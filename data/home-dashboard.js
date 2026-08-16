@@ -852,12 +852,13 @@ export function buildHomeDashboard({
         : 'no-track';
     }
 
-    const w = corridor?.ok ? corridor.worst : null;
-    const windows = w ? corridor.forecast[w].windows : [];
-    const onHouseNow = windows.some(
-      ([a, b]) => Date.parse(a) <= now && (!b || Date.parse(b) >= now)
-    );
-    if (onHouseNow) return 'wind-here';
+    /* ==> "IS WIND ON MY HOUSE" IS NOT "IS THE WORST WIND HERE YET". <== This
+     * read `corridor.worst`'s windows, so a storm whose tropical-storm field
+     * arrived hours ago and whose hurricane core is still coming answered NO —
+     * and the chip said *Hours away* while the wind was blowing. `here` is the
+     * strongest threshold whose window contains this minute; see
+     * data/home-corridor.js for the storm that made the difference matter. */
+    if (corridor?.ok && corridor.here) return 'wind-here';
 
     const cpaMs = approach?.time ? Date.parse(approach.time) : NaN;
     const cpaHours = Number.isFinite(cpaMs) ? (cpaMs - now) / MS_PER_HOUR : null;
@@ -900,7 +901,26 @@ export function buildHomeDashboard({
       return passedHours >= -HOME_DASH.afterCpaHours ? 'just-passed' : 'gone-by';
     }
 
-    const firstWind = windows.length ? Date.parse(windows[0][0]) : NaN;
+    /* ==> THE COUNTDOWN IS TO THE FIRST WIND, NOT THE WORST. <== This read
+     * `corridor.worst`'s arrival, which made the rung almost unreachable once
+     * `wind-here` started asking the right question: by the time a storm's
+     * hurricane core is six hours out, its tropical-storm field is usually
+     * already over the house, so the ladder jumped bearing-down → wind-here
+     * and skipped `imminent` entirely. Measured on Ida: 34 kt is 18.74 nm off
+     * the house at Advisory 013 and 8.68 nm INSIDE it at 014.
+     *
+     * "Imminent" means dangerous wind is nearly on you, and the first field to
+     * arrive is the one that decides that. The rung above has already claimed
+     * every case where something is on the house now, so this can only be
+     * counting down to something genuinely ahead. */
+    let firstWind = NaN;
+    if (corridor?.ok) {
+      for (const kt of [34, 50, 64]) {
+        const a = corridor.forecast[kt]?.windows?.[0]?.[0];
+        const t = a ? Date.parse(a) : NaN;
+        if (Number.isFinite(t) && (!Number.isFinite(firstWind) || t < firstWind)) firstWind = t;
+      }
+    }
     if (Number.isFinite(firstWind)) {
       const h = (firstWind - now) / MS_PER_HOUR;
       if (h <= HOME_DASH.imminentHours) return 'imminent';
@@ -991,6 +1011,26 @@ export function buildHomeDashboard({
       passed?.time &&
       approach?.time &&
       (!(Date.parse(approach.time) > now) || passed.nm <= approach.nm)
+    ),
+
+    /** ==> AND THE MIRROR OF IT, WHICH GLASS FOUND SECOND. <== `closestPassed`
+     *  walks the OBSERVED track, so on a storm that is still coming in, the
+     *  closest it has been so far is simply where it is standing — and the
+     *  rail printed *Closest it came — 107 mi ESE of you, 1 hr ago* two rows
+     *  above *Closest pass — 44 mi S of you, in 6 hrs*, with the same 107 mi
+     *  showing under `Where it is`. One fact in the other's words again, from
+     *  the other end.
+     *
+     *  So the observed pass is superseded when the forecast will bring the
+     *  storm closer than it has yet come, and that pass is still ahead of the
+     *  clock. The two flags are deliberately not one: a storm mid-pass can
+     *  have both facts true and both worth stating, and exactly one of these
+     *  can be set at a time, because they test opposite inequalities. */
+    passedSuperseded: !!(
+      passed?.time &&
+      approach?.time &&
+      Date.parse(approach.time) > now &&
+      approach.nm < passed.nm
     ),
 
     /** ==> THE CLOSEST IT ACTUALLY CAME. PAST TENSE, MEASURED, NO BAND. <==

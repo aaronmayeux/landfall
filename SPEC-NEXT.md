@@ -1218,6 +1218,15 @@ which the pass table (§49.13) did not list.
   is computed once in `data/home-dashboard.js`; the three surfaces read it and
   none of them recompute it.
 
+  **AND THE MIRROR OF IT, WHICH GLASS FOUND SECOND.** `closestPassed` walks the
+  OBSERVED track, so on a storm still coming in the closest it has been so far
+  is simply where it is standing. The rail printed *Closest it came — 107 mi
+  ESE of you, 1 hr ago* two rows above *Closest pass — 44 mi S of you, in
+  6 hrs*, with that same 107 mi under `Where it is`. `dash.passedSuperseded` is
+  the opposite inequality — the observed pass is superseded when the forecast
+  will bring the storm closer than it has yet come and that pass is still ahead
+  — and exactly one of the two flags can be set at a time.
+
 **A `now` row, not a circled node.** The rail's dots are already coloured by the
 storm's category at that moment (`categoryColor`); ringing one to mean "you are
 here" overloads a signal that already means something else.

@@ -580,6 +580,44 @@ departed storm has been carrying a false closest-pass row for as long as the
 rail has existed, and storms passing within a couple of minutes of a synoptic
 hour kept carrying one after pass 4.
 
+**AN APPROACHING STORM SENT BACK FIVE MORE, AND ONE OF THEM WAS THE CHIP
+LYING.** All five reproduce on one ordinary polling state — Ida's Advisory 014
+read three hours after issue — and all five were on screen together on Lala
+2026-08-16 with home moved into her path.
+
+**The chip said *Hours away* while tropical-storm wind was on the house.** The
+`wind-here` rung asked whether the WORST field's window contained now, which
+silently means *is the strongest wind here yet*. Measured against NHC's own
+radii, the house was 8.68 nm inside the 34 kt field. It asks `corridor.here`
+now — the strongest threshold containing this minute — and `imminent` counts
+down to the FIRST wind rather than the worst, or the rung became unreachable.
+The ladder walks cleanly across Ida's real advisories: 012 bearing-down, 013
+imminent, 014 and 015 wind-here. **JUDGE: does the chip flipping to wind-here
+on the tropical-storm band, hours before the core, read as accurate or as
+crying wolf?**
+
+**The sentence said *reaches you again* about wind that had never reached.**
+"Again" was fired by the past clause saying anything at all — including a
+denial. It now needs an actual prior reach.
+
+**And it denied a reach the rail below was announcing.** The analysed field
+lags up to six hours; the forecast corridor is walked from the current
+position. Both were true at once, so *No tropical-storm wind has reached you so
+far* sat directly above *28 min ago — Tropical-storm-force wind reached you*.
+The denial yields to the forecast now.
+
+**The present tense named the wrong wind.** It was built on `worst`, so on a
+storm mid-arrival it would have promised a hurricane that had not landed. It
+names the field actually on the house and says separately that the stronger one
+is coming. **JUDGE: does the two-clause version read as one thought or as two?**
+
+**Rail wind rows were present tense with past lead times** — *3 hrs ago —
+Tropical-storm-force wind reaches you*, the §49.1 bug the milestone rows fixed
+in pass 4 and the wind rows never did.
+
+**And *Closest it came* appeared on a storm that had not been closest yet** —
+the mirror of the supersession rule, from the other end.
+
 **PASS 5 IS ON GLASS AND SIX THINGS CAME BACK FROM IT.** The wind sentence
 lost its forward half once the wind has been and gone — *no tropical-storm wind
 is forecast to reach you either* and *the nearest edge stays 160 mi off* are

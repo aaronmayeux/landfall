@@ -227,6 +227,19 @@ export function countdownHtml(dash, sys, sectHead) {
     for (const kt of reaching) {
       const start = windowsOf(kt)[0]?.[0];
       if (!start) continue;
+      /* ==> A WIND ROW BEHIND THE CLOCK IS IN THE PAST TENSE (§49.1). <== The
+       * milestone rows learned this in pass 4 and the wind rows did not, so a
+       * field that arrived three hours ago printed *3 hrs ago —
+       * Tropical-storm-force wind reaches you*: a real past lead time beside a
+       * future-tense verb, which is the exact shape §49.1 names. The corridor
+       * is walked from the storm's current position and its first window can
+       * easily be open already, so this is the ordinary case rather than an
+       * edge one. Seen on glass 2026-08-16 on Lala.
+       *
+       * THE TENSE COMES OFF THE ROW'S OWN TIMESTAMP, not off the stage: this
+       * row IS the arrival, so the moment it names is the only thing that can
+       * decide whether it has happened. */
+      const arrived = Date.parse(start) <= clock;
       rows.push({
         at: Date.parse(start),
         tone: windColor(kt),
@@ -234,7 +247,7 @@ export function countdownHtml(dash, sys, sectHead) {
          * shouting is every band whispering. */
         key: kt === worst ? 'true' : '',
         lead: formatUntil(start, clock) || '',
-        ev: `${WIND_LABEL[kt] || kt + ' kt'} wind reaches you`,
+        ev: `${WIND_LABEL[kt] || kt + ' kt'} wind ${arrived ? 'reached' : 'reaches'} you`,
         det: formatClockDay(start) || '',
       });
     }
@@ -286,11 +299,15 @@ export function countdownHtml(dash, sys, sectHead) {
         /* An open-ended window is one NHC stopped publishing radii for while
          * the house was still inside it, so its end is a FLOOR and no row
          * built on it may claim the wind stopped. */
+        /* Past tense once the moment is behind the clock, same rule as the
+         * arrival above. "The wind is past you" is already tenseless and
+         * stays; the easing of one band is an event and takes a tense. */
         ev: c.openEnded
           ? 'The forecast stops here, with wind still on you'
           : last
             ? 'The wind is past you'
-            : `${WIND_LABEL[kt] || kt + ' kt'} wind eases`,
+            : `${WIND_LABEL[kt] || kt + ' kt'} wind ${
+                Date.parse(end) <= clock ? 'eased' : 'eases'}`,
         det: `${formatClockDay(end)} · ${duration} in all`,
       });
     }
@@ -374,8 +391,17 @@ export function countdownHtml(dash, sys, sectHead) {
    *
    * NO `key: 'true'`. The filled node and the bold line mark the one event a
    * reader is planning AROUND, and nobody plans around something that has
-   * finished — this row is the record, not the warning. */
-  if (dash.passed?.time) {
+   * finished — this row is the record, not the warning.
+   *
+   * ==> AND IT IS NOT A RECORD UNTIL THE STORM HAS ACTUALLY BEEN CLOSEST.
+   * <== `closestPassed` walks the OBSERVED track, so on a storm still coming
+   * in, the closest it has been so far is simply where it is standing. The
+   * rail printed *Closest it came — 107 mi ESE of you, 1 hr ago* two rows
+   * above *Closest pass — 44 mi S of you, in 6 hrs*, with that same 107 mi
+   * showing under `Where it is`. Seen on glass 2026-08-16 on Lala. Same test
+   * as the row above and the opposite inequality, read off the one field on
+   * the dashboard so the pair cannot drift apart. */
+  if (dash.passed?.time && !dash.passedSuperseded) {
     const kt = dash.atPassed?.windKt;
     rows.push({
       at: Date.parse(dash.passed.time),

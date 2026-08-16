@@ -1095,11 +1095,30 @@ export function createHomeDashboardView({
      * 11 PM" stayed in the future for the whole stretch the wind was actually
      * blowing on the house — which is the stretch this screen exists for. The
      * stage knows; the sentence follows it. */
-    const onYou = dash.stage === 'wind-here';
-    /* ==> THE PAST CLAUSE IS DROPPED WHEN THE WIND NEVER LEFT. <== Mid-event,
-     * "wind reached you at 8 PM and lifted at 11" and "wind is on your house
-     * now" are the same weather described twice, and the second is the one
-     * that matters. Reaching-again is a different story and keeps both. */
+    const onYou = !!co.here;
+    /* ==> THE SENTENCE IS ABOUT THE WIND THAT IS ACTUALLY ON THE HOUSE. <==
+     * It was about `worst` in both arms, so on a storm whose 34 kt field
+     * arrived hours ago and whose 64 kt core is five hours out, the present
+     * tense would have promised a hurricane that had not arrived. `here` names
+     * the strongest field containing this minute; `worst` still names the
+     * strongest the storm will bring, and when they differ the second half of
+     * the sentence says the stronger one is still coming. */
+    const nowKt = co.here || kt;
+    const nowC = co.forecast[nowKt];
+    const nowStart = nowC?.windows?.find(
+      ([a, b]) => Date.parse(a) <= dash.now && (!b || Date.parse(b) >= dash.now)
+    )?.[0] || nowC?.windows?.[0]?.[0];
+    const stillComing = onYou && kt > nowKt ? kt : null;
+
+    /* ==> "AGAIN" NEEDS A FIRST TIME, AND IT WAS ASKING THE WRONG QUESTION.
+     * <== It read `before && !onYou` — true whenever the past clause said
+     * ANYTHING, including *No tropical-storm wind has reached you so far*. So
+     * a storm that had never touched the house read *No tropical-storm wind
+     * has reached you so far. Damaging wind reaches you again…* Seen on glass
+     * 2026-08-16 on Lala. The question is whether wind actually reached, which
+     * is `co.past.worst` — a measurement — or a forecast window that has
+     * already opened and closed. */
+    const reachedBefore = !!co.past?.worst;
     const both = before && !onYou;
     return `<p class="home-band">
       ${both ? `${before} ` : ''}
@@ -1110,16 +1129,19 @@ export function createHomeDashboardView({
            * "lasting and the forecast stops before saying for how long from
            * 10:00 PM". When there is no length to give, the sentence ends and
            * a second one says why. */
-          `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind is on your house now</b>${
-            windDurationPhrase(hrs, c.openEnded)
+          `<b>${esc(WIND_LABEL[nowKt] || nowKt + ' kt')} wind is on your house now</b>${
+            windDurationPhrase(nowC.totalHours, nowC.openEnded)
               ? `, and the forecast has it lasting ${esc(
-                  windDurationPhrase(hrs, c.openEnded)
-                )} from when it arrived at ${esc(formatTimeDay(start))}.`
-              : `. It arrived at ${esc(formatTimeDay(start))}, and the forecast
+                  windDurationPhrase(nowC.totalHours, nowC.openEnded)
+                )} from when it arrived at ${esc(formatTimeDay(nowStart))}.`
+              : `. It arrived at ${esc(formatTimeDay(nowStart))}, and the forecast
                  stops before saying how long it lasts.`
-          }`
+          }${stillComing
+            ? ` <b>${esc(WIND_LABEL[stillComing] || stillComing + ' kt')} wind
+                reaches you</b> ${esc(formatTimeDay(c.windows[0]?.[0]))}.`
+            : ''}`
         : `<b>${esc(WIND_LABEL[kt] || kt + ' kt')} wind
-           ${both ? 'reaches you again' : 'reaches you'}</b>
+           ${reachedBefore ? 'reaches you again' : 'reaches you'}</b>
            ${esc(windDurationClause(hrs, c.openEnded))},
            starting ${esc(formatTimeDay(start))}.`}
       ${earlyGap >= 2 && !onYou
@@ -1170,6 +1192,23 @@ export function createHomeDashboardView({
        * forward all-clear and is worth making separately. The horizon rides
        * along when the measurement does not reach back as far as the track:
        * "nothing reached you" is only true over the hours somebody measured. */
+
+      /* ==> AND IT MUST NOT CONTRADICT THE RAIL TWO INCHES BELOW IT. <== The
+       * measured field is NHC's ANALYSIS and it lags — the most recent one can
+       * be six hours behind the clock — while the forecast corridor is walked
+       * from the storm's current position and its first window is often
+       * already open. So on a storm mid-arrival both were true at once and the
+       * screen said *No tropical-storm wind has reached you so far* directly
+       * above *28 min ago — Tropical-storm-force wind reached you*. Seen on
+       * glass 2026-08-16 on Lala.
+       *
+       * A denial is the one thing this clause cannot afford to be wrong
+       * about, so where the forecast says wind has already begun the denial is
+       * dropped entirely and the forward half carries the story. Silence here
+       * is not a §5 failure: the sentence beside it, the rail and the chart
+       * are all saying the wind arrived. */
+      if (co?.begun) return '';
+
       return p.partial && p.coveredFrom
         ? `<b>No tropical-storm wind has reached you</b> over the hours the
            wind field is published for — measurements start

@@ -99,6 +99,27 @@ reads "Closest it came" once the pass is behind. Before this, the screen stayed
 in the future tense through the whole stretch the wind was actually blowing —
 which is the stretch it exists for.
 
+**`wind-here` ASKS ABOUT THE WIND ON THE HOUSE, NOT ABOUT THE WORST WIND.** It
+tested whether `corridor.worst`'s window contained the present, which silently
+means *is the strongest wind here yet*. A storm whose tropical-storm field has
+been over the roof for hours and whose hurricane core is still five hours out
+answered no, so the chip read *Hours away* while the wind was blowing. The test
+is `corridor.here` — the strongest threshold whose window contains this minute
+— and it is a THRESHOLD rather than a boolean because every caller has to name
+which wind it is talking about: a present-tense sentence built on `worst` would
+promise a hurricane that has not arrived. Measured against NHC's published
+radii, a house is 8.68 nm inside Ida's 34 kt field at her Advisory 014 and
+37.31 nm inside it at 015; both read `imminent` before this.
+
+**AND `imminent` COUNTS DOWN TO THE FIRST WIND, NOT THE WORST.** Once
+`wind-here` started asking the right question the rung became nearly
+unreachable — by the time a hurricane core is six hours out its tropical-storm
+field is usually already on the house — so the ladder jumped straight from
+`bearing-down` to `wind-here`. *Imminent* means dangerous wind is nearly on
+you, and the first field to arrive is what decides that. The ladder now walks
+cleanly across Ida's real advisories: 012 `bearing-down`, 013 `imminent`, 014
+and 015 `wind-here`.
+
 ### Home is a dashboard, not a setup screen
 
 The home FAB opens a **single-storm dashboard** that answers one question: *is

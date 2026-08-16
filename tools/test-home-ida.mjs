@@ -896,7 +896,22 @@ section('the stage ladder');
   };
 
   ok(stageOf('008') === 'bearing-down', 'two days out, with wind forecast to reach: bearing down');
-  ok(stageOf('015') === 'imminent', `six hours from the first wind: imminent (got ${stageOf('015')})`);
+  /* ==> THIS USED TO ASSERT `imminent` ON 015, AND IT WAS ENCODING A BUG.
+   * <== The rung asked whether the WORST field's window contained `now`, so a
+   * house already inside the tropical-storm field read as "wind arrives in six
+   * hours". Measured against NHC's own published radii, the house is 37.31 nm
+   * INSIDE the 34 kt field at the moment Advisory 015 is issued — the wind is
+   * on it, and the chip said *Hours away*. Seen on glass 2026-08-16 on Lala.
+   *
+   * The ladder now walks cleanly across her real advisories: 012 bearing-down
+   * (34 kt is 58.50 nm off), 013 imminent (18.74 nm off, arriving in 2.26 h),
+   * 014 and 015 wind-here (8.68 nm and 37.31 nm inside). */
+  ok(stageOf('013') === 'imminent',
+     `wind two hours out and not yet on the house: imminent (got ${stageOf('013')})`);
+  ok(stageOf('015') === 'wind-here',
+     `a house 37 nm inside the 34 kt field is NOT "hours away" (got ${stageOf('015')})`);
+  ok(stageOf('014') === 'wind-here',
+     `nor one 8.68 nm inside it (got ${stageOf('014')})`);
   ok(stageOf('016') === 'wind-here', 'wind already on the house: wind-here');
   ok(stageOf('017') === 'wind-here', 'still wind-here while she is inland and the field covers home');
   ok(stageOf('018') === 'past', 'once the field has left and she is going: past');
@@ -2349,6 +2364,248 @@ section('the wind that already reached you (§49.9)');
        'and never dates a peak that has not happened against a pass that has');
     ok(/>Strongest</.test(flat09) && !/Was strongest/.test(flat09),
        'the label stays present tense too, because the peak has not happened');
+  }
+  clearHome();
+
+  /* --- 6d. a storm still coming in, read three hours after issue ---------- *
+   * ==> ONE ORDINARY POLLING STATE, FIVE BUGS. <== Advisory 014 read three
+   * hours after it was issued — the app polls, so an advisory on screen is
+   * routinely one to three hours old — puts Ida's 34 kt field over the house
+   * while her 64 kt core is still five hours out, with a real forecast pass
+   * eight hours ahead and closer than anything yet observed. Every one of the
+   * following was wrong on that screen, and all five were seen together on
+   * glass 2026-08-16 on Lala. */
+  {
+    const A14 = parseTcm(readAdv('014'), { sourceId: 'al092021' });
+    const CLOCK = A14.issuedMs + 3 * 3_600_000;
+    const iso14 = new Date(A14.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const past14 = normalizePastPoints(JSON.parse(
+      await (await call(iso14, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    ).features);
+    const pr14 = normalizePastRadii(JSON.parse(
+      await (await call(iso14, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
+    const d14 = buildHomeDashboard({
+      storm: { ...A14.storm, category: categoryFromKt(A14.storm.windKt) },
+      forecast: A14.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past14, radii: A14.radii, pastRadii: pr14, home: HOME,
+      now: CLOCK, trackState: 'ok',
+    });
+
+    /* The shape, stated so a fixture drift cannot make the rest vacuous. */
+    ok(d14.corridor.here === 34,
+       `tropical-storm wind is on the house (here ${d14.corridor.here})`);
+    ok(d14.corridor.worst === 64, 'while the hurricane core is still to come');
+    ok(d14.corridor.begun === true, 'so wind has already begun on this forecast');
+    ok(d14.corridor.past?.worst == null,
+       'and the ANALYSED field, which lags, has not caught up — no measured reach');
+
+    /* 1. THE CHIP. It read "Hours away" while the wind was blowing. */
+    ok(d14.stage === 'wind-here',
+       `the chip says wind is here, not hours away (got ${d14.stage})`);
+
+    /* 2. THE OBSERVED PASS IS NOT A RECORD YET. `closestPassed` walks the
+     * observed track, so on a storm still coming in the closest it has been is
+     * simply where it is standing — 103 nm, the same number under "Where it
+     * is", against a forecast pass of 5 nm eight hours out. */
+    near(d14.passed.nm, 103, 1, 'the observed "closest" is just its current distance');
+    ok(d14.approach.nm < 10 && Date.parse(d14.approach.time) > CLOCK,
+       'while a much closer pass is still genuinely ahead');
+    ok(d14.passedSuperseded === true, 'so the observed pass is superseded');
+    ok(d14.approachSuperseded === false, 'and the forecast pass is not — they are opposites');
+
+    const { countdownHtml: rail } = await import('../ui/countdown-home.js');
+    const rail14 = rail(d14, () => 'imperial', (i, t) => `<h3>${t}</h3>`);
+    const rt = rail14.replace(/\s+/g, ' ');
+    ok(!/Closest it came/.test(rt),
+       'the rail drops "Closest it came" on a storm that has not been closest yet');
+    ok(/Closest pass —/.test(rt), 'and keeps the pass a reader is planning around');
+
+    /* 3. RAIL TENSE. A wind row behind the clock is in the past tense (§49.1). */
+    ok(/wind reached you/.test(rt),
+       'a wind field that arrived three hours ago says "reached you"');
+    ok(!/ago[\s\S]{0,80}?wind reaches you/.test(rt),
+       'and no row pairs a past lead time with a future-tense verb');
+
+    /* 4 and 5. THE SENTENCE. */
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A14.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A14.radii, past: past14, pastRadii: pr14,
+        },
+        error: null,
+      }),
+      now: () => CLOCK,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A14.storm, category: categoryFromKt(A14.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const f14 = innerEl.innerHTML.replace(/\s+/g, ' ');
+
+    /* "AGAIN" NEEDS A FIRST TIME. It was said whenever the past clause said
+     * anything at all, including a denial. */
+    ok(!/reaches you again/.test(f14),
+       'nothing says the wind reaches you AGAIN when it has never reached you');
+
+    /* AND THE DENIAL MUST NOT CONTRADICT THE RAIL BELOW IT. The analysed field
+     * lags the forecast one, so both were true at once and the screen said
+     * "No tropical-storm wind has reached you so far" directly above a rail
+     * row announcing that it had. */
+    ok(!/No tropical-storm wind has reached you/.test(f14),
+       'and the measured denial is dropped where the forecast says wind has begun');
+
+    /* THE PRESENT TENSE NAMES THE WIND THAT IS ACTUALLY ON THE HOUSE, not the
+     * worst the storm will ever bring — otherwise it promises a hurricane that
+     * has not arrived. */
+    ok(/wind is on your house now/.test(f14), 'the sentence is in the present tense');
+    ok(/Tropical-storm[- ]force wind is on your house now/i.test(f14),
+       'and names the 34 kt field, which is the one on the house');
+    ok(!/Damaging wind is on your house now/.test(f14),
+       'never the 64 kt core, which is still five hours out');
+    ok(/Damaging wind[\s\S]{0,40}reaches you/.test(f14),
+       'while still saying the stronger wind is coming, and when');
+  }
+  clearHome();
+
+  /* --- 6e. the denial that IS correct, and the "again" that is not -------- *
+   * ==> ADVISORY 014 CANNOT TEST "AGAIN", BECAUSE IT SUPPRESSES THE CLAUSE
+   * "AGAIN" IS SPLICED INTO. <== Where the forecast says wind has begun the
+   * measured denial is dropped, so `before` is empty and the mutation that
+   * makes "again" fire on any past clause is invisible. Advisory 013 read at
+   * issue is the case that matters: the analysed field genuinely records no
+   * reach, no forecast window has opened yet, and the denial is both correct
+   * and printed — which is exactly where "again" must not appear. */
+  {
+    const A13 = parseTcm(readAdv('013'), { sourceId: 'al092021' });
+    const iso13 = new Date(A13.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const past13 = normalizePastPoints(JSON.parse(
+      await (await call(iso13, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    ).features);
+    const pr13 = normalizePastRadii(JSON.parse(
+      await (await call(iso13, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
+    const d13 = buildHomeDashboard({
+      storm: { ...A13.storm, category: categoryFromKt(A13.storm.windKt) },
+      forecast: A13.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past13, radii: A13.radii, pastRadii: pr13, home: HOME,
+      now: A13.issuedMs, trackState: 'ok',
+    });
+    ok(d13.corridor.begun === false && d13.corridor.here === null,
+       'no forecast window has opened yet at Advisory 013');
+    ok(d13.corridor.past?.worst == null && d13.corridor.past?.published.length > 0,
+       'and the analysed field was measured and records no reach');
+    ok(d13.corridor.worst === 64, 'while hurricane-force wind is forecast to arrive');
+
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A13.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A13.radii, past: past13, pastRadii: pr13,
+        },
+        error: null,
+      }),
+      now: () => A13.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A13.storm, category: categoryFromKt(A13.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const f13 = innerEl.innerHTML.replace(/\s+/g, ' ');
+
+    ok(/No tropical-storm wind has reached you/.test(f13),
+       'here the denial is correct and IS printed — it is not dead wording');
+    ok(!/reaches you again/.test(f13),
+       'and the wind still to come reaches you, not again — nothing has reached yet');
+    ok(/Damaging wind reaches you/.test(f13), 'the forward half is stated in full');
+  }
+  clearHome();
+
+  /* --- 6f. wind that came and went while the analysis lags ---------------- *
+   * ==> THE DENIAL'S GUARD PROTECTS A STATE NEITHER FIXTURE ABOVE REACHES.
+   * <== On Advisory 014 at three hours the wind is ON the house, so the
+   * present-tense arm drops the past clause anyway and the guard is invisible.
+   * The state it exists for is the one AFTER that: a forecast window that has
+   * opened and closed while the ANALYSED field — which lags by up to a
+   * synoptic interval — still records no reach. There the screen would say
+   * *No tropical-storm wind has reached you* above a rail row announcing that
+   * it did.
+   *
+   * REACHED BY STRETCHING THE CLOCK, and that is stated rather than hidden:
+   * twenty-four hours is not a realistic advisory age, and no Ida advisory
+   * produces this shape at a realistic one. The STATE is real — it is the
+   * hours after any storm's first band passes — and only the clock is moved;
+   * every radius, fix and window is NHC's own. */
+  {
+    const A14b = parseTcm(readAdv('014'), { sourceId: 'al092021' });
+    const LATE = A14b.issuedMs + 24 * 3_600_000;
+    const iso14b = new Date(A14b.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const past14b = normalizePastPoints(JSON.parse(
+      await (await call(iso14b, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    ).features);
+    const pr14b = normalizePastRadii(JSON.parse(
+      await (await call(iso14b, 'nhc/mapserver', q(SUMMARY_LAYER.windPast))).text()
+    ));
+    const dLate = buildHomeDashboard({
+      storm: { ...A14b.storm, category: categoryFromKt(A14b.storm.windKt) },
+      forecast: A14b.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: past14b, radii: A14b.radii, pastRadii: pr14b, home: HOME,
+      now: LATE, trackState: 'ok',
+    });
+    ok(dLate.corridor.begun === true && dLate.corridor.here === null,
+       'a forecast window has opened AND closed, and nothing is on the house now');
+    ok(dLate.corridor.past?.worst == null,
+       'while the analysed field still records no reach — the lag');
+
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: A14b.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: A14b.radii, past: past14b, pastRadii: pr14b,
+        },
+        error: null,
+      }),
+      now: () => LATE,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({
+      storms: [{ ...A14b.storm, category: categoryFromKt(A14b.storm.windKt), can: { forecastPoints: true } }],
+      sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } },
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    const fLate = innerEl.innerHTML.replace(/\s+/g, ' ');
+
+    ok(!/No tropical-storm wind has reached you/.test(fLate),
+       'the denial is dropped rather than contradicting the wind rows below it');
   }
   clearHome();
 

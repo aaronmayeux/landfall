@@ -512,6 +512,34 @@ export function buildCorridor({
    * headline is about. Null when none of them do, which is a real answer. */
   const worst = [...THRESHOLDS].reverse().find((kt) => forecastCross[kt]?.everInside) ?? null;
 
+  /* ==> AND THE STRONGEST ONE THAT IS ON THE HOUSE AT THIS MINUTE, WHICH IS
+   * NOT THE SAME QUESTION. <== The ladder and the sentence both used to ask
+   * whether `worst`'s window contained `now`, which silently means "is the
+   * WORST wind here yet". On a storm whose 34 kt field arrived three hours ago
+   * and whose 64 kt core is still five hours out, the honest answer to "is
+   * wind on my house" is yes and the answer that was computed was no — so the
+   * chip read *Hours away* while tropical-storm-force wind was blowing, and
+   * the sentence stayed in the future tense through the stretch this screen
+   * exists for. Reproduced on Ida's Advisory 014 read three hours after issue,
+   * which is an ordinary polling state, not an edge case.
+   *
+   * Kept as a THRESHOLD rather than a boolean, because every caller needs to
+   * name which wind it is talking about. A sentence that says "wind is on your
+   * house now" while `worst` is 64 kt would be promising a hurricane. */
+  const here = [...THRESHOLDS].reverse().find((kt) =>
+    (forecastCross[kt]?.windows || []).some(
+      ([a, b]) => Date.parse(a) <= now && (!b || Date.parse(b) >= now)
+    )
+  ) ?? null;
+
+  /* ==> HAS ANY WIND ALREADY ARRIVED, ON THIS FORECAST? <== Separate from
+   * `here`, because a window that opened AND closed before now is still wind
+   * that reached the house — and a screen that then says "no wind has reached
+   * you" is contradicting its own rail two inches lower. */
+  const begun = THRESHOLDS.some((kt) =>
+    (forecastCross[kt]?.windows || []).some(([a]) => Date.parse(a) <= now)
+  );
+
   return {
     ok: true,
     /** True when NHC published a FORECAST wind field to walk. False on a
@@ -525,6 +553,18 @@ export function buildCorridor({
     /** Per threshold, with the track error applied. OURS, not NHC's. */
     earliest,
     worst,
+
+    /** The strongest threshold whose forecast window contains `now`, or null.
+     *  What "is wind on my house" actually means, as opposed to "is the WORST
+     *  wind here yet" — see the block above for the storm that made the
+     *  difference matter. */
+    here,
+
+    /** True when any threshold's window opened at or before `now`. A window
+     *  that has already opened AND closed still counts: that is wind which
+     *  reached the house, and a sentence denying it contradicts the rail. */
+    begun,
+
     /** The wind that ALREADY reached the house (§49.9), or null when the
      *  source published no past wind field — which for GDACS is always, and
      *  is a fact about GDACS rather than a failure of ours. */
@@ -563,6 +603,11 @@ function pastOnly(pastArm, home, now, storm, why) {
     forecast: { 34: null, 50: null, 64: null },
     earliest: { 34: null, 50: null, 64: null },
     worst: null,
+    /* Nobody published a forecast wind field, so there is no forecast window
+     * to be inside of and none to have opened. Both are absences, not falses
+     * about the weather, and `forwardOk` is what says which. */
+    here: null,
+    begun: false,
     published: [],
     past: pastArm,
     home,
