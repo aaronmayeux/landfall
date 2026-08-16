@@ -30,6 +30,7 @@ import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
 import { smoothRadialSeams } from '../lib/ringpolish.js';
 import { parseGdacsStamp } from '../lib/time.js';
+import { normalizePastPoints } from '../lib/track-point.js';
 import { parseGdacsPoints } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
 
@@ -542,6 +543,14 @@ export async function fetchGdacsGeometry(storm) {
     /* Real now. Feeds closestApproach() in data/home.js, which GDACS storms
      * were locked out of for as long as this was an empty array. */
     forecast,
+    /* The observed half of the same track, normalized through the SAME
+     * function NHC's layer 10 goes through (§49.3, lib/track-point.js). GDACS
+     * publishes no wind on history of its own, so most of these points carry a
+     * position and a time and nothing else — unless `lib/carq.js` matched a
+     * JTWC analysed row, in which case `_windKt` is already on the feature and
+     * comes through as a real measurement. Both cases degrade honestly: a
+     * distance and a time is a complete answer to "when did it pass". */
+    past: normalizePastPoints(pastPoints),
     stamp: { advisnum: null, filedate: Number.isFinite(stampMs) ? stampMs : null },
     fetchedAt: new Date().toISOString(),
   };

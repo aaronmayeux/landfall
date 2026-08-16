@@ -527,10 +527,13 @@ move.
 **The home dashboard cannot say anything happened (§49, `SPEC-NEXT.md`).** Every
 figure on it is computed from now-plus-forecast, so once a storm is past the
 house "closest it came" is just the current distance and "when it was closest"
-is just the current wind. Seen on glass on Lala. Four passes left, sized and
-ordered in §49.13; pass 5 closes the safety-adjacent one — *no tropical-storm
-wind reaches you* is a forward-only sentence printed with no tense marker. Read
-the section, not this line.
+is just the current wind. Seen on glass on Lala. **The history now REACHES the
+screen and nothing reads it** — `bundle.past` and `dash.pastCurve` are live for
+both sources and for ended storms (`SPEC-DATA.md` §49.3), with no visible
+change by design. Three passes left, sized and ordered in §49.13; pass 5 closes
+the safety-adjacent one — *no tropical-storm wind reaches you* is a
+forward-only sentence printed with no tense marker. Read the section, not this
+line.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open

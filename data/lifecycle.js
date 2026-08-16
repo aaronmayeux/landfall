@@ -100,7 +100,7 @@ import { isNhcFinalAdvisory } from '../lib/advisory.js';
 import { becameWhat, endedExpired } from '../lib/lifecycle.js';
 import { scopedKey } from '../lib/replay-mode.js';
 import { isSilent, silenceAge } from '../lib/silence.js';
-import { timeMsOf, windKtOf, categoryIndexOf } from '../lib/track-point.js';
+import { timeMsOf, windKtOf, categoryIndexOf, normalizePastPoints } from '../lib/track-point.js';
 import { fetchAdvisory } from './advisory.js';
 import { getGeometry } from './cache.js';
 
@@ -305,6 +305,16 @@ function compactTrack(bundle) {
        * a real index and needs none; load-bearing for a GDACS one, which has no
        * index at all. */
       p._catCode == null ? null : String(p._catCode),
+      /* WHERE THE INDEX ABOVE CAME FROM (§49.3). Without it a rehydrated point
+       * has a category and no provenance, and the past figures on the home
+       * dashboard cannot say whether a finished storm's strength is the
+       * agency's grading or our arithmetic on its wind. An NHC point has no
+       * stamp and is 'reported' by construction; a GDACS one carries whichever
+       * data/gdacs-points.js resolved. A SIX-element tuple written before this
+       * existed leaves it undefined and reads back as unknown, which is true —
+       * and records expire inside `ENDED.holdFor` anyway, so the old shape
+       * cannot outlive a day and a half. */
+      p._catStamped ? (p._catSource ?? null) : 'reported',
     ]);
   }
   /* Newest kept when over budget: the recent end of the track is the part
@@ -345,7 +355,7 @@ function rehydrateLine(track) {
 /** Compact tuples → the bundle shape every consumer already reads. */
 export function rehydrateTrack(track) {
   const features = (Array.isArray(track) ? track : []).map(
-    ([lon, lat, t, windKt, catIndex, catCode]) => ({
+    ([lon, lat, t, windKt, catIndex, catCode, catSource]) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [lon, lat] },
       properties: {
@@ -364,6 +374,11 @@ export function rehydrateTrack(track) {
          * through on a falsy code either way, and an explicit null in the
          * property bag suggests the source said something when it did not. */
         ...(catCode ? { _catCode: catCode } : {}),
+        /* Stamped only when it was persisted. Absent means "we do not know",
+         * which is the honest reading of a tuple written before §49.3 — and
+         * `normalizePastPoints` treats a stamped point with no source as
+         * exactly that rather than defaulting it to 'reported'. */
+        ...(catSource ? { _catSource: catSource } : {}),
       },
     })
   );
@@ -390,12 +405,19 @@ export function endedBundle(id) {
    * up: prefer the full record, fall back to the persisted skeleton. */
   const live = getGeometry(id);
   if (live && !live.error && live.layers?.pastPoints?.status === 'ok') return live;
+  const pastPoints = rehydrateTrack(rec.track);
   return {
     layers: {
-      pastPoints: rehydrateTrack(rec.track),
+      pastPoints,
       pastTrack: rehydrateLine(rec.track),
     },
     forecast: [],
+    /* ==> THE ONE THING A FINISHED STORM STILL HAS (§49.3). <== `forecast` is
+     * empty above because there is nothing left to forecast; the observed
+     * track is the whole of what this bundle is for, and normalizing it here
+     * means the home dashboard's past figures survive the storm leaving the
+     * feed. Same function, same shape, from the same features the map draws. */
+    past: normalizePastPoints(pastPoints.fc?.features || []),
     stamp: rec.storm?.advisoryKey ? { advisnum: null, filedate: rec.storm.observedAt } : null,
     /** Marks a bundle that came out of localStorage rather than off a feed. The
      *  panel's geometry-lag line reads `stamp` and would otherwise report a

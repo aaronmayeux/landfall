@@ -1700,6 +1700,141 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 clearHome();
 
 
+/* =========================================================================
+ * 14. THE OBSERVED TRACK ARRIVES (§49.3)
+ *
+ * `normalizePastPoints` turns either source's history into the same shape the
+ * forecast curve has. It is ONE function for both sources, so the risk it
+ * carries is a field name read from the wrong feed — which never throws, it
+ * just silently returns fewer points or a wrong grade.
+ *
+ * THE KNOTS FALLBACK IS THE ASSERTION THAT MATTERS. NHC publishes a real wind
+ * on a pre-genesis fix — Lala's first eight are 20 kt disturbances — and
+ * grading those from knots would put a tropical depression on a position NHC
+ * refuses to grade, which is the exact bug `trackPointReading` already exists
+ * to stop on the map. Measured off the archive 2026-08-16: three of Lala's
+ * 35 kt fixes are still `LO` and the fourth is `TS`, so a knots-derived
+ * category would have named her a tropical storm eighteen hours early.
+ * ====================================================================== */
+section('the observed track normalizes (§49.3)');
+
+const { normalizePastPoints } = await import('../lib/track-point.js');
+const { rehydrateTrack } = await import('../data/lifecycle.js');
+
+/** NHC layer 10's real field names and casing, as served. */
+const pastFeat = (dtg, props = {}, coords = [-80, 25]) => ({
+  type: 'Feature',
+  geometry: { type: 'Point', coordinates: coords },
+  properties: { dtg, ...props },
+});
+
+const NHC_PAST = normalizePastPoints([
+  /* Out of order on purpose: the sort is the contract, not the input. */
+  pastFeat(2026081606, { intensity: 65, ss: 1, stormtype: 'HU' }, [-156.5, 19.1]),
+  pastFeat(2026081000, { intensity: 20, ss: 0, stormtype: 'DB' }, [-137.3, 14.5]),
+  pastFeat(2026081512, { intensity: 35, ss: 0, stormtype: 'LO' }, [-150.0, 17.0]),
+  pastFeat(2026081518, { intensity: 35, ss: 0, stormtype: 'TS' }, [-152.0, 17.6]),
+]);
+
+ok(NHC_PAST.length === 4, 'every readable NHC past fix survives');
+ok(
+  NHC_PAST.map((p) => p.time).join(',') ===
+    ['2026-08-10T00:00:00.000Z', '2026-08-15T12:00:00.000Z',
+     '2026-08-15T18:00:00.000Z', '2026-08-16T06:00:00.000Z'].join(','),
+  'they come back ascending by time whatever order they arrived in'
+);
+ok(NHC_PAST[3].category === 2 && NHC_PAST[3].categorySource === 'reported',
+   "NHC's ss 1 is a Cat 1, which is index 2, and it is reported not derived");
+ok(NHC_PAST[2].category === 1 && NHC_PAST[2].categorySource === 'reported',
+   'a TS at ss 0 is graded off the class letter, index 1');
+
+/* ==> THE ONE THAT GUARDS THE MAP'S AGREEMENT. <== */
+ok(NHC_PAST[0].category === null && NHC_PAST[0].categorySource === null,
+   'a 20 kt DISTURBANCE gets NO category, even though it has a real wind');
+ok(NHC_PAST[1].category === null,
+   'and a 35 kt LOW gets none either — NHC has not named it yet');
+ok(NHC_PAST[1].windKt === 35,
+   'the wind is still carried on an ungraded fix; only the GRADE is withheld');
+
+ok(NHC_PAST.every((p) => p.tau === null), 'tau is null on every observed fix');
+ok(NHC_PAST.every((p) => p.gustKt === null), 'so is gust — neither source publishes one');
+ok(NHC_PAST[0].stormType === 'DB' && NHC_PAST[3].stormType === 'HU',
+   'the source class letter is carried verbatim, DB included');
+
+/* A wind with NO classification at all is the only case that derives. */
+const bare = normalizePastPoints([pastFeat(2026081000, { intensity: 90 })]);
+ok(bare[0].category === categoryFromKt(90) && bare[0].categorySource === 'derived',
+   'a fix with a wind and no class letter at all derives, and says so');
+
+/* Points that cannot be placed are DROPPED, never guessed into position. */
+const junk = normalizePastPoints([
+  pastFeat(null, { intensity: 40, stormtype: 'TS' }),
+  { type: 'Feature', geometry: { type: 'LineString', coordinates: [[0, 0], [1, 1]] },
+    properties: { dtg: 2026081000 } },
+  pastFeat(2026081000, { intensity: 40, stormtype: 'TS' }, [null, 25]),
+  pastFeat(2026081006, { intensity: 40, stormtype: 'TS' }),
+]);
+ok(junk.length === 1, 'no time, not a point, or no position — each one is dropped');
+ok(junk[0].time === '2026-08-10T06:00:00.000Z', 'and the readable one is unharmed');
+
+/* --- the GDACS side, which speaks entirely different field names --------- */
+const gdacsFeat = (t, props) => ({
+  type: 'Feature',
+  geometry: { type: 'Point', coordinates: [-131.7, 18.1] },
+  properties: { _time: t, _catStamped: true, ...props },
+});
+const GD_PAST = normalizePastPoints([
+  /* THE `tau` VALUES ARE REAL. A GDACS past dot carries a NEGATIVE forecast
+   * hour (measured -66 on HERNAN-26 off the archive), and it is the only
+   * input that can prove the field is nulled rather than merely absent. */
+  gdacsFeat(Date.parse('2026-08-13T03:00:00Z'),
+            { _catIndex: 1, _catCode: 'TS', _catSource: 'reported',
+              _gdacsIntensity: 'TS', tau: -66 }),
+  gdacsFeat(Date.parse('2026-08-13T09:00:00Z'),
+            { _catIndex: 4, _catCode: '3', _catSource: 'derived', _windKt: 100,
+              _gdacsIntensity: 'HU', tau: -60 }),
+  gdacsFeat(Date.parse('2026-08-13T15:00:00Z'),
+            { _catIndex: null, _catCode: 'HU', _gdacsIntensity: 'HU', tau: -54 }),
+]);
+ok(GD_PAST.length === 3, 'GDACS dots normalize through the same function');
+ok(GD_PAST[0].categorySource === 'reported' && GD_PAST[1].categorySource === 'derived',
+   "GDACS's own leg code is reported; our read of a JTWC wind is derived");
+ok(GD_PAST[1].windKt === 100, 'a matched measured wind comes through as a real number');
+ok(GD_PAST[0].windKt === null,
+   'and GDACS publishing no wind of its own degrades to null, not to zero');
+ok(GD_PAST[2].category === null && GD_PAST[2].categorySource === null,
+   'a stamped hurricane with no gradeable category stays ungraded');
+ok(GD_PAST[0].stormType === 'TS' && GD_PAST[2].stormType === 'HU',
+   "GDACS's intensity letter fills the same slot NHC's stormtype does");
+ok(GD_PAST.every((p) => p.tau === null),
+   'a GDACS dot arriving with tau -66 comes out with tau null, not with -66');
+
+/* An ended storm's persisted skeleton goes through the SAME function. */
+const revived = normalizePastPoints(
+  rehydrateTrack([
+    [-131.7, 18.1, Date.parse('2026-08-13T03:00:00Z'), 100, 4, '3', 'derived'],
+    /* A SIX-element tuple, written before §49.3 existed. */
+    [-133.0, 18.4, Date.parse('2026-08-13T09:00:00Z'), 105, 4, '3'],
+  ]).fc.features
+);
+ok(revived.length === 2, 'a rebuilt ended-storm track normalizes too');
+ok(revived[0].categorySource === 'derived',
+   'a persisted provenance survives the round trip through localStorage');
+ok(revived[1].category === 4 && revived[1].categorySource === null,
+   'an old tuple keeps its category and honestly admits it cannot say where it came from');
+
+/* --- and the dashboard actually receives it ------------------------------ */
+const withPast = buildHomeDashboard({
+  storm: STORM, forecast: CURVE, past: NHC_PAST, radii: RADII,
+  home: HOME, now: NOW, trackState: 'ok',
+});
+ok(withPast.pastCurve?.length === 4, 'buildHomeDashboard hands the observed track through');
+ok(
+  buildHomeDashboard({ storm: STORM, forecast: CURVE, home: HOME, now: NOW })
+    .pastCurve?.length === 0,
+  'and a caller that passes none gets an empty array, never undefined'
+);
+
 for (const f of failures) console.log(`  ✗ ${f}`);
 console.log(
   failures.length

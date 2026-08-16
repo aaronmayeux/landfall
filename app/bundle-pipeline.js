@@ -343,7 +343,7 @@ export function createBundlePipeline({
      * `forMap` still runs on it, so the empty forward-looking slots go through
      * exactly the same gate every other storm's do. */
     if (isEnded(storm)) {
-      const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], stamp: null };
+      const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], past: [], stamp: null };
       selectedBundle = bundle;
       if (isStyleReady()) {
         engine.setBundle(storm, decorate(storm, bundle));
@@ -359,7 +359,7 @@ export function createBundlePipeline({
       if (isStyleReady()) engine.clearSelection();
       detail().setGeometry({
         state: 'ok',
-        bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
+        bundle: { layers: {}, forecast: [], past: [], stamp: { advisnum: null, filedate: null } },
         lagged: false,
       });
       return;
@@ -517,13 +517,13 @@ export function createBundlePipeline({
       if (!storm) return { state: 'error', bundle: null, error: 'no storm' };
 
       if (isEnded(storm)) {
-        const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], stamp: null };
+        const bundle = endedBundle(storm.id) || { layers: {}, forecast: [], past: [], stamp: null };
         return { state: 'ok', bundle, error: null };
       }
       if (storm.source !== 'nhc' && storm.source !== 'gdacs') {
         return {
           state: 'ok',
-          bundle: { layers: {}, forecast: [], stamp: { advisnum: null, filedate: null } },
+          bundle: { layers: {}, forecast: [], past: [], stamp: { advisnum: null, filedate: null } },
           error: null,
         };
       }

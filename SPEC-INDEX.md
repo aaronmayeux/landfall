@@ -198,30 +198,30 @@ real home is the other row carrying the same section number.
 | `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2333-2384 |
 | `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2385-2404 |
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2405-2421 |
-| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1815 |
+| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1817 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 977-978 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1014 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1015-1040 |
-| `49.3` | &nbsp;&nbsp;Source — the observed track, already downloaded | `SPEC-NEXT.md` | 1041-1081 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1015 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1016-1041 |
+| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1818-1902 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2422-2444 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1082-1110 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1111-1134 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1135-1168 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1169-1191 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1192-1243 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1244-1261 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1262-1282 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1283-1300 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1301-1322 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1042-1070 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1071-1094 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1095-1128 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1129-1151 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1152-1203 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1204-1221 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1222-1242 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1243-1260 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1261-1281 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 108,440 | 31 |
+| `SPEC-DATA.md` | 113,557 | 32 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 83,895 | 30 |
+| `SPEC-NEXT.md` | 81,261 | 29 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 142,364 | 10 |
 | `SPEC.md` | 147,007 | 14 |

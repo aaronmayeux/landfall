@@ -294,10 +294,15 @@ export function createHomeDashboardView({
      * alongside the drawn swath rather than being recovered from it — see
      * normalizeForecastRadii in data/nhc-mapserver.js. */
     const radii = ready ? geo.bundle?.forecastRadii || [] : [];
+    /* The storm's OBSERVED track (§49.3). Both sources put it on the bundle
+     * under one name and in one shape, and an ended storm's rebuilt skeleton
+     * carries it too — so this line needs no source test and no ended test. */
+    const past = ready ? geo.bundle?.past || [] : [];
 
     const dash = buildHomeDashboard({
       storm: threat.storm,
       forecast,
+      past,
       radii,
       home,
       now: now(),

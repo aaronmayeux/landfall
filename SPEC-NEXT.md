@@ -1010,7 +1010,8 @@ forecasting. It is wrong for reporting. Underneath it, `formatUntil()` in
 `lib/time.js` had **no past branch at all** — a negative interval fell through
 the "less than two minutes ahead" case and returned `'now'`, so every past moment
 anywhere in the app rendered as `now`. That half is fixed and now lives in
-`SPEC-UI.md` §49.4; everything below it does not exist yet.
+`SPEC-UI.md` §49.4, and the observed track it needs now reaches the dashboard —
+`SPEC-DATA.md` §49.3. Everything below those two does not exist yet.
 
 ### 49.2 The rule this section adds
 
@@ -1037,47 +1038,6 @@ already has this case for a pass happening now (`bandUnavailable:
 'pass-is-now'`); the same suppression extends backwards, and it is a rule rather
 than a convenience — a two-thirds circle drawn around a place the storm
 *actually was* is a fabricated uncertainty.
-
-### 49.3 Source — the observed track, already downloaded
-
-Nothing new is fetched. Both sources already publish an observed track and the
-app already pays for it to draw the trail on the globe.
-
-**NHC** — `SUMMARY_LAYER.pastPoints` (layer 10), fetched on every geometry
-bundle. Read live from `origin/archive:latest/geometry/nhc-Lala-CP2-pastPoints.geojson`
-on 2026-08-16: **26 features, one every 6 hours, from `dtg` 2026081000 through
-2026081606** — the storm's whole life including its pre-genesis `INVEST` period.
-Per feature, all verified present on every point in that file:
-
-| Field | Meaning | Note |
-|---|---|---|
-| `geometry.coordinates` | position | **the position.** `lat`/`lon` attributes are rounded to whole degrees, ~30 nm of error |
-| `dtg` | 10-digit synoptic time, NUMBER | `2026081606` |
-| `intensity` | wind, knots | NHC's own analysed wind — a measurement, not a forecast |
-| `mslp` | central pressure, mb | |
-| `stormtype` | NHC's class letter | **`DB` early in the file and `HU` at the end** — the first time this field has been read off a real past-track point |
-| `ss` | Saffir-Simpson number | `0` below hurricane |
-| `binnumber` | `CP2` | the filter currency every layer keys on |
-
-**GDACS** — `data/gdacs-points.js` already splits its centre dots into
-`pastPoints` and `forecastPoints` at the advisory issue time and already
-attaches JTWC's analysed `CARQ` wind where a match exists. `lib/carq.js` is that
-join. GDACS publishes no wind of its own on history, so some past points carry a
-position and time and no wind, which degrades honestly to a distance and a time
-(the same path `closestApproach` already takes for GDACS forecast points).
-
-**What is missing is only the normalizer.** `normalizeForecast()` turns layer 5
-into the `{lon, lat, time, windKt, category, categorySource, stormType, tau}`
-array the whole home dashboard reads as `bundle.forecast`. **There is no
-equivalent for layer 10**, so the observed track exists in the bundle as raw
-GeoJSON features that only the map consumes. §49 adds `bundle.past` — the same
-shape, ascending by time, `tau` null, with `windKt` taken from `intensity` and
-the category derived from `ss` when present and from knots otherwise, using the
-`categorySource` convention already established (`'reported'` vs `'derived'`).
-
-`data/lifecycle.js` already compacts and rehydrates past points for ended
-storms, so a storm that has left the feed keeps its observed track and therefore
-keeps its past figures.
 
 ### 49.5 The closest pass, backwards
 
@@ -1300,22 +1260,21 @@ sits at a moment where past and future happen to agree.
 
 ### 49.13 The passes
 
-Four passes plus one piece of housekeeping, each shippable on its own and each
+Three passes plus one piece of housekeeping, each shippable on its own and each
 leaving the app more correct than it found it. They keep the numbers they were
 given, because those numbers are how they are referred to; pass 1 landed as
-`SPEC-UI.md` §49.4.
+`SPEC-UI.md` §49.4 and pass 2 as `SPEC-DATA.md` §49.3.
 
 | Pass | Scope | Files |
 |---|---|---|
-| **2. The observed track arrives** | `bundle.past` normalized for both sources and plumbed into `buildHomeDashboard`. **No visible change** — a pure data pass, so a break can only be the plumbing. | `data/nhc-mapserver.js`, `data/gdacs-geometry.js`, `data/home-dashboard.js`, `ui/view-home.js` |
 | **3. The pass and the peak, backwards** | `closestApproach` gains `passed`; the peak spans the whole life; `atClosest` splits; the headline and the strength block get their tenses. Ida fixture lands here. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home.mjs` |
 | **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |
 | **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
 | **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
 
-**Pass 2 must not be skipped or merged into pass 3.** The plumbing and the
-meaning are separate risks, and a pure-plumbing pass with no visible change is
-the only way to know which one broke.
+**Pass 3 reads `dash.pastCurve` and adds no fetching of its own.** Everything
+it needs is on the bundle already — see `SPEC-DATA.md` §49.3 — so a wrong figure
+in pass 3 is a wrong reading, never a missing download.
 
 
 ---

@@ -1812,3 +1812,90 @@ it: the window ends 2026-08-20T15:00Z and the series ends 2026-08-20T10:00Z,
 five hours apart and both `early Thursday` in Honolulu. The suite proves the
 rule a different way — cut the series and the label must move — rather than
 asserting an accident.
+
+---
+
+### 49.3 The observed track
+
+**The app has always downloaded where a storm HAS BEEN and never read it.** Both
+sources publish an observed track and both already pay for it — NHC to draw the
+trail and build the wind swath, GDACS as half of its centre dots. Nothing new
+goes over the wire for any of this.
+
+**NHC** — `SUMMARY_LAYER.pastPoints` (layer 10), on every geometry bundle. Read
+live off `origin/archive:latest/geometry/nhc-Lala-CP2-pastPoints.geojson`,
+2026-08-16: 26 fixes, one every 6 hours, from `dtg` 2026081000 through
+2026081606 — the storm's whole life including its pre-genesis stretch.
+
+| Field | Meaning | Note |
+|---|---|---|
+| `geometry.coordinates` | position | **the position.** `lat`/`lon` attributes are rounded to whole degrees, ~30 nm of error |
+| `dtg` | 10-digit synoptic time, NUMBER | `2026081606`, UTC |
+| `intensity` | wind, knots | NHC's own analysed wind — a measurement, not a forecast |
+| `mslp` | central pressure, mb | not carried; nothing asks for it |
+| `stormtype` | NHC's class letter | `DB`, `LO`, `TS`, `HU` all on Lala's one track |
+| `ss` | Saffir-Simpson number | `0` below hurricane |
+| `binnumber` | `CP2` | the filter currency every layer keys on |
+
+**GDACS** — `data/gdacs-points.js` already splits its centre dots at the
+advisory issue time and already attaches JTWC's analysed `CARQ` wind where
+`lib/carq.js` finds a match. GDACS publishes no wind of its own on history, so
+most past dots carry a position and a time and nothing else. Measured on
+HERNAN-26 episode 12: 11 past dots, every one with a position, a time and a
+class letter, none with a wind.
+
+**`normalizePastPoints()` in `lib/track-point.js` is the one normalizer, for
+both sources.** It returns `[{lon, lat, time, windKt, gustKt, category,
+categorySource, stormType, tau}]` — the same shape `normalizeForecast()`
+produces — ascending by time. It lives in `lib/track-point.js` rather than
+twice in `data/` because that file already owns reading ONE track position
+source-blind: `timeMsOf`, `windKtOf` and `categoryIndexOf` between them already
+resolve NHC's field names, GDACS's stamped ones, and the skeleton
+`data/lifecycle.js` rehydrates for an ended storm. Two copies would have meant
+two copies of the source-precedence rules, drifting until the dashboard and the
+map disagreed about the same fix.
+
+**A FIX WITH NO READABLE TIME IS DROPPED, never placed.** Same rule the ridge
+builder and the ended-storm compactor already apply. So is one whose
+coordinates are not numbers — `Number(null)` is `0`, and 0°N 0°E is a real
+place in the Gulf of Guinea.
+
+**`tau` IS ALWAYS NULL** even though a GDACS past dot arrives carrying a
+negative one (measured −66 on HERNAN-26). Tau means hours ahead of the
+analysis and a measurement has none; NHC publishes none on layer 10 at all. A
+field present on half the points invites a consumer to sort on it, which would
+silently scramble an NHC track. The times are the ordering key and they always
+exist. `gustKt` is always null for the same kind of reason — neither source
+publishes a gust on an observed fix — and is present only so one loop can read
+a past point and a forecast point without asking which it has.
+
+**A DISTURBANCE GETS NO CATEGORY EVEN THOUGH IT HAS A WIND.** The knots
+fallback fires only where the source published no classification at all.
+`categoryIndexOf` refuses to grade `DB`, `LO`, `WV`, `HU`-without-`ss` and the
+post-tropical codes, and that refusal is what stops the map painting a storm's
+pre-genesis history hotter than the depression it grew into; deriving here
+would put two different readings on one position. **Lala is the live proof:**
+three of her 35 kt fixes are still `LO` and the fourth is `TS`, so a
+knots-derived grade would have named her a tropical storm eighteen hours before
+NHC did.
+
+**`categorySource` says whose grading it is.** `'reported'` where the agency
+graded the fix, `'derived'` where the number is our Saffir-Simpson read of
+somebody's wind. GDACS's stamp is ambiguous from outside the parser that made
+it — its index can be GDACS's own leg code or our arithmetic on a JTWC or CARQ
+wind — so `data/gdacs-points.js` writes `_catSource` beside `_catIndex`, and
+`data/lifecycle.js` persists it as a seventh element on each compacted tuple.
+A six-element tuple written before this existed reads back as unknown, which is
+true; records expire inside `ENDED.holdFor` and cannot outlive a day and a half.
+
+**Where it arrives:** `bundle.past` on both sources' geometry bundles, on the
+rebuilt bundle `endedBundle()` returns for a storm that has left the feed, and
+on the four empty fallback bundles in `app/bundle-pipeline.js`. `ui/view-home.js`
+reads it off the bundle with no source test and no ended test and hands it to
+`buildHomeDashboard`, which exposes it as `dash.pastCurve`. Empty array, never
+null — a storm named in its first advisory has no history yet, and that is an
+answer rather than a gap.
+
+**NOTHING ON ANY SCREEN READS IT YET.** §49's later passes turn it into the
+closest pass that already happened, the storm's real peak, and the left half of
+the chart.

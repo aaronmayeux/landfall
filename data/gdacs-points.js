@@ -342,9 +342,19 @@ export function parseGdacsPoints(features, issueMs, storm) {
       jtwcReadingAt(storm, d.timeMs) ??
       (isAnalysis ? measuredAnalysis(storm) : null) ??
       carqReadingAt(storm, d.timeMs, d.centre);
+    /* ==> WHERE THE READING CAME FROM, RECORDED WITH IT (§49.3). <==
+     * A measured index is OUR arithmetic on somebody's wind number
+     * (`categoryFromKt`); `readingFor` returns GDACS's own leg code or the
+     * storm's own published classification. Those are different provenances
+     * and `lib/track-point.js normalizePastPoints` has to be able to tell them
+     * apart — from outside this file, the two are one stamped integer and
+     * indistinguishable. Nothing renders it yet; the past figures in §49 do.
+     * Null when there is no index at all, matching data/nhc.js's convention
+     * that a source only exists where an answer does. */
     const { index, code } = measured
       ? { index: measured.index, code: measured.code }
       : readingFor(d.code, isAnalysis, storm);
+    const catSource = index == null ? null : measured ? 'derived' : 'reported';
 
     const feature = {
       type: 'Feature',
@@ -356,6 +366,10 @@ export function parseGdacsPoints(features, issueMs, storm) {
         _catStamped: true,
         _catIndex: index,
         _catCode: code,
+        /** 'reported' (GDACS's own code, or the storm's classification) or
+         *  'derived' (our Saffir-Simpson read of a JTWC or CARQ wind), or null
+         *  when there is no index. See the note above. */
+        _catSource: catSource,
         _time: d.timeMs,
         /** A MEASURED wind in knots at this position, or absent.
          *

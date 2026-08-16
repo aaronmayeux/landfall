@@ -67,6 +67,7 @@ import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants
 import { parseNhcValidtime } from '../lib/time.js';
 import { categoryFromKt } from '../lib/category.js';
 import { buildFullTrack } from '../lib/windswath.js';
+import { normalizePastPoints } from '../lib/track-point.js';
 
 /** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
  *  the relay validates before it reaches a WHERE clause. */
@@ -476,12 +477,27 @@ export async function fetchStormGeometry(storm) {
   const forecast =
     layers.forecastPoints?.status === 'ok' ? normalizeForecast(layers.forecastPoints.fc) : [];
 
+  /* THE OBSERVED TRACK, IN THE SAME SHAPE AS THE FORECAST (§49.3). Layer 10
+   * has been fetched on every geometry bundle since the swath was built from
+   * it, but only the map ever read it — so the home dashboard could compute
+   * where a storm is GOING and nothing whatever about where it HAS BEEN. The
+   * normalizer is shared with the GDACS path rather than written twice; see
+   * lib/track-point.js. Nothing new goes over the wire here. */
+  const past =
+    layers.pastPoints?.status === 'ok' ? normalizePastPoints(layers.pastPoints.fc.features) : [];
+
   /* `bin` rides along because the CACHE compares bundles across advisories,
    * and a basin change is the one difference worth naming on the console
    * (data/cache.js). Nothing renders it. */
   return {
     layers,
     forecast,
+    /** The storm's published observed track, normalized (§49.3). Ascending by
+     *  time, ending at NHC's most recent analysed fix — which is BEHIND the
+     *  current feed position by up to a synoptic interval, and is a
+     *  measurement rather than an estimate. Empty array, never null: a storm
+     *  with no history yet is a real answer. */
+    past,
     /** Published quadrant radii per forecast hour, per threshold — the raw
      *  numbers behind the drawn swath. See normalizeForecastRadii. */
     forecastRadii,

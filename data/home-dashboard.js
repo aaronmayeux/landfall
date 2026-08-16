@@ -324,6 +324,14 @@ export function nearRingWindow(storm, forecast, home = getHome(), {
  * @param {object}   o
  * @param {object}   o.storm      normalized storm (SPEC §4)
  * @param {Array}    o.forecast   normalized forecast curve, or [] / null
+ * @param {Array}    o.past       normalized OBSERVED track, or [] / null.
+ *   The same shape as `forecast` and from the same normalizer
+ *   (lib/track-point.js), ascending by time, ending at the source's most
+ *   recent analysed fix. **NOTHING ON THE SCREEN READS IT YET** — §49's later
+ *   passes turn it into the closest pass that already happened, the storm's
+ *   real peak, and the left half of the chart. It is accepted and carried now,
+ *   on its own, so that a break in the plumbing cannot be confused with a
+ *   break in the meaning (§49.13).
  * @param {Array}    o.radii      published quadrant radii per tau, or [] / null
  * @param {object}   o.home
  * @param {number}   o.now
@@ -341,13 +349,22 @@ export function nearRingWindow(storm, forecast, home = getHome(), {
  *   taught to report cannot be assumed to have finished.
  */
 export function buildHomeDashboard({
-  storm, forecast, radii, home = getHome(), now = Date.now(), trackState = 'loading',
+  storm, forecast, past, radii, home = getHome(), now = Date.now(), trackState = 'loading',
 } = {}) {
   if (!home) return { ok: false, unavailable: 'no-home' };
   if (!storm) return { ok: false, unavailable: 'no-storm' };
 
   const curve = Array.isArray(forecast) ? forecast : [];
   const hasCurve = curve.length > 0;
+
+  /* ==> THE OBSERVED TRACK, HELD AND NOT YET SPENT (§49.3). <==
+   * Normalized to an array here for exactly the reason `curve` is: every
+   * caller that has not been taught to pass it omits it, and a screen full of
+   * past figures must never fork on `undefined` vs `[]`. A storm can honestly
+   * have none — a system named in its first advisory has no history yet — so
+   * empty is an answer, not a gap, and it needs no `unavailable` reason of its
+   * own until something renders from it. */
+  const pastCurve = Array.isArray(past) ? past : [];
 
   /* ==> WHY THERE IS NO CURVE, DECIDED ONCE. <==
    *
@@ -756,6 +773,11 @@ export function buildHomeDashboard({
      *  nothing to draw is a different render path from a chart that was handed
      *  a null and threw. */
     curve,
+
+    /** The OBSERVED track, same shape, ascending by time (§49.3). Empty array,
+     *  never null, same contract as `curve` above. Nothing renders it yet —
+     *  see the argument note at the top of this function. */
+    pastCurve,
 
     /** WHY there is no forecast-derived figure, when there isn't one. The view
      *  turns each of these into a different sentence, per §5. `null` here means

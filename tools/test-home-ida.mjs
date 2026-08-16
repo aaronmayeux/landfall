@@ -1028,7 +1028,81 @@ ok(/30\/0235     979\.0     30\/0135        41       65/.test(TCR),
 near(greatCircleNm(HOME.lon, HOME.lat, -90.94, 30.17), 8.2, 0.5,
      'that site is 8 nm from home, so it is the right thing to compare against');
 
+/* =========================================================================
+ * IDA'S OWN HISTORY, THROUGH THE REAL ROUTE (§49.3)
+ *
+ * Everything above tests where a storm is GOING. This tests where one HAS
+ * BEEN, against NHC's published best track for Ida, served through the same
+ * replay route the app uses — so the field names, the casing and the cut at
+ * the replay clock are all the real ones rather than a fixture written to
+ * match the parser.
+ *
+ * THE CASING IS THE TRAP THIS SECTION EXISTS FOR. The committed best-track
+ * file spells its properties `DTG`, `INTENSITY`, `SS`, `STORMTYPE` — the
+ * shapefile convention — while the live MapServer layer serves `dtg`,
+ * `intensity`, `ss`, `stormtype`. The replay route lower-cases before it
+ * answers. Nothing else in the app would notice if it stopped: the normalizer
+ * would return an empty track, no error, and the past figures would simply
+ * never appear.
+ * ====================================================================== */
+section("the observed track, off Ida's published best track");
+
+{
+  const { normalizePastPoints } = await import('../lib/track-point.js');
+
+  /* Landfall day. Advisory 12's own time, so the cut is a real moment in the
+   * storm's life rather than an arbitrary one. */
+  const ISO = '2021-08-29T09:00:00Z';
+  const raw = JSON.parse(
+    await (await call(ISO, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+  );
+  ok(raw.features.length > 0, 'the replay route serves a past track at all');
+
+  const past = normalizePastPoints(raw.features);
+  ok(past.length === raw.features.length,
+     'every published fix survives normalization — none is silently dropped');
+
+  /* ==> IF THE ROUTE EVER STOPS LOWER-CASING, THIS IS THE ASSERTION THAT
+   * NOTICES. <== An upper-cased payload normalizes to nothing at all. */
+  ok(past.length > 8, `Ida has a real history by landfall day (${past.length} fixes)`);
+
+  const ascending = past.every(
+    (p, i) => i === 0 || Date.parse(p.time) >= Date.parse(past[i - 1].time)
+  );
+  ok(ascending, 'and it comes back in order');
+  ok(past.every((p) => p.tau === null), 'with no forecast hour on any of it');
+
+  /* THE CUT IS REAL: nothing in the observed track may lie ahead of the clock
+   * it was cut at. This is the whole reason a past figure can be trusted. */
+  ok(past.every((p) => Date.parse(p.time) <= Date.parse(ISO)),
+     'no observed fix is in the future — the replay cut held');
+
+  /* Ida began as a depression and was a major hurricane by this advisory.
+   * Both ends are NHC's own grading, so both are `reported`. */
+  /* Null-safe on purpose: an EMPTY track is the shape this section's whole
+   * casing argument predicts, and it has to come out as a named failure
+   * rather than as a TypeError three assertions later. */
+  ok(past[0]?.stormType === 'TD' && past[0]?.category === 0,
+     'she starts as a tropical depression, graded off NHC\'s own class letter');
+  const strongest = past.reduce((a, b) => (b.windKt > (a?.windKt ?? -1) ? b : a), null);
+  ok(strongest?.windKt >= 100,
+     `her observed peak by this hour is a real measured wind (${strongest?.windKt} kt)`);
+  ok(strongest?.categorySource === 'reported',
+     "and its category is NHC's own Saffir-Simpson number, not our arithmetic");
+  ok(past.every((p) => p.categorySource !== 'derived'),
+     'nothing on a published NHC track needs deriving — every fix carries a class');
+
+  /* The last observed fix is BEHIND the advisory position, by up to a synoptic
+   * interval. That gap is why §49.5 makes the two walks share the current
+   * position rather than letting the observed track stand in for it. */
+  const lastMs = Date.parse(past[past.length - 1]?.time);
+  const gapHrs = (Date.parse(ISO) - lastMs) / 3600000;
+  ok(gapHrs >= 0 && gapHrs < 6.01,
+     `the newest observed fix trails the advisory by under a synoptic interval (${gapHrs.toFixed(1)} h)`);
+}
+
 /* ------------------------------------------------------------------------- */
+
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);
 console.log(
