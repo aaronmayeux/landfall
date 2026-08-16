@@ -80,28 +80,25 @@ export function createEnvHealth({ loadShips, retryShips, units }) {
         <span class="detail-env-fig-v">${esc(f.value)}</span>
       </div>`).join('');
 
-    /* ==> ONE PARAGRAPH EACH, BECAUSE THEY ARE NOT ONE THOUGHT. <== Joined
-     * with spaces these three read as a single run-on: two figures that are
-     * excluded, a fact about where the track's numbers stop, and a source
-     * credit. Nothing connects them except that none of them belongs in the
-     * story above, and running them together is what made the block
-     * unreadable on glass. */
-    const notes = out.notes
-      .map((n) => `<p class="detail-env-note">${esc(n)}</p>`).join('');
-
-    /* ==> THE LEGEND GOES LAST, AND ONLY ON THE PATH THAT HAS A PARAGRAPH.
-     * <== A color key under an "unavailable" notice would be explaining a
-     * scale nothing on screen is currently painted in, which is the §5
-     * confident-wrong-answer shape in miniature. It sits BELOW the footnotes
-     * because it is the only part of this section that is not about this
-     * storm — everything above is Lala's numbers, and this is what the colors
-     * mean for any storm. Reading order therefore runs specific to general,
-     * and a reader who already knows the scale never has to step over it. */
+    /* ==> NOTHING BETWEEN THE GRID AND THE LEGEND, AND NOTHING BETWEEN THE
+     * LEGEND AND THE NEXT SECTION EXCEPT THE CREDIT. <== §47.8. Three grey
+     * paragraphs used to sit in those two gaps and none of them survived
+     * glass: a reader who has just read the story and scanned the figures is
+     * looking for what the colors mean, and every sentence in the way is one
+     * they have to step over to get there.
+     *
+     * THE CREDIT GOES UNDER THE LEGEND, NOT ABOVE IT. Provenance is last
+     * everywhere else in this app, and the legend is the last thing it is the
+     * provenance OF.
+     *
+     * ==> THE LEGEND IS ON THIS PATH ONLY. <== A color key under an
+     * "unavailable" notice would be explaining a scale nothing on screen is
+     * painted in, which is the §5 confident-wrong-answer shape in miniature. */
     return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>
       <div class="detail-env-figs-head">${esc(out.figures.when)} — ${esc(out.figures.total)} in total</div>
       <div class="detail-env-figs">${cells}</div>
-      ${notes}
-      ${envLegendHtml()}`;
+      ${envLegendHtml({ note: false })}
+      <p class="detail-env-note">${esc(out.source)}</p>`;
   }
 
   /**

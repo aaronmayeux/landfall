@@ -184,10 +184,10 @@ real home is the other row carrying the same section number.
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1027-1257 |
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 543-568 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 569-605 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 606-950 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2307-2359 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 951-974 |
-| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 975-1048 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 606-951 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2307-2368 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 952-975 |
+| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 976-1057 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1548-1549 |
 | `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1550-1575 |
 | `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1576-1618 |
@@ -196,26 +196,26 @@ real home is the other row carrying the same section number.
 | `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1669-1698 |
 | `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1699-1726 |
 | `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1727-1771 |
-| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2360-2411 |
-| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2412-2431 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2432-2448 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2369-2420 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2421-2440 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2441-2457 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1817 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
-| `49` | Time has a direction | `SPEC-NEXT.md` | 1049-1050 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1051-1106 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1107-1132 |
+| `49` | Time has a direction | `SPEC-NEXT.md` | 1058-1059 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1060-1115 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1116-1141 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1818-1903 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2449-2471 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1133-1185 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1186-1237 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1238-1356 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1357-1436 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1437-1508 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1509-1526 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1527-1547 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1548-1573 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1574-1597 |
-| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1598-1644 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2458-2480 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1142-1194 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1195-1246 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1247-1365 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1366-1445 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1446-1517 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1518-1535 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1536-1556 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1557-1582 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1583-1606 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1607-1653 |
 
 ## Files
 
@@ -223,9 +223,9 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 113,676 | 32 |
 | `SPEC-MAP.md` | 185,304 | 37 |
-| `SPEC-NEXT.md` | 104,297 | 31 |
+| `SPEC-NEXT.md` | 104,494 | 31 |
 | `SPEC-OPS.md` | 67,283 | 14 |
-| `SPEC-UI.md` | 144,123 | 10 |
+| `SPEC-UI.md` | 144,669 | 10 |
 | `SPEC.md` | 149,756 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

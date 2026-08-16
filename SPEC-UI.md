@@ -2308,7 +2308,8 @@ plainly.
 
 ```
 Environment
-Colors the cone by whether the environment is helping or hurting the storm.
+Colors the cone by the environment's net contribution to intensity, from NHC's
+SHIPS model.
 ```
 
 Label and `note` in `config/layers.js`, using the standing-caveat mechanism
@@ -2318,6 +2319,14 @@ The note is not decoration. "Environment" alone does not say what the color
 means, and this is the only layer in the app whose color encodes a signed
 quantity rather than a category — every other colored thing on the globe is a
 class of storm, a watch, or a wind band.
+
+**IT USED TO SAY "whether the environment is helping or hurting the storm" AND
+THAT WAS THE WRONG REGISTER** (Aaron, 2026-08-16). Helping and hurting are OUR
+verbs for a number SHIPS published, and a row that sounds like a judgement
+invites the reader to read the color as our opinion. *Net contribution to
+intensity* is what the file's own contribution table is called, and naming the
+model says out loud that this layer reports rather than scores — §47's founding
+rule, in the one sentence most readers of it will ever see.
 
 **Default OFF, and grouped with the cone** — it modifies the cone rather than
 adding a shape, so it belongs beside the thing it changes rather than in a

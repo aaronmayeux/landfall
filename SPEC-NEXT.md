@@ -627,7 +627,7 @@ incomplete story by design. The paragraph is where the rest of it goes.
 
 Lives in the storm detail drawer, under the figures already shown there.
 
-**Structure — a paragraph, a grid, and a footnote, in that order.**
+**Structure — a paragraph, a grid, the legend, and one credit, in that order.**
 
 **The paragraph is four sentences and carries the STORY.**
 
@@ -647,25 +647,40 @@ largest first, and a closing cell. **The cells visibly sum to the total**, which
 is the whole reason it exists: a paragraph can only assert that its figures add
 up, and a column of numbers under a total either does or does not.
 
-**Then the footnotes, one short paragraph each** — the two figures the color
-leaves out, where the track's numbers stop if they stop short, and who publishes
-them. Three separate thoughts sharing nothing except not belonging in the story,
-and run together as one block they were unreadable on glass.
+**Then §47.11's legend, and under it one line of provenance.** Nothing else.
 
-**Two rules the footnotes obey, both learned by shipping the opposite.**
+**THERE WERE THREE FOOTNOTES BETWEEN THE GRID AND THE LEGEND AND ALL OF THEM ARE
+GONE** (Aaron, on glass, 2026-08-16): the two figures the color leaves out, a
+caveat about runs whose winds outlast their positions, and the credit. They were
+three separate thoughts sharing nothing except not belonging in the story, and
+the reader arriving at the grid is looking for what the colors mean — every
+sentence in that gap is one they step over to get there. Only the credit
+survives, and it moved BELOW the legend, because provenance is last everywhere
+in this app and the legend is the last thing it is the provenance of.
 
-- **No signed figure ever reaches a sentence.** A storm whose structure
-  contributed nothing printed *"its own structure +0 mph"*, which is a number
-  pretending to be information. Signs are the grid's register; in a sentence a
-  contribution *adds*, *costs*, or *counts for nothing*.
-- **Name the quantity, never the state**, because these read at the VERDICT hour
-  while the room sentence reads at the FIX and the two can be days apart. Lala's
-  06 UTC run says *"plenty of room to grow"* from hour 0 while her headroom at
-  +120 h is negative; a first draft rendered that as *"being up against its
-  ceiling"* and the paragraph argued with itself on screen. *"The gap between
-  its strength and the sea's ceiling costs 2 mph"* is symmetric in both signs
-  and cannot contradict the sentence above it. The opener says which hour they
-  belong to out loud.
+**WHAT THAT COST, STATED EXACTLY.** Room to grow and the storm's own structure
+have NOT left the app — sentence three of the paragraph still says both, in
+words (*"plenty of room to grow — 35 mph over water that could hold 160 mph,
+and its own structure costs 12 mph"*). What is gone is their value **at the
+verdict hour**, which is what the footnote carried and which can be days from
+the fix the sentence quotes.
+
+**AND NEITHER MAY MOVE INTO THE GRID.** The grid's entire contract is that its
+cells visibly sum to the colored total; neither figure is part of that sum, and
+adding one would break the only claim the grid exists to make. Giving them
+figures again means a second block with its own heading, which is a new surface
+and a separate decision.
+
+**THE OTHER LOSS IS §47.6's FOURTH CASE.** A run whose positions stop before its
+winds leaves the ribbon ending mid-cone, and the note explaining why went with
+the rest. The ribbon is still honest — it stops rather than extrapolating — but
+nothing tells the reader why it stopped.
+
+**One rule the surviving line still obeys.** **No signed figure ever reaches a
+sentence.** A storm whose structure contributed nothing printed *"its own
+structure +0 mph"*, which is a number pretending to be information. Signs are
+the grid's register; in a sentence a contribution *adds*, *costs*, or *counts
+for nothing*.
 
 **The figures used to be recited in the prose and it read like a ledger.** The
 sentence *"Nothing dominates — working against it: shear −2, dry air −2 and cold
@@ -676,10 +691,9 @@ closing clause becomes a closing CELL — named `Rounding` where nothing was lef
 out and `Everything else` where something was — and the sentence goes back to
 being a sentence.
 
-**Which also gives the headroom figure a home.** It previously appeared in one
-of three room-sentence branches, so most storms never showed it at all; it is
-now always in the footnote, and whether that room is being USED is the bottom
-line's closing clause, taken from `V (KT) LAND` alone. *"Plenty of room and the
+**Whether that room is being USED is the bottom line's closing clause**, taken
+from `V (KT) LAND` alone. (The headroom FIGURE briefly had a home in the
+footnotes and no longer has one — see above.) *"Plenty of room and the
 forecast still has it easing"* is two published numbers set beside each other.
 *"The air is what stops it filling that room"* is this section predicting, and
 is banned.
@@ -750,18 +764,12 @@ reader's local day and part of day, computed here for US Central.
 >
 > *Monday afternoon — −13 mph in total.* Wind shear −9 mph · Air flowing out the top −2 mph · Warm moist air +1 mph · Moisture around it −1 mph · Everything else −2 mph
 >
-> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling adds 17 mph, and the storm's own structure costs 12 mph.
->
 > From NHC's SHIPS intensity model.
 
 > **94L** — `26081506AL9426`.
 > The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. That cost is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
 >
 > *early Wednesday — −8 mph in total.* Cold air above it −2 mph · Moisture around it −2 mph · Wind shear +1 mph · Warm moist air −1 mph · Everything else −4 mph
->
-> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling adds 45 mph, and the storm's own structure costs 5 mph.
->
-> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
 >
 > From NHC's SHIPS intensity model.
 
@@ -770,20 +778,12 @@ reader's local day and part of day, computed here for US Central.
 >
 > *early Thursday — +14 mph in total.* Cold air above it +14 mph · Wind shear +3 mph · Moisture around it −2 mph · Warm moist air +1 mph · Everything else −2 mph
 >
-> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling costs 2 mph, and the storm's own structure adds 8 mph.
->
-> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
->
 > From NHC's SHIPS intensity model.
 
 > **Genevieve** — `26072706EP0726`.
 > The environment turns hard against Genevieve through Tuesday afternoon, costing up to 15 mph, then eases back to about even by Thursday afternoon. Almost all of that is wind shear. The only thing working in its favor is moisture around it. Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph — so there is not much room left to grow, and its own structure adds 5 mph. The intensity model has it falling from 161 mph to 63 mph by early Saturday, so the environment and its own decay are pulling the same way.
 >
 > *Tuesday afternoon — −15 mph in total.* Wind shear −15 mph · Cold air above it −1 mph · Moisture around it +1 mph
->
-> At that same hour, two other things move the forecast and are not counted above: the gap between its strength and the sea's ceiling costs 20 mph, and the storm's own structure adds 5 mph.
->
-> The model publishes wind further along the track than it publishes positions, so the environment can only be shown for part of it.
 >
 > From NHC's SHIPS intensity model.
 
@@ -909,15 +909,16 @@ outside the NHC basins says the data is not published there; a storm whose first
 run has not appeared says so. Silence is the one forbidden outcome. **None of
 those replacements says "SHIPS" at the reader** — they say *the intensity
 model*, which is the same register the bottom line uses. The name is real
-provenance and it belongs where the app puts every other source name: in the
-footnote under the figures, *"From NHC's SHIPS intensity model."*
+provenance and it belongs where the app puts every other source name: on one
+line under the LEGEND, at the very foot of the section, *"From NHC's SHIPS
+intensity model."*
 
 Built as three pure files, the clock and unit system arguments throughout so
 every sentence they can say runs on plain node: `lib/env-series.js` (bands,
 drawable hours, extremes, forecast hour to local time), `lib/env-verdict.js`
 (the seven shapes and the verdict sentence, which also decides the one hour
 every other figure is read at) and `lib/env-health.js` (the remaining three
-sentences, the grid, the notes, the entry point). Imports run ONE WAY:
+sentences, the grid, the credit, the entry point). Imports run ONE WAY:
 health → verdict → series. They were one file until it crossed §12's 700-line
 ceiling, which is the whole reason the ceiling exists — three concerns had been
 sharing a filename and nothing said so. Rendered by `ui/env-health.js`, a self-contained controller (state
@@ -1008,11 +1009,19 @@ panel is a list of switches being scanned, and a paragraph inside a control is
 how a settings screen stops being scannable. The drawer is where a reader has
 already stopped to read.
 
-**In the drawer it goes last, below the footnotes, and only on the path that has
-a paragraph.** Everything above it is *this storm's* numbers; the legend is what
-the colors mean for any storm, so reading order runs specific to general. A key
-under an "unavailable" notice would be explaining a scale nothing on screen is
-painted in — the §5 shape in miniature.
+**In the drawer it sits directly under the figures grid, with the source credit
+as the only thing below it, and only on the path that has a paragraph.** Nothing
+comes between the grid and the bar (§47.8 — the three footnotes that used to be
+there were cut on glass). Everything above it is *this storm's* numbers; the
+legend is what the colors mean for any storm, so reading order runs specific to
+general, and provenance closes it. A key under an "unavailable" notice would be
+explaining a scale nothing on screen is painted in — the §5 shape in miniature.
+
+**It renders WITHOUT the explanatory sentence here too**, for the same reason
+the footnotes went: a reader who has just read four sentences of story does not
+want a fifth about methodology. Both surfaces now call `envLegendHtml({ note:
+false })`, so the `note` option is currently unused — kept because the sentence
+itself is worth not losing, and turning it back on is one argument.
 
 **THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The three stops arrive as
 `--env-ramp-lo/mid/hi`, written by `app/theme-switch.js` `applyTokens()` from the

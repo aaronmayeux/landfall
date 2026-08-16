@@ -91,6 +91,18 @@ simply disappear into its own fill. Third: the legend's middle label reads
 rather than a calm day. Does "Balanced" land, or does it sound like a verdict
 rather than a midpoint?
 
+**The Environment section is down to story, figures, legend, credit — and two
+figures lost their verdict-hour value doing it.** `SPEC-NEXT.md` §47.8. Three
+grey footnotes sat between the grid and the legend and Aaron cut all of them on
+glass. Room to grow and the storm's own structure are still SAID, in sentence
+three, at the fix; what is gone is what they are worth at the verdict hour,
+which can be days later. **Neither can move into the grid** — its one claim is
+that the cells sum to the colored total and neither figure is part of that sum,
+so putting them back means a second block with its own heading. Also gone with
+them: the line explaining why a ribbon stops mid-cone when a run's positions end
+before its winds (§47.6's fourth case). The ribbon still stops honestly; nothing
+now says why. Judge whether either absence is felt.
+
 **The css-vars suite cannot see a stylesheet.** `tools/test-css-vars.mjs` walks
 `.js` only, so a fallback-less `var()` in a `.css` file — which renders as
 nothing, silently, which is the entire reason that file exists — is invisible to

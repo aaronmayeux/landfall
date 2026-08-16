@@ -1489,19 +1489,20 @@ button.drawer-identity:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* The footnotes: what the color deliberately leaves out, where the numbers
- * stop, and who publishes them. Quieter and smaller than the grid above it,
- * the same relationship .detail-ww-note has to its list. */
+/* The source credit, and after 2026-08-16 that is all this is: the two
+ * footnotes that shared the class were cut on glass (§47.8). Quieter and
+ * smaller than the grid above it, the same relationship .detail-ww-note has to
+ * its list. It now sits BELOW the legend rather than above it, so its top
+ * margin is separating it from the bar's labels rather than from the grid. */
 .detail-env-note {
   margin: var(--space-base) 0 0;
   font-size: var(--type-small);
   line-height: 1.45;
   color: var(--text-muted);
 }
-/* Tighter between footnotes than between the grid and the first one: they are
-   separate thoughts but they are one block, and full spacing between them
-   makes three short lines look like three sections. */
-.detail-env-note + .detail-env-note { margin-top: var(--space-snug); }
+/* There is exactly ONE of these now (§47.8) — the source credit, under the
+   legend. The stacking rule that used to live here went with the two footnotes
+   it separated; a single line needs no rule about its siblings. */
 
 /* --- the environment legend (§47.11) ---------------------------------------
  * ONE BLOCK, TWO HOMES: under the Environment toggle in the Layers panel and

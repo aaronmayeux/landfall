@@ -94,9 +94,21 @@ const closes = (label, out) => {
   sum === total ? ok(label) : fail(label, `cells sum to ${sum}, total says ${total}`);
 };
 
-const noteHas = (label, out, phrase) => {
-  const hit = out.notes.some((n) => n.includes(phrase));
-  hit ? ok(label) : fail(label, `notes: ${JSON.stringify(out.notes)}\n      missing  ${JSON.stringify(phrase)}`);
+/* ==> THE FOOTNOTES ARE GONE AND ONE CREDIT REPLACED THEM (§47.8). <== There
+ * used to be a `notes` array carrying the room-and-structure aside and a
+ * caveat about runs whose winds outlast their positions. Both were cut on
+ * glass 2026-08-16 — three grey paragraphs between the figures and the legend
+ * that nobody read. What is left is provenance, and these two assertions
+ * replace the six that checked the wording of sentences no longer written.
+ *
+ * THE ONE THING WORTH PINNING IS THAT NO FIGURE SNUCK BACK INTO IT. The old
+ * rule — no signed number may reach a sentence, because "its own structure
+ * +0 mph" shipped once — still applies to the only sentence left. */
+const sourceIs = (label, out) => {
+  const want = "From NHC's SHIPS intensity model.";
+  out.source === want
+    ? ok(label)
+    : fail(label, `source is ${JSON.stringify(out.source)}, wanted ${JSON.stringify(want)}`);
 };
 
 console.log('\nHernan — 26081506EP0826 — turning against, everything agreeing');
@@ -136,16 +148,17 @@ console.log('\nHernan — 26081506EP0826 — turning against, everything agreein
   eq('grid values', cellValues(out),
     ['\u22129 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22122 mph']);
   closes('grid closes on its own total', out);
-  noteHas('headroom has a home now', out, "the sea's ceiling adds 17 mph");
-  noteHas('structure beside it', out, "the storm's own structure costs 12 mph");
-  noteHas('the note says which hour it belongs to', out, 'At that same hour');
-  noteHas('and that neither is in the total above', out, 'not counted above');
+  sourceIs('the credit is the only thing left under the grid', out);
   /* ==> NO SIGNED FIGURE MAY REACH A SENTENCE. <== "its own structure +0 mph"
    * shipped and is a number pretending to be information. Signs are the grid's
    * register; a sentence says adds, costs, or counts for nothing. */
-  truthy('no signed figures anywhere in the notes',
-    !out.notes.some((n) => /[+\u2212]\d/.test(n)));
-  noteHas('provenance last', out, "From NHC's SHIPS intensity model.");
+  truthy('and it carries no figure of its own',
+    !/[+\u2212]\d/.test(out.source));
+  /* ==> THE FOOTNOTES ARE NOT MERELY UNRENDERED, THEY ARE NOT BUILT. <== A
+   * `notes` array left on the return value would be dead weight the next
+   * reader would wire back up believing it was a feature. */
+  truthy('and no notes array survives to be re-rendered by accident',
+    out.notes === undefined);
 }
 
 console.log('\n94L — 26081506AL9426 — early help, then against; strengthening in spite of it');
@@ -187,12 +200,14 @@ console.log('\n94L — 26081506AL9426 — early help, then against; strengthenin
   eq('grid values', cellValues(out),
     ['\u22122 mph', '\u22122 mph', '+1 mph', '\u22121 mph', '\u22124 mph']);
   closes('grid closes on its own total', out);
-  noteHas('headroom at that hour', out, "the sea's ceiling adds 45 mph");
-  /* §47.6's fourth case: positions stop at +120 while winds run to +168. It
-   * is a NOTE now, not a fifth sentence competing with the story. */
-  noteHas('partial-track note says what actually runs short', out,
-    'publishes wind further along the track than it publishes positions');
-  truthy('and it is not in the prose', !s.some((x) => x.includes('stop partway')));
+  /* ==> §47.6's FOURTH CASE NO LONGER SAYS ANYTHING, AND THAT IS THE COST.
+   * <== 94L's positions stop at +120 h while its winds run to +168, and the
+   * note explaining why the ribbon ends mid-cone went with the rest of the
+   * footnotes on 2026-08-16. The RIBBON is still honest — it simply stops —
+   * but nothing now tells the reader why. Pinned so a future session sees the
+   * gap deliberately rather than rediscovering it as a bug. */
+  truthy('the partial track is no longer explained anywhere in the prose',
+    !s.some((x) => /publishes wind further|stop partway/.test(x)));
   /* The app's name, not the file header's INVEST. */
   notIn('file header name never leaks', s, 'Invest');
 }
@@ -273,18 +288,27 @@ console.log('\nGenevieve — 26072706EP0726 — a bad patch, a Cat 5 coming apar
   truthy('no zero-valued closing cell', !cellLabels(out).includes('Rounding'));
   /* Headroom on a major hurricane is NEGATIVE — the number §47.4 excludes
    * from the colour precisely because it reports the storm back to itself. */
-  noteHas('a Cat 5 has negative headroom, and it is shown', out, "the sea's ceiling costs 20 mph");
-  /* ==> THE NOTE NAMES THE QUANTITY, NEVER THE STATE. <== It reads at the
-   * VERDICT hour while the room sentence reads at the FIX, so a note asserting
-   * a state can contradict the sentence above it — Lala's 06 UTC run says
+  /* ==> HEADROOM AND STRUCTURE KEEP THEIR SENTENCE AND LOSE THEIR FIGURE. <==
+   * §47.4 excludes both from the COLOR — headroom reports the storm back to
+   * itself rather than describing the environment. Sentence three still states
+   * both in words at the FIX; what went with the footnotes on 2026-08-16 is
+   * their value at the VERDICT hour. Neither may join the grid: its contract
+   * is that the cells sum to the colored total, and neither is part of it.
+   *
+   * ==> THE SENTENCE NAMES THE QUANTITY, NEVER THE STATE. <== The room clause
+   * reads at the FIX while the verdict reads later, so an assertion about a
+   * state can contradict the sentence above it — Lala's 06 UTC run says
    * "plenty of room to grow" at hour 0 and her headroom is negative at +120 h.
    * Both true, and read together they argue. */
   {
     const lala06 = paragraph(load('26081506CP0126'));
+    /* The aside that quoted the ceiling figure is gone (§47.8), so what is
+     * left to protect is the SENTENCE: the room clause reads at the FIX, and
+     * a run whose headroom turns negative later must not be allowed to
+     * contradict it. */
     truthy('a negative headroom never claims the storm is at its ceiling',
       lala06.sentences[2].includes('plenty of room to grow') &&
-      lala06.notes.some((n) => n.includes("the sea's ceiling costs 2")) &&
-      !lala06.notes.some((n) => /up against its ceiling|no room left/.test(n)));
+      !lala06.sentences.some((n) => /up against its ceiling|no room left/.test(n)));
   }
 }
 

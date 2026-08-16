@@ -480,7 +480,15 @@ export const LAYER_TOGGLES = Object.freeze([
     default: false,
     phase: 9,
     fetches: true,
-    note: 'Colors the cone by whether the environment is helping or hurting the storm.',
+    /* ==> THE WORDING IS THE MODEL'S, NOT OURS (Aaron, 2026-08-16). <== It read
+     *  "whether the environment is helping or hurting the storm", which is
+     *  plain and is also the one register this layer must not use: helping and
+     *  hurting are OUR verbs for a number SHIPS published, and a row that
+     *  sounds like a judgement invites the reader to treat the color as our
+     *  opinion. "Net contribution to intensity" is what the file's own
+     *  contribution table is called, and naming the model says out loud that
+     *  we are reporting rather than scoring — §47's founding rule. */
+    note: "Colors the cone by the environment's net contribution to intensity, from NHC's SHIPS model.",
     engineKey: 'environment',
     /** ==> THE ROW CARRIES THE KEY TO ITS OWN COLOR (§47.11). <== The note
      *  above says the color means "helping or hurting"; it cannot say WHICH
