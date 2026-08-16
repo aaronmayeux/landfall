@@ -635,6 +635,20 @@ installFakeDocument();
 const { createHomeDashboardView } = await import('../ui/view-home.js');
 const { setHome, clearHome } = await import('../data/home.js');
 
+/* ==> THE RAIN FACADE, STUBBED TO ONE FIXED ANSWER. <== §48.8's section lives
+ * on this dashboard and app/views.js injects its fetch; these suites are about
+ * the dashboard's own sentences, not about rainfall, which has its own suite
+ * against real NWS bytes (tools/test-rainfall.mjs). What matters here is that
+ * the section is WIRED — a view built without it renders no Rain section at
+ * all, and every assertion below would then be made against a screen the app
+ * never shows. `not_covered` is the quietest real answer there is: one line,
+ * no figures, nothing that could collide with an assertion about the storm.
+ */
+const RAIN_STUB = {
+  loadRainfall: async () => ({ status: 'not_covered', payload: null, fetchedAt: null, stale: false }),
+  retryRainfall: async () => ({ status: 'not_covered', payload: null, fetchedAt: null, stale: false }),
+};
+
 /** What the DRAWER'S HEADER would show — the storm identity block, or the
  *  plain string for the paths with no storm to name. Identity moved out of the
  *  body and into the header (SPEC-UI §16.5), so an assertion about the storm's
@@ -654,6 +668,10 @@ function mountView(warmResult) {
      * this screen would be a year in the past and none of these paths could be
      * driven — see the note on the parameter. */
     now: () => NOW,
+    /* Rain (§48.8) has its own suite against real NWS bytes; here it only has
+     * to be WIRED, so the dashboard's own paths are exercised with the section
+     * present rather than with it quietly missing. */
+    rain: RAIN_STUB,
   });
   const host = fakeHost();
   v.mount(host);
@@ -668,7 +686,16 @@ clearHome();
 {
   const { host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
   ok(/Set a home/.test(host.read()), 'no home invites you to set one');
-  ok(/never\s+leave this device/.test(host.read()), 'and says the coordinates stay put');
+  ok(/stored\s+on this device only/.test(host.read()), 'and says where the home is kept');
+  /* ==> AND THAT THE OLD PROMISE CANNOT COME BACK. <== This screen said the
+   * coordinates never leave the device until §48 made that false: a rainfall
+   * forecast for a house means sending the house, and `/api/reverse` was
+   * already sending one to name a dropped pin. Both send a rounded point and
+   * neither carries an identifier, so the claim that IS true is about storage.
+   * A future edit restoring the stronger wording would restore a lie, so the
+   * absence is asserted rather than left to whoever reads it next. */
+  ok(!/never\s+leaves?\s+this device/.test(host.read()),
+    'and does not promise the coordinates never leave');
 }
 
 setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
@@ -973,6 +1000,10 @@ section('the storm switcher');
     onFocusStorm() {},
     warmGeometry: async () => ({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null }),
     now: () => NOW,
+    /* Rain (§48.8) has its own suite against real NWS bytes; here it only has
+     * to be WIRED, so the dashboard's own paths are exercised with the section
+     * present rather than with it quietly missing. */
+    rain: RAIN_STUB,
   });
   v.mount(host);
   v.onEnter();
@@ -1085,6 +1116,7 @@ section('the storm switcher');
       onFrameHome: (arg) => { framed = arg?.storm?.name ?? null; },
       warmGeometry: async () => ({ state: 'ok', bundle: { forecast: [], forecastRadii: [] }, error: null }),
       now: () => NOW,
+      rain: RAIN_STUB,
     });
     const h2 = fakeHost();
     v2.mount(h2);

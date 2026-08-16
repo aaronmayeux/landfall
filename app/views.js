@@ -77,6 +77,7 @@ import { getAdeck, evictAdeck } from '../data/adeck.js';
 import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
+import { loadRainfall, evictRainfall } from '../data/rainfall.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { resolveSystem } from '../lib/units.js';
@@ -839,6 +840,29 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     /* Opening the drawer frames the house against the storm it is about.
      * `frameHome` owns the whole decision, including declining to move. */
     onFrameHome: ({ storm }) => frameHome(storm),
+    /* Rainfall at the house (§48.8). The same facade shape every other
+     * injected data path on this panel uses — ui/ never imports data/ (§12) —
+     * and deliberately the whole of it: the view awaits an answer and renders
+     * one of four states. No fetching, no caching, no coverage branching up
+     * there.
+     *
+     * Counted at the RETRY only. A section that fetches when it is drawn says
+     * nothing about what anybody wanted; a button somebody pressed does.
+     *
+     * ==> UNDER THE GENERIC `retry`, NOT A NAME OF ITS OWN. <== `lib/usage.js`
+     * is an ALLOWLIST and every name in it is a D1 column, so inventing one
+     * here would be silently dropped rather than counted. (`env_retry`, two
+     * hundred lines up, already is — it is not in ACTIONS and never has
+     * been.) Adding columns is a schema conversation, not a thing to do inside
+     * a feature. */
+    rain: {
+      loadRainfall: (home) => loadRainfall(home),
+      retryRainfall: (home) => {
+        countAction('retry');
+        evictRainfall();
+        return loadRainfall(home);
+      },
+    },
   });
 
   /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This

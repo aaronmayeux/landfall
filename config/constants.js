@@ -1865,6 +1865,69 @@ export const GEOCODE = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * RAINFALL (SPEC §48)
+ *
+ * Two surfaces, two questions, and the numbers below only govern the HOME one.
+ * The storm drawer shows NHC's own rainfall paragraph and extracts no figure
+ * from it at all, so it has nothing to tune — §48.9 is deliberately a section
+ * with no arithmetic in it.
+ * ------------------------------------------------------------------------- */
+export const RAIN = Object.freeze({
+  /** How far ahead the home total looks.
+   *
+   *  ==> IT IS A CEILING, NOT A PROMISE. <== The series usually stops first —
+   *  Hilo's ran to about four days while this window is five — so the sentence
+   *  names the end of the LAST BLOCK IT ACTUALLY HAS, never this number
+   *  (§48.11: the 120-hour window and the 72-hour window are the same total,
+   *  and the label has to say Thursday rather than claim five days). */
+  windowHours: 120,
+
+  /** Under this, the section says so in words instead of printing a figure.
+   *
+   *  2.5 mm is a tenth of an inch, which is the bottom rung NWS itself uses on
+   *  its point forecasts. Galveston measured 0.254 mm across thirty blocks and
+   *  Key West 1.778; both are the same fact — no meaningful rain — and both
+   *  render as `0.01 in` and `0.07 in` if this number does not exist, which
+   *  reads as a malfunction rather than as a forecast (§48.8). */
+  negligibleMm: 2.5,
+
+  /** A single block only earns its own sentence when it carries at least this
+   *  much of the total. Hilo's heaviest six hours are 30% of four days, and
+   *  "most of it in six hours" is what distinguishes a flood from a wet week.
+   *  Below a quarter there is no heaviest block worth naming — the rain is
+   *  spread, and saying otherwise would invent an event. */
+  peakShare: 0.25,
+
+  /** How long a fetched answer is trusted on the device.
+   *
+   *  The GRID updates a few times a day, so this is not about the number
+   *  moving. It is about ALERTS, which travel in the same payload: a flash
+   *  flood warning is routinely shorter-lived than an hour (Hilo's expired 52
+   *  minutes after it was issued, §48.6), so holding this answer for longer
+   *  than that would mean the section can be a lie about now. Expiry is ALSO
+   *  filtered at render time, which is the belt to this braces. */
+  clientTtlMs: 15 * 60 * 1000,
+
+  /** Decimal places the home coordinates are rounded to BEFORE they go on the
+   *  wire (§48.7).
+   *
+   *  ==> THIS IS THE PRIVACY POSTURE, AND IT COSTS NOTHING. <== An NWS grid
+   *  cell is about 2.5 km across; two decimals is about 1.1 km, comfortably
+   *  inside one, so the coarser number resolves to the same cell and the same
+   *  forecast. What it buys is that the request names a neighbourhood rather
+   *  than a house, and that a cache key can be hit twice. Three decimals is
+   *  what `/api/reverse` sends (SPEC-DATA §4) and it needs the extra digit;
+   *  this does not. */
+  wireDecimals: 2,
+
+  /** Only these reach the screen. §48.6: hurricane and tropical storm
+   *  warnings already have a home in the `In effect` section and must not be
+   *  said twice, and High Surf and the local statement belong to neither
+   *  section. Matched against the alert's `event` text, case-insensitively. */
+  alertEventMatch: 'flood',
+});
+
+/* ---------------------------------------------------------------------------
  * ENDED STORMS — the graceful death (SPEC §5)
  *
  * ==> NOT A TIMER. READ THIS BEFORE ADDING ONE. <==
@@ -2177,6 +2240,30 @@ export const ENDPOINT = Object.freeze({
    *  the shape is written down somewhere (the 2026-07-23 probe measured this
    *  endpoint's timing but never recorded its URL, which cost a round trip). */
   gdacsGeometry: 'https://www.gdacs.org/gdacsapi/api/polygons/getgeometry',
+
+  /** ==> THE ONLY SOURCE IN THIS APP THAT IS ABOUT A PLACE RATHER THAN A
+   *  STORM. <== §48.3. `/points/{lat},{lon}` resolves a coordinate to a
+   *  forecast office and grid cell and hands back the URL of the raw numeric
+   *  grid; that grid's `quantitativePrecipitation` is the rainfall series.
+   *  TWO HOPS, which is why the relay does both of them (§48.7) — a phone
+   *  paying two round trips to read 1.2 KB is the thing that route exists to
+   *  stop.
+   *
+   *  COVERAGE IS THE UNITED STATES AND ITS TERRITORIES, and that includes
+   *  Hawaii, Puerto Rico and Guam — measured, not assumed (§48.3). Outside it
+   *  the answer is a 404 with `problems/InvalidPoint`, which is an ANSWER
+   *  about the place and not a failure of ours.
+   *
+   *  NWS REQUIRES A `User-Agent` NAMING A CONTACT and answers 403 without
+   *  one. The relay sets it; nothing here does. */
+  nwsPoints: 'https://api.weather.gov/points',
+
+  /** What is in force at a point, as structured GeoJSON (§48.6). Same host,
+   *  same relay, same User-Agent rule. Its way of saying "outside coverage" is
+   *  a 400 with `problems/InvalidParameter` — a DIFFERENT status for the SAME
+   *  fact the points route reports as 404, which is why §48.5 matches on the
+   *  `problems/` URI rather than on the status code. */
+  nwsAlerts: 'https://api.weather.gov/alerts/active',
 
   /** JTWC's Significant Tropical Weather Advisory — plain text, no auth (§45).
    *  The only genesis product found outside NHC that carries a probability.

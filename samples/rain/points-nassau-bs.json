@@ -1,0 +1,1 @@
+{"correlationId":"18ac4ba1","title":"Data Unavailable For Requested Point","type":"https://api.weather.gov/problems/InvalidPoint","status":404,"detail":"Unable to provide data for requested point 25.048,-77.3554","instance":"https://api.weather.gov/requests/18ac4ba1"}

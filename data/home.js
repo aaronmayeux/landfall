@@ -17,7 +17,18 @@
  *
  * 2. HOME IS DEVICE-LOCAL. localStorage only. No accounts, no server-side user
  *    data, ever. Someone's house coordinates are the most sensitive thing this
- *    app touches and they never leave the phone.
+ *    app touches.
+ *
+ *    ==> THEY ARE STORED HERE AND NOWHERE ELSE, WHICH IS NOT THE SAME AS
+ *    NEVER LEAVING. <== This comment read "they never leave the phone" until
+ *    two features needed a point: `/api/reverse` turns a dropped pin into a
+ *    place name (SPEC-DATA §4), and `/api/nws/rainfall` asks how much rain
+ *    falls on the house (§48.3). Both are lookups the reader asked for, both
+ *    send a ROUNDED coordinate — three decimals and two respectively — and
+ *    neither is attached to an identifier of any kind. Telemetry still carries
+ *    no coordinate at all and never will (lib/perf.js). The honest rule is:
+ *    nothing STORES it but this device, and anything that sends it sends the
+ *    coarsest number that can answer.
  *
  * Geometry-free half only (Phase 3). Wind-arrival, exposure timeline, and
  * surge-at-home need forecast wind radii and the Peak Storm Surge service and

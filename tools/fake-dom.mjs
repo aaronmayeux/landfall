@@ -129,7 +129,23 @@ export function installFakeDocument() {
  * @returns {{innerHTML:string, querySelector:Function, read:() => string}}
  */
 export function fakeHost() {
-  const inner = { innerHTML: '' };
+  /* ==> THE BODY ANSWERS `querySelector` NOW, AND THAT IS NOT A CONVENIENCE.
+   * <== The dashboard repaints single sections in place rather than rebuilding
+   * the whole body — Rain does it when its fetch lands (§48.8), the same way
+   * the storm panel's sections do — so `body().querySelector('.home-rain')` is
+   * a real call on a real path. A body with no such method threw, which is the
+   * suite failing to model the app rather than the app being wrong.
+   *
+   * It returns null, deliberately. A per-section repaint that finds nothing
+   * does nothing, which is exactly what happens on a render path that did not
+   * draw the section; what these suites assert is the full-body string, and
+   * teaching this lookup table to return a live sub-element would mean
+   * maintaining a second, partial idea of what is on screen. */
+  const inner = {
+    innerHTML: '',
+    querySelector: () => null,
+    querySelectorAll: () => [],
+  };
   return {
     innerHTML: '',
     children: [],

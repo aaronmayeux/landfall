@@ -34,6 +34,46 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**Rainfall is on two surfaces and neither has been seen.** `SPEC-DATA.md`
+§48.1–§48.7, `SPEC-UI.md` §48.8–§48.10. The storm drawer shows NHC's own
+rainfall paragraph between `Wind field` and `Environment`; the home drawer
+answers how much falls on the house, under `Where it is`. **THE ONE THING TO
+JUDGE FIRST IS §48.10, AND IT NEEDS A STORM NEAR HOME.** Lala's advisory says
+8 to 12 inches across eastern Maui while the grid at Kahului says 2.91 — both
+correct, and a reader seeing both will think the app is broken. Two things are
+built for that and nothing else: the home section is worded about the HOUSE,
+and its last line names the point NWS is forecasting for. Whether that is
+enough is yours. Then: does a rainfall total read as frightening or as trivia
+beside the wind numbers — eleven inches is catastrophic and looks like a small
+number. Does a live Flash Flood Warning above the total read as urgent, or does
+it just make the section taller. On a storm with no land threat, does *NHC
+lists no land hazards for this storm* read as reassurance or as a missing
+feature. And outside NWS coverage, does an always-visible "no rainfall forecast
+here" earn its space or become furniture — that is the direct cost of §48.5's
+decision and only glass can price it.
+
+**Two corners of rainfall nothing has exercised.** The `no_hazards` path — a
+storm publishing `None.` — is proven against a SYNTHESISED product, because no
+real bytes were ever captured (§48.11 says so in the spec). And a house outside
+NWS coverage has never rendered: the 404/400 pair is asserted from the Nassau
+fixtures, but nobody has set home in the Bahamas and looked.
+
+**The no-home screen no longer promises something the app does not do.** It
+said your coordinates never leave this device. That was already strained by the
+reverse lookup that names a dropped pin, and rainfall settles it — asking how
+much rain falls on a house means sending the house. It now says the home is
+stored on this device only, no account, nothing that names you; both lookups
+send a rounded point (two decimals here, three for `/api/reverse`) and
+telemetry still carries no coordinate at all. Judge the new sentence: it is
+weaker than the old one and it is true, which is the trade.
+
+**Three Retry buttons on the storm panel were each doing two things.** The
+generic geometry binder excluded `data-retry="advisory"` BY NAME, so `people`
+and `environment` — both added since — were firing their own recovery AND a
+full map-geometry refetch on one tap. It excludes the attribute now, so the
+next scoped section is correct on the day it lands. Nothing to judge; noted
+because it means those two retries have been doing extra work for weeks.
+
 **The environment ribbon is judged in both themes; three things about it are
 still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **The tapped storm's
 ribbon has never been seen on a phone.** It had no selection presentation at
@@ -472,16 +512,6 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**Rainfall (§48) is specified and waiting in `SPEC-NEXT.md`.** Two surfaces, no
-map layer — NHC publishes no rainfall geometry and §48.1 records the check so
-nobody redoes it. The storm drawer shows the advisory's own RAINFALL paragraph,
-which costs no new network. The home drawer answers "how much rain at my house"
-off `api.weather.gov`, which covers Hawaii, Puerto Rico and Guam as well as the
-lower 48. Every figure in §48 was computed against real captured bytes on the
-`rain-probe-results` branch. Read the section, not this line — but two traps are
-worth knowing before opening it: the units are **millimetres**, and `validTime`
-is an interval with a duration, not a timestamp.
-
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open
 questions written down. Read the section, not this line. §47 is now fully
@@ -538,3 +568,7 @@ same pass as the engine upgrade** — both are surgery on `map/globe3d.js`.
   `raw`. Logged because the question keeps getting re-asked.
 - **Three suites need Playwright and do not run in a bare sandbox.** Expected,
   not broken. They run once `node_modules` is on the path, and on the runner.
+- **`env_retry` has never been counted and is not a column.** `lib/usage.js` is
+  an allowlist and that name is not in it, so every call has been silently
+  dropped since §47.8 shipped. Rain's retry uses the generic `retry` rather
+  than adding a second phantom. Fixing it properly is a D1 schema decision.

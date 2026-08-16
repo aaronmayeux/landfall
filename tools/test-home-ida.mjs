@@ -795,6 +795,20 @@ section('the countdown');
 const { createHomeDashboardView } = await import('../ui/view-home.js');
 const { setHome, clearHome } = await import('../data/home.js');
 const { installFakeDocument, fakeHost } = await import('./fake-dom.mjs');
+
+/* ==> THE RAIN FACADE, STUBBED TO ONE FIXED ANSWER. <== §48.8's section lives
+ * on this dashboard and app/views.js injects its fetch; these suites are about
+ * the dashboard's own sentences, not about rainfall, which has its own suite
+ * against real NWS bytes (tools/test-rainfall.mjs). What matters here is that
+ * the section is WIRED — a view built without it renders no Rain section at
+ * all, and every assertion below would then be made against a screen the app
+ * never shows. `not_covered` is the quietest real answer there is: one line,
+ * no figures, nothing that could collide with an assertion about the storm.
+ */
+const RAIN_STUB = {
+  loadRainfall: async () => ({ status: 'not_covered', payload: null, fetchedAt: null, stale: false }),
+  retryRainfall: async () => ({ status: 'not_covered', payload: null, fetchedAt: null, stale: false }),
+};
 installFakeDocument();
 setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
 {
@@ -811,6 +825,10 @@ setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
     warmGeometry: async () => ({
       state: 'ok', bundle: { forecast: CURVE, forecastRadii: ida.radii }, error: null }),
     now: () => NOW,
+    /* Rain (§48.8) has its own suite against real NWS bytes; here it only has
+     * to be WIRED, so the dashboard's own paths are exercised with the section
+     * present rather than with it quietly missing. */
+    rain: RAIN_STUB,
   });
   v.mount(host);
   v.onEnter();
@@ -931,6 +949,7 @@ section('the stage ladder');
     warmGeometry: async () => ({
       state: 'ok', bundle: { forecast: c16, forecastRadii: a16.radii }, error: null }),
     now: () => a16.issuedMs,
+    rain: RAIN_STUB,
   });
   setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
   v.mount(host);

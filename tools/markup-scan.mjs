@@ -27,8 +27,14 @@ import path from 'node:path';
 
 /* `mockups/` and `proto/` are skipped ON BOTH SIDES. They are scratch HTML with
  * their own inline styles and no relationship to the shipped app; counting them
- * as either emitters or definitions makes every answer here meaningless. */
-export const SKIP = new Set(['vendor', 'node_modules', '.git', 'mockups', 'proto']);
+ * as either emitters or definitions makes every answer here meaningless.
+ *
+ * `samples/` is skipped for a sharper reason: it holds bytes OTHER PEOPLE
+ * served us, captured verbatim so tests run against reality. NOAA's advisory
+ * page is a full USWDS document, and counting its sixty-odd government-template
+ * classes as markup this app emits produces sixty failures about stylesheets
+ * that are not ours and must never be edited. A fixture is data, not markup. */
+export const SKIP = new Set(['vendor', 'node_modules', '.git', 'mockups', 'proto', 'samples']);
 
 export function walk(dir, out = []) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

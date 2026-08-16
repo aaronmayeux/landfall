@@ -1067,3 +1067,21 @@ and it is also the peak-cost moment — the two failures arrive together. Revenu
 comes from convenience and depth: push alerts, multiple saved locations, history,
 expert layers. That is the same set that has to live server-side anyway, so the
 moat and the product boundary are the same line.
+
+### 48.13 The rainfall probe
+
+`tools/rain-probe.mjs` and `.github/workflows/rain-probe.yml` are the survey
+that produced every measured figure in §48. The workflow triggers on a push to
+the `rain-probe` branch — **not** on a schedule and not on dispatch, because a
+fine-grained PAT can push but cannot dispatch (measured: HTTP 403 on the
+`/dispatches` endpoint), so a push is the only way a cloud session can start a
+runner. Results land on `rain-probe-results`, which like `archive` is data: one
+orphan commit, force-pushed, never merged.
+
+Re-run it by pushing the branch again.
+
+**Both files and both branches are disposable and are being kept until §48 is
+judged on glass.** The fixtures the suite needs are copied into `samples/rain/`
+and no test reads the branch, so deleting them breaks nothing — but they are
+the only way to re-measure this API from a sandbox that cannot reach it, and
+the first storm near a home is exactly when that will be wanted.

@@ -62,6 +62,7 @@ const HOOKS = new Map([
   ['home-result-label', 'the parent .home-result carries the whole layout'],
   ['watch-rows', 'role="list" wrapper; .watch-row does the painting'],
   ['watch-title', 'span inside .watch-head, which styles the whole heading'],
+  ['home-rain', 'query hook — view-home.js repaints just this section by it; .home-sect paints it'],
 ]);
 
 const files = walk('.');

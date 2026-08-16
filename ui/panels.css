@@ -2576,3 +2576,32 @@ button.drawer-identity:focus-visible {
     opacity: 1;
   }
 }
+
+/* --- rainfall, in the storm drawer (§48.9) ---------------------------------
+ *
+ * ==> NHC'S OWN PARAGRAPHS, SET AS PROSE. <== Not a `<pre>` like the advisory
+ * section below it, because these have been rewrapped out of teletype columns
+ * and a monospace block would put them back into a ragged column on a phone.
+ * Not a figure grid like Environment either — there is no number in here to
+ * grid, and there is deliberately never going to be one (§48.2).
+ * ------------------------------------------------------------------------- */
+
+.detail-rain-para {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+/* Between paragraphs of one forecast: tighter than between sections, because
+   this is one thought continuing rather than a new one starting. */
+.detail-rain-para + .detail-rain-para { margin-top: var(--space-snug); }
+
+/* Who is speaking. Same register as the environment section's footnotes — the
+   reader needs to know these are NHC's words and not our summary, and that is
+   the whole content of the line. */
+.detail-rain-note {
+  margin: var(--space-base) 0 0;
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--text-muted);
+}

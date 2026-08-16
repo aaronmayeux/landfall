@@ -50,6 +50,7 @@ import { placeText } from '../lib/place-label.js';
 import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dashboard.js';
 import { homeChart } from './chart-home.js';
 import { dotted } from './loading-dots.js';
+import { createRainHome } from './rain-home.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 
 const esc = (t) =>
@@ -81,8 +82,12 @@ const esc = (t) =>
  */
 export function createHomeDashboardView({
   units, onEditHome, onOpenStorm, onFocusStorm, onFrameHome,
-  warmGeometry, now = () => Date.now(),
+  warmGeometry, rain, now = () => Date.now(),
 }) {
+  /* Rain (§48.8) is a self-contained controller in ui/rain-home.js — this file
+   * is the largest in the app and over §12's ceiling, so it gets one seam and
+   * nothing else: a section string, an ensure, a wire. */
+  const rainH = createRainHome({ ...rain, units, now });
   let host = null;
   let visible = false;
   let lastState = null;
@@ -309,6 +314,12 @@ export function createHomeDashboardView({
 
     lastDash = dash;
     el.innerHTML = dashboardHtml(dash, threat, home);
+    /* ==> THE SECTION IS ITS OWN GATE (§48.8). <== Rain is fetched here, on the
+     * dashboard path, and nowhere else: the quiet, loading, error and no-home
+     * states do not draw the section, so asking for a forecast on any of them
+     * would be a request for something nobody can see. */
+    rainH.ensure(home, renderRainBody);
+    rainH.wire(el, home, renderRainBody);
     afterRender();
   }
 
@@ -378,12 +389,21 @@ export function createHomeDashboardView({
   }
 
   function noHomeHtml() {
+    /* ==> THE LAST SENTENCE USED TO SAY "YOUR COORDINATES NEVER LEAVE THIS
+     * DEVICE", AND IT STOPPED BEING TRUE. <== It was already strained by the
+     * reverse lookup that turns a dropped pin into a place name, and §48's
+     * rainfall forecast settles it: asking how much rain falls on a house
+     * means sending the house. What IS true is what it says now — the home is
+     * stored here and nowhere else, no account holds it, and the two lookups
+     * that need a point send a rounded one (`RAIN.wireDecimals`, and three
+     * decimals for `/api/reverse`). A promise a feature quietly breaks is
+     * worse than a smaller promise kept. */
     return `
       <div class="home-sect">
         <p class="home-lede">Set a home and this becomes a page about you.</p>
         <p class="detail-soft">How far it is, how close it gets, how strong it is when
-          it reaches you, and how long you have before it does. Your coordinates never
-          leave this device.</p>
+          it reaches you, and how long you have before it does. Your home is stored
+          on this device only — no account, and nothing that names you.</p>
       </div>
       <div class="home-sect">
         <button class="home-cta" type="button" data-act="edit-home">Set your home ›</button>
@@ -527,6 +547,14 @@ export function createHomeDashboardView({
       dash.far ? '' : headlineSectHtml(dash),
       dash.far ? '' : chartSectHtml(dash),
       whereSectHtml(dash),
+      /* ==> DIRECTLY UNDER `Where it is`, AND ABOVE THE FIGURES. <== §48.8
+       * places it after that section and before the address block, which is a
+       * range rather than a slot; this is the top of that range and it is
+       * chosen for one reason. A Flash Flood Warning in force is the most
+       * actionable thing on this screen, it renders at the head of this
+       * section (§48.6), and a warning at the bottom of a scroll is a warning
+       * nobody read. */
+      rainSectHtml(),
       figuresHtml(dash),
       dash.far ? '' : countdownHtml(dash),
       homeRowHtml(home),
@@ -640,6 +668,32 @@ export function createHomeDashboardView({
       </div>`;
   }
 
+  /** RAIN — how much is coming to the house (§48.8).
+   *
+   *  ==> IT IS ABOUT THE HOUSE, NOT ABOUT THE STORM, AND THE HEADING HAS TO
+   *  SAY SO. <== §48.10: this number and the storm drawer's rainfall paragraph
+   *  answer different questions and will disagree — the advisory quotes the
+   *  heaviest band across an area, this is one grid cell. The controller's
+   *  note names the point NWS is forecasting for, which is the only thing on
+   *  either surface that explains the difference. */
+  function rainSectHtml() {
+    const home = getHome();
+    if (!home) return '';
+    return `<div class="home-sect home-rain">${rainH.inner(home, sectHead('rain', 'Rain'))}</div>`;
+  }
+
+  /** Repaint ONLY the Rain section when its fetch lands. A full render()
+   *  rebuilds the whole dashboard and throws away the reader's scroll
+   *  position — the same reasoning the storm panel's per-section repaints
+   *  use. */
+  function renderRainBody() {
+    const el = body()?.querySelector('.home-rain');
+    const home = getHome();
+    if (!el || !home) return;
+    el.innerHTML = rainH.inner(home, sectHead('rain', 'Rain'));
+    rainH.wire(el, home, renderRainBody);
+  }
+
   /**
    * A section heading: an icon and its words.
    *
@@ -668,6 +722,9 @@ export function createHomeDashboardView({
     pin: '<path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
     /* How strong — the wind glyph, three trailing streams. */
     wind: '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h14a3 3 0 1 1-3 3"/><path d="M3 16h7"/>',
+    /* Rain — a cloud with fall lines under it. */
+    rain: '<path d="M7 15.5a4 4 0 0 1 .5-7.97 5 5 0 0 1 9.4 1.02A3.5 3.5 0 0 1 17 15.5Z"/>' +
+      '<path d="M9 18.5 8 21M13 18.5 12 21M17 18.5 16 21"/>',
     /* Timeline — a clock, because every row on it is a time. */
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     /* Vitals — a gauge needle. */

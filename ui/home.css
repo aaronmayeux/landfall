@@ -1077,3 +1077,95 @@
   font-size: var(--type-small);
   margin: var(--space-snug) 0 0;
 }
+
+/* --- rain (§48.8) ----------------------------------------------------------
+ *
+ * ==> THE WARNING BLOCK AND THE FORECAST BLOCK ARE DELIBERATELY DIFFERENT
+ * SHAPES. <== A flood warning is a fact about now, published by somebody else,
+ * with an expiry attached; a total is our arithmetic on a forecast. Given the
+ * same styling they read as one list of five similar things, and the one that
+ * matters loses. So the alerts are a bordered list with their own ink and the
+ * total is prose underneath.
+ * ------------------------------------------------------------------------- */
+
+.home-rain-alerts {
+  list-style: none;
+  margin: 0 0 var(--space-base);
+  padding: 0;
+  display: grid;
+  gap: var(--space-tight);
+}
+
+.home-rain-alert {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  padding: var(--space-snug);
+  border-radius: var(--radius-snug);
+  /* The panel's own raised fill, not a tinted one. The COLOR carries the
+     urgency; a filled amber row would compete with the storm's own category
+     color three inches above it. */
+  background: var(--surface-raised);
+  font-size: var(--type-body);
+}
+
+/* `Immediate` is happening now; `Expected` and `Future` are not, and the two
+   must not read the same. Severity cannot make this distinction — a Flood
+   Watch and a Flash Flood Warning are both `Severe`. */
+.home-rain-alert[data-urgency='now'] .home-rain-alert-name {
+  color: var(--error);
+  font-weight: 600;
+}
+.home-rain-alert[data-urgency='later'] .home-rain-alert-name {
+  color: var(--stale);
+  font-weight: 600;
+}
+
+.home-rain-alert-until {
+  flex: 0 0 auto;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.home-rain-line {
+  margin: 0;
+  font-size: var(--type-lead);
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+.home-rain-line strong { font-variant-numeric: tabular-nums; }
+
+.home-rain-peak {
+  margin: var(--space-tight) 0 0;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* Provenance, and the coverage sentence, in the quietest register on the
+   screen. It is the line that answers "why does this disagree with the storm
+   panel" (§48.10), so it has to be there — and it is not what anybody came to
+   read, so it is not allowed to compete with the number. */
+.home-rain-note {
+  margin: var(--space-snug) 0 0;
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+/* Matches the detail panel's retry so a Retry looks like a Retry everywhere.
+   Declared here rather than reused across files because home.css and
+   panels.css share only tokens, on purpose. */
+.home-rain-retry {
+  margin-left: var(--space-tight);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+  min-height: var(--touch-min);
+}

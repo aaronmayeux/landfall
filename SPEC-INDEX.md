@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 177 numbered headings.
+Covering 9 files, 176 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -29,19 +29,19 @@ real home is the other row carrying the same section number.
 | `4` | Data architecture | -> `SPEC-DATA.md` | SPEC.md:390 |
 | `4.1` | &nbsp;&nbsp;Companion documents | `SPEC-DATA.md` | 23-43 |
 | `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 44-64 |
-| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-176 |
-| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 177-212 |
-| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 213-420 |
-| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 421-553 |
-| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 554-608 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 609-670 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 671-876 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 877-957 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 958-999 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 1000-1016 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 1017-1103 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1104-1118 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1119-1146 |
+| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-177 |
+| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 178-213 |
+| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 214-421 |
+| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 422-554 |
+| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 555-609 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 610-671 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 672-877 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 878-958 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 959-1000 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 1001-1017 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 1018-1104 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1105-1119 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1120-1147 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 395-396 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1030-1110 |
 | `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1111-1141 |
@@ -156,59 +156,58 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1051-1096 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1097-1148 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1149-1185 |
-| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1169-1170 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1171-1198 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1199-1285 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1286-1328 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1170-1171 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1172-1199 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1200-1286 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1287-1329 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 2694-2740 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1329-1415 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1330-1416 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 2869-2886 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2887-2895 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2119-2265 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1416-1546 |
-| `46` | The intensity chart | `SPEC-NEXT.md` | 55-56 |
-| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 57-65 |
-| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 66-88 |
-| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 89-104 |
-| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 105-131 |
-| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 132-147 |
-| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 148-159 |
-| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 160-170 |
-| `47` | The environment ribbon | `SPEC-NEXT.md` | 171-172 |
-| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 173-189 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 190-315 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 316-339 |
-| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 340-534 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1417-1547 |
+| `46` | The intensity chart | `SPEC-NEXT.md` | 60-61 |
+| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 62-70 |
+| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 71-93 |
+| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 94-109 |
+| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 110-136 |
+| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 137-152 |
+| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 153-164 |
+| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 165-175 |
+| `47` | The environment ribbon | `SPEC-NEXT.md` | 176-177 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 178-194 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 195-320 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 321-344 |
+| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 345-539 |
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1027-1217 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 535-560 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 561-597 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 598-942 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 540-565 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 566-602 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 603-947 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2284-2330 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 943-966 |
-| `48` | Rainfall | `SPEC-NEXT.md` | 967-968 |
-| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-NEXT.md` | 969-996 |
-| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-NEXT.md` | 997-1048 |
-| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-NEXT.md` | 1049-1073 |
-| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-NEXT.md` | 1074-1096 |
-| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-NEXT.md` | 1097-1135 |
-| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-NEXT.md` | 1136-1164 |
-| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-NEXT.md` | 1165-1193 |
-| `48.8` | &nbsp;&nbsp;What the home section says | `SPEC-NEXT.md` | 1194-1214 |
-| `48.9` | &nbsp;&nbsp;What the storm section says | `SPEC-NEXT.md` | 1215-1221 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-NEXT.md` | 1222-1244 |
-| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-NEXT.md` | 1245-1275 |
-| `48.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1276-1288 |
-| `48.13` | &nbsp;&nbsp;The probe | `SPEC-NEXT.md` | 1289-1303 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 948-973 |
+| `48` | Rainfall — the sources | `SPEC-DATA.md` | 1548-1549 |
+| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1550-1575 |
+| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1576-1618 |
+| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-DATA.md` | 1619-1646 |
+| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-DATA.md` | 1647-1668 |
+| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1669-1698 |
+| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1699-1726 |
+| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1727-1771 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2331-2382 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2383-2402 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2403-2417 |
+| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1815 |
+| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 92,475 | 22 |
+| `SPEC-DATA.md` | 108,440 | 31 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 82,260 | 31 |
-| `SPEC-OPS.md` | 66,318 | 13 |
-| `SPEC-UI.md` | 135,915 | 6 |
-| `SPEC.md` | 142,493 | 12 |
+| `SPEC-NEXT.md` | 63,648 | 17 |
+| `SPEC-OPS.md` | 67,283 | 14 |
+| `SPEC-UI.md` | 140,975 | 9 |
+| `SPEC.md` | 142,489 | 12 |
 | `spec-parameter.md` | 54,194 | 49 |
 

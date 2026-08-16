@@ -89,6 +89,7 @@ import { loadTowns, townsOrNull, populationState } from '../data/population.js';
 import { POPULATION } from '../config/constants.js';
 import { DOTS } from './loading-dots.js';
 import { createEnvHealth, ENV_SECTION } from './env-health.js';
+import { createRainStorm, RAIN_SECTION } from './rain-storm.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -232,6 +233,11 @@ export function createStormDetailView({
    * ui/env-health.js — this file is past §12's ceiling and holds only the
    * seams: the section row, one ensure, one wire, one repaint. */
   const envH = createEnvHealth({ ...envShips, units });
+
+  /* Rainfall (§48.9) takes the same shape and for the same reason. It is handed
+   * the SAME advisory facade the Advisory section uses, so both read one cached
+   * record and can never show two different advisories for one storm. */
+  const rainH = createRainStorm({ loadAdvisory });
 
   /** The resolved unit system, asked fresh on every render. NEVER cached: the
    *  user can change it in Settings while this panel is open, and a captured
@@ -1220,6 +1226,26 @@ export function createStormDetailView({
     return envH.html(storm);
   }
 
+  /** The Rainfall section's body (§48.9) — the controller's HTML behind the
+   *  same withheld-note gate every other section uses, so a silent or ended
+   *  storm never gets a paragraph read as a current forecast. */
+  function rainHtml() {
+    const silenced = withheldNote();
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+    return rainH.html(storm);
+  }
+
+  /** Repaint ONLY the Rainfall section — same scroll-position reasoning as the
+   *  Environment, advisory and people repaints. */
+  function renderRainBody() {
+    const el = bodyEl?.querySelector(
+      `.detail-section[data-section="${RAIN_SECTION}"] .detail-section-body`
+    );
+    if (!el || !storm) return;
+    el.innerHTML = rainHtml();
+    rainH.wire(bodyEl, storm, renderRainBody);
+  }
+
   /** Repaint ONLY the Environment section — same scroll-position reasoning as
    *  the advisory and people repaints below. */
   function renderEnvBody() {
@@ -1295,6 +1321,7 @@ export function createStormDetailView({
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
       section('wind', 'Wind field', windHtml()),
+      section(RAIN_SECTION, 'Rainfall', rainHtml()),
       section(ENV_SECTION, 'Environment', envHtml()),
       section(PEOPLE_SECTION, 'People in the path', peopleHtml()),
       section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
@@ -1309,6 +1336,8 @@ export function createStormDetailView({
     if (!withheldNote()) {
       envH.ensure(storm, renderEnvBody);
       envH.wire(bodyEl, storm, renderEnvBody);
+      rainH.ensure(storm, renderRainBody);
+      rainH.wire(bodyEl, storm, renderRainBody);
     }
     /* A reader who left this section open last time gets it open — and open
      * means fetched. Without this the persisted preference renders an
@@ -1321,12 +1350,19 @@ export function createStormDetailView({
      * querySelector by id bound only whichever came first in the document,
      * silently leaving the other dead.
      *
-     * EXCEPT THE ADVISORY'S. It wears the same class for the same look, and
-     * without the exclusion it would collect BOTH handlers: one tap would
-     * refetch the map geometry as well, which is a different source, a
-     * different failure, and a payload the reader did not ask for. Retry
-     * means retry THIS, always. */
-    for (const btn of bodyEl.querySelectorAll('.detail-retry:not([data-retry="advisory"])')) {
+     * EXCEPT ANY THAT NAMES ITS OWN SECTION. `data-retry` means a section has
+     * already bound this button to its own recovery; without the exclusion it
+     * collects BOTH handlers, and one tap also refetches the map geometry —
+     * a different source, a different failure, and a payload the reader did
+     * not ask for. Retry means retry THIS, always.
+     *
+     * ==> IT USED TO EXCLUDE `data-retry="advisory"` BY NAME, AND THAT WAS
+     * ALREADY WRONG BY TWO. <== `people` and `environment` had both grown
+     * their own scoped buttons since, and both were quietly firing a geometry
+     * refetch alongside their own. Excluding the ATTRIBUTE rather than one of
+     * its values is what makes the next scoped section correct on the day it
+     * lands instead of on the day somebody notices. */
+    for (const btn of bodyEl.querySelectorAll('.detail-retry:not([data-retry])')) {
       btn.addEventListener('click', () => {
         if (storm) onRetryGeometry(storm);
       });

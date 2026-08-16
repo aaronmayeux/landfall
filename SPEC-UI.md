@@ -2327,3 +2327,90 @@ count, and ENDED is checked before SILENT:
 a cached `unavailable` is evicted — `basin` and `no_run` are resolved answers,
 and dropping them would refetch on every tap to be told the same permanent fact.
 
+
+## 48.8 Rain — the home drawer's section
+
+A section titled **Rain**, directly under `Where it is`. §48.5 places it after
+that section and before the address block, which is a range rather than a slot;
+this is the top of that range, for one reason: a Flash Flood Warning in force is
+the most actionable thing on the screen, it renders at the head of this section,
+and a warning at the bottom of a scroll is a warning nobody read.
+
+It draws on the DASHBOARD PATH ONLY. The quiet, loading, error and no-home
+states do not render it, so nothing fetches a forecast for a section nobody can
+see. The section is its own gate — there is no warm loop and no poll.
+
+In order:
+
+1. **Any flood warning or watch in force**, each with its expiry **in the
+   reader's own local clock** — never UTC, the same rule §47.8 follows, and it
+   matters more here because these expire in minutes rather than days. An
+   `Immediate` alert takes `--error`; everything else takes `--stale`.
+   When the alerts hop failed, the section says the warnings could not be
+   checked rather than showing nothing (§48.7).
+2. **The total, with its window** — *About 11 inches expected through early
+   Thursday.*
+3. **The heaviest block**, when one carries at least `RAIN.peakShare` of the
+   total — *The heaviest six hours bring about 3 inches, from Sat 12:00 PM.*
+   Hilo's peak six hours are 30% of four days, and "most of it in six hours" is
+   the sentence that distinguishes a flood from a wet week. Below a quarter
+   there is no heaviest block worth naming and the line is omitted.
+4. **Where the number is from** — *At your house — National Weather Service,
+   nearest point Hilo, HI.*
+
+**THE WINDOW IS A CEILING AND THE LABEL IS NOT.** `RAIN.windowHours` is 120;
+every series captured stops before that. The sentence names the end of the LAST
+BLOCK ACTUALLY HELD, so a series that stops on Thursday says Thursday rather
+than claiming five days. A label computed from the window instead is unmoved
+when the series is cut short, which is the bug the suite mutates for.
+
+**ROUNDING.** Whole inches above one, one decimal below, and metric gets whole
+millimetres in both bands. The grid says 282.956 mm — 11.14 inches — and
+printing the tenth claims a precision no four-day rainfall forecast has; the
+reader's decision does not turn on it. One millimetre in eleven inches is a
+third of a percent, which nobody reads as a precision claim.
+
+**NEGLIGIBLE RAIN IS WORDS.** Under `RAIN.negligibleMm` (2.5 mm, a tenth of an
+inch, the bottom rung NWS itself uses) the section says *No meaningful rain
+expected through Sunday* rather than printing a figure. Galveston measured
+0.254 mm across thirty blocks and Key West 1.778; as `0.01 in` and `0.07 in`
+both read as a malfunction rather than as a forecast.
+
+**Outside coverage the section stays and names who does not forecast here**
+(§48.5), and offers no Retry — a house outside NWS's area will never get a
+different answer, and a button that cannot work is worse than none.
+
+### 48.9 Rainfall — the storm drawer's section
+
+A section titled **Rainfall**, between `Wind field` and `Environment`. The
+advisory paragraph, rewrapped, in NHC's words, under a line saying so. The four
+states of §48.2 and nothing else. **No number is extracted, so nothing here can
+disagree with NHC.**
+
+A GDACS storm is answered without a fetch: *Not published for storms in this
+basin.* — worded identically to §47.6's Environment sentence on purpose, so a
+reader who meets both learns one sentence rather than two. A silenced or ended
+storm gets the panel's withheld note like every other section.
+
+**==> IT COSTS THE ADVISORY FETCH, AND THAT IS A REAL CHANGE. <==** §48.2's "no
+new network" is true of the SOURCE and not of the TIMING. The Advisory section
+is collapsed by default and fetches on expand, so a reader who never opened it
+never paid; an open-by-default Rainfall section means one advisory page per NHC
+storm opened — 30,712 bytes for Lala. It is cached per advisory key and shared
+with the Advisory section, so opening that afterwards is free. That is the price
+of §48.1's complaint, which is that rainfall currently sits where nobody opens it.
+
+### 48.10 The two numbers that disagree, and why both are right
+
+Lala's advisory says eastern Maui gets 8 to 12 inches. The grid at Kahului says
+2.91. Both are correct: the advisory quotes the heaviest band across an area,
+and Kahului sits off that axis. At Hilo the two agree — the advisory says 10 to
+20 inches for the Big Island and the grid says 11.14.
+
+**==> THIS IS THE ONE REAL DESIGN RISK IN §48. <==** A reader whose home is on
+Maui, looking at the home drawer's "about 3 inches" and then at the storm
+drawer's "8 to 12 inches across eastern Maui", will conclude the app is broken.
+Two things are built for this and nothing else: the home section is titled and
+worded about the HOUSE, and its closing line NAMES THE POINT NWS is forecasting
+for. Whether that is enough is a glass question and it needs a storm near a
+home to ask — **it is not settled.**
