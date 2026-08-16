@@ -103,6 +103,14 @@ jobs:
       - name: every size is on the type scale
         run: node tools/type-scale-check.mjs
 
+      # config/constants.js is 63 blocks in one file, deliberately (§12.1 — the
+      # split was measured and declined). The generated table of contents at its
+      # head is the only map of it, and a map missing the newest thing is worse
+      # than no map. This fires only when a block is added, removed or renamed
+      # without landing in a group — never on an ordinary comment edit.
+      - name: constants table of contents is current
+        run: node tools/constants-toc.mjs --check
+
       # Every color and spacing literal in feature code has to resolve to a
       # real token. Moved out of known-broken on 2026-08-08: its only failures
       # were in the volcano plume files, which no longer exist. It is blocking
@@ -121,7 +129,7 @@ jobs:
           fi
           echo "clean"
 
-      # Plain node, no dependencies, no browser. 55 suites, discovered by glob
+      # Plain node, no dependencies, no browser. 62 suites, discovered by glob
       # — a new tools/test-*.mjs is picked up here with no edit to this file.
       # test-lifecycle is slow on purpose (real timer behaviour, ~65s) — do not
       # "optimise" it out.

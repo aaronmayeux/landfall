@@ -1287,22 +1287,22 @@ wrong row says a file was looked at and judged when it was not.
 
 | File | Lines | Call |
 |---|---|---|
-| `config/constants.js` | 4884 | **Exempt — standing** (above). Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. No off-path block remains. |
-| `config/tokens.js` | 1925 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `config/constants.js` | 4935 | **Exempt — standing** (above), and the exemption was re-measured rather than re-asserted. Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. **Only 705 of these lines are code**; the other 77% is the reason beside each number. `tools/module-graph.mjs` was run against all 63 blocks: every one is read by the SHIPPED app, zero are off-path. `WIND_BAND_KT` was the one dead export and is deleted. A grouped table of contents at the head of the file is generated and enforced by `tools/constants-toc.mjs` — see §12.1. |
+| `config/tokens.js` | 1978 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `ui/panels.css` | 2607 | **Exempt, and the threshold below it was missed.** See below. Crossed 2,500 when the environment paragraph and the freshness column landed; still declarative all the way down. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1571 | **Over the line, and holding at seams only.** The Environment section (§47.8) went in as four seams — a section row, an ensure, a wire and a repaint — with its whole controller in `ui/env-health.js`, which is the shape every further addition must take. The stamp, the section renderers, the advisory record and the stepper remain the four separable concerns; inventory and cut list before the next detail pass that is more than a seam. |
 | `config/layers.js` | 734 | **Newly over the line, and exempt for `constants.js`'s reason rather than by analogy.** It is the layer MANIFEST: frozen data, one entry per row, with the argument for each default written beside it. The only logic in it is four small helpers at the foot (`isLive`, `pairLiveOptions`, `layerGroups`, `defaultLayerState`), none of which can throw and none of which has state. Splitting it would put half the inventory in each of two files and give the panel two places to look. Crossed the ceiling when the environment row landed. |
-| `ui/view-storms.js` | 1243 | **Watch.** The row builder and the list chrome are separable if it grows again. |
+| `ui/view-storms.js` | 1271 | **Watch.** The row builder and the list chrome are separable if it grows again. |
 | `main.js` | 1228 | **Cut in three passes, done.** It grew 246 lines since, of which 89 are code and all 89 are wiring. See below. The environment ribbon (§47) added ~40 more, all of it the warm-and-push pair that model guidance already had — the same shape twice is the signal that a `warmable layer` helper is the next lift out of here, not a fourth copy. |
 | `map/layers/points-forecast.js` | 772 | **Newly over the line, and the seam is already cut once.** Crossed it when the storm name learned to move. It is three things: the MapLibre layer definitions, the per-storm projection and grouping pass, and the two publish/subscribe stores that hand placement out. The GEOMETRY of both placements is already out of it — `label-placement.js` for the time labels, `name-placement.js` for the name — which is why what remains is readable. If it grows again, the layer definitions are the clean lift. |
 | `map/style.js` | 897 | **Watch.** The unreachable per-world plate and admin layers were ripped out; what remains over the ceiling is the dormant Protomaps branch (§2's basemap entry). |
 | `map/imagery.js` | 939 | **Watch.** |
 | `data/lifecycle.js` | 1021 | **Watch, and closer to a cut than the number alone says.** The registry, the persisted shape, the three ending routes and the track repair's two seams are already four separable concerns; the FETCHING half of the repair went to `data/ended-track.js` rather than in here, which is the pattern the eventual split should follow. |
-| `ui/view-home.js` | 1713 | **Over the line and still the largest file in the app.** Rainfall (§48.8) went in the way the ceiling requires — a section string, an ensure, a wire, an icon — with its whole controller in `ui/rain-home.js`; the file grew about sixty lines and none of them is logic. The cut list is written and unstarted: `countdownHtml` and its row builders are one concern, the strength strip and its figures a second, the quiet/error/no-home states a third. Next home pass does the split FIRST, with no behaviour change, so a break can only be the move. |
-| `data/home-dashboard.js` | 756 | **Newly over the line.** Crossed it when the class-milestone walk landed. Three concerns are already visible and already independent: the approach maths (`closestApproach` feeding `band`, `atClosest`, `nearRing`), the intensity story (`peak`, `arrivalTrend`, `peakWhen`, `milestones`), and the `stage` ladder, which reads all of them and is the only part that has to. `nearRingWindow` and the corridor call are the natural seam. Not urgent — every piece is pure and separately tested — but it does not get to grow again first. |
+| `ui/view-home.js` | 1301 | **Over the line, and the first cut on its list is taken.** `countdownHtml` was 168 lines of CODE — the longest function in the app by more than double, which is the shape §12 actually cares about — and it moved out whole to `ui/countdown-home.js` with `headingOf` and `motionDetail`, which are its other caller's too. No behaviour changed in the move: the two things the rail used to close over, the unit system and `sectHead`, are handed in as arguments, and `tools/test-home.mjs` and `test-home-ida.mjs` cover it (557 assertions, and a reversed sort in the moved file fails five of them). Two concerns remain on the list: the strength strip and its figures, and the quiet/error/no-home states. |
+| `data/home-dashboard.js` | 775 | **Newly over the line.** Crossed it when the class-milestone walk landed. Three concerns are already visible and already independent: the approach maths (`closestApproach` feeding `band`, `atClosest`, `nearRing`), the intensity story (`peak`, `arrivalTrend`, `peakWhen`, `milestones`), and the `stage` ladder, which reads all of them and is the only part that has to. `nearRingWindow` and the corridor call are the natural seam. Not urgent — every piece is pure and separately tested — but it does not get to grow again first. |
 | `ui/home.css` | 1171 | **Watch, and it grew for a good reason.** Same cascade-order argument as `panels.css`, at half the size. It crossed 1,000 when the setup screen's three doors became one shared `.home-choice` recipe, and 1,100 when the Rain section landed with its alert rows. The visible seam if it grows again is the SETUP screen against the DASHBOARD; they share only tokens. |
-| `map/marker-home.js` | 882 | **Watch — the real one.** See below. |
+| `map/marker-home.js` | 868 | **Watch — the real one.** See below. |
 | `app/views.js` | 936 | **Watch, and the cut list is written.** The composition layer that came out of `main.js` pass 3. Almost all of it is wiring — the drawer, the five views, the home marker and the provisional pin, knotted by construction order. Splitting it would put half a knot in each of two files, which is the thing it exists to prevent. The Home drawer's opening camera frame (§9.16) added ~50 lines of it and the *maths* went to `map/home-frame.js`; only the orchestration lands here, which is the pattern that has kept this file readable. **The next feature that wants a home in this file does the inventory and the cut FIRST**, with no behaviour change, so a break can only be the move. The visible seam: the five view factories and their callback bags are one concern; the home cluster — marker, provisional pin, setup and dashboard — is a second. |
 | `functions/api/gdacs/inspect.js` | 750 | **Watch.** A diagnostic route, self-contained by the Pages-Function rule, and it writes nothing. Not in the render path. |
 
@@ -1315,7 +1315,7 @@ NO BUILD STEP means hand-managing cascade order across files — trading a real
 correctness hazard for tidiness.
 
 **==> THE OLD 1,000-LINE REVISIT THRESHOLD WAS PASSED WITHOUT ANYONE NOTICING,
-AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 2,084 lines. A
+AND IS NOT REPLACED WITH A BIGGER NUMBER. <==** The file is 2,607 lines. A
 line-count trigger on a stylesheet was the wrong instrument: nothing was
 watching it, and length was never the hazard — the hazard is cascade order, and
 468 lines or 2,084, a cascade bug crosses a section boundary or it does not.
@@ -1340,7 +1340,7 @@ measured on a real phone. Refactoring verified-on-glass code for tidiness
 spends the verification and buys nothing a user can see. Take the cut the next
 time this file needs a real change, not before.
 
-**`main.js` WAS cut, in three passes, 1,747 -> 896, AND IS NOW 1,142 AGAIN.** It
+**`main.js` WAS cut, in three passes, 1,747 -> 896, AND IS NOW 1,228 AGAIN.** It
 stands up two engines, hands the dive both, and routes input, so it will never
 be 100 lines — but it reached 1,747 by being the convenient place for anything
 that needed two of those things at once, which is exactly what §12 forbids.
@@ -1647,6 +1647,72 @@ for real storms, and swaps to a scale breath under `prefers-reduced-motion`.
   takes storms in through `update()` and is wired by `main.js`. Its imagery
   PAIR is pushed on the same one-call `applyLayerState()` path as the engine's
   pairs, so there is still exactly one route from a layer choice to pixels.
+
+### 12.1 The constants table of contents — the grouping, without the split
+
+`config/constants.js` carries a generated table of contents at its head:
+63 blocks sorted into ten groups, each group with the one sentence that says
+what belongs in it. `tools/constants-toc.mjs` writes it; `--check` fails if a
+block is exported without landing in a group, and the pre-push hook runs it.
+
+**==> A SPLIT WAS PROPOSED, MEASURED, AND DECLINED — HERE IS THE MEASUREMENT SO
+NOBODY HAS TO TAKE IT ON FAITH. <==** The file looks like eight files' worth of
+settings and is not: **only 705 of its lines are code**, the other 77% being the
+reason attached to each number, which §12 requires and which moving between
+files does not reduce. `tools/module-graph.mjs` — §12's own test for whether a
+block belongs here — was run against every block, and **all 63 are read by the
+shipped app; zero are off-path.** So a split moves identical bytes into more
+files. It also costs a round trip: eight blocks reference each other
+(`FRESHNESS` and `SILENCE` derive from `ADVISORY_CADENCE`, `HOME` and `GEOCODE`
+from `ZOOM`, `IMAGERY` from `POLL`, `MODEL_TRACKS` from both model enums), so
+the parts need a shared base file beneath them, and that is an extra module
+WAVE — 100-300 ms on a phone on cell data, bought for nothing visible.
+
+Findability was the real complaint and the table of contents is what answers it.
+**NO LINE NUMBERS IN IT, deliberately** — `SPEC-INDEX.md` carries ranges because
+a spec section is prose you cannot search for, while a constant has a NAME that
+searching lands on exactly. Line numbers would rot on every edit and turn an
+ordinary comment change into a failed push, which is how a check teaches people
+to ignore it.
+
+The groups are a MAP, NOT A BOUNDARY, and each group's sentence is the admission
+test: a block that fits none of them either needs a new group or does not belong
+in this file at all.
+
+### 12.2 The relay mirrors — six facts written down twice
+
+A Pages Function runs in its own workerd runtime and cannot import
+`config/constants.js` (§3), so six facts are hand-copied across that wire: the
+model codes each `adeck` route keeps, the satellite endpoint/layer/version
+table, the two geocode limits, and four cache lifetimes. The routes have always
+said so in their own headers. **Nothing checked it until
+`tools/test-relay-mirrors.mjs`.**
+
+Every one of these drifts SILENTLY. Add a model to `MODEL_TRACKS.techs` and not
+to `KEEP_TECHS` and the app asks for guidance the relay already discarded: the
+request 200s, the row draws nothing, nothing errors. Repoint a bird in
+`SATELLITES` and not in `BIRDS` and that one satellite 400s while three keep
+working. Both are §5 silent failures, and no amount of "does the app work"
+testing finds them.
+
+The cache pairs carry a second hazard on top: **the app holds milliseconds and
+the edge holds seconds**, so the same interval is written in two units and a
+change to one is invisible in the other. Only the pairs the routes themselves
+claim to match are asserted; the remaining `FRESH_SECONDS` constants have no
+config counterpart and asserting an accidental equality would invent a contract.
+
+The suite reads the relay side by PARSING THE ROUTE SOURCE, not by importing it
+— importing a Pages Function module works today and stops the moment it touches
+a Workers global, and the string in the file is the contract. Because a parser
+that stops matching would return null on both sides and pass, the suite also
+asserts each extractor found something: **a check that reads nothing must report
+blind, not green.**
+
+Verified by mutation, seven ways: each mirror broken on the relay side, one
+broken on the config side, and the parser's expected form changed. All eight
+fail. This is the same rule `tools/test-kv-keys.mjs` and `tools/test-advisory.mjs`
+already run on: a copy nobody checks is how the two drift; a copy with a test
+that fails when they disagree is just a copy.
 
 ## 13. Inherited hard-won rules
 

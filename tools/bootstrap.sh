@@ -265,6 +265,24 @@ if ! node tools/type-scale-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking the constants table of contents is current...\n'
+if ! node tools/constants-toc.mjs --check; then
+  printf '\nA block was added, removed or renamed in config/constants.js without\n'
+  printf 'landing in a group. The table of contents at the head of that file is\n'
+  printf 'the only map of 63 blocks; a map missing the newest thing is worse than\n'
+  printf 'no map. Run: node tools/constants-toc.mjs\n'
+  fail=1
+fi
+
+printf 'pre-push: checking the app and the relay still agree...\n'
+if ! node tools/test-relay-mirrors.mjs; then
+  printf '\nSix facts are hand-copied into the Pages Functions because that runtime\n'
+  printf 'cannot import config/constants.js. When a copy drifts NOTHING ERRORS —\n'
+  printf 'the app asks for data the relay already threw away and the row draws\n'
+  printf 'nothing while looking healthy. Fix whichever side is wrong.\n'
+  fail=1
+fi
+
 printf 'pre-push: parsing every module as an ES module...\n'
 if ! node tools/check-syntax.mjs; then
   printf '\ncheck-syntax failed. A SyntaxError means the module never parses and\n'
@@ -297,7 +315,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + check-syntax + home-setup)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + home-setup)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

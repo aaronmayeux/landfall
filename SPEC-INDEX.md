@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 176 numbered headings.
+Covering 9 files, 178 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -86,15 +86,17 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2648-2671 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2672-2693 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1651-1652 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2160-2166 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2167-2173 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1651-1681 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1682-1716 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1717-1718 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2226-2232 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2233-2239 |
 | `16` | Screen architecture | `SPEC-UI.md` | 994-995 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2174 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2240 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1540-1708 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1709-1927 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2180 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2246 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -208,6 +210,6 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 63,648 | 17 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 140,975 | 9 |
-| `SPEC.md` | 142,489 | 12 |
+| `SPEC.md` | 147,007 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 
