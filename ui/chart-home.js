@@ -108,11 +108,12 @@ const AXIS_GAP = 12; // plot bottom to the axis labels' anchor
 const CAP_GAP = 62; // plot bottom to the first caption row
 const FOOT_H = 78; // plot bottom to the bottom of the SVG
 
-/** How far out the chart bothers to plot, as a multiple of the near ring.
- *  BEYOND THIS THE DETAIL THAT MATTERS IS CRUSHED: a five-day track running
- *  to 400 nm squashes a 30 nm closest pass into two pixels of the frame. The
- *  countdown carries the full horizon; this carries the approach. */
-const WINDOW_RINGS = 3;
+/* THE THREE NUMBERS THAT DECIDE THIS FRAME'S SHAPE — how far out it plots, how
+ * far back, and how much room a past pass gets — are `HOME_DASH.chartWindowRings`,
+ * `chartPastHours` and `chartPastPassMarginHours`. The first used to live here
+ * as a local `WINDOW_RINGS`; §49.8 put all three in `config/constants.js`,
+ * where §12 says a behavioural number belongs and where the other two would
+ * otherwise have had to be read in a different file from the first. */
 
 const esc = (t) =>
   String(t).replace(/[&<>"']/g, (c) =>
@@ -170,7 +171,7 @@ export function homeChart(dash, system) {
    * Cut at the last sample inside WINDOW_RINGS, but never shorter than the
    * closest approach plus a little, or the chart would stop before the point
    * of the whole screen. */
-  const limit = HOME_DASH.nearRingNm * WINDOW_RINGS;
+  const limit = HOME_DASH.nearRingNm * HOME_DASH.chartWindowRings;
   let end = 0;
   for (let i = 0; i < co.samples.length; i++) if (co.samples[i].nm <= limit) end = i;
   const cpaH = dash.approach?.time
@@ -179,12 +180,44 @@ export function homeChart(dash, system) {
   while (end + 1 < co.samples.length && co.samples[end].h < cpaH + 6) end++;
   const S = co.samples.slice(0, Math.max(end + 1, 2));
 
-  const hMin = Math.min(0, S[0].h);
+  /* --- and the window BEHIND the present (§49.8) ---------------------------
+   * The `now` line was pinned to the left edge only because there was no data
+   * behind it. The observed track reaches this file now, plots in the same
+   * hours-from-now the forecast does, and lands to the left with no new
+   * machinery — so the existing marker becomes meaningful for free.
+   *
+   * ==> TWO CUTS, AND BOTH ARE NEEDED. <== The first is time: back to
+   * `chartPastHours`, or to a past closest pass plus `chartPastPassMarginHours`
+   * if that is older, so the one moment the screen is about is never off the
+   * left edge. The second is DISTANCE, the same `limit` the forecast side is
+   * cut at, and without it the chart rescales itself: a storm that was 800 nm
+   * away yesterday sets `nmMax` to 800 and flattens today's approach into the
+   * bottom two pixels of the frame. Walking back only while the storm was
+   * inside the plot's own distance window keeps the vertical axis meaning what
+   * it meant before, which is what makes two screenshots an hour apart
+   * comparable. */
+  let backH = HOME_DASH.chartPastHours;
+  const passedH = dash.passed?.time
+    ? (Date.parse(dash.passed.time) - co.now) / 3_600_000
+    : null;
+  if (Number.isFinite(passedH) && passedH < 0) {
+    backH = Math.max(backH, -passedH + HOME_DASH.chartPastPassMarginHours);
+  }
+  const P = [];
+  for (const p of dash.pastSamples || []) {
+    if (!Number.isFinite(p.h) || !Number.isFinite(p.nm)) continue;
+    if (p.h < -backH || p.h > 0) continue;
+    if (p.nm > limit) { P.length = 0; continue; }
+    P.push(p);
+  }
+
+  const hMin = Math.min(0, S[0].h, P.length ? P[0].h : 0);
   const hMax = S[S.length - 1].h;
   if (!(hMax > hMin)) return '';
 
   let nmMax = 0;
   for (const s of S) nmMax = Math.max(nmMax, s.nm);
+  for (const p of P) nmMax = Math.max(nmMax, p.nm);
   nmMax = Math.max(nmMax, 1);
 
   const X = (h) => PAD_L + ((W - PAD_L - PAD_R) * (h - hMin)) / (hMax - hMin);
@@ -322,7 +355,13 @@ export function homeChart(dash, system) {
   let shadow = '';
   const early = co.earliest?.[34];
   if (early && co.published.includes(34)) {
-    const lit = S.filter((s) => s.gapEarly?.[34] != null);
+    /* ==> AND NEVER LEFT OF `now` (§49.2). <== This dashed line is NHC's track
+     * error applied to their wind radii — a statement about what a forecast
+     * might be wrong by. Left of the present there is no forecast to be wrong,
+     * only positions the storm was measured at, and a hedge drawn over a
+     * measurement is a fabricated uncertainty. The same rule that keeps the ±
+     * band off `passed`, applied to the picture. */
+    const lit = S.filter((s) => s.h >= 0 && s.gapEarly?.[34] != null);
     if (lit.length > 1) {
       const d = lit
         .map((s, i) => `${i ? 'L' : 'M'}${X(s.h).toFixed(1)},${Y(Math.max(0, s.gapEarly[34])).toFixed(1)}`)
@@ -333,8 +372,27 @@ export function homeChart(dash, system) {
     }
   }
 
-  /* --- the centre track ---------------------------------------------------- */
+  /* --- the centre track ----------------------------------------------------
+   * ==> SOLID FOR WHAT HAPPENED, DOTTED FOR WHAT IS FORECAST (§49.8). <== The
+   * same grammar §46.2 uses for observed-versus-forecast intensity, so the app
+   * has ONE visual vocabulary for that distinction rather than two. It changes
+   * every chart, not only a departed storm's: a track that is entirely ahead
+   * of the clock is entirely a forecast and was being drawn as though it were
+   * a measurement.
+   *
+   * THE SEAM IS THE CORRIDOR'S FIRST SAMPLE, NOT THE STROKE OF MIDNIGHT, and
+   * that is up to three hours behind `now` — the advisory position is what the
+   * corridor is walked from, and this file already says so at the `now` line
+   * below. So a short dotted sliver can sit just left of `now`. Splitting the
+   * polyline at exactly h=0 would mean interpolating a position nobody
+   * published, to move a line style by three hours. */
   const eye = S.map((s, i) => `${i ? 'L' : 'M'}${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`).join(' ');
+  /* Joined to the forecast's first sample so the two read as one track with a
+   * change of certainty, not as two lines with a gap at the present. */
+  const observed = P.length
+    ? P.map((p, i) => `${i ? 'L' : 'M'}${X(p.h).toFixed(1)},${Y(p.nm).toFixed(1)}`).join(' ') +
+      ` L${X(S[0].h).toFixed(1)},${Y(S[0].nm).toFixed(1)}`
+    : '';
 
   /* --- the distance grid --------------------------------------------------
    *
@@ -543,8 +601,12 @@ export function homeChart(dash, system) {
     ticks.join('') +
     bands.join('') +
     shadow +
+    (observed
+      ? `<path d="${observed}" fill="none" stroke="var(--text-primary)" stroke-width="2" ` +
+        `stroke-linejoin="round" stroke-linecap="round"/>`
+      : '') +
     `<path d="${eye}" fill="none" stroke="var(--text-primary)" stroke-width="2" ` +
-    `stroke-linejoin="round" stroke-linecap="round"/>` +
+    `stroke-dasharray="5 3" stroke-linejoin="round" stroke-linecap="round"/>` +
     cpa +
     nowLine +
     railSvg.join('') +

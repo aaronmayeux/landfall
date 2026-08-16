@@ -1011,9 +1011,10 @@ forecasting. It is wrong for reporting. Underneath it, `formatUntil()` in
 the "less than two minutes ahead" case and returned `'now'`, so every past moment
 anywhere in the app rendered as `now`. That half is fixed and now lives in
 `SPEC-UI.md` §49.4; the observed track it needs reaches the dashboard as
-`SPEC-DATA.md` §49.3; and the pass, the peak and the rungs that describe the
-past are built as §49.5, §49.6 and §49.14. The rail, the chart and the wind
-corridor's past arm — §49.7 through §49.9 — do not exist yet.
+`SPEC-DATA.md` §49.3; the pass, the peak and the rungs that describe the past
+are built as §49.5, §49.6 and §49.14; and the rail and the chart are built as
+§49.7 and §49.8. The wind corridor's past arm — §49.9 — does not exist yet, and
+it is the safety-adjacent one.
 
 ### 49.2 The rule this section adds
 
@@ -1141,39 +1142,85 @@ test asserts against the report, so the app has to agree with NHC rather than
 with itself. Rebuild the same dashboard with no observed track and the peak
 collapses to **30 kt**, which is what the old code saw.
 
-**THE PEAK MILESTONE IS STILL FORECAST-ONLY.** `classMilestones` gates its
-`peak` row on `when === 'forecast'` and a time ahead of the clock, so a past
-peak produces no rail row — exactly as `when === 'now'` already did. §49.7 opens
-that gate; nothing regressed here.
+**THE PEAK MILESTONE'S GATE IS OPEN BEHIND THE CLOCK.** `classMilestones` gated
+its `peak` row on `when === 'forecast'` and a time ahead of the clock, so a past
+peak produced no rail row — exactly as `when === 'now'` already did. §49.7's
+pass opened it for `'past'`. `'now'` stays shut, and that subsection says why.
 
 ### 49.7 The Timeline rail keeps the past
 
+**BUILT.** `data/home-dashboard.js` produces the rows; `ui/countdown-home.js`
+chooses their words; `ui/home.css` draws the divider and dims what is behind it.
+
 **The past is not dropped.** Three reasons, in order of weight:
 
-1. **Dropping it deletes the section.** `countdownHtml` bails with
-   `if (rows.length <= 1) return ''`. A fully-passed storm has no future events,
-   so the whole Timeline silently vanishes — the §5 failure, on the screen about
-   the storm that just went by the house.
+1. **Dropping it deleted the section.** `countdownHtml` bailed on
+   `rows.length <= 1`. A fully-passed storm has no future events, so the whole
+   Timeline silently vanished — the §5 failure, on the screen about the storm
+   that just went by the house.
 2. **The rail is the accessible form of the chart.** A screen reader cannot
    explore an SVG. If the past is not in the rail it does not exist for that
    reader.
 3. **It is nearly free.** The rail carries *events*, not track points — class
    changes, the pass, wind arriving and lifting. A six-day storm has four or
    five behind it, not thirty. Every row already carries an absolute `at` and
-   the rail already sorts on it, so keeping the past is literally not filtering.
+   the rail already sorts on it.
+
+**THE PAST ROWS ARE MADE, NOT KEPT, AND THAT IS THE PART THE PLAN HAD WRONG.**
+The rail was not filtering the past out; nothing was building it. The class
+walk ran over the forecast curve only and gated on `ms >= now`, and the peak
+row gated on `when === 'forecast'`. So the work is in `data/home-dashboard.js`,
+which the pass table (§49.13) did not list.
+
+- **One walk, two callers.** `walkClasses(points, baseline, keep, when)` runs
+  over the forecast curve from the storm's current class, and over the observed
+  track from nothing — a `null` baseline means the first fix sets the class and
+  emits no crossing of its own, which is right for a history whose first point
+  is the storm's first published position and wrong for a forecast that
+  continues from what the storm is now. Same dedupe, same two-steps-at-once rule.
+- **Every row carries `when`**, `'forecast'` or `'past'`, stamped where the
+  crossing was found. The rail picks its TENSE from that field rather than
+  comparing `at` against `now`, so the words and the filter that produced the
+  row cannot disagree — the §49.1 failure, where an honest past lead time sat
+  beside a future-tense verb.
+- **The peak gate is open behind the clock.** `when === 'past'` now emits a
+  row. `when === 'now'` stays shut: it means the storm is at its strongest
+  right now, so the row would land on the divider and repeat what the strength
+  strip says two inches higher.
+- **The forecast pass row is suppressed once it is not ahead of the clock.**
+  Not in the original plan, and it is the same bug pass 3 fixed on the
+  headline: `closestApproach` walks forward from the current position, so a
+  leaving storm's "closest pass" is where it is standing. On Ida's Advisory 19
+  the rail printed *Closest pass — 163 mi NNE of you, now* two rows under
+  *Closest it came — 13 mi ENE of you, 17 hrs ago* — one fact in the other's
+  words, which §49.2 forbids. Kept whole for a storm with no observed track,
+  where there is no truer row to fall back to.
 
 **A `now` row, not a circled node.** The rail's dots are already coloured by the
 storm's category at that moment (`categoryColor`); ringing one to mean "you are
-here" overloads a signal that already means something else, and the node you
-would ring changes identity every few hours as time passes. Instead:
+here" overloads a signal that already means something else.
 
-- **One row at the current moment**, sorted in by time like every other row,
-  because it has a time by definition. A thin rule and a hollow node, no
-  category colour, so it reads as a divider and not as an event.
-- **Rows above it are past tense and dimmed**; rows below are the countdown that
-  is there today.
-- Read aloud it becomes one ordered sentence: *…became a hurricane, 3 days ago …
-  closest pass, 6 hrs ago … now … was strongest, 2 days ago…*
+**AND IT IS THE ROW THAT WAS ALREADY THERE.** The plan asked for a divider —
+a thin rule, a hollow node, no category colour, sorted in by time. The
+live-distance row is already exactly that: it sits at the clock, its lead
+already reads `now`, and it carries no tone. So it *becomes* the divider rather
+than gaining a bare one beside it, which would have put two rows at the same
+minute on a list whose whole job is order. A dashboard with no live distance —
+no usable position published — gets a bare divider instead, so the reader can
+still see which side of the list they are standing on.
+
+- **Rows above it are dimmed** by `[data-when="past"]`, at 0.62 opacity.
+  Opacity rather than a second colour set: every row's colour means something
+  (the threshold ramp on the wind rows, Saffir-Simpson on the pass and the
+  class changes), and recolouring the past would either throw that away or
+  invent a second ramp. Dimming lowers the voice without changing the word.
+- **One list, not two.** Past is an attribute on the `<li>`, not a separate
+  section — a screen reader gets one ordered sentence: *…became a hurricane,
+  3 days ago … closest it came, 17 hrs ago … now … weakens to a depression,
+  in 9 hrs.*
+- **The section's gate counts EVENTS, not rows.** `rows.length <= 1` counted
+  the divider as content, so a single event on a dashboard with no live
+  distance was swallowed.
 
 **THIS IS A NAMED EXCEPTION TO THE RAIL'S OWN RULE.** `ui/countdown-home.js`
 states that the rail carries events only and that anything without a time does
@@ -1182,26 +1229,65 @@ moment. The exception is written down here so it does not later look like drift.
 
 ### 49.8 The chart's left half
 
-`ui/chart-home.js` already draws a dotted vertical at `X(0)` labelled `now`,
-already tests whether it falls inside the frame (`nowShown`), and already plots
-in hours-from-now — so negative hours land to the left with no new machinery.
-The line is pinned to the left edge today only because there is no data behind
-it.
+**BUILT.** `ui/chart-home.js`, fed by `dash.pastSamples`.
 
-- **Extend the domain backwards** and the existing `now` line slides into the
-  frame and becomes meaningful for free. No new marker.
-- **How far back:** to the past closest pass plus a margin, or a fixed lookback,
-  **whichever is longer** — so the pass is never off-frame, and a week-old storm
-  does not squash today into two pixels. The constant goes in `config/` beside
-  `WINDOW_RINGS`, defined before the logic.
-- **Solid left of `now`, dotted right of it**, matching §46.2's house style for
-  observed-versus-forecast so the app has one visual grammar for the distinction
-  rather than two.
-- **The uncertainty band is drawn only right of `now`.** Per §49.2.
-- The closest-pass stamp's collision logic against the `now` label already
-  handles the two verticals landing on top of each other and gets a second
-  header row for it. That case now happens on every storm mid-pass rather than
-  one in a hundred, so it wants a look on glass.
+`ui/chart-home.js` already drew a dotted vertical at `X(0)` labelled `now`,
+already tested whether it fell inside the frame (`nowShown`), and already
+plotted in hours-from-now — so negative hours land to the left with no new
+machinery. The line was pinned to the left edge only because there was no data
+behind it.
+
+**THE SERIES IS COMPUTED IN `data/home-dashboard.js`, NOT HERE.** `pastSamples`
+is the observed track as hours-from-now against distance-from-home — the same
+two fields the corridor's samples carry, so one `X`/`Y` pair plots both. The
+chart imports `config/` and `lib/` and does no arithmetic of its own, which is
+the rule that keeps its figures testable. It is deliberately not part of the
+corridor: the corridor answers what the WIND does, and the past wind field is
+§49.9's pass. This is the centre only, which the observed track always carries.
+
+**HOW FAR BACK — TWO CUTS, AND BOTH ARE LOAD-BEARING.**
+
+- **Time.** `HOME_DASH.chartPastHours` (24) is a floor, widened to a past
+  closest pass plus `HOME_DASH.chartPastPassMarginHours` (6) when the pass is
+  older than that — so the moment the screen is about is never off the left
+  edge, with one synoptic step of run-up visible before it.
+- **Distance.** The same `limit` the forecast side is cut at
+  (`nearRingNm × chartWindowRings`). Without it the picture rescales itself: a
+  storm 800 nm away yesterday sets `nmMax` to 800 and flattens today's approach
+  into the bottom two pixels. The walk keeps the most recent contiguous run
+  inside the window, so the vertical axis means what it meant before and two
+  screenshots an hour apart stay comparable.
+
+**THE THREE NUMBERS LIVE IN `config/constants.js`.** `chartWindowRings` used to
+be a local `WINDOW_RINGS` in the chart; it moved, because the three of them
+together decide the shape of one picture and reading them in two files is how
+they drift.
+
+**Solid left of `now`, dotted right of it**, matching §46.2's house style for
+observed-versus-forecast so the app has one visual grammar for the distinction
+rather than two. **This changes every chart, not only a departed storm's:** a
+track entirely ahead of the clock is entirely a forecast and was being drawn as
+though it were a measurement. The seam is the corridor's first sample, which is
+the advisory position and up to three hours behind `now`, so a short dotted
+sliver can sit just left of the line — splitting the polyline at exactly h=0
+would mean interpolating a position nobody published to move a line style by
+three hours.
+
+**The uncertainty band is drawn only right of `now`.** Per §49.2. The
+earliest-arrival line is NHC's track error applied to their wind radii; left of
+the present there is no forecast to be wrong, only positions the storm was
+measured at, and a hedge over a measurement is a fabricated uncertainty.
+
+The closest-pass stamp's collision logic against the `now` label already
+handles the two verticals landing on top of each other and gets a second header
+row for it. That case now happens on every storm mid-pass rather than one in a
+hundred, so it wants a look on glass.
+
+**`[VERIFY]` — A FULLY-PASSED STORM STILL DRAWS NO CHART, AND THAT IS NOT THIS
+PASS.** `homeChart` returns `''` without a corridor, and a storm late in its
+life stops publishing wind radii — Ida's Advisory 19 has none. So the rail has
+her whole story and the picture beside it is absent. Pre-existing, orthogonal to
+the domain work, and the fix belongs with §49.9's reading of the past wind field.
 
 ### 49.9 The wind that already reached you
 
@@ -1317,15 +1403,21 @@ sits at a moment where past and future happen to agree.
 Three passes plus one piece of housekeeping, each shippable on its own and each
 leaving the app more correct than it found it. They keep the numbers they were
 given, because those numbers are how they are referred to; pass 1 landed as
-`SPEC-UI.md` §49.4, pass 2 as `SPEC-DATA.md` §49.3, and pass 3 as §49.5, §49.6
-and §49.14 above and below.
+`SPEC-UI.md` §49.4, pass 2 as `SPEC-DATA.md` §49.3, pass 3 as §49.5, §49.6 and
+§49.14, and pass 4 as §49.7 and §49.8 above.
 
 | Pass | Scope | Files |
 |---|---|---|
 | ~~**3. The pass and the peak, backwards**~~ | **DONE.** `closestApproach` gained a sibling `closestPassed`; the peak spans the whole life; `atClosest` split; the headline, the strength block and the chip got their tenses. Ida fixture landed. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home-ida.mjs` |
-| **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. The peak milestone's gate opens here. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |
+| ~~**4. The rail and the chart**~~ | **DONE.** Past class crossings and the past peak are BUILT (they were never being filtered out — nothing made them); every milestone carries its own tense; the live-distance row became the `now` divider; past rows dimmed; the forecast pass row suppressed once it is no longer ahead; chart domain extended left with two cuts; solid/dotted split; hedge suppressed left of `now`. | `data/home-dashboard.js`, `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css`, `tools/test-home-ida.mjs` |
 | **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
 | **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
+
+**PASS 4's FILE LIST WAS WRONG WHEN IT WAS WRITTEN, AND THE REASON IS WORTH
+KEEPING.** It named the two views, the constants and the stylesheet, on the
+premise that the rail was dropping past rows. It was not — nothing was
+producing them. A plan that describes a filter where the real problem is an
+absence points the next session at the wrong file.
 
 ### 49.14 The rungs that describe the past
 

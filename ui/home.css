@@ -995,10 +995,44 @@
   box-shadow: 0 0 var(--dot-glow-blur)
               color-mix(in srgb, var(--rail-dot) var(--dot-glow-hedge), transparent);
 }
+/* ==> THE CURRENT MOMENT IS A DIVIDER, NOT AN EVENT (§49.7). <== The rail
+ * carries the past above it and the countdown below it, and the reader has to
+ * be able to find themselves on the list without counting lead times.
+ *
+ * HOLLOW, AND WITHOUT THE GLOW EVERY OTHER NODE CAN EARN. The dots on this
+ * list mean "something happens here" and are coloured by what it is; `now` is
+ * not a thing that happens, it is where the reader is standing. It used to be
+ * a filled node in the secondary text colour, which read as one more event and
+ * a slightly quieter one.
+ *
+ * A hairline is what makes it a DIVIDER rather than merely a quiet row. It is
+ * drawn on the row's own `::before` box using an inset shadow-free border-top
+ * — no extra element, because the node and the thread already own
+ * `::before`/`::after` and a third pseudo-element does not exist. */
 .home-rail li[data-key="now"]::before {
-  background: var(--text-secondary);
+  background: none;
   border-color: var(--text-secondary);
 }
+.home-rail li[data-key="now"] {
+  border-top: 1px solid var(--glass-border);
+  padding-top: var(--space-snug);
+  margin-top: var(--space-snug);
+}
+
+/* ==> WHAT ALREADY HAPPENED IS DIMMED, NOT HIDDEN. <== Three reasons, in the
+ * order §49.7 gives them: dropping the past deleted the whole section on a
+ * storm that had gone by, the rail is the accessible form of the chart so
+ * anything missing here does not exist for a screen reader, and it costs four
+ * or five rows on a six-day storm rather than thirty.
+ *
+ * ==> OPACITY, NOT A DIFFERENT COLOUR SET. <== Every row on this list carries
+ * a meaning in its colour — the threshold ramp on the wind rows, Saffir-Simpson
+ * on the pass and the class changes — and recolouring the past would either
+ * throw that away or invent a second ramp for it. Dimming keeps the colour
+ * saying what it says and only lowers its voice. It is deliberately mild:
+ * §5's rule is that stale beats blank, and the past here is not stale, it is
+ * finished, which is a thing worth reading. */
+.home-rail li[data-when="past"] { opacity: 0.62; }
 /* Size and line box come from the rail's own custom properties, because the
  * node's vertical offset is computed from them. Changing the type here without
  * changing them there would silently uncentre every node on the list. */

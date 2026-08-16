@@ -1657,6 +1657,43 @@ export const HOME_DASH = Object.freeze({
    *  there, in the sentence that is about how strong it gets. */
   classMilestones: Object.freeze([1, 2, 4]),
 
+  /** How far out the chart bothers to plot, as a MULTIPLE of the near ring.
+   *
+   *  BEYOND THIS THE DETAIL THAT MATTERS IS CRUSHED: a five-day track running
+   *  to 400 nm squashes a 30 nm closest pass into two pixels of the frame. The
+   *  countdown rail carries the full horizon; the chart carries the approach.
+   *
+   *  ==> IT LIVED IN `ui/chart-home.js` AS A LOCAL `WINDOW_RINGS`. <== §49.8
+   *  said the new past-window number goes "beside WINDOW_RINGS" in `config/`,
+   *  which is where the spec assumed it already was and where SPEC §12 says
+   *  every behavioural number belongs. It is here now, with the two below it,
+   *  because the three of them together decide the shape of one picture and
+   *  reading them in two files is how they drift. */
+  chartWindowRings: 3,
+
+  /** How far BACK the chart plots, HOURS, when nothing else forces it wider.
+   *
+   *  The chart used to start at the present because there was no data behind
+   *  it (§49.8). Now that the observed track reaches it, "how far back" is a
+   *  real editorial choice: too little and a storm that went by an hour ago
+   *  still looks like it appeared from nowhere; too much and today is two
+   *  pixels wide.
+   *
+   *  TWENTY-FOUR HOURS, because that is roughly the span a reader can still
+   *  remember weather for — yesterday's wind is a thing that happened to them,
+   *  and the day before is history. It is a FLOOR, not a ceiling: a pass older
+   *  than this widens the window rather than falling off the left edge. */
+  chartPastHours: 24,
+
+  /** How much frame to leave to the LEFT of a closest pass that has already
+   *  happened, HOURS.
+   *
+   *  A pass sitting exactly on the frame edge reads as the chart having been
+   *  cut off mid-event rather than as the moment the whole screen is about.
+   *  Six hours is one synoptic step — one published fix of run-up — so the
+   *  approach into the pass is always visible, not just the pass itself. */
+  chartPastPassMarginHours: 6,
+
   /** How close a class milestone has to be to the forecast peak, HOURS,
    *  before the peak row is folded into it rather than printed beside it.
    *

@@ -1375,6 +1375,284 @@ section('the pass and the peak, backwards (§49)');
   clearHome();
 }
 
+/* =========================================================================
+ * 10. THE RAIL AND THE CHART KEEP THE PAST (§49.7, §49.8)
+ *
+ * ===========================================================================
+ * THE FAILURE THIS SECTION IS THE PROOF AGAINST
+ * ===========================================================================
+ *
+ * Pass 3 gave the headline and the strength strip a real past. The rail and
+ * the chart were still forward-only, and on a storm that had gone by that is
+ * not a cosmetic gap — it is §5:
+ *
+ *   - `countdownHtml` bailed on `rows.length <= 1`. A fully-passed storm has
+ *     no future events, so the WHOLE TIMELINE SECTION silently vanished from
+ *     the screen about the storm that just went over the house.
+ *   - The rail is the accessible form of the chart. Anything not in it does
+ *     not exist for a screen reader.
+ *   - `closestApproach` walks forward from the current position, so a leaving
+ *     storm's "closest pass" is where it is standing — and it printed as a row
+ *     saying "Closest pass — 163 mi NNE of you, now", two rows under the true
+ *     "Closest it came — 13 mi ENE of you, 17 hrs ago".
+ *
+ * Ida's Advisory 19 has all three: she is 141 nm away, everything about this
+ * house is behind the clock, and NHC still publishes a forecast track.
+ *
+ * EVERY FIGURE BELOW COMES OUT OF THE FIXTURES. The times are the synoptic
+ * hours in NHC's own best track, read through the replay route, not typed.
+ * ====================================================================== */
+section('the rail and the chart keep the past (§49.7, §49.8)');
+
+{
+  const { normalizePastPoints } = await import('../lib/track-point.js');
+  const { countdownHtml } = await import('../ui/countdown-home.js');
+  const { HOME_DASH } = await import('../config/constants.js');
+
+  const build = async (nnn) => {
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    const iso = new Date(a.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const raw = JSON.parse(
+      await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    );
+    const past = normalizePastPoints(raw.features);
+    const dash = buildHomeDashboard({
+      storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+      forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past, radii: a.radii, home: HOME, now: a.issuedMs, trackState: 'ok',
+    });
+    return { a, past, dash, rail: countdownHtml(dash, () => 'imperial', (i, t) => `<h3>${t}</h3>`) };
+  };
+
+  /** Every `<li>` on the rail, in document order, with the three things a
+   *  reader sees and the two attributes the stylesheet reads. Parsed rather
+   *  than grepped, because ORDER is half of what this section is checking and
+   *  a regex over the whole string cannot see it. */
+  const railRows = (html) =>
+    (html.match(/<li[\s\S]*?<\/li>/g) || []).map((li) => ({
+      key: li.match(/data-key="([^"]*)"/)?.[1] ?? '',
+      past: /data-when="past"/.test(li),
+      text: [...li.matchAll(/<div class="home-rail-(?:lead|ev|det)">([^<]*)<\/div>/g)]
+        .map((m) => m[1]).join(' | '),
+    }));
+
+  const { dash: d19, rail: rail19 } = await build('019');
+  const { dash: d17, rail: rail17 } = await build('017');
+
+  /* --- the section exists at all, which is the §5 half -------------------- */
+
+  ok(rail19 !== '', 'a storm entirely in the past still has a Timeline section');
+  const rows19 = railRows(rail19);
+  ok(rows19.length >= 8,
+     `and it is the storm's whole story, not one row (got ${rows19.length})`);
+
+  /* --- the past is on it, in the past tense ------------------------------- */
+
+  const text19 = rows19.map((r) => r.text).join('\n');
+  ok(/Became a hurricane/.test(text19),
+     'the rail says she became a hurricane, which is a fact it had nowhere to put');
+  ok(!/Becomes a hurricane/.test(text19),
+     'and it is the PAST tense — a real past lead time beside a future verb is the §49.1 bug');
+  ok(/Became a major hurricane/.test(text19), 'the major-hurricane step is on it too');
+  ok(/Weakened to/.test(text19) && !/Weakens to/.test(text19),
+     'and so is the way back down, also in the past tense');
+  ok(/It was at its strongest — 150 mph/.test(text19),
+     'the 130 kt peak has a row now — the gate §49.6 left shut for §49.7 to open');
+  ok(/Closest it came — 13 mi/.test(text19),
+     'the pass that actually happened is a row, at the distance it actually happened');
+
+  /* --- and the forecast pass does not argue with it (§49.2) --------------- */
+
+  ok(!/Closest pass —/.test(text19),
+     'the forward-walked pass is NOT also on the list, pinned to now, under nearly the same words');
+  ok(!/163 mi NNE of you \| Mon/.test(text19),
+     'so nothing on the rail offers her current distance as a closest approach');
+  /* Mid-pass, both are legitimate and both must be there: the pass that
+   * happened is behind the clock, the wind she is still under is ahead of it. */
+  const text17 = railRows(rail17).map((r) => r.text).join('\n');
+  ok(/Closest it came — 13 mi/.test(text17),
+     'mid-pass the observed pass is still stated at its real distance');
+  ok(/Weakens to a depression/.test(text17),
+     'and the forecast half of the same rail is still in the future tense');
+
+  /* --- the divider, and which side of it every row is on ------------------ */
+
+  const div19 = rows19.findIndex((r) => r.key === 'now');
+  ok(div19 > 0, 'there is exactly one row at the current moment and it is not the first');
+  ok(rows19.filter((r) => r.key === 'now').length === 1,
+     'exactly one — the live-distance row IS the divider, not a second row beside it');
+  ok(rows19.every((r, i) => (i < div19) === r.past),
+     'every row above it is marked past and none below it is');
+  ok(rows19.slice(0, div19).length === div19 && div19 === rows19.length - 1,
+     'on a fully-passed storm the divider is the last row, because nothing is forecast');
+
+  /* ==> THE DIVIDER SURVIVES A DASHBOARD WITH NO LIVE DISTANCE. <== The row
+   * that carries it is the live-distance row, and `distance` is null when the
+   * source published no usable position. The old guard was `rows.length <= 1`,
+   * which counted the divider as content and therefore deleted a real event
+   * that happened to be the only one; the guard counts EVENTS now, so the
+   * section renders and pushes a bare divider to sit them against. Synthetic,
+   * because no Ida advisory omits a position — `countdownHtml` computes
+   * nothing, so handing it a doctored dashboard is exactly what it is for. */
+  {
+    const noDistance = countdownHtml(
+      { ...d19, distance: null }, () => 'imperial', (i, t) => `<h3>${t}</h3>`
+    );
+    const rows = railRows(noDistance);
+    ok(noDistance !== '', 'a dashboard with no live distance still renders its Timeline');
+    ok(rows.filter((r) => r.key === 'now').length === 1,
+       'and still has exactly one divider, so the reader can see where they are standing');
+    ok(rows.some((r) => /Closest it came/.test(r.text)),
+       'with the events it did have above it');
+
+    /* AND THE ONE CASE THE TWO GUARDS ACTUALLY DISAGREE ON: no distance, and
+     * exactly one event. `rows.length <= 1` counts that event as the divider
+     * and deletes the section; counting events keeps it. */
+    const lonely = countdownHtml(
+      {
+        ...d19, distance: null, approach: null, passed: null, nearRing: null,
+        milestones: d19.milestones.slice(0, 1),
+      },
+      () => 'imperial', (i, t) => `<h3>${t}</h3>`
+    );
+    ok(railRows(lonely).some((r) => /Became a tropical storm/.test(r.text)),
+       'a single event with no live distance is a Timeline, not a row to be swallowed');
+  }
+
+  /* --- the chart's left half ---------------------------------------------- */
+
+  const svg17 = homeChart(d17, 'imperial');
+  ok(/stroke-dasharray="5 3"/.test(svg17),
+     'the forecast track is dotted (§46.2\'s grammar for observed vs forecast)');
+  ok(/stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/.test(svg17),
+     'and the observed track beside it is solid');
+  ok(/>now</.test(svg17), 'the `now` marker is inside the frame rather than pinned to the edge');
+
+  /* THE AXIS IS THE PROOF THE DOMAIN MOVED. Its first label is the left edge
+   * of the plot, and on Advisory 17 that has to be BEFORE the advisory. */
+  const firstTick = (svg17.match(/rotate\(-38\)" font-size="8" text-anchor="end">([^<]*)</) || [])[1];
+  ok(/Sun/.test(firstTick),
+     `the chart starts on Sunday, before Monday's advisory (got ${firstTick})`);
+
+  /* --- and the picture is not rescaled by where she used to be ------------- */
+
+  const limit = HOME_DASH.nearRingNm * HOME_DASH.chartWindowRings;
+  const { nmPerDisplayUnit } = await import('../lib/units.js');
+  const gridNm = (svg) =>
+    [...svg.matchAll(/text-anchor="end">([0-9,]+) mi</g)]
+      .map((m) => Number(m[1].replace(/,/g, '')) * nmPerDisplayUnit('imperial'));
+
+  const grid17 = gridNm(svg17);
+  ok(grid17.length && Math.max(...grid17) < limit,
+     `the distance grid tops out inside the plot window (${
+       grid17.map((n) => n.toFixed(0)).join(', ')} nm against ${limit.toFixed(0)})`);
+
+  /* ==> THE DISTANCE CUT IS SYNTHESISED, AND THAT IS STATED RATHER THAN
+   * HIDDEN. <== Ida's own history does not exercise it: inside the 24-hour
+   * lookback her furthest published fix is 129 nm out, well under the 261 nm
+   * plot window, and the first fix that clears it (279 nm) is 33 hours back
+   * and already outside the lookback on time alone.
+   *
+   * A slower storm reaches it easily, and what happens without the cut is not
+   * cosmetic: `nmMax` takes the far value, the vertical axis rescales, and the
+   * entire approach — the point of the picture — flattens into the bottom of
+   * the frame. So the case is CONSTRUCTED, on Ida's own dashboard, by putting
+   * one 900 nm fix inside the lookback. */
+  {
+    const far = {
+      ...d17,
+      pastSamples: [
+        { h: -20, nm: 900, time: '2021-08-29T13:00:00.000Z' },
+        ...(d17.pastSamples || []).filter((p) => p.h >= -18),
+      ],
+    };
+    const gridFar = gridNm(homeChart(far, 'imperial'));
+    ok(gridFar.length && Math.max(...gridFar) < limit,
+       `a fix 900 nm out inside the lookback does not rescale the frame (${
+         gridFar.map((n) => n.toFixed(0)).join(', ')} nm)`);
+    ok(gridFar.join() === grid17.join(),
+       'the grid is the one it would have had anyway — the far leg is cut, not squeezed in');
+  }
+
+  /* --- how far back, when a pass is older than the floor -------------------
+   * ==> SYNTHETIC, AND IDA CANNOT DO IT. <== Her pass at Advisory 17 is five
+   * hours old, inside the 24-hour floor, so the rule that widens the window to
+   * hold an OLDER pass never fires on her. Without it a pass two days back
+   * falls off the left edge of the picture it is the subject of.
+   *
+   * Counted by vertices rather than by reading the axis, because the axis
+   * labels are locale-formatted and the vertex count is exactly the question:
+   * how many published fixes made it into the frame. */
+  {
+    const H = 3_600_000;
+    const older = {
+      ...d17,
+      passed: { ...d17.passed, time: new Date(d17.now - 40 * H).toISOString() },
+      pastSamples: Array.from({ length: 8 }, (_, i) => ({
+        h: -45 + i * 6,
+        nm: 120 - i * 12,
+        time: new Date(d17.now + (-45 + i * 6) * H).toISOString(),
+      })),
+    };
+    const path = homeChart(older, 'imperial')
+      .match(/<path d="([^"]*)" fill="none" stroke="var\(--text-primary\)" stroke-width="2" stroke-linejoin/)?.[1] || '';
+    const verts = (path.match(/[ML]/g) || []).length;
+    ok(verts >= 8,
+       `a pass 40 hrs back pulls the whole run-up into frame (got ${verts} vertices, want the 7 fixes plus the join)`);
+  }
+
+  /* --- the uncertainty hedge never covers a measurement (§49.2) ------------
+   * ALSO SYNTHETIC, AND FOR THE SAME KIND OF REASON. Ida's fixtures put the
+   * corridor's first sample at exactly `now`, so there is no left-of-now
+   * forecast sample for the filter to drop. A live advisory is up to three
+   * hours old and routinely has one — this file's own `now` comment says so —
+   * which is the case built here.
+   *
+   * ON ADVISORY 12, NOT 17, AND THAT IS MEASURED RATHER THAN PREFERRED.
+   * Advisory 17 lights ONE sample of the earliest-arrival series — she is
+   * already over the house and the hedge has almost nothing left to say — and
+   * the chart needs two to draw a line at all. Twelve lights 37. */
+  {
+    const { dash: d12h } = await build('012');
+    const s = d12h.corridor.samples;
+    const shifted = {
+      ...d12h,
+      corridor: { ...d12h.corridor, samples: [{ ...s[0], h: -3 }, ...s.slice(1)] },
+    };
+    const svg = homeChart(shifted, 'imperial');
+    const shadow = svg.match(/<path d="([^"]*)" fill="none" stroke="var\(--home-band-edge\)/)?.[1];
+    ok(shadow, 'the earliest-arrival line is drawn on this storm, so the rule has something to bite on');
+    const xs = [...(shadow || '').matchAll(/[ML]([0-9.]+),/g)].map((m) => Number(m[1]));
+    /* THE `now` VERTICAL, NOT THE CLOSEST-PASS ONE. Both start at y=6 and the
+     * first draft matched whichever came first in the string, which was the
+     * pass — so the test was comparing the shadow against the wrong line and
+     * failing for a reason that had nothing to do with the rule. `now` is the
+     * muted 2-3 dash; the pass is the primary 3-3 dash. */
+    const nowX = Number(
+      (svg.match(/<line x1="([0-9.]+)" y1="6"[^>]*stroke="var\(--text-muted\)"/) || [])[1]
+    );
+    ok(xs.length && Number.isFinite(nowX) && Math.min(...xs) >= nowX - 0.5,
+       'and it starts at `now` — a forecast hedge is never drawn over a measured position');
+  }
+
+  /* --- the mechanism, shown rather than described -------------------------- */
+
+  const blind = buildHomeDashboard({
+    storm: { ...d19.storm },
+    forecast: d19.curve,
+    radii: [],
+    home: HOME,
+    now: d19.now,
+    trackState: 'ok',
+  });
+  ok(!blind.milestones.some((m) => m.when === 'past'),
+     'rebuild the same dashboard with no observed track and there are no past milestones');
+  ok(!blind.milestones.some((m) => m.kind === 'peak'),
+     'and no peak row either, because her peak is behind the clock and behind nothing else');
+  ok((blind.pastSamples || []).length === 0,
+     'and the chart has nothing to draw left of now — which is the state this pass replaced');
+}
+
 /* ------------------------------------------------------------------------- */
 
 console.log('');

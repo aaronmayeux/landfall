@@ -427,16 +427,12 @@ the same words. The countdown is the chart's accessible twin and has to be
 self-contained, which is the argument for keeping it; it may simply look like a
 mistake with both on screen. Aaron's call, and it needs a near storm to make.
 
-**The app can say how long ago something was, and one row now reads oddly on
-purpose.** `SPEC-UI.md` §49.4. `formatUntil` had no past arm, so every past moment
-on ten call sites printed `now`; it now says `40 min ago` / `14 hrs ago` /
-`3 days ago`, with `now` kept for the two minutes either side of the instant.
-**Judge the intermediate state, not the wording.** The home headline is fixed —
-pass 3 gave it a real past distance and a real past wind. The Timeline rail is
-not, and until pass 4 lands a row can still carry an honest past lead time
-against a future-tense verb: *5 hrs ago — Tropical-storm-force wind reaches
-you*. That is more honest than `now` and it still looks half-finished, which is
-what two remaining passes look like.
+**The app can say how long ago something was.** `SPEC-UI.md` §49.4.
+`formatUntil` had no past arm, so every past moment on ten call sites printed
+`now`; it now says `40 min ago` / `14 hrs ago` / `3 days ago`, with `now` kept
+for the two minutes either side of the instant. The half-finished state this
+note used to describe is gone — pass 4 gave the Timeline rail its tenses, so a
+past lead time no longer sits beside a future-tense verb.
 
 **A dead storm's trail is no longer a souvenir of who was watching.** `SPEC.md`
 §5, `data/ended-track.js`. The trail was whatever geometry THIS device happened
@@ -527,10 +523,9 @@ move.
 `SPEC-NEXT.md`).** Every figure on it used to be computed from
 now-plus-forecast, so once a storm was past the house "closest it came" was just
 the current distance and "when it was closest" was just the current wind. Seen
-on glass on Lala. **Pass 3 has landed:** `dash.passed` is the closest approach
-walked backwards over the observed track (§49.5), `dash.peak` spans the storm's
-whole published life (§49.6), and the chip ladder gained a rung so a storm that
-came near and left is no longer collapsed into "Not near you" (§49.14).
+on glass on Lala. **Passes 3 AND 4 have landed.** Pass 3: `dash.passed`,
+`dash.peak` over the whole life, the chip ladder's new rung. Pass 4: the
+Timeline rail and the chart.
 
 Proved on Hurricane Ida against a Prairieville home, her Advisory 19: she is
 141 nm away at 30 kt, and the screen now reads **Closest it came 13 mi ·
@@ -538,23 +533,50 @@ Proved on Hurricane Ida against a Prairieville home, her Advisory 19: she is
 it reached you**. The 130 kt peak is asserted against NHC's own Tropical
 Cyclone Report, and the 11.28 nm pass against an independent brute-force
 minimum computed in the test — both would previously have printed the live
-numbers. Five mutations were run and all five fire.
+numbers. Twelve mutations were run across both passes and all twelve fire.
 
-**JUDGE ON GLASS, and there are four things to look at.** Does *It's been by*
-read as calmer than *Moving away* or as vaguer? Does the sentence replacing the
-± band — *that's where it was measured, not where it was forecast to go* —
-carry the same weight the band did, or does its absence feel like something
-went missing? Does *Was strongest* beside *When it was closest* read as one
-story in two tenses or as two unrelated facts (§49.12 Q6)? And on a storm
+**JUDGE ON GLASS, and there are four things to look at from pass 3.** Does
+*It's been by* read as calmer than *Moving away* or as vaguer? Does the sentence
+replacing the ± band — *that's where it was measured, not where it was forecast
+to go* — carry the same weight the band did, or does its absence feel like
+something went missing? Does *Was strongest* beside *When it was closest* read
+as one story in two tenses or as two unrelated facts (§49.12 Q6)? And on a storm
 mid-pass, is the single line *It came closer earlier — 12 mi, 6 hrs ago* enough,
 or does the past want its own vertical (§49.12 Q5)?
 
-**Still half-finished by design, and it will look it.** The Timeline rail and
-the chart are pass 4, so the rail still drops every past row and the chart's
-left edge is still the present — a storm that has gone by has a headline and a
-strength strip full of real history sitting above a picture that starts at now.
-Pass 5 closes the safety-adjacent one: *no tropical-storm wind reaches you* is
-a forward-only sentence printed with no tense marker. Read §49, not this line.
+**AND FIVE MORE FROM PASS 4, WHICH NOTHING HAS SEEN.** On Ida's Advisory 19 the
+rail is now eight rows: became a tropical storm, a hurricane, a major hurricane,
+was at its strongest, closest it came, weakened twice, then the `now` divider.
+**Is that a story or a wall?** The past rows are dimmed to 0.62 — too faint to
+read in daylight, or not faint enough to be obviously behind you. **Does the
+divider land as "you are here"** when it is the live-distance row wearing a
+hairline, rather than a rule of its own. **The dotted forecast track is on EVERY
+chart now**, including storms nowhere near the house, and that is the one change
+in this pass a reader will see on an ordinary day. **And the chart reaches 24
+hours back by default** — long enough to be useful, or does it squeeze the
+forecast half that matters.
+
+**Two things pass 4 turned up that were not in its plan.**
+
+The rail was printing *Closest pass — 163 mi NNE of you, now* two rows under
+*Closest it came — 13 mi ENE of you, 17 hrs ago*. Same bug pass 3 fixed on the
+headline, on a surface pass 3 did not touch: the forward walk pins a leaving
+storm's "closest approach" to where it is standing. The forecast row is now
+suppressed once it is no longer ahead of the clock. Nothing to judge — it is a
+row that should never have been there — but it means every departed storm has
+been carrying a false closest-pass row on the rail for as long as the rail has
+existed.
+
+**A FULLY-PASSED STORM STILL DRAWS NO CHART.** `homeChart` needs a corridor and
+a corridor needs published wind radii, which NHC stops issuing late in a storm's
+life — Ida's Advisory 19 has none. So her rail has the whole story and the space
+beside it is empty. Pre-existing, orthogonal to pass 4's domain work, and it
+belongs with pass 5, which is the pass that reads the past wind field.
+
+**Pass 5 is the safety-adjacent one and is still open.** *No tropical-storm wind
+reaches you* remains a forward-only sentence printed with no tense marker, on a
+storm whose wind field may already have crossed the house. Read §49.9, not this
+line.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open

@@ -319,7 +319,24 @@ export function countdownHtml(dash, sys, sectHead) {
    * rule as the block above: the proxy does not get to argue with the
    * measurement in the same drawer. */
 
-  if (dash.approach?.relevant && dash.approach.time) {
+  /* ==> A FORECAST PASS THAT IS NOT AHEAD OF THE CLOCK IS NOT A FORECAST.
+   * <== `closestApproach` walks from the CURRENT POSITION forward, so for a
+   * storm that is leaving, the nearest point on what remains of the track is
+   * where the storm is standing — and this row printed "Closest pass — 163 mi
+   * NNE of you, now" two rows under "Closest it came — 13 mi ENE of you,
+   * 17 hrs ago". Both numbers are correct and together they are the exact
+   * confusion §49.2 forbids: one fact in the other's words.
+   *
+   * So the forecast row is drawn when the pass is genuinely still to come.
+   * When it is not, the observed row above is the true answer to the question
+   * this row was asking, and it is already on the list.
+   *
+   * ==> KEPT WHOLE FOR A STORM WITH NO HISTORY. <== Without an observed track
+   * there is no other row to fall back to, and a pinned-to-now pass is still
+   * the best the app can say. Nothing is deleted, only superseded. */
+  const passAhead =
+    dash.approach?.time ? Date.parse(dash.approach.time) > clock : false;
+  if (dash.approach?.relevant && dash.approach.time && (passAhead || !dash.passed?.time)) {
     const kt = dash.atClosest?.windKt;
     rows.push({
       /* ==> THE PASS TAKES THE STORM'S OWN COLOR AT THAT MOMENT. <== Not
@@ -340,6 +357,34 @@ export function countdownHtml(dash, sys, sectHead) {
          * typo rather than as a classification. */
         kt != null
           ? `${formatWind(kt, sys())} · ${categoryShortLabel(dash.atClosest.category, dash.storm.nature)}`
+          : null,
+      ]
+        .filter(Boolean)
+        .join(' · '),
+    });
+  }
+
+  /* ==> AND THE PASS THAT ALREADY HAPPENED (§49.5, §49.7). <== Its own row,
+   * never a widened version of the one above, for §49.2's reason: the forecast
+   * pass and the observed pass are two facts, and a storm mid-pass has both
+   * and must show both. They sort either side of the divider by themselves,
+   * because one is behind the clock and one is ahead of it by definition.
+   *
+   * NO `key: 'true'`. The filled node and the bold line mark the one event a
+   * reader is planning AROUND, and nobody plans around something that has
+   * finished — this row is the record, not the warning. */
+  if (dash.passed?.time) {
+    const kt = dash.atPassed?.windKt;
+    rows.push({
+      at: Date.parse(dash.passed.time),
+      tone: categoryColor(dash.atPassed?.category, dash.storm.nature),
+      key: '',
+      lead: formatUntil(dash.passed.time, clock) || '',
+      ev: `Closest it came — ${formatDistance(dash.passed.nm, sys())} ${formatBearing(dash.passed.bearing)} of you`,
+      det: [
+        formatClockDay(dash.passed.time),
+        kt != null
+          ? `${formatWind(kt, sys())} · ${categoryShortLabel(dash.atPassed.category, dash.storm.nature)}`
           : null,
       ]
         .filter(Boolean)
@@ -379,24 +424,30 @@ export function countdownHtml(dash, sys, sectHead) {
    * chooses words and nothing else. */
   for (const m of dash.milestones || []) {
     const windPart = Number.isFinite(m.windKt) ? formatWind(m.windKt, sys()) : null;
+    /* ==> THE TENSE COMES OFF THE ROW, NOT OFF A CLOCK COMPARISON (§49.7).
+     * <== `when` is stamped where the crossing was found, so the words and the
+     * filter that produced the row cannot disagree — the failure mode §49.1
+     * describes, where a real past lead time sat beside a future-tense verb:
+     * "5 hrs ago — Tropical-storm-force wind reaches you". */
+    const was = m.when === 'past';
     let ev;
     if (m.kind === 'peak') {
-      ev = `At its strongest — ${windPart}`;
+      ev = was ? `It was at its strongest — ${windPart}` : `At its strongest — ${windPart}`;
     } else if (m.direction === 'up') {
       /* Named for the class being ENTERED. These are the three phrases
        * evacuation orders and bulletins are written in, so they are used
        * verbatim rather than paraphrased into something friendlier. */
       ev =
-        m.level >= 4 ? 'Becomes a major hurricane'
-        : m.level >= 2 ? 'Becomes a hurricane'
-        : 'Becomes a tropical storm';
+        m.level >= 4 ? `Bec${was ? 'ame' : 'omes'} a major hurricane`
+        : m.level >= 2 ? `Bec${was ? 'ame' : 'omes'} a hurricane`
+        : `Bec${was ? 'ame' : 'omes'} a tropical storm`;
     } else {
       /* Named for where it ENDS UP, not for the step it lost. "Drops below
        * major hurricane" tells a reader what it is no longer; "weakens to a
        * tropical storm" tells them what it now is, which is the thing they
        * are trying to find out. Read off the point's own category so a storm
        * falling two steps at once is described by where it landed. */
-      ev = `Weakens to ${
+      ev = `Weaken${was ? 'ed' : 's'} to ${
         categoryShortLabel(m.category, dash.storm.nature) === 'TD'
           ? 'a depression'
           : m.category >= 2
@@ -421,7 +472,30 @@ export function countdownHtml(dash, sys, sectHead) {
     });
   }
 
-  if (rows.length <= 1) return '';
+  /* ==> THE SECTION IS GATED ON EVENTS, NOT ON ROW COUNT (§49.7). <== It read
+   * `rows.length <= 1`, which was the same test while the only row that could
+   * exist without an event was the `now` row. It is not the same test now: a
+   * storm entirely in the past has real rows and no future ones, and the old
+   * count would have kept working by accident rather than by rule. Stated
+   * properly, the rule is that a divider with nothing on either side of it is
+   * not a timeline. */
+  const events = rows.filter((r) => r.key !== 'now');
+  if (!events.length) return '';
+
+  /* ==> ONE ROW AT THE CURRENT MOMENT, AND IT IS THE ROW THAT WAS ALREADY
+   * THERE. <== §49.7 asks for a divider at `now`: a thin rule and a hollow
+   * node, no category colour, sorted in by time like everything else. The row
+   * carrying the live distance is already exactly that — it sits at `clock`,
+   * its lead already reads `now`, and it has no tone. So it becomes the
+   * divider rather than gaining a bare one beside it, which would have put two
+   * rows at the same minute on a list whose whole job is order.
+   *
+   * A dashboard with no distance at all still gets the divider, empty, because
+   * past rows above future rows with nothing between them is a list that does
+   * not say where the reader is standing. */
+  if (!rows.some((r) => r.key === 'now')) {
+    rows.push({ at: clock, key: 'now', lead: 'now', ev: '', det: '' });
+  }
 
   /* ==> A COUNTDOWN THAT GOES BACKWARDS IS NOT A COUNTDOWN. <== The rows are
    * pushed in the order the sections above are written, and that order is
@@ -450,7 +524,15 @@ export function countdownHtml(dash, sys, sectHead) {
       <ul class="home-rail">
         ${rows
           .map(
+            /* ==> PAST IS AN ATTRIBUTE, NOT A CLASS, AND NOT A SECOND LIST.
+             * <== The rail is one ordered sequence and stays one: rows above
+             * the divider are dimmed and rows below it are not, which is a
+             * style question the stylesheet answers off `data-when`. Splitting
+             * the list in two would give a screen reader two lists and the
+             * reader two headings for what is one story in one order. */
             (r) => `<li data-key="${esc(r.key || 'false')}"${
+              r.at < clock ? ' data-when="past"' : ''
+            }${
               r.tone ? ` style="--rail-dot:${esc(r.tone)}"` : ''
             }>
               <div class="home-rail-lead">${esc(r.lead)}</div>

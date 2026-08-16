@@ -404,6 +404,28 @@ export function buildHomeDashboard({
    * goes blank. */
   const passed = pastCurve.length ? closestPassed({ ...storm, past: pastCurve }, home, now) : null;
 
+  /* ==> HOW FAR AWAY IT WAS, HOUR BY HOUR (§49.8). <== The same series the
+   * corridor produces for the forecast — hours from now against distance from
+   * the house — computed over the observed track so the chart's left half has
+   * something to draw. It is deliberately NOT part of the corridor: the
+   * corridor's job is what the WIND does, and the past wind field is §49.9's
+   * pass. This is the centre only, which the observed track always carries.
+   *
+   * A FIX STAMPED AHEAD OF THE CLOCK IS DROPPED, the same rule `closestPassed`
+   * applies: an observed position in the future is a source error, and drawing
+   * it would put a solid "this happened" line to the right of `now`. */
+  const pastSamples = [];
+  for (const p of pastCurve) {
+    if (!Number.isFinite(p?.lon) || !Number.isFinite(p?.lat)) continue;
+    const ms = p.time ? Date.parse(p.time) : NaN;
+    if (!Number.isFinite(ms) || ms > now) continue;
+    pastSamples.push({
+      h: (ms - now) / MS_PER_HOUR,
+      time: p.time,
+      nm: greatCircleNm(home.lon, home.lat, p.lon, p.lat),
+    });
+  }
+
   /* --- the band, and the two ways it can be absent ------------------------
    * A missing band and a basin with no published table are different facts.
    * The first is "we have no closest approach to attach one to"; the second
@@ -622,14 +644,30 @@ export function buildHomeDashboard({
    * storm already at hurricane strength gets no row telling it will become one.
    */
   const milestones = [];
-  if (hasCurve) {
-    const baseline = Number.isFinite(storm.category) ? storm.category : null;
+
+  /** One walk, two callers, for the reason §49.5 gives about the two closest
+   *  passes: the forecast crossings and the observed ones appear on one list a
+   *  few rows apart, and a second implementation is how they come to describe
+   *  the same storm differently.
+   *
+   *  @param points   a track, ascending by time
+   *  @param baseline the class the storm was in BEFORE the first point, or
+   *    null for "nothing came before this". Null means the first point sets
+   *    the baseline and emits no crossing of its own — right for history,
+   *    whose first fix is the storm's first published position, and wrong for
+   *    the forecast, which continues from what the storm is right now.
+   *  @param keep     which moments belong to this caller. The two must not
+   *    overlap or one crossing lands on the rail twice.
+   *  @param when     'forecast' or 'past', stamped onto every row this walk
+   *    produces. Handed in rather than derived from `at` vs `now` so the tense
+   *    on the screen and the filter that chose the row are the same decision. */
+  const walkClasses = (points, baseline, keep, when) => {
     for (const level of HOME_DASH.classMilestones) {
       /* `null` category means the source could not say — never a crossing.
        * Treating unknown as "below" would announce a storm becoming a
        * hurricane every time one forecast hour happened to omit the field. */
       let prev = baseline;
-      for (const p of curve) {
+      for (const p of points) {
         const cat = Number.isFinite(p.category) ? p.category : null;
         const ms = p.time ? Date.parse(p.time) : NaN;
         if (cat == null || prev == null || !Number.isFinite(ms)) {
@@ -638,7 +676,7 @@ export function buildHomeDashboard({
         }
         const was = prev >= level;
         const is = cat >= level;
-        if (was !== is && ms >= now) {
+        if (was !== is && keep(ms)) {
           milestones.push({
             kind: 'class',
             at: ms,
@@ -649,12 +687,37 @@ export function buildHomeDashboard({
             direction: is ? 'up' : 'down',
             category: cat,
             windKt: Number.isFinite(p.windKt) ? p.windKt : null,
+            /** WHICH SIDE OF THE CLOCK IT IS ON, DECIDED HERE AND NOT BY THE
+             *  VIEW COMPARING TIMESTAMPS. The rail chooses a tense from this
+             *  field, and the same rule as §49.6's `peak.when` applies: a fact
+             *  about the past says so itself rather than being inferred. */
+            when,
           });
         }
         prev = cat;
       }
     }
+  };
+  const aheadOfClock = (ms) => ms >= now;
+  const behindClock = (ms) => ms < now;
+
+  if (hasCurve) {
+    walkClasses(
+      curve,
+      Number.isFinite(storm.category) ? storm.category : null,
+      aheadOfClock,
+      'forecast'
+    );
   }
+  /* ==> WHAT THE STORM ALREADY DID (§49.7). <== The rail dropped every past
+   * row, so a storm that became a hurricane two days before it reached the
+   * house had that fact nowhere on the screen about it — and a storm entirely
+   * in the past had no rows at all, which deleted the whole Timeline section.
+   *
+   * NOT GATED ON `hasCurve`, the same rule `passed` above follows: a storm
+   * whose forecast never arrived still has a history and the history is still
+   * true. */
+  if (pastCurve.length) walkClasses(pastCurve, null, behindClock, 'past');
 
   /* ==> A STORM CAN CROSS TWO STEPS BETWEEN ONE PAIR OF FORECAST HOURS. <==
    * Measured on a synthetic curve going Cat 2 to depression in one six-hour
@@ -681,11 +744,24 @@ export function buildHomeDashboard({
   const classMilestones = [...byTime.values()];
 
   /* THE PEAK IS A MILESTONE TOO, and it is the one that carries the number.
-   * Only when it is still AHEAD — `when: 'now'` means the storm has already
-   * peaked, which is a fact about the past and has no place on a countdown. */
-  if (peak?.when === 'forecast' && peak.time) {
+   *
+   * ==> THE GATE IS OPEN BEHIND THE CLOCK NOW (§49.7). <== It read
+   * `when === 'forecast'` and a time ahead of the clock, which was right while
+   * the rail was a countdown and wrong the moment it became a timeline: a
+   * storm that peaked on its way to the house had its strongest hour — the one
+   * number a reader remembers — on no row at all. §49.6 gave the peak a
+   * `'past'` value for exactly this.
+   *
+   * ==> `when: 'now'` STAYS SHUT, AND THAT IS NOT AN OVERSIGHT. <== It means
+   * the storm is at its strongest RIGHT NOW, so the row would land on the
+   * divider saying what the divider's own neighbours already say and what the
+   * strength strip states two inches higher. A rail row earns its place by
+   * naming a moment that is not this one. */
+  const peakBehind = peak?.when === 'past';
+  if ((peak?.when === 'forecast' || peakBehind) && peak.time) {
     const peakMs = Date.parse(peak.time);
-    if (Number.isFinite(peakMs) && peakMs >= now) {
+    const onTheRightSide = peakBehind ? peakMs < now : peakMs >= now;
+    if (Number.isFinite(peakMs) && onTheRightSide) {
       const clash = classMilestones.some(
         (m) => Math.abs(m.at - peakMs) < HOME_DASH.peakMergeHours * MS_PER_HOUR
       );
@@ -695,6 +771,7 @@ export function buildHomeDashboard({
           at: peakMs,
           windKt: peak.windKt,
           category: categoryFromKt(peak.windKt),
+          when: peakBehind ? 'past' : 'forecast',
         });
       }
     }
@@ -875,11 +952,22 @@ export function buildHomeDashboard({
     nearRing,
     corridor,
 
-    /** What the STORM does and when, ahead of the clock: crossings of the
-     *  three named classification steps, plus the forecast peak. Ordered.
-     *  Empty array, never null — a storm with a flat forecast has no
-     *  milestones, which is a real answer and not a missing one. */
+    /** What the STORM does and when: crossings of the three named
+     *  classification steps, plus the peak. Ordered. Empty array, never null —
+     *  a storm with a flat forecast has no milestones, which is a real answer
+     *  and not a missing one.
+     *
+     *  ==> BOTH SIDES OF THE CLOCK NOW (§49.7), AND EVERY ROW SAYS WHICH. <==
+     *  `when` is `'forecast'` or `'past'`. It is on the row rather than being
+     *  worked out from `at` against `now` because the rail picks a TENSE from
+     *  it, and a view deciding tense by comparing timestamps is a view that
+     *  can disagree with the filter that produced the row. */
     milestones: classMilestones,
+
+    /** The observed track as hours-from-now against distance-from-home, for
+     *  the chart's left half (§49.8). Same two fields the corridor's samples
+     *  carry, so one `X`/`Y` pair plots both. Empty array, never null. */
+    pastSamples,
 
     /** The curve itself, for the chart. Empty array, never null — a chart with
      *  nothing to draw is a different render path from a chart that was handed
