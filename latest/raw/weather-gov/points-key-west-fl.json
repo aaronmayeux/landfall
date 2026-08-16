@@ -1,0 +1,112 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "s": "https://schema.org/",
+            "geo": "http://www.opengis.net/ont/geosparql#",
+            "unit": "http://codes.wmo.int/common/unit/",
+            "@vocab": "https://api.weather.gov/ontology#",
+            "geometry": {
+                "@id": "s:GeoCoordinates",
+                "@type": "geo:wktLiteral"
+            },
+            "city": "s:addressLocality",
+            "state": "s:addressRegion",
+            "distance": {
+                "@id": "s:Distance",
+                "@type": "s:QuantitativeValue"
+            },
+            "bearing": {
+                "@type": "s:QuantitativeValue"
+            },
+            "value": {
+                "@id": "s:value"
+            },
+            "unitCode": {
+                "@id": "s:unitCode",
+                "@type": "@id"
+            },
+            "forecastOffice": {
+                "@type": "@id"
+            },
+            "forecastGridData": {
+                "@type": "@id"
+            },
+            "publicZone": {
+                "@type": "@id"
+            },
+            "county": {
+                "@type": "@id"
+            }
+        }
+    ],
+    "id": "https://api.weather.gov/points/24.5551,-81.78",
+    "type": "Feature",
+    "geometry": {
+        "type": "Point",
+        "coordinates": [
+            -81.78,
+            24.5551
+        ]
+    },
+    "properties": {
+        "@id": "https://api.weather.gov/points/24.5551,-81.78",
+        "@type": "wx:Point",
+        "cwa": "KEY",
+        "type": "land",
+        "forecastOffice": "https://api.weather.gov/offices/KEY",
+        "gridId": "KEY",
+        "gridX": 62,
+        "gridY": 48,
+        "forecast": "https://api.weather.gov/gridpoints/KEY/62,48/forecast",
+        "forecastHourly": "https://api.weather.gov/gridpoints/KEY/62,48/forecast/hourly",
+        "forecastGridData": "https://api.weather.gov/gridpoints/KEY/62,48",
+        "observationStations": "https://api.weather.gov/gridpoints/KEY/62,48/stations",
+        "relativeLocation": {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -81.7755389,
+                    24.5650628
+                ]
+            },
+            "properties": {
+                "city": "Key West",
+                "state": "FL",
+                "distance": {
+                    "unitCode": "wmoUnit:m",
+                    "value": 0
+                },
+                "bearing": {
+                    "unitCode": "wmoUnit:degree_(angle)",
+                    "value": 0
+                }
+            }
+        },
+        "forecastZone": "https://api.weather.gov/zones/forecast/FLZ078",
+        "county": "https://api.weather.gov/zones/county/FLC087",
+        "fireWeatherZone": "https://api.weather.gov/zones/fire/FLZ078",
+        "timeZone": "America/New_York",
+        "radarStation": "KBYX",
+        "astronomicalData": {
+            "sunrise": "2026-08-15T07:01:47-04:00",
+            "sunset": "2026-08-15T20:01:21-04:00",
+            "transit": "2026-08-15T13:31:34-04:00",
+            "civilTwilightBegin": "2026-08-15T06:38:05-04:00",
+            "civilTwilightEnd": "2026-08-15T20:25:03-04:00",
+            "nauticalTwilightBegin": "2026-08-15T06:10:01-04:00",
+            "nauticalTwilightEnd": "2026-08-15T20:53:07-04:00",
+            "astronomicalTwilightBegin": "2026-08-15T05:41:17-04:00",
+            "astronomicalTwilightEnd": "2026-08-15T21:21:51-04:00"
+        },
+        "nwr": {
+            "transmitter": "WXJ95",
+            "sameCode": "012087",
+            "areaBroadcast": "https://api.weather.gov/radio/WXJ95/broadcast",
+            "pointBroadcast": "https://api.weather.gov/points/24.5551,-81.78/radio"
+        }
+    }
+}

@@ -1,0 +1,168 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.debcb77d3a57ce21c151b68d843a12b9007e2bf4.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.debcb77d3a57ce21c151b68d843a12b9007e2bf4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.debcb77d3a57ce21c151b68d843a12b9007e2bf4.001.1",
+                "areaDesc": "San Juan and Vicinity; Northeast; Southeast; North Central; Ponce and Vicinity; Northwest; Southwest; Culebra; Vieques; St.Thomas...St. John.. and Adjacent Islands; St Croix",
+                "geocode": {
+                    "SAME": [
+                        "072021",
+                        "072031",
+                        "072033",
+                        "072061",
+                        "072127",
+                        "072135",
+                        "072137",
+                        "072139",
+                        "072029",
+                        "072037",
+                        "072053",
+                        "072069",
+                        "072087",
+                        "072089",
+                        "072103",
+                        "072119",
+                        "072015",
+                        "072057",
+                        "072095",
+                        "072109",
+                        "072123",
+                        "072151",
+                        "072013",
+                        "072017",
+                        "072051",
+                        "072054",
+                        "072091",
+                        "072143",
+                        "072145",
+                        "072059",
+                        "072075",
+                        "072111",
+                        "072113",
+                        "072133",
+                        "072153",
+                        "072005",
+                        "072027",
+                        "072065",
+                        "072071",
+                        "072115",
+                        "072023",
+                        "072055",
+                        "072079",
+                        "072049",
+                        "072147",
+                        "078020",
+                        "078030",
+                        "078010"
+                    ],
+                    "UGC": [
+                        "PRZ001",
+                        "PRZ002",
+                        "PRZ003",
+                        "PRZ005",
+                        "PRZ007",
+                        "PRZ008",
+                        "PRZ011",
+                        "PRZ012",
+                        "PRZ013",
+                        "VIZ001",
+                        "VIZ002"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/PRZ001",
+                    "https://api.weather.gov/zones/forecast/PRZ002",
+                    "https://api.weather.gov/zones/forecast/PRZ003",
+                    "https://api.weather.gov/zones/forecast/PRZ005",
+                    "https://api.weather.gov/zones/forecast/PRZ007",
+                    "https://api.weather.gov/zones/forecast/PRZ008",
+                    "https://api.weather.gov/zones/forecast/PRZ011",
+                    "https://api.weather.gov/zones/forecast/PRZ012",
+                    "https://api.weather.gov/zones/forecast/PRZ013",
+                    "https://api.weather.gov/zones/forecast/VIZ001",
+                    "https://api.weather.gov/zones/forecast/VIZ002"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bfa59371e35985bcec0316583224d3b35313ea85.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.bfa59371e35985bcec0316583224d3b35313ea85.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-15T16:37:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-15T20:56:00-04:00",
+                "effective": "2026-08-15T20:56:00-04:00",
+                "onset": "2026-08-15T20:56:00-04:00",
+                "expires": "2026-08-16T05:00:00-04:00",
+                "ends": "2026-08-17T06:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Moderate",
+                "certainty": "Likely",
+                "urgency": "Expected",
+                "event": "Rip Current Statement",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Rip Current Statement issued August 15 at 8:56PM AST until August 17 at 6:00AM AST by NWS San Juan PR",
+                "description": "* WHAT...Life-threatening rip currents.\n\n* WHERE...Exposed beaches of northern, eastern, and southern\nPuerto Rico, Vieques, Culebra, and the U.S. Virgin Islands.\n\n* WHEN...Through late Sunday night.\n\n* IMPACTS...Rip currents can sweep even the best swimmers away\nfrom shore into deeper water, where it becomes difficult to\nreturn to safety.",
+                "instruction": "There is a high risk of rip currents.\n\nRip currents are powerful channels of water flowing quickly away\nfrom shore, which occur most often at low spots or breaks in the\nsandbar and in the vicinity of structures such as groins, jetties\nand piers. Heed the advice of lifeguards, beach patrol flags and\nsigns.\n\nIf you become caught in a rip current, yell for help. Remain\ncalm, do not exhaust yourself and stay afloat while waiting for\nhelp. If you have to swim out of a rip current, swim parallel to\nshore and back toward the beach when possible. Do not attempt to\nswim directly against a rip current as you will tire quickly.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "CFWSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WHCA42 TJSJ 160056"
+                    ],
+                    "NWSheadline": [
+                        "HIGH RIP CURRENT RISK REMAINS IN EFFECT THROUGH LATE SUNDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "VTEC": [
+                        "/O.CON.TJSJ.RP.S.0019.000000T0000Z-260817T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-17T06:00:00-04:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.156e6aa93de2d13c2dea3f2939cf920c2ea26e36.001.1,2026-08-15T10:36:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.04234bd491db4631d73befb27d4f3d3b998023e4.001.1,2026-08-15T04:08:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f46995679c9a4fc7cfb40af7d1e68a18009c4cf7.001.1,2026-08-14T20:56:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.834395dd96c5a226f3fa02e4c99e614b19cdf9ea.001.1,2026-08-14T16:23:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.573f94f485a1bb1ad87ccc4d5ea2c31a56012dd0.001.1,2026-08-14T10:06:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e1e69ebccb57753687dd30ba26bb6bdacfc30a03.001.1,2026-08-14T03:42:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b55816ac2f0edc557a7ee4304c2da64cd6ed3cea.001.1,2026-08-13T20:40:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.99177d80344ea556301c48aabd0bd4dfa5f18608.001.1,2026-08-13T17:15:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.d04c03505bac2b6a13d7cf042978c4f7e612ff95.001.1,2026-08-13T11:07:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b1ca2e065bfb66b669f0a7957647cd1da9ccf831.001.1,2026-08-13T03:50:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "NWS"
+                    ],
+                    "NationalWeatherService": [
+                        "RPS"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current watches, warnings, and advisories for 18.4655 N, 66.1057 W",
+    "updated": "2026-08-16T01:48:00+00:00"
+}

@@ -1,0 +1,112 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "s": "https://schema.org/",
+            "geo": "http://www.opengis.net/ont/geosparql#",
+            "unit": "http://codes.wmo.int/common/unit/",
+            "@vocab": "https://api.weather.gov/ontology#",
+            "geometry": {
+                "@id": "s:GeoCoordinates",
+                "@type": "geo:wktLiteral"
+            },
+            "city": "s:addressLocality",
+            "state": "s:addressRegion",
+            "distance": {
+                "@id": "s:Distance",
+                "@type": "s:QuantitativeValue"
+            },
+            "bearing": {
+                "@type": "s:QuantitativeValue"
+            },
+            "value": {
+                "@id": "s:value"
+            },
+            "unitCode": {
+                "@id": "s:unitCode",
+                "@type": "@id"
+            },
+            "forecastOffice": {
+                "@type": "@id"
+            },
+            "forecastGridData": {
+                "@type": "@id"
+            },
+            "publicZone": {
+                "@type": "@id"
+            },
+            "county": {
+                "@type": "@id"
+            }
+        }
+    ],
+    "id": "https://api.weather.gov/points/13.4791,144.7737",
+    "type": "Feature",
+    "geometry": {
+        "type": "Point",
+        "coordinates": [
+            144.7737,
+            13.4791
+        ]
+    },
+    "properties": {
+        "@id": "https://api.weather.gov/points/13.4791,144.7737",
+        "@type": "wx:Point",
+        "cwa": "GUM",
+        "type": "land",
+        "forecastOffice": "https://api.weather.gov/offices/GUM",
+        "gridId": "GUM",
+        "gridX": 46,
+        "gridY": 49,
+        "forecast": "https://api.weather.gov/gridpoints/GUM/46,49/forecast",
+        "forecastHourly": "https://api.weather.gov/gridpoints/GUM/46,49/forecast/hourly",
+        "forecastGridData": "https://api.weather.gov/gridpoints/GUM/46,49",
+        "observationStations": "https://api.weather.gov/gridpoints/GUM/46,49/stations",
+        "relativeLocation": {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    144.7777218,
+                    13.4892508
+                ]
+            },
+            "properties": {
+                "city": "Apotgan",
+                "state": "GU",
+                "distance": {
+                    "unitCode": "wmoUnit:m",
+                    "value": 324.23916878822
+                },
+                "bearing": {
+                    "unitCode": "wmoUnit:degree_(angle)",
+                    "value": 201
+                }
+            }
+        },
+        "forecastZone": "https://api.weather.gov/zones/forecast/GUZ001",
+        "county": "https://api.weather.gov/zones/county/GUC010",
+        "fireWeatherZone": "https://api.weather.gov/zones/fire/GUZ001",
+        "timeZone": "Pacific/Guam",
+        "radarStation": "PGUA",
+        "astronomicalData": {
+            "sunrise": "2026-08-16T06:08:13+10:00",
+            "sunset": "2026-08-16T18:42:20+10:00",
+            "transit": "2026-08-16T12:25:17+10:00",
+            "civilTwilightBegin": "2026-08-16T05:46:16+10:00",
+            "civilTwilightEnd": "2026-08-16T19:04:17+10:00",
+            "nauticalTwilightBegin": "2026-08-16T05:20:31+10:00",
+            "nauticalTwilightEnd": "2026-08-16T19:30:02+10:00",
+            "astronomicalTwilightBegin": "2026-08-16T04:54:29+10:00",
+            "astronomicalTwilightEnd": "2026-08-16T19:56:04+10:00"
+        },
+        "nwr": {
+            "transmitter": "WXM85",
+            "sameCode": "066010",
+            "areaBroadcast": "https://api.weather.gov/radio/WXM85/broadcast",
+            "pointBroadcast": "https://api.weather.gov/points/13.4791,144.7737/radio"
+        }
+    }
+}

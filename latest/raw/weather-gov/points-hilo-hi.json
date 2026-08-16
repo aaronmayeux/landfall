@@ -1,0 +1,112 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "s": "https://schema.org/",
+            "geo": "http://www.opengis.net/ont/geosparql#",
+            "unit": "http://codes.wmo.int/common/unit/",
+            "@vocab": "https://api.weather.gov/ontology#",
+            "geometry": {
+                "@id": "s:GeoCoordinates",
+                "@type": "geo:wktLiteral"
+            },
+            "city": "s:addressLocality",
+            "state": "s:addressRegion",
+            "distance": {
+                "@id": "s:Distance",
+                "@type": "s:QuantitativeValue"
+            },
+            "bearing": {
+                "@type": "s:QuantitativeValue"
+            },
+            "value": {
+                "@id": "s:value"
+            },
+            "unitCode": {
+                "@id": "s:unitCode",
+                "@type": "@id"
+            },
+            "forecastOffice": {
+                "@type": "@id"
+            },
+            "forecastGridData": {
+                "@type": "@id"
+            },
+            "publicZone": {
+                "@type": "@id"
+            },
+            "county": {
+                "@type": "@id"
+            }
+        }
+    ],
+    "id": "https://api.weather.gov/points/19.7203,-155.0868",
+    "type": "Feature",
+    "geometry": {
+        "type": "Point",
+        "coordinates": [
+            -155.0868,
+            19.7203
+        ]
+    },
+    "properties": {
+        "@id": "https://api.weather.gov/points/19.7203,-155.0868",
+        "@type": "wx:Point",
+        "cwa": "HFO",
+        "type": "land",
+        "forecastOffice": "https://api.weather.gov/offices/HFO",
+        "gridId": "HFO",
+        "gridX": 270,
+        "gridY": 74,
+        "forecast": "https://api.weather.gov/gridpoints/HFO/270,74/forecast",
+        "forecastHourly": "https://api.weather.gov/gridpoints/HFO/270,74/forecast/hourly",
+        "forecastGridData": "https://api.weather.gov/gridpoints/HFO/270,74",
+        "observationStations": "https://api.weather.gov/gridpoints/HFO/270,74/stations",
+        "relativeLocation": {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [
+                    -155.0828924,
+                    19.6887478
+                ]
+            },
+            "properties": {
+                "city": "Hilo",
+                "state": "HI",
+                "distance": {
+                    "unitCode": "wmoUnit:m",
+                    "value": 0
+                },
+                "bearing": {
+                    "unitCode": "wmoUnit:degree_(angle)",
+                    "value": 0
+                }
+            }
+        },
+        "forecastZone": "https://api.weather.gov/zones/forecast/HIZ053",
+        "county": "https://api.weather.gov/zones/county/HIC001",
+        "fireWeatherZone": "https://api.weather.gov/zones/fire/HIZ339",
+        "timeZone": "Pacific/Honolulu",
+        "radarStation": "PHKM",
+        "astronomicalData": {
+            "sunrise": "2026-08-16T06:01:05-10:00",
+            "sunset": "2026-08-16T18:48:00-10:00",
+            "transit": "2026-08-16T12:24:33-10:00",
+            "civilTwilightBegin": "2026-08-16T05:38:21-10:00",
+            "civilTwilightEnd": "2026-08-16T19:10:45-10:00",
+            "nauticalTwilightBegin": "2026-08-16T05:11:32-10:00",
+            "nauticalTwilightEnd": "2026-08-16T19:37:33-10:00",
+            "astronomicalTwilightBegin": "2026-08-16T04:44:17-10:00",
+            "astronomicalTwilightEnd": "2026-08-16T20:04:48-10:00"
+        },
+        "nwr": {
+            "transmitter": "WWG76",
+            "sameCode": "015001",
+            "areaBroadcast": "https://api.weather.gov/radio/WWG76/broadcast",
+            "pointBroadcast": "https://api.weather.gov/points/19.7203,-155.0868/radio"
+        }
+    }
+}

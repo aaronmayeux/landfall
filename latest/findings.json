@@ -1,0 +1,283 @@
+[
+  {
+    "id": "hilo-hi",
+    "label": "Hilo, Big Island HI",
+    "lat": 19.7203,
+    "lon": -155.0868,
+    "why": "Under Lala now. Her advisory says 10-20 in with a 25 in max here.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 130885,
+      "ms": 193
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 20,
+      "total": 282.956,
+      "firstValidFrom": "2026-08-15T15:00:00+00:00",
+      "lastValidFrom": "2026-08-20T04:00:00+00:00",
+      "sampleValidTime": "2026-08-15T15:00:00+00:00/PT1H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "HFO",
+    "cell": "270,74",
+    "pop": "present",
+    "updateTime": "2026-08-15T21:11:51+00:00",
+    "alertEvents": [
+      "Flash Flood Warning",
+      "High Surf Warning",
+      "Tropical Cyclone Local Statement",
+      "Hurricane Warning",
+      "Flood Watch"
+    ]
+  },
+  {
+    "id": "kahului-hi",
+    "label": "Kahului, Maui HI",
+    "lat": 20.8893,
+    "lon": -156.4729,
+    "why": "Second island named in the same paragraph, at a lower total.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 125264,
+      "ms": 173
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 20,
+      "total": 73.914,
+      "firstValidFrom": "2026-08-15T15:00:00+00:00",
+      "lastValidFrom": "2026-08-20T04:00:00+00:00",
+      "sampleValidTime": "2026-08-15T15:00:00+00:00/PT1H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "HFO",
+    "cell": "212,126",
+    "pop": "present",
+    "updateTime": "2026-08-15T21:11:51+00:00",
+    "alertEvents": [
+      "Tropical Cyclone Local Statement",
+      "Tropical Storm Warning",
+      "Flood Watch"
+    ]
+  },
+  {
+    "id": "honolulu-hi",
+    "label": "Honolulu, Oahu HI",
+    "lat": 21.307,
+    "lon": -157.8583,
+    "why": "The \"remainder of the island chain\" band, 4-6 in.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 123705,
+      "ms": 172
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 20,
+      "total": 84.074,
+      "firstValidFrom": "2026-08-15T15:00:00+00:00",
+      "lastValidFrom": "2026-08-20T04:00:00+00:00",
+      "sampleValidTime": "2026-08-15T15:00:00+00:00/PT1H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "HFO",
+    "cell": "154,145",
+    "pop": "present",
+    "updateTime": "2026-08-15T21:11:51+00:00",
+    "alertEvents": [
+      "Tropical Cyclone Local Statement",
+      "Tropical Storm Warning",
+      "Flood Watch"
+    ]
+  },
+  {
+    "id": "san-juan-pr",
+    "label": "San Juan PR",
+    "lat": 18.4655,
+    "lon": -66.1057,
+    "why": "The other non-CONUS case that matters for Atlantic storms.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 227537,
+      "ms": 186
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 29,
+      "total": 44.45,
+      "firstValidFrom": "2026-08-15T19:00:00+00:00",
+      "lastValidFrom": "2026-08-23T22:00:00+00:00",
+      "sampleValidTime": "2026-08-15T19:00:00+00:00/PT3H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "SJU",
+    "cell": "162,132",
+    "pop": "present",
+    "updateTime": "2026-08-16T01:16:12+00:00",
+    "alertEvents": [
+      "Rip Current Statement"
+    ]
+  },
+  {
+    "id": "galveston-tx",
+    "label": "Galveston TX",
+    "lat": 29.3013,
+    "lon": -94.7977,
+    "why": "Ordinary CONUS Gulf coast. Should be the easy one.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 216035,
+      "ms": 178
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 30,
+      "total": 0.254,
+      "firstValidFrom": "2026-08-15T18:00:00+00:00",
+      "lastValidFrom": "2026-08-23T00:00:00+00:00",
+      "sampleValidTime": "2026-08-15T18:00:00+00:00/PT6H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "HGX",
+    "cell": "85,74",
+    "pop": "present",
+    "updateTime": "2026-08-16T00:20:24+00:00",
+    "alertEvents": []
+  },
+  {
+    "id": "key-west-fl",
+    "label": "Key West FL",
+    "lat": 24.5551,
+    "lon": -81.78,
+    "why": "CONUS, but far enough south to sit near the edge of the grid.",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 163005,
+      "ms": 187
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 30,
+      "total": 1.778,
+      "firstValidFrom": "2026-08-15T19:00:00+00:00",
+      "lastValidFrom": "2026-08-23T00:00:00+00:00",
+      "sampleValidTime": "2026-08-15T19:00:00+00:00/PT5H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "KEY",
+    "cell": "62,48",
+    "pop": "present",
+    "updateTime": "2026-08-16T01:15:27+00:00",
+    "alertEvents": []
+  },
+  {
+    "id": "tamuning-gu",
+    "label": "Tamuning, Guam",
+    "lat": 13.4791,
+    "lon": 144.7737,
+    "why": "West Pacific. GDACS/JTWC territory — does NWS reach here at all?",
+    "points": {
+      "status": "ok",
+      "http": 200
+    },
+    "grid": {
+      "status": "ok",
+      "http": 200,
+      "bytes": 188704,
+      "ms": 1152
+    },
+    "qpf": {
+      "uom": "wmoUnit:mm",
+      "count": 17,
+      "total": 144.27200000000005,
+      "firstValidFrom": "2026-08-15T14:00:00+00:00",
+      "lastValidFrom": "2026-08-23T08:00:00+00:00",
+      "sampleValidTime": "2026-08-15T14:00:00+00:00/PT6H"
+    },
+    "alerts": {
+      "status": "ok",
+      "http": 200
+    },
+    "notes": [],
+    "office": "GUM",
+    "cell": "46,49",
+    "pop": "present",
+    "updateTime": "2026-08-15T20:05:43+00:00",
+    "alertEvents": []
+  },
+  {
+    "id": "nassau-bs",
+    "label": "Nassau, Bahamas",
+    "lat": 25.048,
+    "lon": -77.3554,
+    "why": "DELIBERATELY OUTSIDE NWS. What does no-coverage look like on the wire?",
+    "points": {
+      "status": "not_covered",
+      "http": 404
+    },
+    "grid": null,
+    "qpf": null,
+    "alerts": {
+      "status": "http_error",
+      "http": 400
+    },
+    "notes": [
+      "no grid: HTTP 404 Not Found"
+    ]
+  }
+]
