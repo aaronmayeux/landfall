@@ -427,6 +427,18 @@ the same words. The countdown is the chart's accessible twin and has to be
 self-contained, which is the argument for keeping it; it may simply look like a
 mistake with both on screen. Aaron's call, and it needs a near storm to make.
 
+**The app can say how long ago something was, and one row now reads oddly on
+purpose.** `SPEC-UI.md` §49.4. `formatUntil` had no past arm, so every past moment
+on ten call sites printed `now`; it now says `40 min ago` / `14 hrs ago` /
+`3 days ago`, with `now` kept for the two minutes either side of the instant.
+**Judge the intermediate state, not the wording.** Until §49's passes 3 and 4
+land, a Timeline row can carry an honest past lead time against a future-tense
+verb — *5 hrs ago — Tropical-storm-force wind reaches you*. The home headline's
+closest-approach line will also start dating itself on a storm that has gone by,
+because `closestApproach` returns the current position there and its analysis
+time is hours behind the clock. Both are more honest than `now` and both look
+half-finished, which is what four remaining passes look like.
+
 **A dead storm's trail is no longer a souvenir of who was watching.** `SPEC.md`
 §5, `data/ended-track.js`. The trail was whatever geometry THIS device happened
 to hold when the storm was promoted, so a device that first met a storm already
@@ -515,11 +527,10 @@ move.
 **The home dashboard cannot say anything happened (§49, `SPEC-NEXT.md`).** Every
 figure on it is computed from now-plus-forecast, so once a storm is past the
 house "closest it came" is just the current distance and "when it was closest"
-is just the current wind. Underneath it `formatUntil` has no past branch at all,
-so **every past moment anywhere in the app renders as `now`**. Seen on glass on
-Lala. Five passes, sized and ordered in §49.13; pass 5 closes the
-safety-adjacent one — *no tropical-storm wind reaches you* is a forward-only
-sentence printed with no tense marker. Read the section, not this line.
+is just the current wind. Seen on glass on Lala. Four passes left, sized and
+ordered in §49.13; pass 5 closes the safety-adjacent one — *no tropical-storm
+wind reaches you* is a forward-only sentence printed with no tense marker. Read
+the section, not this line.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open

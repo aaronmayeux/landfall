@@ -1007,9 +1007,10 @@ deliberately: *THE PAST IS NOT AN APPROACH.* That rule was written for a real
 problem (neither source's track starts at "now", so the raw minimum kept landing
 behind the storm and reading as a future approach) and it is correct for
 forecasting. It is wrong for reporting. Underneath it, `formatUntil()` in
-`lib/time.js` has **no past branch at all** — a negative interval falls through
-the "less than two minutes ahead" case and returns `'now'`, so every past moment
-anywhere in the app currently renders as `now`.
+`lib/time.js` had **no past branch at all** — a negative interval fell through
+the "less than two minutes ahead" case and returned `'now'`, so every past moment
+anywhere in the app rendered as `now`. That half is fixed and now lives in
+`SPEC-UI.md` §49.4; everything below it does not exist yet.
 
 ### 49.2 The rule this section adds
 
@@ -1077,22 +1078,6 @@ the category derived from `ss` when present and from knots otherwise, using the
 `data/lifecycle.js` already compacts and rehydrates past points for ended
 storms, so a storm that has left the feed keeps its observed track and therefore
 keeps its past figures.
-
-### 49.4 Past tense, everywhere
-
-`formatUntil(t, now)` gains a past arm mirroring its future one: `just now`
-inside two minutes either side, then `N min ago`, `N hrs ago`, `N days ago` at
-the same boundaries the forward side uses (one hour, 48 hours).
-
-**THE BLAST RADIUS IS THE WHOLE APP AND THAT IS THE POINT.** Seven call sites in
-`ui/countdown-home.js`, one each in `ui/view-home.js`, `ui/view-storm-detail.js`
-and `ui/view-storms.js`. Every one of them can currently print `now` about
-something hours old. This is the cheapest correctness win in the section and it
-lands before anything else is built.
-
-`formatUntil` carries its own preposition (`in 9 hrs`, not `9 hrs`) and the past
-arm keeps that contract — it returns `6 hrs ago`, so callers concatenate
-identically and nothing downstream branches on tense.
 
 ### 49.5 The closest pass, backwards
 
@@ -1315,12 +1300,13 @@ sits at a moment where past and future happen to agree.
 
 ### 49.13 The passes
 
-Five passes plus one piece of housekeeping. Each one is shippable on its own and
-leaves the app more correct than it found it.
+Four passes plus one piece of housekeeping, each shippable on its own and each
+leaving the app more correct than it found it. They keep the numbers they were
+given, because those numbers are how they are referred to; pass 1 landed as
+`SPEC-UI.md` §49.4.
 
 | Pass | Scope | Files |
 |---|---|---|
-| **1. Past tense** | `formatUntil` gains a past arm; every call site checked; the `now`-for-everything bug is gone app-wide. No new data, no new UI. | `lib/time.js`, `tools/test-home.mjs` |
 | **2. The observed track arrives** | `bundle.past` normalized for both sources and plumbed into `buildHomeDashboard`. **No visible change** — a pure data pass, so a break can only be the plumbing. | `data/nhc-mapserver.js`, `data/gdacs-geometry.js`, `data/home-dashboard.js`, `ui/view-home.js` |
 | **3. The pass and the peak, backwards** | `closestApproach` gains `passed`; the peak spans the whole life; `atClosest` splits; the headline and the strength block get their tenses. Ida fixture lands here. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home.mjs` |
 | **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |

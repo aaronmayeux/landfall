@@ -987,6 +987,8 @@ looking at.
   preference.
 - **Never a bare time without a weekday** beyond ~12 hours out. "3:00 AM" that
   could be tonight or tomorrow night is a dangerous ambiguity on the home panel.
+- **The relative half runs in both directions** — `in 14 hrs` and `14 hrs ago`
+  off one function, at one set of boundaries. §49.4.
 - 12 h / 24 h follows locale. No separate setting.
 
 ---
@@ -2414,3 +2416,28 @@ Two things are built for this and nothing else: the home section is titled and
 worded about the HOUSE, and its closing line NAMES THE POINT NWS is forecasting
 for. Whether that is enough is a glass question and it needs a storm near a
 home to ask — **it is not settled.**
+
+---
+
+### 49.4 Relative time has a direction
+
+`formatUntil(t, now)` in `lib/time.js` answers in whichever direction the moment
+actually lies: `in 3 days`, `in 14 hrs`, `in 40 min`, `now`, `40 min ago`,
+`14 hrs ago`, `3 days ago`. It is the string every timed row on the home
+dashboard leads with — seven in `ui/countdown-home.js`, one each in
+`ui/view-home.js`, `ui/view-storm-detail.js` and `ui/view-storms.js`.
+
+**IT CARRIES ITS OWN PREPOSITION IN EVERY DIRECTION** — `in 9 hrs` and `9 hrs
+ago`, never a bare `9 hrs`. Callers concatenate one string and nothing
+downstream branches on tense.
+
+**THE DEAD ZONE IS `now` ON BOTH SIDES, AND IT IS THE ONLY TENSELESS WORD ON
+THIS SCREEN.** Inside two minutes either way the event is happening rather than
+scheduled or finished. `formatAge`'s word for the same span is `just now`, which
+leans past — printed about an arrival ninety seconds out it would borrow the
+past's words for a future fact, which is exactly what §49.2 forbids.
+
+**THE PAST ARM IS `formatAge`, NOT A COPY OF IT.** The boundaries (one hour,
+48 hours), the rounding and the hr/hrs plural already exist there and already
+match the forward arm. A copy would be two places to change and a silent way for
+the two directions to disagree.

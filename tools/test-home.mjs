@@ -134,6 +134,107 @@ for (const r of RADII) ok(FIX.includes(r.line), `fixture carries "${r.line.trim(
 ok(!FIX.includes('64 KT'), 'and carries NO 64 kt radii — Bertha was never a hurricane');
 
 /* =========================================================================
+ * 0b. TIME HAS A DIRECTION (SPEC-NEXT §49.4)
+ *
+ * `formatUntil` is the string every timed row on this screen leads with —
+ * seven rows in `ui/countdown-home.js`, one in `ui/view-home.js`, one in
+ * `ui/view-storm-detail.js`, one in `ui/view-storms.js`. It had NO PAST ARM.
+ * A negative interval fell through the under-two-minutes case, so a closest
+ * pass three hours behind the clock and a wind that eased yesterday both
+ * printed the same word as a thing happening this second. Seen on glass
+ * 2026-08-16 on Lala.
+ *
+ * IT IS TESTED HERE RATHER THAN IN A SUITE OF ITS OWN because this is the
+ * file that drives every surface the bug was visible on, and §49.13 names it.
+ *
+ * ==> THE TWO DIRECTIONS ARE ASSERTED AS A MIRROR, NOT AS TWO LISTS. <== The
+ * past arm delegates to `formatAge`, so the boundaries can only agree today;
+ * the point of walking both sides of the same offsets is that they must still
+ * agree after someone changes one of them.
+ * ====================================================================== */
+section('time has a direction');
+
+{
+  const { formatUntil, formatAge } = await import('../lib/time.js');
+  const T0 = Date.parse('2026-08-16T12:00:00Z');
+  /** offset in minutes, signed: positive is ahead of T0. */
+  const at = (mins) => formatUntil(new Date(T0 + mins * 60_000).toISOString(), T0);
+
+  /* --- the bug itself ------------------------------------------------- */
+  ok(at(-180) === '3 hrs ago', `three hours back is "3 hrs ago" (got "${at(-180)}")`);
+  ok(at(-40) === '40 min ago', `forty minutes back is "40 min ago" (got "${at(-40)}")`);
+  ok(at(-4320) === '3 days ago', `three days back is "3 days ago" (got "${at(-4320)}")`);
+  ok(!/\bnow\b/.test(at(-180)) && !/\bnow\b/.test(at(-4320)),
+     'and NOTHING past the dead zone comes back as the word "now" any more');
+
+  /* --- the dead zone is tenseless, and it is "now" on BOTH sides -------
+   * §49.2: the two tenses never borrow each other's words. Inside two
+   * minutes either way the event is happening, and `formatAge`'s "just now"
+   * leans past — printed about a forecast arrival ninety seconds out it
+   * would be a lie of exactly the kind this section exists to end. */
+  ok(at(0) === 'now', 'the instant itself is "now"');
+  ok(at(1) === 'now', 'one minute ahead is "now", not "in 1 min"');
+  ok(at(-1) === 'now', 'one minute back is "now" — a tenseless word, on purpose');
+  ok(at(-1) !== 'just now', 'and specifically NOT "just now", which is past tense');
+  ok(at(2) === 'in 2 min' && at(-2) === '2 min ago',
+     'and the dead zone ends at two minutes in both directions');
+
+  /* --- the boundaries mirror, including the plural --------------------- */
+  ok(at(60) === 'in 1 hr' && at(-60) === '1 hr ago',
+     'one hour is singular in both directions');
+  ok(at(120) === 'in 2 hrs' && at(-120) === '2 hrs ago',
+     'and plural past that');
+  ok(at(59) === 'in 59 min' && at(-59) === '59 min ago',
+     'the minute/hour boundary sits at the same place both ways');
+  ok(at(2879) === 'in 48 hrs' && at(-2879) === '48 hrs ago',
+     'so does the hour/day boundary, quirk and all');
+  ok(at(2880) === 'in 2 days' && at(-2880) === '2 days ago',
+     'and 48 hours exactly is the first day-shaped answer');
+
+  /* THE MIRROR AS A RULE, walked rather than listed: every past answer is
+   * its forward twin with the preposition moved to the other end. A change
+   * to one arm's rounding or plural that is not made to the other lands
+   * here, whichever arm it was. */
+  for (const mins of [2, 7, 30, 59, 61, 90, 121, 600, 2879, 2880, 5000, 20000]) {
+    const fwd = at(mins);
+    const back = at(-mins);
+    ok(fwd === `in ${back.replace(/ ago$/, '')}`,
+       `${mins} min: "${fwd}" and "${back}" are the same words, opposite ends`);
+  }
+
+  /* --- the preposition contract (§49.4) -------------------------------
+   * Every caller concatenates one string and none of them branches on
+   * tense, so the string has to arrive already knowing which way it points.
+   * `ui/view-storms.js` carries the scar from the forward half: writing
+   * `in ${until}` there produced "closest 120 mi in in 9 hrs". */
+  for (const mins of [3, 45, 61, 300, 5000]) {
+    const back = at(-mins);
+    ok(back.endsWith(' ago'), `"${back}" carries its own preposition`);
+    ok(!back.startsWith('in '), `"${back}" does not also carry the forward one`);
+  }
+
+  /* --- nothing on the forward side moved ------------------------------
+   * The past arm was added inside the same function, so the forward arm is
+   * a regression surface. These are the strings the app printed before it. */
+  ok(at(25 * 60) === 'in 25 hrs', 'the forward arm still says "in 25 hrs"');
+  ok(at(40) === 'in 40 min' && at(4320) === 'in 3 days',
+     'and still speaks minutes and days unchanged');
+
+  /* --- NaN-safety survives -------------------------------------------- */
+  ok(formatUntil(null, T0) === null, 'null in, null out — the caller renders a dash');
+  ok(formatUntil('not a time', T0) === null, 'and an unparseable string is null, not "NaN days ago"');
+
+  /* --- the arms genuinely share formatAge's boundaries ------------------
+   * The delegation is the reason the mirror above holds. If someone inlines
+   * a copy of the branches, this is what notices. */
+  for (const mins of [3, 45, 90, 5000]) {
+    const iso = new Date(T0 - mins * 60_000).toISOString();
+    ok(formatUntil(iso, T0) === formatAge(iso, T0),
+       `${mins} min back reads identically to formatAge ("${formatAge(iso, T0)}")`);
+  }
+}
+
+/* =========================================================================
  * 1. THE CURVE SURVIVES NORMALIZATION
  *
  * normalizeForecast used to keep {lon,lat,time,windKt,tau} and drop gust,
