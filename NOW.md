@@ -74,61 +74,39 @@ full map-geometry refetch on one tap. It excludes the attribute now, so the
 next scoped section is correct on the day it lands. Nothing to judge; noted
 because it means those two retries have been doing extra work for weeks.
 
-**The environment ribbon now colors the forecast LINE too, and has a legend in
-two places. Neither has been seen.** `SPEC-MAP.md` §47.5, `SPEC-NEXT.md` §47.11.
-**The line does not get wider** — it is drawn at the same 1.75 px the white
-track already is, so the legibility floor had to go into the color instead: the
-line uses a lifted ramp (`envRampLine`) whose darkest stop clears 3:1 against
-the sea, while the cone keeps its full range and still fades into the water. So
-**the two do not match at the hostile end, on purpose**, and that is the thing
-to judge — does a mid-violet line inside a nearly-black cone read as one
-statement or as two? Measured cause: the fill ramp's hostile end is 1.05:1
-against the night ocean, so an unfloored line would have been invisible on
-roughly one hour in twenty. Second question, on a favorable storm this time: at
-the bright end the line and the cone are nearly the same violet and the line may
-simply disappear into its own fill. Third: the legend's middle label reads
-**Balanced** — not "no impact", because one neutral cone in five is a tug of war
-rather than a calm day. Does "Balanced" land, or does it sound like a verdict
-rather than a midpoint?
+**The environment ribbon is judged on glass and four things about it are still
+open.** `SPEC-MAP.md` §47.5, `SPEC-NEXT.md` §47.8, §47.11, `SPEC-UI.md` §47.9.
 
-**The Environment section is down to story, figures, legend, credit — and two
-figures lost their verdict-hour value doing it.** `SPEC-NEXT.md` §47.8. Three
-grey footnotes sat between the grid and the legend and Aaron cut all of them on
-glass. Room to grow and the storm's own structure are still SAID, in sentence
-three, at the fix; what is gone is what they are worth at the verdict hour,
-which can be days later. **Neither can move into the grid** — its one claim is
-that the cells sum to the colored total and neither figure is part of that sum,
-so putting them back means a second block with its own heading. Also gone with
-them: the line explaining why a ribbon stops mid-cone when a run's positions end
-before its winds (§47.6's fourth case). The ribbon still stops honestly; nothing
-now says why. Judge whether either absence is felt.
+**Only the FAVORABLE end has been seen.** Lala's environment is +12, so the
+colored forecast line was judged bright. The line and the cone deliberately do
+not match at the hostile end — the line runs on a lifted ramp so it can never
+fall into the sea, while the cone keeps its full range and does. Nothing has
+shown that gap yet. The question when a hostile storm arrives: does a mid-violet
+line inside a nearly-black cone read as one statement or as two? If it reads as
+two, the dial is `envRampLine`'s first stop, not the cone's.
 
-**The css-vars suite cannot see a stylesheet.** `tools/test-css-vars.mjs` walks
-`.js` only, so a fallback-less `var()` in a `.css` file — which renders as
-nothing, silently, which is the entire reason that file exists — is invisible to
-it. The blind spot survived because the bug that prompted the suite was in JS. A
-probe found five names already referenced and never declared: `--radius-snug`,
-`--surface-raised`, `--accent`, `--touch-min` (`ui/home.css`) and `--space-roomy`
-(`ui/panels.css`). Each needs judging separately — some may be intentional
-inheritance — so widening the sweep is its own pass, not a rider on this one.
+**Two figures lost their verdict-hour value and one caveat lost its voice.**
+Room to grow and the storm's own structure are still said in sentence three, at
+the fix; what they are worth at the verdict hour — days later, on a very
+different storm — is gone. Neither can go back into the grid, whose one claim is
+that its cells sum to the colored total. Gone with them: the line explaining why
+a ribbon stops mid-cone when a run's positions end before its winds (§47.6's
+fourth case). The ribbon still stops honestly; nothing now says why. Judge
+whether either absence is felt on a storm that has the shape.
 
-**The environment ribbon is judged in both themes; three things about it are
-still open.** `SPEC-MAP.md` §47.5, `SPEC-UI.md` §47.9. **The tapped storm's
-ribbon has never been seen on a phone.** It had no selection presentation at
-all until now, so a tap erased the color it was drawn in — the question is only
-whether the cone now holds its color through the tap, with no flicker as the
-selection source takes over from the ambient one. **A question that is
-Aaron's, not a bug.** §47.2 says a slice is drawable where a wind AND a
-position both exist; §47.10's numbers were measured against positions alone,
-and on EP9326 the two answers differ by 22 kt. The parser applies §47.2 and
-carries both ends, so changing the rule is one line in the layer. No live storm
-exercises the disagreement. **The dateline path is written and has never run
-against a real seam-crossing storm.** The ribs come back unwrapped past ±180
-and the forecast points arrive wrapped, so anchors are moved onto the stations'
-branch before anything is measured; a synthesised seam case reproduces a real
-storm's ribbon exactly. LALA is a CP storm already out at 172.7°W, so the first
-real exercise is probably weeks rather than seasons away. If a cone crossing
-180 ever comes out with its colors crowded into the near end, that is this.
+**A question that is Aaron's, not a bug.** §47.2 says a slice is drawable where
+a wind AND a position both exist; §47.10's numbers were measured against
+positions alone, and on EP9326 the two answers differ by 22 kt. The parser
+applies §47.2 and carries both ends, so changing the rule is one line in the
+layer. No live storm exercises the disagreement.
+
+**The dateline path is written and has never run against a real seam-crossing
+storm.** The ribs come back unwrapped past ±180 and the forecast points arrive
+wrapped, so anchors are moved onto the stations' branch before anything is
+measured; a synthesised seam case reproduces a real storm's ribbon exactly. LALA
+is a CP storm already out at 172.7°W, so the first real exercise is probably
+weeks rather than seasons away. If a cone crossing 180 ever comes out with its
+colors crowded into the near end, that is this.
 
 **The Environment section has been judged on a phone and is good, with two
 corners nobody has looked at.** `SPEC-NEXT.md` §47.8. It has never been seen on
@@ -502,6 +480,18 @@ the misses are sessions that ended still loading. Retry has been pressed zero
 times in 193 sessions, so that path has never been exercised by a real user.
 Two changes have landed since these numbers and both should move them: the
 stamp fix, and the two-second rung. **Re-read before acting.**
+
+**4. THE CSS-VARS SUITE CANNOT SEE A STYLESHEET.** `tools/test-css-vars.mjs`
+walks `.js` only, so a fallback-less `var()` in a `.css` file — which renders as
+nothing, silently, which is the entire reason that file exists — is invisible to
+it. The blind spot survived because the bug that prompted the suite was in JS.
+Widening the sweep to `.css` is a few lines and immediately fails: a probe on
+2026-08-16 found five names already referenced and never declared —
+`--radius-snug`, `--surface-raised`, `--accent`, `--touch-min` (`ui/home.css`)
+and `--space-roomy` (`ui/panels.css`). **Each needs judging on its own**; some
+may be deliberate inheritance from a parent, some may be things that have been
+rendering as their initial value for months. The pass is: decide the five, then
+widen the sweep so the sixth cannot happen.
 
 *Dead hypotheses, do not reopen without new data:* the OpenFreeMap CDN is not
 the bottleneck, and modulepreload was measured and rejected (`SPEC.md` SETTLED).
