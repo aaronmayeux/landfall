@@ -609,28 +609,47 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
 
 ### 4.8 Surge
 
-**Built against Hurricane Milton's published archive; the live path is one
-adapter short.** `data/surge.js` normalizes both sources to one shape —
-`kind`, `color`, `severity`, `range`, `place` — and `map/layers/surge.js` draws
-it as segment B of the `coastal` pair. The fixture is
-`samples/milton-al142024/surge/`, 22 advisories, simplified at `SURGE.offsetDeg`
-to match what the relay asks ArcGIS to generalize to. `/?surge=milton&adv=017`
-shows it on the real globe.
+**Live.** `data/surge.js` normalizes both sources to one shape — `kind`,
+`color`, `severity`, `range`, `place` — and `map/layers/surge.js` draws it as
+segment B of the `coastal` pair. Two fixtures:
+`samples/milton-al142024/surge/` (22 advisories, already normalized, proves the
+RENDERER) and `samples/lala-cp012026/surge/` (raw service bytes with NHC's own
+attribute names, proves the READER). `/?surge=milton&adv=017` shows the first
+on the real globe.
 
-**What is NOT built: the relay route.** The Peak Storm Surge service only
-answers while a US storm has surge watches in effect, so the live field names
-cannot be read today. `fetchSurgeLive()` throws until that route exists, which
-the caller surfaces as `unavailable` — never as an empty coast.
+**The relay route is `/api/nhc/surge`, and it takes no parameters.** It queries
+layers 1 and 2 whole, merges them into one FeatureCollection, and is warmed by
+the cron Worker under the single fixed key `nhc/surge`. The per-storm filter
+runs on the client. A position in the query would be a position in the cache
+key, and the Worker and the reader cannot be made to agree on one — the storm
+moves between the warm cycle and the tap, and the warm loop then runs forever
+writing bytes nobody reads while every count stays green.
 
-Rules below are inherited from the HA project and corrected where Milton's
-bytes disproved them.
+`fetchStormGeometry()` starts the surge fetch beside the nine MapServer layers
+and joins it as its own slot: `ok` with bands, `none` when the storm has none,
+`unavailable` when the fetch failed. Those three never look alike (§5).
 
-- **The PeakStormSurge service is not per-storm and has no `stormid` field.** One
-  Points/Lines/Polygons trio serves every active storm. Filter spatially: ±12°
-  envelope around the current position, `spatialRel=esriSpatialRelIntersects`,
-  polygon layer 2. This breaks the per-(storm, advisory) cache assumption every
-  other layer relies on — **surge keys on position, not storm id.**
-- **Ask the server to generalize** (`maxAllowableOffset` ≈ 0.005°). A second
+Rules below are inherited from the HA project and corrected where real bytes
+disproved them.
+
+- **==> THE SERVICE DOES PUBLISH A STORM ID, AND THIS SECTION SAID IT DID NOT.
+  <==** One Points/Lines/Polygons trio serves every active storm and there is no
+  field named `stormid` — which is where the old rule stopped looking. Measured
+  on Lala 2026-08-16: every feature carries `idp_subset: "cp012026"`, the app's
+  own storm id, same spelling and case, and `folderpath` carries it again
+  alongside the advisory number. **Match on `idp_subset` first.** The ±12°
+  envelope around the current position survives as the fallback for a feature
+  that states no id — losing a real band is worse than including a distant one.
+  Surge therefore keys on NOTHING: the route is unparameterized and the filter
+  is client-side.
+- **==> THE LAYER'S PUBLISHED `extent` IS NOT A MEASUREMENT OF ITS CONTENTS.
+  <==** ArcGIS stores it on the table definition and does not recompute it as
+  rows change, so it can describe the previous storm indefinitely. It was read
+  as proof this service held nothing near Hawaii while it was actively serving
+  eleven bands over Oahu and Kauai. **Only the features answer.**
+  `tools/archive-fetch.mjs` snapshots both layers unfiltered every hour so the
+  question is never re-asked from metadata again.
+- **Ask the server to generalize** (`maxAllowableOffset` = `SURGE.offsetDeg`, 0.001°; 0.005° shipped once and was rejected on glass). A second
   always-on client-side pass on top deletes small rings and inland fingers;
   coarsen only a band that overruns its own budget.
 - **Allocate the point budget across bands** proportional to raw size, with a
@@ -651,9 +670,12 @@ bytes disproved them.
   `{"peak_surge_range": "8-12 ft", "color": "red"}`, verified against Milton's
   22 advisories. On the live service the field is most likely `popupinfo` —
   Esri's landing spot for a KML `<description>`, and this service is visibly a
-  KML import. `SURGE.liveColorFields` tries the candidates in order and
-  `data/surge.js` logs which one answered, so **the first live storm settles it
-  as a measurement rather than leaving it a guess.**
+  KML import. **The first live storm settled it: `popupinfo` is correct.** On
+  Lala's eleven features it reads
+  `{"peak_surge_range": "1-2 ft", "color": "blue"}` on every one, while
+  `symbolid` is `0` on every one. `SURGE.liveColorFields` still tries the
+  candidates in order and `data/surge.js` still logs which answered, because a
+  schema change must stay loud.
 - **The color is a BUCKET; the range is the forecast.** `SURGE_RAMP` labels red
   "Up to 12 ft"; the archive publishes 5-10, 6-10 *and* 8-12 ft as red. Show the
   published range, and the ramp label only when a feature has none.
@@ -663,7 +685,9 @@ bytes disproved them.
 - **==> SURGE IS NOT BANDS ONLY. <==** Every advisory carries coastal LINES
   beside the polygons, each with its own color and depth — roughly half the
   features on Milton. Layer 1 (Lines) and layer 2 (Polygons) are both required;
-  drawing only the bands drops half the product.
+  drawing only the bands drops half the product. **An empty Lines layer is an
+  ANSWER, not a failure** — Lala published none, and the route must not treat
+  that as an error.
 - **A "surge band" is not a surge WATCH/WARNING.** Surge watch/warning does not
   exist as a vector product anywhere in NHC's services. Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
   NHC_Breakpoints is static reference points. **Surge is bands only.** Any design

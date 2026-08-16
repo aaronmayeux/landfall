@@ -204,6 +204,7 @@ const READER_KEYS = [
   ['functions/api/jtwc/warning.js', 'jtwc/warning/'],
   ['functions/api/nhc/genesis.js', 'nhc/genesis/'],
   ['functions/api/nhc/outlook.js', 'nhc/outlook/'],
+  ['functions/api/nhc/surge.js', 'nhc/surge'],
 ];
 
 for (const [file, expected] of READER_KEYS) {

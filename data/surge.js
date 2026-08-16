@@ -28,8 +28,20 @@
  * what the reader is shown; the ramp label is a fallback for a feature that
  * has no range of its own.
  *
- * ==> DO NOT READ `symbolid`. <== SPEC-DATA.md §4.8 said it carries the color
- * class. The service declares it as an integer. See config/constants.js SURGE.
+ * ==> DO NOT READ `symbolid`. NOW MEASURED, NOT REASONED. <== SPEC-DATA.md
+ * §4.8 said it carries the color class. The service declares it an integer,
+ * and on Lala's real bytes (2026-08-16) it is `0` on all eleven features while
+ * `popupinfo` carries `{"peak_surge_range": "1-2 ft", "color": "blue"}` on
+ * every one of them.
+ *
+ * THE COST OF GETTING THIS WRONG IS NOT A MISSING LAYER, IT IS A WRONG NUMBER
+ * ON A COASTLINE, and there is a live example. The HA integration this app
+ * descends from reads `symbolid`, finds no color word in `0`, and falls back
+ * to the feature's INDEX in the list — so Lala's eleven bands, every one of
+ * them blue at 1-2 ft, painted as blue, yellow, orange, red, and then purple
+ * ("Above 12 ft") for the remaining seven, over Honolulu. It looks entirely
+ * plausible on a map, which is exactly why the rule is stated this loudly.
+ * See config/constants.js SURGE.
  */
 
 import { ENDPOINT, SURGE } from '../config/constants.js';
@@ -190,34 +202,145 @@ export async function fetchSurgeFixture(adv) {
   return normalizeSurge(json, { fromFixture: true });
 }
 
+/* ---------------------------------------------------------------------------
+ * THE ENVELOPE, WHICH LIVES HERE RATHER THAN IN THE QUERY
+ *
+ * ==> THE RELAY ROUTE TAKES NO POSITION, AND THIS IS THE OTHER HALF OF THAT
+ *     DECISION. <== `functions/api/nhc/surge.js` carries the argument in full:
+ * a position in the query is a position in the cache key, and the cron Worker
+ * and the reader cannot be made to agree on one, because the storm moves
+ * between the warm cycle and the tap. So the route serves everything NHC
+ * publishes anywhere, warmed under one fixed key, and the per-storm filter is
+ * done here — arithmetic over bytes already in memory.
+ *
+ * TWO FILTERS, IN ORDER: the storm id the service publishes on each feature
+ * (`idp_subset` — see `matchesStormId`, and note that this file used to say
+ * flatly that no such field existed), then the spatial box for anything that
+ * states no id. With one storm publishing surge neither changes the answer;
+ * with two, they are what stops one storm's panel showing the other's coast.
+ * ------------------------------------------------------------------------- */
+
+/** Every coordinate in a GeoJSON geometry, however deeply nested. Surge
+ *  arrives as Polygon, MultiPolygon, LineString and MultiLineString in one
+ *  collection, so walking the arrays is simpler and safer than four cases. */
+function* coordsOf(node) {
+  if (!Array.isArray(node)) return;
+  if (typeof node[0] === 'number' && typeof node[1] === 'number') {
+    yield node;
+    return;
+  }
+  for (const child of node) yield* coordsOf(child);
+}
+
+/**
+ * Does any part of this feature fall inside the box around the storm?
+ *
+ * ==> ANY VERTEX, NOT THE CENTROID. <== A coastal reach can be 200 km long. A
+ * band whose middle sits outside the envelope while its end touches the storm
+ * is still that storm's forecast, and dropping it would take a real piece of
+ * coast off the map — the §5 failure this whole file is arranged around.
+ *
+ * NO ANTIMERIDIAN HANDLING, AND IT IS DELIBERATE RATHER THAN FORGOTTEN. This
+ * product covers US coasts; the widest case is Hawaii, where a 12° box around
+ * 160°W spans 172°W to 148°W and never approaches the seam. A Guam or Wake
+ * surge product would need it, NHC does not publish one, and a wrap written
+ * against no real bytes would be a guess sitting in the path of every storm.
+ */
+function withinEnvelope(feature, lat, lng, deg) {
+  for (const [x, y] of coordsOf(feature?.geometry?.coordinates)) {
+    if (Math.abs(y - lat) <= deg && Math.abs(x - lng) <= deg) return true;
+  }
+  return false;
+}
+
+/**
+ * ==> THE SERVICE DOES CARRY A STORM ID, AND EVERY NOTE IN THIS PROJECT SAID
+ *     IT DID NOT. <== Measured on Lala's real bytes, 2026-08-16
+ *     (`origin/archive:latest/nhc-peaksurge-polygons.geojson`): every feature
+ *     carries `idp_subset: "cp012026"` — the app's own storm id, same case,
+ *     same shape. `folderpath` carries it too, alongside the advisory number.
+ *
+ * The "no stormid, so filter spatially" rule came from reading the field list
+ * for a field literally named `stormid`, finding none, and stopping. It is the
+ * same mistake as trusting the layer extent: a question answered from metadata
+ * rather than from rows. The HA integration this app descends from carries the
+ * identical assumption in its own comments.
+ *
+ * SO THE ID IS TRIED FIRST AND THE BOX IS THE FALLBACK, not the other way
+ * round. An id match is exact; a 12° box around a storm sitting off a crowded
+ * coast will happily hand one storm's panel a neighbour's bands. But the id
+ * is one storm's worth of evidence, so a feature that carries no `idp_subset`
+ * at all still gets the spatial test rather than being silently dropped —
+ * losing a real band is worse than including a distant one.
+ *
+ * @returns {boolean|null} true/false when the feature states an id, null when
+ *   it states none and the caller should fall back to geometry.
+ */
+function matchesStormId(feature, stormId) {
+  if (!stormId) return null;
+  const sub = feature?.properties?.idp_subset;
+  if (typeof sub !== 'string' || !sub.trim()) return null;
+  return sub.trim().toLowerCase() === String(stormId).trim().toLowerCase();
+}
+
+/**
+ * Narrow the whole published product down to one storm's features.
+ *
+ * PURE, AND EXPORTED FOR THAT REASON — this is the only piece of the live path
+ * that makes a judgement, so it is the only piece worth a test, and a test that
+ * needs a network fetch is a test nobody runs.
+ *
+ * @returns {{fc: object, byId: number, byBox: number}} the counts say WHICH
+ *   filter answered, which is what turns the first live storm into a
+ *   measurement instead of another entry on the open-questions list.
+ */
+export function selectForStorm(fc, { lat, lng, stormId = null } = {}) {
+  let byId = 0;
+  let byBox = 0;
+  const features = (fc?.features || []).filter((f) => {
+    const idSays = matchesStormId(f, stormId);
+    if (idSays !== null) {
+      if (idSays) byId++;
+      return idSays;
+    }
+    const inBox = withinEnvelope(f, lat, lng, SURGE.envelopeDeg);
+    if (inBox) byBox++;
+    return inBox;
+  });
+  return { fc: { type: 'FeatureCollection', features }, byId, byBox };
+}
+
 /**
  * Live surge near a storm's current position.
  *
- * NOT WIRED TO A ROUTE YET, and deliberately so: the relay route this calls is
- * one adapter that can only be written correctly against a real storm's bytes,
- * and there has been none since the layer was built. Calling it today throws,
- * which the caller turns into an honest `unavailable` — never an empty map,
- * which would read as no surge forecast rather than no answer (§5).
+ * Fetches the whole published product from the warmed relay route and narrows
+ * it here. Throws on anything that is not an answer, which the caller turns
+ * into an honest `unavailable` — never an empty map, which would read as no
+ * surge forecast rather than no answer (§5). An answer that genuinely contains
+ * nothing for this storm comes back as an empty collection, which is
+ * `none_matched`, and the two must never look alike.
  */
-export async function fetchSurgeLive(lat, lng) {
+export async function fetchSurgeLive(lat, lng, stormId = null) {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
     throw new Error('surge: no position to filter on');
   }
-  const params = new URLSearchParams({ lat: String(lat), lng: String(lng) });
-  const res = await fetch(`${ENDPOINT.relay}/nhc/surge?${params}`, { cache: 'no-store' });
+  const res = await fetch(`${ENDPOINT.relay}/nhc/surge`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const json = await res.json();
   if (json?.error) throw new Error(json.error.message || 'surge query error');
   if (json?.type !== 'FeatureCollection') throw new Error('not a FeatureCollection');
 
-  const out = normalizeSurge(json, { fromFixture: false });
+  const published = json.features?.length || 0;
+  const { fc: near, byId, byBox } = selectForStorm(json, { lat, lng, stormId });
+  const out = normalizeSurge(near, { fromFixture: false });
   /* ==> THE ONE LINE THAT ANSWERS THE OPEN QUESTION. <== Printed rather than
    * rendered: it is a note to whoever is watching the console during the first
    * storm, and it turns `SURGE.liveColorFields` from a list of guesses into a
    * measurement. */
   console.info(
-    `[landfall] surge: ${out.fc.features.length} features, color read from ` +
-    `${out.via || '(nothing — every candidate field missed)'}` +
+    `[landfall] surge: ${published} published, ${near.features.length} for this storm ` +
+    `(${byId} by id, ${byBox} by ${SURGE.envelopeDeg}° box), ${out.fc.features.length} kept, ` +
+    `color read from ${out.via || '(nothing — every candidate field missed)'}` +
     (out.dropped ? `, ${out.dropped} dropped for no recognizable color` : '')
   );
   return out;

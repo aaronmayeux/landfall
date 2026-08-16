@@ -506,11 +506,24 @@ fired on a real storm. A real JTWC final warning proves it. Detection is
 client-side; the app must be open. DOLPHIN-26 was the candidate and never got
 one — it simply stopped being analysed, which is what `lapsed` is for.
 
-**Surge (Phase 6 step 3) and wind arrival (step 4) are HELD FOR A STORM NEAR
-HOME, not blocked.** Against a storm half a planet away there is no telling a
-right answer from a plausible one. Surge is bands only (no watch/warning vector
-product exists); wind arrival fetches layers 18/19 and never computes; the
-at-home exposure timeline lands after both.
+**Surge (Phase 6 step 3) is LIVE and awaiting judgement on glass.** The relay
+route, the warming key and the client wiring shipped 2026-08-16 against Tropical
+Storm Lala, the first storm to publish surge since the layer was built. Not yet
+confirmed on a phone. What to look for: eleven bands around Oahu, Kauai and
+Niihau, **every one of them blue (1-2 ft)** — NHC forecast one depth for this
+whole storm, so any ramp of colours on that coast is a bug, not a forecast.
+
+**Wind arrival (step 4) is still HELD FOR A STORM NEAR HOME.** Against a storm
+half a planet away there is no telling a right answer from a plausible one. It
+fetches layers 18/19 and never computes; the at-home exposure timeline follows.
+
+**The HA integration is painting Lala's surge wrong, and it is not ours to fix
+here.** It resolves severity from `symbolid` (integer `0` on every feature),
+misses, and falls back to the feature's index in the list — so eleven all-blue
+bands render blue, yellow, orange, red, then purple for the remaining seven,
+over Honolulu. Landfall reads `popupinfo` and gets it right. Noted because the
+two apps now visibly disagree on the same storm and the reason should not have
+to be rediscovered.
 
 **A Cat 4 has never been on this globe.** The severity ramp above Cat 2 is
 untested by observation. So is the cone, swath and warnings together at basin
