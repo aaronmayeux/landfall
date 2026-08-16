@@ -1187,14 +1187,36 @@ which the pass table (§49.13) did not list.
   row. `when === 'now'` stays shut: it means the storm is at its strongest
   right now, so the row would land on the divider and repeat what the strength
   strip says two inches higher.
-- **The forecast pass row is suppressed once it is not ahead of the clock.**
-  Not in the original plan, and it is the same bug pass 3 fixed on the
-  headline: `closestApproach` walks forward from the current position, so a
-  leaving storm's "closest pass" is where it is standing. On Ida's Advisory 19
-  the rail printed *Closest pass — 163 mi NNE of you, now* two rows under
-  *Closest it came — 13 mi ENE of you, 17 hrs ago* — one fact in the other's
-  words, which §49.2 forbids. Kept whole for a storm with no observed track,
-  where there is no truer row to fall back to.
+- **The forecast pass row is suppressed once it is superseded.** Not in the
+  original plan, and it is the same bug pass 3 fixed on the headline:
+  `closestApproach` walks forward from the current position, so a leaving
+  storm's "closest pass" is where it is standing. On Ida's Advisory 19 the rail
+  printed *Closest pass — 163 mi NNE of you, now* two rows under *Closest it
+  came — 13 mi ENE of you, 17 hrs ago* — one fact in the other's words, which
+  §49.2 forbids.
+
+  **THE RULE ASKS TWO THINGS, AND ASKING ONLY THE FIRST SHIPPED THE BUG
+  AGAIN.** The rule was written as "is the forecast pass ahead of the clock",
+  which every Ida advisory satisfies or fails cleanly. Lala did neither: seen
+  on glass 2026-08-16 at 12:58 PM with her forecast pass stamped 1:00 PM — two
+  minutes ahead, so the clock test passed it — at 224 mi, printed under
+  *Closest it came — 36 mi SW of you, 14 hrs ago*. A pass six times farther
+  than one that already happened is not a closest pass however far ahead of the
+  clock it sits. So the second question is distance: **has the storm already
+  been closer than the forecast will ever bring it back.** Either answer
+  supersedes.
+
+  A recurving storm forecast to come back CLOSER than it came is **not**
+  superseded — that is the case the rule protects, not the one it removes.
+  Kept whole for a storm with no observed track, where there is no truer row to
+  fall back to.
+
+  **IT IS ONE FIELD, `dash.approachSuperseded`, AND THAT IS PART OF THE RULE.**
+  The comparison lived in three files — the rail, the chart's marker and the
+  chart's aria summary — as three copies, and was tightened twice. Three copies
+  is how a picture and its own description come to disagree about one storm. It
+  is computed once in `data/home-dashboard.js`; the three surfaces read it and
+  none of them recompute it.
 
 **A `now` row, not a circled node.** The rail's dots are already coloured by the
 storm's category at that moment (`categoryColor`); ringing one to mean "you are
@@ -1298,7 +1320,9 @@ and its stamp were planted at `approach` unconditionally — the forward walk,
 which for a leaving storm answers with the storm's current position. On Lala,
 fourteen hours after she went by, the dot sat at 165 mi under a headline
 reading *Closest it came 36 mi*. The marker now takes the forecast pass only
-while it is still ahead of the clock, and the observed pass otherwise. **One
+while it is not superseded — the same `dash.approachSuperseded` the rail reads,
+which asks both whether the pass is ahead of the clock and whether the storm
+has already been closer — and the observed pass otherwise. **One
 marker, never two:** a storm mid-pass has both facts and the rail states both,
 but two white dots and two timestamps on a 320-px frame is a collision the
 picture does not need, and the one worth marking is the pass somebody can still
@@ -1442,7 +1466,7 @@ given, because those numbers are how they are referred to; pass 1 landed as
 | Pass | Scope | Files |
 |---|---|---|
 | ~~**3. The pass and the peak, backwards**~~ | **DONE.** `closestApproach` gained a sibling `closestPassed`; the peak spans the whole life; `atClosest` split; the headline, the strength block and the chip got their tenses. Ida fixture landed. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home-ida.mjs` |
-| ~~**4. The rail and the chart**~~ | **DONE.** Past class crossings and the past peak are BUILT (they were never being filtered out — nothing made them); every milestone carries its own tense; the live-distance row became the `now` divider; past rows dimmed; the forecast pass row suppressed once it is no longer ahead; chart domain extended left with two cuts; solid/dotted split; hedge suppressed left of `now`. | `data/home-dashboard.js`, `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css`, `tools/test-home-ida.mjs` |
+| ~~**4. The rail and the chart**~~ | **DONE.** Past class crossings and the past peak are BUILT (they were never being filtered out — nothing made them); every milestone carries its own tense; the live-distance row became the `now` divider; past rows dimmed; the forecast pass row suppressed once superseded (clock AND distance, see §49.7); chart domain extended left with two cuts; solid/dotted split; hedge suppressed left of `now`. | `data/home-dashboard.js`, `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css`, `tools/test-home-ida.mjs` |
 | **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
 | **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
 

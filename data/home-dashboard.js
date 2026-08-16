@@ -924,6 +924,41 @@ export function buildHomeDashboard({
     trend,
     approach,
 
+    /** ==> IS THE FORECAST PASS STILL THE REAL ANSWER? ONE FACT, DECIDED HERE.
+     *  <== `closestApproach` walks from the CURRENT POSITION forward, so for a
+     *  storm that is leaving, the nearest point on what REMAINS of the track is
+     *  wherever the storm happens to be standing. Printed beside the observed
+     *  pass that already happened, that is one fact wearing the other's words —
+     *  the exact confusion §49.2 forbids.
+     *
+     *  ==> TIME ALONE WAS NOT ENOUGH, AND GLASS PROVED IT. <== The first
+     *  version of this rule asked only whether the forecast pass was ahead of
+     *  the clock. Seen on Lala 2026-08-16 at 12:58 PM with her forecast pass
+     *  stamped 1:00 PM: two minutes ahead, so the test passed, and the rail
+     *  read `Closest pass — 224 mi WNW of you, now` two rows under `Closest it
+     *  came — 36 mi SW of you, 14 hrs ago`. Both numbers correct, together
+     *  nonsense. A pass six times FARTHER than one that already happened is
+     *  not a closest pass however far ahead of the clock it sits.
+     *
+     *  So both halves are asked, and either one supersedes: the forecast pass
+     *  is behind the clock, or the storm has already been closer than the
+     *  forecast will ever bring it back.
+     *
+     *  ==> KEPT WHOLE FOR A STORM WITH NO HISTORY. <== Every arm requires
+     *  `passed`. Without an observed track there is no truer row to fall back
+     *  to, and a pass pinned to now is still the best the app can say. Nothing
+     *  is deleted, only superseded.
+     *
+     *  ==> AND A GENUINE SECOND APPROACH SURVIVES. <== A recurving storm whose
+     *  forecast brings it back CLOSER than it came is not superseded, because
+     *  `passed.nm <= approach.nm` is false — which is the case this field
+     *  exists to protect, not the one it exists to suppress. */
+    approachSuperseded: !!(
+      passed?.time &&
+      approach?.time &&
+      (!(Date.parse(approach.time) > now) || passed.nm <= approach.nm)
+    ),
+
     /** ==> THE CLOSEST IT ACTUALLY CAME. PAST TENSE, MEASURED, NO BAND. <==
      *  A sibling of `approach` and never a replacement for it (§49.2/§49.5):
      *  a storm approaching has only `approach`, a storm gone has only

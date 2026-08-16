@@ -291,11 +291,13 @@ export function homeChart(dash, system) {
    * and two timestamps on a 320-px frame is a collision problem the picture
    * does not need. The marked one is the pass still to come, because that is
    * the one anybody is planning around. */
-  const passAhead = dash.approach?.time
-    ? Date.parse(dash.approach.time) > co.now
-    : false;
+  /* THE TEST IS `dash.approachSuperseded`, COMPUTED ONCE ON THE DASHBOARD.
+   * It asks two things, not one: is the forecast pass ahead of the clock, and
+   * is it actually closer than the pass that already happened. Lala's forecast
+   * pass sat two minutes ahead of the clock at six times the distance of her
+   * real one, which the clock test alone waved through. */
   const mark =
-    dash.approach?.relevant && dash.approach.time && (passAhead || !dash.passed?.time)
+    dash.approach?.relevant && dash.approach.time && !dash.approachSuperseded
       ? { nm: dash.approach.nm, time: dash.approach.time, h: cpaH }
       : dash.passed?.time && Number.isFinite(passedH) && passedH >= hMin
         ? { nm: dash.passed.nm, time: dash.passed.time, h: passedH }
@@ -672,11 +674,11 @@ function summary(dash, system) {
    * chart, so "passes closest at about 165 mi" — the forward walk pinned to a
    * leaving storm's current position — would be the only thing that reader is
    * told about a storm that actually came 36 mi from the house. Past tense,
-   * measured distance, whenever the forecast pass is no longer ahead. */
-  const passAhead = dash.approach?.time
-    ? Date.parse(dash.approach.time) > (dash.now ?? Date.now())
-    : false;
-  if (dash.approach?.relevant && (passAhead || !dash.passed?.time)) {
+   * measured distance, whenever the forecast pass is superseded — either
+   * because it is behind the clock or because it is farther out than the pass
+   * that already happened. One field, `dash.approachSuperseded`, so this
+   * sentence cannot describe a different dot from the one drawn above it. */
+  if (dash.approach?.relevant && !dash.approachSuperseded) {
     parts.push(
       `${name} passes closest at about ${formatDistance(dash.approach.nm, system)} from you`
     );

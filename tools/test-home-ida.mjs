@@ -1409,7 +1409,11 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
   const { countdownHtml } = await import('../ui/countdown-home.js');
   const { HOME_DASH } = await import('../config/constants.js');
 
-  const build = async (nnn) => {
+  /** `clockMs` moves the READER'S clock without touching a byte of the
+   *  advisory — the archive is still cut at issue time, so every fix and every
+   *  forecast point is exactly what NHC published. It exists for one case Ida
+   *  cannot otherwise produce; see the supersession block below. */
+  const build = async (nnn, clockMs = null) => {
     const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
     const iso = new Date(a.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
     const raw = JSON.parse(
@@ -1419,7 +1423,7 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
     const dash = buildHomeDashboard({
       storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
       forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
-      past, radii: a.radii, home: HOME, now: a.issuedMs, trackState: 'ok',
+      past, radii: a.radii, home: HOME, now: clockMs ?? a.issuedMs, trackState: 'ok',
     });
     return { a, past, dash, rail: countdownHtml(dash, () => 'imperial', (i, t) => `<h3>${t}</h3>`) };
   };
@@ -1474,6 +1478,132 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
      'mid-pass the observed pass is still stated at its real distance');
   ok(/Weakens to a depression/.test(text17),
      'and the forecast half of the same rail is still in the future tense');
+
+  /* ===================================================================== *
+   * THE HALF OF THAT RULE THE CLOCK COULD NOT SEE (dash.approachSuperseded)
+   *
+   * ==> IDA CANNOT PRODUCE THIS CASE AND LALA DID. <== Measured across
+   * advisories 012-019 against the Prairieville home, every one of Ida's
+   * forecast passes is either genuinely ahead of the clock AND closer than
+   * anything observed (012: 0.9 nm ahead of a 168.0 nm history) or pinned
+   * exactly to the current position at +0.00 h (017-019). So a rule that
+   * asks only "is the pass ahead of the clock" passes every Ida advisory
+   * and is still wrong.
+   *
+   * Seen on glass 2026-08-16 on Lala at 12:58 PM, whose forecast pass was
+   * stamped 1:00 PM — TWO MINUTES AHEAD, so the clock test waved it through
+   * — at 224 mi, printed two rows under `Closest it came — 36 mi SW of you,
+   * 14 hrs ago`. Six times farther, and the app called it the closest pass.
+   *
+   * Reproduced here on real bytes with NOTHING CHANGED BUT THE READER'S
+   * CLOCK: Advisory 019 read ten minutes before it was issued. The archive
+   * is still cut at issue time, so the track, the fixes and the forecast are
+   * NHC's own; the forecast pass simply becomes 0.17 h ahead instead of
+   * 0.00 h, at 141.6 nm, over an observed pass of 10.5 nm.
+   * ===================================================================== */
+  {
+    const A19 = parseTcm(readAdv('019'), { sourceId: 'al092021' });
+    const { dash: dEarly, rail: railEarly } =
+      await build('019', A19.issuedMs - 10 * 60_000);
+
+    /* The mechanism, stated rather than described: this IS the shape the
+     * clock-only rule cannot catch. If either line stops being true the
+     * fixture has drifted and the assertions below prove nothing. */
+    ok(Date.parse(dEarly.approach.time) > dEarly.now,
+       'the forecast pass is genuinely AHEAD of the clock, so the old test passed it');
+    near(dEarly.approach.nm, 141.50, 0.05,
+       'and it sits at her current position, 141.50 nm out');
+    near(dEarly.passed.nm, 11.28, 0.05,
+       'while she actually came 11.28 nm from the house — twelve times closer');
+
+    ok(dEarly.approachSuperseded === true,
+       'so the forecast pass is superseded — distance, not just the clock');
+    const textEarly = railRows(railEarly).map((r) => r.text).join('\n');
+    ok(!/Closest pass —/.test(textEarly),
+       'and no row on the rail offers 163 mi as a closest pass — this is the Lala bug');
+    ok(/Closest it came — 13 mi/.test(textEarly),
+       'the true answer to that question is on the rail, at the distance it happened');
+
+    /* ==> AND THE CASE THIS MUST NOT SUPPRESS. <== A pass still ahead AND
+     * still closer than anything observed is the one thing on the screen a
+     * reader is planning around. Advisory 016 is mid-pass with 12.409 nm
+     * ahead against 12.482 nm behind — 0.074 nm apart, about 136 metres,
+     * which is as tight a test as real bytes offer that the comparison runs
+     * the right way round rather than passing by a comfortable margin. */
+    const { dash: d16, rail: rail16 } = await build('016');
+    near(d16.passed.nm - d16.approach.nm, 0.074, 0.005,
+       'her forecast pass beats her observed one by 0.074 nm and no more');
+    ok(d16.approach.nm < d16.passed.nm,
+       'mid-pass her forecast pass is still marginally closer than her observed one');
+    ok(d16.approachSuperseded === false,
+       'so it is NOT superseded — a genuine approach survives the rule');
+    ok(/Closest pass —/.test(railRows(rail16).map((r) => r.text).join('\n')),
+       'and the row a reader is planning around is still on the rail');
+
+    /* THE STORM WITH NO HISTORY IS UNTOUCHED. Nothing is deleted, only
+     * superseded — and with no observed pass there is nothing to supersede it
+     * with, however far out the forecast pass sits.
+     *
+     * ==> THE SAME NUDGED CLOCK, AND WITHOUT IT THIS PROVES NOTHING. <== Read
+     * at issue time the pass is behind the clock, so the FIRST arm supersedes
+     * it and the missing-history guard is never reached — the assertion passed
+     * with the guard deleted. Ten minutes early puts the pass ahead, which
+     * leaves the guard as the only thing holding the answer at false. */
+    ok(buildHomeDashboard({
+      storm: { ...A19.storm, category: categoryFromKt(A19.storm.windKt) },
+      forecast: A19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+      past: [], radii: A19.radii, home: HOME,
+      now: A19.issuedMs - 10 * 60_000, trackState: 'ok',
+    }).approachSuperseded === false,
+       'with no observed track at all nothing is superseded — 141 nm is all the app has');
+
+    /* THE PICTURE AND ITS DESCRIPTION READ THE SAME FIELD. This rule lived
+     * in three files as three copies; the chart's aria sentence is the one a
+     * screen reader gets INSTEAD of the chart, so it is the surface where a
+     * drift would be invisible and total.
+     *
+     * ==> ADVISORY 018, NOT 019, AND THE REASON IS A SEPARATE OPEN BUG. <==
+     * NHC stops publishing wind radii late in a storm's life — 019 has none —
+     * and `homeChart` returns an empty string when the corridor has nothing,
+     * so a departed storm draws NO CHART AT ALL and there is no aria string
+     * to read. That is §49.9's second finding and it is pass 5's to fix. 018
+     * is the last advisory that is both superseded and still drawn: one
+     * published radius, 96.4 nm ahead against the same 11.28 nm behind. */
+    /* ==> ITS OWN ISSUE TIME, AND THAT MATTERS. <== Nudging 018 off 019's
+     * clock puts the reader six hours AFTER 018 was written, which makes its
+     * forecast pass behind the clock and superseded for the ordinary reason —
+     * so the assertion below passed while the bug was reintroduced. Caught by
+     * a mutation run, which is the whole point of doing them. */
+    const A18 = parseTcm(readAdv('018'), { sourceId: 'al092021' });
+    const { dash: d18early } = await build('018', A18.issuedMs - 10 * 60_000);
+    ok(d18early.approachSuperseded === true && d18early.corridor.ok,
+       'Advisory 018 read early is superseded AND still has a corridor to draw');
+    const svg18 = homeChart(d18early, 'imperial');
+
+    /* ==> THE DOT ITSELF, NOT ONLY THE SENTENCE ABOUT IT. <== A mutation run
+     * put the chart's marker back on its own private clock-only test and the
+     * whole suite stayed green, because the only assertion covering that
+     * branch was the aria string — a different function reading the same
+     * field. The marker is what a sighted reader sees, so it gets its own
+     * test: on a superseded pass it must sit LEFT of the `now` line, because
+     * the moment it marks has happened.
+     *
+     * Parsed off the rendered SVG rather than recomputed, so this cannot pass
+     * by repeating the chart's own arithmetic back at it. */
+    const nowX18 = +(svg18.match(
+      /<line x1="([\d.]+)" y1="6" x2="[\d.]+" y2="[\d.]+" stroke="var\(--text-muted\)"/
+    ) || [])[1];
+    const dotX18 = +(svg18.match(/<circle cx="([\d.]+)" cy="[\d.]+" r="4"/) || [])[1];
+    ok(Number.isFinite(nowX18) && Number.isFinite(dotX18),
+       'the chart draws both a now line and a closest-pass dot to compare');
+    ok(dotX18 < nowX18,
+       `the dot marks the pass that HAPPENED, left of now (dot ${dotX18}, now ${nowX18})`);
+    const aria = svg18.match(/aria-label="([^"]*)"/)?.[1] ?? '';
+    ok(/came closest/.test(aria),
+       'the chart tells a screen reader she CAME closest, past tense');
+    ok(!/passes closest/.test(aria),
+       'and never that she passes closest at a distance she is already leaving');
+  }
 
   /* --- the divider, and which side of it every row is on ------------------ */
 

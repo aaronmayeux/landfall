@@ -327,16 +327,18 @@ export function countdownHtml(dash, sys, sectHead) {
    * 17 hrs ago". Both numbers are correct and together they are the exact
    * confusion §49.2 forbids: one fact in the other's words.
    *
-   * So the forecast row is drawn when the pass is genuinely still to come.
-   * When it is not, the observed row above is the true answer to the question
-   * this row was asking, and it is already on the list.
+   * So the forecast row is drawn when the pass is genuinely still to come AND
+   * is genuinely closer than the one that already happened. When it is not,
+   * the observed row above is the true answer to the question this row was
+   * asking, and it is already on the list.
    *
-   * ==> KEPT WHOLE FOR A STORM WITH NO HISTORY. <== Without an observed track
-   * there is no other row to fall back to, and a pinned-to-now pass is still
-   * the best the app can say. Nothing is deleted, only superseded. */
-  const passAhead =
-    dash.approach?.time ? Date.parse(dash.approach.time) > clock : false;
-  if (dash.approach?.relevant && dash.approach.time && (passAhead || !dash.passed?.time)) {
+   * ==> THE TEST IS `dash.approachSuperseded` AND IT IS NOT COMPUTED HERE.
+   * <== This rule lived in three files — this rail, the chart's dot, and the
+   * chart's aria sentence — as three copies of one comparison, and it has now
+   * been tightened twice. Three copies of a rule is how a picture and its
+   * description come to disagree about the same storm. It is one field on the
+   * dashboard; see data/home-dashboard.js for why both halves are asked. */
+  if (dash.approach?.relevant && dash.approach.time && !dash.approachSuperseded) {
     const kt = dash.atClosest?.windKt;
     rows.push({
       /* ==> THE PASS TAKES THE STORM'S OWN COLOR AT THAT MOMENT. <== Not

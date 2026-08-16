@@ -561,11 +561,24 @@ forecast half that matters.
 The rail was printing *Closest pass — 163 mi NNE of you, now* two rows under
 *Closest it came — 13 mi ENE of you, 17 hrs ago*. Same bug pass 3 fixed on the
 headline, on a surface pass 3 did not touch: the forward walk pins a leaving
-storm's "closest approach" to where it is standing. The forecast row is now
-suppressed once it is no longer ahead of the clock. Nothing to judge — it is a
-row that should never have been there — but it means every departed storm has
-been carrying a false closest-pass row on the rail for as long as the rail has
-existed.
+storm's "closest approach" to where it is standing.
+
+**THAT FIX WAS HALF A RULE AND GLASS FOUND THE OTHER HALF.** It asked only
+whether the forecast pass was ahead of the clock. Lala at 12:58 PM had hers
+stamped 1:00 PM — two minutes ahead, so it sailed through, at **224 mi**,
+printed under *Closest it came — 36 mi SW of you, 14 hrs ago*. It now also asks
+whether the storm has already been closer than the forecast will ever bring it
+back, and either answer supersedes. A recurving storm forecast to come back
+CLOSER is untouched, which is the case worth protecting.
+
+The comparison also stopped being three copies. It lived in the rail, the
+chart's marker and the chart's aria summary as three private tests of one
+thing, and had been tightened twice; it is now one field,
+`dash.approachSuperseded`, computed in `data/home-dashboard.js`. Nothing to
+judge — these are rows that should never have been there — but it means every
+departed storm has been carrying a false closest-pass row for as long as the
+rail has existed, and storms passing within a couple of minutes of a synoptic
+hour kept carrying one after pass 4.
 
 **A FULLY-PASSED STORM'S CHART HAS NO WIND ON IT, AND THAT IS THE THING TO FIX
 NEXT.** Seen on glass 2026-08-16 on Lala from a Big Island home, fourteen hours
