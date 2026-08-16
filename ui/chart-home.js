@@ -279,10 +279,31 @@ export function homeChart(dash, system) {
    * stamp is the same string the panel shows — `formatClockDay` — deliberately,
    * because one screen cannot hold two answers to one question.
    *
-   * It exists exactly when the dotted line does, and nowhere else. */
-  const cpaShown = Boolean(dash.approach?.relevant && dash.approach.time);
-  const cpaX = cpaShown ? X(cpaH) : null;
-  const cpaLabel = cpaShown ? formatClockDay(dash.approach.time) || '' : '';
+   * ==> WHICH PASS IT MARKS FOLLOWS §49.2, AND ON A DEPARTED STORM THAT IS THE
+   * OBSERVED ONE. <== `closestApproach` walks forward from the current
+   * position, so once a storm is leaving its "closest approach" is wherever it
+   * is standing — and the chart was planting the marker there, at 165 mi, on a
+   * screen whose headline read *Closest it came 36 mi · 14 hrs ago*. Seen on
+   * glass 2026-08-16 on Lala. The rail had the same fault and the same fix.
+   *
+   * ONE MARKER, NEVER TWO, and that is a choice rather than an oversight: a
+   * storm mid-pass has both facts and the rail states both, but two white dots
+   * and two timestamps on a 320-px frame is a collision problem the picture
+   * does not need. The marked one is the pass still to come, because that is
+   * the one anybody is planning around. */
+  const passAhead = dash.approach?.time
+    ? Date.parse(dash.approach.time) > co.now
+    : false;
+  const mark =
+    dash.approach?.relevant && dash.approach.time && (passAhead || !dash.passed?.time)
+      ? { nm: dash.approach.nm, time: dash.approach.time, h: cpaH }
+      : dash.passed?.time && Number.isFinite(passedH) && passedH >= hMin
+        ? { nm: dash.passed.nm, time: dash.passed.time, h: passedH }
+        : null;
+
+  const cpaShown = Boolean(mark);
+  const cpaX = cpaShown ? X(mark.h) : null;
+  const cpaLabel = cpaShown ? formatClockDay(mark.time) || '' : '';
 
   const nowX = X(0);
   const nowShown = nowX >= PAD_L - 0.01 && nowX <= W - PAD_R + 0.01;
@@ -443,7 +464,7 @@ export function homeChart(dash, system) {
   let cpa = '';
   if (cpaShown) {
     const x = cpaX.toFixed(1);
-    const y = Y(dash.approach.nm).toFixed(1);
+    const y = Y(mark.nm).toFixed(1);
     cpa =
       `<line x1="${x}" y1="${cpaTextY - 6}" x2="${x}" y2="${y}" stroke="var(--text-primary)" ` +
       `stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>` +
@@ -646,9 +667,22 @@ function summary(dash, system) {
   const name = dash.storm?.name || 'The storm';
   const co = dash.corridor;
   const parts = [];
-  if (dash.approach?.relevant) {
+  /* ==> THE SAME §49.2 RULE THE PICTURE FOLLOWS, AND THIS IS THE SURFACE IT
+   * MATTERS MOST ON. <== A screen reader gets this string INSTEAD of the
+   * chart, so "passes closest at about 165 mi" — the forward walk pinned to a
+   * leaving storm's current position — would be the only thing that reader is
+   * told about a storm that actually came 36 mi from the house. Past tense,
+   * measured distance, whenever the forecast pass is no longer ahead. */
+  const passAhead = dash.approach?.time
+    ? Date.parse(dash.approach.time) > (dash.now ?? Date.now())
+    : false;
+  if (dash.approach?.relevant && (passAhead || !dash.passed?.time)) {
     parts.push(
       `${name} passes closest at about ${formatDistance(dash.approach.nm, system)} from you`
+    );
+  } else if (dash.passed?.time) {
+    parts.push(
+      `${name} came closest at about ${formatDistance(dash.passed.nm, system)} from you`
     );
   } else {
     parts.push(`How far ${name} is from you, over time`);

@@ -567,11 +567,24 @@ row that should never have been there — but it means every departed storm has
 been carrying a false closest-pass row on the rail for as long as the rail has
 existed.
 
-**A FULLY-PASSED STORM STILL DRAWS NO CHART.** `homeChart` needs a corridor and
-a corridor needs published wind radii, which NHC stops issuing late in a storm's
-life — Ida's Advisory 19 has none. So her rail has the whole story and the space
-beside it is empty. Pre-existing, orthogonal to pass 4's domain work, and it
-belongs with pass 5, which is the pass that reads the past wind field.
+**A FULLY-PASSED STORM'S CHART HAS NO WIND ON IT, AND THAT IS THE THING TO FIX
+NEXT.** Seen on glass 2026-08-16 on Lala from a Big Island home, fourteen hours
+after she passed at 36 mi: the picture has her track and an empty frame above
+the home line. No band, no rail bar. Each half of that is correct on its own —
+nothing reaches the house on what REMAINS of the forecast, so there is no
+forecast band to draw, and the wind that was actually on the house while she
+went by is layer 13's to tell and nothing reads it. Together they produce the
+one chart that is entirely about the past with no wind in it. **This is §49.9
+and it is pass 5**, the safety-adjacent one, and it is now unblocked: layer 13
+went into `tools/archive-fetch.mjs` beside layer 10, so the hourly runner is
+collecting both sides of the join and the next session can read real bytes
+instead of building against a guessed shape.
+
+**And a departed storm draws no chart AT ALL when it stops publishing radii.**
+`homeChart` needs a corridor and a corridor needs wind radii, which NHC stops
+issuing late in a storm's life — Ida's Advisory 19 has none. So the rail has the
+whole story and the space beside it is blank. Pre-existing, same neighbourhood
+as the gap above, same pass.
 
 **Pass 5 is the safety-adjacent one and is still open.** *No tropical-storm wind
 reaches you* remains a forward-only sentence printed with no tense marker, on a

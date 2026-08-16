@@ -467,10 +467,25 @@ function geometrySources(eventListJson) {
  * `binNumber`, never assembled here. Same rule the GDACS block follows above:
  * a URL this script invents that 404s is indistinguishable in the manifest from
  * a storm that genuinely has no track. */
-const NHC_POINT_LAYER = Object.freeze({
+/* ==> NOT ONLY POINTS ANY MORE, WHICH IS WHY THE NAME CHANGED. <== Layer 13
+ * is the PAST wind field — polygons, not positions — and §49.9 blocks on it:
+ * the corridor's past arm is the answer to "did dangerous wind already reach
+ * my house", and the spec says in as many words that nobody has ever read this
+ * layer field-by-field off real bytes. It is consumed in production by
+ * `lib/windswath.js`, so the field names are trustworthy and the COVERAGE is
+ * not — how far back it publishes, whether it carries all three thresholds at
+ * every synoptic hour, what it does across a basin change. Those are questions
+ * one hourly snapshot answers and no amount of reading our own code can.
+ *
+ * IT JOINS TO LAYER 10 ON A TEN-DIGIT STAMP: 13 carries `synoptime` as a
+ * STRING, 10 carries `dtg` as a NUMBER of the same digits. Both are in this
+ * table, so one snapshot holds both sides of the join and the next session can
+ * test it without the network. */
+const NHC_STORM_LAYER = Object.freeze({
   forecastPoints: 5,
   watchWarning: 8,
   pastPoints: 10,
+  windPast: 13,
 });
 const NHC_MAPSERVER =
   'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
@@ -487,7 +502,7 @@ function nhcTrackSources(currentStormsJson) {
      * skipped rather than queried, so a bad row cannot fill the manifest with
      * identical 400s. */
     if (!/^[A-Z]{2}[0-9]$/.test(bin)) continue;
-    for (const [key, id] of Object.entries(NHC_POINT_LAYER)) {
+    for (const [key, id] of Object.entries(NHC_STORM_LAYER)) {
       out.push({
         name: `geometry/nhc-${slug(s.name)}-${bin}-${key}.geojson`,
         url:
@@ -506,7 +521,7 @@ function nhcTrackSources(currentStormsJson) {
      * third would have quietly turned a cap on STORMS into a cap two-thirds
      * as generous — no error, no warning, just the last storms of a busy
      * season missing from the archive and nobody able to say since when. */
-    if (out.length >= GEOMETRY_MAX * Object.keys(NHC_POINT_LAYER).length) break;
+    if (out.length >= GEOMETRY_MAX * Object.keys(NHC_STORM_LAYER).length) break;
   }
   return out;
 }

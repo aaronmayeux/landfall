@@ -1519,6 +1519,30 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
        'a single event with no live distance is a Timeline, not a row to be swallowed');
   }
 
+  /* --- and the marker on it names the pass that HAPPENED (§49.2) -----------
+   * Seen on glass 2026-08-16 on Lala: the white dot and its stamp sat at the
+   * forward walk's answer — her CURRENT distance — on a screen headlined
+   * *Closest it came 36 mi · 14 hrs ago*.
+   *
+   * ADVISORY 17, NOT 19, AND THE REASON IS THE PICTURE: 19 publishes no wind
+   * radii at all, so it has no corridor and `homeChart` draws nothing to put a
+   * marker on. Seventeen is the same shape and does have one — she is 49 nm
+   * past the house and still moving away, so her forward-walked approach is
+   * pinned to the present while the real pass is 11 nm, five hours back. */
+  {
+    const { formatClockDay } = await import('../lib/time.js');
+    const svg = homeChart(d17, 'imperial');
+    const stamp = svg.match(/font-weight="600" text-anchor="[^"]*" fill="var\(--text-primary\)">([^<]*)</)?.[1];
+    ok(stamp === formatClockDay(d17.passed.time),
+       `the stamp is the observed pass's own clock time (got ${stamp}, want ${
+         formatClockDay(d17.passed.time)})`);
+    const aria = (svg.match(/aria-label="([^"]*)"/) || [])[1] || '';
+    ok(/came closest at about 13 mi/.test(aria),
+       `the accessible twin says she CAME closest, at the measured distance (got ${aria})`);
+    ok(!/passes closest/.test(aria),
+       'and never offers a departed storm\u2019s current distance as an approach');
+  }
+
   /* --- the chart's left half ---------------------------------------------- */
 
   const svg17 = homeChart(d17, 'imperial');

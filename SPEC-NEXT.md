@@ -1293,6 +1293,20 @@ handles the two verticals landing on top of each other and gets a second header
 row for it. That case now happens on every storm mid-pass rather than one in a
 hundred, so it wants a look on glass.
 
+**WHICH PASS THE MARKER NAMES FOLLOWS §49.2, AND IT DID NOT.** The white dot
+and its stamp were planted at `approach` unconditionally — the forward walk,
+which for a leaving storm answers with the storm's current position. On Lala,
+fourteen hours after she went by, the dot sat at 165 mi under a headline
+reading *Closest it came 36 mi*. The marker now takes the forecast pass only
+while it is still ahead of the clock, and the observed pass otherwise. **One
+marker, never two:** a storm mid-pass has both facts and the rail states both,
+but two white dots and two timestamps on a 320-px frame is a collision the
+picture does not need, and the one worth marking is the pass somebody can still
+plan around. The aria summary follows the same rule and says *came closest* —
+that string is what a screen reader gets INSTEAD of the picture, so a departed
+storm's current distance offered there as an approach is the whole failure with
+no visual to correct it.
+
 **`[VERIFY]` — A FULLY-PASSED STORM STILL DRAWS NO CHART, AND THAT IS NOT THIS
 PASS.** `homeChart` returns `''` without a corridor, and a storm late in its
 life stops publishing wind radii — Ida's Advisory 19 has none. So the rail has
@@ -1334,8 +1348,17 @@ Its shape above is taken from `lib/windswath.js`, which consumes it successfully
 in production, so the field names are trustworthy and the *coverage* is not:
 nobody has confirmed how far back layer 13 publishes, whether it carries all
 three thresholds at every synoptic hour, or what it does across a basin change.
-**Add it to `tools/archive-fetch.mjs` and read a real file before building this
-pass.**
+**IT IS IN `tools/archive-fetch.mjs` NOW**, beside layer 10 so one snapshot
+holds both sides of the join, and the hourly runner has been collecting it
+since. Read a real file before building this pass.
+
+**THIS IS WHAT A DEPARTED STORM'S CHART IS MISSING, AND IT IS THE FIRST THING
+GLASS ASKED FOR.** Seen 2026-08-16 on Lala from a Big Island home, fourteen
+hours after she went by at 36 mi: the picture has her track and nothing above
+the home line. No band, no rail bar — correctly, because no wind reaches the
+house on what REMAINS of the forecast. The wind that was on the house while she
+passed is layer 13's to tell and nothing reads it, so the one chart that is
+entirely about the past is the one with no wind on it at all.
 
 **`[DECIDE]` on partial coverage.** If layer 13 goes back only a few synoptic
 hours while layer 10 goes back to genesis, the corridor's past arm is shorter
