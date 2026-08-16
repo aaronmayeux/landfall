@@ -1896,6 +1896,7 @@ reads it off the bundle with no source test and no ended test and hands it to
 null — a storm named in its first advisory has no history yet, and that is an
 answer rather than a gap.
 
-**NOTHING ON ANY SCREEN READS IT YET.** §49's later passes turn it into the
-closest pass that already happened, the storm's real peak, and the left half of
-the chart.
+**WHAT READS IT.** §49's pass 3 turned it into the closest pass that already
+happened (`SPEC-NEXT.md` §49.5), the storm's real peak (§49.6) and the rungs
+that describe the past (§49.14). The left half of the chart and the Timeline
+rail's past rows are pass 4 and do not read it yet.

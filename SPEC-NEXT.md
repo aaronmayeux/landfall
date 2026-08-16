@@ -1010,8 +1010,10 @@ forecasting. It is wrong for reporting. Underneath it, `formatUntil()` in
 `lib/time.js` had **no past branch at all** — a negative interval fell through
 the "less than two minutes ahead" case and returned `'now'`, so every past moment
 anywhere in the app rendered as `now`. That half is fixed and now lives in
-`SPEC-UI.md` §49.4, and the observed track it needs now reaches the dashboard —
-`SPEC-DATA.md` §49.3. Everything below those two does not exist yet.
+`SPEC-UI.md` §49.4; the observed track it needs reaches the dashboard as
+`SPEC-DATA.md` §49.3; and the pass, the peak and the rungs that describe the
+past are built as §49.5, §49.6 and §49.14. The rail, the chart and the wind
+corridor's past arm — §49.7 through §49.9 — do not exist yet.
 
 ### 49.2 The rule this section adds
 
@@ -1041,56 +1043,108 @@ than a convenience — a two-thirds circle drawn around a place the storm
 
 ### 49.5 The closest pass, backwards
 
-`closestApproach()` returns a second, independent result rather than a widened
-one. **Two objects, because they are two facts and the caller must not be able
-to render one thinking it has the other.**
+**BUILT.** `closestPassed()` in `data/home.js`, exposed as `dash.passed`.
+
+`closestApproach()` was not widened. **Two functions, two objects, because they
+are two facts and the caller must not be able to render one thinking it has the
+other.**
 
 - `approach` — unchanged. Current position plus forecast, past candidates
-  skipped, refined by the existing ternary search, error band eligible.
+  skipped, refined by the ternary search, error band eligible.
 - `passed` — the same walk over the observed track, ending at the current
-  position. Same `densifyTrack`, same refinement, same return fields
-  (`nm`, `time`, `windKt`, `bearing`), plus `windSource: 'analysed'`. Null when
-  the storm has no observed track or has never been inside
-  `APPROACH.relevanceNm`.
+  position. Returns `nm`, `time`, `windKt`, `bearing`, plus
+  `windSource: 'analysed'`. Null when the storm has no observed track or has
+  never been inside `APPROACH.relevanceNm`.
+
+**ONE COPY OF THE GEOMETRY, TWO CALLERS.** `walkToClosest()` holds the densify,
+the scan and the ternary refinement; the only thing the two callers differ in is
+an `eligible(index, point)` predicate — the forward walk skips samples behind
+the clock and exempts index 0, the backward walk drops samples ahead of it. A
+second implementation is how the forecast pass and the observed pass, which
+appear on one screen four lines apart, come to disagree about the same house.
 
 **THE TWO WALKS SHARE THE CURRENT POSITION AND THAT IS DELIBERATE.** It is the
 one point that belongs to both — the end of what happened and the start of what
 is forecast — and giving it to only one of them creates a gap or an overlap at
-the exact moment the reader cares about.
+the exact moment the reader cares about. It is APPENDED to the observed track
+rather than assumed to be on the end of it, because it is not: NHC's layer 10
+runs to the synoptic analysis, up to three hours behind the advisory position.
+Appending is skipped when the history already reaches the current time, so a
+zero-length leg never lands mid-polyline.
 
-**How far back:** the whole published track. A storm that formed near the house
-a week ago and wandered off has a real closest pass a week old, and hiding it is
-a worse failure than showing it with a plain timestamp. `formatUntil`'s past arm
-makes a week-old pass read as a week old.
+**THE ERROR BAND CANNOT REACH IT, STRUCTURALLY.** `band` in
+`data/home-dashboard.js` is computed from `approach` and only from `approach`.
+There is deliberately no `passed`-shaped branch in that block, so §49.2's rule
+is enforced by there being no code path rather than by a convention a later edit
+has to remember. The headline prints one plain line in the band's place instead
+of dropping the most prominent caveat on the screen silently.
 
-**The headline word follows which fact exists**, and `dash.stage` already
-computes the rungs (`just-passed`, `past`, `overhead`) that decide it. What
-changes is that the words now have real numbers behind them instead of the
-current position wearing past-tense wording.
+**How far back:** the whole published track. Measured on Hurricane Ida against a
+Prairieville home, her Advisory 19 (2021-08-30 21:00 UTC): she is 141.50 nm away
+and down to 30 kt, and the closest she ACTUALLY came is **11.28 nm at
+03:52:45 UTC**, seventeen hours earlier. The old screen printed the first number
+under the words "Closest it came". `formatUntil`'s past arm (§49.4) renders it
+as `17 hrs ago`.
+
+**THE FIGURE IS PROVED, NOT PASTED.** `tools/test-home-ida.mjs` recomputes the
+same minimum with an independent 20,000-step brute force over the same polyline
+and asserts agreement to 0.01 nm and one minute. Strip the ternary refinement
+and it reports the best SAMPLE instead — the §4 bug — and the assertion goes red.
+
+**The headline word follows `dash.stage`**, and the ladder gained a rung for it
+— see §49.14.
 
 ### 49.6 Strongest means strongest, over the whole life
 
-**DECIDED.** `dash.peak` is the maximum over the observed track, the current
-wind, and the forecast — the storm's entire published life. It is currently
-taken over the forecast plus the present wind only, so a storm that peaked
-before it reached the house reports a peak it has already passed as though it
-were still coming.
+**BUILT.** `dash.peak` is the maximum over the observed track, the current wind,
+and the forecast — the storm's entire published life. It was taken over the
+forecast plus the present wind only, so a storm that peaked before it reached
+the house reported a peak it had already passed as though it were still coming.
 
-Consequences, all of which are part of this section rather than follow-on work:
+**THE ORDER IS THE TIE-BREAK AND IT RUNS OLDEST FIRST:** observed, then now,
+then forecast, each replacing the incumbent only on a STRICTLY greater wind. So
+a storm holding one speed across all three reports the earliest moment it
+reached it, which is the true answer to "when was it strongest" — a later moment
+at the same speed is not stronger.
 
-- **The peak milestone can be in the past.** The rail's `At its strongest —
-  81 mph` becomes `Was strongest — 81 mph` when the moment is behind the clock.
-  One row, two tenses, chosen from the same timestamp everything else uses.
-- **The STRENGTH block's third column gains a past caption.** It already says
-  `after it passes`; it needs `before it reached you` and `earlier today` in the
-  same slot.
-- **Past intensity is better data than forecast intensity.** `intensity` on a
-  past point is NHC's analysis of what the storm did. Where the two are both
-  available for the same hour, the observed one wins, and the block should be
-  able to say so rather than blending them.
-- **`dash.atClosest` splits with the pass.** The wind at a past closest pass is
-  read off the observed track; the wind at a future one stays a sample of the
-  forecast curve.
+`peak.when` gains a fourth value, **`'past'`**. It is the field every tense on
+the screen is chosen from, so a peak behind the clock says so itself rather than
+having a view infer it from a timestamp.
+
+Consequences, all built:
+
+- **The STRENGTH block's third column changes tense.** `Strongest` becomes
+  `Was strongest`, and `before it reaches you` becomes `before it reached you`.
+- **`dash.peakWhenPassed` is a separate field from `dash.peakWhen`**, not a
+  widened one. The first dates the peak against the pass that happened, the
+  second against the pass that is forecast. "Before it reaches you" and "before
+  it reached you" are different claims about different events (§49.2).
+- **`dash.atClosest` splits with the pass.** `atPassed` samples the OBSERVED
+  track at the observed pass; `atClosest` still samples the forecast at the
+  forecast pass. Past intensity is the agency's analysis of what the storm did
+  and beats a forecast for the same hour. Null for most GDACS history, which
+  publishes positions and times and no per-point wind — the cell then does not
+  render, which is the honest shape of that answer rather than a borrowed
+  figure. **The end of the observed track is the current position**, whose wind
+  lives on the storm rather than on the curve, so a pass landing at or after the
+  last published fix reads the storm's own reading.
+- **"It weakens on the way in" and its two siblings are suppressed once the way
+  in is over.** All three are the future tense computed from the forecast wind
+  at the forecast pass, which for a departed storm is the current position — so
+  under a storm that went by yesterday the strip offered *It holds its strength
+  all the way in* about a trip that had finished.
+
+**Measured on Ida's Advisory 19:** peak **130 kt at 1200 UTC 29 August**,
+`when: 'past'`, `peakWhenPassed: 'before'` — she was weakening as she went by.
+`samples/ida-al092021/tcr-AL092021_Ida.txt` states that peak in words and the
+test asserts against the report, so the app has to agree with NHC rather than
+with itself. Rebuild the same dashboard with no observed track and the peak
+collapses to **30 kt**, which is what the old code saw.
+
+**THE PEAK MILESTONE IS STILL FORECAST-ONLY.** `classMilestones` gates its
+`peak` row on `when === 'forecast'` and a time ahead of the clock, so a past
+peak produces no rail row — exactly as `when === 'now'` already did. §49.7 opens
+that gate; nothing regressed here.
 
 ### 49.7 The Timeline rail keeps the past
 
@@ -1263,18 +1317,59 @@ sits at a moment where past and future happen to agree.
 Three passes plus one piece of housekeeping, each shippable on its own and each
 leaving the app more correct than it found it. They keep the numbers they were
 given, because those numbers are how they are referred to; pass 1 landed as
-`SPEC-UI.md` §49.4 and pass 2 as `SPEC-DATA.md` §49.3.
+`SPEC-UI.md` §49.4, pass 2 as `SPEC-DATA.md` §49.3, and pass 3 as §49.5, §49.6
+and §49.14 above and below.
 
 | Pass | Scope | Files |
 |---|---|---|
-| **3. The pass and the peak, backwards** | `closestApproach` gains `passed`; the peak spans the whole life; `atClosest` splits; the headline and the strength block get their tenses. Ida fixture lands here. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home.mjs` |
-| **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |
+| ~~**3. The pass and the peak, backwards**~~ | **DONE.** `closestApproach` gained a sibling `closestPassed`; the peak spans the whole life; `atClosest` split; the headline, the strength block and the chip got their tenses. Ida fixture landed. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home-ida.mjs` |
+| **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. The peak milestone's gate opens here. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |
 | **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
 | **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
 
-**Pass 3 reads `dash.pastCurve` and adds no fetching of its own.** Everything
-it needs is on the bundle already — see `SPEC-DATA.md` §49.3 — so a wrong figure
-in pass 3 is a wrong reading, never a missing download.
+### 49.14 The rungs that describe the past
+
+**BUILT, and it is a correctness fix rather than a copy change.**
+`dash.stage`'s past rungs were judged on `approach.nm` — the FORECAST approach —
+and for a storm that has already gone by, `approach` is pinned to the current
+position. So "how close did it get" was being answered with "how far away is it
+now".
+
+Three days after a storm went twelve miles past the house, `approach.nm` was
+several hundred miles, the near-ring test was false, and the storm fell all the
+way through to `far-off`: the rung that sets `dash.far` and hides the entire
+closest-pass section. **The screen about the storm that just went over the house
+had the least on it.**
+
+The same two questions are now asked of `passed`, which is a measurement and
+does not move as the storm leaves. Same `HOME_DASH.nearRingNm`, same
+`HOME_DASH.afterCpaHours` split, same order — the observed rungs sit BELOW the
+forecast ones deliberately, because a storm still closing has a future worth
+leading with even if it has been near before.
+
+**`past` USED TO CARRY TWO FACTS AND ONE WORD, AND NOW CARRIES ONE.**
+
+| Rung | Chip | What it claims |
+|---|---|---|
+| `just-passed` | *Just passed you* | a real close pass, inside `afterCpaHours` |
+| `gone-by` | *It's been by* | a real close pass, further back than that |
+| `past` | *Moving away* | nothing about this house — only which way the storm is pointed |
+
+`gone-by` is new. It is a statement about something that happened to THIS house;
+`past` is a statement about the storm's heading. "Moving away" was only ever
+true of the second. All three stay `calm` — none of them is a warning.
+
+**`dash.far` needs no separate fix.** The observed rungs return before the
+ladder reaches `far-off`, so a storm that came near and left is no longer
+collapsed. A storm whose closest observed pass was outside the near ring still
+reads `far-off`, which is honest: it never came near.
+
+**Measured on Ida against Prairieville.** Advisory 18, eleven hours after the
+pass: `just-passed`. Advisory 19, seventeen hours after it: `gone-by`, and
+`far === false`. Rebuild either with no observed track and the ladder cannot
+reach a past rung at all — the mechanism of the bug, asserted rather than
+described.
+
 
 
 ---

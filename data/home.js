@@ -357,6 +357,181 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
     return Number.isFinite(ms) && ms < now;
   };
 
+  /* The current position is the ONLY sample exempt from the past filter — it
+   * is the one that is SUPPOSED to be behind the clock. It is index 0 of the
+   * input, so it is index 0 of the walk. */
+  const best = walkToClosest(points, home, (i, p) => i === 0 || !isPast(p.time));
+  if (!best) return null;
+
+  /* Where the storm is RIGHT NOW, always — the baseline every judgement below
+   * is made against, and a figure the panel shows in its own right. */
+  const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
+
+  /* THE ONE TEST, and it is deliberately a statement about the TRACK rather
+   * than about the clock: does the forecast ever bring this storm closer than
+   * it is right now? That is exactly what the panel's words claim, so it is
+   * what gets measured. Lead time is NOT part of it — a minimum forty minutes
+   * out is still a real minimum, and formatUntil already renders anything
+   * inside two minutes as "now". Tying the test to a clock threshold only
+   * created a case where the app had a true minimum and no sentence for it. */
+  const closerAhead = nowNm - best.nm >= APPROACH.minGainNm;
+
+  return {
+    nm: best.nm,
+    time: best.time,
+    windKt: best.windKt,
+    bearing: bearingDeg(home.lon, home.lat, best.lon, best.lat),
+
+    /** Distance at the current position, for the caller that wants to show
+     *  the pair rather than make the reader subtract two numbers. */
+    nowNm,
+
+    /** 'closing' | 'receding'. NEVER null — a track exists, so this question
+     *  always has an answer. Pure direction: 'receding' means the track never
+     *  beats the current position by more than the deadband. Contrast
+     *  motionTrend() below, which can honestly return null because its inputs
+     *  may be missing. */
+    trend: closerAhead ? 'closing' : 'receding',
+
+    /** false when the nearest point is beyond APPROACH.relevanceNm.
+     *
+     *  ORTHOGONAL TO `trend`, and the panel needs both because the two
+     *  combinations of "closing" produce different true sentences. A storm
+     *  closing from 400 nm is approaching. A typhoon closing from 7,315 nm to
+     *  7,085 nm is also closing — over the top of the planet, because the
+     *  great circle from Louisiana to the West Pacific crosses Alaska — and
+     *  calling that an approach is the §5 failure this whole block exists to
+     *  prevent. Same flag, different sentence. */
+    relevant: best.nm <= APPROACH.relevanceNm,
+
+    /* Same rule as distanceTo: the figure and the advisory it came from are
+     * one object. A closest approach computed from a stale advisory is a
+     * stale closest approach, and the UI must be able to say so. */
+    observedAt: storm.observedAt || null,
+    advisoryKey: storm.advisoryKey || null,
+  };
+}
+
+/**
+ * The closest the storm ACTUALLY CAME — the same walk, run backwards over the
+ * observed track (§49.5).
+ *
+ * ==> TWO FUNCTIONS, TWO OBJECTS, BECAUSE THEY ARE TWO FACTS. <== A widened
+ * `closestApproach` that quietly included the past would let a caller render
+ * a measurement in the words of a forecast, which is the exact failure §49
+ * exists to end: on glass 2026-08-16, Lala's "CLOSEST IT CAME" printed the
+ * distance to where she was standing.
+ *
+ * | | |
+ * |---|---|
+ * | `closestApproach` | future tense · forecast position · forecast wind · error band |
+ * | `closestPassed`   | past tense · observed position · analysed wind · NO error band |
+ *
+ * THE ERROR BAND CANNOT REACH THIS RESULT AND THAT IS STRUCTURAL, not a
+ * convention somebody has to remember. `lib/cone-error.js` describes forecast
+ * error; the dashboard computes its band from `approach` alone, so there is no
+ * code path that could put a two-thirds circle around a place the storm
+ * actually was.
+ *
+ * THE TWO WALKS SHARE THE CURRENT POSITION, DELIBERATELY. It is the one point
+ * that belongs to both — the end of what happened and the start of what is
+ * forecast. Giving it to only one of them opens a gap or an overlap at exactly
+ * the moment the reader cares about.
+ *
+ * HOW FAR BACK: the whole published track. A storm that formed near the house
+ * a week ago and wandered off has a real closest pass a week old, and hiding
+ * it is a worse failure than showing it with a plain timestamp — `formatUntil`
+ * (§49.4) makes a week-old pass read as a week old.
+ *
+ * NO PAST FILTER RUNS HERE, and none is wanted: every candidate is an observed
+ * fix and is SUPPOSED to be behind the clock. A fix carrying a time in the
+ * future is a source error, not a forecast, and is dropped.
+ *
+ * Returns null when the storm has no observed track, or when it has never been
+ * inside APPROACH.relevanceNm — the same relevance threshold, applied in the
+ * same place, so no screen can decide "is it close" twice and disagree.
+ */
+export function closestPassed(storm, home = getHome(), now = Date.now()) {
+  if (!home || !storm) return null;
+
+  const history = Array.isArray(storm.past) ? storm.past : null;
+  if (!history || history.length === 0) return null;
+
+  const usable = history.filter(
+    (p) => p && Number.isFinite(p.lon) && Number.isFinite(p.lat)
+  );
+  if (usable.length === 0) return null;
+
+  /* The current position closes the walk. It is appended rather than assumed
+   * to be on the end of the observed track, because it is not: NHC's layer 10
+   * runs to the synoptic analysis, which can be up to three hours behind the
+   * advisory position, and GDACS splits its dots at the advisory issue time.
+   * Skipped only when the history already reaches it, so a zero-length leg
+   * never lands in the middle of the polyline. */
+  const lastMs = Date.parse(usable[usable.length - 1]?.time ?? '');
+  const nowMs = Date.parse(storm.observedAt ?? '');
+  const points =
+    Number.isFinite(storm.lon) && Number.isFinite(storm.lat) &&
+    !(Number.isFinite(lastMs) && Number.isFinite(nowMs) && lastMs >= nowMs)
+      ? [...usable, {
+          lon: storm.lon,
+          lat: storm.lat,
+          time: storm.observedAt,
+          windKt: storm.windKt ?? null,
+        }]
+      : usable;
+
+  /* A fix stamped ahead of the clock is not history. Kept when the time is
+   * unreadable — unknown is not future, and dropping it would silently
+   * shorten the track (§5), the same rule the forward walk applies. */
+  const isFuture = (t) => {
+    if (t == null) return false;
+    const ms = typeof t === 'number' ? t : Date.parse(t);
+    return Number.isFinite(ms) && ms > now;
+  };
+
+  const best = walkToClosest(points, home, (_i, p) => !isFuture(p.time));
+  if (!best) return null;
+  if (best.nm > APPROACH.relevanceNm) return null;
+
+  return {
+    nm: best.nm,
+    time: best.time,
+    windKt: best.windKt,
+    bearing: bearingDeg(home.lon, home.lat, best.lon, best.lat),
+
+    /** ==> NAMED IN THE RETURN SO A RENDERER CANNOT DESCRIBE IT AS ANYTHING
+     *  ELSE. <== The wind here is the agency's ANALYSIS of what the storm did,
+     *  not a sample of a forecast curve, and §49.6 says so explicitly: past
+     *  intensity is better data than forecast intensity. Null on most GDACS
+     *  history, which publishes positions and times and no wind — that is the
+     *  honest shape of the answer, not a degraded one. */
+    windSource: 'analysed',
+
+    /* Same rule as everything else here: the figure and the advisory it came
+     * from are one object, so no caller can render the number without its age.
+     * The advisory dates the WALK, not the pass — the pass has its own `time`. */
+    observedAt: storm.observedAt || null,
+    advisoryKey: storm.advisoryKey || null,
+  };
+}
+
+/**
+ * Densify, scan for the minimum, refine it. The geometry both walks share.
+ *
+ * ONE COPY, because the forecast pass and the observed pass appear on one
+ * screen a few lines apart and a second implementation is how they come to
+ * disagree about the same house by a mile and a half.
+ *
+ * `eligible(index, point)` is the ONLY difference between the two callers: the
+ * forward walk skips samples behind the clock and exempts index 0, the
+ * backward walk drops samples ahead of it. The predicate is applied to the
+ * scan AND to the refinement, or refinement could walk back into a sample the
+ * scan deliberately skipped.
+ *
+ * Returns `{nm, lon, lat, time, windKt}` or null.
+ */
+function walkToClosest(points, home, eligible) {
   let best = null;
   let bestIndex = -1;
 
@@ -368,12 +543,9 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
    * on TRACK_SUBDIVISIONS. */
   const walked = densifyTrack(points);
 
-  /* The current position is the ONLY sample exempt from the past filter — it
-   * is the one that is SUPPOSED to be behind the clock. It is index 0 of the
-   * input, so it is index 0 of the walk. */
   for (let i = 0; i < walked.length; i++) {
     const p = walked[i];
-    if (i !== 0 && isPast(p.time)) continue;
+    if (!eligible(i, p)) continue;
     const nm = greatCircleNm(home.lon, home.lat, p.lon, p.lat);
     if (!best || nm < best.nm) {
       best = { nm, lon: p.lon, lat: p.lat, time: p.time || null, windKt: p.windKt ?? null };
@@ -450,59 +622,12 @@ export function closestApproach(storm, home = getHome(), now = Date.now()) {
     }
   };
   /* The same eligibility rule the scan used, or refinement could walk back
-   * into a sample the scan deliberately skipped: index 0 is exempt because it
-   * is the current position and is SUPPOSED to be behind the clock. */
-  const eligible = (i) => i >= 0 && i < walked.length && (i === 0 || !isPast(walked[i].time));
-  if (eligible(bestIndex - 1) && eligible(bestIndex)) refine(walked[bestIndex - 1], walked[bestIndex]);
-  if (eligible(bestIndex) && eligible(bestIndex + 1)) refine(walked[bestIndex], walked[bestIndex + 1]);
+   * into a sample the scan deliberately skipped. */
+  const ok = (i) => i >= 0 && i < walked.length && eligible(i, walked[i]);
+  if (ok(bestIndex - 1) && ok(bestIndex)) refine(walked[bestIndex - 1], walked[bestIndex]);
+  if (ok(bestIndex) && ok(bestIndex + 1)) refine(walked[bestIndex], walked[bestIndex + 1]);
 
-  /* Where the storm is RIGHT NOW, always — the baseline every judgement below
-   * is made against, and a figure the panel shows in its own right. */
-  const nowNm = greatCircleNm(home.lon, home.lat, storm.lon, storm.lat);
-
-  /* THE ONE TEST, and it is deliberately a statement about the TRACK rather
-   * than about the clock: does the forecast ever bring this storm closer than
-   * it is right now? That is exactly what the panel's words claim, so it is
-   * what gets measured. Lead time is NOT part of it — a minimum forty minutes
-   * out is still a real minimum, and formatUntil already renders anything
-   * inside two minutes as "now". Tying the test to a clock threshold only
-   * created a case where the app had a true minimum and no sentence for it. */
-  const closerAhead = nowNm - best.nm >= APPROACH.minGainNm;
-
-  return {
-    nm: best.nm,
-    time: best.time,
-    windKt: best.windKt,
-    bearing: bearingDeg(home.lon, home.lat, best.lon, best.lat),
-
-    /** Distance at the current position, for the caller that wants to show
-     *  the pair rather than make the reader subtract two numbers. */
-    nowNm,
-
-    /** 'closing' | 'receding'. NEVER null — a track exists, so this question
-     *  always has an answer. Pure direction: 'receding' means the track never
-     *  beats the current position by more than the deadband. Contrast
-     *  motionTrend() below, which can honestly return null because its inputs
-     *  may be missing. */
-    trend: closerAhead ? 'closing' : 'receding',
-
-    /** false when the nearest point is beyond APPROACH.relevanceNm.
-     *
-     *  ORTHOGONAL TO `trend`, and the panel needs both because the two
-     *  combinations of "closing" produce different true sentences. A storm
-     *  closing from 400 nm is approaching. A typhoon closing from 7,315 nm to
-     *  7,085 nm is also closing — over the top of the planet, because the
-     *  great circle from Louisiana to the West Pacific crosses Alaska — and
-     *  calling that an approach is the §5 failure this whole block exists to
-     *  prevent. Same flag, different sentence. */
-    relevant: best.nm <= APPROACH.relevanceNm,
-
-    /* Same rule as distanceTo: the figure and the advisory it came from are
-     * one object. A closest approach computed from a stale advisory is a
-     * stale closest approach, and the UI must be able to say so. */
-    observedAt: storm.observedAt || null,
-    advisoryKey: storm.advisoryKey || null,
-  };
+  return best;
 }
 
 /**

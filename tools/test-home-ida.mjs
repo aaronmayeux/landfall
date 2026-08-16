@@ -1101,6 +1101,280 @@ section("the observed track, off Ida's published best track");
      `the newest observed fix trails the advisory by under a synoptic interval (${gapHrs.toFixed(1)} h)`);
 }
 
+/* =========================================================================
+ * 9. THE PASS AND THE PEAK, BACKWARDS (§49.5, §49.6)
+ *
+ * ===========================================================================
+ * THE BUG THIS SECTION IS THE PROOF AGAINST
+ * ===========================================================================
+ *
+ * Every past-tense figure on the home dashboard used to be computed from
+ * now-plus-forecast, so the moment a storm was by the house they all collapsed
+ * onto the present. Seen on glass 2026-08-16 on Lala: "CLOSEST IT CAME —
+ * 138 mi" was her live distance, and "WHEN IT WAS CLOSEST — 69 mph" was the
+ * NOW column beside it, character for character.
+ *
+ * Ida is the fixture that can prove the fix, because she really did go over
+ * this house and then really did leave. At her Advisory 19 she is 141 nm away
+ * and down to 30 kt — and the true closest she ever came is 11 nm, seventeen
+ * hours earlier, at 79 kt. Three numbers, none of them each other.
+ *
+ * ===========================================================================
+ * EVERY FIGURE BELOW IS COMPUTED, NOT TYPED
+ * ===========================================================================
+ *
+ * The distance and time of the pass are checked against an INDEPENDENT
+ * 20,000-step brute-force minimum over the same polyline, computed in this
+ * file. If the ternary refinement in data/home.js ever regresses to reporting
+ * the best SAMPLE — the exact bug section 4 of this file exists for, worth
+ * 5.4 nm on Ida's forecast side — the two disagree and this goes red.
+ *
+ * The peak is checked against NHC's own Tropical Cyclone Report, which is
+ * committed beside the advisories and says in plain words that Ida's peak
+ * intensity was 130 kt at 1200 UTC 29 August. The app is not permitted to
+ * agree with itself here; it has to agree with NHC.
+ * ====================================================================== */
+section('the pass and the peak, backwards (§49)');
+
+{
+  const { normalizePastPoints } = await import('../lib/track-point.js');
+  const { HOME_DASH } = await import('../config/constants.js');
+
+  /** One dashboard, built from an advisory PLUS the observed track the replay
+   *  route serves for that same instant. Everything §49 pass 3 added is a
+   *  function of those two together — an advisory alone still has no history,
+   *  which is why the rest of this file's stage assertions are untouched. */
+  const withHistory = async (nnn) => {
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    const iso = new Date(a.issuedMs).toISOString().replace(/\.\d+Z$/, 'Z');
+    const raw = JSON.parse(
+      await (await call(iso, 'nhc/mapserver', q(SUMMARY_LAYER.pastPoints))).text()
+    );
+    const past = normalizePastPoints(raw.features);
+    return {
+      a,
+      past,
+      dash: buildHomeDashboard({
+        storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+        forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+        past,
+        radii: a.radii,
+        home: HOME,
+        now: a.issuedMs,
+        trackState: 'ok',
+      }),
+    };
+  };
+
+  const { a: ida19, past: past19, dash: d19 } = await withHistory('019');
+
+  /* --- the three numbers are three different numbers --------------------- */
+
+  ok(d19.passed, 'a storm that has gone by has a closest pass that already happened');
+  ok(d19.approach, 'and still has a forecast approach, because both facts exist (§49.2)');
+  ok(d19.atPassed, 'and a wind measured at it');
+
+  /* NULL-SAFE FROM HERE DOWN, deliberately, the same rule the observed-track
+   * section above states: a MISSING past pass is the exact shape this whole
+   * section exists to catch, and it has to come out as the named failure two
+   * lines up rather than as a TypeError twenty lines later that reads like a
+   * broken test rather than a broken app. */
+
+  const liveNm = greatCircleNm(HOME.lon, HOME.lat, ida19.storm.lon, ida19.storm.lat);
+  near(liveNm, 141.50, 0.05, 'Advisory 19 finds Ida 141 nm from the house');
+  near(d19.approach.nm, liveNm, 0.01,
+       'and her forecast approach is pinned to that live distance, as it should be');
+
+  /* ==> THE HEADLINE FINDING. <== The old screen printed the line above under
+   * the words "Closest it came". The real answer is an eighth of it. */
+  ok(d19.passed?.nm < liveNm / 10,
+     `the closest she ACTUALLY came is an order of magnitude nearer than where she is now `
+     + `(${d19.passed?.nm.toFixed(2)} nm vs ${liveNm.toFixed(2)} nm)`);
+
+  /* --- and the pass is proved against a brute-force minimum --------------- */
+
+  const polyline = [
+    ...past19,
+    { lon: ida19.storm.lon, lat: ida19.storm.lat, time: ida19.storm.observedAt, windKt: ida19.storm.windKt },
+  ];
+  let brute = { nm: Infinity, ms: NaN, windKt: null };
+  for (let i = 0; i < polyline.length - 1; i++) {
+    const A = polyline[i];
+    const B = polyline[i + 1];
+    let dLon = B.lon - A.lon;
+    if (dLon > 180) dLon -= 360;
+    if (dLon < -180) dLon += 360;
+    const ta = Date.parse(A.time);
+    const tb = Date.parse(B.time);
+    for (let k = 0; k <= 20000; k++) {
+      const f = k / 20000;
+      const nm = greatCircleNm(HOME.lon, HOME.lat, A.lon + dLon * f, A.lat + (B.lat - A.lat) * f);
+      if (nm < brute.nm) {
+        brute = {
+          nm,
+          ms: ta + (tb - ta) * f,
+          windKt: Number.isFinite(A.windKt) && Number.isFinite(B.windKt)
+            ? A.windKt + (B.windKt - A.windKt) * f
+            : null,
+        };
+      }
+    }
+  }
+
+  near(d19.passed?.nm, brute.nm, 0.01,
+       'the past pass is the TRUE minimum on the polyline, not the best sample');
+  near(Date.parse(d19.passed?.time), brute.ms, 60_000,
+       'and its time agrees with the brute-force minimum to within a minute');
+  near(d19.passed?.windKt, brute.windKt, 0.5,
+       'as does the analysed wind carried with it');
+
+  /* THE FIGURES, ONCE, SO A REGRESSION READS AS A NUMBER RATHER THAN A DIFF.
+   * Both were computed above before being compared to these. */
+  near(d19.passed?.nm, 11.28, 0.02, 'Ida came 11.3 nm from this house');
+  ok(d19.passed?.time?.startsWith('2021-08-30T03:5'),
+     `and she did it at 03:52 UTC on the 30th (got ${d19.passed?.time})`);
+
+  /* --- past tense means a past NUMBER, not a past verb on today's number -- */
+
+  ok(d19.passed?.windSource === 'analysed',
+     'the wind at that pass is named as a measurement, not a forecast sample');
+  near(d19.atPassed?.windKt, 79.14, 0.1,
+       'she was a 79 kt hurricane as she went by');
+  /* Index 2 is the app's Category ONE — see the off-by-one note in
+   * tools/test-home.mjs. 79 kt is 64-82 kt, so a Cat 1, off NHC's own `ss`
+   * number on the fix rather than our arithmetic on the wind. */
+  ok(d19.atPassed?.category === 2, 'a Category 1, off NHC\'s own grading of the fix');
+
+  /* ==> THE LALA FAILURE, ASSERTED DIRECTLY. <== Two cells side by side on one
+   * strip, and the bug was that they printed the same number. */
+  ok(Math.abs(d19.atPassed?.windKt - ida19.storm.windKt) > 40,
+     `"when it was closest" and "now" are 49 kt apart, not identical `
+     + `(${d19.atPassed?.windKt?.toFixed(0)} kt vs ${ida19.storm.windKt} kt)`);
+
+  /* --- the peak spans her whole life, and NHC says what it was ------------ */
+
+  const TCR = fs.readFileSync(`${DIR}/tcr-AL092021_Ida.txt`, 'utf8');
+  ok(TCR.includes('peak intensity of 130 kt at 1200 UTC'),
+     'the Tropical Cyclone Report states her peak in so many words');
+
+  ok(d19.peak?.windKt === 130, `the app agrees: 130 kt (got ${d19.peak?.windKt})`);
+  ok(d19.peak?.time === '2021-08-29T12:00:00.000Z',
+     `and puts it at 1200 UTC on the 29th, where the TCR does (got ${d19.peak?.time})`);
+  ok(d19.peak?.when === 'past', 'and says out loud that it is behind the clock');
+  ok(d19.peakWhenPassed === 'before',
+     'the peak came before the closest pass — she was weakening as she went by');
+
+  /* ==> AND THE OLD PEAK COULD NOT HAVE FOUND IT. <== Proof rather than
+   * assertion: rebuild the same dashboard with no history and the peak
+   * collapses onto the forecast-plus-now maximum, which on a dying storm is
+   * the dying storm. 130 kt against 30 kt is the whole size of the bug. */
+  const blind = buildHomeDashboard({
+    storm: { ...ida19.storm, category: categoryFromKt(ida19.storm.windKt) },
+    forecast: ida19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+    radii: ida19.radii, home: HOME, now: ida19.issuedMs, trackState: 'ok',
+  });
+  ok(blind.peak?.windKt < 50 && blind.peak?.when !== 'past',
+     `without the observed track the peak is only ${blind.peak?.windKt} kt — what the old code saw`);
+  ok(blind.passed === null && blind.atPassed === null,
+     'and there is no past pass at all, which is honest rather than a zero');
+
+  /* --- no error band ever touches a measured position (§49.2) ------------- */
+
+  ok(!(d19.passed && 'band' in d19.passed),
+     'the past pass carries no error band field — forecast error has no meaning on a measurement');
+  ok(d19.band === null || d19.band.nm > 0,
+     'and the band that does exist still belongs to the forecast approach alone');
+
+  /* --- the rungs, judged on the pass that actually happened --------------- */
+
+  const { dash: d18 } = await withHistory('018');
+  ok(d18.stage === 'just-passed',
+     `eleven hours after the pass she is just-passed (got ${d18.stage})`);
+  ok(d19.stage === 'gone-by',
+     `seventeen hours after it, past HOME_DASH.afterCpaHours, she is gone-by (got ${d19.stage})`);
+  ok(d19.far === false,
+     'and NOT far-off, which is the rung that hides the whole closest-pass section');
+
+  /* ==> WITHOUT THE OBSERVED PASS SHE FALLS THROUGH. <== The rung used to be
+   * judged on `approach.nm`, which for a departed storm is just how far away
+   * she is now — 141 nm, well outside the near ring. This is the mechanism of
+   * the bug, shown rather than described. */
+  ok(blind.approach?.nm > HOME_DASH.nearRingNm,
+     'her forecast approach is outside the near ring, so the old test could not fire');
+  ok(blind.stage !== 'gone-by' && blind.stage !== 'just-passed',
+     `and with no history the ladder cannot reach a past rung (got ${blind.stage})`);
+
+  /* --- and it reaches the glass ------------------------------------------- */
+
+  {
+    /* An earlier section calls clearHome(). Without this the view renders its
+     * no-home setup prompt and every assertion below passes vacuously by
+     * failing to find text that was never going to be there. */
+    setHome({ lon: HOME.lon, lat: HOME.lat, label: HOME.label, source: 'address' });
+    const host = fakeHost();
+    const innerEl = host.querySelector('.home-dash');
+    const stormObj = {
+      ...ida19.storm,
+      category: categoryFromKt(ida19.storm.windKt),
+      can: { forecastPoints: true },
+    };
+    const v = createHomeDashboardView({
+      units: () => 'imperial',
+      onEditHome() {}, onOpenStorm() {},
+      warmGeometry: async () => ({
+        state: 'ok',
+        bundle: {
+          forecast: ida19.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+          forecastRadii: ida19.radii,
+          past: past19,
+        },
+        error: null,
+      }),
+      now: () => ida19.issuedMs,
+      rain: RAIN_STUB,
+    });
+    v.mount(host);
+    v.onEnter();
+    v.update({ storms: [stormObj], sources: { nhc: { status: 'ok' }, gdacs: { status: 'ok' } } });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = innerEl.innerHTML;
+
+    /* SCOPED TO THE HEADLINE BLOCK. The live distance is legitimately on this
+     * screen — it is the whole point of the `Where it is` section — so a test
+     * that just greps the page for it proves nothing. What must be true is
+     * that it is not the number sitting under "Closest it came". */
+    const headline = html.split('home-headline')[1]?.split('home-sect')[0] ?? '';
+    ok(/Closest it came/.test(headline), 'the headline is in the past tense');
+    ok(/13 mi/.test(headline),
+       'and carries the 11.3 nm pass in miles (13 statute), not the live distance');
+    ok(!/163 mi/.test(headline),
+       'the live 141 nm is NOT under the past-tense heading — this is the Lala bug');
+    ok(/163 mi/.test(html),
+       'it is still on the screen, under "Where it is", where it belongs');
+    ok(/not where\s+it was forecast to go/.test(headline),
+       'the band is replaced by the sentence saying why there is none');
+    ok(!/±/.test(headline),
+       'and no ± band is drawn around a position the storm was measured at (§49.2)');
+    ok(/Was strongest/.test(html), 'the strength strip puts the peak in the past tense too');
+    ok(/When it was closest<\/div>\s*<div class="home-figs-v"[^>]*>91 mph/.test(html),
+       'and the wind beside it is the 79 kt she was measured at, not the 35 kt she is now');
+    ok(/Was strongest<\/div>\s*<div class="home-figs-v"[^>]*>150 mph/.test(html),
+       'and 150 mph is the 130 kt peak the Tropical Cyclone Report states');
+    ok(/before it reached you/.test(html),
+       'and dates it against the pass that happened, not one that has not');
+    ok(!/on the way in/.test(html) && !/all the way in/.test(html),
+       'and says nothing about a journey that is already over');
+    /* The chip rides on the view's TITLE, not in the dashboard body — same
+     * place the countdown section reads it from. */
+    const title = (() => { const t = v.titleFor(); return typeof t === 'string' ? t : t.innerHTML; })();
+    ok(/It’s been by/.test(title),
+       `the chip describes the past rather than the heading (got ${title.replace(/<[^>]*>/g, '').trim()})`);
+    ok(!/Moving away/.test(title),
+       'and not the old word, which was a statement about where she is pointed');
+  }
+  clearHome();
+}
+
 /* ------------------------------------------------------------------------- */
 
 console.log('');

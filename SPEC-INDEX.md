@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 192 numbered headings.
+Covering 9 files, 193 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -86,17 +86,17 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2648-2671 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 2672-2693 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
-| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1651-1681 |
-| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1682-1716 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1717-1718 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2226-2232 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2233-2239 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1652-1682 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1683-1717 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1718-1719 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2227-2233 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2234-2240 |
 | `16` | Screen architecture | `SPEC-UI.md` | 996-997 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2240 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2241 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1542-1710 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1711-1929 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2246 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2247 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 100-112 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 113-154 |
@@ -201,29 +201,30 @@ real home is the other row carrying the same section number.
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1817 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 977-978 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1015 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1016-1041 |
-| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1818-1902 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1017 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1018-1043 |
+| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1818-1903 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2422-2444 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1042-1070 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1071-1094 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1095-1128 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1129-1151 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1152-1203 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1204-1221 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1222-1242 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1243-1260 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1261-1281 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1044-1096 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1097-1148 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1149-1182 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1183-1205 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1206-1257 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1258-1275 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1276-1296 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1297-1314 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1315-1329 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1330-1376 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 113,557 | 32 |
+| `SPEC-DATA.md` | 113,676 | 32 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 81,261 | 29 |
+| `SPEC-NEXT.md` | 86,912 | 30 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 142,364 | 10 |
-| `SPEC.md` | 147,007 | 14 |
+| `SPEC.md` | 148,295 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

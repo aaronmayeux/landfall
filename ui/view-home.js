@@ -500,6 +500,17 @@ export function createHomeDashboardView({
     'bearing-down':  ['Bearing down', false],
     closing:         ['Closing in', false],
     'just-passed':   ['Just passed you', true],
+    /* ==> `past` USED TO CARRY TWO DIFFERENT FACTS AND ONE WORD. <== It was
+     * both "this storm came close to you and that is behind you now" and
+     * "this storm is simply heading away", and "Moving away" is only true of
+     * the second. Worse, the first was judged on the FORECAST pass, which for
+     * a departed storm is just its current distance — so a storm that went 12
+     * miles past the house three days ago read as `far-off`: "Not near you".
+     *
+     * Two facts, two rungs, two chips. `gone-by` is a statement about
+     * something that happened to THIS house; `past` is a statement about which
+     * way the storm is pointed. Both stay `calm` — neither is a warning. */
+    'gone-by':       ['It’s been by', true],
     past:            ['Moving away', true],
     'far-off':       ['Not near you', true],
     'track-unknown': ['Track unknown', true],
@@ -783,6 +794,17 @@ export function createHomeDashboardView({
         </div>`;
     }
 
+    /* ==> WHEN THE PASS IS BEHIND THE CLOCK, THE HEADLINE IS A DIFFERENT
+     * OBJECT, NOT A DIFFERENT ADJECTIVE. <== This block used to print
+     * `dash.approach` under the words "Closest it came", and `approach` for a
+     * departed storm is pinned to the current position — so the screen said
+     * the closest the storm ever came was exactly where it was standing.
+     * Measured on Lala 2026-08-16: 138 mi WNW, which was her live distance.
+     * `dash.passed` is the real figure, walked over the observed track
+     * (§49.5), and it is rendered by its own function so no edit can
+     * accidentally feed forecast numbers into past-tense words. */
+    if (isPastStage(dash) && dash.passed) return passedHeadlineHtml(dash);
+
     const a = dash.approach;
     /* The kicker changes tense with the stage. It used to branch on `trend`
      * alone, so it kept saying "Closest pass" in the present tense for hours
@@ -791,7 +813,7 @@ export function createHomeDashboardView({
      * the date line underneath ("Mon 10:00 AM · now") and by the chip, and a
      * kicker that repeated it put the same three words twice on one screen. */
     const dirWord =
-      dash.stage === 'just-passed' || dash.stage === 'past' ? 'Closest it came'
+      isPastStage(dash) ? 'Closest it came'
       : a.trend === 'receding' ? 'Closest it gets'
       : 'Closest pass';
 
@@ -845,8 +867,87 @@ export function createHomeDashboardView({
           <small>${esc(formatBearing(a.bearing))} of home</small></div>
         ${when ? `<div class="home-when">${when}</div>` : ''}
         ${band}
+        ${alreadyCloserHtml(dash)}
         ${windNoteHtml(dash)}
       </div>`;
+  }
+
+  /** Is the pass this screen is about behind the clock?
+   *
+   *  ONE TEST, READ FROM THE RUNG LADDER, so the kicker, the figures strip and
+   *  the headline's choice of object can never disagree about which tense the
+   *  screen is in. `gone-by` is the rung added with §49's pass 3 — see
+   *  STAGE_CHIP — and it exists because "it came close and that is behind you"
+   *  and "it is heading away" were sharing one word. */
+  function isPastStage(dash) {
+    return dash?.stage === 'just-passed' || dash?.stage === 'gone-by';
+  }
+
+  /** The closest pass that ACTUALLY HAPPENED (§49.5).
+   *
+   *  ==> NO ERROR BAND, AND THAT IS THE POINT RATHER THAN AN OMISSION. <== The
+   *  ± figure beside a forecast pass is NHC's published two-thirds circle, and
+   *  a circle drawn around a place the storm was MEASURED at is a fabricated
+   *  uncertainty. `dash.passed` carries no band field for that reason; the one
+   *  line here says why in words a reader can act on, because silently
+   *  dropping the most prominent caveat on the screen would read as the app
+   *  having lost it.
+   *
+   *  THE DISTANCE AND THE BEARING ARE BOTH THE PAST'S. An earlier draft kept
+   *  the live bearing under a past distance and the pair contradicted each
+   *  other — the storm came ashore south-west of the house and was north-east
+   *  of it by then. */
+  function passedHeadlineHtml(dash) {
+    const p = dash.passed;
+    const when = p.time
+      ? `${esc(formatClockDay(p.time))}${formatUntil(p.time, now()) ? ` · ${esc(formatUntil(p.time, now()))}` : ''}`
+      : '';
+
+    /* THE FUTURE IS NOT DROPPED WHEN IT STILL SAYS SOMETHING. A storm on the
+     * way out can still have a forecast that brings it back inside where it
+     * is now — rare, and exactly the case a reader must not miss because the
+     * screen decided it was a history lesson. One line, not a second headline;
+     * §49.12 asks whether two stacked verticals read, and this is the cheap
+     * answer to look at first. */
+    const stillAhead =
+      dash.approach?.relevant && dash.approach.trend === 'closing' && dash.approach.time
+        ? `<p class="detail-soft">It comes back inside that — ${esc(
+            formatDistance(dash.approach.nm, sys())
+          )}, ${esc(formatUntil(dash.approach.time, now()) || 'shortly')}.</p>`
+        : '';
+
+    return `
+      <div class="home-headline">
+        ${sectHead('target', 'Closest it came')}
+        <div class="home-big">${esc(formatDistance(p.nm, sys()))}
+          <small>${esc(formatBearing(p.bearing))} of home</small></div>
+        ${when ? `<div class="home-when">${when}</div>` : ''}
+        <p class="home-band detail-soft">That’s where it was measured, not where
+          it was forecast to go — so there is no forecast error to allow for.</p>
+        ${stillAhead}
+        ${windNoteHtml(dash)}
+      </div>`;
+  }
+
+  /** ==> THE MID-PASS CASE: BOTH FACTS ARE TRUE AT ONCE. <== A storm overhead,
+   *  or one still closing that has already been near once, has a real past
+   *  pass AND a real forecast pass, and §49.2 forbids letting either wear the
+   *  other's words. It does not require two identical headlines, which at
+   *  phone width is two big numbers stacked with nothing to tell them apart.
+   *
+   *  So the forecast keeps the headline and the past gets one line under it,
+   *  and only when it actually changes the picture — closer than the forecast
+   *  pass by more than APPROACH.minGainNm, the same deadband that decides
+   *  whether the track is closing at all. Below that they are the same event
+   *  described twice. */
+  function alreadyCloserHtml(dash) {
+    const p = dash.passed;
+    if (!p || isPastStage(dash)) return '';
+    if (!(dash.approach && dash.approach.nm - p.nm >= APPROACH.minGainNm)) return '';
+    const ago = p.time ? formatUntil(p.time, now()) : '';
+    return `<p class="detail-soft">It came closer earlier — ${esc(
+      formatDistance(p.nm, sys())
+    )}${ago ? `, ${esc(ago)}` : ''}.</p>`;
   }
 
   /**
@@ -1025,13 +1126,28 @@ export function createHomeDashboardView({
      * on PEILOU-26 it read "At the pass 23 mph" about a closest approach of
      * 6,001 miles. A cell whose heading implies relevance must not be filled
      * with a number that has none. */
-    if (dash.atClosest?.windKt != null && !dash.far) {
-      const past = dash.stage === 'past' || dash.stage === 'just-passed';
+    /* ==> AND PAST TENSE MEANS A PAST NUMBER, NOT A PAST VERB ON TODAY'S
+     * NUMBER. <== This cell used to print `dash.atClosest` — a sample of the
+     * FORECAST curve — under the heading "When it was closest", and for a
+     * departed storm the forecast pass is pinned to the current position. So
+     * the cell printed the live wind, identical to the `Now` cell two inches
+     * to its left. On Lala that was 69 mph twice, which reads as a rendering
+     * fault even though both numbers were individually correct.
+     *
+     * `dash.atPassed` is NHC's ANALYSIS of what the storm was doing at the
+     * moment it actually went by (§49.6) — a measurement, and better data than
+     * a forecast for the same hour. Absent for most GDACS history, which
+     * publishes positions and times and no wind: the cell then does not render
+     * at all, which is the honest shape of that answer rather than a borrowed
+     * figure. */
+    const past = isPastStage(dash);
+    const at = past ? dash.atPassed : dash.atClosest;
+    if (at?.windKt != null && !dash.far) {
       cells.push({
         k: past ? 'When it was closest' : 'When it’s closest',
-        v: formatWind(dash.atClosest.windKt, sys()),
-        s: categoryShortLabel(dash.atClosest.category, nature),
-        color: categoryColor(dash.atClosest.category, nature),
+        v: formatWind(at.windKt, sys()),
+        s: categoryShortLabel(at.category, nature),
+        color: categoryColor(at.category, nature),
       });
     }
 
@@ -1044,18 +1160,36 @@ export function createHomeDashboardView({
     if (dash.peak?.when === 'now') {
       peakNote = 'It’s at its strongest right now.';
     } else if (dash.peak) {
+      /* ==> THE PEAK CAN BE BEHIND THE CLOCK NOW (§49.6). <== `dash.peak` used
+       * to span the forecast plus the present wind only, so a storm that
+       * peaked on its way in reported a peak it had already had as though it
+       * were still coming — "Strongest 81 mph · before it reaches you", under
+       * a storm that went by yesterday. It now spans the observed track too,
+       * and `when === 'past'` is the field that says so.
+       *
+       * ONE ROW, TWO TENSES, CHOSEN FROM THE SAME TIMESTAMP EVERYTHING ELSE
+       * USES. `peakWhenPassed` is the past pass's answer and `peakWhen` is the
+       * forecast pass's; they are separate fields rather than one widened one,
+       * because "before it reaches you" and "before it reached you" are
+       * different claims about different events (§49.2). */
+      const peakPast = dash.peak.when === 'past';
+      const rel = (peakPast || past) ? (dash.peakWhenPassed ?? dash.peakWhen) : dash.peakWhen;
       cells.push({
-        k: 'Strongest',
+        k: peakPast ? 'Was strongest' : 'Strongest',
         v: formatWind(dash.peak.windKt, sys()),
         /* `peakWhen` can be 'at' (the peak lands on the pass) or null (nobody
          * published a time for one of them), and both used to fall through to
          * "before the pass" — wrong about the first, an invention about the
          * second. */
-        s:
-          dash.peakWhen === 'after' ? 'after it passes'
-          : dash.peakWhen === 'at' ? 'right as it passes'
-            : dash.peakWhen === 'before' ? 'before it reaches you'
-              : 'time not given',
+        s: past || peakPast
+          ? (rel === 'after' ? 'after it passed'
+            : rel === 'at' ? 'right as it passed'
+              : rel === 'before' ? 'before it reached you'
+                : 'time not given')
+          : rel === 'after' ? 'after it passes'
+            : rel === 'at' ? 'right as it passes'
+              : rel === 'before' ? 'before it reaches you'
+                : 'time not given',
         /* ==> THE THIRD FIGURE IS COLORED LIKE THE OTHER TWO. <== It was the
          * only cell in the strip with no `color`, so it fell through to plain
          * white next to a colored `Now` and a colored `When it's closest`.
@@ -1072,7 +1206,16 @@ export function createHomeDashboardView({
      * closest pass, which for a far storm means "over the next four days,
      * while travelling in the opposite direction, it gets weaker". True, and
      * about somebody else's house. */
-    const trendLine = dash.far
+    /* ==> AND IT IS ALSO ABOUT A JOURNEY THAT IS ALREADY OVER. <== Every one
+     * of these three sentences is the future tense — "on the way in", "when it
+     * gets to you" — and all three are computed from the FORECAST wind at the
+     * FORECAST pass, which for a departed storm is the current position. So
+     * under a storm that went by yesterday the strip offered "It holds its
+     * strength all the way in" about a trip that finished. There is a real
+     * past-tense version of this sentence and it belongs to §49's later work;
+     * printing a wrong one meanwhile is the §5 failure, and printing nothing
+     * costs a reader nothing they cannot see in the two cells above. */
+    const trendLine = dash.far || past
       ? ''
       : dash.arrivalTrend === 'weakening'
         ? 'It weakens on the way in.'

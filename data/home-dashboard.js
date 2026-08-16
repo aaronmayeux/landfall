@@ -37,7 +37,7 @@ import { coneErrorNm, hasConeError, coneSeasonOfStorm, coneSeasonUsed } from '..
 import { isEnded } from '../lib/lifecycle.js';
 import { categoryFromKt } from '../lib/category.js';
 import { buildCorridor } from './home-corridor.js';
-import { distanceTo, closestApproach, motionTrend, getHome } from './home.js';
+import { distanceTo, closestApproach, closestPassed, motionTrend, getHome } from './home.js';
 
 const MS_PER_HOUR = 3_600_000;
 
@@ -394,12 +394,30 @@ export function buildHomeDashboard({
    * bare returns null and looks exactly like a storm with no forecast. */
   const approach = hasCurve ? closestApproach({ ...storm, forecast: curve }, home, now) : null;
 
+  /* ==> THE CLOSEST IT ACTUALLY CAME (§49.5). <== Same decoration rule as the
+   * line above — the storm object in the store is PURE and carries no geometry,
+   * so the observed track goes onto a copy rather than into the store.
+   *
+   * NOT GATED ON `hasCurve`. A storm whose forecast never arrived, or that has
+   * left the feed entirely, still has a history and the history is still true.
+   * Tying the past to the presence of a forecast is how a dead storm's screen
+   * goes blank. */
+  const passed = pastCurve.length ? closestPassed({ ...storm, past: pastCurve }, home, now) : null;
+
   /* --- the band, and the two ways it can be absent ------------------------
    * A missing band and a basin with no published table are different facts.
    * The first is "we have no closest approach to attach one to"; the second
    * is "NHC does not publish error statistics for this ocean", which is a
    * sentence the screen should be able to say out loud rather than silently
-   * dropping a line. */
+   * dropping a line.
+   *
+   * ==> THE BAND IS COMPUTED FROM `approach` AND ONLY FROM `approach`, AND
+   * THAT IS THE ENFORCEMENT OF §49.2's RULE. <== The error band describes
+   * FORECAST error. A past position is a measurement, and a two-thirds circle
+   * drawn around a place the storm actually WAS is a fabricated uncertainty.
+   * There is deliberately no `passed`-shaped branch anywhere in this block, so
+   * the rule is structural rather than something a later edit has to remember.
+   * The existing `pass-is-now` suppression is the same rule at zero hours. */
   let band = null;
   let bandUnavailable = null;
   if (!hasConeError(storm.basin)) {
@@ -449,8 +467,45 @@ export function buildHomeDashboard({
     }
   }
 
-  /* --- strength at the closest pass -------------------------------------- */
+  /* --- strength at the closest pass --------------------------------------
+   *
+   * ==> TWO PASSES, TWO WINDS, READ OFF TWO DIFFERENT CURVES (§49.6). <==
+   * `atClosest` samples the FORECAST at the forecast pass. `atPassed` samples
+   * the OBSERVED track at the pass that already happened, because a past
+   * intensity is the agency's analysis of what the storm did and a forecast
+   * intensity is a prediction — where both cover the same hour, the measured
+   * one wins.
+   *
+   * This is the Lala bug in one line. Her screen printed "WHEN IT WAS CLOSEST
+   * — 69 mph", identical to the NOW column beside it, because the only wind
+   * anywhere on this object was a sample of a forecast taken at the current
+   * position. There was no second number to print. Now there is. */
   const atClosest = approach?.time ? sampleCurveAt(curve, Date.parse(approach.time)) : null;
+
+  /* THE END OF THE OBSERVED TRACK IS THE CURRENT POSITION, and the current
+   * position's wind lives on the storm rather than on the curve — so a pass
+   * that lands at or after the last published fix falls outside what
+   * `sampleCurveAt` can answer (it returns null past a curve's span rather
+   * than clamping, deliberately). That moment is not unknown; it is NOW, and
+   * the storm's own reading is exactly the right answer for it. */
+  let atPassed = null;
+  if (passed?.time) {
+    const passedMs = Date.parse(passed.time);
+    atPassed = sampleCurveAt(pastCurve, passedMs);
+    if (!atPassed && Number.isFinite(storm.windKt)) {
+      const lastPastMs = Date.parse(pastCurve[pastCurve.length - 1]?.time ?? '');
+      if (!Number.isFinite(lastPastMs) || passedMs >= lastPastMs) {
+        atPassed = {
+          windKt: storm.windKt,
+          gustKt: storm.gustKt ?? null,
+          category: storm.category ?? null,
+          categorySource: null,
+          stormType: null,
+          source: 'point',
+        };
+      }
+    }
+  }
 
   /* --- the peak, and where it sits relative to the pass -------------------
    * The peak is taken over the FORECAST plus the storm's present wind, because
@@ -467,26 +522,32 @@ export function buildHomeDashboard({
    * present reading, or the winning forecast point — so it can never disagree
    * with the number it sits under. Null stays null: a point with no
    * classification gets no color rather than a borrowed one. */
+  /* ==> AND IT NOW SPANS THE STORM'S WHOLE PUBLISHED LIFE (§49.6). <== It used
+   * to be the maximum over the forecast plus the present wind only, so a storm
+   * that peaked BEFORE it reached the house reported a peak it had already
+   * passed as though it were still coming. Lala peaked on her way in and the
+   * screen offered "Strongest 81 mph · before it reaches you" about a storm
+   * that had gone by the day before.
+   *
+   * ORDER IS THE TIE-BREAK AND IT RUNS OLDEST FIRST: observed, then now, then
+   * forecast, each replacing the incumbent only on a STRICTLY greater wind. So
+   * a storm holding one speed across all three reports the earliest moment it
+   * reached it, which is the true answer to "when was it strongest" — a later
+   * moment at the same speed is not stronger.
+   *
+   * `when` gains a fourth value, 'past'. It is the field every tense on the
+   * screen is chosen from, so a peak behind the clock has to be able to say so
+   * itself rather than have a view infer it from a timestamp. */
   let peak = null;
-  if (Number.isFinite(storm.windKt)) {
-    peak = {
-      windKt: storm.windKt,
-      category: storm.category ?? null,
-      time: storm.observedAt || null,
-      when: 'now',
-    };
-  }
-  for (const p of curve) {
-    if (!Number.isFinite(p.windKt)) continue;
-    if (!peak || p.windKt > peak.windKt) {
-      peak = {
-        windKt: p.windKt,
-        category: p.category ?? null,
-        time: p.time || null,
-        when: 'forecast',
-      };
-    }
-  }
+  const claim = (windKt, category, time, when) => {
+    if (!Number.isFinite(windKt)) return;
+    if (peak && windKt <= peak.windKt) return;
+    peak = { windKt, category: category ?? null, time: time || null, when };
+  };
+
+  for (const p of pastCurve) claim(p.windKt, p.category, p.time, 'past');
+  claim(storm.windKt, storm.category, storm.observedAt, 'now');
+  for (const p of curve) claim(p.windKt, p.category, p.time, 'forecast');
 
   /* WHAT THE HEADLINE SENTENCE IS ALLOWED TO SAY. Compared against the wind
    * NOW, not against the peak — "stronger when it reaches you than it is right
@@ -511,11 +572,21 @@ export function buildHomeDashboard({
   /** Is the forecast peak before, at, or after the closest pass? A separate
    *  question from arrivalTrend, and the one that answers "have I already seen
    *  the worst of it". Null when either moment has no time. */
-  let peakWhen = null;
-  if (peak?.time && approach?.time) {
-    const dp = Date.parse(peak.time) - Date.parse(approach.time);
-    peakWhen = Math.abs(dp) < MS_PER_HOUR ? 'at' : dp < 0 ? 'before' : 'after';
-  }
+  const peakRelativeTo = (passTime) => {
+    if (!peak?.time || !passTime) return null;
+    const dp = Date.parse(peak.time) - Date.parse(passTime);
+    if (!Number.isFinite(dp)) return null;
+    return Math.abs(dp) < MS_PER_HOUR ? 'at' : dp < 0 ? 'before' : 'after';
+  };
+  let peakWhen = peakRelativeTo(approach?.time);
+
+  /** The same question asked of the pass that ALREADY HAPPENED, and a separate
+   *  field rather than a widened `peakWhen` for the reason §49.2 gives: the
+   *  two passes are two facts and a caller must not be able to render one
+   *  thinking it has the other. "Before it reaches you" and "before it reached
+   *  you" are different claims and they need different sources. Null whenever
+   *  there is no past pass, which is most storms most of the time. */
+  const peakWhenPassed = peakRelativeTo(passed?.time);
   /* ==> 'at' AND null WERE BOTH BEING PRINTED AS "before the pass". <== The
    * view fell through to the same words for three different facts: the peak
    * lands before the pass, the peak lands ON the pass, and nobody knows when
@@ -694,7 +765,28 @@ export function buildHomeDashboard({
      * goes by, when the back half of the storm is still on you, and two days
      * later. Two rungs, not one. */
     if (nearPass && cpaHours != null && cpaHours < -1) {
-      return cpaHours >= -HOME_DASH.afterCpaHours ? 'just-passed' : 'past';
+      return cpaHours >= -HOME_DASH.afterCpaHours ? 'just-passed' : 'gone-by';
+    }
+
+    /* ==> THE PAST RUNGS USED TO BE JUDGED ON THE FORECAST, WHICH IS THE BUG
+     * THIS WHOLE SECTION IS ABOUT (§49). <== `nearPass` above measures
+     * `approach.nm`, and for a storm that has already gone by, `approach` is
+     * pinned to the current position — so "how close did it get" was answered
+     * with "how far away is it now". Three days after Lala went 12 miles past
+     * the house, `approach.nm` was several hundred miles, `nearPass` was
+     * false, and she fell all the way through to `far-off`: the rung that
+     * hides the entire closest-pass section. The screen about the storm that
+     * just went over the house had the least on it.
+     *
+     * So the same two questions are now asked of the OBSERVED pass, which is a
+     * measurement and does not move as the storm leaves. Same ring, same
+     * `afterCpaHours` split, same order — this rung sits BELOW the forecast
+     * ones deliberately, because a storm still closing has a future worth
+     * leading with even if it has been near before. */
+    const passedMs = passed?.time ? Date.parse(passed.time) : NaN;
+    const passedHours = Number.isFinite(passedMs) ? (passedMs - now) / MS_PER_HOUR : null;
+    if (passed && passed.nm <= HOME_DASH.nearRingNm && passedHours != null && passedHours < -1) {
+      return passedHours >= -HOME_DASH.afterCpaHours ? 'just-passed' : 'gone-by';
     }
 
     const firstWind = windows.length ? Date.parse(windows[0][0]) : NaN;
@@ -754,12 +846,32 @@ export function buildHomeDashboard({
     distance,
     trend,
     approach,
+
+    /** ==> THE CLOSEST IT ACTUALLY CAME. PAST TENSE, MEASURED, NO BAND. <==
+     *  A sibling of `approach` and never a replacement for it (§49.2/§49.5):
+     *  a storm approaching has only `approach`, a storm gone has only
+     *  `passed`, and a storm mid-pass has both and both are true. Null when
+     *  there is no observed track or the storm has never been inside
+     *  APPROACH.relevanceNm.
+     *
+     *  NOTHING HERE CARRIES A `band` FIELD AND NOTHING EVER WILL. See the
+     *  band block above: forecast error has no meaning over a position the
+     *  storm was measured at. */
+    passed,
+
     band,
     bandUnavailable,
     atClosest,
+
+    /** The wind AT the past pass, read off the observed track — the agency's
+     *  analysis, not a sample of a forecast. Same shape as `atClosest`. Null
+     *  for most GDACS history, which publishes no per-point wind. */
+    atPassed,
+
     peak,
     arrivalTrend,
     peakWhen,
+    peakWhenPassed,
     nearRing,
     corridor,
 
