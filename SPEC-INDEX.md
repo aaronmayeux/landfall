@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 178 numbered headings.
+Covering 9 files, 192 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -168,25 +168,25 @@ real home is the other row carrying the same section number.
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 2887-2895 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2119-2265 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1417-1547 |
-| `46` | The intensity chart | `SPEC-NEXT.md` | 60-61 |
-| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 62-70 |
-| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 71-93 |
-| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 94-109 |
-| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 110-136 |
-| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 137-152 |
-| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 153-164 |
-| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 165-175 |
-| `47` | The environment ribbon | `SPEC-NEXT.md` | 176-177 |
-| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 178-194 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 195-320 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 321-344 |
-| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 345-539 |
+| `46` | The intensity chart | `SPEC-NEXT.md` | 63-64 |
+| `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 65-73 |
+| `46.2` | &nbsp;&nbsp;What it draws | `SPEC-NEXT.md` | 74-96 |
+| `46.3` | &nbsp;&nbsp;Source — observed intensity | `SPEC-NEXT.md` | 97-112 |
+| `46.4` | &nbsp;&nbsp;Source — the satellite estimate | `SPEC-NEXT.md` | 113-139 |
+| `46.5` | &nbsp;&nbsp;The second opinion, and how to word it | `SPEC-NEXT.md` | 140-155 |
+| `46.6` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 156-167 |
+| `46.7` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 168-178 |
+| `47` | The environment ribbon | `SPEC-NEXT.md` | 179-180 |
+| `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 181-197 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 198-323 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 324-347 |
+| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 348-542 |
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1027-1217 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 540-565 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 566-602 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 603-947 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 543-568 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 569-605 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 606-950 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2284-2330 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 948-973 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 951-976 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1548-1549 |
 | `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1550-1575 |
 | `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1576-1618 |
@@ -200,6 +200,20 @@ real home is the other row carrying the same section number.
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2403-2417 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1815 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
+| `49` | Time has a direction | `SPEC-NEXT.md` | 977-978 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1013 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1014-1039 |
+| `49.3` | &nbsp;&nbsp;Source — the observed track, already downloaded | `SPEC-NEXT.md` | 1040-1080 |
+| `49.4` | &nbsp;&nbsp;Past tense, everywhere | `SPEC-NEXT.md` | 1081-1096 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1097-1125 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1126-1149 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1150-1183 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1184-1206 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1207-1258 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1259-1276 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1277-1297 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1298-1315 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1316-1336 |
 
 ## Files
 
@@ -207,7 +221,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 108,440 | 31 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 63,648 | 17 |
+| `SPEC-NEXT.md` | 84,689 | 31 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 140,975 | 9 |
 | `SPEC.md` | 147,007 | 14 |

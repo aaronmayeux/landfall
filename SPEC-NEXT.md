@@ -1,7 +1,10 @@
 # SPEC-NEXT.md — approved, not built
 
-**This is §46–§47 of the Landfall spec.** What is agreed and specified but has
-not shipped. §47 is now PART built: the SHIPS source (§47.2), the color's
+**This is §46, §47 and §49 of the Landfall spec.** What is agreed and specified
+but has not shipped. **§49 — the past on the home dashboard — is the one to
+read first: it is the only section in this file fixing something the app gets
+WRONG today rather than adding something it lacks, and one of its five passes
+closes a safety-adjacent sentence.** §47 is now PART built: the SHIPS source (§47.2), the color's
 meaning (§47.4), the coverage rules (§47.6), performance (§47.7) and the
 fixtures (§47.10) describe live code, and every section whose subject is fully
 built has left — **§47.5, the ribbon itself, is in `SPEC-MAP.md`, §47.9, the
@@ -968,6 +971,366 @@ be representative. A parser that handles all fifteen handles the season; the las
 | `26081506EP0826_ships.txt` | **§47.8 acceptance: Hernan.** Turning against with near-total agreement (push 1, pull −12 at the peak) and the far-below-ceiling, hostile-environment room case — 30 kt under a 139 kt ceiling. |
 | `26081506AL9426_ships.txt` | **§47.8 acceptance: 94L.** Early help then turning against; strengthening IN SPITE of the environment (gains 35 kt against a hostile track — the storm that proves direction comes only from `V (KT) LAND`); nothing-dominates term spread; positions stop at +120 h while winds run to +168 (the partial-track note). |
 | `26081506CP0126_ships.txt` | **§47.8 acceptance: Lala.** Brief dip then turning for; one term carrying the whole net (cold air aloft 12 of 12 kt); the closer-to-ceiling room case. |
+
+---
+
+## 49. Time has a direction
+
+### 49.1 Why this exists
+
+**The home dashboard has no memory.** Every figure on it is computed from where
+the storm is *right now* plus where it is forecast to go. The moment a storm is
+past the house, every one of those figures collapses onto the present and the
+screen starts telling a reader that the closest the storm ever came is exactly
+where it is standing.
+
+Seen on glass 2026-08-16, Lala against a Big Island home, after she had gone by:
+
+- **CLOSEST IT CAME — 138 mi WNW of home** is the current distance.
+- **WHEN IT WAS CLOSEST — 69 mph** is the current wind, identical to the NOW
+  column beside it, which reads as a rendering fault even though each number is
+  individually correct.
+- **The Timeline's first two rows both said `now`** and one of them was the
+  closest pass.
+- **The chart's left edge is the present**, so the entire approach — the part
+  the reader lived through — is off-frame.
+- **"On this forecast no tropical-storm wind reaches you. The nearest edge stays
+  27 mi off."** This is the dangerous one. It is a statement about the remaining
+  forecast, worded as a statement about the storm, printed under a storm whose
+  wind field may already have crossed the house.
+
+Only the chip was right: **Moving away**.
+
+**The cause is one rule and one function.** `closestApproach()` in
+`data/home.js` skips every track candidate behind the clock — the code says so
+deliberately: *THE PAST IS NOT AN APPROACH.* That rule was written for a real
+problem (neither source's track starts at "now", so the raw minimum kept landing
+behind the storm and reading as a future approach) and it is correct for
+forecasting. It is wrong for reporting. Underneath it, `formatUntil()` in
+`lib/time.js` has **no past branch at all** — a negative interval falls through
+the "less than two minutes ahead" case and returns `'now'`, so every past moment
+anywhere in the app currently renders as `now`.
+
+### 49.2 The rule this section adds
+
+**Two facts, never merged, never inferred from each other:**
+
+| | |
+|---|---|
+| **Closest it came** | past tense · observed position · analysed wind · no error band |
+| **Closest it will come** | future tense · forecast position · forecast wind · error band |
+
+A storm approaching has only the second. A storm gone has only the first. A
+storm mid-pass has both and must show both. Nothing on any screen may present
+one of them in the other's words.
+
+**DERIVE, NEVER RECORD.** The past figures are computed from the storm's
+published observed track measured against wherever home is *at render time* —
+exactly the way the forecast figures already work. Nothing stores "the closest
+it came" anywhere. This is the whole answer to moving home (§49.10) and it is
+also the only design that survives the app not having been open.
+
+**THE ERROR BAND NEVER TOUCHES AN OBSERVED POINT.** `lib/cone-error.js`
+describes forecast error. A past position is a measurement. The dashboard
+already has this case for a pass happening now (`bandUnavailable:
+'pass-is-now'`); the same suppression extends backwards, and it is a rule rather
+than a convenience — a two-thirds circle drawn around a place the storm
+*actually was* is a fabricated uncertainty.
+
+### 49.3 Source — the observed track, already downloaded
+
+Nothing new is fetched. Both sources already publish an observed track and the
+app already pays for it to draw the trail on the globe.
+
+**NHC** — `SUMMARY_LAYER.pastPoints` (layer 10), fetched on every geometry
+bundle. Read live from `origin/archive:latest/geometry/nhc-Lala-CP2-pastPoints.geojson`
+on 2026-08-16: **26 features, one every 6 hours, from `dtg` 2026081000 through
+2026081606** — the storm's whole life including its pre-genesis `INVEST` period.
+Per feature, all verified present on every point in that file:
+
+| Field | Meaning | Note |
+|---|---|---|
+| `geometry.coordinates` | position | **the position.** `lat`/`lon` attributes are rounded to whole degrees, ~30 nm of error |
+| `dtg` | 10-digit synoptic time, NUMBER | `2026081606` |
+| `intensity` | wind, knots | NHC's own analysed wind — a measurement, not a forecast |
+| `mslp` | central pressure, mb | |
+| `stormtype` | NHC's class letter | **`DB` early in the file and `HU` at the end** — the first time this field has been read off a real past-track point |
+| `ss` | Saffir-Simpson number | `0` below hurricane |
+| `binnumber` | `CP2` | the filter currency every layer keys on |
+
+**GDACS** — `data/gdacs-points.js` already splits its centre dots into
+`pastPoints` and `forecastPoints` at the advisory issue time and already
+attaches JTWC's analysed `CARQ` wind where a match exists. `lib/carq.js` is that
+join. GDACS publishes no wind of its own on history, so some past points carry a
+position and time and no wind, which degrades honestly to a distance and a time
+(the same path `closestApproach` already takes for GDACS forecast points).
+
+**What is missing is only the normalizer.** `normalizeForecast()` turns layer 5
+into the `{lon, lat, time, windKt, category, categorySource, stormType, tau}`
+array the whole home dashboard reads as `bundle.forecast`. **There is no
+equivalent for layer 10**, so the observed track exists in the bundle as raw
+GeoJSON features that only the map consumes. §49 adds `bundle.past` — the same
+shape, ascending by time, `tau` null, with `windKt` taken from `intensity` and
+the category derived from `ss` when present and from knots otherwise, using the
+`categorySource` convention already established (`'reported'` vs `'derived'`).
+
+`data/lifecycle.js` already compacts and rehydrates past points for ended
+storms, so a storm that has left the feed keeps its observed track and therefore
+keeps its past figures.
+
+### 49.4 Past tense, everywhere
+
+`formatUntil(t, now)` gains a past arm mirroring its future one: `just now`
+inside two minutes either side, then `N min ago`, `N hrs ago`, `N days ago` at
+the same boundaries the forward side uses (one hour, 48 hours).
+
+**THE BLAST RADIUS IS THE WHOLE APP AND THAT IS THE POINT.** Seven call sites in
+`ui/countdown-home.js`, one each in `ui/view-home.js`, `ui/view-storm-detail.js`
+and `ui/view-storms.js`. Every one of them can currently print `now` about
+something hours old. This is the cheapest correctness win in the section and it
+lands before anything else is built.
+
+`formatUntil` carries its own preposition (`in 9 hrs`, not `9 hrs`) and the past
+arm keeps that contract — it returns `6 hrs ago`, so callers concatenate
+identically and nothing downstream branches on tense.
+
+### 49.5 The closest pass, backwards
+
+`closestApproach()` returns a second, independent result rather than a widened
+one. **Two objects, because they are two facts and the caller must not be able
+to render one thinking it has the other.**
+
+- `approach` — unchanged. Current position plus forecast, past candidates
+  skipped, refined by the existing ternary search, error band eligible.
+- `passed` — the same walk over the observed track, ending at the current
+  position. Same `densifyTrack`, same refinement, same return fields
+  (`nm`, `time`, `windKt`, `bearing`), plus `windSource: 'analysed'`. Null when
+  the storm has no observed track or has never been inside
+  `APPROACH.relevanceNm`.
+
+**THE TWO WALKS SHARE THE CURRENT POSITION AND THAT IS DELIBERATE.** It is the
+one point that belongs to both — the end of what happened and the start of what
+is forecast — and giving it to only one of them creates a gap or an overlap at
+the exact moment the reader cares about.
+
+**How far back:** the whole published track. A storm that formed near the house
+a week ago and wandered off has a real closest pass a week old, and hiding it is
+a worse failure than showing it with a plain timestamp. `formatUntil`'s past arm
+makes a week-old pass read as a week old.
+
+**The headline word follows which fact exists**, and `dash.stage` already
+computes the rungs (`just-passed`, `past`, `overhead`) that decide it. What
+changes is that the words now have real numbers behind them instead of the
+current position wearing past-tense wording.
+
+### 49.6 Strongest means strongest, over the whole life
+
+**DECIDED.** `dash.peak` is the maximum over the observed track, the current
+wind, and the forecast — the storm's entire published life. It is currently
+taken over the forecast plus the present wind only, so a storm that peaked
+before it reached the house reports a peak it has already passed as though it
+were still coming.
+
+Consequences, all of which are part of this section rather than follow-on work:
+
+- **The peak milestone can be in the past.** The rail's `At its strongest —
+  81 mph` becomes `Was strongest — 81 mph` when the moment is behind the clock.
+  One row, two tenses, chosen from the same timestamp everything else uses.
+- **The STRENGTH block's third column gains a past caption.** It already says
+  `after it passes`; it needs `before it reached you` and `earlier today` in the
+  same slot.
+- **Past intensity is better data than forecast intensity.** `intensity` on a
+  past point is NHC's analysis of what the storm did. Where the two are both
+  available for the same hour, the observed one wins, and the block should be
+  able to say so rather than blending them.
+- **`dash.atClosest` splits with the pass.** The wind at a past closest pass is
+  read off the observed track; the wind at a future one stays a sample of the
+  forecast curve.
+
+### 49.7 The Timeline rail keeps the past
+
+**The past is not dropped.** Three reasons, in order of weight:
+
+1. **Dropping it deletes the section.** `countdownHtml` bails with
+   `if (rows.length <= 1) return ''`. A fully-passed storm has no future events,
+   so the whole Timeline silently vanishes — the §5 failure, on the screen about
+   the storm that just went by the house.
+2. **The rail is the accessible form of the chart.** A screen reader cannot
+   explore an SVG. If the past is not in the rail it does not exist for that
+   reader.
+3. **It is nearly free.** The rail carries *events*, not track points — class
+   changes, the pass, wind arriving and lifting. A six-day storm has four or
+   five behind it, not thirty. Every row already carries an absolute `at` and
+   the rail already sorts on it, so keeping the past is literally not filtering.
+
+**A `now` row, not a circled node.** The rail's dots are already coloured by the
+storm's category at that moment (`categoryColor`); ringing one to mean "you are
+here" overloads a signal that already means something else, and the node you
+would ring changes identity every few hours as time passes. Instead:
+
+- **One row at the current moment**, sorted in by time like every other row,
+  because it has a time by definition. A thin rule and a hollow node, no
+  category colour, so it reads as a divider and not as an event.
+- **Rows above it are past tense and dimmed**; rows below are the countdown that
+  is there today.
+- Read aloud it becomes one ordered sentence: *…became a hurricane, 3 days ago …
+  closest pass, 6 hrs ago … now … was strongest, 2 days ago…*
+
+**THIS IS A NAMED EXCEPTION TO THE RAIL'S OWN RULE.** `ui/countdown-home.js`
+states that the rail carries events only and that anything without a time does
+not belong. `now` is not an event; it is a *moment*, and this rail is ordered by
+moment. The exception is written down here so it does not later look like drift.
+
+### 49.8 The chart's left half
+
+`ui/chart-home.js` already draws a dotted vertical at `X(0)` labelled `now`,
+already tests whether it falls inside the frame (`nowShown`), and already plots
+in hours-from-now — so negative hours land to the left with no new machinery.
+The line is pinned to the left edge today only because there is no data behind
+it.
+
+- **Extend the domain backwards** and the existing `now` line slides into the
+  frame and becomes meaningful for free. No new marker.
+- **How far back:** to the past closest pass plus a margin, or a fixed lookback,
+  **whichever is longer** — so the pass is never off-frame, and a week-old storm
+  does not squash today into two pixels. The constant goes in `config/` beside
+  `WINDOW_RINGS`, defined before the logic.
+- **Solid left of `now`, dotted right of it**, matching §46.2's house style for
+  observed-versus-forecast so the app has one visual grammar for the distinction
+  rather than two.
+- **The uncertainty band is drawn only right of `now`.** Per §49.2.
+- The closest-pass stamp's collision logic against the `now` label already
+  handles the two verticals landing on top of each other and gets a second
+  header row for it. That case now happens on every storm mid-pass rather than
+  one in a hundred, so it wants a look on glass.
+
+### 49.9 The wind that already reached you
+
+**The safety fix, and the largest piece.** `buildCorridor()` walks the forecast
+track and the forecast wind radii and answers *does dangerous wind reach my
+house, when does it start, when does it lift*. Everything it says is
+forward-only, and the headline sentence it feeds — **no tropical-storm wind
+reaches you** — is printed with no tense marker on a storm whose wind field may
+already have been over the roof.
+
+**The past wind field is already downloaded.** `SUMMARY_LAYER.windPast` (layer
+13) is fetched on every NHC bundle and currently feeds nothing but the drawn
+swath. `lib/windswath.js` already performs the exact join this needs: **layer 13
+carries `radii`, `ne`/`se`/`sw`/`nw` and a `synoptime` STRING; layer 10 carries
+a `dtg` NUMBER of the same ten digits; the two join on that value.** Radii with
+no joinable centre are dropped, because a ring with no stated centre cannot be
+placed.
+
+The corridor gains a past arm built from that join, using
+`normalizeForecastRadii`'s output shape keyed on time instead of `tau`, and the
+sentence splits by what is true:
+
+- Wind reached the house and has lifted → **past tense, with when it started and
+  when it ended**, and it must not be possible to render the forward sentence
+  instead.
+- Wind is on the house now → present, unchanged.
+- Wind has not arrived and is forecast to → future, unchanged.
+- Wind reached the house earlier *and* is forecast to again → both, in order.
+- Never reached and is not forecast to → the current all-clear wording, which is
+  only now actually true.
+
+**`[VERIFY]` — LAYER 13 HAS NEVER BEEN READ FIELD-BY-FIELD OFF REAL BYTES.**
+Its shape above is taken from `lib/windswath.js`, which consumes it successfully
+in production, so the field names are trustworthy and the *coverage* is not:
+nobody has confirmed how far back layer 13 publishes, whether it carries all
+three thresholds at every synoptic hour, or what it does across a basin change.
+**Add it to `tools/archive-fetch.mjs` and read a real file before building this
+pass.**
+
+**`[DECIDE]` on partial coverage.** If layer 13 goes back only a few synoptic
+hours while layer 10 goes back to genesis, the corridor's past arm is shorter
+than the observed track and the honest answer is a stated horizon — *we can
+speak for the last N hours* — not a silent shrug. The wording is a glass call
+once the real coverage is known.
+
+**GDACS PUBLISHES NO PAST WIND RADII AT ALL.** `data/gdacs-geometry.js` sets
+`windPast: NONE()` and that is correct, not a gap in our parsing. So this arm is
+NHC-only and a GDACS storm says plainly that no past wind field was published
+rather than showing an empty corridor. Per SPEC.md's both-sources rule the two
+may ship in separate passes, but the GDACS sentence ships **in the same pass as
+the NHC one** — an unhandled source here is a silent all-clear, which is the
+exact failure this whole subsection exists to remove.
+
+### 49.10 Moving home is not an edge case
+
+Home is one point in `localStorage` (`data/home.js`), and every figure derived
+from it is computed at render time from `getHome()`. Nothing caches a distance,
+a bearing, a closest pass or a corridor. **So §49 requires no work for a moved
+home beyond not introducing any.** Move the pin and the next render measures the
+same published tracks against the new point and is immediately correct.
+
+**The design that would have broken is recording.** Watching the distance tick
+down and storing the minimum observed — *at 4:36 PM we saw 42 mi* — is wrong
+three ways: it is wrong after a home move, it is wrong on a second device, and
+it is wrong whenever the app was closed. It is not built and must not be.
+
+**The ended-storm registry is not an exception.** `data/lifecycle.js` stores a
+compacted copy of a dead storm's track so the map can still draw it after the
+source drops it. That is a record of **the storm**, not of the home, so it
+survives a move intact and the derived figures recompute off it correctly.
+
+### 49.11 Fixtures
+
+**Ida is the fixture, and she is already in the repo.**
+`samples/ida-al092021/fstadv/` holds 19 sequential forecast advisories for a
+real major hurricane that really passed over the Prairieville home
+`tools/test-home.mjs` already uses, and `mockups/home-corridor.html` already
+renders her Advisory 12 and 14. Stacking the position and wind at issue time
+across advisories 001…N produces a **real observed track with real analysed
+winds**, and running the dashboard at Advisory 17 — where she is inland and past
+the house — gives every past-tense case at once: a closest pass behind the
+clock, a peak behind the clock, wind that arrived and lifted, and a forecast
+that still has hours left in it.
+
+Bertha's Advisory 10 stays the forward-only fixture, unchanged, so a break in
+the existing assertions can only be a regression rather than a fixture change.
+
+**Every new rule gets mutation-tested.** Reintroduce the bug and confirm the
+assertion actually fails. A test that passes on the same wrong assumption as the
+bug is worse than no test — and the specific trap here is a fixture whose `now`
+sits at a moment where past and future happen to agree.
+
+### 49.12 Open questions for glass
+
+1. **Does the `now` divider read as a divider or as an event?** It is the one
+   row on the rail that is neither.
+2. **How long is too long?** With the past kept, a six-day storm's rail may run
+   past a phone screen. The designed cut, if one is needed, is intermediate past
+   milestones — **never** the past closest pass and never the wind that reached
+   the house.
+3. **Do dimmed past rows read as history, or as disabled?** Dimming is the app's
+   language for *unavailable* elsewhere.
+4. **At phone width, with a week of history and five days of forecast**, does
+   the chart still show the pass at a legible size, or does the lookback need
+   capping harder than §49.8 proposes?
+5. **Two verticals on top of each other** — the mid-pass case is now common. Is
+   the second header row enough?
+6. **Does `Was strongest` beside `Strongest` in the same block read as one fact
+   in two tenses, or as two different facts?**
+
+### 49.13 The passes
+
+Five passes plus one piece of housekeeping. Each one is shippable on its own and
+leaves the app more correct than it found it.
+
+| Pass | Scope | Files |
+|---|---|---|
+| **1. Past tense** | `formatUntil` gains a past arm; every call site checked; the `now`-for-everything bug is gone app-wide. No new data, no new UI. | `lib/time.js`, `tools/test-home.mjs` |
+| **2. The observed track arrives** | `bundle.past` normalized for both sources and plumbed into `buildHomeDashboard`. **No visible change** — a pure data pass, so a break can only be the plumbing. | `data/nhc-mapserver.js`, `data/gdacs-geometry.js`, `data/home-dashboard.js`, `ui/view-home.js` |
+| **3. The pass and the peak, backwards** | `closestApproach` gains `passed`; the peak spans the whole life; `atClosest` splits; the headline and the strength block get their tenses. Ida fixture lands here. | `data/home.js`, `data/home-dashboard.js`, `ui/view-home.js`, `tools/test-home.mjs` |
+| **4. The rail and the chart** | Past rows kept, `now` divider added, chart domain extended left, solid/dotted split, band suppressed left of `now`. | `ui/countdown-home.js`, `ui/chart-home.js`, `config/constants.js`, `ui/home.css` |
+| **5. The wind that already reached you** | Layer 13 read off real archived bytes first, then the corridor's past arm and the split sentence. GDACS's honest gap ships in the same pass. | `tools/archive-fetch.mjs`, `data/home-corridor.js`, `data/nhc-mapserver.js`, `ui/view-home.js` |
+| **0. Housekeeping** | `lib/windswath.js`'s doc comment names layers `+7`, `+10`, `+12`, `+13`, `+2` for tiers whose real ids in `SUMMARY_LAYER` are 10, 13, 15, 16 and 5. As-built rule: fix the comment. Can ride along with any pass. | `lib/windswath.js` |
+
+**Pass 2 must not be skipped or merged into pass 3.** The plumbing and the
+meaning are separate risks, and a pure-plumbing pass with no visible change is
+the only way to know which one broke.
+
 
 ---
 

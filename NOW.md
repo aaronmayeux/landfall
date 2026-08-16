@@ -512,6 +512,15 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
+**The home dashboard cannot say anything happened (§49, `SPEC-NEXT.md`).** Every
+figure on it is computed from now-plus-forecast, so once a storm is past the
+house "closest it came" is just the current distance and "when it was closest"
+is just the current wind. Underneath it `formatUntil` has no past branch at all,
+so **every past moment anywhere in the app renders as `now`**. Seen on glass on
+Lala. Five passes, sized and ordered in §49.13; pass 5 closes the
+safety-adjacent one — *no tropical-storm wind reaches you* is a forward-only
+sentence printed with no tense marker. Read the section, not this line.
+
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open
 questions written down. Read the section, not this line. §47 is now fully
