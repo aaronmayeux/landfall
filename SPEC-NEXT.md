@@ -978,6 +978,22 @@ be representative. A parser that handles all fifteen handles the season; the las
 
 ### 49.1 Why this exists
 
+**BUILT AND JUDGED IN FULL, 2026-08-16.** All five passes and the housekeeping
+have landed and been seen on a phone across one storm's whole life —
+approaching, mid-arrival, and departed. What follows describes why the section
+was written and what each part of it does; it is a record of the reasoning, not
+a plan. The two things still open are named in §49.9's `[VERIFY]` (live layer 13
+has never been read) and §49.12 (two glass questions that need a storm sitting
+in the right state).
+
+**THE FAILURE IT REMOVED, STATED ONCE.** Every figure on the home dashboard was
+computed from where the storm is *right now* plus where it is forecast to go, so
+the moment a storm was past the house every figure collapsed onto the present —
+and the sentence *no tropical-storm wind reaches you* was printed, with no tense
+marker, over houses the wind had measurably crossed.
+
+---
+
 **The home dashboard has no memory.** Every figure on it is computed from where
 the storm is *right now* plus where it is forecast to go. The moment a storm is
 past the house, every one of those figures collapses onto the present and the
@@ -1459,6 +1475,14 @@ sits at a moment where past and future happen to agree.
 
 ### 49.12 Open questions for glass
 
+**SEVEN OF THE NINE ARE ANSWERED.** The rail reads as a story rather than a
+wall; the dimmed past rows read as history; the `now` divider reads as a
+divider; the chart holds the pass at a legible size with history on the left;
+the chip is *Has passed*; the paragraph explaining the missing error band was
+cut as furniture; and a departed storm's chart, sentence and rail all agree.
+Answered on glass 2026-08-16 across Lala's whole life. The two below still
+need a storm sitting in the right state long enough to look at.
+
 1. **Does the `now` divider read as a divider or as an event?** It is the one
    row on the rail that is neither.
 2. **How long is too long?** With the past kept, a six-day storm's rail may run
@@ -1477,8 +1501,11 @@ sits at a moment where past and future happen to agree.
 
 ### 49.13 The passes
 
-Three passes plus one piece of housekeeping, each shippable on its own and each
-leaving the app more correct than it found it. They keep the numbers they were
+**ALL LANDED.** Three passes plus one piece of housekeeping as originally
+scoped, plus two rounds of corrections that glass sent back — the second of
+them five bugs deep, because a storm mid-arrival exercises paths a departed one
+never reaches. Each was shippable on its own and each left the app more correct
+than it found it. They keep the numbers they were
 given, because those numbers are how they are referred to; pass 1 landed as
 `SPEC-UI.md` §49.4, pass 2 as `SPEC-DATA.md` §49.3, pass 3 as §49.5, §49.6 and
 §49.14, and pass 4 as §49.7 and §49.8 above.

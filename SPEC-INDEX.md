@@ -201,20 +201,20 @@ real home is the other row carrying the same section number.
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1772-1817 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 977-978 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1018 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1019-1044 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 979-1034 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1035-1060 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1818-1903 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2443-2465 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1045-1097 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1098-1149 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1150-1268 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1269-1348 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1349-1420 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1421-1438 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1439-1459 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1460-1477 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1478-1498 |
-| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1499-1545 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1061-1113 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1114-1165 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1166-1284 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1285-1364 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1365-1436 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1437-1454 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1455-1475 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1476-1501 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1502-1525 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1526-1572 |
 
 ## Files
 
@@ -222,7 +222,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 113,676 | 32 |
 | `SPEC-MAP.md` | 182,574 | 37 |
-| `SPEC-NEXT.md` | 98,566 | 30 |
+| `SPEC-NEXT.md` | 100,167 | 30 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 143,764 | 10 |
 | `SPEC.md` | 149,756 | 14 |

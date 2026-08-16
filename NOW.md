@@ -406,33 +406,13 @@ globe, dive, drawer and home dashboard against NHC's published bytes.
 replay paints TODAY's radar over a 2021 hurricane. Suppress with a stated reason
 or find an archive — doing nothing is what §5 rules out.
 
-**The home dashboard was rebuilt around four named sections, and only the far
-layout has been judged.** `SPEC-UI.md` §8. Storm stepper with chevrons, far mode
-for storms that cannot reach the house, strength as three intensities, the
-`<name> right now` block folded away, and most of the closest-pass prose cut as
-redundant with the chart and the countdown. The FAR layout was seen on glass and
-passed. **The NEAR layout has not been seen since the rewrite** — it needs a
-storm within `APPROACH.relevanceNm`, and there has not been one. Judge in order:
-does the inverted axis read without re-checking which way is closer; do three
-translucent bands stay legible in daylight; do five angled time labels and their
-gridlines help or clutter; does the dashed amber read as a hedge rather than a
-second forecast; does the wind rail answer "when does it arrive and how long
-does it stay" or compete with the chart below it; and — the one this rewrite
-gambled on — is `±37 mi forecast error — that reaches your house` still
-frightening enough now that the two sentences explaining it are gone.
-
-**One duplication survives on purpose and may not survive glass.** `SPEC-UI.md`
-§8. On a near storm the `Where it is` section and the countdown's first row say
-the same words. The countdown is the chart's accessible twin and has to be
-self-contained, which is the argument for keeping it; it may simply look like a
-mistake with both on screen. Aaron's call, and it needs a near storm to make.
-
-**The app can say how long ago something was.** `SPEC-UI.md` §49.4.
-`formatUntil` had no past arm, so every past moment on ten call sites printed
-`now`; it now says `40 min ago` / `14 hrs ago` / `3 days ago`, with `now` kept
-for the two minutes either side of the instant. The half-finished state this
-note used to describe is gone — pass 4 gave the Timeline rail its tenses, so a
-past lead time no longer sits beside a future-tense verb.
+**One duplication survives on purpose and has now been SEEN but not ruled on.**
+`SPEC-UI.md` §8. On a near storm the `Where it is` section and the countdown's
+first row say the same words. The countdown is the chart's accessible twin and
+has to be self-contained, which is the argument for keeping it; it may simply
+look like a mistake with both on screen. It was on the glass 2026-08-16 with
+home moved into Lala's path and drew no complaint, which is weaker than an
+answer. Aaron's call.
 
 **A dead storm's trail is no longer a souvenir of who was watching.** `SPEC.md`
 §5, `data/ended-track.js`. The trail was whatever geometry THIS device happened
@@ -519,167 +499,25 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**The home dashboard can say what happened, for the first time (§49,
-`SPEC-NEXT.md`).** Every figure on it used to be computed from
-now-plus-forecast, so once a storm was past the house "closest it came" was just
-the current distance and "when it was closest" was just the current wind. Seen
-on glass on Lala. **Passes 3 AND 4 have landed.** Pass 3: `dash.passed`,
-`dash.peak` over the whole life, the chip ladder's new rung. Pass 4: the
-Timeline rail and the chart.
+**§49 IS COMPLETE AND JUDGED. Two things about it are still open.**
+`SPEC-NEXT.md` §49. All five passes and the housekeeping have landed and been
+seen on a phone across a real storm's whole life — approaching, mid-arrival,
+and departed.
 
-Proved on Hurricane Ida against a Prairieville home, her Advisory 19: she is
-141 nm away at 30 kt, and the screen now reads **Closest it came 13 mi ·
-17 hrs ago**, **When it was closest 91 mph**, **Was strongest 150 mph · before
-it reached you**. The 130 kt peak is asserted against NHC's own Tropical
-Cyclone Report, and the 11.28 nm pass against an independent brute-force
-minimum computed in the test — both would previously have printed the live
-numbers. Twelve mutations were run across both passes and all twelve fire.
+**`[VERIFY]` — LIVE LAYER 13 HAS STILL NEVER BEEN READ.** Every figure in §49.9
+is measured against NHC's published best-track radii, which is the same product
+with the same field names the live layer serves. How far back the LIVE layer
+publishes on an active storm, and what it does across a basin change, is
+unknown. It is in the hourly archive now; read
+`latest/geometry/nhc-*-windPast.geojson` across a few runs. If it publishes far
+less history than layer 10, `partial` already exists to say so and the wording
+is a glass call.
 
-**JUDGED ON GLASS AND TWO OF THE FOUR ARE SETTLED.** The chip is *Has passed*
-— *It's been by* was too coy. The paragraph explaining the missing ± band —
-*that's where it was measured, not where it was forecast to go* — is cut: it
-answered a question nobody was asking about a number that carries no band
-anyway. Still open: does *Was strongest* beside *When it was closest* read as
-one story in two tenses or as two unrelated facts (§49.12 Q6)? And on a storm
-mid-pass, is the single line *It came closer earlier — 12 mi, 6 hrs ago* enough,
-or does the past want its own vertical (§49.12 Q5)?
-
-**AND FIVE MORE FROM PASS 4, WHICH NOTHING HAS SEEN.** On Ida's Advisory 19 the
-rail is now eight rows: became a tropical storm, a hurricane, a major hurricane,
-was at its strongest, closest it came, weakened twice, then the `now` divider.
-**Is that a story or a wall?** The past rows are dimmed to 0.62 — too faint to
-read in daylight, or not faint enough to be obviously behind you. **Does the
-divider land as "you are here"** when it is the live-distance row wearing a
-hairline, rather than a rule of its own. **The dotted forecast track is on EVERY
-chart now**, including storms nowhere near the house, and that is the one change
-in this pass a reader will see on an ordinary day. **And the chart reaches 24
-hours back by default** — long enough to be useful, or does it squeeze the
-forecast half that matters.
-
-**Two things pass 4 turned up that were not in its plan.**
-
-The rail was printing *Closest pass — 163 mi NNE of you, now* two rows under
-*Closest it came — 13 mi ENE of you, 17 hrs ago*. Same bug pass 3 fixed on the
-headline, on a surface pass 3 did not touch: the forward walk pins a leaving
-storm's "closest approach" to where it is standing.
-
-**THAT FIX WAS HALF A RULE AND GLASS FOUND THE OTHER HALF.** It asked only
-whether the forecast pass was ahead of the clock. Lala at 12:58 PM had hers
-stamped 1:00 PM — two minutes ahead, so it sailed through, at **224 mi**,
-printed under *Closest it came — 36 mi SW of you, 14 hrs ago*. It now also asks
-whether the storm has already been closer than the forecast will ever bring it
-back, and either answer supersedes. A recurving storm forecast to come back
-CLOSER is untouched, which is the case worth protecting.
-
-The comparison also stopped being three copies. It lived in the rail, the
-chart's marker and the chart's aria summary as three private tests of one
-thing, and had been tightened twice; it is now one field,
-`dash.approachSuperseded`, computed in `data/home-dashboard.js`. Nothing to
-judge — these are rows that should never have been there — but it means every
-departed storm has been carrying a false closest-pass row for as long as the
-rail has existed, and storms passing within a couple of minutes of a synoptic
-hour kept carrying one after pass 4.
-
-**AN APPROACHING STORM SENT BACK FIVE MORE, AND ONE OF THEM WAS THE CHIP
-LYING.** All five reproduce on one ordinary polling state — Ida's Advisory 014
-read three hours after issue — and all five were on screen together on Lala
-2026-08-16 with home moved into her path.
-
-**The chip said *Hours away* while tropical-storm wind was on the house.** The
-`wind-here` rung asked whether the WORST field's window contained now, which
-silently means *is the strongest wind here yet*. Measured against NHC's own
-radii, the house was 8.68 nm inside the 34 kt field. It asks `corridor.here`
-now — the strongest threshold containing this minute — and `imminent` counts
-down to the FIRST wind rather than the worst, or the rung became unreachable.
-The ladder walks cleanly across Ida's real advisories: 012 bearing-down, 013
-imminent, 014 and 015 wind-here. **JUDGE: does the chip flipping to wind-here
-on the tropical-storm band, hours before the core, read as accurate or as
-crying wolf?**
-
-**The sentence said *reaches you again* about wind that had never reached.**
-"Again" was fired by the past clause saying anything at all — including a
-denial. It now needs an actual prior reach.
-
-**And it denied a reach the rail below was announcing.** The analysed field
-lags up to six hours; the forecast corridor is walked from the current
-position. Both were true at once, so *No tropical-storm wind has reached you so
-far* sat directly above *28 min ago — Tropical-storm-force wind reached you*.
-The denial yields to the forecast now.
-
-**The present tense named the wrong wind.** It was built on `worst`, so on a
-storm mid-arrival it would have promised a hurricane that had not landed. It
-names the field actually on the house and says separately that the stronger one
-is coming. **JUDGE: does the two-clause version read as one thought or as two?**
-
-**Rail wind rows were present tense with past lead times** — *3 hrs ago —
-Tropical-storm-force wind reaches you*, the §49.1 bug the milestone rows fixed
-in pass 4 and the wind rows never did.
-
-**And *Closest it came* appeared on a storm that had not been closest yet** —
-the mirror of the supersession rule, from the other end.
-
-**PASS 5 IS ON GLASS AND SIX THINGS CAME BACK FROM IT.** The wind sentence
-lost its forward half once the wind has been and gone — *no tropical-storm wind
-is forecast to reach you either* and *the nearest edge stays 160 mi off* are
-both true and neither is wanted beside a measurement that already answered the
-question. Prose now says the time and then the day (*6:20 PM Sat*), while the
-rail keeps the day first because it is read as a column — two orders on one
-screen, deliberate, and worth a second look. **The chart's white line, its wind
-bands and its closest-pass dot were three different walks of one track**: the
-line from the raw six-hourly fixes, the other two densified, so the dot floated
-7.73 nm and 2.12 hours off the line it sits on (measured on Ida's Advisory 19).
-One walk now feeds all three. And the strength strip's third figure was tensed
-off the STORM rather than off the peak, so a departed storm with a forecast peak
-read *Strongest 86 mph · after it passed*; it says *still to come*.
-
-**WHAT PASS 5 ITSELF BUILT, AND NOTHING ON IT HAS BEEN JUDGED YET.** `SPEC-NEXT.md` §49.9.
-The corridor has a past arm: NHC's analysed wind field (layer 13), joined to
-the analysed positions on the synoptic hour, walked with the same `crossings()`
-the forecast uses. On Ida against the Prairieville house the measurement reads
-**22.58 hours of tropical-storm wind, 5.83 hours of 50 kt, and hurricane force
-missing by 2.9 nm** — she was a Cat 4 and the house is 11.28 nm off her track,
-and the analysed field still says the 64 kt core never covered it.
-
-**JUDGE, IN THIS ORDER, ON A STORM THAT HAS GONE BY.** Does *Damaging wind
-reached your house at Sun 10:24 PM and lifted at Mon 4:14 AM* read as a record
-or as an alarm about something over? On a storm mid-pass the past clause is
-DROPPED and only *wind is on your house now* survives — is that right, or does
-losing "it arrived at" feel like the screen forgot? When the last analysis
-still had wind on the house, the words are *the last measurement still had it
-over you*, which is deliberately not an all-clear and may read as evasive. And
-on a storm whose wind reached the house AND is forecast to again, the sentence
-runs both clauses in order with *reaches you again* — that is the longest this
-sentence has ever been.
-
-**THE CHART DRAWS ON A DEPARTED STORM FOR THE FIRST TIME.** `SPEC-MAP.md` is
-not where this lives; it is `SPEC-NEXT.md` §49.8/§49.9. Two things were broken
-and both are fixed: measured wind bands now extend left of `now`, and a storm
-whose advisory publishes NO forecast radii — Ida's 19, which is most storms
-late in life — gets a chart at all instead of an empty frame. Judge: does a
-band that starts left of `now` and stops there read as "this happened", or does
-it look like the forecast half failed to load?
-
-**THE HORIZON HEDGE HAS NEVER FIRED ON A REAL STORM AND THAT IS THE DESIGN.**
-When the wind field is published for less of the storm's life than the track
-covers, the sentence says *measurements start Thu 2:00 PM* rather than claiming
-an all-clear over hours nobody measured. It only fires when the storm was close
-enough during those hours to matter, judged against its own largest measured
-field — so Ida, 600 nm out during her six blind hours, stays quiet. First
-version fired on every storm; that was furniture and was cut. If you never see
-this line, it is working.
-
-**A GDACS STORM NOW SAYS IT CANNOT ANSWER.** GDACS publishes no past wind
-radii at all, so those storms get *No past wind field is published for this
-storm* rather than inheriting a forward-only sentence. Judge whether that reads
-as a fact about GDACS or as our failure — the same question §47.8's "Not
-published for storms in this basin" is still waiting on.
-
-**`[VERIFY]` — LIVE LAYER 13 IS STILL UNREAD.** Everything above is measured
-against NHC's published best-track radii, which is the same product with the
-same field names the live layer serves. How far back the LIVE layer publishes
-on an active storm, and what it does across a basin change, is still unknown.
-It is in the hourly archive now; read `latest/geometry/nhc-*-windPast.geojson`
-across a few runs.
+**Two glass questions §49.12 records and nothing has answered.** Does *Was
+strongest* beside *When it was closest* read as one story in two tenses or as
+two unrelated facts (Q6)? And on a storm mid-pass, is the single line *It came
+closer earlier* enough, or does the past want its own vertical (Q5)? Both need
+a storm sitting in that state long enough to look at.
 
 **The intensity chart (§46) is specified and waiting in `SPEC-NEXT.md`.**
 Endpoints fetched live, field names transcribed from the real schemas, open
