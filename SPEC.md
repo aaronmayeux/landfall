@@ -402,7 +402,7 @@ imagery, the normalized storm object, polling, cache TTLs, failure recovery.
   any more: the scope filter that did was removed (§16), and with no filter
   nothing can hide a storm that exists.
 - `clear` — everything fetched clean and the ocean is genuinely quiet.
-- `silent` — a FOURTH state, not a flavour of the other three. Every fetch
+- `silent` — a FOURTH state, not a flavor of the other three. Every fetch
   succeeded, the storm is still in the list, its record still says current, and
   the newest analysis in it is more than a day old. Nothing errored, nothing is
   missing, the data is simply frozen. See **Silent storms**.
@@ -518,7 +518,7 @@ this yet", and it goes stale by days (two measured cases, 58 h and 51 h).
 **Keep history, drop the future** — the same rule as a ghost and the same reason.
 It lives in `lib/future-slots.js` (`FUTURE_SLOTS`, `withoutFuture`) because
 **Ended storms** below is its second caller; there is deliberately no alias under
-the old silence-flavoured names, since two names for one rule is the drift the
+the old silence-flavored names, since two names for one rule is the drift the
 extraction prevents. `pastTrack` and `pastPoints` survive: a day-old record of
 where a storm has been is still true. `cone`, `forecastTrack`, `forecastPoints`,
 `modelTracks`, `windCurrent`, `watchWarning` and `windSwath` are emptied, because

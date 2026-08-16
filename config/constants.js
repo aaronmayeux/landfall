@@ -330,7 +330,7 @@ export const RELAY_AGE = Object.freeze({
 /* ---------------------------------------------------------------------------
  * SILENCE — a source that STOPPED PUBLISHING (SPEC §5)
  *
- * A FOURTH STATE, and it is not a flavour of the other three. `unavailable`
+ * A FOURTH STATE, and it is not a flavor of the other three. `unavailable`
  * means the fetch died. `none_matched` means nothing was in scope. `clear`
  * means the ocean is genuinely empty. SILENT means all three succeeded — the
  * feed answered 200, the storm is still in the list, its record still says

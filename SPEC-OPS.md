@@ -396,7 +396,7 @@ The `sessions` row does carry device characteristics — screen size, pixel rati
 device memory, core count, connection quality — added deliberately, because
 without them there is no way to ask whether slow iPhones are simply OLD iPhones.
 There is still **no user id, no name and no user agent string**; the
-highest-entropy field of the lot was left out in favour of a six-value
+highest-entropy field of the lot was left out in favor of a six-value
 `platform` bucket. The honest note: those five fields together are a device
 fingerprint, and regulators generally treat a fingerprint as personal data even
 with no name attached — as they do the `device` number above. **If this is ever

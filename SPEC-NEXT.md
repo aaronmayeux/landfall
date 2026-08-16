@@ -396,7 +396,7 @@ and they are split into three groups of which **only the first is colored**:
    **A name has to survive both signs, and "dry air" did not.** `700-500 MB RH`
    is POSITIVE when the air around the storm is moist and that is helping it.
    Named "dry air", a helping hour printed as "dry air +2" — which reads as
-   dryness doing the storm a favour, the exact opposite of what the file says.
+   dryness doing the storm a favor, the exact opposite of what the file says.
    Named for the quantity rather than for one end of it, "moisture around it +2"
    and "moisture around it −2" are both true. Every name is checked the same
    way: read it aloud with a plus and with a minus, and if only one of the two
@@ -624,8 +624,9 @@ Lives in the storm detail drawer, under the figures already shown there.
 
 1. **The verdict.** What the environment does *across the whole track*, and
    whether the storm is strengthening or weakening with it or against it.
-2. **What is acting on it** — which way the weight sits, which factor leads or
-   that none does, and what is on the other side. **No figures in it.**
+2. **What is acting on it** — which factor leads, or that none does and the
+   work is spread; then **the other side in its own sentence**, named, or said
+   to be empty. **No figures in either.**
 3. **Room to grow**, said as the storm's strength beside the sea's ceiling, and
    what its own structure is worth.
 4. **The bottom line.** The published intensity forecast in plain words, with at
@@ -667,7 +668,7 @@ An early version quoted the **last** forecast hour. Genevieve is why that had to
 go: her environment number runs
 `0, −2, −6, −8, −11, −13, −13, −10, −5, 0, +1, +2, +3`,
 so the last hour is +3 and a Cat 5 coming apart was summarised as *helping*. The
-last hour was her single most favourable moment. Quoting the **worst** hour
+last hour was her single most favorable moment. Quoting the **worst** hour
 instead fails the other way — half the season sits in the neutral band, and a
 quiet storm with one −4 afternoon would be announced as "working against it".
 
@@ -720,28 +721,28 @@ imperial reader; a metric reader sees the same sentences in km/h.** Times are th
 reader's local day and part of day, computed here for US Central.
 
 > **Hernan** — `26081506EP0826`.
-> The environment is about even now but turns against Hernan steadily, reaching −13 mph by Monday afternoon, and nearly everything is pulling the same way. Most of that is wind shear; the only thing helping is warm moist air. There is plenty of room to grow — 35 mph over water that could hold 160 mph, and its own structure costs 12 mph. The intensity model has it falling from 35 mph to 25 mph by Monday afternoon, so the room is there and nothing is using it.
+> The environment is about even now but turns against Hernan steadily, reaching −13 mph by Monday afternoon. Most of that is wind shear. The only thing working in its favor is warm moist air. There is plenty of room to grow — 35 mph over water that could hold 160 mph, and its own structure costs 12 mph. The intensity model has it falling from 35 mph to 25 mph by Monday afternoon, so the room is there and nothing is using it.
 >
 > *Monday afternoon — −13 mph in total.* Wind shear −9 mph · Air flowing out the top −2 mph · Warm moist air +1 mph · Moisture around it −1 mph · Everything else −2 mph
 >
 > At that hour room to grow is worth +17 mph and its own structure −12 mph — neither is part of the color. From NHC's SHIPS intensity model.
 
 > **94L** — `26081506AL9426`.
-> The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. No single thing is behind it — cold air above it and moisture around it lead a group of small ones; the only thing helping is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
+> The environment helps 94L mildly for the first day, then turns against it, reaching −8 mph by early Wednesday. The damage is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear. There is plenty of room to grow — 29 mph over water that could hold 158 mph, and its own structure costs 5 mph. The intensity model has it reaching 69 mph by early Thursday, so the environment slows it rather than stopping it.
 >
 > *early Wednesday — −8 mph in total.* Cold air above it −2 mph · Moisture around it −2 mph · Wind shear +1 mph · Warm moist air −1 mph · Everything else −4 mph
 >
 > At that hour room to grow is worth +45 mph and its own structure −5 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
 
 > **Lala** — `26081506CP0126`.
-> The environment works against Lala briefly on Sunday, then swings behind it, reaching +14 mph by early Thursday, though not everything agrees. Cold air above it is almost the whole of it; the only thing working against it is moisture around it. There is plenty of room to grow — 63 mph over water that could hold 161 mph, and its own structure adds 8 mph. The intensity model has it reaching 83 mph by early Thursday, using some of that room.
+> The environment works against Lala briefly on Sunday, then swings behind it, reaching +14 mph by early Thursday. Almost all of that is cold air above it. The only thing working against it is moisture around it. There is plenty of room to grow — 63 mph over water that could hold 161 mph, and its own structure adds 8 mph. The intensity model has it reaching 83 mph by early Thursday, using some of that room.
 >
 > *early Thursday — +14 mph in total.* Cold air above it +14 mph · Wind shear +3 mph · Moisture around it −2 mph · Warm moist air +1 mph · Everything else −2 mph
 >
 > At that hour room to grow is worth −2 mph and its own structure +8 mph — neither is part of the color. These numbers stop partway along the forecast track. From NHC's SHIPS intensity model.
 
 > **Genevieve** — `26072706EP0726`.
-> The environment turns hard against Genevieve through Tuesday afternoon, costing up to 15 mph, then eases back to about even by Thursday afternoon, and nearly everything is pulling the same way. Wind shear is almost the whole of it; the only thing helping is moisture around it. Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph — so there is not much room left to grow, and its own structure adds 5 mph. The intensity model has it falling from 161 mph to 63 mph by early Saturday, so the environment and its own decay are pulling the same way.
+> The environment turns hard against Genevieve through Tuesday afternoon, costing up to 15 mph, then eases back to about even by Thursday afternoon. Almost all of that is wind shear. The only thing working in its favor is moisture around it. Genevieve is close to its ceiling — 161 mph over water that could hold 188 mph — so there is not much room left to grow, and its own structure adds 5 mph. The intensity model has it falling from 161 mph to 63 mph by early Saturday, so the environment and its own decay are pulling the same way.
 >
 > *Tuesday afternoon — −15 mph in total.* Wind shear −15 mph · Cold air above it −1 mph · Moisture around it +1 mph
 >
@@ -782,12 +783,21 @@ left" starts at 80% (`ENV_HEALTH.roomFarRatio`, `roomNearRatio`). Genevieve at
   `V (KT) LAND` falls away. When the two forecasts diverge by 10 kt or more at any hour — 25
   files in the 2026 season — the bottom line names the coast as the reason. It
   must never read as though the environment turned against the storm.
-- **The agreement sentence is required, not optional.** Whenever the environment sum
-  lands in the neutral band, the paragraph says whether that is a quiet
-  environment or a tug of war, because one neutral reading in five is 15 kt or
-  more of push and pull cancelling out (§47.4). "Nothing much is acting on it"
-  and "a great deal is acting on it in both directions" are different warnings
-  and the same color.
+- **The agreement sentence is required on a NEUTRAL verdict and forbidden
+  everywhere else.** Whenever the environment sum lands in the neutral band, the
+  paragraph says whether that is a quiet environment or a tug of war, because
+  one neutral reading in five is 15 kt or more of push and pull cancelling out
+  (§47.4). "Nothing much is acting on it" and "a great deal is acting on it in
+  both directions" are different warnings and the same color, and nothing else
+  in the paragraph can tell them apart.
+
+  **Off a neutral verdict it was deleted, and the deletion is the point.** It
+  used to append *"and nearly everything is pulling the same way"* or *"though
+  not everything agrees"*, both of which are a vaguer restatement of the
+  sentence one line later — the sentence that names the other side outright.
+  Kept together they read as a contradiction: *"…nearly everything is pulling
+  the same way. …with nothing helping"* sounds like two claims to anyone who
+  has not read §47.4. One fact, said once, concretely.
 - Verdict cases, on the intensity change and the environment together:
   strengthening with the environment behind it; strengthening in spite of it;
   strengthening while the environment stays out of it; weakening because of the
@@ -836,6 +846,16 @@ left" starts at 80% (`ENV_HEALTH.roomFarRatio`, `roomNearRatio`). Genevieve at
   reader in Louisiana looking at a Central Pacific storm should see their own
   Thursday evening. Mixing clocks to be technically correct about a distant
   storm is how someone reads the wrong day about a storm that is near them.
+- **A direction word may never be reused as a causation word.** The verdict
+  says the environment *"swings behind it"*, meaning helping. An early draft of
+  the next sentence opened *"No single thing is behind it"*, meaning *is the
+  cause of* — a private second meaning hung on a phrase the reader had learned
+  four words earlier. The same draft ended *"a group of small ones"* without
+  ever supplying the noun. Both were unreadable in exactly the way a generator
+  cannot notice, because each sentence is defensible alone.
+  `tools/test-env-health.mjs` sweeps every fixture for the collision rather than
+  checking one storm, since it only appears where a run happens to draw both
+  phrasings.
 - No hedging stack. One verdict, stated once.
 
 **When SHIPS is missing** the paragraph is replaced, not dropped — §5. A storm

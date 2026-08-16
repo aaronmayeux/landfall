@@ -73,11 +73,13 @@ this basin" read as a fact about NHC rather than as our failure. The dials:
 sentence count is `lib/env-health.js`, the grid's column count is the 140px
 minimum in `.detail-env-figs` (`ui/panels.css`).
 
-**The `colour` spelling is gone from the whole repo** — code, comments, specs
-and screen text are all `color` now. `worker/package-lock.json` is the one file
-left alone, because `@img/colour` is a real npm package name and renaming it
-breaks the worker build. Other British spellings survive (`favour`, `behaviour`,
-`grey`) and are a separate sweep if they ever bother anyone.
+**The `colour` and `favour` spellings are gone from the whole repo** — code,
+comments, specs and screen text are all `color` and `favor` now.
+`worker/package-lock.json` is the one file left alone, because `@img/colour` is
+a real npm package name and renaming it breaks the worker build. Other British
+spellings survive — `behaviour` (92), `neighbour` (86), `analyse` (70),
+`centre` (459), `grey` (258) — and none of them reaches screen text, so they
+are a separate sweep if they ever bother anyone.
 
 **A GDACS storm's panel says three new things, and its name says one thing
 less.** `spec-parameter.md` §34.1, §35.1. The year suffix is stripped at ingest

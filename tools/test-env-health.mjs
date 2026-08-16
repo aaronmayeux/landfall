@@ -111,10 +111,11 @@ console.log('\nHernan — 26081506EP0826 — turning against, everything agreein
   inSentence('starts about even, not "neutral"', s, 0, 'The environment is about even now');
   inSentence('peak −13 mph', s, 0, 'reaching −13 mph');
   inSentence('peak time Monday afternoon', s, 0, 'by Monday afternoon');
-  inSentence('agreement clause', s, 0, 'nearly everything is pulling the same way');
+  notIn('no agreement clause on a non-neutral verdict — the next sentence says it better',
+    s, 'pulling the same way');
   /* The story sentence carries NO figures — they are all in the grid. */
-  eq('story sentence names the lead and the lone helper', s[1],
-    'Most of that is wind shear; the only thing helping is warm moist air.');
+  eq('story sentence names the lead, then the other side on its own', s[1],
+    'Most of that is wind shear. The only thing working in its favor is warm moist air.');
   truthy('no figures in the story sentence', !/[+\u2212]\d/.test(s[1]));
   /* Room at the fix: 30 kt → 35 mph under a 139 kt → 160 mph ceiling. 22% of
    * its ceiling is plenty of room by any reading. Structure at +60: −10 kt. */
@@ -154,8 +155,9 @@ console.log('\n94L — 26081506AL9426 — early help, then against; strengthenin
   inSentence('peak time early Wednesday', s, 0, 'by early Wednesday');
   /* Nothing leads (top term 2 kt of net 7), and the sentence says SO rather
    * than listing four signed figures at the reader. */
-  eq('nothing leads, and it says which two are biggest', s[1],
-    'No single thing is behind it \u2014 cold air above it and moisture around it lead a group of small ones; the only thing helping is wind shear.');
+  eq('nothing leads, and the noun is supplied', s[1],
+    'The damage is spread across several factors rather than one, the largest being cold air above it and moisture around it. The only thing working in its favor is wind shear.');
+  notIn('never reuses "behind it", which means HELPING one sentence earlier', s, 'is behind it');
   /* Room: 25 kt over a 137 kt ceiling → 29 mph over 158 mph. */
   inSentence('plenty of room', s, 2, 'There is plenty of room to grow — 29 mph over water that could hold 158 mph');
   inSentence('structure costs 5', s, 2, 'its own structure costs 5 mph');
@@ -196,9 +198,9 @@ console.log('\nLala — 26081506CP0126 — brief dip, then turning for');
   inSentence('then swings behind', s, 0, 'then swings behind it');
   inSentence('peak +14 mph', s, 0, 'reaching +14 mph');
   inSentence('peak time early Thursday', s, 0, 'by early Thursday');
-  inSentence('disagreement clause', s, 0, 'though not everything agrees');
+  notIn('no disagreement clause either', s, 'not everything agrees');
   eq('one factor carries it', s[1],
-    'Cold air above it is almost the whole of it; the only thing working against it is moisture around it.');
+    'Almost all of that is cold air above it. The only thing working against it is moisture around it.');
   /* Room: 55 kt over 140 kt → 63 mph over 161 mph. 39% of the ceiling.
    *
    * ==> THIS IS THE SENTENCE THE OLD CUT POINTS GOT WRONG. <== At 0.3/0.7 a
@@ -237,7 +239,7 @@ console.log('\nGenevieve — 26072706EP0726 — a bad patch, a Cat 5 coming apar
   inSentence('eases back by Thursday afternoon', s, 0, 'eases back to about even by Thursday afternoon');
   notIn('a +3 graze is not a reversal', s, 'then swings behind it');
   eq('shear is the whole story', s[1],
-    'Wind shear is almost the whole of it; the only thing helping is moisture around it.');
+    'Almost all of that is wind shear. The only thing working in its favor is moisture around it.');
   /* Room: 140 kt over 163 kt → 161 mph over 188 mph, 86% of the ceiling —
    * the one acceptance storm that really is near it. */
   inSentence('close to the ceiling at 86%', s, 2,
@@ -427,7 +429,7 @@ console.log('\nMutations — each historical bug must change the output');
     !paragraph(folded).sentences[0].includes('costing up to 15 mph'));
 
   /* Bug 3 (§47.8's early draft): quoting the LAST hour as the verdict.
-   * Genevieve's last hour is her most favourable moment; the real verdict
+   * Genevieve's last hour is her most favorable moment; the real verdict
    * must not read as helping. */
   truthy('a Cat 5 coming apart never reads as helping',
     !good.includes('swings behind Genevieve'));
@@ -481,6 +483,28 @@ console.log('\nMutations — each historical bug must change the output');
     sinking.includes('the room is there and nothing is using it'));
   truthy('a rising one uses it, with the environment identical',
     climbing.includes('using some of that room'));
+
+  /* Bug 9 (this build's own): "behind it" carrying two opposite meanings in
+   * one paragraph. The verdict uses it for HELPING — "swings behind it" — so
+   * no later sentence may use it for CAUSATION. Swept across every fixture,
+   * because the collision only appears on the storms that happen to get both
+   * phrasings and would never show up on a single hand-picked case. */
+  {
+    const { readdirSync } = await import('node:fs');
+    const dir = path.join(ROOT, 'samples', 'ships');
+    const clashes = [];
+    for (const f of readdirSync(dir)) {
+      const r = parseShips(readFileSync(path.join(dir, f), 'utf8'));
+      const o = envHealth({ status: 'ok', run: r }, { system: 'imperial' });
+      if (o.kind !== 'paragraph') continue;
+      for (const line of o.sentences.slice(1)) {
+        if (line.includes('behind it')) clashes.push(`${f}: ${line}`);
+      }
+    }
+    truthy('"behind it" never means causation after the verdict has used it for help',
+      clashes.length === 0);
+    if (clashes.length) fail('behind-it collision', clashes.join('\n      '));
+  }
 
   /* Bug 8 (this build's own): a name that is only honest at one sign. The
    * humidity row is POSITIVE when the air is moist, and the old name for it

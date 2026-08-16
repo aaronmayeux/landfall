@@ -16,7 +16,7 @@
  * ===========================================================================
  *
  * The ↗/↘ it replaces were text characters, which is why they only ever came
- * in eight flavours and why they sat high in the line and needed nudging down.
+ * in eight flavors and why they sat high in the line and needed nudging down.
  * A heading is continuous, so the mark has to be too.
  *
  * ==> ROTATED WITH `transform`, WHICH IS THE ONLY THING THIS APP ANIMATES

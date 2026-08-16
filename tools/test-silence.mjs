@@ -36,7 +36,7 @@ const {
 /* THE SLOT RULE MOVED to lib/future-slots.js when §5's ended state became its
  * second caller — one list, so a storm cannot hide its cone when it goes quiet
  * and keep it when it dies. There is deliberately no alias left under the old
- * silence-flavoured names, so this suite imports the real thing; the assertions
+ * silence-flavored names, so this suite imports the real thing; the assertions
  * below are unchanged and still guard the silence behaviour that depends on it. */
 const { FUTURE_SLOTS: SILENCED_SLOTS, withoutFuture: silenceBundle } =
   await import('../lib/future-slots.js');

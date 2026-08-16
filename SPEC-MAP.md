@@ -2027,7 +2027,7 @@ and on any build without it.
   pointer.** Home sliding under the storm drawer is invisible while still inside the
   viewport rectangle. The occlusion test covers both the anchor AND the floating
   glyph, since the glyph is what the eye looks for.
-- **Covered-but-on-screen is a THIRD anchor case, not a flavour of off-screen.**
+- **Covered-but-on-screen is a THIRD anchor case, not a flavor of off-screen.**
   When home is on the near face, inside the viewport, and merely underneath a panel,
   the pointer anchors at the GLYPH's own projected position and chrome avoidance
   slides it the shortest way clear — parking it directly against the top edge of
