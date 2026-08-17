@@ -514,11 +514,18 @@ Niihau, **every one of them blue (1-2 ft)** — NHC forecast one depth for this
 whole storm, so any ramp of colours on that coast is a bug, not a forecast.
 **SET COASTAL TO SURGE FIRST.** The pair is exclusive and its default is
 `watchWarning`, so the layer writes EMPTY no matter what loaded — twice now
-that has been read as the data path being broken. **And the relay itself has
-still never been measured:** nothing in a session can reach `/api/nhc/surge`,
-and the archive probe that would answer it died in the run this fix repairs.
-Upstream is proven (`origin/archive:latest/nhc-peaksurge-polygons.geojson`,
-eleven `cp012026` features); everything downstream of NOAA is inference.
+that has been read as the data path being broken. **THE DATA PATH IS NOT
+BROKEN, AND IT IS NOW MEASURED RATHER THAN ASSUMED.** 2026-08-17 01:36Z:
+`latest/relay-nhc-surge.json` and `latest/nhc-peaksurge-polygons.geojson`
+carry the same eleven features, every one `cp012026`, `blue`, `1-2 ft`, and
+the relay answered `X-Landfall-Cache: fresh`. Everything from NOAA to the
+browser is proven; only the glass is unjudged.
+
+**`X-Landfall-Surge-Features` comes back EMPTY on a cache hit.** Seen on that
+same capture. `functions/api/nhc/surge.js` omits the header when it writes the
+fresh copy from the KV path, so every hit off that copy reports no count — the
+one number the header exists to publish without parsing the body. Cosmetic
+today because the body is right; it is a diagnostic that lies by omission.
 
 **Wind arrival (step 4) is still HELD FOR A STORM NEAR HOME.** Against a storm
 half a planet away there is no telling a right answer from a plausible one. It
