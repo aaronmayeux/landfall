@@ -34,7 +34,7 @@
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 
 const OUT = process.argv[2];
 if (!OUT) {
@@ -706,8 +706,6 @@ async function grab(src) {
 
 const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
-mkdirSync(join(OUT, 'geometry'), { recursive: true });
-mkdirSync(join(OUT, 'ships'), { recursive: true });
 
 const results = [];
 
@@ -716,6 +714,21 @@ const results = [];
  *  "a failure writes no data file" rule to drift out of. */
 async function run(src) {
   const r = await grab(src);
+
+  /* ==> THE FOLDER COMES FROM THE SOURCE'S OWN NAME. <== It used to come from
+   * a hand-maintained list of mkdirs at the top of the file, and on 2026-08-17
+   * that cost a whole run: three `surge-kml/...` sources were added, no fourth
+   * mkdir was added beside them, the first write threw ENOENT, and the script
+   * — which has no try around this loop — died on the spot. Thirty-one healthy
+   * sources were fetched and none of them were committed, so the archive sat a
+   * day and a half behind while the one question it had just been extended to
+   * answer stayed open.
+   *
+   * A list that has to be kept in step with another list will eventually not
+   * be. Deriving it removes the second list entirely, and `recursive: true`
+   * makes the repeat calls free. */
+  mkdirSync(dirname(join(OUT, r.name)), { recursive: true });
+
   if (r.status === 'ok') {
     writeFileSync(join(OUT, r.name), r.body);
   } else if (r.body != null) {

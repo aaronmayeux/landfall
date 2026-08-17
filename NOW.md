@@ -512,6 +512,13 @@ Storm Lala, the first storm to publish surge since the layer was built. Not yet
 confirmed on a phone. What to look for: eleven bands around Oahu, Kauai and
 Niihau, **every one of them blue (1-2 ft)** — NHC forecast one depth for this
 whole storm, so any ramp of colours on that coast is a bug, not a forecast.
+**SET COASTAL TO SURGE FIRST.** The pair is exclusive and its default is
+`watchWarning`, so the layer writes EMPTY no matter what loaded — twice now
+that has been read as the data path being broken. **And the relay itself has
+still never been measured:** nothing in a session can reach `/api/nhc/surge`,
+and the archive probe that would answer it died in the run this fix repairs.
+Upstream is proven (`origin/archive:latest/nhc-peaksurge-polygons.geojson`,
+eleven `cp012026` features); everything downstream of NOAA is inference.
 
 **Wind arrival (step 4) is still HELD FOR A STORM NEAR HOME.** Against a storm
 half a planet away there is no telling a right answer from a plausible one. It
