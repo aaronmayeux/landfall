@@ -516,7 +516,8 @@ whole storm, so any ramp of colours on that coast is a bug, not a forecast.
 `watchWarning`, so the layer writes EMPTY no matter what loaded — twice now
 that has been read as the data path being broken. **THE DATA PATH IS NOT
 BROKEN, AND IT IS NOW MEASURED RATHER THAN ASSUMED.** 2026-08-17 01:36Z:
-`latest/relay-nhc-surge.json` and `latest/nhc-peaksurge-polygons.geojson`
+`origin/archive:latest/relay-nhc-surge.json` and
+`origin/archive:latest/nhc-peaksurge-polygons.geojson`
 carry the same eleven features, every one `cp012026`, `blue`, `1-2 ft`, and
 the relay answered `X-Landfall-Cache: fresh`. Everything from NOAA to the
 browser is proven; only the glass is unjudged.
