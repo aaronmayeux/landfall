@@ -28,26 +28,6 @@ on:
     # intermediates in between, so hourly catches every one without guessing.
     - cron: '0 * * * *'
   workflow_dispatch:
-  # ==> AND ON A PUSH THAT CHANGES WHAT IS FETCHED. <== 2026-08-16. GitHub's
-  # scheduled runs drift badly under load — measured a 93-minute gap on a night
-  # when a source had just been added and was needed to unblock a build. That
-  # turned "add a source, read the bytes" from a two-minute loop into an
-  # open-ended wait, and the fallback was guessing, which is the one thing this
-  # whole file exists to prevent. Scoped to the fetch script itself so ordinary
-  # app commits do not trigger it.
-  # ==> AND ON A CHANGE TO THIS FILE, WHICH THE ORIGINAL LIST MISSED. <==
-  # 2026-08-17. The reasoning above is about not waiting on a drifting cron
-  # to find out whether a change worked, and a change to the ASSEMBLY half of
-  # this job needs that just as much as a change to the fetch half — more, in
-  # fact, because the assembly step only ever runs here and cannot be tried
-  # any other way. Measured cost of the omission: the fetch was repaired, the
-  # run failed one step later in this file, and the only way to see whether
-  # the second fix worked was to wait for the hour. Still scoped, so ordinary
-  # app commits do not trigger it.
-  push:
-    paths:
-      - 'tools/archive-fetch.mjs'
-      - '.github/workflows/archive.yml'
 
 permissions:
   contents: write
@@ -153,17 +133,12 @@ jobs:
             base="$(basename "$f")"
             case "$base" in
               *.error.txt) continue ;;
+              # A directory would blow up the plain `cp` below and take the
+              # whole job with it under `set -e`. geometry/ and ships/ have
+              # their own rules immediately after this loop.
+              geometry) continue ;;
+              ships) continue ;;
             esac
-            # ==> A DIRECTORY IS SKIPPED BY TYPE, NOT BY NAME. <== This read
-            # `geometry) continue ;; ships) continue ;;` and the comment beside
-            # it correctly said a directory here would blow up the plain `cp`
-            # and take the whole job with it under `set -e`. That is exactly
-            # what happened on 2026-08-17 when surge-kml/ became the third one:
-            # the fetch had just been repaired, every source came back, and the
-            # run died at this line instead. Two hand-maintained lists of the
-            # same directory names, in two files, and neither was updated.
-            # Each subdirectory has its own rebuild rule below.
-            [ -d "$f" ] && continue
             cp "$f" "/tmp/arc/latest/$base"
           done
 
@@ -216,28 +191,6 @@ jobs:
               cp "$f" "/tmp/arc/latest/ships/$(basename "$f")"
             done
           fi
-
-          # ==> surge-kml/ IS REBUILT, AND THE 404 IS THE POINT. <== §4.8.
-          # Three advisories are requested per run — the current one, the
-          # previous one, and the NEXT one, which is deliberately asked for
-          # before it exists. Carrying files forward would leave the next
-          # advisory's KML sitting in latest/ from the hour it finally
-          # published, so "has NHC issued surge for this advisory yet" could
-          # never be answered by looking. Rebuilt, the directory always says
-          # exactly what NHC is serving this hour, and a missing file is an
-          # answer. manifest.json carries the reason, as everywhere else.
-          rm -rf /tmp/arc/latest/surge-kml
-          mkdir -p /tmp/arc/latest/surge-kml
-          if [ -d /tmp/new/surge-kml ]; then
-            for f in /tmp/new/surge-kml/*; do
-              [ -f "$f" ] || continue
-              case "$(basename "$f")" in
-                *.error.txt) continue ;;
-              esac
-              cp "$f" "/tmp/arc/latest/surge-kml/$(basename "$f")"
-            done
-          fi
-          echo "latest/surge-kml holds $(ls -1 /tmp/arc/latest/surge-kml | wc -l) advisory file(s)"
 
           rm -rf /tmp/arc/latest/geometry
           mkdir -p /tmp/arc/latest/geometry

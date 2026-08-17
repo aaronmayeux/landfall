@@ -34,7 +34,7 @@
  */
 
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 
 const OUT = process.argv[2];
 if (!OUT) {
@@ -98,127 +98,6 @@ const SOURCES = [
       'showed 3 points against 5 polygons with attributes matching one shape ' +
       'while sitting inside another. Kept archived so the decision can be ' +
       'revisited against real data rather than from memory.',
-  },
-  /* ==> PEAK STORM SURGE. ADDED 2026-08-16, AND THE LESSON IS ABOUT TRUSTING
-   * A METADATA FIELD OVER THE ROWS. <== `data/surge.js` has shipped a full
-   * renderer and normalizer for a year against Milton's fixture, with the live
-   * fetch deliberately unwired because "there has been no such storm since the
-   * layer was built". Lala published surge over Oahu and Kauai and nobody
-   * noticed, because nothing was watching this service.
-   *
-   * WORSE: A SESSION CHECKED AND GOT IT BACKWARDS. The layer's published
-   * `extent` on the ArcGIS service page read as the Gulf of Mexico, and that
-   * was taken as proof the service held nothing near Hawaii. ArcGIS stores
-   * that extent as a property of the table DEFINITION and does not recompute
-   * it as rows change, so it can describe the previous storm indefinitely.
-   * Reading it as a measurement of current contents is the same error as
-   * reading a cached header as a live one. Only the FEATURES answer this, and
-   * the only way to hold the features is to archive them.
-   *
-   * NO SPATIAL FILTER HERE ON PURPOSE. The app queries an envelope around one
-   * storm (`SURGE.envelopeDeg`); the archive takes everything the service
-   * holds, so a snapshot answers "what is published anywhere right now"
-   * — which is the question the extent field lied about.
-   *
-   * `maxAllowableOffset` matches `SURGE.offsetDeg` (0.001) so these bytes are
-   * the same geometry the relay will ask for. A fixture generalized
-   * differently from production judges the renderer wrongly, which is already
-   * a written-down lesson in config/constants.js. */
-  {
-    name: 'nhc-peaksurge-polygons.geojson',
-    url:
-      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
-      'NHC_PeakStormSurge/MapServer/2/query' +
-      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326' +
-      '&maxAllowableOffset=0.001&f=geojson',
-    note:
-      'NHC Peak Storm Surge inundation bands, EVERY feature the service ' +
-      'holds, unfiltered. Settles which attribute carries the color word — ' +
-      'SURGE.liveColorFields in config/constants.js is a list of four GUESSES ' +
-      '(popupinfo, snippet, name, folderpath) and says so. The HA integration ' +
-      'next door reads `symbolid` instead, which the service declares as an ' +
-      'INTEGER; one of those two readings is wrong and these bytes say which.',
-  },
-  {
-    name: 'nhc-peaksurge-lines.geojson',
-    url:
-      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
-      'NHC_PeakStormSurge/MapServer/1/query' +
-      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326' +
-      '&maxAllowableOffset=0.001&f=geojson',
-    note:
-      'The Lines folder beside the Polygons — coastal reaches like "Suwannee ' +
-      'River, FL to Yankeetown, FL...3-5 ft". Roughly half the product on ' +
-      'Milton. Archived separately because a renderer that draws only the ' +
-      'filled bands drops half the forecast, which is a §5 lie about a coast.',
-  },
-  /* ==> THE PER-ADVISORY KML, WHICH IS THE SOURCE THE FLORIDA FIXTURE WAS
-   * ACTUALLY BUILT FROM. <== 2026-08-16, and it took Aaron pointing at it.
-   *
-   * `samples/milton-al142024/surge/` — the one surge path in this project
-   * KNOWN to render correctly — came from
-   * `nhc.noaa.gov/gis/peakSurge/AL142024_PeakStormSurge_017adv.kml`, not from
-   * the MapServer. Per storm, per advisory, named in the URL. The MapServer
-   * has no advisory field to query and holds only whatever is current, which
-   * is why every plan built on it ends up inventing a filter — a spatial box
-   * in the HA integration, a whole-product fetch here. The KML needs neither:
-   * the storm id and the advisory number are both already in hand from
-   * CurrentStorms.json, so they are a stable cache key and warm exactly like
-   * `/api/nhc/advisory` does.
-   *
-   * BINARY, so the bytes survive verbatim. The file is XML, but a parser has
-   * to be written against it and `text()` is a lossy read for anything whose
-   * encoding is not certain — the gtwo KMZ entries above learned that.
-   *
-   * THREE ADVISORIES, NOT ONE. The archive is not uniform: NHC skips numbers
-   * and issues A-suffixed intermediates, and the milton workflow handles that
-   * by asking for everything and letting the 404s fall out. Three is enough to
-   * see whether the current one exists, whether the previous one is still up,
-   * and what a miss looks like — without turning an hourly job into a scraper. */
-  {
-    name: 'surge-kml/lala-018adv.kml.b64',
-    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_018adv.kml',
-    binary: true,
-    note:
-      'Lala advisory 018 peak surge, as NHC publishes it for download. The ' +
-      'structure to read: five KML folders, of which only Polygons and Lines ' +
-      'carry forecast, and a <description> holding {"peak_surge_range", ' +
-      '"color"} — the same JSON popupinfo carries on the MapServer.',
-  },
-  {
-    name: 'surge-kml/lala-017adv.kml.b64',
-    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_017adv.kml',
-    binary: true,
-    note:
-      'The previous advisory. Confirms how long a superseded file stays up, ' +
-      'which decides whether the relay can serve the last good one when the ' +
-      'current advisory has not published its surge yet (§5).',
-  },
-  {
-    name: 'surge-kml/lala-019adv.kml.b64',
-    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_019adv.kml',
-    binary: true,
-    note:
-      'The NEXT advisory, deliberately fetched before it exists. A 404 here ' +
-      'is the expected answer and is the point: it records what a miss looks ' +
-      'like, so the relay can tell "not published yet" from "the source is ' +
-      'down". Guessing that difference is the §5 failure this app is built ' +
-      'around.',
-  },
-  {
-    name: 'relay-nhc-surge.json',
-    url: 'https://landfall.getgravitate.app/api/nhc/surge',
-    note:
-      'OUR OWN surge route. Added 2026-08-16 because the layer shipped and ' +
-      'drew nothing, and nothing inside a session can fetch this — so the ' +
-      'question "is the relay serving surge at all" could only be answered by ' +
-      'asking a person to read a console on a phone. Diff it against ' +
-      'nhc-peaksurge-polygons.geojson above: same features means the relay is ' +
-      'fine and the fault is in the client; a 502 or an empty collection ' +
-      'against a populated upstream means it is not. The headers carry ' +
-      'X-Landfall-Cache and X-Landfall-Surge-Features, which say WHICH of the ' +
-      'three cache levels answered — the single most useful fact about this ' +
-      'route and one no browser will show you.',
   },
   {
     name: 'jtwc-abpw.txt',
@@ -706,6 +585,8 @@ async function grab(src) {
 
 const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
+mkdirSync(join(OUT, 'geometry'), { recursive: true });
+mkdirSync(join(OUT, 'ships'), { recursive: true });
 
 const results = [];
 
@@ -714,21 +595,6 @@ const results = [];
  *  "a failure writes no data file" rule to drift out of. */
 async function run(src) {
   const r = await grab(src);
-
-  /* ==> THE FOLDER COMES FROM THE SOURCE'S OWN NAME. <== It used to come from
-   * a hand-maintained list of mkdirs at the top of the file, and on 2026-08-17
-   * that cost a whole run: three `surge-kml/...` sources were added, no fourth
-   * mkdir was added beside them, the first write threw ENOENT, and the script
-   * — which has no try around this loop — died on the spot. Thirty-one healthy
-   * sources were fetched and none of them were committed, so the archive sat a
-   * day and a half behind while the one question it had just been extended to
-   * answer stayed open.
-   *
-   * A list that has to be kept in step with another list will eventually not
-   * be. Deriving it removes the second list entirely, and `recursive: true`
-   * makes the repeat calls free. */
-  mkdirSync(dirname(join(OUT, r.name)), { recursive: true });
-
   if (r.status === 'ok') {
     writeFileSync(join(OUT, r.name), r.body);
   } else if (r.body != null) {

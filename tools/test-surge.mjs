@@ -18,7 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { normalizeSurge, selectForStorm } from '../data/surge.js';
+import { normalizeSurge } from '../data/surge.js';
 import { bandSelect } from '../map/coast-band.js';
 import { dimCoast } from '../map/layers/surge.js';
 import { OPACITY } from '../config/tokens.js';
@@ -138,13 +138,9 @@ ok('every color in the archive has a ramp entry',
   const { fc, via } = normalizeSurge(live, { fromFixture: false });
   eq('live: one feature normalized', fc.features.length, 1);
   eq('live: color read from popupinfo', via, 'popupinfo.json');
-  /* Optional chaining so a reader that drops the feature reports THIS rule by
-   * name instead of throwing a TypeError here and taking every later group in
-   * the file down with it — measured while mutation-testing the Lala group,
-   * which never got to run because this line crashed the process first. */
-  eq('live: severity is red\'s', fc.features[0]?.properties?.severity, 3);
-  eq('live: range preserved verbatim', fc.features[0]?.properties?.range, '8-12 ft');
-  eq('live: place stripped of its depth', fc.features[0]?.properties?.place, 'Tampa Bay');
+  eq('live: severity is red\'s', fc.features[0].properties.severity, 3);
+  eq('live: range preserved verbatim', fc.features[0].properties.range, '8-12 ft');
+  eq('live: place stripped of its depth', fc.features[0].properties.place, 'Tampa Bay');
 }
 
 {
@@ -265,90 +261,6 @@ ok('the surge corridor is narrower than watch/warning\'s',
   let threw = false;
   try { dimCoast(bare, true); dimCoast(bare, false); } catch { threw = true; }
   ok('a missing basemap is survived, not thrown on', !threw);
-}
-
-/* ---------------------------------------------------------------------------
- * LALA — THE FIRST LIVE BYTES, AND THE ONLY THING THAT CAN TEST THE READER.
- *
- * Milton's fixture is already normalized, so it proves the RENDERER and cannot
- * prove the reader: the service's own attribute names are gone by the time
- * that file is written. These are the raw bytes with NHC's fields on them.
- * `samples/lala-cp012026/surge/README.md` carries the measurements.
- * ------------------------------------------------------------------------- */
-{
-  const LALA = path.join(ROOT, 'samples/lala-cp012026/surge');
-  const polys = JSON.parse(fs.readFileSync(path.join(LALA, 'peaksurge-polygons.geojson'), 'utf8'));
-  const lines = JSON.parse(fs.readFileSync(path.join(LALA, 'peaksurge-lines.geojson'), 'utf8'));
-
-  /* The relay merges both layers into one collection; so does this. */
-  const merged = { type: 'FeatureCollection', features: [...polys.features, ...lines.features] };
-  eq('Lala advisory 017 published 11 surge features', merged.features.length, 11);
-  eq('and no coastal reaches — an empty layer is an ANSWER, not a failure',
-     lines.features.length, 0);
-
-  /* --- THE READER. What the live path actually pulls the color out of. --- */
-  const live = normalizeSurge(merged, { fromFixture: false });
-  eq('every live feature is read, none dropped', live.dropped, 0);
-  eq('all 11 survive normalization', live.fc.features.length, 11);
-  eq('and the color comes from popupinfo, not from a fallback', live.via, 'popupinfo.json');
-
-  /* ==> THE HA BUG, PINNED AGAINST THE BYTES THAT WOULD TRIGGER IT. <== NHC
-   * forecast 1-2 ft everywhere on this storm. Anything that resolves severity
-   * from `symbolid` (0 on every feature) or from arrival order paints a ramp
-   * here instead, which is what the HA integration does on this exact file. */
-  const sevs = new Set(live.fc.features.map((f) => f.properties.severity));
-  eq('every Lala band is ONE severity — NHC forecast 1-2 ft everywhere', sevs.size, 1);
-  eq('and that severity is blue', [...sevs][0], SURGE.colors.indexOf('blue'));
-  /* ==> THIS IS THE ONE THAT WOULD HAVE CAUGHT THE HA BUG, AND THE FIRST
-   * VERSION OF IT COULD NOT FAIL. <== It originally asserted that no band's
-   * severity equalled its own index — which on an all-blue storm is trivially
-   * true for every feature past the first, whatever the reader does. A test
-   * that passes on the broken code is worse than no test (§ test discipline),
-   * so it is stated the way the failure actually looks instead: index-order
-   * coloring produces a RISING RAMP across features that are all one depth. */
-  const ramp = live.fc.features.map((f) => f.properties.severity);
-  ok('severity does not climb with position in the list (the HA failure)',
-     !ramp.some((s, i) => i > 0 && s > ramp[i - 1]),
-     JSON.stringify(live.fc.features.map((f) => f.properties.color)));
-
-  /* OPTIONAL CHAINING IS NOT DEFENSIVENESS HERE, IT IS THE DIFFERENCE BETWEEN
-   * A FAILURE AND A CRASH. Mutation-tested: dropping `popupinfo` from
-   * `SURGE.liveColorFields` correctly empties this collection, and a bare
-   * `features[0].properties` then throws a TypeError — the suite exits non-zero
-   * with a stack trace instead of naming the rule that broke. The gate still
-   * catches it; the person reading the output learns nothing. */
-  eq('the range is NHC\'s own words, kept verbatim',
-     live.fc.features[0]?.properties?.range, '1-2 ft');
-  eq('and the place is the name with the depth cut off',
-     live.fc.features[0]?.properties?.place, 'Oahu');
-
-  /* --- THE SELECTOR. Which filter answers, and what it excludes. --- */
-  const LALA_POS = { lat: 20.9, lng: -160 }; // CurrentStorms.json, same archive run
-
-  const mine = selectForStorm(merged, { ...LALA_POS, stormId: 'cp012026' });
-  eq('the storm id claims all 11 features', mine.byId, 11);
-  eq('so the spatial box is never consulted', mine.byBox, 0);
-
-  /* A DIFFERENT storm's id must take nothing, even standing in the same ocean
-   * — this is the whole reason to prefer the id over a 12° box. */
-  const other = selectForStorm(merged, { ...LALA_POS, stormId: 'ep092026' });
-  eq('another storm\'s id takes none of Lala\'s bands', other.fc.features.length, 0);
-
-  /* With no id to match on, the box must still find them: a feature that
-   * states no id is filtered spatially rather than silently dropped. */
-  const stripped = {
-    type: 'FeatureCollection',
-    features: merged.features.map((f) => ({
-      ...f,
-      properties: { ...f.properties, idp_subset: undefined },
-    })),
-  };
-  const boxed = selectForStorm(stripped, { ...LALA_POS, stormId: 'cp012026' });
-  eq('with no id on the feature, the box still finds all 11', boxed.byBox, 11);
-
-  /* And the box must be a real filter, not a pass-through. Miami is 55° away. */
-  const miami = selectForStorm(stripped, { lat: 25.8, lng: -80.2, stormId: null });
-  eq('a storm in another ocean gets none of them', miami.fc.features.length, 0);
 }
 
 /* ---------------------------------------------------------------------------- */
