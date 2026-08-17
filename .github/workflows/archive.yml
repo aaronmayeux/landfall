@@ -28,6 +28,16 @@ on:
     # intermediates in between, so hourly catches every one without guessing.
     - cron: '0 * * * *'
   workflow_dispatch:
+  # ==> AND ON A PUSH THAT CHANGES WHAT IS FETCHED. <== 2026-08-16. GitHub's
+  # scheduled runs drift badly under load — measured a 93-minute gap on a night
+  # when a source had just been added and was needed to unblock a build. That
+  # turned "add a source, read the bytes" from a two-minute loop into an
+  # open-ended wait, and the fallback was guessing, which is the one thing this
+  # whole file exists to prevent. Scoped to the fetch script itself so ordinary
+  # app commits do not trigger it.
+  push:
+    paths:
+      - 'tools/archive-fetch.mjs'
 
 permissions:
   contents: write

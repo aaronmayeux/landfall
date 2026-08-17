@@ -152,6 +152,59 @@ const SOURCES = [
       'Milton. Archived separately because a renderer that draws only the ' +
       'filled bands drops half the forecast, which is a §5 lie about a coast.',
   },
+  /* ==> THE PER-ADVISORY KML, WHICH IS THE SOURCE THE FLORIDA FIXTURE WAS
+   * ACTUALLY BUILT FROM. <== 2026-08-16, and it took Aaron pointing at it.
+   *
+   * `samples/milton-al142024/surge/` — the one surge path in this project
+   * KNOWN to render correctly — came from
+   * `nhc.noaa.gov/gis/peakSurge/AL142024_PeakStormSurge_017adv.kml`, not from
+   * the MapServer. Per storm, per advisory, named in the URL. The MapServer
+   * has no advisory field to query and holds only whatever is current, which
+   * is why every plan built on it ends up inventing a filter — a spatial box
+   * in the HA integration, a whole-product fetch here. The KML needs neither:
+   * the storm id and the advisory number are both already in hand from
+   * CurrentStorms.json, so they are a stable cache key and warm exactly like
+   * `/api/nhc/advisory` does.
+   *
+   * BINARY, so the bytes survive verbatim. The file is XML, but a parser has
+   * to be written against it and `text()` is a lossy read for anything whose
+   * encoding is not certain — the gtwo KMZ entries above learned that.
+   *
+   * THREE ADVISORIES, NOT ONE. The archive is not uniform: NHC skips numbers
+   * and issues A-suffixed intermediates, and the milton workflow handles that
+   * by asking for everything and letting the 404s fall out. Three is enough to
+   * see whether the current one exists, whether the previous one is still up,
+   * and what a miss looks like — without turning an hourly job into a scraper. */
+  {
+    name: 'surge-kml/lala-018adv.kml.b64',
+    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_018adv.kml',
+    binary: true,
+    note:
+      'Lala advisory 018 peak surge, as NHC publishes it for download. The ' +
+      'structure to read: five KML folders, of which only Polygons and Lines ' +
+      'carry forecast, and a <description> holding {"peak_surge_range", ' +
+      '"color"} — the same JSON popupinfo carries on the MapServer.',
+  },
+  {
+    name: 'surge-kml/lala-017adv.kml.b64',
+    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_017adv.kml',
+    binary: true,
+    note:
+      'The previous advisory. Confirms how long a superseded file stays up, ' +
+      'which decides whether the relay can serve the last good one when the ' +
+      'current advisory has not published its surge yet (§5).',
+  },
+  {
+    name: 'surge-kml/lala-019adv.kml.b64',
+    url: 'https://www.nhc.noaa.gov/gis/peakSurge/CP012026_PeakStormSurge_019adv.kml',
+    binary: true,
+    note:
+      'The NEXT advisory, deliberately fetched before it exists. A 404 here ' +
+      'is the expected answer and is the point: it records what a miss looks ' +
+      'like, so the relay can tell "not published yet" from "the source is ' +
+      'down". Guessing that difference is the §5 failure this app is built ' +
+      'around.',
+  },
   {
     name: 'relay-nhc-surge.json',
     url: 'https://landfall.getgravitate.app/api/nhc/surge',
