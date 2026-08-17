@@ -36,6 +36,34 @@ async function start() {
   const adv = params.get('adv') || '017';
   globalThis.__LANDFALL_SURGE_FIXTURE__ = adv;
 
+  /* ==> TURN THE SEGMENT ON, BECAUSE A HARNESS THAT SHOWS NOTHING BY DEFAULT
+   *     IS WORSE THAN NO HARNESS. <== 2026-08-16, and this cost a diagnosis.
+   *
+   * `coastal` is an EXCLUSIVE PAIR and its stored default is 'watchWarning',
+   * so `map/layers/surge.js` starts with `drawingOff()` true and writes EMPTY
+   * to both its sources no matter what the fixture loaded. This page therefore
+   * came up as the ordinary app with a banner on it, and the banner's counts
+   * are read from `index.json` rather than from the drawn features — so it
+   * confidently announced "14 areas, 13 coastal reaches" over an empty globe.
+   *
+   * That is exactly the §5 failure the harness exists to catch, committed by
+   * the harness itself: a page stating a number it did not draw. It was used
+   * as evidence that the LIVE path was broken, which it was not evidence of at
+   * all — the layer was simply switched off in both cases.
+   *
+   * Written to the same localStorage key `data/layer-prefs.js` reads, before
+   * main.js imports it, rather than by reaching into the module: the harness
+   * drives the app the way a reader would, which is the whole idea stated at
+   * the top of this file. Nothing else in the stored state is touched. */
+  try {
+    const key = 'landfall.layers';
+    const stored = JSON.parse(localStorage.getItem(key)) || {};
+    localStorage.setItem(key, JSON.stringify({ ...stored, coastal: 'surge' }));
+  } catch {
+    /* Private mode, or a corrupt entry. The fixture still loads; the reader
+     * flips the pair by hand, as before. Not worth failing the page over. */
+  }
+
   let meta;
   try {
     const r = await fetch('/samples/milton-al142024/surge/index.json', { cache: 'no-store' });

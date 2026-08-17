@@ -67,7 +67,7 @@ import { warmShips } from './data/ships.js';
 import { isEnded } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
 import { backfillEndedTracks } from './data/ended-track.js';
-import { IMAGERY } from './config/constants.js';
+import { IMAGERY, GLOBE } from './config/constants.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -629,6 +629,35 @@ function boot() {
             { id: FIXTURE_STORM_ID },
             { layers: { surge: { status: 'ok', fc, error: null } } }
           );
+          /* ==> AND POINT THE CAMERA AT IT. <== 2026-08-16. The globe opens
+           * whereever the reader left it — for a Hawaii storm, half a planet
+           * from Milton's Florida coast. The fixture painted correctly, off
+           * screen, under a banner announcing 14 areas, and that was read as
+           * the layer being broken. A harness whose subject is not in frame
+           * is not a harness. Centre only, no zoom change: how surge reads at
+           * the reader's own zoom is exactly what is being judged. */
+          const lons = [];
+          const lats = [];
+          for (const f of fc.features) {
+            const stack = [f.geometry?.coordinates];
+            while (stack.length) {
+              const n = stack.pop();
+              if (!Array.isArray(n)) continue;
+              if (typeof n[0] === 'number' && typeof n[1] === 'number') {
+                lons.push(n[0]); lats.push(n[1]);
+              } else for (const c of n) stack.push(c);
+            }
+          }
+          if (lons.length) {
+            map.flyTo({
+              center: [
+                (Math.min(...lons) + Math.max(...lons)) / 2,
+                (Math.min(...lats) + Math.max(...lats)) / 2,
+              ],
+              speed: GLOBE.flyToSpeed,
+              curve: GLOBE.flyToCurve,
+            });
+          }
         })
         .catch((e) => console.error('[landfall] surge fixture failed:', e?.message || e));
     }
