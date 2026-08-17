@@ -143,12 +143,17 @@ jobs:
             base="$(basename "$f")"
             case "$base" in
               *.error.txt) continue ;;
-              # A directory would blow up the plain `cp` below and take the
-              # whole job with it under `set -e`. geometry/ and ships/ have
-              # their own rules immediately after this loop.
-              geometry) continue ;;
-              ships) continue ;;
             esac
+            # ==> A DIRECTORY IS SKIPPED BY TYPE, NOT BY NAME. <== This read
+            # `geometry) continue ;; ships) continue ;;` and the comment beside
+            # it correctly said a directory here would blow up the plain `cp`
+            # and take the whole job with it under `set -e`. That is exactly
+            # what happened on 2026-08-17 when surge-kml/ became the third one:
+            # the fetch had just been repaired, every source came back, and the
+            # run died at this line instead. Two hand-maintained lists of the
+            # same directory names, in two files, and neither was updated.
+            # Each subdirectory has its own rebuild rule below.
+            [ -d "$f" ] && continue
             cp "$f" "/tmp/arc/latest/$base"
           done
 
@@ -201,6 +206,28 @@ jobs:
               cp "$f" "/tmp/arc/latest/ships/$(basename "$f")"
             done
           fi
+
+          # ==> surge-kml/ IS REBUILT, AND THE 404 IS THE POINT. <== §4.8.
+          # Three advisories are requested per run — the current one, the
+          # previous one, and the NEXT one, which is deliberately asked for
+          # before it exists. Carrying files forward would leave the next
+          # advisory's KML sitting in latest/ from the hour it finally
+          # published, so "has NHC issued surge for this advisory yet" could
+          # never be answered by looking. Rebuilt, the directory always says
+          # exactly what NHC is serving this hour, and a missing file is an
+          # answer. manifest.json carries the reason, as everywhere else.
+          rm -rf /tmp/arc/latest/surge-kml
+          mkdir -p /tmp/arc/latest/surge-kml
+          if [ -d /tmp/new/surge-kml ]; then
+            for f in /tmp/new/surge-kml/*; do
+              [ -f "$f" ] || continue
+              case "$(basename "$f")" in
+                *.error.txt) continue ;;
+              esac
+              cp "$f" "/tmp/arc/latest/surge-kml/$(basename "$f")"
+            done
+          fi
+          echo "latest/surge-kml holds $(ls -1 /tmp/arc/latest/surge-kml | wc -l) advisory file(s)"
 
           rm -rf /tmp/arc/latest/geometry
           mkdir -p /tmp/arc/latest/geometry
