@@ -35,9 +35,19 @@ on:
   # open-ended wait, and the fallback was guessing, which is the one thing this
   # whole file exists to prevent. Scoped to the fetch script itself so ordinary
   # app commits do not trigger it.
+  # ==> AND ON A CHANGE TO THIS FILE, WHICH THE ORIGINAL LIST MISSED. <==
+  # 2026-08-17. The reasoning above is about not waiting on a drifting cron
+  # to find out whether a change worked, and a change to the ASSEMBLY half of
+  # this job needs that just as much as a change to the fetch half — more, in
+  # fact, because the assembly step only ever runs here and cannot be tried
+  # any other way. Measured cost of the omission: the fetch was repaired, the
+  # run failed one step later in this file, and the only way to see whether
+  # the second fix worked was to wait for the hour. Still scoped, so ordinary
+  # app commits do not trigger it.
   push:
     paths:
       - 'tools/archive-fetch.mjs'
+      - '.github/workflows/archive.yml'
 
 permissions:
   contents: write
