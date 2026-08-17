@@ -153,6 +153,21 @@ const SOURCES = [
       'filled bands drops half the forecast, which is a §5 lie about a coast.',
   },
   {
+    name: 'relay-nhc-surge.json',
+    url: 'https://landfall.getgravitate.app/api/nhc/surge',
+    note:
+      'OUR OWN surge route. Added 2026-08-16 because the layer shipped and ' +
+      'drew nothing, and nothing inside a session can fetch this — so the ' +
+      'question "is the relay serving surge at all" could only be answered by ' +
+      'asking a person to read a console on a phone. Diff it against ' +
+      'nhc-peaksurge-polygons.geojson above: same features means the relay is ' +
+      'fine and the fault is in the client; a 502 or an empty collection ' +
+      'against a populated upstream means it is not. The headers carry ' +
+      'X-Landfall-Cache and X-Landfall-Surge-Features, which say WHICH of the ' +
+      'three cache levels answered — the single most useful fact about this ' +
+      'route and one no browser will show you.',
+  },
+  {
     name: 'jtwc-abpw.txt',
     url: 'https://www.metoc.navy.mil/jtwc/products/abpwweb.txt',
     note:
