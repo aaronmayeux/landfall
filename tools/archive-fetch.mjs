@@ -481,24 +481,11 @@ function geometrySources(eventListJson) {
  * STRING, 10 carries `dtg` as a NUMBER of the same digits. Both are in this
  * table, so one snapshot holds both sides of the join and the next session can
  * test it without the network. */
-/* ==> AND LAYERS 15 AND 16, BECAUSE A SESSION CANNOT DIAGNOSE THE HOME CHART
- * WITHOUT THEM (§49.15). <== The chart's wind bands are built from the
- * FORECAST quadrant numbers (15) and the field at the storm's present position
- * (16). Neither was archived, so the Lala band fault of 2026-08-16 could be
- * confirmed for the measured half — layer 13 was here — and only REASONED
- * ABOUT for the forecast half, which is the one that was being dropped.
- * `data/nhc-mapserver.js` reads 15 for its numbers and then OVERWRITES the
- * slot with the swept envelope, so the published quadrants exist for one
- * instant in the live app and nowhere at all in the archive. They exist here
- * now. Four layers a storm an hour is the price of being able to measure the
- * band instead of arguing about it. */
 const NHC_STORM_LAYER = Object.freeze({
   forecastPoints: 5,
   watchWarning: 8,
   pastPoints: 10,
   windPast: 13,
-  windSwath: 15,
-  windCurrent: 16,
 });
 const NHC_MAPSERVER =
   'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +

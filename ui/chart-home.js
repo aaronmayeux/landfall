@@ -259,22 +259,9 @@ export function homeChart(dash, system) {
      * `X`/`Y` pair with no second code path. */
     const pc = co.past?.published.includes(kt) ? co.past.cross[kt] : null;
 
-    /* A band for a field that never comes near is noise on a phone. ==> BUT IT
-     * IS ONE QUESTION ABOUT ONE FIELD, NOT TWO QUESTIONS ABOUT TWO HALVES
-     * (§49.15). <== It used to be asked separately of the measured half and
-     * the forecast half, and each half was drawn only if its own half
-     * qualified. On a storm that crossed the house and is now leaving — the
-     * whole point of this screen — the measured half qualifies and the
-     * forecast half does not, so the band drew up to the last analysis and
-     * then STOPPED DEAD in the middle of the frame, which reads as the wind
-     * field ceasing to exist rather than as it walking away.
-     *
-     * Seen on glass 2026-08-16 on Lala: her 34 and 50 kt bands ended at
-     * 2:00 PM with `now` eight hours to the right of them.
-     *
-     * So: near is a property of the FIELD. If either half comes near, both
-     * halves draw. A field that never comes near in either half still draws
-     * nothing, which is what the rule was for. */
+    /* A band for a field that never comes near is noise on a phone. Asked of
+     * both halves, because a field that missed on the way in and landed on the
+     * way past is exactly the storm this chart is for. */
     const fwdNear = c && (c.everInside || c.closestGapNm <= HOME_DASH.nearRingNm);
     const pastNear = pc && (pc.everInside || pc.closestGapNm <= HOME_DASH.nearRingNm);
     if (!fwdNear && !pastNear) continue;
@@ -282,28 +269,10 @@ export function homeChart(dash, system) {
     /* ==> ONE LIT SERIES, TWO SOURCES, AND THE PAST HALF COMES FIRST. <== The
      * band is a single path across the frame; splitting it into two paths at
      * `now` would draw a seam through a wind field that never had one. The
-     * samples are already in ascending `h` on both sides.
-     *
-     * ==> THE HOLE BETWEEN THE TWO HALVES IS A PUBLICATION ARTEFACT AND IS
-     * BRIDGED. <== NHC's measured radii land on the 6-hourly synoptic clock
-     * and the advisory's tau 0 lands on the advisory clock, so the two arms
-     * routinely do not meet: measured to 18Z, forecast from 21Z, three hours
-     * of nothing (read off the archive for Lala, 2026-08-17). The wind did not
-     * pause for those three hours. One polygon over both halves draws a
-     * straight segment across the hole, which is the same assumption every
-     * other leg of this chart already makes between two published points.
-     *
-     * ==> AND WHERE THEY OVERLAP INSTEAD, THE MEASUREMENT WINS. <== The other
-     * cadence case: an advisory whose tau 0 predates the last analysis. Merged
-     * naively the series would zigzag between measured and forecast reach for
-     * the same hour and draw a sawtooth. Cutting the forecast half at the last
-     * measured hour also makes the merged series provably ascending, which is
-     * what the polygon needs and what nothing was checking. */
-    const litPast = pc ? (co.past.samples || []).filter((s) => s.gap[kt] != null) : [];
-    const litFwd = c ? S.filter((s) => s.gap[kt] != null) : [];
-    const kept = litPast.filter((s) => s.h >= hMin);
-    const lastPastH = kept.length ? kept[kept.length - 1].h : -Infinity;
-    const lit = [...kept, ...litFwd.filter((s) => s.h > lastPastH)];
+     * samples are already in ascending `h` on both sides. */
+    const litPast = pastNear ? (co.past.samples || []).filter((s) => s.gap[kt] != null) : [];
+    const litFwd = fwdNear ? S.filter((s) => s.gap[kt] != null) : [];
+    const lit = [...litPast.filter((s) => s.h >= hMin), ...litFwd];
     if (lit.length < 2) continue;
 
     /* One bar per window this field is on the house. Built only for a field
@@ -454,14 +423,7 @@ export function homeChart(dash, system) {
    * earned equal weight with the published ones. */
   let shadow = '';
   const early = co.earliest?.[34];
-  /* ==> AND NEVER WITHOUT THE BAND IT HEDGES (§49.15). <== This line is the
-   * 34 kt field's leading edge moved earlier by NHC's track error. Drawn on a
-   * frame where the 34 kt band itself was suppressed, it is error bars around
-   * something invisible: a lone dashed stroke in the middle of the plot with
-   * nothing on the chart or in the caption to say what it is a hedge ON. Seen
-   * beside the Lala fault above, and it survived that fix because the two
-   * decisions were made independently — so they are tied together here. */
-  if (early && co.published.includes(34) && drawn.some((d) => d.kt === 34)) {
+  if (early && co.published.includes(34)) {
     /* ==> AND NEVER LEFT OF `now` (§49.2). <== This dashed line is NHC's track
      * error applied to their wind radii — a statement about what a forecast
      * might be wrong by. Left of the present there is no forecast to be wrong,

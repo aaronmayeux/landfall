@@ -1505,19 +1505,15 @@ six blind hours were spent 600 nm out against a field that never reached
 further than 110.9 nm, so her hedge stays off; a house under her first fix gets
 it, which is what proves the arm is not dead code.
 
-**LIVE LAYER 13 COVERAGE, READ OFF THE ARCHIVE.** It publishes a SHORTER
-history than layer 10, and `partial` exists because of it. Lala (CP012026,
-advisory 18, archive run of 2026-08-17 01:47Z): layer 10 carries **28 positions
-from 2026-08-10 00Z**, layer 13 carries radii at **14 synoptic times from
-2026-08-13 12:00Z** — about 78 hours of wind field against about 162 hours of
-track. Both arms end at the same instant, 2026-08-16 18:00Z. So a storm's first
-days are track-only, and any sentence claiming no wind reached the house has to
-be able to say how far back it can actually see.
-
-**`[VERIFY]` — what a basin change does to layer 13 is still unread.** Lala
-crossed from EP into CP and the archive holds her under `CP2`; whether the
-layer keeps the pre-crossing radii or drops them with the old bin has not been
-measured. One storm's snapshot cannot answer it.
+**`[VERIFY]` — LIVE LAYER 13 COVERAGE IS STILL UNREAD.** Everything above is
+measured against NHC's published best-track radii, which is the same product
+and the same field names the live layer serves — `lib/windswath.js` has
+consumed it in production for months. What that does NOT answer is how far back
+the LIVE layer publishes on an active storm, or what it does across a basin
+change. It is in `tools/archive-fetch.mjs` and the hourly runner is collecting
+it; read `latest/geometry/nhc-*-windPast.geojson` across a few runs. If it
+turns out to publish only a few synoptic hours while layer 10 reaches back to
+genesis, `partial` already exists to say so and the wording is a glass call.
 
 ### 49.10 Moving home is not an edge case
 
@@ -1650,49 +1646,6 @@ pass: `just-passed`. Advisory 19, seventeen hours after it: `gone-by`, and
 `far === false`. Rebuild either with no observed track and the ladder cannot
 reach a past rung at all — the mechanism of the bug, asserted rather than
 described.
-
-### 49.15 A wind band is one field, not two halves
-
-**BUILT.** The home chart's wind bands used to stop dead in the middle of the
-frame on exactly the storm the screen exists for. Two independent faults in
-`ui/chart-home.js` produced one hard vertical edge, and both are fixed here.
-
-**FAULT ONE: THE NEAR TEST WAS ASKED TWICE.** A wind field that never comes
-close to the house is noise on a phone and is not drawn. That question was
-asked separately of the measured half and the forecast half, and each half was
-drawn only if its own half passed. On a storm that crossed the house and is now
-leaving, the measured half passes and the forecast half does not — so the band
-drew up to the last analysis and vanished, which reads as the field ceasing to
-exist rather than as it walking away. **Near is a property of the FIELD.** If
-either half comes near, both halves draw; if neither does, nothing draws, which
-is what the rule was for.
-
-**FAULT TWO: NOTHING BRIDGED THE PUBLICATION HOLE.** NHC's measured radii land
-on the 6-hourly synoptic clock and the advisory's tau 0 lands on the advisory
-clock, so the two arms routinely do not meet. Measured off the archive for Lala
-(CP012026, advisory 18, run of 2026-08-17 01:47Z): layer 13 ends at
-**2026-08-16 18:00Z** and forecast tau 0 is **2026-08-16 21:00Z** — three hours
-of nothing, on a chart whose `now` was another 4.8 hours to the right of that.
-The wind did not pause for those three hours. One polygon spans both halves and
-draws a straight segment across the hole, the same assumption every other leg
-of this chart already makes between two published points.
-
-**AND WHERE THE TWO ARMS OVERLAP INSTEAD, THE MEASUREMENT WINS.** The opposite
-cadence case is an advisory whose tau 0 predates the last analysis. Merged
-naively the series would zigzag between measured and forecast reach for the
-same hour and draw a sawtooth. The forecast half is cut at the last measured
-hour, which also makes the merged series provably ascending in time — what the
-polygon needs, and what nothing was checking.
-
-**THE EARLIEST-ARRIVAL LINE IS TIED TO THE BAND IT HEDGES.** The dashed stroke
-is the 34 kt field's leading edge moved earlier by NHC's track error. It was
-decided independently of the band, so it survived fault one and drew alone: a
-lone dashed line mid-plot with nothing on the chart or in the caption saying
-what it is a hedge *on*. It now requires the 34 kt band to be present.
-
-**Seen on glass 2026-08-16 on Lala**, against a Hawaii home: the 34 and 50 kt
-bands ended at 2:00 PM with `now` eight hours to the right of them, and the
-orphan dashed line sat near `now` at about 200 mi with no band under it.
 
 
 
