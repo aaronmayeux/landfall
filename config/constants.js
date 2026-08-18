@@ -1224,24 +1224,64 @@ export const GLOW = Object.freeze({
    *  quantising into visible rings on a narrow window. */
   minBufferPx: 96,
 
-  /** How many storms can light the sky at once. A busy Atlantic + Pacific day
-   *  is comfortably under this; past it the extra lights are visually lost in
-   *  each other anyway and only cost fill. */
-  maxLights: 8,
+  /** How many lights the sky can carry at once.
+   *
+   *  Raised from 8 on 2026-08-18, when a light stopped being "one per storm"
+   *  and became "one per run of one color along a storm's ridge" (see
+   *  `buildLights` in map/limb-glow.js). A storm that has crossed three
+   *  categories in its window now spends three slots, so the old budget would
+   *  have silenced whole storms on a busy day. A typical Atlantic + Pacific
+   *  afternoon lands around a dozen.
+   *
+   *  Still a real ceiling and not a formality: these are radial-gradient fills
+   *  and they are the entire cost of this layer. It is affordable only because
+   *  the buffer is a sixteenth of the screen (`pixelScale`). Past the cap the
+   *  budget is spent biggest-run-first, but every storm keeps its own biggest
+   *  run before any storm keeps its second. */
+  maxLights: 16,
 
   /** Blob radius as a multiple of the globe's measured on-screen radius, at
    *  full severity. Above ~1.4 the lights stop reading as coming FROM the
    *  globe and start looking like weather on the camera lens. */
   radiusScale: 1.15,
 
-  /** Radius at severity 0 as a fraction of the above, so a tropical storm
-   *  still casts light and a Cat 5 casts much more. Not zero: a depression
-   *  that lights nothing looks like a bug, not like a weak storm. */
+  /** Radius of the SMALLEST run — a single bead — as a fraction of the above.
+   *  Not zero: a category a storm only touched for one fix should throw a
+   *  small light, not no light, or the ridge shows a color the sky denies. */
   radiusFloor: 0.55,
 
-  /** Master strength, before the theme's own `fx.glow` multiplier. Severity
-   *  scales it; this sets the ceiling. */
-  intensity: 0.85,
+  /** How many beads of one color a run needs before its light is at full size.
+   *  This is the whole of "unless there is just more of it": below it a run
+   *  scales with its length, at or above it every long run looks the same, so
+   *  a week at Cat 1 cannot swamp everything else simply by being long. */
+  runFull: 10,
+
+  /** Minimum distance from grey (0..255) a color needs to throw a light at
+   *  all. `stormSwatch` paints a storm nobody is publishing a wind for in the
+   *  theme's neutral, and a neutral light is a claim with no content: under
+   *  the light theme's `color` blending it tints nothing anyway, and under
+   *  dark's additive blending it would render as a plain white wash on a
+   *  system the source has gone quiet about. §5 — say nothing rather than
+   *  something unsupported. Every §6 category color clears this comfortably;
+   *  the lowest is Cat 1 yellow at 178. */
+  minChroma: 24,
+
+  /** ==> MASTER STRENGTH, BEFORE THE THEME'S `fx.glow` MULTIPLIER. NOTHING
+   *  ELSE SCALES IT. <==
+   *
+   *  Severity used to, and that was a bug on glass (2026-08-18): elevation on
+   *  the cage is already severity, said in the loudest channel the globe has,
+   *  and multiplying the light by it too left a depression's glow too faint to
+   *  find beside a hurricane's. Every color now shines at one strength and the
+   *  only thing that can make one read louder is covering more sky — which is
+   *  `runFull` below, off how much ridge wears that color.
+   *
+   *  Cut from 0.85 in the same pass, and the arithmetic is the reason: the old
+   *  number was a CEILING that a typical storm's severity pulled down to about
+   *  0.5, and there were far fewer lights. Flat strength across roughly double
+   *  the count needs the ceiling to come down or the sky blows out. This is the
+   *  first dial to reach for if the whole effect is too strong or too weak. */
+  intensity: 0.42,
 
   /** ==> THE BACKDROP IS A CURVED SHELL, THIS FAR OUT IN GLOBE RADII, AND THIS
    *  IS THE ONE NUMBER THAT DECIDES THE WHOLE LOOK. <==

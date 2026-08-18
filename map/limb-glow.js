@@ -134,6 +134,137 @@ function rgbOf(hex, saturate = 0) {
   return `${pull(r)},${pull(g)},${pull(b)}`;
 }
 
+/** How far a color is from grey, 0..255. A colorless point makes no severity
+ *  claim and throws no light — see `buildLights`. */
+function chromaOf(hex) {
+  const h = typeof hex === 'string' && hex.charCodeAt(0) === 35 ? hex.slice(1) : hex;
+  if (typeof h !== 'string') return 0;
+  const n = parseInt(h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h, 16);
+  if (!Number.isFinite(n)) return 0;
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return Math.max(r, g, b) - Math.min(r, g, b);
+}
+
+/**
+ * ==> THE CAGE'S POINTS -> THE LIGHTS. ONE PER RUN OF ONE COLOR, NOT ONE PER
+ * STORM. <==
+ *
+ * This used to be `pt.head === true` and nothing else: a single light per
+ * storm, wearing that storm's CURRENT category color. Everything the cage
+ * remembers threw no light at all — so a storm that peaked at Cat 4 and has
+ * since weakened to a Cat 1 showed a large red ridge on the globe and a purely
+ * yellow glow behind it. The red was not dim, it was never drawn. Aaron on
+ * glass, 2026-08-18: "make sure all node mesh colors shine on the background,
+ * in the correct position."
+ *
+ * So the list is walked as what it is — a per-storm ridge, in order — and every
+ * consecutive stretch of ONE category color becomes one light, placed at that
+ * stretch's middle bead. The colors on the backdrop are then the colors on the
+ * cage, each where its own part of the cage is.
+ *
+ * ==> WEIGHT IS HOW MUCH CAGE WEARS THE COLOR, AND IT DRIVES SIZE ONLY. <==
+ * Aaron's rule, same session: "one color shouldn't overpower the others unless
+ * there is just more of it — height shouldn't dictate intensity." Severity is
+ * already the loudest channel on the globe as ELEVATION; letting it also set
+ * the light's brightness said the same thing twice and left a depression's
+ * light too dim to find. Brightness is now flat across every color, and the
+ * only thing that makes one read louder is covering more of the sky — which is
+ * exactly "there is more of it", measured off the ridge rather than off height.
+ *
+ * THE HEAD IS ITS OWN RUN AND IS NOT MERGED WITH ITS NEIGHBOURS, because the
+ * list is not chronological across that seam: `buildMeshPoints` enters the head
+ * FIRST and then the beads oldest-first, so the point beside the head is the
+ * oldest one in the window, days away. Merging them would put a run's midpoint
+ * in open ocean between the two.
+ *
+ * A storm WITH beads drops its head light: the beads already cover the present
+ * position with the present color, and keeping both double-lights it. A storm
+ * with NO beads — CURRENT mesh mode, a failed geometry bundle, or a storm with
+ * no current reading — keeps its head as its single light, so no live storm
+ * ever goes dark.
+ *
+ * @param {Array} pts  the heightfield's live point list
+ * @returns {Array<{dir, color, weight}>}
+ */
+function buildLights(pts) {
+  const perStorm = [];
+  let runs = null;
+  let cur = null;
+
+  const closeRun = () => {
+    if (cur) runs.push(cur);
+    cur = null;
+  };
+  const closeStorm = () => {
+    if (!runs) return;
+    closeRun();
+    if (runs.length) perStorm.push(runs);
+    runs = null;
+  };
+
+  for (const pt of pts) {
+    if (!pt || !pt.dir) continue;
+    if (pt.head === true) {
+      closeStorm();
+      runs = [];
+    }
+    if (!runs) continue; // a bead before any head: not part of a storm we know
+    /* A point with no lift, or no color, states nothing worth lighting. Grey is
+     * what `stormSwatch` gives a storm nobody is publishing a wind for, and a
+     * light with no hue under `color` blending tints nothing anyway — so this
+     * refuses to shine on a claim the data does not make, rather than throwing
+     * a neutral wash the dark theme would render as plain white. */
+    if (!(pt.sev > 0) || chromaOf(pt.color) < GLOW.minChroma) {
+      closeRun();
+      continue;
+    }
+    if (pt.head === true) {
+      runs.push({ color: pt.color, pts: [pt], head: true });
+      continue;
+    }
+    if (cur && cur.color === pt.color) cur.pts.push(pt);
+    else {
+      closeRun();
+      cur = { color: pt.color, pts: [pt], head: false };
+    }
+  }
+  closeStorm();
+
+  const lights = [];
+  for (const stormRuns of perStorm) {
+    const beadRuns = stormRuns.filter((r) => !r.head);
+    const keep = beadRuns.length ? beadRuns : stormRuns;
+    for (const run of keep) {
+      lights.push({
+        dir: run.pts[(run.pts.length - 1) >> 1].dir,
+        color: run.color,
+        weight: run.pts.length,
+        storm: perStorm.indexOf(stormRuns),
+      });
+    }
+  }
+
+  if (lights.length <= GLOW.maxLights) return lights;
+
+  /* ==> OVER BUDGET: EVERY STORM KEEPS ITS BIGGEST RUN BEFORE ANY STORM KEEPS
+   * ITS SECOND. <== Sorting the whole list by weight and truncating would let
+   * one long-lived system's five color spans silence a smaller storm outright,
+   * which is a false reading of how many systems are out there — the same
+   * class of error as the head flag on the cage glyphs. Below the cap this
+   * branch never runs at all. */
+  const best = new Map();
+  for (const l of lights) {
+    const b = best.get(l.storm);
+    if (!b || l.weight > b.weight) best.set(l.storm, l);
+  }
+  const first = [...best.values()];
+  const rest = lights.filter((l) => !first.includes(l)).sort((a, b) => b.weight - a.weight);
+  return first.concat(rest).slice(0, GLOW.maxLights);
+}
+
+
 /**
  * @param {HTMLCanvasElement} canvas  - the #glow canvas
  * @param {object} opts
@@ -146,6 +277,8 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
   let cssH = 1;
   let painted = false; // was anything drawn last frame? skips redundant clears
   let lastOpacity = null; // only touch the style when the number actually moves
+  let lightsSrc = null; // the point array the light list below was built from
+  let lights = [];
 
   /* The globe group only ever rotates about the origin, so one scratch matrix
    * covers every frame. Allocated once, on purpose: this runs inside the
@@ -190,11 +323,34 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
      * off on glass. Do not unify these — the two themes need different
      * OPERATORS, not different values, and that is the whole point.
      *
-     * Blobs still stack with `multiply` INSIDE the canvas in light: multiply
-     * preserves and deepens chroma where two storms overlap, and chroma is the
-     * only channel `color` blending reads. */
+     * ==> BLOBS STACK WITH PLAIN `source-over` IN LIGHT. THEY USED TO
+     * `multiply`, AND MULTIPLY WAS WHY EVERYTHING LOOKED YELLOW. <==
+     *
+     * The old argument was that multiply deepens chroma where two storms
+     * overlap, and chroma is the only channel `color` blending reads. True for
+     * two blobs of the SAME hue and false — badly — for two of different ones,
+     * because multiply is per-channel arithmetic with no idea what a hue is:
+     *
+     *   Cat 1 yellow saturates to (255,212,0). Multiplying by it leaves red
+     *   and green essentially untouched and drives blue to ZERO. Yellow cannot
+     *   be attenuated by anything else in the §6 ramp, so every overlap drifts
+     *   warm and the blues and greens are erased.
+     *
+     *   Worse, it INVENTS colors. Yellow x TD blue is (0,140,0) — a green that
+     *   is nowhere on the cage. A backdrop showing a hue no storm has is the
+     *   same class of error as §5's silence: the picture states something the
+     *   data does not.
+     *
+     * `source-over` is ordinary alpha blending, so an overlap lands BETWEEN
+     * the two colors in proportion to how much of each is there. That is what
+     * two lights on a wall actually do, it cannot manufacture a third hue, and
+     * no color in the ramp gets special treatment. Aaron on glass, 2026-08-18.
+     *
+     * The cost is honest and small: two opposite hues at equal strength blend
+     * toward neutral and tint weakly under `color`. That reads as "two
+     * different storms are here", which is true. */
     canvas.style.mixBlendMode = light ? 'color' : 'screen';
-    ctx.globalCompositeOperation = light ? 'multiply' : 'lighter';
+    ctx.globalCompositeOperation = light ? 'source-over' : 'lighter';
   }
 
   function resize() {
@@ -239,6 +395,16 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     }
 
     const pts = getStormPoints?.() || [];
+    /* Memoised on the array IDENTITY, which is safe because the heightfield
+     * REPLACES `stormPoints` wholesale on every poll rather than mutating it
+     * (map/heightfield.js `setStormPoints`). The split is pure and the list
+     * changes maybe twice an hour; recomputing it per frame would be doing
+     * ~1,500 string comparisons inside the gesture this effect decorates. */
+    if (pts !== lightsSrc) {
+      lightsSrc = pts;
+      lights = buildLights(pts);
+    }
+
     const sx = canvas.width / cssW;
     const sy = canvas.height / cssH;
     /* One bind, not three reads per storm — `fx()` is a property lookup and
@@ -269,10 +435,8 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     clear();
 
     let drawn = 0;
-    for (let i = 0; i < pts.length && drawn < GLOW.maxLights; i++) {
-      const pt = pts[i];
-      if (!pt || pt.head !== true) continue; // one light per storm, not per track point
-      if (!(pt.sev > 0)) continue;
+    for (let i = 0; i < lights.length && drawn < GLOW.maxLights; i++) {
+      const pt = lights[i];
 
       /* ==> EVERY LIVE STORM LIGHTS THE BACKDROP. THE AIM WEIGHTS IT, IT DOES
        * NOT GATE IT. <==
@@ -368,15 +532,31 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
        * actually change the look (see LIGHT.fx.glowGain). Both are exactly 1
        * in dark, so this is the shipped dark maths untouched — light needs a
        * stronger version of the same effect and the canvas opacity has no
-       * headroom left to give it. */
+       * headroom left to give it.
+       *
+       * ==> SIZE IS HOW MUCH CAGE WEARS THIS COLOR. IT USED TO BE SEVERITY.
+       * <== `weight` is the number of beads in the run (see buildLights), so a
+       * storm that held Cat 1 for three days throws a wide Cat 1 light and one
+       * that touched Cat 4 for six hours throws a small red one. That is
+       * Aaron's rule — "one color shouldn't overpower the others unless there
+       * is just more of it" — and it is the ONLY channel left that can make one
+       * color louder than another. */
       const r =
         radiusPx *
         GLOW.radiusScale * spread *
-        (GLOW.radiusFloor + (1 - GLOW.radiusFloor) * pt.sev) *
+        (GLOW.radiusFloor +
+          (1 - GLOW.radiusFloor) * Math.min(1, pt.weight / GLOW.runFull)) *
         Math.min(sx, sy);
       if (!(r > 0)) continue;
 
-      const a = Math.min(1, pt.sev * face * clearance * GLOW.intensity * gain);
+      /* ==> BRIGHTNESS DOES NOT TOUCH SEVERITY, AND THAT IS THE POINT. <==
+       * It used to be multiplied by `pt.sev`, which said the same thing the
+       * cage's ELEVATION already says and says louder — so a depression's
+       * light was too faint to find next to a hurricane's, on top of the
+       * category ramp's own luminance spread. Every color now shines at the
+       * same strength and only geometry — where the storm is aimed, and how
+       * much planet is in the way — moves it. */
+      const a = Math.min(1, face * clearance * GLOW.intensity * gain);
       if (a <= 0) continue;
 
       /* ==> THE SMEAR: LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==

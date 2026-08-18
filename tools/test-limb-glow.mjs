@@ -219,10 +219,18 @@ ok(
   'light: the canvas TINTS the backdrop — `color` keeps its luminosity, `multiply` could only darken it'
 );
 ok(cv.style.mixBlendMode !== 'multiply', 'light never darkens the backdrop — that is the smudge');
-ok(cv._fills[0]?.composite === 'multiply', 'light: blobs stack like colored filters');
+/* ==> BLOBS STACK WITH PLAIN ALPHA IN LIGHT, NOT `multiply`. <==
+ * Multiply is per-channel arithmetic that does not know what a hue is: a
+ * saturated Cat 1 yellow leaves red and green untouched and drives blue to
+ * zero, so yellow could not be attenuated by anything else in the ramp and the
+ * blues and greens were erased. It also manufactured hues no storm had —
+ * yellow x TD blue reads green. Aaron on glass, 2026-08-18.
+ * MUTATION: set it back to 'multiply' and this fails. Verified. */
+ok(cv._fills[0]?.composite === 'source-over', 'light: blobs stack with plain alpha, so no hue is invented');
+ok(cv._fills[0]?.composite !== 'multiply', 'light never multiplies blobs — that is what yellow could not lose to');
 
-/* The pairing is the point — additive INSIDE a multiplied canvas is the black
- * smear this test exists to catch. Neither mode may share a value. */
+/* The pairing is the point — additive INSIDE a tinting canvas is the black
+ * smear this test exists to catch. The two themes never share an operator. */
 /* The two themes are free to sit anywhere relative to each other: they drive
  * different OPERATORS, so their numbers are not comparable. Both must simply
  * be a real strength — a zero here is the effect silently switched off for one
@@ -248,8 +256,8 @@ setThemeMode(MODE.DARK);
   glow.update({ group, camera, radiusPx: R_PX, p: 0 });
   ok(cv2.style.mixBlendMode === 'color', 'toggling to light re-blends the canvas as a tint');
   ok(
-    cv2._fills.at(-1)?.composite === 'multiply',
-    'toggling to light re-blends the BLOBS as multiply too'
+    cv2._fills.at(-1)?.composite === 'source-over',
+    'toggling to light re-blends the BLOBS to plain alpha too'
   );
 }
 
@@ -425,15 +433,104 @@ ok(
   'a point past the eye plane is dropped, not mirrored to the far side of the screen'
 );
 
-/* 5 — ONE LIGHT PER STORM, AND ONLY LIVE ONES. ----------------------------- */
+/* 5 — ONE LIGHT PER RUN OF ONE COLOR, NOT ONE PER STORM. -------------------
+ *
+ * ==> THIS SECTION USED TO ASSERT THE OPPOSITE AND THE OPPOSITE WAS THE BUG.
+ * <== "Track points are not lights — only the live fix is" was the shipped
+ * rule, and it meant everything the cage REMEMBERS threw no light: a storm
+ * that peaked at Cat 4 and has weakened to a Cat 1 drew a large red ridge on
+ * the globe and a purely yellow glow behind it. The red was not dim, it was
+ * never drawn. Aaron on glass, 2026-08-18.
+ *
+ * A bead is still not a light on its own — a bare track point with no storm
+ * ahead of it belongs to nothing and is ignored — but a storm's beads are now
+ * where its lights come from. */
 const trackPoint = { ...atAngleLit(), head: false };
-ok(paint([trackPoint])._fills.length === 0, 'track points are not lights — only the live fix is');
+ok(paint([trackPoint])._fills.length === 0, 'a bead with no storm ahead of it belongs to nothing');
 ok(paint([atAngleLit(0)])._fills.length === 0, 'a zero-severity point throws no light');
+ok(
+  paint([{ ...atAngleLit(), color: '#9AA0A5' }])._fills.length === 0,
+  'a grey head throws nothing — no reading is no claim, so the sky says nothing'
+);
+
+/* A storm whose ridge crosses three categories throws THREE lights, one per
+ * color, each at its own stretch of the track — not one light wearing the
+ * head's color.
+ * MUTATION: restore `if (pt.head !== true) continue` and this drops to 1. */
+{
+  const bead = (deg, color) => {
+    const t = (deg * Math.PI) / 180;
+    return { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 0.5, color, head: false };
+  };
+  const storm = [
+    { ...atAngle(120), color: '#FFE14D' },        // head: a Cat 1 now
+    bead(112, '#FF4D6D'), bead(114, '#FF4D6D'),   // it was a Cat 4 back here
+    bead(118, '#FFB52E'), bead(120, '#FFB52E'),
+    bead(126, '#FFE14D'), bead(128, '#FFE14D'),
+  ];
+  const cv = paint(storm);
+  const colorsOf = (c) => c._fills.map((f) => f.stops[0][1].match(/rgba\(([^)]+),/)[1]);
+  ok(cv._fills.length === 3, 'a ridge crossing three categories throws three lights');
+  ok(
+    colorsOf(cv).includes('255,77,109'),
+    'including the Cat 4 RED the storm no longer is — the mesh wears it, so the sky shows it'
+  );
+
+  /* Each light sits at its OWN run, so the three land in three places.
+   * MUTATION: place every run at the head's dir and this fails. */
+  const xs = cv._fills.map((f) => Math.round(f.xf.x));
+  ok(new Set(xs).size === 3, 'the three lights land in three different places');
+
+  /* The head's own light is dropped when beads exist, or the present position
+   * is lit twice. Three runs, three fills — pinned by the count above. */
+}
+
+/* ==> BRIGHTNESS IS FLAT ACROSS SEVERITY; SIZE IS NOT FLAT ACROSS RUN LENGTH.
+ * <== Aaron's rule: "one color shouldn't overpower the others unless there is
+ * just more of it — height shouldn't dictate intensity."
+ * MUTATION: multiply `a` by pt.sev again and the first fails; drive the radius
+ * off severity instead of weight and the second fails. Both verified. */
+{
+  const weak = paintAt(LIT_DEG, 0.08);
+  const strong = paintAt(LIT_DEG, 1);
+  ok(alphaOf(weak) === alphaOf(strong), 'a depression shines exactly as bright as a Cat 5');
+
+  const runOf = (n) => {
+    const t = (LIT_DEG * Math.PI) / 180;
+    const head = { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 1, color: '#FF0000', head: true };
+    const beads = Array.from({ length: n }, () => ({
+      dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 1, color: '#FF0000', head: false,
+    }));
+    return paint([head, ...beads])._fills[0].r;
+  };
+  ok(runOf(GLOW.runFull) > runOf(1), 'a long run of one color throws a bigger light than a brief one');
+  ok(runOf(GLOW.runFull * 3) === runOf(GLOW.runFull), 'and stops growing at runFull, so length cannot swamp');
+}
+
 ok(
   paint(Array.from({ length: GLOW.maxLights + 6 }, () => atAngleLit()))._fills.length ===
     GLOW.maxLights,
   'the light count is capped at GLOW.maxLights'
 );
+
+/* Over budget, every storm keeps its biggest run before any storm keeps its
+ * second — a long-lived system's five color spans must not silence a smaller
+ * storm outright, which would be a false count of live systems.
+ * MUTATION: sort the whole list by weight and truncate; this fails. */
+{
+  const t = (LIT_DEG * Math.PI) / 180;
+  const at = (deg) => new V3(Math.sin((deg * Math.PI) / 180), 0, Math.cos((deg * Math.PI) / 180));
+  const hog = [{ dir: at(120), sev: 1, color: '#FF0000', head: true }];
+  for (let c = 0; c < GLOW.maxLights + 4; c++) {
+    const col = `#${(0x110000 * (c + 1)).toString(16).padStart(6, '0')}`;
+    for (let k = 0; k < 12; k++) hog.push({ dir: at(120), sev: 1, color: col, head: false });
+  }
+  const small = { dir: at(125), sev: 0.2, color: '#3ECC7A', head: true };
+  const cv = paint([...hog, small]);
+  const greens = cv._fills.filter((f) => /62,204,122/.test(f.stops[0][1]));
+  ok(greens.length === 1, 'a small storm keeps its light however many runs a big one has');
+  void t;
+}
 
 /* 6 — THE DIVE PUTS IT OUT BEFORE MAPLIBRE OWNS THE SCREEN. ---------------- */
 ok(paint([atAngleLit()], 'ok', 1)._fills.length === 0, 'handed off to the flat map: no light');

@@ -2409,6 +2409,30 @@ MapLibre fades up over it on the dive exactly as it does over `#spacebg`, and
 the globe painting above means opaque continents cover the light behind them
 while the transparent ocean lets it through.
 
+**One light per RUN OF ONE COLOR along a storm's ridge, not one per storm.**
+The point list is walked as what it is — a per-storm ridge in order — and every
+consecutive stretch of one category color throws its own light, placed at that
+stretch's middle bead. So the colors on the backdrop are the colors on the cage,
+each where its own part of the cage is. Until 2026-08-18 only a storm's CURRENT
+position threw light, which meant everything the cage remembers threw none: a
+storm that peaked at Cat 4 and weakened to a Cat 1 drew a large red ridge and a
+purely yellow glow. The red was not dim; it was never drawn.
+
+**Brightness is flat. Size is not.** Every color shines at `GLOW.intensity`,
+untouched by severity — elevation on the cage is already severity said in the
+loudest channel the globe has, and multiplying the light by it too left a
+depression's glow unfindable beside a hurricane's. The one thing that makes a
+color read louder is covering more sky, and that comes from how many beads wear
+it (`GLOW.runFull`): three days at Cat 1 throws a wide light, six hours at Cat 4
+a small one. Aaron's rule — *one color shouldn't overpower the others unless
+there is just more of it.*
+
+A grey point throws nothing. `stormSwatch` paints a storm nobody is publishing a
+wind for in the theme's neutral, and a light with no hue is a claim with no
+content (§5). Over `GLOW.maxLights`, every storm keeps its own biggest run
+before any storm keeps its second — otherwise one long-lived system's color
+spans silence a smaller storm outright, which is a false count of live systems.
+
 **A storm is a lamp on the globe's skin, aiming straight outward, and the
 backdrop is a curved shell `GLOW.wallRadius` globe-radii around it.** The light
 is drawn where that outward beam strikes the shell — which, because a radial
@@ -2453,7 +2477,16 @@ globe as a rim highlight, which is the Fresnel effect this was built to avoid.
 
 **The two themes use different OPERATORS, not different numbers.** Dark is
 emitted light — `lighter` between blobs, `screen` onto the backdrop; overlapping
-storms brighten and their hues mix. Light is a TINT — `mix-blend-mode: color`,
+storms brighten and their hues mix, which is what two real lights on a wall do.
+Light blends blobs with plain `source-over`, so an overlap lands BETWEEN the two
+colors in proportion to how much of each is there. It multiplied them until
+2026-08-18, and multiply is per-channel arithmetic that does not know what a hue
+is: a saturated Cat 1 yellow leaves red and green untouched and drives blue to
+zero, so yellow could not be attenuated by anything else in the §6 ramp and the
+blues and greens were erased. It also manufactured hues no storm had — yellow
+times a TD blue reads green, and a backdrop showing a color nothing on the cage
+wears is the same class of error as §5's silence. The canvas itself is still a
+TINT — `mix-blend-mode: color`,
 which takes hue and saturation from the light layer and keeps the backdrop's own
 luminosity. Transparent is the identity for both, which is why the canvas is
 only ever cleared and never painted with a base color.
