@@ -190,6 +190,34 @@
     transform: translateX(-105%);
   }
   #drawer[data-open="true"] { transform: translateX(0); }
+
+  /* ==> THE SCROLLBAR RAN INTO THE ROUNDED CORNER. <==
+   *
+   * The rail is rounded on its RIGHT edge, top and bottom, and the scrollbar
+   * lives on that same right edge. The scrolling body fills the panel to the
+   * last pixel, so the track's final 16px sat exactly where the glass has
+   * already curved away — a straight bar carrying on past the edge of the
+   * thing it belongs to. Aaron on glass, desktop.
+   *
+   * Nothing clips it, and deliberately so: `overflow: hidden` on the drawer
+   * would trim the bar to the curve, but a thumb sliced off on a diagonal is
+   * a different wrong answer, not the right one. Ending the scroller above
+   * the corner is what was actually asked for.
+   *
+   * ONE RADIUS, NOT A TUNED NUMBER. `--radius-large` is the corner, so the
+   * track stops precisely where the curve starts and the two can never drift
+   * apart. The phone sheet leaves `--body-end` at zero: its bottom corners
+   * are square, and a phone has no visible scrollbar to run into them.
+   *
+   * ==> `#drawer .drawer-body`, NOT `.drawer-body`, AND MEASURING CAUGHT IT.
+   *     <== The default lives on the `.drawer-body` rule ~200 lines BELOW
+   * this block. A media query adds no specificity, so a bare `.drawer-body`
+   * here ties with it and loses on source order — the override computed to
+   * `0px` and the corner was exactly as broken as before, with the fix
+   * apparently in place. The id is what wins regardless of where the rule
+   * sits, which is what this file needs: the geometry lives up here with the
+   * rest of the drawer's layout, not down beside the scroller. */
+  #drawer .drawer-body { --body-end: var(--radius-large); }
 }
 
 /* --- drawer chrome --------------------------------------------------------
@@ -403,15 +431,50 @@
  * have been a real blur re-evaluated on every scroll frame, on a phone that
  * is already running a globe (§9, feel wins). */
 .drawer-body {
+  /* ==> HOW FAR THE SCROLLER STOPS SHORT OF THE PANEL'S BOTTOM EDGE. <==
+   *
+   * Zero here, because the phone sheet's bottom corners are SQUARE — it is
+   * rounded at the top, where it meets the thumb. The wide rail overrides it,
+   * and the note there is the reason this property exists at all. */
+  --body-end: 0px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: var(--scroll-fade) var(--drawer-body-pad) var(--space-comfy);
+  /* ==> A TRANSPARENT BORDER, BECAUSE A SCROLLBAR CANNOT BE SHORTENED ON ITS
+   *     OWN. <== It always fills its scroller, top to bottom, and there is no
+   * property that insets it. The scrollbar is laid out INSIDE the border edge,
+   * so a transparent bottom border is the one thing that pulls the track up
+   * without an extra wrapper element — and it pulls the content clip up with
+   * it, which is what the bottom mask stop below is for. */
+  border-bottom: var(--body-end) solid transparent;
   flex: 1 1 auto;
   min-height: 0;
+  /* THE SAME DISSOLVE AT BOTH ENDS NOW. The top stop is the original: content
+   * fades in under the pinned chrome instead of being guillotined by it.
+   *
+   * The bottom two stops are new and are NOT decoration — they are what makes
+   * moving the clip line up survivable. A hard cut at the panel's own bottom
+   * edge reads as "the panel ends here"; the same cut floating 16px above it,
+   * in the middle of the glass, reads as a rendering fault, which is the exact
+   * failure the top stop was added to prevent.
+   *
+   * ==> THE MASK IS MEASURED FROM THE BORDER BOX, SO 100% IS BELOW THE CLIP.
+   *     <== `mask-origin` is `border-box` by default, and the transparent
+   * border is part of that box — nothing paints down there, so a fade ending
+   * at 100% would land entirely inside it and do nothing. Every bottom stop
+   * therefore backs off by `--body-end` first.
+   *
+   * At rest the last row still lands crisp: `--space-comfy` (16px) of padding
+   * puts it clear of the 12px fade, the same relationship the top stop has
+   * with its own padding. */
   -webkit-mask-image: linear-gradient(to bottom,
-      transparent 0, #000 var(--scroll-fade), #000 100%);
+      transparent 0, #000 var(--scroll-fade),
+      #000 calc(100% - var(--body-end) - var(--scroll-fade)),
+      transparent calc(100% - var(--body-end)));
   mask-image: linear-gradient(to bottom,
-      transparent 0, #000 var(--scroll-fade), #000 100%);
+      transparent 0, #000 var(--scroll-fade),
+      #000 calc(100% - var(--body-end) - var(--scroll-fade)),
+      transparent calc(100% - var(--body-end)));
 }
 
 /* Entering a view fades its body in. Transform and opacity only (§9), and

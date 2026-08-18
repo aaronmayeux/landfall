@@ -301,6 +301,49 @@ ok(missing.length === 0, `every referenced custom property resolves (${refs.size
 }
 
 /* ---------------------------------------------------------------------------
+ * THE SCROLLER STOPS AT THE PANEL'S ROUNDED CORNER
+ *
+ * The wide rail is rounded on its right edge and the scrollbar lives on that
+ * same edge, so a scroller filling the panel to the last pixel put the bar's
+ * final 16px where the glass had already curved away. A scrollbar cannot be
+ * shortened on its own — it always fills its scroller — so the scroller ends
+ * early instead, via a transparent bottom border of exactly `--radius-large`.
+ *
+ * ==> AND THE FIRST ATTEMPT SILENTLY DID NOTHING. <== The default lives on
+ * `.drawer-body`; the wide override sits ~200 lines earlier in the same file.
+ * A media query adds NO specificity, so a bare `.drawer-body` inside it tied
+ * with the default and lost on source order — computed value `0px`, corner
+ * exactly as broken, fix apparently in place. Caught only by reading the
+ * computed style out of a browser instead of trusting the diff.
+ * ------------------------------------------------------------------------- */
+{
+  const panels = strip(fs.readFileSync('ui/panels.css', 'utf8'));
+  ok(
+    /--body-end:\s*0px/.test(panels),
+    'the scroller has a zero default inset — the phone sheet has square bottom '
+    + 'corners and must not lose the room'
+  );
+  ok(
+    /#drawer\s+\.drawer-body\s*\{\s*--body-end:\s*var\(--radius-large\)/.test(panels),
+    'the wide rail insets the scroller by its OWN corner radius, and does it '
+    + 'through an id so the rule cannot lose to the later default on source '
+    + 'order — a media query carries no specificity of its own'
+  );
+  ok(
+    /border-bottom:\s*var\(--body-end\)\s+solid\s+transparent/.test(panels),
+    'and it does it with a transparent border, which is the only thing that '
+    + 'moves a scrollbar track without an extra wrapper element'
+  );
+  ok(
+    (panels.match(/transparent calc\(100% - var\(--body-end\)\)/g) || []).length === 2,
+    'both mask declarations back their bottom fade off by the same inset — the '
+    + 'mask is measured from the BORDER box, so a fade ending at 100% would '
+    + 'land inside the transparent border where nothing paints, and the content '
+    + 'would be guillotined mid-glass instead'
+  );
+}
+
+/* ---------------------------------------------------------------------------
  * HOVER IS ITS OWN TOKEN, NOT A PANEL COLOR
  *
  * Row hovers were painted with `--glass-raised`, which is the color of a

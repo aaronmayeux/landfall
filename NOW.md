@@ -48,6 +48,16 @@ light wash in dark and a dark one in light, on all four hoverable surfaces.
 land clearly without reading as a selection.** If hover is still quiet the
 number to turn is the one token.
 
+**The drawer's scrollbar stops at the rounded corner, and the body fades at the
+bottom too.** `SPEC-UI.md` §16. The wide rail is rounded on its right edge and
+the scrollbar lives on that edge, so the track ran straight through the curve. A
+scrollbar cannot be shortened on its own, so the scroller now ends one
+`--radius-large` early via a transparent bottom border — which moved the content
+clip up with it, hence the matching bottom fade. Phone sheet unaffected: square
+bottom corners, no visible bar. **Judge on the desktop: does the bar now end
+where the corner starts, and does content dissolve into the bottom edge rather
+than stopping at a line.**
+
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. The patch layer read `globeRisk`, which only NHC areas carry, so every
 JTWC area drew with the Low hue, the loosest hatch and the weakest fill no matter

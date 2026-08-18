@@ -1362,7 +1362,7 @@ and 309px into a 424px body); that is fine and the rule is reachability, not
 location. Settings is the one to watch — its target is whichever segment is
 checked, so it moves with the reader's own preferences.
 
-**CONTENT DISSOLVES UNDER THE HEADER, IT IS NOT GUILLOTINED BY IT.** Every
+**CONTENT DISSOLVES AT BOTH ENDS, IT IS NOT GUILLOTINED AT EITHER.** Every
 view's `.drawer-body` carries a 12px fade band at its top (`--scroll-fade`), so
 a row scrolling up under the title thins out instead of being cut clean in half
 at the scroller's edge — a hard cut reads as a rendering fault rather than as
@@ -1377,6 +1377,35 @@ layer that already exists and costs nothing per frame. The same 18px is also the
 scroller's TOP PADDING, and that is load-bearing: a mask on a scroller is fixed
 to the element's own box rather than to the content, so without matching padding
 the first row would sit permanently half-faded at rest.
+
+**THE SCROLLER STOPS AT THE PANEL'S ROUNDED CORNER, AND THE BOTTOM FADE EXISTS
+BECAUSE OF IT.** The wide rail is rounded on its right edge and the scrollbar
+lives on that same edge, so a body filling the panel to the last pixel ran its
+track through the curve — a straight bar carrying on past the edge of the thing
+it belongs to. A scrollbar cannot be shortened on its own; it always fills its
+scroller. So the scroller ends early, via a transparent bottom border of exactly
+`--radius-large` (`--body-end`), which is where a scrollbar track stops because
+a track is laid out inside the border edge. Clipping it with `overflow: hidden`
+on the drawer would have trimmed the bar to the curve, and a thumb sliced off on
+a diagonal is a different wrong answer rather than the right one. **The phone
+sheet leaves `--body-end` at zero:** its bottom corners are square and a phone
+has no visible scrollbar to run into them.
+
+Moving the scroller's edge up moves the CONTENT CLIP up with it, and a hard cut
+floating 16px above the panel's own bottom edge reads as a rendering fault
+exactly the way the top one did — which is why the mask now fades at both ends.
+**Every bottom mask stop backs off by `--body-end` first**, because `mask-origin`
+is the border box: a fade ending at 100% would land inside the transparent
+border where nothing paints and would do nothing at all. The 16px of bottom
+padding is what keeps the last row crisp at rest, the same relationship the top
+stop has with its own padding.
+
+**THE WIDE OVERRIDE IS `#drawer .drawer-body`, NOT `.drawer-body`.** The default
+sits ~200 lines further down the same stylesheet and a media query carries no
+specificity of its own, so the class-only version tied and lost on source order:
+the property computed to `0px` and the corner stayed exactly as broken with the
+fix apparently in place. Caught only by reading the computed style out of a
+browser. `tools/test-css-vars.mjs` pins the selector.
 
 **THE PADDING MUST EQUAL THE MASK EXACTLY, AND BOTH DIRECTIONS ARE BUGS.**
 Shorter and the first line renders inside the gradient — measured at 8px against

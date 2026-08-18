@@ -94,8 +94,8 @@ real home is the other row carrying the same section number.
 | `15` | Open decisions — RETIRED | `SPEC.md` | 2236-2242 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1017-1018 |
 | `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2243 |
-| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1563-1731 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1732-1950 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1592-1760 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1761-1979 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
 | `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2249 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-99 |
@@ -167,7 +167,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1345-1431 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3219-3236 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3237-3245 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2142-2288 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2171-2317 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1432-1562 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 63-64 |
 | `46.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 65-73 |
@@ -186,7 +186,7 @@ real home is the other row carrying the same section number.
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 543-568 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 569-605 |
 | `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 606-951 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2307-2404 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2336-2433 |
 | `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 952-975 |
 | `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 976-1071 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1563-1564 |
@@ -197,16 +197,16 @@ real home is the other row carrying the same section number.
 | `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1684-1713 |
 | `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1714-1741 |
 | `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1742-1786 |
-| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2405-2456 |
-| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2457-2476 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2477-2493 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2434-2485 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2486-2505 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2506-2522 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1787-1832 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1071-1088 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 1072-1073 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1074-1129 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1130-1155 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1833-1918 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2494-2516 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2523-2545 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1156-1208 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1209-1260 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1261-1379 |
@@ -227,7 +227,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 206,134 | 38 |
 | `SPEC-NEXT.md` | 108,229 | 32 |
 | `SPEC-OPS.md` | 67,283 | 14 |
-| `SPEC-UI.md` | 146,773 | 10 |
+| `SPEC-UI.md` | 148,726 | 10 |
 | `SPEC.md` | 149,784 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 
