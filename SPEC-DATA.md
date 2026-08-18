@@ -674,7 +674,11 @@ bytes disproved them.
 - **==> SURGE IS NOT BANDS ONLY. <==** Every advisory carries coastal LINES
   beside the polygons, each with its own color and depth — roughly half the
   features on Milton. Layer 1 (Lines) and layer 2 (Polygons) are both required;
-  drawing only the bands drops half the product.
+  drawing only the bands drops half the product. **Reaches are breakpoint lines
+  and band onto the real coast the same way a watch/warning does; when there is
+  no coast under one, it draws as the dashed chord of SPEC-MAP.md §7.10, not as
+  a reach stroke.** The polygons are areas NHC drew itself — never chords, so
+  nothing about them is approximated and they are never dashed.
 - **A "surge band" is not a surge WATCH/WARNING.** Surge watch/warning does not
   exist as a vector product anywhere in NHC's services. Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
   NHC_Breakpoints is static reference points. **Surge is bands only.** Any design

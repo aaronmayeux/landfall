@@ -1961,6 +1961,60 @@ export const STORM_GEO = Object.freeze({
   stripeGlowScale:    1.3,
   stripeOpacity:      0.9,
 
+  /** THE UNBANDED CHORD — how a watch/warning or surge reach draws when there
+   *  is NO COASTLINE UNDER IT TO PAINT (map/coast-fallback.js, §7.10).
+   *
+   *  ==> THE FALLBACK USED TO WEAR THE STRIPE'S OWN CLOTHES, AND THAT WAS THE
+   *  BUG. <== NHC publishes these products as BREAKPOINTS joined by straight
+   *  lines. Where the basemap has coast, we select it and repaint it, and the
+   *  result IS the shoreline. Where it does not, `map/coast-band.js` keeps
+   *  NHC's delivered chord — correctly, because official geometry is not ours
+   *  to discard — and that chord was then drawn at `stripeCoreScale` over
+   *  `stripeGlowScale`, pixel-identical to a real snapped shore.
+   *
+   *  Seen on glass on Lala, 2026-08-18, advisory 25: a Tropical Storm Watch
+   *  and a Hurricane Watch for the Northwestern Hawaiian Islands — French
+   *  Frigate Shoals to Maro Reef to Lisianski, all real land, all atolls too
+   *  small for the basemap to carry. Two fat solid strokes across open ocean,
+   *  reading as "we drew a coastline in the middle of the sea".
+   *
+   *  A GUESS MUST NOT LOOK LIKE A MEASUREMENT (§5). So the chord is restyled
+   *  rather than removed — removing it is the silence §5 forbids, with a
+   *  Hurricane Watch in force and nothing on the map to say so.
+   *
+   *  THINNER THAN THE COASTLINE IT IS NOT. 1.0 against the stripe's 1.8, on
+   *  the same zoom curve, so it can never again be mistaken for an emphasised
+   *  shore. It also inherits the depth fade, which means at globe distance the
+   *  dash is sub-pixel and effectively gone — deliberate. Out there the DOTS
+   *  are the signal and the dash is only a connector. */
+  chordScale:        1.0,
+
+  /** Dash pattern, in multiples of the line's own width — so it scales with
+   *  the zoom curve instead of turning into a solid line when the stroke gets
+   *  thin. Equal on and off: a dash reads as "approximate" at a glance and a
+   *  solid line does not, and that is the entire job. */
+  chordDash:         [2, 2],
+
+  /** Below the stripe's 0.9. The chord is the weakest honest statement the
+   *  map can make about a real government order — present, findable, and
+   *  visibly less certain than paint on a real shore. */
+  chordOpacity:      0.6,
+
+  /** THE BREAKPOINTS THEMSELVES, as dots. NHC's line is not a shape it
+   *  measured — it is the straight joins between NAMED PLACES, and those
+   *  places are the only part of the geometry that is exactly true. Drawing
+   *  them is what turns a wrong-looking line into a right-looking one: the
+   *  reader sees anchors with an approximation strung between them.
+   *
+   *  A FIXED PIXEL RADIUS, NOT A ZOOM CURVE, and that is the opposite choice
+   *  from the chord beside it. The dash may fade out at globe distance; these
+   *  may not, or the layer says nothing at exactly the zoom the app opens at.
+   *  A dot here is a LABEL — "the order reaches this place" — never a
+   *  footprint, so it does not scale with the ground it sits on (the same
+   *  reasoning map/watch-marks.js gives for `sizeAttenuation: false`). */
+  chordMarkRadius:   3.5,
+  chordMarkStroke:   1,
+
   /** WIND FIELD (Phase 6 step 2) — three nested bands, colors from the §6
    *  fixed contract in WIND_BAND_COLOR. These are the only tunable values;
    *  the hues are not themeable and are not here.

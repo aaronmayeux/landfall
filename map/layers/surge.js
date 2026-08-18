@@ -78,6 +78,7 @@ import { SURGE_RAMP, OPACITY, STORM_GEO } from '../../config/tokens.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
+import { chordLayers, chordMarks, IS_BANDED, NOT_MARK } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-surge';
@@ -112,8 +113,13 @@ function colorExpression() {
   return ['match', ['get', 'color'], ...stops, SURGE_RAMP[0].color];
 }
 
-const isPolygon = ['==', ['get', 'kind'], 'polygon'];
-const isLine = ['==', ['get', 'kind'], 'line'];
+/* ==> `NOT_MARK` ON BOTH, BECAUSE A BREAKPOINT DOT INHERITS ITS PARENT'S
+ * PROPERTIES. <== A mark cut from a reach carries `kind: 'line'`, so without
+ * this the fill and reach layers would each try to draw a Point as their own
+ * kind of thing. MapLibre would quietly render nothing and the dots would look
+ * fine — until a source schema change made it render something. */
+const isPolygon = ['all', ['==', ['get', 'kind'], 'polygon'], NOT_MARK];
+const isLine = ['all', ['==', ['get', 'kind'], 'line'], NOT_MARK];
 
 /** Paint the reaches onto the loaded coastline; leave the areas alone.
  *
@@ -176,7 +182,14 @@ function decorated(map, key, fc, stamp) {
   const areas = all.filter((f) => f.properties?.kind !== 'line');
   if (!reaches.length) return { type: 'FeatureCollection', features: areas };
   const { features } = bandFor(map, bandKey(key), reaches, stamp, SURGE.bandHalfWidthKm);
-  return { type: 'FeatureCollection', features: [...areas, ...features] };
+  /* Reaches that found no coast keep NHC's chord and get their breakpoints
+   * dotted, exactly as a watch/warning does (§7.10). ONLY the reaches: the
+   * polygons are areas NHC drew itself, never breakpoint chords, so there is
+   * nothing about them to admit. */
+  return {
+    type: 'FeatureCollection',
+    features: [...areas, ...features, ...chordMarks(features)],
+  };
 }
 
 function surgeLayers(id, source, minzoom) {
@@ -228,12 +241,17 @@ function surgeLayers(id, source, minzoom) {
      * The scales are the stripe's own. Surge and watch/warning are mutually
      * exclusive segments of one control, so a reach and a warning SHOULD wear
      * the same weight; only the color differs. */
+    /* ==> `IS_BANDED` — THE REACH STROKE DRAWS ONLY WHAT IT SNAPPED. <== A
+     * reach with no coast in its corridor keeps NHC's straight chord, and
+     * dressed in this same weight it was indistinguishable from a real
+     * shoreline carrying a depth forecast. Those go to
+     * map/coast-fallback.js instead (§7.10). */
     ...['glow', 'core'].map((part) => ({
       id: `${id}-reach-${part}`,
       type: 'line',
       source,
       ...zoomFloor,
-      filter: isLine,
+      filter: ['all', isLine, IS_BANDED],
       layout: { 'line-cap': 'round', 'line-join': 'round', 'line-sort-key': sortKey },
       paint: {
         'line-color': color,
@@ -249,6 +267,15 @@ function surgeLayers(id, source, minzoom) {
             }),
       },
     })),
+
+    /* LAST, so the breakpoint dots sit above the bands and the reach strokes.
+     * A dot buried under an opaque surge polygon says nothing. `extraFilter`
+     * carries the `kind` test this module has no business knowing about. */
+    ...chordLayers(id, source, minzoom, {
+      color,
+      sortKey,
+      extraFilter: [['==', ['get', 'kind'], 'line']],
+    }),
   ];
 }
 

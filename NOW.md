@@ -34,6 +34,17 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**A warning drawn where there is no coast now admits it.** `SPEC-MAP.md` §7.10,
+`SPEC-DATA.md` §4.8. Lala's watch and warning for the Northwestern Hawaiian
+Islands fell back to NHC's raw breakpoint chord — correctly, the atolls are below
+what the basemap carries — but drew it in the coastal stripe's own paint, so a
+guess looked exactly like a measurement. Unbanded products are now a thin dashed
+chord with a dot on every breakpoint; surge reaches got the same treatment, since
+they band through the identical code. **Judge: does a dashed line with dots read
+as "approximate, anchored at these places" rather than as a broken layer, and are
+the dots findable at the zoom the app opens at** — that is the whole reason they
+do not ride the coastline's zoom curve. Lala is live and out there now.
+
 **The environment ribbon paints a cone the rebuild refused to redraw, confirmed
 on Lala.** `SPEC-MAP.md` §7.9, §47.5, `SPEC-UI.md` §47.9. Judged on glass and
 corrected twice in the same pass — the ribbon sat a few pixels off the cone, and
@@ -609,6 +620,11 @@ same pass as the engine upgrade** — both are surgery on `map/globe3d.js`.
   pmtiles lines never run. A Pages Function is not downloaded by a visitor, so
   this costs nothing on the wire — it is a maintenance question, not a
   performance one. `[DECIDE]` whether R2 is still wanted as an option.
+- **The drawer does not say which watch/warning products fell back to a chord.**
+  `SPEC-UI.md` §16, `SPEC-MAP.md` §7.10. The IN EFFECT rows read the raw NHC
+  slot and have no view of what the map managed to snap; saying it there means
+  plumbing map state into the panel. Left undone deliberately now the map admits
+  it itself. Revisit only if glass says the dashed chord is not enough.
 - **The `> 0` guard on `index-of` in the state-name suffix trim is untested.**
   Its suite went with the three-globe cut. `SPEC-MAP.md` §11.2.
 - **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**

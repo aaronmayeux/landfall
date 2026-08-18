@@ -57,7 +57,10 @@ const toRad = Math.PI / 180;
  * across coast NHC never warned.
  * ------------------------------------------------------------------------- */
 
-function lineParts(geometry) {
+/** EXPORTED because map/coast-fallback.js walks the SAME parts to place a dot
+ *  on every breakpoint, and two copies of "what counts as a part" would drift
+ *  the moment either learned about a new geometry type. */
+export function lineParts(geometry) {
   if (!geometry) return [];
   if (geometry.type === 'LineString') return [geometry.coordinates];
   if (geometry.type === 'MultiLineString') return geometry.coordinates;

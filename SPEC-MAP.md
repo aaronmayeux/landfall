@@ -864,7 +864,8 @@ avoid — only coast in the band or out of it.
 - **Fallback keeps NHC's chords, flagged `_banded: false`** with a reason
   (`no-coastline` / `no-coast-in-band` / `not-a-line`). Official geometry isn't ours
   to curve, and no coast loaded in the corridor is `unavailable` (§5), never "no
-  warning here".
+  warning here". **How that chord DRAWS is §7.10** — deliberately not in this
+  stripe's paint.
 - **The legend dedupes by type** (`wwLegend`). One warning paints several coast runs;
   iterating naively stacks five identical rows.
 - **`tcww` is the field carrying the TCWW code.** `lib/watchwarning.js` reads it
@@ -1082,6 +1083,70 @@ across the western half of the West Pacific. Everything is moved onto the
 track's branch before it is measured; rings move as one piece after being made
 continuous, because per-vertex would tear a straddling ring across the world.
 
+
+### 7.10 When there is no coast to paint — the dashed chord and its breakpoints
+
+`map/coast-fallback.js`, shared by the watch/warning stripe (§7.7) and the surge
+reaches (§40). One module, both callers, because the trap is identical on each.
+
+**The rule: a guess must not look like a measurement (§5).** The band select
+paints a product onto real coastline where it can find some. Where it cannot, it
+keeps NHC's delivered chord — the straight joins between named breakpoints —
+flagged `_banded: false`. Keeping it is right; a warning that vanishes is the
+silence §5 forbids. **Drawing it in the stripe's own paint was not.**
+
+**Measured on glass, Lala advisory 25, 2026-08-18.** A Tropical Storm Watch
+(French Frigate Shoals → Maro Reef) and a Hurricane Watch (Maro Reef →
+Lisianski Island), both for the Northwestern Hawaiian Islands. Real orders on
+real land — atolls a few hundred metres across, far below anything OpenMapTiles
+carries, so both features fell back. On the phone: two fat solid strokes across
+empty Pacific with no land in frame, reading as "the app drew a coastline in the
+middle of the sea." The flag had existed since the band select was written and
+nothing had ever read it.
+
+**What an unbanded product draws now**
+
+| | Banded (§7.7) | Unbanded (here) |
+|---|---|---|
+| stroke | `stripeCoreScale` 1.8 + glow 1.3 | `chordScale` 1.0, no glow |
+| pattern | solid | dashed, `chordDash` in line-width multiples |
+| opacity | `stripeOpacity` 0.9 | `chordOpacity` 0.6 |
+| breakpoints | — | a dot at every vertex, `chordMarkRadius` |
+
+- **The dots are the point.** NHC's line is not a shape it surveyed; it is the
+  straight joins between named places, and those places are the only part of the
+  geometry that is exactly true. Anchors with an approximation strung between
+  them is an honest picture; a confident solid stroke is not.
+- **The dash rides the coastline's zoom curve and the dots do not.** At globe
+  distance the dash is sub-pixel and effectively gone — deliberate. Out there
+  the dots carry the layer, at a fixed pixel radius, because the app OPENS at
+  that zoom and a layer that goes silent there says nothing when it matters
+  most. A dot is a LABEL, never a footprint (the same reasoning
+  `map/watch-marks.js` gives for `sizeAttenuation: false`).
+- **Colour is untouched.** Saffir-Simpson and the NHC watch/warning hues are the
+  §6 fixed contract. A Hurricane Watch is pink whether or not we managed to snap
+  it to a shore. What the fallback changes is the CONFIDENCE the drawing claims,
+  never the severity it reports.
+- **Shared breakpoints are not deduped.** Adjacent products butt end to end —
+  Lala's watch and warning share Maro Reef exactly — so two dots of different
+  colours land on one coordinate. Merging would mean choosing a colour for a
+  place genuinely under both orders; the sort key already answers that
+  everywhere else products overlap, so it answers here (§6).
+- **Marks copy their parent's properties wholesale**, which is what lets the
+  caller's existing colour and sort-key expressions work on a dot without
+  knowing dots exist. They must therefore be cut AFTER the layer stamps its
+  colour on: cut a line earlier and `to-color` of undefined renders every dot
+  BLACK, silently, in both themes — the failure `map/layers/points-forecast.js`
+  already paid for once. `tools/test-coast-fallback.mjs` drives a real bundle
+  through the engine to pin it.
+- **Stripe and reach layers filter to `_banded: true`.** That filter is the fix;
+  without it the chord goes straight back to wearing the coastline's paint, with
+  nothing erroring.
+
+**Known open:** the drawer's IN EFFECT rows (SPEC-UI.md §16) do not say which
+products fell back. The panel reads the raw NHC slot and has no view of what the
+map snapped, so saying it there means plumbing map state into the panel. Left
+undone deliberately — the map now says it itself.
 
 ### 47.5 The environment ribbon — the cone, colored by what the environment is worth
 

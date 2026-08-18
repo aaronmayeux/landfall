@@ -48,6 +48,7 @@ import { ZOOM, COAST_BAND } from '../../config/constants.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { wwCodeFromProps, wwColor, wwSortKey } from '../../lib/watchwarning.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
+import { chordLayers, chordMarks, IS_BANDED } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-ww';
@@ -75,19 +76,25 @@ const drawingOff = () => segment !== 'watchWarning';
  *  when a new advisory replaces the geometry. */
 function decorated(map, key, fc, stamp) {
   const { features } = bandFor(map, key, fc?.features, stamp);
+  const painted = features.map((f) => {
+    const code = wwCodeFromProps(f.properties);
+    return {
+      ...f,
+      properties: {
+        ...f.properties,
+        _color: wwColor(code) || CATEGORY_COLOR.GENERIC,
+        _sev: wwSortKey(code),
+      },
+    };
+  });
+  /* ==> DOTS AFTER COLORING, NEVER BEFORE. <== A mark copies its parent's
+   * properties, so it has to be cut from a feature that already carries
+   * `_color` and `_sev` — cut it first and every breakpoint dot on the map
+   * renders in `to-color` of undefined, which is black, silently
+   * (map/coast-fallback.js). */
   return {
     type: 'FeatureCollection',
-    features: features.map((f) => {
-      const code = wwCodeFromProps(f.properties);
-      return {
-        ...f,
-        properties: {
-          ...f.properties,
-          _color: wwColor(code) || CATEGORY_COLOR.GENERIC,
-          _sev: wwSortKey(code),
-        },
-      };
-    }),
+    features: [...painted, ...chordMarks(painted)],
   };
 }
 
@@ -109,13 +116,21 @@ function decorated(map, key, fc, stamp) {
  *  one definition of how wide a coastline is. */
 function lineLayers(id, source, minzoom) {
   const zoomFloor = minzoom != null ? { minzoom } : {};
+  const color = ['get', '_color'];
+  const sortKey = ['get', '_sev'];
   const shared = {
     type: 'line',
     source,
+    /* ==> THE STRIPE NOW DRAWS ONLY WHAT IT ACTUALLY SNAPPED. <== Everything
+     * in this source used to land in these two passes, banded coastline and
+     * unsnapped NHC chord alike, so a straight line across open water wore the
+     * same paint as a recolored shore. The unbanded half moves to
+     * map/coast-fallback.js and draws as an admitted approximation (§7.10). */
+    filter: IS_BANDED,
     layout: {
       'line-cap': 'round',
       'line-join': 'round',
-      'line-sort-key': ['get', '_sev'],
+      'line-sort-key': sortKey,
     },
   };
   return [
@@ -140,6 +155,10 @@ function lineLayers(id, source, minzoom) {
         'line-opacity': STORM_GEO.stripeOpacity,
       },
     },
+    /* LAST, so the breakpoint dots sit ABOVE the stripe. Adjacent products
+     * routinely share a breakpoint and only one of them may have found coast
+     * to snap to; the dot marking the other one must not be buried under it. */
+    ...chordLayers(id, source, minzoom, { color, sortKey }),
   ];
 }
 
