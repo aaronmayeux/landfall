@@ -34,17 +34,6 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The light-mode glyph wears a keyline instead of a drop shadow.** `SPEC-MAP.md`
-§9.13. The blurred halo that reads as depth on the night globe read as a grey
-smudge under the mark on the pale daytime one. The ink stays — deleting it drops
-every fill below Cat 4 under the 3:1 findability floor against the light ocean,
-and `contrast-check.mjs` would keep passing because it reads the token and not
-the render — but in light it is now a crisp rim at `SIZE.glyphKeylineWeight`
-with no blur. **Judge in light mode on glass: is the edge a clean line at every
-category, or does it read heavy on a TD and thin on a Cat 5.** The weight is the
-one dial; 0.07 is a hair under one screen pixel and is the thinnest a continuous
-rim can be before the 6.4x texture downscale breaks it into speckle.
-
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. The patch layer read `globeRisk`, which only NHC areas carry, so every
 JTWC area drew with the Low hue, the loosest hatch and the weakest fill no matter
