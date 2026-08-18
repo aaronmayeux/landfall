@@ -32,6 +32,8 @@ const section = (n) => console.log(`\n  ${n}`);
 const { simplifyRing } = await import('../lib/simplify.js');
 const { splineClosedRing } = await import('../lib/ringpolish.js');
 const { smoothCone } = await import('../lib/cone-smooth.js');
+const { sweepConeDetail } = await import('../lib/cone-sweep.js');
+const { smoothTracks } = await import('../lib/trackline.js');
 const { CONE_CURVE, TRACK_LINE, SIMPLIFY } = await import('../config/constants.js');
 
 const OPTS = {
@@ -339,6 +341,69 @@ section('which of the two paths runs');
     ] } } } };
   ok(smoothCone(split).layers.cone.fc.features[0].properties._swept === false,
      'a track that would not assemble into one line falls back rather than guessing a spine');
+}
+
+/* ---------------------------------------------------------------------------
+ * THE FALLBACK STILL MEASURES — §7.9, §47.5.
+ *
+ * ==> `tools/test-cone-sweep.mjs` PROVES `measureConeRibs` WORKS. IT CANNOT
+ * PROVE IT IS CALLED. <== That suite reaches for the function directly, so
+ * deleting the call from this file leaves all 54 of its assertions green while
+ * the environment ribbon goes back to vanishing on every hard-turning storm —
+ * the exact bug, passing its own test. Verified by doing it. This block is the
+ * wiring, asserted through `smoothCone` where the wiring lives.
+ * ------------------------------------------------------------------------- */
+section('a rebuild that declines still hands over stations');
+{
+  const idaDir = 'samples/ida-al092021/gis';
+  let refusedCone = null;
+  let refusedTrack = null;
+
+  for (const d of fs.readdirSync(idaDir).sort()) {
+    const pg = `${idaDir}/${d}/5day_pgn.geojson`;
+    const ln = `${idaDir}/${d}/5day_lin.geojson`;
+    if (!fs.existsSync(pg) || !fs.existsSync(ln)) continue;
+    const poly = JSON.parse(fs.readFileSync(pg, 'utf8'))
+      .features.find((f) => f.geometry?.type === 'Polygon');
+    const linfc = JSON.parse(fs.readFileSync(ln, 'utf8'));
+    if (!poly) continue;
+    const sm = smoothTracks(
+      { layers: { forecastTrack: { status: 'ok', fc: linfc } }, forecast: [], past: [] },
+      'Ida'
+    );
+    const feats = sm.layers.forecastTrack.fc.features;
+    if (feats.length !== 1 || feats[0].geometry.type !== 'LineString') continue;
+    if (sweepConeDetail(feats[0].geometry.coordinates, poly.geometry.coordinates)) continue;
+    refusedCone = poly;
+    refusedTrack = sm;
+    break;
+  }
+
+  ok(!!refusedCone,
+     'the corpus still contains an advisory the rebuild declines — without one this block proves nothing');
+
+  if (refusedCone) {
+    const bundle = smoothCone({
+      ...refusedTrack,
+      layers: {
+        ...refusedTrack.layers,
+        cone: { status: 'ok', fc: { type: 'FeatureCollection', features: [refusedCone] } },
+      },
+    }, 'Ida');
+    const cone = bundle.layers.cone;
+
+    ok(cone.fc.features[0].properties._swept === false,
+       'the DRAWING falls back to the published outline, exactly as it always did');
+    ok(Array.isArray(cone.ribs) && cone.ribs.length >= 2,
+       `and the stations come back anyway — ${cone.ribs?.length ?? 0} of them`);
+    ok(!!cone.caps?.start && !!cone.caps?.end,
+       'with both caps, or the nose and tail read as grey blobs on a colored cone');
+    ok(!!cone.ribs?.some((r) => r.ok === false),
+       'and the stations it cannot vouch for are MARKED rather than dropped — dropping one would shift every forecast hour after it');
+    const usable = cone.ribs?.filter((r) => r.ok).length ?? 0;
+    ok(usable > (cone.ribs?.length ?? 0) * 0.8,
+       `while most of them are usable (${usable}/${cone.ribs?.length ?? 0}) — a fallback that marks everything bad is the old silence wearing a fix's clothes`);
+  }
 }
 
 section('the antimeridian');

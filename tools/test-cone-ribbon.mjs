@@ -336,6 +336,63 @@ const lines = (b) => b.features.filter((f) => f.properties._kind === 'line');
     'and a whole-knot figure, which is the precision SHIPS publishes');
 }
 
+/* ---------------------------------------------------------------------------
+ * A STATION THAT COULD NOT BE MEASURED — §47.5.
+ *
+ * Ribs from lib/cone-sweep.js `measureConeRibs` — the path taken when the cone
+ * rebuild declines and the published outline is measured instead — carry
+ * `ok: false` where a ray missed or the edge doubles back on the inside of a
+ * bend. Both stations of a bad segment are marked, and the slice bounded by
+ * them is not a slice: its two edges cross, so it paints one stretch of cone
+ * TWICE, which is the double-blend §47.5's shared vertices exist to prevent.
+ *
+ * ==> LOSING A SLICE IS THE POINT, NOT A REGRET. <== Before this path existed a
+ * cone the rebuild would not draw got no ribbon at all — twelve of Ida's
+ * thirty-five advisories, a third of her life with no color. Skipping the one
+ * or two slices on a hard turn and keeping the rest is the trade, and it is the
+ * same trimming rule a slice already gets when its hours are not all drawable.
+ * ------------------------------------------------------------------------- */
+section('a station that could not be measured');
+{
+  const clean = fakeRibs(201);
+  const whole = buildRibbon({
+    ribs: clean, caps: fakeCaps(clean), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+  ok(whole.status === 'ok', 'the clean cone paints, so the comparison below means something');
+
+  /* One bad segment, mid-cone: two adjacent stations, as `measureConeRibs`
+   * marks them. Deliberately away from either end so no cap is involved. */
+  const holed = clean.map((r, i) => (i === 100 || i === 101 ? { ...r, ok: false } : r));
+  const gapped = buildRibbon({
+    ribs: holed, caps: fakeCaps(holed), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+
+  ok(gapped.status === 'ok',
+     'two unmeasurable stations cost a slice, NOT the ribbon — the whole failure this path exists to end');
+  const sliceCount = (b) => b.features.filter((f) => f.properties._kind === 'slice').length;
+  ok(sliceCount(gapped) < sliceCount(whole),
+     `and the slice across them is gone (${sliceCount(whole)} → ${sliceCount(gapped)})`);
+  ok(sliceCount(whole) - sliceCount(gapped) <= 2,
+     'and only that slice — one bad station must not take the cone with it');
+
+  /* ==> A SWEPT RIB HAS NO `ok` AT ALL AND MUST STILL BE TRUSTED. <== The two
+   * paths hand out different rib shapes, and a check written as `if (rib.ok)`
+   * rather than `if (rib.ok === false)` would silently drop every slice on the
+   * path that works today — the ribbon would vanish everywhere instead of
+   * nowhere, which is a worse version of the bug being fixed. */
+  ok(clean.every((r) => r.ok === undefined),
+     'the swept rib fixture carries no `ok`, which is what the sweep really returns');
+  ok(sliceCount(whole) > 50, 'and every one of its slices is painted regardless');
+
+  /* An end station marked bad takes its own cap and nothing else. */
+  const noNose = clean.map((r, i) => (i >= clean.length - 2 ? { ...r, ok: false } : r));
+  const capless = buildRibbon({
+    ribs: noNose, caps: fakeCaps(noNose), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+  ok(capless.status === 'ok' && sliceCount(capless) < sliceCount(whole),
+     'an unmeasurable end station drops its own cap and leaves the body painted');
+}
+
 section('a refused cone rebuild draws no ribbon and says which kind of nothing');
 
 {

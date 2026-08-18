@@ -222,14 +222,25 @@ the feed flips its bin from EP to CP, and the new block exists and is completely
 empty while the geometry is still in the old block at the previous advisory. In
 the Pacific a basin change is not an edge case.
 
-**THE ARCHIVE NOW SNAPSHOTS NHC TRACKS, AND IT IS WHY.** `tools/archive-fetch.mjs`
-derives layer 5 and layer 10 queries per active storm from `CurrentStorms.json`'s
-own `binNumber` and writes them under `latest/geometry/`. The storm LIST was
-archived from day one and the TRACK never was, which cost two bugs in one week —
-both of them questions about a per-position field that no session could read,
-because the sandbox cannot reach NOAA and `web_fetch` strips the query string an
-ArcGIS query *is*. Points layers only; the cone, lines and radii are
-geometry-heavy and answer questions nobody has been stuck on.
+**THE ARCHIVE SNAPSHOTS NHC TRACKS, AND IT IS WHY.** `tools/archive-fetch.mjs`
+derives a query per active storm per layer from `CurrentStorms.json`'s own
+`binNumber` and writes them under `latest/geometry/`. The storm LIST was archived
+from day one and the TRACK never was, which cost two bugs in one week — both of
+them questions about a per-position field that no session could read, because the
+sandbox cannot reach NOAA and `web_fetch` strips the query string an ArcGIS query
+*is*.
+
+**LAYERS 6 AND 7 WERE ADDED LAST, AND THE REASONING THAT KEPT THEM OUT IS THE
+LESSON.** They were excluded as "geometry-heavy, and they answer questions nobody
+has been stuck on." On 2026-08-18 somebody was stuck on exactly them: the cone
+rebuild sweeps 7 along 6 and those two are its ONLY inputs, so a report that the
+environment ribbon was vanishing on Lala had to be investigated against Ida's
+2021 GIS capture instead — a different storm, a different basin, five years
+earlier — and the finding could be generalised to Lala but never confirmed on
+her. A layer is worth archiving when it is the sole input to something that can
+fail, not when it has already caused trouble.
+
+The set is now 5, 6, 7, 8, 10, 13, 15 and 16.
 
 **`NHC_tropical_weather_summary` — the service the app reads.** 35 layers, every
 storm in one set keyed by `binnumber`. Fixed ids: no arithmetic, no stride, no

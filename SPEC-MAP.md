@@ -1015,6 +1015,41 @@ than the blur window can account for. **Every refusal is said once on the
 console** — the first version fell back silently, which is indistinguishable
 from running and being no good, and cost a full round of work to notice.
 
+**A REFUSAL COSTS THE DRAWING NOTHING AND MUST NOT COST THE MEASUREMENT
+EITHER.** `lib/cone-measure.js` `measureConeRibs` is the second path, taken by
+`lib/cone-smooth.js` whenever the rebuild declines. It casts the same
+perpendicular rays at the same stations and then stops — no blur, no gap-fill,
+no fold test, no ring. Every point it returns is a ray hit on the published
+polygon, which is the shape being drawn on that path, so §47.5's ribbon fits it
+by construction rather than by agreement. The published outline is drawn with
+its corners rounded (`curveGeometry`), which moves it by at most 3.1 km across
+the whole Ida corpus.
+
+Where it cannot vouch for a station — a ray that missed, or an edge that doubles
+back on the inside of a bend — the rib carries `ok: false` and `lib/cone-ribbon.js`
+skips the slice bounded by it. **The station is MARKED, never dropped:** one hour
+is mapped per rib by index, so removing one would shift every forecast hour after
+it. `measureConeRibs` refuses outright on the same 60% hit floor the rebuild
+uses; below that the track and the cone are not describing the same storm and
+§47.9 has a sentence for it.
+
+**Measured across every Ida advisory (35 cones, `samples/ida-al092021/gis`):** 23
+rebuild, 12 are measured, none are blind. The 12 that used to yield nothing now
+color 86–98% of their published area; the 23 sit at 99.8%.
+
+**THE REBUILD'S BAR STAYS HIGH, AND ONE ATTEMPT TO LOWER IT IS WORTH THE
+PARAGRAPH.** The fold guard was found to be refusing a third of Ida's advisories
+— on advisory 006, from ONE station out of 316 — so the widths were held back to
+the exact bound at which it fires. All 35 then rebuilt, and ten of the twelve
+recovered outlines crossed themselves. The guard is a cheap PROXY for
+self-intersection, not a test of it, and holding every segment forward satisfies
+the proxy while the inside edge loops around and crosses further along. The
+finding underneath: a swept ribbon is the wrong model for a cone on a tight bend.
+A published cone is a union of growing circles, and on the inside of a bend that
+union's boundary is the outer envelope of the overlap; an offset curve has no
+envelope, so it loops. No threshold fixes that, which is why the second path
+measures rather than redraws.
+
 **THE THREE INPUTS DO NOT ARRIVE ON THE SAME BRANCH OF LONGITUDE.** §7.4 emits
 the smoothed track UNWRAPPED on purpose — past ±180, so MapLibre draws one
 continuous line across the seam — while the cone arrives wrapped into
@@ -1132,13 +1167,43 @@ either end makes every slice a whole step brighter or darker than the stretch
 it represents, which on a storm whose number moves 13–21 kt along one cone is a
 visible shift of the entire ribbon.
 
-**WHEN THE CONE REBUILD REFUSES, THE RIBBON DOES NOT DRAW.** §7.9 returns the
-published outline rather than a worse shape whenever the track cannot see its
-cone, a flank would fold, or the rebuild sits too deep inside the published
-shape. That outline has no stations, and a ribbon built from widths the guard
-has just rejected would sit visibly inside the drawn cone edge on exactly the
-storms where the measurement is least trustworthy. The layer row says so
-(§47.9) rather than painting it.
+**WHEN THE CONE REBUILD REFUSES, THE RIBBON IS MEASURED INSTEAD OF LOST.** §7.9
+returns the published outline rather than a worse shape whenever the track cannot
+see its cone, a flank would fold, or the rebuild sits too deep inside the
+published shape. That was the end of it until 2026-08-18, and it cost a third of
+Ida's advisories their entire ribbon — color that came and went between
+advisories on a storm whose SHIPS data never had a problem, which is what Aaron
+reported on Lala.
+
+The reasoning that stood behind it was that a ribbon built from widths the guard
+had just rejected would sit visibly inside the drawn cone edge. **That is true of
+the REBUILD's widths and not of a fresh measurement.** `lib/cone-measure.js`
+re-casts the rays against the published polygon and takes the raw hits, so every
+rib end lies ON the outline the map is drawing, to within a metre. Nothing is
+blurred, nothing is gap-filled, and no shape is invented — the two operations
+that make a width right for drawing are exactly what make it wrong for measuring
+someone else's.
+
+**A slice whose stations cannot both be vouched for is skipped, and the rest of
+the cone is painted.** Ribs from that path carry `ok: false` where a ray missed
+or the edge doubles back on the inside of a bend; the slice bounded by two of
+them has crossing edges and would paint one stretch of cone twice, which is the
+double-blend this section's shared vertices exist to prevent. The reader loses a
+slice or two on a hard turn — a visible unpainted band on the inside of the bend
+— and keeps 86–98% of the cone, against nothing at all before. A swept rib
+carries no `ok` and is trusted; the test is `=== false`, never a truthiness
+check, or every slice on the path that works today would silently vanish.
+
+**Both caps come from one builder.** A cap is the half-ellipse beyond the end
+station and no pair of stations spans it; without them a fully-colored cone shows
+a grey blob at each end (glass, 2026-08-15). The measured path was first written
+to CUT its caps out of the published polygon, which is exact on a cone running
+roughly straight and self-intersecting on a hooked one — the region ahead of the
+last station is then two disconnected pieces, and clipping joins them with a
+zero-width bridge. Measured on Ida 006A: one cap in thirty-five, and it would
+have been a hole punched through the veil at the day-5 circle. A parametric
+half-ellipse is anchored to the real cone at three ray hits and has no fourth
+crossing to find. A cap whose own end station is unmeasurable is not drawn.
 
 **THE JOIN IS BY FORECAST HOUR, NEVER BY SHIPS'S OWN COORDINATES.** SHIPS can
 be newer than the advisory — a 06 UTC run against a 00 UTC advisory (§47.2) —

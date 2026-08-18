@@ -1503,7 +1503,8 @@ drawer refactor renamed them all to `ui/view-*.js`), so check it against
 config/     constants.js  layers.js  motion.js  theme.js  tokens.js
 lib/        abpw.js  adeck.js  advisory.js  bandmerge.js  basin.js
             carq.js  category.js  catmullrom.js  cone-error.js
-            cone-smooth.js  cone-sweep.js  device-id.js  future-slots.js
+            cone-measure.js  cone-smooth.js  cone-sweep.js  device-id.js
+            future-slots.js
             genesis.js  geo.js  imagery.js  imagery-cache.js
             imagery-paint.js  jtwc-wind.js  lifecycle.js  outlook.js
             perf.js  place-label.js  population-count.js  replay-mode.js

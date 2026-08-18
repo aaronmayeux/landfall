@@ -31,7 +31,8 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
 const { sweepCone, sweepConeDetail } = await import('../lib/cone-sweep.js');
-const { smoothPath } = await import('../lib/trackline.js');
+const { measureConeRibs } = await import('../lib/cone-measure.js');
+const { smoothPath, smoothTracks } = await import('../lib/trackline.js');
 
 /* ---------------------------------------------------------------------------
  * FIXTURES
@@ -445,6 +446,150 @@ section('refusals — decline rather than draw something wrong');
   ok(sweepCone(smoothPath(C), []) === null, 'no rings, no rebuild');
   ok(sweepCone(null, [pub]) === null, 'no track at all is survivable');
   ok(sweepCone(smoothPath(C), [[[0, 0], [1, 1]]]) === null, 'a degenerate ring is refused');
+
+  /* ==> THE MEASURING PATH REFUSES ON THE SAME TERMS, AND HAS TO. <== It is
+   * the softer of the two by design — it marks stations instead of throwing
+   * the cone away — and the temptation is to let it answer for anything. The
+   * hit floor is where softness stops: below it the track and the cone are not
+   * describing the same storm, and slicing a shape the track can barely see
+   * would put confident color on a cone that is not this storm's. Refusing is
+   * the honest answer and §47.9 already has a sentence for it. */
+  ok(measureConeRibs(smoothPath(elsewhere), [pub]) === null,
+     'and a cone belonging to a different storm is not MEASURED either');
+  ok(measureConeRibs([[1, 1], [2, 2]], [pub]) === null, 'nor is a two-vertex track');
+  ok(measureConeRibs(smoothPath(C), []) === null, 'nor a cone with no rings');
+  ok(measureConeRibs(null, [pub]) === null, 'and no track at all is survivable here too');
+}
+
+/* ---------------------------------------------------------------------------
+ * A REBUILD THAT DECLINES MUST STILL MEASURE — §7.9, §47.5.
+ *
+ * ==> EVERY SYNTHETIC FIXTURE ABOVE PASSED WHILE THE REBUILD WAS REFUSING A
+ * THIRD OF A REAL HURRICANE. <== Measured 2026-08-18, after Aaron reported the
+ * environment ribbon appearing and disappearing between advisories: of the 35
+ * archived Ida cones, twelve were refused, all twelve at `folds`, and on
+ * advisory 006 the refusal came from ONE station out of 316. Nothing in this
+ * file turned hard enough or carried a cone wide enough relative to its turn to
+ * reach that, so the guard costing a third of the ribbons was invisible from
+ * inside it. That is what this block is for, and why it is a CORPUS rather than
+ * twelve named cases — the failure was not a wrong shape on one advisory, it
+ * was color that came and went as the storm turned.
+ *
+ * ==> THE REBUILD IS STILL ALLOWED TO REFUSE, AND MUST STAY ALLOWED TO. <== A
+ * first attempt held the widths back to where `folds` could not fire; all 35
+ * then swept and TEN of the twelve recovered outlines crossed themselves,
+ * because `folds` is a cheap proxy for self-intersection rather than a test of
+ * it. So nothing here asserts that the sweep succeeds. What it asserts is that
+ * a refusal costs the DRAWING nothing it was not already going to cost, and
+ * costs the MEASUREMENT nothing at all.
+ *
+ * The fixtures are NHC's own 5-day cone polygon and forecast track, run through
+ * the same `smoothTracks` the app applies before `smoothCone` ever sees them —
+ * the raw published line is not what the sweep is fed, and feeding it here
+ * would test a path that does not exist.
+ * ------------------------------------------------------------------------- */
+section('every cone Ida ever published');
+{
+  const dirs = fs.readdirSync('samples/ida-al092021/gis').sort();
+  const swept = [];
+  const measured = [];
+  const blind = [];
+  let crossed = 0;
+  let outside = 0;
+
+  /** Distance from a point to a ring, DEGREES.
+   *
+   *  ==> IT IS A DISTANCE AND NOT AN INSIDE/OUTSIDE TEST, AND THE FIRST
+   *  VERSION WAS THE SECOND. <== A measured rib point IS a ray hit on the
+   *  published outline, so it lies exactly ON the ring — and an even-odd
+   *  point-in-polygon test answers a coin flip for a point on its own edge. It
+   *  reported 317 of 357 ribs "outside" at a worst distance of 0.0 m. Asking
+   *  how far a point is from the outline is the question that was actually
+   *  meant, and it has an answer that is not about rounding. */
+  const toRing = (v, r) => {
+    let best = Infinity;
+    for (let i = 0; i < r.length - 1; i++) {
+      const a = r[i];
+      const b = r[i + 1];
+      const dx = b[0] - a[0];
+      const dy = b[1] - a[1];
+      const L = dx * dx + dy * dy;
+      let t = L ? ((v[0] - a[0]) * dx + (v[1] - a[1]) * dy) / L : 0;
+      t = Math.max(0, Math.min(1, t));
+      const qx = a[0] + t * dx - v[0];
+      const qy = a[1] + t * dy - v[1];
+      best = Math.min(best, qx * qx + qy * qy);
+    }
+    return Math.sqrt(best);
+  };
+  /** One metre, in degrees. Nothing this path does should exceed it. */
+  const ON_RING = 1e-5;
+
+  for (const d of dirs) {
+    const pg = `samples/ida-al092021/gis/${d}/5day_pgn.geojson`;
+    const ln = `samples/ida-al092021/gis/${d}/5day_lin.geojson`;
+    if (!fs.existsSync(pg) || !fs.existsSync(ln)) continue;
+    const poly = JSON.parse(fs.readFileSync(pg, 'utf8'))
+      .features.find((f) => f.geometry?.type === 'Polygon');
+    const linfc = JSON.parse(fs.readFileSync(ln, 'utf8'));
+    if (!poly) continue;
+
+    /* The app's own order: smooth the track, then work the cone along it. */
+    const sm = smoothTracks(
+      { layers: { forecastTrack: { status: 'ok', fc: linfc } }, forecast: [], past: [] },
+      'Ida'
+    );
+    const feats = sm.layers.forecastTrack.fc.features;
+    if (feats.length !== 1 || feats[0].geometry.type !== 'LineString') continue;
+    const track = feats[0].geometry.coordinates;
+    const rings = poly.geometry.coordinates;
+
+    const out = sweepConeDetail(track, rings);
+    if (out) {
+      swept.push(d);
+      if (selfIntersects(out.ring)) crossed++;
+      continue;
+    }
+
+    const m = measureConeRibs(track, rings);
+    if (!m) { blind.push(d); continue; }
+    measured.push(d);
+
+    /* ==> A MEASURED RIB IS A RAY HIT ON THE PUBLISHED OUTLINE, SO IT LIES ON
+     * IT. <== This is the entire justification for painting a ribbon on a cone
+     * the rebuild would not draw, and it is the one property worth asserting
+     * rather than trusting: if every rib end sits on the published edge, the
+     * color is inside the shape on screen by construction rather than by
+     * agreement. It is also what fails the moment somebody adds a blur or a
+     * gap-fill to this path for tidiness — both move a width off the outline,
+     * which is exactly right for a shape being drawn and exactly wrong for a
+     * measurement of somebody else's. `ok:false` ribs are parked on the track
+     * and carry no measurement, so they are not asked. */
+    for (const rib of m.ribs) {
+      if (!rib.ok) continue;
+      if (toRing(rib.left, rings[0]) > ON_RING) outside++;
+      if (toRing(rib.right, rings[0]) > ON_RING) outside++;
+    }
+    if (m.capStart && selfIntersects(m.capStart)) crossed++;
+    if (m.capEnd && selfIntersects(m.capEnd)) crossed++;
+  }
+
+  const total = swept.length + measured.length + blind.length;
+  ok(total >= 30, `the corpus is still there — ${total} advisories with a cone and a track`);
+
+  /* THE HEADLINE. Before this existed, `blind` was 12. */
+  ok(blind.length === 0,
+     `every advisory yields stations to slice — ${swept.length} swept, ${measured.length} measured${blind.length ? `, ${blind.length} blind (${blind.join(', ')})` : ''}`);
+
+  /* ==> AND THE CORPUS MUST STILL CONTAIN BOTH PATHS. <== If a future change
+   * makes the sweep accept everything, `measured` goes to zero and every
+   * assertion above passes while the path they were written for stops being
+   * exercised at all — a suite that quietly tests nothing. */
+  ok(measured.length > 0 && swept.length > 0,
+     `and both paths are exercised (${swept.length} swept, ${measured.length} measured)`);
+
+  ok(outside === 0, 'every measured rib end lands ON the published outline, within a metre');
+  ok(crossed === 0, 'and nothing either path hands out crosses itself');
 }
 
 section('the real GDACS payload');

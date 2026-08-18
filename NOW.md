@@ -34,25 +34,39 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The environment ribbon's two SILENT absences now speak, and that changes what
-a missing ribbon looks like rather than making one appear.** `SPEC-UI.md` §47.9.
-The Layers row was computed from the SHIPS fetch alone, so when a run was
-perfectly healthy and the RIBBON refused — the cone rebuild declining for that
-advisory (`no_ribs`), or the run's hours not reaching the cone
-(`nothing_drawable`) — the row said nothing at all and the ribbon came and went
-between advisories with no explanation anywhere. `lib/cone-ribbon.js` had named
-both all along; nothing read it. **THE NEXT STEP DEPENDS ON WHICH SENTENCE
-APPEARS.** If it is *This cone could not be measured*, the real work is in
-`sweepConeDetail`'s refusal guard (`lib/cone-sweep.js`) and this fix only made
-it visible. If nothing ever appears, the disappearance was something else and
-this line comes out.
+**The environment ribbon now paints a cone the rebuild refused to redraw, and
+that is most of the reason it kept disappearing.** `SPEC-MAP.md` §7.9, §47.5,
+`SPEC-UI.md` §47.9. The cone rebuild has always been allowed to decline — on a
+tight bend the swept edge loops and MapLibre fills the loop as a hole — and the
+map falls back to NHC's published outline, which is fine. What was NOT fine is
+that the ribbon fell with it: measured across all 35 archived Ida advisories,
+twelve were refused, a third of one storm's life with no color at all, appearing
+and disappearing as she turned. `lib/cone-measure.js` now re-casts the same rays
+against the published polygon and takes the raw hits, so the color sits inside
+the shape actually on screen. Twelve of twelve recovered, 86–98% of published
+cone area each; the 23 that already worked are byte-identical.
+
+**THE ONE THING TO JUDGE IS THE GAP ON A HARD TURN.** Where the inside edge
+doubles back, those slices are skipped rather than painted twice, so a
+sharply-recurving storm should show a thin unpainted band on the INSIDE of the
+bend. That is honest and it is 2–14% of the cone. The question is whether it
+reads as data or as a rendering fault. If it reads as a fault the fix is one
+wider slice bridging the gap, not a smaller threshold.
+
+**And the two silent absences now speak.** The Layers row was computed from the
+SHIPS fetch alone, so a healthy run whose ribbon refused on geometry produced no
+sentence anywhere. It reads the built ribbon now. With the above landed,
+*This cone could not be measured* should be rare — it now means BOTH paths were
+blind, not merely that the rebuild declined. If it still appears on a live storm,
+that is a different guard and worth measuring on its own.
+
+**The archive now holds NHC layers 6 and 7.** The cone and the forecast track are
+the rebuild's only two inputs and neither was ever snapshotted, so this entire
+investigation ran against Ida's 2021 capture and could never be confirmed on
+Lala. Next cone question is answerable on the actual storm.
 
 **The Environment section's legend now disappears with the layer switch.**
-`SPEC-NEXT.md` §47.11. The Layers panel's copy always did; the drawer's did not,
-so the key to a color sat under a paragraph while the map was painted in nothing.
-The paragraph, the figures and the credit stay — §47.8 fetches with the layer
-off on purpose. Judge whether the section reads as complete without the bar, or
-whether it now ends abruptly on the figures.
+`SPEC-NEXT.md` §47.11. Confirmed on glass. Nothing left to judge.
 
 **Rainfall is on two surfaces and neither has been seen.** `SPEC-DATA.md`
 §48.1–§48.7, `SPEC-UI.md` §48.8–§48.10. The storm drawer shows NHC's own

@@ -492,8 +492,22 @@ function geometrySources(eventListJson) {
  * instant in the live app and nowhere at all in the archive. They exist here
  * now. Four layers a storm an hour is the price of being able to measure the
  * band instead of arguing about it. */
+/* ==> AND LAYERS 6 AND 7, WITHOUT WHICH THE CONE CANNOT BE DEBUGGED AT ALL.
+ * <== §7.9, §47.5. The cone rebuild sweeps layer 7 along layer 6 and those two
+ * are the ONLY inputs it has. Neither was archived. So when Aaron reported the
+ * environment ribbon coming and going on Lala (2026-08-18), the one feature
+ * being diagnosed was the one with no real bytes anywhere — the whole
+ * investigation ran against Ida's 2021 GIS capture instead, a different storm
+ * in a different basin five years earlier, and the finding could only be
+ * generalised to Lala rather than confirmed on her.
+ *
+ * Two layers a storm an hour is the price of never being in that position
+ * again. It is also the pair that answers the first question about any cone
+ * fault: did the rebuild decline, and if so at which guard. */
 const NHC_STORM_LAYER = Object.freeze({
   forecastPoints: 5,
+  forecastTrack: 6,
+  cone: 7,
   watchWarning: 8,
   pastPoints: 10,
   windPast: 13,

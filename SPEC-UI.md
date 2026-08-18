@@ -2359,8 +2359,9 @@ count, and ENDED is checked before SILENT:
 computed from the built ribbon as well as the fetch so it can name them. The
 run behind both is healthy:
 
-- The cone rebuild declined for this advisory (`lib/cone-smooth.js`), so the
-  map is drawing NHC's published outline, which carries no stations to slice:
+- Neither path could put stations on this cone — the rebuild declined AND the
+  published outline could not be measured from the track either (§7.9's 60% hit
+  floor, which means the track and the cone are not describing the same storm):
   *This cone could not be measured, so there is nothing to color.*
 - The run's forecast hours reach no part of the cone, so every slice was
   trimmed: *This run does not reach any part of this cone.*
@@ -2368,6 +2369,12 @@ run behind both is healthy:
 Neither is retryable — the next advisory is the recovery. Both rank BELOW every
 fetch answer above: a typhoon has no ribs either, and saying its cone could not
 be measured would be true and useless.
+
+**A DECLINED REBUILD ON ITS OWN NO LONGER REACHES EITHER SENTENCE.** It did
+until 2026-08-18, and it was the common case rather than the corner one — a
+third of Ida's advisories. §7.9's measured path now supplies stations whenever
+the rebuild refuses, so `no_ribs` has narrowed to the genuine both-paths-blind
+answer it was always worded for.
 
 `lib/cone-ribbon.js` has always named both in its `reason`, and
 `app/bundle-pipeline.js` has always written that into the bundle slot. Until
