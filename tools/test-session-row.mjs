@@ -60,8 +60,14 @@ const check = (label, actual, expected) => {
 /* Pull a flat array-of-strings literal out of a source file by the name it is
  * assigned to. Read from the SOURCE TEXT rather than imported, because both
  * of these live in Pages Function modules that may touch Workers globals. */
+/* ===> ANCHORED ON THE `=`, NOT ON THE FIRST MENTION. <===
+ * Plain `indexOf(name)` finds the name wherever it appears first, and in this
+ * repo that is usually the COMMENT ABOVE the declaration. From there the next
+ * `[` in the file can easily belong to a different array entirely — which is
+ * how a check can end up confidently asserting things about the wrong list
+ * while looking completely correct. */
 function stringList(src, name) {
-  const at = src.indexOf(name);
+  const at = src.search(new RegExp(`${name}\\s*=`));
   if (at < 0) return null;
   const open = src.indexOf('[', at);
   const close = src.indexOf(']', open);
@@ -95,7 +101,7 @@ check('SESSION_NUMS is readable', Array.isArray(nums) && nums.length > 20, true)
 const NON_NUMERIC = new Set([
   'ts', 'app', 'country', 'standalone',
   'platform', 'engine', 'nav_type', 'conn_type',
-  'device', 'timings_ok', 'ref_host',
+  'device', 'timings_ok', 'ref_host', 'retry_which',
 ]);
 
 const numericColumns = columns.filter((c) => !NON_NUMERIC.has(c));
@@ -104,6 +110,17 @@ const missingFromStore = nums.filter((c) => !columns.includes(c));
 
 check('every numeric column is named in the beacon allowlist', missingFromBeacon, []);
 check('every allowlisted number has a column to land in', missingFromStore, []);
+
+/* ===> AND THE EXCLUSION LIST IS ITSELF CHECKED, WHICH IS NOT OBVIOUS. <===
+ * NON_NUMERIC only says "do not expect these in SESSION_NUMS". On its own
+ * that means DELETING one of these columns from the store passes every check
+ * above: the beacon still builds the value, the store simply never writes it,
+ * and the field reads empty forever looking like a browser that did not
+ * report it. Found by mutation-testing this file on 2026-08-18, against
+ * `retry_which` — which had just been added, and where an empty column is
+ * exactly what a working one looks like today. */
+check('every non-numeric column named here still exists in the store list',
+  [...NON_NUMERIC].filter((c) => !columns.includes(c)), []);
 
 /* ---------------------------------------------------------------------------
  * 2. THE CLIENT ACTUALLY EMITS WHAT THE SERVER ACCEPTS.
@@ -122,12 +139,19 @@ const clientSrc = `${perfSrc}\n${usageSrc}`;
  *   `field:`   a literal key in perf.js's hand-written snapshot object
  *   `'field'`  a member of usage.js's ACTIONS list, which snapshot() loops
  *              over to build its keys dynamically
- * Anything matching neither is a name that exists only on the server. */
-const emitted = (f) => clientSrc.includes(`${f}:`) || clientSrc.includes(`'${f}'`);
+ *   `.field =` a key assigned onto the snapshot after the loop, which is how
+ *              usage.js adds the one value that is not a counter
+ * Anything matching none of the three is a name that exists only on the
+ * server. */
+const emitted = (f) =>
+  clientSrc.includes(`${f}:`) ||
+  clientSrc.includes(`'${f}'`) ||
+  new RegExp(`\\.${f}\\s*=`).test(clientSrc);
 
 const neverEmitted = nums.filter((f) => !emitted(f));
 check('every allowlisted field is emitted by perf.js or usage.js', neverEmitted, []);
 check('ref_host is emitted by the client too', emitted('ref_host'), true);
+check('retry_which is emitted by the client too', emitted('retry_which'), true);
 
 /* The boot milestone must be a legal mark name or mark() drops it on the
  * floor and t_scripts_ms is zero on every row. */
@@ -270,6 +294,87 @@ check('a boot just over the ceiling does not', timingsOk({ t_storms_ms: 60001 })
  * earliest milestone landed, impossibly late, must not slip through. */
 check('an impossible scripts mark alone is caught',
   timingsOk({ t_scripts_ms: 120000 }), 2);
+
+/* ---------------------------------------------------------------------------
+ * 5. WHICH RETRY BUTTON, AND THE THREE WAYS THAT GOES SILENTLY WRONG.
+ *
+ * `retry` is one counter shared by four buttons and `retry_which` names the
+ * ones pressed. Every failure mode in that arrangement is quiet:
+ *
+ *   - The two allowlists DRIFT. `RETRY_BUTTONS` is written out by hand in
+ *     lib/usage.js and again in functions/api/beacon.js, because neither file
+ *     can import the other. A name in one and not the other is a label the
+ *     client sends and the server throws away, and nothing anywhere errors.
+ *   - A CALL SITE TYPOS A NAME. `countRetry('rainfall')` still counts the
+ *     press — deliberately — so the only symptom is a column that reads empty
+ *     on exactly the rows that should have named that button.
+ *   - A PRESS GOES BACK UNDER THE BARE COUNTER. `count('retry')` still exists
+ *     and still works; a call site using it records the press with no name,
+ *     which looks identical to a row written before this field existed.
+ *
+ * That third one is not hypothetical. `count('env_retry')` shipped with §47.8
+ * and every press of the Environment retry was dropped on the floor from that
+ * day until 2026-08-18, because the name was not in ACTIONS and ACTIONS is an
+ * allowlist. Nothing complained for three weeks.
+ * ------------------------------------------------------------------------- */
+
+const viewsSrc = read('app/views.js');
+
+const clientButtons = stringList(usageSrc, 'RETRY_BUTTONS');
+const serverButtons = stringList(beaconSrc, 'RETRY_BUTTONS');
+
+check('the client declares a retry button list', clientButtons, ['storms', 'geometry', 'env', 'rain']);
+check('the server list matches the client list exactly', serverButtons, clientButtons);
+
+/* Every name actually passed to countRetry(), from live code only — a call
+ * inside a comment is not a call, and stripping comments is what stops this
+ * passing against a half-finished edit. */
+const calledNames = [...liveCode(viewsSrc).matchAll(/countRetry\(\s*'([a-z0-9_]+)'/g)]
+  .map((m) => m[1]);
+
+check('every retry call site names a button that exists',
+  calledNames.filter((n) => !clientButtons.includes(n)), []);
+check('all four buttons are wired, not just the ones somebody remembered',
+  [...new Set(calledNames)].sort(), [...clientButtons].sort());
+
+/* ===> THE BARE COUNTER MUST NOT COME BACK. <===
+ * `count('retry')` recording a press with no name is the exact state this
+ * field was built to end, and it is invisible from the data — an unnamed
+ * press and a pre-2026-08-18 row read the same. */
+check('no view counts a retry without naming it',
+  /count(Action)?\(\s*'retry'/.test(liveCode(viewsSrc)), false);
+check('the dropped env_retry name is gone from live code',
+  liveCode(viewsSrc).includes('env_retry'), false);
+
+/* The reimplementation below proves nothing on its own; this ties it to the
+ * shipping route, the same way the ceiling checks above do. Both halves are
+ * asserted: the route must REBUILD from its own list (a `.filter` over
+ * RETRY_BUTTONS) and must actually put the result on the row. */
+check('the route rebuilds the value from its own allowlist',
+  /RETRY_BUTTONS\.filter\(\(b\) => sent\.has\(b\)\)\.join\(','\)/.test(beaconSrc), true);
+check('the route actually stores it on the session row',
+  /row\.retry_which\s*=\s*retryWhichStr\(/.test(beaconSrc), true);
+
+const retryWhichStr = (value) => {
+  if (typeof value !== 'string' || value.length > 64) return '';
+  const sent = new Set(value.split(','));
+  return clientButtons.filter((b) => sent.has(b)).join(',');
+};
+
+check('one button survives', retryWhichStr('rain'), 'rain');
+check('two buttons survive', retryWhichStr('storms,rain'), 'storms,rain');
+check('order is the allowlist order, not the order sent',
+  retryWhichStr('rain,storms'), 'storms,rain');
+check('a duplicate collapses', retryWhichStr('env,env'), 'env');
+check('an unknown name is dropped, not stored',
+  retryWhichStr('storms,evil'), 'storms');
+check('prose smuggled into the field survives as nothing',
+  retryWhichStr('my home is at 21.3 -157.8'), '');
+check('a value that is only junk is empty', retryWhichStr('rainfall'), '');
+check('an over-long value is rejected outright',
+  retryWhichStr(`rain,${'a'.repeat(70)}`), '');
+check('a non-string is rejected', retryWhichStr(null), '');
+check('empty stays empty', retryWhichStr(''), '');
 
 /* ------------------------------------------------------------------------- */
 

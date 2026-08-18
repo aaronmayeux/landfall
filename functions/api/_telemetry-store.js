@@ -134,6 +134,21 @@ const SESSION_COLUMNS = Object.freeze([
    *   for everyone who arrived the same way, and is NOT a location field —
    *   the contract in lib/telemetry.js still forbids region, city and colo. */
   't_scripts_ms', 'boot_longtask_n', 'boot_longtask_ms', 'visit_ms', 'ref_host',
+  /* Appended 2026-08-18.
+   *
+   * `retry_which` — WHICH Retry buttons were pressed, beside `retry`, which
+   *   only ever said how many presses there were. There are four such buttons
+   *   and they mean four completely different failures; a bare count could
+   *   not tell them apart, and the thing worth knowing is which part of the
+   *   app broke badly enough that somebody fought back.
+   *
+   *   ==> ONE FIELD, NOT ONE COLUMN PER BUTTON. <== The obvious shape is a
+   *   counter each. That is a schema change every time a Retry is added, on a
+   *   table that already carries forty-odd columns. This is a small text
+   *   value holding the NAMES pressed, in a fixed order, drawn from a fixed
+   *   list of four in both lib/usage.js and beacon.js. Adding a fifth button
+   *   costs one word in two allowlists and no ALTER TABLE at all. */
+  'retry_which',
 ]);
 
 const SESSION_SQL =

@@ -278,6 +278,17 @@ project notes is the reading guide; this section is the contract.
   retries. **Counts only** — no order, no timestamps, no arguments; never which
   storm, never which layer. A sequence with times attached is a behavioural
   fingerprint.
+  **One exception, and it is a set rather than a sequence: `retry_which`.** Four
+  Retry buttons share the single `retry` counter, so a press said only that
+  something broke. The names of the buttons pressed — `storms`, `geometry`,
+  `env`, `rain` — ride beside the count in one small text column, emitted in a
+  fixed order so one answer cannot arrive as two. Presses go through
+  `countRetry()`, never `count('retry')`. **A counter per button is the shape
+  this deliberately is not**: that is a new column every time a Retry is added,
+  and adding a fifth button here costs one word in two allowlists and no
+  `ALTER TABLE`. `RETRY_BUTTONS` is written out by hand in `lib/usage.js` and
+  again in `functions/api/beacon.js`, which cannot import each other;
+  `tools/test-session-row.mjs` is what keeps the two in step.
 
 **`lcp_ms` IS NOT STRUCTURALLY ZERO. THAT CLAIM WAS WRONG AND IT WAS LOAD-BEARING.**
 This file used to say a WebGL canvas is not an LCP candidate and this app is

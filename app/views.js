@@ -82,7 +82,7 @@ import { loadRainfall, evictRainfall } from '../data/rainfall.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { resolveSystem } from '../lib/units.js';
-import { count as countAction } from '../lib/usage.js';
+import { count as countAction, countRetry } from '../lib/usage.js';
 import { MODEL_FAMILY } from '../config/constants.js';
 import {
   isInstalled,
@@ -552,7 +552,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     onSelect: selectStorm,
     onSelectArea: selectArea,
     onRetry: () => {
-      countAction('retry');
+      countRetry('storms');
       return refresh();
     },
     home: homeApi,
@@ -581,7 +581,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * second copy, so Back still lands where the reader came in. */
     onStep: (storm) => selectStorm(storm),
     onRetryGeometry: (storm) => {
-      countAction('retry');
+      countRetry('geometry');
       return pipeline.load(storm, { retry: true });
     },
     /* The advisory-text facade. ui/ never imports data/ (§12), and this is
@@ -602,7 +602,11 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     envShips: {
       loadShips: (storm) => loadShips(storm),
       retryShips: (storm) => {
-        countAction('env_retry');
+        /* ==> THIS PRESS USED TO VANISH. <== It called count('env_retry'),
+         * which is not in `lib/usage.js`'s ACTIONS list, and that list is an
+         * allowlist — so every press of this button since §47.8 shipped was
+         * dropped in silence rather than counted anywhere. */
+        countRetry('env');
         evictShips(storm.advisoryKey);
         return loadShips(storm);
       },
@@ -875,16 +879,15 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * Counted at the RETRY only. A section that fetches when it is drawn says
      * nothing about what anybody wanted; a button somebody pressed does.
      *
-     * ==> UNDER THE GENERIC `retry`, NOT A NAME OF ITS OWN. <== `lib/usage.js`
-     * is an ALLOWLIST and every name in it is a D1 column, so inventing one
-     * here would be silently dropped rather than counted. (`env_retry`, two
-     * hundred lines up, already is — it is not in ACTIONS and never has
-     * been.) Adding columns is a schema conversation, not a thing to do inside
-     * a feature. */
+     * ==> THE NAME IS AN ALLOWLIST MEMBER, NOT A FREE STRING. <== One counter
+     * for every Retry in the app plus one field naming the buttons pressed —
+     * see `lib/usage.js` RETRY_BUTTONS. A name that is not on that list still
+     * counts the press and loses the label, so a typo here costs a label and
+     * never a column. */
     rain: {
       loadRainfall: (home) => loadRainfall(home),
       retryRainfall: (home) => {
-        countAction('retry');
+        countRetry('rain');
         evictRainfall();
         return loadRainfall(home);
       },

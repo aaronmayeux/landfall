@@ -158,11 +158,16 @@ function buildSession(e, app, country, standalone, device) {
     row[key] = num(e?.[key]);
   }
 
-  /* The one free-form string on this row, and the only one there will be.
-   * Hostname or nothing — see refHostStr. It answers "where did this spike
-   * come from", which on 2026-08-14 could only be guessed at from the
-   * phone-versus-laptop ratio. */
+  /* The one free-form string on this row. Hostname or nothing — see
+   * refHostStr. It answers "where did this spike come from", which on
+   * 2026-08-14 could only be guessed at from the phone-versus-laptop ratio. */
   row.ref_host = refHostStr(e?.ref_host);
+
+  /* Which Retry buttons were pressed, beside the count of how many presses.
+   * NOT free-form despite being text — reassembled from this file's own
+   * constants, so the client chooses among four fixed words and cannot
+   * contribute a fifth. See retryWhichStr. */
+  row.retry_which = retryWhichStr(e?.retry_which);
 
   /* ==> THREE STATES, BECAUSE TWO ZEROES CANNOT TELL THEM APART. <==
    * `hidden_at_start` and `first_hidden_ms` say whether a row's timings are
@@ -315,6 +320,32 @@ function refHostStr(value) {
   if (typeof value !== 'string' || value.length > 64) return '';
   const host = value.toLowerCase();
   return REF_HOST_SHAPE.test(host) ? host : '';
+}
+
+/** Every Retry button that exists. Must match RETRY_BUTTONS in lib/usage.js —
+ *  a client cannot import this file and this file cannot import the client's,
+ *  so the two are kept in step by hand and by
+ *  tools/test-session-row.mjs, the same way `device`'s length is. */
+const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain']);
+
+/**
+ * The names of the Retry buttons this visit pressed, or nothing.
+ *
+ * ==> REBUILT FROM THE ALLOWLIST, NOT PARSED AND KEPT. <== This is the second
+ * text field a client can put on the session row, and it arrives as a
+ * comma-joined list, which is the shape most likely to be treated as "clip it
+ * and store it". It is not. The incoming value is only ever CONSULTED — the
+ * output is assembled here out of this file's own four constants, so the
+ * longest string that can reach the column is `storms,geometry,env,rain` and
+ * there is no input that produces anything else.
+ *
+ * Emitted in RETRY_BUTTONS order rather than the order it was sent, so one
+ * answer cannot arrive as two and split a GROUP BY.
+ */
+function retryWhichStr(value) {
+  if (typeof value !== 'string' || value.length > 64) return '';
+  const sent = new Set(value.split(','));
+  return RETRY_BUTTONS.filter((b) => sent.has(b)).join(',');
 }
 
 /** Accept a value only if it is in the allowlist; otherwise the empty string.

@@ -39,16 +39,6 @@
 research it does not need. Do not start two. When a wave lands, delete it from
 here and put what it built in the spec.
 
-**WAVE 3 — needs a decision, then a read.**
-- **Telemetry cannot tell which Retry button was pressed**, and `env_retry` is
-  not in `lib/usage.js`'s allowlist so every press of that one has been dropped
-  since §47.8 shipped. **The agreed shape is ONE counter plus a field naming the
-  button**, not one counter per button — five counters means five columns and a
-  new one every time a Retry is added. Needs a D1 schema change; keep it small.
-- **Read `boot_longtask_ms` and `visit_ms`** — see NEXT UP item 1. They should
-  have data now. That number decides whether the Windows problem is a bundling
-  job or a code job, and it gates the Three.js work.
-
 **WAVE 4 — the build. Its own session.**
 - **GDACS storms get no wind-arrival countdown**, and the data to fix it is
   already in the payload. See SCOPED, NOT STARTED below for the shape and the one
@@ -193,25 +183,32 @@ or find an archive — doing nothing is what §5 rules out.
 
 ## NEXT UP
 
-**1. WINDOWS BLOCKS AND THE FRESH COLUMNS SHOULD HAVE DATA NOW.** The only real
-performance problem left. Clean slice, `timings_ok = 1`, boot milestones in ms:
+**1. WINDOWS IS SLOW BEFORE OUR CODE RUNS, AND THE THREE.JS FIX IS AIMED AT THE
+WRONG THIRD.** Read against 808 clean sessions on current code — `timings_ok=1`,
+rows carrying `t_scripts_ms`, own device excluded. **Medians**, because averages
+were hiding a tail:
 
-| | iPhone | Android | Linux | Mac | **Windows** |
+| ms | iPhone (528) | Android (196) | **Windows (56)** | Mac (13) | Linux (15) |
 |---|---|---|---|---|---|
-| Boot veil lifts | 1,158 | 1,209 | 829 | 596 | **2,764** |
-| Storms on screen | 2,132 | 2,219 | 1,279 | 799 | **4,670** |
+| First paint | 222 | 528 | **684** | 204 | 308 |
+| Libraries finished | 667 | 1,087 | **1,446** | 567 | 852 |
+| Storms on screen | 1,226 | 1,552 | **1,991** | 1,219 | 1,638 |
+| Blocked during boot | *not measured* | 391 | **323** | 0 | 512 |
 
-21 clean sessions across 7 stranger machines, so it is not one weird PC.
+Windows is 765 ms behind an iPhone. **462 of that is already gone at first
+paint**, before our JavaScript matters; 317 is downloading and parsing the two
+vendored libraries; **our map-and-data code costs Windows 14 ms LESS than an
+iPhone** — that stage is identical everywhere. And Windows sits blocked for
+*less* time during boot than Android does.
 
-**READ `boot_longtask_ms` AND `visit_ms`, NOT the old `longtask_ms` column.** The
-old one covers a WHOLE VISIT while every boot row stops at boot, so the two were
-never comparable and the 29,604 ms figure was never 29 seconds inside a load. The
-new columns exist to settle it and should now be populated. The question they
-answer is whether the fix is a bundling job (Three.js off the boot path) or a
-code job (the map taking too long to build). **Do not start the Three.js work
-before that number exists** — it is a real restructuring and ten modules import
-`THREE`. iOS stays blind: Safari has no long-task observer, so every iOS zero is
-"not measured".
+**So the main thread is not what is slow on Windows, and moving Three.js off the
+boot path would help Android more.** Ten modules import `THREE`; the most it can
+win is a slice of 317 ms on the platform with the least blocking. Not worth the
+restructuring on this evidence. iOS stays blind either way — Safari has no
+long-task observer, so every iOS zero is "not measured".
+
+*The old figures here (Windows 2,764 / 4,670) came from 21 sessions and
+overstated this by roughly half. Windows is 1.6× an iPhone, not 2.2×.*
 
 **2. WHAT A MAPLIBRE FRAME COSTS — UNMEASURED, AND THE GATE ON ITEM 1.**
 `attachIdleRotation` calls `setCenter` per frame below `DIVE.zHandoff`, so a
@@ -220,11 +217,20 @@ remaining repaint cannot simply be skipped, because `setCenter` is what
 `map/globe-follow.js` mirrors to make the rotation visible. The four rules a fix
 must follow are in `SPEC-MAP.md` §9.7. Needs a real device with a real basemap.
 
-**3. GDACS STILL LEAVES PEOPLE ON A SPINNER, though less so.** 41 of 46 GDACS
-loads reached `ok` against NHC's 44 of 46, with **zero errors either side** — the
-misses are sessions that ended still loading. Retry has been pressed zero times
-in 193 sessions. Two changes have landed since these numbers and both should move
-them: the stamp fix, and the two-second rung. **Re-read before acting.**
+**3. THE GDACS SPINNER LARGELY FIXED ITSELF; THE RETRY BUTTON IS THE OPEN
+QUESTION NOW.** Re-read over 14 days: GDACS 1,591 of 1,713 loads reached `ok`,
+90 said `unavailable`, and **32 ended still loading — about 2%, down from 11%**.
+NHC is 1,700 `ok` against 18 `unavailable`. The stamp fix and the two-second rung
+did their job.
+
+**What did not move: Retry has still been pressed zero times, now across 1,711
+sessions in 30 days** — including the 108 visits that were shown a real
+`unavailable` state with a real button on it. Either the outage clears before
+anyone reacts, or the button is not reading as a thing to press. **A glass
+question, not a data one:** open the app with the network off and look at what
+that screen actually invites you to do. `retry_which` now names which button a
+press was, so the first one ever recorded will say which section people care
+enough to fight.
 
 *Dead hypotheses, do not reopen without new data:* the OpenFreeMap CDN is not the
 bottleneck, and modulepreload was measured and rejected (`SPEC.md` SETTLED). The
