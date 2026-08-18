@@ -803,30 +803,29 @@ export const LIGHT = Object.freeze({
                              // ocean, so the cage reads as the hero — the same
                              // rule as dark, pointed the other way
 
-  /** ==> ON TRIAL: THE CAGE AND THE COASTLINE CARRY DARK MODE'S CYAN INTO THE
-   *  LIGHT THEME. Aaron asked to see it, 2026-08-08. <==
+  /** ==> THE CAGE IS NEUTRAL IN THE LIGHT THEME. THE COASTLINE IS NOT. <==
    *
-   *  These were grey for one deploy — the argument being that the cage is
-   *  ~7,680 edges covering the whole planet, so whatever color it rests at is
-   *  by area the color of the app, and a neutral base gives storm severity
-   *  nothing to compete with.
+   *  The cage is ~7,680 edges covering the whole planet, so whatever color it
+   *  rests at is BY AREA the color of the app. A neutral base gives storm
+   *  severity nothing to compete with, which is the whole argument for the
+   *  light theme's greyscale base (see the note above `ocean`). The cyan cage
+   *  was on trial from 2026-08-08 and lost: it put a hue underneath every
+   *  storm bloom. `node` goes with `mesh` — they are the same piece of
+   *  furniture and splitting them reads as a rendering fault, not a choice.
    *
-   *  ==> IT IS THE SAME HUE ANGLE AS DARK, NOT THE SAME HEX, AND THAT IS NOT A
-   *  HEDGE. <== Dark's `#4FD1E8` on this grey sea measures 1.51:1 — it would
-   *  fail the REQUIRED `coastline vs the ocean` pair in
-   *  tools/contrast-check.mjs, which is a real gate and not a preference. A
-   *  bright line glowing on a night sea becomes a dark line drawn on a pale
-   *  one; the hue is what carries the identity across, and lightness is what
-   *  has to move. So: same cyan family, walked down until it reads.
+   *  The COASTLINE keeps dark mode's cyan family, and that is deliberate, not
+   *  an oversight. It is a thin line, not a field: it does not tint the planet
+   *  the way the cage does, and it is the one place the app's identity carries
+   *  across themes. ==> IT IS THE SAME HUE ANGLE AS DARK, NOT THE SAME HEX.
+   *  <== Dark's `#4FD1E8` on this grey sea measures 1.51:1 and would fail the
+   *  REQUIRED `coastline vs the ocean` pair in tools/contrast-check.mjs, which
+   *  is a real gate and not a preference. A bright line glowing on a night sea
+   *  becomes a dark line drawn on a pale one; the hue carries the identity
+   *  across, the lightness has to move.
    *
-   *  These are the EXACT values the light theme carried before the greyscale
-   *  pass, so reverting the experiment is a straight swap back to the grey
-   *  block in git history. Population heat comes with them — its top stop is
+   *  Population heat rides the coastline, not the cage — its top stop is
    *  asserted to equal `coastGlow`, so the two cannot split by accident. */
-  /* Rotated 16 degrees with DARK's `mesh` and for the same reason — the cage
-   * has to clear CATEGORY_COLOR.TD's hue in both themes, since §6 colors do
-   * not change between them. */
-  mesh:           '#3D9492',
+  mesh:           '#7C8288',
   coastGlow:      '#0C5065', // the strong top line of the coastline stack
   coastGlowSoft:  '#4E93A8', // the wide soft underlay
   graticuleMajor: '#7E868D', // equator and the two tropics — still well under
@@ -904,7 +903,8 @@ export const LIGHT = Object.freeze({
   homeBandFill: 'rgba(125, 81, 0, 0.10)',
   homeBandEdge: '#7D5100',
 
-  node:           '#0C6562', // nodes: the signal, a step stronger than the cage
+  node:           '#3F474E', // nodes: the signal, a step stronger than the cage.
+                             // Neutral because `mesh` is — see the note there.
   meshStormMix: 1.0,
   meshRestDim: 1.0,
 

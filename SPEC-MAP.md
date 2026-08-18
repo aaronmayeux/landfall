@@ -1405,16 +1405,18 @@ compete with. `error` / `stale` / `ok` keep a hue because they are status words,
 `focusRing` because it is an accessibility affordance that must never read as a
 border, and the install amber because it is a brand color.
 
-**ON TRIAL (2026-08-08): the cage, the coastline, the nodes and the population
-heat carry dark mode's CYAN rather than a neutral.** They were grey for one
-deploy. Aaron asked to see the cyan version, and these are the exact values the
-light theme used before the greyscale pass, so reverting is a straight swap back
-to the grey block in git history. **Same hue angle as dark, not the same hex** —
+**The cage and its nodes are neutral. The coastline and the population heat
+carry dark mode's CYAN.** The cage is ~7,680 edges over the whole planet, so by
+area its resting color IS the color of the app — a hue there sits underneath
+every storm bloom and competes with it. That is what the greyscale base is for,
+and the cyan cage tried from 2026-08-08 lost the argument. `node` follows `mesh`:
+same furniture, and splitting them reads as a rendering fault. The coastline is a
+thin line rather than a field, so it tints nothing, and it is where the app's
+identity carries across themes. **Same hue angle as dark, not the same hex** —
 dark's `#4FD1E8` measures 1.05:1 against this ocean and would fail the required
 `coastline vs the ocean` pair. A bright line glowing on a night sea becomes a
 dark line drawn on a pale one; hue carries the identity across, lightness has to
-move. The open question is the one the greyscale pass was answering: whether a
-cyan resting cage competes with the storm color blooming out of it.
+move.
 
 **It is not an inversion**, and the places it refuses to invert are the ones worth
 knowing before editing it:
