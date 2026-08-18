@@ -1025,17 +1025,41 @@ by construction rather than by agreement. The published outline is drawn with
 its corners rounded (`curveGeometry`), which moves it by at most 3.1 km across
 the whole Ida corpus.
 
-Where it cannot vouch for a station — a ray that missed, or an edge that doubles
-back on the inside of a bend — the rib carries `ok: false` and `lib/cone-ribbon.js`
-skips the slice bounded by it. **The station is MARKED, never dropped:** one hour
-is mapped per rib by index, so removing one would shift every forecast hour after
-it. `measureConeRibs` refuses outright on the same 60% hit floor the rebuild
-uses; below that the track and the cone are not describing the same storm and
-§47.9 has a sentence for it.
+**IT MEASURES THE RING THAT WILL BE DRAWN, NOT THE ONE THAT ARRIVED.** The
+fallback outline is the published one with its corners rounded, which moves it by
+at most 3.1 km. That reads as nothing on paper and as a grey rim between the
+color and the cone edge on a phone, because a five-day cone fills the screen. The
+ring is curved once and handed to both, so the two cannot disagree by any amount
+at all rather than by an amount somebody decided was small enough.
+
+**A FOLD PINCHES THE EDGE.** On the inside of a bend tighter than the cone is
+wide, consecutive perpendicular rays hit the outline in reverse order and the
+edge has nowhere further to go, so the point is held at its predecessor. That is
+the shape the union-of-circles boundary genuinely has there, consecutive slices
+go on sharing a boundary vertex, and the held point is itself a ray hit so the
+segment joining them cannot leave the cone. The first version MARKED both
+stations instead and let `lib/cone-ribbon.js` skip the slice — a slice spans many
+stations, so one bad station cut a black wedge clean across the cone at the
+inflection, which reads as a rendering fault rather than as an absence.
+
+Pinched ribs share edge points, so slice rings are deduped like every other ring
+in the app; a repeated vertex is a zero-length segment with no direction.
+
+`ok: false` therefore means exactly one thing: no ray hit at this station.
+`measureConeRibs` refuses outright on the same 60% hit floor the rebuild uses;
+below that the track and the cone are not describing the same storm and §47.9 has
+a sentence for it.
+
+**The caps are the outline's own nose and tail, walked** — the arc of the drawn
+ring between the end station's two edge points, taken on the side that lies
+ahead. Exact, so the day-5 circle is the day-5 circle. Two earlier versions are
+recorded in `lib/cone-measure.js`: clipping to a half-plane self-intersects on a
+hooked cone, and the rebuild's half-ellipse sat up to 17.5 km off the ring
+actually on screen.
 
 **Measured across every Ida advisory (35 cones, `samples/ida-al092021/gis`):** 23
-rebuild, 12 are measured, none are blind. The 12 that used to yield nothing now
-color 86–98% of their published area; the 23 sit at 99.8%.
+rebuild, 12 are measured, none are blind, and every one colors 100.0% of its cone
+with no slice sitting outside the drawn outline and none crossing itself.
 
 **THE REBUILD'S BAR STAYS HIGH, AND ONE ATTEMPT TO LOWER IT IS WORTH THE
 PARAGRAPH.** The fold guard was found to be refusing a third of Ida's advisories
@@ -1184,26 +1208,21 @@ blurred, nothing is gap-filled, and no shape is invented — the two operations
 that make a width right for drawing are exactly what make it wrong for measuring
 someone else's.
 
-**A slice whose stations cannot both be vouched for is skipped, and the rest of
-the cone is painted.** Ribs from that path carry `ok: false` where a ray missed
-or the edge doubles back on the inside of a bend; the slice bounded by two of
-them has crossing edges and would paint one stretch of cone twice, which is the
-double-blend this section's shared vertices exist to prevent. The reader loses a
-slice or two on a hard turn — a visible unpainted band on the inside of the bend
-— and keeps 86–98% of the cone, against nothing at all before. A swept rib
-carries no `ok` and is trusted; the test is `=== false`, never a truthiness
-check, or every slice on the path that works today would silently vanish.
+**A fold pinches the edge rather than costing a slice** (§7.9). The first cut at
+this marked the folding stations and skipped their slice, which on glass was a
+black wedge across the cone at the inflection — a slice spans many stations, so
+one bad station takes the whole thing. `ok: false` now means only "no ray hit
+here", and a slice is skipped only for that. A swept rib carries no `ok` at all
+and is trusted; the test is `=== false`, never a truthiness check, or every slice
+on the path that works today would silently vanish.
 
-**Both caps come from one builder.** A cap is the half-ellipse beyond the end
-station and no pair of stations spans it; without them a fully-colored cone shows
-a grey blob at each end (glass, 2026-08-15). The measured path was first written
-to CUT its caps out of the published polygon, which is exact on a cone running
-roughly straight and self-intersecting on a hooked one — the region ahead of the
-last station is then two disconnected pieces, and clipping joins them with a
-zero-width bridge. Measured on Ida 006A: one cap in thirty-five, and it would
-have been a hole punched through the veil at the day-5 circle. A parametric
-half-ellipse is anchored to the real cone at three ray hits and has no fourth
-crossing to find. A cap whose own end station is unmeasurable is not drawn.
+**The two paths cap their ends differently, and that is not an oversight.** A cap
+is the stretch beyond the end station that no pair of ribs spans; without one a
+fully-colored cone shows a grey blob at each end (glass, 2026-08-15). The rebuild
+is inventing a shape, so its cap is a half-ellipse anchored at the two flanks and
+the reach dead ahead, and its own undercut guard prices it. The measured path is
+inventing nothing and walks the drawn ring's actual arc. A cap whose end station
+has no measurement is not drawn.
 
 **THE JOIN IS BY FORECAST HOUR, NEVER BY SHIPS'S OWN COORDINATES.** SHIPS can
 be newer than the advisory — a 06 UTC run against a 00 UTC advisory (§47.2) —

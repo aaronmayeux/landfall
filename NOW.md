@@ -46,12 +46,20 @@ against the published polygon and takes the raw hits, so the color sits inside
 the shape actually on screen. Twelve of twelve recovered, 86–98% of published
 cone area each; the 23 that already worked are byte-identical.
 
-**THE ONE THING TO JUDGE IS THE GAP ON A HARD TURN.** Where the inside edge
-doubles back, those slices are skipped rather than painted twice, so a
-sharply-recurving storm should show a thin unpainted band on the INSIDE of the
-bend. That is honest and it is 2–14% of the cone. The question is whether it
-reads as data or as a rendering fault. If it reads as a fault the fix is one
-wider slice bridging the gap, not a smaller threshold.
+**Judged on Lala and corrected twice in the same pass.** The first build was
+close and wrong in two ways Aaron named on glass: the ribbon sat slightly off the
+cone, and a black wedge was cut across the inside of the right-hand curve. Both
+are fixed and both are worth a second look. The shift was measuring the published
+outline while drawing the rounded one — 3 km, invisible on paper, several pixels
+of a five-day cone on a phone. The wedge was a fold marking its stations unusable
+and taking a whole slice with it; folds pinch the edge now. Coverage went 86–98%
+to 100.0%, with nothing outside the drawn cone and nothing crossing itself.
+
+**What to look at next time:** the pinch replaces a stretch of the inside edge
+with a corner, so on a very tight bend the color should meet itself at a point
+rather than following the cone edge round. On Ida that is invisible. If Lala
+shows a visible flat spot on the inside of her turn, that is this, and the answer
+is to follow the ring's arc there the same way the caps now do.
 
 **And the two silent absences now speak.** The Layers row was computed from the
 SHIPS fetch alone, so a healthy run whose ribbon refused on geometry produced no

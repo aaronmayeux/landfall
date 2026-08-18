@@ -496,6 +496,7 @@ section('every cone Ida ever published');
   const blind = [];
   let crossed = 0;
   let outside = 0;
+  let unusable = 0;
 
   /** Distance from a point to a ring, DEGREES.
    *
@@ -572,6 +573,14 @@ section('every cone Ida ever published');
     }
     if (m.capStart && selfIntersects(m.capStart)) crossed++;
     if (m.capEnd && selfIntersects(m.capEnd)) crossed++;
+
+    /* ==> A FOLD MUST PINCH, NEVER MARK. <== The first version marked both
+     * stations of a folding segment unusable and let the slice be skipped;
+     * that is a black wedge across the cone on glass, because a slice spans
+     * many stations. `ok:false` now means only "no ray hit here", which on a
+     * cone the track can see at all never happens. If this starts failing, a
+     * fold has gone back to being an absence. */
+    if (m.ribs.some((r) => !r.ok)) unusable++;
   }
 
   const total = swept.length + measured.length + blind.length;
@@ -588,7 +597,9 @@ section('every cone Ida ever published');
   ok(measured.length > 0 && swept.length > 0,
      `and both paths are exercised (${swept.length} swept, ${measured.length} measured)`);
 
-  ok(outside === 0, 'every measured rib end lands ON the published outline, within a metre');
+  ok(outside === 0, 'every measured rib end lands ON the outline it was measured from, within a metre');
+  ok(unusable === 0,
+     'and not one advisory loses a station to a fold — the edge pinches, so nothing is skipped and no wedge is cut out of the cone');
   ok(crossed === 0, 'and nothing either path hands out crosses itself');
 }
 

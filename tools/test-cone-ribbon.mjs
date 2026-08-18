@@ -393,6 +393,58 @@ section('a station that could not be measured');
      'an unmeasurable end station drops its own cap and leaves the body painted');
 }
 
+/* ---------------------------------------------------------------------------
+ * A PINCHED EDGE — §47.5.
+ *
+ * On the measured path (lib/cone-measure.js) the inside edge of a tight bend
+ * has nowhere further to go, so the point is held at its predecessor rather
+ * than allowed to run backwards. Consecutive ribs then SHARE an edge point, and
+ * a slice through that stretch arrives carrying repeated vertices.
+ *
+ * ==> A REPEATED VERTEX IS A ZERO-LENGTH SEGMENT AND A ZERO-LENGTH SEGMENT HAS
+ * NO DIRECTION. <== Enough to make a self-intersection test report a crossing
+ * that is not there, and enough to hand MapLibre a degenerate edge to
+ * triangulate. Every other ring in the app is deduped for exactly this reason;
+ * the slices were not, and the moment pinching existed 148 of them read as
+ * crossed on the Ida corpus.
+ * ------------------------------------------------------------------------- */
+section('a pinched edge');
+{
+  const clean = fakeRibs(201);
+  /* A run of stations sharing one left-edge point, as a pinch produces. */
+  const pinched = clean.map((r, i) =>
+    (i > 100 && i <= 108 ? { ...r, left: clean[100].left.slice() } : r));
+
+  const built = buildRibbon({
+    ribs: pinched, caps: fakeCaps(pinched), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+  ok(built.status === 'ok', 'a pinched cone still paints — the pinch is a corner, not an absence');
+
+  const sliceRings = built.features
+    .filter((f) => f.properties._kind === 'slice')
+    .map((f) => f.geometry.coordinates[0]);
+
+  let dupes = 0;
+  let degenerate = 0;
+  for (const ring of sliceRings) {
+    for (let i = 0; i < ring.length - 1; i++) {
+      if (ring[i][0] === ring[i + 1][0] && ring[i][1] === ring[i + 1][1]) dupes++;
+    }
+    if (ring.length < 4) degenerate++;
+  }
+  ok(dupes === 0,
+     `no slice carries a repeated vertex (${dupes} found) — the pinch shares points and the ring must strip them`);
+  ok(degenerate === 0, 'and no slice comes out as a line pretending to be a polygon');
+
+  /* THE PINCH MUST NOT COST A SLICE. That was the whole failure it replaced. */
+  const whole = buildRibbon({
+    ribs: clean, caps: fakeCaps(clean), forecast: fakeForecast(), run: MAJOR, stops: STOPS,
+  });
+  const n = (b) => b.features.filter((f) => f.properties._kind === 'slice').length;
+  ok(n(built) === n(whole),
+     `and every slice is still painted (${n(built)}/${n(whole)}) — pinching costs shape, never coverage`);
+}
+
 section('a refused cone rebuild draws no ribbon and says which kind of nothing');
 
 {

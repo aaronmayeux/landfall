@@ -398,11 +398,46 @@ section('a rebuild that declines still hands over stations');
        `and the stations come back anyway — ${cone.ribs?.length ?? 0} of them`);
     ok(!!cone.caps?.start && !!cone.caps?.end,
        'with both caps, or the nose and tail read as grey blobs on a colored cone');
-    ok(!!cone.ribs?.some((r) => r.ok === false),
-       'and the stations it cannot vouch for are MARKED rather than dropped — dropping one would shift every forecast hour after it');
-    const usable = cone.ribs?.filter((r) => r.ok).length ?? 0;
-    ok(usable > (cone.ribs?.length ?? 0) * 0.8,
-       `while most of them are usable (${usable}/${cone.ribs?.length ?? 0}) — a fallback that marks everything bad is the old silence wearing a fix's clothes`);
+    /* ==> `ok:false` MEANS ONE THING NOW: NO RAY HIT AT ALL. <== It used to
+     * also mean "the edge folds here", and lib/cone-ribbon.js skipped those
+     * slices — which cut a black wedge clean across the cone at the inflection
+     * on glass, because a slice spans many stations and one bad station takes
+     * the whole slice. Folds pinch the edge instead. Every station of a cone
+     * the track can see is usable. */
+    ok(cone.ribs.every((r) => r.ok),
+       'every station of a cone the track can see is usable — a fold pinches the edge, it does not punch a hole');
+
+    /* ==> AND THE RIBS MUST LIE ON THE RING THIS BUNDLE IS CARRYING, NOT ON
+     * THE ONE IT ARRIVED WITH. <== The drawn cone is the published outline
+     * with its corners rounded, which moves it by a couple of kilometres —
+     * nothing on paper, several pixels of a five-day cone on a phone, and
+     * Aaron saw it as the color sitting off the cone. Measuring the published
+     * ring and drawing the curved one is the bug; this is the assertion that
+     * fails if anyone reconnects them. */
+    const drawn = cone.fc.features[0].geometry.coordinates[0];
+    const toRing = (v, r) => {
+      let best = Infinity;
+      for (let i = 0; i < r.length - 1; i++) {
+        const a = r[i];
+        const b = r[i + 1];
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const L = dx * dx + dy * dy;
+        let t = L ? ((v[0] - a[0]) * dx + (v[1] - a[1]) * dy) / L : 0;
+        t = Math.max(0, Math.min(1, t));
+        const qx = a[0] + t * dx - v[0];
+        const qy = a[1] + t * dy - v[1];
+        best = Math.min(best, qx * qx + qy * qy);
+      }
+      return Math.sqrt(best);
+    };
+    let off = 0;
+    for (const r of cone.ribs) {
+      if (!r.ok) continue;
+      off = Math.max(off, toRing(r.left, drawn), toRing(r.right, drawn));
+    }
+    ok(off < 1e-5,
+       `and every rib end lies on the ring this bundle is DRAWING, within a metre (worst ${(off * 111000).toFixed(2)} m)`);
   }
 }
 
