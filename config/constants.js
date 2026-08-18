@@ -1303,6 +1303,37 @@ export const GLOW = Object.freeze({
   smear: 1.4,
   squash: 0.35,
 
+  /** ==> WHAT A STORM POINTED STRAIGHT AT YOU IS WORTH, AGAINST ONE POINTED
+   *  STRAIGHT AWAY. <==
+   *
+   *  There used to be no number here — a storm on the near side of the planet
+   *  was culled outright and threw no light at all. That meant a Cat 4 sitting
+   *  in plain view on the front of the globe lit nothing while a weaker storm
+   *  at the edge glowed, which is what came back off glass 2026-08-18.
+   *
+   *  Below 1 on purpose. The shell curves all the way around, so a near-side
+   *  lamp really does throw its beam past the planet onto backdrop you can
+   *  see — but it lands further out, spread wider and hit more squarely, and a
+   *  grazing beam near the limb is genuinely the brighter event. The sweep
+   *  round the edge stays the hero; this is the quieter half of the same
+   *  effect. At 1 the two become indistinguishable and the globe just sits in
+   *  a permanent even halo. */
+  frontGain: 0.42,
+
+  /** ==> WHAT SURVIVES WHEN THE LIGHT LANDS FULLY BEHIND THE PLANET. <==
+   *
+   *  Also new, and also replacing a cull: light whose landing point slid
+   *  inside the globe's disc used to be dropped, so a glow did not fade as its
+   *  storm rotated behind the globe, it fell off a cliff.
+   *
+   *  The planet covers the MIDDLE of a light that lands behind it. It does not
+   *  delete it: the blob is over a globe radius across, so its falloff still
+   *  spills past the silhouette all the way round, and the dark theme's ocean
+   *  is translucent, so the covered part shines through as well. Not 1 —
+   *  a light behind the planet IS more hidden than one in open sky, and losing
+   *  that difference flattens the sweep into a permanent ring. */
+  rimFloor: 0.5,
+
   /** Camera-space depth guard, in globe radii. A point closer to the eye than
    *  this is refused rather than projected: past the eye plane the perspective
    *  divide flips sign and would place the storm on the OPPOSITE side of the

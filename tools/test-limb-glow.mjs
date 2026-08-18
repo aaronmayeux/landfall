@@ -302,14 +302,44 @@ const paintAt = (deg, sev = 1) => {
   return cv;
 };
 
-ok(paintAt(0)._fills.length === 0, 'a storm facing the camera lights nothing');
-ok(paintAt(45)._fills.length === 0, 'a storm on the near side lights nothing');
-ok(paintAt(180)._fills.length === 0, 'a storm aimed straight back is hidden by the globe');
-ok(paintAt(160)._fills.length === 0, 'deep behind the globe: still hidden');
+/* ==> NO LIVE STORM GOES DARK, ANYWHERE ON THE PLANET. <==
+ *
+ * These four used to assert the OPPOSITE — that a near-side storm and a storm
+ * straight behind the globe both lit nothing. That was the shipped behaviour
+ * and it was the bug: a Cat 4 in plain view on the front of the globe threw no
+ * light while a weaker storm at the edge glowed, and a glow vanished off a
+ * cliff as its storm rotated behind rather than fading. Aaron, 2026-08-18.
+ *
+ * MUTATION: put back either `if (away <= 0) continue` or `if (d <= rInner)
+ * continue` in map/limb-glow.js and the matching pair below fails. Verified. */
+ok(paintAt(0)._fills.length === 1, 'a storm facing the camera still lights the sky');
+ok(paintAt(45)._fills.length === 1, 'and so does one on the near side');
+ok(paintAt(180)._fills.length === 1, 'a storm aimed straight back spills light round the rim');
+ok(paintAt(160)._fills.length === 1, 'deep behind the globe: still lit');
 
 const band = paintAt(120);
 ok(band._fills.length === 1, 'just past the limb: the wall is lit — this band IS the effect');
 ok(alphaOf(band) > 0.1, 'and lit strongly enough to see, not a trace');
+
+/* ==> THE LIMB IS STILL THE HERO. <== Everything lights now, so the thing that
+ * has to be pinned is the ORDER: a grazing beam past the limb beats a
+ * head-on one on the near side, and beats one buried behind the planet. Lose
+ * that and the effect flattens into an even halo round the globe, which is the
+ * failure mode of setting frontGain or rimFloor to 1.
+ *
+ * MUTATION: GLOW.frontGain = 1 fails the first; GLOW.rimFloor = 1 fails the
+ * second. Verified. */
+ok(alphaOf(paintAt(45)) < alphaOf(band), 'a near-side storm is dimmer than one at the limb');
+ok(alphaOf(paintAt(180)) < alphaOf(band), 'and so is one hidden behind the planet');
+
+/* A near-side light meets the shell head-on, so it is a round pool. The smear
+ * is a fact about a GRAZING beam and must not leak onto storms that have not
+ * rotated past the limb yet.
+ * MUTATION: drive stretch/squash off `aim` instead of `behind` and this fails. */
+{
+  const xf = paintAt(45)._fills[0]?.xf;
+  ok(xf?.sx === 1 && xf?.sy === 1, 'a near-side light is a round pool, not a smear');
+}
 
 /* The peak sits INSIDE the band rather than at either end of it — the product
  * of an aim that grows with rotation and a clearance that shrinks with it. */

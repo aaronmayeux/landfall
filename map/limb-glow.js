@@ -274,19 +274,38 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
       if (!pt || pt.head !== true) continue; // one light per storm, not per track point
       if (!(pt.sev > 0)) continue;
 
-      /* ==> IS THE LAMP POINTED AT THE WALL, OR AT YOU? <==
+      /* ==> EVERY LIVE STORM LIGHTS THE BACKDROP. THE AIM WEIGHTS IT, IT DOES
+       * NOT GATE IT. <==
        *
-       * A storm is a lamp on the globe's skin aiming straight outward. Light
-       * only lands on the backdrop if that aim has a component AWAY from the
-       * camera. A storm facing you lights nothing — its beam goes between you
-       * and the globe, and there is no surface there to catch it.
+       * A storm is a lamp on the globe's skin aiming straight outward, and the
+       * shell it lights curves all the way around — so there is nowhere a lamp
+       * can point where NOTHING is lit. `aim` runs -1 (pointed at you) through
+       * 0 (at the limb) to +1 (pointed straight away), and it decides how much
+       * of the beam lands on backdrop the camera can see, not whether any of
+       * it does.
        *
-       * This is the rule the first cut got wrong. It drew each light at the
-       * storm's own screen position, which is a halo around a lamp, not light
-       * falling on a wall — so it read as the mesh glowing rather than as the
-       * background being lit. */
-      const away = -(pt.dir.x * _eye.x + pt.dir.y * _eye.y + pt.dir.z * _eye.z);
-      if (away <= 0) continue;
+       * ==> THIS REPLACES A HARD CULL AT `aim <= 0`, AND THE CULL WAS THE BUG.
+       * <== A storm on the near side of the planet threw no light at all, so a
+       * Cat 4 sitting in plain view on the front of the globe lit nothing
+       * while a weaker storm at the edge glowed. Aaron caught it on glass,
+       * 2026-08-18. The rule the original cull was defending is still here and
+       * still right — the light belongs on the WALL, at `wallRadius`, never at
+       * the storm's own screen position — but a near-side lamp still throws
+       * its beam past the planet onto the shell, further out and to the same
+       * side, which is where this puts it.
+       *
+       * `GLOW.frontGain` is what a lamp pointed straight at you is worth
+       * against one pointed straight away. Below 1 on purpose: the limb sweep
+       * is still the hero and a front-lit storm is the quieter half of the
+       * effect.
+       *
+       * `behind` is the aim's positive half, and it drives the SMEAR only. A
+       * near-side light is a round pool because its beam is not grazing the
+       * shell — the stretch is a fact about the geometry, not a decoration
+       * that should apply everywhere. */
+      const aim = -(pt.dir.x * _eye.x + pt.dir.y * _eye.y + pt.dir.z * _eye.z);
+      const behind = aim > 0 ? aim : 0;
+      const face = GLOW.frontGain + (1 - GLOW.frontGain) * (aim * 0.5 + 0.5);
 
       /* ==> WHERE THE BEAM LANDS: THE SAME DIRECTION, FURTHER OUT. <==
        *
@@ -314,20 +333,36 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
       const py = (1 - (_hit.y * 0.5 + 0.5)) * cssH * sy;
       if (!Number.isFinite(px) || !Number.isFinite(py)) continue;
 
-      /* ==> THE GLOBE IS IN THE WAY. <==
+      /* ==> THE GLOBE IS IN FRONT OF IT, NOT INSTEAD OF IT. <==
        *
-       * A storm pointed STRAIGHT back lands its light directly behind the
-       * planet, where the planet hides it. Fading across the rim rather than
-       * clipping at it is what makes a light swell as its storm rotates past
-       * the limb and die as it goes deeper behind, instead of popping.
+       * A storm pointed straight back lands its light directly behind the
+       * planet. The planet covers the MIDDLE of that light — it does not
+       * delete it. The blob is over a globe radius across, so its outer falloff
+       * still spills past the silhouette all the way round, and in the dark
+       * theme the ocean is translucent, so what is left shines THROUGH the
+       * planet as well.
        *
-       * Together with `away`, this is what confines the effect to a band: away
-       * is zero at the limb and grows as a storm rotates behind, clearance is
-       * full outside the disc and falls as the landing point slides inward.
-       * Their product peaks just past the limb, which is the sweep. */
+       * ==> THIS REPLACES A HARD CULL AT `d <= rInner`, AND THE CULL WAS THE
+       * OTHER HALF OF THE BUG. <== The light did not fade as its storm rotated
+       * behind the globe; it fell off a cliff and vanished, which is exactly
+       * what Aaron reported on glass, 2026-08-18.
+       *
+       * `GLOW.rimFloor` is what survives once the landing point is fully
+       * inside the disc. It is not 1: a light straight behind the planet IS
+       * more hidden than one out in open sky, and keeping that difference is
+       * what stops the effect flattening into a permanent ring. It is not 0
+       * either, and that is the fix.
+       *
+       * The occlusion of the covered part costs nothing and is not done here —
+       * the Three canvas paints above this one, so opaque continents hide the
+       * light behind them and the clear ocean lets it through, for free, out
+       * of the z-order that was already there (see the header). */
       const d = Math.hypot(px - cx, py - cy);
-      if (d <= rInner) continue;
-      const clearance = d >= rOuter ? 1 : smoothstep((d - rInner) / (rOuter - rInner));
+      const clearance =
+        d >= rOuter
+          ? 1
+          : GLOW.rimFloor +
+            (1 - GLOW.rimFloor) * smoothstep((d - rInner) / (rOuter - rInner));
 
       /* `spread` and `gain` are the theme's multipliers on the two dials that
        * actually change the look (see LIGHT.fx.glowGain). Both are exactly 1
@@ -341,7 +376,7 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
         Math.min(sx, sy);
       if (!(r > 0)) continue;
 
-      const a = Math.min(1, pt.sev * away * clearance * GLOW.intensity * gain);
+      const a = Math.min(1, pt.sev * face * clearance * GLOW.intensity * gain);
       if (a <= 0) continue;
 
       /* ==> THE SMEAR: LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==
@@ -359,16 +394,19 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
        * beam pointing at the viewer, which is the one thing this geometry says
        * cannot be happening.
        *
-       * `away` drives it, so a storm at the limb throws a round pool and grows
-       * into a smear as it rotates behind — the elongation animates through
-       * the sweep for free, off a number that was already being computed.
+       * `behind` drives it — the aim's POSITIVE half only, so a storm at the
+       * limb throws a round pool and grows into a smear as it rotates behind,
+       * the elongation animating through the sweep for free off a number that
+       * was already being computed. A near-side storm gets no smear at all,
+       * which is right: its beam meets the shell head-on rather than grazing
+       * it, so there is no curve for the patch to stretch along.
        *
        * The radial squash is not decoration. Stretching alone inflates the lit
        * area, and area is brightness once the falloffs overlap; thinning it
        * across the curve keeps a smeared light roughly as strong as a round
        * one instead of blooming as it elongates. */
-      const stretch = 1 + GLOW.smear * away;
-      const squash = 1 - GLOW.squash * away;
+      const stretch = 1 + GLOW.smear * behind;
+      const squash = 1 - GLOW.squash * behind;
       const rMax = r * Math.max(stretch, squash);
       if (px < -rMax || py < -rMax || px > canvas.width + rMax || py > canvas.height + rMax) {
         continue;

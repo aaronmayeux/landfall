@@ -2412,22 +2412,37 @@ while the transparent ocean lets it through.
 **A storm is a lamp on the globe's skin, aiming straight outward, and the
 backdrop is a curved shell `GLOW.wallRadius` globe-radii around it.** The light
 is drawn where that outward beam strikes the shell — which, because a radial
-lamp fires along its own radius, is just the storm's direction scaled up. Three
-things follow, and together they ARE the effect:
+lamp fires along its own radius, is just the storm's direction scaled up.
 
-- **A storm facing you lights nothing.** Its beam goes between you and the
-  globe, where there is no surface to catch it.
-- **A storm aimed straight back lands its light behind the planet**, which hides
-  it. `GLOW.rimInner`/`rimOuter` fade that across the silhouette rather than
-  clipping at it.
-- **A storm just past the limb lands its light outside the disc**, aimed
-  properly at the shell. Aim grows with rotation while clearance shrinks, so
-  their product peaks in a band past the limb, and that peak sweeping around the
-  edge is what you see when you spin the globe.
+**No live storm goes dark, wherever it is on the planet.** The shell curves the
+whole way round, so there is nowhere a lamp can point that lights nothing the
+camera can see. The aim WEIGHTS the light; it does not gate it. Three cases,
+and their ordering is the effect:
 
-**Drawing the light at the storm's own screen position is the wrong answer** and
-was the first shipped cut. It is a halo around a lamp, not light on a wall, and
-on glass it read as the mesh glowing. `tools/test-limb-glow.mjs` pins the
+- **A storm just past the limb is the brightest.** Its beam grazes the shell and
+  lands well outside the disc, in open sky.
+- **A storm facing you is dimmer, at `GLOW.frontGain`.** Its beam runs past the
+  planet and meets the shell head-on, further out and to the same side — so it
+  lands as a round pool rather than a smear, and it is real light on real
+  backdrop rather than a halo pinned to the storm.
+- **A storm aimed straight back is dimmer, at `GLOW.rimFloor`.** Its light lands
+  behind the planet, which covers the MIDDLE of it — the blob is over a globe
+  radius across, so the falloff still spills past the silhouette all the way
+  round, and the translucent ocean lets the covered part shine through.
+  `rimInner`/`rimOuter` fade between the two cases instead of clipping.
+
+Aim rises with rotation while clearance falls, so their product still peaks in a
+band past the limb, and that peak sweeping around the edge is what you see when
+you spin the globe. **Both floors are load-bearing and neither may go to zero.**
+They were hard culls until 2026-08-18, and both were bugs on glass: a Cat 4 in
+plain view on the front of the globe threw no light at all, and a glow did not
+fade as its storm rotated behind the planet — it fell off a cliff and vanished.
+Neither may go to 1 either; that flattens the sweep into a permanent even halo.
+
+**Drawing the light at the storm's own screen position is still the wrong
+answer** and was the first shipped cut. It is a halo around a lamp, not light on
+a wall, and on glass it read as the mesh glowing. Every light lands on the shell
+at `wallRadius`, including near-side ones. `tools/test-limb-glow.mjs` pins the
 landing point outside the silhouette precisely because every other check passed
 while that was wrong.
 
