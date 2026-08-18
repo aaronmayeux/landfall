@@ -2490,6 +2490,19 @@ both read as a malfunction rather than as a forecast.
 (§48.5), and offers no Retry — a house outside NWS's area will never get a
 different answer, and a button that cannot work is worse than none.
 
+**Where there IS a Retry it takes `.home-retry`'s declaration, which is the one
+Retry shape in `ui/home.css`** — a bordered box at `--touch-target` in primary
+ink, matching `.retry` and `.detail-retry` in `ui/panels.css`. It sits in its
+own element, never inline in the sentence: a 44px control set mid-paragraph
+pushes its line apart and reads as a bad wrap. A pattern used twice gets
+extracted (§12), and the point of extracting this one is that a fourth Retry
+cannot quietly become something else — the rainfall Retry shipped as a bare
+underlined link in `--accent` at `--touch-min`, two names declared nowhere, so
+it had no colour and no minimum height, and it was missing from the file's
+`:focus-visible` list as well. Three of §10's rules broken by a rule nothing
+could see was broken. `tools/test-css-vars.mjs` now sweeps stylesheets, so an
+undeclared name cannot be invisible again.
+
 ### 48.9 Rainfall — the storm drawer's section
 
 A section titled **Rainfall**, between `Wind field` and `Environment`. The

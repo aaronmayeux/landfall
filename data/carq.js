@@ -26,7 +26,7 @@
  * No DOM, ever. Imports: data/ and lib/ siblings, plus config.
  */
 
-import { ENDPOINT } from '../config/constants.js';
+import { ADVISORY_TEXT, CACHE, ENDPOINT } from '../config/constants.js';
 import { parseCarq } from '../lib/carq.js';
 import { fetchText } from './relay.js';
 import { getTcgpIndex } from './tcgp-index.js';
@@ -43,8 +43,26 @@ import { matchStormByName } from '../lib/advisory.js';
  */
 const cache = new Map();
 
-/** Same 6-hourly turnover as the index this file already depends on. */
-const TTL_MS = 15 * 60 * 1000;
+/** ==> THE SAME NUMBER THE INDEX USES, READ FROM THE SAME PLACE. <== This was
+ *  a hand-written `15 * 60 * 1000` sitting beside a comment saying it matched
+ *  `ADVISORY_TEXT.indexTtl`. It did match, on the day it was written. Two
+ *  copies of one number free to drift apart are two answers to one question
+ *  (§Tuning), and the drift would show up as a deck the app re-reads on a
+ *  different clock from the index that names it. */
+const TTL_MS = ADVISORY_TEXT.indexTtl;
+
+/** ==> BOUNDED, LIKE EVERY OTHER CACHE IN THIS PROJECT (§7). <== It was not,
+ *  and it is the only per-storm cache here that was not. Insertion order is the
+ *  eviction order — a Map iterates oldest-first, which is a good enough LRU for
+ *  a list holding one entry per live storm. Same shape as `data/adeck.js` and
+ *  `data/ships.js`, deliberately, so all three read as one pattern. */
+function put(key, value) {
+  cache.delete(key);
+  cache.set(key, value);
+  while (cache.size > CACHE.geometryLruStorms) {
+    cache.delete(cache.keys().next().value); // oldest first
+  }
+}
 
 /**
  * True when this storm cannot benefit and must not cost a request.
@@ -93,7 +111,7 @@ async function analysesFor(storm) {
    * this the app would re-ask every poll for a deck that has nothing in it,
    * which is the most pointless request the app could make and the one it would
    * make most often. */
-  cache.set(hit.id, { at: now, analyses });
+  put(hit.id, { at: now, analyses });
   return analyses;
 }
 

@@ -88,8 +88,11 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
     }
 
     if (res.status !== 'ok') {
-      return `<p class="detail-soft">The rainfall forecast didn’t load.
-        <button class="home-rain-retry" type="button" data-retry="rain">Retry</button></p>`;
+      /* THE BUTTON IS ITS OWN ELEMENT, not a word inside the sentence. It is
+       * a 44px bordered control (§10), and a control that size set inline in a
+       * paragraph pushes the line it sits in apart and reads as a bad wrap. */
+      return `<p class="detail-soft">The rainfall forecast didn’t load.</p>
+        <button class="home-rain-retry" type="button" data-retry="rain">Retry</button>`;
     }
 
     const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });

@@ -2439,7 +2439,7 @@ button.drawer-identity:focus-visible {
  * ------------------------------------------------------------------------- */
 
 .about-block {
-  margin-top: var(--space-roomy);
+  margin-top: var(--space-comfy);
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
   /* Trailing room so the last line clears the safe-area inset on a phone

@@ -369,10 +369,20 @@ const ADMIN_SUFFIX_KEEP = Object.freeze(['Free State']);
  *  `index-of` returns **-1** when the suffix is absent. For a name exactly one
  *  character SHORTER than the suffix, that difference is also -1, the test
  *  passes on a word that does not contain the suffix at all, and `slice(0, -1)`
- *  quietly eats the last letter. " State" is six characters, so this turned
- *  TEXAS into TEXA and IOWA into IOW. Caught by running the real names through
- *  the official expression parser before shipping; it would have looked like a
- *  typo on glass and sent somebody hunting in the tile data.
+ *  quietly eats the last letter.
+ *
+ *  ONE ENDANGERED LENGTH PER SUFFIX, and there are three suffixes:
+ *      " State"       6  ->  every 5-character name    TEXAS -> TEXA
+ *      " Province"    9  ->  every 8-character name    Michigan -> Michiga
+ *      " Prefecture" 11  ->  every 10-character name   Washington -> Washingto
+ *  This comment used to add "and IOWA into IOW", which is not possible — IOWA
+ *  is four characters and -1 is not -2. The real reach is wider than that
+ *  example and does not include it. `tools/test-admin-suffix.mjs` drives all
+ *  three lengths through the generated expression.
+ *
+ *  Caught by running the real names through the official expression parser
+ *  before shipping; it would have looked like a typo on glass and sent
+ *  somebody hunting in the tile data.
  *
  *  The `coalesce ... ''` is the same class of problem: a feature with no name
  *  in any of the three fields binds `null`, and `length` on null is a hard

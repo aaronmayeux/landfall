@@ -74,6 +74,7 @@ import {
 } from '../data/layer-prefs.js';
 import { modelSelectorGroups } from '../config/layers.js';
 import { getAdeck, evictAdeck } from '../data/adeck.js';
+import { evictTcgpIndex } from '../data/tcgp-index.js';
 import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
@@ -671,8 +672,22 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
          * and records a source failure for a storm that has simply finished.
          * Reaching for the raw fetcher here made this the one path that did NOT
          * know that rule, and a rule with one exception is not a rule. */
+        /* ==> THE SHARED INDEX GOES TOO, AND WITHOUT IT THE RETRY CANNOT WORK
+         * FOR FIFTEEN MINUTES. <== A deck is resolved by NAME through
+         * `data/tcgp-index.js`, and that index is cached for `indexTtl`
+         * whatever it says. A relay answering 200 with a DEGRADED index — the
+         * shape data/tcgp-index.js exists to keep distinguishable from an
+         * empty one — is therefore held as the answer, and every press of this
+         * button re-matches the storm against the same bad copy and fails
+         * identically. Dropping the storm's deck alone retries the second half
+         * of a lookup whose first half already decided the outcome.
+         *
+         * Exactly what `fetchAdvisory` does with `evictJtwcIndex` on its own
+         * retry, for the same reason. The control IS the recovery (§5/§7), and
+         * a control that can only recover half a path is not one. */
         const sel = pipeline.selected();
         if (sel) evictAdeck(sel.advisoryKey);
+        evictTcgpIndex();
         refreshLayerStatus();
         warmDecks();
         return;

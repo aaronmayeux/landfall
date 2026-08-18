@@ -39,26 +39,6 @@
 research it does not need. Do not start two. When a wave lands, delete it from
 here and put what it built in the spec.
 
-**WAVE 2 — small code, nothing to research, nothing to decide.**
-- **Five style names are referenced and never declared**, so they render as
-  nothing, silently. Four are in the rainfall block of `ui/home.css`
-  (`--radius-snug`, `--surface-raised`, `--accent`, `--touch-min`) and one is in
-  `ui/panels.css` (`--space-roomy`). The alert row has no background and no
-  corner radius; the Retry link has no color and **no 44px minimum, which breaks
-  §10's touch rule**. Decided: reuse the panel's existing raised surface for the
-  background, and PROMOTE the storm panel's locally-declared Retry color into a
-  real token so every Retry in the app matches (§12: a pattern used twice gets
-  extracted). Then widen `tools/test-css-vars.mjs` to sweep `.css` so a sixth
-  cannot happen. **Do this before judging rainfall on glass.**
-- **Three eviction functions are never called** — `evictTcgpIndex`
-  (`data/tcgp-index.js`), `evictCarq` (`data/carq.js`), `forgetBand`
-  (`map/coast-band-cache.js`). Three caches that fill and never empty. Wire them,
-  and sweep for any other cache with no eviction path.
-- **The `> 0` guard on `index-of` in the state-name suffix trim has no test**
-  (`SPEC-MAP.md` §11.2). Its suite went with the three-globe cut. Without the
-  guard, TEXAS renders as TEXA. Give it a home in a suite that is not about
-  worlds, and verify the assertion FAILS when the guard is removed.
-
 **WAVE 3 — needs a decision, then a read.**
 - **Telemetry cannot tell which Retry button was pressed**, and `env_retry` is
   not in `lib/usage.js`'s allowlist so every press of that one has been dropped
@@ -108,11 +88,10 @@ patches stay on the globe, and does a genuine all-clear still get through once
 six hours lapse.
 
 **Rainfall is on two surfaces and neither has been seen.** `SPEC-DATA.md`
-§48.1–§48.7, `SPEC-UI.md` §48.8–§48.10. **FIX THE MISSING STYLE TOKENS BEFORE
-JUDGING THIS** — four of them are in this exact block (see NEXT UP item 4) and
-the section currently renders without its background, its corner radius or its
-44px retry target.
-**Then judge §48.10 first, and it needs a storm near home.** Lala's advisory says
+§48.1–§48.7, `SPEC-UI.md` §48.8–§48.10. Nothing blocks judging it now — the
+alert row has its background and corner back, and the Retry is a real 44px
+bordered button with a focus ring instead of an unstyled link.
+**Judge §48.10 first, and it needs a storm near home.** Lala's advisory says
 8–12 inches across eastern Maui while the grid at Kahului says 2.91 — both
 correct, and a reader seeing both will think the app is broken. Two things are
 built for that: the home section is worded about the HOUSE, and its last line
@@ -246,13 +225,6 @@ loads reached `ok` against NHC's 44 of 46, with **zero errors either side** — 
 misses are sessions that ended still loading. Retry has been pressed zero times
 in 193 sessions. Two changes have landed since these numbers and both should move
 them: the stamp fix, and the two-second rung. **Re-read before acting.**
-
-**4. THE CSS-VARS SUITE CANNOT SEE A STYLESHEET.** `tools/test-css-vars.mjs`
-walks `.js` only, so a fallback-less `var()` in a `.css` file — which renders as
-nothing, silently — is invisible to it. **Five names are already referenced and
-never declared** — four in the rainfall block of `ui/home.css` and one in
-`ui/panels.css`. The pass is: fix the five, then widen the sweep so
-the sixth cannot happen.
 
 *Dead hypotheses, do not reopen without new data:* the OpenFreeMap CDN is not the
 bottleneck, and modulepreload was measured and rejected (`SPEC.md` SETTLED). The

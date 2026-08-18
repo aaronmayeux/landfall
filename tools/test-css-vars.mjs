@@ -88,13 +88,52 @@ ok(declared.size > 40, `index.html and applyTokens declare ${declared.size} cust
 ok(declared.has('--ocean') && declared.has('--text-primary'),
    'the scan found the obvious ones, so the parse is not silently empty');
 
-/* ---- what is REFERENCED ------------------------------------------------- */
-const files = CODE_DIRS.flatMap((d) => (fs.existsSync(d) ? walk(d) : []));
-ok(files.length > 80, `scanning ${files.length} modules`);
+/* ==> AND FROM THE STYLESHEETS THEMSELVES. <== A `.css` file declares its own
+ * locals — `--body-end`, `--rail-node-top`, the drawer's measurements — and
+ * those are as real a declaration as one on `:root`. Collected here so the
+ * widened reference sweep below does not report a file's own variables as
+ * missing. */
+const CSS_FILES = fs.existsSync('ui') ? walkCss('ui') : [];
+for (const f of CSS_FILES) {
+  for (const m of strip(fs.readFileSync(f, 'utf8')).matchAll(/(^|[;{\s])(--[a-zA-Z0-9-]+)\s*:/g)) {
+    declared.add(m[2]);
+  }
+}
+
+/* ==> AND THE ONES SET ON AN ELEMENT, WHICH ARE THE WHOLE POINT OF FOUR OF
+ * THEM. <== `--swatch`, `--dot-ink`, `--sw` and `--rail-dot` are never on
+ * `:root` and never should be: a storm's color is per-row, and putting it on
+ * the root is exactly the trap the glow block below exists to forbid. They are
+ * written by JS, either as an inline `style="--x: ..."` in a template string or
+ * through `setProperty`. Both forms count as a declaration.
+ *
+ * WITHOUT THIS THE WIDENED SWEEP FAILS ON CORRECT CODE, which would be worse
+ * than the hole it closes — a check that cries wolf on the right answer gets
+ * loosened, and the next genuinely missing name goes out with it. */
+const JS_FILES_ALL = CODE_DIRS.flatMap((d) => (fs.existsSync(d) ? walk(d) : []));
+for (const f of JS_FILES_ALL) {
+  const src = strip(fs.readFileSync(f, 'utf8'));
+  for (const m of src.matchAll(/style\s*=\s*[\\"'`][^"'`]*?(--[a-zA-Z0-9-]+)\s*:/g)) declared.add(m[1]);
+  for (const m of src.matchAll(/setProperty\(\s*['"`](--[a-zA-Z0-9-]+)/g)) declared.add(m[1]);
+}
+
+/* ---- what is REFERENCED -------------------------------------------------
+ * ==> THIS USED TO READ `.js` ONLY, AND THAT WAS AN ODD HOLE IN A SUITE
+ * WRITTEN ABOUT EXACTLY THIS FAILURE. <== A fallback-less `var()` living in a
+ * STYLESHEET was invisible to it, because the bug that prompted the file
+ * (`--kt34`) happened to be in a JS file. Five undeclared names were sitting in
+ * `ui/home.css` and `ui/panels.css` the whole time: `--radius-snug`,
+ * `--surface-raised`, `--accent`, `--touch-min` and `--space-roomy`. The
+ * rainfall alert row had no background and no corner; the rainfall Retry had no
+ * color and no 44px minimum, which is §10's touch rule broken by a rule nobody
+ * could see was broken. */
+const files = [...JS_FILES_ALL, ...CSS_FILES];
+ok(JS_FILES_ALL.length > 80, `scanning ${JS_FILES_ALL.length} modules`);
+ok(CSS_FILES.length >= 3, `and ${CSS_FILES.length} stylesheets — the hole this file used to have`);
 
 const refs = new Map(); // name -> Set(file)
 for (const f of files) {
-  const src = fs.readFileSync(f, 'utf8');
+  const src = strip(fs.readFileSync(f, 'utf8'));
   for (const m of src.matchAll(/var\(\s*(--[a-zA-Z0-9-]+)\s*(,|\))/g)) {
     /* `var(--x, fallback)` carries its own answer and cannot go black. */
     if (m[2] === ',') continue;
@@ -123,16 +162,9 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
  * `lib/cone-ribbon.js` colors the cone slices from. Delete them there and the
  * gradient resolves to nothing — a legend that is present, blank, and silent.
  *
- * ==> AND THEY HAD TO BE NAMED HERE RATHER THAN LEFT TO THE SWEEP, BECAUSE THE
- * SWEEP CANNOT SEE THEM. <== `walk()` above collects `.js` only, so a
- * fallback-less `var()` living in a STYLESHEET is invisible to this file —
- * which is an odd blind spot for a suite written about exactly this failure.
- * It went unnoticed because the bug that prompted it (`--kt34`) was in a JS
- * file. Widening the sweep to `.css` is worth doing and is NOT free: a probe
- * on 2026-08-16 found five more undeclared names already referenced from
- * `ui/home.css` and `ui/panels.css` (`--radius-snug`, `--surface-raised`,
- * `--accent`, `--touch-min`, `--space-roomy`), each of which needs judging on
- * its own. Logged in NOW.md; not folded into an unrelated pass. */
+ * They stay named here even though the sweep now reads stylesheets too. A
+ * sweep failure prints a list; these print a sentence saying what goes blank,
+ * and the legend's bar going blank is not a thing to work out from a name. */
 for (const v of ['--env-ramp-lo', '--env-ramp-mid', '--env-ramp-hi']) {
   ok(declared.has(v),
      `${v} is declared — without it the environment legend's bar renders as nothing`);

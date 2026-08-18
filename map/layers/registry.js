@@ -35,6 +35,8 @@
  *     update(map, storm, bundle),     // the SELECTED storm changed
  *     clear(map),                     // selection closed — empty sel data
  *     updateAmbient?(map, features),  // ambient feature set changed
+ *     forget?(stormId),               // this storm has left the feed — drop
+ *                                     // anything held for it. See below.
  *     setVisible?(map, on),           // additive toggle hook
  *     setPair?(map, value),           // exclusive-pair segment hook.
  *                                     // MUST return true when the segment
@@ -143,7 +145,25 @@ export function createLayerEngine(map) {
     ambientPrune(liveIds) {
       let changed = false;
       for (const id of [...ambient.keys()]) {
-        if (!liveIds.has(id)) { ambient.delete(id); changed = true; }
+        if (!liveIds.has(id)) {
+          ambient.delete(id);
+          /* ==> AND ANYTHING THE LAYER ITSELF IS HOLDING FOR THAT STORM. <==
+           * Dropping the bundle empties what is DRAWN; it does not empty what
+           * a layer cached along the way. The coastal band cache is the case
+           * that made this necessary — it holds a selected stretch of
+           * coastline per storm per zoom bucket, keyed by storm id, and until
+           * now nothing ever removed one. A storm dissolves, the map is
+           * correct, and its bands sit in memory for the rest of the session;
+           * a busy Atlantic week is a slow leak on a phone with no path out.
+           *
+           * ==> AND THE ENGINE DELIBERATELY DOES NOT KNOW WHAT IS BEING
+           * DROPPED. <== This file imports nothing, on purpose. The band keys
+           * are not the storm id in every case either — surge namespaces its
+           * own (`surge:${id}`) — so only the layer that wrote them knows how
+           * to name them. It gets told the storm is gone and decides. */
+          for (const d of defs) d.forget?.(id);
+          changed = true;
+        }
       }
       if (changed) recomputeAmbient();
     },

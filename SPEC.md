@@ -1548,7 +1548,7 @@ tools/      check-syntax.mjs  doc-check.mjs  spec-index.mjs
             contrast-check.mjs  csp-hash-check.mjs  token-check.mjs
             headless-check.mjs  csp-check.mjs  module-graph.mjs
             area-shot.mjs  load-probe.mjs  boot-profile.mjs
-            bootstrap.sh  with-server.sh  (+ 43 test-*.mjs suites)
+            bootstrap.sh  with-server.sh  (+ 64 test-*.mjs suites)
 ```
 
 **Pages Functions — twenty-four files**, all self-contained on purpose: Pages

@@ -417,6 +417,30 @@ model shortlist.** Merged into the guidance response these rows reach
 `map/layers/model-tracks.js`, which draws what it is given — painting a storm's
 past across the map as a five-day forecast.
 
+**The parsed decks are cached per TCGP deck id, bounded by
+`CACHE.geometryLruStorms` like every other per-storm cache, on the same
+`ADVISORY_TEXT.indexTtl` the index itself uses — read from that constant, not
+restated.** An EMPTY parse is cached too and deliberately: TCGP files no
+analysis rows for some storms, and without it the app would re-ask every poll
+for a deck with nothing in it. **A MANUAL RETRY DROPS THEM ALL** (`refresh()` in
+`data/store.js`, which is where the storm list's Retry and a re-toggled layer
+land). A poll reusing the cache is correct — the deck only grows — but the user
+pressing Retry is doing so because something came back wrong, and the entry
+cached during the failure is the likeliest thing to be wrong. Without the drop
+the button is a no-op for a quarter of an hour. A re-toggled layer pays one
+re-parse per GDACS storm for nothing, which is cheaper than a second entry point
+a future poll change could forget.
+
+**The Layers row's model-tracks Retry drops the SHARED TCGP INDEX as well as the
+storm's deck** (`app/views.js`). A deck is resolved by name through
+`data/tcgp-index.js`, and a relay answering 200 with a degraded index — the state
+that file exists to keep distinguishable from an empty one — is held for
+`indexTtl` whatever it says. Dropping only the deck retries the second half of a
+lookup whose first half already decided the outcome, so every press fails
+identically until the TTL lapses. Exactly what `fetchAdvisory` does with
+`evictJtwcIndex`, for the same reason: the control IS the recovery (§5/§7), and
+one that can recover half a path is not one.
+
 **Both a-deck variants are cron-warmed** (`tcgpDerived` in `worker/src/sources.js`).
 UCAR states TCGP is not an operational service, and `caches.default` is
 per-datacentre across 300+ colos — a 300x fan-out at a non-operational academic

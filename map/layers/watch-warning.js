@@ -47,7 +47,7 @@ import { STORM_GEO, CATEGORY_COLOR, OPACITY } from '../../config/tokens.js';
 import { ZOOM, COAST_BAND } from '../../config/constants.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { wwCodeFromProps, wwColor, wwSortKey } from '../../lib/watchwarning.js';
-import { bandFor, bandMissingFor } from '../coast-band-cache.js';
+import { bandFor, bandMissingFor, forgetBand } from '../coast-band-cache.js';
 import { chordLayers, chordMarks, trimChords, IS_BANDED } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
@@ -261,6 +261,26 @@ registerLayer({
      * whatever tiles happen to be loaded, which can only be worse. */
     lastSelected = null;
     map.getSource(SOURCE)?.setData(EMPTY);
+  },
+
+  /**
+   * The storm has LEFT THE FEED, which is the one case `clear()` above is not.
+   *
+   * Deselection keeps the band because the storm is still out there and still
+   * drawn ambiently — the work stays useful. A dissolved storm is different:
+   * nothing will ever ask for its coastline again, and the entry it left
+   * behind counts against `COAST_BAND.maxBandEntries`, so it does not merely
+   * sit there, it pushes a LIVE storm's band out of the cache ahead of its
+   * time. That costs a re-select on a storm somebody is actually looking at.
+   *
+   * This layer's band key is the plain storm id — see `update()` above.
+   */
+  forget(stormId) {
+    forgetBand(stormId);
+    /* If the departed storm was the one held for re-select, stop holding it.
+     * `moveend` would otherwise re-select geometry for a storm that no longer
+     * exists and paint its warning stripe back onto the map (§5). */
+    if (lastSelected?.key === stormId) lastSelected = null;
   },
 
   updateAmbient(map, features) {

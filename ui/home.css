@@ -291,7 +291,12 @@
   color: var(--error);
 }
 
-.home-retry {
+/* THE ONE RETRY SHAPE IN THIS FILE. Both of home's retries take it, so a
+   Retry on the search row and a Retry in the rainfall section are the same
+   control — same box, same ink, same 44px target — which is the same shape
+   `.retry` and `.detail-retry` carry in panels.css. */
+.home-retry,
+.home-rain-retry {
   min-height: var(--touch-target);
   padding: 0 var(--space-snug);
   background: transparent;
@@ -449,6 +454,7 @@
 .home-choice:focus-visible,
 .home-search:focus-visible,
 .home-retry:focus-visible,
+.home-rain-retry:focus-visible,
 .home-result:focus-visible,
 .home-confirm-yes:focus-visible,
 .home-confirm-no:focus-visible,
@@ -1150,11 +1156,11 @@
   justify-content: space-between;
   gap: var(--space-snug);
   padding: var(--space-snug);
-  border-radius: var(--radius-snug);
+  border-radius: var(--radius);
   /* The panel's own raised fill, not a tinted one. The COLOR carries the
      urgency; a filled amber row would compete with the storm's own category
      color three inches above it. */
-  background: var(--surface-raised);
+  background: var(--glass-raised);
   font-size: var(--type-body);
 }
 
@@ -1203,17 +1209,20 @@
   color: var(--text-muted);
 }
 
-/* Matches the detail panel's retry so a Retry looks like a Retry everywhere.
-   Declared here rather than reused across files because home.css and
-   panels.css share only tokens, on purpose. */
+/* ==> IT CLAIMED TO MATCH THE DETAIL PANEL'S RETRY AND DID NOT. <== It shipped
+   as a bare underlined link in `--accent` at `--touch-min` — two names that
+   were never declared anywhere, so it had NO color of its own and NO minimum
+   height, and it was missing from the focus list below as well. Three of §10's
+   rules broken by one rule nobody could see was broken.
+
+   It now takes `.home-retry`'s declaration outright (see the shared selector
+   above), because that IS the app's Retry: a bordered box at
+   `--touch-target`, in primary ink, exactly like `.retry` and `.detail-retry`
+   in panels.css. A pattern used twice gets extracted (§12) — and the point of
+   extracting it is that a fourth Retry cannot quietly become a link.
+
+   All this rule adds is the room to sit under its sentence rather than inside
+   it; `ui/rain-home.js` puts it in its own paragraph for the same reason. */
 .home-rain-retry {
-  margin-left: var(--space-tight);
-  background: none;
-  border: 0;
-  padding: 0;
-  font: inherit;
-  color: var(--accent);
-  text-decoration: underline;
-  cursor: pointer;
-  min-height: var(--touch-min);
+  margin-top: var(--space-snug);
 }

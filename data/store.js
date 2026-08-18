@@ -22,6 +22,7 @@
 import { POLL } from '../config/constants.js';
 import { fetchNhcStorms } from './nhc.js';
 import { fetchGdacsStorms } from './gdacs.js';
+import { evictCarq } from './carq.js';
 import { fetchGenesis } from './genesis.js';
 import { mergeWithEnded } from './merge.js';
 import {
@@ -408,7 +409,23 @@ function stopPolling() {
 }
 
 /** Manual retry — the 44 px Retry button and re-toggled layers land here.
- *  Same path as a poll tick; no special cases to go stale. */
+ *  Same path as a poll tick; no special cases to go stale.
+ *
+ *  ==> IT DROPS THE ANALYSED DECKS FIRST, BECAUSE A POLL WOULD NOT. <== The
+ *  GDACS parse joins each storm's measured past wind from TCGP
+ *  (`data/carq.js`), and that join is cached per deck for `indexTtl`. A poll
+ *  re-using it is correct — the deck only grows, and re-reading it every five
+ *  minutes would spend a request to learn nothing. A RETRY is the other case:
+ *  the user is pressing it because something came back wrong, and the entry
+ *  cached during the failure (including a deliberately-cached empty parse) is
+ *  the most likely thing to be wrong. Answering the retry from it makes the
+ *  button a no-op for a quarter of an hour. The control IS the recovery
+ *  (§5/§7).
+ *
+ *  A re-toggled layer lands here too and pays one re-parse per GDACS storm for
+ *  nothing. That is a handful of storms and a cached relay response, and it is
+ *  cheaper than a second entry point that a future poll change could forget. */
 export function refresh() {
+  evictCarq();
   return pollAll();
 }

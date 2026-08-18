@@ -77,7 +77,7 @@
 import { SURGE_RAMP, OPACITY, STORM_GEO } from '../../config/tokens.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
-import { bandFor, bandMissingFor } from '../coast-band-cache.js';
+import { bandFor, bandMissingFor, forgetBand } from '../coast-band-cache.js';
 import { chordLayers, chordMarks, trimChords, IS_BANDED, NOT_MARK } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
@@ -353,6 +353,22 @@ registerLayer({
      * segment off — the ambient surge for every other storm is still on the
      * map, and brightening the coastline back up under it would undo the fix
      * for as long as nothing was selected. `setPair` owns this. */
+  },
+
+  /**
+   * The storm has left the feed. Same reasoning as watch-warning.js's `forget`
+   * — a dissolved storm's band is dead weight that evicts a live storm's.
+   *
+   * ==> AND THE KEY IS NOT THE STORM ID. <== This layer namespaces its bands
+   * `surge:${id}` so a surge band and a warning band for one storm cannot
+   * collide on a shared corridor width. Handing the raw id to `forgetBand`
+   * here would silently forget nothing, which is exactly the kind of quiet
+   * miss that made this cache leak in the first place — so the key is built
+   * with the same `bandKey` the writes use, and never spelled out twice.
+   */
+  forget(stormId) {
+    forgetBand(bandKey(stormId));
+    if (lastSelected?.key === stormId) lastSelected = null;
   },
 
   updateAmbient(map, features) {

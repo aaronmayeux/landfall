@@ -842,6 +842,20 @@ avoid — only coast in the band or out of it.
   an identical stamp on an identical substrate returns immediately without a ring
   decode or a band select. **The advisory stamp clears EVERY bucket for that storm**
   — a superseded warning is wrong at every zoom.
+  **A STORM LEAVING THE FEED DROPS ITS BANDS.** Deselection deliberately does not
+  — the storm is still out there and still drawn ambiently, so the select is still
+  useful work. A dissolved storm is the other case: nothing will ask for its
+  coastline again, and its entry counts against `maxBandEntries`, so it does not
+  merely sit there, it evicts a LIVE storm's band ahead of time. The wire is an
+  optional `forget(stormId)` hook on the layer definition, called from
+  `ambientPrune` in `map/layers/registry.js`. **The engine is not told what to
+  drop and must not learn** — it imports nothing by design, and the key is not the
+  storm id in every case: `map/layers/surge.js` namespaces its own as
+  `surge:${id}`, so each layer builds its key with the same helper its writes use.
+  `clearBands` drops everything and **has no caller in the app**, which is correct
+  rather than a gap: it was written for a basemap style RELOAD, and a theme change
+  is `setGlobalState` now, so the style loads once per session. Unreachable, not
+  obsolete — the same read `registry.js` records for its retired `invalidate()`.
 - **Severity stacking.** Overlapping products (a Hurricane Watch atop a Tropical
   Storm Warning) paint the same coast; `line-sort-key` via `wwSortKey()` makes the
   severer color win the pixels — §6 safety contract.
@@ -2949,13 +2963,18 @@ by `class` and `rank`). No new source, no new request, no new bytes.
   - **The `> 0` guard on `index-of` is load bearing.** `index-of` returns -1 on a
     miss, which equals `length - suffixLength` for a name one character shorter
     than the suffix, so the end-of-string test passes on a word that never
-    contained it and `slice(0, -1)` eats the last letter. TEXAS became TEXA.
-    **==> NOTHING PINS THIS ANY MORE. <==** `tools/test-world-basemap.mjs` did,
-    and it was deleted with the three-globe cut on 2026-08-08 — the suite went
-    with the feature it was named after, taking an assertion about SHIPPED
-    behaviour with it. The guard is still in the code and is still load bearing;
-    it is simply untested. `[VERIFY]` — it wants a home in a suite that is not
-    about worlds.
+    contained it and `slice(0, -1)` eats the last letter. **Each suffix
+    endangers a different name length**, so the reach is one length per clause,
+    not one case: ` State` (6) breaks 5-character names — TEXAS becomes TEXA;
+    ` Province` (9) breaks 8-character ones — Michigan becomes Michiga;
+    ` Prefecture` (11) breaks 10-character ones — Washington becomes Washingto.
+    `tools/test-admin-suffix.mjs` pins all three by evaluating the `text-field`
+    expression `buildStyle()` actually generates, rather than a JavaScript
+    restatement of the rule that would be free to agree with itself while the
+    shipped expression drifted. It also pins the `Free State` exception, the
+    two words deliberately not stripped, the trailing-word-only rule, and the
+    nameless feature — a null name reaching `length` is a hard expression error
+    that removes the whole layer, not a blank label.
 - **OpenMapTiles only.** The Protomaps path has its own boundary schema and does
   NOT get these.
 

@@ -321,8 +321,24 @@ export function forgetBand(key) {
   dropAllBuckets(key);
 }
 
-/** Drop everything. Used when the basemap style reloads and every cached
- *  band was selected from vertices that no longer exist. */
+/** Drop everything.
+ *
+ *  ==> NOTHING IN THE APP CALLS THIS, AND THAT IS CORRECT RATHER THAN A GAP.
+ *  <== It was written for a basemap style RELOAD, when every cached band had
+ *  been selected from vertices that no longer existed. A theme change used to
+ *  be `map.setStyle`; it is `map.setGlobalState` now (map/theme-state.js) and
+ *  touches no source, so the style is loaded exactly once per session and
+ *  there is no reload to clear against. `coastGeneration` covers the softer
+ *  case of tiles arriving and leaving without a reload.
+ *
+ *  It is UNREACHABLE, not obsolete — the same read `map/layers/registry.js`
+ *  records for its retired `invalidate()`. Reintroduce a `setStyle` on a live
+ *  map and this comes back with it. Meanwhile it is the reset seam
+ *  `tools/test-coast-band-zoom.mjs` needs to keep two suites in one process
+ *  from inheriting each other's cache.
+ *
+ *  Per-storm removal is `forgetBand`, which the layers call when a storm
+ *  leaves the feed. That is the path that actually runs. */
 export function clearBands() {
   cache.clear();
 }
