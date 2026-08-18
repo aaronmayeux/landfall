@@ -523,6 +523,34 @@ export const DARK = Object.freeze({
   scrollThumb:      'rgba(120, 190, 225, 0.26)',
   scrollThumbHover: 'rgba(120, 190, 225, 0.46)',
 
+  /** THE POINTER HOVER WASH ON A LIST ROW.
+   *
+   *  ==> HOVER IN THE DARK THEME ADDS LIGHT. IT DOES NOT ADD PANEL. <==
+   *
+   *  Rows used `glassRaised` for this, which is the color of a RAISED PANEL —
+   *  a dark blue at 0.44. Painted onto a drawer that is already dark blue over
+   *  a near-black ocean it barely moves. MEASURED in Chromium, sampling the
+   *  real three-layer stack (ocean -> glass -> wash):
+   *
+   *      no hover      rgb(  7, 15, 26)
+   *      glassRaised   rgb( 10, 21, 35)   delta ( 3,  6,  9)
+   *      this token    rgb( 21, 36, 49)   delta (14, 21, 23)
+   *
+   *  A real change arithmetically and invisible at the bottom of the luminance
+   *  range where the whole dark theme lives. Aaron could not see it on a
+   *  desktop, which is the only place hover exists at all.
+   *
+   *  This is the same light blue and the same idea as `scrollThumbHover`
+   *  directly above — the theme already had one honest answer for "a surface
+   *  responds to a pointer" and the rows were not using it. The lift is about
+   *  three times the old one and it reads as the row catching light rather
+   *  than as a second panel sliding under it.
+   *
+   *  DELIBERATELY NOT BRIGHTER THAN THIS. Hover is an affordance, not a
+   *  selection: it must stay below the selected-row treatment and below
+   *  anything carrying severity (§6). */
+  hover:          'rgba(120, 190, 225, 0.12)',
+
   /* State */
   focusRing:      '#5FE0F5', // always visible, never outline:none
   stale:          '#E0A93C', // aging data, 4-9 h
@@ -1114,6 +1142,15 @@ export const LIGHT = Object.freeze({
    *  ink for the same reason: it is a moving edge on a glass panel. */
   scrollThumb:      'rgba(28, 32, 36, 0.26)',
   scrollThumbHover: 'rgba(28, 32, 36, 0.46)',
+
+  /** THE POINTER HOVER WASH — see the long note on `DARK.hover`.
+   *
+   *  INVERTED, AND IT HAS TO BE. Dark hover adds light; a light panel is
+   *  already near white, so adding light does nothing and the row has to take
+   *  some away. Same neutral ink as the scrollbar above, at the same weight
+   *  the dark theme lifts by, so both themes answer a pointer with the same
+   *  strength of change in opposite directions. */
+  hover:          'rgba(28, 32, 36, 0.10)',
 
   /* State. The three status colors and the focus ring are the only saturated
    * values in this palette — see the header for why each one earns it. */

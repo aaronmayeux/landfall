@@ -1498,6 +1498,19 @@ SHIPS numbers.
 - 44 px touch targets; every interactive element keyboard-reachable and
   screen-reader-labelled; visible focus ring always; contrast meets WCAG AA in
   both modes. Verify at phone width and desktop width before anything is done.
+- **A row that pairs two typefaces or two sizes states `align-items: baseline`.**
+  Flex and grid align the child BOXES by default, which is not the same as
+  aligning the text inside them — two faces at one font-size put their baseline
+  at different heights, so a label/value row drifts apart by a pixel or more on
+  every line. It shows on a desktop before it shows on a phone, because the
+  desktop font pairing is wider apart. `tools/test-css-vars.mjs` sweeps for it.
+- **Hover has its own token and it is never a panel colour.** `--hover` is a
+  light wash in the dark theme and a dark one in the light theme, so both
+  answer a pointer with the same strength of change in opposite directions.
+  Reaching for `--glass-raised` looks right and is not: a dark panel laid over
+  a dark panel over a near-black ocean moves the composite by single digits and
+  is invisible in the one place hover exists at all. Hover stays below the
+  selected treatment and never carries severity (§6).
 
 **Visual direction: a cyan nodal-network entry that dissolves into a lit
 volumetric globe.** At the planet band the globe is a glowing geodesic node cage

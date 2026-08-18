@@ -184,7 +184,7 @@
 }
 
 @media (hover: hover) {
-  .home-choice:hover:not(:disabled) { background: var(--glass); }
+  .home-choice:hover:not(:disabled) { background: var(--hover); }
 }
 
 .home-choice:disabled {
@@ -329,7 +329,7 @@
 }
 
 @media (hover: hover) {
-  .home-result:hover { background: var(--glass-raised); }
+  .home-result:hover { background: var(--hover); }
 }
 
 .home-result-note {

@@ -221,6 +221,124 @@ for (const [name, where] of missing) {
 }
 ok(missing.length === 0, `every referenced custom property resolves (${refs.size} checked)`);
 
+/* ---------------------------------------------------------------------------
+ * TWO FACES IN ONE ROW MUST SIT ON ONE BASELINE
+ *
+ * ==> THE STORM DRAWER'S VITALS LIST PRINTED EVERY LABEL A HAIR BELOW ITS OWN
+ * VALUE, ON EVERY ROW, AND NOTHING WAS WRONG WITH ANY OF IT. <==
+ *
+ * `.detail-vitals` is a two-column grid: the label is in the UI face, the
+ * value is in `--font-numeric`. A grid item defaults to `stretch`, which
+ * agrees the two cells' EDGES and says nothing about where the glyphs sit
+ * inside them — and two faces at one font-size put their baseline at
+ * different heights in the line box. Measured in Chromium: the text ends up
+ * a pixel apart with the substitute faces a Linux box has, and further apart
+ * with a real UI/mono pair like SF Pro against SF Mono, which is why Aaron
+ * saw it on a desktop before anyone saw it on a phone.
+ *
+ * `.area-facts`, `.row-head`, `.watch-head` and `.slider-label` all already
+ * carried `align-items: baseline`. The rule was known; one grid missed it,
+ * and nothing could tell.
+ *
+ * WHAT THIS CHECKS: any flex or grid container whose own children are given
+ * two different `font-family` or `font-size` values has an explicit
+ * `align-items`. It does NOT prove the text lines up — that is a browser and
+ * ultimately glass. It closes the hole where the question was never asked.
+ *
+ * Read as text: there is no CSS parser here and none is worth adding.
+ * ------------------------------------------------------------------------- */
+{
+  const cssText = walkCss('ui').map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+  /* Comments out first — several of them quote `display: grid` in prose. */
+  const css = strip(cssText);
+  const rules = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].map((m) => ({
+    sel: m[1].trim().split('\n').pop().trim(),
+    body: m[2],
+  }));
+
+  const containers = rules.filter(
+    (r) => /display:\s*(grid|flex)/.test(r.body) && /^\.[\w-]+$/.test(r.sel)
+  );
+
+  const offenders = [];
+  for (const c of containers) {
+    if (/align-items/.test(c.body)) continue;
+    /* Rules targeting something INSIDE this container. A descendant two levels
+     * down is not a sibling of anything and cannot misalign against one, so
+     * only the immediate children pattern (`.x dt`, `.x > *`, `.x .y`) counts
+     * — which over-collects slightly and is the safe direction for a check
+     * that fails loudly. */
+    const kids = rules.filter((r) => r.sel.startsWith(`${c.sel} `) || r.sel.startsWith(`${c.sel}>`));
+    const faces = new Set();
+    const sizes = new Set();
+    for (const k of kids) {
+      const f = /font-family:\s*([^;]+)/.exec(k.body);
+      const s = /font-size:\s*([^;]+)/.exec(k.body);
+      if (f) faces.add(f[1].trim());
+      if (s) sizes.add(s[1].trim());
+    }
+    /* ONE declared face beside the inherited one is already two faces in the
+     * row. Same for size. */
+    if (faces.size >= 1 || sizes.size >= 1) {
+      if (kids.length > 1) offenders.push(`${c.sel} (faces: ${[...faces].join(', ') || 'inherited'})`);
+    }
+  }
+  ok(
+    offenders.length === 0,
+    'every flex/grid row whose children change face or size states its '
+    + `align-items — these do not: ${offenders.join('; ')}`
+  );
+
+  /* The one that actually broke, pinned by name so the general sweep above
+   * cannot be loosened out from under it. */
+  const vitals = /\.detail-vitals\s*\{([^}]*)\}/.exec(css)?.[1] || '';
+  ok(
+    /align-items:\s*baseline/.test(vitals),
+    '.detail-vitals is baseline-aligned — its labels are in the UI face and '
+    + 'its values are in the monospace one, and `stretch` lines up the boxes '
+    + 'rather than the text'
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * HOVER IS ITS OWN TOKEN, NOT A PANEL COLOR
+ *
+ * Row hovers were painted with `--glass-raised`, which is the color of a
+ * RAISED PANEL — in the dark theme a dark blue, laid over a drawer that is
+ * already dark blue over a near-black ocean. Measured composite moved from
+ * rgb(7,15,26) to rgb(10,21,35): real on paper, invisible on a screen, and
+ * hover only exists on a desktop where that screen is biggest.
+ *
+ * `--hover` is a light wash in the dark theme and a dark one in the light
+ * theme. The mistake is easy to make again precisely because `--glass-raised`
+ * is the obviously-adjacent name.
+ * ------------------------------------------------------------------------- */
+{
+  const wrong = [];
+  for (const f of walkCss('ui')) {
+    const css = strip(fs.readFileSync(f, 'utf8'));
+    for (const m of css.matchAll(/([^{}]*:hover[^{}]*)\{([^{}]*)\}/g)) {
+      if (/background:\s*var\(--glass(-raised)?\)/.test(m[2])) {
+        wrong.push(`${path.basename(f)}: ${m[1].trim().split('\n').pop().trim()}`);
+      }
+    }
+  }
+  ok(
+    wrong.length === 0,
+    'a hover background uses `--hover`, never a glass panel color — these do '
+    + `not: ${wrong.join('; ')}`
+  );
+
+  /* And the token has to exist in both themes, or half the app has no hover
+   * at all and nothing throws. */
+  const tokens = fs.readFileSync('config/tokens.js', 'utf8');
+  ok(
+    (tokens.match(/^\s*hover:\s*'rgba/gm) || []).length === 2,
+    'both palettes declare a `hover` color — an undeclared one resolves to '
+    + 'nothing and the row simply stops responding to the pointer'
+  );
+}
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

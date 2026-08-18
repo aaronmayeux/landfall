@@ -525,7 +525,12 @@
   appearance: none;
   transition: opacity var(--duration-instant) var(--ease-swap);
 }
-@media (hover: hover) { .storm-row:hover { background: var(--glass-raised); } }
+/* ==> `--hover`, NOT `--glass-raised`. <== The raised-panel color is the color
+ * of a PANEL, and painting one dark blue onto a drawer that is already dark
+ * blue over a near-black ocean moved the composite by an amount that is real
+ * on paper and invisible on a screen. See the note on `DARK.hover` in
+ * config/tokens.js. One token, both themes, every hoverable row in the app. */
+@media (hover: hover) { .storm-row:hover { background: var(--hover); } }
 .storm-row:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
@@ -871,7 +876,7 @@
   -webkit-appearance: none;
   appearance: none;
 }
-@media (hover: hover) { .watch-row:hover { background: var(--glass-raised); } }
+@media (hover: hover) { .watch-row:hover { background: var(--hover); } }
 .watch-row:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
   outline-offset: calc(-1 * var(--focus-ring-width));
@@ -1411,6 +1416,23 @@ button.drawer-identity:focus-visible {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: var(--space-tight) var(--space-base);
+  /* ==> THE LABEL IS IN THE UI FACE AND THE VALUE IS IN THE MONOSPACE ONE, SO
+   *     THE BOXES LINING UP IS NOT THE TEXT LINING UP. <==
+   *
+   * A grid item defaults to `stretch`, which agrees the two cells' EDGES and
+   * says nothing about where the glyphs sit inside them. Two faces at one
+   * font-size put their baseline at different heights in the line box —
+   * different ascent, different normal line-height — so `Winds` printed a
+   * hair below `86 mph`, on every row, in a list whose whole job is being
+   * scannable down a column. Measured in Chromium: 1px apart with the
+   * substitute faces a Linux box has, and wider than that with a real UI/mono
+   * pair like SF Pro against SF Mono, which is why it showed on Aaron's
+   * desktop first.
+   *
+   * `baseline` is the same alignment `.area-facts`, `.row-head`, `.watch-head`
+   * and `.slider-label` already carry — this grid was the one that missed it.
+   * ANY ROW PAIRING TWO TYPEFACES OR TWO SIZES NEEDS IT. */
+  align-items: baseline;
   margin: 0;
   font-size: var(--type-lead);
 }
