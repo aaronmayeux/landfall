@@ -1138,6 +1138,32 @@ nothing had ever read it.
   ring says "a place", which is what a breakpoint is, and it lets the chord and
   the track beneath read through instead of being punched full of holes. The
   product colour therefore rides the STROKE.
+- **==> THE CHORD STOPS AT EACH RING'S OUTER EDGE AND DOES NOT ENTER IT. <==**
+  Aaron's call on glass, 2026-08-18. A line running THROUGH an open ring makes
+  the ring look like a bead threaded onto it — decoration — and the reader stops
+  seeing it as a place the order reaches. A line that stops short reads as
+  arriving AT something. `trimChords` pulls both ends of every segment back by
+  `chordMarkRadius + chordMarkStroke + chordMarkClearPx`.
+- **The trim is done in SCREEN PIXELS, via `map.project`, and it has to be.**
+  The ring is a fixed pixel radius, so the gap it needs is a pixel distance too;
+  trimming a fixed number of degrees would bury the line inside the ring zoomed
+  in and cut a hole hundreds of km wide zoomed out. Same tool
+  `map/layers/points-forecast.js` uses for label placement.
+- **Every segment becomes its own part.** NHC products run to a dozen
+  breakpoints, and a single polyline trimmed only at its two ends still runs
+  through every ring in the middle. Splitting an N-point line into N−1
+  independently trimmed segments handles interior rings for free.
+- **Two rules keep the trim honest.** (1) **Rings are cut BEFORE the trim** —
+  they belong on NHC's original breakpoints, and marking trimmed geometry lands
+  every ring a gap-width inside the place it names. (2) **A feature is never
+  emptied.** A segment with no room left is dropped, but if that leaves nothing,
+  the feature keeps NHC's untrimmed geometry — deleting a live government order
+  from the map for a cosmetic reason is the §5 failure. A map that cannot
+  project passes features through untrimmed for the same reason.
+- **It goes stale mid-gesture, deliberately.** Both callers re-run `decorated()`
+  on `moveend`, so the gap is right on any settled camera and can drift slightly
+  during a pinch. Cosmetic drift on a thin dashed line is not worth a per-frame
+  recompute.
 - **Ring radius sits between the first pass (3.5) and a forecast point
   (`pointRadius` 10)**, Aaron's call on glass: 3.5 could not be found on a
   phone, a full 10 would compete with the dots carrying the category codes. It

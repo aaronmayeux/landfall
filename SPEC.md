@@ -1288,7 +1288,7 @@ wrong row says a file was looked at and judged when it was not.
 | File | Lines | Call |
 |---|---|---|
 | `config/constants.js` | 4972 | **Exempt — standing** (above), and the exemption was re-measured rather than re-asserted. Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. **Only 705 of these lines are code**; the other 77% is the reason beside each number. `tools/module-graph.mjs` was run against all 63 blocks: every one is read by the SHIPPED app, zero are off-path. `WIND_BAND_KT` was the one dead export and is deleted. A grouped table of contents at the head of the file is generated and enforced by `tools/constants-toc.mjs` — see §12.1. |
-| `config/tokens.js` | 2085 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `config/tokens.js` | 2119 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `ui/panels.css` | 2607 | **Exempt, and the threshold below it was missed.** See below. Crossed 2,500 when the environment paragraph and the freshness column landed; still declarative all the way down. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1571 | **Over the line, and holding at seams only.** The Environment section (§47.8) went in as four seams — a section row, an ensure, a wire and a repaint — with its whole controller in `ui/env-health.js`, which is the shape every further addition must take. The stamp, the section renderers, the advisory record and the stepper remain the four separable concerns; inventory and cut list before the next detail pass that is more than a seam. |

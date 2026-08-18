@@ -123,9 +123,125 @@ export function chordMarks(features) {
   return out;
 }
 
+/* ---------------------------------------------------------------------------
+ * PULLING THE CHORD BACK OFF THE RINGS
+ *
+ * ==> THIS IS DONE IN SCREEN PIXELS, NOT IN DEGREES, AND IT HAS TO BE. <== The
+ * ring is a FIXED PIXEL radius — it does not scale with the ground — so the
+ * gap it needs is a pixel distance too. Trimming a fixed number of degrees
+ * would leave the line buried in the ring when zoomed in and cut a hole
+ * hundreds of km wide when zoomed out.
+ *
+ * `map.project` gives exact screen coordinates for the camera as it stands,
+ * globe curvature included, which is the same tool map/layers/points-forecast.js
+ * uses to place its labels. Trim there, unproject back.
+ *
+ * EVERY SEGMENT BECOMES ITS OWN PART. A product with five breakpoints has
+ * rings on the three in the middle as well as the two ends, and a single
+ * polyline trimmed only at its ends would still run straight through those
+ * three. Splitting an N-point line into N-1 independently trimmed segments
+ * handles interior rings for free — and a MultiLineString draws identically.
+ *
+ * THE CAMERA MOVES AND THIS GOES STALE. Both callers re-run `decorated()` on
+ * `moveend`, so the gap is correct on any settled camera and can be slightly
+ * off mid-pinch. That is a cosmetic drift on a thin dashed line, not a wrong
+ * statement about a warning, so it is not worth a per-frame recompute.
+ * ------------------------------------------------------------------------- */
+
+/** Pixels of line to remove at each end of each segment: the ring's outer edge
+ *  plus a hair of clear air. `circle-stroke-width` grows OUTWARD from
+ *  `circle-radius`, so the outer edge is the two added. */
+const trimPx = () =>
+  STORM_GEO.chordMarkRadius + STORM_GEO.chordMarkStroke + STORM_GEO.chordMarkClearPx;
+
+/**
+ * Trim every unbanded feature's chord back to the edge of its breakpoint
+ * rings. Banded features pass through untouched — their geometry is real
+ * coastline and carries no rings.
+ *
+ * ==> CALL THIS AFTER `chordMarks`, NEVER BEFORE. <== The rings belong on
+ * NHC's ORIGINAL breakpoints. Mark a trimmed line and every ring lands one
+ * gap-width inside the place it is supposed to be naming, which is a wrong
+ * position rendered confidently — the §5 failure, in miniature.
+ *
+ * @param {object} map       needs `project` / `unproject`; anything else is a
+ *                           no-op and the untrimmed chords draw
+ * @param {Array}  features  post-band features
+ */
+export function trimChords(map, features) {
+  const list = features || [];
+  if (typeof map?.project !== 'function' || typeof map?.unproject !== 'function') {
+    return list;
+  }
+  const cut = trimPx();
+  /* Below this many pixels of surviving line there is nothing worth drawing —
+   * two breakpoints whose rings nearly touch. Drop that connector rather than
+   * squeeze in a smear. The RINGS still draw, so the order is never silent. */
+  const minVisiblePx = cut;
+
+  return list.map((f) => {
+    if (f?.properties?._banded !== false) return f;
+
+    const parts = [];
+    for (const part of lineParts(f.geometry)) {
+      for (let i = 0; i < part.length - 1; i++) {
+        const seg = trimSegment(map, part[i], part[i + 1], cut, minVisiblePx);
+        if (seg) parts.push(seg);
+      }
+    }
+
+    /* NOTHING SURVIVED, SO KEEP WHAT NHC GAVE US. Every segment being too
+     * short to trim is a real case (a warning covering one short reach), and
+     * an empty geometry would delete a live government order from the map for
+     * a cosmetic reason. The rings are the honest signal there; the untrimmed
+     * chord under them is a smaller wrong than nothing at all (§5). */
+    if (!parts.length) return f;
+
+    return { ...f, geometry: { type: 'MultiLineString', coordinates: parts } };
+  });
+}
+
+/** One segment, shortened by `cut` pixels at each end. Null when there would
+ *  be nothing left, or when the projection gives an answer we cannot trust. */
+function trimSegment(map, a, b, cut, minVisiblePx) {
+  let pa;
+  let pb;
+  try {
+    pa = map.project(a);
+    pb = map.project(b);
+  } catch {
+    return [a, b]; /* projection refused — draw it untrimmed rather than lose it */
+  }
+  if (!Number.isFinite(pa?.x) || !Number.isFinite(pa?.y) ||
+      !Number.isFinite(pb?.x) || !Number.isFinite(pb?.y)) {
+    return [a, b];
+  }
+
+  const dx = pb.x - pa.x;
+  const dy = pb.y - pa.y;
+  const len = Math.hypot(dx, dy);
+  if (!Number.isFinite(len) || len === 0) return null;
+  if (len <= 2 * cut + minVisiblePx) return null;
+
+  const t = cut / len;
+  const ax = pa.x + dx * t;
+  const ay = pa.y + dy * t;
+  const bx = pb.x - dx * t;
+  const by = pb.y - dy * t;
+
+  try {
+    const la = map.unproject([ax, ay]);
+    const lb = map.unproject([bx, by]);
+    if (!Number.isFinite(la?.lng) || !Number.isFinite(lb?.lng)) return [a, b];
+    return [[la.lng, la.lat], [lb.lng, lb.lat]];
+  } catch {
+    return [a, b];
+  }
+}
+
 /**
  * The two layers that draw an unbanded product: the dashed chord and its
- * breakpoint dots.
+ * breakpoint rings.
  *
  * Takes the caller's own `color` and `sortKey` expressions rather than
  * deriving them, because the two callers disagree on both — watch/warning

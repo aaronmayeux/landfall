@@ -52,7 +52,7 @@ const eq = (name, got, want) =>
   ok(got === want, `${name} — got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`);
 
 const { bandSelect } = await import('../map/coast-band.js');
-const { chordMarks, chordLayers, IS_BANDED, IS_CHORD, IS_MARK, NOT_MARK } =
+const { chordMarks, chordLayers, trimChords, IS_BANDED, IS_CHORD, IS_MARK, NOT_MARK } =
   await import('../map/coast-fallback.js');
 const { STORM_GEO } = await import('../config/tokens.js');
 
@@ -120,6 +120,94 @@ const shapeless = bandSelect(
 );
 eq('a shapeless watch is flagged not-a-line', shapeless.features[0].properties._bandReason, 'not-a-line');
 eq('and contributes no dots', chordMarks(shapeless.features).length, 0);
+
+/* ---- the chord stops at the ring's edge ----------------------------------- */
+
+/* A stub camera: 10 px per degree, y flipped. Linear, so a trim of N px is
+ * exactly N/10 of a degree and the arithmetic below is checkable by hand. */
+const PX_PER_DEG = 10;
+const flatMap = {
+  project: ([lon, lat]) => ({ x: lon * PX_PER_DEG, y: -lat * PX_PER_DEG }),
+  unproject: ([x, y]) => ({ lng: x / PX_PER_DEG, lat: -y / PX_PER_DEG }),
+};
+const CUT = STORM_GEO.chordMarkRadius + STORM_GEO.chordMarkStroke + STORM_GEO.chordMarkClearPx;
+
+const trimmed = trimChords(flatMap, dry.features);
+eq('trimming returns the same number of features', trimmed.length, dry.features.length);
+
+const seg = trimmed[0].geometry.coordinates[0];
+const orig = dry.features[0].geometry.coordinates;
+const pxBetween = (a, b) => {
+  const pa = flatMap.project(a);
+  const pb = flatMap.project(b);
+  return Math.hypot(pb.x - pa.x, pb.y - pa.y);
+};
+ok(Math.abs(pxBetween(orig[0], seg[0]) - CUT) < 0.01,
+   `the chord starts exactly ${CUT}px off its first breakpoint — the ring's outer edge`);
+ok(Math.abs(pxBetween(orig[1], seg[1]) - CUT) < 0.01,
+   'and stops the same distance short of its last');
+ok(pxBetween(orig[0], orig[1]) - pxBetween(seg[0], seg[1]) > 0,
+   'the drawn line is strictly shorter than NHC delivered — it no longer enters the rings');
+
+/* ==> INTERIOR BREAKPOINTS GET A GAP TOO, WHICH IS WHY EVERY SEGMENT IS ITS
+ * OWN PART. <== NHC products run to a dozen breakpoints; a single polyline
+ * trimmed only at its two ends would still run straight through every ring in
+ * the middle. Lala has none, so this is asserted on a built three-point line. */
+const threePoint = bandSelect(
+  [{
+    type: 'Feature',
+    properties: { tcww: 'HWR' },
+    geometry: { type: 'LineString', coordinates: [[-160, 20], [-150, 20], [-140, 20]] },
+  }],
+  []
+);
+const threeTrim = trimChords(flatMap, threePoint.features);
+eq('a three-breakpoint line trims into two separate segments',
+   threeTrim[0].geometry.coordinates.length, 2);
+eq('and becomes a MultiLineString', threeTrim[0].geometry.type, 'MultiLineString');
+const [s1, s2] = threeTrim[0].geometry.coordinates;
+ok(Math.abs(pxBetween(s1[1], [-150, 20]) - CUT) < 0.01 &&
+   Math.abs(pxBetween(s2[0], [-150, 20]) - CUT) < 0.01,
+   'the middle breakpoint gets clear air on BOTH sides, not a line through its ring');
+
+/* Banded features are real coastline with no rings on them. Trimming one would
+ * chew a gap out of a shoreline for no reason. */
+const bandedTrim = trimChords(flatMap, bandedLike);
+ok(bandedTrim[0] === bandedLike[0], 'a banded feature passes through untouched, by identity');
+
+/* ==> A SEGMENT TOO SHORT TO TRIM IS DROPPED, BUT A FEATURE IS NEVER EMPTIED.
+ * <== Two breakpoints whose rings nearly touch leave nothing worth drawing.
+ * Dropping that connector is right; dropping the whole feature would delete a
+ * live government order from the map for a cosmetic reason (§5). The rings
+ * always draw either way. */
+const tiny = bandSelect(
+  [{
+    type: 'Feature',
+    properties: { tcww: 'HWR' },
+    geometry: { type: 'LineString', coordinates: [[-160, 20], [-159.9, 20]] },
+  }],
+  []
+);
+const tinyTrim = trimChords(flatMap, tiny.features);
+eq('a feature whose every segment is too short keeps NHC geometry rather than vanishing',
+   tinyTrim[0].geometry.type, 'LineString');
+ok(tinyTrim[0].properties._banded === false,
+   'and stays flagged, so it still draws as a chord');
+
+/* No camera to project with — the test stubs, and any call before the map is
+ * ready. Untrimmed chords are the right answer; no chords are not. */
+ok(trimChords({}, dry.features)[0] === dry.features[0],
+   'a map that cannot project passes features through rather than dropping them');
+
+/* THE ORDERING RULE. Rings belong on NHC's original breakpoints; mark the
+ * trimmed line and every ring lands a gap-width inside the place it names. */
+const marksOfTrimmed = chordMarks(trimmed);
+ok(marksOfTrimmed.length === 0 ||
+   marksOfTrimmed[0].geometry.coordinates[0] !== orig[0][0],
+   'sanity: marking trimmed geometry would move the rings off their breakpoints');
+ok(marks[0].geometry.coordinates[0] === orig[0][0] &&
+   marks[0].geometry.coordinates[1] === orig[0][1],
+   'the rings sit on NHC\u2019s exact breakpoint, untouched by the trim');
 
 /* ---- the layers the module builds ---------------------------------------- */
 
@@ -254,6 +342,8 @@ for (const id of ['sel-surge-fill', 'sel-surge-edge']) {
 const wrote = new Map();
 const recordingStub = {
   ...stub,
+  project: flatMap.project,
+  unproject: flatMap.unproject,
   getSource: (id) => ({ setData: (d) => wrote.set(id, d) }),
 };
 const engine2 = createLayerEngine(recordingStub);
@@ -273,6 +363,66 @@ ok(wroteMarks.every((m) => typeof m.properties._color === 'string' && m.properti
    'every dot carries a real color — an undefined _color renders BLACK with no error');
 ok(wroteMarks.every((m) => typeof m.properties._sev === 'number'),
    'every dot carries a severity, so the severer product wins a shared breakpoint (§6)');
+
+/* ==> AND THE CHORD THAT REACHED THE SOURCE IS TRIMMED. <== Everything above
+ * proves `trimChords` works; this proves the layer actually CALLS it. Without
+ * this the whole trim can be quietly unwired — the geometry still draws, the
+ * rings still draw, and the line runs straight through them again with nothing
+ * failing anywhere. That is precisely the shape of bug this file exists for. */
+const wroteChords = (painted?.features || []).filter(
+  (f) => f.properties?._banded === false && f.properties?._mark !== true
+);
+eq('both products reached the source as chords', wroteChords.length, 2);
+ok(wroteChords.every((f) => f.geometry.type === 'MultiLineString'),
+   'the drawn chord is the TRIMMED geometry — an untrimmed one is still a LineString');
+const drawnStart = wroteChords[0]?.geometry?.coordinates?.[0]?.[0];
+ok(Array.isArray(drawnStart) &&
+   Math.abs(pxBetween(drawnStart, LALA.features[0].geometry.coordinates[0]) - CUT) < 0.01,
+   `the drawn chord starts ${CUT}px off NHC's breakpoint — it stops at the ring's edge`);
+
+/* The rings, from the same write, are still exactly on NHC's coordinates. Both
+ * halves of the ordering rule, checked on one payload. */
+const ringAtStart = wroteMarks.find(
+  (m) => m.geometry.coordinates[0] === LALA.features[0].geometry.coordinates[0][0]
+);
+ok(ringAtStart, 'a ring sits on NHC\u2019s first breakpoint, untouched by the trim');
+
+/* ==> SURGE GOES THROUGH THE SAME DOOR, AND HAS TO BE DRIVEN SEPARATELY. <==
+ * Shipping the fix on one of the two coastal segments only is exactly how a
+ * shared pattern half-lands: the module is right, one caller calls it, and the
+ * other quietly does not. A synthetic reach is fine here — the shape of the
+ * feature is what is under test, not NHC's surge values. */
+wrote.clear();
+const engine3 = createLayerEngine(recordingStub);
+engine3.attach();
+engine3.setPair('coastal', 'surge');
+engine3.setBundle(
+  { id: 'surge-test', source: 'nhc' },
+  {
+    stamp: { advisnum: '1' },
+    layers: {
+      surge: {
+        status: 'ok',
+        fc: {
+          type: 'FeatureCollection',
+          features: [{
+            type: 'Feature',
+            properties: { kind: 'line', color: 'red', severity: 3 },
+            geometry: { type: 'LineString', coordinates: [[-160, 20], [-150, 20]] },
+          }],
+        },
+      },
+    },
+  }
+);
+const surgeOut = wrote.get('sel-surge');
+const surgeReach = (surgeOut?.features || []).find(
+  (f) => f.properties?._banded === false && f.properties?._mark !== true
+);
+const surgeRings = (surgeOut?.features || []).filter((f) => f.properties?._mark === true);
+ok(surgeReach, 'the surge reach reached the source');
+eq('the surge reach is trimmed too', surgeReach?.geometry?.type, 'MultiLineString');
+eq('and its breakpoints are ringed', surgeRings.length, 2);
 
 /* The dots draw ABOVE the stripe they sit beside. Adjacent products share
  * breakpoints and only one of them may have found coast; a dot buried under

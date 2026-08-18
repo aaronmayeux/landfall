@@ -2038,6 +2038,17 @@ export const STORM_GEO = Object.freeze({
    *  a faint circle. It is the only paint the mark has — there is no fill. */
   chordMarkStroke:   2,
 
+  /** ==> THE CHORD STOPS AT THE RING'S OUTER EDGE AND DOES NOT ENTER IT. <==
+   *  Aaron's call on glass, 2026-08-18: a line running THROUGH an open ring
+   *  makes the ring look like a bead threaded onto the line — decoration — and
+   *  the reader stops seeing it as a place the order reaches. A line that stops
+   *  at the edge reads as arriving AT something.
+   *
+   *  This many pixels of clear air beyond `chordMarkRadius + chordMarkStroke`,
+   *  so antialiasing does not fuse the two back together at the join. Small on
+   *  purpose: a visible gap, not a dotted line pretending to be a dash. */
+  chordMarkClearPx:  1,
+
   /** WIND FIELD (Phase 6 step 2) — three nested bands, colors from the §6
    *  fixed contract in WIND_BAND_COLOR. These are the only tunable values;
    *  the hues are not themeable and are not here.

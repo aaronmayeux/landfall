@@ -48,7 +48,7 @@ import { ZOOM, COAST_BAND } from '../../config/constants.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { wwCodeFromProps, wwColor, wwSortKey } from '../../lib/watchwarning.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
-import { chordLayers, chordMarks, IS_BANDED } from '../coast-fallback.js';
+import { chordLayers, chordMarks, trimChords, IS_BANDED } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-ww';
@@ -89,12 +89,17 @@ function decorated(map, key, fc, stamp) {
   });
   /* ==> DOTS AFTER COLORING, NEVER BEFORE. <== A mark copies its parent's
    * properties, so it has to be cut from a feature that already carries
-   * `_color` and `_sev` — cut it first and every breakpoint dot on the map
+   * `_color` and `_sev` — cut it first and every breakpoint ring on the map
    * renders in `to-color` of undefined, which is black, silently
-   * (map/coast-fallback.js). */
+   * (map/coast-fallback.js).
+   *
+   * ==> AND THE RINGS COME OFF THE UNTRIMMED GEOMETRY. <== `trimChords` pulls
+   * the chord back to each ring's edge; mark the trimmed line instead and
+   * every ring lands a gap-width inside the place it names. */
+  const marks = chordMarks(painted);
   return {
     type: 'FeatureCollection',
-    features: [...painted, ...chordMarks(painted)],
+    features: [...trimChords(map, painted), ...marks],
   };
 }
 

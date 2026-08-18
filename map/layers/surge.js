@@ -78,7 +78,7 @@ import { SURGE_RAMP, OPACITY, STORM_GEO } from '../../config/tokens.js';
 import { coastCoreWidth, coastGlowWidth, coastGlowBlur } from '../style.js';
 import { SURGE, ZOOM, COAST_BAND } from '../../config/constants.js';
 import { bandFor, bandMissingFor } from '../coast-band-cache.js';
-import { chordLayers, chordMarks, IS_BANDED, NOT_MARK } from '../coast-fallback.js';
+import { chordLayers, chordMarks, trimChords, IS_BANDED, NOT_MARK } from '../coast-fallback.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'sel-surge';
@@ -183,12 +183,16 @@ function decorated(map, key, fc, stamp) {
   if (!reaches.length) return { type: 'FeatureCollection', features: areas };
   const { features } = bandFor(map, bandKey(key), reaches, stamp, SURGE.bandHalfWidthKm);
   /* Reaches that found no coast keep NHC's chord and get their breakpoints
-   * dotted, exactly as a watch/warning does (§7.10). ONLY the reaches: the
+   * ringed, exactly as a watch/warning does (§7.10). ONLY the reaches: the
    * polygons are areas NHC drew itself, never breakpoint chords, so there is
-   * nothing about them to admit. */
+   * nothing about them to admit.
+   *
+   * Rings BEFORE the trim — they belong on NHC's original breakpoints, not on
+   * the pulled-back ends of the line. */
+  const marks = chordMarks(features);
   return {
     type: 'FeatureCollection',
-    features: [...areas, ...features, ...chordMarks(features)],
+    features: [...areas, ...trimChords(map, features), ...marks],
   };
 }
 
