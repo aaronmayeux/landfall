@@ -2418,6 +2418,16 @@ position threw light, which meant everything the cage remembers threw none: a
 storm that peaked at Cat 4 and weakened to a Cat 1 drew a large red ridge and a
 purely yellow glow. The red was not dim; it was never drawn.
 
+**It is backdrop mood, not a readout, and that sets its volume.** Nothing is
+read off this light: severity is the cage's height and the glyph's color, and
+both run at full strength. The bar the glow has to clear is *present*, not
+*legible* — if it competes with the globe for attention it is wrong however
+pretty it is. Every strength dial was cut hard on 2026-08-18 for exactly this
+reason, once one light per storm became one per color run and a dozen
+overlapping lights stacked toward a saturated wash. `LIGHT.fx.glowGain` and
+`glowSpread` went back to 1.0 in the same pass: light no longer runs the effect
+*harder* than dark, it runs the same numbers through a different operator.
+
 **Brightness is flat. Size is not.** Every color shines at `GLOW.intensity`,
 untouched by severity — elevation on the cage is already severity said in the
 loudest channel the globe has, and multiplying the light by it too left a

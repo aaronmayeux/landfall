@@ -182,6 +182,7 @@ const atAngleLit = (sev = 1) => {
   return { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev, color: '#FF0000', head: true };
 };
 
+const { readFileSync } = await import('node:fs');
 const { createLimbGlow } = await import('../map/limb-glow.js');
 const { setThemeMode, MODE } = await import('../config/theme.js');
 const { GLOW } = await import('../config/constants.js');
@@ -569,37 +570,34 @@ ok(worst < 1e-9, `radiusPxAt round-trips matchDistance (worst relative error ${w
 
 /* 9 — THE PER-THEME GAIN AND SPREAD ARE ACTUALLY WIRED IN. -----------------
  *
- * `LIGHT.fx.glow` (the canvas opacity) is nearly maxed out, so light mode's
- * strength is bought with two multipliers on the shared dials instead. A dial
- * that exists in the palette but is never read is the exact failure this
- * catches: without it, raising the numbers changes a comment and nothing else.
+ * These two multipliers existed so light mode could run the effect HARDER than
+ * dark, back when a single light per storm had to carry the whole thing against
+ * a pale sky. A light per color run covers the sky several times over, so both
+ * are 1.0 in both palettes as of 2026-08-18 and the effect is now the same
+ * numbers through two different OPERATORS, which is what it was always meant to
+ * be.
  *
- * Severity is deliberately MID. At sev 1 the light alpha clamps at 1 and the
- * ratio below would silently collapse to "equal", which is a passing test
- * measuring nothing. */
+ * ==> THAT MAKES THE OLD RATIO CHECK VACUOUS, AND A VACUOUS CHECK IS WORSE THAN
+ * NONE. <== It compared the light blob's radius and alpha against dark's and
+ * asserted the ratio equalled the dial. With every dial at 1 that is 1 === 1,
+ * which passes just as happily if map/limb-glow.js stops reading the dials
+ * altogether — the exact failure the section was written to catch. So the
+ * ratios are asserted where they still mean something (dark, the reference) and
+ * the wiring is checked at the source, which cannot go quiet.
+ * MUTATION: drop `* spread` or `* gain` from the maths and this fails. */
 ok(DARK.fx.glowGain === 1 && DARK.fx.glowSpread === 1,
    'dark is the untouched reference — both multipliers are exactly 1');
-ok(LIGHT.fx.glowGain >= 1 && LIGHT.fx.glowSpread >= 1,
-   'light runs the same effect harder, never weaker');
+ok(LIGHT.fx.glowGain > 0 && LIGHT.fx.glowSpread > 0,
+   'light publishes both multipliers as real numbers');
 ok(GLOW.radiusScale * LIGHT.fx.glowSpread <= 1.4,
    'the light blob stays inside the "coming FROM the globe" limit (~1.4 effective)');
 
 {
-  const MID = 0.5;
-  setThemeMode(MODE.DARK);
-  const d = paint([atAngleLit(MID)]);
-  setThemeMode(MODE.LIGHT);
-  const l = paint([atAngleLit(MID)]);
-
-  const rRatio = l._fills[0].r / d._fills[0].r;
-  ok(Math.abs(rRatio - LIGHT.fx.glowSpread) < 1e-9,
-     `the light blob is exactly glowSpread wider (${rRatio.toFixed(3)})`);
-
-  const aD = alphaOf(d);
-  const aL = alphaOf(l);
-  ok(aL < 1, 'the mid-severity light alpha is unclamped, so this ratio means something');
-  ok(Math.abs(aL / aD - LIGHT.fx.glowGain) < 1e-9,
-     `the light blob soaks in exactly glowGain more color (${(aL / aD).toFixed(3)})`);
+  const src = readFileSync(new URL('../map/limb-glow.js', import.meta.url), 'utf8');
+  ok(/const spread = F\.glowSpread;/.test(src) && /\*\s*spread\b/.test(src),
+     'the radius really is multiplied by the theme\'s glowSpread');
+  ok(/const gain = F\.glowGain;/.test(src) && /\*\s*gain\b/.test(src),
+     'the alpha really is multiplied by the theme\'s glowGain');
 }
 setThemeMode(MODE.DARK);
 

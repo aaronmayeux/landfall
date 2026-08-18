@@ -1276,12 +1276,20 @@ export const GLOW = Object.freeze({
    *  only thing that can make one read louder is covering more sky — which is
    *  `runFull` below, off how much ridge wears that color.
    *
-   *  Cut from 0.85 in the same pass, and the arithmetic is the reason: the old
-   *  number was a CEILING that a typical storm's severity pulled down to about
-   *  0.5, and there were far fewer lights. Flat strength across roughly double
-   *  the count needs the ceiling to come down or the sky blows out. This is the
-   *  first dial to reach for if the whole effect is too strong or too weak. */
-  intensity: 0.42,
+   *  0.85 -> 0.42 -> 0.16, and the second cut is the one that matters. The
+   *  original 0.85 was a CEILING that a typical storm's severity pulled down to
+   *  about 0.5, on ONE light per storm. Flat strength across a dozen
+   *  OVERLAPPING lights is a completely different sum: in light mode they stack
+   *  toward opaque, and the whole screen went to a saturated wash. Aaron on
+   *  glass, 2026-08-18: "it should just be a faint, non-distracting glow on the
+   *  background."
+   *
+   *  ==> THIS IS BACKDROP MOOD, NOT A READOUT. <== Nothing is read off it —
+   *  severity is the cage's height and the glyph's color, and both are still at
+   *  full strength. The light is atmosphere behind them, so the bar it has to
+   *  clear is "present", not "legible". If it is competing with the globe for
+   *  attention it is wrong however pretty it is. First dial to reach for. */
+  intensity: 0.16,
 
   /** ==> THE BACKDROP IS A CURVED SHELL, THIS FAR OUT IN GLOBE RADII, AND THIS
    *  IS THE ONE NUMBER THAT DECIDES THE WHOLE LOOK. <==

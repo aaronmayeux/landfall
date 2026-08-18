@@ -567,10 +567,16 @@ export const DARK = Object.freeze({
     node:        0.85,
     stormDot3d:  0.95,
     /** STORM LIGHT ON THE BACKDROP (map/limb-glow.js). Emitted light on a
-     *  night sky, so it can run high — there is a whole dark gradient of
-     *  headroom above `space` for it to climb into, and the blobs `screen`
-     *  onto it rather than covering it. */
-    glow:        0.60,
+     *  night sky, so it can run higher than the light theme's — there is a
+     *  whole dark gradient of headroom above `space` for it to climb into, and
+     *  the blobs `screen` onto it rather than covering it.
+     *
+     *  0.60 -> 0.40 on 2026-08-18, when a light stopped being one per storm and
+     *  became one per color run: the same opacity over three times the lights,
+     *  blended ADDITIVELY, is a much brighter sky than the number was chosen
+     *  for. This is backdrop mood behind the globe, not a readout — if it is
+     *  competing with the cage for attention it is wrong. */
+    glow:        0.40,
     /** No chroma push in the dark theme. `screen` blending keeps the color's
      *  own value, and a Cat 1's blue reading as a Cat 1's blue is the point.
      *  See LIGHT.fx.glowSaturate for why the other theme needs the opposite. */
@@ -1152,13 +1158,16 @@ export const LIGHT = Object.freeze({
      *  it is now "how much hue soaks in", and the failure at the top of the
      *  range is garish rather than dirty.
      *
-     *  0.75 -> 0.94 on glass, at Aaron's ask, once the operator was right.
-     *  THERE IS ALMOST NO ROOM LEFT ABOVE THIS: at 1.0 the tint is the storm's
-     *  hue at full chroma with none of the backdrop's own color surviving, so
-     *  the gradient stops showing through the light entirely. If it still
-     *  wants more after this, the honest next dial is `GLOW.intensity` or the
-     *  blob radius, not this one. */
-    glow:        0.94,
+     *  0.75 -> 0.94 -> 0.50. The climb to 0.94 was right when ONE light per
+     *  storm had to carry the whole effect against a pale sky. It became wrong
+     *  the moment every color run got its own light: a dozen of them stack
+     *  toward opaque under `source-over`, and at 0.94 the tint was the storm's
+     *  hue at full chroma with none of the backdrop's own color surviving —
+     *  a saturated wash over half the screen. Aaron on glass, 2026-08-18.
+     *
+     *  Keep it well under 1. The gradient showing THROUGH the light is what
+     *  makes it read as light rather than as paint. */
+    glow:        0.50,
 
     /** Push the storm color to full chroma before tinting.
      *
@@ -1168,10 +1177,14 @@ export const LIGHT = Object.freeze({
      *  category ramp runs pale, and a pale source under `color` is a pale
      *  tint — this is what gives the light something to be.
      *
-     *  Hue is untouched at any value, so a green storm throws green. Lower it
-     *  if the tint reads as garish; it cannot make the light muddy, only
-     *  weaker. */
-    glowSaturate: 1.0,
+     *  Hue is untouched at any value, so a green storm throws green. It cannot
+     *  make the light muddy, only weaker.
+     *
+     *  1.0 -> 0.65. Full chroma was needed when the light was fighting to be
+     *  visible at all; with a light per color run it was most of what made the
+     *  sky read as poster paint rather than atmosphere. Garish IS the failure
+     *  mode at the top of this dial, and it arrived. */
+    glowSaturate: 0.65,
 
     /** ==> THIS IS WHERE LIGHT MODE'S GLOW GETS BIGGER, BECAUSE `glow` ABOVE
      *  IS OUT OF ROOM. <==
@@ -1194,10 +1207,15 @@ export const LIGHT = Object.freeze({
      *  of tinted backdrop is the half of "more glow" that alpha cannot buy.
      *  Its own note warns that past about 1.4 effective the lights stop
      *  reading as coming FROM the globe and start looking like weather on the
-     *  camera lens — 1.15 x 1.2 lands at 1.38, deliberately just inside that.
-     *  Do not raise this one without checking the limb on a phone. */
-    glowGain:    1.3,
-    glowSpread:  1.2,
+     *  camera lens. It sat at 1.2 (1.38 effective) to buy reach for a single
+     *  light per storm; a light per color run already covers the sky several
+     *  times over, so the reach is now free and the multiplier is not needed.
+     *
+     *  Both back to 1.0 on 2026-08-18 — light is no longer running the effect
+     *  HARDER than dark, it is running the same effect through a different
+     *  operator, which is what the two themes were always supposed to be. */
+    glowGain:    1.0,
+    glowSpread:  1.0,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring
