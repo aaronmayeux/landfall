@@ -1108,21 +1108,43 @@ nothing had ever read it.
 
 | | Banded (§7.7) | Unbanded (here) |
 |---|---|---|
-| stroke | `stripeCoreScale` 1.8 + glow 1.3 | `chordScale` 1.0, no glow |
-| pattern | solid | dashed, `chordDash` in line-width multiples |
-| opacity | `stripeOpacity` 0.9 | `chordOpacity` 0.6 |
-| breakpoints | — | a dot at every vertex, `chordMarkRadius` |
+| stroke | `stripeCoreScale` 1.8 + glow 1.3, on the coastline curve | `trackForecastWidth`, flat, no glow |
+| pattern | solid | dashed, `chordDash` [4, 1.5] in line-width multiples |
+| opacity | `stripeOpacity` 0.9 | `chordOpacity` 0.85 |
+| breakpoints | — | an OPEN RING at every vertex, `chordMarkRadius` 6.75 |
 
-- **The dots are the point.** NHC's line is not a shape it surveyed; it is the
+- **The rings are the point.** NHC's line is not a shape it surveyed; it is the
   straight joins between named places, and those places are the only part of the
   geometry that is exactly true. Anchors with an approximation strung between
   them is an honest picture; a confident solid stroke is not.
-- **The dash rides the coastline's zoom curve and the dots do not.** At globe
-  distance the dash is sub-pixel and effectively gone — deliberate. Out there
-  the dots carry the layer, at a fixed pixel radius, because the app OPENS at
-  that zoom and a layer that goes silent there says nothing when it matters
-  most. A dot is a LABEL, never a footprint (the same reasoning
-  `map/watch-marks.js` gives for `sizeAttenuation: false`).
+- **==> IT CARRIES THE FORECAST TRACK'S WEIGHT, NOT THE COASTLINE'S, AND THAT IS
+  A CORRECTION MADE ON GLASS. <==** The first pass tied the chord to
+  `coastCoreWidth` and held it at 0.6 opacity, reasoning that a fallback should
+  look like the weakest thing on the map. It came out at model-track weight, and
+  beside five model lines carrying `modelDash` [3,2] the reader had no way to
+  tell a government order from a model's opinion (Aaron, 2026-08-18). **A watch
+  is not a guess about where the storm goes; it is a fact about where the order
+  applies.** It gets a decided line's weight — `trackForecastWidth` by
+  reference, so a track restyle drags it along — and the DASH plus the open
+  rings carry the "we could not snap this to a shore" reading instead. The dash
+  keeps longer marks and shorter gaps than `modelDash` so the two textures never
+  converge, and `tools/test-coast-fallback.mjs` asserts that as a relation.
+- **Consequence, stated rather than discovered later:** the chord no longer
+  inherits the coastline's depth fade, so it stays legible at globe distance.
+  For a line whose whole job is "an order reaches here", that is the right trade.
+- **The rings are HOLLOW, and the emptiness is the meaning.** A FILLED dot in
+  this app is a storm of a known Saffir-Simpson strength (§6) — that equation is
+  load-bearing and `map/watch-marks.js` already forbids borrowing it. An open
+  ring says "a place", which is what a breakpoint is, and it lets the chord and
+  the track beneath read through instead of being punched full of holes. The
+  product colour therefore rides the STROKE.
+- **Ring radius sits between the first pass (3.5) and a forecast point
+  (`pointRadius` 10)**, Aaron's call on glass: 3.5 could not be found on a
+  phone, a full 10 would compete with the dots carrying the category codes. It
+  is a fixed pixel radius, not a zoom curve — the app OPENS at globe distance
+  and a layer that goes silent there says nothing when it matters most. A ring
+  is a LABEL, never a footprint (same reasoning `map/watch-marks.js` gives for
+  `sizeAttenuation: false`).
 - **Colour is untouched.** Saffir-Simpson and the NHC watch/warning hues are the
   §6 fixed contract. A Hurricane Watch is pink whether or not we managed to snap
   it to a shore. What the fallback changes is the CONFIDENCE the drawing claims,

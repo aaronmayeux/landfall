@@ -39,11 +39,14 @@ the question a tool cannot answer.
 Islands fell back to NHC's raw breakpoint chord — correctly, the atolls are below
 what the basemap carries — but drew it in the coastal stripe's own paint, so a
 guess looked exactly like a measurement. Unbanded products are now a thin dashed
-chord with a dot on every breakpoint; surge reaches got the same treatment, since
-they band through the identical code. **Judge: does a dashed line with dots read
-as "approximate, anchored at these places" rather than as a broken layer, and are
-the dots findable at the zoom the app opens at** — that is the whole reason they
-do not ride the coastline's zoom curve. Lala is live and out there now.
+chord with an open ring on every breakpoint; surge reaches got the same
+treatment, since they band through the identical code. Retuned once on glass: the
+first pass read as another model track, so the chord now carries the forecast
+track line's weight with longer marks and shorter gaps than `modelDash`, and the
+rings grew to sit between their old size and a forecast point. **Judge: with the
+model tracks layer ON, does the chord still read as a government order rather
+than as a sixth model line, and do the rings read as places rather than as
+storms.** Lala is live and out there now.
 
 **The environment ribbon paints a cone the rebuild refused to redraw, confirmed
 on Lala.** `SPEC-MAP.md` §7.9, §47.5, `SPEC-UI.md` §47.9. Judged on glass and

@@ -144,24 +144,48 @@ ok(chord.paint['line-dasharray'] === STORM_GEO.chordDash,
    'the chord is DASHED — a dash reads as approximate at a glance and a solid line does not');
 
 /* THE CORE RELATION, and the one that would silently rot. The chord must stay
- * visibly LIGHTER than the stripe it is distinguished from. Asserted as a
- * relation, never as a pixel count, so a future coastline restyle drags both
- * and this stays green — but a chord that creeps back up to stripe weight
- * fails here whatever number it picked. */
-ok(STORM_GEO.chordScale < STORM_GEO.stripeCoreScale,
-   `chordScale ${STORM_GEO.chordScale} must stay under stripeCoreScale ` +
-   `${STORM_GEO.stripeCoreScale} — equal weights is the bug that shipped`);
-ok(STORM_GEO.chordOpacity < STORM_GEO.stripeOpacity,
-   'the chord must stay fainter than the stripe');
-ok(json(chord.paint['line-width']) !== json(built[0].paint['line-color']),
-   'the chord has a width expression of its own');
+ * distinguishable from the MODEL TRACKS beside it — that was the glass failure
+ * on the first pass, where a coastline-width chord and `modelDash` read as the
+ * same texture and a government order looked like a model's opinion. Asserted
+ * as relations, never as pixel counts, so a future track restyle drags the
+ * chord along and this stays green. */
+eq('the chord is drawn at the forecast track line width, by reference',
+   chord.paint['line-width'], STORM_GEO.trackForecastWidth);
+ok(STORM_GEO.trackForecastWidth > STORM_GEO.modelLineWidth,
+   `the chord must outweigh a model line (${STORM_GEO.trackForecastWidth} vs ` +
+   `${STORM_GEO.modelLineWidth}) — a watch is a fact, not a forecast opinion`);
+ok(STORM_GEO.chordDash[0] > STORM_GEO.modelDash[0] &&
+   STORM_GEO.chordDash[1] < STORM_GEO.modelDash[1],
+   'the chord dash must have LONGER marks and SHORTER gaps than modelDash, or the ' +
+   'two read as one texture with several models up');
+ok(STORM_GEO.chordOpacity <= STORM_GEO.stripeOpacity,
+   'the chord must not out-shout paint on a real shore');
 
-/* The dots do NOT ride the zoom curve, and that is the deliberate opposite of
- * the dash beside them: the app opens at globe distance, where the dash is
- * sub-pixel. If the radius ever became an expression, the layer would go
- * silent at exactly the zoom it matters most. */
-eq('the dot radius is a fixed pixel number, not a zoom ramp',
+/* The rings do NOT ride the zoom curve. The app opens at globe distance; a
+ * radius that scaled with the ground would go silent at exactly the zoom that
+ * matters most. A ring is a LABEL, never a footprint. */
+eq('the ring radius is a fixed pixel number, not a zoom ramp',
    typeof mark.paint['circle-radius'], 'number');
+
+/* ==> HOLLOW, AND THE EMPTINESS IS THE MEANING. <== A FILLED dot in this app
+ * is a storm of a known Saffir-Simpson strength (§6). Borrowing that shape for
+ * a place would put two meanings on one visual channel — the objection
+ * map/watch-marks.js makes at length. Fill this in and nothing errors; it just
+ * quietly starts claiming a storm at every breakpoint. */
+eq('the ring has no fill', mark.paint['circle-opacity'], 0);
+ok(json(mark.paint['circle-stroke-color']) === json(['get', '_color']),
+   'the product colour rides the STROKE, since the ring is all stroke');
+ok(mark.paint['circle-stroke-width'] >= 2,
+   'the stroke must be thick enough to read as a ring at arm’s length');
+
+/* Sized between the first pass and a forecast point: 3.5 was too small to find
+ * on a phone, a full `pointRadius` would compete with the dots carrying the
+ * category codes. A relation, so a forecast-point resize drags this along. */
+ok(STORM_GEO.chordMarkRadius < STORM_GEO.pointRadius,
+   `a breakpoint ring (${STORM_GEO.chordMarkRadius}) must stay under a forecast ` +
+   `point (${STORM_GEO.pointRadius}) — it marks a place, not a storm`);
+ok(STORM_GEO.chordMarkRadius > STORM_GEO.pointRadius / 4,
+   'and must stay big enough to find with a thumb on a phone');
 
 /* Color is the §6 fixed contract and survives the fallback untouched. */
 ok(json(chord.paint['line-color']) === json(['get', '_color']),

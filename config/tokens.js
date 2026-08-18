@@ -1982,38 +1982,61 @@ export const STORM_GEO = Object.freeze({
    *  rather than removed — removing it is the silence §5 forbids, with a
    *  Hurricane Watch in force and nothing on the map to say so.
    *
-   *  THINNER THAN THE COASTLINE IT IS NOT. 1.0 against the stripe's 1.8, on
-   *  the same zoom curve, so it can never again be mistaken for an emphasised
-   *  shore. It also inherits the depth fade, which means at globe distance the
-   *  dash is sub-pixel and effectively gone — deliberate. Out there the DOTS
-   *  are the signal and the dash is only a connector. */
-  chordScale:        1.0,
+   *  ==> IT IS THE FORECAST TRACK LINE'S WEIGHT, NOT THE COASTLINE'S, AND THAT
+   *  IS A CORRECTION MADE ON GLASS. <== The first pass tied the chord to
+   *  `coastCoreWidth` on the reasoning that it was still a coastal product. It
+   *  came out at model-track weight, and with `modelDash` [3,2] beside it on a
+   *  storm carrying five model lines, the reader had no way to tell a
+   *  government order from a model's opinion (Aaron, 2026-08-18). A watch is
+   *  not a guess about where the storm goes; it is a fact about where the
+   *  order applies, and it must carry a decided line's weight.
+   *
+   *  So the width is `trackForecastWidth` exactly — a RELATION, not a copy of
+   *  1.75, so the two can never drift. Consequence worth stating: the chord no
+   *  longer inherits the coastline's depth fade and stays legible out at globe
+   *  distance, which for a line that exists to say "an order reaches here" is
+   *  the right trade. */
 
-  /** Dash pattern, in multiples of the line's own width — so it scales with
-   *  the zoom curve instead of turning into a solid line when the stroke gets
-   *  thin. Equal on and off: a dash reads as "approximate" at a glance and a
-   *  solid line does not, and that is the entire job. */
-  chordDash:         [2, 2],
+  /** LONGER MARKS, SHORTER GAPS THAN ANY MODEL LINE. In multiples of the
+   *  line's own width. Against `modelDash` [3,2] on a heavier stroke this
+   *  reads as a firm line that happens to be broken, rather than as another
+   *  member of the spaghetti — which is exactly the distinction that failed on
+   *  the first pass. Still dashed, because a dash is what says "approximate"
+   *  at a glance and a solid line does not. */
+  chordDash:         [4, 1.5],
 
-  /** Below the stripe's 0.9. The chord is the weakest honest statement the
-   *  map can make about a real government order — present, findable, and
-   *  visibly less certain than paint on a real shore. */
-  chordOpacity:      0.6,
+  /** Only just under the stripe's 0.9. The first pass held it at 0.6 to carry
+   *  the "less certain" reading on its own; the dash and the open rings do
+   *  that job now, and a faint line was part of what made this look like a
+   *  model track. The order is real — draw it like one. */
+  chordOpacity:      0.85,
 
-  /** THE BREAKPOINTS THEMSELVES, as dots. NHC's line is not a shape it
+  /** THE BREAKPOINTS THEMSELVES, as OPEN RINGS. NHC's line is not a shape it
    *  measured — it is the straight joins between NAMED PLACES, and those
    *  places are the only part of the geometry that is exactly true. Drawing
    *  them is what turns a wrong-looking line into a right-looking one: the
    *  reader sees anchors with an approximation strung between them.
    *
-   *  A FIXED PIXEL RADIUS, NOT A ZOOM CURVE, and that is the opposite choice
-   *  from the chord beside it. The dash may fade out at globe distance; these
-   *  may not, or the layer says nothing at exactly the zoom the app opens at.
-   *  A dot here is a LABEL — "the order reaches this place" — never a
-   *  footprint, so it does not scale with the ground it sits on (the same
-   *  reasoning map/watch-marks.js gives for `sizeAttenuation: false`). */
-  chordMarkRadius:   3.5,
-  chordMarkStroke:   1,
+   *  ==> HOLLOW, AND THAT IS THE WHOLE POINT OF THE SHAPE. <== A FILLED dot in
+   *  this app means a storm of a known strength on the Saffir-Simpson ramp
+   *  (§6) — that equation is load-bearing and map/watch-marks.js already
+   *  forbids borrowing it. An open ring says "a place", which is what a
+   *  breakpoint is. It also lets the chord and whatever is under it read
+   *  through the middle instead of punching holes in the track.
+   *
+   *  MIDWAY BETWEEN THE FIRST PASS (3.5) AND A FORECAST POINT (`pointRadius`
+   *  10), Aaron's call on glass: 3.5 was too small to find on a phone, and a
+   *  full 10 would compete with the dots that carry the category codes.
+   *
+   *  A FIXED PIXEL RADIUS, NOT A ZOOM CURVE. A ring here is a LABEL — "the
+   *  order reaches this place" — never a footprint, so it does not scale with
+   *  the ground it sits on (the same reasoning map/watch-marks.js gives for
+   *  `sizeAttenuation: false`). */
+  chordMarkRadius:   6.75,
+
+  /** Thick enough that the ring reads as a ring at arm's length rather than as
+   *  a faint circle. It is the only paint the mark has — there is no fill. */
+  chordMarkStroke:   2,
 
   /** WIND FIELD (Phase 6 step 2) — three nested bands, colors from the §6
    *  fixed contract in WIND_BAND_COLOR. These are the only tunable values;

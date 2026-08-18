@@ -40,17 +40,27 @@
  *
  * NOT the stripe's paint either. A guess must not look like a measurement.
  *
- * So: the chord draws THIN AND DASHED at `STORM_GEO.chordScale`, on the
- * coastline's own zoom curve, well under the stripe's weight — and every
- * breakpoint gets a DOT. The dots are the point. NHC's line is not a shape it
- * surveyed; it is the straight joins between named places, and those places
- * are the only part of the geometry that is exactly true. Anchors with an
- * approximation strung between them is an honest picture. A confident solid
- * stroke is not.
+ * So: the chord draws DASHED at the forecast track line's own width
+ * (`STORM_GEO.trackForecastWidth`), with longer marks and shorter gaps than
+ * any model line — and every breakpoint gets an OPEN RING.
  *
- * The dash fades with the coastline curve and is effectively gone at globe
- * distance; the dots hold a fixed pixel radius and do not. That split is
- * deliberate — see the tokens.
+ * ==> WHY NOT LIGHTER. <== The first pass tied the chord to the coastline's
+ * width curve and held it at 0.6 opacity, on the reasoning that a fallback
+ * should look like the weakest thing on the map. On glass, beside five model
+ * tracks, that made a government order look like a model's opinion (Aaron,
+ * 2026-08-18). A watch is not a guess about where the storm goes; it is a fact
+ * about where the order applies. It gets a decided line's weight, and the DASH
+ * plus the OPEN rings carry the "we could not snap this to a shore" reading
+ * instead.
+ *
+ * The rings are the point. NHC's line is not a shape it surveyed; it is the
+ * straight joins between named places, and those places are the only part of
+ * the geometry that is exactly true. Anchors with an approximation strung
+ * between them is an honest picture. A confident solid stroke is not.
+ *
+ * ==> AND THE RINGS ARE HOLLOW ON PURPOSE. <== A FILLED dot in this app means
+ * a storm of a known Saffir-Simpson strength (§6); map/watch-marks.js already
+ * forbids borrowing that equation. An open ring says "a place".
  *
  * ==> COLOR IS UNTOUCHED. <== Saffir-Simpson and the NHC watch/warning hues
  * are the §6 fixed contract, and a Hurricane Watch is pink whether we managed
@@ -69,8 +79,6 @@
  */
 
 import { STORM_GEO } from '../config/tokens.js';
-import { palette } from '../config/theme.js';
-import { coastCoreWidth } from './style.js';
 import { lineParts } from './coast-band.js';
 
 /** Painted onto real coastline — the ordinary stripe. */
@@ -152,10 +160,17 @@ export function chordLayers(id, source, minzoom, { color, sortKey, extraFilter =
       layout: { 'line-cap': 'butt', 'line-join': 'round', 'line-sort-key': sortKey },
       paint: {
         'line-color': color,
-        'line-width': coastCoreWidth(STORM_GEO.chordScale),
+        /* ==> THE FORECAST TRACK'S WIDTH, AS A REFERENCE RATHER THAN A COPY.
+         * <== Tied to the coastline's zoom curve on the first pass, this came
+         * out at model-track weight, and beside five model lines a government
+         * order was indistinguishable from a model's opinion. A watch is not a
+         * guess about where the storm goes; it carries a decided line's
+         * weight. Reading `trackForecastWidth` means a future track restyle
+         * drags this along instead of leaving the two to drift. */
+        'line-width': STORM_GEO.trackForecastWidth,
         'line-opacity': STORM_GEO.chordOpacity,
-        /* In multiples of line-width, so the pattern rides the zoom curve
-         * instead of collapsing to solid as the stroke thins. */
+        /* In multiples of line-width. Longer marks and shorter gaps than
+         * `modelDash`, so the two never read as the same texture. */
         'line-dasharray': STORM_GEO.chordDash,
       },
     },
@@ -168,16 +183,20 @@ export function chordLayers(id, source, minzoom, { color, sortKey, extraFilter =
       layout: { 'circle-sort-key': sortKey },
       paint: {
         'circle-radius': STORM_GEO.chordMarkRadius,
-        'circle-color': color,
-        'circle-opacity': STORM_GEO.stripeOpacity,
+        /* ==> OPEN RING, NO FILL, AND THE EMPTINESS IS THE MEANING. <== A
+         * FILLED dot in this app is a storm of a known Saffir-Simpson strength
+         * (§6) and map/watch-marks.js already forbids borrowing that equation
+         * for anything else. A hollow ring says "a place", which is what a
+         * breakpoint is — and it lets the chord and the track under it read
+         * through instead of being punched full of holes.
+         *
+         * The color therefore rides the STROKE. That is still feature data, so
+         * it is fine; the rule broken by the black-ring bug was global THEME
+         * state inside a data-driven expression, never data itself
+         * (map/layers/points-forecast.js). */
+        'circle-opacity': 0,
         'circle-stroke-width': STORM_GEO.chordMarkStroke,
-        /* BAKED FROM `palette()`, NOT `gs()`. This expression reads feature
-         * data one property up (`circle-color`), and MapLibre evaluates the
-         * whole paint block in a worker that never receives global theme
-         * state — `to-color` of the missing value is silently BLACK. The full
-         * account is in map/layers/points-forecast.js. `geo.pointStroke` is
-         * the same ink in both themes, so there is nothing to retheme. */
-        'circle-stroke-color': palette().geo.pointStroke,
+        'circle-stroke-color': color,
       },
     },
   ];
