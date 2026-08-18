@@ -34,39 +34,18 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**The environment ribbon now paints a cone the rebuild refused to redraw, and
-that is most of the reason it kept disappearing.** `SPEC-MAP.md` §7.9, §47.5,
-`SPEC-UI.md` §47.9. The cone rebuild has always been allowed to decline — on a
-tight bend the swept edge loops and MapLibre fills the loop as a hole — and the
-map falls back to NHC's published outline, which is fine. What was NOT fine is
-that the ribbon fell with it: measured across all 35 archived Ida advisories,
-twelve were refused, a third of one storm's life with no color at all, appearing
-and disappearing as she turned. `lib/cone-measure.js` now re-casts the same rays
-against the published polygon and takes the raw hits, so the color sits inside
-the shape actually on screen. Twelve of twelve recovered, 86–98% of published
-cone area each; the 23 that already worked are byte-identical.
+**The environment ribbon paints a cone the rebuild refused to redraw, confirmed
+on Lala.** `SPEC-MAP.md` §7.9, §47.5, `SPEC-UI.md` §47.9. Judged on glass and
+corrected twice in the same pass — the ribbon sat a few pixels off the cone, and
+a fold cut a black wedge across the inside of the right-hand curve. Both fixed,
+both confirmed. Ida corpus: 35 of 35 advisories color, 100.0% of cone area,
+nothing outside the drawn outline. Nothing left to judge on the ribbon itself.
 
-**Judged on Lala and corrected twice in the same pass.** The first build was
-close and wrong in two ways Aaron named on glass: the ribbon sat slightly off the
-cone, and a black wedge was cut across the inside of the right-hand curve. Both
-are fixed and both are worth a second look. The shift was measuring the published
-outline while drawing the rounded one — 3 km, invisible on paper, several pixels
-of a five-day cone on a phone. The wedge was a fold marking its stations unusable
-and taking a whole slice with it; folds pinch the edge now. Coverage went 86–98%
-to 100.0%, with nothing outside the drawn cone and nothing crossing itself.
-
-**What to look at next time:** the pinch replaces a stretch of the inside edge
-with a corner, so on a very tight bend the color should meet itself at a point
-rather than following the cone edge round. On Ida that is invisible. If Lala
-shows a visible flat spot on the inside of her turn, that is this, and the answer
-is to follow the ring's arc there the same way the caps now do.
-
-**And the two silent absences now speak.** The Layers row was computed from the
-SHIPS fetch alone, so a healthy run whose ribbon refused on geometry produced no
-sentence anywhere. It reads the built ribbon now. With the above landed,
-*This cone could not be measured* should be rare — it now means BOTH paths were
-blind, not merely that the rebuild declined. If it still appears on a live storm,
-that is a different guard and worth measuring on its own.
+**One thing still unseen: a very tight bend.** The pinch replaces a stretch of
+the inside edge with a corner, so somewhere tighter than Lala's turn the color
+should meet itself at a point rather than following the cone edge round. Invisible
+on Ida and on Lala. If a flat spot ever shows on the inside of a turn, that is
+this, and the answer is to walk the ring's arc there the same way the caps do.
 
 **The archive now holds NHC layers 6 and 7.** The cone and the forecast track are
 the rebuild's only two inputs and neither was ever snapshotted, so this entire
