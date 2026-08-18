@@ -1703,7 +1703,7 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
 
   const svg17 = homeChart(d17, 'imperial');
   ok(/stroke-dasharray="5 3"/.test(svg17),
-     'the forecast track is dotted (§46.2\'s grammar for observed vs forecast)');
+     'the forecast track is dotted (§49.8: observed solid, forecast dotted)');
   ok(/stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/.test(svg17),
      'and the observed track beside it is solid');
   ok(/>now</.test(svg17), 'the `now` marker is inside the frame rather than pinned to the edge');

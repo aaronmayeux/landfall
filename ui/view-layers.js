@@ -272,11 +272,16 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
      * exists and broke is more urgent than one that has not shipped.
      *
      * A NOTE ON A LIVE ROW IS A STANDING CAVEAT, not a not-built-yet message
-     * — the same precedence the pairs already use. Model tracks is the first
-     * additive layer to carry one ("NHC storms only"), and it is true
-     * whenever the layer is on rather than something a later phase removes.
-     * The old branch here only showed notes on DEAD rows, so a live row's
-     * caveat would have been silently dropped. */
+     * — the same precedence the pairs already use. It is true whenever the
+     * layer is on, rather than something a later phase removes: the coastal
+     * pair's "US storms only" and the environment row's naming of SHIPS are
+     * both permanent facts about what those products cover. The old branch
+     * here only showed notes on DEAD rows, so a live row's caveat would have
+     * been silently dropped.
+     *
+     * The example that used to sit here was model tracks, "NHC storms only".
+     * That was never a note in config/layers.js and it is not true either —
+     * GDACS storms resolve to a TCGP deck by name (data/adeck.js). */
     let sub = '';
     let tone = '';
     if (live && status?.state === 'loading') {

@@ -859,13 +859,19 @@ Home features, in order of how much geometry they need:
 |---|---|---|
 | Home marker, off-screen pointer, distance, bearing | position only | shipped |
 | Forecast closest approach | forecast track | shipped |
-| Wind-arrival at home | MapServer layers `+15`/`+16` | not built |
-| At-home exposure timeline | forecast wind radii | not built |
+| Wind-arrival at home | forecast wind radii | shipped (`data/home-corridor.js`) |
+| At-home exposure timeline | forecast wind radii | shipped (`ui/chart-home.js`, `ui/countdown-home.js`) |
 | Surge-at-home | Peak Storm Surge service | not built |
 
-**Wind arrival is FETCHED, never computed** (§4). Peak Storm Surge has no
-`stormid` field and must be filtered spatially, so the at-home version and the
-surge layer share one fetch-and-filter — build them together or write it twice.
+**Wind arrival is COMPUTED from the published radii, not fetched.** The earlier
+plan was to read MapServer's own arrival-time layers; `data/home-corridor.js`
+measures the distance from home to the nearest EDGE of each wind field at every
+step along the forecast instead, because a boundary sampled every twelve hours
+is a boundary you will miss.
+
+Peak Storm Surge has no `stormid` field and must be filtered spatially, so the
+at-home version and the surge layer share one fetch-and-filter — build them
+together or write it twice.
 
 ### Every home figure carries the advisory timestamp it came from
 
@@ -1306,7 +1312,8 @@ No `isMobile`, no second markup tree. A touchscreen laptop gets the rail because
 it is wide, and that is correct.
 
 **One view at a time, on every screen size**, and one state machine rather than
-two. `[DECIDE]` whether a second desktop slot earns its place.
+two. **A second desktop slot was considered and declined** (Aaron, 2026-08-18) —
+one view everywhere means one state machine, and that is the point.
 
 **NAVIGATION IS A REAL HISTORY STACK, and "back" means where you just were.**
 
@@ -2044,8 +2051,8 @@ TS-force · 8:00 PM Wed (in 7 hrs)
 One advisory feeds all of these, so the block carries a single header stamp
 rather than three identical timestamps — but if anything in it is stale, that is
 stated at block level, never buried. Closest approach is a *forecast track*
-number and reads as the forecast it is. `[DECIDE]` whether cone width folds into
-that wording.
+number and reads as the forecast it is. **Cone width does NOT fold into that
+wording** (Aaron, 2026-08-18) — one number, one claim.
 
 **5. Watch/warning block** — when in effect
 ```

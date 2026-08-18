@@ -104,11 +104,10 @@ not a fresh opinion.
   on the reasoning that past z8 you pull in street grids; we draw no road layer,
   so that never happened — `map/style.js` reads four OpenMapTiles source-layers
   (`water`, `earth`, `boundary`, rank-filtered `place`) and nothing else. What
-  pushed it to 11 specifically was the Deep world's seamounts, and **those were
-  cut on 2026-08-08, so 11 no longer has a stated reason** — but neither does 8,
-  and 11 is the known-good status quo. **`[DECIDE]` how far in is useful for
-  reading a landfall point against a coastline.** That is a judgement on a phone,
-  not a budget argument.
+  pushed it to 11 specifically was the Deep world's seamounts, and those were cut
+  on 2026-08-08 — but **11 was judged on a phone and kept** (Aaron, 2026-08-18):
+  it is what reads a landfall point against a coastline. Not a budget argument
+  either way; we draw no road layer, so past z8 there is nothing extra to pull in.
 - **No obfuscation or minification step.** That is a build step, and there is no
   build step (§2).
 - **No pass 4 of the main.js split, and no ~600-line target.** It ended at 896
@@ -148,7 +147,9 @@ not a fresh opinion.
   `map/style.js` is dormant, and `functions/tiles/` still carries the proxy plus
   1,721 vendored lines of pmtiles. Server-side only — a Pages Function is not
   downloaded by a visitor — so it costs nothing on the wire and reviving R2 stays
-  a flag flip. `[DECIDE]` whether that option is still wanted.
+  a flag flip. **The option is no longer wanted** (Aaron, 2026-08-18). The dormant
+  code is not urgent to delete — it bills nothing and breaks nothing — but nobody
+  should spend time maintaining it, and a cleanup pass may remove it outright.
 
 - **No per-world basemap knobs, and no plate boundaries.** Ripped from `main`
   2026-08-11. `buildStyle()` took a per-world palette, plate colors, an
@@ -1323,8 +1324,9 @@ watching it, and length was never the hazard — the hazard is cascade order, an
 468 lines or 2,084, a cascade bug crosses a section boundary or it does not.
 **The trigger is now that event, and only that event.** The first time a rule in
 one section changes the rendering of another, this file gets cut along the seam
-that broke, not along all thirteen. `[DECIDE]` if Aaron would rather take the
-split pre-emptively; the cascade argument above is the case against.
+that broke, not along all thirteen. **A pre-emptive split was declined** (Aaron,
+2026-08-18) — same answer, and for the same reason, as `config/constants.js`:
+a line count is the wrong instrument for a file whose hazard is ordering.
 
 **`map/marker-home.js` — the one worth watching, and NOT because of its
 length.** The whole file is a single factory, `createHomeMarker()`, and §12's

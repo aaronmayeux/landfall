@@ -259,9 +259,9 @@ the eye was at 03Z. The curve is the better guess, not a decoration.
 **The forecast line stays well inside the cone** — measured, at most 15.4 nm from
 the straight chord on a classic recurve, against cone half-widths of ~68 nm at
 48 h. **The cone is drawn as NOAA published it**: their polygon, their water,
-unbent. `[DECIDE]` whether to rebuild the cone by sweeping the recovered radii
-along the curved spine — deferred, because bending a federal uncertainty product
-changes the answer to "is my town in the cone".
+unbent — every width the redrawn cone uses is measured off that polygon rather
+than modelled, which is what keeps "is my town in the cone" honest. The redraw
+itself is §7.9.
 
 **Planar frame and the antimeridian.** Longitude is scaled by cos(latitude) before
 splining and unscaled after. Every distance uses a **wrapped** longitude delta, so
@@ -561,8 +561,8 @@ constrains the shared angle rather than dictating a per-point one.
   left/right anchor, in Y for top/bottom), so a diagonal anchor gives an
   axis-aligned push. **It must stay absent — it disables `text-offset` outright.**
 
-`[DECIDE]` whether a five-day track at z4 is still too dense; if so thin to 24 h
-intervals rather than culling.
+**A five-day track at z4 was judged on glass and kept as it is** (Aaron,
+2026-08-18). No thinning, no culling.
 
 ### 7.6 Model spaghetti tracks
 
@@ -740,8 +740,9 @@ current position and those comparisons are meaningless across a 360° gap.
 **Not split into two features** — a split leaves a visible hole at the seam and
 gives the layer two answers to one question.
 
-`[DECIDE]` whether to fade guidance past ~72 h so the near-term cluster — the
-actionable part — reads first.
+**Guidance is NOT faded past ~72 h.** It was considered so the near-term cluster
+would read first, and rejected on glass — the tracks read correctly as they are
+(Aaron, 2026-08-18).
 
 **Ambient legibility holds with a basin up** — crossing model lines read as a
 spread, not as noise, at phone width (confirmed on glass). No `ZOOM` floor is
@@ -2195,8 +2196,8 @@ Four bands, not eight, so the transitions are felt rather than guessed at.
 - **The watch/warning stripe draws at z4, ahead of the coastal detail it hugs.**
   Deliberate: a warning is safety information and waiting until z7 to show it is
   worse than showing it imprecisely.
-- `[DECIDE]` exact z-thresholds, once there is a real basemap to look at.
-- `[DECIDE]` whether z0–2 carries any text at all.
+- **The z-thresholds were judged against a real basemap and kept** (Aaron,
+  2026-08-18), including z0–2 carrying no text.
 
 ### 9.10 The home marker
 
@@ -2532,7 +2533,7 @@ every other icon's geometry is inline. The two move together by hand.
   light. The disc flips, so its ink flips with it. It did not, briefly, and at
   1.79:1 the X vanished into its own dot — a §5 failure, not a cosmetic one.
   `tools/contrast-check.mjs` gates it as required text.
-- `[DECIDE]` whether the mesh glyph rotates slowly. Leaning no — animating N sprites
+- **The mesh glyph does not rotate** (Aaron, 2026-08-18). Animating N sprites
   forever is a battery cost for decoration.
 
 ### 9.14 Storm light on the backdrop

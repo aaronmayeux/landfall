@@ -480,9 +480,10 @@ export function homeChart(dash, system) {
   }
 
   /* --- the centre track ----------------------------------------------------
-   * ==> SOLID FOR WHAT HAPPENED, DOTTED FOR WHAT IS FORECAST (§49.8). <== The
-   * same grammar §46.2 uses for observed-versus-forecast intensity, so the app
-   * has ONE visual vocabulary for that distinction rather than two. It changes
+   * ==> SOLID FOR WHAT HAPPENED, DOTTED FOR WHAT IS FORECAST (§49.8). <== This
+   * is the app's ONE visual vocabulary for observed-versus-forecast. It was
+   * first stated by the intensity chart, which was cut, so §49.8 owns it now.
+   * It changes
    * every chart, not only a departed storm's: a track that is entirely ahead
    * of the clock is entirely a forecast and was being drawn as though it were
    * a measurement.

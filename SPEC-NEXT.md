@@ -1,17 +1,18 @@
 # SPEC-NEXT.md — approved, not built
 
-**This is §46, §47 and §49 of the Landfall spec.** What is agreed and specified
-but has not shipped. **§49 — the past on the home dashboard — is the one to
-read first: it is the only section in this file fixing something the app gets
-WRONG today rather than adding something it lacks, and one of its five passes
-closes a safety-adjacent sentence.** §47 is now PART built: the SHIPS source (§47.2), the color's
+**This is §47 and §49 of the Landfall spec.** What is agreed and specified
+but has not shipped. §47 is now PART built: the SHIPS source (§47.2), the color's
 meaning (§47.4), the coverage rules (§47.6), performance (§47.7) and the
 fixtures (§47.10) describe live code, and every section whose subject is fully
 built has left — **§47.5, the ribbon itself, is in `SPEC-MAP.md`, §47.9, the
 layers row, is in `SPEC-UI.md`, and §47.8, the storm health paragraph, is in
-`SPEC-NEXT.md` only until its glass questions close.** §46, the intensity
-chart, is written to be picked up cold by a future session with no memory of
-the one that researched it.
+`SPEC-NEXT.md` only until its glass questions close.**
+
+**The intensity chart was CUT** (Aaron, 2026-08-18). It is not deferred and it
+is not waiting for anything — the feature is not wanted. Its section number is a
+retired address and must never be reused (§12: section numbers are permanent).
+One thing left with it: the marker for rapid-intensification probability had no
+other home in the app, so that number is now unpublished anywhere.
 
 **§48, rainfall, has shipped and left this file.** Sources, the two payload
 traps, coverage and the relay are §48.1–§48.7 in `SPEC-DATA.md`; the two
@@ -57,122 +58,6 @@ Nothing marked `[VERIFY]` may be treated as confirmed.
 **Every endpoint in this file was fetched live and the response inspected.**
 Field names are transcribed from the actual `?f=json` schema, not from
 documentation. Where something was not fetched it says so.
-
----
-
-## 46. The intensity chart
-
-### 46.1 Why this exists
-
-"Is it getting stronger or weaker, and does anybody actually know" is the first
-question a storm raises and the app currently answers it in prose, inside the
-advisory text, several taps down. A shape answers it in half a second.
-
-The app has no chart of any kind. This is the first one, so it also sets the
-house style for every chart after it.
-
-### 46.2 What it draws
-
-One plot in the storm detail panel. Time across, wind speed up.
-
-- **Background: Saffir-Simpson bands as horizontal stripes**, using §6's fixed
-  category colors at low opacity. This is the load-bearing idea. The line
-  crossing from one band into the next *is* the category change, so the chart is
-  readable without reading the axis, and it is the same color language as the
-  globe.
-- **A vertical "now" line.** Past to its left, forecast to its right.
-- **Solid line, left of now** — observed intensity.
-- **Dotted line, right of now** — the official forecast.
-- **A shaded fan around the dotted line** — model spread. This is the honest
-  part. A tight fan means the guidance agrees; a wide one means nobody knows and
-  the centre line should not be read as a promise.
-- **A fine second line, left of now** — the satellite estimate (§46.4), where
-  available.
-- **A marker** where rapid intensification probability crosses a threshold, once
-  §47 lands and that number exists. Not a blocker; the chart ships without it.
-
-Category bands, the forecast line and the spread fan are all built from data the
-app already fetches.
-
-### 46.3 Source — observed intensity
-
-Currently the app draws past track from the MapServer's pre-rendered Past Track
-layers. For a chart it wants the numbers, not the drawing.
-
-`https://ftp.nhc.noaa.gov/atcf/btk/` — b-deck best track, e.g. `bal022026.dat`.
-Fixed-width ATCF, the same record family `lib/adeck.js` already parses. Carries
-lat, lon, max wind, min pressure, wind radii by quadrant, and eye diameter,
-updated through the season after each advisory.
-
-**AL / EP / CP only.** Confirmed directly: `ftp.nhc.noaa.gov/atcf/`'s own README
-scopes `aid_public` and `btk` to those three basins, and a live listing of
-`aid_public/` shows only `aal`, `aep`, `acp` files. **There is no West Pacific or
-Indian Ocean b-deck on NHC's server.** For those storms the observed line comes
-from the app's own accumulated history plus §46.4.
-
-### 46.4 Source — the satellite estimate
-
-`https://tropic.ssec.wisc.edu/real-time/adt/{ID}-list.txt`
-Index at `https://tropic.ssec.wisc.edu/real-time/adt/adt.html`.
-
-CIMSS Advanced Dvorak Technique. **Global — every basin.** Fixed-width plain
-text, one row per fix, **every 20 to 30 minutes**.
-
-Verified by pulling `12W-list.txt` in full: a complete series for Typhoon
-Dolphin from 30 kt on 27 Jul, through 155 kt on 29 Jul, and back down. Columns
-include date, time, CI number, MSLP, Vmax in knots, raw and adjusted T-numbers,
-the constraint rule in force, scene type (`IRRCDO` → `CRVBND` → `EYE` → `EYE/L`),
-estimated RMW, eye size, lat, lon, fix method (`FCST` / `ARCHER`), and the
-satellite that produced it (`HIM-9`).
-
-That is roughly twelve times the sampling rate of a 6-hourly warning. For West
-Pacific and Indian Ocean storms — where the app has JTWC's warnings and nothing
-else — it is the difference between four points a day and fifty.
-
-**Filename convention `[VERIFY]`.** `12W-list.txt` was confirmed. The pattern for
-Atlantic and East Pacific storms was not fetched and must be checked before this
-is wired up; do not assume `AL02-list.txt` works.
-
-**This is a university research page, not a hardened API.** No SLA, no published
-rate limit, no stated licence. Cache hard, attribute UW-CIMSS, and treat an
-outage as routine rather than exceptional.
-
-### 46.5 The second opinion, and how to word it
-
-Official warnings are 6-hourly. The satellite algorithm runs every half hour. In
-a rapidly intensifying storm the official number is routinely behind reality, and
-the gap between the two lines is the most useful thing on the chart.
-
-When they diverge past a threshold, the panel says so:
-
-> Satellite estimate 132 kt · last advisory 115 kt, 4 h ago
-
-**Wording is a safety question, not a copy question.** Landfall is not a forecast
-product (§1) and must never appear to second-guess a warning centre. The line
-names what each number is and how old it is, and draws no conclusion. Never
-"stronger than forecasters say." `[DECIDE]` — the divergence threshold, and
-whether this surfaces at all or only lives on the chart.
-
-### 46.6 Performance
-
-**This is the item most exposed to the unmeasured frame cost.** A chart canvas in
-the detail panel is new drawing work on a device that is already blocking for
-3.2 seconds on Windows during load, with a MapLibre frame cost nobody has put a
-number on. See SPEC-MAP.md §9.7.
-
-Mitigations, decided rather than left open: the chart renders once on panel open
-and on new data, never per frame; it is not animated beyond a transform-and-
-opacity entrance; and it does not exist in the DOM until the detail panel is
-opened.
-
-### 46.7 Open questions for glass
-
-1. **Do the category bands help or do they turn the chart into wallpaper?** At
-   low opacity they may disappear; at high opacity they will fight the lines.
-2. **The spread fan on a storm with wide guidance** may swamp the plot. There may
-   need to be a cap on how much of the vertical range it can claim.
-3. **At phone width, with a five-day forecast and a ten-day history**, does
-   anything remain legible? The history may need truncating.
 
 ---
 
@@ -1415,9 +1300,9 @@ be a local `WINDOW_RINGS` in the chart; it moved, because the three of them
 together decide the shape of one picture and reading them in two files is how
 they drift.
 
-**Solid left of `now`, dotted right of it**, matching §46.2's house style for
-observed-versus-forecast so the app has one visual grammar for the distinction
-rather than two. **This changes every chart, not only a departed storm's:** a
+**Solid left of `now`, dotted right of it.** This is the app's one visual
+grammar for observed-versus-forecast, and this chart is now where it is defined —
+the section that first stated it was the cut intensity chart. **This changes every chart, not only a departed storm's:** a
 track entirely ahead of the clock is entirely a forecast and was being drawn as
 though it were a measurement. The seam is the corridor's first sample, which is
 the advisory position and up to three hours behind `now`, so a short dotted
@@ -1721,8 +1606,10 @@ Pacific is untested.
 
 Sources that were investigated and are **not** proposed here, so the next session
 does not re-research them: NHC wind speed probabilities (layers 394–397, real and
-useful, lower priority), arrival time of TS winds (layers 18/19/20, already noted
-in NOW.md), storm surge (held for a storm near home), aircraft reconnaissance
+useful, lower priority), NHC's own arrival-time layers 18/19/20 (**superseded** —
+`data/home-corridor.js` computes arrival from the published radii instead, which
+catches a crossing between two forecast hours that a sampled layer misses),
+storm surge (held for a storm near home), aircraft reconnaissance
 (`nhc.noaa.gov/text/URNT15-USAF.shtml`, spectacular and extremely seasonal),
 HURDAT2 historical analogs (a Home feature, not a storm feature), NDBC buoys and
 CO-OPS tide gauges (US coastal only), and ECMWF Open Data ensemble tracks

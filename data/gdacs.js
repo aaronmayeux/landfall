@@ -245,7 +245,19 @@ function normalizeEvent(feat) {
        * a shape use the band polygons. */
       windRadii: false,
       surge: false,
-      models: false,
+      /* ==> TRUE, AND IT WAS FALSE FOR WEEKS AFTER IT STOPPED BEING. <== The
+       * flag predates the TCGP join. `data/adeck.js` resolves a GDACS storm to
+       * a deck by NAME through `data/tcgp-index.js` and has done since the
+       * Noul final-warning fix, so these storms carry model tracks today.
+       *
+       * Nothing reads this flag right now — `can.forecastPoints` and
+       * `can.watchWarning` are the only two consulted anywhere — which is
+       * exactly why it was wrong for so long and exactly why it matters that
+       * it is right: the next gate written against `can.models` would have
+       * silently deleted guidance for every storm outside NHC's basins. A
+       * capability map that is only correct where something happens to read it
+       * is a trap, not a map. */
+      models: true,
     },
 
     raw: {
