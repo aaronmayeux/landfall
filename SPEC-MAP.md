@@ -1124,20 +1124,47 @@ same hour the fill does with no third thing to keep in step. It sits above the
 forecast track and below the forecast dots, which carry category color and a
 classification code and must never be painted over.
 
-**IT USES A FLOORED RAMP, AND THAT IS THE ONE PLACE THIS FEATURE HOLDS TWO SETS
-OF NUMBERS** (`config/tokens.js` `envRampLine`). "Hostile dissolves into the sea"
-is right for a translucent shape the width of a five-day cone and is a bug on a
-1.75 px line: measured against the night ocean the fill ramp reads **1.05 : 1**
-at its hostile end and 2.70 : 1 through its middle, and in the light theme the
-hostile stop *is* the daylight sea. With the environment number running p5 −14
-kt, roughly one hour in twenty would draw the most load-bearing line on the map
-in a color that cannot be seen — §5 silence, and it would have shipped, because
-the mockup was judged on Lala, whose environment is +12 and therefore bright.
-So the line's ramp keeps the same hue journey and the same bright end with its
-bottom lifted until every stop clears 3 : 1 against the sea, WCAG's bar for a
-graphical object. The two ramps never point opposite ways; the line simply
-refuses to reach zero. **If the track is ever widened, the floor can come back
-down.**
+**IT USES THE CONE'S OWN RAMP, LIFTED ONLY WHERE A COLOR WOULD VANISH**
+(`lib/cone-ribbon.js` `liftToLegible`). "Hostile dissolves into the sea" is right
+for a translucent shape the width of a five-day cone and is a bug on a 1.75 px
+line: measured against the night ocean the fill ramp reads **1.05 : 1** at its
+hostile end and 2.70 : 1 through its middle, and in the light theme the hostile
+stop *is* the daylight sea. With the environment number running p5 −14 kt,
+roughly one hour in twenty would draw the most load-bearing line on the map in a
+color that cannot be seen — §5 silence.
+
+**THE FIRST ANSWER WAS A SECOND RAMP AND IT TRADED ONE FLATNESS FOR ANOTHER.**
+`envRampLine` held three stops each tuned to clear the bar. It met the
+requirement and compressed the *whole* journey to do it, not the end that needed
+it. Measured on Lala, whose environment ran −2 kt at the storm to +32 kt by day
+five: everything past hour 60 clamps to the ramp's bright end, and across the
+half that did not, the fill travelled `#51448f → #c4b0ff` and plainly read as a
+gradient while the line travelled `#8d80d3 → #c4b0ff` and read as one flat color.
+Two surfaces carrying the same number and one of them showing it (glass,
+2026-08-18).
+
+So the floor is a per-color **lift** now, not a ramp. A line color is the cone's
+color, unchanged, wherever that color already clears
+`ENV_RIBBON.lineMinContrast` (3 : 1, WCAG's bar for a graphical object and the
+same bar the wind bands are held to). Where it does not, it is blended toward the
+ramp's own far end until it does, by bisection — sixteen steps, once per slice,
+at bundle build time and never per frame. Above the crossover the line and the
+fill are now the same pixel value rather than two nearby ones.
+
+**IT IS DELIBERATELY NOT A LIGHTNESS FLOOR.** Brightness inverts between the
+themes and saturation does not, so a lightness rule would lift the light theme's
+line *toward* the water it is trying to be seen against. Contrast against the
+ocean is the rule this section states, and it holds in both. Lifting runs toward
+the ramp's far end because that is the direction "more environment" already runs,
+which preserves the hue journey — and **only as far as the bar**, because
+overshooting to the far end would paint a hostile stretch in the fully-favourable
+color. That reads as the line and the cone disagreeing, and it trips no
+legibility check, because the far end is the most legible color there is.
+
+Measured across both palettes: dark lifts below about +4 kt, light below about
++8 kt, worst case 3.00 : 1 in each. The line and the fill never point opposite
+ways; the line simply refuses to reach zero. **If the track is ever widened, the
+floor can come back down.**
 
 **IT SLICES THE STATIONS THE CONE REBUILD IS ALREADY ASSEMBLED FROM.** §7.9
 walks the smoothed track at uniform stations and measures how far the published

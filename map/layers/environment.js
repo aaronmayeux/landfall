@@ -185,7 +185,7 @@ registerLayer({
  * THAN NOTHING. <== `STORM_GEO.trackForecastWidth`, exactly — the same 1.75 px
  * the line already is. The track does not get fatter when the environment is
  * switched on, which was Aaron's call on 2026-08-16 and is why the LEGIBILITY
- * FLOOR lives in the color instead (config/tokens.js `envRampLine`). The white
+ * FLOOR lives in the color instead (lib/cone-ribbon.js `liftToLegible`). The white
  * line underneath is not decoration either: where the run stops short of the
  * cone (§47.6 — 86 files in the season lost their positions before +120 h) the
  * colored segments simply end, and the white track continues from there. The

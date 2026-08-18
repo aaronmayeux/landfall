@@ -41,11 +41,23 @@ a fold cut a black wedge across the inside of the right-hand curve. Both fixed,
 both confirmed. Ida corpus: 35 of 35 advisories color, 100.0% of cone area,
 nothing outside the drawn outline. Nothing left to judge on the ribbon itself.
 
-**One thing still unseen: a very tight bend.** The pinch replaces a stretch of
+**The colored forecast line now uses the cone's own ramp.** `SPEC-MAP.md` §47.5.
+It carried a separate lifted ramp so it could never dissolve into the sea, which
+worked and compressed the whole journey to do it — on Lala the fill read as a
+gradient and the line read as one flat color across the same stretch. The floor
+is a per-color lift now: the cone's exact hex wherever it clears 3 : 1 against
+the ocean, blended toward the ramp's far end only where it does not. `envRampLine`
+is retired from both palettes. **Judge whether the line and the fill now read as
+one statement** — above the crossover they are the same pixel value, and below it
+the line still refuses to reach zero.
+
+**Two things still unseen.** A very tight bend: the pinch replaces a stretch of
 the inside edge with a corner, so somewhere tighter than Lala's turn the color
-should meet itself at a point rather than following the cone edge round. Invisible
-on Ida and on Lala. If a flat spot ever shows on the inside of a turn, that is
-this, and the answer is to walk the ring's arc there the same way the caps do.
+should meet itself at a point rather than following the cone edge round.
+Invisible on Ida and on Lala; if a flat spot ever shows, the answer is to walk
+the ring's arc there the way the caps do. And **the hostile end of the line has
+still never been seen** — every storm judged so far has been favorable, so the
+lift has only ever been exercised in arithmetic.
 
 **The archive now holds NHC layers 6 and 7.** The cone and the forecast track are
 the rebuild's only two inputs and neither was ever snapshotted, so this entire

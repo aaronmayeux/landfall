@@ -31,7 +31,20 @@ const section = (n) => console.log(`\n  ${n}`);
 const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps;
 
 const { parseShips } = await import('../functions/api/nhc/_ships-parse.js');
-const { buildRibbon, environmentAtHour, hoursAlong, rampAt, rampT } =
+/** WCAG contrast, computed here rather than imported: a test that reuses the
+ *  implementation's own arithmetic agrees with the implementation's own bug. */
+function contrastOf(a, b) {
+  const lum = (h) => {
+    const [r, g, bl] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255)
+      .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+  };
+  const la = lum(a);
+  const lb = lum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+const { buildRibbon, environmentAtHour, hoursAlong, liftToLegible, rampAt, rampT } =
   await import('../lib/cone-ribbon.js');
 const { ENV_RIBBON, CONE_SWEEP } = await import('../config/constants.js');
 const { DARK, LIGHT } = await import('../config/tokens.js');
@@ -520,10 +533,10 @@ section('the forecast line carries the same number as the fill it lies in');
 
 {
   const ribs = fakeRibs(201);
-  const LINE_STOPS = ['#6E62B0', '#9184D8', '#C4B0FF'];
+  const SEA = '#070D18'; // the night ocean, DARK.ocean
   const built = buildRibbon({
     ribs, caps: fakeCaps(ribs), forecast: fakeForecast(), run: MAJOR,
-    stops: STOPS, lineStops: LINE_STOPS,
+    stops: STOPS, sea: SEA,
   });
 
   const S = slices(built);
@@ -554,20 +567,40 @@ section('the forecast line carries the same number as the fill it lies in');
   });
   ok(paired, 'every segment reports the same knots and the same hour as the polygon it lies inside');
 
-  /* ==> AND THEY DO NOT SHARE A COLOR, WHICH IS DELIBERATE AND IS THE ONE
-   * PLACE THIS FEATURE HOLDS TWO SETS OF NUMBERS. <== The fill is allowed to
-   * dissolve into the sea; a 1.75 px line drawn in the same hex would simply
-   * not be there on the storms the environment is tearing apart. The floor
-   * lives in the RAMP (config/tokens.js `envRampLine`), so the two agree on
-   * direction and differ only in how far down they are allowed to go. */
+  /* ==> ONE RAMP NOW, LIFTED ONLY WHERE A COLOR WOULD VANISH. <== §47.5. The
+   * line used to carry a whole second ramp, which met the legibility bar and
+   * compressed the entire journey to do it — on Lala the fill read as a
+   * gradient and the line read as one flat color across the same stretch
+   * (glass, 2026-08-18). Both halves of the replacement are asserted here,
+   * because either one alone is a regression: legible-but-flat is where this
+   * started, and matching-but-invisible is the §5 silence it was built to
+   * avoid. */
   const hostile = L.reduce((a, b) => (a.properties.kt < b.properties.kt ? a : b));
   const hostilePoly = S.find((f) => f.properties.kt === hostile.properties.kt);
   ok(hostile.properties.kt < 0, 'the major hurricane has a hostile stretch to test with');
   ok(hostile.properties._color !== hostilePoly.properties._color,
-    'its line is NOT the same hex as its fill — the fill may fade into the ocean, the line may not');
-  ok(LINE_STOPS.includes(hostile.properties._color)
-     || /^#[0-9a-f]{6}$/i.test(hostile.properties._color),
-    'and the line color is resolved from the line ramp, not left as an expression');
+    'a HOSTILE line is not the same hex as its fill — the fill may fade into the ocean, the line may not');
+  ok(contrastOf(hostile.properties._color, SEA) >= ENV_RIBBON.lineMinContrast,
+    `and it clears the bar against the sea (${contrastOf(hostile.properties._color, SEA).toFixed(2)} : 1)`);
+  ok(L.every((f) => contrastOf(f._color || f.properties._color, SEA) >= ENV_RIBBON.lineMinContrast - 1e-9),
+    'as does EVERY segment — one dark stretch of a five-day track is one that is not there');
+
+  /* THE OTHER HALF. Above the crossover the line must be the cone's EXACT hex,
+   * not a nearby one — that is the whole reason the second ramp went. */
+  const bright = L.filter((f) => {
+    const poly = S.find((p) => p.properties.kt === f.properties.kt
+                            && p.properties.hr === f.properties.hr);
+    return poly && contrastOf(poly.properties._color, SEA) >= ENV_RIBBON.lineMinContrast;
+  });
+  ok(bright.length > 0, 'the storm has a stretch whose fill is legible on its own');
+  ok(bright.every((f) => {
+    const poly = S.find((p) => p.properties.kt === f.properties.kt
+                            && p.properties.hr === f.properties.hr);
+    return f.properties._color === poly.properties._color;
+  }), 'and wherever the fill is legible the line is the SAME hex — no second ramp, no near-miss');
+
+  ok(L.every((f) => /^#[0-9a-f]{6}$/i.test(f.properties._color)),
+    'every line color is a resolved hex, never left as an expression');
 
   /* Consecutive segments MEET. A slice ends on the station the next one starts
    * from, so the drawn line has no gap where the color steps — which on a
@@ -595,6 +628,91 @@ section('the forecast line carries the same number as the fill it lies in');
  * color each slice gets, and lib/cone-sweep.js already owns whether the ribs
  * follow the cone.
  * ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+ * THE FLOOR IN BOTH THEMES — §47.5.
+ *
+ * ==> BRIGHTNESS INVERTS BETWEEN THE THEMES AND SATURATION DOES NOT. <== On the
+ * night globe a helping environment glows; on the greyscale day globe it
+ * darkens, so the LIGHT ramp's hostile stop IS the daylight sea. A floor
+ * written as "lighten until visible" would be right in one theme and exactly
+ * backwards in the other — the light theme's line would be lifted TOWARD the
+ * water it is trying to be seen against. This block is what fails if anyone
+ * ever writes it that way, and it runs against the real palettes rather than a
+ * fixture, so a retune of either ramp is checked here on the day it lands.
+ * ------------------------------------------------------------------------- */
+section('the line clears the sea in both themes');
+for (const [themeName, pal] of [['dark', DARK], ['light', LIGHT]]) {
+  const rampStops = pal.geo.envRamp;
+  const sea = pal.ocean;
+  const target = rampStops[rampStops.length - 1];
+
+  let worst = Infinity;
+  let untouched = 0;
+  let lifted = 0;
+  /* Across the whole domain and past both ends, because rampT clamps and the
+   * clipped tails are 5.5% of the season. */
+  for (let kt = -30; kt <= 30; kt += 1) {
+    const cone = rampAt(rampStops, rampT(kt));
+    const line = liftToLegible(cone, sea, target, ENV_RIBBON.lineMinContrast);
+    worst = Math.min(worst, contrastOf(line, sea));
+    if (line === cone) untouched++; else lifted++;
+  }
+
+  ok(worst >= ENV_RIBBON.lineMinContrast - 1e-9,
+     `${themeName}: every colour the line can take clears ${ENV_RIBBON.lineMinContrast} : 1 against the sea (worst ${worst.toFixed(2)})`);
+  ok(lifted > 0,
+     `${themeName}: and the floor actually does something — ${lifted} of 61 sampled knots need lifting`);
+  ok(untouched > 0,
+     `${themeName}: while ${untouched} are left exactly as the cone paints them, which is the whole reason the second ramp went`);
+
+  /* ==> LIFTING MUST MOVE AWAY FROM THE WATER, NOT TOWARD IT. <== The one
+   * assertion that catches a lightness rule wearing a contrast rule's name. */
+  const hostileHex = rampAt(rampStops, rampT(-30));
+  const liftedHex = liftToLegible(hostileHex, sea, target, ENV_RIBBON.lineMinContrast);
+  ok(contrastOf(liftedHex, sea) > contrastOf(hostileHex, sea),
+     `${themeName}: the most hostile colour ends up further from the sea than it started`);
+
+  /* ==> AND ONLY AS FAR AS IT HAS TO. <== §47.5's founding rule is that the
+   * line and the fill never point opposite ways. A lift that overshoots to the
+   * ramp's far end paints a HOSTILE stretch in the fully-favourable colour,
+   * which is a line saying "helping" over a cone saying "tearing it apart" —
+   * the two-answers-to-one-question failure this whole section exists to
+   * prevent, and it does not trip any legibility check because the far end is
+   * the most legible colour there is. Reached by lifting toward the sea, which
+   * can never clear the bar and falls through to the far end; verified,
+   * 2026-08-18. */
+  ok(liftedHex !== target,
+     `${themeName}: and a hostile line is NOT painted the fully-favourable colour`);
+
+  /* The same rule stated across the whole domain: more environment can never
+   * come out reading as LESS. Contrast against the sea rises with distance
+   * along the ramp in BOTH themes — the dark ramp brightens and the light one
+   * deepens — so one comparison covers both.
+   *
+   * ==> THE TOLERANCE IS NOT SLOP, AND PICKING IT BY EYE WOULD HAVE MADE THIS
+   * ASSERTION MEANINGLESS. <== Through the lifted stretch every colour sits ON
+   * the floor by construction, so contrast is FLAT there and the only movement
+   * is where the bisection happened to stop — measured at 0.017 contrast points
+   * across both themes, which is invisible and is not a direction. A real
+   * inversion is the line jumping to the ramp's far end and back, which is
+   * whole points. 0.1 sits an order of magnitude above the noise and an order
+   * below the fault. */
+  const NOISE = 0.1;
+  let worstDrop = 0;
+  let prev = -Infinity;
+  for (let kt = -30; kt <= 30; kt += 1) {
+    const c = contrastOf(
+      liftToLegible(rampAt(rampStops, rampT(kt)), sea, target, ENV_RIBBON.lineMinContrast),
+      sea
+    );
+    if (prev > -Infinity && c < prev) worstDrop = Math.max(worstDrop, prev - c);
+    prev = c;
+  }
+  ok(worstDrop < NOISE,
+     `${themeName}: and the line never reads backwards — worst backward step ${worstDrop.toFixed(3)} contrast points`);
+}
+
+
 function fakeRibs(n) {
   return Array.from({ length: n }, (_, i) => {
     const t = i / (n - 1);

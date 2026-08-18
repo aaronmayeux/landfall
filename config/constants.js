@@ -3730,6 +3730,21 @@ export const CONE_CURVE = Object.freeze({
  * are applied at the moment text is drawn.
  */
 export const ENV_RIBBON = Object.freeze({
+  /** The contrast the colored forecast line must clear against the ocean.
+   *
+   *  ==> 3 : 1 IS WCAG'S BAR FOR A GRAPHICAL OBJECT, and it is the same bar the
+   *  wind bands are held to, so this is a house number rather than a new one.
+   *  It replaces a hand-tuned second ramp (`envRampLine`) that met it at three
+   *  fixed stops; the line now takes the CONE's ramp and is lifted only at the
+   *  points that fall short, so the two surfaces agree wherever agreement costs
+   *  nothing. lib/cone-ribbon.js `liftToLegible`.
+   *
+   *  RAISING IT PULLS THE HOSTILE END OF THE LINE FURTHER FROM THE CONE'S. The
+   *  line can only ever be lifted toward the ramp's bright end, so a higher bar
+   *  buys legibility with range — which is the trade the old ramp made
+   *  everywhere and this one makes only where it must. */
+  lineMinContrast: 3,
+
   /** The ramp's domain, KNOTS. ±15, and it is measured rather than chosen
    *  (§47.4). Across every hour the ribbon can actually paint the environment
    *  number runs p5 −14, median 0, p95 +10, full range −26 to +38; ±15 holds

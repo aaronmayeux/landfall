@@ -25,11 +25,12 @@
  * those storms, in a layer whose whole argument is that it reports rather than
  * scores. "Balanced" is true of both the quiet ones and the loud ones.
  *
- * ==> IT KEYS THE CONE, NOT THE TRACK. <== The line carries a floored version
- * of this ramp so it can never disappear into the sea (config/tokens.js
- * `envRampLine`), so its darkest violet is lighter than the bar's darkest end.
- * The cone is a hundred times the area and is the surface the reader is
- * actually reading; keying both would need two bars saying one thing.
+ * ==> IT KEYS THE CONE, NOT THE TRACK. <== The line carries the SAME ramp now,
+ * lifted only where a colour would dissolve into the sea (lib/cone-ribbon.js
+ * `liftToLegible`), so above the crossover the two are the same pixel value and
+ * below it the line's darkest violet is lighter than the bar's darkest end. The
+ * cone is a hundred times the area and is the surface the reader is actually
+ * reading; keying both would need two bars saying one thing.
  *
  * Imports: nothing. It is a string.
  */

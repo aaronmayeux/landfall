@@ -674,34 +674,33 @@ export const DARK = Object.freeze({
      *  FIRST STOP, not ENV_RIBBON's scale. */
     envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF']),
 
-    /** THE SAME RAMP, ON THE FORECAST LINE — AND IT IS NOT `envRamp`, WHICH IS
-     *  THE ONE PLACE THIS FEATURE IS ALLOWED TWO SETS OF NUMBERS.
+    /** ==> THE FORECAST LINE USES THIS RAMP TOO, AND IT DID NOT USED TO. <==
+     *  There was a second list here, `envRampLine`, lifted so every one of its
+     *  three stops cleared 3 : 1 against the sea. It existed for a real reason:
+     *  "hostile dissolves into the sea" is the point of the cone and a bug on a
+     *  1.75 px track, and this ramp reads 1.05 : 1 at its hostile end, so the
+     *  single most load-bearing line on the map disappeared on exactly the
+     *  storms the environment was tearing apart. Roughly one hour in twenty
+     *  lands in the third of this ramp that cannot be seen at all.
      *
-     *  ==> "HOSTILE DISSOLVES INTO THE SEA" IS RIGHT FOR A CONE AND IS A BUG ON
-     *  A 1.75 px LINE. <== Measured against the night ocean (#070D18), the fill
-     *  ramp reads 1.05 : 1 at its hostile end and 2.70 : 1 through its middle.
-     *  On a translucent shape the width of a five-day cone that is the intended
-     *  effect. On the forecast track it means the single most load-bearing line
-     *  on the map DISAPPEARS on exactly the storms the environment is tearing
-     *  apart — and the season says that is not a corner case: the environment
-     *  number runs p5 −14 kt, so roughly one hour in twenty lands in the third
-     *  of the ramp that cannot be seen at all. A track that vanishes is §5
-     *  silence, and it would have shipped invisible because the mockup was
-     *  judged on Lala, whose environment is +12 and therefore bright.
+     *  ==> BUT A SECOND RAMP COMPRESSES THE WHOLE JOURNEY, NOT THE END THAT
+     *  NEEDED IT. <== Measured on Lala 2026-08-18, whose environment ran −2 kt
+     *  to +32 kt: across the half of her cone that was not clamped, the fill
+     *  travelled #51448f → #c4b0ff and plainly read as a gradient, while the
+     *  line travelled #8d80d3 → #c4b0ff and read as one flat colour. Two
+     *  surfaces carrying the same number, one of them showing it.
      *
-     *  SO THE LINE GETS A FLOOR AND THE CONE DOES NOT. Same hue journey, same
-     *  direction, same bright end — the bottom is lifted until every stop
-     *  clears 3 : 1 against the sea, which is WCAG's bar for a graphical object
-     *  and the same bar the wind bands are held to. Measured: 3.74 / 6.02 /
-     *  10.19.
+     *  The floor is a per-colour LIFT now, not a ramp: lib/cone-ribbon.js
+     *  `liftToLegible` blends toward this ramp's own far end until the colour
+     *  clears `ENV_RIBBON.lineMinContrast` against `ocean`, and returns it
+     *  untouched when it already does. Same bar, same hue journey, and above
+     *  the crossover the line is the cone's exact colour rather than a nearby
+     *  one. Dark: lifted below about +4 kt, worst case 3.00 : 1.
      *
-     *  WHAT THIS COSTS, STATED PLAINLY: a hostile line is a mid violet rather
-     *  than nothing, so the line has less range than the cone it sits in. The
-     *  cone is the surface that carries the number — it is a hundred times the
-     *  area and it is what the legend keys — and the line is a legible echo of
-     *  it. They never point opposite ways; the line simply refuses to reach
-     *  zero. IF THE TRACK IS EVER WIDENED, THIS FLOOR CAN COME BACK DOWN. */
-    envRampLine: Object.freeze(['#6E62B0', '#9184D8', '#C4B0FF']),
+     *  IT IS DELIBERATELY NOT A LIGHTNESS FLOOR. Brightness inverts between
+     *  the themes (see LIGHT.geo.envRamp) and a lightness rule would be right
+     *  in one and exactly backwards in the other. Contrast against the ocean is
+     *  the rule §47.5 actually states, and it holds in both. */
 
     /** Halo behind a STORM NAME on the map. A map label's legibility is
      *  decided by its halo, not by the terrain under it — the terrain changes
@@ -1267,13 +1266,12 @@ export const LIGHT = Object.freeze({
      *  true in both themes. */
     envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E']),
 
-    /** See DARK.geo.envRampLine for why the line has a floor and the cone does
-     *  not. The light theme needs it MORE, not less: its hostile stop IS the
-     *  daylight sea (#C2C6CA), so an unfloored line there is not merely dim,
-     *  it is the exact color of the water. Lifted until every stop clears
-     *  3 : 1 — measured 3.05 / 4.02 / 5.68 — and the direction still runs
-     *  toward the deep violet, so "more color, more happening" survives. */
-    envRampLine: Object.freeze(['#6E63A8', '#5C4CA6', '#4B2C9E']),
+    /* The line's floor is computed against `ocean`, not listed — see
+     * DARK.geo.envRamp. THE LIGHT THEME NEEDS IT MORE, NOT LESS: its hostile
+     * stop IS the daylight sea (#C2C6CA), so an unfloored line there is not
+     * merely dim, it is the exact colour of the water. Lifted below about
+     * +8 kt, worst case 3.00 : 1, and the direction still runs toward the deep
+     * violet, so "more colour, more happening" survives. */
   }),
 });
 
