@@ -210,7 +210,7 @@ real home is the other row carrying the same section number.
 | `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1486-1509 |
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1510-1552 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1553-1595 |
-| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1596-1678 |
+| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1596-1677 |
 
 ## Files
 
@@ -218,7 +218,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 116,232 | 32 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 107,644 | 25 |
+| `SPEC-NEXT.md` | 107,598 | 25 |
 | `SPEC-OPS.md` | 68,109 | 14 |
 | `SPEC-UI.md` | 150,105 | 10 |
 | `SPEC.md` | 150,037 | 14 |

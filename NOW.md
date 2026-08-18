@@ -59,18 +59,6 @@ here and put what it built in the spec.
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**A GDACS storm now gets the wind-arrival countdown, and no GDACS storm has
-been on the glass with it.** `SPEC-NEXT.md` §49.16. The chart's bands, the
-Timeline rail and the headline sentence all work for GDACS now, because its
-wind field is recovered from the drawn polygons as the same quadrant radii NHC
-publishes — exact, not approximated, verified against the archive.
-**Judge on a real GDACS storm near home:** the drawer is deliberately SHORTER
-than an NHC one — no past-wind sentence, no earliest-arrival hedge, no
-rainfall, no watch/warning, because nobody publishes them. Does that read as a
-source that knows less, or as an app that is missing something? And do the
-arrival times pass the sanity test a reader would apply — weaker wind first,
-stronger wind inside it, all-clear last.
-
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. **Judge when a Western Pacific area next goes Medium or High:** does the
 patch step visibly, and does it match an NHC area at the same rung. Both live

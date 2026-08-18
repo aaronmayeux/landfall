@@ -1670,9 +1670,8 @@ can see. `WIND_LABEL` states what the wind does and carries no figure;
 `tools/test-gdacs-corridor.mjs` asserts no knot threshold reaches the rail or
 the chart, which is what stops its numeric fallback ever appearing unnoticed.
 
-**Judge on glass:** whether a GDACS drawer with a chart, a rail and a headline
-but no past-wind line reads as a source that knows less, or as an app that is
-missing something.
+**Confirmed on glass 2026-08-18.** The shorter drawer reads as a source that
+knows less, not as an app that is missing something.
 
 ---
 
