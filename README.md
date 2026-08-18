@@ -100,7 +100,9 @@ addresses — a section may move between files, it may never be renumbered.
   features that are agreed and specified but have not shipped. A section leaves it
   by shipping (it moves into the spec file that owns it, rewritten in the present
   tense) or by being cut. Everywhere else, the spec describes what is.
-- **`NOW.md`** — what's in flight right now. Nothing in it is a rule.
+- **`NOW.md`** — what's in flight right now. Nothing in it is a rule. It opens
+  with **`THE PLAN`**: the numbered waves of work, in order, each sized for one
+  session. Start a session by picking one.
 - **`SPEC-INDEX.md`** — generated. Section number to file and line range, so you
   can jump to §17.7 instead of reading 61 KB to find it. Regenerate with
   `node tools/spec-index.mjs` whenever a heading changes; CI checks it is current.

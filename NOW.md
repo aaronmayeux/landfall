@@ -10,9 +10,14 @@
 > already knew to look for — which is exactly backwards for the file whose job is
 > naming the things you DIDN'T know about.
 >
-> **THE FIRST SCREEN IS THE PRODUCT.** `IN FLIGHT` and `NEXT UP` stay short
-> enough to read at a glance, because this file's whole job is orienting the
-> next session in its first minute. Length accumulates BELOW them.
+> **THE FIRST SCREEN IS THE PRODUCT.** `THE PLAN`, `IN FLIGHT` and `NEXT UP`
+> stay short enough to read at a glance, because this file's whole job is
+> orienting the next session in its first minute. Length accumulates BELOW them.
+>
+> **`THE PLAN` IS SEQUENCING, NOT A DECISION TRAIL.** It answers "what am I doing
+> in this session" and nothing else. A wave carries a pointer to the section that
+> describes the work, never a copy of it. When a wave lands it is DELETED here,
+> the same as any other item.
 >
 > **An item leaves this file in exactly two ways.**
 > 1. **It lands** — delete it here, and add one or two sentences to the relevant
@@ -25,6 +30,62 @@
 > honest. An item needing several paragraphs is a spec entry wearing a TODO's
 > clothes — write it in the spec and leave a pointer here.
 > **Never a place to record a rule.** Rules go in SPEC.md.
+
+---
+
+## THE PLAN — pick one wave, do it, close it out
+
+**Each wave is sized for ONE session.** They are ordered so nothing waits on
+research it does not need. Do not start two. When a wave lands, delete it from
+here and put what it built in the spec.
+
+**WAVE 2 — small code, nothing to research, nothing to decide.**
+- **Five style names are referenced and never declared**, so they render as
+  nothing, silently. Four are in the rainfall block of `ui/home.css`
+  (`--radius-snug`, `--surface-raised`, `--accent`, `--touch-min`) and one is in
+  `ui/panels.css` (`--space-roomy`). The alert row has no background and no
+  corner radius; the Retry link has no color and **no 44px minimum, which breaks
+  §10's touch rule**. Decided: reuse the panel's existing raised surface for the
+  background, and PROMOTE the storm panel's locally-declared Retry color into a
+  real token so every Retry in the app matches (§12: a pattern used twice gets
+  extracted). Then widen `tools/test-css-vars.mjs` to sweep `.css` so a sixth
+  cannot happen. **Do this before judging rainfall on glass.**
+- **Three eviction functions are never called** — `evictTcgpIndex`
+  (`data/tcgp-index.js`), `evictCarq` (`data/carq.js`), `forgetBand`
+  (`map/coast-band-cache.js`). Three caches that fill and never empty. Wire them,
+  and sweep for any other cache with no eviction path.
+- **The `> 0` guard on `index-of` in the state-name suffix trim has no test**
+  (`SPEC-MAP.md` §11.2). Its suite went with the three-globe cut. Without the
+  guard, TEXAS renders as TEXA. Give it a home in a suite that is not about
+  worlds, and verify the assertion FAILS when the guard is removed.
+
+**WAVE 3 — needs a decision, then a read.**
+- **Telemetry cannot tell which Retry button was pressed**, and `env_retry` is
+  not in `lib/usage.js`'s allowlist so every press of that one has been dropped
+  since §47.8 shipped. **The agreed shape is ONE counter plus a field naming the
+  button**, not one counter per button — five counters means five columns and a
+  new one every time a Retry is added. Needs a D1 schema change; keep it small.
+- **Read `boot_longtask_ms` and `visit_ms`** — see NEXT UP item 1. They should
+  have data now. That number decides whether the Windows problem is a bundling
+  job or a code job, and it gates the Three.js work.
+
+**WAVE 4 — the build. Its own session.**
+- **GDACS storms get no wind-arrival countdown**, and the data to fix it is
+  already in the payload. See SCOPED, NOT STARTED below for the shape and the one
+  labelling rule. This is the app's most important feature missing for half the
+  world's cyclones.
+
+**WAVE 5 — research, and it is FOUR QUESTIONS IN ONE.**
+- **Global coverage for the four NHC-only features** — watch/warning, rainfall,
+  storm surge, the environment ribbon. Same question four times: *is there
+  another source covering the rest of the world?* Research together or pay four
+  times. See SCOPED, NOT STARTED.
+- **Global radar** is its own pass and a different shape. See SCOPED, NOT STARTED.
+- **The outlook KMZ has never been opened.** Inventory everything in it, not just
+  the outlook areas. See SCOPED, NOT STARTED.
+- **JTWC's per-storm `fix.txt` has never been fetched.** Whether it carries wind
+  extent or only positions is the open question behind GDACS having no past wind
+  field. See KNOWN AND ACCEPTED.
 
 ---
 
