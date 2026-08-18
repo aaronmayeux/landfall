@@ -163,10 +163,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1187-1214 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1215-1301 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1302-1344 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3018-3064 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3018-3077 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1345-1431 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3193-3210 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3211-3219 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3206-3223 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3224-3232 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2142-2288 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1432-1562 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 63-64 |
@@ -224,7 +224,7 @@ real home is the other row carrying the same section number.
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 114,615 | 32 |
-| `SPEC-MAP.md` | 204,137 | 38 |
+| `SPEC-MAP.md` | 205,143 | 38 |
 | `SPEC-NEXT.md` | 108,229 | 32 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 146,773 | 10 |

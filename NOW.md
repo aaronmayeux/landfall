@@ -34,6 +34,15 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
+§45.4. The patch layer read `globeRisk`, which only NHC areas carry, so every
+JTWC area drew with the Low hue, the loosest hatch and the weakest fill no matter
+what the bulletin said — under its own label reading "High" in the High color.
+Now `globeRisk ?? risk`, the same expression every other surface already used.
+**Judge: when a Western Pacific area next goes Medium or High, does the patch
+step visibly and match an NHC area at the same rung.** Both live JTWC areas are
+genuinely Low right now, so there is nothing to see until one moves.
+
 **A warning drawn where there is no coast now admits it.** `SPEC-MAP.md` §7.10,
 `SPEC-DATA.md` §4.8. Lala's watch and warning for the Northwestern Hawaiian
 Islands fell back to NHC's raw breakpoint chord — correctly, the atolls are below

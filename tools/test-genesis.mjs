@@ -1205,6 +1205,89 @@ ok(
   'and every JTWC area carries a word and no number'
 );
 
+section('§45.4 — the PATCH tracks the risk word, not just the label');
+
+/* ==> THIS SECTION DRIVES THE REAL LAYER, NOT A REGEX OVER ITS SOURCE. <==
+ *
+ * The two assertions above read `map/layers/genesis.js` as text, which is
+ * enough to pin a rule about what may be printed and is worth nothing at all
+ * for a rule about what gets DRAWN. The bug this section exists for was
+ * invisible to a text check and to every assertion in this file: the label
+ * code was correct, the parsers were correct, the data was correct, and the
+ * polygon still came out the wrong colour.
+ *
+ * `areaFeatures` read `globeRisk` alone. That is NHC's field. JTWC writes its
+ * word to `risk`, so `normalizeRisk(undefined)` handed back the LOW fallback
+ * and every JTWC patch drew LOW forever — faintest hue, loosest hatch, weakest
+ * fill — under a label reading "High" in the High colour. Nothing was missing
+ * from the screen, which is why it survived.
+ *
+ * The layer is driven with a stub map that captures `setData`. No document is
+ * needed: `hatchImage` degrades to null without one and `setGenesisAreas`
+ * touches nothing but the two sources.
+ */
+const { setGenesisAreas } = await import('../map/layers/genesis.js');
+
+const captured = {};
+const stubMap = {
+  getSource: (id) => ({ setData: (d) => { captured[id] = d; } }),
+  getLayer: () => null,
+  hasImage: () => true,
+};
+
+const patchOf = (id) =>
+  captured['genesis-areas'].features.find((f) => f.properties._id === id)?.properties;
+
+const ring = (lon) => ({
+  type: 'Polygon',
+  coordinates: [[[lon, 0], [lon + 1, 0], [lon + 1, 1], [lon, 0]]],
+});
+
+setGenesisAreas(stubMap, [
+  { id: 'nhc-high', source: 'NHC', globeRisk: 'HIGH', globeProb: 80,
+    geometry: ring(0), centroid: { lon: 0.5, lat: 0.4 } },
+  { id: 'jtwc-high', source: 'JTWC', risk: 'HIGH',
+    geometry: ring(10), centroid: { lon: 10.5, lat: 0.4 } },
+  { id: 'jtwc-low', source: 'JTWC', risk: 'LOW',
+    geometry: ring(20), centroid: { lon: 20.5, lat: 0.4 } },
+]);
+
+const patchNhcHigh = patchOf('nhc-high');
+const patchJtwcHigh = patchOf('jtwc-high');
+const patchJtwcLow = patchOf('jtwc-low');
+
+ok(
+  patchJtwcHigh?._risk === 'HIGH',
+  'a JTWC HIGH area resolves to HIGH on the patch — its word is in `risk`, '
+  + 'and reading `globeRisk` alone silently resolves it to the LOW fallback'
+);
+ok(
+  patchJtwcHigh?._hatch === patchNhcHigh?._hatch && patchJtwcHigh?._color === patchNhcHigh?._color,
+  'and it draws with the SAME hatch and colour as an NHC HIGH area — one risk '
+  + 'ramp for both sources, exactly as §45.4 describes it'
+);
+ok(
+  patchJtwcHigh?._color !== patchJtwcLow?._color
+    && patchJtwcHigh?._hatch !== patchJtwcLow?._hatch
+    && patchJtwcHigh?._fillOpacity > patchJtwcLow?._fillOpacity,
+  'and a JTWC HIGH is distinguishable from a JTWC LOW on all three channels — '
+  + 'hue, hatch density and fill weight. Colour alone is a hard read on a '
+  + 'phone in daylight; density alone is the dimension the eye is worst at'
+);
+
+/* ==> THE MUTATION CHECK (§12). <== The bug is reintroduced in one expression
+ * here and shown to give a DIFFERENT answer. If this line ever agrees with the
+ * implementation, the three assertions above have stopped testing anything —
+ * either the fallback moved upstream into the parser, or `_risk` stopped
+ * meaning what it means. Either way, come read this. */
+const naiveRisk = (a) => normalizeRisk(a.globeRisk);
+ok(
+  naiveRisk({ source: 'JTWC', risk: 'HIGH' }) === 'LOW' && patchJtwcHigh?._risk === 'HIGH',
+  'and the naiveRisk one-field read really does still answer LOW for that same '
+  + 'area — the bug was a designed-in default standing in for a real value, '
+  + 'not a crash and not a blank'
+);
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

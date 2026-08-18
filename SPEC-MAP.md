@@ -3020,10 +3020,23 @@ forecast label to disappear.**
 *The source and its failure behaviour are §45.2–§45.5 in `SPEC-DATA.md`; the
 drawer section is §45.8 in `SPEC-UI.md`.*
 
-A soft hatched patch per NHC area, in `map/layers/genesis.js`. JTWC systems
-draw nothing — JTWC publishes a point and no area, and inventing a radius to
-draw a circle with would be inventing data. They are drawer rows and camera
-targets.
+A soft hatched patch per watched area, in `map/layers/genesis.js`. **Both
+sources draw, through one code path.** JTWC publishes a position and no extent,
+so `lib/abpw.js` gives it a circle at `GENESIS.jtwcRadiusDeg` — 6.04°, the mean
+equivalent radius of NHC's real published areas — and the area panel says in
+words that the shape is indicative. Aaron's call, 2026-08-09, overruling the
+earlier rule that a JTWC system drew nothing: a drawer row that flew the camera
+to empty ocean looked broken at the exact moment the app was being most careful.
+
+**The risk ramp is one ramp, and it is fed from `globeRisk ?? risk`.** NHC's
+word arrives on `globeRisk`, resolved from the horizon the globe draws; JTWC has
+no horizon to choose between and writes straight to `risk`. Every surface that
+asks an area's risk uses that same expression — the patch, the label, the
+planet-band mark, the drawer row and the detail panel. A second spelling of the
+question is not a style difference: the patch layer briefly read `globeRisk`
+alone, `normalizeRisk(undefined)` returned the LOW fallback, and every JTWC
+patch drew Low forever underneath its own label reading "High" in the High
+color. Nothing was missing from the screen, which is why it survived.
 
 **A genesis area is separated from a storm by SHAPE, not by color.** A storm
 is a filled dot with a spiral and a halo; that equation is the whole legibility

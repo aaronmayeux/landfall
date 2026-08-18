@@ -84,7 +84,12 @@ export function createAreaDetailView() {
     }
 
     const jtwc = area.source === 'JTWC';
-    const swatch = genesisColor(jtwc ? area.risk : area.globeRisk);
+    /* `globeRisk ?? risk` is THE idiom for "what risk is this area", used
+     * identically in map/layers/genesis.js and map/watch-marks.js. It was a
+     * branch on the source name here, which is behaviourally the same and one
+     * more place that has to be remembered when a source is added — the patch
+     * layer had its own third spelling and drew every JTWC area as LOW for it. */
+    const swatch = genesisColor(area.globeRisk ?? area.risk);
 
     /* JTWC AND NHC GET DIFFERENT BODIES, NOT ONE BODY WITH BLANKS. JTWC
      * publishes a word over 24 hours and no percentage at all; rendering it

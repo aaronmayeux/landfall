@@ -236,7 +236,25 @@ function ensureHatchImages(map) {
 function areaFeatures(areas, selectedId) {
   const light = isLight();
   return areas.map((a) => {
-    const risk = normalizeRisk(a.globeRisk);
+    /* ==> `globeRisk ?? risk`, AND THE FALLBACK IS THE WHOLE POINT. <==
+     *
+     * `globeRisk` is NHC's field: `normalizeNhcAreas` resolves it from the
+     * horizon the globe draws. A JTWC system has no horizon to choose between,
+     * so `parseAbpw` writes its word straight to `risk` and never sets
+     * `globeRisk` at all.
+     *
+     * Reading `globeRisk` alone therefore did not throw and did not blank
+     * anything — `normalizeRisk(undefined)` returns `GENESIS.riskFallback`,
+     * which is LOW. Every JTWC patch on the globe drew with the LOW color, the
+     * LOW hatch gap and the LOW fill opacity no matter what the bulletin said,
+     * WHILE ITS OWN LABEL READ "High" IN THE HIGH COLOR — `pointFeatures` and
+     * map/watch-marks.js both had the fallback and this did not. A designed-in
+     * default silently standing in for a real value is exactly the §5 failure
+     * that is hardest to see, because nothing is missing from the screen.
+     *
+     * If a third source ever arrives speaking in words, it writes `risk` and
+     * lands here correctly with no change. Do not re-narrow this to one field. */
+    const risk = normalizeRisk(a.globeRisk ?? a.risk);
     const selected = a.id === selectedId;
     return {
       type: 'Feature',

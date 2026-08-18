@@ -965,7 +965,11 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
   }
 
   function watchRowHtml(a) {
-    const swatch = genesisColor(a.source === 'JTWC' ? a.risk : a.globeRisk);
+    /* `globeRisk ?? risk` — the one idiom, shared with the map layer and the
+     * area detail panel. See the note in map/layers/genesis.js: a second
+     * spelling of this question is what let the patches draw every JTWC area
+     * as LOW while its own label said High. */
+    const swatch = genesisColor(a.globeRisk ?? a.risk);
     const meta = watchMeta(a);
     const two = watchTwoDay(a);
     const label = `${a.title}, ${meta}${two ? `, ${two}` : ''}`;
