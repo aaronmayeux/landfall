@@ -29,6 +29,7 @@ import { ENDPOINT, GDACS_GEOMETRY, RING_POLISH } from '../config/constants.js';
 import { mergeBandPolygons } from '../lib/bandmerge.js';
 import { simplifyGeometry, countCoordinates } from '../lib/simplify.js';
 import { smoothRadialSeams } from '../lib/ringpolish.js';
+import { quadrantRadiiNm } from '../lib/quadrant-radii.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { normalizePastPoints } from '../lib/track-point.js';
 import { parseGdacsPoints } from './gdacs-points.js';
@@ -262,6 +263,7 @@ const timeOf = (props) => parseGdacsStamp(props?.polygondate);
  */
 function sortFeatures(features) {
   const bands = [];        // per-timestep band polygons (featuretype WindRadii)
+  const zeroBands = [];    // per-timestep bands GDACS published at zero area
   const swathBands = [];   // GDACS's OWN pre-merged swath, one per threshold
   const cone = [];
   const pastTrack = [];
@@ -304,7 +306,26 @@ function sortFeatures(features) {
        * bridge blends the corridor down to a mathematical point, which is
        * the pinched end he kept seeing. No invented fixture ever contained
        * one of these. */
-      if (isDegenerate(f.geometry)) continue;
+      if (isDegenerate(f.geometry)) {
+        /* ==> DROPPED FROM THE MAP, KEPT FOR THE ARITHMETIC. <== A zero-area
+         * shape must never reach the drawing path — that is the pinched
+         * corridor Aaron diagnosed above, and nothing below this line changes
+         * it. But GDACS publishing one is a STATEMENT: this threshold does not
+         * reach this forecast hour. That is a published zero, which
+         * spec-parameter §37.5 calls real data rather than a gap, and the home
+         * corridor needs it: without it a threshold that GDACS says stops at
+         * hour 48 merely goes quiet, and quiet is what the corridor reads as
+         * "the source said nothing". Measured and common, not theoretical —
+         * ONE-C-26's 120 km/h band is zero at its last two forecast hours and
+         * SEVENTEEN-26's is zero at its first two (archive, 2026-08-18).
+         *
+         * Only the per-timestep bands are kept. A degenerate SWATH carries no
+         * hour to hang a zero on and there is nothing to say about it. */
+        if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
+          zeroBands.push(tagBand(f, band, timeOf(p)));
+        }
+        continue;
+      }
 
       if (p.featuretype === GDACS_GEOMETRY.windRadiiType) {
         bands.push(tagBand(f, band, timeOf(p)));
@@ -329,7 +350,7 @@ function sortFeatures(features) {
      * existed to rule out. */
   }
 
-  return { bands, swathBands, cone, pastTrack, forecastTrack };
+  return { bands, zeroBands, swathBands, cone, pastTrack, forecastTrack };
 }
 
 /**
@@ -369,6 +390,86 @@ function splitPair(bands) {
    * from Current. Falling back to the whole stack keeps every threshold
    * visible — stale-but-visible beats blank (§5). */
   return { current: current.length ? current : bands, swath: bands };
+}
+
+/* ---------------------------------------------------------------------------
+ * THE WIND-ARRIVAL NUMBERS (§49.16)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The band polygons → `[{tau, kt, ne, se, sw, nw}]`, the exact shape
+ * `data/nhc-mapserver.js normalizeForecastRadii()` returns.
+ *
+ * ==> THIS IS THE WHOLE OF WHAT GDACS STORMS WERE MISSING. <== Every figure on
+ * the home drawer that says when wind arrives — the chart's bands, the Timeline
+ * rail's arrivals and endings, the headline sentence — is computed by
+ * `data/home-corridor.js` from an array of this shape, and GDACS storms
+ * reached it with nothing. So they all landed in the one branch of
+ * `ui/view-home.js windLineHtml()` that says this advisory does not publish a
+ * wind field size, on half the world's cyclones, for a payload that publishes
+ * it in every response.
+ *
+ * ==> THE SAME ARRAY FROM BOTH SOURCES, AND THAT IS THE POINT. <== The arrival
+ * math is the most safety-critical arithmetic in the app. A GDACS-shaped copy
+ * of it would drift from the NHC one, and the day it drifts is the day one of
+ * them is wrong while both suites stay green. So the CONVERSION is
+ * source-specific and everything downstream of it is not — the same rule the
+ * layer bundle at the top of this file already follows.
+ *
+ * ==> THE CENTRE IS GDACS'S OWN DOT, NEVER THE POLYGON'S CENTROID. <== A band
+ * is asymmetric by construction (ONE-C-26's 60 km/h field reached 90 nm
+ * northwest and 50 nm southwest of the same centre), so its bounding-box
+ * middle is not the storm and every radius measured from one would be wrong in
+ * a different direction. A band whose valid time matches no published dot is
+ * DROPPED rather than measured from a guessed centre.
+ *
+ * @param {Array} bands       per-timestep band features, already tagged.
+ * @param {Array} zeroBands   per-timestep bands GDACS published at zero area.
+ * @param {Array} forecast    `parseGdacsPoints()`'s track points: lon, lat,
+ *                            time and `tau`, the hour relative to the analysis.
+ */
+function forecastRadiiFrom(bands, zeroBands, forecast) {
+  /* The published centres, keyed by the instant they are for. Bands state
+   * their valid time in `polygondate` and dots state theirs in their label;
+   * both parse to UTC epoch ms, so the join is exact rather than nearest —
+   * confirmed against all three archived storms 2026-08-18, every band time
+   * finding a dot. */
+  const centreAt = new Map();
+  for (const p of forecast || []) {
+    const ms = p?.time ? Date.parse(p.time) : NaN;
+    if (!Number.isFinite(ms) || !Number.isFinite(p.tau)) continue;
+    if (Number.isFinite(p.lon) && Number.isFinite(p.lat)) centreAt.set(ms, p);
+  }
+  if (centreAt.size === 0) return [];
+
+  const out = [];
+  const add = (f, zero) => {
+    const kt = f.properties?.radii;
+    if (![34, 50, 64].includes(kt)) return;
+    const pt = centreAt.get(f.properties?._gdacsTime);
+    /* No published centre for this hour — the band's own history dates it
+     * before the bulletin, or the dot was unreadable. Either way there is
+     * nothing honest to measure against. */
+    if (!pt) return;
+
+    if (zero) {
+      out.push({ tau: pt.tau, kt, ne: 0, se: 0, sw: 0, nw: 0 });
+      return;
+    }
+    const q = quadrantRadiiNm(f.geometry, [pt.lon, pt.lat], GDACS_GEOMETRY.quadrantWindowDeg);
+    /* Fails closed (lib/quadrant-radii.js). An unreadable shape publishes
+     * NOTHING for that hour, which the corridor refuses to interpolate
+     * across — rather than a zero, which would be an all-clear for a flank. */
+    if (!q) return;
+    out.push({ tau: pt.tau, kt, ...q });
+  };
+
+  for (const f of bands) add(f, false);
+  for (const f of zeroBands) add(f, true);
+
+  /* Ascending by hour then threshold, the order `sampleCorridor` and every
+   * NHC-side test already assume. */
+  return out.sort((a, b) => (a.tau - b.tau) || (a.kt - b.kt));
 }
 
 /**
@@ -448,7 +549,8 @@ export async function fetchGdacsGeometry(storm) {
   const features = Array.isArray(json?.features) ? json.features : [];
 
   const rawCount = features.reduce((n, f) => n + countCoordinates(f.geometry), 0);
-  const { bands, swathBands, cone, pastTrack, forecastTrack } = sortFeatures(features);
+  const { bands, zeroBands, swathBands, cone, pastTrack, forecastTrack } =
+    sortFeatures(features);
   /* POLISH ONLY WHAT IS DRAWN. `splitPair` picks the analysis timestep for
    * the Current segment; the other ~15 band features feed only the swath
    * FALLBACK, which goes through lib/bandmerge.js and is already polished
@@ -510,6 +612,11 @@ export async function fetchGdacsGeometry(storm) {
     console.warn(`[landfall] ${storm.id}: GDACS issue time unreadable; track points skipped`);
   }
 
+  /* The wind field as NUMBERS rather than as a picture (§49.16). Built after
+   * the points, because every radius is measured from a published centre and
+   * those are what carry the centres. */
+  const forecastRadii = forecastRadiiFrom(bands, zeroBands, forecast);
+
   const layers = {
     cone: cone.length ? okSlot(cone) : NONE(),
     forecastTrack: forecastTrack.length ? okSlot(forecastTrack) : NONE(),
@@ -551,6 +658,14 @@ export async function fetchGdacsGeometry(storm) {
      * comes through as a real measurement. Both cases degrade honestly: a
      * distance and a time is a complete answer to "when did it pass". */
     past: normalizePastPoints(pastPoints),
+
+    /** Published quadrant radii per forecast hour, per threshold — recovered
+     *  from the drawn bands (§49.16), in the SAME shape and under the SAME
+     *  name `data/nhc-mapserver.js` puts there. `ui/view-home.js` reads one
+     *  field from both sources, and `data/home-corridor.js` walks one
+     *  implementation for both. Empty when GDACS published no readable band,
+     *  which the corridor already distinguishes from a field that misses. */
+    forecastRadii,
 
     /** ==> ALWAYS EMPTY, AND SAID OUT LOUD RATHER THAN LEFT UNDEFINED (§49.9).
      *  <== GDACS publishes no past wind radii — `layers.windPast` above is

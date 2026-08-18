@@ -1593,7 +1593,86 @@ what it is a hedge *on*. It now requires the 34 kt band to be present.
 bands ended at 2:00 PM with `now` eight hours to the right of them, and the
 orphan dashed line sat near `now` at about 200 mi with no band under it.
 
+### 49.16 A GDACS storm gets the same wind countdown
 
+**BUILT.** Every figure on the home drawer that says when wind arrives — the
+chart's bands, the Timeline rail's arrivals and endings, the headline sentence
+— is computed by `data/home-corridor.js` from an array of quadrant radii. GDACS
+storms reached it with nothing, so all of them landed in the one branch of
+`ui/view-home.js windLineHtml()` that says the advisory does not publish a wind
+field size. That was half the world's cyclones, for a payload that publishes
+the wind field in every response.
+
+**GDACS PUBLISHES THE SAME QUANTITY AS A PICTURE.** Each threshold, at each
+forecast hour, arrives as a closed polygon (`featuretype: WindRadii`) rather
+than as four numbers. `lib/quadrant-radii.js` reads the numbers back out and
+`data/gdacs-geometry.js` puts them on the bundle as `forecastRadii`, under the
+same name and in the same shape `data/nhc-mapserver.js` uses. Nothing
+downstream of the bundle knows which source it is reading.
+
+**THE CONVERSION IS A RECOVERY, NOT AN ESTIMATE.** A GDACS band is four
+constant-radius sectors joined by radial seams at 0/90/180/270 — the
+construction `polishGeometry()` already exists to smooth for drawing. Sampling
+the middle half of each quadrant and taking the median returns the sector
+radii. Measured on ONE-C-26 (`origin/archive:latest/geometry/`, 2026-08-18),
+against the storm's own published centre dot:
+
+| band | NE | SE | SW | NW |
+|---|---|---|---|---|
+| Poly_Green (60 km/h) | 79.9 | 70.1 | 50.0 | 89.8 |
+| Poly_Orange (90 km/h) | 40.0 | 20.0 | 20.0 | 40.0 |
+| Poly_Red (120 km/h) | 20.0 | 15.0 | 10.0 | 20.0 |
+
+Round nautical miles, under 0.5 nm of spread across ~90 vertices per sector.
+Those are the figures GDACS drew from.
+
+**THE WINDOW IS WHY, AND `GDACS_GEOMETRY.quadrantWindowDeg` HOLDS IT.** Seam
+vertices sit at bearings of exactly 0/90/180/270 carrying every value between
+the two sectors they join, so a whole-quadrant reading spans tens of miles of
+radius where the middle half spans a rounding step. Sampling only the middle
+half means the median has nothing to absorb — a band whose sectors were
+unevenly sampled would tip a whole-quadrant median and cannot tip this one.
+
+**THE CENTRE IS GDACS'S OWN DOT, NEVER A CENTROID.** A band is asymmetric by
+construction, so its bounding-box middle is not the storm and every radius
+measured from one would be wrong in a different direction. Band valid times and
+centre-dot times both parse to UTC epoch ms and join exactly — confirmed
+against all three archived storms. A band whose hour matches no published dot
+is dropped rather than measured from a guess.
+
+**A ZERO-AREA BAND IS A PUBLISHED ZERO AND SURVIVES AS ONE.** GDACS says "this
+threshold does not reach this hour" by publishing a shape whose every vertex is
+the same point. Those are still dropped from the drawing path — a zero-radius
+shape pinches the merged corridor — but they now carry into `forecastRadii` as
+explicit zeros, because a published zero is a measurement (spec-parameter
+§37.5) and losing it turns "the source says no" into "the source said nothing".
+Common, not theoretical: ONE-C-26's 120 km/h band is zero at its last two
+forecast hours and SEVENTEEN-26's is zero at its first two.
+
+**NO EARLIEST-ARRIVAL HEDGE, AND THAT IS THE HONEST OUTCOME.** `earliest`
+composes NHC's track-error circle with a wind field, and NHC publishes that
+circle only for the basins it forecasts (`CONE_CIRCLE_BASIN`). `coneErrorNm`
+correctly returns null everywhere else; `buildCorridor` was reading it as
+`?? 0`, which turned the refusal into a shift of zero and would have drawn the
+dashed hedge exactly on top of the band edge it hedges, with a Timeline row
+naming the moment the row above it names. `gapEarly` is now null where there is
+no table. Nothing on an NHC storm moves — all three of its basins have one.
+
+**WHAT A GDACS DRAWER STILL DOES NOT GET, because nobody publishes it:** the
+past-wind sentence (§49.9 — GDACS publishes no past wind shapes, measured), the
+earliest-arrival hedge, rainfall, storm surge, and the watch/warning stripe. The
+drawer is shorter and says so; it does not fall silent.
+
+**THE KNOT NUMBERS STAY OFF THE SCREEN.** GDACS's thresholds are 60/90/120 km/h
+≈ 32.4/48.6/64.8 kt, near NHC's and deliberately not identical, and
+`GDACS_GEOMETRY.bandClass` forbids relabelling them 34/50/64 anywhere a reader
+can see. `WIND_LABEL` states what the wind does and carries no figure;
+`tools/test-gdacs-corridor.mjs` asserts no knot threshold reaches the rail or
+the chart, which is what stops its numeric fallback ever appearing unnoticed.
+
+**Judge on glass:** whether a GDACS drawer with a chart, a rail and a headline
+but no past-wind line reads as a source that knows less, or as an app that is
+missing something.
 
 ---
 

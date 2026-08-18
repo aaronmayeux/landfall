@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 188 numbered headings.
+Covering 9 files, 189 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -209,7 +209,8 @@ real home is the other row carrying the same section number.
 | `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1460-1485 |
 | `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1486-1509 |
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1510-1552 |
-| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1553-1599 |
+| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1553-1595 |
+| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1596-1678 |
 
 ## Files
 
@@ -217,7 +218,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 116,232 | 32 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 102,848 | 24 |
+| `SPEC-NEXT.md` | 107,644 | 25 |
 | `SPEC-OPS.md` | 68,109 | 14 |
 | `SPEC-UI.md` | 150,105 | 10 |
 | `SPEC.md` | 150,037 | 14 |

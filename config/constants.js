@@ -3452,6 +3452,26 @@ export const GDACS_GEOMETRY = Object.freeze({
    *  60/90/120 km/h → 32/49/65 kt, matching the audit's validated table
    *  (spec-parameter §28.2). */
   kmhPerKtGdacs: 1.85184,
+
+  /** How wide a window, centred on each quadrant's own bearing (45/135/225/
+   *  315), `lib/quadrant-radii.js` samples when reading a band's radii back
+   *  out of its drawn shape.
+   *
+   *  MEASURED, AND THE FAILURE IT AVOIDS IS SPECIFIC. A GDACS band is four
+   *  constant-radius sectors joined by RADIAL SEAMS at 0/90/180/270, and a
+   *  seam's vertices carry every value between the two sectors it joins. Read
+   *  the whole quadrant and those seam vertices leak the neighbour's radius
+   *  in: on ONE-C-26's green band (archive, 2026-08-18) the northeast
+   *  quadrant's true radius is 80 nm and a whole-quadrant maximum returns 90,
+   *  which is the NORTHWEST figure crossing the seam at due north.
+   *
+   *  45° is the middle half of each 90° quadrant — 22.5° of clearance from
+   *  each seam. Inside it the sampled radii are flat to under 0.5 nm across
+   *  ~90 vertices, which is the source's own number recovered exactly.
+   *
+   *  MUST NOT EXCEED 90: wider and the four windows overlap, a vertex lands
+   *  in two quadrants, and the seams come back. */
+  quadrantWindowDeg: 45,
 });
 
 /**
@@ -3986,7 +4006,11 @@ export const BAND_MERGE = Object.freeze({
    *
    *  The error direction is OUTWARD by up to one cell (a cell fills if any
    *  polygon covers its centre), stated in lib/bandmerge.js as the accepted
-   *  trade — GDACS publishes no radii to sweep inward from. */
+   *  trade. This merge traces PUBLISHED POLYGONS; it has no radii to sweep a
+   *  corridor from the way lib/windswath.js does on the NHC side. §49.16 does
+   *  recover per-timestep quadrant figures from those same polygons, but for
+   *  the home corridor's arithmetic — nothing feeds them back into a sweep,
+   *  and this cell size is the accuracy dial that remains. */
   cellDeg: 0.02,
 
   /** Resample spacing for the traced contour, in CELLS. The raw marching-

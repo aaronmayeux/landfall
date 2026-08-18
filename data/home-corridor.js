@@ -481,10 +481,26 @@ export function buildCorridor({
   /* The pessimistic twin: same geometry, wind fields shifted toward the house
    * by the track error. Stored under `gapEarly` so `crossings` can walk it
    * with the identical code path — one implementation, two readings. */
+  /* ==> NO ERROR TABLE, NO HEDGE — AND THAT IS NOT THE SAME AS A ZERO ONE.
+   * <== `coneErrorNm` returns null for every basin NHC does not forecast (see
+   * CONE_CIRCLE_BASIN: the west Pacific, both Indian oceans, the south
+   * Pacific, Australia), because lending them the Atlantic's numbers would be
+   * fabricating an error bar and signing NHC's name to it. This line read
+   * `s.coneNm ?? 0`, which quietly turned that refusal into a shift of zero —
+   * so `gapEarly` came out IDENTICAL to `gap`, `crossings` found the same
+   * windows in both, and the screen would have drawn the dashed
+   * earliest-arrival line exactly on top of the band edge it is supposed to
+   * hedge, plus a Timeline row saying wind could start at the moment it
+   * already says it starts.
+   *
+   * Nothing on an NHC storm moves: all three of NHC's basins have tables, so
+   * `coneNm` is never null there and this is the same arithmetic it always
+   * was. It only fires on the storms that reached this function for the first
+   * time in §49.16. */
   for (const s of samples) {
     s.gapEarly = {};
     for (const kt of THRESHOLDS) {
-      s.gapEarly[kt] = s.gap[kt] == null ? null : s.gap[kt] - (s.coneNm ?? 0);
+      s.gapEarly[kt] = s.gap[kt] == null || s.coneNm == null ? null : s.gap[kt] - s.coneNm;
     }
   }
 

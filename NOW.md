@@ -39,12 +39,6 @@
 research it does not need. Do not start two. When a wave lands, delete it from
 here and put what it built in the spec.
 
-**WAVE 4 — the build. Its own session.**
-- **GDACS storms get no wind-arrival countdown**, and the data to fix it is
-  already in the payload. See SCOPED, NOT STARTED below for the shape and the one
-  labelling rule. This is the app's most important feature missing for half the
-  world's cyclones.
-
 **WAVE 5 — research, and it is FOUR QUESTIONS IN ONE.**
 - **Global coverage for the four NHC-only features** — watch/warning, rainfall,
   storm surge, the environment ribbon. Same question four times: *is there
@@ -64,6 +58,18 @@ here and put what it built in the spec.
 **Everything under this heading is BUILT, DEPLOYED AND UNJUDGED.** The as-built
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
+
+**A GDACS storm now gets the wind-arrival countdown, and no GDACS storm has
+been on the glass with it.** `SPEC-NEXT.md` §49.16. The chart's bands, the
+Timeline rail and the headline sentence all work for GDACS now, because its
+wind field is recovered from the drawn polygons as the same quadrant radii NHC
+publishes — exact, not approximated, verified against the archive.
+**Judge on a real GDACS storm near home:** the drawer is deliberately SHORTER
+than an NHC one — no past-wind sentence, no earliest-arrival hedge, no
+rainfall, no watch/warning, because nobody publishes them. Does that read as a
+source that knows less, or as an app that is missing something? And do the
+arrival times pass the sanity test a reader would apply — weaker wind first,
+stronger wind inside it, all-clear last.
 
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. **Judge when a Western Pacific area next goes Medium or High:** does the
@@ -299,16 +305,6 @@ COASTLINES, not global** — ground radar needs ground, and no radar exists over
 open ocean anywhere on Earth. The storms it would newly reach are ones already
 near land, which is when radar matters most. Its own pass, separate from the four
 above.
-
-**GDACS storms have no wind-arrival countdown, and the data to fix it is already
-in the payload.** `data/gdacs-geometry.js` sorts per-timestep band polygons
-(`featuretype: 'WindRadii'`), each carrying a threshold and a valid time.
-`data/home-corridor.js` measures distance from home to the nearest EDGE of a wind
-field over time — which a polygon answers directly, and more accurately than four
-quadrant radii blended by `radiusAtBearing`. Nothing gets invented. **The one
-rule: GDACS's thresholds are 60/90/120 km/h ≈ 32.4/48.6/64.8 kt, near NHC's and
-deliberately not identical, and `GDACS_GEOMETRY.bandClass` forbids labelling them
-34/50/64 anywhere a user can see.**
 
 ## KNOWN AND ACCEPTED
 

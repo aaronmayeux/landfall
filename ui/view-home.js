@@ -1024,11 +1024,16 @@ export function createHomeDashboardView({
       /* Absent radii is normal for a weak or distant storm and is NOT a
        * failure — it must not read like one.
        *
-       * ==> AND IT IS WHERE EVERY GDACS STORM LANDS. <== GDACS publishes no
-       * wind radii in either direction, so this branch is not an edge case for
-       * half the world's cyclones — it is the only sentence they ever get. It
-       * used to speak about the forecast alone, which left "did its wind
-       * already reach me" unanswered and unasked. */
+       * ==> IT IS NO LONGER WHERE EVERY GDACS STORM LANDS (§49.16). <== It
+       * was, and that was the largest silence in the app: GDACS reached this
+       * function with no radii at all, so this branch was the only sentence
+       * half the world's cyclones ever got. Their wind field is published as
+       * polygons and `data/gdacs-geometry.js` now hands it over as numbers, so
+       * a GDACS storm goes down the same path an NHC one does.
+       *
+       * What still lands here from either source is a storm whose advisory
+       * genuinely published no forecast wind field — weak, distant, or late in
+       * its life. The sentence stays worded for that. */
       if (co?.unavailable !== 'no-radii') return '';
       return `<p class="detail-soft" style="margin-top:var(--space-snug)">
           ${before ? `${before} ` : ''}This advisory doesn’t say how big the
