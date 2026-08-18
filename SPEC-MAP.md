@@ -2449,6 +2449,23 @@ every other icon's geometry is inline. The two move together by hand.
   hole. Measured across 12/16/20/24/32/48 px: this weight holds the eye open and
   the four arms separate down to ~16 px, and roughly double it fuses them into a
   pinwheel — the worse failure, because a fused mark still looks deliberate.
+- **THE HALO IS ONE INK IN TWO SHAPES, AND ONLY ITS SHAPE IS THEMED.**
+  `geo.glyphHalo` is dark in both modes because it does a different job in each:
+  on the night globe it deepens a bright mark against lit land, and on the pale
+  daytime globe it is the only thing separating the mark from the sea. So in
+  **dark** it is a soft blurred drop shadow; in **light** it is a crisp keyline
+  at `SIZE.glyphKeylineWeight`, no blur at all — the same soft shadow on grey
+  water reads as a smudge under the mark rather than as part of it.
+  **It cannot simply be deleted in light, and the numbers are why:** §6's
+  severity colors are fixed, and against the light ocean the fills measure
+  1.03–1.87:1 where the findability floor is 3 — Cat 2 at 1.03 is the sea's own
+  luminance. The ink is 10.77:1 there. `contrast-check.mjs` reads the TOKEN, not
+  the render, so it would go on passing while every glyph below Cat 4 stopped
+  being findable in daylight. **The keyline weight is set by the downscale, not
+  by taste:** a 256px texture rendered at 40px is a 6.4× reduction, so a rim
+  thinner than about 1 screen pixel arrives as a broken speckle along the edge
+  instead of a line. That is worse than the smudge, and it is what the first
+  attempt at half the arm weight actually produced.
 - **ONE ENGINE DRAWS IT, AND IT IS THE MESH.** `map/glyph.js` is shared. MapLibre's
   copy is deleted: its zoom band reached full opacity at z3.4 while the mesh does
   not finish handing off until z5.0, so for 1.6 zoom levels two copies of one spiral

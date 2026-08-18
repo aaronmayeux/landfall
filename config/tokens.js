@@ -1477,6 +1477,39 @@ export const SIZE = Object.freeze({
    *  so a fixed width would make a Cat 5 look thinner-armed than a TD. */
   glyphArmWeight: 0.035,
 
+  /** THE LIGHT THEME'S OUTLINE, IN PLACE OF THE DARK THEME'S BLUR.
+   *
+   *  ==> WHY THE TWO THEMES DRAW THE SAME MARK DIFFERENTLY. <== `geo.glyphHalo`
+   *  is doing a different job in each. On the night globe it DEEPENS the glyph
+   *  against lit land, and a soft blur is exactly right for that. On the pale
+   *  daytime globe it is the only thing holding the glyph off the sea, and a
+   *  soft blur there reads as a grey smudge under the mark rather than as part
+   *  of it — Aaron on glass, and the reason this constant exists.
+   *
+   *  ==> IT CANNOT SIMPLY BE DELETED, AND THE NUMBERS SAY SO. <== §6's severity
+   *  colors are fixed, so on the light ocean (#C2C6CA) the fills measure 1.03
+   *  to 1.87 against the water — Cat 2 at 1.03 is literally the sea's own
+   *  luminance. The ink is 10.77:1 there. Remove the outline and every glyph
+   *  below Cat 4 stops being findable in daylight, and `contrast-check.mjs`
+   *  would go on passing because it reads this token rather than the render.
+   *
+   *  So the ink stays and only its SHAPE changes: zero blur, drawn as a
+   *  keyline around the fattened mark. Same fraction-of-radius rule as
+   *  `glyphArmWeight` above and for the same reason — a pixel count would make
+   *  a Cat 5 look thinner-edged than a TD, and every category scales through
+   *  `glyphScale`, so a fraction keeps the rim proportional at all seven.
+   *
+   *  ==> 0.07 IS SET BY THE DOWNSCALE, NOT BY TASTE. <== The glyph is drawn
+   *  into a 256px texture and rendered at `stormDot3dPx` (40), so the texture
+   *  is scaled down 6.4x on the way to the screen. The first value tried here
+   *  was 0.0175 — half the arm weight, which looked right in the file and
+   *  measured 0.2px of rim on screen. It survived that downscale as a broken
+   *  speckle along the edge rather than as a line, which is worse than the
+   *  smudge it replaced. Rim on screen is `weight x R`, and R at scale 1.0 is
+   *  15.6px, so this is a hair under 1px — the thinnest a continuous rim can
+   *  be. THIS IS THE DIAL if the edge ever reads too heavy or too faint. */
+  glyphKeylineWeight: 0.07,
+
   /* (`endedDotPx` and `endedDotStrokePx` retired 2026-07-29. The last-known
    * position of an ended storm is now drawn at the FORECAST POINT's size and
    * stroke, read straight off `STORM_GEO`, because the two marks have to match

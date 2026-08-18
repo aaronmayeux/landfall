@@ -75,17 +75,17 @@ real home is the other row carrying the same section number.
 | `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 2201-2379 |
 | `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 2380-2403 |
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 2404-2431 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 2432-2520 |
-| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 2521-2690 |
-| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 2691-2781 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 2432-2537 |
+| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 2538-2707 |
+| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 2708-2798 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1181-1249 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 2782-2828 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 2799-2845 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1250 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 2829-2851 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 2852-2943 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2944-2984 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 2985-3008 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 3009-3030 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 2846-2868 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 2869-2960 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 2961-3001 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 3002-3025 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 3026-3047 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1255-1274 |
 | `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1654-1684 |
 | `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1685-1719 |
@@ -163,10 +163,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1187-1214 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1215-1301 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1302-1344 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3031-3090 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3048-3107 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1345-1431 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3219-3236 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3237-3245 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3236-3253 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3254-3262 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2171-2317 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1432-1562 |
 | `46` | The intensity chart | `SPEC-NEXT.md` | 63-64 |
@@ -224,7 +224,7 @@ real home is the other row carrying the same section number.
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 114,615 | 32 |
-| `SPEC-MAP.md` | 206,134 | 38 |
+| `SPEC-MAP.md` | 207,430 | 38 |
 | `SPEC-NEXT.md` | 108,229 | 32 |
 | `SPEC-OPS.md` | 67,283 | 14 |
 | `SPEC-UI.md` | 148,726 | 10 |

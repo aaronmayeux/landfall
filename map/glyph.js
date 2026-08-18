@@ -45,7 +45,7 @@
  * Imports: config/ only.
  */
 
-import { palette } from '../config/theme.js';
+import { palette, isLight } from '../config/theme.js';
 import { SIZE } from '../config/tokens.js';
 
 /* ---------------------------------------------------------------------------
@@ -105,17 +105,34 @@ function art() {
 export function drawSpiral(ctx, R, color, dir) {
   /* THE §6 HALO. Severity colors are fixed, so on a pale daytime ocean a
    * Cat 1 yellow has almost no luminance contrast against the water — this
-   * dark halo is what makes the mark findable, and the fill then says which
+   * dark ink is what makes the mark findable, and the fill then says which
    * severity it is. Dark in BOTH themes: in the dark theme it deepens the
    * glyph against lit land, in the light theme it is the only thing holding
    * the glyph off the sea. tools/contrast-check.mjs gates the color.
    *
+   * ==> THE INK IS THE SAME IN BOTH THEMES. ITS SHAPE IS NOT. <==
+   *
+   *   dark   a soft blurred drop shadow. It sits under a bright mark on a
+   *          near-black globe and reads as depth.
+   *   light  a crisp keyline, no blur at all. The same soft shadow on a pale
+   *          grey globe reads as a smudge under the mark instead of as part
+   *          of it (Aaron on glass, light mode).
+   *
+   * Deleting it outright in light was the ask and is not survivable: measured
+   * against the light ocean the fills run 1.03-1.87:1 where the floor is 3,
+   * and `contrast-check.mjs` would keep passing because it reads the token and
+   * not the render. See `SIZE.glyphKeylineWeight` for the full numbers.
+   *
    * SET BEFORE THE SCALE, deliberately. Canvas shadows are not transformed by
    * the matrix, so the blur radius stays in the caller's units and a glyph
    * drawn at any size gets the same proportional halo it always had. */
+  const P = palette();
+  const light = isLight();
   ctx.save();
-  ctx.shadowColor = palette().geo.glyphHalo;
-  ctx.shadowBlur = R * 0.35;
+  if (!light) {
+    ctx.shadowColor = P.geo.glyphHalo;
+    ctx.shadowBlur = R * 0.35;
+  }
 
   ctx.fillStyle = color;
   ctx.strokeStyle = color;
@@ -130,6 +147,24 @@ export function drawSpiral(ctx, R, color, dir) {
   ctx.translate(-ART_CENTER, -ART_CENTER);
 
   const path = art();
+  const arm = SIZE.glyphArmWeight * ART_RADIUS;
+
+  /* ==> THE KEYLINE GOES FIRST AND IS THE WIDEST STROKE. <== A canvas stroke
+   * is centred on the outline, so a wider one in the dark ink lays down a band
+   * that the narrower colored stroke then covers all but the outer edge of.
+   * What is left showing is a rim of exactly `glyphKeylineWeight` on each
+   * side. Drawing it after would put the dark ink OVER the color and turn the
+   * mark into a dark outline of itself.
+   *
+   * It is a separate pass rather than the shadow with `shadowBlur = 0` because
+   * a zero-blur shadow is offset-only — it would stamp a hard dark copy beside
+   * the mark, not around it. */
+  if (light) {
+    ctx.strokeStyle = P.geo.glyphHalo;
+    ctx.lineWidth = arm + SIZE.glyphKeylineWeight * ART_RADIUS * 2;
+    ctx.stroke(path);
+    ctx.strokeStyle = color;
+  }
 
   /* TWO PASSES, AND THE ORDER IS THE WHOLE TRICK.
    *
@@ -142,7 +177,7 @@ export function drawSpiral(ctx, R, color, dir) {
    * color, so the two together are one solid fattened mark with no seam — the
    * stroke covers a band centred on the outline, the fill covers everything
    * inside it. */
-  ctx.lineWidth = SIZE.glyphArmWeight * ART_RADIUS;
+  ctx.lineWidth = arm;
   ctx.stroke(path);
 
   ctx.shadowColor = 'transparent';
