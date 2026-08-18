@@ -46,6 +46,7 @@ import { getAdeck } from '../data/adeck.js';
 import { getShips } from '../data/ships.js';
 import { modelOn as isModelOn, toggleOn } from '../data/layer-prefs.js';
 import { palette } from '../config/theme.js';
+import { CACHE } from '../config/constants.js';
 import { buildRibbon } from '../lib/cone-ribbon.js';
 import { endedBundle } from '../data/lifecycle.js';
 import { tracksToFeatures } from '../lib/adeck.js';
@@ -313,7 +314,45 @@ export function createBundlePipeline({
     shipsFor: getShips,
     ribbonOn: () => toggleOn('environment'),
   };
-  const decorate = (storm, bundle) => forMap(storm, bundle, deps);
+  /* ==> WHY THE RIBBON'S BUILD OUTCOME IS REMEMBERED HERE AND NOWHERE ELSE.
+   * <== §47.9. The Environment row in the Layers panel used to be computed
+   * from the SHIPS FETCH alone, so it could only ever name the four ways the
+   * DATA comes up empty. The ribbon has two more ways to come up empty that
+   * have nothing to do with the data — `no_ribs` (the cone rebuild declined,
+   * so there are no stations to slice) and `nothing_drawable` (the run's hours
+   * do not reach the cone) — and for both of those the row said NOTHING. On
+   * glass that is a ribbon appearing and disappearing between advisories with
+   * no explanation anywhere, which is the §5 silence this app is not allowed
+   * to ship. Reported by Aaron 2026-08-18.
+   *
+   * `lib/cone-ribbon.js` already NAMES both, and `withEnvRibbon` already
+   * writes the name into the bundle slot. Nothing read it. This is the reader.
+   *
+   * ==> IT HANGS OFF `decorate`, NOT OFF `forMap`. <== `forMap` is a pure
+   * function with a suite asserting it, and every path to the map — selection,
+   * re-push, ambient warm, ended-storm push, cold-start repush — goes through
+   * THIS wrapper (main.js reaches for `pipeline.forMap`, which is this). So
+   * the record is written wherever a ribbon is built and the pure function
+   * stays pure.
+   *
+   * Bounded, like every cache in this project, and by the same number the
+   * geometry cache uses: one entry per storm the app can hold at once. */
+  const ribbonReasons = new Map(); // stormId -> the slot's `reason`, or null
+
+  const decorate = (storm, bundle) => {
+    const out = forMap(storm, bundle, deps);
+    const id = storm?.id;
+    if (id) {
+      /* Delete-then-set so insertion order is recency, which is what makes the
+       * eviction below an LRU rather than a first-in queue. */
+      ribbonReasons.delete(id);
+      ribbonReasons.set(id, out?.layers?.environment?.reason ?? null);
+      while (ribbonReasons.size > CACHE.geometryLruStorms) {
+        ribbonReasons.delete(ribbonReasons.keys().next().value);
+      }
+    }
+    return out;
+  };
 
   /** The geometry pipeline: cache → fetch → layers + panel. Every exit path
    *  checks `seq` so a slow response for storm A never paints over storm B. */
@@ -578,6 +617,13 @@ export function createBundlePipeline({
     /** The decorator, for the two callers that already hold a bundle and only
      *  need it dressed: the ended-storm push and a landed a-deck. */
     forMap: decorate,
+
+    /** Why this storm's ribbon drew nothing the last time it was built, or
+     *  `null` if it drew. `undefined` means this storm has never been through
+     *  the decorator, which is a different fact again — app/layer-status.js
+     *  only ever speaks on the two reasons it recognises, so an unknown storm
+     *  can never produce a sentence. */
+    ribbonReasonFor: (stormId) => ribbonReasons.get(stormId),
 
     /** Re-apply the selected storm's geometry after something OTHER than a new
      *  bundle changed what should be drawn — a deck landing, or the user

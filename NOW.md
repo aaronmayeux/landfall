@@ -34,6 +34,26 @@
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**The environment ribbon's two SILENT absences now speak, and that changes what
+a missing ribbon looks like rather than making one appear.** `SPEC-UI.md` §47.9.
+The Layers row was computed from the SHIPS fetch alone, so when a run was
+perfectly healthy and the RIBBON refused — the cone rebuild declining for that
+advisory (`no_ribs`), or the run's hours not reaching the cone
+(`nothing_drawable`) — the row said nothing at all and the ribbon came and went
+between advisories with no explanation anywhere. `lib/cone-ribbon.js` had named
+both all along; nothing read it. **THE NEXT STEP DEPENDS ON WHICH SENTENCE
+APPEARS.** If it is *This cone could not be measured*, the real work is in
+`sweepConeDetail`'s refusal guard (`lib/cone-sweep.js`) and this fix only made
+it visible. If nothing ever appears, the disappearance was something else and
+this line comes out.
+
+**The Environment section's legend now disappears with the layer switch.**
+`SPEC-NEXT.md` §47.11. The Layers panel's copy always did; the drawer's did not,
+so the key to a color sat under a paragraph while the map was painted in nothing.
+The paragraph, the figures and the credit stay — §47.8 fetches with the layer
+off on purpose. Judge whether the section reads as complete without the bar, or
+whether it now ends abruptly on the figures.
+
 **Rainfall is on two surfaces and neither has been seen.** `SPEC-DATA.md`
 §48.1–§48.7, `SPEC-UI.md` §48.8–§48.10. The storm drawer shows NHC's own
 rainfall paragraph between `Wind field` and `Environment`; the home drawer

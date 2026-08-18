@@ -562,6 +562,73 @@ console.log('\nMutations — each historical bug must change the output');
     !cellLabels(genevieve).some((l) => /dry air/i.test(l)));
 }
 
+/* ---------------------------------------------------------------------------
+ * THE SECTION'S OWN COPY OF THE LEGEND — §47.11.
+ *
+ * ==> A COLOR KEY FOR A MAP THAT IS NOT PAINTED IN IT. <== The Layers row has
+ * always hidden its copy of the ramp when the Environment switch is off
+ * (ui/view-layers.js) — a scale explaining a layer that is not drawing is a
+ * confident answer about nothing. The DRAWER's copy did not: it rendered
+ * whenever the paragraph was healthy, with no idea the switch existed.
+ * Reported on glass by Aaron 2026-08-18.
+ *
+ * WHAT MUST SURVIVE THE GATE, and this is the half that is easy to overrun:
+ * the paragraph, the figures and the credit are the reading surface's answer
+ * about THIS STORM and are true whatever the map is drawing — §47.8 is
+ * explicit that the section fetches even with the layer off. Only the key to a
+ * color is a claim about the map, so only the key goes.
+ *
+ * This reaches into ui/ for a string. No DOM: `html()` is pure of it.
+ * ------------------------------------------------------------------------- */
+{
+  const { createEnvHealth } = await import(path.join(ROOT, 'ui/env-health.js'));
+
+  const storm = { id: 'cp012026', name: 'Lala', advisoryKey: 'nhc:cp012026:024' };
+  const result = { status: 'ok', run: load('26071600CP9126'), fetchedAt: null, stale: false };
+
+  /** The section body once its run has landed, with the layer on or off. */
+  const bodyWith = async (on) => {
+    const h = createEnvHealth({
+      loadShips: async () => result,
+      retryShips: async () => result,
+      units: () => 'imperial',
+      ribbonOn: () => on,
+    });
+    await h.ensure(storm, () => {});
+    return h.html(storm);
+  };
+
+  const onHtml = await bodyWith(true);
+  const offHtml = await bodyWith(false);
+
+  truthy('with the layer ON the section carries the color key',
+    onHtml.includes('env-legend'));
+  truthy('with the layer OFF the key is gone — nothing on the map is painted in it',
+    !offHtml.includes('env-legend'));
+
+  /* ==> THE GATE MUST NOT TAKE THE ANSWER WITH IT. <== Asserted against the
+   * REAL sentences and cells this fixture produces, not against a marker
+   * class, so a gate that accidentally emptied the body would fail here rather
+   * than pass on an empty string containing no `env-legend` either.
+   *
+   * ESCAPED FIRST. The section escapes every string it prints, and these
+   * sentences carry apostrophes — comparing the raw text fails on a body that
+   * is completely correct, which is a test lying about the thing it guards. */
+  const escd = (s) =>
+    String(s).replace(/[&<>"']/g, (c) =>
+      ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const expected = paragraph(load('26071600CP9126'), { stormName: storm.name });
+  truthy('and the paragraph still says what it said',
+    offHtml.includes(escd(expected.sentences[0])));
+  truthy('and every figure in the grid survives',
+    expected.figures.cells.every((c) =>
+      offHtml.includes(escd(c.label)) && offHtml.includes(escd(c.value))));
+  truthy('and the credit under it survives',
+    offHtml.includes(escd(expected.source)));
+  truthy('the two bodies differ ONLY by the key',
+    onHtml.length > offHtml.length && onHtml.includes(escd(expected.sentences[0])));
+}
+
 console.log(
   failures === 0
     ? '\nAll env-health checks passed.\n'

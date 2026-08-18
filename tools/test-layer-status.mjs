@@ -198,6 +198,47 @@ ok(/retry/i.test(rowForOneShips({ status: 'unavailable' }).message),
   ok(new Set(msgs).size === 4, 'all four sentences are DISTINCT — none of them collapses into another');
 }
 
+/* --- the two absences the row could not see (§47.9) ------------------------
+ *
+ * ==> THIS IS THE SILENCE AARON HIT ON GLASS, 2026-08-18. <== The ribbon
+ * appeared and disappeared between advisories with a healthy run behind it
+ * every time, and the row said NOTHING — because it was computed from the
+ * FETCH and the fetch was fine. `lib/cone-ribbon.js` had already named both
+ * geometry refusals; nothing read them.
+ *
+ * Every assertion below fails if `refused()` is made to return false or if
+ * the reason lookup is dropped from the signature — verified by reverting each
+ * in turn. That is the point: the bug's shape was a function returning `null`,
+ * so a test that only checked the four fetch answers passed all the way
+ * through it. */
+section('the environment row — a healthy run whose cone refused');
+
+const noRibs = rowForOneShips(okRun, 'no_ribs');
+ok(noRibs && noRibs.state === 'empty',
+   'a cone the rebuild declined SPEAKS, even though the run behind it is perfect');
+ok(!/retry/i.test(noRibs?.message || ''),
+   'and offers no retry — the next advisory is the recovery, not a button');
+ok(/measure/i.test(noRibs?.message || ''),
+   'and names the geometry, not the data, so it never reads as a NOAA outage');
+
+const noReach = rowForOneShips(okRun, 'nothing_drawable');
+ok(noReach && noReach.state === 'empty' && noReach.message !== noRibs?.message,
+   'and the two geometry absences are DIFFERENT sentences — one is our measurement, the other is the run\'s reach');
+
+ok(rowForOneShips(okRun, null) === null && rowForOneShips(okRun, undefined) === null,
+   'a ribbon that BUILT, and a storm never decorated at all, both still say nothing');
+ok(rowForOneShips(okRun, 'off') === null,
+   'and a bundle decorated while the layer was off is not a refusal — only the two named reasons count');
+
+/* ==> THE FETCH ANSWERS OUTRANK THE GEOMETRY ONE, AND THE ORDER IS THE WHOLE
+ * CORRECTNESS. <== A typhoon has no ribs either, because it has no ribbon to
+ * build. Saying "this cone could not be measured" about it would be true and
+ * completely useless. */
+ok(/basin/i.test(rowForOneShips({ status: 'basin' }, 'no_ribs').message),
+   'a storm outside the basin reads as outside the basin, never as an unmeasurable cone');
+ok(/retry/i.test(rowForOneShips({ status: 'unavailable' }, 'no_ribs').message),
+   'and a real fetch failure keeps its Retry — a geometry sentence must never hide one');
+
 section('the environment row across the whole map');
 
 ok(rowForAllShips([okRun, { status: 'basin' }]) === null,
@@ -218,6 +259,33 @@ ok(rowForAllShips([undefined, { status: 'basin' }]).state === 'loading',
 ok(rowForAllShips([{ status: 'ok', run: { drawableHours: 0 } }, { status: 'unavailable' }]).state === 'error',
    'a run with nothing drawable does not count as drawing, so it cannot silence a real failure beside it');
 
+/* ==> "DRAWING" HAS TO MEAN THE RIBBON BUILT, NOT THAT THE FETCH SUCCEEDED.
+ * <== §47.9. It meant the second until 2026-08-18, so a screen on which EVERY
+ * cone had refused looked, to this function, like a screen that was working. */
+ok(rowForAllShips([okRun, okRun], ['no_ribs', 'no_ribs'])?.state === 'empty',
+   'a map where every cone refused is not a working map, whatever the runs say');
+ok(/cones/i.test(rowForAllShips([okRun, okRun], ['no_ribs', 'no_ribs'])?.message || ''),
+   'and it is phrased for several storms');
+ok(rowForAllShips([okRun, okRun], ['no_ribs', 'nothing_drawable'])?.message
+     === rowForAllShips([{ status: 'basin' }, { status: 'no_run' }]).message,
+   'two DIFFERENT geometry absences fall back to the plain count, exactly as two different fetch absences do — never a sentence right about half the map');
+
+/* THE INDEX JOIN. Both arrays are built by one map over one candidate list, so
+ * position N is the same storm in both. A test that passed with them swapped
+ * would be guarding nothing. */
+ok(rowForAllShips([okRun, { status: 'basin' }], ['no_ribs', undefined])?.state === 'empty',
+   'a refusal on the FIRST storm is read against the FIRST storm — a working Atlantic run no longer silences the row');
+ok(rowForAllShips([{ status: 'basin' }, okRun], [undefined, 'no_ribs'])?.state === 'empty',
+   'and the same holds with the pair reversed, which is what proves the reasons are not read off by the wrong index');
+ok(rowForAllShips([okRun, { status: 'basin' }], [undefined, 'no_ribs']) === null,
+   'while a refusal recorded against the storm that has no ribbon to build changes nothing — the Atlantic run is still drawing');
+
+ok(rowForAllShips([okRun, { status: 'unavailable' }], ['no_ribs', undefined])?.state === 'error',
+   'and a real failure still outranks a geometry refusal beside it');
+
+ok(rowForAllShips([okRun, okRun]) === null,
+   'called with no reasons at all — every existing caller — the row answers exactly as it always did');
+
 ok(shipsCandidates([live('a'), ended('b')]).length === 1,
    'an ended storm is not a candidate — nothing warms its run, so it would hold the row on loading forever');
 
@@ -234,6 +302,17 @@ ok(/no update/i.test(environmentRow(quiet, [quiet], () => okRun).message),
    'and it says WHY, not a bare blank');
 ok(/ended/i.test(environmentRow(both, [both], () => undefined).message),
    'a storm that is both silent AND ended reads as ended — §5\'s precedence rule');
+
+/* The lookup is keyed by storm ID, not by advisory key — `ribbonReasonFor` is
+ * a record of what the DECORATOR last did to a storm, and the decorator is
+ * handed storms. Getting that wrong would return undefined every time and the
+ * row would go quiet again with every test above still green. */
+ok(environmentRow(sel, [sel], () => okRun, (id) => (id === sel.id ? 'no_ribs' : undefined))?.state === 'empty',
+   'a selected storm whose ribbon refused says so, and the lookup is asked for its ID');
+ok(environmentRow(sel, [sel], () => okRun, () => undefined) === null,
+   'and a selected storm whose ribbon built says nothing');
+ok(environmentRow(null, [sel], () => okRun, (id) => (id === sel.id ? 'no_ribs' : undefined))?.state === 'empty',
+   'the same holds with nothing selected, where the reasons travel as a parallel list');
 
 /* --- the store ----------------------------------------------------------- */
 section('the store');

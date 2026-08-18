@@ -38,9 +38,10 @@ export const ENV_SECTION = 'environment';
 /**
  * @param {{ loadShips: (storm:object)=>Promise<object>,
  *           retryShips: (storm:object)=>Promise<object>,
- *           units: ()=>string|null }} deps  injected by app/views.js
+ *           units: ()=>string|null,
+ *           ribbonOn: ()=>boolean }} deps  injected by app/views.js
  */
-export function createEnvHealth({ loadShips, retryShips, units }) {
+export function createEnvHealth({ loadShips, retryShips, units, ribbonOn }) {
   let state = { phase: 'idle', result: null, forId: null, forKey: null };
   let seq = 0;
 
@@ -93,11 +94,25 @@ export function createEnvHealth({ loadShips, retryShips, units }) {
      *
      * ==> THE LEGEND IS ON THIS PATH ONLY. <== A color key under an
      * "unavailable" notice would be explaining a scale nothing on screen is
-     * painted in, which is the §5 confident-wrong-answer shape in miniature. */
+     * painted in, which is the §5 confident-wrong-answer shape in miniature.
+     *
+     * ==> AND ONLY WHILE THE LAYER IS ON, WHICH IS THE SAME RULE ONE STEP
+     * FURTHER. <== §47.11. The Layers row has always hidden its copy when the
+     * switch is off (ui/view-layers.js). This copy did not, so a reader with
+     * the Environment layer switched off got a color scale for a map that is
+     * not painted in it — the exact thing the paragraph above forbids, reached
+     * through the one door nobody checked. Reported by Aaron 2026-08-18.
+     *
+     * THE PARAGRAPH AND THE FIGURES STAY. They are the reading surface's own
+     * answer about this storm and are true whatever the map is drawing (§47.8:
+     * the section fetches even with the layer off). Only the KEY TO A COLOR
+     * goes, because only the key is a claim about the map. */
+    const legend = ribbonOn?.() ? envLegendHtml({ note: false }) : '';
+
     return `<p class="detail-env-paragraph">${out.sentences.map(esc).join(' ')}</p>
       <div class="detail-env-figs-head">${esc(out.figures.when)} — ${esc(out.figures.total)} in total</div>
       <div class="detail-env-figs">${cells}</div>
-      ${envLegendHtml({ note: false })}
+      ${legend}
       <p class="detail-env-note">${esc(out.source)}</p>`;
   }
 

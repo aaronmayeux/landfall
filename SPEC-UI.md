@@ -2350,10 +2350,39 @@ count, and ENDED is checked before SILENT:
 - A run that exists and publishes no forecast position (§47.6's fourth case,
   6% of the season): *This run publishes no forecast track to color.*
 - The relay failed: *Environment data unavailable — tap to retry.* The only one
-  of the four that offers a retry, because it is the only one a retry can fix.
+  that offers a retry, because it is the only one a retry can fix.
 - A silenced or ended storm: it has no cone to paint inside, so it has no
   ribbon, and the row says that rather than reporting on a run nothing is
   drawing.
+
+**TWO OF THE SIX ABSENCES ARE NOT ABOUT SHIPS AT ALL**, and the row is
+computed from the built ribbon as well as the fetch so it can name them. The
+run behind both is healthy:
+
+- The cone rebuild declined for this advisory (`lib/cone-smooth.js`), so the
+  map is drawing NHC's published outline, which carries no stations to slice:
+  *This cone could not be measured, so there is nothing to color.*
+- The run's forecast hours reach no part of the cone, so every slice was
+  trimmed: *This run does not reach any part of this cone.*
+
+Neither is retryable — the next advisory is the recovery. Both rank BELOW every
+fetch answer above: a typhoon has no ribs either, and saying its cone could not
+be measured would be true and useless.
+
+`lib/cone-ribbon.js` has always named both in its `reason`, and
+`app/bundle-pipeline.js` has always written that into the bundle slot. Until
+2026-08-18 nothing read it, so the row was computed from the fetch alone, the
+fetch was fine, and the ribbon appeared and disappeared between advisories with
+nothing said anywhere — the §5 silence, reached through the one door that made
+it look like a data fault. `createBundlePipeline` now records each storm's
+outcome as it decorates (keyed by storm id, capped like every other cache) and
+exposes `ribbonReasonFor`; `refreshEnvironment` passes it in.
+
+Across the whole map, *drawing* means the ribbon BUILT, not that the fetch
+succeeded — otherwise one healthy run silences the row for a screen on which
+every cone refused. Where every storm shares one geometry absence the row says
+so in the plural; a mixed screen falls back to the plain count, exactly as two
+different fetch absences already do.
 
 **Re-tapping an errored row is the retry**, as it is for every other row. Only
 a cached `unavailable` is evicted — `basin` and `no_run` are resolved answers,

@@ -191,23 +191,72 @@ export function modelTracksRow(selected, storms, deckFor) {
  * THE ENVIRONMENT RIBBON — the decisions (§47.6, §47.9)
  * ------------------------------------------------------------------------- */
 
+/* ==> TWO MORE ABSENCES, AND NEITHER OF THEM IS A FACT ABOUT SHIPS. <== §47.9.
+ * Everything below this comment answers "what did the FETCH find". These two
+ * answer "what happened when we tried to PAINT it", and the run can be
+ * perfect for both of them:
+ *
+ *   no_ribs           — the cone rebuild declined for this advisory
+ *                       (lib/cone-smooth.js), so the map is drawing NOAA's
+ *                       published outline, which has no stations to slice.
+ *                       Decided fresh per advisory, so it comes and goes.
+ *   nothing_drawable  — the run's forecast hours do not reach any part of the
+ *                       cone, so every slice was trimmed away.
+ *
+ * They were silent until 2026-08-18: the row is computed from the fetch, the
+ * fetch was fine, so the row said nothing while the ribbon vanished. That is
+ * the §5 failure exactly — an empty result that does not name which kind of
+ * empty it is — and it is the one the reader is most likely to hit, because
+ * it flips between advisories on a storm whose data never had a problem.
+ *
+ * NEITHER IS RETRYABLE. Both are answers about this advisory's geometry; the
+ * next advisory is the recovery, and a Retry button would be one that cannot
+ * work. `state: 'empty'`, like the basin and no-run sentences.
+ */
+const RIBBON_ABSENCE_ONE = Object.freeze({
+  no_ribs: 'This cone could not be measured, so there is nothing to color',
+  nothing_drawable: 'This run does not reach any part of this cone',
+});
+
+const RIBBON_ABSENCE_ALL = Object.freeze({
+  no_ribs: 'These cones could not be measured, so there is nothing to color',
+  nothing_drawable: 'These runs do not reach any part of their cones',
+});
+
+/** Did this storm's ribbon positively refuse for a reason we can name?
+ *
+ *  ==> POSITIVELY, AND THAT IS THE WHOLE GUARD. <== A storm that has never
+ *  been decorated has no record, and one decorated while the layer was off
+ *  carries `off`. Treating either as a refusal would put a confident sentence
+ *  under the switch describing something that never happened. Only the two
+ *  names above count. */
+const refused = (reason) => !!RIBBON_ABSENCE_ONE[reason];
+
 /**
  * One storm's SHIPS result → a row state, or null when there is nothing to
  * say beyond the row's standing note.
  *
- * ==> THE FOUR ABSENCES ARE FOUR DIFFERENT SENTENCES AND THEY MUST STAY THAT
+ * ==> THE SIX ABSENCES ARE SIX DIFFERENT SENTENCES AND THEY MUST STAY THAT
  * WAY. <== They look identical on the map — an uncolored cone, every time —
  * and §5's whole rule is that an empty result has to name which kind of empty
  * it is. "SHIPS is not published for this ocean" is permanent and true;
  * "no run yet" is a wait measured in hours; "the file publishes no forecast
  * position" is a healthy file with nothing to paint, and it is 6% of the
- * season rather than an oddity; and only the fourth is a fault worth a retry.
+ * season rather than an oddity; "the cone could not be measured" and "the run
+ * does not reach the cone" are facts about the GEOMETRY on a run that is
+ * fine; and only the fetch failure is a fault worth a retry.
  *
  * `undefined` is LOADING, not empty — a run that has not been asked for yet
  * and one that came back with nothing are different facts, and only one of
  * them is worth a spinner. Same rule the deck row above follows.
+ *
+ * @param {object|undefined} result  from data/ships.js
+ * @param {string|null|undefined} [reason]  the ribbon slot's `reason` for this
+ *        same storm, from `pipeline.ribbonReasonFor`. Optional: the fetch
+ *        answers stand on their own, and the two geometry answers only ever
+ *        ADD a sentence where there would otherwise be none.
  */
-export function rowForOneShips(result) {
+export function rowForOneShips(result, reason) {
   if (!result) return { state: 'loading' };
 
   if (result.status === 'unavailable') {
@@ -234,6 +283,15 @@ export function rowForOneShips(result) {
    * has broken. */
   if (result.status === 'ok' && !result.run?.drawableHours) {
     return { state: 'empty', message: 'This run publishes no forecast track to color' };
+  }
+
+  /* LAST, because it is the weakest claim of the five above it. Every check
+   * before this one is a fact about the run itself and outranks a fact about
+   * what we managed to do with it — a storm outside the basin has no ribbon
+   * for a reason that has nothing to do with its cone, and saying the cone
+   * could not be measured would be true and useless. */
+  if (refused(reason)) {
+    return { state: 'empty', message: RIBBON_ABSENCE_ONE[reason] };
   }
 
   return null;
@@ -267,11 +325,26 @@ export function shipsCandidates(storms) {
  * not. When NOTHING is drawing, the row says why in the words of whichever
  * absence covers every storm on screen, and falls back to a plain count when
  * they disagree.
+ *
+ * ==> "DRAWING" NOW MEANS THE RIBBON ACTUALLY BUILT, NOT JUST THAT THE FETCH
+ * SUCCEEDED. <== §47.9. It used to mean the second, so one storm with a
+ * healthy run silenced this row for the whole screen even when every cone on
+ * it had refused to take the color — which is how the layer came to vanish
+ * with nothing said anywhere (2026-08-18).
+ *
+ * @param {Array} results  one SHIPS result per candidate storm
+ * @param {Array<string|null|undefined>} [reasons]  the SAME storms' ribbon
+ *        reasons, IN THE SAME ORDER. Both arrays are built by one `map` over
+ *        one candidate list in `environmentRow`, which is what makes the index
+ *        join safe; `tools/test-layer-status.mjs` asserts the alignment rather
+ *        than trusting it.
  */
-export function rowForAllShips(results) {
+export function rowForAllShips(results, reasons = []) {
   if (!results || !results.length) return null;
 
-  const anyOk = results.some((r) => r?.status === 'ok' && r.run?.drawableHours);
+  const anyOk = results.some(
+    (r, i) => r?.status === 'ok' && r.run?.drawableHours && !refused(reasons[i])
+  );
   if (anyOk) {
     if (results.some((r) => r?.status === 'unavailable')) {
       return {
@@ -312,6 +385,18 @@ export function rowForAllShips(results) {
     return { state: 'empty', message: 'No SHIPS run published for these storms yet' };
   }
 
+  /* THE GEOMETRY ABSENCES, and only when every storm on screen shares ONE of
+   * them. A mixed screen — one cone that could not be measured beside one run
+   * that does not reach its cone — falls through to the plain count below,
+   * which is the same rule the basin and no-run sentences already follow: say
+   * the specific thing when it is true of everything, say the general thing
+   * when it is not. Never a sentence that is right about half the map. */
+  for (const name of Object.keys(RIBBON_ABSENCE_ALL)) {
+    if (results.every((r, i) => r.status === 'ok' && reasons[i] === name)) {
+      return { state: 'empty', message: RIBBON_ABSENCE_ALL[name] };
+    }
+  }
+
   return { state: 'empty', message: 'No environment data for the current storms' };
 }
 
@@ -329,7 +414,12 @@ export function rowForAllShips(results) {
  * the map drew nothing — the exact two-answers-to-one-question bug the deck
  * row shipped once and was corrected for.
  */
-export function environmentRow(selected, storms, shipsFor) {
+export function environmentRow(selected, storms, shipsFor, ribbonFor) {
+  /* Optional so every existing caller and every existing assertion keeps its
+   * meaning: with no lookup, nothing is known about any ribbon and the row
+   * says exactly what it said before. */
+  const reasonOf = (s) => (ribbonFor ? ribbonFor(s?.id) : undefined);
+
   if (selected) {
     if (isEnded(selected)) {
       return { state: 'empty', message: 'No environment — this system has ended' };
@@ -340,11 +430,16 @@ export function environmentRow(selected, storms, shipsFor) {
         message: `No environment — no update in over ${silenceHours()} hours`,
       };
     }
-    return rowForOneShips(shipsFor(selected.advisoryKey));
+    return rowForOneShips(shipsFor(selected.advisoryKey), reasonOf(selected));
   }
   const candidates = shipsCandidates(storms);
   if (!candidates.length) return null;
-  return rowForAllShips(candidates.map((s) => shipsFor(s.advisoryKey)));
+  /* ONE list, TWO maps over it. The index join in `rowForAllShips` is only
+   * safe because both arrays are built here, from this array, in this order. */
+  return rowForAllShips(
+    candidates.map((s) => shipsFor(s.advisoryKey)),
+    candidates.map(reasonOf)
+  );
 }
 
 /* ---------------------------------------------------------------------------
@@ -394,11 +489,11 @@ export function createLayerStatus(onChange) {
      *  everything it needs arrives as an argument, and the key is deleted
      *  outright when the layer is off so a stale sentence cannot survive the
      *  switch being flipped. */
-    refreshEnvironment({ on, selected, storms, shipsFor }) {
+    refreshEnvironment({ on, selected, storms, shipsFor, ribbonFor }) {
       const next = { ...status };
       delete next.environment;
       if (on) {
-        const row = environmentRow(selected, storms, shipsFor);
+        const row = environmentRow(selected, storms, shipsFor, ribbonFor);
         if (row) next.environment = row;
       }
       commit(next);

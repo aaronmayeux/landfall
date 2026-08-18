@@ -424,6 +424,11 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       selected,
       storms: all,
       shipsFor: getShips,
+      /* WHAT THE FETCH FOUND *AND* WHAT THE PAINT DID. The run being healthy
+       * says nothing about whether the cone could take the color, and for
+       * weeks the row only knew the first half — so a ribbon that refused on
+       * geometry vanished with no sentence anywhere (§47.9). */
+      ribbonFor: pipeline.ribbonReasonFor,
     });
   }
 
@@ -600,6 +605,12 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
         evictShips(storm.advisoryKey);
         return loadShips(storm);
       },
+      /* WHETHER THE MAP IS ACTUALLY PAINTED IN THE RAMP, so the section's copy
+       * of the legend can disappear with the switch exactly as the Layers
+       * panel's copy already does (§47.11). Read fresh on every render rather
+       * than captured — the drawer repaints on `layersChanged`, so flipping
+       * the switch with the panel open updates it in place. */
+      ribbonOn: () => toggleOn('environment'),
     },
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());

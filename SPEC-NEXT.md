@@ -1017,6 +1017,20 @@ legend is what the colors mean for any storm, so reading order runs specific to
 general, and provenance closes it. A key under an "unavailable" notice would be
 explaining a scale nothing on screen is painted in — the §5 shape in miniature.
 
+**AND ONLY WHILE THE ENVIRONMENT LAYER IS ON, WHICH IS THE SAME RULE ONE STEP
+FURTHER.** The Layers copy has always disappeared with its switch; the drawer's
+copy did not, so a reader with the layer off got a key to a scale the map is not
+painted in — the exact thing the paragraph above forbids, reached through the
+one door nobody had checked (Aaron, 2026-08-18). `createEnvHealth` takes a
+`ribbonOn` dependency and the drawer already repaints on `layersChanged`, so
+flipping the switch with the panel open updates it in place.
+
+**The paragraph, the figures and the credit STAY when the layer is off.** They
+are the reading surface's answer about this storm and are true whatever the map
+is drawing — §47.8 is explicit that the section fetches with the layer off,
+because the reading surface is its own gate. Only the key to a color is a claim
+about the map, so only the key goes.
+
 **It renders WITHOUT the explanatory sentence here too**, for the same reason
 the footnotes went: a reader who has just read four sentences of story does not
 want a fifth about methodology. Both surfaces now call `envLegendHtml({ note:
