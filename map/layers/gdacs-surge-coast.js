@@ -55,7 +55,7 @@
 import { COAST_BAND, GDACS_SURGE } from '../../config/constants.js';
 import { surgeColor, surgeRung, gdacsEventIdOf } from '../../lib/surge-locations.js';
 import { areaSelect } from '../coast-band.js';
-import { coastRings, coastGeneration } from '../coast-source.js';
+import { coastRings } from '../coast-source.js';
 import { loadGdacsSurge } from '../../data/gdacs-surge.js';
 import { lineLayers } from './watch-warning.js';
 import { registerLayer } from './registry.js';
@@ -75,11 +75,16 @@ let segment = 'watchWarning';
 const drawingOff = () => segment !== 'surge';
 
 /* ---------------------------------------------------------------------------
- * THE SELECT MEMO — the same construction cap-coast.js uses and for the same
- * reason: `moveend` fires this, and between two coastline generations with the
- * same town set the select returns identical features.
+ * THE SELECT MEMO — the same construction `cap-coast.js` uses, including the
+ * correction made to it on 2026-08-19. Read that file's memo header for why
+ * this is keyed on the town set rather than on `coastGeneration()`, and why
+ * only a settled camera asks for a fresh look.
+ *
+ * ==> IT MATTERS MORE HERE THAN THERE. <== A country is one area to select;
+ * a storm is up to `GDACS_SURGE.maxPlaces` towns, each its own select against
+ * the same coastline. Lala published 47.
  * ------------------------------------------------------------------------ */
-let memo = null; // { sig, generation, fc }
+let memo = null; // { sig, fc }
 
 /** What the painted set is, as a string. Position AND height: a rerun that
  *  moves a town's number is a different statement, and the name alone would
@@ -118,14 +123,21 @@ function ringAround(lon, lat) {
  * beside it words honestly.
  */
 function decorated(map, places) {
-  const rings = coastRings(map);
+  /* ==> `.rings`, NOT THE WRAPPER — `cap-coast.js` carries the full note. <== */
+  const { rings } = coastRings(map);
   const features = [];
 
   for (const p of places) {
     const color = surgeColor(p.heightM);
     if (!color) continue;
 
-    const { runs } = areaSelect(ringAround(p.lon, p.lat), rings, GDACS_SURGE.bandHalfWidthKm);
+    /* ==> A **LIST** OF RINGS, WHICH IS WHAT `areaSelect` TAKES. <==
+     * `ringAround` returns ONE ring; passing it bare meant every element the
+     * filter looked at was a `[lon, lat]` pair of length two, every one was
+     * discarded as too short, and the call took the `degenerate-area` exit for
+     * every town. Between this and the wrapper above, this layer could not
+     * paint a single metre of coast between shipping and 2026-08-19. */
+    const { runs } = areaSelect([ringAround(p.lon, p.lat)], rings, GDACS_SURGE.bandHalfWidthKm);
     if (!runs.length) continue;
 
     features.push({
@@ -149,21 +161,24 @@ function decorated(map, places) {
     });
   }
 
-  return { type: 'FeatureCollection', features };
+  return {
+    fc: { type: 'FeatureCollection', features },
+    hadCoast: rings.length > 0,
+  };
 }
 
-function paintFor(map, places) {
+/** `fresh` is a settled camera asking to look again. */
+function paintFor(map, places, fresh) {
   const sig = signature(places);
-  const generation = coastGeneration(map);
-  if (memo && memo.sig === sig && memo.generation === generation) return memo.fc;
-  const fc = decorated(map, places);
-  memo = { sig, generation, fc };
+  if (!fresh && memo && memo.sig === sig) return memo.fc;
+  const { fc, hadCoast } = decorated(map, places);
+  memo = hadCoast ? { sig, fc } : null;
   return fc;
 }
 
-const repaint = (map) => {
+const repaint = (map, fresh = false) => {
   map.getSource(SOURCE)?.setData(
-    held && !drawingOff() ? paintFor(map, held.places) : EMPTY
+    held && !drawingOff() ? paintFor(map, held.places, fresh) : EMPTY
   );
 };
 
@@ -205,7 +220,9 @@ registerLayer({
          * tap on Watch/warning easily lands inside the debounce, and a
          * re-select does not consult the source it overwrites. */
         if (drawingOff()) return;
-        repaint(map);
+        /* FRESH — the one caller with a reason to believe the coastline
+         * changed, and the only one that pays for a decode. */
+        repaint(map, true);
       }, COAST_BAND.reselectDebounceMs);
     });
   },
@@ -244,8 +261,10 @@ registerLayer({
 
       if (!places.length) { blank(map); return; }
 
+      /* ==> THE MEMO IS **NOT** CLEARED HERE. <== `cap-coast.js` explains
+       * why: this runs on every engine push with the same towns nearly every
+       * time, and `paintFor` already invalidates on the signature. */
       held = { places };
-      memo = null;
       repaint(map);
     });
   },

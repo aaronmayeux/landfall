@@ -84,6 +84,25 @@ one that matters — does the `out_of_range` pair of sentences read as **a gap i
 what we know** or as an all-clear. If it reads as an all-clear that is a §5
 bug, not a wording preference.
 
+**BOTH COASTAL STRIPES ARE PAINTING FOR THE FIRST TIME — JUDGE THAT BEFORE
+ANYTHING ELSE ON THIS LIST.** `SPEC-DATA.md` §50.11, §51.4. Between shipping and
+2026-08-19 neither `cap-coast.js` nor `gdacs-surge-coast.js` could draw: both
+handed `areaSelect()` the wrapper `coastRings()` returns instead of the rings
+array inside it, and the surge one also handed a single ring where a list was
+wanted. Every earlier judgement of these two was a judgement of a blank map.
+`tools/test-coastal-paint.mjs` now runs the real layers through the real engine
+and asks whether anything landed.
+
+**The same commit is a performance fix, and that needs glass too.** The select
+memo was keyed on `coastGeneration()`, which bumps whenever tiles stream, so
+every engine push paid a full basemap decode on the main thread — measured in
+the field at 421 blocked-thread events totalling 38.7 seconds in one four-minute
+Windows visit, against four to fifteen on the same laptop the day before. Judge
+on a desktop with a GDACS storm open: does dragging the globe feel clean, and
+does the cage's storm ridge rise in one motion rather than crawling. Telemetry
+answers it too — `longtask_n` on a `windows` session should be back in single
+digits.
+
 **THE COASTAL LAYER HAS A KNOWN DEFECT AND THE FIX IS SPECIFIED. BUILD §51.7
 FIRST.** `SPEC-DATA.md` §51.4 names it, `SPEC-NEXT.md` §51.7 fixes it, and the
 measurements are in the second. In one line: the 5 km corridor is too narrow

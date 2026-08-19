@@ -232,14 +232,14 @@ real home is the other row carrying the same section number.
 | `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2366-2392 |
 | `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2393-2417 |
 | `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2418-2437 |
-| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2438-2479 |
-| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2480-2532 |
-| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2533-2534 |
-| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2535-2621 |
-| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2622-2651 |
-| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2652-2700 |
-| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2701-2751 |
-| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 2752-2791 |
+| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2438-2509 |
+| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2510-2562 |
+| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2563-2564 |
+| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2565-2651 |
+| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2652-2681 |
+| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2682-2730 |
+| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2731-2786 |
+| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 2787-2826 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2612-2659 |
 | `51.7` | The surge stripe joins up — approved, not built | `SPEC-NEXT.md` | 1694-1699 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1770-1803 |
@@ -248,7 +248,7 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 165,074 | 54 |
+| `SPEC-DATA.md` | 167,328 | 54 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 114,728 | 27 |
 | `SPEC-OPS.md` | 72,203 | 20 |

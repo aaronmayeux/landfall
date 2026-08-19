@@ -445,6 +445,55 @@ function isTileEdge(a, b, kmLon) {
 }
 
 /* ---------------------------------------------------------------------------
+ * RING EXTENTS
+ *
+ * ==> ONE WALK OF THE COASTLINE PER DECODE, NOT ONE PER QUESTION ASKED OF IT.
+ * <== `map/coast-source.js` hands back the SAME rings array for as long as the
+ * loaded tile set is unchanged, and it says in its own header that nobody may
+ * mutate it. That makes the array a safe cache key: while it is alive, every
+ * ring in it has the same extent it had the first time somebody asked.
+ *
+ * A WeakMap so a stale coastline is collected with the rings it describes —
+ * these are the largest arrays the map layer holds and a Map here would pin
+ * every tile set the session ever loaded.
+ *
+ * Flat `Float64Array` of `[w, e, s, n]` per ring rather than objects: fifty
+ * thousand small objects is real allocation pressure on a phone, and this is
+ * read in the innermost loop of the whole pipeline.
+ * ------------------------------------------------------------------------- */
+
+const extentCache = new WeakMap();
+
+/** `[w, e, s, n]` per ring, computed once per rings array. */
+function ringExtents(rings) {
+  const hit = extentCache.get(rings);
+  /* The length check is the guard against a caller that reuses an array
+   * identity while changing its contents. Nothing in the app does; a cache
+   * that silently answers for the wrong coastline is not worth the risk. */
+  if (hit && hit.length === rings.length * 4) return hit;
+
+  const boxes = new Float64Array(rings.length * 4);
+  for (let ri = 0; ri < rings.length; ri++) {
+    const ring = rings[ri];
+    let rw = Infinity;
+    let re = -Infinity;
+    let rs = Infinity;
+    let rn = -Infinity;
+    for (let i = 0; i < ring.length; i++) {
+      const v = ring[i];
+      if (v[0] < rw) rw = v[0];
+      if (v[0] > re) re = v[0];
+      if (v[1] < rs) rs = v[1];
+      if (v[1] > rn) rn = v[1];
+    }
+    const b = ri * 4;
+    boxes[b] = rw; boxes[b + 1] = re; boxes[b + 2] = rs; boxes[b + 3] = rn;
+  }
+  extentCache.set(rings, boxes);
+  return boxes;
+}
+
+/* ---------------------------------------------------------------------------
  * SELECTION
  * ------------------------------------------------------------------------- */
 
@@ -458,24 +507,26 @@ function isTileEdge(a, b, kmLon) {
  * the Atlantic and the Yucatán along with the coast we care about. A ring
  * whose own extent misses the corridor's cannot contribute a single vertex,
  * and four comparisons settles it instead of several thousand.
+ *
+ * ==> AND THAT SENTENCE WAS NOT TRUE UNTIL `ringExtents()` EXISTED. <== The
+ * extents were computed inline, immediately above the rejection test, so
+ * every ring on screen was walked in full BEFORE being thrown away — the
+ * rejection saved the band arithmetic and nothing else. One caller with one
+ * corridor barely noticed. Fifty towns each asking their own question paid it
+ * fifty times over, which is how a 200k-vertex coastline turned a repaint
+ * into a fifth of a second (measured 2026-08-19).
  */
 function selectRuns(rings, band) {
   const kmLon = band.toXY([1, 0])[0]; /* km per degree of longitude here */
   const { w, e, s, n } = band.bbox;
   const runs = [];
 
-  for (const ring of rings) {
-    let rw = Infinity;
-    let re = -Infinity;
-    let rs = Infinity;
-    let rn = -Infinity;
-    for (const v of ring) {
-      if (v[0] < rw) rw = v[0];
-      if (v[0] > re) re = v[0];
-      if (v[1] < rs) rs = v[1];
-      if (v[1] > rn) rn = v[1];
-    }
-    if (re < w || rw > e || rn < s || rs > n) continue;
+  const boxes = ringExtents(rings);
+
+  for (let ri = 0; ri < rings.length; ri++) {
+    const b = ri * 4;
+    if (boxes[b + 1] < w || boxes[b] > e || boxes[b + 3] < s || boxes[b + 2] > n) continue;
+    const ring = rings[ri];
 
     let run = null;
     let prev = null;

@@ -47,7 +47,7 @@ import { COAST_BAND } from '../../config/constants.js';
 import { wwColor, wwSortKey } from '../../lib/watchwarning.js';
 import { isInForce, severityRung, alertsForStorm } from '../../lib/cap.js';
 import { areaSelect } from '../coast-band.js';
-import { coastRings, coastGeneration } from '../coast-source.js';
+import { coastRings } from '../coast-source.js';
 import { loadAlerts } from '../../data/cap.js';
 import { loadShapes } from '../../data/cap-shapes.js';
 import { lineLayers } from './watch-warning.js';
@@ -71,14 +71,36 @@ const drawingOff = () => segment !== 'watchWarning';
  * THE SELECT MEMO
  *
  * A national outline against a delta coastline is the most expensive select in
- * the app, and `moveend` fires it. Two things and only two things change the
- * answer: WHICH alerts are painted, and WHICH coastline vertices are loaded.
- * `coastGeneration()` is the map's own counter for the second — bumped by
- * `sourcedata` and `styledata` — so this is an exact invalidation signal
- * rather than a staleness tradeoff. Between two bumps the select would return
- * the identical features.
+ * the app, and the first thing it does is ask `coastRings()` — which decodes
+ * every loaded basemap tile on the main thread.
+ *
+ * ==> THE FIRST VERSION KEYED THIS ON `coastGeneration()` AND THAT WAS THE
+ *     PERFORMANCE BUG SHIPPED ON 2026-08-19. <== The reasoning looked exact:
+ * the counter bumps whenever the loaded tile set changes, so a matching
+ * generation means the select would return identical features. What it missed
+ * is that the counter bumps on EVERY basemap `sourcedata` — which is
+ * continuous while tiles stream — while `update()` is called by the layer
+ * engine on every poll, every landed bundle and every layer push. Those two
+ * facts together mean the memo essentially never hit, so a few hundred
+ * routine engine pushes each paid a full tile decode. Field telemetry: 421
+ * blocked-thread events totalling 38.7 seconds in one four-minute desktop
+ * visit, against four to fifteen events on the same laptop the day before.
+ * A wide window loads more tiles than a phone, which is why it was far worse
+ * on a laptop.
+ *
+ * ==> SO THE KEY IS THE ALERT SET, AND ONLY A SETTLED CAMERA FORCES A FRESH
+ *     LOOK. <== Re-selecting exists to pick up coastline that has since
+ *     loaded, and coastline only loads because the camera moved. `moveend`
+ *     asks for `fresh`; nothing else does. An engine push with the same alerts
+ *     now costs a string compare.
+ *
+ * ==> A SELECT THAT SAW NO COASTLINE IS NOT HELD. <== §5. Otherwise a storm
+ * opened in the instant before its tiles arrive would cache an empty stripe
+ * and keep showing it until the reader happened to pan — a warned coast
+ * reading as unwarned, which is the one failure this app may not have. A
+ * repeat costs nothing anyway: with no tiles decoded there is nothing to walk.
  * ------------------------------------------------------------------------ */
-let memo = null; // { sig, generation, fc }
+let memo = null; // { sig, fc }
 
 /** What the painted set is, as a string. Row id AND expiry: an agency
  *  reissuing the same alert with a later expiry is a different statement, and
@@ -99,7 +121,14 @@ const signature = (alerts) =>
  * confidence the row does not carry.
  */
 function decorated(map, alerts, shapes) {
-  const rings = coastRings(map);
+  /* ==> `.rings`, NOT THE WRAPPER. <== `coastRings()` returns
+   * `{schema, rings, vertexCount}`. Handing the whole object to `areaSelect`
+   * — which this file did until 2026-08-19 — reads `.length` off an object,
+   * gets `undefined`, and takes the `no-coastline` exit on every single call.
+   * The layer paid the decode and then painted nothing, every time, and no
+   * test caught it because the suite calls `areaSelect` directly with the
+   * right shape. */
+  const { rings } = coastRings(map);
   const features = [];
 
   for (const alert of alerts) {
@@ -130,22 +159,26 @@ function decorated(map, alerts, shapes) {
     });
   }
 
-  return { type: 'FeatureCollection', features };
+  return {
+    fc: { type: 'FeatureCollection', features },
+    /* Whether there was a coastline to select FROM, which is a different fact
+     * from whether anything got painted — see the memo header. */
+    hadCoast: rings.length > 0,
+  };
 }
 
-/** The memoized select. */
-function paintFor(map, alerts, shapes) {
+/** The memoized select. `fresh` is a settled camera asking to look again. */
+function paintFor(map, alerts, shapes, fresh) {
   const sig = signature(alerts);
-  const generation = coastGeneration(map);
-  if (memo && memo.sig === sig && memo.generation === generation) return memo.fc;
-  const fc = decorated(map, alerts, shapes);
-  memo = { sig, generation, fc };
+  if (!fresh && memo && memo.sig === sig) return memo.fc;
+  const { fc, hadCoast } = decorated(map, alerts, shapes);
+  memo = hadCoast ? { sig, fc } : null;
   return fc;
 }
 
-const repaint = (map) => {
+const repaint = (map, fresh = false) => {
   map.getSource(SOURCE)?.setData(
-    held && !drawingOff() ? paintFor(map, held.alerts, held.shapes) : EMPTY
+    held && !drawingOff() ? paintFor(map, held.alerts, held.shapes, fresh) : EMPTY
   );
 };
 
@@ -184,7 +217,9 @@ registerLayer({
          * tap on Off easily lands inside the debounce, and a re-select does
          * not consult the source it overwrites. */
         if (drawingOff()) return;
-        repaint(map);
+        /* FRESH. This is the one caller that has a reason to believe the
+         * coastline changed, and the only one that pays for a decode. */
+        repaint(map, true);
       }, COAST_BAND.reselectDebounceMs);
     });
   },
@@ -237,8 +272,12 @@ registerLayer({
         map.getSource(SOURCE)?.setData(EMPTY);
         return;
       }
+      /* ==> THE MEMO IS **NOT** CLEARED HERE, AND THAT IS THE FIX. <== This
+       * runs on every engine push, and the alert set is the same one on almost
+       * all of them. `paintFor` invalidates on the signature, which is the
+       * honest test; clearing by hand here would force the decode this whole
+       * memo exists to avoid. */
       held = { alerts: inForce, shapes: slot.shapes };
-      memo = null;
       repaint(map);
     });
   },

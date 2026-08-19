@@ -2465,6 +2465,36 @@ has one job.
 Inside-ness is an even-odd crossing count over every ring, so holes come free
 and winding direction never matters.
 
+**==> THE SELECT IS KEYED ON THE ALERT SET, AND ONLY A SETTLED CAMERA PAYS FOR
+A FRESH ONE. <==** This contract is shared by `cap-coast.js` and
+`gdacs-surge-coast.js` and it is a §5 concern as much as a speed one. The first
+thing either layer does is call `coastRings()`, which decodes every loaded
+basemap tile on the main thread — the most expensive call in the map pipeline.
+The layer engine pushes `update()` on every poll, every landed bundle and every
+layer change, and the alert set is the same on nearly all of them, so the memo
+is keyed on the **signature of what is painted** (row id, expiry and severity;
+town, position and height) and nothing else. Re-selecting exists to pick up
+coastline that has since loaded, and coastline loads because the camera moved,
+so `moveend` — debounced on `COAST_BAND.reselectDebounceMs` — is the only
+caller that asks for a fresh look. A routine push costs a string compare.
+
+`coastGeneration()` is **not** the key. It bumps on every basemap `sourcedata`,
+which is continuous while tiles stream, so a memo keyed on it never hits and
+every engine push pays a full decode. `map/coast-band-cache.js` may key on it
+because it holds a per-storm, per-zoom result it can serve instead; these
+layers hold one collection and have no such fallback.
+
+**A select that saw no coastline is not held.** Otherwise a storm opened in the
+instant before its tiles arrive would cache an empty stripe and keep showing it
+until the reader happened to pan — a warned coast reading as unwarned. A repeat
+costs nothing anyway: with no tiles decoded there is nothing to walk.
+
+Per-ring extents are computed once per decoded coastline and cached against the
+rings array (`map/coast-band.js`), so a ring outside the band really is four
+comparisons rather than a full vertex walk. That is what makes a per-town
+select affordable: one storm asks the same coastline up to
+`GDACS_SURGE.maxPlaces` separate questions.
+
 **UNJUDGED.** Nothing has been on glass with a live foreign warning. Open
 questions: whether a whole-country area paints far more coast than reads well
 (the Philippines is 7,600 islands; Costa Rica gets both coasts), and whether
@@ -2731,6 +2761,11 @@ than evenly spread, so the result is several short disconnected fragments and
 isolated stubs down one island. The fix and its measurements are in
 `SPEC-NEXT.md` §51.7. **This paragraph describes what ships today; it is not a
 description of what the layer should look like.**
+
+**The select memo and the decode contract are §50.11's**, unchanged: keyed on
+the town set, refreshed only by a settled camera, never held when no coastline
+was loaded. It matters more here than there — a country is one area to select,
+a storm is up to `GDACS_SURGE.maxPlaces` towns against the same coastline.
 
 **Deepest on top**, via `line-sort-key` — Shomushon and Marasu are 3.7 km apart
 and share coastline at this corridor width, and where two heights overlap the
