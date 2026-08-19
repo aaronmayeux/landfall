@@ -682,10 +682,40 @@ it as segment B of the `coastal` pair. The fixture is
 to match what the relay asks ArcGIS to generalize to. `/?surge=milton&adv=017`
 shows it on the real globe.
 
-**What is NOT built: the relay route.** The Peak Storm Surge service only
-answers while a US storm has surge watches in effect, so the live field names
-cannot be read today. `fetchSurgeLive()` throws until that route exists, which
-the caller surfaces as `unavailable` — never as an empty coast.
+**What is NOT built: the relay route.** `fetchSurgeLive()` throws until it
+exists, which the caller surfaces as `unavailable` — never as an empty coast.
+
+**==> THE LIVE SERVICE'S SHAPE WAS UNREADABLE AND IS NOT ANY MORE. READ
+2026-08-19, WITH NO STORM ACTIVE. <==** This section used to say the field
+names could not be read until a US storm had surge watches in effect. That
+conflated two different things: the FEATURES only publish during a watch, but
+the ArcGIS **directory** answers all year. Confirmed live, at
+`mapservices.weather.noaa.gov/tropical/.../NHC_PeakStormSurge/MapServer`:
+
+- **Three layers** — Points (0), Lines (1), Polygons (2). Layer 0 has never
+  been looked at by this project and nothing below describes it.
+- **The polygon layer's fields**, verbatim: `objectid`, `name`, `folderpath`,
+  `symbolid`, `altmode`, `base`, `clamped`, `extruded`, `snippet`, `popupinfo`,
+  `shape`, `idp_source`, `idp_subset`, `idp_filedate`, `idp_ingestdate`, plus
+  the two `st_*` shape functions and `shape_leng`. **All four candidates in
+  `SURGE.liveColorFields` are real fields on the live service**, which is more
+  than was known before and still is not which one carries the colour.
+- **`symbolid` is `esriFieldTypeInteger` on the live service**, not just in the
+  archive — the trap below is confirmed against the thing we will actually
+  query.
+- **The renderer publishes exactly `blue`, `yellow`, `orange`, `red`,
+  `purple`**, labelled up to 3, 6, 9 and 12 ft and above 12 ft. `SURGE.colors`
+  and `SURGE_RAMP` are now confirmed against the live service rather than
+  inferred from Milton.
+- `altmode`, `clamped`, `extruded` and `folderpath` together are a KML
+  converter's fingerprint, which is the evidence behind the `popupinfo` bet
+  below.
+
+**==> WHAT IS STILL UNKNOWN, AND IT IS THE ONE THAT MATTERS. <==** Which field
+the renderer keys on, and whether the service holds features right now. Both
+live only in the JSON view, and a session cannot reach it — SPEC-OPS.md §18.2
+records why. **So the colour field remains a bet, and the route must be built
+to fail honestly on it rather than to assume it right.**
 
 Rules below are inherited from the HA project and corrected where Milton's
 bytes disproved them.

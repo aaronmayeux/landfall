@@ -2550,11 +2550,18 @@ export const MAPSERVER = Object.freeze({
  * color here was read out of `samples/milton-al142024/surge/` — Hurricane
  * Milton's 22 published advisories, blue through purple, 460 surge features.
  *
- * NOT VERIFIED: the LIVE MapServer's field names. The service only answers
- * while a US storm has surge watches in effect, and there has been no such
- * storm to read since this was written. `liveColorFields` is an ordered list
- * of candidates, not a fact — see data/surge.js, which reports which one
- * actually answered the first time a real storm arrives.
+ * ALSO VERIFIED, against the LIVE service directory, 2026-08-19, with no storm
+ * active: the polygon layer really does carry `name`, `folderpath`, `snippet`
+ * and `popupinfo`; `symbolid` really is an integer there too; and the renderer
+ * really does publish these five color words with these five labels. The
+ * FEATURES only exist during a surge watch, but the DIRECTORY answers all year
+ * — see SPEC-DATA.md §4.8, which used to claim otherwise.
+ *
+ * STILL NOT VERIFIED: WHICH of those fields carries the color word.
+ * `liveColorFields` is an ordered list of candidates, not a fact — the
+ * renderer names its own field, that name lives only in the JSON view, and
+ * SPEC-OPS.md §18.2 records why a session cannot reach it. `data/surge.js`
+ * reports which one actually answered the first time a real storm arrives.
  *
  * ==> AND §4.8 WAS WRONG ABOUT THE ONE FIELD EVERYTHING KEYS ON. <== It said
  * `symbolid` carries the color class. The service declares `symbolid` as
@@ -2600,7 +2607,12 @@ export const SURGE = Object.freeze({
    *  <description> and <Snippet>, and this service is visibly a KML import —
    *  it also carries `folderpath`, `altmode`, `clamped` and `extruded`, which
    *  is that converter's fingerprint. The archived KML puts the color in
-   *  <description>, so `popupinfo` is the bet. It is still a bet. */
+   *  <description>, so `popupinfo` is the bet.
+   *
+   *  ==> ALL FOUR ARE CONFIRMED TO EXIST ON THE LIVE POLYGON LAYER (read
+   *  2026-08-19), WHICH IS NOT THE SAME AS KNOWING WHICH ONE ANSWERS. <== It
+   *  is still a bet; it is now a bet on real fields rather than on remembered
+   *  ones. */
   liveColorFields: Object.freeze(['popupinfo', 'snippet', 'name', 'folderpath']),
 
   /** Corridor half-width, in km, for painting a coastal reach onto the real

@@ -1129,6 +1129,20 @@ than verbatim.** Right for a small JSON body, an API index, a licence page, or
 "is this thing up". Never right for a wind field, and never the basis for a
 sentence containing a figure that will end up on the screen.
 
+**==> IT STRIPS QUERY PARAMETERS, WHICH RULES OUT EVERY ArcGIS `/query`
+ENDPOINT. <==** Measured 2026-08-19 against NHC_PeakStormSurge: fetching
+`.../2/query?where=1=1&outFields=*&f=pjson` came back as the service
+directory's blank HTML **query form**, not a result set — the parameters never
+reached the server. The same limit blocks `?f=pjson` anywhere, so a renderer's
+keyed field, a feature count, and anything else living only in the JSON view
+are out of reach from a session.
+
+**What it CAN read is the ArcGIS directory's HTML** — service description,
+layer list, the full field list with types, and a renderer's values and labels.
+That is enough to confirm a field EXISTS and enough to kill a wrong assumption.
+It is not enough to confirm which field a renderer keys on. Past that is the
+archive runner's job.
+
 ### 18.3 The archive runner — EXACT BYTES
 
 A GitHub Actions runner has open internet. `tools/archive-fetch.mjs` fetches a
