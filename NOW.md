@@ -46,9 +46,6 @@ written brief naming candidates, what was measured, and what still needs glass.
 
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
-- **Pass 3 — the outlook KMZ.** **No network needed** — the bytes are already in
-  the archive and decode to a working zip. Cheapest of the four. See SCOPED, NOT
-  STARTED.
 - **Pass 4 — JTWC's per-storm `fix.txt`.** Never fetched. One entry added to
   `tools/archive-fetch.mjs`, then a wait for the hour (§18.3 — a session cannot
   trigger the runner itself). See KNOWN AND ACCEPTED.
@@ -284,12 +281,33 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**PASS 3 — the outlook KMZ is archived and unparsed.** Layer 3 is empty on BOTH
-NOAA map services while NHC's website draws areas (§45.2 — settled, don't re-check).
-`gtwo_atl.kmz` is the second publication path and is snapshotted hourly. **Open
-the real bytes and inventory EVERYTHING in them, not just the outlook areas** —
-the question is what else a KML carries that we are not getting elsewhere. The
-Pacific filename in the archive is inferred and may 404.
+**THE OUTLOOK KMZ IS PARSED AND PROVEN, AND NOTHING SHIPS IT YET.**
+`lib/kmz.js` unwraps the zip, `lib/gtwo-kml.js` reads the KML, and
+`tools/gtwo-compare.mjs` runs both against all 72 archived hours: the KMZ and
+GIS layer 3 agree on every area, every vertex and every probability, worst
+disagreement 4.5e-10°. The Pacific filename was a guess and it is right —
+`gtwo_pac.kmz` answers 200.
+
+**THE NEXT PASS IS THE SWAP, AND IT IS A SWAP RATHER THAN AN ADDITION.** The
+KMZ is not a second source; it is the same forecaster run published better, so
+it replaces layer 3 rather than joining it. Two sources feeding one feature
+would need a matcher — the exact thing `lib/outlook.js` refuses to do and
+`GENESIS.anchorLayer` records as unsafe — plus three new failure states, bought
+for two text fields. The relay unzips (transport, not interpretation) and
+`data/genesis.js` reads `toAreaCollection()`. Delete layer 3 in the same commit.
+
+It carries four things layer 3 does not: NHC's own name per area, the
+forecaster's paragraph attached to the shape it describes, a disturbance number
+joining an area to its current-position point, and a `LineString` present in 23
+of 72 hours. **The LineString stays unnamed** — four samples say it appears when
+a disturbance sits outside its own area, which is a hypothesis, not a fact.
+
+Two differences to carry into the swap deliberately. The KMZ's issue time is
+the forecaster's; layer 3's `idp_filedate` is NOAA's ingest, a median 203s
+later — ours is sharper, and it moves what `isStaleArea` measures against. And
+**the two paths wind their rings opposite ways**, which no renderer here cares
+about but the planned 3D land fill will, because winding is what tells a
+triangulator which side is inside.
 
 **The 3D land fill should be shapes, not a picture.** Feeding `RINGS` to the GPU
 as filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU
