@@ -237,11 +237,11 @@ export function createCapStorm({ loadAlerts }) {
        * this storm would be the causal assertion §50.5 forbids; staying
        * silent would be §5. So it states what is missing and stops. */
       const n = loose === 1
-        ? 'One national cyclone alert is'
-        : `${loose} national cyclone alerts are`;
+        ? 'One national cyclone alert is in force elsewhere in the world, and\n        we can\u2019t tell whether it covers'
+        : `${loose} national cyclone alerts are in force elsewhere in the
+        world, and we can\u2019t tell whether any of them covers`;
       return `<div class="detail-soft">No country is listed as affected by this
-        storm yet, so we can't look up national alerts for it. ${n} in force
-        elsewhere in the world, and we can't tell whether any of them covers
+        storm yet, so we can't look up national alerts for it. ${n}
         this storm. <strong>This is a gap in what we know, not an
         all-clear.</strong></div>`;
     }

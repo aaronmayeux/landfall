@@ -430,8 +430,31 @@ ok(
   'the all-clear sentence must NOT appear while an alert is in force — this is the bug'
 );
 ok(
-  /in force\s+elsewhere in the world/i.test(gapHtml),
+  /in force elsewhere in the world/i.test(gapHtml.replace(/\s+/g, ' ')),
   'the gap wording must say the alerts are elsewhere, never that one covers this storm'
+);
+/* ==> SINGULAR AND PLURAL ARE SEPARATE SENTENCES AND BOTH MUST PARSE. <== The
+ * first build read "One national cyclone alert is in force ... whether any of
+ * them covers this storm", which no proofreader would pass and no test caught,
+ * because the assertion above only looks for the phrase both branches share.
+ * The shared fixture carries four alerts, so the singular branch needs a feed
+ * built for it. */
+const oneInForce = alerts.filter((a) => isInForce(a, NOW)).slice(0, 1);
+ok(oneInForce.length === 1, 'MUTATION DEAD: no single in-force alert to build the singular case from');
+
+const capUiOne = createCapStorm({
+  loadAlerts: async () => ({ state: 'ok', alerts: oneInForce, stale: false }),
+});
+await capUiOne.ensure(hernan, () => {});
+const oneHtml = capUiOne.html(hernan, NOW).replace(/\s+/g, ' ');
+
+ok(
+  /One national cyclone alert is in force elsewhere in the world, and we can\u2019t tell whether it covers this storm/.test(oneHtml),
+  `with exactly one alert the sentence must stay singular throughout; got: ${oneHtml.slice(0, 200)}`
+);
+ok(
+  !/any of them/.test(oneHtml),
+  'the plural pronoun must not survive into the singular sentence'
 );
 
 /* ==> AND THE OTHER HALF, OR THE FIX IS JUST A LOUDER SENTENCE. <== With
