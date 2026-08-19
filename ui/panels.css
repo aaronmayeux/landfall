@@ -2631,6 +2631,29 @@ button.drawer-identity:focus-visible {
   color: var(--text-secondary);
 }
 
+/* --- the forecaster's paragraph -------------------------------------------
+ * NHC's own discussion of the area, verbatim. Body size rather than small: it
+ * is the only prose in this panel and the only place a reader learns why the
+ * area exists, so it is meant to be read rather than skimmed past. Secondary
+ * colour keeps it quieter than the two probability rows above, which are the
+ * headline.
+ *
+ * `pre-line` because the forecaster's line breaks are meaningful and the text
+ * arrives with the wrapping NHC published; collapsing it into one paragraph
+ * loses the shape, and honouring every space would leave the source's
+ * fixed-width column breaks stranded mid-sentence at phone width. */
+.area-discussion {
+  margin: var(--space-base) 0 0;
+  font-size: var(--type-body);
+  /* 1.5, the same as the other prose block in this file. There are no
+   * line-height tokens in this project and inventing one for a single rule
+   * would be a token nobody else uses. */
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
 /* --- the provenance list --------------------------------------------------
  * A two-column grid, label left and value right, rather than a default <dl>
  * — which indents the value under the label and turns six short facts into

@@ -84,6 +84,7 @@ reader.
 | `/api/nhc/storms` | Forward the CORS-blocked storm list |
 | `/api/nhc/adeck` | Forward + gunzip + filter model a-decks |
 | `/api/nhc/mapserver` | Forward MapServer queries, build the WHERE clause |
+| `/api/nhc/genesis` | Forward + unzip + read the two outlook KMZs |
 | `/api/nhc/advisory` | Forward + cache the advisory `.shtml` |
 | `/api/nhc/ships` | Walk three synoptic slots + parse SHIPS to per-hour knots |
 | `/api/gdacs/events` | Forward the cyclone event list |
@@ -124,6 +125,29 @@ answer that looks perfectly healthy on screen. **It is not warmed by the cron
 Worker**, so the KV read always misses today and the first reader in each colo
 pays one NOAA round trip; the route degrades exactly as `_kv-cache.js` §17
 describes and gains warming the day the Worker learns the key.
+
+**`/api/nhc/genesis` is the third bounded exception, and it UNZIPS AND PARSES.**
+§45.2 decided this rather than the route. NHC publishes the outlook twice — as
+GIS layer 3 and as a KMZ on its own web server — and the KMZ is the better
+publication: it carries the forecaster's name for each area, the discussion
+paragraph attached to the shape it describes, and a disturbance number joining
+an area to its current-position point, none of which layer 3 publishes at all.
+A KMZ is a zip, so somebody has to open it; four of its five entries are icons
+and 45% of its bytes, so opening it on a phone would send a reader bytes that
+exist only to be thrown away. `_kmz.js` unwraps the container — the same
+category as the a-deck route's gunzip — and `_gtwo-kml.js` converts the
+document to the FeatureCollection layer 3 used to answer with.
+
+**Like the a-deck filter and the SHIPS parse, this parse decides nothing.**
+Every judgement about basin, colour, ordering, staleness and wording still runs
+in `lib/genesis.js` and `lib/outlook.js` in the browser. It fails loudly: a
+document that will not unzip, will not parse, or names a basin other than the
+one requested throws rather than yielding a plausible answer, because a KMZ
+that has changed shape produces an outlook that looks perfectly healthy with an
+ocean missing from it. **Both parsers live under `functions/` for the same
+reason `_ships-parse.js` does** — a working client-side copy would be a second
+implementation of this judgement on the far side of a deploy boundary, and
+would invite somebody to fetch a zip from a phone.
 
 **GDACS geometry is relayed for SIZE, not CORS.** 180–400 KB per event from a
 European server, pulled fresh every load, against small US-hosted NHC queries
@@ -1238,25 +1262,67 @@ seven days it is, and it is published as a polygon with a percentage on it.
 
 ### 45.2 Source — NHC, the two- and seven-day outlook
 
-Same MapServer the cone comes from. No new host, no new relay pattern.
+**The Graphical Tropical Weather Outlook, as the KMZ NHC publishes on its own
+web server.** Two documents, one per basin:
 
-`https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer`
+```
+https://www.nhc.noaa.gov/xgtwo/gtwo_atl.kmz
+https://www.nhc.noaa.gov/xgtwo/gtwo_pac.kmz
+```
 
 Reached through `/api/nhc/genesis?part=areas` (`functions/api/nhc/genesis.js`),
-fresh for 15 minutes, serve-stale for 9 hours.
+fresh for 15 minutes, serve-stale for 9 hours. The route unzips both, converts
+them, and answers with one FeatureCollection spanning both basins.
 
-**Layer 3 is the only layer fetched.** Its fields:
+**This is the same forecaster run GIS layer 3 publishes, not a second source.**
+Proven before it was switched: `tools/gtwo-compare.mjs` ran both against all 72
+hourly snapshots on the archive branch and they agree on every area, every
+vertex and every probability — worst vertex disagreement 4.5e-10 degrees — with
+the issue stamp matching to the minute every hour. Two differences are real and
+deliberate: the KMZ's issue time is the forecaster's where layer 3's
+`idp_filedate` was NOAA's ingest a median 203 seconds later, and **the two
+paths wind their rings in opposite directions**, which matters to a
+triangulator and to nothing currently drawn.
+
+**Why swap rather than add.** The KMZ carries three things layer 3 does not
+publish at all: NHC's own name for each area, the forecaster's paragraph
+attached to the shape it describes, and a disturbance number joining an area to
+its current-position point. Running both to obtain them would require matching
+prose to polygons — the thing §45.9 refuses to do, for measured reasons — plus
+three new failure states, in exchange for two text fields. One source per fact.
+
+A KMZ is a zip of five entries; four are icons and 45% of the bytes.
+`functions/api/nhc/_kmz.js` unwraps it and `_gtwo-kml.js` reads it. Both live
+under `functions/` for the same reason `_ships-parse.js` does — see §4.3.
+
+**What a document carries**, per placemark:
 
 ```
-basin           string(12)   "Atlantic" | "Pacific"
-prob2day        string(4)    "0%" .. "100%"
-risk2day        string(6)    "Low" | "Medium" | "High"
-prob7day        string(4)
-risk7day        string(6)
-objectid        integer      the service's row id
-idp_source      string(50)
-idp_filedate    date         epoch ms
+Disturbance        integer   1, 2, 3 ... per basin, per issuance
+2day_percentage    string    "0%" .. "100%"
+2day_category      string    "Low" | "Medium" | "High"
+7day_percentage    string
+7day_category      string
+Discussion         string    the forecaster's paragraph, numbered and titled
 ```
+
+Placemarks come in three shapes: a `Polygon` for each watched area, a `Point`
+for a disturbance that already has a current location, and — in 23 of the 72
+archived hours — an unlabelled `LineString` carrying no data at all. **The
+LineString is not drawn and is not named.** In every hour examined it appeared
+exactly when a disturbance sat outside its own watched area and vanished when
+it moved inside, which reads like a short motion path; that is four samples on
+one disturbance in one basin, so the parser carries it through as `tracks` and
+claims nothing.
+
+The route converts each area to the field names layer 3 used — `prob2day`,
+`risk2day`, `prob7day`, `risk7day`, `basin`, `objectid`, `idp_source`,
+`idp_filedate` — so nothing downstream changed shape. Two differ on purpose.
+`objectid` is namespaced by basin (`atl-1`, `epac-1`) because each document
+numbers its disturbances from 1 and a bare number would let an Atlantic area
+and a Pacific one collide. `idp_source` reads `gtwo_kml_202608190525` rather
+than `gtwo_areas_...`, so a value we synthesised is never mistaken for one NHC
+published. Two new fields ride alongside: `nhcTitle` and `discussion`.
 
 **The probabilities are STRINGS with a percent sign, not numbers.** `"40%"`.
 `parsePercent` in `lib/genesis.js` parses them; sorted as text, `"100%"` lands
@@ -1277,21 +1343,36 @@ and nothing else. Central Pacific is **not** distinguished — an area at
 
 **Layer 2, the published label anchor, is not fetched.** It carries a point for
 only some areas — five polygons, three points — and its attributes match one
-polygon while its position sits inside another, so the two layers cannot be
-reliably matched. The percentage is drawn at the app's own centroid, off the
-same feature the number came from. The archive branch still snapshots layer 2
-as evidence.
+polygon while its position sits inside another, so the two ArcGIS layers could
+not be reliably matched. **The KMZ publishes that join**: every placemark
+carries a disturbance number, so an area and its current-position point arrive
+already paired. The percentage is still drawn at the app's own centroid, which
+is now a choice about placement rather than a workaround — a centroid comes off
+the same feature the number came from and therefore cannot belong to the wrong
+area, however NHC moves its label points.
 
-**NHC publishes no name for these areas.** The row title — "Central Atlantic",
-"East Pacific" — is computed from the centroid by `areaTitle()`. It is
-descriptive, not a designation, and the area panel prints that same centroid
-underneath it as the checkable fact. NHC's own `basin` word is carried as
-`sourceBasin` and grouped on by the outlook arbiter (§45.9), but is not shown:
-see §45.8 for why one basin row beats two.
+**NHC's name is used where NHC publishes one.** The KMZ carries the forecaster's
+own wording for each area — "South-Southwest of Mexico" — in the first line of
+the discussion, and that heads the row and the panel. A document arriving
+without one falls back to `areaTitle()`, which computes a description from the
+centroid ("Central Atlantic", "East Pacific"); `titleIsOurs` carries which of
+the two is on screen, because the fallback is descriptive rather than a
+designation and the panel prints the centroid underneath it as the checkable
+fact. NHC's own `basin` word is carried as `sourceBasin` and grouped on by the
+outlook arbiter (§45.9), but is not shown: see §45.8 for why one basin row
+beats two.
 
-Cadence: with the text outlook, roughly every 6 hours. `idp_filedate` is the
-publication stamp and is what the app ages the layer by — never the phone's
-clock (§17.7).
+**The forecaster's paragraph is shown verbatim in the area panel**, minus the
+two formation-chance lines, which restate the probability rows directly above
+it in a second vocabulary. It is never trimmed to a sentence and never
+summarised: a paraphrase of a forecast is a forecast the app wrote.
+
+Cadence: with the text outlook, roughly every 6 hours. The publication stamp is
+the **forecaster's issue time**, read from the document's own title and carried
+in `idp_filedate`, and it is what the app ages the layer by — never the phone's
+clock (§17.7). It runs a median 203 seconds ahead of the value ArcGIS published
+under the same field name, which was NOAA's ingest time rather than NHC's
+issue time.
 
 **The layer publishes and then empties, and this is measured, not suspected.**
 Across the archive's 72-hour window it runs three to six areas for many hours,
@@ -1310,18 +1391,27 @@ layers, with a `Seven-Day Outlook` group at 34 and `Seven-Day: Development
 Motion` at 33; there is no two-day polygon layer any more, only `Two-Day:
 Current Location` (1).
 
-**A second, independent publication of the same product exists and is not read
-yet.** `nhc.noaa.gov/xgtwo/gtwo_atl.kmz` is live and serves
-`application/vnd.google-earth.kmz` — the outlook off a different path from
-ArcGIS, which is the likeliest reason NHC's website has areas when layer 3 does
-not. **Nobody has opened it.** It is a zip, and no sandbox on this project can
-reach NOAA to unpack one, so both basins are snapshotted base64 by
-`tools/archive-fetch.mjs` (which takes a `binary` flag for exactly this — a zip
-run through `res.text()` decodes as UTF-8 and is silently destroyed) and any
-parser gets written against the real bytes. The East Pacific filename is
-inferred from its Atlantic sibling and has never been fetched. What the KMZ
-costs, if it is adopted: KML carries color where the GIS layer carries
-`prob7day`, so the shapes may arrive without the numbers.
+**That outage is the reason the outlook is no longer read from ArcGIS at all.**
+The KMZ on `nhc.noaa.gov/xgtwo/` is the same product off a different path,
+which is the likeliest reason NHC's website had areas when layer 3 did not, and
+it is now the source (§45.2). Both basin filenames are live; the East Pacific
+one was inferred from its Atlantic sibling and is correct. The fear recorded
+here before anyone opened the bytes — that KML carries colour where the GIS
+layer carries `prob7day`, so shapes might arrive without numbers — was wrong:
+each placemark carries both percentages, both risk words and the forecaster's
+paragraph in `ExtendedData`.
+
+**The KMZ states an all-clear instead of merely being empty, and that narrows
+the hold.** A quiet basin's document says formation is not expected, in a dated
+sentence, so "NHC is watching nothing" and "NHC's layer is broken" are no
+longer the same bytes. `/api/nhc/genesis` therefore believes an explained
+all-clear at once and no longer holds it behind remembered areas for six hours.
+
+**The hold still exists, on a narrower trigger: no areas AND no explanation.**
+Every quiet basin in 72 hours of archive carried the sentence, so this shape
+has never been observed. It is kept because nothing has watched this source
+through an outage yet, and a false all-clear is the failure §5 ranks worst. If
+it never fires, the apparatus is a candidate for deletion rather than a fixture.
 
 ### 45.3 Source — JTWC, everywhere else
 

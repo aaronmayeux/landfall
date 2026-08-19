@@ -281,33 +281,28 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**THE OUTLOOK KMZ IS PARSED AND PROVEN, AND NOTHING SHIPS IT YET.**
-`lib/kmz.js` unwraps the zip, `lib/gtwo-kml.js` reads the KML, and
-`tools/gtwo-compare.mjs` runs both against all 72 archived hours: the KMZ and
-GIS layer 3 agree on every area, every vertex and every probability, worst
-disagreement 4.5e-10°. The Pacific filename was a guess and it is right —
-`gtwo_pac.kmz` answers 200.
+**THE OUTLOOK NOW COMES FROM NHC'S KMZ AND LAYER 3 IS GONE.** `SPEC-DATA.md`
+§45.2. Proven before it shipped — `tools/gtwo-compare.mjs` agrees the two paths
+match on every area, every vertex and every probability across all 72 archived
+hours. **Needs glass on the area drawer:** NHC's own name now heads the panel
+in place of our computed description, and the forecaster's paragraph sits under
+the stamp. Judge whether the paragraph earns its space beside two probability
+rows, or whether it makes a small panel long.
 
-**THE NEXT PASS IS THE SWAP, AND IT IS A SWAP RATHER THAN AN ADDITION.** The
-KMZ is not a second source; it is the same forecaster run published better, so
-it replaces layer 3 rather than joining it. Two sources feeding one feature
-would need a matcher — the exact thing `lib/outlook.js` refuses to do and
-`GENESIS.anchorLayer` records as unsafe — plus three new failure states, bought
-for two text fields. The relay unzips (transport, not interpretation) and
-`data/genesis.js` reads `toAreaCollection()`. Delete layer 3 in the same commit.
+**A quiet basin is believed at once now, and nobody has seen that happen.**
+`SPEC-DATA.md` §45.5. The KMZ states the all-clear in a dated sentence, so the
+six-hour hold no longer stands between a genuine all-clear and the screen. The
+hold still exists for a document that goes quiet WITHOUT explaining — a shape
+NHC has never published in 72 hours of archive. If it never fires, the whole
+held apparatus becomes a candidate for deletion.
 
-It carries four things layer 3 does not: NHC's own name per area, the
-forecaster's paragraph attached to the shape it describes, a disturbance number
-joining an area to its current-position point, and a `LineString` present in 23
-of 72 hours. **The LineString stays unnamed** — four samples say it appears when
-a disturbance sits outside its own area, which is a hypothesis, not a fact.
+**The unlabelled LineString is parsed, carried, and drawn nowhere.** Present in
+23 of 72 hours, always when a disturbance sat outside its own area. Four
+samples, one disturbance, one basin — decide what it is before deciding whether
+to draw it.
 
-Two differences to carry into the swap deliberately. The KMZ's issue time is
-the forecaster's; layer 3's `idp_filedate` is NOAA's ingest, a median 203s
-later — ours is sharper, and it moves what `isStaleArea` measures against. And
-**the two paths wind their rings opposite ways**, which no renderer here cares
-about but the planned 3D land fill will, because winding is what tells a
-triangulator which side is inside.
+**Ring winding is opposite between the two paths.** Nothing drawn today cares.
+The planned 3D land fill triangulates rings and will.
 
 **The 3D land fill should be shapes, not a picture.** Feeding `RINGS` to the GPU
 as filled triangles deletes the canvas, the ~500 ms upload and ~34 MB of GPU

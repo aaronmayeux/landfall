@@ -40,9 +40,51 @@
 
 import { kvRead, isWarmRequest } from '../_kv-cache.js';
 import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
+import { kmlFromKmz } from './_kmz.js';
+import { parseGtwoKml, toAreaCollection } from './_gtwo-kml.js';
 
-const UPSTREAM =
-  'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer';
+/**
+ * ==> THE OUTLOOK COMES FROM THE KMZ NOW, NOT FROM GIS LAYER 3. <==
+ *
+ * Not a fallback and not a second opinion — the SAME forecaster run, published
+ * on a different path and published better. Proven before it was switched:
+ * `tools/gtwo-compare.mjs` runs both against all 72 hourly snapshots on the
+ * archive branch and they agree on every area, every vertex and every
+ * probability, worst disagreement 4.5e-10 degrees. The issue stamp matches to
+ * the minute every hour.
+ *
+ * WHAT THE SWAP BUYS, and why it is a swap rather than an addition. The KMZ
+ * carries three things layer 3 does not publish at all: NHC's own name for
+ * each area, the forecaster's paragraph attached to the shape it describes,
+ * and a disturbance number joining an area to its current-position point.
+ * Running BOTH sources to get them would need a matcher between prose and
+ * polygons — the exact thing `lib/outlook.js` refuses to do and the `GENESIS`
+ * block in config/constants.js records as unsafe — plus three new failure
+ * states, for two text fields. One source per fact.
+ *
+ * ==> AND IT SAYS THE ALL-CLEAR IN WORDS. <== The whole held apparatus below
+ * exists because an empty FeatureCollection is UNSTAMPED: "NHC is watching
+ * nothing" and "NHC's layer is broken" are the same bytes. This document is
+ * not. A quiet basin arrives carrying `Tropical cyclone formation is not
+ * expected` and an issue time, which is a fact rather than an absence.
+ *
+ * THAT APPARATUS IS DELIBERATELY LEFT STANDING ANYWAY, and this is a judgement
+ * worth stating rather than a leftover. It now fires on a narrower and more
+ * honest trigger — see `parseBasinDocument` — and it still covers the one case
+ * the new source can produce that nobody has seen: a document with no areas
+ * AND no all-clear sentence. Retiring 250 lines of measured failure handling
+ * in the same pass that changes where the bytes come from is two changes
+ * wearing one commit, in season. It goes when something has watched the new
+ * source through a real outage.
+ */
+
+/** The two basin documents. ONE PRODUCT, PUBLISHED PER BASIN — layer 3
+ *  answered both from a single query, and this does not, which is the only
+ *  structural difference the swap introduces. See `fetchBasins`. */
+const KMZ_URL = Object.freeze({
+  atlantic: 'https://www.nhc.noaa.gov/xgtwo/gtwo_atl.kmz',
+  epacific: 'https://www.nhc.noaa.gov/xgtwo/gtwo_pac.kmz',
+});
 
 /* ===========================================================================
  * ==> THE MEMORY THAT MAKES THE HELD BRANCH WORK IS PER-DATACENTRE, AND THAT
@@ -142,22 +184,20 @@ function featureCount(body) {
   }
 }
 
-/** The parts this route will fetch, and the layer each maps to. A closed
- *  table, so no caller text ever reaches a layer id or a cache key — the same
- *  rule `mapserver.js` applies to its bin.
+/** The parts this route will serve. A closed table, so no caller text ever
+ *  reaches an upstream URL or a cache key — the same rule `mapserver.js`
+ *  applies to its bin.
  *
- *  ==> LAYER 2 IS NOT IN THIS TABLE, AND ITS ABSENCE IS DELIBERATE. <== It was
- *  going to be `anchors`, carrying NHC's own label points. Real bytes
- *  (2026-08-09) showed three points against five polygons, with attributes
- *  that match one polygon while sitting inside another — unmatchable, and a
- *  wrong match would print one area's probability on another area's shape.
- *  The label is drawn at our own centroid instead. Full measurement in
- *  `GENESIS.anchorLayer`'s note in config/constants.js. The archive still
- *  snapshots layer 2 as evidence; if NHC ever publishes one point per area,
- *  this is where the mode comes back, with fresh bytes behind it. */
-const PARTS = {
-  areas: 3, // Seven-Day: Potential Development Region (polygon)
-};
+ *  ==> THERE IS NO SECOND PART ANY MORE, AND THAT IS THE POINT. <== It was
+ *  going to be `anchors`, carrying GIS layer 2's label points, and it never
+ *  shipped: real bytes (2026-08-09) showed three points against five polygons
+ *  with attributes matching one polygon while sitting inside another —
+ *  unmatchable, and a wrong match would print one area's probability on
+ *  another area's shape. THE KMZ PUBLISHES THAT JOIN. Every placemark carries
+ *  its disturbance number, so the point and the polygon arrive already paired
+ *  and there is nothing left for a second part to fetch. The parameter stays
+ *  because the wire contract and the KV keys are shaped around it. */
+const PARTS = { areas: true };
 
 /** Mirrors `CACHE.genesisFresh`. Comfortably under the 30-minute client poll,
  *  so a poll is never handed the copy it fetched last time. */
@@ -258,21 +298,41 @@ export async function onRequestGet(context) {
     );
   }
 
-  const layer = PARTS[part];
 
-  /* `where=1=1` IS SAFE HERE AND IS NOT THE THING mapserver.js FORBIDS. That
-   * route refuses an unfiltered query because its upstream holds every active
-   * storm and one storm's panel would get three storms' cones. This layer
-   * holds nothing but genesis areas, there is no per-feature owner to filter
-   * by, and "all of them" is precisely the question. The clause is built here
-   * and never accepted from a caller either way. */
-  const params = new URLSearchParams({
-    where: '1=1',
-    outFields: '*',
-    returnGeometry: 'true',
-    outSR: '4326',
-    f: 'geojson',
-  });
+  /* ==> ONE PRODUCT, TWO DOCUMENTS, AND EITHER ONE MISSING IS AN OUTAGE. <==
+   * Layer 3 answered both basins from a single query; the KMZ is published per
+   * basin, so this is two fetches where there was one. Serving the half that
+   * answered would mean the app quietly showing an Atlantic-only outlook that
+   * looks exactly like a complete one, which is §5's false all-clear wearing a
+   * different hat — a Pacific area at 80% would simply not be there, with
+   * nothing on screen to say so. So a failure in either basin fails the whole
+   * request and falls through to the memory below, which is precisely what a
+   * single failed query did before. Both documents come from the same NHC host
+   * behind the same CloudFront distribution, so the two are correlated in
+   * practice rather than independent. */
+  async function fetchBasins() {
+    const out = [];
+    for (const [basin, url] of Object.entries(KMZ_URL)) {
+      const r = await fetch(url, {
+        headers: { 'User-Agent': USER_AGENT, Accept: 'application/vnd.google-earth.kmz' },
+      });
+      if (!r.ok) throw new Error(`upstream HTTP ${r.status} for the ${basin} outlook`);
+
+      const kml = await kmlFromKmz(new Uint8Array(await r.arrayBuffer()));
+      const parsed = parseGtwoKml(kml);
+      if (parsed.state !== 'ok') throw new Error(`the ${basin} outlook was unreadable: ${parsed.reason}`);
+
+      /* THE DOCUMENT MUST NAME THE BASIN WE ASKED FOR. If NHC ever moves a
+       * filename, serving the Atlantic twice would double-count one ocean and
+       * silently empty the other — an error that produces a perfectly
+       * well-formed answer, which is the kind this project keeps having. */
+      if (parsed.basin !== basin) {
+        throw new Error(`the ${basin} outlook document says it is ${parsed.basin || 'unnamed'}`);
+      }
+      out.push(parsed);
+    }
+    return out;
+  }
 
   const cache = caches.default;
   const freshKey = new Request(`https://landfall-relay.internal/nhc/genesis/${part}/fresh`);
@@ -360,20 +420,13 @@ export async function onRequestGet(context) {
 
   let upstreamError;
   try {
-    const r = await fetch(`${UPSTREAM}/${layer}/query?${params}`, {
-      headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
-    });
-    if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
-    const body = await r.text();
+    const documents = await fetchBasins();
 
-    let parsed;
-    try {
-      parsed = JSON.parse(body);
-    } catch {
-      throw new Error('upstream returned non-JSON');
-    }
-
-    const areaCount = Array.isArray(parsed?.features) ? parsed.features.length : 0;
+    /* Both basins into the one FeatureCollection layer 3 used to answer with,
+     * so nothing downstream of this route changes shape. */
+    const features = documents.flatMap((doc) => toAreaCollection(doc).features);
+    const body = JSON.stringify({ type: 'FeatureCollection', features });
+    const areaCount = features.length;
 
     const headers = baseHeaders({
       'X-Landfall-Fetched-At': new Date().toISOString(),
@@ -382,27 +435,39 @@ export async function onRequestGet(context) {
       [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM,
     });
 
-    /* ArcGIS reports failure as HTTP 200 with an `error` body. Forwarded
-     * verbatim so the client can mark this `unavailable` rather than empty —
-     * which for THIS layer is the difference between "we could not ask" and
-     * "nothing is being watched", the exact confusion §45.5 exists to stop.
-     * Never cached: a cached rejection is hours of a false all-clear. */
-    if (parsed && parsed.error) {
-      return new Response(body, {
-        headers: baseHeaders({ 'X-Landfall-Upstream': 'arcgis-error' }),
-      });
-    }
+    /* ==> WHAT "EMPTY" NOW MEANS, AND WHY IT IS NARROWER THAN IT WAS. <==
+     *
+     * Under layer 3 this was simply `features.length === 0`, because that was
+     * the only thing an empty FeatureCollection could tell you. The KMZ tells
+     * you more: a quiet basin's document CARRIES A SENTENCE saying formation
+     * is not expected, and a dated sentence from the forecaster is a fact
+     * rather than an absence.
+     *
+     * So a basin is only ambiguous when it has no areas AND does not say why.
+     * Every quiet basin in the 72-hour archive window said why, so this is
+     * expected never to fire — which is exactly why it is worth keeping.
+     * Nobody has watched this source through an outage yet, and the failure it
+     * guards against is the one §5 ranks worst.
+     *
+     * THE PRACTICAL EFFECT OF NARROWING IT: a genuine all-clear now shows
+     * immediately instead of being held for up to six hours behind remembered
+     * areas. That six hours was the price of not being able to tell the two
+     * apart. We can tell them apart now, so it is not owed.
+     */
+    const ambiguous = documents.some((doc) => doc.areas.length === 0 && !doc.formationNotExpected);
 
-    if (!(parsed && parsed.type === 'FeatureCollection')) {
-      return new Response(body, {
-        headers: baseHeaders({ 'X-Landfall-Upstream': 'unexpected-shape' }),
-      });
-    }
-
-    /* AN EMPTY OUTLOOK IS CACHED LIKE ANY OTHER ANSWER, AND IT IS STILL
-     * REFUSED AS LAST-GOOD — so `lastGoodKey` only ever holds a response that
-     * actually had areas in it. That is what makes the branch below possible. */
-    const empty = !(Array.isArray(parsed.features) && parsed.features.length);
+    /* ==> AND THIS IS THE OTHER HALF OF THE SAME WORD, KEPT SEPARATE ON
+     * PURPOSE. <== `ambiguous` decides whether to hold. `noAreas` decides what
+     * may be written to a cache, and it is UNCHANGED from what layer 3 did: an
+     * answer with nothing in it is never stored as fresh and never stored as
+     * last-good. Rolling the two together is what the swap makes tempting and
+     * it would quietly change two behaviours at once — a stated all-clear
+     * would start being served out of the caches, and `lastGoodKey` would
+     * start holding bodies with no areas in them, which is the one thing that
+     * key promises never to hold. Both may be worth doing. Neither is this
+     * pass's job, and `featureCount` above still steps over an empty body
+     * wherever it finds one, exactly as it did yesterday. */
+    const noAreas = features.length === 0;
 
     /* ==> UPSTREAM ANSWERED, AND ANSWERED NOTHING, AND WE SAW AREAS RECENTLY.
      * <== This is the branch that exists because 2026-08-11 happened. See
@@ -424,7 +489,7 @@ export async function onRequestGet(context) {
      * every poll for the next fifteen minutes re-queries upstream, and worse,
      * the answer would flip between held and empty depending on which copy
      * answered. */
-    if (empty) {
+    if (ambiguous) {
       /* ==> TWO MEMORIES, AND THE NEWER ONE WINS. <==
        *
        * The colo slot is free, is already here, and in a datacentre that has
@@ -534,7 +599,7 @@ export async function onRequestGet(context) {
      * that every future request has to read and step over. The saving it was
      * bought for is gone; the cost of keeping it is a cache entry that lies
      * about being useful. */
-    const writes = empty
+    const writes = noAreas
       ? []
       : [
           cache.put(
@@ -544,7 +609,7 @@ export async function onRequestGet(context) {
             })
           ),
         ];
-    if (!empty) {
+    if (!noAreas) {
       writes.push(
         cache.put(
           lastGoodKey,

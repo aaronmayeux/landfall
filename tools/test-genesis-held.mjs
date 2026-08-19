@@ -46,21 +46,119 @@ const { onRequestGet } = await import('../functions/api/nhc/genesis.js');
 
 /* ---------------------------------------------------------------------------
  * FIXTURES — the real bytes, from origin/archive.
+ *
+ * ==> THE UPSTREAM IS THE KMZ PAIR NOW, NOT GIS LAYER 3. <== Same product,
+ * different path, proven identical across 72 archived hours by
+ * `tools/gtwo-compare.mjs`. Everything this suite is about — which body goes
+ * out, with which headers, for each combination of upstream answer and memory
+ * — is unchanged by that, which is why the sections below are untouched.
+ *
+ * THE EXPECTED BODIES ARE COMPUTED BY THE SAME PARSER THE ROUTE USES, and that
+ * is deliberate rather than lazy. Hand-copying the FeatureCollection would
+ * pin 600 vertices of NHC geometry into this file and make it fail every time
+ * a forecaster redraws a shape, which would be a test about NHC's opinions.
+ * What is under test here is the DECISION. The parse itself is pinned hard,
+ * against the same bytes, in `tools/test-gtwo-kml.mjs`.
  * ------------------------------------------------------------------------- */
 
-/** Three Atlantic + three Pacific areas, verbatim shape from the 17:50Z
- *  issuance. Trimmed to properties: the held decision never reads geometry. */
-const POPULATED = JSON.stringify({
-  type: 'FeatureCollection',
-  features: [
-    { type: 'Feature', properties: { basin: 'Atlantic', prob2day: '20%', risk2day: 'Low', prob7day: '60%', risk7day: 'Medium', idp_source: 'gtwo_areas_202608101750' }, geometry: null },
-    { type: 'Feature', properties: { basin: 'Atlantic', prob2day: '10%', risk2day: 'Low', prob7day: '10%', risk7day: 'Low', idp_source: 'gtwo_areas_202608101750' }, geometry: null },
-    { type: 'Feature', properties: { basin: 'Pacific', prob2day: '50%', risk2day: 'Medium', prob7day: '90%', risk7day: 'High', idp_source: 'gtwo_areas_202608101750' }, geometry: null },
-  ],
-});
+const { parseGtwoKml, toAreaCollection } = await import('../functions/api/nhc/_gtwo-kml.js');
+const { kmlFromKmz } = await import('../functions/api/nhc/_kmz.js');
 
-/** EXACTLY what layer 3 returned at 02:17Z. Forty-two bytes, no stamp. */
-const EMPTY = '{"type":"FeatureCollection","features":[]}';
+const kmzFixture = (n) =>
+  Buffer.from(fs.readFileSync(path.join(ROOT, 'samples/genesis/gtwo', n), 'utf8').trim(), 'base64');
+
+/** Two watched areas in the East Pacific, 19 Aug 05:25Z. */
+const KMZ_PACIFIC = kmzFixture('epacific.kmz.b64');
+/** The Atlantic the same hour: nothing being watched, and SAYING SO. */
+const KMZ_ATLANTIC_CLEAR = kmzFixture('atlantic.kmz.b64');
+
+/**
+ * ==> THE ONE DOCUMENT NHC HAS NEVER PUBLISHED, AND THE REASON THE HELD
+ * MACHINERY IS STILL HERE. <== No areas and no all-clear sentence: the KMZ
+ * doing what layer 3 did every time, saying nothing and explaining nothing.
+ * Every quiet basin in the 72-hour archive window carried the sentence, so
+ * this shape is synthetic — built by deleting the sentence from real bytes,
+ * which is the smallest lie that produces the case.
+ */
+/**
+ * A QUIET EAST PACIFIC, SYNTHESISED, and the reason it has to be. Every one of
+ * the 72 archived hours had two Pacific areas on the board, so the archive
+ * contains no real Pacific all-clear to copy. This is the Atlantic's genuine
+ * all-clear with the basin words swapped — the sentence, the stamp and the
+ * structure are NHC's, and only the ocean is ours.
+ */
+const KMZ_PACIFIC_CLEAR = await (async () => {
+  const kml = (await kmlFromKmz(KMZ_ATLANTIC_CLEAR))
+    .replace(/North Atlantic basin/g, 'eastern North Pacific basin');
+  return zipOneFile('gtwo_pac.kml', kml);
+})();
+
+const KMZ_ATLANTIC_SILENT = await (async () => {
+  const kml = (await kmlFromKmz(KMZ_ATLANTIC_CLEAR))
+    .replace(/formation is not expected/gi, 'the outlook is being prepared');
+  return zipOneFile('gtwo_atl.kml', kml);
+})();
+
+/**
+ * A KML string → a one-entry zip, stored uncompressed.
+ *
+ * STORED RATHER THAN DEFLATED because `_kmz.js` supports both and this needs
+ * no dependency to build. The DEFLATE path — which is what NHC actually
+ * publishes — is exercised by the two real fixtures above, so both branches of
+ * the reader are covered by the suite as a whole.
+ */
+function zipOneFile(name, text) {
+  const nameBytes = Buffer.from(name, 'utf8');
+  const data = Buffer.from(text, 'utf8');
+  const local = Buffer.alloc(30);
+  local.writeUInt32LE(0x04034b50, 0);
+  local.writeUInt16LE(20, 4);          // version needed
+  local.writeUInt16LE(0, 6);           // flags — bit 3 clear, sizes are here
+  local.writeUInt16LE(0, 8);           // method 0, stored
+  local.writeUInt32LE(0, 14);          // crc, not read by _kmz.js
+  local.writeUInt32LE(data.length, 18);
+  local.writeUInt32LE(data.length, 22);
+  local.writeUInt16LE(nameBytes.length, 26);
+  local.writeUInt16LE(0, 28);
+  return Buffer.concat([local, nameBytes, data]);
+}
+
+/** What the route serves for a given pair of documents — atlantic first, then
+ *  east Pacific, which is the order `KMZ_URL` declares them in. */
+async function expectedBody(...kmzs) {
+  const features = [];
+  for (const kmz of kmzs) {
+    features.push(...toAreaCollection(parseGtwoKml(await kmlFromKmz(kmz))).features);
+  }
+  return JSON.stringify({ type: 'FeatureCollection', features });
+}
+
+/** Two areas on the board — the state everything below calls POPULATED. */
+const POPULATED = await expectedBody(KMZ_ATLANTIC_CLEAR, KMZ_PACIFIC);
+
+/** Nothing anywhere. Under layer 3 this was 42 unstamped bytes; it is the same
+ *  42 bytes on the wire now, and the difference is that upstream EXPLAINED
+ *  itself, so the route believes it instead of holding. */
+const EMPTY = await expectedBody(KMZ_ATLANTIC_CLEAR, KMZ_PACIFIC_CLEAR);
+
+/**
+ * ==> THE SAME 42 BYTES, FOR A COMPLETELY DIFFERENT REASON, AND THIS IS THE
+ * DISTINCTION THE SWAP BOUGHT. <== `EMPTY` above is upstream saying "nothing
+ * is being watched" in a dated sentence. This is upstream saying nothing at
+ * all — no areas, no explanation — which is what layer 3 said EVERY time,
+ * including on 2026-08-11 when it was wrong.
+ *
+ * On the wire the two are byte-identical. The route can tell them apart
+ * because it read the documents, and every held section below feeds it THIS
+ * one, because holding is now a response to ambiguity rather than to
+ * emptiness.
+ */
+const AMBIGUOUS_MARKER = { ambiguous: true };
+/** Selecting the fixture pair is by IDENTITY, because the two states produce
+ *  the same string and a value comparison could not tell them apart — which is
+ *  the whole point being tested. `AMBIGUOUS` is a marker on the way in; what
+ *  comes back out is `EMPTY`, byte for byte. */
+const AMBIGUOUS = AMBIGUOUS_MARKER;
 
 /* --- a fake Cloudflare cache and fetch ------------------------------------ */
 
@@ -78,18 +176,52 @@ function makeCache() {
   };
 }
 
-function install({ upstreamBody, upstreamStatus = 200 }) {
+/**
+ * Install a fake edge.
+ *
+ * `upstreamBody` names the ANSWER wanted, and the fixtures that produce it are
+ * looked up here — so every section below reads exactly as it did when this
+ * route talked to ArcGIS, and the swap is invisible to them. Passing
+ * `upstreamKmz` directly is the escape hatch for the cases that are about the
+ * bytes rather than the decision.
+ */
+function install({ upstreamBody, upstreamKmz, upstreamStatus = 200 }) {
   const cache = makeCache();
   globalThis.caches = { default: cache };
   upstreamCalls = 0;
+
+  const pair = upstreamKmz
+    || (upstreamBody === POPULATED ? [KMZ_ATLANTIC_CLEAR, KMZ_PACIFIC]
+      : upstreamBody === AMBIGUOUS_MARKER ? [KMZ_ATLANTIC_SILENT, KMZ_PACIFIC_CLEAR]
+        : [KMZ_ATLANTIC_CLEAR, KMZ_PACIFIC_CLEAR]);
+
+  /* The route fetches the two basin documents in declaration order and always
+   * both, so the stub cycles through the pair. `upstreamCalls` ticks once per
+   * REQUEST rather than once per document, so every "did this touch NHC at
+   * all" check below still counts what it counted before the swap. */
+  let served = 0;
   globalThis.fetch = async () => {
-    upstreamCalls++;
-    return new Response(upstreamBody, {
+    const body = pair[served % 2];
+    if (served % 2 === 0) upstreamCalls++;
+    served++;
+    return new Response(body, {
       status: upstreamStatus,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/vnd.google-earth.kmz' },
     });
   };
   return cache;
+}
+
+/**
+ * Point the stub at a basin document that has no areas AND does not say why —
+ * upstream going quiet without explaining, which is the only thing that still
+ * makes this route hold. Used by the sections that seed a real answer first
+ * and then watch the outlook fall over.
+ */
+function goAmbiguous() {
+  const pair = [KMZ_ATLANTIC_SILENT, KMZ_PACIFIC_CLEAR];
+  let served = 0;
+  globalThis.fetch = async () => new Response(pair[served++ % 2], { status: 200 });
 }
 
 /** Counted, because two of the checks below are about a request that must NOT
@@ -157,7 +289,7 @@ section('A populated answer passes straight through');
   ok(r.body === POPULATED, 'a populated response is returned verbatim');
   ok(r.stale !== 'true', 'and is NOT marked stale');
   ok(r.held == null || r.held === '', 'and is NOT marked held');
-  ok(JSON.parse(r.body).features.length === 3, 'all three areas survive');
+  ok(JSON.parse(r.body).features.length === 2, 'all three areas survive');
 }
 
 section('An empty answer with NO memory is believed — a real all-clear');
@@ -202,13 +334,13 @@ section('Six areas, then zero — the 2026-08-11 transition');
    * the request actually reaches upstream, exactly as it would fifteen
    * minutes later. */
   cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
-  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+  goAmbiguous();
 
   const r = await read(await onRequestGet(ctx()));
 
   ok(
-    JSON.parse(r.body).features.length === 3,
-    'THE HEADLINE: the three areas are still served when the layer goes empty — ' +
+    JSON.parse(r.body).features.length === 2,
+    'THE HEADLINE: the remembered areas are still served when the outlook goes quiet — ' +
       `got ${JSON.parse(r.body).features.length}`
   );
   ok(r.stale === 'true', 'and the response says it is stale');
@@ -227,7 +359,7 @@ section('The caveat survives the next fifteen minutes of cache hits');
   const cache = install({ upstreamBody: POPULATED });
   await onRequestGet(ctx());
   cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
-  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+  goAmbiguous();
   const first = await read(await onRequestGet(ctx()));
 
   /* Now a plain cache hit — no upstream call at all. */
@@ -265,7 +397,7 @@ section('Past one outlook cycle, the emptiness is believed');
     })
   );
   cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
-  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+  goAmbiguous();
 
   const r = await read(await onRequestGet(ctx()));
   /* ==> PAST SIX HOURS THE MEMORY IS OFFERED, NOT ASSERTED, AND THE MARKER IS
@@ -283,7 +415,7 @@ section('Past one outlook cycle, the emptiness is believed');
     `seven hours on, the memory is OFFERED under its own marker, not asserted — got ${JSON.stringify(r.held)}`
   );
   ok(
-    JSON.parse(r.body).features.length === 3,
+    JSON.parse(r.body).features.length === 2,
     'the areas ride along so the client CAN draw them if the text outlook '
     + 'backs it — a marker with no payload behind it decides nothing'
   );
@@ -312,7 +444,7 @@ section('Past a full day even a remembered answer is let go');
     })
   );
   cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
-  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+  goAmbiguous();
 
   const r = await read(await onRequestGet(ctx()));
   ok(
@@ -337,7 +469,7 @@ const KV_MAIN = 'v1:nhc/genesis/areas';
 section('A cold colo with a warm global memory holds — this is the 04:26Z case');
 
 {
-  install({ upstreamBody: EMPTY });
+  install({ upstreamBody: AMBIGUOUS });
   const env = {
     LANDFALL_CACHE: makeKv({
       [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(95) },
@@ -354,13 +486,13 @@ section('A cold colo with a warm global memory holds — this is the 04:26Z case
   const heldAgeMin = (Date.now() - Date.parse(r.fetchedAt)) / 60000;
   ok(heldAgeMin > 90 && heldAgeMin < 100,
     `stamped when NHC last answered (~95 min ago), not now — got ${Math.round(heldAgeMin)} min`);
-  ok(r.areas === '3', 'and the count describes the body being sent, for the writer\u2019s gate');
+  ok(r.areas === '2', 'and the count describes the body being sent, for the writer\u2019s gate');
 }
 
 section('The global memory expires on the same clock as the local one');
 
 {
-  install({ upstreamBody: EMPTY });
+  install({ upstreamBody: AMBIGUOUS });
   const env = {
     LANDFALL_CACHE: makeKv({
       [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(7 * 60) },
@@ -373,7 +505,7 @@ section('The global memory expires on the same clock as the local one');
     + `same marker — got ${JSON.stringify(r.held)}`
   );
   ok(
-    JSON.parse(r.body).features.length === 3,
+    JSON.parse(r.body).features.length === 2,
     'carrying its areas, for the client to accept or drop on the evidence'
   );
 }
@@ -391,7 +523,7 @@ section('The global memory expires on the same clock as the local one');
 section('An empty answer never becomes the memory of having had areas');
 
 {
-  const cache = install({ upstreamBody: EMPTY });
+  const cache = install({ upstreamBody: AMBIGUOUS });
   await onRequestGet(ctx());
   const stored = cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good');
   ok(
@@ -418,7 +550,7 @@ section('An empty answer never becomes the memory of having had areas');
 section('A memory stamped in the future is not a fresh memory');
 
 {
-  install({ upstreamBody: EMPTY });
+  install({ upstreamBody: AMBIGUOUS });
   const env = {
     LANDFALL_CACHE: makeKv({
       [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: minsAgo(-6 * 60) },
@@ -434,17 +566,33 @@ section('A memory stamped in the future is not a fresh memory');
   );
 }
 
-section('ArcGIS reports failure as 200 with an error body, and it is forwarded');
+section('A document we cannot read is an outage, never an empty sky');
+
+/* ==> THIS SECTION REPLACED THE ARCGIS ONE, AND THE SHAPE OF THE ANSWER
+ * CHANGED WITH THE SOURCE. <== Layer 3 reported failure as HTTP 200 with an
+ * `error` body, so the route forwarded those bytes verbatim for the client to
+ * recognise. NHC's web path has no such convention: a bad answer is a bad
+ * answer — a 404, a page of HTML, a zip with no KML in it. So the route
+ * REFUSES it rather than forwarding it, and refusing means falling into the
+ * memory below, which is strictly better than what ArcGIS allowed.
+ *
+ * WHAT MUST NOT CHANGE is the thing both versions are about: garbage upstream
+ * may never turn into a FeatureCollection with no features in it, because that
+ * is a published all-clear over a source that never answered (§45.5). */
 
 {
-  const ARCGIS_ERROR = JSON.stringify({ error: { code: 400, message: 'Invalid query' } });
-  const cache = install({ upstreamBody: ARCGIS_ERROR });
+  const notAZip = Buffer.from('<html><body>404 Not Found</body></html>', 'utf8');
+  const cache = install({ upstreamKmz: [notAZip, notAZip] });
   const r = await read(await onRequestGet(ctx()));
+
   ok(
-    r.body === ARCGIS_ERROR,
-    'THE ERROR BODY IS FORWARDED VERBATIM so `data/genesis.js` can call it '
-    + '`unavailable`. Read as a FeatureCollection with no features it becomes '
-    + 'a published all-clear over a query that was refused'
+    r.status === 502,
+    `AN UNREADABLE UPSTREAM IS A FAILURE, NOT AN ANSWER — got ${r.status}`
+  );
+  ok(
+    !/"features":\[\]/.test(r.body),
+    'and emphatically NOT an empty FeatureCollection, which is the one wrong '
+    + 'answer that looks exactly like a healthy quiet season'
   );
   ok(
     cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/fresh') == null,
@@ -455,25 +603,79 @@ section('ArcGIS reports failure as 200 with an error body, and it is forwarded')
     cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good') == null,
     'nor remembered as a good answer'
   );
-  /* ==> AND IT IS NAMED AS AN ARCGIS REFUSAL, NOT AS AN ODD SHAPE. <== Without
-   * this line the assertions above pass with the whole `parsed.error` branch
-   * deleted: an error body has no `type`, so the unexpected-shape guard a few
-   * lines down catches it and forwards the same bytes uncached. The two guards
-   * overlap, which is defence in depth and is also how a branch gets quietly
-   * removed. The HEADER is the only observable difference, so it is the thing
-   * asserted — a session staring at a response can tell "NOAA refused the
-   * query" from "NOAA sent something we do not recognise", and those call for
-   * different next steps. */
+}
+
+section('A document that names the wrong basin is refused, not counted twice');
+
+/* ==> THE FAILURE THAT WOULD PRODUCE A PERFECTLY WELL-FORMED LIE. <== The two
+ * basins are separate files on NHC's web server. If a filename ever moves and
+ * one URL starts answering with the other basin's document, the route would
+ * merge the Atlantic with itself: a complete-looking outlook with every
+ * Pacific area silently absent. Nothing downstream could see it. So each
+ * document is required to name the basin it was asked for. */
+
+{
+  const cache = install({ upstreamKmz: [KMZ_ATLANTIC_CLEAR, KMZ_ATLANTIC_CLEAR] });
+  const r = await read(await onRequestGet(ctx()));
+  ok(r.status === 502, `the same document twice is refused — got ${r.status}`);
   ok(
-    r.upstream === 'arcgis-error',
-    `and named as a refusal rather than as an unrecognised shape — got ${JSON.stringify(r.upstream)}`
+    cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good') == null,
+    'and half an ocean is never remembered as a good answer'
+  );
+}
+
+section('A stated all-clear is believed at once, with a fresh memory in hand');
+
+/* ==> THE THING THE SWAP ACTUALLY BOUGHT, PINNED SO IT CANNOT BE LOST. <==
+ * Under layer 3 this case was unreachable: an empty answer minutes after a
+ * real one was held for up to six hours, because an empty FeatureCollection
+ * carries nothing to distinguish a genuine all-clear from a broken layer. The
+ * KMZ carries a dated sentence saying formation is not expected, so the
+ * distinction is published and the six hours are not owed.
+ *
+ * THE SAME MEMORY, THE SAME MINUTE, THE OPPOSITE ANSWER from the section
+ * above — the ONLY difference is whether upstream explained itself. */
+
+{
+  const cache = install({ upstreamBody: POPULATED });
+  await onRequestGet(ctx());
+  cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
+
+  /* Upstream now says, in words, that it is watching nothing. */
+  let served = 0;
+  const clear = [KMZ_ATLANTIC_CLEAR, KMZ_PACIFIC_CLEAR];
+  globalThis.fetch = async () => new Response(clear[served++ % 2], { status: 200 });
+
+  const r = await read(await onRequestGet(ctx()));
+
+  ok(r.body === EMPTY, 'the all-clear goes out, not the areas from ten seconds ago');
+  ok(r.stale !== 'true', 'and it is not dressed up as stale');
+  ok(
+    r.held == null || r.held === '',
+    `nor held — the source explained itself, so there is nothing to hold for. Got ${JSON.stringify(r.held)}`
+  );
+
+  /* ==> AND IT MUST NOT ERASE THE MEMORY OF HAVING HAD AREAS. <== `lastGoodKey`
+   * answers exactly one question — "when did NHC last publish areas" — so a
+   * body with none in it may never land there, however well explained it is.
+   * The temptation the swap creates is to govern that write with `ambiguous`,
+   * which now reads false for a stated all-clear; the route keeps a separate
+   * `noAreas` for this line precisely so the two cannot be collapsed. Without
+   * this assertion that collapse passes every other check in this suite, and
+   * the next genuine outage would find the memory holding an all-clear. */
+  const lg = cache.store.get('https://landfall-relay.internal/nhc/genesis/areas/last-good');
+  const remembered = lg ? JSON.parse(await lg.clone().text()) : null;
+  ok(
+    remembered && remembered.features.length === 2,
+    'the memory of having had areas survives an all-clear — got '
+      + `${remembered ? remembered.features.length : 'nothing'}`
   );
 }
 
 section('An unstamped global memory is not a memory');
 
 {
-  install({ upstreamBody: EMPTY });
+  install({ upstreamBody: AMBIGUOUS });
   const env = { LANDFALL_CACHE: makeKv({ [KV_LAST_GOOD]: { body: POPULATED, fetchedAt: null } }) };
   const r = await read(await onRequestGet(ctx(env)));
   /* An entry whose age cannot be computed must not be treated as recent.
@@ -506,7 +708,7 @@ section('When both memories exist, the newer one wins');
   };
   /* One real answer, so the colo now remembers something NEWER than KV. */
   await onRequestGet(ctx(env));
-  globalThis.fetch = async () => new Response(EMPTY, { status: 200 });
+  goAmbiguous();
   cache.store.delete('https://landfall-relay.internal/nhc/genesis/areas/fresh');
 
   const r = await read(await onRequestGet(ctx(env)));
@@ -544,7 +746,7 @@ section('An empty warm copy is stepped over, not served — the 13:22Z case');
  * of the remembering. ONE empty cycle that got through poisoned the entire
  * outage. */
 {
-  install({ upstreamBody: EMPTY });
+  install({ upstreamBody: AMBIGUOUS });
   const env = {
     LANDFALL_CACHE: makeKv({
       [KV_MAIN]: { body: EMPTY, fetchedAt: minsAgo(1) },
@@ -571,7 +773,7 @@ section('An empty local copy is stepped over too, and is never stored');
  * colo that saw the all-clear before the memory arrived. It must be stepped
  * over. */
 {
-  const cache = install({ upstreamBody: EMPTY });
+  const cache = install({ upstreamBody: AMBIGUOUS });
   cache.store.set(
     'https://landfall-relay.internal/nhc/genesis/areas/fresh',
     new Response(EMPTY, { headers: { 'X-Landfall-Fetched-At': new Date().toISOString() } })
@@ -586,7 +788,7 @@ section('An empty local copy is stepped over too, and is never stored');
 
 /* SECOND: nothing empty goes into the slot in the first place. */
 {
-  const cache = install({ upstreamBody: EMPTY });
+  const cache = install({ upstreamBody: AMBIGUOUS });
   const env = { LANDFALL_CACHE: makeKv({}) };
   const r = await read(await onRequestGet(ctx(env)));
   ok(r.body === EMPTY, 'with no memory at all, a true all-clear still gets through');

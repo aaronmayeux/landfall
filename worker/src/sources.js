@@ -69,13 +69,26 @@ export const LIST_FEEDS = [
    *
    * WHY IT IS WARMED AT ALL. Its route holds the one piece of memory in the
    * relay that has to survive being asked in a datacentre that has never seen
-   * a real answer: "did NHC have areas an hour ago". An empty outlook layer and
-   * a broken outlook layer are byte-identical, so that memory is the only thing
-   * separating "nothing is out there" from "we cannot see". It lived in
+   * a real answer: "did NHC have areas an hour ago". It lived in
    * `caches.default`, which is per-colo, and MEASURED on 2026-08-11 it was cold
    * in the colo that mattered ninety minutes after the fix shipped: a false
    * all-clear went out with a 70% development area live in the Atlantic.
    * `functions/api/nhc/genesis.js` carries the full account.
+   *
+   * ==> THE REASON THAT MEMORY IS NEEDED HAS NARROWED, AND WARMING HAS NOT.
+   * <== It used to be needed on every empty answer, because an empty
+   * FeatureCollection from GIS layer 3 was unstamped and "nothing is out
+   * there" and "we cannot see" were the same bytes. The outlook comes from
+   * NHC's KMZ now and a quiet basin carries a dated sentence saying so, so the
+   * route believes an explained all-clear immediately and only holds when a
+   * document goes quiet WITHOUT explaining. That case is rarer and has never
+   * been observed — which is exactly why the memory still has to be warm in
+   * the colo the reader lands in when it finally happens.
+   *
+   * NOTHING HERE CHANGED FOR THE SWAP, and that is the point of warming
+   * through `route` rather than through an upstream URL: this loop asks the
+   * relay the same question it always asked and never learns where the bytes
+   * come from.
    *
    * ==> AND WHY IT MUST NOT BE WRITTEN WHILE THE ROUTE IS HOLDING. <==
    * `kv.js` re-stamps `fetchedAt` on every cycle whether the bytes changed or

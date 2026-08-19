@@ -114,6 +114,32 @@ export function createAreaDetailView() {
       ? `Published ${formatAge(new Date(area.issuedAt).toISOString())}`
       : 'Publication time not stated';
 
+    /* ==> THE FORECASTER'S OWN WORDS, WHEN THERE ARE ANY. <== NHC's outlook
+     * KMZ attaches the discussion paragraph to the polygon it describes, so
+     * this is the one place in the feature where a reader learns WHY an area
+     * is on the board rather than only how likely it is. It is printed
+     * verbatim: never trimmed to a sentence, never summarised, because a
+     * paraphrase of a forecast is a forecast we wrote.
+     *
+     * The two formation-chance lines at the end are DROPPED, and only those.
+     * They restate the two rows already sitting directly above this paragraph,
+     * in a second vocabulary — printing them again gives a reader two numbers
+     * to reconcile that were always the same number.
+     *
+     * ABSENT IS SILENT, NOT EMPTY. JTWC areas have no discussion at all, and
+     * an NHC document may arrive without one; a heading over nothing reads as
+     * a section that failed to load (§5). */
+    const body = area.discussion
+      ? area.discussion
+        .split('\n')
+        .filter((line) => !/^\s*\*?\s*Formation chance/i.test(line))
+        .join('\n')
+        .trim()
+      : '';
+    const discussion = body
+      ? `<p class="area-discussion">${esc(body)}</p>`
+      : '';
+
     host.innerHTML = `
       <div class="drawer-body area-detail">
         <div class="area-head">
@@ -129,8 +155,9 @@ export function createAreaDetailView() {
         <div class="area-horizons">${horizons}</div>
 
         <p class="area-stamp">${esc(issued)}</p>
+${discussion}
 
-        <!-- ==> THE PROVENANCE BLOCK. The name above is OURS. <==
+        <!-- ==> THE PROVENANCE BLOCK. The name above may be OURS. <==
              NHC publishes no name for these areas — the source gives a basin
              word, four probability strings and a date. "Central Atlantic" is a
              description computed from the centroid, so the centroid is printed

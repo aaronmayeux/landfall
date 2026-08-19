@@ -29,8 +29,8 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { kmlFromKmz } from '../lib/kmz.js';
-import { parseGtwoKml } from '../lib/gtwo-kml.js';
+import { kmlFromKmz } from '../functions/api/nhc/_kmz.js';
+import { parseGtwoKml } from '../functions/api/nhc/_gtwo-kml.js';
 
 const VERBOSE = process.argv.includes('--list');
 

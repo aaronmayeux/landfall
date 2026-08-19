@@ -1,12 +1,12 @@
 /**
  * kmz.js — a KMZ is a zip. This gets the KML out of it, and nothing else.
  *
- * ==> THIS IS TRANSPORT, NOT INTERPRETATION. <== §4's rule is that a route
+ * ==> THIS IS TRANSPORT, NOT INTERPRETATION. <== §4.3's rule is that a route
  * forwards and caches and does not interpret its payload. Unwrapping a
- * container is the same category as gunzipping a response or decoding base64:
- * it changes the packaging and not one byte of meaning. `gtwo-kml.js` next
- * door does the interpreting. Keeping the two apart is what makes this file
- * boring enough to trust.
+ * container is the same category as the a-deck route's gunzip: it changes the
+ * packaging and not one byte of meaning. `_gtwo-kml.js` next door does the
+ * interpreting. Keeping the two apart is what makes this file boring enough to
+ * trust.
  *
  * ==> WHY NOT A ZIP LIBRARY. <== There is no build step (§12), so every
  * dependency is a vendored file somebody has to maintain forever. A zip whose

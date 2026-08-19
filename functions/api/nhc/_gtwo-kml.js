@@ -18,11 +18,11 @@
  *    description from the centroid and says so in capitals.
  *
  * 2. A DISTURBANCE NUMBER ON EVERY PLACEMARK, which joins an area to its
- *    current-position point. `GENESIS.anchorLayer` records layer 2 as not
- *    fetched precisely because the two GIS layers cannot be matched — anchor 1
- *    carrying polygon 2's attributes while sitting inside polygon 1. Here the
- *    join is published rather than inferred, so the failure that measurement
- *    describes cannot happen.
+ *    current-position point. The `GENESIS` block in config/constants.js records
+ *    layer 2 as never fetched precisely because the two GIS layers cannot be
+ *    matched — anchor 1 carrying polygon 2's attributes while sitting inside
+ *    polygon 1. Here the join is published rather than inferred, so the
+ *    failure that measurement describes cannot happen.
  *
  * 3. THE FORECASTER'S PARAGRAPH, attached to the polygon it describes.
  *    `lib/outlook.js` explains at length why the text bulletin's areas can
@@ -46,8 +46,25 @@
  * would be pretending to more than it does.
  *
  * Pure and synchronous, like `lib/outlook.js` and `lib/abpw.js`: text in,
- * state out, never throws, no fetching. `lib/kmz.js` unwraps the container
- * (§4 — that is transport); this interprets.
+ * state out, never throws, no fetching. `_kmz.js` unwraps the container (§4 —
+ * that is transport); this interprets.
+ *
+ * ==> WHY IT IS UNDER functions/ RATHER THAN lib/, which is where README puts
+ * parsers. <== The same reason `_ships-parse.js` next door is: a KMZ is a zip
+ * of five entries and 45% of its bytes are icons nobody will ever draw, so the
+ * unwrapping belongs on the far side of the relay and the browser should
+ * receive the small GeoJSON. Leaving a working client-side copy in `lib/`
+ * would put a second implementation of this judgement on the other side of a
+ * deploy boundary — the exact drift §4.3 and `worker/src/sources.js` refuse to
+ * commit — and would invite somebody to fetch the KMZ from a phone. There is
+ * ONE of these and the browser cannot reach it. `_` is Cloudflare's
+ * not-a-route marker; `tools/check-syntax.mjs` covers these files anyway.
+ *
+ * ==> AND THE PARSE STILL DECIDES NOTHING, which is what keeps §4.3's rule
+ * intact. <== It converts a container and a fixed template into the same
+ * FeatureCollection the GIS layer published. Every judgement about basin,
+ * colour, ordering, staleness and wording still runs in `lib/genesis.js` and
+ * `lib/outlook.js` in the browser, exactly as before.
  *
  * Imports nothing. Never DOM, never data/, never map/, never ui/.
  */

@@ -2630,59 +2630,68 @@ export const SURGE = Object.freeze({
 export const GENESIS = Object.freeze({
   /* --- NHC, the two- and seven-day outlook ------------------------------- */
 
-  /** The MapServer layer carrying the polygons. Same service the cone already
-   *  comes from (`ENDPOINT.nhcMapServer`) — no new host, no new relay pattern.
-   *  ONE POLYGON CARRIES BOTH HORIZONS, so two-day and seven-day come from a
-   *  single query. */
-  outlookLayer: 3,
+  /* ==> THE OUTLOOK COMES FROM NHC'S KMZ, AND THERE IS NO LAYER NUMBER HERE
+   * ANY MORE. <== It used to be `outlookLayer: 3` on the same MapServer the
+   * cone comes from. That constant is gone rather than kept beside a comment
+   * saying it is unused: the two basin URLs live in `KMZ_URL` in
+   * `functions/api/nhc/genesis.js`, which is the only file that fetches them,
+   * and a behavioural constant nothing reads is a fact waiting to be believed.
+   *
+   * IT IS THE SAME FORECASTER RUN, published on a different path and published
+   * better. `tools/gtwo-compare.mjs` ran both against all 72 hourly snapshots
+   * on the archive branch: every area, every vertex and every probability
+   * agree, worst disagreement 4.5e-10 degrees, issue stamps matching to the
+   * minute every hour.
+   *
+   * ONE POLYGON STILL CARRIES BOTH HORIZONS, so two-day and seven-day come
+   * from one shape, exactly as before. What is new is that the document also
+   * carries NHC's own name for each area, the forecaster's paragraph, and a
+   * disturbance number joining an area to its current-position point.
+   *
+   * ==> AND A QUIET BASIN NOW SAYS SO IN WORDS. <== The whole held apparatus
+   * in that route exists because an empty FeatureCollection is UNSTAMPED:
+   * "NHC is watching nothing" and "NHC's layer is broken" were the same bytes.
+   * The KMZ carries a dated sentence, so they are not. The apparatus still
+   * stands and now fires on a narrower trigger — no areas AND no explanation —
+   * which is a shape nobody has yet seen NHC publish.
+   */
 
-  /* ==> LAYER 2 IS NOT FETCHED, AND THAT REVERSED THE DESIGN. <==
+  /* ==> THE LAYER-2 ANCHOR PROBLEM IS SOLVED BY THE SOURCE, NOT BY US. <==
    *
-   * The plan was to hang each percentage on NHC's own label anchor rather than
-   * on a centroid we computed — their point, their number. Then the real bytes
-   * landed on the archive branch (2026-08-09 04:24Z) and the layers do not
-   * correspond:
+   * The original plan was to hang each percentage on NHC's own label anchor
+   * rather than on a centroid we computed — their point, their number. Real
+   * bytes killed it (archive branch, 2026-08-09 04:24Z): five polygons on
+   * layer 3 against three points on layer 2, because layer 2 is the CURRENT
+   * LOCATION OF A DISTURBANCE and an area drawn for a wave that has not
+   * organised yet has no current location to publish. Two of the five had no
+   * point, and one of those was the second-likeliest area on the board.
    *
-   *   layer 3  5 polygons   Atlantic 40%, Atlantic 20%, Pacific 80%,
-   *                         Pacific 20%, Pacific 50%
-   *   layer 2  3 points     Atlantic 20%, Pacific 80%, Pacific 50%
-   *
-   * Layer 2 is the CURRENT LOCATION OF A DISTURBANCE, which only some watched
-   * areas have — an area drawn for a wave that has not organised yet has no
-   * current location to publish. Two of the five had no point at all, and the
-   * two without were the 40% Atlantic and the 20% Pacific, so labelling from
-   * anchors would have left the SECOND-LIKELIEST area on the board unlabelled
-   * while a 20% one carried a number.
-   *
-   * Worse, they cannot be matched. Anchor objectid 1 carries "20% / Low" —
-   * polygon objectid 2's attributes — while sitting at 28.5°W, inside polygon
+   * Worse, they could not be matched. Anchor objectid 1 carried "20% / Low" —
+   * polygon objectid 2's attributes — while sitting at 28.5°W inside polygon
    * objectid 1's footprint. Attribute matching and nearest-centroid matching
-   * disagree with each other on the very first feature, so either one would
-   * silently put one area's probability on another area's shape. That is a §5
-   * failure that looks perfect on screen.
+   * disagreed on the very first feature, so either would have silently printed
+   * one area's probability on another area's shape: a §5 failure that looks
+   * perfect on screen.
    *
-   * So the label is drawn at OUR centroid, from the SAME feature the
-   * probability came off. It is not where NHC would have put it, and it cannot
-   * be wrong about which area it belongs to. The archive still snapshots layer
-   * 2 as evidence — if NHC ever publishes one point per area, this decision is
-   * worth revisiting with fresh bytes, and the bytes will be there. */
-
-  /** ==> §45.2's `[VERIFY]` ON `basin`, ANSWERED — AND IT CHANGES NOTHING. <==
-   *  Live response 2026-08-09: five areas, `basin` is `"Atlantic"` or
-   *  `"Pacific"` and nothing else. Central Pacific is NOT distinguished — the
-   *  80% area sat at 140-156°W, which is Central Pacific by every other
-   *  reckoning in this app, and NHC still called it `"Pacific"`.
+   * THE KMZ PUBLISHES THE JOIN. Every placemark — polygon and point alike —
+   * carries a `Disturbance` number, so the pairing is stated by NHC rather
+   * than inferred by us, and the failure above cannot happen. `_gtwo-kml.js`
+   * reads it; `tools/test-gtwo-kml.mjs` pins the case where the point belongs
+   * to the SECOND area rather than the first.
    *
-   *  This is recorded rather than acted on. `lib/genesis.js` derives the
-   *  canonical basin from the polygon's own centroid, so an unexpected value
-   *  here cannot drop, misfile or mistitle an area — there is no branch for it
-   *  to take. If NHC starts spelling `"Central Pacific"` tomorrow, nothing
-   *  needs to change. That is the point of not depending on it. */
+   * The label is still drawn at our own centroid. That is now a choice about
+   * placement rather than a workaround for a missing join, and it holds
+   * because a centroid comes off the same feature the probability came off and
+   * therefore cannot belong to the wrong area.
+   */
 
-  /** `maxRecordCount` on this service is 2000 and a busy season peaks in the
-   *  single digits, so paging will never be needed. Asserted rather than
-   *  assumed: if a response ever comes back at exactly this length, it was
-   *  truncated and the parser says so instead of quietly showing a subset. */
+  /** A ceiling on absurdity, and it guards a different thing than it was
+   *  written for. ArcGIS had a `maxRecordCount` of 2000 and would silently
+   *  return a subset at exactly that number; a KMZ has no paging and cannot
+   *  truncate that way, so the specific mechanism is gone. What remains true
+   *  is that a busy season peaks in the single digits, so an outlook claiming
+   *  thousands of watched areas is a source that has changed shape —
+   *  `data/genesis.js` says so rather than drawing it. */
   maxRecords: 2000,
 
   /* --- the risk vocabulary ----------------------------------------------- */

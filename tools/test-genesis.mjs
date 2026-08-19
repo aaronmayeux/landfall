@@ -298,6 +298,65 @@ ok(
 );
 ok(areaTitle(NaN, 10) === 'Watched area', 'an unusable position still gets a name');
 
+section('...but NHC\u2019s own name wins when NHC publishes one');
+
+/* ==> THE OUTLOOK COMES FROM THE KMZ NOW, AND IT CARRIES A NAME. <== GIS layer
+ * 3 published none, which is why `areaTitle()` above exists at all. The KMZ
+ * carries the forecaster's own wording attached to the polygon it describes,
+ * so the computed description is the FALLBACK rather than the answer, and
+ * `titleIsOurs` is how the panel knows which of the two it is showing. */
+{
+  const named = normalizeNhcAreas({
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [[[-45, 10], [-40, 10], [-40, 15], [-45, 15], [-45, 10]]] },
+      properties: {
+        objectid: 'atl-1', prob7day: '40%', risk7day: 'Medium',
+        nhcTitle: 'South-Southwest of Mexico',
+        discussion: '1. South-Southwest of Mexico: An area of low pressure...',
+      },
+    }],
+  });
+  ok(named[0].title === 'South-Southwest of Mexico', `NHC\u2019s name heads the area — got ${named[0].title}`);
+  ok(named[0].titleIsOurs === false, 'and the object says the name is not ours');
+  ok(
+    named[0].discussion === '1. South-Southwest of Mexico: An area of low pressure...',
+    'the forecaster\u2019s paragraph rides along verbatim'
+  );
+
+  /* A DOCUMENT WITHOUT A NAME MUST NOT PRODUCE A BLANK HEADING. An older
+   * snapshot, a template change, or a discussion that did not match the shape
+   * `titleFromDiscussion` expects all land here, and the centroid description
+   * is still an honest answer. */
+  const unnamed = normalizeNhcAreas({
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [[[-45, 10], [-40, 10], [-40, 15], [-45, 15], [-45, 10]]] },
+      properties: { objectid: 'atl-1', prob7day: '40%', risk7day: 'Medium' },
+    }],
+  });
+  ok(unnamed[0].title === 'Central Atlantic', `no name published, so ours is used — got ${unnamed[0].title}`);
+  ok(unnamed[0].titleIsOurs === true, 'and the object says so, because the panel caveats ours and not NHC\u2019s');
+  ok(unnamed[0].discussion === null, 'a missing paragraph is null, never an empty string a panel would frame');
+
+  /* ==> WHITESPACE IS NOT A NAME. <== A field present but blank would sail
+   * through a truthiness check on the property and put an empty heading on the
+   * panel, which reads as a section that failed to load rather than as an area
+   * NHC did not name. */
+  const blank = normalizeNhcAreas({
+    type: 'FeatureCollection',
+    features: [{
+      type: 'Feature',
+      geometry: { type: 'Polygon', coordinates: [[[-45, 10], [-40, 10], [-40, 15], [-45, 15], [-45, 10]]] },
+      properties: { objectid: 'atl-1', nhcTitle: '   ', discussion: '  ' },
+    }],
+  });
+  ok(blank[0].title === 'Central Atlantic', 'a blank name falls back rather than heading the panel with nothing');
+  ok(blank[0].discussion === null, 'and a blank paragraph is null');
+}
+
 /* ---------------------------------------------------------------------------
  * THE REAL NHC PAYLOAD
  * ------------------------------------------------------------------------- */

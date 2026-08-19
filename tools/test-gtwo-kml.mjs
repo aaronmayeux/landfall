@@ -23,10 +23,10 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { kmlFromKmz, kmzEntryNames } from '../lib/kmz.js';
+import { kmlFromKmz, kmzEntryNames } from '../functions/api/nhc/_kmz.js';
 import {
   parseGtwoKml, toAreaCollection, parseIssuedAt, parseBasin, titleFromDiscussion,
-} from '../lib/gtwo-kml.js';
+} from '../functions/api/nhc/_gtwo-kml.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const sample = (n) => fs.readFileSync(path.join(ROOT, 'samples/genesis/gtwo', n), 'utf8');

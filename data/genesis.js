@@ -120,10 +120,18 @@ async function fetchNhc(outlooks) {
      * the parser. */
     const { json, fetchedAt, relayStale, relayHeld } = await fetchFeed(nhcUrl());
 
-    /* ArcGIS reports failure as HTTP 200 with an `error` body, and the relay
-     * forwards it verbatim precisely so this line can exist. Reading it as a
-     * FeatureCollection with no features would turn a refused query into a
-     * published all-clear. */
+    /* ==> KEPT AFTER THE SOURCE CHANGED, AND WORTH SAYING WHY. <== This guard
+     * was written for ArcGIS, which reported failure as HTTP 200 with an
+     * `error` body that the relay forwarded verbatim. The outlook comes from
+     * NHC's KMZ now and that convention is gone — the relay refuses an
+     * unreadable document outright rather than passing it on (§4.3), so
+     * nothing upstream produces this shape today.
+     *
+     * It stays because what it asserts is not about ArcGIS: a body carrying an
+     * error is never a published all-clear. Deleting it would leave the
+     * shape-check below as the only thing between an unexpected payload and
+     * "nothing is being watched", and §45.5 is the one place in this app where
+     * a redundant guard is cheaper than a clever one. */
     if (json && json.error) {
       return slot('unavailable', [], { fetchedAt, reason: 'the outlook query was refused' });
     }
@@ -142,9 +150,14 @@ async function fetchNhc(outlooks) {
 
     const areas = normalizeNhcAreas(json);
 
-    /* TRUNCATION IS AN OUTAGE, NOT A SHORT LIST. `maxRecordCount` is 2000 and
-     * a busy season peaks in single digits, so hitting it exactly means the
-     * response was cut and we are looking at a subset without being told. */
+    /* TRUNCATION IS AN OUTAGE, NOT A SHORT LIST — and this now guards against
+     * a different thing than it was written for. ArcGIS had a `maxRecordCount`
+     * of 2000 and would silently return a subset at exactly that number. A KMZ
+     * has no paging and cannot truncate that way, so the specific mechanism is
+     * gone. What the check still buys is a ceiling on absurdity: a busy season
+     * peaks in single digits, so an outlook claiming thousands of watched
+     * areas is a source that has changed shape, and drawing it would be worse
+     * than saying so. */
     if (areas.length >= GENESIS.maxRecords) {
       return slot('unavailable', [], { fetchedAt, reason: 'the outlook response was truncated' });
     }
