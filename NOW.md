@@ -46,9 +46,14 @@ written brief naming candidates, what was measured, and what still needs glass.
 
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
-- **Pass 4 — JTWC's per-storm `fix.txt`.** Never fetched. One entry added to
-  `tools/archive-fetch.mjs`, then a wait for the hour (§18.3 — a session cannot
-  trigger the runner itself). See KNOWN AND ACCEPTED.
+- **Pass 4 — JTWC's per-storm products. THE FETCH IS IN; THE BYTES ARE NOT.**
+  `latest/jtwc/` now archives three files a storm — `…fix.txt`, `.tcw` and
+  `.kmz.b64` — scraped from the links JTWC's own RSS publishes. Nothing has read
+  one yet: a session cannot trigger the runner (§18.3), so the next one starts
+  with `git show origin/archive:latest/jtwc/wp1726.tcw` and answers the single
+  question in KNOWN AND ACCEPTED — **does any of it carry wind extent, and does
+  it carry it for PAST hours.** If none does, delete this and write the negative
+  into KNOWN AND ACCEPTED as settled.
 
 ---
 
@@ -351,7 +356,11 @@ are ones already near land, which is when radar matters most.
   no cone, no footprints and no past track (`lib/jtwc-wind.js` says so). The one
   unexamined candidate is JTWC's per-storm `fix.txt`, which this project has
   never fetched — whether it carries wind extent or only positions is unknown.
-  **This is PASS 4.**
+  **This is PASS 4, and it is now three candidates rather than one:** the fix
+  bulletin is Dvorak positions by its own title, so the `.tcw` plot file and the
+  `.kmz` overlay are the likelier homes for a radius. All three are archived
+  hourly under `latest/jtwc/`. A formation alert gets the `.tcw` and `.kmz` and
+  no fix bulletin — measured, not assumed.
   Stitching a history from our own hourly snapshots would make what a user sees
   depend on how long their phone happened to be open, which is the exact bug
   `data/ended-track.js` exists to fix.

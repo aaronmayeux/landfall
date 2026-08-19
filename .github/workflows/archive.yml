@@ -134,10 +134,11 @@ jobs:
             case "$base" in
               *.error.txt) continue ;;
               # A directory would blow up the plain `cp` below and take the
-              # whole job with it under `set -e`. geometry/ and ships/ have
-              # their own rules immediately after this loop.
+              # whole job with it under `set -e`. geometry/, ships/ and jtwc/
+              # have their own rules immediately after this loop.
               geometry) continue ;;
               ships) continue ;;
+              jtwc) continue ;;
             esac
             cp "$f" "/tmp/arc/latest/$base"
           done
@@ -191,6 +192,31 @@ jobs:
               cp "$f" "/tmp/arc/latest/ships/$(basename "$f")"
             done
           fi
+
+          # ==> jtwc/ FOLLOWS ships/ EXACTLY. <== Rebuilt in latest/ because it
+          # mirrors the CURRENT storm set — the filenames are ATCF ids, so
+          # carrying them forward would leave last season's typhoon sitting
+          # beside this hour's with nothing saying which is which. Kept in the
+          # 72-hour history because here the question really is "when did this
+          # change": whether a wind radius appears only near landfall, or at
+          # every synoptic hour, is answerable from consecutive runs and from
+          # nothing else. Three small text/zip files a storm, so the window
+          # costs a few megabytes.
+          #
+          # ZERO FILES IS A REAL ANSWER, NOT A FAULT. JTWC warns on nothing at
+          # all for stretches of the year, and its RSS says so in plain text.
+          rm -rf /tmp/arc/latest/jtwc
+          mkdir -p /tmp/arc/latest/jtwc
+          if [ -d /tmp/new/jtwc ]; then
+            for f in /tmp/new/jtwc/*; do
+              [ -f "$f" ] || continue
+              case "$(basename "$f")" in
+                *.error.txt) continue ;;
+              esac
+              cp "$f" "/tmp/arc/latest/jtwc/$(basename "$f")"
+            done
+          fi
+          echo "latest/jtwc holds $(ls -1 /tmp/arc/latest/jtwc | wc -l) file(s)"
 
           rm -rf /tmp/arc/latest/geometry
           mkdir -p /tmp/arc/latest/geometry

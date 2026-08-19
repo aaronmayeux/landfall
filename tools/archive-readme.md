@@ -24,6 +24,8 @@ This branch is what it brings back.
 | `latest/nhc-genesis-anchors.geojson` | NHC's own label anchors for those polygons |
 | `latest/jtwc-abpw.txt` | **§45 genesis** — the JTWC Significant Tropical Weather Advisory, plain text |
 | `latest/geometry/` | **Per-storm GDACS polygons**, one file per current cyclone — cone, wind bands, the pre-merged swath, the centre dots, and the `Line_*` track segments whose `forecast` flag splits past from future. `latest/` only; see below |
+| `latest/ships/` | **§47 the environment ribbon** — the SHIPS diagnostic per storm per synoptic hour. Roughly half are expected to be missing: two slots are asked for and usually only the older one is published yet |
+| `latest/jtwc/` | **Per-storm JTWC products**, three per storm — the Satellite Fix Bulletin (`…fix.txt`), the Navy's own plot file (`.tcw`) and the Google Earth overlay (`.kmz.b64`). There to answer one open question: does JTWC publish wind extent for a storm anywhere, and does it publish it for past hours |
 | `history/<UTC hour>/` | Hourly snapshots of everything above **except `geometry/`**, rolling 72-hour window |
 
 ## `latest/geometry/` plays by two different rules, on purpose

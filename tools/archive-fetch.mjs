@@ -433,6 +433,86 @@ function shipsSources(currentStormsJson, now = Date.now()) {
 }
 
 /* ---------------------------------------------------------------------------
+ * JTWC PER-STORM PRODUCTS — THE THREE FILES THIS PROJECT HAS NEVER FETCHED.
+ *
+ * ==> THE QUESTION THEY EXIST TO CLOSE. <== `lib/jtwc-wind.js` says JTWC's
+ * warning is text with no cone, no footprints and no past track, and GDACS was
+ * measured on 2026-08-18 to publish no past wind shapes at all — every band on
+ * every live GDACS storm dated at or after its bulletin. That leaves a global
+ * storm with no way to answer "did dangerous wind already reach my house",
+ * which NHC storms answer from layer 13. If any per-storm JTWC product carries
+ * wind extent, that gap has a floor. If none does, the gap is a fact and the
+ * search stops.
+ *
+ * ==> ALL THREE AT ONCE, DELIBERATELY. <== §18.5 prices a guess through this
+ * runner at an hour. `fix.txt` is the one the backlog named and it is the
+ * WEAKEST candidate of the three — a Satellite Fix Bulletin is Dvorak
+ * positions and intensity by its own title. The `.tcw` is the Navy's own
+ * machine-readable plot file for the Joint METOC Viewer and the `.kmz` is the
+ * storm as actual drawn shapes, so they are where a wind radius would live if
+ * one lives anywhere. Three small files a storm settles it in one cycle
+ * instead of three sessions.
+ *
+ * ==> THE ADDRESSES ARE JTWC'S OWN, SCRAPED FROM THE RSS THIS RUN JUST
+ * FETCHED. <== Same rule as the GDACS geometry block below: a URL this script
+ * INVENTS that 404s is indistinguishable in the manifest from a product JTWC
+ * genuinely does not publish. The RSS links these per storm, and that link
+ * also does the filtering for free — the Tropical Cyclone Formation Alert on
+ * 90E is given a `.tcw` and a `.kmz` and NO fix bulletin, which is a real
+ * finding about what an unwarned system carries and would have looked like a
+ * broken guess if the name had been built here.
+ * ------------------------------------------------------------------------ */
+
+/** The published per-storm products worth having, and how to name them here.
+ *  `.kmz` is a zip and MUST be flagged binary — `text()` would decode it as
+ *  UTF-8 and hand back a plausible-looking length of replacement characters. */
+const JTWC_PRODUCTS = Object.freeze([
+  { suffix: 'fix.txt', ext: 'fix.txt', binary: false, what: 'Satellite Fix Bulletin' },
+  { suffix: '.tcw', ext: '.tcw', binary: false, what: 'JMV 3.0 data' },
+  { suffix: '.kmz', ext: '.kmz.b64', binary: true, what: 'Google Earth overlay' },
+]);
+
+/** Storms to pull products for. JTWC peaks around a dozen worldwide; eight is
+ *  well past any real hour and caps a runaway feed at 24 fetches. */
+const JTWC_MAX = 8;
+
+/** Absolute product links in the RSS body. The alternation is what filters:
+ *  `web.txt`, `prog.txt`, `.gif` and the satellite JPEGs all fail it. The
+ *  four-digit ATCF id is the storm — `wp1726` is the 17th West Pacific system
+ *  of 2026. */
+const JTWC_PRODUCT_RE =
+  /https:\/\/www\.metoc\.navy\.mil\/jtwc\/products\/([a-z]{2}\d{4})(fix\.txt|\.tcw|\.kmz)/gi;
+
+function jtwcStormSources(rssText) {
+  const seen = new Set();
+  const byStorm = new Map();
+  for (const m of String(rssText || '').matchAll(JTWC_PRODUCT_RE)) {
+    const id = m[1].toLowerCase();
+    const suffix = m[2].toLowerCase();
+    const key = `${id}${suffix}`;
+    /* The RSS repeats a storm's block when it sits in two basin items. */
+    if (seen.has(key)) continue;
+    seen.add(key);
+    if (!byStorm.has(id) && byStorm.size >= JTWC_MAX) continue;
+    if (!byStorm.has(id)) byStorm.set(id, []);
+    const spec = JTWC_PRODUCTS.find((p) => p.suffix === suffix);
+    if (!spec) continue;
+    byStorm.get(id).push({
+      name: `jtwc/${id}${spec.ext}`,
+      url: m[0],
+      binary: spec.binary,
+      note:
+        `JTWC ${spec.what} for ATCF ${id.toUpperCase()}, linked from this ` +
+        `run's jtwc.rss. Archived to settle one question and only one: does ` +
+        `any per-storm JTWC product carry WIND EXTENT — a radius, a quadrant, ` +
+        `a drawn band — and does it carry it for PAST hours as well as ` +
+        `forecast ones. Everything else in here is a bonus.`,
+    });
+  }
+  return [...byStorm.values()].flat();
+}
+
+/* ---------------------------------------------------------------------------
  * PER-STORM GEOMETRY — DERIVED, NOT LISTED
  *
  * ==> THE ONLY PART OF THIS FILE THAT CANNOT BE A CONSTANT. <== Every source
@@ -741,6 +821,7 @@ const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
 mkdirSync(join(OUT, 'geometry'), { recursive: true });
 mkdirSync(join(OUT, 'ships'), { recursive: true });
+mkdirSync(join(OUT, 'jtwc'), { recursive: true });
 
 const results = [];
 
@@ -833,6 +914,23 @@ try {
 } catch (err) {
   console.log(
     `\nno SHIPS this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
+/* JTWC per-storm products. Its own try block like every other derived phase:
+ * this is an open research question, and an experiment must never be able to
+ * cost us a track or a polygon. Reads the RSS that was WRITTEN rather than a
+ * body held in memory, so it derives from exactly the bytes a session reads.
+ * A run deriving ZERO URLs is a real answer when JTWC has no active warnings —
+ * the Southern Hemisphere block says so in as many words for half the year. */
+try {
+  const rss = readFileSync(join(OUT, 'jtwc.rss'), 'utf8');
+  const derived = jtwcStormSources(rss);
+  console.log(`\nderived ${derived.length} JTWC per-storm product URL(s) from jtwc.rss`);
+  for (const src of derived) await run(src);
+} catch (err) {
+  console.log(
+    `\nno JTWC per-storm products this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 
