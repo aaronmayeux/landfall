@@ -2739,11 +2739,11 @@ tells them.
 **==> THE INPUT IS POINTS, AND EVERY METRE OF COAST PAINTED AROUND ONE IS OURS
 RATHER THAN THE MODEL'S. <==** NHC publishes a **reach** — a named stretch of
 coast that IS the subject of the forecast — so fattening its breakpoint chord
-reconstructs geometry NHC meant. GDACS publishes a **town** and a number. So
-`GDACS_SURGE.bandHalfWidthKm` is 5 km against surge's 8 and watch/warning's 50:
-enough to reach the shoreline the town sits on, not enough to claim anything
-about the next bay. `pointRingDeg` makes the point a ring `areaSelect` can take;
-the pad is what sets the reach.
+reconstructs geometry NHC meant. GDACS publishes a **town** and a number.
+`GDACS_SURGE.townReachKm` is how far that number is allowed to travel along the
+coast, and every metre of it is ours. `pointRingDeg` makes the point a ring
+`areaSelect` can take; the reach is what actually decides how much coast is
+selected.
 
 **==> NOTHING IS INTERPOLATED BETWEEN TOWNS, AND A COAST THAT JOINS UP DOES SO
 BY OVERLAP RATHER THAN BY DRAWING. <==** A continuous ramp from one town's
@@ -2753,14 +2753,9 @@ the JRC never made for ground it never ran on. Each town paints its own
 shoreline; where two corridors overlap the deeper wins on the sort key. Nothing
 in this file ever states a height for a stretch of coast no town reports.
 
-**==> AT 5 km THE STRIPES DO NOT JOIN, AND THAT IS THE OPEN DEFECT. <==**
-Measured on Lala's 47 towns, 2026-08-19: median distance to a nearest
-neighbour **3.8 km**, worst **24.2 km**. A 5 km half-width reaches 10 km, and
-single-link chaining at 10 km joins **8 of 47** — the towns are clumped rather
-than evenly spread, so the result is several short disconnected fragments and
-isolated stubs down one island. The fix and its measurements are in
-`SPEC-NEXT.md` §51.7. **This paragraph describes what ships today; it is not a
-description of what the layer should look like.**
+**==> HOW FAR ONE TOWN'S NUMBER TRAVELS IS §51.7. <==** It is 13 km of reach,
+and it is the single dial that decides whether this layer reads as a coast or
+as a scatter. The measurements that set it are there.
 
 **The select memo and the decode contract are §50.11's**, unchanged: keyed on
 the town set, refreshed only by a settled camera, never held when no coastline
@@ -2822,4 +2817,51 @@ answers while one is (see `NOW.md`, HELD FOR WEATHER).
 and `tools/test-surge-locations.mjs` asserts that an NHC storm yields null. That
 assertion guards a decision, not a limitation — a change that makes it pass a
 value has crossed this line and should be treated as reopening a settled call.
+
+### 51.7 The reach — how far one town's number travels along the coast
+
+`GDACS_SURGE.townReachKm`, 13 km. The corridor half-width `map/layers/gdacs-surge-coast.js`
+hands `areaSelect`. **It is the whole dial of §51.4** — too small and 47 towns
+paint 47 disconnected flecks, too large and the stripe covers coast the model
+never ran on. Neither failure throws, logs, or looks broken.
+
+**==> THE NUMBER IS SET BY WHERE THE GAPS ACTUALLY ARE. <==** Computed from
+Lala's 47 towns (`samples/surge-locations/getlocations-lala-1001303.json`) with
+`kmBetween()`, not estimated:
+
+| Gap | Distance |
+|---|---|
+| Median distance to a nearest neighbour | **3.8 km** |
+| Widest gap **inside** a run of coast (Mahaiula–Kahaluu) | **24.2 km** |
+| Milolii–Waiahukini — south Kona to Kau, no towns between | **33.5 km** |
+| Royal Gardens–Hilea — across the south of the island | **57.7 km** |
+| Narrowest channel between two islands (Kukuihaele → Hawaiian Village) | **123.7 km** |
+
+13 km of reach puts 26 km between two town centres. That crosses every gap
+inside a coast and cannot approach the 33.5 km stretch, let alone the channel.
+**Lala goes from 47 flecks to five continuous stripes.** The margin is on town
+centres alone — `pointRingDeg` adds roughly another kilometre and is
+deliberately not counted, so the number does not depend on the size of a shape
+that is a formality.
+
+**==> THE CEILING IS THE EMPTY COAST, NOT THE CHANNEL. <==** The two long
+stretches of the Big Island's south shore carry no modelled town at all. They
+stay unpainted, because painting them would state a height for ground the JRC
+never ran on (§5). So the usable window is **13 to 16 km** — far narrower than
+the 123.7 km channel suggests.
+
+**`tools/test-surge-locations.mjs` computes both edges of that window from the
+sample rather than hard-coding them**, so the first continental coast this meets
+will say whether the window still exists. Verified to fail at 5, at 12, and at
+17 and above.
+
+**A widest-nearest-neighbour distance is not the widest gap a chain crosses.**
+The fix was originally specified at 12 km on that reading, and 12 km is 210 m
+short of joining Mahaiula to Kahaluu. Whoever revisits this measures the chain.
+
+**==> AND THE ARITHMETIC IS STRAIGHT-LINE WHILE THE COAST IS NOT. <==** Two
+towns 24 km apart across a bay may still not join, because the shoreline between
+them is longer than the line between them. That errs toward fragments rather
+than toward over-claiming, which is the safe direction — but it means the
+painted result can be patchier than the table above predicts.
 

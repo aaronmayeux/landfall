@@ -103,14 +103,16 @@ does the cage's storm ridge rise in one motion rather than crawling. Telemetry
 answers it too — `longtask_n` on a `windows` session should be back in single
 digits.
 
-**THE COASTAL LAYER HAS A KNOWN DEFECT AND THE FIX IS SPECIFIED. BUILD §51.7
-FIRST.** `SPEC-DATA.md` §51.4 names it, `SPEC-NEXT.md` §51.7 fixes it, and the
-measurements are in the second. In one line: the 5 km corridor is too narrow
-for how the towns actually cluster — chaining Lala's 47 at 10 km joins only 8
-of them — so what draws today is disconnected fragments rather than a coast.
-**One constant, 5 → ~12 km, plus its reasoning.** Then judge on glass whether a
-continuous Big Island stripe reads as a coast or as too much; the dial is that
-one number.
+**THE SURGE STRIPE NOW REACHES 13 km AND THAT IS THE DIAL.** `SPEC-DATA.md`
+§51.4. On the archive's towns this turns 47 flecks into five continuous
+stripes, and the measured window for the constant is 13 to 16 km — below 13 a
+town is stranded, above 16 the stripe starts painting coast GDACS modelled
+nothing on. Judge: does a continuous Big Island stripe read as a coast, or as
+one town's number claiming too much ground. **Also judge the GAPS**, which is
+the harder half — the two long empty stretches of the south shore stay
+unpainted on purpose, and the question is whether a reader takes that as "not
+modelled" or as "safe here". If it reads as safe, that is a §5 bug and the fix
+is wording somewhere, not a wider corridor.
 
 Still worth judging on the same pass: whether the teal-to-magenta ramp is
 distinguishable from NHC's blue-to-purple at a glance.

@@ -15,9 +15,17 @@
  * stretch of coast that IS the subject of the forecast — so `coast-band.js`
  * fattening a breakpoint chord is reconstructing geometry NHC meant. GDACS
  * publishes a TOWN with a height. There is no reach; there is a point and a
- * number. So `GDACS_SURGE.bandHalfWidthKm` is 5 km rather than surge's 8 or
- * watch/warning's 50 — enough to reach the shoreline the town sits on, and not
- * enough to make a claim about the next bay.
+ * number. `GDACS_SURGE.townReachKm` is how far one town's number is allowed to
+ * travel along the coast, and every metre of it is ours.
+ *
+ * ==> IT IS 13 km, AND THE NUMBER IS SET BY THE GAPS BETWEEN TOWNS. <== The
+ * constant carries the measured ladder. In one line: the widest gap inside a
+ * run of Hawaiian coast is 24.2 km and the narrowest channel between two
+ * islands is 123.7 km, so a 26 km reach joins a coast and cannot cross water.
+ * At the 5 km this shipped with, Lala's 47 towns painted 47 disconnected
+ * flecks; at 13 km they paint five continuous stripes. The stripes still END
+ * where the towns end — the two long empty stretches of the Big Island's south
+ * coast stay empty, because GDACS modelled nothing there.
  *
  * ==> AND NOTHING IS INTERPOLATED BETWEEN TOWNS. <== The first design drew a
  * continuous ramp along the coast from one town's height to the next. It was
@@ -137,7 +145,7 @@ function decorated(map, places) {
      * discarded as too short, and the call took the `degenerate-area` exit for
      * every town. Between this and the wrapper above, this layer could not
      * paint a single metre of coast between shipping and 2026-08-19. */
-    const { runs } = areaSelect([ringAround(p.lon, p.lat)], rings, GDACS_SURGE.bandHalfWidthKm);
+    const { runs } = areaSelect([ringAround(p.lon, p.lat)], rings, GDACS_SURGE.townReachKm);
     if (!runs.length) continue;
 
     features.push({

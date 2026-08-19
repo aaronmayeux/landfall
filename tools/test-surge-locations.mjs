@@ -45,7 +45,7 @@ const {
 } = await import(path.join(ROOT, 'lib/surge-locations.js'));
 const { projectLocations, locationsUrl, hoursFrom } =
   await import(path.join(ROOT, 'functions/api/gdacs/surge.js'));
-const { GDACS_SURGE } = await import(path.join(ROOT, 'config/constants.js'));
+const { GDACS_SURGE, COAST_BAND } = await import(path.join(ROOT, 'config/constants.js'));
 
 let failures = 0;
 const ok = (label) => console.log(`  \u2713 ${label}`);
@@ -180,6 +180,122 @@ eq('0.48 m in imperial', formatSurgeHeight(0.48, 'imperial'), '2 ft');
 eq('a negligible height gets no figure', formatSurgeHeight(0.04, 'metric'), null);
 eq('a missing height gets no figure', formatSurgeHeight(null, 'metric'), null);
 truthy('the negligible floor is the constant, not a literal', GDACS_SURGE.negligibleM === 0.1);
+
+/* ---------------------------------------------------------------------------
+ * THE CORRIDOR REACH — §51.4
+ *
+ * ==> THE COAST STRIPE IS ONE NUMBER AND THIS IS THE ONLY PLACE THAT NUMBER
+ * MEETS REAL TOWN POSITIONS. <== `GDACS_SURGE.townReachKm` decides whether 47
+ * points become a coast or a scatter of flecks. Both failure modes are silent:
+ * too small paints disconnected stubs, too large paints coast the model never
+ * ran on — and neither throws, neither logs, and the layer renders happily in
+ * both cases. A test-tube assertion on the constant's VALUE would only restate
+ * the value. So everything below is computed from Lala's actual town positions
+ * at run time, which means it keeps its meaning if the sample is ever replaced
+ * by a better one.
+ *
+ * ==> BOTH ASSERTIONS WERE VERIFIED TO FAIL. <== Setting the constant back to
+ * 5 breaks the first; setting it to 20 (which reaches 40 km, past the 33.5 km
+ * stretch where GDACS modelled nothing) breaks the second.
+ * ------------------------------------------------------------------------- */
+console.log('\ncorridor reach — the number that decides whether it reads as a coast');
+
+/** Single-link chaining: how many separate runs `threshold` km of reach joins
+ *  the towns into. This is the geometry the corridor overlap performs — two
+ *  towns whose corridors touch paint one continuous stripe. */
+const chainGroups = (places, thresholdKm) => {
+  const parent = places.map((_, i) => i);
+  const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  for (let i = 0; i < places.length; i++) {
+    for (let j = i + 1; j < places.length; j++) {
+      const d = kmBetween(places[i].lon, places[i].lat, places[j].lon, places[j].lat);
+      if (d > thresholdKm) continue;
+      const a = find(i);
+      const b = find(j);
+      if (a !== b) parent[a] = b;
+    }
+  }
+  return new Set(places.map((_, i) => find(i))).size;
+};
+
+/* ==> THE REACH IS THE HALF-WIDTH, SO TWO TOWNS JOIN AT TWICE IT. <== The
+ * point ring adds about another kilometre on top and is deliberately NOT
+ * counted here — the margin has to survive without it. */
+const joinKm = GDACS_SURGE.townReachKm * 2;
+
+/** The widest gap the stripe MUST cross: the largest distance any town has to
+ *  its own nearest neighbour. Below this, a town somewhere is left stranded. */
+const mustCrossKm = Math.max(...lala.places.map((a, i) =>
+  Math.min(...lala.places
+    .filter((_, j) => j !== i)
+    .map((b) => kmBetween(a.lon, a.lat, b.lon, b.lat)))));
+
+/** The narrowest gap the stripe MUST NOT cross: the next distance above that
+ *  which would merge two separate runs of coast. On Lala this is the empty
+ *  stretch between Milolii and Waiahukini, where GDACS modelled no town at
+ *  all — painting across it states a height for ground the JRC never ran on,
+ *  which is the one thing this layer may not do (§5).
+ *
+ *  Found by walking every pair in ascending order and taking the first merge
+ *  that happens above `mustCrossKm`. That is the same single-link walk as
+ *  `chainGroups`, asked for the edge instead of the count. */
+const mustNotCrossKm = (() => {
+  const pairs = [];
+  for (let i = 0; i < lala.places.length; i++) {
+    for (let j = i + 1; j < lala.places.length; j++) {
+      pairs.push([kmBetween(lala.places[i].lon, lala.places[i].lat,
+        lala.places[j].lon, lala.places[j].lat), i, j]);
+    }
+  }
+  pairs.sort((a, b) => a[0] - b[0]);
+  const parent = lala.places.map((_, i) => i);
+  const find = (x) => (parent[x] === x ? x : (parent[x] = find(parent[x])));
+  for (const [d, i, j] of pairs) {
+    const a = find(i);
+    const b = find(j);
+    if (a === b) continue;
+    if (d > mustCrossKm) return d;
+    parent[a] = b;
+  }
+  return Infinity;
+})();
+
+const runsAtReach = chainGroups(lala.places, joinKm);
+const runsAtFive = chainGroups(lala.places, 10);
+
+/* ==> THE WHOLE DESIGN IS THAT THE REACH SITS BETWEEN THOSE TWO NUMBERS. <==
+ * On Lala they are 24.2 km and 33.5 km, so there is a real window and 26 km is
+ * inside it. On a continental coast the window may be narrower or may not
+ * exist, and this line is what will say so. */
+truthy(
+  `the reach crosses every gap inside a coast (${mustCrossKm.toFixed(1)} km) ` +
+  `at ${joinKm} km`,
+  joinKm > mustCrossKm
+);
+
+truthy(
+  `and stops short of the empty stretch GDACS modelled nothing on ` +
+  `(${mustNotCrossKm.toFixed(1)} km)`,
+  joinKm < mustNotCrossKm
+);
+
+truthy(
+  `so 47 towns read as ${runsAtReach} coasts rather than the ${runsAtFive} ` +
+  `flecks the 5 km this shipped with produced`,
+  runsAtReach < runsAtFive
+);
+
+/* The channel is the outer guard rail and it is enormous — 123.7 km, Hawaii to
+ * Maui. A reach that ever approaches half of it is painting open ocean. */
+truthy(
+  'the reach is nowhere near the narrowest channel between two islands',
+  joinKm < 123.7 / 2
+);
+
+truthy(
+  'and it stays well under the watch/warning band, which covers areas rather than points',
+  GDACS_SURGE.townReachKm < COAST_BAND.halfWidthKm / 3
+);
 
 /* ---------------------------------------------------------------------------
  * NEAREST, AND ITS CEILING

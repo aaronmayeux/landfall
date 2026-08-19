@@ -14,11 +14,12 @@ retired address and must never be reused (§12: section numbers are permanent).
 One thing left with it: the marker for rapid-intensification probability had no
 other home in the app, so that number is now unpublished anywhere.
 
-**§51, surge outside America, is PART built.** What ships is §51.1–§51.6 in
-`SPEC-DATA.md` and `SPEC-UI.md`. Two pieces are approved and not built and are
-here: **§51.7**, the corridor width that makes the coast stripe join up, and
-**§51.8**, a marker carrying the figure. §51.7 fixes a defect the shipped layer
-has today — read §51.4 first, it names it.
+**§51, surge outside America, is PART built.** What ships is §51.1–§51.7 in
+`SPEC-DATA.md` and `SPEC-UI.md` — §51.7 was the corridor reach that makes the
+stripe join up, and it went into §51.4 where the layer is described. One piece
+is approved and not built and is here: **§51.8**, a marker carrying the figure.
+It is a different job from the stripe — the stripe says which coast, the marker
+says how much and where.
 
 **§48, rainfall, has shipped and left this file.** Sources, the two payload
 traps, coverage and the relay are §48.1–§48.7 in `SPEC-DATA.md`; the two
@@ -1691,85 +1692,13 @@ the chart, which is what stops its numeric fallback ever appearing unnoticed.
 knows less, not as an app that is missing something.
 
 
-## 51.7 The surge stripe joins up — approved, not built
-
-**This is the fix for the defect §51.4 records.** The as-built layer paints a
-5 km half-width corridor around each modelled town. On a dense archipelago that
-produces disconnected fragments rather than a coast.
-
-### The measurements this rests on
-
-Lala, 47 towns, read off the archive 2026-08-19. Every number below is computed,
-not estimated — `samples/surge-locations/getlocations-lala-1001303.json` is in
-the repo and `lib/surge-locations.js` `kmBetween()` is the function.
-
-| Question | Answer |
-|---|---|
-| Distance to nearest neighbouring town, median | **3.8 km** |
-| Same, worst case | **24.2 km** |
-| Towns with a neighbour inside 5 km | 33 of 47 |
-| Single-link chain at 10 km (what a 5 km corridor reaches) | **8 of 47** |
-| Single-link chain at 80 km | **41 of 47** — the whole Big Island |
-| Closest pair on DIFFERENT islands | **123.7 km**, Kukuihaele → Hawaiian Village |
-| Island groups at 80 km | Big Island 41, Maui/Molokai 4, Oahu 2 |
-
-**The two numbers that decide everything are 24.2 and 123.7.** The widest gap
-between neighbouring towns on one island is 24.2 km; the narrowest gap between
-two islands is 123.7 km. There is a factor of five of clear air between them, so
-a single threshold can join a coast and refuse to cross a channel with enormous
-margin. That is not luck — it is what an archipelago looks like — but it is
-measured on one storm in one basin and should be re-checked the first time this
-runs on a continental coast, where towns are denser and the "channel" may be a
-river mouth.
-
-### What changes
-
-**Raise the corridor half-width from 5 km to ~12 km, and rename the constant for
-what it now does.** 12 km reaches 24 km, which chains every town within an
-island and cannot approach 123.7 km. Same three groups, three continuous
-stripes, one number changed.
-
-**The honest cost, stated so nobody discovers it on glass.** At 12 km a town's
-height paints roughly 24 km of coast either side. That is a real widening of the
-claim. Three things make it acceptable and none of them makes it free:
-
-1. It is still a quarter of what the watch/warning band already does at 50 km
-   (`COAST_BAND.halfWidthKm`), on a product with the same shape of input.
-2. Neighbours sit 3.8 km apart, so in practice a stretch carries the **deepest
-   nearby** town's number rather than a distant one's — the sort key already
-   enforces that and it errs safe.
-3. Nothing is stated for coast no town reports. The stripe still ends where the
-   towns end; only the reach of each town grows.
-
-**Write 123.7 km into the constant's reasoning.** The next person to widen this
-needs to know what the next thing out is, or they will cross a channel and paint
-open ocean as warned coast.
-
-### What was considered and NOT chosen, so it is not re-litigated
-
-**A drawn polyline between adjacent towns, NHC-breakpoint style, with a 50-mile
-connect rule.** Aaron's proposal, and the 50-mile figure is well chosen — it sits
-between 24.2 and 123.7 and does exactly the intended work. It is not taken
-because building the line needs two things the data does not carry:
-
-- **Ordering.** NHC's breakpoints arrive in coastal sequence, which is what
-  makes a chord meaningful. GDACS hands over an unordered bag (the relay sorts
-  it by height). Ordering 41 towns around a crenellated coast by
-  nearest-neighbour chaining zigzags — it cuts bays and doubles back.
-- **A colour for the segment.** NHC states one depth **for the reach**; the
-  reach is its unit. Hookena is 0.17 and Hilo is 0.13 and the stretch between
-  them has no published value. Interpolating invents one; taking an end claims
-  one town's number for the other's coast.
-
-**The per-town corridor dodges both and produces the same picture**, and it
-matches the data's own unit: GDACS makes a claim per town, not per reach.
-
-**A glyph at each town instead of a stripe.** Also considered, also not chosen
-as the primary — but see §51.8, because it is not dead.
-
 ## 51.8 A marker on the deepest towns — approved, not built, second pass
 
-**After §51.7 and not with it.** The stripe carries the EXTENT — which coast is
+**§51.7 has shipped and this did not go with it, deliberately.** A stripe that
+joins up is the thing to judge on glass first; a marker on top of a stripe
+nobody has looked at yet is two unjudged changes wearing one commit.
+
+The stripe carries the EXTENT — which coast is
 affected. A marker carries the FIGURE — how much, and at which town. They are
 different jobs and the second is worth having.
 

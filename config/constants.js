@@ -2672,22 +2672,63 @@ export const GDACS_SURGE = Object.freeze({
    *  scale a JRC grid cell of 0.5 to 6 arc-minutes actually resolves. */
   homeRadiusKm: 50,
 
-  /** Corridor half-width, in km, for painting a town's height onto the real
-   *  coastline (map/coast-band.js).
+  /** How far along the coast, in km, a single town's modelled height reaches.
+   *  Passed to `areaSelect` as the corridor half-width (map/coast-band.js).
+   *  SPEC-DATA.md §51.7.
    *
-   *  ==> NARROWER THAN `SURGE.bandHalfWidthKm` (8) AND FOR THE OPPOSITE
-   *  REASON. <== NHC issues a reach — a named stretch of coast that is the
-   *  subject of the forecast — so a corridor is reconstructing geometry NHC
-   *  meant. GDACS gives a POINT, and every metre of coast painted around it is
-   *  ours rather than the model's. 5 km keeps the claim to the shoreline the
-   *  town actually sits on. Judge where two towns with different heights sit
-   *  close together — Shomushon and Marasu on Saipan are 3.7 km apart, which
-   *  is the worst case in the archive and is inside this radius. */
-  bandHalfWidthKm: 5,
+   *  ==> IT IS NAMED FOR REACH RATHER THAN FOR WIDTH BECAUSE REACH IS WHAT IT
+   *  IS SET BY. <== It was 5 km, chosen to keep a town's claim to the shoreline
+   *  that town sits on. That was defensible and it produced a picture nobody
+   *  could read: GDACS towns are CLUMPED, not evenly spread, so 47 towns became
+   *  a scatter of short disconnected flecks rather than a coast.
+   *
+   *  ==> THE NUMBER IS SET BY WHERE THE GAPS ACTUALLY ARE. <== Computed, not
+   *  estimated, from `samples/surge-locations/getlocations-lala-1001303.json`
+   *  — 47 towns across Hawaii — using `kmBetween()`. The gaps a chain has to
+   *  cross, in order:
+   *
+   *      3.8 km    median distance to a nearest neighbour
+   *     24.2 km    THE WIDEST GAP INSIDE A RUN OF COAST (Mahaiula–Kahaluu)
+   *     33.5 km    Milolii–Waiahukini, south Kona to Kau — no towns between
+   *     57.7 km    Royal Gardens–Hilea, across the south of the island
+   *    123.7 km    THE NARROWEST CHANNEL BETWEEN TWO ISLANDS
+   *                (Kukuihaele on Hawaii → Hawaiian Village on Maui)
+   *
+   *  13 km reaches 26 km, which crosses 24.2 with margin and cannot approach
+   *  33.5, let alone 123.7. Lala goes from 47 fragments to five continuous
+   *  stripes. **The margin is on the town centres alone** — `pointRingDeg`
+   *  adds about another kilometre and is deliberately not counted, so this
+   *  number does not depend on the size of a shape that is a formality.
+   *
+   *  ==> 12 km WAS SPECIFIED AND IS 0.2 km SHORT. <== The fix was reasoned on
+   *  24.2 being the widest gap between neighbouring towns, so 12 km would chain
+   *  an island. Two things were wrong: 12 + 12 is 24.0, which misses 24.21 by
+   *  210 m, and a widest-NEAREST-NEIGHBOUR distance is not the widest gap a
+   *  CHAIN crosses. Single-link chaining at 24 km leaves six pieces; at 26 km,
+   *  five. Whoever revisits this measures the chain, not the neighbours.
+   *
+   *  ==> WHAT THIS DOES **NOT** DO, AND MUST NOT. <== It does not join the
+   *  islands and it does not close the 33.5 and 57.7 km stretches where GDACS
+   *  modelled nothing. Empty coast stays empty — that is §5, not a rough edge.
+   *  ==> THE NEXT THING OUT IS 123.7 km. <== Anyone widening this past ~16 km
+   *  starts crossing stretches the model never ran on, and past ~60 km paints
+   *  open ocean between two islands as warned coast.
+   *
+   *  ==> STILL WELL UNDER THE WATCH/WARNING BAND. <== `COAST_BAND.halfWidthKm`
+   *  is 50 on a product with the same shape of input. Neighbours sit 3.8 km
+   *  apart, so in practice a stretch carries the DEEPEST nearby town's number
+   *  rather than a distant one's — `_sev` on the sort key enforces that and it
+   *  errs safe.
+   *
+   *  ==> MEASURED ON ONE STORM IN ONE ARCHIPELAGO. <== Re-check it the first
+   *  time this runs on a continental coast, where towns are denser and the
+   *  "channel" between two runs may be a river mouth rather than 123 km of
+   *  open sea. */
+  townReachKm: 13,
 
   /** The square drawn around a town before `areaSelect` dilates it. Small on
    *  purpose: the shape is a formality — a point has no area and `areaBand`
-   *  needs rings — and `bandHalfWidthKm` is what actually sets the reach. */
+   *  needs rings — and `townReachKm` is what actually sets the reach. */
   pointRingDeg: 0.01,
 
   /** Below this a modelled height is stated in words, never as a figure.
