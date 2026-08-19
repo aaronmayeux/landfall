@@ -281,14 +281,6 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**THE WATCH ROW NOW MATCHES THE STORM ROW, AND ALL OF IT WANTS GLASS.**
-`SPEC-UI.md` §45.8. Badge on the right, publish time under it, both
-percentages always shown. **Judge the badge against the dot beside it:** the
-badge is the two-day rung and the dot is the seven-day colour, so a row can
-read `Low` next to orange. That is true and it may still read as a
-contradiction — if it does, the answer is which horizon the DOT should carry,
-not the badge.
-
 **BASIN GROUPING IS WANTED AND NOT STARTED.** Areas should sit under the same
 basin headings the storms do. **The blocker is not layout:** `Being watched`
 is currently the only surface that can say the outlook is DOWN, and dissolving
@@ -297,14 +289,6 @@ to the top where it reads as being about the storms. Decide where an outage
 speaks before moving any rows. Two smaller things it drags in: an ordering rule
 within a basin (storms and areas are not on one scale), and basin headers that
 contain only a watched area, which at a glance can read as an active threat.
-
-**THE OUTLOOK NOW COMES FROM NHC'S KMZ AND LAYER 3 IS GONE.** `SPEC-DATA.md`
-§45.2. Proven before it shipped — `tools/gtwo-compare.mjs` agrees the two paths
-match on every area, every vertex and every probability across all 72 archived
-hours. **Needs glass on the area drawer:** NHC's own name now heads the panel
-in place of our computed description, and the forecaster's paragraph sits under
-the stamp. Judge whether the paragraph earns its space beside two probability
-rows, or whether it makes a small panel long.
 
 **A quiet basin is believed at once now, and nobody has seen that happen.**
 `SPEC-DATA.md` §45.5. The KMZ states the all-clear in a dated sentence, so the
