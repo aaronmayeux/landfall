@@ -979,11 +979,6 @@
   margin-top: 5px;
 }
 
-/* The two-day line — it only appears when something has become imminent (see
- * `watchTwoDay` in ui/view-storms.js), so it is allowed to be slightly louder
- * than the line above it rather than quieter. */
-.watch-soon { color: var(--text-primary); }
-
 /* --- list notes & failure states ----------------------------------------- */
 .list-note {
   margin: var(--space-comfy) calc(var(--drawer-inset) - var(--drawer-body-pad));

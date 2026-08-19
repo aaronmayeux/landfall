@@ -2190,9 +2190,19 @@ and another for areas.
 
 ```
 ◪  South-Southwest of Mexico                    Low
-   80% · in 7 days · NHC                  2 hrs ago
-   0% in 2 days
+   0% in 2 days · NHC                     2 hrs ago
+   80% in 7 days
 ```
+
+**The near horizon leads.** The row answers *is this imminent* before *is this
+likely eventually*, so the two-day figure shares line one with the publish
+stamp and the seven-day follows underneath — the same question the badge above
+it answers. The seven-day figure is the one the globe draws, which is why it
+sits on the line nearest the swatch that carries its colour.
+
+**A figure is never separated from its own horizon.** `80% · in 7 days` split
+one fact into two with a bullet between them. The middot survives only between
+genuinely different facts: the figure and the source.
 
 **The badge is the TWO-day rung, on both sources.** A storm's badge is what it
 is right now; the near horizon is the closest thing a watched area has to that.
@@ -2203,7 +2213,7 @@ different horizons. The subline names both horizons underneath for that reason.
 A JTWC system has one horizon and one word, so its badge is that word and its
 subline sheds it rather than saying it twice.
 
-**Both percentages are always shown.** The two-day line used to be hidden below
+**Both percentages are always shown.** The near line used to be hidden below
 1%, on the argument that a column of zeros trains the eye to skip the line that
 matters. It cost more than it bought: rows changed height on a value, so the
 reader could never learn where the two-day figure lives, and its absence

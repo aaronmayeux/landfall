@@ -956,46 +956,55 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
   }
 
   /**
-   * One area's figures, line one.
+   * One area's figures, line one: THE NEAR HORIZON.
    *
-   * The SEVEN-day number, its horizon, and the source. The risk word has moved
-   * to the badge, so this line is purely the figure — NHC's percentage is
-   * finer than its word and the two together only restated each other.
+   * ==> THE TWO-DAY NUMBER LEADS, THE WAY THE BADGE ABOVE IT DOES. <== The row
+   * answers "is this imminent" first and "is this likely eventually" second, so
+   * the near figure sits on the first line beside the publish stamp and the
+   * seven-day one follows underneath. It used to be the other way round, which
+   * put the row's least urgent number in its most read position.
+   *
+   * ==> A FIGURE IS NOT SEPARATED FROM ITS OWN HORIZON. <== `80% · in 7 days`
+   * split one fact into two with a bullet between them; `80% in 7 days` is the
+   * phrase a person would say. The middot survives only where it separates
+   * genuinely different facts — the figure from the source.
    *
    * JTWC published no number at all, and inventing one is what §45.3 forbids
    * in as many terms, so its line is the horizon and the source. Each row
    * names its own horizon, so two scales in one list can never be mistaken for
    * one scale.
+   *
+   * NULL IS NOT ZERO. A blank field prints `Not stated`, because printing `0%`
+   * over a field NHC left empty invents a forecast (§5).
    */
   function watchMeta(a) {
     if (a.source === 'JTWC') return [a.horizon, 'JTWC'].filter(Boolean).join(' · ');
-    return [formatPercent(a.prob7day) ?? 'Not stated', GENESIS.HORIZON.sevenDay, 'NHC']
-      .filter(Boolean)
-      .join(' · ');
+    const figure = a.prob2day == null ? 'Not stated' : formatPercent(a.prob2day);
+    return `${figure} ${GENESIS.HORIZON.twoDay} · NHC`;
   }
 
   /**
-   * The two-day line, always, for an NHC area.
+   * Line two: THE FAR HORIZON. Always present for an NHC area.
    *
-   * ==> IT USED TO BE HIDDEN AT ZERO, AND HIDING IT WAS THE WRONG TRADE. <==
-   * The argument for hiding was that most areas sit at 0% for days and a
+   * ==> BOTH FIGURES ARE ALWAYS SHOWN, AND HIDING EITHER WAS THE WRONG TRADE.
+   * <== The near line used to be dropped below 1%, on the argument that a
    * column of zeros trains the eye to skip the line that matters. What it
    * actually cost was worse: rows changed HEIGHT depending on a value, so the
-   * reader could never learn where the two-day figure lives, and its absence
-   * carried two meanings at once — "zero" and "NHC said nothing" looked
+   * reader could never learn where a horizon's figure lives, and an absent
+   * line carried two meanings at once — "zero" and "NHC said nothing" looked
    * identical, which is the §45.5 conflation this feature exists to refuse.
    *
    * A stated zero is a forecast. It is NHC saying "not in this window", which
-   * is exactly the reassurance a reader scanning a watch list wants, and it
-   * belongs beside the seven-day number rather than behind a tap.
+   * is exactly the reassurance a reader scanning a watch list wants.
    *
-   * NULL IS STILL NOT ZERO. A blank field prints `Not stated`, because
-   * printing `0%` over a field NHC left empty invents a forecast (§5).
+   * THIS IS THE FIGURE THE GLOBE DRAWS. The polygon is the seven-day area and
+   * the swatch beside this row is its seven-day colour (§45.6), so the number
+   * that matches what is painted lives here rather than on line one.
    */
-  function watchTwoDay(a) {
+  function watchFar(a) {
     if (a.source !== 'NHC') return null;
-    const figure = a.prob2day == null ? 'Not stated' : formatPercent(a.prob2day);
-    return `${figure} ${GENESIS.HORIZON.twoDay}`;
+    const figure = a.prob7day == null ? 'Not stated' : formatPercent(a.prob7day);
+    return `${figure} ${GENESIS.HORIZON.sevenDay}`;
   }
 
   /**
@@ -1029,7 +1038,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     const swatch = genesisColor(a.globeRisk ?? a.risk);
     const badge = watchBadge(a);
     const meta = watchMeta(a);
-    const two = watchTwoDay(a);
+    const far = watchFar(a);
     const stamp = watchStamp(a);
 
     /* ==> THE SAME TWO COLUMNS A STORM ROW HAS. <== Identity and figures down
@@ -1041,7 +1050,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
       a.title,
       badge,
       meta,
-      two,
+      far,
       Number.isFinite(a.issuedAt) ? `published ${formatAge(new Date(a.issuedAt).toISOString())}` : '',
     ].filter(Boolean).join(', ');
 
@@ -1058,7 +1067,7 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
             <span class="row-meta">${esc(meta)}</span>
             ${stamp}
           </span>
-          ${two ? `<span class="row-meta watch-soon">${esc(two)}</span>` : ''}
+          ${far ? `<span class="row-meta">${esc(far)}</span>` : ''}
         </span>
       </button>
     `;

@@ -376,15 +376,34 @@ section('the watch row carries the same two columns a storm row does');
   const code = src.replace(/\/\*[\s\S]*?\*\//g, '');
   const watch = code.slice(code.indexOf('function watchBadge'), code.indexOf('function renderWatch'));
 
-  /* 1. THE TWO-DAY LINE IS UNCONDITIONAL. It used to be hidden at zero, which
-   *    made rows change height on a value and made "0%" and "NHC said nothing"
-   *    look identical. A `> 0` or `<= 0` guard anywhere in this builder is
-   *    that bug coming back. */
+  /* 1. BOTH FIGURE LINES ARE UNCONDITIONAL. The near one used to be hidden at
+   *    zero, which made rows change height on a value and made "0%" and "NHC
+   *    said nothing" look identical. A `> 0` or `<= 0` guard anywhere in this
+   *    builder is that bug coming back. */
   ok(
-    !/prob2day\s*[<>]=?\s*0/.test(watch),
-    'the two-day line must not be gated on the value being above zero — a '
+    !/prob[27]day\s*[<>]=?\s*0/.test(watch),
+    'neither figure line may be gated on the value being above zero — a '
     + 'stated 0% is NHC saying "not in this window" and is exactly the '
     + 'reassurance a watch list is scanned for'
+  );
+
+  /* 2. THE NEAR HORIZON LEADS. The row answers "is this imminent" before "is
+   *    this likely eventually", so the two-day figure shares line one with the
+   *    publish stamp and the seven-day follows underneath. Asserted on ORDER
+   *    of appearance in the builder, which is the only thing visible from
+   *    here — `watchMeta` builds line one. */
+  ok(
+    watch.indexOf('HORIZON.twoDay') < watch.indexOf('HORIZON.sevenDay'),
+    'the TWO-day figure is built first, because it is line one — the row leads '
+    + 'with the near horizon, the same question the badge answers'
+  );
+
+  /* 3. A FIGURE IS NOT SEPARATED FROM ITS OWN HORIZON. `80% · in 7 days` split
+   *    one fact in two; the middot survives only between genuinely different
+   *    facts, which is the figure and the source. */
+  ok(
+    !/\$\{figure\}\s*·/.test(watch) && !/·\s*\$\{GENESIS\.HORIZON/.test(watch),
+    'no middot between a percentage and the horizon it belongs to'
   );
   ok(
     /Not stated/.test(watch),
@@ -392,7 +411,7 @@ section('the watch row carries the same two columns a storm row does');
     + 'printing a zero over a field NHC left blank invents a forecast (§5)'
   );
 
-  /* 2. THE BADGE IS THE TWO-DAY RUNG. A storm's badge is what it is right
+  /* 4. THE BADGE IS THE TWO-DAY RUNG. A storm's badge is what it is right
    *    now; the near horizon is the closest thing an area has to that.
    *    Reaching for `risk7day` here would make the badge restate the swatch. */
   ok(
@@ -401,7 +420,7 @@ section('the watch row carries the same two columns a storm row does');
     + 'day rung is already carried by the swatch colour (§45.6)'
   );
 
-  /* 3. THE ROW AGES ON THE OUTLOOK'S CLOCK. `FRESHNESS` is built for
+  /* 5. THE ROW AGES ON THE OUTLOOK'S CLOCK. `FRESHNESS` is built for
    *    three-hourly advisories; the outlook republishes roughly six-hourly, so
    *    borrowing the storm bands would paint nearly every area amber nearly
    *    all the time and the colour would stop meaning anything. */
