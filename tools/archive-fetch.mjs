@@ -433,55 +433,77 @@ function shipsSources(currentStormsJson, now = Date.now()) {
 }
 
 /* ---------------------------------------------------------------------------
- * JTWC PER-STORM PRODUCTS — THE THREE FILES THIS PROJECT HAS NEVER FETCHED.
+ * JTWC PER-STORM PRODUCTS — FOUR FILES, ONE SETTLED ANSWER AND ONE OPEN ONE.
  *
- * ==> THE QUESTION THEY EXIST TO CLOSE. <== `lib/jtwc-wind.js` says JTWC's
- * warning is text with no cone, no footprints and no past track, and GDACS was
- * measured on 2026-08-18 to publish no past wind shapes at all — every band on
- * every live GDACS storm dated at or after its bulletin. That leaves a global
- * storm with no way to answer "did dangerous wind already reach my house",
- * which NHC storms answer from layer 13. If any per-storm JTWC product carries
- * wind extent, that gap has a floor. If none does, the gap is a fact and the
- * search stops.
+ * ==> THE QUESTION THIS CLOSED, MEASURED 2026-08-19 ON SAUDEL (17W) AND LALA
+ * (01C). <== Does JTWC publish PAST wind extent anywhere per-storm — the thing
+ * GDACS was measured a day earlier not to publish, and that NHC storms answer
+ * from layer 13. It does not. Not in one of the four.
  *
- * ==> ALL THREE AT ONCE, DELIBERATELY. <== §18.5 prices a guess through this
- * runner at an hour. `fix.txt` is the one the backlog named and it is the
- * WEAKEST candidate of the three — a Satellite Fix Bulletin is Dvorak
- * positions and intensity by its own title. The `.tcw` is the Navy's own
- * machine-readable plot file for the Joint METOC Viewer and the `.kmz` is the
- * storm as actual drawn shapes, so they are where a wind radius would live if
- * one lives anywhere. Three small files a storm settles it in one cycle
- * instead of three sessions.
+ *   `fix.txt`  388 bytes. ONE Dvorak satellite fix — a position, a time, a
+ *              T-number and the analyst's shorthand. No history, no radii.
+ *              Archived to prove the negative, not because it feeds anything.
+ *   `.tcw`     Forecast radii per quadrant at 34/50/64 kt out to 120 hours,
+ *              THEN a best track of 39 six-hourly positions back nine days
+ *              carrying intensity — and no radii on any of them. The past rows
+ *              repeat once per wind threshold the storm met at that hour with
+ *              the radius columns stripped, so the record shape is there and
+ *              the numbers are withheld deliberately.
+ *   `.kmz`     The same nine-day best track as points, plus forward radius
+ *              POLYGONS and a 34 kt danger swath. Every polygon is forecast.
+ *              455 KB, 308 of it the JTWC logo — the `.tcw` carries the same
+ *              track in 9 KB of plain text, so this is archived as evidence
+ *              and is not a candidate to ship against.
+ *
+ * So no source anywhere publishes past wind footprints outside NHC. That is
+ * settled and should not be re-asked without new evidence.
+ *
+ * ==> WHAT IS STILL OPEN, AND WHY `web.txt` JOINED THE LIST. <== The `.tcw`
+ * turned out to embed a full warning text of its own, which raises whether one
+ * fetch could replace the two the app makes today. It is NOT byte-identical:
+ * its subject line reads `SUBJ:` where the plain product reads `SUBJ/`, the
+ * exact character `parseSubject` keys on in the relay AND in lib/advisory.js.
+ * Whether anything else differs needs both files in one snapshot, which is
+ * what the `web.txt` entry is for.
  *
  * ==> THE ADDRESSES ARE JTWC'S OWN, SCRAPED FROM THE RSS THIS RUN JUST
  * FETCHED. <== Same rule as the GDACS geometry block below: a URL this script
  * INVENTS that 404s is indistinguishable in the manifest from a product JTWC
  * genuinely does not publish. The RSS links these per storm, and that link
  * also does the filtering for free — the Tropical Cyclone Formation Alert on
- * 90E is given a `.tcw` and a `.kmz` and NO fix bulletin, which is a real
- * finding about what an unwarned system carries and would have looked like a
- * broken guess if the name had been built here.
+ * 90E is given a `.tcw`, a `.kmz` and its TCFA text but NO fix bulletin, and
+ * its `.tcw` has a different layout entirely: no forecast rows, no radii, and
+ * a header that says ALERT where a storm's says WARNING. Any parser written
+ * against these has to branch on that before it reads a thing.
  * ------------------------------------------------------------------------ */
 
 /** The published per-storm products worth having, and how to name them here.
  *  `.kmz` is a zip and MUST be flagged binary — `text()` would decode it as
  *  UTF-8 and hand back a plausible-looking length of replacement characters. */
 const JTWC_PRODUCTS = Object.freeze([
+  { suffix: 'web.txt', ext: 'web.txt', binary: false, what: 'warning text' },
   { suffix: 'fix.txt', ext: 'fix.txt', binary: false, what: 'Satellite Fix Bulletin' },
   { suffix: '.tcw', ext: '.tcw', binary: false, what: 'JMV 3.0 data' },
   { suffix: '.kmz', ext: '.kmz.b64', binary: true, what: 'Google Earth overlay' },
 ]);
 
 /** Storms to pull products for. JTWC peaks around a dozen worldwide; eight is
- *  well past any real hour and caps a runaway feed at 24 fetches. */
+ *  well past any real hour and caps a runaway feed at 32 fetches. */
 const JTWC_MAX = 8;
 
 /** Absolute product links in the RSS body. The alternation is what filters:
- *  `web.txt`, `prog.txt`, `.gif` and the satellite JPEGs all fail it. The
- *  four-digit ATCF id is the storm — `wp1726` is the 17th West Pacific system
- *  of 2026. */
+ *  `prog.txt`, `.gif` and the satellite JPEGs all fail it. The four-digit ATCF
+ *  id is the storm — `wp1726` is the 17th West Pacific system of 2026.
+ *
+ *  `web.txt` IS THE PRODUCT THE APP ALREADY FETCHES LIVE, and it is here for
+ *  one reason: the `.tcw` embeds a full warning text of its own, and the two
+ *  are NOT byte-identical — the `.tcw` subject line reads `SUBJ:` where the
+ *  plain product reads `SUBJ/`, which is the exact character `parseSubject`
+ *  keys on in both the relay and lib/advisory.js. Whether anything ELSE
+ *  differs decides whether one fetch can ever replace two, and that cannot be
+ *  answered without both files side by side in the same snapshot. */
 const JTWC_PRODUCT_RE =
-  /https:\/\/www\.metoc\.navy\.mil\/jtwc\/products\/([a-z]{2}\d{4})(fix\.txt|\.tcw|\.kmz)/gi;
+  /https:\/\/www\.metoc\.navy\.mil\/jtwc\/products\/([a-z]{2}\d{4})(web\.txt|fix\.txt|\.tcw|\.kmz)/gi;
 
 function jtwcStormSources(rssText) {
   const seen = new Set();

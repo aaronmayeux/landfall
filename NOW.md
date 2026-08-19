@@ -46,14 +46,6 @@ written brief naming candidates, what was measured, and what still needs glass.
 
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
-- **Pass 4 — JTWC's per-storm products. THE FETCH IS IN; THE BYTES ARE NOT.**
-  `latest/jtwc/` now archives three files a storm — `…fix.txt`, `.tcw` and
-  `.kmz.b64` — scraped from the links JTWC's own RSS publishes. Nothing has read
-  one yet: a session cannot trigger the runner (§18.3), so the next one starts
-  with `git show origin/archive:latest/jtwc/wp1726.tcw` and answers the single
-  question in KNOWN AND ACCEPTED — **does any of it carry wind extent, and does
-  it carry it for PAST hours.** If none does, delete this and write the negative
-  into KNOWN AND ACCEPTED as settled.
 
 ---
 
@@ -278,6 +270,33 @@ sitting in that state long enough to look at.
 
 ## SCOPED, NOT STARTED
 
+**JTWC'S `.tcw` IS A BETTER SOURCE THAN THE PRODUCT WE PARSE, AND ONE PIECE OF
+IT DELETES CODE.** Read 2026-08-19 on two storms at one hour, archived hourly
+under `latest/jtwc/` from now on. Four separable wins, in order of confidence:
+
+1. **`resolveDtg` and `nextDtgAfter` in `functions/api/jtwc/storms.js` stop
+   being necessary.** They exist only because the warning text stamps `DDHHMM`
+   with no month or year, so the relay guesses the calendar against read time
+   and guards the rollover. The `.tcw` header carries `2026081912` and every
+   forecast step is a plain offset from it. That is a class of bug removed, not
+   just lines.
+2. **Forecast wind footprints outside NHC.** Per-quadrant radii at 34/50/64 kt
+   out to 120 hours — the same shape `lib/windswath.js` already renders from
+   NHC layer 15, which today has no non-American half.
+3. **A nine-day past track with intensity on every step**, against GDACS's
+   twelve centre dots for Hernán.
+4. **Possibly one fetch where the app makes two** — the `.tcw` embeds a full
+   warning text. NOT a swap: its subject line reads `SUBJ:` where the plain
+   product reads `SUBJ/`, the character `parseSubject` keys on in the relay AND
+   in `lib/advisory.js`, which are held together by a test. `web.txt` is now
+   archived beside it so the rest of the comparison is a diff.
+
+**DO NOT WRITE THE PARSER OFF THIS SNAPSHOT.** Two storms, one hour, one
+hemisphere. A formation alert's `.tcw` has no forecast rows and no radii at all
+and says ALERT where a storm says WARNING, so the layout varies by system type
+before any basin question is asked. Wait for a Southern Hemisphere storm in the
+72-hour window and write it against a corpus, the way SHIPS was done.
+
 **Two views are over §12's ~700-line ceiling and both want a cut before they are
 touched again.** `ui/view-home.js` is 1,413 — the strength strip and its figures,
 the countdown rail, and the quiet/error/no-home states are three separable
@@ -349,18 +368,14 @@ are ones already near land, which is when radar matters most.
 
 ## KNOWN AND ACCEPTED
 
-- **GDACS PUBLISHES NO PAST WIND SHAPES, MEASURED.** Every band on every live
-  GDACS storm is dated at or after the bulletin's issue time — checked across all
-  three storms in the archive 2026-08-18. Hernán carried twelve PAST centre dots
-  and five FORWARD wind shapes. JTWC is no help either: its warning is text, with
-  no cone, no footprints and no past track (`lib/jtwc-wind.js` says so). The one
-  unexamined candidate is JTWC's per-storm `fix.txt`, which this project has
-  never fetched — whether it carries wind extent or only positions is unknown.
-  **This is PASS 4, and it is now three candidates rather than one:** the fix
-  bulletin is Dvorak positions by its own title, so the `.tcw` plot file and the
-  `.kmz` overlay are the likelier homes for a radius. All three are archived
-  hourly under `latest/jtwc/`. A formation alert gets the `.tcw` and `.kmz` and
-  no fix bulletin — measured, not assumed.
+- **NOBODY PUBLISHES PAST WIND EXTENT OUTSIDE NHC. SETTLED, DO NOT RE-ASK.**
+  GDACS: every band on every live storm is dated at or after its bulletin —
+  checked across all three storms in the archive 2026-08-18. JTWC: all four
+  per-storm products read 2026-08-19 on Saudel (17W) and Lala (01C), and none
+  carries a past radius. The `.tcw` comes closest and is the proof it is
+  deliberate — its best track repeats each past hour once per wind threshold the
+  storm met, with the radius columns stripped out. So NHC's layer 13 is the only
+  source of past wind footprints on Earth, and that feature stays American.
   Stitching a history from our own hourly snapshots would make what a user sees
   depend on how long their phone happened to be open, which is the exact bug
   `data/ended-track.js` exists to fix.
