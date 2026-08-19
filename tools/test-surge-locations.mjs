@@ -288,11 +288,12 @@ console.log('\nthe event id — read off the fields that exist');
 
 eq('a GDACS storm yields its event id',
   gdacsEventIdOf({ source: 'gdacs', sourceId: '1001303' }), '1001303');
-/* ==> AN NHC STORM YIELDS NOTHING, AND §51.5 RECORDS WHAT THAT COSTS. <==
- * `mergeStorms` drops the GDACS twin of every storm in an NHC basin, so Lala
- * reaches the app as its NHC record alone and this feature cannot see the 47
- * towns above. Asserted rather than left implicit, because the day somebody
- * closes that gap this line is the one that has to change. */
+/* ==> AN NHC STORM YIELDS NOTHING, AND THIS ASSERTION GUARDS A DECISION RATHER
+ * THAN A LIMITATION. <== §51.5, settled 2026-08-19: in an NHC basin NHC is the
+ * only surge source, because it issues an official inundation forecast and this
+ * is a global model that disagrees with its own sibling product. A change that
+ * makes this line pass a value has crossed that boundary and is reopening a
+ * settled call, not fixing a bug. */
 eq('an NHC storm yields none', gdacsEventIdOf({ source: 'nhc', sourceId: 'cp012026' }), null);
 eq('a storm with no source yields none', gdacsEventIdOf({}), null);
 eq('no storm at all yields none', gdacsEventIdOf(null), null);

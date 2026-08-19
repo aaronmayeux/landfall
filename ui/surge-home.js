@@ -171,14 +171,12 @@ export function createSurgeHome({ loadSurge, retrySurge, units }) {
    *  there is nothing to ask about.
    *
    *  ==> NO GDACS EVENT ID MEANS NO SECTION, AND THAT IS NOT §5's SILENCE.
-   *  <== §5 governs a source that FAILED. This is a storm we have no way to
-   *  ask about: every storm in an NHC basin arrives here as its NHC record
-   *  alone, because `mergeStorms` drops the GDACS twin (§51.5). There is no
-   *  question to put to the source, so there is no section — and on those
-   *  storms the coastal surge layer is NHC's own product, which is the better
-   *  forecast anyway. A heading over an explanation of why a global model has
-   *  not heard of a storm is noise on the screen a reader opens during a
-   *  hurricane. */
+   *  <== §5 governs a source that FAILED. This is a storm this source is not
+   *  ASKED about, deliberately: in an NHC basin NHC is the only surge source
+   *  (§51.5, settled), and `mergeStorms` drops the GDACS twin before any view
+   *  sees a storm. There is no question to put, so there is no section. A
+   *  heading over an explanation of why a global model has not heard of a
+   *  storm is noise on the screen a reader opens during a hurricane. */
   function inner(storm, home, sectionHead) {
     if (!applies(storm, home)) return '';
     return `${sectionHead}${body(storm, home)}`;

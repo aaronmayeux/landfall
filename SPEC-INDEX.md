@@ -239,7 +239,7 @@ real home is the other row carrying the same section number.
 | `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2622-2651 |
 | `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2652-2700 |
 | `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2701-2751 |
-| `51.5` | &nbsp;&nbsp;The hole this feature has, stated plainly | `SPEC-DATA.md` | 2752-2774 |
+| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 2752-2791 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2612-2659 |
 | `51.7` | The surge stripe joins up — approved, not built | `SPEC-NEXT.md` | 1694-1699 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1770-1803 |
@@ -248,7 +248,7 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 163,809 | 54 |
+| `SPEC-DATA.md` | 165,074 | 54 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 114,728 | 27 |
 | `SPEC-OPS.md` | 72,203 | 20 |

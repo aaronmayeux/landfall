@@ -46,7 +46,7 @@ the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
 
-**THIS FILE IS 493 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
+**THIS FILE IS 489 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
 arrival, so the audit was overdue before this pass and this pass made it worse.
 **The next session does the read and the cut list before adding anything**, and
 the first candidates are the IN FLIGHT entries that have been unjudged longest —
@@ -100,16 +100,6 @@ distinguishable from NHC's blue-to-purple at a glance.
 whole three-storm archive spans 0.10 m to 0.48 m: rungs 0 and 1 of five. The
 top three colours and the "deepest town elsewhere" sentence have never
 rendered. Needs a real typhoon on a real coast.
-
-**THE HOLE, AND IT IS AARON'S CALL RATHER THAN A TODO.** `SPEC-DATA.md` §51.5.
-`mergeStorms` drops the GDACS twin of every storm in an NHC basin, so surge
-cannot see Lala's 47 Hawaiian towns — and NHC's own surge product only answers
-while a US surge watch is in force. So an American storm with no watch out has
-a real answer sitting in GDACS that nothing renders. Closing it means joining an
-NHC storm to a GDACS event id **by name**, which is the same class of join
-§50.12 is measuring right now for CAP. **Decide it there, with that evidence.**
-`tools/test-surge-locations.mjs` asserts an NHC storm yields null, so that line
-is what changes the day it is closed.
 
 **Local agency alerts — a drawer section AND a coast stripe, neither judged.**
 `SPEC-DATA.md` §50. CAP alerts from national weather agencies, matched to a
@@ -335,17 +325,23 @@ filled triangles (below), not a smaller canvas.
 **Watch a storm get a real final warning.** The `declared` end path has never
 fired on a real storm. Detection is client-side; the app must be open.
 
-**The AMERICAN half of surge is still held for a storm near home.** The global
-half shipped (§51) and answers a different question on different storms; this
-entry is now only about NHC's product.
+**THE AMERICAN HALF OF SURGE IS THE WHOLE OF WHAT AMERICAN SURGE NEEDS, AND
+`/api/nhc/surge` DOES NOT EXIST.** `SPEC-DATA.md` §51.5. `fetchSurgeLive()`
+calls that route, gets a 404, throws, and every NHC-basin storm shows
+`unavailable` — today, whether or not a watch is out. **Nothing fills it in
+from GDACS and nothing should** (Aaron, 2026-08-19: NHC's surge data is trusted
+over GDACS's, so in NHC's basins NHC is the only source; §51.5 is settled and
+the test guards it). That makes this route the only path to surge on an
+American storm.
 
-`SPEC-DATA.md` §4.8. `fetchSurgeLive()` throws until that route exists, which the
-caller surfaces as `unavailable` — never as an empty coast. The Peak Storm Surge
-service only answers while a US storm has surge watches in effect, so the live
-field names cannot be read until one does. **Build the relay route and
-surge-at-home together the moment such a storm appears** — they share one
-fetch-and-filter, and against a storm half a planet away there is no telling a
-right answer from a plausible one.
+**Still held for a storm with a watch in force, and that is not procrastination.**
+`SPEC-DATA.md` §4.8. The Peak Storm Surge service only answers while a US storm
+has surge watches in effect, and `SURGE.liveColorFields` is an ordered list of
+GUESSES at where the colour lives on the live service — the fixture's field
+names are known, the live ones are not. Against a storm half a planet away there
+is no telling a right answer from a plausible one. Build the route and
+surge-at-home together the moment such a storm appears; they share one
+fetch-and-filter.
 
 **Two glass questions §49.12 records and nothing has answered.** Does *Was
 strongest* beside *When it was closest* read as one story in two tenses or as two

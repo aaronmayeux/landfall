@@ -2749,25 +2749,42 @@ affected-places list with no height in it (§51.1). Town bands are not a stand-i
 for a footprint this product declines to publish — they are the whole of what it
 publishes, drawn honestly. **Nothing here waits on a better source.**
 
-### 51.5 The hole this feature has, stated plainly
+### 51.5 The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE
 
 **Every storm in an NHC basin reaches this app without a GDACS event id, so
 this feature cannot see it.** `mergeStorms` (`data/merge.js`) drops the GDACS
-twin of any storm whose basin NHC covers, which is the right dedupe rule. It
-costs something real: GDACS modelled 47 Hawaiian towns for Lala, a Central
-Pacific storm, and neither the section nor the layer can reach them.
+twin of any storm whose basin NHC covers. This feature therefore covers the
+West Pacific, the Indian Ocean and the Southern Hemisphere, and stops at the
+edge of NHC's basins.
 
-**What covers the gap today is NHC's own product** (§4.8, §36) — the better
-forecast where it publishes, and it only answers while a US surge watch is in
-force. So on an American storm with no surge watch out, there is a real answer
-sitting in GDACS that nothing renders.
+**==> THAT IS THE DESIGN. AARON, 2026-08-19: NHC's SURGE DATA IS TRUSTED OVER
+GDACS'S, SO IN NHC's BASINS NHC IS THE ONLY SOURCE. <==** It was written up as a
+hole to be closed by joining an NHC storm to a GDACS event id by name. It is not
+a hole. It is where one source's authority ends and another's begins, and
+crossing it would mean showing a global model's output for coastline the
+responsible warning centre already forecasts for.
 
-**Closing it means joining an NHC storm to a GDACS event id by NAME**, which is
-the same class of join §50.12 is currently measuring for CAP alerts and is not
-free. Decide it there, with that evidence, rather than writing a second
-name-matcher here.
+**The evidence supports the call rather than merely permitting it.** NHC's Peak
+Storm Surge is an official inundation forecast in feet above ground level,
+issued by the warning centre for that basin. The GDACS product is a JRC model
+output whose datum is stated nowhere this project has read (§51.1), whose
+figures are sub-metre on every storm in the archive, and which **disagrees with
+itself**: the surge card and the towns export give different numbers for the
+same storm, twice measured — Saudel 0.72 m against Shomushon's 0.48, Lala 0.33
+against Hookena's 0.17. A source that cannot be reconciled with its own sibling
+product does not get to override an official forecast.
 
-`gdacsEventIdOf()` in `lib/surge-locations.js` is the one place the mapping
-lives, and `tools/test-surge-locations.mjs` asserts that an NHC storm yields
-null — so the day somebody closes this gap, that line is what has to change.
+**==> THE CONSEQUENCE, AND IT IS THE REAL WORK. <==** `/api/nhc/surge` **does
+not exist**. `fetchSurgeLive()` in `data/surge.js` calls it, gets a 404, throws,
+and the caller surfaces `unavailable`. So **every storm in an NHC basin shows no
+surge at all today** — not because of this boundary, but because the American
+half was never wired to a live route. Nothing fills that in from elsewhere and
+nothing should. Building that route is the whole of what American surge needs,
+and it is held for a storm with a surge watch in force because the service only
+answers while one is (see `NOW.md`, HELD FOR WEATHER).
+
+**`gdacsEventIdOf()` in `lib/surge-locations.js` is where the boundary lives**,
+and `tools/test-surge-locations.mjs` asserts that an NHC storm yields null. That
+assertion guards a decision, not a limitation — a change that makes it pass a
+value has crossed this line and should be treated as reopening a settled call.
 
