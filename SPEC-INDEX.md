@@ -229,13 +229,13 @@ real home is the other row carrying the same section number.
 | `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2275-2299 |
 | `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2300-2319 |
 | `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2320-2361 |
-| `50.12` | &nbsp;&nbsp;An unmatched alert is a gap, not an all-clear | `SPEC-DATA.md` | 2362-2400 |
+| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2362-2414 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 142,106 | 45 |
+| `SPEC-DATA.md` | 143,008 | 45 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |

@@ -2359,41 +2359,55 @@ stripe undershoots at a river mouth or an offshore island.
 11. The disclosure is reachable by Tab, opens on Enter or Space, shows a focus
     ring, and reports its state through `aria-expanded`.
 
-### 50.12 An unmatched alert is a gap, not an all-clear
+### 50.12 Coverage is the storms we list, and an unattributed storm says so
 
-**The country join fails in two ways and they look identical from the panel.**
-§50.3 matches a storm to an agency through GDACS's `affectedcountries`. That
-join returns nothing when GDACS has not scored the storm yet — an attribution
-**lag** — and also when GDACS carries no row for the system at all, a coverage
-**hole**. GDACS tracks named cyclones; agencies warn on depressions and
-invests, so the hole is structural and no amount of waiting closes it.
+**LANDFALL COVERS STORMS NHC, JTWC OR GDACS LIST. SETTLED, NOT A GAP TO
+CLOSE.** Aaron's call, 2026-08-19. The CAP feed is worldwide, so it carries
+alerts for systems none of those three centres carries — PAGASA names
+depressions and invests inside its own area, and on 2026-08-19 had a Tropical
+Cyclone Alert out for "Tropical Depression Neneng", which appears in no storm
+list this app reads. Such an alert has nowhere to attach and is not shown.
 
-**MEASURED 2026-08-19.** Across every hourly snapshot in the archive window
-GDACS listed three live cyclones and attributed a country to exactly one, the
-American one. PAGASA had a Tropical Cyclone Alert in force for a Philippine
-depression that GDACS listed nowhere. The reassuring figure previously written
-here — 63 of 98 rows carry countries — counts a list that is mostly *ended*
-storms, which is where attribution accumulates. Among live storms it was one in
-three.
+The alternative was rejected on identity, not effort. Adopting a national
+centre's naming means a system can exist here under a name no other centre
+uses, then acquire a second name when JTWC picks it up — two rows, or a rename
+mid-storm. That is the ghost-storm failure §5 already guards against. Systems
+that have not become storms yet have a home already: §45's genesis outlook.
 
-**SO AN EMPTY MATCH IS WORDED ON WHETHER ANYTHING IS IN FORCE ANYWHERE.** With
-nothing in force, the section gives the complete answer: no country is listed,
-and no agency anywhere has a cyclone alert out. With something in force, it
-says the storm has no country listed yet, states how many alerts are in force
-**elsewhere in the world**, and says in as many words that this is a gap and
-not an all-clear. It never claims one of them covers this storm — that is the
-causal assertion §50.5 forbids — and it counts only alerts passing §50.8, so a
-feed of cancellations does not trip it.
+**AND THE ALERT'S OWN GEOMETRY ARGUES THE SAME WAY.** The archived PAGASA
+polygon is a seven-vertex box spanning 113°–130°E and 5°–21°N. Both candidate
+invests that hour — 94W at 23.0°N 126.7°E and 95W at 19.5°N 111.8°E — fall
+**outside** it. The published area does not contain the system it is about,
+which is what "jurisdiction, not hazard" means in coordinates. Weigh that when
+judging §50.11's stripe on glass: it bands a shape that was never drawn to say
+where the danger is.
 
-**THE LAG IS MEASURED, NOT GUESSED.** `tools/archive-fetch.mjs` writes a
-`countryMatch` block into the archive manifest every run: each live storm's
-ISO-2 codes, episode and position, plus
-every country with an alert in force, plus the alert countries no live storm
-carries. It rides in the manifest because that is the one file carried into
-`history/`. A country that sits in `unmatchedAlertCountries` for some hours and
-then attaches to a storm was a lag; one that never attaches was a hole.
+**SO THE JOIN'S ONE REMAINING FAILURE IS AN ATTRIBUTION LAG, AND IT IS
+MEASURED.** §50.3 matches through GDACS's `affectedcountries`. Among the three
+storms actually live on 2026-08-19 exactly one carried a country, and it was the
+American one; the other two carried none in every hourly snapshot across the
+window. The reassuring figure previously written here — 63 of 98 rows carry
+countries — counts a list that is mostly *ended* storms, which is where
+attribution accumulates.
 
-**OPEN.** Whether the hole is worth closing, and how. Reading GDACS is not the
-only way to know a storm exists — JTWC's own bulletins carry the Philippine
-systems PAGASA names — but attaching a foreign alert to a JTWC storm needs an
-identity that neither feed publishes against the other.
+`tools/archive-fetch.mjs` writes a `countryMatch` block into the archive
+manifest every run: each live storm's ISO-2 codes, episode and position, every
+country with an alert in force, and the alert countries no live storm carries.
+It rides in the manifest because that is the one file carried into `history/`.
+A country that sits in `unmatchedAlertCountries` for some hours and then
+attaches to a storm was a lag; one that never attaches was a system we do not
+cover, which is the decision above rather than a defect.
+
+**AN UNATTRIBUTED STORM GETS ONE SENTENCE AND IT STOPS WHERE OUR KNOWLEDGE
+STOPS.** *No country is listed as affected by this storm yet.* Nothing follows
+it. The clause it replaced — "so there are no national alerts to look up" — is
+an ANSWER, and the state is unavailable rather than none-matched (§5). The word
+"yet" carries the whole distinction.
+
+**IT DOES NOT COUNT ALERTS ELSEWHERE ON EARTH, AND THAT IS DELIBERATE.** A
+build that did so put a global fact on a per-storm surface: with alerts out in
+three countries, every unattributed storm anywhere would announce a gap,
+including storms nowhere near any of them. It diluted the one case that matters
+and edged toward the causal claim §50.5 forbids. The sentence is identical
+whether the rest of the world is quiet or not, and `tools/test-cap.mjs` asserts
+those two renders are byte-identical.

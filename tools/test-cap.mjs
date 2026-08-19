@@ -392,103 +392,75 @@ ok(
 );
 
 /* =====================================================================
- * §50.12 — A STORM WITH NO COUNTRY IS TWO SITUATIONS, NOT ONE
+ * §50.12 — AN UNATTRIBUTED STORM MUST NOT REPORT AN ANSWER
  *
  * ==> THIS IS THE ASSERTION THAT WOULD HAVE CAUGHT 2026-08-19. <== GDACS
- * listed three live storms and gave a country to one. PAGASA had an alert in
- * force. The two unattributed storms rendered "no country is listed as
- * affected by this storm, so there are no national alerts to look up" — which
- * a reader takes as an all-clear, at an hour an agency was warning somebody.
+ * listed three live storms and gave a country to exactly one. PAGASA had an
+ * alert in force. The two unattributed storms rendered "no country is listed
+ * as affected by this storm, SO THERE ARE NO NATIONAL ALERTS TO LOOK UP" —
+ * and that trailing clause is an answer we did not have. §5 calls this out by
+ * name: unavailable and none-matched are different states and must never share
+ * a sentence.
  *
- * The distinction is not cosmetic and it is not about wording taste: one of
- * these sentences is a complete true statement and the other is a §5 silence
- * wearing a period.
+ * The fix is a sentence that stops where our knowledge stops. These assertions
+ * guard the STOPPING, which is the part a future edit would erode by helpfully
+ * adding a clause back.
  * ====================================================================== */
-section('§50.12  no country — a gap is not an all-clear');
+section('§50.12  an unattributed storm reports no answer');
 
-/* `hernan` carries no country. Fed the real four-alert fixture, at least one
- * of which is in force, the section must NOT read as a clean answer. */
 const capUiGap = createCapStorm({
   loadAlerts: async () => ({ state: 'ok', alerts, stale: false }),
 });
 await capUiGap.ensure(hernan, () => {});
-const gapHtml = capUiGap.html(hernan, NOW);
+const gapHtml = capUiGap.html(hernan, NOW).replace(/\s+/g, ' ');
 
-/* MUTATION GUARD FIRST — if the fixture ever stops carrying a live alert this
- * whole section passes vacuously against the wrong branch. */
+/* MUTATION GUARD. If the fixture stops carrying a live alert this whole
+ * section passes vacuously — the bug only exists when an alert is out. */
 ok(
   alerts.some((a) => isInForce(a, NOW)),
-  'MUTATION DEAD: no fixture alert is in force, so the gap branch is untestable'
+  'MUTATION DEAD: no fixture alert is in force, so this section proves nothing'
+);
+ok(
+  stormCountries(hernan).length === 0,
+  'MUTATION DEAD: the fixture storm gained a country and no longer takes this branch'
 );
 
 ok(
-  /gap in what we know/i.test(gapHtml),
-  'an unattributed storm during a live alert must say it is a gap, not an answer'
-);
-ok(
-  !/no agency anywhere has a cyclone alert in force/i.test(gapHtml),
-  'the all-clear sentence must NOT appear while an alert is in force — this is the bug'
-);
-ok(
-  /in force elsewhere in the world/i.test(gapHtml.replace(/\s+/g, ' ')),
-  'the gap wording must say the alerts are elsewhere, never that one covers this storm'
-);
-/* ==> SINGULAR AND PLURAL ARE SEPARATE SENTENCES AND BOTH MUST PARSE. <== The
- * first build read "One national cyclone alert is in force ... whether any of
- * them covers this storm", which no proofreader would pass and no test caught,
- * because the assertion above only looks for the phrase both branches share.
- * The shared fixture carries four alerts, so the singular branch needs a feed
- * built for it. */
-const oneInForce = alerts.filter((a) => isInForce(a, NOW)).slice(0, 1);
-ok(oneInForce.length === 1, 'MUTATION DEAD: no single in-force alert to build the singular case from');
-
-const capUiOne = createCapStorm({
-  loadAlerts: async () => ({ state: 'ok', alerts: oneInForce, stale: false }),
-});
-await capUiOne.ensure(hernan, () => {});
-const oneHtml = capUiOne.html(hernan, NOW).replace(/\s+/g, ' ');
-
-ok(
-  /One national cyclone alert is in force elsewhere in the world, and we can\u2019t tell whether it covers this storm/.test(oneHtml),
-  `with exactly one alert the sentence must stay singular throughout; got: ${oneHtml.slice(0, 200)}`
-);
-ok(
-  !/any of them/.test(oneHtml),
-  'the plural pronoun must not survive into the singular sentence'
+  /No country is listed as affected by this storm yet\./.test(gapHtml),
+  `the unattributed sentence must read exactly as agreed; got: ${gapHtml.slice(0, 200)}`
 );
 
-/* ==> AND THE OTHER HALF, OR THE FIX IS JUST A LOUDER SENTENCE. <== With
- * nothing in force anywhere, the complete true statement is the right one and
- * the alarming one would be noise on every quiet day of the year. */
+/* ==> THE CLAUSE THAT MADE IT A LIE. <== */
+ok(
+  !/no national alerts to look up/i.test(gapHtml),
+  'must not claim there are no alerts to look up — that is an answer we do not have'
+);
+ok(
+  !/all[- ]clear/i.test(gapHtml),
+  'must not raise the idea of an all-clear at all, in either direction'
+);
+ok(
+  !/in force/i.test(gapHtml),
+  'must not report what is in force elsewhere — a global fact on a per-storm surface'
+);
+ok(
+  !/\bno agency\b/i.test(gapHtml),
+  'must not make a claim about agencies, which is exactly what we cannot check'
+);
+
+/* ==> AND IT SAYS THE SAME THING ON A QUIET DAY. <== The wording is
+ * deliberately independent of the rest of the world: whether anything is in
+ * force in Manila changes nothing about what we know for THIS storm. An edit
+ * that reintroduces a branch here shows up as these two diverging. */
 const capUiQuiet = createCapStorm({
   loadAlerts: async () => ({ state: 'ok', alerts: [], stale: false }),
 });
 await capUiQuiet.ensure(hernan, () => {});
-const quietHtml = capUiQuiet.html(hernan, NOW);
+const quietHtml = capUiQuiet.html(hernan, NOW).replace(/\s+/g, ' ');
 
 ok(
-  /no agency anywhere has a cyclone alert in force/i.test(quietHtml),
-  'with nothing in force, the section must give the complete answer'
-);
-ok(
-  !/gap in what we know/i.test(quietHtml),
-  'a genuinely quiet hour must not be dressed up as a gap'
-);
-
-/* A CANCELLATION IS NOT AN ALERT IN FORCE, so it must not trip the gap
- * wording. Guards against the branch counting `slot.alerts` raw — which it
- * would be very easy to do, since that list deliberately KEEPS stand-downs. */
-const capUiStoodDown = createCapStorm({
-  loadAlerts: async () => ({
-    state: 'ok',
-    alerts: alerts.map((a) => ({ ...a, msgType: 'Cancel' })),
-    stale: false,
-  }),
-});
-await capUiStoodDown.ensure(hernan, () => {});
-ok(
-  !/gap in what we know/i.test(capUiStoodDown.html(hernan, NOW)),
-  'a feed of nothing but cancellations is not an alert in force'
+  quietHtml === gapHtml,
+  'the sentence must not depend on alerts elsewhere on Earth — it is about this storm'
 );
 
 /* =====================================================================

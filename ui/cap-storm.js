@@ -31,7 +31,7 @@
  * (§12).
  */
 
-import { alertKey, alertsForStorm, isInForce, plainEnglish, stormCountries } from '../lib/cap.js';
+import { alertKey, alertsForStorm, plainEnglish, stormCountries } from '../lib/cap.js';
 import { formatUntil } from '../lib/time.js';
 import { DOTS } from './loading-dots.js';
 
@@ -201,49 +201,28 @@ export function createCapStorm({ loadAlerts }) {
         <button class="detail-retry" type="button" data-retry="local-alerts">Retry</button></div>`;
     }
 
-    /* ==> NO COUNTRY IS TWO DIFFERENT SITUATIONS AND THEY MUST NOT SHARE A
-     * SENTENCE. <== §50.12. The match runs on GDACS's `affectedcountries`, so
-     * a storm with none is unmatchable — but WHY that matters depends entirely
-     * on whether any agency has an alert out at all.
+    /* ==> NO COUNTRY, ONE SENTENCE, AND IT STOPS WHERE OUR KNOWLEDGE DOES.
+     * <== §50.12. Aaron's wording, 2026-08-19.
      *
-     * MEASURED 2026-08-19, every hourly snapshot in the archive window: GDACS
-     * carried three live storms and attributed a country to exactly ONE, the
-     * American one. Saudel (17W) and Hernán carried none in any snapshot,
-     * while PAGASA had a Tropical Cyclone Alert in force for Tropical
-     * Depression Neneng. Neneng is NOT either of them — it is one of the
-     * Philippine-basin invests, and GDACS lists no live storm for it at all,
-     * which is the harsher of the two ways this join fails. Either way both
-     * unattributed storms rendered an all-clear during an hour an agency was
-     * warning somebody.
+     * WHAT THIS REPLACED AND WHY IT WAS WRONG: "…so there are no national
+     * alerts to look up." That trailing clause is an ANSWER, and we do not
+     * have one — the match is unavailable, not empty (§5's three states). On
+     * 2026-08-19 GDACS listed three live storms and attributed a country to
+     * exactly one, so two storms rendered that false all-clear during an hour
+     * PAGASA had an alert in force.
      *
-     * The 63-of-98 figure this branch used to cite counts every row in the
-     * list including ENDED storms, which is where the countries accumulate.
-     * Among storms actually live it was one in three. */
+     * ==> AND IT DELIBERATELY DOES NOT COUNT ALERTS ELSEWHERE ON EARTH. <== An
+     * earlier build said how many were in force worldwide. That is a GLOBAL
+     * fact on a PER-STORM surface: with alerts out in three countries, every
+     * unattributed storm anywhere would announce a gap, including storms
+     * nowhere near any of them. It would dilute the one case that matters and
+     * edge toward the causal claim §50.5 forbids.
+     *
+     * The word "yet" is doing the work the old clause did badly: it says the
+     * attribution is pending, not that the lookup came back clean. */
     if (!stormCountries(storm).length) {
-      const loose = (slot.alerts || []).filter((a) => isInForce(a, now)).length;
-
-      /* NOTHING IS IN FORCE ANYWHERE. The old wording, and here it is the
-       * whole truth: no country is listed, and there is nothing we would have
-       * found even if one were. */
-      if (!loose) {
-        return `<div class="detail-soft">No country is currently listed as
-          affected by this storm, so there are no national alerts to look up,
-          and no agency anywhere has a cyclone alert in force right now.</div>`;
-      }
-
-      /* ==> A GAP, AND IT SAYS SO IN THOSE WORDS. <== The count is of alerts
-       * in force WORLDWIDE, not near this storm — we cannot narrow it, which
-       * is precisely the thing being reported. Claiming one of them covers
-       * this storm would be the causal assertion §50.5 forbids; staying
-       * silent would be §5. So it states what is missing and stops. */
-      const n = loose === 1
-        ? 'One national cyclone alert is in force elsewhere in the world, and\n        we can\u2019t tell whether it covers'
-        : `${loose} national cyclone alerts are in force elsewhere in the
-        world, and we can\u2019t tell whether any of them covers`;
       return `<div class="detail-soft">No country is listed as affected by this
-        storm yet, so we can't look up national alerts for it. ${n}
-        this storm. <strong>This is a gap in what we know, not an
-        all-clear.</strong></div>`;
+        storm yet.</div>`;
     }
 
     const mine = alertsForStorm(slot.alerts, storm);
