@@ -55,25 +55,51 @@ written brief naming candidates, what was measured, and what still needs glass.
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
-**Local agency alerts — a new drawer section that will usually be empty.**
+**Local agency alerts — a drawer section AND a coast stripe, neither judged.**
 `SPEC-DATA.md` §50. CAP alerts from national weather agencies, matched to a
-GDACS storm by country, shown as text and never painted (§50.1 has the measured
-reason). **The question is whether it earns its place.** The whole global feed
-was five rows at an hour with eleven live cyclones, so on most storms this reads
+GDACS storm by country, shown as text and — since 2026-08-19 — banded onto the
+coast by `map/layers/cap-coast.js` through the NHC stripe's own selector and
+widths. **The question is whether it earns its place.** The whole global feed
+was ONE row at an hour with three live cyclones, so on most storms this reads
 "no national weather agency in the affected countries currently has a tropical
 cyclone alert in force" — true, and possibly not worth a section. Judge that
 first; the rest is cosmetic if the answer is no.
-**Second, the wording chevron (§50.4).** A non-English alert arrives collapsed
+**Second, the paint at country scale (§50.11), which nothing has seen.** An NHC
+warning covers a stretch of one coast; a CAP area covers a nation. The
+Philippines is 7,600 islands and Costa Rica takes in both its shores. Correct
+and possibly far too much — also whether that volume meets
+`COAST_BAND.maxBandVertices`. `areaPadKm` is the dial if it undershoots at a
+river mouth or an offshore island.
+**Third, the wording chevron (§50.4).** A non-English alert arrives collapsed
 with only the coded English line showing — which names a severity and NOT a
 hazard. Judge whether "Possible threat — expected later, possible" over an
 agency and an area is enough to be worth reading, or whether it reads as an
 alert with the subject missing. If it is the second, the answer is a
 translation pass, not a layout tweak.
+**Fourth, the new gap sentence (§50.12), which will be on screen more often
+than the alerts are.** A storm with no country listed and an alert in force
+somewhere now reads "this is a gap in what we know, not an all-clear". Judge
+whether that lands as honest or as alarming boilerplate on a storm nowhere near
+anyone — it fires on EVERY unattributed storm whenever any agency on Earth has
+anything out, which on 2026-08-19 was two of the three live storms.
 Then, when a Western Pacific storm is live: does PAGASA's alert — English, so
 no chevron — read as informative or as clutter; does the
 footnote successfully say "this agency covers this country" rather than "this
 alert is about this storm"; and on an NHC storm, does pointing at **In effect**
 above read as an answer or as a dead section.
+
+**THE COUNTRY JOIN IS THE FEATURE'S REAL CEILING, AND IT IS NOW BEING
+MEASURED.** `SPEC-DATA.md` §50.12. Every hourly archive run writes a
+`countryMatch` block into the manifest: each live storm's ISO-2 codes, episode
+and position, every country with an alert in force, and the alert countries no
+live storm carries. Read a few days of `history/*/manifest.json` and the
+question answers itself — a country that sits in `unmatchedAlertCountries` and
+later attaches to a storm was an attribution LAG, one that never attaches was a
+coverage HOLE. The hole is the harder one: GDACS tracks named cyclones and
+agencies warn on depressions and invests, which is exactly what happened on
+2026-08-19. **Do not decide how to close it before there are several days of
+snapshots** — the fix for a lag is patience and the fix for a hole is a second
+storm source, and one hour of data cannot tell them apart.
 
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. **Judge when a Western Pacific area next goes Medium or High:** does the
@@ -339,26 +365,38 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
 
-**PASS 1 LANDED, AND THREE OF ITS FOUR ANSWERS ARE NOW WAITING ON THE RUNNER.**
-Watch/warning, rainfall and storm surge each have exactly one credible global
-candidate; none could be measured from a session, so all three are entries in
-`tools/archive-fetch.mjs` and the next session reads bytes rather than a vendor
-page. The fourth is closed: there is no published environment diagnostic outside
-NHC's basins at all (§47.3). Full brief in the project note
-`global-coverage-pass1`.
+**PASS 1 IS READ. TWO ANSWERS ARE SETTLED, ONE IS STILL HALF OPEN.** The bytes
+are on the archive branch and were read 2026-08-19. The fourth question was
+already closed: there is no published environment diagnostic outside NHC's
+basins at all (§47.3). Full brief in the project note `global-coverage-pass1`.
 
-- **Watch/warning → Esri's CAP Connector**, republishing the WMO Alert Hub as a
-  public ArcGIS feature service. `git show origin/archive:latest/` +
-  `capalerts-cyclone.json` for who publishes what — and the companion
-  `geometry/capalerts-cyclone-shapes.geojson` FIRST, because if those areas are
-  administrative blobs rather than coastal lines, the global version of this
-  feature is a different visual object from §7.7's stripe.
-- **Rainfall → Open-Meteo**, keyless and global. `git show` the archive's
-  `openmeteo-rain-outside-nws.json`. Licence is the live question, not the data:
-  CC BY 4.0 attribution required, free tier non-commercial with a daily ceiling.
-- **Surge → GDACS already models it globally**, per populated place, after every
-  advisory from every centre. Whether any of it is machine-readable is unknown;
-  `geometry/gdacs-eventdata-*.json` is where the answer would be.
+- **Watch/warning → SHIPPED, and the shape question answered itself.** The CAP
+  areas ARE administrative blobs — the one live alert on Earth was PAGASA's
+  Philippine Area of Responsibility, a seven-vertex box across 17 degrees of
+  ocean. `areaSelect()` bands it onto the coastline instead of drawing it, so
+  the blob never reaches the globe as a blob. The real limit turned out to be
+  the country join, not the geometry: §50.12.
+- **Rainfall → Open-Meteo works, and the blockers are legal not technical.**
+  Manila, 200 in 403 ms, 1,992 bytes, **72 hourly values with zero nulls and
+  zero time gaps**, mm and ISO-8601 on a UTC base. Two things the bytes could
+  NOT settle: the response carries no `access-control-allow-origin`, but the
+  runner sends no `Origin` so CORS is **unproven rather than disproven** — if
+  it is closed it is a relay route, not a dead end. And there are no
+  rate-limit headers at all, so the daily ceiling is docs-only. CC BY 4.0
+  attribution and a non-commercial free tier are the real gates. Note it is mm
+  and hourly buckets against §48's inches and NWS's QPF grid — a conversion and
+  a different provenance line, not an adapter.
+- **Surge → GDACS publishes an INDEX, and the values are one fetch further
+  down.** `cyclonesurge` is on all three live storms including the JTWC one, so
+  it genuinely covers the non-American half. Structure is better than hoped:
+  three models (ECMWF, GFS, HWRF) × every bulletin, each row flagged `last` and
+  `overall` so picking the current one is trivial. But every row is a URL —
+  `cyclonesurge/getdetails?id=NNNNN` — and nothing fetched one. `impacts[]
+  .resource` carries `buffer39`, `buffer74`, `timeline` and `locations` export
+  links nobody has followed either. **This is now a one-entry change to
+  `tools/archive-fetch.mjs`, not a research question.** `locations` is the
+  shape most likely to fit the home dashboard, since GDACS's answer is
+  per-place where NHC's is per-coast.
 
 **PASS 2 — global radar, through the fewest sources that hold quality.**
 `SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest
