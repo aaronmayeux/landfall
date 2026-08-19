@@ -1141,6 +1141,18 @@ the `archive` branch, where a session reads them with plain git:
 `.b64` suffix and decodes to the real file — the outlook KMZ is a working zip
 in the branch today. This is how a candidate becomes a measurement.
 
+**Three phases run AFTER the flat list, each reading what the phase before it
+WROTE.** Per-storm geometry is derived from the event list; surge cards and
+impact exports are derived from the event records that produced; and
+`aoi_surge` polygons are derived from the surge cards. A URL that lives inside
+a payload cannot be in a static list, and the alternative — hardcoding an id
+that changes every bulletin — is a source that silently 404s.
+
+**Every derived phase is capped and round-robins across storms**, so one storm's
+three models cannot eat a budget of six and leave the other basin unread. The
+`aoi_surge` pass is deliberately uncapped: it is bounded by how many storms
+publish one at all, which on 2026-08-19 was one of three.
+
 **A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
 on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
 HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,

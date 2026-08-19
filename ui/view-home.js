@@ -51,6 +51,7 @@ import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dash
 import { homeChart } from './chart-home.js';
 import { dotted } from './loading-dots.js';
 import { createRainHome } from './rain-home.js';
+import { createSurgeHome } from './surge-home.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
 
@@ -83,12 +84,17 @@ const esc = (t) =>
  */
 export function createHomeDashboardView({
   units, onEditHome, onOpenStorm, onFocusStorm, onFrameHome,
-  warmGeometry, rain, now = () => Date.now(),
+  warmGeometry, rain, surge, now = () => Date.now(),
 }) {
   /* Rain (§48.8) is a self-contained controller in ui/rain-home.js — this file
    * is the largest in the app and over §12's ceiling, so it gets one seam and
    * nothing else: a section string, an ensure, a wire. */
   const rainH = createRainHome({ ...rain, units, now });
+  /* Surge (§51.3) gets the same one seam for the same reason. It is passed the
+   * STORM as well as the house, which Rain is not: rainfall is about a point
+   * on the ground and is the same answer whichever storm is on screen, while a
+   * surge simulation belongs to one storm's bulletins. */
+  const surgeH = createSurgeHome({ ...surge, units });
   let host = null;
   let visible = false;
   let lastState = null;
@@ -331,6 +337,8 @@ export function createHomeDashboardView({
      * would be a request for something nobody can see. */
     rainH.ensure(home, renderRainBody);
     rainH.wire(el, home, renderRainBody);
+    surgeH.ensure(threat?.storm, home, renderSurgeBody);
+    surgeH.wire(el, threat?.storm, home, renderSurgeBody);
     afterRender();
   }
 
@@ -577,6 +585,14 @@ export function createHomeDashboardView({
        * section (§48.6), and a warning at the bottom of a scroll is a warning
        * nobody read. */
       rainSectHtml(),
+      /* ==> DIRECTLY UNDER RAIN, AND THE PAIRING IS THE POINT (§51.3). <==
+       * These are the two sections on this screen about WATER AT THE HOUSE
+       * rather than about the storm's own numbers, and a reader deciding
+       * whether to move a car wants them together. Rain is first because it
+       * reaches every house on Earth and surge only reaches coastal ones —
+       * putting the rarer section above the universal one would leave a gap
+       * on most screens where a heading used to be. */
+      surgeSectHtml(threat),
       figuresHtml(dash),
       dash.far ? '' : countdownHtml(dash, sys, sectHead),
       homeRowHtml(home),
@@ -704,6 +720,32 @@ export function createHomeDashboardView({
     return `<div class="home-sect home-rain">${rainH.inner(home, sectHead('rain', 'Rain'))}</div>`;
   }
 
+  /** SURGE — how much water reaches the coast near the house (§51.3).
+   *
+   *  ==> IT RENDERS FOR SOME STORMS AND NOT OTHERS, AND THAT IS NOT A BUG.
+   *  <== Only a storm carrying a GDACS event id can be asked, which excludes
+   *  every storm in an NHC basin (§51.5). The controller decides; this asks it
+   *  rather than re-deriving the rule, so the wrapper can never render around
+   *  an empty section. */
+  function surgeSectHtml(threat) {
+    const home = getHome();
+    const storm = threat?.storm;
+    if (!surgeH.applies(storm, home)) return '';
+    return `<div class="home-sect home-surge">${surgeH.inner(storm, home, sectHead('surge', 'Coastal flooding'))}</div>`;
+  }
+
+  /** Repaint ONLY the Surge section when its fetch lands, for the reason
+   *  `renderRainBody` gives: a full render() throws away the reader's scroll
+   *  position. */
+  function renderSurgeBody() {
+    const el = body()?.querySelector('.home-surge');
+    const home = getHome();
+    const storm = lastDash ? currentThreat()?.storm : null;
+    if (!el || !surgeH.applies(storm, home)) return;
+    el.innerHTML = surgeH.inner(storm, home, sectHead('surge', 'Coastal flooding'));
+    surgeH.wire(el, storm, home, renderSurgeBody);
+  }
+
   /** Repaint ONLY the Rain section when its fetch lands. A full render()
    *  rebuilds the whole dashboard and throws away the reader's scroll
    *  position — the same reasoning the storm panel's per-section repaints
@@ -751,6 +793,12 @@ export function createHomeDashboardView({
     clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     /* Vitals — a gauge needle. */
     gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 17l4-5"/>',
+    /* Coastal flooding — a wave crest over a level line. Deliberately NOT the
+     * rain cloud with more drops: these two sections sit adjacent and their
+     * icons are the only thing distinguishing them at a glance while
+     * scrolling. */
+    surge: '<path d="M3 16c2 0 2-1.5 4-1.5S9 16 11 16s2-1.5 4-1.5S17 16 19 16"/>' +
+      '<path d="M3 20h18"/><path d="M6 11c0-3 3-4 6-7 3 3 6 4 6 7"/>',
     /* The closest pass — a crosshair over the house. */
     target: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/>' +
       '<path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',

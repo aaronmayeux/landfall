@@ -81,10 +81,16 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
        * coverage rather than as our failure. NO RETRY: a house outside NWS's
        * area will never get a different answer, and a button that cannot work
        * is worse than none. */
+      /* ==> THIS SENTENCE CHANGED WHEN THE SECOND SOURCE LANDED (§48.14), AND
+       * THE OLD ONE WOULD NOW BE A LIE. <== It used to explain NWS's coverage
+       * area, because NWS not forecasting here WAS the whole answer. It is not
+       * any more: the global model covers the planet, so reaching this state
+       * means BOTH sources declined to produce a series for this point. That
+       * is rare and it is still an answer about the place rather than a
+       * failure of ours, so it still carries no Retry. */
       return `<p class="detail-soft">No rainfall forecast for this location.</p>
-        <p class="home-rain-note">The National Weather Service forecasts for the
-          United States and its territories, which includes Hawaii, Puerto Rico
-          and Guam.</p>`;
+        <p class="home-rain-note">Neither the National Weather Service nor the
+          global model has a forecast for this point.</p>`;
     }
 
     if (res.status !== 'ok') {
@@ -113,12 +119,20 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
       ? `<ul class="home-rain-alerts">${out.alerts.map(alertRow).join('')}</ul>`
       : '';
 
-    /* `alerts: null` from the relay means the alerts hop failed while the grid
-     * succeeded. That is NOT "nothing in force", and it must not be shown as
-     * silence (§5). */
-    const alertsUnknown = res.payload?.alerts == null
-      ? `<p class="home-rain-note">Flood warnings could not be checked just now.</p>`
-      : '';
+    /* ==> `alerts: null` MEANS TWO DIFFERENT THINGS AND THEY GET TWO DIFFERENT
+     * SENTENCES (§48.16). <== From NWS it means the alerts hop failed while
+     * the grid succeeded — what is in force is UNKNOWN, which is not "nothing
+     * in force" and must not be shown as silence (§5). From the global model
+     * it means there is no flood-warning source for this place at all, which
+     * is a durable fact rather than a hiccup. Saying "could not be checked
+     * just now" about the second reads as a temporary fault and invites a
+     * reader to wait for an answer that is never coming. */
+    const alertsUnknown = res.payload?.alerts != null
+      ? ''
+      : out.provider?.name === 'open-meteo'
+        ? `<p class="home-rain-note">Flood warnings aren’t published for this
+            location — this is a rainfall forecast only.</p>`
+        : `<p class="home-rain-note">Flood warnings could not be checked just now.</p>`;
 
     const through = out.throughWords ? ` through ${esc(out.throughWords)}` : '';
 
@@ -137,9 +151,27 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
           ${esc(out.peak.text)}, from ${esc(formatClockDay(out.peak.startMs))}.</p>`
       : '';
 
-    const where = out.place
-      ? `At your house — National Weather Service, nearest point ${esc(out.place)}.`
-      : 'At your house, from the National Weather Service.';
+    /* ==> THE PROVENANCE LINE NAMES THE SOURCE **AND** THE POINT, ON BOTH
+     * PATHS, AND §48.10 IS WHY. <== The risk that section records is a reader
+     * on Maui seeing "8 to 12 inches across eastern Maui" in the storm drawer
+     * and 2.91 here, and concluding the app is broken. The defence is that
+     * this line says WHOSE forecast this is and WHERE FOR. NWS supplies a town
+     * name; the global model supplies only the grid point it snapped to, which
+     * is a poorer answer to the same question and not nothing.
+     *
+     * ==> AND THE SECOND SOURCE'S LICENCE IS DISCHARGED HERE. <== Open-Meteo
+     * is CC BY 4.0, which requires visible attribution. Naming it in the
+     * provenance line is that attribution — a credit in a code comment is not
+     * one, and a separate footer would put it somewhere nobody reading the
+     * number ever looks. */
+    const where = out.provider?.name === 'open-meteo'
+      ? (Number.isFinite(out.provider.gridLat)
+        ? `At your house — Open-Meteo, nearest model point
+           ${out.provider.gridLat.toFixed(2)}, ${out.provider.gridLon.toFixed(2)}.`
+        : 'At your house, from Open-Meteo.')
+      : out.place
+        ? `At your house — National Weather Service, nearest point ${esc(out.place)}.`
+        : 'At your house, from the National Weather Service.';
 
     return `${alerts}${alertsUnknown}${headline}${peak}
       <p class="home-rain-note">${where}</p>`;

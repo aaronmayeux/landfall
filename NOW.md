@@ -39,13 +39,18 @@
 research it does not need. Do not start two. When a wave lands, delete it from
 here and put what it built in the spec.
 
-**WAVE 5 — research. FOUR PASSES, one session each, independent.** Take them in
-any order; nothing here waits on anything else here. **How to actually reach the
-world from a sandbox that cannot: `SPEC-OPS.md` §18.** Each pass ends in a
-written brief naming candidates, what was measured, and what still needs glass.
+**WAVE 5 — research. ONE PASS LEFT.** Pass 1 shipped rainfall and surge; what it
+built is in the spec and what it still needs is under IN FLIGHT. **How to reach
+the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
+
+**THIS FILE IS 484 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
+arrival, so the audit was overdue before this pass and this pass made it worse.
+**The next session does the read and the cut list before adding anything**, and
+the first candidates are the IN FLIGHT entries that have been unjudged longest —
+several name a glass question for a storm shape that has not occurred in months.
 
 ---
 
@@ -54,6 +59,62 @@ written brief naming candidates, what was measured, and what still needs glass.
 **Everything under this heading is BUILT, DEPLOYED AND UNJUDGED.** The as-built
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
+
+**Global rainfall and global surge are BUILT, DEPLOYED AND UNJUDGED.**
+`SPEC-DATA.md` §48.14–§48.16, §51; `SPEC-UI.md` §48.12, §51.6. Wave 5 Pass 1's
+two features. What a tool cannot answer:
+
+**Rainfall's second source is invisible from anywhere with an NWS forecast.**
+It only fires when NWS says `not_covered`, so judging it means setting home
+somewhere NWS does not reach — the Bahamas, Manila, anywhere outside the US and
+its territories — and looking. Three things to judge there: does *"Open-Meteo,
+nearest model point 14.59, 121.00"* read as provenance or as a coordinate leak;
+does *"Flood warnings aren't published for this location"* land as a fact or as
+a missing feature; and does a rainfall total from a raw model beside an
+American storm's read as the same kind of number. **The old Bahamas hole is
+now closed** — §48.5's never-rendered 404/400 pair now falls through to a real
+forecast instead of a coverage sentence.
+
+**Surge at home has never rendered and needs a GDACS-basin storm near a house.**
+West Pacific, Indian Ocean, Southern Hemisphere — not an NHC basin, see the
+hole below. Judge: does *"About 0.5 m of coastal flooding is modelled at
+Shomushon"* read as useful or as trivia beside the wind numbers; does *"it keeps
+rising for about six hours after it first arrives"* earn its clause; and — the
+one that matters — does the `out_of_range` pair of sentences read as **a gap in
+what we know** or as an all-clear. If it reads as an all-clear that is a §5
+bug, not a wording preference.
+
+**The coastal layer has never been on a globe.** `SPEC-DATA.md` §51.4. Tap
+Coastal → Surge on a GDACS storm. Judge whether a 5 km band around a town reads
+as a coast or as a smudge; whether the teal-to-magenta ramp is distinguishable
+from the NHC blue-to-purple one at a glance; and whether the EMPTY coast
+between two modelled towns reads as deliberate or as a rendering failure. That
+last one is the deliberate choice — nothing is interpolated between towns —
+and it is the most likely thing to look broken.
+
+**Every archived height is sub-metre, so nobody has seen the ramp move.** The
+whole three-storm archive spans 0.10 m to 0.48 m: rungs 0 and 1 of five. The
+top three colours and the "deepest town elsewhere" sentence have never
+rendered. Needs a real typhoon on a real coast.
+
+**THE HOLE, AND IT IS AARON'S CALL RATHER THAN A TODO.** `SPEC-DATA.md` §51.5.
+`mergeStorms` drops the GDACS twin of every storm in an NHC basin, so surge
+cannot see Lala's 47 Hawaiian towns — and NHC's own surge product only answers
+while a US surge watch is in force. So an American storm with no watch out has
+a real answer sitting in GDACS that nothing renders. Closing it means joining an
+NHC storm to a GDACS event id **by name**, which is the same class of join
+§50.12 is measuring right now for CAP. **Decide it there, with that evidence.**
+`tools/test-surge-locations.mjs` asserts an NHC storm yields null, so that line
+is what changes the day it is closed.
+
+**`aoi_surge` is fetched now and nothing has read it.** `SPEC-OPS.md` §18.3.
+The surge card names an `aoi_surge` polygon on some storms — one of three on
+2026-08-19 — and no `getaoi` payload of any kind has ever been fetched here.
+The archive runner derives them in a second pass from the next run onward.
+**Read the bytes before touching §51.4:** if it is a real modelled footprint it
+becomes the primary geometry and the town bands become the fallback, the same
+pattern the coast band already has against NHC's chord. If it is another
+metadata card, that is one line deleted from the runner.
 
 **Local agency alerts — a drawer section AND a coast stripe, neither judged.**
 `SPEC-DATA.md` §50. CAP alerts from national weather agencies, matched to a
@@ -127,10 +188,10 @@ above the total read as urgent or just make the section taller. On a storm with
 no land threat, does *NHC lists no land hazards for this storm* read as
 reassurance or as a missing feature.
 
-**Two corners of rainfall nothing has exercised.** The `no_hazards` path is
-proven against a SYNTHESISED product (§48.11). And a house outside NWS coverage
-has never rendered — the 404/400 pair is asserted from the Nassau fixtures, but
-nobody has set home in the Bahamas and looked.
+**One corner of rainfall nothing has exercised.** The `no_hazards` path is
+proven against a SYNTHESISED product (§48.11). *The Bahamas corner is gone —
+a house outside NWS coverage now gets a real forecast from the second source
+(§48.14), and what needs looking at is above.*
 
 **The no-home screen's new privacy sentence.** It no longer says coordinates
 never leave the device, because rainfall sends the house. It now says the home is
@@ -279,7 +340,10 @@ filled triangles (below), not a smaller canvas.
 **Watch a storm get a real final warning.** The `declared` end path has never
 fired on a real storm. Detection is client-side; the app must be open.
 
-**Surge is HELD FOR A STORM NEAR HOME, and the live relay route is the gap.**
+**The AMERICAN half of surge is still held for a storm near home.** The global
+half shipped (§51) and answers a different question on different storms; this
+entry is now only about NHC's product.
+
 `SPEC-DATA.md` §4.8. `fetchSurgeLive()` throws until that route exists, which the
 caller surfaces as `unavailable` — never as an empty coast. The Peak Storm Surge
 service only answers while a US storm has surge watches in effect, so the live
@@ -364,43 +428,6 @@ the triangulation. **Not during cyclone season, and not in the same pass as the
 engine upgrade** — both are surgery on `map/globe3d.js`.
 
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
-
-**PASS 1 IS READ. TWO ANSWERS ARE SETTLED, ONE IS STILL HALF OPEN.** The bytes
-are on the archive branch and were read 2026-08-19. The fourth question was
-already closed: there is no published environment diagnostic outside NHC's
-basins at all (§47.3). Full brief in the project note `global-coverage-pass1`.
-
-- **Watch/warning → SHIPPED, and the shape question answered itself.** The CAP
-  areas ARE administrative blobs — the one live alert on Earth was PAGASA's
-  Philippine Area of Responsibility, a seven-vertex box across 17 degrees of
-  ocean. `areaSelect()` bands it onto the coastline instead of drawing it, so
-  the blob never reaches the globe as a blob. The real limit turned out to be
-  the country join, not the geometry: §50.12.
-- **Rainfall → Open-Meteo works; the blockers are legal, and the CORS question
-  is now being asked properly.** Manila, 200 in 403 ms, 1,992 bytes, **72
-  hourly values with zero nulls and zero time gaps**, mm and ISO-8601 on a UTC
-  base. The first probe carried no `access-control-allow-origin` — but the
-  runner sent no `Origin`, so the server was never asked, and reading that
-  silence as "CORS is closed" would have been the mistake. A second Open-Meteo
-  entry in `tools/archive-fetch.mjs` now sends one from our production origin.
-  **Read the manifest headers, not the body.** Also read any `x-ratelimit-*`
-  there: the free tier's daily ceiling is a docs-page number with nothing in
-  the response to measure against, which is the harder blocker. CC BY 4.0
-  attribution is the other. Note it is mm and hourly buckets against §48's
-  inches and NWS's QPF grid — a conversion and a different provenance line.
-- **Surge → the payloads are being fetched now, after one run of the new
-  entries.** `cyclonesurge` is on all three live storms including the JTWC one,
-  three models × every bulletin, each row flagged `last` and `overall`. It is
-  an INDEX; the values live behind `getdetails?id=`. Six surge payloads and six
-  impact exports are now derived per run, **round-robin across storms so one
-  storm cannot eat the budget and leave the other basin unread** — verified
-  against the archived records: all three storms get an `overall` and a
-  `latest` before any second model, and both `getlocations` and `gettimeline`
-  land for each. `getlocations` is the shape decision: if it is populated
-  places with a per-place number, this is a home-dashboard feature and not a
-  globe layer, and it works where nothing American reaches. Caps are
-  deliberately small because no payload here has a known size yet — raise them
-  once one has been seen.
 
 **PASS 2 — global radar, through the fewest sources that hold quality.**
 `SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest

@@ -2583,6 +2583,78 @@ worded about the HOUSE, and its closing line NAMES THE POINT NWS is forecasting
 for. Whether that is enough is a glass question and it needs a storm near a
 home to ask — **it is not settled.**
 
+
+### 48.12 The provenance line, on both paths
+
+The closing line of the Rain section names the SOURCE and the POINT, and it is
+the only thing on either surface that explains §48.10's disagreement.
+
+- **NWS** — "At your house — National Weather Service, nearest point Kahului,
+  HI." A town, as NWS itself names it.
+- **Open-Meteo** — "At your house — Open-Meteo, nearest model point 14.59,
+  121.00." No town exists in that payload; the coordinate it snapped to does,
+  and it is a poorer answer to the same question rather than none. **Naming
+  Open-Meteo here is also the CC BY 4.0 attribution** (§48.14) — a credit in a
+  code comment is not one, and a footer would put it where nobody reading the
+  number looks.
+
+**Two sentences for `alerts: null`, and they are opposites** (§48.16). From NWS:
+"Flood warnings could not be checked just now" — a hiccup, and the section is
+retryable. From Open-Meteo: "Flood warnings aren't published for this location —
+this is a rainfall forecast only" — a durable fact, and inviting a reader to
+retry it would be inviting them to wait for an answer that never comes.
+
+**`not_covered` no longer explains NWS's coverage area.** It used to, because
+NWS not forecasting here was the whole answer. Since §48.14 the global model
+covers the planet, so reaching that state means both sources declined; the
+sentence says so and still carries no Retry.
+
+### 51.6 Coastal flooding — the home drawer's section
+
+Directly under Rain, above the figures. **The pairing is the point:** these are
+the two sections about water at the house rather than about the storm's own
+numbers, and a reader deciding whether to move a car wants them together. Rain
+is first because it reaches every house on Earth and this only reaches coastal
+ones — putting the rarer section above the universal one leaves a gap on most
+screens where a heading used to be.
+
+**It renders for some storms and not others, and that is not a bug.** Only a
+storm carrying a GDACS event id can be asked, which excludes every storm in an
+NHC basin (§51.5). The controller decides; the view asks it rather than
+re-deriving the rule, so the `.home-sect` wrapper can never render around
+nothing.
+
+**Its own icon.** A wave crest over a level line — deliberately not the rain
+cloud with more drops, because these two sections are adjacent and the icon is
+what separates them at a glance while scrolling.
+
+**It borrows Rain's type scale rather than inventing one.** Same lead, same
+secondary, same muted note. The two answer the same kind of question and should
+read as one rhythm; what distinguishes them is the icon and the words, which is
+where the difference actually is.
+
+**The Retry takes `.home-retry`'s declaration**, as the third member of that
+shared selector. §12 says a pattern used twice gets extracted before the second
+use, and this is the first control added since — it cost one selector name
+rather than a rediscovery of the bare-underlined-link bug `ui/home.css` records
+at the bottom.
+
+**The four sentences** (§51.3 holds the states):
+
+| State | What it says |
+|---|---|
+| `ok` | "About 0.5 m of coastal flooding is modelled at Shomushon, the nearest reporting point to your house. It keeps rising for about six hours after it first arrives." |
+| `ok`, negligible | "Only a trace of coastal flooding is modelled near you, at Hilo." |
+| `out_of_range` | "No coastal flooding has been modelled near your house for this storm. The deepest modelled anywhere on this storm is about X at Y." + "This model only reports at populated coastal places, so this is a gap in what we know rather than an all-clear." |
+| `none_matched` | "No coastal flooding is modelled for this storm — it isn't near enough to any populated coast." |
+
+**Only the last is an all-clear**, and the third is the one that must never read
+as one. The gap sentence is not optional garnish: an absence with no figure
+beside it reads as safety.
+
+**Heights are in the reader's own units**, through `formatSurge`, like every
+other length in the app. Never dual-printed.
+
 ---
 
 ### 49.4 Relative time has a direction

@@ -244,7 +244,20 @@ function normalizeEvent(feat) {
        * Consumers wanting numbers still get nothing here; consumers wanting
        * a shape use the band polygons. */
       windRadii: false,
-      surge: false,
+      /* ==> TRUE SINCE §51, AND THE FLAG WAS WRONG THE MOMENT THAT SHIPPED.
+       * <== It meant "GDACS publishes no storm surge", which was believed
+       * because the product named `cyclonesurge` on the event record resolves
+       * to cards with `geometry: null` and no places in them. The surge is on
+       * the same record under `impacts` → `getlocations`: named towns, a
+       * modelled height in metres, an arrival hour and a peak hour. Measured
+       * 2026-08-19 — Lala 47 towns, Saudel 2, Hernán none.
+       *
+       * Recorded here even though — like `can.models` above — nothing reads
+       * it, and for the identical reason that comment gives: a capability map
+       * that is only correct where something happens to consult it is a trap.
+       * The next gate written against this flag would have deleted the entire
+       * non-American half of surge without failing anything. */
+      surge: true,
       /* ==> TRUE, AND IT WAS FALSE FOR WEEKS AFTER IT STOPPED BEING. <== The
        * flag predates the TCGP join. `data/adeck.js` resolves a GDACS storm to
        * a deck by NAME through `data/tcgp-index.js` and has done since the

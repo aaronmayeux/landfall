@@ -89,13 +89,19 @@ reader.
 | `/api/nhc/ships` | Walk three synoptic slots + parse SHIPS to per-hour knots |
 | `/api/gdacs/events` | Forward the cyclone event list |
 | `/api/gdacs/geometry` | Forward + edge-cache per-event geometry |
+| `/api/gdacs/surge` | Two hops to modelled surge at named towns (§51.2) |
 | `/api/jtwc/storms` | Name↔designation index, wind ladder, final-warning flag |
 | `/api/jtwc/warning` | Forward + cache a warning `.txt` |
 | `/api/tcgp/adeck` | UCAR model guidance for non-NHC basins |
+| `/api/cap/alerts` | National agencies' cyclone alerts, worldwide (§50.2) |
+| `/api/cap/shapes` | Those alerts' areas, fetched per set (§50.10) |
+| `/api/nws/rainfall` | Two hops to the gridded QPF at a point (§48.7) |
+| `/api/rain/global` | Open-Meteo, reshaped into the NWS body (§48.15) |
 | `/api/imagery/satellite` | Forward + cache satellite frames |
 | `/api/imagery/radar` | Forward radar (CORS-blocked, pixels must be read) |
 | `/api/geocode` | Proxy Mapbox — a secret problem, not a CORS one |
 | `/api/reverse` | The same, backwards: a point becomes a place name |
+| `/api/replay/*` | Serves an archived storm as if it were live (§8) |
 | `/api/beacon` | Telemetry sink |
 | four `/inspect` routes | Read-only probes, secret-gated |
 
@@ -2037,6 +2043,118 @@ happened (`SPEC-NEXT.md` §49.5), the storm's real peak (§49.6) and the rungs
 that describe the past (§49.14). The left half of the chart and the Timeline
 rail's past rows are pass 4 and do not read it yet.
 
+### 48.14 Source — rainfall where NWS does not reach
+
+**Open-Meteo, `api.open-meteo.com/v1/forecast`.** Keyless, global, and the
+non-American half of §48. Measured 2026-08-19 against Manila: HTTP 200 in
+403 ms, 1,992 bytes, **72 hourly values with zero nulls and zero time gaps**,
+`mm` and ISO-8601 on a UTC base.
+
+**==> CORS IS OPEN AND WE RELAY ANYWAY. <==** The first probe carried no
+`access-control-allow-origin` — but the runner sent no `Origin`, so the server
+was never asked, and reading that silence as "CORS is closed" would have been
+the mistake. A second probe sent one from the production origin and the answer
+is `access-control-allow-origin: *`. A browser **can** call this directly. It
+does not, for three reasons, and none of them is access: the free tier's daily
+ceiling is a documentation-page number with **no `x-ratelimit-*` header of any
+kind** in the response, so the only defence is fewer calls and that needs a
+shared cache; the coordinate is somebody's house and behind a relay it reaches
+one third party from one server rather than from the reader's own IP; and a
+second origin in `connect-src` is a permanent widening of what this app may
+talk to.
+
+**Two constraints on shipping it, neither on reading it.** CC BY 4.0 requires
+**visible** attribution — discharged in the provenance line of §48.16, because
+a credit in a code comment is not one. And the free tier is non-commercial,
+which this app is.
+
+**==> THE UNIT PROBLEM DOES NOT EXIST, AND THAT IS LUCK RATHER THAN DESIGN.
+<==** §48.4 records that NWS's `quantitativePrecipitation` reads `wmoUnit:mm`
+at every point ever probed, including the American ones. Open-Meteo's
+`hourly_units.precipitation` reads `mm`. Same unit, no conversion — but the
+field is still **read** rather than assumed, and an unrecognised one is an
+answer (`unreadable`) rather than a guess.
+
+**What differs is the packaging, and that is a transport concern.** Open-Meteo
+sends parallel arrays — a list of ISO times and a list of numbers, positionally
+paired. NWS sends `{ validTime, value }` objects where `validTime` is an
+interval. Same fact, two shapes.
+
+### 48.15 The global relay route
+
+`/api/rain/global?lat=&lon=` — `functions/api/rain/global.js`.
+
+**==> IT EXISTS SO `lib/rainfall.js` NEVER LEARNS THERE ARE TWO SOURCES. <==**
+`projectOpenMeteo()` normalises the parallel arrays into the exact body
+`/api/nws/rainfall` already serves, including rebuilding `validTime` to NWS's
+own grammar: `2026-08-19T00:00:00+00:00/PT1H`, an instant, a solidus and a
+duration §48.4's `parseInterval` already reads. Every line of arithmetic, every
+window, every sentence and every test downstream is untouched. The alternative
+— a second parser — is two code paths that must agree about what an inch is,
+and they drift.
+
+**A null inside the series is dropped, not zeroed.** Never seen in the archive.
+A missing hour is an hour we do not know about, and summing it as zero quietly
+shrinks a total with no shape to the failure.
+
+**A 200 with no series is `values: null`, never `values: []`.** This model
+covers the planet, so it cannot report a place as uncovered; an empty array
+would read downstream as a forecast of nothing, which is a claim nobody made.
+
+**Cache: fresh 1 h, last-good 6 h.** Four times the NWS route's fresh window,
+and the reason is what is **missing** from this payload. That route's fifteen
+minutes is set by flood warnings that expire inside the hour. Nothing here
+expires — it is a numerical model rerun a few times a day — and the longer hold
+is the difference between one upstream call per hour per neighbourhood and four,
+against a ceiling nothing can measure.
+
+**==> THERE ARE NO FLOOD WARNINGS HERE AND THE ROUTE SAYS SO. <==** Open-Meteo
+publishes weather, not what an agency has in force, and no global equivalent of
+`/alerts/active` has been found. `alerts: null` is the same signal the NWS route
+sends when its alerts hop fails, so `provider` travels beside it — see §48.16.
+
+### 48.16 Which source answered, and the two meanings of `alerts: null`
+
+**NWS first, everywhere it answers.** It is a forecaster's product rather than a
+raw model: a gridded QPF an office has touched, flood warnings in the same
+payload, and a named nearest town that §48.10 depends on. The global model has
+none of those three and covers everywhere.
+
+**==> ONLY `not_covered` FALLS THROUGH. <==** `data/rainfall.js` moves to the
+second source on a statement about the PLACE and never on one about the
+NETWORK. Answering an `unavailable` from elsewhere would mean a reader in Miami
+silently getting a different forecast, with different provenance and no flood
+warnings, on the days api.weather.gov is having trouble. Retry is the honest
+response to a transport failure; substitution is not. And if the second source
+also fails, the answer is **its** failure — returning the first one's
+`not_covered` would tell a reader outside NWS coverage, permanently and with no
+button, that nobody forecasts rain for their house.
+
+**`provenance()` in `lib/rainfall.js` reads which source answered.** A payload
+with no `provider` field is the American one — `/api/nws/rainfall` predates the
+second source and sends none, so defaulting to `nws` keeps every fixture in
+`samples/rain/` reporting the source it actually came from with nothing
+rewritten.
+
+**==> `alerts: null` MEANS TWO OPPOSITE THINGS AND GETS TWO SENTENCES. <==**
+From NWS it means the alerts hop failed while the grid succeeded: what is in
+force is **unknown**, which is not "nothing in force" and must not read as
+silence (§5). From the global model it means no flood-warning source exists for
+this place at all — a durable fact. "Could not be checked just now" under the
+second invites a reader to wait for an answer that is never coming.
+`alertsKnown` is what separates them.
+
+**The provenance line names the point on both paths, and §48.10 is why.** NWS
+supplies a town ("nearest point Kahului, HI"). Open-Meteo supplies only the grid
+point it snapped to — measured, 14.5995/120.9842 asked and 14.586995/121.002785
+answered — which is a poorer answer to the same question and not nothing.
+
+**`not_covered` is now close to unreachable, and its wording changed.** It used
+to explain NWS's coverage area, because NWS not forecasting here **was** the
+whole answer. Reaching it now means both sources declined to produce a series.
+It still carries no Retry.
+
+
 ## 50. Local agency alerts — what the rest of the world publishes
 
 ### 50.1 Why this exists, and what it deliberately is not
@@ -2411,3 +2529,221 @@ including storms nowhere near any of them. It diluted the one case that matters
 and edged toward the causal claim §50.5 forbids. The sentence is identical
 whether the rest of the world is quiet or not, and `tools/test-cap.mjs` asserts
 those two renders are byte-identical.
+
+## 51. Storm surge outside America — modelled water at named towns
+
+### 51.1 The product, and the one that is not it
+
+**==> THE THING CALLED `cyclonesurge` IN THE GDACS API IS NOT THE SURGE
+FORECAST. <==** Measured off the archive branch 2026-08-19, three live storms.
+The event record carries a `cyclonesurge` index — three models, one row per
+bulletin, each flagged `last` and `overall`. Every row resolves to a
+`getdetails` card that arrives with `geometry: null`, `bbox: null`, one headline
+`maxheight`, and links. **No places in it and no shapes in it.**
+
+**The product with the answer hangs off `impacts` on the same record:
+`getlocations`.** One export per storm, model-agnostic, and already aggregated
+across every bulletin — "Simulation based on Bulletins 1-29", read verbatim out
+of Lala's header. That is what `/api/gdacs/surge` fetches, and it is why its
+first hop is `geteventdata` rather than anything with "surge" in its name.
+
+**The shape, per town:**
+
+| Field | Meaning | Note |
+|---|---|---|
+| `city` | the town | **absent on the header feature** — that is the test that separates them |
+| `country` | the country | "Northern Mariana Islands", "United States" |
+| `maxheight` | modelled water height, **metres**, as a string | `"0.48"`. `-1` is a sentinel for "not computed" |
+| `timearrival` | **hours from bulletin 1**, `"87:00"` | not a clock time |
+| `timemaxh` | hours from bulletin 1 to the peak | `"93:00"` — six hours of rising |
+| `latitude` / `longitude` | the town, six decimals | padded strings |
+
+**Every export opens with a header feature that is not a town.** It sits at the
+storm's own position with `city: null` and a blob of simulation metadata. Kept,
+it renders as an unnamed place in the ocean with no height. Hernán's export is
+**the header alone**, which is why the `city` test is the right one and "the
+first feature is metadata" would have been right by accident.
+
+**`overall` on the surge index is the event aggregate. Confirmed, not
+inferred.** Every model group carries exactly one `overall: true` row, always
+`bulletinid: "0"`, its `episodedate` equal to the newest bulletin's, and its
+figures are running maxima — Lala's overall rain 831 mm against bulletin 15's
+328, Hernán's overall wind 31 m/s against 17. Recorded because the question was
+open; the app does not read these cards.
+
+**==> THE TWO PRODUCTS DISAGREE AND ONLY ONE MAY REACH A SCREEN. <==** Lala's
+`getlocations` header states 0.17 m at Hookena as the worst **populated** place;
+its ECMWF card states `maxheight: 0.330424815416`. Both are true of different
+questions. The route serves the towns and never the card's number.
+
+**==> THE HEIGHTS ARE SUB-METRE AND THAT GOVERNS THE DESIGN. <==** The whole
+archive: Lala's worst populated place 0.17 m, Saudel's 0.48 m, Hernán none.
+Lala's entire 47-town spread is 0.10 to 0.17 — seven centimetres end to end.
+
+Two things follow and neither is a style choice.
+
+1. **NHC's ramp may never be reused.** `SURGE_RAMP`'s bottom rung is "up to
+   3 ft" ≈ 0.91 m, so every observation this product has ever made lands in it.
+   Painted on that ramp, every storm outside America renders the same blue for
+   ever and a reader correctly concludes from the globe that surge only happens
+   in America. §6 says a red band means one thing everywhere; keeping that
+   promise here needs a ramp of our own. `GDACS_SURGE.thresholdsM` and
+   `GDACS_SURGE_RAMP`, teal through magenta, deliberately a different hue
+   family so the two cannot be mistaken for one scale.
+2. **The figure outranks the colour.** At this scale a bucket says almost
+   nothing. Every surface shows the height itself, in the reader's own units,
+   through `formatSurge` — the app's one surge formatter, fed metres converted
+   at this boundary rather than a second formatter that rounds differently.
+
+**==> AND THE DATUMS HAVE NOT BEEN CONFIRMED TO MATCH. <==** NHC publishes
+inundation **above ground level**. What the JRC model reports its height above
+is not stated in any byte this project has read. Until somebody confirms it,
+putting the two numbers on one scale asserts an equivalence nobody checked.
+
+**One door is unread.** The surge card carries an `aoi` list, and exactly one
+storm of three had an `aoi_surge` entry in it. No `getaoi` payload of any kind
+has ever been fetched here. `tools/archive-fetch.mjs` now derives them in a
+second pass; §51.4 records what the answer would change.
+
+### 51.2 The relay route
+
+`/api/gdacs/surge?eventid=` — `functions/api/gdacs/surge.js`. Two hops:
+`geteventdata` for the record, then the `locations` URL off its `impacts`.
+
+**Only a `https://www.gdacs.org/` URL is ever followed.** This route takes an
+event id from the open internet and then fetches a URL found inside somebody
+else's JSON. Without the host test it is a request forwarder pointed at any
+host a compromised upstream cares to name.
+
+**Towns are sorted deepest-first and capped at `GDACS_SURGE.maxPlaces` (60).**
+Lala returned 47 and 27 KB — fine on the wire, impossible on a screen, and 47
+overlapping corridors along one island chain on the map. `placeCount` carries
+the count **before** the cap.
+
+**==> `-1` AND AN EMPTY LIST ARE TWO DIFFERENT ANSWERS AND NEITHER IS AN ERROR.
+<==** A card with no `locations` key, or an export holding only its header, is
+`none_matched`: the model ran and found nobody. Hernán, mid-Pacific. A fetch
+that fails is `unavailable`. Collapsing them puts "no surge expected" under a
+house during an outage, which is the §5 failure the app is built against.
+
+**Cache: fresh 1 h, last-good 12 h.** A JRC run is redone per bulletin at best
+— Lala's ECMWF index sat at bulletin 15 while its GFS index sat at 29 at the
+same instant — and nothing in this payload expires.
+
+**It works on both sources, which is the point.** Lala is NOAA-sourced and
+returned 47 towns; Saudel is JTWC-sourced and returned two. The export is
+structurally identical across them — same twelve keys, same header, same
+description grammar — so there is one parser.
+
+### 51.3 Surge at the house — the home dashboard section
+
+`ui/surge-home.js`, under Rain and above the figures. The two water sections
+sit together; Rain is first because it reaches every house on Earth and this
+only reaches coastal ones.
+
+**Four states, and only one is an all-clear (§5).**
+
+| State | Means | Retry? |
+|---|---|---|
+| `ok` | a town within `GDACS_SURGE.homeRadiusKm` has a height | — |
+| `out_of_range` | towns exist, none near this house. **A fact about the house.** | no |
+| `none_matched` | the model found no populated place at all. **A fact about the storm.** | no |
+| `unavailable` | the fetch failed | yes |
+
+**==> `out_of_range` IS NOT SAFETY AND MUST NEVER READ AS ONE. <==** It means
+nobody modelled the water here, not that the house is dry. The section says so
+in as many words and names the deepest town elsewhere on the storm, because an
+absence with no figure beside it reads as an all-clear.
+
+**The radius is mandatory and Kauai is why.** Lala modelled the Big Island (41
+towns), Maui and Molokai (4) and Oahu (2) — and **not Kauai**. Nearest with no
+ceiling hands a Lihue house a town 150 km away across open ocean and prints it
+as that house's forecast. 50 km is about an hour's drive and inside one
+island's coast.
+
+**Nearest, then the ceiling — never "the deepest within the radius".** A reader
+asking what happens at their house is asking about their house; handing them a
+worse number from further away because it is scarier is inventing a forecast.
+
+**The deepest town elsewhere is named only when it is a different rung.** The
+first rule compared against `negligibleM`, which borrowed a constant meaning
+"too small to print" to answer "too small a difference to mention" — and at
+this scale silenced the line on every storm in the archive. If the deepest town
+shares this house's colour it is the same story.
+
+**No clock times.** The offsets are hours from bulletin 1, whose publication
+time this route does not carry. `arrivalMs` stays null without a supplied base;
+what the section says instead is the **spread** — "it keeps rising for about
+six hours after it first arrives" — because a clock time from a guessed base is
+a confident wrong answer about when somebody's street floods.
+
+**The provenance line names the modeller and says "modelled".** Both halves are
+load-bearing: the modeller, because a reader comparing an American storm's feet
+against this storm's centimetres has to see they are two products; and
+"modelled", because this is a simulation output rather than a forecaster's
+warning, and stating water depth at somebody's address in an official warning's
+voice would overclaim.
+
+### 51.4 The coastal layer
+
+`map/layers/gdacs-surge-coast.js`. Joins the `coastal` pair's **SURGE** segment
+— `surge.js` is the NHC half of that same segment. **No second switch**: a
+reader who taps Surge means surge, and a "global surge" option would ask them
+to know which agency models their coast before they can turn on the thing that
+tells them.
+
+**==> THE INPUT IS POINTS, AND EVERY METRE OF COAST PAINTED AROUND ONE IS OURS
+RATHER THAN THE MODEL'S. <==** NHC publishes a **reach** — a named stretch of
+coast that IS the subject of the forecast — so fattening its breakpoint chord
+reconstructs geometry NHC meant. GDACS publishes a **town** and a number. So
+`GDACS_SURGE.bandHalfWidthKm` is 5 km against surge's 8 and watch/warning's 50:
+enough to reach the shoreline the town sits on, not enough to claim anything
+about the next bay. `pointRingDeg` makes the point a ring `areaSelect` can take;
+the pad is what sets the reach.
+
+**==> NOTHING IS INTERPOLATED BETWEEN TOWNS. <==** A continuous ramp along the
+coast from one town's height to the next was the first design and was rejected
+before it was written. Hookena reads 0.17 and Hilo 0.13, 100 km apart on
+opposite sides of one island. Painting the coast between them states a forecast
+the JRC never made for ground it never ran on. A town paints its own shoreline
+and the gaps stay empty, because the gaps **are** empty.
+
+**Deepest on top**, via `line-sort-key` — Shomushon and Marasu are 3.7 km apart
+and share coastline at this corridor width, and where two heights overlap the
+reader must see the deeper. Same §6 contract `surge.js` enforces with
+`fill-sort-key`.
+
+**No fallback geometry.** `surge.js` keeps NHC's delivered chord when a reach
+fails to band, because official geometry is not ours to discard. Here the
+delivered geometry is a **point**, and a dot in the sea off a coastline we could
+not load is not a lesser version of the answer — it is a different and worse
+claim. No coast means no feature; the section beside it words that honestly.
+
+**If `aoi_surge` turns out to be a real modelled footprint**, it becomes the
+primary geometry and these town bands become the fallback where it is absent —
+the same primary-and-fallback pattern the coast band already has against NHC's
+chord. Read the bytes first; it was present on one storm of three, so a parser
+written off that snapshot would be written off one basin and one hour.
+
+### 51.5 The hole this feature has, stated plainly
+
+**Every storm in an NHC basin reaches this app without a GDACS event id, so
+this feature cannot see it.** `mergeStorms` (`data/merge.js`) drops the GDACS
+twin of any storm whose basin NHC covers, which is the right dedupe rule. It
+costs something real: GDACS modelled 47 Hawaiian towns for Lala, a Central
+Pacific storm, and neither the section nor the layer can reach them.
+
+**What covers the gap today is NHC's own product** (§4.8, §36) — the better
+forecast where it publishes, and it only answers while a US surge watch is in
+force. So on an American storm with no surge watch out, there is a real answer
+sitting in GDACS that nothing renders.
+
+**Closing it means joining an NHC storm to a GDACS event id by NAME**, which is
+the same class of join §50.12 is currently measuring for CAP alerts and is not
+free. Decide it there, with that evidence, rather than writing a second
+name-matcher here.
+
+`gdacsEventIdOf()` in `lib/surge-locations.js` is the one place the mapping
+lives, and `tools/test-surge-locations.mjs` asserts that an NHC storm yields
+null — so the day somebody closes this gap, that line is what has to change.
+

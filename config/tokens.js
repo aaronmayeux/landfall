@@ -115,6 +115,27 @@ export const SURGE_RAMP = Object.freeze([
   { color: '#AB47BC', label: 'Above 12 ft', feet: Infinity },
 ]);
 
+/** GDACS/JRC modelled surge height at a town (§51.4). METRES, and a SEPARATE
+ *  ramp from `SURGE_RAMP` above — see `GDACS_SURGE` in config/constants.js for
+ *  why sharing one would render every storm outside America permanently blue.
+ *
+ *  ==> A DIFFERENT HUE FAMILY ON PURPOSE. <== Teal through magenta, so that a
+ *  reader who has learned NHC's blue-to-purple cannot mistake one product's
+ *  bottom rung for the other's. The thresholds live beside the logic in
+ *  `GDACS_SURGE.thresholdsM`; only the paint is here.
+ *
+ *  ==> THE LABEL IS A FALLBACK, NEVER THE ANSWER. <== Every surface that shows
+ *  one of these also shows the town's own height in the reader's units. At
+ *  sub-metre scale the figure is the information and the colour only says
+ *  "here". */
+export const GDACS_SURGE_RAMP = Object.freeze([
+  { color: '#4DD0C7', label: 'Under 0.25 m' },
+  { color: '#66BB6A', label: '0.25 to 0.5 m' },
+  { color: '#FFCA28', label: '0.5 to 1 m' },
+  { color: '#F4511E', label: '1 to 2 m' },
+  { color: '#D81B60', label: 'Above 2 m' },
+]);
+
 /** Wind bands, drawn nested: 34 kt widest, 64 kt core. */
 export const WIND_BAND_COLOR = Object.freeze({
   KT34: '#43A047',

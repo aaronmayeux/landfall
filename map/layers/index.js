@@ -20,6 +20,11 @@ import './track-forecast.js';
 import './watch-warning.js';
 import './cap-coast.js';
 import './surge.js';
+/* Directly after the NHC surge layer, because it is the other half of the same
+ * segment — the `coastal` pair's SURGE option, for storms NHC does not cover.
+ * §51.4. Z-order is the `order` field (39, between surge and watch/warning),
+ * not import order. */
+import './gdacs-surge-coast.js';
 import './points-forecast.js';
 
 export { createLayerEngine } from './registry.js';

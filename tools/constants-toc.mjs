@@ -77,7 +77,7 @@ const GROUPS = [
 
   ['FEATURES WITH THEIR OWN SECTION',
    'each of these owns a spec section and a piece of the drawer',
-   ['OUTLOOK', 'GENESIS', 'SURGE', 'RAIN', 'ENDED', 'IMAGERY', 'ENV_RIBBON',
+   ['OUTLOOK', 'GENESIS', 'SURGE', 'GDACS_SURGE', 'RAIN', 'ENDED', 'IMAGERY', 'ENV_RIBBON',
     'ENV_HEALTH', 'MODEL_GROUP', 'MODEL_FAMILY', 'MODEL_TRACKS', 'ADVISORY_TEXT',
     'POPULATION']],
 

@@ -326,7 +326,7 @@ function refHostStr(value) {
  *  a client cannot import this file and this file cannot import the client's,
  *  so the two are kept in step by hand and by
  *  tools/test-session-row.mjs, the same way `device`'s length is. */
-const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain']);
+const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain', 'surge']);
 
 /**
  * The names of the Retry buttons this visit pressed, or nothing.

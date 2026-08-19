@@ -79,11 +79,13 @@ import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { loadRainfall, evictRainfall } from '../data/rainfall.js';
+import { loadGdacsSurge, retryGdacsSurge } from '../data/gdacs-surge.js';
 import { loadAlerts } from '../data/cap.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { resolveSystem } from '../lib/units.js';
 import { count as countAction, countRetry } from '../lib/usage.js';
+import { gdacsEventIdOf } from '../lib/surge-locations.js';
 import { MODEL_FAMILY } from '../config/constants.js';
 import {
   isInstalled,
@@ -899,6 +901,23 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
         countRetry('rain');
         evictRainfall();
         return loadRainfall(home);
+      },
+    },
+    /* Modelled coastal flooding (§51.3). The same facade shape — ui/ never
+     * imports data/ (§12) — and the same counting rule: the RETRY is counted,
+     * never the load, because a section that fetches when it is drawn says
+     * nothing about what anybody wanted.
+     *
+     * ==> THE FACADE TAKES A STORM AND HANDS DOWN AN EVENT ID. <== The view
+     * knows about storms and `data/gdacs-surge.js` is keyed by GDACS event id,
+     * and `gdacsEventIdOf` is the one place that mapping lives — so it is
+     * applied once, here, rather than in both the section and the map layer
+     * where the two could drift. */
+    surge: {
+      loadSurge: (storm) => loadGdacsSurge(gdacsEventIdOf(storm)),
+      retrySurge: (storm) => {
+        countRetry('surge');
+        return retryGdacsSurge(gdacsEventIdOf(storm));
       },
     },
   });

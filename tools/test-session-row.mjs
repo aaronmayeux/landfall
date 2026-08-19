@@ -323,7 +323,8 @@ const viewsSrc = read('app/views.js');
 const clientButtons = stringList(usageSrc, 'RETRY_BUTTONS');
 const serverButtons = stringList(beaconSrc, 'RETRY_BUTTONS');
 
-check('the client declares a retry button list', clientButtons, ['storms', 'geometry', 'env', 'rain']);
+check('the client declares a retry button list', clientButtons,
+  ['storms', 'geometry', 'env', 'rain', 'surge']);
 check('the server list matches the client list exactly', serverButtons, clientButtons);
 
 /* Every name actually passed to countRetry(), from live code only — a call
@@ -334,7 +335,7 @@ const calledNames = [...liveCode(viewsSrc).matchAll(/countRetry\(\s*'([a-z0-9_]+
 
 check('every retry call site names a button that exists',
   calledNames.filter((n) => !clientButtons.includes(n)), []);
-check('all four buttons are wired, not just the ones somebody remembered',
+check('every button is wired, not just the ones somebody remembered',
   [...new Set(calledNames)].sort(), [...clientButtons].sort());
 
 /* ===> THE BARE COUNTER MUST NOT COME BACK. <===
