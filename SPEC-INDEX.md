@@ -221,16 +221,16 @@ real home is the other row carrying the same section number.
 | `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1945-1983 |
 | `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 1984-2003 |
 | `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2004-2026 |
-| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2027-2052 |
-| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2053-2085 |
-| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2086-2106 |
-| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2107-2123 |
+| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2027-2078 |
+| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2079-2111 |
+| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2112-2132 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2133-2155 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 125,592 | 40 |
+| `SPEC-DATA.md` | 127,544 | 40 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |

@@ -322,6 +322,72 @@ ok(
   'an event with no headline is still an alert'
 );
 
+/* =========================================================================
+ * 9. THE DISCLOSURE — ENGLISH LEADS, THE AGENCY'S WORDS ARE BEHIND A CHEVRON
+ *
+ * Rendered through the real controller with a stubbed loader, because the
+ * whole point of §50.4's layout is WHICH text is visible on arrival and no
+ * assertion about the parser can reach that.
+ * ====================================================================== */
+section('the wording disclosure');
+
+const { createCapStorm } = await import('../ui/cap-storm.js');
+
+const capUi = createCapStorm({
+  loadAlerts: async () => ({ state: 'ok', alerts, stale: false }),
+});
+await capUi.ensure(peilou, () => {});
+const phHtml = capUi.html(peilou, NOW);
+
+/* PAGASA writes in English, so there is nothing to hide and no chevron. */
+ok(
+  !phHtml.includes('data-cap-toggle'),
+  'an English alert must not get a disclosure — hiding readable text buys nothing'
+);
+ok(
+  phHtml.includes('Neneng'),
+  "PAGASA's own English wording should be visible without a tap"
+);
+
+/* Now the Spanish one. Costa Rica is not among the fixture storms' countries,
+ * so the alert is fed through a storm constructed for it — the country join
+ * is asserted in section 5 and is not what this section is testing. */
+const crStorm = { id: 'gdacs:test-cr', source: 'gdacs', countries: [{ iso2: 'CR' }] };
+const capUi2 = createCapStorm({
+  loadAlerts: async () => ({ state: 'ok', alerts, stale: false }),
+});
+await capUi2.ensure(crStorm, () => {});
+const esHtml = capUi2.html(crStorm, NOW);
+
+ok(esHtml.includes('data-cap-toggle'), 'a non-English alert must get a disclosure');
+ok(
+  esHtml.includes('aria-expanded="false"'),
+  'the disclosure must arrive CLOSED — English is the default view (§50.4)'
+);
+ok(
+  /<div class="detail-cap-words"[^>]*\shidden>/.test(esHtml),
+  "the agency's Spanish wording must be hidden on arrival, not merely styled small"
+);
+ok(
+  esHtml.includes('Spanish wording'),
+  `the label should name the language in English; got: ${esHtml.slice(0, 0) || 'no match'}`
+);
+ok(esHtml.includes('aria-controls='), 'the disclosure must be wired for a screen reader');
+
+/* THE ENGLISH LINE IS STILL THERE AND IS STILL NOT A TRANSLATION. This is the
+ * tradeoff §50.4 accepts written as an assertion: with the wording collapsed,
+ * the visible text names a severity and NOT a hazard. If a future pass adds
+ * real translation, this is the assertion that should change. */
+const visible = esHtml.replace(/<div class="detail-cap-words"[\s\S]*?<\/div>/g, '');
+ok(
+  !visible.includes('Onda Tropical'),
+  "the agency's words must not leak into the visible half"
+);
+ok(
+  /threat/.test(visible),
+  'the coded English line must still lead the block'
+);
+
 /* ===================================================================== */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
 for (const f of failures) console.log(`    FAIL  ${f}`);

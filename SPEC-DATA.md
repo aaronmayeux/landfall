@@ -2040,8 +2040,34 @@ whatever language surrounds them, so `lib/cap.js` renders them directly:
 - **certainty** — Observed/Likely/Possible/Unlikely/Unknown
 
 That yields a real English sentence for every alert on earth with no
-interpretation and no risk. The agency's own words sit underneath it, verbatim,
-tagged with their language when it is not English.
+interpretation and no risk.
+
+**THE AGENCY'S OWN WORDS ARE BEHIND A CHEVRON, AND ONLY WHEN THEY ARE NOT IN
+ENGLISH.** The coded line leads; a disclosure labelled with the language in
+English ("Spanish wording") opens the original, verbatim, in a `lang`-tagged
+block. **An English alert gets no chevron** — PAGASA writes in English, and
+hiding readable text behind a tap would cost the reader the one line that names
+the hazard and buy nothing.
+
+**==> THE COST OF THIS LAYOUT, STATED RATHER THAN DISCOVERED LATER. <== The
+English line names a SEVERITY AND NOT A HAZARD.** With the wording collapsed, a
+Spanish alert reads "Possible threat — expected later, possible" over an agency
+and an area, and the only text saying what the alert is *about* is behind the
+tap. That is accepted knowingly: the section is titled for alerts inside a
+cyclone app, the label names the language, and the alternative — leading with a
+sentence the reader cannot read — is worse. **It is also the strongest argument
+for a translation pass**, and `tools/test-cap.mjs` asserts the tradeoff so the
+day it stops being true is a failing test rather than a forgotten comment.
+
+**EXPANDED STATE IS IN MEMORY AND SURVIVES A REPAINT, NOT A SESSION.** The
+drawer's own sections persist because a section is a permanent fixture with a
+stable name. An alert expires and is reissued, so a stored key would accumulate
+forever and match nothing.
+
+**THE DOM CARRIES A HASH, NEVER THE ALERT KEY.** The key is built from the
+agency, event and area — the agency's untranslated words. In a `data-`
+attribute they are out of the visible half but still in the markup, which is
+the same text somewhere nobody thought about.
 
 **AN UNRECOGNISED CODE IS NAMED, NEVER DROPPED.** CAP may add one; an agency
 may mis-set one. Omitting that half of the sentence would leave a reader
@@ -2120,3 +2146,9 @@ visible.
    last — not the more severe one.
 7. An alert past its stated expiry does not render at all.
 8. Nothing in this feature draws on the globe.
+9. A Spanish alert arrives with its wording COLLAPSED and the English coded
+   line visible. Tapping the chevron opens it; the chevron rotates and nothing
+   else on the panel moves.
+10. An English alert has no chevron at all — its wording is simply there.
+11. The disclosure is reachable by Tab, opens on Enter or Space, shows a focus
+    ring, and reports its state through `aria-expanded`.

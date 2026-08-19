@@ -69,8 +69,14 @@ was five rows at an hour with eleven live cyclones, so on most storms this reads
 "no national weather agency in the affected countries currently has a tropical
 cyclone alert in force" — true, and possibly not worth a section. Judge that
 first; the rest is cosmetic if the answer is no.
-Then, when a Western Pacific storm is live: does PAGASA's alert with an English
-severity line above its own words read as informative or as clutter; does the
+**Second, the wording chevron (§50.4).** A non-English alert arrives collapsed
+with only the coded English line showing — which names a severity and NOT a
+hazard. Judge whether "Possible threat — expected later, possible" over an
+agency and an area is enough to be worth reading, or whether it reads as an
+alert with the subject missing. If it is the second, the answer is a
+translation pass, not a layout tweak.
+Then, when a Western Pacific storm is live: does PAGASA's alert — English, so
+no chevron — read as informative or as clutter; does the
 footnote successfully say "this agency covers this country" rather than "this
 alert is about this storm"; and on an NHC storm, does pointing at **In effect**
 above read as an answer or as a dead section.

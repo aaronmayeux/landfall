@@ -2792,15 +2792,62 @@ button.drawer-identity:focus-visible {
   color: var(--text-secondary);
 }
 
-/* The language tag on untranslated text. Small, inline, and never a flag —
-   a flag names a country and a language is not a country. */
-.detail-cap-lang {
-  margin-left: var(--space-tight);
-  font-size: var(--type-micro);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+/* THE DISCLOSURE (SPEC §50.4). Only ever rendered for text that is NOT in
+   English — English wording has nothing to hide and gets no chevron.
+
+   A full-width button rather than a small link: this is a touch target on a
+   phone and the whole row is the target. Borrowing the section head's
+   language deliberately — same chevron geometry, same rotation, same easing —
+   so a reader who has learned the drawer already knows what this does. */
+.detail-cap-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  width: 100%;
+  /* 44px minimum touch target, met by padding rather than a fixed height so
+     the label may wrap on a narrow phone without being clipped. */
+  min-height: var(--touch-target);
+  padding: var(--space-snug) 0;
+  margin-top: var(--space-tight);
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
   color: var(--text-muted);
+  font: inherit;
+  font-size: var(--type-small);
 }
+.detail-cap-toggle:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: -2px;
+}
+@media (hover: hover) {
+  .detail-cap-toggle:hover { color: var(--text-secondary); }
+  .detail-cap-toggle:hover .detail-cap-chevron {
+    border-right-color: var(--text-secondary);
+    border-bottom-color: var(--text-secondary);
+  }
+}
+
+/* Same 8px box the section chevron uses. Points down when closed and up when
+   open, and ONLY `transform` animates — §7's rule, and the reason this is a
+   rotated border box rather than an SVG that would want its path redrawn. */
+.detail-cap-chevron {
+  flex: none;
+  width: 8px; height: 8px;
+  border-right: 1.6px solid var(--text-muted);
+  border-bottom: 1.6px solid var(--text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-settle);
+}
+.detail-cap-toggle[aria-expanded="true"] .detail-cap-chevron {
+  transform: rotate(-135deg);
+}
+
+/* The label carries the wrap. Without it the flex row would let a long
+   language name push the chevron off the right edge on a narrow phone. */
+.detail-cap-toggle-label { min-width: 0; }
 
 .detail-cap-meta {
   margin-top: var(--space-tight);
