@@ -46,7 +46,7 @@ the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
 
-**THIS FILE IS 484 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
+**THIS FILE IS 489 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
 arrival, so the audit was overdue before this pass and this pass made it worse.
 **The next session does the read and the cut list before adding anything**, and
 the first candidates are the IN FLIGHT entries that have been unjudged longest —
@@ -106,15 +106,6 @@ NHC storm to a GDACS event id **by name**, which is the same class of join
 §50.12 is measuring right now for CAP. **Decide it there, with that evidence.**
 `tools/test-surge-locations.mjs` asserts an NHC storm yields null, so that line
 is what changes the day it is closed.
-
-**`aoi_surge` is fetched now and nothing has read it.** `SPEC-OPS.md` §18.3.
-The surge card names an `aoi_surge` polygon on some storms — one of three on
-2026-08-19 — and no `getaoi` payload of any kind has ever been fetched here.
-The archive runner derives them in a second pass from the next run onward.
-**Read the bytes before touching §51.4:** if it is a real modelled footprint it
-becomes the primary geometry and the town bands become the fallback, the same
-pattern the coast band already has against NHC's chord. If it is another
-metadata card, that is one line deleted from the runner.
 
 **Local agency alerts — a drawer section AND a coast stripe, neither judged.**
 `SPEC-DATA.md` §50. CAP alerts from national weather agencies, matched to a
@@ -437,6 +428,15 @@ are ones already near land, which is when radar matters most.
 
 ## KNOWN AND ACCEPTED
 
+- **`aoi_surge` IS NOT A SURGE FOOTPRINT. SETTLED 2026-08-19, DO NOT RE-ASK.**
+  `SPEC-DATA.md` §51.1. Fetched and read: an affected-PLACES export — cities,
+  provinces and urban areas, `intensity: 1` on every feature, and no height,
+  surge, water or depth field among its twenty keys. Its two real shapes are a
+  Korea/Honshu outline and a model-domain bounding box, and it names Korea,
+  Japan and the Philippines for a storm whose surge export names the Northern
+  Mariana Islands. There is nothing in it to draw. The derivation that fetched
+  it is deleted; §51.4's town bands are not a stand-in for a better geometry,
+  they are the whole of what this product publishes.
 - **NOBODY PUBLISHES PAST WIND EXTENT OUTSIDE NHC. SETTLED, DO NOT RE-ASK.**
   GDACS: every band on every live storm is dated at or after its bulletin —
   checked across all three storms in the archive 2026-08-18. JTWC: all four

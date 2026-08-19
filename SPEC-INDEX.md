@@ -235,18 +235,18 @@ real home is the other row carrying the same section number.
 | `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2438-2479 |
 | `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2480-2532 |
 | `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2533-2534 |
-| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2535-2607 |
-| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2608-2637 |
-| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2638-2686 |
-| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2687-2727 |
-| `51.5` | &nbsp;&nbsp;The hole this feature has, stated plainly | `SPEC-DATA.md` | 2728-2750 |
+| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2535-2621 |
+| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2622-2651 |
+| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2652-2700 |
+| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2701-2741 |
+| `51.5` | &nbsp;&nbsp;The hole this feature has, stated plainly | `SPEC-DATA.md` | 2742-2764 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2612-2659 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 162,157 | 54 |
+| `SPEC-DATA.md` | 163,137 | 54 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 72,203 | 20 |

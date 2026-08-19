@@ -985,18 +985,7 @@ try {
   const list = JSON.parse(readFileSync(join(OUT, 'nhc-currentstorms.json'), 'utf8'));
   const derived = shipsSources(list, Date.now());
   console.log(`\nderived ${derived.length} SHIPS URL(s) from CurrentStorms.json`);
-  const surgeWritten = [];
-  for (const src of derived) {
-    const r = await run(src);
-    if (r?.status === 'ok' && /^geometry\/gdacs-surge-/.test(src.name)) surgeWritten.push(src.name);
-  }
-
-  /* SECOND PASS, and it has to be second: these URLs live INSIDE the cards
-   * fetched above. Uncapped on purpose — it is bounded by how many storms
-   * publish an `aoi_surge` at all, which was one of three. */
-  const aoi = surgeAoiSources(surgeWritten);
-  console.log(`derived ${aoi.length} aoi_surge polygon URL(s) from ${surgeWritten.length} surge card(s)`);
-  for (const src of aoi) await run(src);
+  for (const src of derived) await run(src);
 } catch (err) {
   console.log(
     `\nno SHIPS this run — ${String(err && err.message ? err.message : err)}`
@@ -1013,18 +1002,7 @@ try {
   const rss = readFileSync(join(OUT, 'jtwc.rss'), 'utf8');
   const derived = jtwcStormSources(rss);
   console.log(`\nderived ${derived.length} JTWC per-storm product URL(s) from jtwc.rss`);
-  const surgeWritten = [];
-  for (const src of derived) {
-    const r = await run(src);
-    if (r?.status === 'ok' && /^geometry\/gdacs-surge-/.test(src.name)) surgeWritten.push(src.name);
-  }
-
-  /* SECOND PASS, and it has to be second: these URLs live INSIDE the cards
-   * fetched above. Uncapped on purpose — it is bounded by how many storms
-   * publish an `aoi_surge` at all, which was one of three. */
-  const aoi = surgeAoiSources(surgeWritten);
-  console.log(`derived ${aoi.length} aoi_surge polygon URL(s) from ${surgeWritten.length} surge card(s)`);
-  for (const src of aoi) await run(src);
+  for (const src of derived) await run(src);
 } catch (err) {
   console.log(
     `\nno JTWC per-storm products this run — ${String(err && err.message ? err.message : err)}`
@@ -1200,9 +1178,19 @@ const IMPACT_EXPORT_MAX = 6;
  *  ==> AND IT IS NOT THE PRODUCT THE APP SHIPS. <== §51.1. Every one of these
  *  cards arrives with `geometry: null` and no places in it. What the app reads
  *  is `getlocations` off the `impacts` block, which is already aggregated and
- *  is model-agnostic. These are still fetched because `aoi_surge` hangs off
- *  them (below) and because the card is the only place the model identity and
- *  the headline height are stated. */
+ *  is model-agnostic. These are still fetched because the card is the only
+ *  place the model identity and the headline `maxheight` are stated — and the
+ *  card's number disagrees with the towns' (Saudel 0.72 m against Shomushon's
+ *  0.48), which is worth being able to see.
+ *
+ *  ==> `aoi_surge` WAS FETCHED, READ, AND RULED OUT. DO NOT RE-DERIVE IT. <==
+ *  §51.1. It is an affected-PLACES export, not a water surface: 52 features of
+ *  cities, provinces and urban areas, `intensity: 1` on every one, and no
+ *  height, surge, water or depth field among its twenty keys. Its two real
+ *  shapes are a Korea/Honshu outline and a model-domain bounding box. And it
+ *  names Korea, Japan and the Philippines for a storm whose surge export names
+ *  the Northern Mariana Islands — two products about one storm naming
+ *  different countries. There is nothing in it to draw. */
 function surgePicks(cyclonesurge) {
   const picks = [];
   const groups = Array.isArray(cyclonesurge) ? cyclonesurge : [];
@@ -1306,58 +1294,6 @@ function surgeAndImpactSources(eventDataNames) {
   ];
 }
 
-/** The `aoi_surge` polygons named by the surge cards written this run.
- *
- *  ==> THE ONE UNREAD DOOR IN §51, AND IT IS ONE LINE OF FETCHING. <== The
- *  surge card carries an `aoi` list, and on 2026-08-19 exactly one storm of
- *  three had an `aoi_surge` entry in it — Saudel. Lala had `aoi_wind` and
- *  `aoi_rain` and no surge; Hernán had neither. So the product is SPARSE, and
- *  nothing in this project has ever fetched a `getaoi` payload of any kind:
- *  whether it returns a polygon, a bounding box, or another metadata card is
- *  unknown.
- *
- *  ==> IT DECIDES WHETHER §51.4 KEEPS ITS SHAPE. <== That layer paints each
- *  modelled TOWN's height onto the shoreline around it, because a point and a
- *  number is all the app has. If this turns out to be a real modelled
- *  footprint, it becomes the primary geometry and the town bands become the
- *  fallback where it is absent — the same primary-and-fallback pattern the
- *  coast band already has against NHC's chord. Read the bytes before deciding;
- *  do not write the parser off one storm in one basin.
- *
- *  Reads the surge cards this run already WROTE, the same rule the surge phase
- *  itself follows against the event records. */
-function surgeAoiSources(surgeNames) {
-  const out = [];
-  for (const name of surgeNames) {
-    let p;
-    try {
-      p = JSON.parse(readFileSync(join(OUT, name), 'utf8'))?.properties;
-    } catch {
-      continue; // that card failed this run; its manifest row says so
-    }
-    const aoi = Array.isArray(p?.aoi) ? p.aoi : [];
-    for (const a of aoi) {
-      if (a?.name !== 'aoi_surge') continue;
-      if (typeof a.url !== 'string' || !a.url.startsWith('https://www.gdacs.org/')) continue;
-      out.push({
-        name: `geometry/gdacs-aoi-surge-${name.replace(/^geometry\/gdacs-surge-|\.json$/g, '')}.json`,
-        url: a.url,
-        note:
-          'The `aoi_surge` polygon named by this storm\'s surge card. ==> READ ' +
-          'FOR SHAPE, NOT FOR NUMBERS. <== Nothing in this project has fetched a ' +
-          '`getaoi` payload of any kind. The questions are whether it is a real ' +
-          'polygon or another metadata card, whether its geometry is the ' +
-          'INUNDATED AREA or merely the model domain, and what datum any height ' +
-          'on it is measured against — the last of which §51.1 records as ' +
-          'unconfirmed and is the reason GDACS surge may not share NHC\'s ramp. ' +
-          'Present on one storm of three on 2026-08-19, so a run with no rows ' +
-          'here is normal and is not a fetch failure.',
-      });
-    }
-  }
-  return out;
-}
-
 /* The phase itself. Sits below its helpers rather than beside the others
  * because `SURGE_DETAIL_MAX` is a `const` and would be in its temporal dead
  * zone up there — the phases above are free to move, this one is not. */
@@ -1367,18 +1303,7 @@ try {
     `\nderived ${derived.length} GDACS surge/impact payload URL(s) from ` +
       `${eventDataWritten.length} event record(s)`
   );
-  const surgeWritten = [];
-  for (const src of derived) {
-    const r = await run(src);
-    if (r?.status === 'ok' && /^geometry\/gdacs-surge-/.test(src.name)) surgeWritten.push(src.name);
-  }
-
-  /* SECOND PASS, and it has to be second: these URLs live INSIDE the cards
-   * fetched above. Uncapped on purpose — it is bounded by how many storms
-   * publish an `aoi_surge` at all, which was one of three. */
-  const aoi = surgeAoiSources(surgeWritten);
-  console.log(`derived ${aoi.length} aoi_surge polygon URL(s) from ${surgeWritten.length} surge card(s)`);
-  for (const src of aoi) await run(src);
+  for (const src of derived) await run(src);
 } catch (err) {
   console.log(
     `\nno GDACS surge/impact payloads this run — ${String(err && err.message ? err.message : err)}`

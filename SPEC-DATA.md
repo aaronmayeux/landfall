@@ -2600,10 +2600,24 @@ inundation **above ground level**. What the JRC model reports its height above
 is not stated in any byte this project has read. Until somebody confirms it,
 putting the two numbers on one scale asserts an equivalence nobody checked.
 
-**One door is unread.** The surge card carries an `aoi` list, and exactly one
-storm of three had an `aoi_surge` entry in it. No `getaoi` payload of any kind
-has ever been fetched here. `tools/archive-fetch.mjs` now derives them in a
-second pass; §51.4 records what the answer would change.
+**==> `aoi_surge` IS NOT A SURGE FOOTPRINT. READ 2026-08-19, SETTLED, DO NOT
+RE-ASK. <==** The surge card carries an `aoi` list and one storm of three had an
+`aoi_surge` entry in it — checked twice an hour apart, Saudel both times. Both
+its payloads were fetched. They are an affected-PLACES export: 52 features made
+of one city, seven provinces, twenty-one urban areas and their contours, plus
+two raw geometry rows. Seven carry `geometry: null`. **`intensity` is `1` on
+every feature**, so it states no severity, and **not one of its twenty property
+keys is a height, a surge, a water level or a depth.** Its two real shapes are a
+432-vertex outline over Korea and Honshu and a five-vertex box spanning
+123.9°E–169.2°E — a model domain, not a hazard.
+
+**And the places do not match the surge.** It names Korea, Japan and the
+Philippines for a storm whose `getlocations` export names the Northern Mariana
+Islands. Two products about one storm naming different countries. Drawing that
+outline as surge would paint Korea and Japan flooded on evidence that says
+nothing about water depth, while omitting the only two places GDACS modelled
+water for. The derivation that fetched it has been deleted; the reason is
+recorded in `tools/archive-fetch.mjs` beside `surgePicks`.
 
 ### 51.2 The relay route
 
@@ -2719,11 +2733,11 @@ delivered geometry is a **point**, and a dot in the sea off a coastline we could
 not load is not a lesser version of the answer — it is a different and worse
 claim. No coast means no feature; the section beside it words that honestly.
 
-**If `aoi_surge` turns out to be a real modelled footprint**, it becomes the
-primary geometry and these town bands become the fallback where it is absent —
-the same primary-and-fallback pattern the coast band already has against NHC's
-chord. Read the bytes first; it was present on one storm of three, so a parser
-written off that snapshot would be written off one basin and one hour.
+**There is no better geometry to fall back from, and that is now measured
+rather than assumed.** `aoi_surge` was the only candidate and it is an
+affected-places list with no height in it (§51.1). Town bands are not a stand-in
+for a footprint this product declines to publish — they are the whole of what it
+publishes, drawn honestly. **Nothing here waits on a better source.**
 
 ### 51.5 The hole this feature has, stated plainly
 
