@@ -1362,10 +1362,17 @@ fact. NHC's own `basin` word is carried as `sourceBasin` and grouped on by the
 outlook arbiter (§45.9), but is not shown: see §45.8 for why one basin row
 beats two.
 
-**The forecaster's paragraph is shown verbatim in the area panel**, minus the
-two formation-chance lines, which restate the probability rows directly above
-it in a second vocabulary. It is never trimmed to a sentence and never
-summarised: a paraphrase of a forecast is a forecast the app wrote.
+**The forecaster's paragraph is shown verbatim in the area panel** under a
+heading naming its source, minus two things. The two formation-chance lines go,
+because they restate the probability rows directly above the paragraph in a
+second vocabulary. And the `2. South-Southwest of Mexico:` prefix goes, because
+it is packaging rather than content — NHC's plain-text bulletin publishes these
+paragraphs with no number at all, and left on, the paragraph opens by restating
+the heading above it with a rank in front. The prefix is removed **only when it
+is exactly the title already read off it**; anything else survives whole rather
+than having its first sentence guessed at. Nothing else is touched: it is never
+trimmed to a sentence and never summarised, because a paraphrase of a forecast
+is a forecast the app wrote.
 
 Cadence: with the text outlook, roughly every 6 hours. The publication stamp is
 the **forecaster's issue time**, read from the document's own title and carried

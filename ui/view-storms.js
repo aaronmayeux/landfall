@@ -106,7 +106,7 @@ import { FRESHNESS } from '../config/constants.js';
 import { isSilent, SILENT_SHORT } from '../lib/silence.js';
 import { isEnded, stormSwatch, endedRowStamp, ENDED_SHORT } from '../lib/lifecycle.js';
 import { GENESIS } from '../config/constants.js';
-import { genesisColor, formatPercent } from '../lib/genesis.js';
+import { genesisColor, formatPercent, isStaleArea } from '../lib/genesis.js';
 import { headingArrow, headingSpoken } from './heading-arrow.js';
 /* ==> THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT HAPPENS TO
  * SIT NEAR IT. <== Turning the layer off cleared the patches from the globe and
@@ -924,44 +924,101 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
    * collapses this once has silently turned the feature off forever.
    */
 
+  /** A risk rung as a person reads it: `MEDIUM` -> `Medium`. */
+  const riskWord = (r) =>
+    String(r || '').charAt(0) + String(r || '').slice(1).toLowerCase();
+
   /**
-   * One area's figures.
+   * ==> THE RIGHT-HAND BADGE, AND IT IS THE TWO-DAY WORD. <==
    *
-   * NHC gets its PERCENTAGE and not its risk word — the number is finer and
-   * the word would only restate it. JTWC gets its WORD and no number, because
-   * it published no number and inventing one is what §45.3 forbids in as many
-   * terms. Each row names its own source and its own horizon, so two scales in
-   * one list can never be mistaken for one scale.
+   * A storm's badge is what it is RIGHT NOW — CAT 3, TS. The two-day rung is
+   * the closest thing a watched area has to that: it answers "is this
+   * imminent", where the seven-day answers "is this likely eventually". So the
+   * near horizon takes the slot, on both sources.
+   *
+   * IT DELIBERATELY DOES NOT MATCH THE SWATCH BESIDE IT. The dot carries the
+   * SEVEN-day risk, because the polygon on the globe is the seven-day area and
+   * §45.6 fixed that. So a row can read `Low` next to an orange dot — 0% in
+   * two days, 80% in seven — and both marks are true about different horizons.
+   * That is why the subline below now states BOTH figures with both horizons
+   * named: the badge is the headline, the subline is what it is a headline of.
+   *
+   * A JTWC system has one horizon and one word, so its badge is simply that
+   * word and its subline sheds it rather than saying it twice.
+   */
+  function watchBadge(a) {
+    if (a.source === 'JTWC') return riskWord(a.risk);
+    /* NULL IS NOT LOW. A blank field means NHC did not state a two-day
+     * outlook; printing the fallback rung over it would put a forecast in the
+     * source's mouth (§5). The badge stays empty and the subline says so. */
+    if (a.prob2day == null) return '';
+    return riskWord(a.risk2day);
+  }
+
+  /**
+   * One area's figures, line one.
+   *
+   * The SEVEN-day number, its horizon, and the source. The risk word has moved
+   * to the badge, so this line is purely the figure — NHC's percentage is
+   * finer than its word and the two together only restated each other.
+   *
+   * JTWC published no number at all, and inventing one is what §45.3 forbids
+   * in as many terms, so its line is the horizon and the source. Each row
+   * names its own horizon, so two scales in one list can never be mistaken for
+   * one scale.
    */
   function watchMeta(a) {
-    if (a.source === 'JTWC') {
-      const word = String(a.risk || '').charAt(0) + String(a.risk || '').slice(1).toLowerCase();
-      return [word, a.horizon, 'JTWC'].filter(Boolean).join(' · ');
-    }
-    return [formatPercent(a.prob7day), GENESIS.HORIZON.sevenDay, 'NHC']
+    if (a.source === 'JTWC') return [a.horizon, 'JTWC'].filter(Boolean).join(' · ');
+    return [formatPercent(a.prob7day) ?? 'Not stated', GENESIS.HORIZON.sevenDay, 'NHC']
       .filter(Boolean)
       .join(' · ');
   }
 
   /**
-   * The two-day line, or null.
+   * The two-day line, always, for an NHC area.
    *
-   * ==> THIS IS WHERE THE TWO-DAY NUMBER LIVES, AND THE ONLY PLACE IT DOES.
-   * <== The polygon on the globe is the SEVEN-day area, so only the seven-day
-   * figure may sit on it (§45.6). Here there is room to label the horizon, so
-   * the more urgent number is present and honest rather than discarded.
+   * ==> IT USED TO BE HIDDEN AT ZERO, AND HIDING IT WAS THE WRONG TRADE. <==
+   * The argument for hiding was that most areas sit at 0% for days and a
+   * column of zeros trains the eye to skip the line that matters. What it
+   * actually cost was worse: rows changed HEIGHT depending on a value, so the
+   * reader could never learn where the two-day figure lives, and its absence
+   * carried two meanings at once — "zero" and "NHC said nothing" looked
+   * identical, which is the §45.5 conflation this feature exists to refuse.
    *
-   * SHOWN ONLY WHEN IT IS ABOVE ZERO, AND THAT IS A FEATURE. Most watched
-   * areas sit at "0% in 2 days" for days — a line of zeros on every row is
-   * noise, and worse, it trains the eye to skip the line that matters. The
-   * moment this line APPEARS, something has become imminent. Nothing is
-   * hidden: the detail view carries the two-day figure always, including a
-   * genuine zero and a genuine "not stated", which are different facts.
+   * A stated zero is a forecast. It is NHC saying "not in this window", which
+   * is exactly the reassurance a reader scanning a watch list wants, and it
+   * belongs beside the seven-day number rather than behind a tap.
+   *
+   * NULL IS STILL NOT ZERO. A blank field prints `Not stated`, because
+   * printing `0%` over a field NHC left empty invents a forecast (§5).
    */
   function watchTwoDay(a) {
     if (a.source !== 'NHC') return null;
-    if (a.prob2day == null || a.prob2day <= 0) return null;
-    return `${formatPercent(a.prob2day)} ${GENESIS.HORIZON.twoDay}`;
+    const figure = a.prob2day == null ? 'Not stated' : formatPercent(a.prob2day);
+    return `${figure} ${GENESIS.HORIZON.twoDay}`;
+  }
+
+  /**
+   * How current the area is, in the same slot and the same words a storm uses.
+   *
+   * ==> THE PUBLISHER'S CLOCK, NOT THE PHONE'S (§17.7). <== `issuedAt` is the
+   * forecaster's issue time, carried through from the outlook document.
+   *
+   * IT AGES ON THE OUTLOOK'S OWN CADENCE, NOT A STORM'S. `GENESIS.staleAfter`
+   * is nine hours against the outlook's roughly six-hourly republication;
+   * borrowing the storm bands, which are built for three-hourly advisories,
+   * would paint almost every area amber almost all the time and the colour
+   * would stop meaning anything at all.
+   *
+   * NO STAMP MEANS NO SLOT. There is no age to report and inventing "just
+   * now" for a publication of unknown age is the fabrication §5 forbids.
+   */
+  function watchStamp(a) {
+    if (!Number.isFinite(a.issuedAt)) return '';
+    const age = formatAge(new Date(a.issuedAt).toISOString());
+    if (!age) return '';
+    const tone = isStaleArea(a) ? 'stale' : 'fresh';
+    return `<span class="row-stamp" data-tone="${tone}">${esc(age)}</span>`;
   }
 
   function watchRowHtml(a) {
@@ -970,16 +1027,37 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
      * spelling of this question is what let the patches draw every JTWC area
      * as LOW while its own label said High. */
     const swatch = genesisColor(a.globeRisk ?? a.risk);
+    const badge = watchBadge(a);
     const meta = watchMeta(a);
     const two = watchTwoDay(a);
-    const label = `${a.title}, ${meta}${two ? `, ${two}` : ''}`;
+    const stamp = watchStamp(a);
+
+    /* ==> THE SAME TWO COLUMNS A STORM ROW HAS. <== Identity and figures down
+     * the left, classification and freshness down the right, so the eye
+     * compares by position across BOTH kinds of row instead of learning one
+     * layout for storms and another for areas. See `rowHtml` for the argument;
+     * it applies here unchanged. */
+    const label = [
+      a.title,
+      badge,
+      meta,
+      two,
+      Number.isFinite(a.issuedAt) ? `published ${formatAge(new Date(a.issuedAt).toISOString())}` : '',
+    ].filter(Boolean).join(', ');
+
     return `
       <button class="watch-row" type="button" role="listitem" data-id="${esc(a.id)}"
               aria-label="${esc(label)}">
         <span class="row-swatch watch-swatch" style="--swatch:${swatch}" aria-hidden="true"></span>
         <span class="row-text">
-          <span class="row-name">${esc(a.title)}</span>
-          <span class="row-meta">${esc(meta)}</span>
+          <span class="row-head">
+            <span class="row-name">${esc(a.title)}</span>
+            ${badge ? `<span class="row-badge">${esc(badge)}</span>` : ''}
+          </span>
+          <span class="row-where">
+            <span class="row-meta">${esc(meta)}</span>
+            ${stamp}
+          </span>
           ${two ? `<span class="row-meta watch-soon">${esc(two)}</span>` : ''}
         </span>
       </button>

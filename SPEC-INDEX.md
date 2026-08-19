@@ -167,14 +167,14 @@ real home is the other row carrying the same section number.
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1149-1185 |
 | `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1233-1234 |
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1235-1262 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1263-1415 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1416-1458 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1263-1422 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1423-1465 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3068-3127 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1459-1545 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1466-1552 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3256-3273 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3274-3282 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2178-2324 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1546-1676 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2178-2359 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1553-1683 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 64-65 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 66-82 |
 | `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 83-208 |
@@ -184,27 +184,27 @@ real home is the other row carrying the same section number.
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 439-464 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 465-501 |
 | `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 502-847 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2343-2440 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2378-2475 |
 | `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 848-871 |
 | `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 872-967 |
-| `48` | Rainfall — the sources | `SPEC-DATA.md` | 1677-1678 |
-| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1679-1704 |
-| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1705-1747 |
-| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-DATA.md` | 1748-1775 |
-| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-DATA.md` | 1776-1797 |
-| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1798-1827 |
-| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1828-1855 |
-| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1856-1900 |
-| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2441-2505 |
-| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2506-2525 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2526-2542 |
-| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1901-1946 |
+| `48` | Rainfall — the sources | `SPEC-DATA.md` | 1684-1685 |
+| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1686-1711 |
+| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1712-1754 |
+| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-DATA.md` | 1755-1782 |
+| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-DATA.md` | 1783-1804 |
+| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1805-1834 |
+| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1835-1862 |
+| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1863-1907 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2476-2540 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2541-2560 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2561-2577 |
+| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1908-1953 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1082-1101 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 968-969 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 970-1025 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1026-1051 |
-| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1947-2032 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2543-2565 |
+| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1954-2039 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2578-2600 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1052-1104 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1105-1156 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1157-1275 |
@@ -217,24 +217,24 @@ real home is the other row carrying the same section number.
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1521-1563 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1564-1606 |
 | `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1607-1688 |
-| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2033-2034 |
-| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2035-2073 |
-| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2074-2093 |
-| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2094-2116 |
-| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2117-2168 |
-| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2169-2201 |
-| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2202-2222 |
-| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2223-2245 |
+| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2040-2041 |
+| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2042-2080 |
+| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2081-2100 |
+| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2101-2123 |
+| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2124-2175 |
+| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2176-2208 |
+| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2209-2229 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2230-2252 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 133,491 | 40 |
+| `SPEC-DATA.md` | 134,017 | 40 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |
-| `SPEC-UI.md` | 150,105 | 10 |
-| `SPEC.md` | 150,037 | 14 |
+| `SPEC-UI.md` | 152,000 | 10 |
+| `SPEC.md` | 150,137 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

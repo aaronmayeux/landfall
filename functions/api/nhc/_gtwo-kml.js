@@ -196,9 +196,25 @@ export function titleFromDiscussion(discussion) {
   return m ? m[1].trim() : null;
 }
 
+/**
+ * `1. South of Mexico: An area of low pressure...` -> `An area of low
+ * pressure...`, and only when the prefix is exactly the title already read off
+ * it. Anything else is returned untouched.
+ */
+export function stripTitlePrefix(discussion, title) {
+  const text = discussion == null ? null : String(discussion).trim();
+  if (!text || !title) return text || null;
+  const cut = text.replace(
+    new RegExp(`^\\s*\\d+\\.\\s*${title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*:\\s*`),
+    ''
+  );
+  return cut.trim() || null;
+}
+
 /** Everything a placemark says about itself, geometry aside. */
 function attributes(chunk) {
   const discussion = dataValue(chunk, 'Discussion');
+  const title = titleFromDiscussion(discussion);
   return {
     disturbance: (() => {
       const n = Number(dataValue(chunk, 'Disturbance'));
@@ -208,8 +224,19 @@ function attributes(chunk) {
     risk2day: dataValue(chunk, '2day_category'),
     prob7day: dataValue(chunk, '7day_percentage'),
     risk7day: dataValue(chunk, '7day_category'),
-    discussion: discussion == null ? null : discussion.trim(),
-    title: titleFromDiscussion(discussion),
+    /* ==> THE `2. South-Southwest of Mexico:` PREFIX IS STRIPPED HERE. <== It
+     * is packaging, not content: NHC's plain-text bulletin publishes these
+     * paragraphs with no number at all — `samples/outlook-text/` has the bytes
+     * — and the numbering is something the KMZ generator adds. Left on, the
+     * paragraph opens by restating the heading directly above it with a rank
+     * in front, which reads as a ranking NHC never published.
+     *
+     * REMOVED ONLY WHEN IT IS EXACTLY THE TITLE WE ALREADY EXTRACTED. If the
+     * template ever changes and `titleFromDiscussion` returns null, nothing is
+     * cut — the whole paragraph survives with its prefix rather than having
+     * its first sentence guessed at and deleted. */
+    discussion: stripTitlePrefix(discussion, title),
+    title,
   };
 }
 

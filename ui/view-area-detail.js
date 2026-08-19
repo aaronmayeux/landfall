@@ -136,8 +136,19 @@ export function createAreaDetailView() {
         .join('\n')
         .trim()
       : '';
+    /* ==> THE HEADING NAMES WHOSE WORDS THESE ARE, NOT WHAT THEY ARE ABOUT.
+     * <== Repeating the area's name here would be the third time it appears in
+     * one panel. What the paragraph actually needs labelling is its
+     * PROVENANCE: everything above this point is figures, the standing note
+     * below it is ours, and without a heading the forecaster's prose simply
+     * starts mid-panel with nothing marking the change of voice.
+     *
+     * JTWC areas have no discussion, so the heading appears with the paragraph
+     * or not at all — a heading over nothing reads as a section that failed to
+     * load (§5). */
     const discussion = body
-      ? `<p class="area-discussion">${esc(body)}</p>`
+      ? `<h3 class="area-discussion-head">${esc(GENESIS.DISCUSSION_HEAD)}</h3>
+         <p class="area-discussion">${esc(body)}</p>`
       : '';
 
     host.innerHTML = `

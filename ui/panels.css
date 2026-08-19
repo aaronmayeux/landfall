@@ -2631,6 +2631,20 @@ button.drawer-identity:focus-visible {
   color: var(--text-secondary);
 }
 
+/* --- the heading over the forecaster's paragraph --------------------------
+ * Small, muted and letter-spaced, the same treatment section labels get
+ * elsewhere in the drawer: it is a signpost rather than a title, and it must
+ * not compete with the area's name at the top of the panel. */
+.area-discussion-head {
+  margin: var(--space-comfy) 0 0;
+  font-size: var(--type-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.area-discussion-head + .area-discussion { margin-top: var(--space-snug); }
+
 /* --- the forecaster's paragraph -------------------------------------------
  * NHC's own discussion of the area, verbatim. Body size rather than small: it
  * is the only prose in this panel and the only place a reader learns why the

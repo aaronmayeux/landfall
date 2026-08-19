@@ -43,6 +43,7 @@
 
 import path from 'node:path';
 import fs from 'node:fs';
+import { stripTitlePrefix } from '../functions/api/nhc/_gtwo-kml.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
@@ -360,6 +361,91 @@ section('...but NHC\u2019s own name wins when NHC publishes one');
 /* ---------------------------------------------------------------------------
  * THE REAL NHC PAYLOAD
  * ------------------------------------------------------------------------- */
+section('the watch row carries the same two columns a storm row does');
+
+/* ==> SOURCE-TEXT ASSERTIONS, in the style of test-storm-row.mjs. <== The row
+ * is assembled into innerHTML inside a closure with no DOM here, so what can
+ * be checked is the RULES the builder follows. Comments are stripped first:
+ * the first cut of this went red on its own explanation.
+ *
+ * WHY THESE THREE ARE WORTH PINNING. Each one has an obvious-looking
+ * "simplification" that silently reintroduces a §45.5 conflation.
+ */
+{
+  const src = fs.readFileSync('ui/view-storms.js', 'utf8');
+  const code = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const watch = code.slice(code.indexOf('function watchBadge'), code.indexOf('function renderWatch'));
+
+  /* 1. THE TWO-DAY LINE IS UNCONDITIONAL. It used to be hidden at zero, which
+   *    made rows change height on a value and made "0%" and "NHC said nothing"
+   *    look identical. A `> 0` or `<= 0` guard anywhere in this builder is
+   *    that bug coming back. */
+  ok(
+    !/prob2day\s*[<>]=?\s*0/.test(watch),
+    'the two-day line must not be gated on the value being above zero — a '
+    + 'stated 0% is NHC saying "not in this window" and is exactly the '
+    + 'reassurance a watch list is scanned for'
+  );
+  ok(
+    /Not stated/.test(watch),
+    'and a MISSING two-day figure must print "Not stated" rather than 0% — '
+    + 'printing a zero over a field NHC left blank invents a forecast (§5)'
+  );
+
+  /* 2. THE BADGE IS THE TWO-DAY RUNG. A storm's badge is what it is right
+   *    now; the near horizon is the closest thing an area has to that.
+   *    Reaching for `risk7day` here would make the badge restate the swatch. */
+  ok(
+    /risk2day/.test(watch) && !/risk7day/.test(watch),
+    'the badge uses the TWO-day risk word, not the seven-day one — the seven '
+    + 'day rung is already carried by the swatch colour (§45.6)'
+  );
+
+  /* 3. THE ROW AGES ON THE OUTLOOK'S CLOCK. `FRESHNESS` is built for
+   *    three-hourly advisories; the outlook republishes roughly six-hourly, so
+   *    borrowing the storm bands would paint nearly every area amber nearly
+   *    all the time and the colour would stop meaning anything. */
+  ok(
+    /isStaleArea/.test(watch) && !/FRESHNESS/.test(watch),
+    'the stamp ages on GENESIS.staleAfter via isStaleArea, never on the '
+    + 'storm freshness bands'
+  );
+}
+
+section('the numbered prefix is stripped from the forecaster\u2019s paragraph');
+
+/* ==> IT IS PACKAGING, NOT CONTENT. <== NHC's plain-text bulletin publishes
+ * these paragraphs with NO number — `samples/outlook-text/` carries the bytes.
+ * The numbering is added by the KMZ generator, and left on, the paragraph
+ * opens by restating the heading directly above it with a rank in front. */
+{
+  ok(
+    stripTitlePrefix('2. South of Mexico: An area of low pressure...', 'South of Mexico')
+      === 'An area of low pressure...',
+    'the template prefix comes off'
+  );
+
+  /* ==> ONLY WHEN IT IS EXACTLY THE TITLE WE ALREADY READ. <== A regex that
+   * ate "digit, dot, anything, colon" would delete the first sentence of any
+   * paragraph containing a colon — silently, and only sometimes. */
+  ok(
+    stripTitlePrefix('2. Somewhere Else: An area...', 'South of Mexico')
+      === '2. Somewhere Else: An area...',
+    'a prefix that does not match the title is left alone rather than guessed at'
+  );
+  ok(
+    stripTitlePrefix('An area of low pressure...', null) === 'An area of low pressure...',
+    'a paragraph with no prefix survives whole'
+  );
+  ok(stripTitlePrefix(null, 'South of Mexico') === null, 'null in, null out');
+
+  /* A title carrying regex metacharacters must not be compiled as a pattern. */
+  ok(
+    stripTitlePrefix('1. Gulf (South): An area...', 'Gulf (South)') === 'An area...',
+    'a title with brackets in it is matched literally, not as a pattern'
+  );
+}
+
 section('the live outlook, parsed');
 
 const areas = normalizeNhcAreas(AREAS_FC).sort(sortAreas);

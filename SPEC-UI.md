@@ -2181,7 +2181,42 @@ own sentence rather than reading as a failure.
 `SPEC-MAP.md`.*
 
 A second section under the storm list, headed **Being watched** with a count.
-One row per area, ordered by probability across both sources:
+One row per area, ordered by probability across both sources.
+
+**THE WATCH ROW IS THE STORM ROW'S SHAPE, DELIBERATELY.** Identity and figures
+down the left, classification and freshness down the right, so the eye compares
+by position across both kinds of row instead of learning one layout for storms
+and another for areas.
+
+```
+◪  South-Southwest of Mexico                    Low
+   80% · in 7 days · NHC                  2 hrs ago
+   0% in 2 days
+```
+
+**The badge is the TWO-day rung, on both sources.** A storm's badge is what it
+is right now; the near horizon is the closest thing a watched area has to that.
+It deliberately does not match the swatch beside it — the dot carries the
+seven-day risk, because the polygon on the globe is the seven-day area (§45.6)
+— so a row may read `Low` next to an orange dot, and both marks are true about
+different horizons. The subline names both horizons underneath for that reason.
+A JTWC system has one horizon and one word, so its badge is that word and its
+subline sheds it rather than saying it twice.
+
+**Both percentages are always shown.** The two-day line used to be hidden below
+1%, on the argument that a column of zeros trains the eye to skip the line that
+matters. It cost more than it bought: rows changed height on a value, so the
+reader could never learn where the two-day figure lives, and its absence
+carried two meanings at once — a stated `0%` and a blank field looked
+identical, which is the §45.5 conflation this feature exists to refuse. A
+stated zero is NHC saying *not in this window*, which is exactly the
+reassurance a watch list is scanned for. **A field NHC left blank reads `Not
+stated`, never `0%`.**
+
+**The stamp ages on the outlook's own cadence**, `GENESIS.staleAfter` at nine
+hours, never on the storm freshness bands — those are built for three-hourly
+advisories and would paint nearly every area amber nearly all the time, which
+would make the colour mean nothing.
 
 **THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT SITS NEAR IT.**
 Turning the layer off hides these rows as well as the patches on the globe, and

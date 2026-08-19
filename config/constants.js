@@ -2732,6 +2732,13 @@ export const GENESIS = Object.freeze({
     jtwc:     'in 24 hours',
   }),
 
+  /** The heading over the forecaster's paragraph in the area panel. It names
+   *  the SOURCE rather than the subject: the area's own name is already the
+   *  panel's title, and the paragraph's job is being NHC's voice rather than
+   *  ours. Written here so the day a second agency publishes prose, there is
+   *  one place that decides how it is introduced. */
+  DISCUSSION_HEAD: 'What NHC says',
+
   /* --- what goes on the globe -------------------------------------------- */
 
   /** ==> THE POLYGON IS THE SEVEN-DAY AREA, SO THE GLOBE SHOWS THE SEVEN-DAY
