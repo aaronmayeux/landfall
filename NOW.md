@@ -381,8 +381,8 @@ basins at all (§47.3). Full brief in the project note `global-coverage-pass1`.
   hourly values with zero nulls and zero time gaps**, mm and ISO-8601 on a UTC
   base. The first probe carried no `access-control-allow-origin` — but the
   runner sent no `Origin`, so the server was never asked, and reading that
-  silence as "CORS is closed" would have been the mistake.
-  `openmeteo-rain-cors-probe.json` now sends one from our production origin.
+  silence as "CORS is closed" would have been the mistake. A second Open-Meteo
+  entry in `tools/archive-fetch.mjs` now sends one from our production origin.
   **Read the manifest headers, not the body.** Also read any `x-ratelimit-*`
   there: the free tier's daily ceiling is a docs-page number with nothing in
   the response to measure against, which is the harder blocker. CC BY 4.0
