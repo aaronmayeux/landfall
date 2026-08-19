@@ -46,7 +46,7 @@ the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
 
-**THIS FILE IS 489 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
+**THIS FILE IS 493 LINES AND ITS OWN TRIGGER IS 300.** It was already 462 on
 arrival, so the audit was overdue before this pass and this pass made it worse.
 **The next session does the read and the cut list before adding anything**, and
 the first candidates are the IN FLIGHT entries that have been unjudged longest —
@@ -84,13 +84,17 @@ one that matters — does the `out_of_range` pair of sentences read as **a gap i
 what we know** or as an all-clear. If it reads as an all-clear that is a §5
 bug, not a wording preference.
 
-**The coastal layer has never been on a globe.** `SPEC-DATA.md` §51.4. Tap
-Coastal → Surge on a GDACS storm. Judge whether a 5 km band around a town reads
-as a coast or as a smudge; whether the teal-to-magenta ramp is distinguishable
-from the NHC blue-to-purple one at a glance; and whether the EMPTY coast
-between two modelled towns reads as deliberate or as a rendering failure. That
-last one is the deliberate choice — nothing is interpolated between towns —
-and it is the most likely thing to look broken.
+**THE COASTAL LAYER HAS A KNOWN DEFECT AND THE FIX IS SPECIFIED. BUILD §51.7
+FIRST.** `SPEC-DATA.md` §51.4 names it, `SPEC-NEXT.md` §51.7 fixes it, and the
+measurements are in the second. In one line: the 5 km corridor is too narrow
+for how the towns actually cluster — chaining Lala's 47 at 10 km joins only 8
+of them — so what draws today is disconnected fragments rather than a coast.
+**One constant, 5 → ~12 km, plus its reasoning.** Then judge on glass whether a
+continuous Big Island stripe reads as a coast or as too much; the dial is that
+one number.
+
+Still worth judging on the same pass: whether the teal-to-magenta ramp is
+distinguishable from NHC's blue-to-purple at a glance.
 
 **Every archived height is sub-metre, so nobody has seen the ramp move.** The
 whole three-storm archive spans 0.10 m to 0.48 m: rungs 0 and 1 of five. The

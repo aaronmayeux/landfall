@@ -2715,12 +2715,22 @@ enough to reach the shoreline the town sits on, not enough to claim anything
 about the next bay. `pointRingDeg` makes the point a ring `areaSelect` can take;
 the pad is what sets the reach.
 
-**==> NOTHING IS INTERPOLATED BETWEEN TOWNS. <==** A continuous ramp along the
-coast from one town's height to the next was the first design and was rejected
-before it was written. Hookena reads 0.17 and Hilo 0.13, 100 km apart on
-opposite sides of one island. Painting the coast between them states a forecast
-the JRC never made for ground it never ran on. A town paints its own shoreline
-and the gaps stay empty, because the gaps **are** empty.
+**==> NOTHING IS INTERPOLATED BETWEEN TOWNS, AND A COAST THAT JOINS UP DOES SO
+BY OVERLAP RATHER THAN BY DRAWING. <==** A continuous ramp from one town's
+height to the next was the first design and was rejected before it was written:
+Hookena reads 0.17 and Hilo 0.13, and a value drawn between them is a forecast
+the JRC never made for ground it never ran on. Each town paints its own
+shoreline; where two corridors overlap the deeper wins on the sort key. Nothing
+in this file ever states a height for a stretch of coast no town reports.
+
+**==> AT 5 km THE STRIPES DO NOT JOIN, AND THAT IS THE OPEN DEFECT. <==**
+Measured on Lala's 47 towns, 2026-08-19: median distance to a nearest
+neighbour **3.8 km**, worst **24.2 km**. A 5 km half-width reaches 10 km, and
+single-link chaining at 10 km joins **8 of 47** — the towns are clumped rather
+than evenly spread, so the result is several short disconnected fragments and
+isolated stubs down one island. The fix and its measurements are in
+`SPEC-NEXT.md` §51.7. **This paragraph describes what ships today; it is not a
+description of what the layer should look like.**
 
 **Deepest on top**, via `line-sort-key` — Shomushon and Marasu are 3.7 km apart
 and share coastline at this corridor width, and where two heights overlap the
