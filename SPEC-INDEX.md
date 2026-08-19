@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 195 numbered headings.
+Covering 9 files, 203 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -217,12 +217,20 @@ real home is the other row carrying the same section number.
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1521-1563 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1564-1606 |
 | `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1607-1688 |
+| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 1943-1944 |
+| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1945-1983 |
+| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 1984-2003 |
+| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2004-2026 |
+| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2027-2052 |
+| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2053-2085 |
+| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2086-2106 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2107-2123 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 116,232 | 32 |
+| `SPEC-DATA.md` | 125,592 | 40 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |

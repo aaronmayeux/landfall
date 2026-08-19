@@ -2759,3 +2759,61 @@ button.drawer-identity:focus-visible {
   line-height: 1.45;
   color: var(--text-muted);
 }
+
+/* ---------------------------------------------------------------------------
+   LOCAL AGENCY ALERTS (SPEC §50.5)
+
+   Two registers in one block, on purpose. The English line is OURS — built
+   from CAP's coded fields — and is the line a reader can actually read, so it
+   leads at body weight. The agency's own words sit under it in the secondary
+   register, because they are a quotation in a language we are not translating
+   and must not be mistaken for our summary of the situation.
+   ------------------------------------------------------------------------ */
+.detail-cap-alert {
+  padding: var(--space-snug) 0;
+}
+/* A rule between alerts rather than around each one: two agencies warning the
+   same country is two statements, and a boxed card each would read as two
+   severities. The line separates without ranking. */
+.detail-cap-alert + .detail-cap-alert {
+  border-top: 1px solid var(--glass-border);
+}
+
+.detail-cap-english {
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.detail-cap-words {
+  margin-top: var(--space-tight);
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* The language tag on untranslated text. Small, inline, and never a flag —
+   a flag names a country and a language is not a country. */
+.detail-cap-lang {
+  margin-left: var(--space-tight);
+  font-size: var(--type-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.detail-cap-meta {
+  margin-top: var(--space-tight);
+  font-size: var(--type-small);
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* Who is speaking, and the limits of what the match means. Same register as
+   the rainfall and environment footnotes. */
+.detail-cap-note {
+  margin: var(--space-base) 0 0;
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--text-muted);
+}

@@ -90,6 +90,7 @@ import { POPULATION } from '../config/constants.js';
 import { DOTS } from './loading-dots.js';
 import { createEnvHealth, ENV_SECTION } from './env-health.js';
 import { createRainStorm, RAIN_SECTION } from './rain-storm.js';
+import { createCapStorm, CAP_SECTION } from './cap-storm.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -227,7 +228,8 @@ function disclaimerHtml() {
  *   the reader had gone back and tapped it.
  */
 export function createStormDetailView({
-  home, onRetryGeometry, loadAdvisory, envShips, units, siblings, onStep,
+  home, onRetryGeometry, loadAdvisory, loadAlerts, envShips, units, siblings,
+  onStep,
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -238,6 +240,12 @@ export function createStormDetailView({
    * the SAME advisory facade the Advisory section uses, so both read one cached
    * record and can never show two different advisories for one storm. */
   const rainH = createRainStorm({ loadAdvisory });
+
+  /* Local agency alerts (§50.5), same shape again. It reads a GLOBAL list
+   * rather than anything about this storm, which is why its facade takes no
+   * storm argument — the filtering to this storm's countries happens in
+   * lib/cap.js, inside the controller. */
+  const capH = createCapStorm({ loadAlerts });
 
   /** The resolved unit system, asked fresh on every render. NEVER cached: the
    *  user can change it in Settings while this panel is open, and a captured
@@ -1235,6 +1243,26 @@ export function createStormDetailView({
     return rainH.html(storm);
   }
 
+  /** The Local alerts section's body (§50.5) — behind the same withheld-note
+   *  gate every other section uses, so a silent or ended storm never carries a
+   *  block of alerts read as currently in force. */
+  function capHtml() {
+    const silenced = withheldNote();
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+    return capH.html(storm);
+  }
+
+  /** Repaint ONLY the Local alerts section — same scroll-position reasoning as
+   *  every other section repaint here. */
+  function renderCapBody() {
+    const el = bodyEl?.querySelector(
+      `.detail-section[data-section="${CAP_SECTION}"] .detail-section-body`
+    );
+    if (!el || !storm) return;
+    el.innerHTML = capHtml();
+    capH.wire(bodyEl, storm, renderCapBody);
+  }
+
   /** Repaint ONLY the Rainfall section — same scroll-position reasoning as the
    *  Environment, advisory and people repaints. */
   function renderRainBody() {
@@ -1320,6 +1348,10 @@ export function createStormDetailView({
       section('vitals', isEnded(storm) ? 'Last known' : 'Vitals', vitalsHtml()),
       homeBlock ? section('home', 'Home', homeBlock) : '',
       section('ww', 'In effect', wwHtml()),
+      /* Directly under "In effect" because it answers the same question for
+       * the rest of the world — who has warned whom. The order also makes the
+       * NHC storm's pointer ("see In effect above") literally true. */
+      section(CAP_SECTION, 'Local agency alerts', capHtml()),
       section('wind', 'Wind field', windHtml()),
       section(RAIN_SECTION, 'Rainfall', rainHtml()),
       section(ENV_SECTION, 'Environment', envHtml()),
@@ -1338,6 +1370,8 @@ export function createStormDetailView({
       envH.wire(bodyEl, storm, renderEnvBody);
       rainH.ensure(storm, renderRainBody);
       rainH.wire(bodyEl, storm, renderRainBody);
+      capH.ensure(storm, renderCapBody);
+      capH.wire(bodyEl, storm, renderCapBody);
     }
     /* A reader who left this section open last time gets it open — and open
      * means fetched. Without this the persisted preference renders an

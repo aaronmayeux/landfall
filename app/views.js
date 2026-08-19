@@ -79,6 +79,7 @@ import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory } from '../data/advisory.js';
 import { loadRainfall, evictRainfall } from '../data/rainfall.js';
+import { loadAlerts } from '../data/cap.js';
 import { refresh } from '../data/store.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { resolveSystem } from '../lib/units.js';
@@ -595,6 +596,14 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       countAction('advisory_open');
       return fetchAdvisory(storm, opts);
     },
+    /* The national-alert facade (§50). ONE global list shared by every storm,
+     * so this is called on every GDACS storm opened and costs a fetch only the
+     * first time — `data/cap.js` holds the answer for CACHE.capClient.
+     *
+     * NOT COUNTED like `advisory_open` is. That counter means "somebody chose
+     * to open the deepest read we offer"; this section is open by default, so
+     * a count of it would measure the drawer opening and nothing else. */
+    loadAlerts: (opts) => loadAlerts(opts),
     /* The Environment paragraph's facade (§47.8) — cache-first against the
      * same per-advisory store the ribbon warms, so a reader with the layer on
      * pays nothing twice, and the retry evicts before refetching so a cached

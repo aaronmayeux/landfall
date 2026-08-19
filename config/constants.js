@@ -318,6 +318,20 @@ export const CACHE = Object.freeze({
    *  list can never be served from wildly different moments. */
   abpwFresh: 15 * MINUTE,
 
+  /** Relay: the CAP alert feed (§50). Mirrors `FRESH_SECONDS` in
+   *  `functions/api/cap/alerts.js`. Ten minutes rather than fifteen because an
+   *  alert is a human act with no publication cadence to sit inside — an
+   *  agency issues one when it decides to, and the only thing this window
+   *  controls is how long a NEW one waits to appear. */
+  capFresh: 10 * MINUTE,
+
+  /** How long the BROWSER holds the alert list before asking again (§50.6).
+   *  Deliberately shorter than the relay's window: the relay answers from its
+   *  own cache in a millisecond, so a client that asks more often than the
+   *  relay refetches costs one local round trip and gets a fresher answer the
+   *  moment the relay has one. */
+  capClient: 5 * MINUTE,
+
   /** Service worker: last-good storm data. ~1.5x advisory cadence, carried
    *  from the HA project. Served flagged stale with its age. */
   lastGoodStormData: 9 * HOUR,
@@ -2408,6 +2422,18 @@ export const ENDPOINT = Object.freeze({
   gdacsEventList:
     'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH' +
     '?eventlist=TC&alertlevel=Green;Orange;Red',
+
+  /** CAP alerts from national weather agencies worldwide, via Esri's CAP
+   *  Connector over the WMO Alert Hub (§50). CORS-OK, relayed for load and to
+   *  keep one long query string in one place.
+   *
+   *  ==> THE FULL QUERY LIVES IN THE RELAY, NOT HERE. <== It carries a `where`
+   *  clause, a field list and a `returnGeometry=false` that are load-bearing
+   *  for §50.2 — asking for the shapes turned 8 KB into 281 KB, measured — and
+   *  splitting a query between a constant and a route is how half of it gets
+   *  changed. This records the service so the URL is written down. */
+  capAlerts:
+    'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/CAP_Alerts_Feed/FeatureServer/0/query',
 
   /** GDACS per-event geometry. CONFIRMED LIVE 2026-07-24 — and note this is
    *  the FALLBACK form only: every event in the list feed publishes its own

@@ -1,0 +1,182 @@
+{
+ "type": "FeatureCollection",
+ "features": [
+  {
+   "type": "Feature",
+   "bbox": [
+    -168.1,
+    20.4,
+    -168.1,
+    20.4
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -168.1,
+     20.4
+    ]
+   },
+   "properties": {
+    "eventtype": "TC",
+    "eventid": 1001303,
+    "episodeid": 26,
+    "eventname": "ONE-C-26",
+    "glide": "",
+    "name": "Tropical Cyclone ONE-C-26",
+    "description": "Tropical Cyclone ONE-C-26",
+    "htmldescription": "Green Tropical Cyclone ONE-C-26 in United States from: 12 Aug 2026  to: 18 Aug 2026 .",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "iconoverall": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1001303&episodeid=26",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1001303&episodeid=26&eventtype=TC",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1001303"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 1,
+    "istemporary": "false",
+    "iscurrent": "true",
+    "country": "United States",
+    "fromdate": "2026-08-12T15:00:00",
+    "todate": "2026-08-18T21:00:00",
+    "datemodified": "2026-08-19T00:07:18",
+    "iso3": "USA",
+    "source": "NOAA",
+    "sourceid": "",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "countryonland": "",
+    "affectedcountries": [
+     {
+      "iso2": "US",
+      "iso3": "USA",
+      "countryname": "United States"
+     }
+    ],
+    "severitydata": {
+     "severity": 185.184,
+     "severitytext": "Hurricane/Typhoon > 74 mph (maximum wind speed of 185 km/h)",
+     "severityunit": "km/h"
+    }
+   }
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    -135.9,
+    15.8,
+    -135.9,
+    15.8
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -135.9,
+     15.8
+    ]
+   },
+   "properties": {
+    "eventtype": "TC",
+    "eventid": 1001304,
+    "episodeid": 12,
+    "eventname": "HERNAN-26",
+    "glide": "",
+    "name": "Tropical Cyclone HERNAN-26",
+    "description": "Tropical Cyclone HERNAN-26",
+    "htmldescription": "Green Tropical Cyclone HERNAN-26 off-shore from: 13 Aug 2026  to: 15 Aug 2026 .",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "iconoverall": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1001304&episodeid=12",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1001304&episodeid=12&eventtype=TC",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1001304"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 1,
+    "istemporary": "false",
+    "iscurrent": "true",
+    "country": "",
+    "fromdate": "2026-08-13T03:00:00",
+    "todate": "2026-08-15T21:00:00",
+    "datemodified": "2026-08-16T17:36:17",
+    "iso3": "",
+    "source": "NOAA",
+    "sourceid": "",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "countryonland": "",
+    "affectedcountries": [],
+    "severitydata": {
+     "severity": 74.0736,
+     "severitytext": "Tropical Depression (maximum wind speed of 74 km/h)",
+     "severityunit": "km/h"
+    }
+   }
+  },
+  {
+   "type": "Feature",
+   "bbox": [
+    170.2,
+    33.8,
+    170.2,
+    33.8
+   ],
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     170.2,
+     33.8
+    ]
+   },
+   "properties": {
+    "eventtype": "TC",
+    "eventid": 1001298,
+    "episodeid": 28,
+    "eventname": "PEILOU-26",
+    "glide": "TC-2026-000144-CHN",
+    "name": "Tropical Cyclone PEILOU-26",
+    "description": "Tropical Cyclone PEILOU-26",
+    "htmldescription": "Green Tropical Cyclone PEILOU-26 in Philippines from: 04 Aug 2026  to: 13 Aug 2026 .",
+    "icon": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "iconoverall": "https://www.gdacs.org/images/gdacs_icons/maps/Green/TC.png",
+    "url": {
+     "geometry": "https://www.gdacs.org/gdacsapi/api/polygons/getgeometry?eventtype=TC&eventid=1001298&episodeid=28",
+     "report": "https://www.gdacs.org/report.aspx?eventid=1001298&episodeid=28&eventtype=TC",
+     "details": "https://www.gdacs.org/gdacsapi/api/events/geteventdata?eventtype=TC&eventid=1001298"
+    },
+    "alertlevel": "Green",
+    "alertscore": 1,
+    "episodealertlevel": "Green",
+    "episodealertscore": 1,
+    "istemporary": "false",
+    "iscurrent": "false",
+    "country": "Philippines",
+    "fromdate": "2026-08-04T18:00:00",
+    "todate": "2026-08-13T18:00:00",
+    "datemodified": "2026-08-14T21:00:28",
+    "iso3": "PHL",
+    "source": "JTWC",
+    "sourceid": "",
+    "polygonlabel": "Centroid",
+    "Class": "Point_Centroid",
+    "countryonland": "",
+    "affectedcountries": [
+     {
+      "iso2": "PH",
+      "iso3": "PHL",
+      "countryname": "Philippines"
+     }
+    ],
+    "severitydata": {
+     "severity": 74.0736,
+     "severitytext": "Tropical Depression (maximum wind speed of 74 km/h)",
+     "severityunit": "km/h"
+    }
+   }
+  }
+ ]
+}

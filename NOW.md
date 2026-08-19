@@ -61,6 +61,20 @@ written brief naming candidates, what was measured, and what still needs glass.
 description is in the spec section named beside each one; what is here is only
 the question a tool cannot answer.
 
+**Local agency alerts — a new drawer section that will usually be empty.**
+`SPEC-DATA.md` §50. CAP alerts from national weather agencies, matched to a
+GDACS storm by country, shown as text and never painted (§50.1 has the measured
+reason). **The question is whether it earns its place.** The whole global feed
+was five rows at an hour with eleven live cyclones, so on most storms this reads
+"no national weather agency in the affected countries currently has a tropical
+cyclone alert in force" — true, and possibly not worth a section. Judge that
+first; the rest is cosmetic if the answer is no.
+Then, when a Western Pacific storm is live: does PAGASA's alert with an English
+severity line above its own words read as informative or as clutter; does the
+footnote successfully say "this agency covers this country" rather than "this
+alert is about this storm"; and on an NHC storm, does pointing at **In effect**
+above read as an answer or as a dead section.
+
 **A JTWC watched area's patch now changes with its risk word.** `SPEC-MAP.md`
 §45.4. **Judge when a Western Pacific area next goes Medium or High:** does the
 patch step visibly, and does it match an NHC area at the same rung. Both live

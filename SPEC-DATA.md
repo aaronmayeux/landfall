@@ -1939,3 +1939,184 @@ answer rather than a gap.
 happened (`SPEC-NEXT.md` §49.5), the storm's real peak (§49.6) and the rungs
 that describe the past (§49.14). The left half of the chart and the Timeline
 rail's past rows are pass 4 and do not read it yet.
+
+## 50. Local agency alerts — what the rest of the world publishes
+
+### 50.1 Why this exists, and what it deliberately is not
+
+The watch/warning stripe on the coast (§7.7) is NHC-only. Outside NHC's basins
+the app has never been able to say who has warned whom, which for a global
+storm tracker is a real hole: a typhoon closing on Luzon shows a cone, a wind
+field and no indication that anyone has told anybody to move.
+
+**THE SOURCE IS CAP, VIA THE WMO ALERT HUB.** Esri's CAP Connector republishes
+what the Hub aggregates — every member country's official alerts — as an
+ordinary ArcGIS feature service: public, anonymous, no key.
+
+**==> IT IS A TEXT SECTION AND IT PAINTS NOTHING, AND THAT DECISION CAME OUT
+OF THE BYTES. <==** Measured on the archive branch, 2026-08-19, at an hour when
+GDACS was tracking eleven active cyclones, the entire global cyclone-alert feed
+held FIVE rows:
+
+- Two from Environment Canada — storm surge for the **Yukon coastline**. Arctic,
+  no cyclone within thousands of kilometres. They match because surge is surge.
+- Two from Costa Rica's Instituto Meteorológico Nacional, in Spanish, announcing
+  the **END** of a tropical wave's influence. Headline: rain and showers on
+  Tuesday. The same message published twice, eight minutes apart, at two
+  different severities. Geometry: the **entire national outline, 6,585 points.**
+- One from PAGASA — "Tropical Cyclone Alert: Tropical Depression Neneng."
+  Geometry: a **seven-point rectangle, 113–130°E by 5–21°N.** That is the
+  Philippine Area of Responsibility, the whole monitoring basin, not a warned
+  zone.
+
+A CAP area is whatever the issuing country drew, and what countries draw is
+administrative: a province, a nation, a basin. Banded onto a coast the way §7.7
+bands NHC's breakpoint lines, that shades seventeen degrees of open ocean
+because a depression exists somewhere inside it. **Painting it would be a
+worse lie than leaving the coast unpainted**, so the stripe stays NHC-only and
+this section is words.
+
+**NOTHING IN THIS SECTION INFERS A THREAT.** It does not rank alerts, read
+severity as danger, or derive an all-clear. Two of the five archived rows
+announce weather ENDING. It reports that an agency said something, and shows
+what.
+
+### 50.2 The payload, and the geometry we refuse
+
+Two forms of one query, both measured 2026-08-19:
+
+| Form | Rows | Bytes |
+|---|---|---|
+| Attributes only, `returnGeometry=false` | 5 | 8,015 |
+| With shapes, ten requested | 3 | 281,336 |
+
+We paint none of it (§50.1), so the shapes are pure weight and are not asked
+for. **A national outline is not a payload a phone should download to render a
+sentence.**
+
+**==> AND THAT IS WHY THERE IS NO SPATIAL FILTER. <==** The obvious design is
+to ask the service which alerts intersect a storm's box and let the server
+match. It would work, and it would cost one round trip PER STORM OPENED for a
+feed whose global contents are 8 KB. One cached list shared by every storm is
+cheaper, and it moves the matching somewhere `tools/test-cap.mjs` can drive it
+offline against real bytes.
+
+### 50.3 Matching — by country, and only for GDACS storms
+
+A CAP row carries `countryCode` as ISO-2. A GDACS storm carries
+`affectedcountries`, each entry with `iso2` already on it. The join needs no
+lookup table — the two sources happen to speak the same alphabet.
+
+**MEASURED: 63 of 98 rows in the archived GDACS list carry countries.** The
+other 35 are out at sea, where no country has issued anything about them, so an
+empty answer for those is the truth rather than a gap.
+
+**AN NHC STORM CARRIES A BASIN AND NO COUNTRY, AND WE DO NOT INVENT ONE.**
+Deriving a nation from a storm's position would mean this app deciding which
+country a storm belongs to. NHC storms are also the only storms whose watches
+and warnings we already paint, so the section points those readers at "In
+effect" and at the coast rather than reporting an outage (§50.5). That is how
+the both-sources rule is met here: the same section, a different true answer.
+
+**A COUNTRY MATCH IS NOT A CAUSAL CLAIM.** PAGASA's alert covers a basin;
+Environment Canada's covers the Yukon. The question this answers is "which
+agencies covering this storm's countries currently have a cyclone alert out" —
+weaker than "this alert is about this storm", and true. §50.5 requires the UI
+to word it that way.
+
+### 50.4 Translation — the coded fields only
+
+**==> WE DO NOT MACHINE-TRANSLATE A SAFETY MESSAGE WE CANNOT CHECK. <==** An
+alert's `event` and `headline` are the agency's free text in the agency's
+language. A mistranslated warning is a worse failure than an untranslated one,
+and nothing in this sandbox can verify a translation's quality.
+
+What IS put into English is everything CAP defines as a **code**. Severity,
+urgency and certainty come from fixed vocabularies that mean the same thing
+whatever language surrounds them, so `lib/cap.js` renders them directly:
+
+- **severity** — Extreme/Severe/Moderate/Minor/Unknown
+- **urgency** — Immediate/Expected/Future/Past/Unknown
+- **certainty** — Observed/Likely/Possible/Unlikely/Unknown
+
+That yields a real English sentence for every alert on earth with no
+interpretation and no risk. The agency's own words sit underneath it, verbatim,
+tagged with their language when it is not English.
+
+**AN UNRECOGNISED CODE IS NAMED, NEVER DROPPED.** CAP may add one; an agency
+may mis-set one. Omitting that half of the sentence would leave a reader
+thinking an alert had no urgency rather than an unreadable one.
+
+Machine translation is a **separate pass**, not part of this one, and would
+ship labelled as machine-translated with the original still visible.
+
+### 50.5 The relay route
+
+`functions/api/cap/alerts.js`. Forward-and-cache, no parameters, the same dumb
+sibling `jtwc/abpw.js` is. The `where` clause, the field list and
+`returnGeometry=false` live there and nowhere else — splitting a query between
+a constant and a route is how half of it gets changed. `ENDPOINT.capAlerts`
+records the service so the URL is written down.
+
+**`Storm Surge` IS IN THE `where` CLAUSE AND IT COSTS US NON-TROPICAL ROWS.**
+That is what pulls Yukon in. Dropping the term would lose a real storm-surge
+warning during a real hurricane, so it stays, and the country join is what
+keeps Yukon out of a Philippine storm's panel — asserted in `tools/test-cap.mjs`,
+not assumed.
+
+**AN EMPTY ANSWER IS COMMON AND TRUE, AND IS NOT HELD.** Most hours no country
+has a cyclone alert in force. This is §45's situation without §45's danger:
+there, emptiness could read as "no storm is forming", so that route holds its
+last non-empty answer. Here emptiness means "no agency has published one", and
+holding would make the route claim an **expired alert is still in force** —
+the worse lie of the two. Every row carries its own expiry, which is also why
+the stale window is two hours rather than nine: a six-hour-old list is mostly
+things that have already ended.
+
+**A COLO CACHE, NOT THE WARM KV STORE.** §45 needed global KV because a cold
+colo made its held branch unreachable, and the hold is that feature's whole
+point. Nothing is held here, so a cold colo costs one 8 KB fetch.
+
+**ARCGIS REPORTS FAILURE AS HTTP 200 WITH AN `error` BODY.** Read as a feature
+list, a refused query becomes an empty one, and an empty one renders as "no
+agency has issued an alert" — a false all-clear built out of a server error,
+cached for ten minutes. The route answers 502 and forwards the body verbatim so
+`data/cap.js` can say unavailable for the real reason.
+
+### 50.6 The three states
+
+Kept apart, per §5, and the distinction is split across two files on purpose:
+
+| State | Means | Decided in |
+|---|---|---|
+| `unavailable` | the fetch or the parse failed | `data/cap.js` |
+| `ok`, empty list | no country anywhere has an alert in force | `data/cap.js` |
+| nothing matched | the feed answered; this storm's countries have nothing | `lib/cap.js` |
+| no countries | the storm is offshore; there is nothing to look up | `lib/cap.js` |
+
+`readAlerts()` returns **null** for a body it could not read and an **empty
+array** for a genuinely empty feed. Collapsing those two — the ordinary
+`(json?.features || [])` — is precisely how a refused query becomes a published
+all-clear, and `tools/test-cap.mjs` demonstrates that the naive form cannot
+tell them apart.
+
+**A FAILURE IS NEVER CACHED CLIENT-SIDE.** Holding an outage for the client
+window would outlast its own recovery and leave the retry button doing nothing
+visible.
+
+### 50.7 Acceptance cases
+
+1. A GDACS storm affecting the Philippines shows PAGASA's alert, with an
+   English sentence built from the codes and PAGASA's own words below it.
+2. That same storm shows **no** Environment Canada row. The country join is the
+   only thing preventing it.
+3. A storm with no affected countries says so — "no country is currently listed
+   as affected" — and does not read as a failure.
+4. An NHC storm points at "In effect" and the painted coast. It never says
+   unavailable.
+5. The feed being unreachable says the list did not load **and** says that this
+   does not mean no alert is in force.
+6. Costa Rica's duplicate renders **once**, showing the row the agency issued
+   last — not the more severe one.
+7. An alert past its stated expiry does not render at all.
+8. Nothing in this feature draws on the globe.
