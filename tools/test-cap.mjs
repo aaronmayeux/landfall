@@ -392,6 +392,83 @@ ok(
 );
 
 /* =====================================================================
+ * §50.12 — A STORM WITH NO COUNTRY IS TWO SITUATIONS, NOT ONE
+ *
+ * ==> THIS IS THE ASSERTION THAT WOULD HAVE CAUGHT 2026-08-19. <== GDACS
+ * listed three live storms and gave a country to one. PAGASA had an alert in
+ * force. The two unattributed storms rendered "no country is listed as
+ * affected by this storm, so there are no national alerts to look up" — which
+ * a reader takes as an all-clear, at an hour an agency was warning somebody.
+ *
+ * The distinction is not cosmetic and it is not about wording taste: one of
+ * these sentences is a complete true statement and the other is a §5 silence
+ * wearing a period.
+ * ====================================================================== */
+section('§50.12  no country — a gap is not an all-clear');
+
+/* `hernan` carries no country. Fed the real four-alert fixture, at least one
+ * of which is in force, the section must NOT read as a clean answer. */
+const capUiGap = createCapStorm({
+  loadAlerts: async () => ({ state: 'ok', alerts, stale: false }),
+});
+await capUiGap.ensure(hernan, () => {});
+const gapHtml = capUiGap.html(hernan, NOW);
+
+/* MUTATION GUARD FIRST — if the fixture ever stops carrying a live alert this
+ * whole section passes vacuously against the wrong branch. */
+ok(
+  alerts.some((a) => isInForce(a, NOW)),
+  'MUTATION DEAD: no fixture alert is in force, so the gap branch is untestable'
+);
+
+ok(
+  /gap in what we know/i.test(gapHtml),
+  'an unattributed storm during a live alert must say it is a gap, not an answer'
+);
+ok(
+  !/no agency anywhere has a cyclone alert in force/i.test(gapHtml),
+  'the all-clear sentence must NOT appear while an alert is in force — this is the bug'
+);
+ok(
+  /in force\s+elsewhere in the world/i.test(gapHtml),
+  'the gap wording must say the alerts are elsewhere, never that one covers this storm'
+);
+
+/* ==> AND THE OTHER HALF, OR THE FIX IS JUST A LOUDER SENTENCE. <== With
+ * nothing in force anywhere, the complete true statement is the right one and
+ * the alarming one would be noise on every quiet day of the year. */
+const capUiQuiet = createCapStorm({
+  loadAlerts: async () => ({ state: 'ok', alerts: [], stale: false }),
+});
+await capUiQuiet.ensure(hernan, () => {});
+const quietHtml = capUiQuiet.html(hernan, NOW);
+
+ok(
+  /no agency anywhere has a cyclone alert in force/i.test(quietHtml),
+  'with nothing in force, the section must give the complete answer'
+);
+ok(
+  !/gap in what we know/i.test(quietHtml),
+  'a genuinely quiet hour must not be dressed up as a gap'
+);
+
+/* A CANCELLATION IS NOT AN ALERT IN FORCE, so it must not trip the gap
+ * wording. Guards against the branch counting `slot.alerts` raw — which it
+ * would be very easy to do, since that list deliberately KEEPS stand-downs. */
+const capUiStoodDown = createCapStorm({
+  loadAlerts: async () => ({
+    state: 'ok',
+    alerts: alerts.map((a) => ({ ...a, msgType: 'Cancel' })),
+    stale: false,
+  }),
+});
+await capUiStoodDown.ensure(hernan, () => {});
+ok(
+  !/gap in what we know/i.test(capUiStoodDown.html(hernan, NOW)),
+  'a feed of nothing but cancellations is not an alert in force'
+);
+
+/* =====================================================================
  * §50.8 — A WARNING, A STAND-DOWN AND A DRILL ARE THREE DIFFERENT THINGS
  *
  * ==> THE FIXTURE FOR THIS HALF IS SYNTHESISED AND SAYS SO. <== The captured

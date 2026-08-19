@@ -36,6 +36,14 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+/* ==> THE APP'S OWN RULE, IMPORTED RATHER THAN RESTATED. <== `countryMatch`
+ * below counts alerts "in force", and that phrase already has an exact
+ * definition in three parts (§50.8) which took a real bug to get right. A
+ * second copy here would drift the first time one of them changed, and the
+ * drift would be invisible: both would produce a plausible number. `lib/cap.js`
+ * imports nothing and touches no DOM, so it runs on the bare runner. */
+import { isInForce, normalizeAlert } from '../lib/cap.js';
+
 const OUT = process.argv[2];
 if (!OUT) {
   console.error('usage: node tools/archive-fetch.mjs <output-dir>');
@@ -967,6 +975,123 @@ try {
 }
 
 
+/* ---------------------------------------------------------------------------
+ * COUNTRY MATCH — the one thing the hourly window can measure and a session
+ * cannot. §50.12.
+ *
+ * ==> THE FEATURE JOINS STORMS TO ALERTS BY COUNTRY CODE, AND ON 2026-08-19
+ * THAT JOIN MATCHED NOTHING WHILE AN ALERT WAS IN FORCE. <== GDACS attributed
+ * a country to one of three live storms; PAGASA had a Tropical Cyclone Alert
+ * out for a Philippine-basin system GDACS did not list AT ALL. The alert was
+ * real, we had it in hand, we could colour it, and nothing on the globe
+ * carried `PH` to hang it on.
+ *
+ * ==> THAT IS TWO FAILURE MODES WEARING ONE SYMPTOM, AND THEY NEED DIFFERENT
+ * FIXES. <== A listed storm with no country yet is an attribution LAG. An
+ * alert for a system that is not in the storm list at all is a COVERAGE hole
+ * — GDACS tracks named cyclones, PAGASA warns on depressions and invests, and
+ * no amount of waiting closes that. Both look identical from inside the app:
+ * a section that says nothing.
+ *
+ * Nothing in a session can tell them apart — it needs the same storm looked
+ * at across many hours, which is exactly what `history/` is. So each run
+ * records both halves of the join as it stood, and a later session diffs the
+ * snapshots instead of arguing from one. A country that appears in
+ * `unmatchedAlertCountries` for a while and then attaches to a storm was a
+ * lag; one that never attaches was a hole.
+ *
+ * ==> BOTH HALVES, OR IT MEASURES NOTHING. <== A storm list alone cannot tell
+ * you whether an unattributed storm mattered that hour. The pair can: an hour
+ * with an alert country that no live storm carries is one hour of the app
+ * saying nothing while an agency was warning somebody.
+ *
+ * Position rides along because it is the only field that says whether the
+ * storm was NEAR anyone — the difference between "not scored yet" and "out in
+ * the middle of the Pacific" is a coordinate, and reconstructing it later
+ * would mean re-fetching a list that has since rolled over.
+ *
+ * Reads what was WRITTEN, like every other derived phase, so it summarises
+ * exactly the bytes a session will read back. A missing or broken file makes
+ * this null rather than throwing — an experiment must never cost a polygon.
+ * ------------------------------------------------------------------------ */
+function countryMatchSummary() {
+  const out = {
+    note:
+      'Both halves of the §50.3 country join, hourly. `storms` is every live ' +
+      'GDACS cyclone with the ISO-2 codes it carried; `alertCountries` is ' +
+      'every country with a cyclone alert IN FORCE (drills, cancellations ' +
+      'and stand-downs already excluded by lib/cap.js). ==> AN ENTRY IN ' +
+      '`unmatchedAlertCountries` IS AN HOUR THE APP SHOWED NOTHING WHILE AN ' +
+      'AGENCY WAS WARNING SOMEBODY. <== Diff these across history/ to measure ' +
+      "how far GDACS's attribution lags the warnings themselves.",
+    storms: null,
+    alertCountries: null,
+    unmatchedAlertCountries: null,
+  };
+
+  try {
+    const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
+    const feats = Array.isArray(list?.features) ? list.features : [];
+    out.storms = feats
+      .filter((f) => f?.properties?.eventtype === 'TC' && isCurrentRow(f.properties.iscurrent))
+      .map((f) => {
+        const p = f.properties;
+        const coords = Array.isArray(f.geometry?.coordinates) ? f.geometry.coordinates : null;
+        return {
+          name: p.eventname ?? null,
+          eventid: p.eventid ?? null,
+          episodeid: p.episodeid ?? null,
+          source: p.source ?? null,
+          alertlevel: p.alertlevel ?? null,
+          /* The join key itself, exactly as `lib/cap.js` reads it. An empty
+           * array and a missing field are the same thing to the feature and
+           * are recorded the same way here. */
+          iso2: (Array.isArray(p.affectedcountries) ? p.affectedcountries : [])
+            .map((c) => String(c?.iso2 ?? '').trim().toUpperCase())
+            .filter(Boolean),
+          lon: coords ? coords[0] : null,
+          lat: coords ? coords[1] : null,
+        };
+      });
+  } catch {
+    /* The list failed this run; the manifest already says so. */
+  }
+
+  try {
+    const feed = JSON.parse(readFileSync(join(OUT, 'capalerts-cyclone.json'), 'utf8'));
+    const rows = Array.isArray(feed?.features) ? feed.features : [];
+    const now = Date.now();
+    const seen = new Set();
+    for (const r of rows) {
+      const a = normalizeAlert(r?.attributes);
+      if (!a || !a.country) continue;
+      if (!isInForce(a, now)) continue;
+      seen.add(a.country);
+    }
+    out.alertCountries = [...seen].sort();
+  } catch {
+    /* Same: the feed's own manifest row carries the failure. */
+  }
+
+  /* Only computable when BOTH halves arrived. Null here means unknown, and
+   * unknown must not read as zero — that is the §5 rule applied to a
+   * diagnostic rather than to a screen. */
+  if (out.storms && out.alertCountries) {
+    const carried = new Set(out.storms.flatMap((s) => s.iso2));
+    out.unmatchedAlertCountries = out.alertCountries.filter((c) => !carried.has(c));
+  }
+
+  return out;
+}
+
+const countryMatch = countryMatchSummary();
+if (countryMatch.unmatchedAlertCountries?.length) {
+  console.log(
+    `\nCOUNTRY MATCH: alert in force in ${countryMatch.unmatchedAlertCountries.join(', ')} ` +
+      'with no live storm carrying that country — the panel shows nothing this hour.'
+  );
+}
+
 const okCount = results.filter((r) => r.status === 'ok').length;
 
 writeFileSync(
@@ -986,6 +1111,10 @@ writeFileSync(
         'across a 72-hour window buys nothing, because the question they ' +
         'answer is always about now. Do not go looking for them in a snapshot.',
       geometryStorms: geometryCount,
+      /* IN THE MANIFEST AND NOT ITS OWN FILE, ON PURPOSE. manifest.json is the
+       * one thing carried into `history/` every hour; a sibling file would
+       * live in `latest/` only and answer nothing about a lag. */
+      countryMatch,
       ok: okCount,
       unavailable: results.length - okCount,
       sources: results,
