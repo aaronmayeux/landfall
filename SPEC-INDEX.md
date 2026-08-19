@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 203 numbered headings.
+Covering 9 files, 207 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -224,13 +224,17 @@ real home is the other row carrying the same section number.
 | `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2124-2175 |
 | `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2176-2208 |
 | `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2209-2229 |
-| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2230-2252 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2230-2247 |
+| `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2248-2274 |
+| `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2275-2299 |
+| `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2300-2319 |
+| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2320-2361 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 134,017 | 40 |
+| `SPEC-DATA.md` | 139,728 | 44 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |

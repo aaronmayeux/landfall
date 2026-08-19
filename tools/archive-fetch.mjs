@@ -305,8 +305,9 @@ const SOURCES = [
       ) +
       '&outFields=' +
       encodeURIComponent(
-        'event,headline,severity,urgency,certainty,senderName,countryCode,' +
-          'areaDesc,effective,expires,sent,language'
+        'OBJECTID,event,headline,severity,urgency,certainty,senderName,' +
+          'countryCode,areaDesc,effective,expires,sent,language,' +
+          'status,msgType,responseType'
       ) +
       '&returnGeometry=false&orderByFields=sent+DESC' +
       '&resultRecordCount=100&f=json',
@@ -319,7 +320,16 @@ const SOURCES = [
       'agencies, in what words, in what languages. Attributes only here; the ' +
       'shapes are the next entry. A row count of zero is a real answer too — ' +
       'it would mean no cyclone alert is live anywhere this hour, not that ' +
-      'the service is empty.',
+      'the service is empty.\n' +
+      '==> `status`, `msgType` AND `responseType` ARE HERE BECAUSE THEIR ' +
+      'ABSENCE WAS A BUG (§50.8). <== Without them a cancellation and a ' +
+      "warning are identical on the wire: Costa Rica's archived " +
+      '"Fin de Influencia de Onda Tropical" — the tropical wave has PASSED — ' +
+      'carried severity Severe and rendered as "Significant threat". A ' +
+      'national exercise would have rendered as a live alert for the same ' +
+      'reason. Every captured row from here on carries them, so the filter ' +
+      'that drops drills and stand-downs can finally be asserted against ' +
+      'real bytes rather than against a schema page.',
   },
   {
     name: 'geometry/capalerts-cyclone-shapes.geojson',

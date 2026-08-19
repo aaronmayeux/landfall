@@ -325,7 +325,7 @@ export const CACHE = Object.freeze({
    *  controls is how long a NEW one waits to appear. */
   capFresh: 10 * MINUTE,
 
-  /** How long the BROWSER holds the alert list before asking again (§50.6).
+  /** How long the BROWSER holds the alert list before asking again (§50.8).
    *  Deliberately shorter than the relay's window: the relay answers from its
    *  own cache in a millisecond, so a client that asks more often than the
    *  relay refetches costs one local round trip and gets a fresher answer the
@@ -3275,6 +3275,27 @@ export const COAST_BAND = Object.freeze({
    *  in it). Jumping to a genuinely different, unwarned stretch of coast is
    *  the only failure to avoid, and the flat end caps handle that. */
   halfWidthKm: 50,
+
+  /** ==> HOW FAR OUTSIDE A CAP WARNING AREA STILL COUNTS AS INSIDE IT (§50.11).
+   *  <== The corridor above fattens NHC's breakpoint LINES because a line has
+   *  no width. This one does the opposite job on a shape that already has one:
+   *  a national agency's polygon is a statement about jurisdiction, drawn
+   *  against THEIR basemap, and where their outline runs slightly inland ours
+   *  puts the real shoreline outside it. A strict inside-test then paints
+   *  nothing along exactly the coast the warning is about.
+   *
+   *  ==> 5 km, AN ORDER OF MAGNITUDE UNDER THE NHC CORRIDOR, AND THAT
+   *  ASYMMETRY IS THE POINT. <== 50 km is a deliberate over-reach around a
+   *  line that carries no area of its own. Here the area IS published, so the
+   *  pad has one job — absorbing disagreement between two coastline datasets
+   *  and coarse tracing — and anything wider would start claiming coast the
+   *  agency did not warn. Errs outward, which for a warning is the safe
+   *  direction (§5), but only just.
+   *
+   *  UNJUDGED. Nothing has been on glass with a live foreign warning. If the
+   *  stripe undershoots at a river mouth or an offshore island, this is the
+   *  dial. */
+  areaPadKm: 5,
 
   /** Below this many coast vertices, don't attempt a select at all. A handful
    *  of vertices from one half-loaded tile produces a confident-looking band

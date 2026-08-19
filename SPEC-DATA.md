@@ -2242,7 +2242,116 @@ visible.
 6. Costa Rica's duplicate renders **once**, showing the row the agency issued
    last — not the more severe one.
 7. An alert past its stated expiry does not render at all.
-8. Nothing in this feature draws on the globe.
+8. A drill, a test and a draft never render. A cancellation renders as text and
+   never paints.
+
+### 50.8 A warning, a stand-down and a drill are three different things
+
+Three CAP fields decide whether a row is a warning at all. All three are short
+closed-vocabulary strings, and the relay asks for all three.
+
+| Field | Values | What it settles |
+|---|---|---|
+| `status` | Actual, Exercise, System, Test, Draft | is this a real event or a drill |
+| `msgType` | Alert, Update, Cancel, Ack, Error | is it in force or withdrawn |
+| `responseType` | …, AllClear, None | is the agency standing down |
+
+**A MISSING `status` COUNTS AS ACTUAL.** CAP's own default. Treating an absent
+field as a drill would silently discard live warnings from every agency that
+omits it.
+
+**A DRILL IS DROPPED AT THE READ; A CANCELLATION IS KEPT AND TAGGED.** They are
+not the same kind of thing. An exercise has no public reader at all, so
+`readAlerts()` discards it and no surface downstream can render one. A
+cancellation is information somebody watching a departing storm wants — it is
+kept, shown as text, and withheld from the paint by `isInForce()`.
+
+**WHY THIS EXISTS.** Costa Rica's institute published `Fin de Influencia de
+Onda Tropical` — the tropical wave has passed — tagged `severity: Severe`. With
+only the coded severity fields in hand, §50.4's English line renders that as
+"Significant threat", which inverts what the agency said. A national exercise
+was indistinguishable from a live alert for the same reason.
+
+### 50.9 Severity onto the NHC colour rungs
+
+Foreign alerts paint in the §6 watch/warning colours, chosen by the CAP
+`severity` code alone.
+
+| CAP severity | Rung | Colour of |
+|---|---|---|
+| Extreme | `HWR` | Hurricane Warning |
+| Severe | `HWA` | Hurricane Watch |
+| Moderate | `TWR` | Tropical Storm Warning |
+| Minor | `TWA` | Tropical Storm Watch |
+| Unknown, absent | none | not painted |
+
+**BY THE CODE, NEVER BY THE AGENCY'S WORDS.** `event` is free text in the
+issuing agency's language with no closed vocabulary behind it, so reading
+"warning" out of it is a translation problem in a hundred languages that fails
+silently. `severity` means the same thing everywhere.
+
+**WHAT IT COSTS, STATED.** CAP's one axis is danger; NHC's four codes are two
+axes, hazard crossed with confidence. The second axis cannot be recovered from
+the first, so the severities lie on the rungs in `wwSortKey` order and nothing
+claims a foreign Extreme alert **is** a Hurricane Warning. It sits on the same
+rung. An unstated severity is not a rung and is not painted — picking one would
+mean inventing the only fact the paint depends on.
+
+### 50.10 The shape route
+
+`/api/cap/shapes?ids=…` serves warning areas for alerts already on screen.
+Separate from §50.5's text route because geometry is large, wanted only for the
+few alerts a reader surfaced, and is the half that can go wrong on size.
+
+**MEASURED:** the attribute query with shapes was 281,336 bytes for three
+features — Costa Rica drew its own coastline at 6,585 points. Unsimplified CAP
+geometry is not shippable to a phone.
+
+So the service generalises it: `maxAllowableOffset` at 0.01° (~1.1 km) and
+`geometryPrecision=4`. **That costs nothing here because the polygon is never
+drawn.** It is only ever asked which coastline vertices fall inside it, and the
+painted line is the basemap coastline's own geometry at its own detail. The
+tolerance is a fifth of §50.11's pad, so simplification can never eat the reach
+the pad exists to provide.
+
+Rings arrive as Esri's flat list rather than GeoJSON, deliberately: §50.11
+treats every ring as a boundary and needs neither nesting nor winding.
+
+### 50.11 The warning area as a coast selector
+
+**Foreign warnings paint the coast identically to NHC's, because they run
+through the same selector.** `selectRuns` never asked for a corridor — it asks
+for `{inBand, toXY, bbox}`. `corridor()` builds that by fattening NHC's
+breakpoint lines, which have no width. A CAP alert arrives **as** a shape, so
+`areaBand()` skips the fattening and answers the same question about the
+polygon directly. Same runs, same tile-edge filter, same coastline geometry.
+The two stripes are identical by construction, not by two pieces of drawing
+code being kept in step.
+
+**THE AREA IS DILATED BY `COAST_BAND.areaPadKm` (5 km) RATHER THAN USED AS
+DRAWN.** A CAP area states jurisdiction, drawn against the agency's basemap,
+not ours. Where their outline runs slightly inland, the true shoreline falls
+outside it and a strict inside-test paints nothing along exactly the coast the
+warning is about. Two coastline datasets also disagree by a few hundred metres
+where both are right. The test is "inside **or** within the pad of the
+boundary" — the same distance-to-segment arithmetic the corridor already does,
+without the flat caps, because a closed ring has no ends.
+
+**THE ERROR IS OUTWARD.** For a warning, over-inclusion is the safe way to be
+wrong; the opposite failure is a warned coast left unpainted, which §5 calls
+the worst outcome in the app. The pad is an order of magnitude under the NHC
+corridor's 50 km, and that asymmetry is the point: 50 km over-reaches around a
+line carrying no area of its own, while here the area is published and the pad
+has one job.
+
+Inside-ness is an even-odd crossing count over every ring, so holes come free
+and winding direction never matters.
+
+**UNJUDGED.** Nothing has been on glass with a live foreign warning. Open
+questions: whether a whole-country area paints far more coast than reads well
+(the Philippines is 7,600 islands; Costa Rica gets both coasts), and whether
+that volume meets `COAST_BAND.maxBandVertices`. `areaPadKm` is the dial if the
+stripe undershoots at a river mouth or an offshore island.
 9. A Spanish alert arrives with its wording COLLAPSED and the English coded
    line visible. Tapping the chevron opens it; the chevron rotates and nothing
    else on the panel moves.

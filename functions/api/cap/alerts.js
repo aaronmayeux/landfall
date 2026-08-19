@@ -77,6 +77,23 @@ const OUT_FIELDS = [
   'event', 'headline', 'severity', 'urgency', 'certainty',
   'senderName', 'countryCode', 'areaDesc',
   'effective', 'expires', 'sent', 'language',
+  /* ==> THE THREE THAT SAY WHETHER THIS IS A WARNING AT ALL (§50.8). <==
+   * Their absence was a real bug, not a saving: Costa Rica's archived
+   * stand-down notice rendered as "Significant threat" because nothing in the
+   * payload distinguished it from a warning, and a national exercise would
+   * have rendered identically to a live alert.
+   *
+   * They cost almost nothing. All three are short closed-vocabulary strings —
+   * "Actual", "Alert", "AllClear" — against a payload that measured 8,015
+   * bytes for five rows. `description` and `instruction` carry the agency's
+   * full prose and are NOT here: they are the unbounded fields, they are the
+   * §50.4 wording question rather than this one, and adding them unmeasured
+   * would put this route's size back in play. */
+  'status', 'msgType', 'responseType',
+  /* The shape route (`shapes.js`) keys on this to fetch geometry for exactly
+   * the alerts already on screen. Esri's row id rather than the agency's, so
+   * nothing but that join may depend on it. */
+  'OBJECTID',
 ].join(',');
 
 const UPSTREAM =

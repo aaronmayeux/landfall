@@ -50,7 +50,10 @@ process.chdir(ROOT);
 const {
   readAlerts, normalizeAlert, plainEnglish, isExpired,
   dedupeAlerts, alertsForStorm, stormCountries,
+  isActual, isRetracted, isAllClear, isInForce, severityRung,
 } = await import('../lib/cap.js');
+const { areaBand, areaSelect } = await import('../map/coast-band.js');
+const { projectShapes, parseIds } = await import('../functions/api/cap/shapes.js');
 
 let pass = 0;
 const failures = [];
@@ -387,6 +390,224 @@ ok(
   /threat/.test(visible),
   'the coded English line must still lead the block'
 );
+
+/* =====================================================================
+ * §50.8 — A WARNING, A STAND-DOWN AND A DRILL ARE THREE DIFFERENT THINGS
+ *
+ * ==> THE FIXTURE FOR THIS HALF IS SYNTHESISED AND SAYS SO. <== The captured
+ * bytes predate the relay asking for these fields, so no real row in
+ * `samples/` carries one. What IS real and was read off the service's own
+ * schema (2026-08-19) is the vocabulary: `status` is Actual|Exercise|System|
+ * Test|Draft, `msgType` is Alert|Update|Cancel|Ack|Error, `responseType`
+ * includes AllClear. The rows below are the archived Costa Rica alert with
+ * those fields set to values the schema defines.
+ *
+ * When the archive next runs, real rows carrying them land in
+ * `capalerts-cyclone.json` and this fixture should be replaced with them.
+ * Until then the vocabulary is verified and the ROWS are not, which is worth
+ * less than real bytes and more than nothing (§48.11 makes the same trade).
+ * ===================================================================== */
+section('§50.8  in force vs stood down vs drill');
+
+const baseRow = FEED.features.find((f) => f.attributes.countryCode === 'cr').attributes;
+const withFields = (extra) => normalizeAlert({ ...baseRow, ...extra });
+const NOW_50_6 = 0; /* nothing here has an expiry in the past at epoch 0 */
+
+/* ==> A MISSING `status` IS ACTUAL, AND THAT IS LOAD-BEARING. <== CAP's own
+ * default is Actual. If this flipped, every agency that omits the field would
+ * have its live warnings silently discarded — the §5 failure, arrived at by
+ * being careful. Asserted against a REAL row, which is exactly the case:
+ * the captured fixture has no `status` at all. */
+ok(isActual(normalizeAlert(baseRow)), 'a row with no status must count as Actual');
+ok(
+  readAlerts(FEED, Date.parse('2026-08-19T00:00:00Z')) !== null,
+  'the real captured feed must still read after the filter was added'
+);
+
+ok(isActual(withFields({ status: 'Actual' })), 'Actual is actual');
+ok(!isActual(withFields({ status: 'Exercise' })), 'an exercise is not a real alert');
+ok(!isActual(withFields({ status: 'Test' })), 'a test is not a real alert');
+ok(!isActual(withFields({ status: 'Draft' })), 'a draft is not a real alert');
+ok(isActual(withFields({ status: 'ACTUAL' })), 'the status match must be case-insensitive');
+
+ok(!isRetracted(withFields({ msgType: 'Alert' })), 'an Alert is not retracted');
+ok(!isRetracted(withFields({ msgType: 'Update' })), 'an Update is not retracted');
+ok(isRetracted(withFields({ msgType: 'Cancel' })), 'a Cancel retracts the alert');
+ok(isRetracted(withFields({ msgType: 'Error' })), 'an Error disowns the alert');
+
+ok(isAllClear(withFields({ responseType: 'AllClear' })), 'AllClear is an all-clear');
+ok(
+  isAllClear(withFields({ responseType: 'Monitor,AllClear' })),
+  'responseType is a LIST — an all-clear among other values still counts'
+);
+ok(!isAllClear(withFields({ responseType: 'Prepare' })), 'Prepare is not an all-clear');
+
+/* ==> THE COSTA RICA CASE, WHICH IS THE WHOLE REASON THIS EXISTS. <== The
+ * agency said the tropical wave had PASSED and tagged it Severe. Painting a
+ * coast off that row would light up both Costa Rican coastlines for a storm
+ * that had already gone. */
+const standDown = withFields({ status: 'Actual', msgType: 'Alert', responseType: 'AllClear' });
+ok(
+  standDown.event.includes('Fin de Influencia'),
+  'the stand-down fixture must be the real archived row, not an invented one'
+);
+ok(standDown.severity === 'Severe', 'and it must keep the Severe tag that made it dangerous');
+ok(!isInForce(standDown, NOW_50_6), 'a stand-down tagged Severe must NOT be in force');
+ok(
+  !isInForce(withFields({ status: 'Exercise', msgType: 'Alert' }), NOW_50_6),
+  'a drill must not be in force'
+);
+ok(
+  !isInForce(withFields({ msgType: 'Cancel' }), NOW_50_6),
+  'a cancellation must not be in force'
+);
+ok(
+  isInForce(withFields({ status: 'Actual', msgType: 'Alert', responseType: 'Prepare' }), NOW_50_6),
+  'a live Actual/Alert row MUST be in force — the filter must not reject everything'
+);
+
+/* A CANCELLATION IS STILL READABLE. §50.8 keeps it in the list on purpose:
+ * "the wave has passed" is what a reader watching a departing storm wants.
+ * Only the PAINT is withheld. */
+const readBack = readAlerts(
+  { features: [{ attributes: { ...baseRow, msgType: 'Cancel' } }] },
+  Date.parse('2026-08-19T00:00:00Z')
+);
+ok(readBack?.length === 1, 'a cancellation must survive readAlerts as readable text');
+
+/* A DRILL IS NOT. Dropped at the read so no surface downstream can render one. */
+const drillRead = readAlerts(
+  { features: [{ attributes: { ...baseRow, status: 'Exercise' } }] },
+  Date.parse('2026-08-19T00:00:00Z')
+);
+ok(drillRead?.length === 0, 'a drill must be dropped by readAlerts entirely');
+
+/* =====================================================================
+ * §50.9 — SEVERITY ONTO THE NHC COLOUR RUNGS
+ * ===================================================================== */
+section('§50.9  severity -> colour rung');
+
+ok(severityRung({ severity: 'Extreme' }) === 'HWR', 'Extreme takes the top rung');
+ok(severityRung({ severity: 'Severe' }) === 'HWA', 'Severe takes the second rung');
+ok(severityRung({ severity: 'Moderate' }) === 'TWR', 'Moderate takes the third rung');
+ok(severityRung({ severity: 'Minor' }) === 'TWA', 'Minor takes the bottom rung');
+ok(severityRung({ severity: 'minor' }) === 'TWA', 'the rung match must be case-insensitive');
+
+/* ==> AN UNSTATED SEVERITY IS NOT A RUNG. <== Picking one would make this the
+ * only fact the paint depends on, invented. */
+ok(severityRung({ severity: 'Unknown' }) === null, 'Unknown maps to no rung');
+ok(severityRung({ severity: null }) === null, 'a missing severity maps to no rung');
+ok(severityRung({}) === null, 'a row with no severity at all maps to no rung');
+
+/* THE ORDER MUST MATCH THE PAINT ORDER. If these ever disagree, a foreign
+ * Extreme alert would draw UNDER a Minor one on the same coast, which is the
+ * §6 stacking bug in a new place. */
+const { wwSortKey } = await import('../lib/watchwarning.js');
+const rungOrder = ['Extreme', 'Severe', 'Moderate', 'Minor'].map(
+  (s) => wwSortKey(severityRung({ severity: s }))
+);
+ok(
+  rungOrder.every((v, i) => i === 0 || v < rungOrder[i - 1]),
+  `severity must map onto strictly descending paint order; got ${rungOrder.join(',')}`
+);
+
+/* =====================================================================
+ * §50.11 — THE WARNING AREA AS A COAST SELECTOR
+ *
+ * REAL BYTES: the archived PAGASA polygon, captured 2026-08-19. Seven
+ * vertices covering the Philippine Area of Responsibility.
+ * ===================================================================== */
+section('§50.11  the area band');
+
+const PAR = JSON.parse(
+  fs.readFileSync('samples/cap/capalerts-shapes-2026-08-19.geojson', 'utf8')
+);
+const parRings = PAR.features[0].geometry.coordinates;
+
+ok(parRings[0].length === 7, 'the PAR fixture must be the real 7-vertex polygon');
+
+const band5 = areaBand(parRings, 5);
+ok(band5 !== null, 'a real polygon must produce a band');
+ok(band5.inBand([121.0, 14.6]), 'Manila is inside the Philippine Area of Responsibility');
+ok(band5.inBand([126, 15]), 'open water inside the area counts as inside');
+ok(!band5.inBand([139.7, 35.7]), 'Tokyo is outside the area');
+ok(!band5.inBand([-155.09, 19.72]), 'Hawaii is outside the area');
+
+/* ==> THE DILATION IS THE THING AARON ASKED FOR AND IT IS ASSERTED IN KM.
+ * <== A degree of longitude is 108.89 km at 12N, so a test written in degrees
+ * would silently assert the wrong distance — the first version of this probe
+ * did exactly that and "failed" on correct code. */
+const kmLonAt12 = 111.32 * Math.cos((12 * Math.PI) / 180);
+const westOfEdge = (km) => [113 - km / kmLonAt12, 12];
+
+ok(band5.inBand(westOfEdge(4.9)), '4.9 km outside the boundary is within a 5 km pad');
+ok(!band5.inBand(westOfEdge(5.1)), '5.1 km outside the boundary is beyond a 5 km pad');
+
+const band25 = areaBand(parRings, 25);
+ok(band25.inBand(westOfEdge(24)), 'a 25 km pad reaches 24 km out');
+ok(!band25.inBand(westOfEdge(26)), 'a 25 km pad stops before 26 km');
+
+/* A ZERO PAD IS LEGITIMATE AND MUST NOT HANG. The grid cell has a floor for
+ * exactly this; without it the cell size is zero and the column count is
+ * infinite. */
+const band0 = areaBand(parRings, 0);
+ok(band0 !== null, 'a zero pad must still build a band');
+ok(band0.inBand([121.0, 14.6]), 'a zero pad still contains points genuinely inside');
+ok(!band0.inBand(westOfEdge(1)), 'a zero pad reaches nowhere outside the boundary');
+
+ok(areaBand([], 5) === null, 'no rings is not a band');
+ok(areaBand([[[1, 1], [2, 2]]], 5) === null, 'a two-point ring is not an area');
+
+/* ==> THE THREE OUTCOMES ARE DISTINGUISHABLE, WHICH IS THE §5 POINT. <==
+ * "no coastline loaded" and "no coast in this warning area" both paint
+ * nothing and mean opposite things. */
+ok(areaSelect(parRings, []).reason === 'no-coastline', 'no coastline must say so');
+ok(areaSelect([], [[[121, 14], [121, 15]]]).reason === 'degenerate-area',
+  'an unusable area must say so');
+
+/* A synthetic coastline crossing the western boundary: half in, half out.
+ * Not real coast — the real coastline only exists inside a browser, off
+ * loaded basemap tiles — so this asserts the WIRING, and glass asserts the
+ * look.
+ *
+ * ==> IT WIGGLES, AND THE FIRST VERSION OF THIS TEST DID NOT. <== A dead
+ * straight line of constant latitude is EXACTLY what `isTileEdge` exists to
+ * discard: tile boundaries are meridians and parallels, and a long
+ * axis-aligned run is one. Every segment was dropped and the test failed
+ * against correct code. Real coastline is never axis-aligned for 200 km, so
+ * the fixture was wrong rather than the selector — recorded here because the
+ * same trap will catch the next person who writes a straight test coast. */
+const synthCoast = [[
+  [110, 12.0], [111, 12.3], [112, 11.9], [114, 12.4], [116, 11.8], [118, 12.2],
+]];
+const sel = areaSelect(parRings, synthCoast, 5);
+ok(sel.reason === null, 'a coastline crossing the area must produce runs');
+ok(sel.runs.length >= 1, 'and at least one run');
+ok(
+  sel.runs.flat().every(([lon]) => lon >= 113 - 5 / kmLonAt12),
+  'no selected vertex may sit west of the padded boundary'
+);
+
+/* =====================================================================
+ * §50.10 — THE SHAPE ROUTE'S PROJECTION
+ * ===================================================================== */
+section('§50.10  shape route');
+
+ok(parseIds('12,7,12').join(',') === '7,12', 'ids are deduped and sorted');
+ok(parseIds('').length === 0, 'no ids is no ids');
+ok(parseIds('3; DROP TABLE').length === 0, 'a non-numeric id is refused, not passed upstream');
+ok(parseIds('4,abc,9').join(',') === '4,9', 'a bad id does not poison the good ones');
+
+const projected = projectShapes({
+  features: [
+    { attributes: { OBJECTID: 5 }, geometry: { rings: [[[1, 1], [2, 2], [1, 2]]] } },
+    { attributes: { OBJECTID: 6 }, geometry: null },
+    { attributes: {}, geometry: { rings: [[[1, 1], [2, 2], [1, 2]]] } },
+  ],
+});
+ok(projected.features.length === 1, 'a row with no geometry and a row with no id are both dropped');
+ok(projected.features[0].id === 5, 'the surviving row keeps its join key');
+ok(Array.isArray(projected.features[0].rings), 'and its rings arrive as a flat list');
 
 /* ===================================================================== */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
