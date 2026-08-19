@@ -119,7 +119,12 @@ function decorated(map, key, fc, stamp) {
  *  Ida's Mississippi delta up close. Scales live in `SIZE.stripeCoreScale` /
  *  `stripeGlowScale`; the curves come from map/style.js so there is exactly
  *  one definition of how wide a coastline is. */
-function lineLayers(id, source, minzoom) {
+/** ==> EXPORTED, AND `map/layers/cap-coast.js` IS THE ONLY OTHER CALLER.
+ *  <== §50.11 requires a foreign agency's warning to look IDENTICAL to NHC's,
+ *  and the only way to guarantee that is for both to build their layers here.
+ *  Copying this function would give two definitions of how wide a warning
+ *  stripe is, which drift the first time one is tuned on glass. */
+export function lineLayers(id, source, minzoom) {
   const zoomFloor = minzoom != null ? { minzoom } : {};
   const color = ['get', '_color'];
   const sortKey = ['get', '_sev'];

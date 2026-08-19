@@ -307,12 +307,21 @@ export const LAYER_PAIRS = Object.freeze([
      * either — and NHC only carries them when the feed's
      * `windWatchesWarnings` is populated. Aaron caught it.
      *
-     * THE WHOLE ROW IS NHC-ONLY. Not one segment of it. Both products are US
-     * National Hurricane Center products, and surge is narrower still: the US
-     * Gulf and Atlantic coasts, Puerto Rico and the USVI. On a Pacific typhoon
-     * neither segment can draw anything, and a reader must be told that rather
-     * than left to read an empty coastline as an all-clear (§5). */
-    note: 'US storms only — both are National Hurricane Center products.',
+     * THE ROW WAS NHC-ONLY AND THE WATCH/WARNING HALF NO LONGER IS (§50.11).
+     * Foreign agencies' cyclone warnings now paint the same coastal stripe,
+     * through the same selector, from the CAP feed — so a Philippine or a
+     * Caribbean storm can draw one where it never could before.
+     *
+     * ==> IT IS STILL NOT "EVERY STORM", AND THE NOTE MUST NOT SAY SO. <==
+     * The first version of the old note claimed that and Aaron caught it. CAP
+     * matching runs through GDACS's affected countries (§50.3), so a storm
+     * out at sea has no country to look up and an agency that publishes no
+     * CAP feed contributes nothing. An empty coast still has to be readable
+     * as "nobody has warned here", never as an all-clear (§5).
+     *
+     * SURGE REMAINS NARROWER AND UNCHANGED: the US Gulf and Atlantic coasts,
+     * Puerto Rico and the USVI. */
+    note: 'Watch/warning covers US storms plus any country publishing an alert. Surge is US only.',
   }),
   Object.freeze({
     id: 'imagery',

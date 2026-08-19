@@ -18,6 +18,7 @@ import './model-tracks.js';
 import './track-past.js';
 import './track-forecast.js';
 import './watch-warning.js';
+import './cap-coast.js';
 import './surge.js';
 import './points-forecast.js';
 

@@ -609,6 +609,67 @@ ok(projected.features.length === 1, 'a row with no geometry and a row with no id
 ok(projected.features[0].id === 5, 'the surviving row keeps its join key');
 ok(Array.isArray(projected.features[0].rings), 'and its rings arrive as a flat list');
 
+/* =====================================================================
+ * §50.11 — WHAT REACHES THE COAST
+ *
+ * The layer itself needs a map, so what is asserted here is the DECISION it
+ * makes: which alerts out of a storm's list are allowed to paint. That
+ * decision is the safety-bearing half — a drill or a stand-down reaching the
+ * coast is the failure this whole pass exists to prevent — and it is pure.
+ * ===================================================================== */
+section('§50.11  what reaches the coast');
+
+/** The layer's gate, as one predicate. Mirrors `map/layers/cap-coast.js`;
+ *  if that file's filter changes, this must change with it. */
+const paints = (alert, now) =>
+  isInForce(alert, now) && alert.objectId != null && severityRung(alert) !== null;
+
+const NOW_PAINT = Date.parse('2026-08-19T00:00:00Z');
+const alertRow = (extra) => normalizeAlert({
+  ...baseRow,
+  OBJECTID: 900,
+  status: 'Actual',
+  msgType: 'Alert',
+  responseType: 'Prepare',
+  severity: 'Severe',
+  expires: Date.parse('2026-08-20T00:00:00Z'),
+  ...extra,
+});
+
+ok(paints(alertRow({}), NOW_PAINT), 'a live Severe alert with an id must paint');
+ok(!paints(alertRow({ status: 'Exercise' }), NOW_PAINT), 'a drill must never reach the coast');
+ok(!paints(alertRow({ status: 'Test' }), NOW_PAINT), 'a test must never reach the coast');
+ok(!paints(alertRow({ msgType: 'Cancel' }), NOW_PAINT), 'a cancellation must never paint');
+ok(
+  !paints(alertRow({ responseType: 'AllClear' }), NOW_PAINT),
+  'an all-clear must never paint — this is the Costa Rica case'
+);
+ok(
+  !paints(alertRow({ expires: Date.parse('2026-08-18T00:00:00Z') }), NOW_PAINT),
+  'an expired alert must never paint'
+);
+
+/* ==> AN UNSTATED SEVERITY PAINTS NOTHING, AND THAT IS NOT THE SAME CALL THE
+ * NHC LAYER MAKES. <== There, an unreadable code still draws in the generic
+ * hue, because the FACT of a warning is certain and only its class is unknown.
+ * Here the area is a whole country and an unstated severity could be anything,
+ * so neutral paint would still assert "this coast is under warning" at a
+ * confidence the row does not carry. */
+ok(!paints(alertRow({ severity: 'Unknown' }), NOW_PAINT), 'Unknown severity paints nothing');
+ok(!paints(alertRow({ severity: null }), NOW_PAINT), 'a missing severity paints nothing');
+
+/* NO ROW ID MEANS NO SHAPE CAN BE FETCHED. Not an error — just nothing to
+ * draw, and the panel still shows the alert as text. */
+ok(!paints(alertRow({ OBJECTID: null }), NOW_PAINT), 'an alert with no row id cannot paint');
+
+/* THE ONE THAT MUST NOT OVER-FILTER. If every branch above were true at once
+ * the layer would be permanently blank, which looks identical to working. */
+ok(
+  [alertRow({ severity: 'Extreme' }), alertRow({ severity: 'Minor' })]
+    .every((a) => paints(a, NOW_PAINT)),
+  'the gate must let ordinary live alerts through at both ends of the scale'
+);
+
 /* ===================================================================== */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
 for (const f of failures) console.log(`    FAIL  ${f}`);
