@@ -376,27 +376,31 @@ basins at all (§47.3). Full brief in the project note `global-coverage-pass1`.
   ocean. `areaSelect()` bands it onto the coastline instead of drawing it, so
   the blob never reaches the globe as a blob. The real limit turned out to be
   the country join, not the geometry: §50.12.
-- **Rainfall → Open-Meteo works, and the blockers are legal not technical.**
-  Manila, 200 in 403 ms, 1,992 bytes, **72 hourly values with zero nulls and
-  zero time gaps**, mm and ISO-8601 on a UTC base. Two things the bytes could
-  NOT settle: the response carries no `access-control-allow-origin`, but the
-  runner sends no `Origin` so CORS is **unproven rather than disproven** — if
-  it is closed it is a relay route, not a dead end. And there are no
-  rate-limit headers at all, so the daily ceiling is docs-only. CC BY 4.0
-  attribution and a non-commercial free tier are the real gates. Note it is mm
-  and hourly buckets against §48's inches and NWS's QPF grid — a conversion and
-  a different provenance line, not an adapter.
-- **Surge → GDACS publishes an INDEX, and the values are one fetch further
-  down.** `cyclonesurge` is on all three live storms including the JTWC one, so
-  it genuinely covers the non-American half. Structure is better than hoped:
-  three models (ECMWF, GFS, HWRF) × every bulletin, each row flagged `last` and
-  `overall` so picking the current one is trivial. But every row is a URL —
-  `cyclonesurge/getdetails?id=NNNNN` — and nothing fetched one. `impacts[]
-  .resource` carries `buffer39`, `buffer74`, `timeline` and `locations` export
-  links nobody has followed either. **This is now a one-entry change to
-  `tools/archive-fetch.mjs`, not a research question.** `locations` is the
-  shape most likely to fit the home dashboard, since GDACS's answer is
-  per-place where NHC's is per-coast.
+- **Rainfall → Open-Meteo works; the blockers are legal, and the CORS question
+  is now being asked properly.** Manila, 200 in 403 ms, 1,992 bytes, **72
+  hourly values with zero nulls and zero time gaps**, mm and ISO-8601 on a UTC
+  base. The first probe carried no `access-control-allow-origin` — but the
+  runner sent no `Origin`, so the server was never asked, and reading that
+  silence as "CORS is closed" would have been the mistake.
+  `openmeteo-rain-cors-probe.json` now sends one from our production origin.
+  **Read the manifest headers, not the body.** Also read any `x-ratelimit-*`
+  there: the free tier's daily ceiling is a docs-page number with nothing in
+  the response to measure against, which is the harder blocker. CC BY 4.0
+  attribution is the other. Note it is mm and hourly buckets against §48's
+  inches and NWS's QPF grid — a conversion and a different provenance line.
+- **Surge → the payloads are being fetched now, after one run of the new
+  entries.** `cyclonesurge` is on all three live storms including the JTWC one,
+  three models × every bulletin, each row flagged `last` and `overall`. It is
+  an INDEX; the values live behind `getdetails?id=`. Six surge payloads and six
+  impact exports are now derived per run, **round-robin across storms so one
+  storm cannot eat the budget and leave the other basin unread** — verified
+  against the archived records: all three storms get an `overall` and a
+  `latest` before any second model, and both `getlocations` and `gettimeline`
+  land for each. `getlocations` is the shape decision: if it is populated
+  places with a per-place number, this is a home-dashboard feature and not a
+  globe layer, and it works where nothing American reaches. Caps are
+  deliberately small because no payload here has a known size yet — raise them
+  once one has been seen.
 
 **PASS 2 — global radar, through the fewest sources that hold quality.**
 `SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest

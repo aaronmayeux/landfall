@@ -380,6 +380,29 @@ const SOURCES = [
       'required (CC BY 4.0) and the free tier is non-commercial with a daily ' +
       'call ceiling — both are constraints on shipping it, not on reading it.',
   },
+  {
+    name: 'openmeteo-rain-cors-probe.json',
+    url:
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=14.5995&longitude=120.9842' +
+      '&hourly=precipitation&forecast_days=1&timezone=UTC',
+    headers: { origin: 'https://landfall.getgravitate.app' },
+    note:
+      '==> THE SAME ENDPOINT, ASKED THE WAY A BROWSER ASKS. <== The entry ' +
+      'above proved the DATA — 72 hourly values, no nulls, no gaps. It could ' +
+      'not prove the ACCESS, and a session read its silence wrongly: that ' +
+      'response carried no `access-control-allow-origin`, but the runner sent ' +
+      'no `Origin` either, so the server was never asked. This request sends ' +
+      'one, from our real production origin. ==> THE ANSWER IS IN THE ' +
+      "MANIFEST'S HEADERS, NOT IN THE BODY. <== One day of data is requested " +
+      'only because a request needs something to ask for. ' +
+      '`access-control-allow-origin: *`, or our origin echoed back, means the ' +
+      'browser can call Open-Meteo directly and §48 needs no relay for it. ' +
+      'Absent means a relay route — a cost, not a dead end. Also read any ' +
+      '`x-ratelimit-*` header here: the free tier\u2019s daily ceiling is ' +
+      'currently a number on a docs page with nothing in the response to ' +
+      'measure against, which is the harder of the two blockers to plan for.',
+  },
 ];
 
 /* ---------------------------------------------------------------------------
@@ -806,7 +829,13 @@ async function grab(src) {
   const timer = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(src.url, {
-      headers: { 'user-agent': UA, accept: '*/*' },
+      /* ==> A SOURCE MAY ADD HEADERS, AND EXACTLY ONE NEEDS TO. <== A CORS
+       * answer is a RESPONSE to a request that carried an `Origin`; a server
+       * that omits `access-control-allow-origin` when nobody asked has said
+       * nothing, and reading that silence as "CORS is closed" is the mistake
+       * this parameter exists to prevent. `src.headers` never overrides the
+       * user-agent, so a source cannot accidentally anonymise the archive. */
+      headers: { 'user-agent': UA, accept: '*/*', ...(src.headers || {}) },
       signal: ctl.signal,
       redirect: 'follow',
     });
@@ -911,12 +940,18 @@ try {
 }
 
 /* GDACS event detail, §4.8. Its own try block for the same reason as every
- * other derived phase: an experiment must never be able to cost us a polygon. */
+ * other derived phase: an experiment must never be able to cost us a polygon.
+ * The NAMES that landed are kept, because the surge phase below reads these
+ * files back off disk — a failed one has no file and must not be opened. */
+const eventDataWritten = [];
 try {
   const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
   const derived = eventDataSources(list);
   console.log(`\nderived ${derived.length} GDACS event-detail URL(s) from the GDACS list`);
-  for (const src of derived) await run(src);
+  for (const src of derived) {
+    const r = await run(src);
+    if (r.status === 'ok') eventDataWritten.push(r.name);
+  }
 } catch (err) {
   console.log(
     `\nno GDACS event detail this run — ${String(err && err.message ? err.message : err)}`
@@ -1089,6 +1124,171 @@ if (countryMatch.unmatchedAlertCountries?.length) {
   console.log(
     `\nCOUNTRY MATCH: alert in force in ${countryMatch.unmatchedAlertCountries.join(', ')} ` +
       'with no live storm carrying that country — the panel shows nothing this hour.'
+  );
+}
+
+/* ---------------------------------------------------------------------------
+ * GDACS SURGE AND IMPACT PAYLOADS — the values behind the index. §4.8, §50.12.
+ *
+ * ==> THE EVENT RECORD TURNED OUT TO BE A TABLE OF CONTENTS, NOT AN ANSWER.
+ * <== Read 2026-08-19: `cyclonesurge` is present on all three live storms
+ * INCLUDING the JTWC one, which is the whole reason to care — it is the only
+ * surge product on earth with a non-American half. Structure is better than
+ * hoped: three models (ECMWF, GFS, HWRF) crossed with every bulletin, each row
+ * flagged `last` and `overall` so picking the current one needs no date
+ * arithmetic. But every row is a URL and nothing has ever opened one, so the
+ * heights, the places and the units are all still unmeasured.
+ *
+ * `impacts[].resource` is the same story and was not even noticed until now:
+ * `locations`, `timeline`, `buffer39` and `buffer74` are four more export
+ * endpoints nobody has followed.
+ *
+ * ==> WHY `locations` IS FETCHED FOR EVERY STORM AND THE REST ONLY ONCE. <==
+ * GDACS answers per POPULATED PLACE where NHC answers per stretch of COAST.
+ * If that holds, it is a different product from `surge/`, and the home
+ * dashboard — which is already about one house — is its better home than the
+ * globe. That makes `locations` the shape decision, and the others reference.
+ * A sample of one answers "what is in it"; only a sample across storms answers
+ * "does an Atlantic storm and a Pacific one look the same", which is the
+ * question that decides whether one parser can serve both.
+ *
+ * ==> BUDGETS, BECAUSE NOTHING HERE HAS A KNOWN SIZE. <== These are the first
+ * payloads in this file requested without ever having seen one, so an
+ * unlucky storm could in principle return megabytes. Both caps are small and
+ * round-robin across storms, so one storm cannot eat the whole budget and
+ * leave the other basin unmeasured. Raise them once the sizes are known.
+ *
+ * Reads the eventdata files that were WRITTEN by the phase before, same rule
+ * as every other derived phase. Under geometry/ because these are per-storm,
+ * rebuilt every run, and always about now.
+ * ------------------------------------------------------------------------ */
+const SURGE_DETAIL_MAX = 6;
+const IMPACT_EXPORT_MAX = 6;
+
+/** The rows worth opening out of one storm's surge index, best first.
+ *
+ *  ==> `overall` IS TAKEN AHEAD OF ANY SINGLE BULLETIN. <== A row with
+ *  `bulletinid: "0"` and `overall: true` appears once per model and reads as
+ *  the event's aggregate rather than one moment in it — which, if true, is the
+ *  number a dashboard would show. That is an inference from the flag and the
+ *  id, NOT something the bytes have confirmed, and confirming it is half the
+ *  point of fetching this. */
+function surgePicks(cyclonesurge) {
+  const picks = [];
+  const groups = Array.isArray(cyclonesurge) ? cyclonesurge : [];
+  for (const g of groups) {
+    const rows = Array.isArray(g?.data) ? g.data : [];
+    const overall = rows.find((r) => r?.overall === true && typeof r.url === 'string');
+    const latest = rows.find(
+      (r) => r?.last === true && r?.overall !== true && typeof r.url === 'string'
+    );
+    if (overall) picks.push({ model: g.source || 'unknown', kind: 'overall', row: overall });
+    if (latest) picks.push({ model: g.source || 'unknown', kind: 'latest', row: latest });
+  }
+  return picks;
+}
+
+/** Round-robin so every storm contributes before any storm contributes twice.
+ *  Without this, the first storm's three models fill a budget of six and the
+ *  other basin — the entire reason this is being measured — is never read. */
+function interleave(perStorm, cap) {
+  const out = [];
+  for (let i = 0; out.length < cap; i++) {
+    let anyLeft = false;
+    for (const list of perStorm) {
+      if (i >= list.length) continue;
+      anyLeft = true;
+      out.push(list[i]);
+      if (out.length >= cap) break;
+    }
+    if (!anyLeft) break;
+  }
+  return out;
+}
+
+function surgeAndImpactSources(eventDataNames) {
+  const perStormSurge = [];
+  const perStormImpact = [];
+
+  for (const name of eventDataNames) {
+    let p;
+    try {
+      p = JSON.parse(readFileSync(join(OUT, name), 'utf8'))?.properties;
+    } catch {
+      continue; // that storm's record failed this run; its manifest row says so
+    }
+    if (!p) continue;
+    const tag = `${slug(p.eventname)}-${p.eventid}`;
+    const who = `${p.eventname} (${p.source || 'unknown centre'}, event ${p.eventid})`;
+
+    const surge = [];
+    for (const pick of surgePicks(p.cyclonesurge)) {
+      surge.push({
+        name: `geometry/gdacs-surge-${tag}-${slug(pick.model)}-${pick.kind}.json`,
+        url: pick.row.url,
+        note:
+          `JRC storm surge for ${who}, ${pick.model} model, ` +
+          `${pick.kind === 'overall'
+            ? 'the row flagged `overall` — believed to be the event aggregate, which is exactly what this fetch is meant to confirm or disprove'
+            : `bulletin ${pick.row.bulletinid} of ${pick.row.episodedate}, the newest single run`}. ` +
+          '==> READ FOR SHAPE FIRST, NUMBERS SECOND. <== The open questions ' +
+          'are whether a height arrives as a number or as a traffic-light ' +
+          'colour, what its unit is, whether it is tied to a named place or ' +
+          'to a coordinate, and whether the answer is per-place (a different ' +
+          'product from §36, better suited to the home dashboard) or per-coast ' +
+          '(an adapter behind the existing surge layer).',
+      });
+    }
+    if (surge.length) perStormSurge.push(surge);
+
+    const impacts = Array.isArray(p.impacts) ? p.impacts : [];
+    const exports = [];
+    for (const im of impacts) {
+      const res = im?.resource || {};
+      /* `locations` first for every storm — it is the shape decision. The
+       * other three are reference and are capped hard below. */
+      for (const key of ['locations', 'timeline', 'buffer74', 'buffer39']) {
+        const url = res[key];
+        if (typeof url !== 'string' || !url.startsWith('https://www.gdacs.org/')) continue;
+        exports.push({
+          name: `geometry/gdacs-impact-${key}-${tag}.json`,
+          url,
+          note:
+            `GDACS ${key} export for ${who}, source ${im.source || 'unknown'}. ` +
+            (key === 'locations'
+              ? '==> THE ONE THAT DECIDES A DESIGN. <== If this is a list of ' +
+                'populated places with a per-place number, it is a home-dashboard ' +
+                'feature and not a globe layer, and it works on JTWC storms where ' +
+                'nothing American reaches.'
+              : key === 'timeline'
+                ? 'Whether GDACS publishes a per-step history with impact figures on it.'
+                : `The ${key.replace('buffer', '')}-knot wind buffer as GDACS models it — ` +
+                  'compare against what §35 already draws before assuming it adds anything.'),
+        });
+      }
+    }
+    if (exports.length) perStormImpact.push(exports);
+  }
+
+  return [
+    ...interleave(perStormSurge, SURGE_DETAIL_MAX),
+    ...interleave(perStormImpact, IMPACT_EXPORT_MAX),
+  ];
+}
+
+/* The phase itself. Sits below its helpers rather than beside the others
+ * because `SURGE_DETAIL_MAX` is a `const` and would be in its temporal dead
+ * zone up there — the phases above are free to move, this one is not. */
+try {
+  const derived = surgeAndImpactSources(eventDataWritten);
+  console.log(
+    `\nderived ${derived.length} GDACS surge/impact payload URL(s) from ` +
+      `${eventDataWritten.length} event record(s)`
+  );
+  for (const src of derived) await run(src);
+} catch (err) {
+  console.log(
+    `\nno GDACS surge/impact payloads this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 
