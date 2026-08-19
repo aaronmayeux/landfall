@@ -280,6 +280,88 @@ const SOURCES = [
       'the only way to know which runs exist without guessing. Also the only ' +
       'place invests and test systems show up.',
   },
+
+  /* -------------------------------------------------------------------------
+   * GLOBAL COVERAGE CANDIDATES — wave 5 pass 1.
+   *
+   * Four features stop at America's edge for the same reason: NHC and NWS are
+   * the only sources they have. The pass that went looking for replacements
+   * found two that are real, public and keyless, and NEITHER can be measured
+   * from a session — the CAP service takes its whole question in a query
+   * string, which web_fetch strips, and Open-Meteo is simply a blocked host.
+   * So they are archived, and the next session reads bytes instead of a
+   * vendor's marketing page. Both are candidates until then, not decisions.
+   * ---------------------------------------------------------------------- */
+  {
+    name: 'capalerts-cyclone.json',
+    url:
+      'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/' +
+      'CAP_Alerts_Feed/FeatureServer/0/query' +
+      '?where=' +
+      encodeURIComponent(
+        "event LIKE '%Cyclone%' OR event LIKE '%Typhoon%' OR " +
+          "event LIKE '%Hurricane%' OR event LIKE '%Tropical%' OR " +
+          "event LIKE '%Storm Surge%'"
+      ) +
+      '&outFields=' +
+      encodeURIComponent(
+        'event,headline,severity,urgency,certainty,senderName,countryCode,' +
+          'areaDesc,effective,expires,sent,language'
+      ) +
+      '&returnGeometry=false&orderByFields=sent+DESC' +
+      '&resultRecordCount=100&f=json',
+    note:
+      "Esri's CAP Connector, republishing every alert the WMO Alert Hub " +
+      'aggregates worldwide as an ordinary ArcGIS feature service — public, ' +
+      'anonymous, spatially queryable, GeoJSON-capable. THE QUESTION IT ' +
+      'ANSWERS is whether the rest of the world publishes tropical-cyclone ' +
+      'watches and warnings in a form we could paint: how many, from which ' +
+      'agencies, in what words, in what languages. Attributes only here; the ' +
+      'shapes are the next entry. A row count of zero is a real answer too — ' +
+      'it would mean no cyclone alert is live anywhere this hour, not that ' +
+      'the service is empty.',
+  },
+  {
+    name: 'geometry/capalerts-cyclone-shapes.geojson',
+    url:
+      'https://services9.arcgis.com/RHVPKKiFTONKtxq3/ArcGIS/rest/services/' +
+      'CAP_Alerts_Feed/FeatureServer/0/query' +
+      '?where=' +
+      encodeURIComponent(
+        "event LIKE '%Cyclone%' OR event LIKE '%Typhoon%' OR " +
+          "event LIKE '%Hurricane%' OR event LIKE '%Tropical%'"
+      ) +
+      '&outFields=' +
+      encodeURIComponent('event,severity,senderName,countryCode,expires') +
+      '&returnGeometry=true&outSR=4326&orderByFields=sent+DESC' +
+      '&resultRecordCount=10&f=geojson',
+    note:
+      'Ten CAP cyclone alerts WITH their shapes. ==> THE SHAPE IS THE WHOLE ' +
+      'DESIGN QUESTION. <== Our watch/warning paint is a stripe banded onto ' +
+      'the coast from NHC breakpoint LINES (§7.7). A CAP area is whatever the ' +
+      'issuing country drew — most often a whole province polygon, sometimes ' +
+      'a circle. If these come back as administrative blobs then the global ' +
+      'version of this feature is a different visual object from the one we ' +
+      'ship, and that is a decision for Aaron rather than an adapter. Ten ' +
+      'rows, and under geometry/ so a hundred provinces an hour never enter ' +
+      'the 72-hour history.',
+  },
+  {
+    name: 'openmeteo-rain-outside-nws.json',
+    url:
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=14.5995&longitude=120.9842' +
+      '&hourly=precipitation&forecast_days=3&timezone=UTC',
+    note:
+      'Rainfall at a house NWS will never answer for — Manila. Open-Meteo is ' +
+      'keyless, CORS-open and global, which makes it the only candidate that ' +
+      'could give §48 a non-American half. Archived to settle three things ' +
+      'bytes settle and a docs page does not: the exact response shape, ' +
+      'whether the hourly series is really gap-free at a tropical coastal ' +
+      'point, and what the units and time base actually say. Attribution is ' +
+      'required (CC BY 4.0) and the free tier is non-commercial with a daily ' +
+      'call ceiling — both are constraints on shipping it, not on reading it.',
+  },
 ];
 
 /* ---------------------------------------------------------------------------
@@ -426,6 +508,51 @@ function geometrySources(eventListJson) {
         `splits past from future. Last analysed ${p.todate || 'unknown'}.`,
     });
     if (out.length >= GEOMETRY_MAX) break;
+  }
+  return out;
+}
+
+/** GDACS EVENT DETAIL — the storm's own record, not its polygons.
+ *
+ * Wave 5 pass 1 went looking for a storm surge product that covers the world
+ * and found that GDACS already runs one: the JRC models surge globally after
+ * every advisory from every centre and publishes, per populated place, a
+ * maximum height and a traffic-light colour, about twenty minutes behind the
+ * bulletin. That is a per-PLACE answer where NHC's is a per-COAST band, so it
+ * is not an adapter behind `fetchSurgeLive()` — it is a different product with
+ * a different shape, and the home dashboard is arguably its better home.
+ *
+ * ==> WHETHER ANY OF IT IS MACHINE-READABLE IS THE OPEN QUESTION. <== The
+ * numbers are visible on a GDACS web page and in JRC bulletin files; nothing
+ * says they ride the JSON API. The event list does not carry them — checked,
+ * zero of 98 rows mention surge. `url.details` is the next place they could
+ * be, and the sandbox cannot open it. So it gets archived and the answer is
+ * read off real bytes next session.
+ *
+ * Under geometry/ for the reason that directory exists: per-storm, rebuilt
+ * every run, and the question is always about now. */
+const EVENTDATA_MAX = 4;
+
+function eventDataSources(eventListJson) {
+  const feats = Array.isArray(eventListJson?.features) ? eventListJson.features : [];
+  const out = [];
+  for (const f of feats) {
+    const p = f?.properties || {};
+    if ((p.eventtype || '') !== 'TC') continue;
+    if (!isCurrentRow(p.iscurrent)) continue;
+    const url = p.url?.details;
+    /* Same rule as the geometry block: the published link or nothing. */
+    if (typeof url !== 'string' || !url.startsWith('https://www.gdacs.org/')) continue;
+    out.push({
+      name: `geometry/gdacs-eventdata-${slug(p.eventname)}-${p.eventid}.json`,
+      url,
+      note:
+        `GDACS event record for ${p.eventname} (event ${p.eventid}). ` +
+        'Archived to answer one question: does anything in here carry the ' +
+        "JRC's storm surge output — a height, a colour, an affected place — " +
+        'or is that web-page-only. Everything else it holds is a bonus.',
+    });
+    if (out.length >= EVENTDATA_MAX) break;
   }
   return out;
 }
@@ -659,6 +786,19 @@ try {
 } catch (err) {
   console.log(
     `\nno per-storm geometry this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
+/* GDACS event detail, §4.8. Its own try block for the same reason as every
+ * other derived phase: an experiment must never be able to cost us a polygon. */
+try {
+  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
+  const derived = eventDataSources(list);
+  console.log(`\nderived ${derived.length} GDACS event-detail URL(s) from the GDACS list`);
+  for (const src of derived) await run(src);
+} catch (err) {
+  console.log(
+    `\nno GDACS event detail this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 

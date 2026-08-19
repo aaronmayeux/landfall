@@ -178,15 +178,15 @@ real home is the other row carrying the same section number.
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 64-65 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 66-82 |
 | `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 83-208 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 209-232 |
-| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 233-427 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 209-243 |
+| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 244-438 |
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1214-1496 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 428-453 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 454-490 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 491-836 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 439-464 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 465-501 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 502-847 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2343-2440 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 837-860 |
-| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 861-956 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 848-871 |
+| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 872-967 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1587-1588 |
 | `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1589-1614 |
 | `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1615-1657 |
@@ -200,23 +200,23 @@ real home is the other row carrying the same section number.
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2526-2542 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1811-1856 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1082-1101 |
-| `49` | Time has a direction | `SPEC-NEXT.md` | 957-958 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 959-1014 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1015-1040 |
+| `49` | Time has a direction | `SPEC-NEXT.md` | 968-969 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 970-1025 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1026-1051 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1857-1942 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2543-2565 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1041-1093 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1094-1145 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1146-1264 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1265-1344 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1345-1420 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1421-1438 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1439-1459 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1460-1485 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1486-1509 |
-| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1510-1552 |
-| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1553-1595 |
-| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1596-1677 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1052-1104 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1105-1156 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1157-1275 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1276-1355 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1356-1431 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1432-1449 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1450-1470 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1471-1496 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1497-1520 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1521-1563 |
+| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1564-1606 |
+| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1607-1688 |
 
 ## Files
 
@@ -224,7 +224,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 116,232 | 32 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 107,598 | 25 |
+| `SPEC-NEXT.md` | 108,385 | 25 |
 | `SPEC-OPS.md` | 71,463 | 20 |
 | `SPEC-UI.md` | 150,105 | 10 |
 | `SPEC.md` | 150,037 | 14 |

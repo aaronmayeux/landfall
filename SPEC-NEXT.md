@@ -228,6 +228,17 @@ only this one term, in basins where nothing else is published, would be a worse
 statement than an honest absence. AOML also states the dataset is not maintained
 operationally.
 
+**AND THERE IS NO PUBLISHED SHIPS ANYWHERE ELSE, WHICH SETTLES §47.6.** Versions
+of SHIPS do exist for the West Pacific, Indian Ocean and Southern Hemisphere —
+they run operationally as JTWC's guidance. They are not public. CIRA publishes
+those basins only as *developmental* predictor files, seasons behind, and the
+real-time diagnostics ride the a-decks, which JTWC states plainly are not
+publicly available for WP, IO and SH. The only remaining route to a typhoon's
+shear and ocean heat is to compute them ourselves from a public global model.
+**That would stop being a published diagnostic and start being our forecast**,
+which is a different claim to make on a cone, and it is Aaron's call rather than
+an adapter. Until he makes it, §47.6's stated absence is the whole answer.
+
 Recorded here so the next session does not re-research it.
 
 ### 47.4 What the color means

@@ -44,11 +44,6 @@ any order; nothing here waits on anything else here. **How to actually reach the
 world from a sandbox that cannot: `SPEC-OPS.md` §18.** Each pass ends in a
 written brief naming candidates, what was measured, and what still needs glass.
 
-- **Pass 1 — global coverage for the four US-only features.** Watch/warning,
-  rainfall, storm surge, environment ribbon. One identical question each time:
-  *does anyone cover the rest of the world?* **Live web search** (§18.1) — the
-  point is finding what nobody here has heard of. **Start here:** four features
-  unlock at once for everyone outside America. See SCOPED, NOT STARTED.
 - **Pass 2 — global radar.** Same method, different shape, its own session. The
   honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
 - **Pass 3 — the outlook KMZ.** **No network needed** — the bytes are already in
@@ -286,13 +281,26 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
 
-**PASS 1 — global coverage for four NHC-only features, ONE pass not four.**
-Watch/warning, rainfall, storm surge and the environment ribbon are all limited
-to NHC's basins for the same reason: the product is American. The question is
-identical each time — *is there another source covering the rest of the world* —
-so researching them together is far cheaper than four separate investigations.
-§47.3 already answered it NO for the environment ribbon's ocean-heat term and
-that answer stands; the rest are open.
+**PASS 1 LANDED, AND THREE OF ITS FOUR ANSWERS ARE NOW WAITING ON THE RUNNER.**
+Watch/warning, rainfall and storm surge each have exactly one credible global
+candidate; none could be measured from a session, so all three are entries in
+`tools/archive-fetch.mjs` and the next session reads bytes rather than a vendor
+page. The fourth is closed: there is no published environment diagnostic outside
+NHC's basins at all (§47.3). Full brief in the project note
+`global-coverage-pass1`.
+
+- **Watch/warning → Esri's CAP Connector**, republishing the WMO Alert Hub as a
+  public ArcGIS feature service. `git show origin/archive:latest/` +
+  `capalerts-cyclone.json` for who publishes what — and the companion
+  `geometry/capalerts-cyclone-shapes.geojson` FIRST, because if those areas are
+  administrative blobs rather than coastal lines, the global version of this
+  feature is a different visual object from §7.7's stripe.
+- **Rainfall → Open-Meteo**, keyless and global. `git show` the archive's
+  `openmeteo-rain-outside-nws.json`. Licence is the live question, not the data:
+  CC BY 4.0 attribution required, free tier non-commercial with a daily ceiling.
+- **Surge → GDACS already models it globally**, per populated place, after every
+  advisory from every centre. Whether any of it is machine-readable is unknown;
+  `geometry/gdacs-eventdata-*.json` is where the answer would be.
 
 **PASS 2 — global radar, through the fewest sources that hold quality.**
 `SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest
