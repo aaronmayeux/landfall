@@ -39,17 +39,24 @@
 research it does not need. Do not start two. When a wave lands, delete it from
 here and put what it built in the spec.
 
-**WAVE 5 — research, and it is FOUR QUESTIONS IN ONE.**
-- **Global coverage for the four NHC-only features** — watch/warning, rainfall,
-  storm surge, the environment ribbon. Same question four times: *is there
-  another source covering the rest of the world?* Research together or pay four
-  times. See SCOPED, NOT STARTED.
-- **Global radar** is its own pass and a different shape. See SCOPED, NOT STARTED.
-- **The outlook KMZ has never been opened.** Inventory everything in it, not just
-  the outlook areas. See SCOPED, NOT STARTED.
-- **JTWC's per-storm `fix.txt` has never been fetched.** Whether it carries wind
-  extent or only positions is the open question behind GDACS having no past wind
-  field. See KNOWN AND ACCEPTED.
+**WAVE 5 — research. FOUR PASSES, one session each, independent.** Take them in
+any order; nothing here waits on anything else here. **How to actually reach the
+world from a sandbox that cannot: `SPEC-OPS.md` §18.** Each pass ends in a
+written brief naming candidates, what was measured, and what still needs glass.
+
+- **Pass 1 — global coverage for the four US-only features.** Watch/warning,
+  rainfall, storm surge, environment ribbon. One identical question each time:
+  *does anyone cover the rest of the world?* **Live web search** (§18.1) — the
+  point is finding what nobody here has heard of. **Start here:** four features
+  unlock at once for everyone outside America. See SCOPED, NOT STARTED.
+- **Pass 2 — global radar.** Same method, different shape, its own session. The
+  honest framing is MORE COASTLINES, not global. See SCOPED, NOT STARTED.
+- **Pass 3 — the outlook KMZ.** **No network needed** — the bytes are already in
+  the archive and decode to a working zip. Cheapest of the four. See SCOPED, NOT
+  STARTED.
+- **Pass 4 — JTWC's per-storm `fix.txt`.** Never fetched. One entry added to
+  `tools/archive-fetch.mjs`, then a wait for the hour (§18.3 — a session cannot
+  trigger the runner itself). See KNOWN AND ACCEPTED.
 
 ---
 
@@ -262,8 +269,8 @@ section renderers, the advisory record and the stepper are its four. Each split
 should be its own pass with **no behaviour change**, so a break can only be the
 move.
 
-**The outlook KMZ is archived and unparsed.** Layer 3 is empty on BOTH NOAA map
-services while NHC's website draws areas (§45.2 — settled, don't re-check).
+**PASS 3 — the outlook KMZ is archived and unparsed.** Layer 3 is empty on BOTH
+NOAA map services while NHC's website draws areas (§45.2 — settled, don't re-check).
 `gtwo_atl.kmz` is the second publication path and is snapshotted hourly. **Open
 the real bytes and inventory EVERYTHING in them, not just the outlook areas** —
 the question is what else a KML carries that we are not getting elsewhere. The
@@ -279,7 +286,7 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
 
-**Global coverage for four NHC-only features — ONE research pass, not four.**
+**PASS 1 — global coverage for four NHC-only features, ONE pass not four.**
 Watch/warning, rainfall, storm surge and the environment ribbon are all limited
 to NHC's basins for the same reason: the product is American. The question is
 identical each time — *is there another source covering the rest of the world* —
@@ -287,12 +294,11 @@ so researching them together is far cheaper than four separate investigations.
 §47.3 already answered it NO for the environment ribbon's ocean-heat term and
 that answer stands; the rest are open.
 
-**Global radar, through the fewest sources that hold quality.** `SPEC-DATA.md`
-§4. Today's box is NOAA only, roughly the Americas. **The honest framing is MORE
-COASTLINES, not global** — ground radar needs ground, and no radar exists over
-open ocean anywhere on Earth. The storms it would newly reach are ones already
-near land, which is when radar matters most. Its own pass, separate from the four
-above.
+**PASS 2 — global radar, through the fewest sources that hold quality.**
+`SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest
+framing is MORE COASTLINES, not global** — ground radar needs ground, and no
+radar exists over open ocean anywhere on Earth. The storms it would newly reach
+are ones already near land, which is when radar matters most.
 
 ## KNOWN AND ACCEPTED
 
@@ -303,6 +309,7 @@ above.
   no cone, no footprints and no past track (`lib/jtwc-wind.js` says so). The one
   unexamined candidate is JTWC's per-storm `fix.txt`, which this project has
   never fetched — whether it carries wind extent or only positions is unknown.
+  **This is PASS 4.**
   Stitching a history from our own hourly snapshots would make what a user sees
   depend on how long their phone happened to be open, which is the exact bug
   `data/ended-track.js` exists to fix.

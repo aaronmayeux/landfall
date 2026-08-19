@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 189 numbered headings.
+Covering 9 files, 195 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -110,6 +110,12 @@ real home is the other row carrying the same section number.
 | `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 928-939 |
 | `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 940-991 |
 | `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1043-1081 |
+| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1102-1112 |
+| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1113-1123 |
+| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1124-1131 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1132-1149 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1150-1156 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1157-1168 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -193,7 +199,7 @@ real home is the other row carrying the same section number.
 | `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2506-2525 |
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2526-2542 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1811-1856 |
-| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1082-1099 |
+| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1082-1101 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 957-958 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 959-1014 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1015-1040 |
@@ -219,7 +225,7 @@ real home is the other row carrying the same section number.
 | `SPEC-DATA.md` | 116,232 | 32 |
 | `SPEC-MAP.md` | 208,997 | 38 |
 | `SPEC-NEXT.md` | 107,598 | 25 |
-| `SPEC-OPS.md` | 68,109 | 14 |
+| `SPEC-OPS.md` | 71,463 | 20 |
 | `SPEC-UI.md` | 150,105 | 10 |
 | `SPEC.md` | 150,037 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |

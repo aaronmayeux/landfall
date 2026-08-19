@@ -1096,3 +1096,72 @@ judged on glass.** The fixtures the suite needs are copied into `samples/rain/`
 and no test reads the branch, so deleting them breaks nothing — but they are
 the only way to re-measure this API from a sandbox that cannot reach it, and
 the first storm near a home is exactly when that will be wanted.
+
+---
+
+## 18. Research from a sandbox with no internet
+
+A cloud session reaches **github.com and registry.npmjs.org and nothing else**.
+Measured: nhc.noaa.gov, gdacs.org, api.cloudflare.com, tiles.openfreemap.org and
+landfall.getgravitate.app itself are all blocked. `curl` cannot fetch a payload
+and cannot reach our own live app. A session that believes it measured a feed
+with `curl` is wrong.
+
+There are four ways across, they do DIFFERENT JOBS, and using one for another
+one's job is the failure this section exists to prevent.
+
+### 18.1 Live web search — DISCOVERY
+
+A real search engine, not a list of URLs already known. **This is the only
+transport that can answer "what exists that nobody here has heard of"**, which
+is the entire point of a research pass. Any pass whose output is "here is what
+I already knew about, tidied up" used the wrong tool.
+
+It finds NAMES. It does not establish that a source is real, current, free,
+machine-readable, or shaped the way a page claims. Everything it turns up is a
+candidate and is written down as one.
+
+### 18.2 WebFetch — TRIAGE
+
+Reads a named page from anywhere. **It shows no response headers and runs a
+small model over the body, so anything large comes back APPROXIMATED rather
+than verbatim.** Right for a small JSON body, an API index, a licence page, or
+"is this thing up". Never right for a wind field, and never the basis for a
+sentence containing a figure that will end up on the screen.
+
+### 18.3 The archive runner — EXACT BYTES
+
+A GitHub Actions runner has open internet. `tools/archive-fetch.mjs` fetches a
+list of sources hourly and commits the raw bytes plus every response header to
+the `archive` branch, where a session reads them with plain git:
+
+    git fetch origin archive && git show origin/archive:latest/<file>
+
+**Adding a source is one entry in that list.** Binary comes back base64 with a
+`.b64` suffix and decodes to the real file — the outlook KMZ is a working zip
+in the branch today. This is how a candidate becomes a measurement.
+
+**A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
+on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
+HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,
+then either wait for the top of the hour or ask Aaron to press Run. Plan a pass
+around that gap rather than discovering it mid-session.
+
+### 18.4 The Cloudflare MCP — OUR OWN NUMBERS
+
+Live and authenticated, and it does not travel the blocked network. Workers,
+D1 (`landfall-telemetry`, `dc08ce89-b597-40da-b5b5-7571a9b30d90`) and arbitrary
+SQL all work. KV NAMESPACES are listable; KV VALUES are not readable — cache
+contents have to come out of an inspect route's body.
+
+### 18.5 The order, and why getting it backwards is expensive
+
+Search **finds**, WebFetch **triages**, the runner **verifies**, glass
+**judges**. Reversed, each step is wrong in its own way: exploring through the
+runner costs an hour per guess, and measuring through search or WebFetch
+produces an approximation reported as a fact, which is the specific failure
+the whole archive branch was built to end.
+
+**Glass is the fourth transport and it is Aaron\x27s.** No tool here can say
+whether a layer is beautiful, legible at a glance, or fast enough on a phone.
+A research brief ends by naming what still needs a phone.
