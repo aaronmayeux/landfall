@@ -1819,6 +1819,51 @@ section('the rail and the chart keep the past (§49.7, §49.8)');
     );
     ok(xs.length && Number.isFinite(nowX) && Math.min(...xs) >= nowX - 0.5,
        'and it starts at `now` — a forecast hedge is never drawn over a measured position');
+
+    /* ==> AND NEITHER IS THE SOLID/DOTTED SEAM (§49.8). <== Same fixture,
+     * same reason it exists: a corridor whose first sample is three hours
+     * behind the clock is what a LIVE advisory always looks like, and Ida's
+     * raw fixtures put theirs at exactly `now` so the bug could not appear in
+     * them at all.
+     *
+     * The seam used to BE that first sample, so the solid track stopped short
+     * of the `now` vertical by however old the advisory happened to be — a
+     * line ending in a different random place every six hours — and the
+     * dotted forecast started in the past.
+     *
+     * ==> THIS FAILS IF THE SEAM MOVES BACK, AND THAT WAS CHECKED BY MOVING
+     * IT. <== Put the old join back and the solid line ends at 67.0 against a
+     * `now` vertical at 81.0, and the forecast half starts at 84.5 having
+     * already run from 67.0 — two of the assertions below fail. It is not a
+     * test that passes on the bug.
+     *
+     * The halves are found by their stroke: the forecast is the only `5 3`
+     * dash on a 2px primary line, the observed the only undashed one. */
+    const dotted = /<path d="([^"]+)" fill="none" stroke="var\(--text-primary\)" stroke-width="2" stroke-dasharray="5 3"/.exec(svg);
+    const solid = /<path d="([^"]+)" fill="none" stroke="var\(--text-primary\)" stroke-width="2" stroke-linejoin/.exec(svg);
+    ok(dotted && solid, 'an aged advisory draws both halves of the centre track');
+
+    const vx = (d) => [...d.matchAll(/[ML]([\d.-]+),/g)].map((m) => Number(m[1]));
+    const solidXs = vx(solid?.[1] || '');
+    const dottedXs = vx(dotted?.[1] || '');
+
+    ok(solidXs.length > 1 && Math.abs(solidXs[solidXs.length - 1] - nowX) <= 0.11,
+       `the solid track ends ON the now vertical (${solidXs[solidXs.length - 1]} vs ${nowX})`);
+    ok(dottedXs.length > 1 && Math.abs(dottedXs[0] - nowX) <= 0.11,
+       `and the forecast starts there, not three hours before it (${dottedXs[0]} vs ${nowX})`);
+    ok(dottedXs.every((x) => x >= nowX - 0.11),
+       'no dotted segment sits left of the present');
+    ok(solidXs.every((x) => x <= nowX + 0.11),
+       'and no solid segment sits right of it');
+    /* ==> ONE TRACK, NOT TWO OVERLAPPING ONES. <== The observations and the
+     * corridor overlap in time — the newest fix trails the advisory position —
+     * so laid end to end the line walked backwards for one segment. Ordering
+     * them by hour is what stops that, and a doubling-back x proves it did
+     * not happen. */
+    for (let i = 1; i < solidXs.length; i++) {
+      ok(solidXs[i] >= solidXs[i - 1] - 0.11,
+         `the observed track never doubles back (${solidXs[i - 1]} -> ${solidXs[i]})`);
+    }
   }
 
   /* --- the mechanism, shown rather than described -------------------------- */

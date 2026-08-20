@@ -1322,11 +1322,29 @@ they drift.
 grammar for observed-versus-forecast, and this chart is now where it is defined —
 the section that first stated it was the cut intensity chart. **This changes every chart, not only a departed storm's:** a
 track entirely ahead of the clock is entirely a forecast and was being drawn as
-though it were a measurement. The seam is the corridor's first sample, which is
-the advisory position and up to three hours behind `now`, so a short dotted
-sliver can sit just left of the line — splitting the polyline at exactly h=0
-would mean interpolating a position nobody published to move a line style by
-three hours.
+though it were a measurement.
+
+**THE SEAM IS `now`, AND IT USED TO BE THE CORRIDOR'S FIRST SAMPLE.** The
+corridor is walked from the advisory position, which trails the clock by up to
+a synoptic step, so the solid line stopped one to six hours short of the `now`
+vertical and moved every time an advisory was issued. The first cut treated
+that as honest — splitting at h=0 means interpolating a position nobody
+published — and **it was the wrong call, reversed on glass 2026-08-20.**
+Nobody reads a gap that size as "the last fix was at 5 AM"; it reads as the
+line stopping in a random place. And the dotted half was worse: a forecast
+stroke left of `now` tells the reader the future started three hours ago. The
+segment is drawn either way, so all the split changes is which side of the seam
+it sits on, and *everything left of `now` has happened* is the truer of the two
+readings. The interpolation is on the DRAWN track, straight-line between two
+samples, so it can never invent a distance outside the pair it sits between —
+`nmMax` and the axis are untouched.
+
+**ONE TRACK, ORDERED BY HOUR, NOT TWO ARRAYS CONCATENATED.** The observations
+and the corridor OVERLAP: the newest observed fix trails the advisory position,
+so `pastSamples` can end after the corridor begins. Laid end to end the centre
+line walked backwards for one segment, and any split of that sequence puts the
+seam in the wrong place. Sorted, they are what they always were — one storm's
+distance from the house, measured and then forecast.
 
 **The uncertainty band is drawn only right of `now`.** Per §49.2. The
 earliest-arrival line is NHC's track error applied to their wind radii; left of

@@ -157,6 +157,49 @@ function niceStep(max) {
   return max / 4;
 }
 
+/** A polyline of `{h, nm}` samples as an SVG path, in the chart's own scales. */
+function path(pts, X, Y) {
+  return pts
+    .map((p, i) => `${i ? 'L' : 'M'}${X(p.h).toFixed(1)},${Y(p.nm).toFixed(1)}`)
+    .join(' ');
+}
+
+/**
+ * The point where the drawn track crosses `now`, or null if it never does.
+ *
+ * ==> THIS IS A DRAWING SPLIT, NOT A FIGURE. <== §49.8's rule is that this
+ * file does no arithmetic on anything the reader is shown a NUMBER for — the
+ * distances, times and durations all arrive computed from
+ * `data/home-dashboard.js`. The value here is never printed, never read aloud
+ * by the aria summary, and never leaves this function except as an x/y pair.
+ * It exists so one stroke style can change at one x position.
+ *
+ * Takes the merged, time-ordered track — observations and corridor samples in
+ * one sequence — because the crossing can fall inside either half or in the
+ * join between them. The first straddling segment wins.
+ *
+ * ==> A SAMPLE EXACTLY AT h=0 IS THE ANSWER, AND IS RETURNED AS ITSELF. <==
+ * Lerping over a zero-length span would divide by zero; more to the point, a
+ * published position at the present moment is the real thing and must not be
+ * replaced by a copy of itself computed a different way.
+ */
+function splitAtNow(seq) {
+  if (seq.length < 2) return null;
+  for (let i = 0; i < seq.length; i++) {
+    const a = seq[i];
+    if (a.h === 0) return { h: 0, nm: a.nm };
+    const b = seq[i + 1];
+    if (!b) break;
+    /* Strictly straddling. `b.h === 0` is left to the next turn of the loop,
+     * which returns it as itself above rather than lerping onto it. */
+    if (a.h < 0 && b.h > 0) {
+      const t = -a.h / (b.h - a.h);
+      return { h: 0, nm: a.nm + (b.nm - a.nm) * t };
+    }
+  }
+  return null;
+}
+
 /**
  * @param {object} dash      a buildHomeDashboard() result (carries `corridor`)
  * @param {string} system    unit system, labels only
@@ -488,24 +531,56 @@ export function homeChart(dash, system) {
    * of the clock is entirely a forecast and was being drawn as though it were
    * a measurement.
    *
-   * THE SEAM IS THE CORRIDOR'S FIRST SAMPLE, NOT THE STROKE OF MIDNIGHT, and
-   * that is up to three hours behind `now` — the advisory position is what the
-   * corridor is walked from, and this file already says so at the `now` line
-   * below. So a short dotted sliver can sit just left of `now`. Splitting the
-   * polyline at exactly h=0 would mean interpolating a position nobody
-   * published, to move a line style by three hours. */
-  const eye = S.map((s, i) => `${i ? 'L' : 'M'}${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`).join(' ');
-  /* Joined to the forecast's first sample so the two read as one track with a
-   * change of certainty, not as two lines with a gap at the present.
+   * ==> THE SEAM IS `now`, AND IT USED TO BE THE CORRIDOR'S FIRST SAMPLE.
+   * <== The corridor is walked from the advisory position, which is up to a
+   * synoptic step behind the clock, so the seam landed one to six hours left
+   * of the `now` vertical and moved every time a new advisory came out. On
+   * glass that is not a statement about advisory age — nobody reads a gap that
+   * size as "the last fix was at 5 AM". It reads as the line stopping in a
+   * random place, and it says something FALSE besides: a dotted stretch left
+   * of `now` tells the reader the future starts three hours ago.
+   *
+   * So the polyline is split at h=0, interpolating the one point between the
+   * two samples it falls between. THAT POINT IS NOT A PUBLISHED POSITION and
+   * the old comment here was right that it is invented — but the pixels were
+   * already there. The segment is drawn either way; all that changes is which
+   * side of the seam it sits on, and "everything left of `now` has happened"
+   * is the truer of the two readings. Aaron, glass, 2026-08-20.
+   *
+   * The interpolation is on the DRAWN track, straight-line between two
+   * samples, so it can never invent a distance outside the pair it sits
+   * between — `nmMax` and the axis are untouched by it.
+   *
+   * ==> ONE TRACK, ORDERED BY TIME, NOT TWO ARRAYS CONCATENATED. <== The
+   * observations and the corridor overlap: the newest fix trails the advisory
+   * position by up to a synoptic step, so `P` can end AFTER `S` begins. Laying
+   * them end to end drew a line that walked backwards for one segment, and any
+   * split of that sequence lands the seam in the wrong place. Sorted, they are
+   * what they always were — one storm's distance from the house, measured then
+   * forecast. */
+  const track = [...P, ...S].sort((a, b) => a.h - b.h);
+  const nowPt = splitAtNow(track);
+  /* Left of the seam: everything already behind the clock, then the seam. */
+  const solidPts = [...track.filter((p) => p.h < 0), ...(nowPt ? [nowPt] : [])];
+  /* Right of it: the seam, then the forecast proper. Joined at the same point
+   * so the two read as one track with a change of certainty, not as two lines
+   * with a gap at the present.
    *
    * ==> UNLESS THERE IS NO FORECAST TO JOIN TO. <== A past-only chart ends at
    * `now` and the observed line is the whole track. Reaching for `S[0]` there
    * threw, which is one of the two reasons this case used to return early
    * instead of being drawn. */
-  const observed = P.length
-    ? P.map((p, i) => `${i ? 'L' : 'M'}${X(p.h).toFixed(1)},${Y(p.nm).toFixed(1)}`).join(' ') +
-      (S.length ? ` L${X(S[0].h).toFixed(1)},${Y(S[0].nm).toFixed(1)}` : '')
-    : '';
+  const dottedPts = [
+    ...(nowPt ? [nowPt] : []),
+    /* `> 0` rather than `>= 0` when the seam exists, or a sample sitting
+     * exactly on the present is emitted twice — once as the seam and once as
+     * itself. */
+    ...track.filter((p) => (nowPt ? p.h > 0 : p.h >= 0)),
+  ];
+  /* A single point is not a line. Past-only ends at the seam and has no
+   * forecast half; a chart entirely ahead of the clock has no solid half. */
+  const eye = dottedPts.length > 1 ? path(dottedPts, X, Y) : '';
+  const observed = solidPts.length > 1 ? path(solidPts, X, Y) : '';
 
   /* --- the distance grid --------------------------------------------------
    *
