@@ -1,0 +1,29 @@
+{
+  "_readme": [
+    "THRESHOLDS FOR `node tools/perf-audit.mjs --budget`. Exceeding one fails CI.",
+    "",
+    "==> THESE ARE PLACEHOLDERS UNTIL THE FIRST GREEN RUN ON THE RUNNER. <==",
+    "They were written from measurements taken through a Chrome extension on a",
+    "Mac, and two things make those unsafe to freeze as a budget: a Mac is the",
+    "FASTEST platform in SPEC-NEXT §52 (204ms first paint against Windows' 684),",
+    "and the tab was backgrounded for part of the session, which stops the map",
+    "building at all. So each number below is set loose enough that only a real",
+    "regression trips it. CALIBRATE THEM from the first workflow run's JSON and",
+    "tighten in a reviewed commit — a budget nobody can pass gets switched off,",
+    "and a budget nothing can fail is decoration.",
+    "",
+    "`armUnderBudget` is `warm-sw` deliberately: 1,991 of 2,036 D1 sessions are",
+    "service-worker controlled, so that is the path worth defending."
+  ],
+  "armUnderBudget": "warm-sw",
+  "max": {
+    "ourModules": 175,
+    "ourWaves": 8,
+    "staircaseMs": 3000,
+    "dataSerialDepth": 6,
+    "blockedMs": 1200,
+    "transferKB": 900,
+    "colorNulls": 0,
+    "radarTilesOnPan": 120
+  }
+}

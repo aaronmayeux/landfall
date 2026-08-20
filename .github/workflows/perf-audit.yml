@@ -1,0 +1,120 @@
+# perf-audit — THE PERFORMANCE PICTURE, MEASURED WHERE THE INTERNET IS.
+#
+# ===> IT RUNS HERE BECAUSE IT CANNOT RUN ANYWHERE ELSE. <===
+# The dev sandbox reaches GitHub and npm and nothing else — no basemap, no
+# RainViewer, and not even our own deployed app. So the audit joins
+# offline-check and headless-check as a suite that lives on the runner, which
+# has open internet, rather than one that fights the wall locally.
+#
+# ===> WHAT IT ANSWERS THAT `ci.yml` DOES NOT. <===
+# ci.yml proves the app is CORRECT. This asks whether it is FAST, against the
+# real deploy, on the code path real users are on. `load-probe.mjs` and
+# `boot-profile.mjs` both build their browser with `serviceWorkers: 'block'`,
+# and 98% of real sessions are service-worker controlled — so this runs both
+# arms and reports the gap.
+#
+# Nightly plus on-demand. NOT on every push: it measures the LIVE site, so a
+# push that has not finished deploying would measure the previous build and
+# blame this commit for it.
+
+name: perf-audit
+
+on:
+  schedule:
+    # 07:10 UTC daily. Offset off the hour so it does not queue behind the
+    # archive runner, which fetches on the hour.
+    - cron: '10 7 * * *'
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to audit (defaults to the live app)'
+        required: false
+        default: 'https://landfall.getgravitate.app/'
+      fast:
+        description: 'Skip CPU/network throttling (not a user-facing number)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The sandbox pins 1.56.0 because its chromium is build 1194. The runner
+      # has no such constraint, but the version is pinned anyway so a run six
+      # months from now measures the same browser as this one — an audit whose
+      # instrument drifts silently is worse than no audit.
+      - name: install playwright chromium
+        run: |
+          npm i --no-audit --no-fund playwright@1.56.0
+          npx playwright install --with-deps chromium
+
+      - name: run the audit
+        id: audit
+        env:
+          LANDFALL_URL: ${{ github.event.inputs.url || 'https://landfall.getgravitate.app/' }}
+        run: |
+          set -o pipefail
+          ARGS="--json perf-latest.json --budget"
+          if [ "${{ github.event.inputs.fast }}" = "true" ]; then ARGS="$ARGS --fast"; fi
+          node tools/perf-audit.mjs $ARGS 2>&1 | tee /tmp/audit.txt
+        # ==> A BUDGET FAILURE MUST NOT LOSE THE MEASUREMENT. <== The whole
+        # point of the run is the number; exiting before the artifact is
+        # written would throw away the evidence for the failure it just found.
+        continue-on-error: true
+
+      - name: summary
+        if: always()
+        run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/audit.txt >> $GITHUB_STEP_SUMMARY || echo 'no output' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: keep the run as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: perf-audit
+          path: |
+            perf-latest.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      # ==> A TREND IS THE ONLY THING THAT MAKES A LAB NUMBER USEFUL. <== One
+      # run says nothing; the same run every night says whether a change helped.
+      # Appended to a branch rather than main so the history does not churn the
+      # working tree, and force-push is never used so nothing is ever lost.
+      - name: append to the perf history branch
+        if: always() && github.event_name == 'schedule'
+        run: |
+          test -f perf-latest.json || exit 0
+          git config user.name 'Andy (Cowork)'
+          git config user.email 'andy@getgravitate.app'
+          git fetch origin perf-history --depth=1 || true
+          if git rev-parse --verify origin/perf-history >/dev/null 2>&1; then
+            git checkout -B perf-history origin/perf-history
+          else
+            git checkout --orphan perf-history
+            git rm -rf --cached . >/dev/null 2>&1 || true
+            find . -maxdepth 1 ! -name . ! -name .git ! -name perf-latest.json -exec rm -rf {} + 2>/dev/null || true
+          fi
+          mkdir -p runs
+          cp perf-latest.json "runs/$(date -u +%Y-%m-%dT%H%M%SZ).json"
+          git add runs
+          git commit -m "perf-audit $(date -u +%Y-%m-%dT%H:%M:%SZ)" || exit 0
+          git push origin perf-history
+
+      - name: fail the job if the budget was exceeded
+        if: always()
+        run: |
+          grep -q '^  FAIL ' /tmp/audit.txt && { echo 'budget exceeded'; exit 1; } || echo 'within budget'
