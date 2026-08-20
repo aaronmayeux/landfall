@@ -31,7 +31,11 @@
  * Run: node tools/test-radar-coverage.mjs
  */
 
+import fs from 'node:fs';
+import path from 'node:path';
 import { IMAGERY } from '../config/constants.js';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
 import { radarTilesTemplate, radarFramesUrl, radarCoverageUrl } from '../lib/imagery.js';
 import { verdictFor, radarCoverageMessage } from '../data/radar-coverage.js';
 
@@ -199,6 +203,46 @@ ok('a non-array is treated as nothing tracked, not as an answer', says(undefined
  * every check in section 5 has gone blind. */
 ok('the reassurance detector would catch the deleted "no rain" sentence',
   REASSURING.test('Radar is watching and showing no rain near these storms'));
+
+/* ---------------------------------------------------------------------------
+ * 6. THE STATUS STRIP MUST NOT SPEAK FOR THE RADAR SOURCE.
+ *
+ * ==> READ OUT OF main.js's SOURCE TEXT, BECAUSE THE HANDLER IS CLOSURE-BOUND
+ * AND THE STRING IN THE FILE IS THE CONTRACT. <== Same device
+ * `test-relay-mirrors.mjs` uses on the routes, for the same reason: importing
+ * boot() is not possible and the thing worth guarding is one comparison.
+ *
+ * THE BUG THIS EXISTS TO STOP CAME BACK ONCE ALREADY. `map.on('error')` raises
+ * a banner reading "Basemap tiles are not loading". It used to fire for a
+ * failure on ANY source, and the map has several — the basemap, one image
+ * source per satellite disc, and a radar source streaming thirty tiles a
+ * viewport. Aaron saw it on glass: radar tiles loading put a red basemap
+ * outage on screen while the basemap was drawing perfectly.
+ *
+ * That is §5 pointed backwards — not silence during an outage but an outage
+ * announced during normal operation — and a user told something specific and
+ * false has no reason to believe the message the day it is true.
+ * ------------------------------------------------------------------------- */
+{
+  const src = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+
+  ok('main.js names a single basemap source id',
+    /const BASEMAP_SOURCE = 'basemap';/.test(src));
+
+  const errHandler = src.slice(src.indexOf("map.on('error'"), src.indexOf("map.on('sourcedata'"));
+  ok('the tile-error banner is raised ONLY for the basemap source',
+    /sourceId === BASEMAP_SOURCE/.test(errHandler) && !/if \(e\?\.sourceId\) status\.tileError/.test(errHandler),
+    errHandler.split('\n').filter((l) => l.includes('sourceId')).join(' | '));
+
+  const recovered = src.slice(src.indexOf("map.on('sourcedata'"));
+  ok('the recovery half is filtered to the basemap too — a radar tile is not evidence the basemap returned',
+    /sourceId === BASEMAP_SOURCE/.test(recovered.slice(0, 400)));
+
+  /* A blind check is worse than none: prove the slices actually found the
+   * handlers rather than matching against empty strings. */
+  ok('this section actually read both handlers out of main.js',
+    errHandler.includes('status.tileError') && recovered.includes('status.tilesRecovered'));
+}
 
 /* ------------------------------------------------------------------------- */
 

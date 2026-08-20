@@ -973,6 +973,15 @@ drawing. **Do not re-litigate this into a disc.** The disc is what the blur was.
 - **512 px images into a 256 px tile slot** is the standard retina pairing, not
   a mismatch — one image pixel per device pixel on a 2x screen. `{size}` on this
   service is pixel DENSITY, not extent.
+- **A 404 or 204 from the upstream is served as a TRANSPARENT PNG, not an
+  error.** A tile pyramid answers 404 for a tile it has nothing to put in, which
+  over ocean is most of the world; forwarding that as a 502 made MapLibre raise
+  a source error per empty tile, dozens per viewport. **Only 404 and 204** — a
+  500, a 429 or a timeout stays an error, because collapsing those into a
+  transparent tile would paint a clear sky over a broken service. The blank is
+  cached for ten minutes rather than two days: an absence is not immutable the
+  way a frame's pixels are, and freezing a not-yet-materialised tile into a hole
+  for two days is the failure that would cause.
 - **`radar.nowcast` is ignored.** It is a forecast of where rain will be, and
   this layer's job is where rain IS. Drawing a prediction under a label reading
   "radar" is a §5 confidently-wrong answer.
@@ -990,6 +999,20 @@ drawing. **Do not re-litigate this into a disc.** The disc is what the blur was.
   permitted by the terms if it ever needs to change.
 - **Frames are older than NOAA's and that is accepted.** NOAA was roughly two
   minutes behind; RainViewer measured 355 seconds, on 600-second steps.
+
+**==> THE STATUS STRIP'S TILE BANNER IS ABOUT THE `basemap` SOURCE AND NO
+OTHER. <==** `main.js`, `BASEMAP_SOURCE`. MapLibre's `error` event carries a
+`sourceId`, and the map has several sources — the basemap, one image source per
+satellite disc, and radar's tile source. The handler used to raise "Basemap
+tiles are not loading" for a failure on ANY of them, so radar tiles streaming in
+put a red basemap outage on screen while the basemap drew perfectly. **Every
+other source already owns its own row** (`setImageryStatus`, in its own words,
+with re-tapping the segment as the retry); a second and wronger sentence
+elsewhere on screen helps nobody. The `sourcedata` recovery half is filtered the
+same way, and there for a sharper reason: a healthy radar tile is not evidence
+that the basemap came back, and would otherwise clear a real outage message.
+Guarded by `test-radar-coverage.mjs`, which reads the comparison out of
+`main.js`'s source text.
 
 **Radar no longer obeys the Cloud radius or fade sliders, and that is correct.**
 It has no disc to size and no rim to feather. They are satellite controls, which

@@ -82,6 +82,41 @@ const fail = (status, message) =>
 
 const int = (s) => (/^\d+$/.test(s) ? Number(s) : NaN);
 
+/** A 1x1 fully transparent PNG. MapLibre stretches it across the tile, which is
+ *  exactly right — the tile IS empty. */
+const BLANK_PNG = Uint8Array.from(
+  atob('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='),
+  (c) => c.charCodeAt(0),
+);
+
+/**
+ * The answer for a tile the upstream has nothing for.
+ *
+ * ==> CACHED FOR MINUTES, NOT DAYS, AND THAT IS THE ONE SUBTLE PART. <== Every
+ * other answer from this route is immutable, because a frame path fixes its
+ * pixels forever. An ABSENCE is not immutable in the same way — a 404 can be a
+ * tile the composite genuinely lacks, or it can be one the CDN had not
+ * materialised yet. Holding the second for two days would freeze a hole into
+ * the map for two days. Ten minutes is the source's own cadence, so at worst an
+ * empty tile is re-asked one frame later.
+ *
+ * NOT `s-maxage`, and not stored in `caches.default` either: this response is
+ * cheap to rebuild and must not sit in the shared edge slot where the immutable
+ * answer for the same key belongs.
+ */
+const blank = () =>
+  new Response(BLANK_PNG, {
+    headers: {
+      'Content-Type': 'image/png',
+      'Cache-Control': 'public, max-age=600',
+      'Access-Control-Allow-Origin': '*',
+      /* Named so an inspect route, or somebody reading response headers on a
+       * phone, can tell a real empty tile from a drawn one that happens to have
+       * no echoes in it. */
+      'X-Landfall-Radar': 'no-tile',
+    },
+  });
+
 export async function onRequestGet(context) {
   const url = new URL(context.request.url);
   const frame = url.searchParams.get('f') || '';
@@ -122,6 +157,20 @@ export async function onRequestGet(context) {
   } catch (e) {
     return fail(502, 'radar service did not respond');
   }
+
+  /* ==> A MISSING TILE IS NOT A FAILURE, AND TURNING IT INTO ONE PUT A RED
+   * BANNER ON THE APP. <== A tile pyramid answers 404 for a tile it has nothing
+   * to put in, which over ocean and outside the composite is most of the world.
+   * Forwarding that as a 502 made MapLibre raise a source error per empty tile,
+   * dozens per viewport — noise at best, and until the `sourceId` filter in
+   * main.js landed it was mis-reported as a basemap outage.
+   *
+   * ONLY 404 AND 204, AND THE NARROWNESS IS THE SAFETY PROPERTY. "Nothing here"
+   * is a real answer; a 500, a 429 or a timeout is not, and collapsing those
+   * into a transparent tile would paint a clear sky over a service that is
+   * actually broken — the §5 failure this layer keeps finding new roads to.
+   * Everything that is not an explicit "no content" stays an error. */
+  if (upstreamResponse.status === 404 || upstreamResponse.status === 204) return blank();
 
   if (!upstreamResponse.ok) return fail(502, `radar service returned ${upstreamResponse.status}`);
 

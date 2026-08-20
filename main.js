@@ -109,6 +109,11 @@ import { LAYER_TOGGLES, LAYER_PAIRS } from './config/layers.js';
  * already named the latch as the hazard it is; only the trigger got narrowed at
  * the time, not the latch itself. `tilesRecovered()` is the missing half.
  */
+/** The basemap's source id, as `map/style.js` names it. The status strip's tile
+ *  message is about THIS source and no other — see the note on `map.on('error')`
+ *  for the bug that came of not checking. */
+const BASEMAP_SOURCE = 'basemap';
+
 function makeStatusArbiter() {
   let tileError = false;
   let feed = null; // {message, tone} | null
@@ -321,10 +326,29 @@ function boot() {
    * on glass — a real fetch failure arrives as sourceId "basemap"); everything
    * else is our own bug and belongs in the console, where a bug belongs, not
    * in a status strip written for someone watching a hurricane.
+   *
+   * ==> AND IT HAS TO BE THE *BASEMAP'S* SOURCE, WHICH THIS DID NOT CHECK. <==
+   *
+   * Narrowing to "any source" was only ever half the fix. The map has several
+   * sources: the basemap, one image source per satellite disc, and — since
+   * radar became a tile layer — a radar source streaming thirty tiles a
+   * viewport. A failure in ANY of them raised a banner that names the BASEMAP
+   * specifically, which is the same false-and-specific message this comment was
+   * written about, arriving through a different door.
+   *
+   * Aaron caught it on glass: radar tiles loading put "Basemap tiles are not
+   * loading" on screen in red while the basemap was drawing perfectly. The
+   * satellite discs could always have done the same thing; radar just made it
+   * constant instead of occasional.
+   *
+   * EVERY OTHER SOURCE ALREADY OWNS ITS OWN ROW. `map/imagery.js` and
+   * `map/radar-layer.js` both report through `setImageryStatus`, in their own
+   * words, with re-tapping the segment as the retry. A second, wronger sentence
+   * about the same failure in a different part of the screen helps nobody.
    */
   map.on('error', (e) => {
     console.warn('[landfall] map error', e?.error || e);
-    if (e?.sourceId) status.tileError();
+    if (e?.sourceId === BASEMAP_SOURCE) status.tileError();
   });
 
   /* The other half of the latch. MapLibre has no "recovered" event, so the
@@ -350,7 +374,10 @@ function boot() {
    * Fires many times a second while tiles stream. The arbiter early-returns on
    * a boolean, so the cost when nothing is wrong is one property read. */
   map.on('sourcedata', (e) => {
-    if (e?.sourceId && e?.tile && e?.isSourceLoaded) status.tilesRecovered();
+    /* Same source filter as the error half, and for a sharper reason: a radar
+     * tile arriving is not evidence that the BASEMAP came back. Without this,
+     * one healthy radar tile would clear a genuine basemap outage message. */
+    if (e?.sourceId === BASEMAP_SOURCE && e?.tile && e?.isSourceLoaded) status.tilesRecovered();
   });
 
   /* ==> THE DRAWER, THE FIVE VIEWS AND THE HOME MARKER (app/views.js). <==
