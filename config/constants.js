@@ -5080,6 +5080,54 @@ export const IMAGERY = Object.freeze({
     maxTileZoom: 7,
 
     /**
+     * The shallowest zoom radar is drawn at.
+     *
+     * ==> THIS AND `boundsPadDeg` EXIST BECAUSE THE FIRST TILE BUILD TOOK THE
+     * APP DOWN. <== Shipped with a `maxzoom` and no floor and no bounds, and on
+     * a GLOBE that is a request flood: MapLibre shows a whole hemisphere at
+     * once, so it asked for the entire world pyramid — z0 through z7 — and
+     * re-asked on every pan. Cloudflare rate-limited the whole `/api/` path
+     * with 429s, which took SATELLITE down with it, because both go through
+     * the same origin. Aaron found it on glass as "toggling back doesn't work".
+     *
+     * Below z3 a radar tile spans 45° of longitude and the echoes inside it are
+     * invisible specks, so nothing is lost by not drawing — and a whole-planet
+     * globe view stops asking for anything at all.
+     */
+    minTileZoom: 3,
+
+    /**
+     * How far around the live storms radar is fetched, in degrees.
+     *
+     * ==> BOUNDS ARE THE REAL LIMITER, NOT THE ZOOM FLOOR. <== MapLibre only
+     * requests tiles inside a source's `bounds`, so this is what turns "radar
+     * everywhere on Earth forever" into a finite, cacheable set. Eight degrees
+     * is roughly 880 km at the equator — comfortably past the rainbands of even
+     * a large cyclone, which is the thing worth seeing beyond the eye.
+     *
+     * It also settles the open question from the tile pass honestly: a global
+     * radar layer was a judgement call about NOISE, and it turns out to have
+     * been a correctness problem as well. Clipping answers both.
+     */
+    boundsPadDeg: 8,
+
+    /**
+     * How many tile failures in a row before the layer gives up and says so.
+     *
+     * A rate limit does not announce itself — it arrives as dozens of identical
+     * 429s while the map keeps drawing whatever tiles it already had. That is a
+     * PARTIAL picture presented as a whole one, which over a storm is the §5
+     * failure. Past this count the layer hides itself and the row says radar is
+     * being throttled, which is true and actionable, rather than showing half a
+     * rain field with no caveat.
+     *
+     * Twelve rather than three: a viewport legitimately holds dozens of tiles
+     * and the odd one can fail on a flaky phone connection without anything
+     * being wrong.
+     */
+    maxTileFailures: 12,
+
+    /**
      * The zoom of the coverage box asked about each storm — one z5 tile, about
      * 626 km across at the equator.
      *

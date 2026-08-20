@@ -37,11 +37,15 @@
 
 import { IMAGERY, POLL } from '../config/constants.js';
 import { IMAGERY_OPACITY } from '../config/tokens.js';
-import { radarTilesTemplate, radarFramesUrl } from '../lib/imagery.js';
+import { radarTilesTemplate, radarFramesUrl, radarBounds } from '../lib/imagery.js';
 import { radarCoverage, radarCoverageMessage } from '../data/radar-coverage.js';
 
-const SOURCE_ID = 'radar-tiles';
-const LAYER_ID = 'radar-tiles-layer';
+/* ==> ONE SOURCE PER BOUNDING BOX, AND THERE CAN BE TWO. <== MapLibre's
+ * `bounds` is a plain [w,s,e,n] and cannot cross ±180, so a set of storms
+ * straddling the dateline needs two boxes to stay tight — see `radarBounds`.
+ * Indexing the ids is the whole of the machinery that needs. */
+const sourceId = (i) => `radar-tiles-${i}`;
+const layerId = (i) => `radar-tiles-layer-${i}`;
 
 /** Same anchor the satellite discs use: imagery draws ABOVE the land fill and
  *  BELOW the coastline glow, so cloud under the land polygon makes an eyewall
@@ -73,57 +77,121 @@ export function createRadarLayer(map, { onStatus } = {}) {
 
   /* --- the source ------------------------------------------------------------ */
 
-  function install(tiles) {
-    const existing = map.getSource(SOURCE_ID);
-    if (existing) {
-      /* ==> `setTiles`, NOT REMOVE-AND-ADD. <== Replacing the source drops
-       * every tile already decoded and on screen, so a ten-minute refresh would
-       * blink the whole layer out and fade it back in. `setTiles` keeps what is
-       * drawn until the replacement for each tile arrives. */
-      existing.setTiles([tiles]);
+  /** The boxes currently installed, as a string, so a storm that has merely
+   *  drifted does not tear the layer down and refetch everything. */
+  let installedKey = '';
+  let installedCount = 0;
+
+  /**
+   * Put the tile source(s) on the map.
+   *
+   * ==> `bounds` AND `minzoom` ARE NOT OPTIMISATIONS. THEY ARE THE FIX FOR AN
+   * OUTAGE. <== The first tile build had neither, and on a globe MapLibre shows
+   * a whole hemisphere at once — so it requested the entire world pyramid, z0
+   * through z7, and re-requested on every pan. Cloudflare answered 429 to the
+   * whole origin, which took SATELLITE down too, because both go through
+   * `/api/`. Anything that widens these is re-opening that.
+   *
+   * REBUILT ONLY WHEN THE BOXES ACTUALLY CHANGE. `bounds` is fixed at source
+   * construction in MapLibre — `setTiles` cannot move it — so a new box means a
+   * teardown. Keyed on the rounded boxes so ordinary storm drift, which arrives
+   * every poll, changes nothing and keeps the decoded tiles on screen.
+   */
+  function install(tiles, boxes) {
+    const key = boxes.map((b) => b.map((n) => n.toFixed(1)).join(',')).join('|');
+
+    if (key === installedKey && installedCount) {
+      /* Same ground, new frame: swap the tiles under every box and keep what is
+       * already drawn until the replacement for each tile arrives. */
+      for (let i = 0; i < installedCount; i++) {
+        const existing = map.getSource(sourceId(i));
+        if (existing) existing.setTiles([tiles]);
+      }
       return;
     }
 
-    map.addSource(SOURCE_ID, {
-      type: 'raster',
-      tiles: [tiles],
-      /* 256 against 512 px images is the retina trick, not a mismatch: the tile
-       * is laid out at 256 CSS px, so a 512 px image is one image pixel per
-       * device pixel on a 2x screen. */
-      tileSize: IMAGERY.radar.tileSize,
-      /* ==> DECLARED SO MAPLIBRE OVERZOOMS INSTEAD OF ASKING FOR NOTHING. <==
-       * Above z7 RainViewer has no tiles. Without this, zooming in past it
-       * requests addresses that do not exist and the layer goes blank at close
-       * range — which over a storm reads as no rain. With it, MapLibre stretches
-       * the z7 tile, which is honest: that IS the finest data there is. */
-      maxzoom: IMAGERY.radar.maxTileZoom,
-      attribution: '',
-    });
+    teardown();
+    installedKey = key;
+    installedCount = boxes.length;
 
     const before = map.getLayer(BEFORE_ID) ? BEFORE_ID : undefined;
-    map.addLayer(
-      {
-        id: LAYER_ID,
+    boxes.forEach((bounds, i) => {
+      map.addSource(sourceId(i), {
         type: 'raster',
-        source: SOURCE_ID,
-        paint: {
-          'raster-opacity': IMAGERY_OPACITY,
-          /* Radar is no longer feathered per-pixel — there is no rim to feather
-           * — so MapLibre's own cross-fade is the only one, and it is wanted
-           * here. It is what makes a frame change a dissolve rather than a
-           * flicker. */
-          'raster-fade-duration': 300,
-          'raster-resampling': 'linear',
+        tiles: [tiles],
+        /* 256 against 512 px images is the retina trick, not a mismatch: the
+         * tile is laid out at 256 CSS px, so a 512 px image is one image pixel
+         * per device pixel on a 2x screen. */
+        tileSize: IMAGERY.radar.tileSize,
+        /* ==> DECLARED SO MAPLIBRE OVERZOOMS INSTEAD OF ASKING FOR NOTHING. <==
+         * Above z7 RainViewer has no tiles. Without this, zooming in past it
+         * requests addresses that do not exist and the layer goes blank at close
+         * range — which over a storm reads as no rain. With it, MapLibre
+         * stretches the z7 tile, which is honest: that IS the finest data. */
+        maxzoom: IMAGERY.radar.maxTileZoom,
+        /* Below this a radar tile spans 45° and its echoes are invisible
+         * specks, so a whole-planet view asks for nothing at all. */
+        minzoom: IMAGERY.radar.minTileZoom,
+        bounds,
+        attribution: '',
+      });
+
+      map.addLayer(
+        {
+          id: layerId(i),
+          type: 'raster',
+          source: sourceId(i),
+          minzoom: IMAGERY.radar.minTileZoom,
+          paint: {
+            'raster-opacity': IMAGERY_OPACITY,
+            /* Radar is not feathered per-pixel — there is no rim — so
+             * MapLibre's own cross-fade is the only one, and it is wanted here.
+             * It makes a frame change a dissolve rather than a flicker. */
+            'raster-fade-duration': 300,
+            'raster-resampling': 'linear',
+          },
         },
-      },
-      before,
-    );
+        before,
+      );
+    });
   }
 
   function teardown() {
-    if (map.getLayer(LAYER_ID)) map.removeLayer(LAYER_ID);
-    if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID);
+    for (let i = 0; i < installedCount; i++) {
+      if (map.getLayer(layerId(i))) map.removeLayer(layerId(i));
+      if (map.getSource(sourceId(i))) map.removeSource(sourceId(i));
+    }
+    installedKey = '';
+    installedCount = 0;
   }
+
+  /* --- throttling ------------------------------------------------------------
+   *
+   * ==> A RATE LIMIT DOES NOT ANNOUNCE ITSELF. <== It arrives as dozens of
+   * identical 429s while the map goes on drawing whichever tiles it already
+   * had — a PARTIAL rain field presented as a whole one, which over a storm is
+   * §5's silent-wrong-answer. So the failures are counted, and past a threshold
+   * the layer hides itself and says what happened.
+   *
+   * Listened for here rather than in main.js's handler because that one is
+   * about the BASEMAP and deliberately ignores every other source (see the note
+   * on BASEMAP_SOURCE). Each layer owns its own row; this is radar owning its.
+   * ------------------------------------------------------------------------ */
+  let tileFailures = 0;
+
+  function onMapError(e) {
+    if (!on || !e?.sourceId || !String(e.sourceId).startsWith('radar-tiles')) return;
+    tileFailures++;
+    if (tileFailures === IMAGERY.radar.maxTileFailures) {
+      /* Torn down rather than left half-drawn. Reported once, on the crossing,
+       * so a continuing flood does not re-render the row per tile. */
+      teardown();
+      failure = 'throttled';
+      report();
+    }
+  }
+
+  map.on('error', onMapError);
 
   /* --- the frame ------------------------------------------------------------- */
 
@@ -161,12 +229,20 @@ export function createRadarLayer(map, { onStatus } = {}) {
 
     loading = false;
     failure = null;
-    /* Unchanged frame, unchanged tiles. Calling `setTiles` with the same
-     * template would make MapLibre re-request every tile it already holds. */
-    if (path !== frame) {
-      frame = path;
-      install(radarTilesTemplate(frame, IMAGERY.radar.requestPx));
+    frame = path;
+
+    /* ==> NO STORMS, NO TILES. <== Radar is clipped to what is being tracked,
+     * so an empty list is not "draw it everywhere" — it is draw nothing. The
+     * row says so rather than leaving a blank map to be read as no rain. */
+    const boxes = radarBounds(storms);
+    if (!boxes.length) {
+      teardown();
+      report();
+      return;
     }
+
+    tileFailures = 0;
+    install(radarTilesTemplate(frame, IMAGERY.radar.requestPx), boxes);
     report();
   }
 
@@ -215,6 +291,17 @@ export function createRadarLayer(map, { onStatus } = {}) {
        * picture, just not the newest one. Calling this "unavailable" over a
        * visible radar image would be its own kind of lying. */
       return onStatus({ state: 'error', message: 'Radar has stopped updating — tap to retry' });
+    }
+    if (failure === 'throttled') {
+      /* The layer is TORN DOWN by the time this renders, deliberately. Half a
+       * rain field with no caveat is worse than none with one. */
+      return onStatus({ state: 'error', message: 'Radar is being rate limited — tap to retry' });
+    }
+    /* Clipped to the storms, so nothing tracked means nothing drawn. Said out
+     * loud: an empty map with radar switched on would otherwise read as a
+     * clear sky over the whole planet. */
+    if (!storms.length) {
+      return onStatus({ state: 'empty', message: 'Radar follows the storms — none are being tracked' });
     }
 
     /* ==> THE COVERAGE SENTENCE, AND IT IS THE ONLY THING THIS ROW SAYS WHEN
@@ -280,6 +367,7 @@ export function createRadarLayer(map, { onStatus } = {}) {
       generation++;
       stopTimer();
       teardown();
+      tileFailures = 0;
       frame = null;
       failure = null;
       loading = false;
@@ -291,6 +379,15 @@ export function createRadarLayer(map, { onStatus } = {}) {
     update(list) {
       storms = list || [];
       if (!on) return;
+      /* The BOXES follow the storms, so a new list can mean new ground to
+       * fetch — unlike the tiles themselves, which only change with the frame.
+       * `install` keys on the rounded boxes, so ordinary drift is a no-op and
+       * only a real move rebuilds. */
+      if (frame) {
+        const boxes = radarBounds(storms);
+        if (!boxes.length) teardown();
+        else install(radarTilesTemplate(frame, IMAGERY.radar.requestPx), boxes);
+      }
       /* Verdicts for storms that have left go with them. Left behind, they
        * would keep voting in a sentence about a set they are not in — and since
        * that sentence is worst-case-first, a stale 'none' would keep raising a
@@ -307,6 +404,10 @@ export function createRadarLayer(map, { onStatus } = {}) {
       if (!on) return;
       generation++;
       failure = null;
+      /* Cleared, or a layer that has already been throttled once can never come
+       * back — the very next tile would re-trip the threshold. */
+      tileFailures = 0;
+      frame = null;
       loadFrame();
       refreshCoverage();
     },
@@ -316,6 +417,7 @@ export function createRadarLayer(map, { onStatus } = {}) {
       generation++;
       stopTimer();
       document.removeEventListener('visibilitychange', onVisibility);
+      map.off('error', onMapError);
       teardown();
       verdicts.clear();
     },

@@ -36,7 +36,7 @@ import path from 'node:path';
 import { IMAGERY } from '../config/constants.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-import { radarTilesTemplate, radarFramesUrl, radarCoverageUrl } from '../lib/imagery.js';
+import { radarTilesTemplate, radarFramesUrl, radarCoverageUrl, radarBounds } from '../lib/imagery.js';
 import { verdictFor, radarCoverageMessage } from '../data/radar-coverage.js';
 
 let failures = 0;
@@ -242,6 +242,136 @@ ok('the reassurance detector would catch the deleted "no rain" sentence',
    * handlers rather than matching against empty strings. */
   ok('this section actually read both handlers out of main.js',
     errHandler.includes('status.tileError') && recovered.includes('status.tilesRecovered'));
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. THE BOUNDS. THIS IS THE ONE THAT TOOK THE APP DOWN.
+ *
+ * ==> THE FIRST TILE BUILD SHIPPED WITH NO BOUNDS AND NO ZOOM FLOOR, AND ON A
+ * GLOBE THAT IS A REQUEST FLOOD. <== MapLibre shows a whole hemisphere at once,
+ * so it asked for the entire world pyramid — z0 through z7 — and re-asked on
+ * every pan, until Cloudflare answered 429 to the whole origin. That took
+ * SATELLITE down too, because both go through `/api/`, which is why it
+ * presented as "toggle back to satellite and it never comes back".
+ *
+ * So the property under test is not cosmetic: **a box must never be the whole
+ * planet unless the storms genuinely ring it.** Both bugs found while writing
+ * these were cases where it silently was.
+ * ------------------------------------------------------------------------- */
+const area = (b) => (b[2] - b[0]) * (b[3] - b[1]);
+const totalArea = (boxes) => boxes.reduce((n, b) => n + area(b), 0);
+const GLOBE = 360 * 170;
+
+eq('no storms means no boxes at all — not one global box',
+  JSON.stringify(radarBounds([])), '[]');
+eq('a non-array is the same', JSON.stringify(radarBounds(undefined)), '[]');
+eq('storms without usable positions are dropped',
+  JSON.stringify(radarBounds([{ lat: NaN, lon: 5 }, { lat: 5, lon: undefined }])), '[]');
+
+/* ==> ONE STORM MUST NOT PRODUCE A GLOBAL BOX. <== It did. The wrap-around gap
+ * is written with a modulo that reads 0 for a single longitude instead of a
+ * full circle, so the span became everything. */
+{
+  const boxes = radarBounds([{ lat: 25, lon: -85 }]);
+  ok('one storm makes exactly one box', boxes.length === 1, JSON.stringify(boxes));
+  ok('one storm covers a tiny fraction of the globe',
+    totalArea(boxes) < GLOBE * 0.01, `${JSON.stringify(boxes)} = ${totalArea(boxes).toFixed(0)}`);
+  ok('the box contains the storm',
+    boxes[0][0] < -85 && boxes[0][2] > -85 && boxes[0][1] < 25 && boxes[0][3] > 25);
+}
+
+/* ==> AND NEITHER MUST TWO STORMS IN THE SAME OCEAN. <== The eastward-walk
+ * comparison was inverted and turned two Atlantic storms into a global box. */
+{
+  const boxes = radarBounds([{ lat: 25, lon: -85 }, { lat: 20, lon: -60 }]);
+  ok('two storms in one basin make one box', boxes.length === 1, JSON.stringify(boxes));
+  ok('two storms in one basin stay small',
+    totalArea(boxes) < GLOBE * 0.03, `${JSON.stringify(boxes)}`);
+  ok('the box spans both', boxes[0][0] < -85 && boxes[0][2] > -60);
+}
+
+/* ==> THE DATELINE, WHICH IS THE BASIN THIS APP WATCHES MOST. <== MapLibre's
+ * bounds cannot cross ±180, so a naive min/max here is a global box in the west
+ * Pacific. Two boxes meeting at the antimeridian is the fix. */
+{
+  const boxes = radarBounds([{ lat: 15, lon: 175 }, { lat: 12, lon: -178 }]);
+  eq('a dateline pair splits into two boxes', boxes.length, 2);
+  ok('neither box crosses ±180', boxes.every((b) => b[0] >= -180 && b[2] <= 180 && b[0] < b[2]));
+  ok('the two boxes meet exactly at the antimeridian',
+    boxes.some((b) => b[2] === 180) && boxes.some((b) => b[0] === -180));
+  ok('a dateline pair stays small', totalArea(boxes) < GLOBE * 0.03, JSON.stringify(boxes));
+  ok('together they contain both storms',
+    boxes.some((b) => 175 >= b[0] && 175 <= b[2]) && boxes.some((b) => -178 >= b[0] && -178 <= b[2]));
+}
+
+/* Storms in genuinely opposite basins DO cost a wide span, and that is honest —
+ * but it still must be the SHORTER way round, not the whole circle. */
+{
+  const boxes = radarBounds([{ lat: 25, lon: -85 }, { lat: 15, lon: 135 }]);
+  ok('opposite basins take the short way round the globe',
+    totalArea(boxes) < GLOBE * 0.75, JSON.stringify(boxes));
+}
+
+/* ==> STORMS RINGING THE PLANET STILL SKIP THE WIDEST EMPTY STRETCH. <== The
+ * first version of this check asserted a global box and was WRONG — with four
+ * storms 90° apart the widest gap is a real 90° of empty ocean, and declining
+ * to fetch it is the function working, not failing. Asserting the reachable
+ * thing (every storm covered, less than everything fetched) rather than a
+ * guessed shape is the difference. */
+{
+  const lons = [0, 90, 180, -90];
+  const boxes = radarBounds(lons.map((lon) => ({ lat: 0, lon })));
+  ok('every storm in a ring is still inside a box',
+    lons.every((lon) => boxes.some((b) => lon >= b[0] && lon <= b[2])), JSON.stringify(boxes));
+  ok('a ring still declines the widest empty stretch',
+    totalArea(boxes) < 360 * (boxes[0][3] - boxes[0][1]), JSON.stringify(boxes));
+}
+
+/* Latitude is clamped to what Mercator can draw, whatever the padding does. */
+for (const lat of [-89, -84, 0, 84, 89]) {
+  const boxes = radarBounds([{ lat, lon: 0 }]);
+  ok(`latitude stays inside Mercator at ${lat}`,
+    boxes.every((b) => b[1] >= -86 && b[3] <= 86 && b[1] < b[3]), JSON.stringify(boxes));
+}
+
+/* ==> AND THE ZOOM FLOOR, THE OTHER HALF OF THE FIX. <== */
+ok('there is a zoom floor below which radar is not drawn',
+  Number.isInteger(IMAGERY.radar.minTileZoom) &&
+  IMAGERY.radar.minTileZoom > 0 &&
+  IMAGERY.radar.minTileZoom < IMAGERY.radar.maxTileZoom,
+  `minTileZoom is ${IMAGERY.radar.minTileZoom}`);
+
+ok('the layer gives up after a bounded number of tile failures',
+  Number.isInteger(IMAGERY.radar.maxTileFailures) && IMAGERY.radar.maxTileFailures > 0);
+
+/* ==> THE LAYER FILE MUST ACTUALLY USE ALL THREE, AND THESE CHECKS HAVE TO BE
+ * ANCHORED TO SURVIVE BEING WRONG. <== The first spelling searched the WHOLE
+ * file for `bounds,` and for `minzoom:`, and mutation-testing caught it being
+ * useless: `boxes.forEach((bounds, i) =>` satisfies the first, and the layer's
+ * own `minzoom` satisfies the second even with the SOURCE's deleted. Both
+ * passed against a file that would have reproduced the outage. So each
+ * assertion is now scoped to the exact object literal it is about. */
+{
+  const src = fs.readFileSync(path.join(ROOT, 'map/radar-layer.js'), 'utf8');
+  const addSourceAt = src.indexOf('map.addSource(');
+  const addLayerAt = src.indexOf('map.addLayer(');
+  ok('this section found both calls in the layer file',
+    addSourceAt > 0 && addLayerAt > addSourceAt && src.includes('createRadarLayer'));
+
+  const sourceCfg = src.slice(addSourceAt, addLayerAt);
+  const layerCfg = src.slice(addLayerAt, addLayerAt + 900);
+
+  ok('the SOURCE declares bounds — without it MapLibre fetches the whole world',
+    /^\s*bounds,\s*$/m.test(sourceCfg), sourceCfg.split('\n').filter((l) => /bounds/.test(l)).join(' | '));
+  ok('the SOURCE declares a minzoom floor',
+    /minzoom: IMAGERY\.radar\.minTileZoom/.test(sourceCfg));
+  ok('the SOURCE declares a maxzoom so overzoom replaces 404s',
+    /maxzoom: IMAGERY\.radar\.maxTileZoom/.test(sourceCfg));
+  ok('the LAYER carries the same zoom floor',
+    /minzoom: IMAGERY\.radar\.minTileZoom/.test(layerCfg));
+  ok('the layer counts tile failures and gives up', /maxTileFailures/.test(src));
+  ok('a throttled layer is torn down rather than left half drawn',
+    /throttled/.test(src) && /teardown\(\);\s*\n\s*failure = 'throttled'/.test(src));
 }
 
 /* ------------------------------------------------------------------------- */

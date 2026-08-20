@@ -1018,10 +1018,46 @@ Guarded by `test-radar-coverage.mjs`, which reads the comparison out of
 It has no disc to size and no rim to feather. They are satellite controls, which
 is what the "Cloud radius" label has said all along.
 
-**Radar covers the whole globe rather than a ring around each eye.** Turn it on
-over a Pacific typhoon and there is live rain over Louisiana too. That is a
-knowing departure from the disc model — the alternative is the blur — and if it
-ever reads as noise the fix is clipping the layer, not returning to one image.
+**==> RADAR IS CLIPPED TO THE LIVE STORMS, AND THAT IS A CORRECTNESS RULE, NOT
+A TASTE ONE. <==** `lib/imagery.js`'s `radarBounds()`, `IMAGERY.radar.boundsPadDeg`
+(8°), `minTileZoom` (3).
+
+The tile layer first shipped GLOBAL and unbounded, and it took the app down.
+MapLibre only requests tiles inside a source's `bounds` — with none declared, and
+a GLOBE showing a whole hemisphere at once, it asked for the entire world pyramid
+(z0 through z7, confirmed in the console) and re-asked on every pan. Cloudflare
+rate-limited the origin with 429s, **which took SATELLITE down with it**, because
+both go through `/api/`. It presented on glass as "toggle back to satellite and
+it never comes back", and closing the PWA appeared to fix it only because the
+limit window reset.
+
+- **`bounds` is the real limiter; the zoom floor is secondary.** Bounds turn
+  "radar everywhere on Earth forever" into a finite, cacheable set.
+- **`radarBounds()` returns UP TO TWO BOXES because MapLibre's `bounds` cannot
+  cross ±180.** A naive min/max over longitudes makes a global box out of two
+  storms either side of the dateline — in the basin this app watches most. The
+  span is found by locating the widest EMPTY gap in longitude and taking its
+  complement, splitting at the antimeridian when needed. **Storms ringing the
+  planet still skip the widest empty stretch**; only a genuine ring costs a
+  global box.
+- **An empty storm list yields NO boxes, and the layer draws nothing.** Not one
+  global box. The row says "Radar follows the storms — none are being tracked",
+  because a blank map with radar switched on would otherwise read as a clear sky
+  over the whole planet.
+- **`bounds` is fixed at source construction** — `setTiles` cannot move it — so
+  a changed box means teardown and reinstall. Keyed on the rounded boxes so
+  ordinary storm drift, which arrives every poll, rebuilds nothing.
+- **The layer counts tile failures and gives up at `maxTileFailures` (12).** A
+  rate limit does not announce itself; it arrives as dozens of 429s while the map
+  goes on drawing whatever tiles it already had — a partial rain field presented
+  as a whole one, which over a storm is §5's silent-wrong-answer. Past the
+  threshold the layer tears itself down and the row says it is being throttled.
+  Radar listens for its own source errors here; `main.js`'s handler is about the
+  basemap only and deliberately ignores every other source.
+- `test-radar-coverage.mjs` holds all of this, and its source-text assertions are
+  **anchored to the specific object literal** — a first version searched the whole
+  file, matched `boxes.forEach((bounds, i)` and the layer's own `minzoom`, and
+  passed against code that would have reproduced the outage.
 
 **==> THE COVERAGE MASK IS NOW THE ONLY EMPTINESS SIGNAL, AND THE §5 CONTRACT
 HANGS ENTIRELY FROM IT. <==** `/api/imagery/radar-coverage`,

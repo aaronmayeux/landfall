@@ -75,12 +75,14 @@ site because it is what their site does. Compare `?replay=ida` against
 RainViewer's own live radar map at the same zoom; they should now be
 indistinguishable on detail.
 
-**2. IS A GLOBAL RADAR LAYER RIGHT, OR IS IT NOISE?** The change that bought the
-sharpness also deleted the disc, so radar is now everywhere at once — turn it on
-over a Pacific typhoon and there is live rain over Louisiana. **That is the one
-part of this pass that is a judgement rather than a fix.** If it reads as a
-second basemap rather than as weather, the answer is to CLIP the layer to the
-storms, not to go back to one image per eye. Going back is the blur.
+**2. IS THE CLIP TIGHT ENOUGH, OR TOO TIGHT?** Radar is no longer global — it is
+fetched only within 8° of the live storms, above zoom 3. **That was not a taste
+call in the end: unbounded tiles on a globe made MapLibre request the whole world
+pyramid and Cloudflare 429'd the origin, which took satellite down too.** §4.9
+records it. What is left to judge is the padding: 8° is about 880 km, meant to
+reach past the rainbands. If radar visibly stops short of weather you want to
+see, that constant is the dial. With no storms tracked, radar draws nothing and
+says so.
 
 **3. THE PALETTE, still unjudged.** "Universal Blue" is the only scheme offered.
 Sampled off real weather it runs cyan → blue → orange → red → magenta — the
