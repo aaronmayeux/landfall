@@ -1662,6 +1662,15 @@ button.drawer-identity:focus-visible {
 }
 .detail-ww li { display: flex; align-items: center; gap: var(--space-snug); }
 
+/* ==> THE STORM LIST'S CORRECTION IS WRONG HERE, THE SAME WAY IT WAS WRONG IN
+ * THE HEADER (see `.drawer-identity-dot` below). <== `.row-swatch` carries
+ * `margin-top: 5px` to pin itself to the NAME's line inside the list row's
+ * two- and three-line stack. These rows are single-line and centred, so that
+ * correction lands as a 5px drop on a 12px disc. Cancelled here rather than by
+ * declaring a third dot, because unlike the header this IS the same dot doing
+ * the same job — only the surrounding stack differs. */
+.detail-ww .row-swatch { margin-top: 0; }
+
 /* ==> QUIETER AND SMALLER THAN THE LABELS ABOVE IT, DELIBERATELY. <== The
  * order named in the list is real and in force; the only thing this line
  * qualifies is whether we could draw it. Sized to match the trailing tag it

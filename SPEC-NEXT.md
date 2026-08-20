@@ -1748,3 +1748,71 @@ HURDAT2 historical analogs (a Home feature, not a storm feature), NDBC buoys and
 CO-OPS tide gauges (US coastal only), and ECMWF Open Data ensemble tracks
 (`data.ecmwf.int`, genuinely the best global model product and genuinely BUFR,
 which needs a binary decoder this project has no place to run).
+
+## 52. What a boot costs on each platform
+
+**Measured 2026-08-19 against 808 clean sessions on current code** — D1
+`landfall-telemetry`, `timings_ok = 1`, rows carrying `t_scripts_ms`, Aaron's own
+device excluded. **Medians, not averages**, because averages were hiding a tail.
+
+| ms | iPhone (528) | Android (196) | **Windows (56)** | Mac (13) | Linux (15) |
+|---|---|---|---|---|---|
+| First paint | 222 | 528 | **684** | 204 | 308 |
+| Libraries finished | 667 | 1,087 | **1,446** | 567 | 852 |
+| Storms on screen | 1,226 | 1,552 | **1,991** | 1,219 | 1,638 |
+| Blocked during boot | *not measured* | 391 | **323** | 0 | 512 |
+
+**==> WINDOWS IS SLOW BEFORE OUR CODE RUNS, AND THAT REDIRECTS THE OBVIOUS FIX.
+<==** Windows trails an iPhone by 765 ms to storms on screen. **462 of that is
+already gone at first paint**, before any of our JavaScript matters. 317 is
+downloading and parsing the two vendored libraries. **Our own map-and-data stage
+costs Windows 14 ms LESS than an iPhone** — that stage is identical everywhere.
+And Windows sits blocked for *less* time during boot than Android does.
+
+So moving Three.js off the boot path — the fix this table was gathered to
+justify — would help **Android** more, and the most it can win anywhere is a
+slice of 317 ms on the platform with the least blocking. Ten modules import
+`THREE`. Not worth the restructuring on this evidence.
+
+**The iOS column is an instrumentation gap, not a result.** Safari implements no
+long-task observer, so every iOS zero reads "not measured". Do not compare that
+row across platforms.
+
+*Superseded figures, kept so they are not re-derived: an earlier read put Windows
+at 2,764 / 4,670 off 21 sessions and overstated the gap by roughly half. Windows
+is 1.6× an iPhone, not 2.2×.*
+
+## 53. JTWC's `.tcw` — a better source than the product we parse
+
+**Read 2026-08-19 on two storms at one hour (Saudel 17W, Lala 01C), archived
+hourly under `latest/jtwc/`. NOT YET BUILT.** Four separable wins, in descending
+order of confidence:
+
+1. **`resolveDtg` and `nextDtgAfter` in `functions/api/jtwc/storms.js` stop being
+   necessary.** They exist only because the plain warning text stamps `DDHHMM`
+   with no month or year, so the relay guesses the calendar against read time and
+   guards the year rollover. The `.tcw` header carries a full `2026081912` and
+   every forecast step is a plain offset from it. That is a class of bug removed,
+   not merely lines deleted.
+2. **Forecast wind footprints outside NHC.** Per-quadrant radii at 34/50/64 kt out
+   to 120 hours — the same shape `lib/windswath.js` already renders from NHC layer
+   15, which today has no non-American half.
+3. **A nine-day past track with intensity on every step**, against the twelve
+   centre dots GDACS gives the same storm.
+4. **Possibly one fetch where the app currently makes two**, since the `.tcw`
+   embeds a full warning text. **This is NOT a drop-in swap:** its subject line
+   reads `SUBJ:` where the plain product reads `SUBJ/`, and that character is what
+   `parseSubject` keys on in the relay AND in `lib/advisory.js`, held together by
+   a test. `web.txt` is archived beside it so the rest of the comparison is a diff.
+
+**==> DO NOT WRITE THE PARSER OFF THIS SNAPSHOT. <==** Two storms, one hour, one
+hemisphere. A formation alert's `.tcw` carries no forecast rows and no radii at
+all, and says ALERT where a storm says WARNING — so the layout varies by system
+type before any basin question is asked. Wait for a Southern Hemisphere storm
+inside the 72-hour archive window and write it against a corpus, the way SHIPS
+was done.
+
+**What this does NOT contain, settled and not to be re-asked:** past wind extent.
+The `.tcw`'s best track repeats each past hour once per wind threshold the storm
+met, with the radius columns stripped out — which is the proof the omission is
+deliberate rather than an oversight. See §45.3.

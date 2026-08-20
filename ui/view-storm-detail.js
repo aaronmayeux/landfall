@@ -801,7 +801,7 @@ export function createStormDetailView({
       : '';
     return `<ul class="detail-ww">${legend
       .map(
-        (e) => `<li><span class="row-swatch" style="background:${e.color}"></span>${esc(e.label)}</li>`
+        (e) => `<li><span class="row-swatch" style="--swatch:${e.color}"></span>${esc(e.label)}</li>`
       )
       .join('')}</ul>${note}`;
   }
@@ -856,7 +856,7 @@ export function createStormDetailView({
       .sort((a, b) => b[0] - a[0])
       .map(([kt, kmh]) => {
         const label = kmh != null ? `${WIND_LABEL[kt]} (${Math.round(kmh)} km/h)` : WIND_LABEL[kt];
-        return `<li><span class="row-swatch" style="background:${windColor(kt)}"></span>${esc(label)}</li>`;
+        return `<li><span class="row-swatch" style="--swatch:${windColor(kt)}"></span>${esc(label)}</li>`;
       })
       .join('');
 

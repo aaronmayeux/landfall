@@ -297,6 +297,14 @@ outright — and when **the wind is on the house now**, because the countdown's
 version of that moment is the future tense with "now" bolted onto it, and that
 is a weaker thing to read at the point it matters most.
 
+**A THIRD EXCEPTION, RULED ON RATHER THAN ARGUED.** On a near storm the `Where
+it is` section and the countdown's first row say the same words, and that
+survives on purpose: the countdown is the chart's accessible twin, so it has to
+be self-contained or a screen-reader user loses the whole of it. It was carried
+as an open question for a while on the theory that seeing it on glass might change
+the answer. It did not — Aaron ruled it stays as is. Do not re-cut it as a
+duplication; it is the one place where saying a thing twice is the feature.
+
 **The strip's three lines are ROWS OF ONE GRID, not three stacks side by side.**
 `grid-auto-flow: column` over three declared rows, with each cell's wrapper set
 to `display: contents` so its label, figure and note become items of the strip's
@@ -1860,6 +1868,23 @@ color as `--dot-ink`, and both views render it.
 `tools/drawer-head-check.mjs` asserts a live glow with real ink in it on both
 drawers, so a caller that forgets to pass the color fails loudly instead of
 shipping a flat disc.
+
+**==> THE SAME CONSTRUCTION WAS IN TWO MORE PLACES, AND THAT IS WHY THE RULE IS
+NOW A GATE RATHER THAN A NOTE. <==** The watch/warning legend and the wind-field
+legend in `ui/view-storm-detail.js` were built the same way — colour as an inline
+`background`, so the same dead glow, plus the full 5px drop rather than the
+header's 2.5px, because `.detail-ww li` centres a single line. Both now pass
+`--swatch`, and `.detail-ww .row-swatch` cancels the margin. **The cancel is
+deliberate where the header's separate dot was deliberate**: unlike the header,
+this IS the same dot doing the same job, and only the surrounding stack differs.
+
+`tools/test-swatch-contract.mjs` is the gate. It is static rather than a browser
+check, because the bug has no runtime symptom to observe — an inline `background`
+is perfectly valid CSS referencing no variable at all, so `test-css-vars.mjs`
+cannot see it either. The failure IS the absence of a name, so the rule is stated
+positively: an element carrying a glow class is handed a custom property, never a
+`background`. Adding a fourth glowing dot means adding its class to
+`GLOW_CLASSES`, which is the point.
 
 **A chip does not carry another row's layout.** `.home-chip` is pushed to the
 right end of the quiet state's threat row, and that push belongs to the row —
