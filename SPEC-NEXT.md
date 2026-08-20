@@ -1791,10 +1791,10 @@ that the chart trims a zero-width front and breaks rather than bridges a
 zero-width hole. Reintroducing either half of the bug fails the suite: the
 fail-closed path takes out three assertions, the zero-width drawing four.
 
-**GLASS: NOT YET CONFIRMED.** Saudel is the storm to look at, and what to check
-is that each band now begins where the field does rather than partway through
-the frame, that nothing coloured runs along the storm's own track, and that no
-two band edges cross.
+**Confirmed on glass 2026-08-20, on Saudel.** Each band begins where its field
+does, nothing coloured runs along the storm's own track, and no two band edges
+cross. The dated rail arrivals were confirmed in the same pass — the longer
+labels do not cost enough room to be worth shortening.
 
 
 ## 51.8 A marker on the deepest towns — approved, not built, second pass

@@ -59,37 +59,6 @@ traded for.
 
 ## IN FLIGHT
 
-**GLASS: SAUDEL'S WIND BANDS, AFTER §49.17.** Open Saudel on the home screen
-with a home pin near the track and look at the chart. Three things are new:
-
-**1. Every band now starts where its field does.** They were starting late —
-39 mph twelve hours late, 58 mph twenty-four, 74 mph thirty-six — because
-GDACS draws a wind field's dead flank by collapsing that quarter of the shape
-onto the storm's dot, and our reader took an empty quarter to mean the whole
-shape was unreadable and discarded the hour. **Check the bands begin near the
-left of the frame rather than partway across it.**
-
-**2. Nothing coloured should run along the storm's own track.** A field GDACS
-publishes at zero is real data and is no longer painted, because a zero-width
-band is a stroke lying on the centre line and reads as hurricane wind AT the
-centre. **If a band still hugs the track, that is the fix not landing.**
-
-**3. No two band edges should cross.** The 58 and 74 mph edges crossing each
-other in the screenshots was the straight-line bridge across a discarded hour,
-and it is impossible for nested fields. If it is still there, something else
-is wrong and it is not this.
-
-**Also worth a glance: the arrival times on the rail now name the day** when
-the arrival is not today — "Fri 7:14 AM" rather than "7:14 AM" on a chart
-spanning five days. Question for glass: on a narrow bar the label may fall
-back to sitting above the bar instead of beside it more often than before.
-**Is that worse than not knowing which day?** If it is, the fallback is to
-name the day only past 24 hours out.
-
-*(TWO-C-26 had the same fault in the MIDDLE of its run rather than at the
-start, so this is not a Saudel quirk. LALA-26's missing hours are NOT this —
-GDACS genuinely publishes no bands that far out, and that is correct.)*
-
 **§48.10 IS STILL UNSETTLED, AND THE ONE THING THAT SETTLES IT IS AN NHC STORM
 NEAR A HOME PIN.** The storm drawer's Rainfall section now holds NHC's area
 range and the house's point total, one above the other, separated by a hairline,
