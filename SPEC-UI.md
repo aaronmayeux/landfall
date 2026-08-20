@@ -2593,15 +2593,25 @@ undeclared name cannot be invisible again.
 
 ### 48.9 Rainfall — the storm drawer's section
 
-A section titled **Rainfall**, between `Wind field` and `Environment`. The
-advisory paragraph, rewrapped, in NHC's words, under a line saying so. The four
-states of §48.2 and nothing else. **No number is extracted, so nothing here can
-disagree with NHC.**
+A section titled **Rainfall**, between `Wind field` and `Environment`, holding
+**two blocks that answer two different questions**:
 
-A GDACS storm is answered without a fetch: *Not published for storms in this
-basin.* — worded identically to §47.6's Environment sentence on purpose, so a
-reader who meets both learns one sentence rather than two. A silenced or ended
-storm gets the panel's withheld note like every other section.
+| | what it is | whose | which storms |
+|---|---|---|---|
+| **What NHC says** | a range across an AREA | NHC's own paragraph | NHC only |
+| **At your house** (§48.17) | a total for a POINT | the grid, via §48.7/§48.15 | every storm |
+
+The first block is the advisory paragraph, rewrapped, in NHC's words, under a
+line saying so. The four states of §48.2 and nothing else. **No number is
+extracted from it, so nothing here can disagree with NHC.**
+
+A GDACS storm's first block is answered without a fetch: *Not published for
+storms in this basin.* — worded identically to §47.6's Environment sentence on
+purpose, so a reader who meets both learns one sentence rather than two. Since
+§48.17 that sentence is no longer the whole section: the house block answers for
+every basin, so it reads as one source declining rather than as the app having
+nothing to say. A silenced or ended storm gets the panel's withheld note like
+every other section, and that gate covers both blocks.
 
 **==> IT COSTS THE ADVISORY FETCH, AND THAT IS A REAL CHANGE. <==** §48.2's "no
 new network" is true of the SOURCE and not of the TIMING. The Advisory section
@@ -2621,10 +2631,26 @@ and Kahului sits off that axis. At Hilo the two agree — the advisory says 10 t
 **==> THIS IS THE ONE REAL DESIGN RISK IN §48. <==** A reader whose home is on
 Maui, looking at the home drawer's "about 3 inches" and then at the storm
 drawer's "8 to 12 inches across eastern Maui", will conclude the app is broken.
-Two things are built for this and nothing else: the home section is titled and
-worded about the HOUSE, and its closing line NAMES THE POINT NWS is forecasting
-for. Whether that is enough is a glass question and it needs a storm near a
-home to ask — **it is not settled.**
+
+**==> §48.17 PUT BOTH FIGURES ON ONE SCREEN ON PURPOSE, AND THAT IS THE FIX
+RATHER THAN THE PROBLEM GETTING WORSE. <==** Splitting them across two drawers
+never resolved the disagreement; it only made it slower to find, and left the
+reader to reconcile two numbers from memory. Four things are built for this and
+nothing else:
+
+- each block sits under a heading naming what it is a forecast **for** — an
+  area, or the house;
+- the house block's closing line **names the point** (§48.12);
+- a hairline rule separates the two, so they read as two answers before a word
+  of either is read;
+- **when and only when both are on screen**, one line between them says the
+  figures above are for the heaviest band across a whole area while this one is
+  for a single point, so the two can differ and both be right. Under a GDACS
+  storm there is no range above to compare against and the line is suppressed —
+  explaining a disagreement the reader cannot see is its own confusion.
+
+Whether that is enough is a glass question and it needs a storm near a home to
+ask — **it is not settled.**
 
 
 ### 48.12 The provenance line, on both paths
@@ -2651,6 +2677,60 @@ retry it would be inviting them to wait for an answer that never comes.
 NWS not forecasting here was the whole answer. Since §48.14 the global model
 covers the planet, so reaching that state means both sources declined; the
 sentence says so and still carries no Retry.
+
+### 48.17 At your house — the point forecast in the storm drawer
+
+The second block of §48.9's Rainfall section. A total for the reader's home,
+under the heading **At your house**, on **every storm from every source** —
+this is the first rainfall surface that does not care which agency is tracking
+the storm.
+
+**==> IT IS THE HOME DRAWER'S OWN RECORD, NOT A SECOND FETCH. <==**
+`data/rainfall.js` holds exactly one answer, keyed by the rounded home
+coordinates, and both surfaces read it through **one shared facade** built in
+`app/views.js`. Fetching independently would have cost nothing in bytes and
+everything in trust: two calls can land either side of a grid update, and an
+app showing 2.9 in on one screen and 3.2 in on another is an app the reader
+stops believing. One record, one facade, one number.
+
+**==> AND THE FIGURE IS NOT ATTRIBUTED TO THE STORM. <==** A gridded QPF is all
+rain from all causes. Wording it as "this storm will bring" is a claim the
+source does not make and cannot support — a stalled front can put four inches on
+a house while the hurricane on screen goes out to sea. The closing line says
+*Total rain from all causes, not this storm alone*, rather than leaving the
+block's position under a storm's name to imply it.
+
+**Three cases render nothing at all, and none of them is §5's silence.** §5
+governs a source that failed and must say so. These are questions nobody asked:
+no home is set, the facade is not wired into this view, or the storm never comes
+near home. A heading over an explanation of why a reader with no home pin has no
+house forecast is noise on the one screen where noise costs most. Every state
+where a source **was** asked is written out — checking, failed with a Retry,
+not covered without one, and unreadable without one.
+
+**==> THE RANGE GATE REUSES `APPROACH.relevanceNm` AND INVENTS NOTHING. <==**
+That constant already answers "is this storm in the reader's world at all" for
+the Home block's three sentences. A second threshold would mean a storm that is
+"never near home" three inches up the panel and near enough to earn a rainfall
+figure three inches down. `lib/rainfall.js` `houseRainInRange()` checks **both**
+the current distance and the forecast closest approach, and the nearer one wins:
+a storm 1,800 nm out whose track closes to 400 is one the reader cares about
+now, and gating on where it happens to be at this moment would hide the figure
+for exactly the days it matters most. Nothing known is **not** near — an
+unknown must never render as an answer.
+
+**The cost is one small request this panel did not make before, and only one.**
+The client holds the answer for `RAIN.clientTtlMs`, so a reader who has already
+opened the dashboard pays nothing, and a reader stepping through six storm
+drawers pays once. What is genuinely new is the reader who never opens the
+dashboard: for them it is one JSON fetch per fifteen minutes, gated on a home
+being set **and** the storm being near it.
+
+**The Retry is scoped and the flood alerts are not repeated here.** The button
+carries `data-retry="rain-house"` so the panel's blanket `.detail-retry` binding
+cannot also fire a geometry refetch, and it evicts before refetching so a cached
+failure cannot answer a press. Flood warnings in force stay in the home drawer
+(§48.6) and are not said twice.
 
 ### 51.6 Coastal flooding — the home drawer's section
 

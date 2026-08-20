@@ -31,8 +31,9 @@ const SAMPLES = path.join(ROOT, 'samples/rain');
 
 const {
   parseDuration, parseInterval, readSeries, windowTotalMm, windowBlocks,
-  peakBlock, formatRainTotal, floodAlerts, rainSummary,
+  peakBlock, formatRainTotal, floodAlerts, rainSummary, houseRainInRange,
 } = await import(path.join(ROOT, 'lib/rainfall.js'));
+const { APPROACH } = await import(path.join(ROOT, 'config/constants.js'));
 const { projectPoint, stripAlerts } =
   await import(path.join(ROOT, 'functions/api/nws/rainfall.js'));
 const { advisoryRainfall, hazardsBlock, rewrapProduct, extractNhcProduct } =
@@ -462,6 +463,47 @@ console.log('\nMutations — each bug must change the answer');
    * holding one space. */
   eq('a space-only line separates paragraphs',
     rewrapProduct('one line\nwrapped\n \nsecond para').length, 2);
+
+  /* ------------------------------------------------------------------------
+   * §48.17 — WHEN THE HOUSE FIGURE BELONGS BESIDE A STORM.
+   *
+   * ==> THE FAILURE THIS GUARDS IS NOT A WRONG NUMBER. <== The house forecast
+   * is true for every storm on the globe, because it is about a PLACE. Print
+   * it under a typhoon 6,000 nm away and it is a correct figure in a position
+   * that implies a connection nobody claimed. There is no exception to catch
+   * and no shape to the failure, which is exactly why it needs a test.
+   *
+   * The threshold is read from APPROACH rather than typed, so a suite that
+   * passes cannot be one that agreed with a number somebody changed.
+   * ---------------------------------------------------------------------- */
+  const R = APPROACH.relevanceNm;
+
+  truthy('a storm sitting on top of home is in range',
+    houseRainInRange({ distanceNm: 12 }));
+  truthy('a storm on the far side of the planet is not',
+    !houseRainInRange({ distanceNm: 6000 }));
+
+  /* THE BOUNDARY IS INCLUSIVE, and both sides of it are asserted — a gate
+   * tested only well inside its range passes for an off-by-one that swaps
+   * `<=` for `<`. */
+  truthy('exactly at the threshold counts as near', houseRainInRange({ distanceNm: R }));
+  truthy('one mile past it does not', !houseRainInRange({ distanceNm: R + 1 }));
+
+  /* ==> THE CASE THE FEATURE EXISTS FOR. <== A storm far out whose forecast
+   * track closes on home. Gating on where it is at this moment would hide the
+   * figure for exactly the days it matters most. */
+  truthy('a far storm closing on home is in range',
+    houseRainInRange({ distanceNm: R + 900, approachNm: 400 }));
+  truthy('a far storm that stays far is not',
+    houseRainInRange({ distanceNm: R + 900, approachNm: R + 800 }) === false);
+
+  /* NO NUMBERS MEANS NO. The track has not landed yet and there is no
+   * distance either — an unknown must not be treated as near, or the block
+   * renders under every storm during the seconds before geometry arrives. */
+  truthy('nothing known is not in range', !houseRainInRange({}));
+  truthy('no argument at all is not in range', !houseRainInRange());
+  truthy('a non-finite distance is not in range',
+    !houseRainInRange({ distanceNm: NaN, approachNm: null }));
 }
 
 console.log(

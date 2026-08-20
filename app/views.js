@@ -541,6 +541,39 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    *  moves, so risk can never be inferred from selection state. */
   const markArea = (id) => setGenesisSelection(map, id);
 
+  /**
+   * The point-rainfall facade. ui/ never imports data/ (§12), and this is
+   * deliberately the whole of it: a view awaits an answer and renders one of
+   * four states. No fetching, no caching, no coverage branching up there.
+   *
+   * ==> ONE OBJECT, HANDED TO BOTH SURFACES. <== The home dashboard's Rain
+   * section (§48.8) and the storm drawer's house block (§48.17) are both given
+   * THIS constant rather than two literals that happen to match. They already
+   * share one cached record in `data/rainfall.js`; sharing the facade too is
+   * what stops a later edit — a counter, an eviction rule, a coverage
+   * fallback — from landing on one caller and not the other, which is exactly
+   * how two screens start showing two different totals for one house.
+   *
+   * Counted at the RETRY only. A section that fetches when it is drawn says
+   * nothing about what anybody wanted; a button somebody pressed does. Both
+   * retries answer to the one `rain` name — they are the same fetch failing,
+   * and splitting them would need a new column to learn nothing.
+   *
+   * ==> THE NAME IS AN ALLOWLIST MEMBER, NOT A FREE STRING. <== One counter
+   * for every Retry in the app plus one field naming the buttons pressed — see
+   * `lib/usage.js` RETRY_BUTTONS. A name that is not on that list still counts
+   * the press and loses the label, so a typo here costs a label, never a
+   * column.
+   */
+  const rainFacade = {
+    loadRainfall: (home) => loadRainfall(home),
+    retryRainfall: (home) => {
+      countRetry('rain');
+      evictRainfall();
+      return loadRainfall(home);
+    },
+  };
+
   const selectArea = (area) =>
     runSelectArea(area, {
       count: countAction,
@@ -628,6 +661,9 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * the switch with the panel open updates it in place. */
       ribbonOn: () => toggleOn('environment'),
     },
+    /* The house block's forecast (§48.17). THE SAME OBJECT the dashboard's
+     * Rain section gets — see `rainFacade` above for why that matters. */
+    rain: rainFacade,
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());
 
@@ -882,27 +918,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * `frameHome` owns the whole decision, including declining to move. */
     onFrameHome: ({ storm }) => frameHome(storm),
     /* Rainfall at the house (§48.8). The same facade shape every other
-     * injected data path on this panel uses — ui/ never imports data/ (§12) —
-     * and deliberately the whole of it: the view awaits an answer and renders
-     * one of four states. No fetching, no caching, no coverage branching up
-     * there.
-     *
-     * Counted at the RETRY only. A section that fetches when it is drawn says
-     * nothing about what anybody wanted; a button somebody pressed does.
-     *
-     * ==> THE NAME IS AN ALLOWLIST MEMBER, NOT A FREE STRING. <== One counter
-     * for every Retry in the app plus one field naming the buttons pressed —
-     * see `lib/usage.js` RETRY_BUTTONS. A name that is not on that list still
-     * counts the press and loses the label, so a typo here costs a label and
-     * never a column. */
-    rain: {
-      loadRainfall: (home) => loadRainfall(home),
-      retryRainfall: (home) => {
-        countRetry('rain');
-        evictRainfall();
-        return loadRainfall(home);
-      },
-    },
+     * injected data path on this panel uses — ui/ never imports data/ (§12).
+     * ONE object, shared with the storm drawer's house block: see `rainFacade`
+     * above, which is where the counting rule and the allowlist note live. */
+    rain: rainFacade,
     /* Modelled coastal flooding (§51.3). The same facade shape — ui/ never
      * imports data/ (§12) — and the same counting rule: the RETRY is counted,
      * never the load, because a section that fetches when it is drawn says

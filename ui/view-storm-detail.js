@@ -215,6 +215,10 @@ function disclaimerHtml() {
  *        and every formatter on this panel is handed the SAME answer so two
  *        figures in one drawer can never disagree about what system they are
  *        in.
+ * @param {{loadRainfall:Function, retryRainfall:Function}} [opts.rain] the
+ *   point-rainfall facade (§48.17), the same one the home dashboard is given.
+ *   Optional: without it the Rainfall section's house block is simply absent,
+ *   which is what the older suites that build this view get.
  * @param {(storm) => void}      opts.onRetryGeometry
  * @param {(storm, opts?) => Promise<object>} opts.loadAdvisory  injected
  *   facade over data/advisory.js — ui/ never imports data/ (§12).
@@ -228,8 +232,8 @@ function disclaimerHtml() {
  *   the reader had gone back and tapped it.
  */
 export function createStormDetailView({
-  home, onRetryGeometry, loadAdvisory, loadAlerts, envShips, units, siblings,
-  onStep,
+  home, onRetryGeometry, loadAdvisory, loadAlerts, envShips, rain, units,
+  siblings, onStep,
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -239,7 +243,18 @@ export function createStormDetailView({
   /* Rainfall (§48.9) takes the same shape and for the same reason. It is handed
    * the SAME advisory facade the Advisory section uses, so both read one cached
    * record and can never show two different advisories for one storm. */
-  const rainH = createRainStorm({ loadAdvisory });
+  const rainH = createRainStorm({
+    loadAdvisory,
+    /* §48.17 — the house block. `rain` is the SAME facade `ui/view-home.js`
+     * hands `ui/rain-home.js`, so both surfaces read one cached record and one
+     * number. `rangeNm` is how the controller asks whether this storm is in
+     * the reader's world at all; it is a function because the forecast track
+     * lands after the first paint and the reader can move their pin with the
+     * drawer open. */
+    rain,
+    house: { get: () => home.get(), rangeNm: (s) => rangeToHome(s) },
+    units,
+  });
 
   /* Local agency alerts (§50.5), same shape again. It reads a GLOBAL list
    * rather than anything about this storm, which is why its facade takes no
@@ -646,6 +661,31 @@ export function createStormDetailView({
     return `<dl class="detail-vitals">${rows
       .map(([k, v, mark]) => `<dt>${k}</dt><dd>${mark || ''}${esc(v)}</dd>`)
       .join('')}</dl>`;
+  }
+
+  /**
+   * How near this storm comes to home, in nautical miles: where it is now, and
+   * the nearest point on its forecast track. §48.17.
+   *
+   * ==> THE SAME TWO NUMBERS THE HOME BLOCK ALREADY PRINTS, READ ONCE MORE
+   * RATHER THAN RECOMPUTED DIFFERENTLY. <== Both come from the injected `home`
+   * facade, so the Rainfall section can never decide a storm is near home while
+   * the Home block three inches above it says "never comes near home".
+   *
+   * `approachNm` stays null until the geometry bundle lands and null for a
+   * silenced or ended storm — a claim about a future nobody is publishing is
+   * exactly what `homeHtml` refuses to make, and this must refuse it too.
+   */
+  function rangeToHome(s) {
+    const target = s || storm;
+    if (!target) return { distanceNm: null, approachNm: null };
+    const d = home.distanceTo(target);
+    let approachNm = null;
+    if (!withheldNote() && geo.state === 'ok' && geo.bundle?.forecast?.length) {
+      const ca = home.closestApproach({ ...target, forecast: geo.bundle.forecast });
+      if (ca && Number.isFinite(ca.nm)) approachNm = ca.nm;
+    }
+    return { distanceNm: d && Number.isFinite(d.nm) ? d.nm : null, approachNm };
   }
 
   function homeHtml() {

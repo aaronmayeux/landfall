@@ -2801,6 +2801,29 @@ button.drawer-identity:focus-visible {
   color: var(--text-muted);
 }
 
+/* AT YOUR HOUSE (§48.17) — the point forecast, under NHC's area range.
+
+   ==> THE RULE IS THE WHOLE POINT OF THIS CLASS. <== §48.10's risk is a reader
+   seeing "8 to 12 inches across eastern Maui" and "about 3 in" in one section
+   and concluding the app is broken. Both are right and they answer different
+   questions, and the defence is that the reader can SEE they are two answers
+   rather than one contradicting itself. A hairline and a gap do that before
+   anybody reads a word of the explanation.
+
+   No rule when the block stands alone — a GDACS storm has no range above it,
+   so the line would be drawn under nothing. `:first-child` is true exactly
+   then, because the kicker inside is the section body's opening element. */
+.detail-rain-house {
+  margin-top: var(--space-base);
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+}
+.detail-rain-house:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 /* ---------------------------------------------------------------------------
    LOCAL AGENCY ALERTS (SPEC §50.5)
 
