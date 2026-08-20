@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 233 numbered headings.
+Covering 9 files, 234 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -247,14 +247,15 @@ real home is the other row carrying the same section number.
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1785-1821 |
 | `54` | More coastlines for radar — RainViewer, measured | `SPEC-NEXT.md` | 1822-1828 |
 | `54.1` | &nbsp;&nbsp;The gap, stated as it actually is | `SPEC-NEXT.md` | 1829-1845 |
-| `54.2` | &nbsp;&nbsp;RainViewer is the only source that answers this in one hop | `SPEC-NEXT.md` | 1846-1884 |
-| `54.3` | &nbsp;&nbsp;The coverage mask is the finding that makes this safe | `SPEC-NEXT.md` | 1885-1903 |
-| `54.4` | &nbsp;&nbsp;One request per storm — the tile-stitching objection is dead | `SPEC-NEXT.md` | 1904-1933 |
-| `54.5` | &nbsp;&nbsp;SMOOTH MUST BE 0, AND THIS IS THE ONE THAT WOULD HAVE SHIPPED A BUG | `SPEC-NEXT.md` | 1934-1947 |
-| `54.6` | &nbsp;&nbsp;The palette collides, and the licence is what solves it | `SPEC-NEXT.md` | 1948-1971 |
-| `54.7` | &nbsp;&nbsp;Licence, attribution and the honest caveat | `SPEC-NEXT.md` | 1972-1990 |
-| `54.8` | &nbsp;&nbsp;Relay or direct — recommend the relay | `SPEC-NEXT.md` | 1991-2007 |
-| `54.9` | &nbsp;&nbsp;What Pass 3 builds | `SPEC-NEXT.md` | 2008-2030 |
+| `54.2` | &nbsp;&nbsp;THE DECISION — RainViewer REPLACES NOAA. It is not a second source. | `SPEC-NEXT.md` | 1846-1883 |
+| `54.3` | &nbsp;&nbsp;What RainViewer is, measured | `SPEC-NEXT.md` | 1884-1926 |
+| `54.4` | &nbsp;&nbsp;The coverage mask is what makes single-source safe | `SPEC-NEXT.md` | 1927-1944 |
+| `54.5` | &nbsp;&nbsp;One request per storm, and the zoom is now a free choice | `SPEC-NEXT.md` | 1945-1980 |
+| `54.6` | &nbsp;&nbsp;SMOOTH MUST BE 0, AND THIS ONE WOULD HAVE SHIPPED A BUG | `SPEC-NEXT.md` | 1981-1994 |
+| `54.7` | &nbsp;&nbsp;The palette changes, and that is now the only glass call | `SPEC-NEXT.md` | 1995-2022 |
+| `54.8` | &nbsp;&nbsp;Licence, attribution, and what is being accepted | `SPEC-NEXT.md` | 2023-2040 |
+| `54.9` | &nbsp;&nbsp;Relay, not direct — and the relay's REASON changes | `SPEC-NEXT.md` | 2041-2063 |
+| `54.10` | &nbsp;&nbsp;What the build is | `SPEC-NEXT.md` | 2064-2091 |
 
 ## Files
 
@@ -262,7 +263,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 171,984 | 55 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 126,038 | 38 |
+| `SPEC-NEXT.md` | 129,346 | 39 |
 | `SPEC-OPS.md` | 73,025 | 20 |
 | `SPEC-UI.md` | 159,589 | 12 |
 | `SPEC.md` | 151,123 | 14 |

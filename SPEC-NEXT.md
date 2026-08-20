@@ -1843,25 +1843,64 @@ px-dependent.** 334 was measured at a smaller request size; at the 768 px the ap
 actually asks for, an empty NOAA frame is 2,367 bytes. `emptyKeptFraction` is a
 *fraction*, so nothing is broken — but do not use the byte count as a test.
 
-### 54.2 RainViewer is the only source that answers this in one hop
+### 54.2 THE DECISION — RainViewer REPLACES NOAA. It is not a second source.
+
+**==> RADAR STAYS SINGLE-SOURCE. NOAA IS DELETED. <==** Aaron's call, made on the
+trade in §54.8 with the costs below already on the table. **Do not reopen this by
+proposing a two-source fallback** — that reintroduces every problem the decision
+removes, and it is the shape this section originally recommended before the
+simplicity argument won.
+
+**What the decision deletes, which is most of the work:**
+
+- **The provider-list refactor.** A frozen radar array, a per-point picker
+  mirroring `satelliteForLon()`, per-provider relay routes — all of it existed
+  ONLY to hold two providers at once, and none of it was ever written. One
+  provider edits the four existing call sites in place.
+- **The palette collision.** Two ramps meaning two different things on one globe
+  was the only genuine design problem in this pass. One source cannot collide
+  with itself, so the dBZ→RGBA remap, the vendored colour table and the glass
+  call about which ramp wins are all struck. What remains is smaller and is
+  §54.7.
+- **`IMAGERY.radar`'s bounding box**, `inRadarCoverage()`'s geography test, and
+  the second cache policy, attribution row and failure mode.
+
+**What the decision COSTS, recorded so nobody discovers it later and calls it a
+regression:**
+
+1. **Frames are older.** NOAA is roughly two minutes behind; RainViewer measured
+   **355 seconds**, on **600-second steps**. At an eyewall's speed that is about
+   one pixel at our sampling — small, real, and accepted.
+2. **The most-used coverage now comes from a third party.** US radar was a
+   government feed with no terms, no rate limit and nobody who could withdraw it.
+   It is now a free service that states it holds no contracts with the radar
+   owners, publishes no SLA, and may block an abusive IP. **Radar was ALREADY a
+   single point of failure**, so this moves the risk rather than adding it — but
+   it moves it somewhere with a worse worst case.
+3. **A regional blackout is now possible and invisible.** RainViewer can lose one
+   country's feed without the API failing. §54.4's mask is what keeps that
+   honest, which is why the mask is load-bearing rather than a nicety.
+
+### 54.3 What RainViewer is, measured
 
 `https://api.rainviewer.com/public/weather-maps.json` — a composite of, per its
-own documentation, 1200+ radars across 150+ countries. Measured:
+own documentation, 1200+ radars across 150+ countries. Measured 2026-08-19 from a
+real browser:
 
 - **It sends CORS.** Both `api.rainviewer.com` and `tilecache.rainviewer.com`
   answered a cross-origin `fetch` with `response.type === 'cors'`, so the pixels
-  are readable and **the feather works without a relay**. This is the opposite of
-  NOAA, and it is the reason §4.3's "radar is the one route that must exist"
-  sentence stops being true the moment a second source lands.
+  are readable and the rim feather works **without a relay**. That is the
+  opposite of NOAA, and it changes why our relay exists — see §54.9.
 - **No key, no registration.**
 - The JSON is **818 bytes**, `Cache-Control: no-cache`, and lists **13 frames at
   600-second steps spanning two hours**. Newest frame was 355 s old when read.
 - Tile paths are **immutable per frame** and come back
-  `Cache-Control: max-age=172800`.
+  `Cache-Control: max-age=172800`. So the JSON is the only thing needing a
+  frequent refetch; the imagery is a two-day cache asset.
 
-**Coverage measured off the coverage mask** (see §54.3), as the fraction of a
-z5 box with NO radar — lower is better, and a coastal point is mostly ocean, so
-read these as "is there a network here", not as a score:
+**Coverage, measured off the mask** as the fraction of a z5 box with NO radar —
+lower is better, and a coastal point is mostly ocean, so read these as "is there
+a network here", not as a score:
 
 | Point | No-radar fraction | Point | No-radar fraction |
 |---|---|---|---|
@@ -1877,31 +1916,33 @@ read these as "is there a network here", not as a score:
 | Perth | 0.35 | Open Pacific | 1.00 |
 | Manila | 0.49 | | |
 
-**So the honest sentence is still not "global".** It is: *the western Pacific,
-the north Indian Ocean and Australia gain radar; the south-west Indian Ocean does
-not.* A cyclone making landfall on Madagascar or Mozambique will have no radar
-after this lands, and the standing note in §4 must keep saying so.
+**Miami measured 0.07, the same rung as Taiwan and Cuba** — which is the number
+that made dropping NOAA defensible at all. US coverage does not degrade.
 
-### 54.3 The coverage mask is the finding that makes this safe
+**The honest sentence is still not "global".** It is: *the west Pacific, the
+north Indian Ocean and Australia are gained; the south-west Indian Ocean is not.*
+A cyclone making landfall on Madagascar or Mozambique has no radar after this
+lands, and §4's standing note must keep saying so.
+
+### 54.4 The coverage mask is what makes single-source safe
 
 `{host}/v2/coverage/0/{size}/{z}/{x}/{y}/0/0_0.png`, or the same with
 `{lat}/{lon}`. **Transparent means radar coverage exists; opaque black means it
-does not.** Measured: a Japan box came back 19% black, a Congo box came back
-**100%** black, open Pacific 100% black.
+does not.** Measured: a Japan box came back 19% black, a Congo box **100%**,
+open Pacific 100%.
 
-**==> THIS IS WHY RAINVIEWER IS ADOPTABLE AND A BARE GLOBAL TILE SERVICE WOULD
-NOT BE. <==** Without it, every blank frame is ambiguous — "no radar here" and
-"no rain here" are the same transparent PNG, and §5 forbids shipping that
-ambiguity as an all-clear. NOAA's version of this answer is `IMAGERY.radar`'s
-box, which stops existing the moment the source is worldwide. The mask replaces
-it, and it replaces it with something measured per-point instead of a geography
-table nobody can verify — the same argument §4 already makes for not tightening
-the NOAA box.
+**==> THIS IS THE SECTION THE §5 CONTRACT NOW HANGS FROM. <==** Without it, every
+blank frame is ambiguous — "no radar here" and "no rain here" are the same
+transparent PNG, and shipping that ambiguity as an all-clear is the §5 failure
+this layer keeps finding new roads to. NOAA's answer was `IMAGERY.radar`'s box.
+Deleting NOAA deletes the box, so **the mask is not an improvement on the box, it
+is its replacement, and radar has no honest coverage story without it.** Treat a
+mask fetch failure as its own state — "we could not tell", never "no coverage".
 
-The mask is static geography and RainViewer says it updates it rarely, so it is a
+It is static geography that RainViewer says it updates rarely, so it is a
 cache-once asset, not a per-poll one.
 
-### 54.4 One request per storm — the tile-stitching objection is dead
+### 54.5 One request per storm, and the zoom is now a free choice
 
 The coordinate-centred form `{path}/{size}/{z}/{lat}/{lon}/{color}/{options}.png`
 is **genuinely centred on arbitrary coordinates, not snapped to the tile grid.**
@@ -1909,29 +1950,35 @@ Proved by nudging the centre 2° and 4° east inside a single 11.25°-wide z5 ti
 and getting three different images by SHA-1; centring exactly on a tile's centre
 reproduced that tile byte-for-byte, which is the control.
 
-So radar keeps the existing contract: **one image per eye, per refresh.**
+So radar keeps the existing contract: **one image per eye, per refresh.** No
+stitching.
 
 **`{size}` is pixel DENSITY, not extent.** The same z5 tile at 256 and at 512
-returned the same coverage fraction (0.1926 / 0.1935). So the extent of a request
-is set by `{z}` alone, and **the maximum zoom is 7** (documented).
+returned the same coverage fraction (0.1926 / 0.1935). Extent is set by `{z}`
+alone, and **maximum zoom is 7** (documented).
 
-That fixes the disc geometry, and the answer is a smaller disc than satellite:
+**With NOAA gone there is nothing to match, so the disc is chosen on merit:**
 
 | | Extent (EPSG:3857) | at 512 px |
 |---|---|---|
-| Today's satellite/radar disc | 1800 km | 2.3 km/px |
+| Today's NOAA radar disc | 1800 km | 2.3 km/px |
 | RainViewer z5 | 1252 km | 2.45 km/px |
-| RainViewer z4 | 2505 km | 4.89 km/px |
+| RainViewer z6 | 626 km | **1.22 km/px** |
+| RainViewer z7 | 313 km | 0.61 km/px |
 
-**z5 at 512 px is the pick**, and the 1252 km box being narrower than the 1800 km
-satellite box is correct rather than a compromise: a WSR-88D sees roughly 230 km,
-so a 626 km radar radius already contains everything ground radar can know about
-a storm at its centre. The 900 km radius exists because a major hurricane's
-*cloud shield* ran out of disc (§4, `discRadiusKm`) — that is a satellite
-problem. **Radar wants a smaller disc for physical reasons. Do not force them to
-match.**
+**z5 is the default pick.** z6 would be sharper than anything the app has ever
+drawn, but it crops at ±313 km from the eye, and a radar NETWORK over land sees
+rainbands well past that — cropping real weather to gain sharpness is the wrong
+trade for a layer whose job is showing where the rain is. **"RainViewer is lower
+resolution" is false**; its ceiling is finer than what we draw today. If z5 reads
+soft on glass, z6 is the dial, and the cost is a smaller disc, not a worse one.
 
-### 54.5 SMOOTH MUST BE 0, AND THIS IS THE ONE THAT WOULD HAVE SHIPPED A BUG
+The radar disc is now **smaller than the satellite disc, and that is correct**. A
+WSR-88D sees roughly 230 km. The 900 km satellite radius exists because a major
+hurricane's cloud shield ran out of disc (§4, `discRadiusKm`) — a satellite
+problem. **Do not force the two to match.**
+
+### 54.6 SMOOTH MUST BE 0, AND THIS ONE WOULD HAVE SHIPPED A BUG
 
 The `{options}` field is `{smooth}_{snow}`. With `smooth=1`:
 
@@ -1945,85 +1992,99 @@ for "is there anything in this frame" (§4, `emptyKeptFraction`), so a smoothed
 tile defeats the empty-frame test at the exact place it matters — a blank raster
 over a live storm with a silent status row. **Request `0_0`.**
 
-### 54.6 The palette collides, and the licence is what solves it
+### 54.7 The palette changes, and that is now the only glass call
 
-**There is exactly ONE colour scheme now: `2`, "Universal Blue".** The scheme
-list that once offered a NEXRAD Level-III option does not — an earlier assumption
-that we could simply select a NOAA-matching palette was checked and is wrong.
+**There is exactly ONE colour scheme: `2`, "Universal Blue".** The scheme list
+that once offered a NEXRAD Level-III option does not — an earlier assumption that
+a NOAA-matching palette could simply be selected was checked and is wrong.
 
-Sampled off real weather over Vietnam (`smooth=0`), the dominant entries are
-`#007FB4`, `#00A3E0`, `#88DDEE`, `#005588`, `#0077AA` rising to `#FFE000`. So
-Universal Blue runs **blue → yellow**, where NOAA's reflectivity runs
-**green → yellow → red**. Two sources, two meanings for the same colour, on one
-globe — which is a §9 readability problem, not a plumbing one, and it is the only
-part of this pass that is a real design decision rather than a measurement.
+Sampled off real weather over Vietnam (`smooth=0`): `#007FB4`, `#00A3E0`,
+`#88DDEE`, `#005588`, `#0077AA`, rising to `#FFE000`. So Universal Blue runs
+**blue → yellow**, where NOAA's reflectivity ran **green → yellow → red**.
 
-**RainViewer's terms of use explicitly permit the fix:** *"You can change any
-image received by this API without any restrictions (for example, apply a custom
-color scheme to the images)."* We already read every radar pixel to feather the
-rim, so a palette remap is a lookup on a pass the app is already making. The
-published dBZ→RGBA table is at
-`rainviewer.com/files/rainviewer_api_colors_table.csv` (that host sends no CORS,
-so it has to be vendored, not fetched).
+**Single-source demotes this from a correctness problem to a taste problem.**
+Nothing collides; the question is only whether the new ramp reads as well as the
+old one on a dark globe beside Saffir-Simpson category colours. Two things worth
+knowing before judging:
 
-**The recommendation is to remap RainViewer onto NOAA's ramp** so a colour means
-one thing everywhere. **Aaron judges this on glass; it is not settled here.**
+- Blue for light rain is arguably a BETTER fit for §9's cool-toned rule than
+  NOAA's green was. §4 records that imagery already knowingly trades §9 away;
+  this may claw a little of it back.
+- RainViewer's terms explicitly permit recolouring — *"You can change any image
+  received by this API without any restrictions"* — so if Universal Blue reads
+  badly, remapping is still open. The published dBZ→RGBA table is at
+  `rainviewer.com/files/rainviewer_api_colors_table.csv`, and **that host sends
+  no CORS**, so it must be vendored rather than fetched.
 
-### 54.7 Licence, attribution and the honest caveat
+**Ship Universal Blue as-is and let Aaron judge it against real weather.** Do not
+build a remap before there is a complaint — that is a solution shopping for a
+problem.
+
+### 54.8 Licence, attribution, and what is being accepted
 
 - Free for **personal, educational and small-scale community use**. No key, no
   fee, no paid tier.
 - **Attribution is mandatory**: "Weather data by RainViewer" with a link to
-  `https://www.rainviewer.com/`. `map/attribution.js` gains a row.
+  `https://www.rainviewer.com/`. `map/attribution.js` swaps its NOAA radar row
+  for this one.
 - **No SLA, no published rate limit**, an explicit request to cache aggressively,
-  and an explicit warning that abuse gets an IP blocked.
+  an explicit warning that abuse gets an IP blocked.
 - RainViewer states plainly that it holds no contracts with the radar owners and
-  that a country can vanish from the composite without notice. **So this is a
-  source that can go dark per-region, silently, and the app's three-state
-  contract (§5: unavailable / none_matched / clear) has to keep telling the
-  difference. The coverage mask is what makes that possible.**
+  that a country can vanish from the composite without notice.
 
-**The caveat worth stating rather than burying:** Landfall is a personal project
-on a public domain serving roughly 1,700 sessions a month. That is inside
-"personal / small-scale community" by any reading, but it is a judgement, not a
-contract, and it is Aaron's to make.
+**The judgement, stated rather than buried:** Landfall is a personal project on a
+public domain serving roughly 1,700 sessions a month. That is inside "personal /
+small-scale community" by any reading, but it is a judgement and not a contract.
+**Aaron made it knowingly.** If traffic ever grows past that, this section is the
+one to re-read, and RainViewer arranges commercial terms case by case.
 
-### 54.8 Relay or direct — recommend the relay
+### 54.9 Relay, not direct — and the relay's REASON changes
 
-Direct fetch works and needs no relay for CORS. But the app's CSP is
-`connect-src 'self' blob: data: https://tiles.openfreemap.org
-https://cloudflareinsights.com`, and direct fetch means adding **two** origins to
-it. `functions/api/rain/global.js` already states the standing principle: adding
-an origin to the connect-src for one feature is a cost the project charges for.
+RainViewer sends CORS, so **the sentence in §4.3 that radar is the one route that
+must exist because of CORS stops being true and has to be rewritten.** The relay
+survives on two different arguments:
 
-**Going through a Pages Function instead keeps `connect-src` untouched, and it
-also does the "cache aggressively" the terms ask for at the edge — one upstream
-request per frame for every visitor, rather than one per device.** That is a
-better answer to a no-SLA free service than a thousand independent clients.
+1. **CSP.** Direct fetch means adding **two** origins to
+   `connect-src 'self' blob: data: https://tiles.openfreemap.org
+   https://cloudflareinsights.com`. `functions/api/rain/global.js` already states
+   the standing principle that adding an origin for one feature is a cost the
+   project charges for. A Pages Function keeps `connect-src` untouched.
+2. **The terms ask for caching, and the edge is the only place to do it well.**
+   One upstream request per frame shared by every visitor, rather than one per
+   device, is the right way to treat a free no-SLA service — and it is the best
+   defence against the IP block in §54.8.
 
-Cost is one extra round trip per refresh that NOAA does not have: the 818-byte
-JSON has to be read before a tile path is known. At the edge that JSON is one
-cheap request shared by everyone, which is a second argument for the relay.
+Cost is one extra round trip NOAA did not have: the 818-byte frame list must be
+read before a tile path is known. At the edge that is one cheap shared request,
+which is a third argument for the relay rather than against it.
 
-### 54.9 What Pass 3 builds
+**Edge cache at 600 s, not 300 s.** The source cadence is ten minutes; a
+five-minute cache asks twice for the same bytes.
 
-1. **Turn radar into a list, the way `SATELLITES` already is.** Today it is
-   hard-wired in four places — `functions/api/imagery/radar.js`, `IMAGERY.radar`,
-   `radarUrl()` and `inRadarCoverage()`. The target is a `RADARS` array and a
-   picker, mirroring `satelliteForLon()`. **This refactor is the pass; the new
-   source is the easy half.**
-2. **`inRadarCoverage()` stops being a box and starts being the mask.** Per-point,
-   cached, with an explicit "we could not read the mask" state that is *not*
-   "no coverage".
-3. Relay route, `0_0` options, z5/512, the frame-list hop, edge cache at the
-   frame cadence (600 s, not 300 s — asking twice per frame is asking twice for
-   the same bytes).
-4. The palette decision from §54.6, on glass.
-5. Attribution row, and §4's standing note rewritten: radar reaches **more**
-   coastlines, still not the south-west Indian Ocean, and still never open ocean.
+### 54.10 What the build is
+
+Smaller than it was before the single-source decision. In order:
+
+1. **Rewrite `functions/api/imagery/radar.js` in place.** Same route name, same
+   contract, new upstream: read the frame list, request
+   `{path}/512/5/{lat}/{lon}/2/0_0.png`. 600 s edge cache. Keep the strict input
+   guard — it must not become a general-purpose proxy.
+2. **Add a coverage-mask route** and a session-lifetime cache for it, with three
+   states: covered, not covered, **could not tell**.
+3. **`inRadarCoverage()` stops being a box and becomes a mask lookup.** Delete
+   `IMAGERY.radar`'s `lonMin/lonMax/latMin/latMax` and the geography argument
+   attached to them — the reasoning is superseded, not merely stale, so it goes
+   rather than being annotated.
+4. **`radarUrl()` takes a centre, not a bbox.** This is the one signature change
+   that reaches `map/imagery.js`, which currently builds a `bbox` for both paths.
+   Satellite keeps the bbox; radar stops using it.
+5. **Attribution row, and §4's standing note rewritten** — radar reaches more
+   coastlines, still not the south-west Indian Ocean, still never open ocean.
+6. **§4.2 and §4.3's CORS reasoning updated** per §54.9.
+7. Judge on glass: the palette (§54.7) and whether z5 reads sharp enough (§54.5).
 
 **Not adopted, and why:** Environment Canada's GeoMet WMS and the national
 services (DWD, BOM, JMA, KMA) were considered and are not needed — RainViewer
-already contains them, and each one added separately is another palette, another
-projection and another failure mode for a slice of coastline RainViewer covers.
-"The fewest sources that hold quality" is one source, not six.
+already contains them, and each added separately is another palette, another
+projection and another failure mode for a slice of coastline already covered.
+"The fewest sources that hold quality" turned out to be one.

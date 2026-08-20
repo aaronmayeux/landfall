@@ -48,12 +48,15 @@ delete it from here and put what it built in the spec.
 **WAVE 5 IS DONE.** All four passes have landed and what they found is in the
 spec. **How to reach the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 
-**WAVE 6 — build the second radar source. ONE SESSION, AND IT IS A REFACTOR
-FIRST.** Pass 2 researched and decided the source: RainViewer, measured, with the
-five-step build brief in `SPEC-NEXT.md` §54.9. **Step 1 is the pass** — radar is
-hard-wired single-provider in four places and has to become a list the way
-`SATELLITES` already is. Adding the source is the easy half. One decision inside
-it needs Aaron on glass, not code: the palette question in §54.6.
+**WAVE 6 — SWAP RADAR TO RAINVIEWER AND DELETE NOAA. One session.** Pass 2
+researched it and Aaron took the decision: **radar stays single-source, NOAA
+goes.** That choice deleted most of the work — there is no provider-list
+refactor and no palette collision, because there is only ever one source. The
+seven-step brief is `SPEC-NEXT.md` §54.10, the costs being accepted are §54.2,
+and the two glass calls are the new blue palette (§54.7) and whether z5 reads
+sharp enough (§54.5).
+
+**Do not reopen the two-source question.** §54.2 records what it was traded for.
 
 ---
 
