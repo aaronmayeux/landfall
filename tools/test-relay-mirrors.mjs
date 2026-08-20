@@ -212,11 +212,23 @@ check('IMAGERY.radar.smooth is 0 — blur invents alpha and defeats the empty-fr
 check('imagery/radar.js SNOW matches IMAGERY.radar.snow',
   numberConst(read('functions/api/imagery/radar.js'), 'SNOW'), IMAGERY.radar.snow);
 
-check('imagery/radar.js MAX_Z matches IMAGERY.radar.maxZoom',
-  numberConst(read('functions/api/imagery/radar.js'), 'MAX_Z'), IMAGERY.radar.maxZoom);
+check('imagery/radar.js MAX_Z matches IMAGERY.radar.maxTileZoom',
+  numberConst(read('functions/api/imagery/radar.js'), 'MAX_Z'), IMAGERY.radar.maxTileZoom);
 
-check('imagery/radar-coverage.js MAX_Z matches IMAGERY.radar.maxZoom',
-  numberConst(read('functions/api/imagery/radar-coverage.js'), 'MAX_Z'), IMAGERY.radar.maxZoom);
+check('imagery/radar-coverage.js MAX_Z matches IMAGERY.radar.maxTileZoom',
+  numberConst(read('functions/api/imagery/radar-coverage.js'), 'MAX_Z'), IMAGERY.radar.maxTileZoom);
+
+check('imagery/radar-frames.js FRESH_SECONDS matches CACHE.radarFramesFresh',
+  ms(numberConst(read('functions/api/imagery/radar-frames.js'), 'FRESH_SECONDS')), CACHE.radarFramesFresh);
+
+/* ==> THE TILE CACHE MUST BE LONG, AND THE FRAME INDEX MUST BE SHORT. <== The
+ * whole tile design rests on that gap: a tile URL names one immutable frame, so
+ * it can be held for days, while the index is the only thing that DISCOVERS a
+ * new frame and has to be checked constantly. Getting these the wrong way round
+ * would either freeze the radar at one moment forever or hammer a free service
+ * that says it blocks abusive callers — and neither would raise an error. */
+check('the tile cache is far longer than the index cache',
+  CACHE.radarFresh > CACHE.radarFramesFresh * 60, true);
 
 /* ---------------------------------------------------------------------------
  * 5. THE PARSERS THEMSELVES — a check that reads nothing reports nothing.

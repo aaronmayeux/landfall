@@ -59,39 +59,57 @@ traded for.
 
 ## IN FLIGHT
 
-**TWO GLASS CALLS ON RADAR, AND BOTH NEED ONLY A STORM ANYWHERE NEAR A COAST —
-NOT PARTICULAR WEATHER.** Wave 6 replaced NOAA with RainViewer and is deployed.
-Everything measurable was measured; these two cannot be.
+**THREE GLASS CALLS ON RADAR, AND ALL OF THEM WORK ON `?replay=ida` — NO
+WEATHER NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay
+draws today's live radar over Ida's 2021 position: real US radar, right ground,
+wrong storm, which is all these three need. Wave 6 replaced NOAA with
+RainViewer and then replaced the disc with a tile layer; both are deployed.
 
-**1. THE PALETTE.** Radar is now "Universal Blue" — blue → yellow — where NOAA
-ran green → yellow → red. It is the ONLY scheme offered, so this is not a choice
-between ramps: does it read on a dark globe beside Saffir-Simpson colours?
-Blue for light rain may claw back a little of the §9 cool-toned rule that §4
-records imagery trading away. A remap stays open if it reads badly — the terms
-permit recolouring — but do not build one before there is a complaint.
+**1. IS IT SHARP NOW?** Radar shipped as a per-storm disc first and Aaron's
+verdict on glass was that it looked like ass. He was right and the cause was
+structural: one 512 px image over a whole disc is 8.5 km/px at the widest
+radius, against the 1.2 km/px RainViewer's own site draws at the same zoom, and
+no amount of tuning reaches it. **It is a MapLibre raster tile layer now** —
+the same mechanism as the basemap — so the clarity should match RainViewer's
+site because it is what their site does. Compare `?replay=ida` against
+RainViewer's own live radar map at the same zoom; they should now be
+indistinguishable on detail.
 
-**2. IS z4 SHARP ENOUGH AT THE DEFAULT RADIUS?** The direct cost of Aaron's call
-that the slider governs radar too. Zoom is a power of two, so **the 900 km
-default lands on 4.89 km/px against NOAA's 2.3**; dragging the radius down
-crosses a boundary and doubles it. **Compare the default against roughly 550 km
-on one storm.** Three acceptable answers: leave it, lower the default, or add a
-crop tolerance so a sharper zoom may cut a few percent off the outer feather —
-that band is already fading to nothing, so the trade is nearly free and is the
-obvious dial if the answer is "close but soft".
+**2. IS A GLOBAL RADAR LAYER RIGHT, OR IS IT NOISE?** The change that bought the
+sharpness also deleted the disc, so radar is now everywhere at once — turn it on
+over a Pacific typhoon and there is live rain over Louisiana. **That is the one
+part of this pass that is a judgement rather than a fix.** If it reads as a
+second basemap rather than as weather, the answer is to CLIP the layer to the
+storms, not to go back to one image per eye. Going back is the blur.
+
+**3. THE PALETTE, still unjudged.** "Universal Blue" is the only scheme offered.
+Sampled off real weather it runs cyan → blue → orange → red → magenta — the
+spec's old "blue → yellow" was read off light rain and has been corrected. Two
+collisions worth looking for: heavy-rain magenta against the Saffir-Simpson
+cat-4 dot, and light-rain cyan against the coastline glow. The terms permit
+recolouring if it needs to change.
 
 **Anything that turns out to need weather goes to `HELD FOR WEATHER` with the
 storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
-**0. RADAR CAN NOW REPORT A TRUE FRAME TIME; THE ROW STILL SAYS "DOWNLOADED".**
-Left out of Wave 6 deliberately. Every vendor before this one sent no time at
-all — that is what `IMAGERY_SENDS_NO_TIME` is about, and why the age row honestly
-reports when WE fetched rather than when the picture was taken. RainViewer's
-index carries a real per-frame `time`, in SECONDS. One response header plus a
-branch in the row. Held back because the row is SHARED with satellite, and giving
-one layer a different meaning for the same words wants its own look on glass
-rather than a ride on an upstream swap.
+**0. RADAR CAN NOW REPORT A TRUE FRAME TIME; THE ROW SAYS NOTHING ABOUT AGE AT
+ALL.** `/api/imagery/radar-frames` already returns the frame's `time`, in
+SECONDS, and `map/radar-layer.js` throws it away. Every vendor before this one
+sent no time — that is what `IMAGERY_SENDS_NO_TIME` is about, and why the
+satellite row honestly says "Downloaded" rather than claiming to know when the
+picture was taken. Radar is the first source that can say the real thing, and
+the tile split made it easier rather than harder: the two rows are now built in
+different files, so giving radar its own wording no longer changes satellite's.
+Small, and worth doing.
+
+**0b. RADAR'S REQUEST VOLUME HAS NEVER BEEN WATCHED.** One image per storm became
+roughly thirty tiles per viewport. Each is small, immutable and cached two days
+by the browser and shared at our edge, so the expectation is that a session is
+LIGHTER than it was — but that is a prediction, not a measurement, and
+RainViewer's terms say plainly that they block abusive IPs. The archive runner
+has open internet and could sample it.
 
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by
@@ -235,6 +253,12 @@ denominator.
 date-guessing code outright. **Do not write the parser off the current
 snapshot:** two storms, one hour, one hemisphere, and a formation alert has a
 different layout entirely. Wait for a Southern Hemisphere storm in the window.
+
+**`map/imagery.js` CAME BACK UNDER 1,000 AND THE PATTERN IS WORTH COPYING.** It
+shrank because radar left, and radar left because a tile pyramid and a WMS want
+opposite shapes — the split was forced by a real defect, not by the line count.
+The two views below are still waiting on a split that carries no behaviour, and
+that is the harder kind to justify. It is still the right next move on both.
 
 **Two views are over §12's ~700-line ceiling.** `ui/view-home.js` is **1,694**
 (strength strip, countdown rail, and the quiet/error/no-home states are three

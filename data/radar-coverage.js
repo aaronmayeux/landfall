@@ -24,19 +24,23 @@
  *               collapse into it — the whole §5 rule is that we say what we do
  *               not know rather than filling it in with the reassuring answer.
  *
- * ==> IT IS ONLY EVER ASKED WHEN A FRAME CAME BACK EMPTY. <== Which is why it
- * costs nothing in the common case and never gates a request. A storm whose
- * frame HAS weather in it needs no mask — the weather is the proof. That also
- * makes the mask's box alignment harmless: a storm near the edge of its own
- * frame could sit in a mask box that reads 'none' while its rainbands fall on a
- * covered coast nearby, and because the frame is drawn on its own merits, that
- * disagreement can never reach the screen.
+ * ==> IT USED TO BE A SECOND OPINION. IT IS NOW THE ONLY ONE. <== While radar
+ * was a per-storm disc the app measured each frame's own alpha, so the mask was
+ * only consulted to explain a frame already known to be blank. Radar is a tile
+ * layer now (map/radar-layer.js) — there is no single frame and no canvas, and
+ * nothing anywhere can see whether rain is present. So this file is the whole of
+ * what stands between an empty screen and an all-clear over ground nobody
+ * watches, and it is asked about every live storm rather than only about a
+ * blank one.
+ *
+ * It still never gates anything. The tiles load regardless; this only decides
+ * what the status row is allowed to say.
  *
  * Imports: config/ and lib/ only. No map, no store.
  */
 
 import { IMAGERY } from '../config/constants.js';
-import { radarCoverageUrl, radarZoomFor } from '../lib/imagery.js';
+import { radarCoverageUrl } from '../lib/imagery.js';
 
 /**
  * SESSION-LIFETIME, and deliberately not persisted.
@@ -58,11 +62,12 @@ const MAX_ENTRIES = 64;
 /**
  * How coarsely coordinates are binned into a cache key, in degrees.
  *
- * One degree is roughly 111 km, which is small against every frame this asks
- * about (±156 km at the sharpest zoom the slider can reach) and large against
- * how far a storm moves between polls. The zoom is part of the key because a
- * different zoom is a different box, and a different box can genuinely have a
- * different answer.
+ * One degree is roughly 111 km, which is small against the coverage box this
+ * asks about (a z5 tile, roughly 626 km across at the equator) and large
+ * against how far a storm moves between polls. The zoom is part of the key even though
+ * it is fixed today — a different zoom is a different box and can genuinely have
+ * a different answer, and a key that silently ignored it would hand back the
+ * wrong cached verdict the day it moves.
  */
 const CELL_DEG = 1;
 
@@ -79,8 +84,8 @@ const inFlight = new Map();
  * to write a try/catch around a question about safety wording is a caller that
  * will one day forget and default to the reassuring answer.
  */
-export async function radarCoverage(lat, lon, radiusKm) {
-  const z = radarZoomFor(lat, radiusKm);
+export async function radarCoverage(lat, lon) {
+  const z = IMAGERY.radar.coverageZoom;
   const key = cellKey(lat, lon, z);
 
   const known = answers.get(key);
@@ -124,7 +129,7 @@ function remember(key, verdict) {
  */
 async function measure(lat, lon, z) {
   const px = IMAGERY.radar.requestPx;
-  const res = await fetch(radarCoverageUrl(lat, lon, z, px), { mode: 'cors' });
+  const res = await fetch(radarCoverageUrl(lat, lon, px), { mode: 'cors' });
   if (!res.ok) return 'unknown';
 
   const blob = await res.blob();
@@ -169,42 +174,45 @@ export function verdictFor(opaqueFraction) {
 }
 
 /**
- * The sentence for a set of radar discs that are ALL blank.
+ * The coverage caveat for the storms on screen, or `''` when there is none.
  *
- * ==> THIS USED TO BE ONE SENTENCE FOR THREE DIFFERENT FACTS, AND ONE OF THEM
- * WAS AN ALL-CLEAR NOBODY HAD EARNED. <== "No radar coverage for these storms"
- * was said whether radar was watching or not, because with a bounding box for a
- * coverage model there was no way to know. There is now.
+ * ==> IT CAN SAY THAT SOMETHING IS MISSING. IT CAN NEVER SAY THAT ANYTHING IS
+ * CLEAR. <== That asymmetry is the point of the function and it is stricter
+ * than the version it replaces.
  *
- * WRITTEN WORST-CASE-FIRST, AND THE ORDERING IS THE SAFETY PROPERTY. A mixed
- * set — one storm unwatched, one genuinely clear — must never be summarised
- * with the reassuring half. So any 'none' outranks a 'covered', and anything
- * unresolved outranks a clean sweep of 'covered'. Only a set where EVERY disc
- * is known-covered may say there is no rain.
+ * The old one had a branch reading "radar is watching and showing no rain",
+ * which was reachable because a per-storm disc measured its own alpha and could
+ * PROVE the frame was empty. A tile layer proves nothing of the kind — MapLibre
+ * draws what arrives and nothing counts it — so that sentence lost its evidence
+ * and is deleted rather than left to be true by habit. A future pass wanting it
+ * back needs a measurement, not a rewording.
  *
- * `null` verdicts are discs whose mask lookup has not landed yet, and they get
- * the same cautious wording as 'unknown'. That is correct rather than lazy: to
- * a person reading the row right now, not knowing yet and not being able to
- * find out are the same fact.
+ * WORST-CASE-FIRST, AND THE ORDERING IS THE SAFETY PROPERTY. A mixed set — one
+ * storm unwatched, one fine — must never be summarised by its reassuring half.
+ * Any 'none' outranks everything; anything unresolved outranks a clean sweep.
  *
- * Lives HERE, beside the three states, rather than inside map/imagery.js's
- * closure — the file that defines what a verdict means is the file that should
- * own what it reads like, and a pure function is one a test can hold to
- * account.
+ * ==> AN EMPTY STRING IS NOT A REASSURANCE, IT IS A REFUSAL TO COMMENT. <== It
+ * means every storm sits inside a radar network, so the pixels can speak for
+ * themselves. It does NOT mean the sky is clear, and nothing downstream may
+ * render it as though it did.
+ *
+ * `null` verdicts are storms whose mask lookup has not landed yet, and they get
+ * the same cautious treatment as 'unknown' — to a person reading the row right
+ * now, not knowing yet and not being able to find out are the same fact.
  */
-export function radarEmptyMessage(verdicts) {
+export function radarCoverageMessage(verdicts) {
   const list = Array.isArray(verdicts) ? verdicts : [];
-  if (!list.length) return 'Radar is blank here and we could not check whether it reaches these storms';
+  /* Nothing to say about no storms. The layer is global, so radar being on with
+   * nothing tracked is an ordinary state rather than a gap. */
+  if (!list.length) return '';
 
   if (list.some((v) => v === 'none')) {
     return list.every((v) => v === 'none')
       ? 'No radar reaches these storms — a gap in what we can see, not an all-clear'
       : 'Some of these storms have no radar watching them — not an all-clear';
   }
-  if (list.every((v) => v === 'covered')) {
-    return 'Radar is watching and showing no rain near these storms';
-  }
-  return 'Radar is blank here and we could not check whether it reaches these storms';
+  if (list.every((v) => v === 'covered')) return '';
+  return 'Radar reaches some of these storms — we could not check the rest';
 }
 
 /** Testing seam only — the cache is process-wide and a suite that ran two

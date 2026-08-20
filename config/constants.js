@@ -319,17 +319,29 @@ export const CACHE = Object.freeze({
   abpwFresh: 15 * MINUTE,
 
   /**
-   * Relay: one RainViewer radar frame (§4.9). Mirrors `FRESH_SECONDS` in
+   * Relay: one RainViewer radar TILE (§4.9). Mirrors `FRESH_SECONDS` in
    * `functions/api/imagery/radar.js`.
    *
-   * TEN MINUTES, NOT FIVE, AND IT MOVED WITH THE SOURCE. NOAA published on a
-   * roughly five-minute cadence and the old route cached for five. RainViewer
-   * publishes on 600-second steps — measured, thirteen frames spanning two
-   * hours — so a five-minute cache asks twice for bytes that cannot have
-   * changed, against a free service with no SLA whose terms explicitly ask for
-   * aggressive caching and whose stated penalty for abuse is an IP block.
+   * TWO DAYS, AND THAT IS A CONSEQUENCE RATHER THAN A DECISION. A tile URL
+   * names ONE frame explicitly, and a frame's pixels never change, so the
+   * answer is immutable and the only correct lifetime is a long one.
+   * RainViewer serves these with `max-age=172800` themselves, for the same
+   * reason. This is also the best defence available against the IP block their
+   * terms warn about: a warm pan across the map costs nothing at all.
    */
-  radarFresh: 10 * MINUTE,
+  radarFresh: 2 * 24 * HOUR,
+
+  /**
+   * Relay: the radar frame INDEX (§4.9). Mirrors `FRESH_SECONDS` in
+   * `functions/api/imagery/radar-frames.js`.
+   *
+   * SIXTY SECONDS, against tiles cached for two days, and the gap between those
+   * two numbers is the whole design. This is the only thing that DISCOVERS a
+   * new frame exists, so it has to be short; everything it points at is fixed
+   * forever, so that can be long. Not zero, so a dozen tabs opening together
+   * share one lookup.
+   */
+  radarFramesFresh: 1 * MINUTE,
 
   /**
    * Relay: RainViewer's coverage mask (§4.9).
@@ -5010,63 +5022,73 @@ export const IMAGERY = Object.freeze({
 
   /**
    * Radar — RAINVIEWER, a global composite of 1200+ radars across 150+
-   * countries. It replaced NOAA's `radar_base_reflectivity_time` ImageServer
-   * outright; there is no fallback and no second source (§4.9).
+   * countries, drawn as a TILE LAYER rather than a per-storm disc (§4.9).
    *
-   * ==> THE BOUNDING BOX THAT USED TO LIVE HERE IS GONE, AND NOT BECAUSE IT
-   * WENT STALE. <== It read `-170..-60, 10..72`, which is a box with NO
-   * SOUTHERN HEMISPHERE IN IT — Australia, Réunion, Madagascar, Fiji and New
-   * Caledonia were not "poorly covered", they were structurally unreachable.
-   * The box was NOAA's geography and NOAA is deleted, so the reasoning is
-   * superseded rather than merely out of date and it goes rather than being
-   * annotated. What replaces it is `coverageRelay` below — a mask published by
-   * the service itself, which is the only authority on where it has radars.
+   * ==> IT IS THE ONE IMAGERY LAYER THAT IS NOT A DISC, AND THAT ASYMMETRY IS
+   * THE SERVICE'S RATHER THAN A COMPROMISE. <== Satellite comes from a WMS: ask
+   * for a rectangle, get one picture, so a disc around the eye is the natural
+   * shape and 768 px across 1800 km is a real 2.3 km/px. RainViewer is a tile
+   * pyramid. Asking it for one picture caps the pixel budget at 512 no matter
+   * how big the area, so a wider view is a blurrier one — at the radius
+   * slider's maximum that was 8.5 km/px, seven times coarser than RainViewer's
+   * own site at the same zoom. Served as tiles, MapLibre asks for exactly what
+   * the viewport needs at the zoom it is drawing, and the blur is gone.
    *
-   * Radar is still a transparent PNG that needs no colour knockout, and it is
-   * still blank over open ocean. The difference is that the app can now tell
-   * "no radar reaches here" apart from "radar reaches here and there is no
-   * rain", which a box never could.
+   * WHAT THAT COSTS, RECORDED SO NOBODY REDISCOVERS IT: radar no longer obeys
+   * the Cloud radius or fade sliders, because it has no disc and no rim. Those
+   * are satellite controls now, which is what the "Cloud radius" label has said
+   * all along. And radar covers the whole globe rather than a ring around each
+   * eye — turn it on over a Pacific typhoon and there is live rain over
+   * Louisiana too.
    */
   radar: Object.freeze({
-    /** RainViewer sends CORS on both hosts (measured 2026-08-19), so unlike
-     *  NOAA the browser COULD read these pixels directly. The relay survives on
-     *  two other arguments: a direct fetch would add two origins to
-     *  `connect-src` for one feature, and RainViewer's terms ask for aggressive
-     *  caching, which the edge does once for everybody rather than once per
-     *  device (§4.9). */
+    /** One tile. Takes an explicit frame, so every tile in a viewport is the
+     *  same moment and each answer is immutable. */
     relay: '/api/imagery/radar',
 
+    /** Which frames exist. Read ONCE per refresh, not once per tile — thirty
+     *  tiles fill a viewport, and letting each pick "the newest" independently
+     *  would let two of them straddle a ten-minute boundary and paint a seam
+     *  between two different minutes. */
+    framesRelay: '/api/imagery/radar-frames',
+
     /** The coverage mask — transparent where radar exists, opaque black where
-     *  it does not. ==> THIS IS WHAT THE §5 CONTRACT NOW HANGS FROM. <== Without
-     *  it every blank frame is ambiguous, because "no radar here" and "no rain
-     *  here" are the same transparent PNG, and shipping that ambiguity as an
-     *  all-clear is the failure this layer keeps finding new roads to. */
+     *  it does not. ==> THIS IS WHAT THE §5 CONTRACT HANGS FROM, AND IT CARRIES
+     *  MORE WEIGHT NOW THAN IT DID. <== With a per-storm disc the app measured
+     *  the frame's own alpha to tell "blank" from "absent". A tile layer has no
+     *  single frame to measure, so the mask is the ONLY thing standing between
+     *  an empty screen and an all-clear over ground nobody is watching. */
     coverageRelay: '/api/imagery/radar-coverage',
 
     /**
-     * Pixels per side, and it is 512 rather than `requestPx`'s 768 because
-     * RainViewer offers 256 or 512 and nothing else.
-     *
-     * `{size}` on this service is pixel DENSITY, not extent — measured, the
-     * same z5 tile at 256 and at 512 returned the same coverage fraction
-     * (0.1926 / 0.1935). Extent is set by the zoom alone, which is what
-     * `radarZoomFor()` picks.
+     * Pixels per tile image, against a 256 px tile SLOT. That mismatch is the
+     * standard retina trick, not an error: MapLibre lays the tile out at 256
+     * CSS px, so a 512 px image is exactly one image pixel per device pixel on
+     * a 2x screen. RainViewer offers 256 or 512 and nothing else.
      */
     requestPx: 512,
+    tileSize: 256,
 
     /**
-     * The zoom range the service publishes. 7 is documented as the maximum;
-     * 0 is the whole world in one tile.
+     * The deepest zoom RainViewer publishes. Declared to MapLibre as the
+     * source's `maxzoom` so it OVERZOOMS above this — stretching a z7 tile —
+     * rather than asking for tiles that do not exist and getting 404s.
      *
-     * ONE ZOOM STEP IS A FACTOR OF TWO IN BOTH DIRECTIONS AT ONCE — half the
-     * disc, twice the sharpness. At 512 px: z7 is ±156 km at 0.61 km/px, z5 is
-     * ±626 km at 2.45 km/px, z4 is ±1252 km at 4.89 km/px. Aaron's call
-     * (2026-08-19) is that the Cloud radius slider governs BOTH layers, so the
-     * zoom is DERIVED from the requested radius rather than pinned — see
-     * `radarZoomFor()`, which also explains why the sharpness steps.
+     * z7 at 512 px is 0.61 km/px, which is at or past the composite's own
+     * native resolution, so nothing is being left on the table.
      */
-    minZoom: 0,
-    maxZoom: 7,
+    maxTileZoom: 7,
+
+    /**
+     * The zoom of the coverage box asked about each storm — one z5 tile, about
+     * 626 km across at the equator.
+     *
+     * FIXED RATHER THAN DERIVED FROM ANYTHING THE USER CAN MOVE, deliberately.
+     * The question is "is there a radar network near this storm", which does not
+     * change because somebody dragged a slider, and a coverage answer that moved
+     * with a control would be uncacheable for no benefit.
+     */
+    coverageZoom: 5,
 
     /**
      * The relay's three URL fields, mirrored here so `test-relay-mirrors.mjs`
@@ -5075,17 +5097,16 @@ export const IMAGERY = Object.freeze({
      * a test.
      *
      * ==> `smooth` MUST BE 0, AND THIS ONE WOULD HAVE SHIPPED A BUG. <==
-     * Measured: an open-Pacific frame with NO radar coverage at all came back
-     * 10 KB with a non-zero kept fraction and muddy blended colours at
-     * `smooth=1`, and 1,096 bytes at a kept fraction of exactly 0 at
-     * `smooth=0`. Blur invents alpha outside the data, and alpha is the signal
-     * `emptyKeptFraction` reads — so a smoothed tile defeats the empty-frame
-     * test at the exact place it matters, putting a blank raster over a live
-     * storm with a silent status row.
+     * Measured: an open-Pacific tile with NO radar coverage at all came back
+     * 10 KB with muddy blended colour at `smooth=1`, and 1,096 bytes with
+     * nothing in it at `smooth=0`. Blur invents alpha outside the data, so a
+     * smoothed tile paints haze over ground no radar can see — and with the
+     * per-frame alpha measurement gone, there is nothing downstream that would
+     * catch it.
      *
      * `colorScheme` 2 is "Universal Blue", and it is the ONLY scheme offered —
      * the NEXRAD Level-III option an earlier pass assumed existed does not.
-     * It runs blue → yellow where NOAA's reflectivity ran green → yellow → red.
+     * Sampled off real weather it runs cyan → blue → orange → red → magenta.
      */
     colorScheme: 2,
     smooth: 0,
@@ -5093,7 +5114,7 @@ export const IMAGERY = Object.freeze({
 
     /**
      * At or above this fraction of the mask being opaque, the box has NO RADAR
-     * NETWORK in it, and a blank frame there means nobody is looking rather
+     * NETWORK in it, and an empty screen there means nobody is looking rather
      * than nothing is happening.
      *
      * Not 1.0, and the margin is the point: PNG resampling and the mask's own

@@ -1,37 +1,39 @@
 #!/usr/bin/env node
 /**
- * test-radar-coverage.mjs — radar's geometry and its three coverage states
- * (SPEC §4, §4.9).
+ * test-radar-coverage.mjs — radar's tile addressing and its coverage states
+ * (SPEC §4.9).
  *
- * WHY THIS SUITE EXISTS. Wave 6 replaced NOAA with RainViewer, and in doing so
- * replaced the two things that decided what a blank radar frame MEANS:
+ * WHY THIS SUITE EXISTS, AND WHY IT CHANGED SHAPE. Radar was a per-storm disc
+ * that measured its own alpha to decide whether it had anything in it. It is a
+ * TILE LAYER now, and the two things that measurement used to protect are both
+ * gone with it:
  *
- *   1. A WMS took any rectangle we asked for. RainViewer takes a ZOOM, which is
- *      a power of two, so the radius the user asked for has to be turned into a
- *      whole zoom and the leftover trimmed with the feather. Get that wrong and
- *      the disc is drawn at the wrong size on the globe — real weather in the
- *      wrong place, with nothing on screen to say so.
- *   2. Coverage was a hand-written bounding box. It is now a mask, with THREE
- *      states rather than two, and the third one exists entirely to stop the
- *      app saying "clear" about ground nobody is watching.
+ *   1. **Nothing counts pixels any more.** MapLibre draws what arrives. So the
+ *      coverage mask is no longer a second opinion about a frame already known
+ *      to be blank — it is the ONLY thing standing between an empty screen and
+ *      an all-clear over ground nobody watches. Most of this file is about the
+ *      sentence that gets built from it.
+ *   2. **The tiles template is now a correctness surface.** It carries the frame
+ *      every tile in a viewport will name, and MapLibre's `{z}/{x}/{y}`
+ *      placeholders have to survive URL encoding intact. Percent-encode a brace
+ *      and MapLibre requests a literal `{z}`, every tile 400s, and the layer is
+ *      silently blank — over a storm, which is the §5 failure.
  *
- * ==> THE ORDERING IN `radarEmptyMessage` IS THE SAFETY PROPERTY, NOT A STYLE
- * CHOICE, AND MOST OF THIS FILE IS ABOUT IT. <== A mixed set of discs must be
- * summarised by its WORST member. Reverse two branches and the app tells
- * somebody the radar is clear over a storm no radar can see, which is exactly
- * the §5 failure this project treats as the worst thing it can ship — and it
- * would look completely normal on screen.
+ * ==> THE ORDERING IN `radarCoverageMessage` IS THE SAFETY PROPERTY, NOT A
+ * STYLE CHOICE. <== A mixed set of storms must be summarised by its WORST
+ * member. Reverse two branches and the app reassures somebody about a storm no
+ * radar can see, and it would look completely normal on screen.
  *
- * Zero dependencies (§12). No DOM: everything under test is a pure function,
- * which is why `verdictFor` and `radarEmptyMessage` were split out of the
- * canvas and network code that surrounds them.
+ * Zero dependencies (§12). No DOM: everything under test is pure, which is why
+ * `verdictFor` and `radarCoverageMessage` live outside the canvas and network
+ * code that surrounds them.
  *
  * Run: node tools/test-radar-coverage.mjs
  */
 
 import { IMAGERY } from '../config/constants.js';
-import { radarZoomFor, radarHalfKm, radarBox, radarUrl, radarCoverageUrl } from '../lib/imagery.js';
-import { verdictFor, radarEmptyMessage } from '../data/radar-coverage.js';
+import { radarTilesTemplate, radarFramesUrl, radarCoverageUrl } from '../lib/imagery.js';
+import { verdictFor, radarCoverageMessage } from '../data/radar-coverage.js';
 
 let failures = 0;
 let checked = 0;
@@ -47,124 +49,82 @@ const eq = (label, actual, expected) =>
   ok(label, Object.is(actual, expected), `expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
 
 /* ---------------------------------------------------------------------------
- * 1. THE ZOOM ALWAYS COVERS WHAT WAS ASKED FOR.
+ * 1. THE TILES TEMPLATE.
  *
- * The one property that must hold everywhere: whatever radius the slider is
- * set to, at whatever latitude a storm sits, the frame that comes back has to
- * contain that radius. A zoom one step too sharp crops real rainbands off the
- * edge of the picture and the app has no way to know it happened.
- *
- * Walked across the slider's whole declared range and every latitude a cyclone
- * can reach, rather than at three convenient points — the failure mode here is
- * an off-by-one at a boundary, and boundaries are what a sparse test misses.
+ * MapLibre expands `{z}`, `{x}` and `{y}` itself. They must reach it as literal
+ * braces — which is exactly what `URLSearchParams` would destroy, and why the
+ * builder concatenates them instead of setting them.
  * ------------------------------------------------------------------------- */
-const { min: rMin, max: rMax, step: rStep } = IMAGERY.tuning.radiusKm;
+const FRAME = '/v2/radar/c3d7e91014b9';
+const tpl = radarTilesTemplate(FRAME, 512);
 
-for (let lat = -60; lat <= 60; lat += 5) {
-  for (let r = rMin; r <= rMax; r += rStep) {
-    const z = radarZoomFor(lat, r);
-    const half = radarHalfKm(lat, z);
-    ok(
-      `z${z} covers ${r} km at ${lat}°`,
-      half >= r - 1e-9,
-      `half-extent is ${half.toFixed(1)} km, needed ${r} km`,
-    );
-  }
-}
+ok('the template keeps MapLibre’s placeholders unescaped',
+  tpl.includes('z={z}') && tpl.includes('x={x}') && tpl.includes('y={y}'), tpl);
 
-/* AND IT IS THE SHARPEST ZOOM THAT DOES. Covering is half the requirement;
- * always returning zoom 0 would satisfy the loop above and hand back a picture
- * of the whole planet for a 300 km disc. */
-for (let lat = -60; lat <= 60; lat += 15) {
-  for (let r = rMin; r <= rMax; r += 100) {
-    const z = radarZoomFor(lat, r);
-    if (z >= IMAGERY.radar.maxZoom) continue;
-    ok(
-      `z${z} is the sharpest that covers ${r} km at ${lat}°`,
-      radarHalfKm(lat, z + 1) < r,
-      `z${z + 1} would also have covered it (${radarHalfKm(lat, z + 1).toFixed(1)} km)`,
-    );
-  }
-}
+ok('no percent-encoded brace survives anywhere in the template',
+  !/%7[BbDd]/.test(tpl), tpl);
 
-/* Clamped at both ends, and never NaN. A NaN zoom prints into a URL as the
- * string "NaN", which the relay rejects with a 400 — a failure, but a confusing
- * one, and only after a round trip. */
-ok('a zero radius clamps rather than dividing by zero',
-  radarZoomFor(0, 0) === IMAGERY.radar.maxZoom);
-ok('a negative radius clamps rather than returning NaN',
-  radarZoomFor(0, -50) === IMAGERY.radar.maxZoom);
-ok('an absurdly large radius clamps to minZoom',
-  radarZoomFor(0, 500000) === IMAGERY.radar.minZoom);
-for (let lat = -85; lat <= 85; lat += 5) {
-  const z = radarZoomFor(lat, 900);
-  ok(`zoom at ${lat}° is a whole number in range`,
-    Number.isInteger(z) && z >= IMAGERY.radar.minZoom && z <= IMAGERY.radar.maxZoom,
-    `got ${z}`);
-}
+ok('the template names the frame it was given',
+  tpl.includes(encodeURIComponent(FRAME)), tpl);
 
-/* Known reference points, from §4.9's measured table. These are the numbers
- * the spec quotes to Aaron, so they are the numbers that have to stay true. */
-ok('z5 is ±626 km at the equator', Math.abs(radarHalfKm(0, 5) - 626) < 2, `${radarHalfKm(0, 5).toFixed(1)}`);
-ok('z6 is ±313 km at the equator', Math.abs(radarHalfKm(0, 6) - 313) < 2, `${radarHalfKm(0, 6).toFixed(1)}`);
-ok('z4 is ±1252 km at the equator', Math.abs(radarHalfKm(0, 4) - 1252) < 3, `${radarHalfKm(0, 4).toFixed(1)}`);
+ok('the template points at the radar relay',
+  tpl.startsWith(`${IMAGERY.radar.relay}?`), tpl);
+
+ok('the template carries the pixel size',
+  /[?&]px=512(&|$)/.test(tpl), tpl);
+
+/* ==> A TEMPLATE WITHOUT A FRAME WOULD LET EVERY TILE PICK ITS OWN. <== That is
+ * the seam-between-two-minutes bug, and it would look like weather rather than
+ * like a fault. */
+ok('a frame is always present in the template', /[?&]f=[^&]+/.test(tpl), tpl);
+
+eq('the frames route is where the client looks for one',
+  radarFramesUrl(), IMAGERY.radar.framesRelay);
 
 /* ---------------------------------------------------------------------------
- * 2. THE RIM FRACTION IS THE LEFTOVER, AND IT IS NEVER MORE THAN ALL OF IT.
+ * 2. THE COVERAGE URL.
  *
- * Above 1 the feather would be told to fade at a radius outside the image,
- * where there are no pixels — the rim would land nowhere, the disc would draw
- * to a hard square edge, and `keptFraction` would be measured across pixels
- * that were never painted.
+ * Fixed zoom, two decimals. Both are cache-key properties: this string keys the
+ * browser cache and Cloudflare's edge, and a coverage answer that moved with the
+ * camera would be uncacheable and would give one storm different answers at
+ * different zooms.
  * ------------------------------------------------------------------------- */
-for (let lat = -60; lat <= 60; lat += 10) {
-  for (let r = rMin; r <= rMax; r += 100) {
-    const z = radarZoomFor(lat, r);
-    const { rimFraction } = radarBox(lat, 0, z, r);
-    ok(`rim fraction is a usable fraction at ${lat}° / ${r} km`,
-      rimFraction > 0 && rimFraction <= 1,
-      `got ${rimFraction}`);
-    /* And it describes the ACTUAL ratio, not a placeholder. A stubbed 1 would
-     * pass the bounds check above while silently drawing every disc at the full
-     * frame size. */
-    ok(`rim fraction matches the geometry at ${lat}° / ${r} km`,
-      Math.abs(rimFraction - Math.min(1, r / radarHalfKm(lat, z))) < 1e-9);
-  }
-}
-
-/* The box is centred on the storm and square in projected metres. The corners
- * come back clockwise from top-left, same contract as `discBox`. */
-{
-  const { corners } = radarBox(25, -80, 5, 900);
-  const [tl, tr, br, bl] = corners;
-  ok('corners run clockwise from top-left', tl[0] === bl[0] && tr[0] === br[0] && tl[1] === tr[1] && bl[1] === br[1]);
-  ok('the box is centred on the storm in longitude', Math.abs((tl[0] + tr[0]) / 2 - -80) < 1e-9);
-  ok('north is above south', tl[1] > bl[1]);
-}
-
-/* ---------------------------------------------------------------------------
- * 3. THE URLS ARE STABLE CACHE KEYS.
- *
- * This string keys three separate caches — the browser's, the frame LRU, and
- * Cloudflare's edge. Two spellings of the same request is two downloads of the
- * same bytes, which on a free service that blocks abusive IPs is not a
- * cosmetic problem.
- * ------------------------------------------------------------------------- */
-eq('radar URL is fixed to two decimals and stable in order',
-  radarUrl(25.123456, -80.987654, 4, 512),
-  '/api/imagery/radar?lat=25.12&lon=-80.99&z=4&px=512');
-
-eq('the mask URL mirrors it exactly, on its own route',
-  radarCoverageUrl(25.123456, -80.987654, 4, 512),
-  '/api/imagery/radar-coverage?lat=25.12&lon=-80.99&z=4&px=512');
+eq('the mask is asked at the fixed coverage zoom, rounded to two decimals',
+  radarCoverageUrl(25.123456, -80.987654, 512),
+  `/api/imagery/radar-coverage?lat=25.12&lon=-80.99&z=${IMAGERY.radar.coverageZoom}&px=512`);
 
 eq('a longitude past the dateline is wrapped before it is printed',
-  radarUrl(10, 190, 5, 512),
-  '/api/imagery/radar?lat=10.00&lon=-170.00&z=5&px=512');
+  radarCoverageUrl(10, 190, 512),
+  `/api/imagery/radar-coverage?lat=10.00&lon=-170.00&z=${IMAGERY.radar.coverageZoom}&px=512`);
 
-eq('two spellings of the same coordinate produce one key',
-  radarUrl(25.1234, -80.9876, 4, 512),
-  radarUrl(25.1249, -80.9871, 4, 512));
+eq('two spellings of one coordinate produce one key',
+  radarCoverageUrl(25.1234, -80.9876, 512),
+  radarCoverageUrl(25.1249, -80.9871, 512));
+
+ok('the coverage zoom is inside what the service publishes',
+  Number.isInteger(IMAGERY.radar.coverageZoom) &&
+  IMAGERY.radar.coverageZoom >= 0 &&
+  IMAGERY.radar.coverageZoom <= IMAGERY.radar.maxTileZoom);
+
+/* ---------------------------------------------------------------------------
+ * 3. THE TILE SOURCE'S OWN NUMBERS.
+ * ------------------------------------------------------------------------- */
+ok('512 px images against a 256 px tile slot — the retina pairing',
+  IMAGERY.radar.requestPx === 512 && IMAGERY.radar.tileSize === 256);
+
+/* ==> `maxTileZoom` IS WHAT MAKES ZOOMING IN SAFE. <== Declared to MapLibre as
+ * the source's maxzoom, it overzooms above this instead of requesting addresses
+ * that do not exist. Without it the layer goes BLANK at close range — over a
+ * storm, which reads as no rain. */
+eq('the source caps at the deepest zoom RainViewer publishes',
+  IMAGERY.radar.maxTileZoom, 7);
+
+/* ==> SMOOTH MUST BE 0, AND NOTHING DOWNSTREAM WOULD CATCH IT NOW. <== Blur
+ * invents alpha outside the data. While radar was a disc, the alpha measurement
+ * would at least have noticed; a tile layer measures nothing, so this constant
+ * is the only guard left between a smoothed tile and haze painted over ground
+ * no radar can see. */
+eq('smooth is 0', IMAGERY.radar.smooth, 0);
 
 /* ---------------------------------------------------------------------------
  * 4. THE MASK THRESHOLD.
@@ -181,70 +141,69 @@ eq('a hair under the cut is covered', verdictFor(cut - 1e-6), 'covered');
  * it must not fall through to the reassuring branch. */
 eq('a nonsense fraction is unknown, never covered', verdictFor(NaN), 'unknown');
 
-/* ==> THE THRESHOLD MUST LEAVE ROOM ABOVE THE WORST REAL COVERAGE. <== 0.99 is
- * a real measured box with real radar in it (Madagascar). A cut at or below it
- * would call that box empty and suppress the honest wording. */
 ok('the threshold sits above the worst measured real coverage', cut > 0.99,
   `noCoverageFraction is ${cut}`);
 
 /* ---------------------------------------------------------------------------
- * 5. THE WORDING, WORST-CASE-FIRST. THE HEART OF THE SUITE.
+ * 5. THE WORDING. THE HEART OF THE SUITE.
+ *
+ * The contract is asymmetric on purpose: this function may report that
+ * something is MISSING, and may never report that anything is CLEAR. An empty
+ * string is a refusal to comment, not a reassurance.
  * ------------------------------------------------------------------------- */
-const says = (verdicts) => radarEmptyMessage(verdicts);
-const isAllClear = (msg) => /showing no rain/.test(msg);
-const admitsAGap = (msg) => /not an all-clear|could not check/.test(msg);
+const says = (v) => radarCoverageMessage(v);
 
-ok('every disc covered — and only then — may say there is no rain',
-  isAllClear(says(['covered', 'covered'])));
-
-ok('every disc uncovered names the gap',
-  admitsAGap(says(['none', 'none'])) && !isAllClear(says(['none', 'none'])));
-
-/* ==> THE MIXED CASES. EVERY ONE OF THESE IS A WAY TO ACCIDENTALLY SHIP AN
- * ALL-CLEAR. <== */
-const mixed = [
-  ['none', 'covered'],
-  ['covered', 'none'],
-  ['unknown', 'covered'],
-  ['covered', 'unknown'],
-  [null, 'covered'],
-  ['covered', null],
-  ['covered', 'covered', 'none'],
-  ['covered', 'covered', null],
-  ['none', 'unknown', 'covered'],
+/* ==> NO INPUT MAY EVER PRODUCE A REASSURING SENTENCE. <== The old version had
+ * a "showing no rain" branch, which a disc could justify by measuring its own
+ * alpha. A tile layer measures nothing, so that sentence lost its evidence and
+ * was deleted. This asserts it cannot come back by accident. */
+const REASSURING = /no rain|all clear|clear\b|nothing to report/i;
+const universe = [
+  [], ['covered'], ['none'], ['unknown'], [null],
+  ['covered', 'covered'], ['none', 'none'], ['unknown', 'unknown'], [null, null],
+  ['none', 'covered'], ['covered', 'none'], ['unknown', 'covered'], ['covered', 'unknown'],
+  [null, 'covered'], ['covered', null], ['none', 'unknown'], ['unknown', 'none'],
+  ['covered', 'covered', 'none'], ['covered', 'covered', null], ['none', 'unknown', 'covered'],
+  ['covered', 'none', 'unknown', null],
 ];
-for (const set of mixed) {
+for (const set of universe) {
   const msg = says(set);
-  ok(`a mixed set ${JSON.stringify(set)} never reads as an all-clear`,
-    !isAllClear(msg), `said: ${msg}`);
-  ok(`a mixed set ${JSON.stringify(set)} says what is missing`,
-    admitsAGap(msg), `said: ${msg}`);
+  ok(`${JSON.stringify(set)} never claims anything is clear`,
+    !REASSURING.test(msg.replace(/not an all-clear/gi, '')), `said: ${msg}`);
 }
 
-/* A 'none' anywhere outranks an 'unknown' anywhere — a known gap is a stronger
- * statement than an unmeasured one and should be the sentence shown. */
-ok('a known gap beats an unmeasured one in the wording',
-  /no radar watching them/.test(says(['none', 'unknown'])), says(['none', 'unknown']));
+/* Silence is only ever earned by a set where every storm is known-covered. */
+eq('all covered says nothing', says(['covered', 'covered']), '');
+eq('nothing tracked says nothing', says([]), '');
+ok('a single unresolved storm breaks the silence', says(['covered', null]) !== '');
+ok('a single unwatched storm breaks the silence', says(['covered', 'none']) !== '');
 
-/* Nothing to summarise is not an all-clear either. An empty array reaches here
- * when every disc was dropped between the check and the render. */
-ok('an empty set is not an all-clear', !isAllClear(says([])));
-ok('a non-array is not an all-clear', !isAllClear(says(undefined)));
+/* Worst-case-first: a `none` anywhere outranks everything else. */
+for (const set of [['none', 'covered'], ['none', 'unknown'], ['none', null], ['covered', 'none', 'unknown']]) {
+  ok(`${JSON.stringify(set)} leads with the gap`,
+    /not an all-clear/.test(says(set)), says(set));
+}
 
-/* ==> AND THE TEST THAT PROVES THIS SUITE CAN FAIL. <== A suite that passes on
- * the same wrong assumption as the bug is worse than no suite. This reproduces
- * the OLD behaviour — one sentence for every blank frame, chosen without
- * consulting the mask — and asserts that it would be caught. If this ever
- * stops failing, the checks above have gone blind. */
-const oldBehaviour = () => 'Radar is watching and showing no rain near these storms';
-ok('the suite would catch a regression to the single-sentence behaviour',
-  isAllClear(oldBehaviour(['none', 'covered'])) === true && !isAllClear(says(['none', 'covered'])),
-  'the mixed-set checks above would not have detected the pre-Wave-6 wording');
+/* And a set with no `none` but something unresolved says so rather than
+ * guessing in either direction. */
+for (const set of [['covered', 'unknown'], ['covered', null], ['unknown'], [null]]) {
+  ok(`${JSON.stringify(set)} admits it could not check`,
+    /could not check/.test(says(set)), says(set));
+}
+
+ok('a non-array is treated as nothing tracked, not as an answer', says(undefined) === '');
+
+/* ==> THE TEST THAT PROVES THIS SUITE CAN FAIL. <== A suite that passes on the
+ * same wrong assumption as the bug is worse than no suite. This is the deleted
+ * pre-tile sentence; if the reassurance detector above ever stops catching it,
+ * every check in section 5 has gone blind. */
+ok('the reassurance detector would catch the deleted "no rain" sentence',
+  REASSURING.test('Radar is watching and showing no rain near these storms'));
 
 /* ------------------------------------------------------------------------- */
 
 if (failures) {
-  console.error(`\n${failures} of ${checked} radar coverage checks failed.\n`);
+  console.error(`\n${failures} of ${checked} radar checks failed.\n`);
   process.exit(1);
 }
-console.log(`✓ radar geometry and coverage states hold: ${checked} checks`);
+console.log(`✓ radar tiles and coverage states hold: ${checked} checks`);
