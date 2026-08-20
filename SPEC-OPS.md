@@ -41,7 +41,35 @@ renders real hazard data next to real decisions; a missing disclaimer is that
 failure one level up.
 
 `ui/disclaimer.js` owns the wording as one frozen export, so no surface retypes
-it. Plain language, no legalese (§1). Three surfaces:
+it. Plain language, no legalese (§1).
+
+**==> IT SENDS THE READER TO THEIR OWN AGENCY, NOT TO OURS. <==** Changed
+2026-08-20. Both sentences said *"always follow the National Hurricane
+Center"*, which is the right instruction in Florida and the **wrong** one in
+Manila, Brisbane or Réunion — NHC has no jurisdiction there, publishes nothing
+about their storm, and following it instead of PAGASA is worse than no advice.
+The app has been global since §50; this line had not caught up. It now reads
+*"always follow your national weather agency and your local emergency
+management."*
+
+**"YOUR NATIONAL WEATHER AGENCY" BECAUSE IT RESOLVES ITSELF.** We cannot name
+the right agency for an unknown reader — home is a point on a globe, not a
+jurisdiction, and deriving one from it would be inventing authority. The reader
+knows theirs.
+
+**AND THE LINK IS LABELLED `National Hurricane Center (US)` FOR THE SAME
+REASON.** Both surfaces render that label as a bare link directly beneath the
+sentence. Unqualified it reads as an ANSWER to it — *here is your national
+weather agency* — which is the one misreading that could send somebody to the
+wrong forecast mid-storm. The two characters make it an example belonging to
+one country. `tools/detail-disclaimer-check.mjs` still finds the NHC in the
+footer through that label.
+
+**THE TEST FOR ANY FUTURE EDIT, BOTH HALVES:** does the sentence stay true if a
+source is added or dropped, and does it stay true for a reader anywhere on
+Earth? The wording before each of these two corrections failed one of them.
+
+Three surfaces:
 
 - **First run** — a strip shown IMMEDIATELY, with **no dismiss X and no
   timeout**; the only way past it is the button. The home nudge is CHAINED

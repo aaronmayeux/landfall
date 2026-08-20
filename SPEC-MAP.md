@@ -92,9 +92,12 @@ REFERENCE
   slot (wind-field) returns `true`, because only then does the merge produce a
   different answer. `tools/test-recompute-budget.mjs` holds the count at zero.
 - **Every row shows its own state**: loading (spinner in row), error (row amber,
-  named — "Surge unavailable"), unsupported (row dims, "Not available for GDACS
-  storms" — this is what §4's `can` block is for). **Re-tapping an errored row is
-  the retry.**
+  named — "Surge unavailable"), unsupported (row dims with a reason — this is
+  what §4's `can` block is for). **Re-tapping an errored row is the retry.**
+  An unsupported row names the source that declines, and **points at the
+  surface that does answer when one exists** — see §50.11: the storm drawer's
+  "In effect" section no longer dead-ends a GDACS storm, because national
+  agency warnings list below it and paint the same coastal stripe.
 - **Rows dim, they never disappear.** A missing toggle looks like a bug; a dimmed
   one with a reason is information.
 - **The storm-detail group dims entirely with no selection**, header subtitle

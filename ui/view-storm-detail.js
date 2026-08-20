@@ -806,9 +806,25 @@ export function createStormDetailView({
   function wwHtml() {
     /* `can` distinguishes "this source never had it" from "the fetch died"
      * (§4). GDACS publishes no watch/warning product — that is unsupported,
-     * not clear and not broken. Three strings, all different, by design. */
+     * not clear and not broken. Three strings, all different, by design.
+     *
+     * ==> AND IT POINTS DOWN, BECAUSE SINCE §50.11 THERE IS SOMEWHERE TO
+     * POINT. <== This read "Not available for GDACS storms." and stopped.
+     * True about NHC's product and false about the app: foreign agencies'
+     * cyclone warnings now list in "Local agency alerts" directly below and
+     * paint the same coastal stripe through the same selector
+     * (map/layers/cap-coast.js). A reader could see an orange stripe on the
+     * Philippine coast while the section above it said nothing was available.
+     *
+     * IT PROMISES A LIST, NOT A WARNING. "Any national agency warnings are
+     * listed below" stays true when the list is empty, when the country is
+     * unattributed, and when the fetch failed — the section below owns those
+     * three answers and words them separately (§50.6). Claiming a stripe from
+     * here would be asserting a fact this function cannot see. */
     if (storm.source !== 'nhc') {
-      return '<div class="detail-soft">Not available for GDACS storms.</div>';
+      return `<div class="detail-soft">The National Hurricane Center doesn’t
+        cover this storm. Any national agency warnings are listed in
+        <strong>Local agency alerts</strong> below.</div>`;
     }
     /* BEFORE THE SLOT IS READ, ALWAYS. This section's empty state is the
      * sentence "None in effect." — an all-clear on live government orders.

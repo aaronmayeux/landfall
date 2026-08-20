@@ -110,6 +110,26 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
+**INDIAN OCEAN GENESIS — THE ARCHIVE IS COLLECTING THE BYTES, THEN BUILD IT.**
+"Being watched" reads `abpwweb.txt`, which is the WESTERN AND SOUTH PACIFIC
+bulletin and contains no Indian Ocean at all. JTWC publishes the Indian Ocean
+as `abioweb.txt`; it is already linked in the RSS index the app fetches every
+poll, and `PRODUCT_RE` in `functions/api/jtwc/storms.js` drops it as a side
+effect of filtering area bulletins out of the storm list. So an Arabian Sea or
+Mozambique Channel disturbance never appears until it becomes a storm. **Storms
+there are unaffected** — GDACS is global and `io####`/`sh####` warnings already
+flow. §45.3 carries the detail.
+
+`tools/archive-fetch.mjs` now snapshots it hourly as `jtwc-abio.txt`. **Read
+those bytes before touching `GENESIS.ABPW`** — region headings, section
+lettering, probability sentence. §45.3's scar is that the first ABPW parser was
+written from prose and three of four patterns matched nothing, silently, and an
+empty genesis list renders as "nothing is brewing". Assuming ABIO is an ABPW
+with different coordinates is the same mistake wearing a new hat.
+
+The JTWC outage note says *western and South Pacific* on purpose until this
+ships. Change it in `ui/view-storms.js` as part of the same pass, not before.
+
 **0-PERF. THE BOOT PATH HAS BEEN MEASURED AND THE FINDINGS ARE IN
 `PERF-AUDIT.md`.** Read that file, not this entry — it carries the numbers, the
 citations and a ranked plan in three tiers. The one-line version: **a returning

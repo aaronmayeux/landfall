@@ -1658,6 +1658,40 @@ Mapping `HIGH` onto some invented percentage would be inventing data, which §5
 forbids. They render as what each source said, in one list, each labelled with
 its own source and horizon.
 
+**==> THE INDIAN OCEAN IS NOT IN THIS AND IT IS A HOLE, NOT A DECISION. <==**
+Found 2026-08-20. `abpwweb.txt` is headed SIGNIFICANT TROPICAL WEATHER ADVISORY
+FOR THE **WESTERN AND SOUTH PACIFIC** OCEANS and its body has exactly two
+regions — `1. WESTERN NORTH PACIFIC AREA (180 TO MALAY PENINSULA)` and
+`2. SOUTH PACIFIC AREA (WEST COAST OF SOUTH AMERICA TO 135 EAST)`. JTWC
+publishes the Indian Ocean separately as `abioweb.txt`, and Landfall does not
+read it. So a disturbance in the Arabian Sea or the Mozambique Channel appears
+in "Being watched" **never** — only once it becomes a storm and reaches GDACS.
+
+**STORMS THERE ARE FINE, AND THE DISTINCTION MATTERS.** GDACS queries
+`eventlist=TC` with no region filter, and `PRODUCT_RE` in
+`functions/api/jtwc/storms.js` matches any `[a-z]{2}\d{4}web.txt`, so `io####`
+and `sh####` warnings already supply designations, advisory text and model
+tracks. The gap is genesis only.
+
+**IT WAS NEVER DECIDED AGAINST — IT FELL THROUGH A FILTER.** `abioweb.txt` is
+already linked in the RSS index this app fetches every poll, and that same
+`PRODUCT_RE` drops it along with `abpwweb.txt` because area bulletins fail the
+four-digit test. Correct in the storm route; the reason nobody noticed it was
+picked up nowhere else.
+
+**AND IT MUST NOT BE ASSUMED TO BE AN ABPW WITH DIFFERENT COORDINATES.** The
+scar above is the argument: the first ABPW parser was written from this
+section's prose and three of its four patterns matched nothing, silently, and
+an empty list renders as "nothing is brewing". `tools/archive-fetch.mjs`
+snapshots the bulletin hourly as `jtwc-abio.txt` as of 2026-08-20. Read those
+bytes — region headings, section lettering, probability sentence — before
+`GENESIS.ABPW` is asked to handle a second product.
+
+**UNTIL THEN THE OUTAGE NOTE STAYS HONEST ABOUT TODAY.** Aaron's call: the
+storm list says areas in the *western and South Pacific* may be missing, and
+that sentence changes when the coverage does — not before, because writing it
+for the intended future restores the same false claim §5 forbids.
+
 ### 45.5 Failure behaviour
 
 Three states, per §5, and the watch list has its own set separate from the
@@ -2708,6 +2742,23 @@ questions: whether a whole-country area paints far more coast than reads well
 (the Philippines is 7,600 islands; Costa Rica gets both coasts), and whether
 that volume meets `COAST_BAND.maxBandVertices`. `areaPadKm` is the dial if the
 stripe undershoots at a river mouth or an offshore island.
+
+**==> AND "IN EFFECT" POINTS DOWN AT THIS, BECAUSE THE STRIPE MADE ITS OLD
+ANSWER A LIE. <==** Corrected 2026-08-20, Aaron caught it. The storm drawer's
+watch/warning section answered a GDACS storm with *"Not available for GDACS
+storms."* and stopped. True about NHC's product and false about the app the
+moment this section shipped: a reader could see an orange stripe on the
+Philippine coast, painted by `cap-coast.js`, while the section above it said
+nothing was available. It now reads *"The National Hurricane Center doesn't
+cover this storm. Any national agency warnings are listed in **Local agency
+alerts** below."* — the mirror of the pointer NHC storms already carry in the
+other direction (§50.3).
+
+**IT PROMISES A LIST, NOT A WARNING.** The sentence stays true when the list is
+empty, when GDACS has attributed no country (§50.12) and when the fetch failed.
+Those are three different answers and `ui/cap-storm.js` owns and words all
+three; a pointer that claimed a stripe would be asserting a fact `wwHtml()`
+cannot see.
 9. A Spanish alert arrives with its wording COLLAPSED and the English coded
    line visible. Tapping the chevron opens it; the chevron rotates and nothing
    else on the panel moves.

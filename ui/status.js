@@ -97,15 +97,33 @@ export function sourceHealthMessage(sources, now = Date.now()) {
   if (nhcDown && gdacsDown) {
     return { message: 'Storm feeds are not responding', tone: TONE.ERROR };
   }
+  /* ==> THE BASINS NAMED HERE ARE THE ONES THE MERGE ACTUALLY GIVES EACH
+   * SOURCE, AND BOTH LINES USED TO UNDERSTATE THEM. <== A message naming a
+   * narrower area than the outage covers is a false all-clear about
+   * everywhere it left out — the §5 failure wearing an error message's
+   * clothes.
+   *
+   * NHC's line omitted Central Pacific. CPHC storms arrive through this same
+   * feed and carry `cp` ids (lib/basin.js `BASIN_BY_PREFIX`).
+   *
+   * GDACS's line named two basins out of five. `data/merge.js` drops GDACS
+   * storms only inside `NHC_BASINS`, so everything else in `BASIN_ORDER` is
+   * GDACS territory: Northwest Pacific, North Indian, Southwest Indian,
+   * Australian Region and South Pacific. A Coral Sea cyclone going missing
+   * was described as a Northwest Pacific problem. It says the boundary
+   * instead of listing five names — shorter, and it cannot go stale if a
+   * basin is ever reassigned. */
   if (nhcDown) {
     return {
-      message: 'NHC is not responding — Atlantic and East Pacific storms may be missing',
+      message:
+        'NHC is not responding — Atlantic, East Pacific and Central Pacific storms may be missing',
       tone: TONE.ERROR,
     };
   }
   if (gdacsDown) {
     return {
-      message: 'GDACS is not responding — Northwest Pacific and Indian Ocean storms may be missing',
+      message:
+        'GDACS is not responding — storms outside the Atlantic and eastern Pacific may be missing',
       tone: TONE.ERROR,
     };
   }

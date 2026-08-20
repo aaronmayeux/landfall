@@ -1152,10 +1152,34 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
           : 'The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.',
       });
     }
+    /* ==> THE OCEANS NAMED HERE ARE THE BULLETIN'S OWN, AND THE OLD LINE
+     * NAMED ONE WE HAVE NEVER READ. <== It said "Northwest Pacific and Indian
+     * Ocean". `functions/api/jtwc/abpw.js` fetches `abpwweb.txt` and nothing
+     * else, and those bytes (archive branch, 2026-08-20 06:00Z) are headed
+     * SIGNIFICANT TROPICAL WEATHER ADVISORY FOR THE WESTERN AND SOUTH PACIFIC
+     * OCEANS, with exactly two regions in the body:
+     *
+     *     1. WESTERN NORTH PACIFIC AREA (180 TO MALAY PENINSULA):
+     *     2. SOUTH PACIFIC AREA (WEST COAST OF SOUTH AMERICA TO 135 EAST):
+     *
+     * No Indian Ocean anywhere in it. So the line claimed coverage of an
+     * ocean we do not watch and omitted one we do — wrong in both directions
+     * at once.
+     *
+     * ==> IT WILL NEED CHANGING WHEN ABIO SHIPS, AND THAT IS THE RIGHT ORDER.
+     * <== JTWC publishes `abioweb.txt` for the Indian Ocean, it is already
+     * linked in the RSS index this app fetches for storm warnings, and it is
+     * dropped by `PRODUCT_RE` in `functions/api/jtwc/storms.js` as a side
+     * effect of filtering out area bulletins. Aaron's call, 2026-08-20: the
+     * message stays honest about today and changes when the coverage does.
+     * Writing it for the intended future would put back the exact false claim
+     * being removed here. `tools/archive-fetch.mjs` now snapshots the
+     * bulletin so the parser can be written against real bytes (§45.3's
+     * scar). */
     if (g.sources?.jtwc?.status === 'unavailable') {
       partial.push({
         tone: 'error',
-        text: 'JTWC is not responding. Areas in the Northwest Pacific and Indian Ocean may be missing.',
+        text: 'JTWC is not responding. Areas being watched in the western and South Pacific may be missing.',
       });
     }
 
@@ -1235,11 +1259,20 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     if (!body) return;
     body.querySelector('.list-partial')?.remove();
     const notes = [];
+    /* Same basins as `sourceHealthMessage` in ui/status.js, and they are the
+     * same sentence plus "or stale" ON PURPOSE — the strip and the list are
+     * two surfaces answering one question, and a reader who sees both must
+     * not be told two different things about which ocean went quiet. If one
+     * is corrected, correct the other. */
     if (state.sources.nhc.status === 'unavailable') {
-      notes.push('NHC is not responding — Atlantic and East Pacific storms may be missing or stale.');
+      notes.push(
+        'NHC is not responding — Atlantic, East Pacific and Central Pacific storms may be missing or stale.'
+      );
     }
     if (state.sources.gdacs.status === 'unavailable') {
-      notes.push('GDACS is not responding — Northwest Pacific and Indian Ocean storms may be missing or stale.');
+      notes.push(
+        'GDACS is not responding — storms outside the Atlantic and eastern Pacific may be missing or stale.'
+      );
     }
     if (notes.length) {
       const p = document.createElement('p');

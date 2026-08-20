@@ -1783,8 +1783,20 @@ search with no matches):
 - `clear` → "No active storms. All feeds reporting clean." Only when every source
   returned clean AND there are zero storms.
 - `unavailable` → never an empty list. Partial: show what we have plus "GDACS is
-  not responding — Northwest Pacific and Indian Ocean storms may be missing."
-  Total: error state with Retry.
+  not responding — storms outside the Atlantic and eastern Pacific may be
+  missing." Total: error state with Retry.
+
+**THE BASINS IN THOSE NOTES ARE THE MERGE'S, NOT A ROUGH GESTURE AT A REGION.**
+An outage note naming a narrower area than the outage covers is a false
+all-clear about everywhere it left out. `data/merge.js` drops GDACS storms only
+inside `NHC_BASINS`, so GDACS owns the other five entries in `BASIN_ORDER` —
+Northwest Pacific, North Indian, Southwest Indian, Australian Region, South
+Pacific — and the note says that boundary rather than listing five names, so
+reassigning a basin cannot make it stale. NHC's note names Atlantic, East
+Pacific **and Central Pacific**; CPHC storms arrive through the same feed under
+`cp` ids. Corrected 2026-08-20: the old pair named two GDACS basins out of five
+and omitted CPHC entirely. The strip (`ui/status.js`) and the list
+(`ui/view-storms.js`) carry the same sentence and are corrected together.
 
 A WebGL canvas is invisible to assistive technology. The storm list is not a
 hidden duplicate — those rot because nobody looks at them. It is one visible list

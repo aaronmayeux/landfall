@@ -79,24 +79,50 @@ export const DISCLAIMER = Object.freeze({
    * the sentence.
    *
    * THE TEST FOR ANY FUTURE EDIT: does this sentence stay true if a source
-   * is added or dropped? The old one did not. */
+   * is added or dropped? The old one did not.
+   *
+   * ==> [APPROVE] AND THE AGENCY IT SENDS YOU TO CHANGED TOO (2026-08-20).
+   * <== Both sentences said "always follow the National Hurricane Center".
+   * That is the correct instruction for a reader in Florida and the WRONG one
+   * for a reader in Manila, Brisbane or Réunion — NHC has no jurisdiction
+   * over them, issues nothing about their storm, and following it instead of
+   * PAGASA is worse advice than no advice. The app has been global since
+   * §50's national alerts shipped; this line had not caught up.
+   *
+   * "YOUR NATIONAL WEATHER AGENCY" IS THE PHRASE BECAUSE IT RESOLVES ITSELF.
+   * We cannot name the right agency for an unknown reader — home is a point
+   * on a globe, not a jurisdiction, and guessing one from it would be
+   * inventing authority. The reader knows theirs. NHC survives as the named
+   * link below, which is the right example for the largest share of readers
+   * and is now offered as an example rather than as the instruction.
+   *
+   * THE SAME TEST AS ABOVE, APPLIED TO THE OTHER HALF: does this sentence
+   * stay true for a reader anywhere on Earth? The old one did not. */
   full:
     'Landfall is not an official source. It shows public forecast data from ' +
     'weather agencies and research centers, and it can be wrong, late, or ' +
-    'unavailable. For decisions about your safety, always follow the ' +
-    'National Hurricane Center and your local emergency management.',
+    'unavailable. For decisions about your safety, always follow your ' +
+    'national weather agency and your local emergency management.',
 
   /** One line, for a surface that has no room for the full text. */
   short:
-    'Unofficial. Always follow the National Hurricane Center and local ' +
+    'Unofficial. Always follow your national weather agency and local ' +
     'emergency management.',
 
   /** The button. "I understand" and not "OK" — it names what was agreed. */
   acknowledge: 'I understand',
 
-  /** Where to go. Kept beside the text so the two never drift apart. */
+  /** Where to go. Kept beside the text so the two never drift apart.
+   *
+   * ==> "(US)" IS LOAD-BEARING NOW THAT THE SENTENCE SAYS "YOUR NATIONAL
+   * WEATHER AGENCY". <== Both surfaces render this label as a bare link
+   * directly under that sentence. Unqualified, it reads to a reader in Manila
+   * as though we are ANSWERING the sentence — here is your national weather
+   * agency — which is the one misreading that could send somebody to the
+   * wrong forecast during a storm. Two characters make it an example
+   * belonging to one country instead of a resolution of "yours". */
   officialUrl: 'https://www.nhc.noaa.gov/',
-  officialLabel: 'National Hurricane Center',
+  officialLabel: 'National Hurricane Center (US)',
 });
 
 /* --- persisted flag -------------------------------------------------------
