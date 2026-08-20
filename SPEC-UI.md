@@ -745,6 +745,16 @@ source did not answer, the screen refuses the word, names which source failed,
 and says explicitly that this is not an all-clear. `tools/test-home.mjs` drives
 all five paths through a DOM stub for that one assertion.
 
+**THE NO-HOME SCREEN'S PRIVACY SENTENCE IS A SMALLER PROMISE, KEPT.** It used to
+say coordinates never leave the device. That stopped being true — the reverse
+lookup that turns a dropped pin into a place name sends a point, and §48's
+rainfall forecast sends the house. What it says now is what is true: the home is
+stored on this device only, no account holds it, nothing in it names you, and the
+two lookups that need a point send a rounded one (`RAIN.wireDecimals`, and three
+decimals for `/api/reverse`). **The weaker sentence is the deliberate trade** — a
+promise a feature quietly breaks is worse than a smaller one kept. Confirmed on
+glass; do not restore the older, stronger wording.
+
 ### Geometry for the dashboard is warmed, never selected
 
 `pipeline.warm()` — cache first, fetch if needed, and **no camera move, no
@@ -854,6 +864,14 @@ degrades to coordinates and says nothing further. The commit never waits on the
 network either: "Set as home" stores immediately, and a name that lands a moment
 later is patched onto the stored home, guarded on the coordinates still
 matching so a late answer can never label a home the user has since changed.
+
+**CONFIRMED AGAINST THE LIVE SERVICE.** Every path in this block was written
+blind — the sandbox cannot reach Mapbox, so the whole lookup half shipped with no
+failure path ever exercised, and it was the largest untested surface in the app
+for weeks. Aaron judged it on glass and all four outcomes read correctly: the
+three-comma-part name is useful rather than noisy, and `Open water` lands as a
+description rather than a warning. `labelOf()` in `functions/api/reverse.js` is
+the dial if that ever stops being true; nothing needs turning today.
 
 ### What home is for
 

@@ -2184,6 +2184,15 @@ to explain NWS's coverage area, because NWS not forecasting here **was** the
 whole answer. Reaching it now means both sources declined to produce a series.
 It still carries no Retry.
 
+**CONFIRMED ON GLASS WITH HOME OUTSIDE NWS COVERAGE.** The whole second source
+is invisible from anywhere with an NWS forecast, so it shipped unwitnessed and
+could only be judged by moving the house. Aaron judged it and all three
+questions came back clean: the model-point provenance line reads as provenance
+rather than as a coordinate leak; *"Flood warnings aren't published for this
+location"* lands as a durable fact rather than a missing feature; and a total
+from a raw global model reads as the same kind of number an American one does.
+The two halves of §48 are one feature to a reader, which was the goal.
+
 
 ## 50. Local agency alerts — what the rest of the world publishes
 

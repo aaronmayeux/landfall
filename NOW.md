@@ -11,15 +11,14 @@
 > the things you DIDN'T know about. `THE PLAN`, `IN FLIGHT` and `NEXT UP` stay
 > short enough to read at a glance; length accumulates BELOW them.
 >
-> **THE 300 IS CURRENTLY MISSED ON PURPOSE, SO DO NOT RE-RUN THE AUDIT BLIND.**
-> This file came down from 510 and settled at ~340. What is left is `HELD FOR
-> WEATHER` and `KNOWN AND ACCEPTED`, and both grow with the APP rather than with
-> neglect — a bigger app has more built-but-unwitnessed surfaces and more settled
-> questions worth not re-asking. There is no fat left to take. **The next real
-> lever is structural: move `KNOWN AND ACCEPTED` into SPEC.md as a SETTLED
-> section and point at it from here.** That was not done now because its whole
-> job is stopping a session re-asking a closed question, and it only does that
-> job if it is read at session start.
+> **THE TRIGGER IS MET AND THE RESIDUE IS STRUCTURAL, SO DO NOT AUDIT BLIND.**
+> This file came down from 510. What is left is mostly `HELD FOR WEATHER` and
+> `KNOWN AND ACCEPTED`, and both grow with the APP rather than with neglect — a
+> bigger app has more built-but-unwitnessed surfaces and more settled questions
+> worth not re-asking. If it climbs again, the lever is structural rather than
+> editorial: move `KNOWN AND ACCEPTED` into SPEC.md as a SETTLED section. That
+> has been left alone because its whole job is stopping a session re-asking a
+> closed question, and it only does that job if it is read at session start.
 >
 > **`IN FLIGHT` MEANS WAITING ON AARON AND NOTHING ELSE.** ==> THIS IS THE RULE
 > THE 2026-08-19 CUT EXISTED TO RESTORE. <== The heading had silted up with items
@@ -57,46 +56,17 @@ built is in the spec. **How to reach the world from a sandbox that cannot:
 
 ## IN FLIGHT
 
-**Waiting on Aaron's eyes and nothing else — no storm required.** The as-built
-description is in the spec section named beside each one; what is here is only
-the question a tool cannot answer.
+**NOTHING. THE HEADING IS EMPTY AND THAT IS A REAL STATE, NOT AN OVERSIGHT.**
+Everything built is either judged or waiting on weather it has not got. The four
+that stood here — the live reverse-geocoded home name, rainfall's global second
+source, the no-home privacy sentence and the slider grab — all passed on glass
+and are described as-built in `SPEC-UI.md` §8, `SPEC-DATA.md` §48.14–§48.16 and
+`SPEC.md` §10.
 
-**Home is a place name, and the lookup half has never run against real Mapbox.**
-`SPEC-UI.md` §8, `SPEC-DATA.md` §4. The sandbox cannot reach it, so every
-failure path is written and none is exercised — this is the largest untested
-surface in the app. Judge: does the name read as useful at three comma-parts
-("Galveston, Texas, United States"), or is the country noise? Dial is `labelOf()`
-in `functions/api/reverse.js`. And does "Open water" land as a description rather
-than a warning — watching a rig or a passage is a legitimate thing to want.
-
-**Rainfall's second source, which needs a house and no storm at all.**
-`SPEC-DATA.md` §48.14–§48.16. Rainfall is about a point on the ground and is the
-same answer whichever storm is on screen, so this is judgeable now: set home
-outside NWS coverage — the Bahamas, Manila, anywhere outside the US and its
-territories — and look. Three things there: does *"Open-Meteo, nearest model
-point 14.59, 121.00"* read as provenance or as a coordinate leak; does *"Flood
-warnings aren't published for this location"* land as a fact or as a missing
-feature; and does a raw-model rainfall total read as the same kind of number an
-American one does.
-
-**The no-home screen's privacy sentence.** `SPEC-UI.md` §8. It no longer claims
-coordinates never leave the device, because rainfall sends the house. It now says
-the home is stored on this device only, no account, nothing that names you. The
-new sentence is weaker than the old one and it is true, which is the trade. Clear
-the home and read it.
-
-**Sliders need a thumb grab; drawer content fades under the header.** `SPEC.md`
-§10, `SPEC-UI.md` §16. Scroll the settings sheet fast past all four sliders —
-nothing should move. Then drag a thumb: no lag on the first pixel, still
-grabbable at either end. Desktop mouse: the track no longer jumps to a click,
-which is intended.
-
-**Two legend dots in the storm drawer just stopped being flat discs.**
-`SPEC-UI.md` §16. The watch/warning legend and the wind-field legend were handing
-`.row-swatch` an inline `background`, which killed the glow the same way the
-drawer header's dot was killed, plus a 5px drop off centre. Both fixed. Next time
-a storm drawer is open: the legend dots should read as lights, level with their
-own text. `tools/test-swatch-contract.mjs` now fails on the construction.
+**So the next session starts a wave rather than asking Aaron to look at
+anything.** If work lands and this heading is still empty afterwards, that means
+the thing built could not be judged — put it under `HELD FOR WEATHER` with the
+storm named, and do not quietly file it here to make the section look busy.
 
 ## NEXT UP
 

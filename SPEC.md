@@ -1212,7 +1212,10 @@ icons, the storm glyph.
   refused press still FOCUSES the slider so tapping the track then arrowing
   works. `--slider-thumb` is one token read by both the CSS that draws the
   circle and the JS that measures it; two copies would drift and the symptom
-  would be "the slider ignores me sometimes".
+  would be "the slider ignores me sometimes". **Confirmed on glass:** a fast
+  scroll past all four sliders moves none of them, a thumb drag has no lag on
+  the first pixel and stays grabbable at either end, and the desktop track no
+  longer jumps to a click — which is intended, not a regression.
 - **The on-screen keyboard is measured, and the sheet gets out of its way**
   (`ui/keyboard.js`, built 2026-07-26). A fixed element is positioned against
   the LAYOUT viewport, and neither iOS nor Chrome-for-Android shrinks that when
