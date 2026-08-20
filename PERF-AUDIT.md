@@ -148,7 +148,7 @@ globe draws a frame.
 
 **`app/views.js` alone owns 45 modules / 849 KB — 27% of the boot graph.** It
 statically imports all seven drawer views (`app/views.js:45-51`) and constructs
-all seven at boot (`:387-867`). `main.js:1180` states the design intent outright:
+all seven at boot (`:553` onward). `main.js:1197` states the design intent outright:
 
 > *"NOTHING OPEN ON LAUNCH, at any width."*
 
@@ -329,3 +329,23 @@ nightly, writes the run to a `perf-history` branch, and fails on a budget breach
 **The budget numbers in `perf-budget.json` are placeholders and say so.**
 Calibrate them from the first runner result, in a reviewed commit. A budget
 nothing can fail is decoration.
+
+---
+
+## Provenance — what is measured, what is read, what is neither
+
+**MEASURED LIVE** (real Chrome, live deploy, 2026-08-19): the 171-module warm
+load and its per-module service-worker timings; the 1,960 ms vs 2,322 ms A/B;
+the five-deep API chain and its wire timestamps; the 2,459 ms first-API time;
+the `gdacs/geometry` payload size; the two live storms.
+
+**MEASURED FROM D1** (`landfall-telemetry`, `sessions`): 1,991 of 2,036 sessions
+service-worker controlled; the §52 platform table.
+
+**READ FROM CODE, citation-verified**: every `file:line` in this document was
+checked against the file after being written. Two were wrong on the first pass
+and are corrected here — the "NOTHING OPEN ON LAUNCH" quote is `main.js:1197`,
+not `:1180`, and the view constructions start at `app/views.js:553`, not `:387`.
+
+**NEITHER — explicitly open**: everything under §6. Those need the runner.
+`tools/perf-audit.mjs` measures them; nothing in this file guesses at them.
