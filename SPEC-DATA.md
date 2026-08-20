@@ -2508,8 +2508,32 @@ offline against real bytes.
 ### 50.3 Matching — by country, and only for GDACS storms
 
 A CAP row carries `countryCode` as ISO-2. A GDACS storm carries
-`affectedcountries`, each entry with `iso2` already on it. The join needs no
-lookup table — the two sources happen to speak the same alphabet.
+`affectedcountries`, each entry with `iso2` already on it, normalized onto the
+storm object as **`raw.countries`**. The join needs no lookup table — the two
+sources happen to speak the same alphabet.
+
+**==> `raw.countries`, AND READING `storm.countries` KEPT THIS ENTIRE FEATURE
+DARK FROM THE DAY IT SHIPPED UNTIL 2026-08-20. <==** There is no top-level
+`countries` field on a storm object; `data/gdacs.js` puts every GDACS-owned
+field under `raw`. `stormCountries` reached for the top level, returned `[]`
+for every storm that has ever existed, and `alertsForStorm` bails on an empty
+set — so **no foreign agency alert ever reached a screen**, and the section
+could only print its no-country sentence. Not a blank surface: a confident
+wrong one. The CAP coastal stripe (§50.11) was dark for the same reason.
+
+It surfaced as a CONTRADICTION rather than an absence. SAUDEL-26's Vitals row
+read `Country  Japan` — that row had always used the correct path — while the
+section below it said no country was listed. One storm, one feed, two paths,
+and only the disagreement made it visible.
+
+**THREE TESTS WERE GREEN OVER IT**, in `test-cap.mjs` (twice) and
+`test-coastal-paint.mjs`, all because each hand-built its storm object with
+`countries` at the top level — asserting the shape the bug expected rather than
+the shape the app produces. One of them carried a comment claiming the field
+names had been "checked against data/gdacs.js rather than invented for the
+fixture"; they had not. **Fixture storms now go through `_normalizeGdacsEvent`,
+the real normalizer.** A test that stubs the object instead of building it can
+only ever prove the two halves agree with the test.
 
 **MEASURED: 63 of 98 rows in the archived GDACS list carry countries.** The
 other 35 are out at sea, where no country has issued anything about them, so an

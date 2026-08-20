@@ -110,6 +110,15 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
+**GLASS: SAUDEL'S ALERTS SECTION SHOULD HAVE STOPPED CONTRADICTING ITSELF.**
+Vitals said `Country  Japan` while `Watches and warnings` below it said no
+country was listed. That was a field-path bug in `lib/cap.js`, not a wording
+problem — and it had kept every foreign agency alert off every screen since the
+feature shipped. Open Saudel and check the two agree. If a Japanese agency has
+a cyclone alert out, this is also the FIRST TIME the alert rows have ever
+rendered; if not, the section should say no agency in the affected countries
+has one in force, which is a different sentence from the old one.
+
 **GLASS: TWO VITALS ROWS ON AN NHC STORM.** Open Lala (or any Atlantic/Pacific
 storm) and look at Vitals. Two things are new and neither has been seen.
 
@@ -278,26 +287,29 @@ not. Each names its condition first, then the question; the as-built description
 is in the spec section cited.
 
 **A GDACS STORM WHOSE COUNTRY IS ATTRIBUTED, WITH AN ALERT IN FORCE** —
-`SPEC-DATA.md` §50.11, §50.12. The merged `Watches and warnings` section
-(2026-08-20) is glass-approved on its NHC half and on the unattributed GDACS
-half, both seen live. **What has never been on screen is the section actually
-listing a foreign agency's alert** — the rows, the agency/area/expiry meta line,
-a non-English disclosure chevron, and the closing note that keeps a
-country-level alert from reading as an order about this storm.
+`SPEC-DATA.md` §50.3, §50.11, §50.12. **THIS WAS NOT WAITING FOR WEATHER. IT
+WAS WAITING FOR A ONE-WORD BUG.** `lib/cap.js` read `storm.countries`; the
+field is `storm.raw.countries`. Every GDACS storm resolved to no country, so
+no foreign agency alert had ever reached a screen and the CAP coastal stripe
+had never painted. Fixed 2026-08-20; three tests were green over it and now
+build their storms through the real normalizer.
 
-One wording question rides on it and is deliberately left open: under the old
-`Local agency alerts` heading, *"No country is listed as affected by this storm
-yet."* explained itself. Under `Watches and warnings` it may read as a
-non-sequitur — a reader can reasonably wonder whether that means there are
-warnings or not. A lead-in naming the matching method (*national agency
-warnings are matched by country, and no country is listed…*) would explain the
-gap without answering it, but §50.12 says one sentence and nothing follows, and
-`tools/test-cap.mjs` asserts the render is identical whether the rest of the
-world is quiet or busy. **Aaron's wording, Aaron's call** — judge it against a
-real attributed storm rather than in the abstract.
+**So this is judgeable the moment an attributed GDACS storm has an alert out,
+and both halves of that already exist.** SAUDEL-26 carries Japan; PAGASA has
+had a Philippine alert in force all day. What has still never been on screen
+is the section listing a foreign agency's alert — the rows, the
+agency/area/expiry meta line, a non-English disclosure chevron, and the closing
+note that keeps a country-level alert from reading as an order about this
+storm. Look at it on the next GDACS storm whose country matches an agency with
+something out.
 
-The archive manifest's `countryMatch.unmatchedAlertCountries` is the tripwire:
-when a country leaves that list and attaches to a live storm, this is judgeable.
+The wording question that rode on this is **narrower than it was.** Saudel now
+resolves to Japan, so it no longer shows *"No country is listed as affected by
+this storm yet."* That sentence is now reached only by a GDACS storm genuinely
+out at sea — and **Two-C is not an example**, it is an NHC storm and never
+enters this branch at all. Whether the sentence reads as a non-sequitur under
+`Watches and warnings` is still Aaron's call, but it wants a real unattributed
+GDACS storm to judge against, and there is not one right now.
 
 **A GDACS-basin storm near a coast** — `SPEC-DATA.md` §50.11, §51.4, §51.7.
 Three things ride on this one condition. Do the two coastal stripes read as

@@ -52,6 +52,7 @@ const {
   dedupeAlerts, alertsForStorm, stormCountries,
   isActual, isRetracted, isAllClear, isInForce, severityRung,
 } = await import('../lib/cap.js');
+const { _normalizeGdacsEvent } = await import('../data/gdacs.js');
 const { areaBand, areaSelect } = await import('../map/coast-band.js');
 const { projectShapes, parseIds } = await import('../functions/api/cap/shapes.js');
 
@@ -70,16 +71,57 @@ const GDACS = JSON.parse(fs.readFileSync('samples/cap/gdacs-storms-2026-08-19.js
  *  ignore the board" failure this repo has a standing rule about. */
 const NOW = Date.parse('2026-08-19T01:00:00Z');
 
-/** The normalized storm objects data/gdacs.js would build, for the three
- *  fixture storms — only the fields §50 reads. */
+/**
+ * A fixture storm, built by THE REAL NORMALIZER.
+ *
+ * ==> THIS FUNCTION USED TO HAND-BUILD THE OBJECT, AND THAT IS WHY THIS SUITE
+ * WAS GREEN OVER A FEATURE THAT HAD NEVER ONCE RUN. <==
+ *
+ * It returned `{ id, source, countries }` with the country list at the TOP
+ * LEVEL — the shape `lib/cap.js` was reaching for, and a shape `data/gdacs.js`
+ * has never produced. The real object carries it at `raw.countries`. So the
+ * suite asserted the bug's own assumption, `stormCountries` returned `[]` for
+ * every real storm, `alertsForStorm` bailed on the empty set, and **no foreign
+ * agency alert ever reached a screen** while 400 assertions stayed green.
+ *
+ * The hand-built object was faster to write and it tested nothing that mattered.
+ * A test that stubs the object instead of building it through the normalizer
+ * can only ever prove the two halves agree with the TEST — never with each
+ * other. `data/gdacs.js` exports `_normalizeGdacsEvent` for exactly this, and
+ * it costs one import.
+ *
+ * ==> DO NOT "SIMPLIFY" THIS BACK TO A LITERAL. <== It looks like ceremony. It
+ * is the only thing in this file standing between the shape the app builds and
+ * the shape §50 reads.
+ */
 const storm = (name) => {
   const f = GDACS.features.find((x) => x.properties.eventname === name);
   if (!f) throw new Error(`fixture storm missing: ${name}`);
-  return {
-    id: `gdacs:${f.properties.eventid}`,
-    source: 'gdacs',
-    countries: f.properties.affectedcountries || null,
-  };
+
+  /* ==> ONE FIELD IS RESTAMPED, AND IT IS NOT ONE §50 READS. <== PEILOU-26 was
+   * captured with `iscurrent: 'false'` — it had already ended by the hour this
+   * fixture was taken, and `normalizeEvent` correctly refuses an ended storm
+   * before it looks at anything else. The old hand-built object skipped that
+   * check without anyone noticing, which is a second thing this suite was
+   * quietly not testing: §50 behaviour was being asserted for a storm the app
+   * would never put on screen.
+   *
+   * PEILOU is still the right fixture — it is the only archived storm carrying
+   * a PHILIPPINE attribution, and the PAGASA row is the whole point of the
+   * country join. So its liveness flag is forced and NOTHING ELSE IS. Every
+   * field the country match reads, `raw.countries` above all, is GDACS's own
+   * bytes through GDACS's own normalizer.
+   *
+   * Same convention `tools/test-genesis.mjs` uses for a bulletin's date-time
+   * group: touch the one field that makes the fixture usable at the pinned
+   * hour, leave every field under test alone, and say which. */
+  const feat = f.properties.iscurrent === 'true'
+    ? f
+    : { ...f, properties: { ...f.properties, iscurrent: 'true' } };
+
+  const s = _normalizeGdacsEvent(feat);
+  if (!s) throw new Error(`the normalizer refused the fixture storm: ${name}`);
+  return s;
 };
 
 /* =========================================================================
@@ -210,9 +252,25 @@ ok(stormCountries(peilou).join() === 'PH', `PEILOU should resolve to PH, got ${s
 ok(stormCountries(onec).join() === 'US', `ONE-C should resolve to US, got ${stormCountries(onec)}`);
 ok(stormCountries(hernan).length === 0, 'HERNAN is offshore and should resolve to no country');
 
+/* ==> THE ONE THAT NAMES THE FIELD-PATH BUG OUT LOUD. <== Everything below
+ * this line reaches into `forPeilou[0]`, so when the country join breaks the
+ * suite dies with `Cannot read properties of undefined` fifteen lines further
+ * on and the reader has to work backwards to a one-word path in another file.
+ * Asserted first, so the failure says what actually went wrong.
+ *
+ * Verified by reintroducing the bug (`storm.countries` instead of
+ * `storm.raw.countries` in `lib/cap.js`): this is the assertion that fires. */
 const forPeilou = alertsForStorm(alerts, peilou);
-ok(forPeilou.length === 1, `PEILOU should match one alert, got ${forPeilou.length}`);
-ok(forPeilou[0].agency === 'PAGASA-DOST', `PEILOU matched the wrong agency: ${forPeilou[0].agency}`);
+ok(
+  forPeilou.length === 1,
+  `PEILOU should match one alert, got ${forPeilou.length}. A ZERO HERE IS THE `
+  + 'COUNTRY JOIN BEING BROKEN, not the fixture: check that stormCountries() '
+  + 'reads raw.countries, which is where data/gdacs.js puts affectedcountries'
+);
+ok(
+  forPeilou[0]?.agency === 'PAGASA-DOST',
+  `PEILOU matched the wrong agency: ${forPeilou[0]?.agency}`
+);
 
 /* THE ASSERTION THIS SECTION EXISTS FOR. */
 ok(
@@ -354,8 +412,25 @@ ok(
 
 /* Now the Spanish one. Costa Rica is not among the fixture storms' countries,
  * so the alert is fed through a storm constructed for it — the country join
- * is asserted in section 5 and is not what this section is testing. */
-const crStorm = { id: 'gdacs:test-cr', source: 'gdacs', countries: [{ iso2: 'CR' }] };
+ * is asserted in section 5 and is not what this section is testing.
+ *
+ * ==> `raw.countries`, NOT `countries`, AND THIS LITERAL WAS THE SECOND COPY
+ * OF THE BUG. <== It carried the list at the top level, so `stormCountries`
+ * saw nothing, `alertsForStorm` matched nothing, and all six assertions below
+ * were passing against an EMPTY section rather than against a rendered Spanish
+ * alert. They only turned red once `lib/cap.js` was reading the real path —
+ * which is the useful thing about fixing a shape bug in a suite that has more
+ * than one copy of it.
+ *
+ * It stays a literal because there is no archived Costa Rican storm to
+ * normalize; what matters is that the ONE field under test matches what
+ * `data/gdacs.js` builds. Everything with a fixture behind it goes through
+ * `storm()` above. */
+const crStorm = {
+  id: 'gdacs:test-cr',
+  source: 'gdacs',
+  raw: { countries: [{ iso2: 'CR' }] },
+};
 const capUi2 = createCapStorm({
   loadAlerts: async () => ({ state: 'ok', alerts, stale: false }),
 });

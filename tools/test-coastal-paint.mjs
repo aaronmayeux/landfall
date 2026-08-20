@@ -193,12 +193,22 @@ const { createLayerEngine } = await import('../map/layers/registry.js');
 const storm = {
   id: 'gdacs-1001303',
   /* `gdacsEventIdOf` reads `source` and `sourceId`; `stormCountries` reads
-   * `countries[].iso2`. Both are the live field names, checked against
-   * data/gdacs.js rather than invented for the fixture. */
+   * `raw.countries[].iso2`.
+   *
+   * ==> THE COMMENT HERE USED TO CLAIM THESE WERE "CHECKED AGAINST
+   * data/gdacs.js RATHER THAN INVENTED FOR THE FIXTURE", AND THE COUNTRY ONE
+   * WAS INVENTED. <== It sat at the top level, where `data/gdacs.js` has never
+   * put it, and matched `lib/cap.js`'s own wrong path — so the eight
+   * assertions below passed against a stripe that had never painted. A comment
+   * asserting a fact nobody checked is worse than no comment: it stops the
+   * next reader checking too.
+   *
+   * The CAP coastal stripe was therefore dark for the same reason the alert
+   * rows were, and `raw` is the shape the normalizer really builds. */
   source: 'gdacs',
   sourceId: '1001303',
   name: 'Lala',
-  countries: [{ iso2: 'PH', name: 'Philippines' }],
+  raw: { countries: [{ iso2: 'PH', countryname: 'Philippines' }] },
 };
 
 /* ===========================================================================
