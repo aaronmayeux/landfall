@@ -482,7 +482,7 @@ export function createHomeDashboardView({
         <div class="home-threat">
           <span class="home-swatch" style="--sw: var(--text-muted)"></span>
           <span class="home-threat-name">Nothing bearing down</span>
-          <span class="home-chip" data-tone="calm">All clear</span>
+          <span class="drawer-chip" data-tone="calm">All clear</span>
         </div>
         <p class="home-lede home-lede--tight">Nothing is closing on you.</p>
         <p class="detail-soft">${
@@ -508,20 +508,21 @@ export function createHomeDashboardView({
    * only the dashboard has walked the track and the wind fields. This chooses
    * words for them and nothing else.
    *
-   * ==> IT IS PLAIN TEXT NOW, NOT A PILL, AND THE WORDS ARE UNCHANGED. <== It
-   * rendered as a bordered `.home-chip` in the drawer header's second line,
-   * directly beside a detail panel whose second line is bare text in the same
-   * slot. Two drawers, one header shape, two different objects in it — Aaron's
-   * call on glass 2026-08-20 was that the header should read the same on both.
-   * The LADDER is the thing worth keeping and it is untouched; only the box
-   * around it is gone.
+   * ==> THE TWO DRAWERS AGREE, AND IT IS THE CHIP THEY AGREE ON. <== This
+   * rendered as a bordered chip beside a detail panel whose second line was
+   * bare text — two drawers, one header shape, two different objects in it. It
+   * was settled on glass 2026-08-20 in two steps, and both are worth keeping
+   * because the second reversed the first: the chip was dropped so this line
+   * would match the detail panel's plain text, and Aaron's verdict was that he
+   * preferred the chip. So the DETAIL PANEL wears one now too, and this one is
+   * back. Same words either way; the LADDER was never what was in question.
    *
-   * ==> AND THE `calm` TONE WENT WITH THE BOX, DELIBERATELY. <== Each rung used
-   * to carry a boolean that painted the non-warning rungs muted and the warning
-   * rungs secondary, so the colour and the word could not disagree. The detail
-   * panel's classification line is one colour, always, and a second line that
-   * changes colour on one drawer and not the other is exactly the inconsistency
-   * this change exists to remove. Nothing is lost that the screen does not say
+   * ==> THE `calm` TONE DID NOT COME BACK WITH IT, DELIBERATELY. <== Each rung
+   * used to carry a boolean that painted the non-warning rungs muted and the
+   * warning rungs secondary. The detail panel's chip states a classification
+   * and has no ladder to recolour against, so a stage chip that shifted colour
+   * beside one that never did would put the two drawers back out of step — the
+   * exact thing this pass fixed. Nothing is lost that the screen does not say
    * louder elsewhere: the category dot sits directly above these words in the
    * storm's own Saffir-Simpson ink, and the sections below state the approach
    * in sentences. */
@@ -564,15 +565,16 @@ export function createHomeDashboardView({
     pending:         'Checking…',
   });
 
-  /** The stage word for the drawer header's second line — bare text, in the
-   *  same slot and the same type role the detail panel's classification line
-   *  uses. No element of its own: an extra `<span>` here would be a hook for
-   *  exactly the kind of per-drawer styling this pass removed. */
-  function stageWordHtml(dash, threat) {
+  /** The stage word for the drawer header's second line, as `.drawer-chip` —
+   *  the SHARED chip (ui/panels.css), which the detail panel's classification
+   *  line and the quiet state's "All clear" also render. Not a chip class of
+   *  this drawer's own: three callers of one component is how a pattern drifts
+   *  into three slightly different pills. */
+  function stageChipHtml(dash, threat) {
     const word =
       STAGE_CHIP[dash?.stage] ||
       (threat?.why === 'closing' ? STAGE_CHIP['bearing-down'] : STAGE_CHIP.pending);
-    return dotted(esc(word));
+    return `<span class="drawer-chip">${dotted(esc(word))}</span>`;
   }
 
   /* --- the dashboard proper ----------------------------------------------- */
@@ -638,11 +640,12 @@ export function createHomeDashboardView({
    * chevrons go into the SAME pinned stepper. The two drawers are now one
    * design. Aaron's call on glass 2026-08-12.
    *
-   * ==> AND THE SECOND LINE IS BARE TEXT ON BOTH, AS OF 2026-08-20. <== The
-   * shapes matched from the day above; the CONTENTS did not. This drawer put a
-   * bordered pill in the slot where the detail panel puts its classification,
-   * so stepping between the two showed the same header wearing two different
-   * objects. The words are unchanged — see STAGE_CHIP — only the box is gone.
+   * ==> AND THE SECOND LINE IS THE SAME CHIP ON BOTH, AS OF 2026-08-20. <==
+   * The shapes matched from the day above; the CONTENTS did not. This drawer
+   * put a bordered chip in the slot where the detail panel put bare text, so
+   * stepping between the two showed the same header wearing two different
+   * objects. Both wear `.drawer-chip` now. The words on each are unchanged —
+   * see STAGE_CHIP here, `natureLine` there.
    *
    * WHAT IT COST: the name is smaller than it was. Header type is smaller than
    * 1.35rem, and sizing it back up would grow the pinned header on the panel
@@ -679,7 +682,7 @@ export function createHomeDashboardView({
         <span class="drawer-identity-dot" style="--dot-ink: ${esc(stormSwatch(s))}" aria-hidden="true"></span>
         <h1 class="drawer-title">${esc(s.name)}</h1>
       </div>
-      <div class="drawer-identity-sub">${stageWordHtml(dash, threat)}</div>
+      <div class="drawer-identity-sub">${stageChipHtml(dash, threat)}</div>
     `;
     return wrap;
   }

@@ -645,34 +645,29 @@
   white-space: nowrap;
 }
 
-.home-chip {
-  flex: 0 0 auto;
-  font-size: var(--type-micro);
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  padding: var(--space-tight) var(--space-snug);
-  border-radius: 999px;
-  white-space: nowrap;
-  border: 1px solid var(--glass-border);
-  color: var(--text-secondary);
-}
-.home-chip[data-tone="calm"] { color: var(--text-muted); }
-
-/* ==> THE PUSH TO THE RIGHT BELONGS TO THE ROW, NOT TO THE CHIP. <== It used
- * to live on `.home-chip` itself, which meant the chip carried one row's
- * layout everywhere it went. The drawer's identity block centres its second
- * line, and an inherited `margin-left: auto` ate every pixel of free space and
- * shoved the chip to the far right of the name — measured at 260px of used
- * margin behind a long storm name.
+/* ==> THE CHIP ITSELF LIVES IN panels.css NOW, AS `.drawer-chip`. <== It was
+ * `.home-chip` here while this drawer was the only thing that had one. The
+ * storm detail panel's classification line became a chip too on 2026-08-20, so
+ * a component named for one drawer was being rendered by two — and the rule
+ * this project already holds is that a pattern used twice gets extracted
+ * BEFORE the second use, not after somebody notices. One declaration block,
+ * one name, in the stylesheet both drawers load.
+ *
+ * ==> THE PUSH TO THE RIGHT BELONGS TO THE ROW, NOT TO THE CHIP. <== It used
+ * to live on the chip itself, which meant the chip carried one row's layout
+ * everywhere it went. The drawer's identity block centres its second line, and
+ * an inherited `margin-left: auto` ate every pixel of free space and shoved the
+ * chip to the far right of the name — measured at 260px of used margin behind a
+ * long storm name.
  *
  * ==> AND THE CANCELLING RULE COULD NOT WIN. <== It was written in panels.css
- * as `.drawer-identity-sub > *`, the same specificity as `.home-chip`, in the
- * stylesheet that index.html loads FIRST. Equal specificity is decided by
- * source order, so the chip's own rule won and the override never applied to
- * anything. Scoping the margin here is the fix that does not depend on which
- * file loads first. */
-.home-threat .home-chip { margin-left: auto; }
+ * as `.drawer-identity-sub > *`, the same specificity as the chip's own rule,
+ * in the stylesheet that index.html loads FIRST. Equal specificity is decided
+ * by source order, so the chip's own rule won and the override never applied to
+ * anything. This one is a descendant selector and therefore MORE specific, so
+ * it wins on specificity rather than on which file happens to load first —
+ * which is why it is safe for it to stay here beside the row it belongs to. */
+.home-threat .drawer-chip { margin-left: auto; }
 
 /* --- the headline -------------------------------------------------------- */
 

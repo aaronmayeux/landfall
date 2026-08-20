@@ -1506,22 +1506,57 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+/* ==> ONE CHIP, THREE PLACES. <== The home dashboard's stage word, the storm
+ * detail panel's classification, and the quiet state's "All clear" beside the
+ * threat row. It was `.home-chip` in home.css while the dashboard was the only
+ * drawer with one; the detail panel got the same treatment on 2026-08-20 and
+ * the name stopped being true, so it moved here — this is the stylesheet both
+ * drawers load, and this is where the identity block it mostly sits in is
+ * declared.
+ *
+ * ==> NO PER-RUNG TONE, AND THAT IS THE WHOLE POINT OF THE CHIP BEING SHARED.
+ * <== The stage ladder used to carry a boolean that painted the non-warning
+ * rungs muted and the warning rungs secondary. The detail panel's chip states a
+ * classification and has no ladder to recolour against, so a stage chip that
+ * shifted colour while the classification chip beside it never did would put
+ * the two drawers back out of step — which is the thing this pass exists to
+ * fix. `data-tone="calm"` survives for the quiet state's "All clear", which is
+ * a different surface and genuinely is quieter than a threat row's contents.
+ *
+ * `white-space: nowrap` is deliberate: a chip that wraps is a paragraph with a
+ * border round it. If a rung's words ever stop fitting the phone, the words are
+ * what change. */
+.drawer-chip {
+  flex: 0 0 auto;
+  font-size: var(--type-micro);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: var(--space-tight) var(--space-snug);
+  border-radius: 999px;
+  white-space: nowrap;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+}
+.drawer-chip[data-tone="calm"] { color: var(--text-muted); }
+
 /* ==> A CONSTANT HEIGHT, OR THE NAME ABOVE IT MOVES BETWEEN DRAWERS. <== The
  * header centres its three columns vertically, so the identity block's total
  * height decides where the name sits. This was written when the two drawers
  * disagreed about what went in the slot — the detail panel's second line was
- * plain text (~16px) and the dashboard's was a pill with padding and a border
+ * plain text (~16px) and the dashboard's was a chip with padding and a border
  * (~27px), so equal header padding still landed the name several pixels higher
  * on the dashboard, which is exactly what Aaron saw as "the padding isn't the
  * same between the two". Pinning the line to the taller of the two fixed it.
  *
- * ==> BOTH SLOTS HOLD BARE TEXT NOW (2026-08-20), SO THE MIN-HEIGHT IS NO
- * LONGER DERIVED FROM ANYTHING — IT IS A CHOSEN CONSTANT, AND IT STAYS. <==
- * The two lines would agree on their own at the text height. It is kept
- * because `--drawer-head-h` is computed from it and every other drawer's
- * header matches that figure; dropping ~11px here would shorten five headers
- * to fix a difference that no longer exists. If it is ever revisited, that is
- * the thing to look at, and it is a whole-chrome pass rather than a tweak.
+ * ==> BOTH SLOTS HOLD THE SAME CHIP AS OF 2026-08-20, SO THE TWO WOULD NOW
+ * AGREE ON THEIR OWN — AND THE FLOOR STAYS ANYWAY. <== It briefly went the
+ * other way that day: both lines were made bare text, which also agreed, and
+ * Aaron's verdict on glass was that he preferred the chip. So the chip is on
+ * both. This min-height is no longer load-bearing for the two drawers matching
+ * each other, but `--drawer-head-h` is computed from it and five other headers
+ * match that figure, so it is what keeps EVERY drawer's header one height.
+ * Removing it is a whole-chrome pass, not a tweak.
  *
  * ==> AND THE SECOND LINE NEEDS NO SHIFT OF ITS OWN. <== It centres on the
  * block, the block's centre is the panel's centre, and the line above has been
@@ -1532,12 +1567,14 @@
  * other is not the same as aligning them to the page.
  *
  * ==> WHAT WENT WRONG BEFORE THAT, SO IT IS NOT REPEATED. <== The chip was also
- * being thrown to the far right by `margin-left: auto`, inherited from
- * `.home-chip`'s other home in the quiet state's threat row. The cancelling
- * rule was written HERE as `.drawer-identity-sub > *` -- the same specificity as
- * `.home-chip`, in the stylesheet index.html loads FIRST -- so it lost the
- * cascade and never applied to anything. The margin now lives scoped to its own
- * row in home.css and there is nothing to cancel. The harness could not see any
+ * being thrown to the far right by `margin-left: auto`, which at the time lived
+ * on the chip itself for the sake of its OTHER home, the quiet state's threat
+ * row. The cancelling rule was written HERE as `.drawer-identity-sub > *` --
+ * the same specificity as the chip's own rule, in the stylesheet index.html
+ * loads FIRST -- so it lost the cascade and never applied to anything. The
+ * margin now lives in home.css as `.home-threat .drawer-chip`, which is a
+ * descendant selector and therefore wins on specificity rather than on file
+ * order, and there is nothing here to cancel. The harness could not see any
  * of this because it only ever showed a name SHORTER than the chip, where the
  * block is chip-width and an auto margin has no free space to take; a long name
  * reproduces it at 260px of used margin. */

@@ -23,11 +23,13 @@
 <!--
   ==> BOTH STYLESHEETS, BECAUSE THE DASHBOARD'S CHIP IS DEFINED IN THE OTHER
   ONE. <== The first cut of this harness loaded only panels.css, so
-  `.home-chip` rendered as bare inline text: no padding, no border, no
+  the chip rendered as bare inline text: no padding, no border, no
   `margin-left: auto`. Every box that causes the two bugs this file is here to
   catch simply did not exist, and both assertions passed against a control that
   was never built. A fixture that omits a stylesheet the real app loads is a
-  fixture that tests a different app.
+  fixture that tests a different app. (The chip itself now lives in panels.css
+  as `.drawer-chip`, since both drawers render it — but `.home-threat` and the
+  rest of the dashboard's rules are still home.css's, so both sheets stay.)
 -->
 <link rel="stylesheet" href="../ui/home.css">
 <style>
@@ -143,9 +145,19 @@ const record = (id) => (arg, opts) => entered.push({ id, fresh: opts?.fresh });
  * the bug: no glow, and 2.5px low (see ui/panels.css). Both views now render
  * `.drawer-identity-dot`, so the fixture renders that.
  */
-function identity(storm, sub) {
-  const wrap = document.createElement('button');
-  wrap.type = 'button';
+/* ==> THE DASHBOARD'S IDENTITY IS A BUTTON AND THE DETAIL PANEL'S IS NOT, AND
+ * THIS FIXTURE USED TO MAKE BOTH BUTTONS. <== In the app the dashboard's title
+ * is the only route into the storm's own panel, so it is a `<button>`; the
+ * detail panel's is a plain `<div>` because there is nowhere for it to go.
+ * panels.css carries rules scoped to `button.drawer-identity` — the reset, the
+ * hover underline, the focus ring — so a fixture that made both buttons was
+ * styling the detail panel with the dashboard's rules and calling the result a
+ * comparison. Caught 2026-08-20 by a deliberate break that could not fire:
+ * with no element-type difference in the markup, no drawer-scoped override was
+ * expressible, and the assertion meant to catch one could not have. */
+function identity(storm, sub, { asButton = false } = {}) {
+  const wrap = document.createElement(asButton ? 'button' : 'div');
+  if (asButton) wrap.type = 'button';
   wrap.className = 'drawer-identity';
   wrap.innerHTML = `
     <div class="drawer-identity-line">
@@ -173,12 +185,13 @@ const homeStepper = createStormStepper({
 drawer.register({
   id: 'home',
   title: 'Home',
-  /* ==> BARE TEXT, BECAUSE THAT IS WHAT ui/view-home.js EMITS. <== It was a
-   * `.home-chip` pill until 2026-08-20, when the dashboard's second line was
-   * made to match the detail panel's. A fixture still wrapping it in a pill
-   * would measure a box the app no longer draws — the same class of fault as
-   * the missing stylesheet noted at the top of this file. */
-  titleFor: () => identity(currentStorm, chipText),
+  /* ==> `.drawer-chip`, BECAUSE THAT IS WHAT ui/view-home.js EMITS. <== It was
+   * `.home-chip` until 2026-08-20, when the chip was extracted to panels.css so
+   * the detail panel could render the same one. A fixture naming the old class
+   * would measure an unstyled span — the same class of fault as the missing
+   * stylesheet noted at the top of this file, and one that already happened
+   * here once. */
+  titleFor: () => identity(currentStorm, `<span class="drawer-chip">${chipText}</span>`, { asButton: true }),
   eyebrow: () => 'Home',
   onEnter: record('home'),
   mount(host) {
@@ -197,7 +210,8 @@ const detailStepper = createStormStepper({
 drawer.register({
   id: 'detail',
   title: 'Storm',
-  titleFor: () => identity(currentStorm, 'Tropical Storm'),
+  /* The detail panel wears the SAME chip as of 2026-08-20; it was bare text. */
+  titleFor: () => identity(currentStorm, '<span class="drawer-chip">Tropical Storm</span>'),
   onEnter: record('detail'),
   mount(host) {
     host.innerHTML =
@@ -381,6 +395,23 @@ window.__harness = {
         const r = range.getBoundingClientRect();
         if (!r.width) return null;
         return (r.left + r.right) / 2 - (head.left + head.right) / 2;
+      })(),
+
+      /** ==> THE CHIP'S COMPUTED LOOK, SO "BOTH DRAWERS RENDER THE SAME CHIP"
+       *  IS A MEASUREMENT RATHER THAN A CLAIM. <== The whole reason
+       *  `.drawer-chip` was lifted out of home.css is that two drawers now
+       *  render it, and the failure this guards is the ordinary one: somebody
+       *  needs the detail panel's chip a little different, adds a scoped
+       *  override, and the two quietly stop matching. Serialised as a string so
+       *  the assertion is one comparison and the readout names what differs. */
+      chipStyle: (() => {
+        const chip = document.querySelector('.drawer-identity-sub .drawer-chip');
+        if (!chip) return null;
+        const c = getComputedStyle(chip);
+        return [
+          c.fontSize, c.fontWeight, c.letterSpacing, c.textTransform,
+          c.padding, c.borderRadius, c.border, c.color, c.whiteSpace,
+        ].join(' | ');
       })(),
 
       /** Kept so the line's own geometry stays visible in the readout. */

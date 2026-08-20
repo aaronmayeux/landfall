@@ -1870,20 +1870,49 @@ header padding still put the name several pixels higher on the dashboard.
 Pinning the second line to the taller of the two makes the block a constant
 height and the name's inset identical on both drawers.
 
-**Both second lines are bare text as of 2026-08-20, so that min-height is no
-longer derived from anything — it is a chosen constant, and it stays.** The
-dashboard put its stage word (`Hours away`, `Track unknown`, `Checking…`) in a
-bordered `.home-chip` in the slot where the detail panel puts its
-classification, so stepping between the two showed one header shape wearing two
-different objects. Aaron's call: the words are the thing worth keeping and they
-are unchanged — the ladder in `STAGE_CHIP` is untouched — only the box is gone.
-The `calm` tone went with it: each rung used to paint itself muted or secondary,
-and a second line that changes colour on one drawer and not the other is the
-inconsistency the change exists to remove. Nothing is lost that the screen does
-not say louder elsewhere, since the category dot sits directly above those words
-in the storm's own Saffir-Simpson ink. `--identity-sub-h` is kept at the old
-pill's height only because `--drawer-head-h` is computed from it and five other
-headers match that figure; shortening it is a whole-chrome pass, not a tweak.
+**Both second lines are the same chip as of 2026-08-20, and that was settled in
+two steps worth recording because the second reversed the first.** The dashboard
+put its stage word (`Hours away`, `Track unknown`, `Checking…`) in a bordered
+chip in the slot where the detail panel put bare text, so stepping between the
+two showed one header shape wearing two different objects. The chip was dropped
+first, to match the detail panel. On glass Aaron preferred the chip — so the
+DETAIL PANEL wears one too, and the dashboard's is back. Either way the words
+were never in question: `STAGE_CHIP` here and `natureLine` there both decide
+exactly what they decided before.
+
+**The chip is `.drawer-chip` in `ui/panels.css`, not `.home-chip` in
+`ui/home.css`.** Three surfaces render it — the dashboard's stage word, the
+detail panel's classification, and the quiet state's "All clear" — and a
+component named for one drawer being rendered by two is how a pattern drifts
+into three slightly different pills. §12's rule is that a pattern used twice is
+extracted before the second use.
+
+**The per-rung `calm` tone did not come back with the box.** Each stage rung
+used to paint itself muted or secondary. The detail panel's chip states a
+classification and has no ladder to recolour against, so a stage chip shifting
+colour beside one that never does puts the two drawers back out of step — the
+exact thing being fixed. `data-tone="calm"` survives for the quiet state's "All
+clear", which is a different surface and genuinely is quieter. Nothing is lost
+that the screen does not say louder elsewhere: the category dot sits directly
+above those words in the storm's own Saffir-Simpson ink.
+
+**The dashboard's identity is a `<button>` and the detail panel's is a `<div>`,
+and the harness used to make both buttons.** The dashboard's title is the only
+route into the storm's own panel, so it is tappable; the detail panel's has
+nowhere to go. `panels.css` scopes the reset, the hover underline and the focus
+ring to `button.drawer-identity`, so a fixture rendering both as buttons was
+styling the detail panel with the dashboard's rules and calling the result a
+comparison. Found 2026-08-20 by a deliberate break that could not fire: with no
+element-type difference in the fixture, no drawer-scoped override was
+expressible, so the assertion written to catch one could not have. **A break
+that fails to break is a finding about the fixture.**
+
+**`tools/drawer-head-check.mjs` asserts the two chips are one component**, by
+comparing computed font, padding, radius, border and colour across the drawers —
+because every other assertion in that check would pass with two chips that were
+perfectly centred and completely different. `--identity-sub-h` is kept at the
+chip's height; `--drawer-head-h` is computed from it and five other headers
+match that figure, so shortening it is a whole-chrome pass, not a tweak.
 
 **The dot and the name are centred together, and the pair is what lands on the
 panel's axis.** The dot is the storm's category, not an ornament beside the
@@ -1931,28 +1960,26 @@ positively: an element carrying a glow class is handed a custom property, never 
 `background`. Adding a fourth glowing dot means adding its class to
 `GLOW_CLASSES`, which is the point.
 
-**A chip does not carry another row's layout.** `.home-chip` is pushed to the
-right end of the quiet state's threat row, and that push belongs to the row —
-`.home-threat .home-chip` — not to the chip. As a bare `margin-left: auto` on
+**A chip does not carry another row's layout.** The chip is pushed to the right
+end of the quiet state's threat row, and that push belongs to the row —
+`.home-threat .drawer-chip` — not to the chip. As a bare `margin-left: auto` on
 the chip itself it followed the chip into the centred identity block and threw
 it to the far right of the name; measured at 260px of used margin behind a long
 storm name. Cancelling it from `panels.css` did not work and could not: same
 specificity as the chip's own rule, in the stylesheet `index.html` loads first,
-so source order decided it and the override applied to nothing. **The chip no
-longer appears in the identity block at all** (above), which removes this
-particular collision without removing the lesson — the quiet state's row still
-owns its own push, and the next component reused for its appearance will
-inherit its old parent's corrections the same way.
+so source order decided it and the override applied to nothing. The rule that
+works is a DESCENDANT selector, which wins on specificity rather than on which
+file happens to load first — so it can stay in `home.css` beside the row it
+belongs to even though the chip itself now lives in `panels.css`.
 
 **Measure the ink, never the box that contains it.** Three assertions in this
 header's check have now read 0.0px while the pixels were visibly wrong, each
 because they compared two full-width boxes whose centres are equal by
 construction rather than the content inside them. The centring assertions
 measure the dot's left edge to the name's right edge, and a `Range` around the
-second line's bare text — never `.drawer-identity-line` or
-`.drawer-identity-sub` themselves. That `Range` probe now covers both drawers,
-because both second lines are bare text; the separate probe for the dashboard
-pill's own box went when the pill did.
+second line's contents — never `.drawer-identity-line` or
+`.drawer-identity-sub` themselves. One `Range` probe covers both drawers, since
+both second lines now hold the same chip.
 
 **The fixture's design tokens are the app's, and a check holds them there.**
 Every number in `tools/drawer-head-check.mjs` is a distance expressed in the

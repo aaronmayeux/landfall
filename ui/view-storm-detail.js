@@ -404,7 +404,15 @@ export function createStormDetailView({
 
   /** The drawer header's title for this view: swatch + name + nature. Built
    *  as a Node rather than a string because the drawer accepts either, and
-   *  this one carries a colored swatch that must not be escaped away. */
+   *  this one carries a colored swatch that must not be escaped away.
+   *
+   *  ==> THE NATURE LINE IS A CHIP, THE SAME ONE THE DASHBOARD USES. <== It
+   *  was bare text in a slot where the home dashboard put a bordered chip, so
+   *  the two drawers shared a header shape and disagreed about what went in it.
+   *  Settled on glass 2026-08-20: `.drawer-chip` on both (ui/panels.css). The
+   *  WORDS are untouched — `natureLine` still decides them, including the
+   *  "Last reported:" qualifier it adds when nothing current stands behind the
+   *  classification. */
   function titleNode() {
     const wrap = document.createElement('div');
     wrap.className = 'drawer-identity';
@@ -417,7 +425,9 @@ export function createStormDetailView({
         <span class="drawer-identity-dot" style="--dot-ink:${stormSwatch(storm)}" aria-hidden="true"></span>
         <h1 class="drawer-title">${esc(storm.name)}</h1>
       </div>
-      <div class="drawer-identity-sub">${esc(natureLine(storm))}</div>
+      <div class="drawer-identity-sub">
+        <span class="drawer-chip">${esc(natureLine(storm))}</span>
+      </div>
     `;
     return wrap;
   }

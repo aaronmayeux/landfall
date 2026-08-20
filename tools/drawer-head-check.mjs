@@ -300,6 +300,24 @@ ok(
   `and so is the detail panel's classification line (off by ${detailHead.subInkVsHead?.toFixed(1)}px)`
 );
 
+/* ==> AND THE TWO SECOND LINES ARE THE SAME COMPONENT, NOT TWO THAT RESEMBLE
+ * EACH OTHER. <== This header shape has now been wrong in both directions on
+ * one day: a chip on the dashboard against bare text on the detail panel, and
+ * then bare text on both, which Aaron rejected in favour of the chip. What
+ * settled it was extracting `.drawer-chip` to panels.css so ONE declaration
+ * block serves both. That extraction is worth nothing without something that
+ * notices when a scoped override reintroduces the split, and no assertion above
+ * would: each drawer's chip can be perfectly centred and a different object. */
+console.log(`  note  chip style: ${homeHead.chipStyle}`);
+ok(homeHead.chipStyle, 'the dashboard renders a chip in its second line');
+ok(detailHead.chipStyle, 'and so does the detail panel');
+ok(
+  homeHead.chipStyle === detailHead.chipStyle,
+  `and the two are the SAME chip, down to the computed pixel\n` +
+    `        dashboard: ${homeHead.chipStyle}\n` +
+    `        detail:    ${detailHead.chipStyle}`
+);
+
 /* THE PAIRING THAT REPRODUCES THE BUG: a name wider than the second line, so
  * that line has room in it for something to go wrong. The bug was a stray
  * `margin-left: auto` following `.home-chip` into this block; the pill is gone

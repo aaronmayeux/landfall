@@ -64,13 +64,18 @@ WEATHER NEEDED.** Open the app, open the home drawer on any storm, open the
 credits pill. Ten minutes, and this really is ten minutes — unlike everything
 under `HELD FOR WEATHER`.
 
-**1. THE HOME DRAWER'S SECOND LINE IS BARE TEXT NOW.** It was a bordered pill
-(`Hours away`) in the slot where the storm detail panel puts `Tropical Storm`.
-Same words, same ladder, no box — and the `calm` tone went with the box, so the
-line is one colour on both drawers. **Step between the two drawers and see
-whether the header now reads as one design.** The name's position must not move
-between them; `tools/drawer-head-check.mjs` asserts that to 1.5px, but it
-measures a harness, not the app.
+**1. BOTH DRAWERS' SECOND LINE IS THE SAME CHIP NOW — SETTLED, DO NOT REOPEN
+WITHOUT NEW INFO.** It went both ways on 2026-08-20 and the second answer is the
+live one. The dashboard's chip (`Hours away`) was dropped so it would match the
+detail panel's bare `Tropical Storm`; Aaron's verdict on glass was that he
+preferred the chip, so the DETAIL PANEL got one and the dashboard's came back.
+The words on each are exactly what they always were. The chip is now
+`.drawer-chip` in `ui/panels.css`, rendered by three surfaces.
+**Step between the two drawers and check the header reads as one design** —
+the name must not move between them. The per-rung `calm` tone did NOT come back:
+the detail panel's chip has no ladder to recolour against, so a stage chip that
+shifted colour beside one that never does would put the drawers back out of
+step. Say so if that reads as a loss on a storm that is on top of the house.
 
 **2. RAIL LABELS DODGE THE DOTTED VERTICALS.** The `now` line was running
 through the middle of an arrival time. They now merge to whichever side of the
