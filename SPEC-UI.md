@@ -522,6 +522,37 @@ on top of each other — the header takes a **second 12px row** and the stamp
 drops onto it rather than either label being dropped. Ida's Advisory 17 is a
 real case of it.
 
+**THE RAIL'S OWN LABELS DODGE THE SAME TWO VERTICALS, AND FOR A LONGER TIME
+THEY DID NOT.** The arrival time sits at the bar's left end and the duration at
+its right, each flipping to the other side when it runs out of room, and both
+merging into one chip when neither has room. That logic knew about the **bar**
+and the **frame edges** and nothing else — while `now` and the closest-pass
+stamp both run the full height of the frame, straight through the rail band. On
+glass 2026-08-20 the `now` line ran through the middle of a 39 kt arrival time:
+the one row of this picture that says when to stop what you are doing, with a
+hairline of dots through the digits.
+
+Placement is now a preference ladder. Two labels where two fit and both clear
+the verticals; failing that, the merged chip on whichever side of the bar is
+free; failing that, the merged chip **slid along the row** until it is past the
+line, which costs a small gap between chip and bar and keeps it on the bar's own
+centre line in the bar's own colour so the pairing still reads. Only if none of
+those works does it fall back to the old fits-only answer — a label with a
+hairline through it still beats no label.
+
+**A LABEL IS A SPAN, NEVER A POINT** — `end`-anchored text occupies the room to
+the *left* of its x — and the clearance either side of a vertical is
+`VERTICAL_CLEAR`, 2.5px. At 1px the dots land between the letters and the eye
+stitches them into the word; at 2.5 there is a visible channel.
+
+**THE COLLISION IS A FUNCTION OF THE CLOCK, SO THE CHECK SWEEPS RATHER THAN
+SPOT-CHECKS.** Where `now` lands depends on how long ago the advisory was
+issued, so a fixture rendered once at its own issue time exercises exactly one
+of the positions the line can take — and none of the real collisions is
+reachable at offset zero. `tools/test-home-ida.mjs` renders 19 advisories at 12
+hourly offsets, 216 frames, and asserts no rail label has a vertical through it.
+Removing the dodge produces 118 crossings.
+
 **A BAND IS ONLY DRAWN FOR A FIELD THAT COMES NEAR.** Most storms most of the
 time are nowhere near anybody, and three translucent bands hugging the frame
 say nothing while making the two useful lines harder to read. Drawn when the
