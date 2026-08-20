@@ -59,6 +59,20 @@ traded for.
 
 ## IN FLIGHT
 
+**RAINFALL AT THE HOUSE, IN THE STORM DRAWER (§48.17) — ONE GLASS CALL, AND IT
+NEEDS A HOME PIN SET WITHIN 1,500 nm OF A STORM.** The Rainfall section now has a
+second block, "At your house": a point total for the home pin, on every storm
+from every source, reading the SAME cached record the dashboard's Rain section
+shows. **What to judge is whether the two figures read as two answers or as one
+contradiction.** Under an NHC storm the section shows NHC's area range ("10 to 20
+inches across the Big Island") and then the point total ("about 11 inches"),
+separated by a hairline, with one line between them explaining why they can
+differ. §48.10 has called that risk unsettled since it was written and this is
+the first build that puts both numbers where a reader meets them together.
+Secondary: the block is suppressed entirely for a storm further than
+`APPROACH.relevanceNm` — check a far-away typhoon shows NO house block rather
+than a stray figure.
+
 **THREE GLASS CALLS ON RADAR, AND ALL OF THEM WORK ON `?replay=ida` — NO
 WEATHER NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay
 draws today's live radar over Ida's 2021 position: real US radar, right ground,
