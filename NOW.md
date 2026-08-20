@@ -59,19 +59,19 @@ traded for.
 
 ## IN FLIGHT
 
-**RAINFALL AT THE HOUSE, IN THE STORM DRAWER (§48.17) — ONE GLASS CALL, AND IT
-NEEDS A HOME PIN SET WITHIN 1,500 nm OF A STORM.** The Rainfall section now has a
-second block, "At your house": a point total for the home pin, on every storm
-from every source, reading the SAME cached record the dashboard's Rain section
-shows. **What to judge is whether the two figures read as two answers or as one
-contradiction.** Under an NHC storm the section shows NHC's area range ("10 to 20
-inches across the Big Island") and then the point total ("about 11 inches"),
-separated by a hairline, with one line between them explaining why they can
-differ. §48.10 has called that risk unsettled since it was written and this is
-the first build that puts both numbers where a reader meets them together.
-Secondary: the block is suppressed entirely for a storm further than
-`APPROACH.relevanceNm` — check a far-away typhoon shows NO house block rather
-than a stray figure.
+**§48.10 IS STILL UNSETTLED, AND THE ONE THING THAT SETTLES IT IS AN NHC STORM
+NEAR A HOME PIN.** The storm drawer's Rainfall section now holds NHC's area
+range and the house's point total, one above the other, separated by a hairline,
+with one line between them explaining why they can differ. **The question is
+whether that reads as two answers or as the app contradicting itself.** Aaron
+has seen the house block ALONE (GDACS storm, no range above it) and said it
+looks good — that is §48.17 working, and it is NOT the §48.10 call. Needs an
+Atlantic or Pacific storm with a rainfall paragraph, within
+`APPROACH.relevanceNm` of the pin.
+
+Two smaller things to glance at while there: a far-away typhoon should show NO
+house block at all rather than a stray figure, and a live Flash Flood Warning
+should appear at the TOP of the house block, in red, above the total.
 
 **THREE GLASS CALLS ON RADAR, AND ALL OF THEM WORK ON `?replay=ida` — NO
 WEATHER NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay

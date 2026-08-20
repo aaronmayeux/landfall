@@ -76,7 +76,9 @@
 
 import { advisoryRainfall } from '../lib/advisory.js';
 import { houseRainInRange, rainSummary } from '../lib/rainfall.js';
+import { formatClockDay } from '../lib/time.js';
 import { DOTS } from './loading-dots.js';
+import { floodAlertRows } from './rain-alerts.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -103,8 +105,15 @@ export const RAIN_SECTION = 'rainfall';
  *   after the first paint.
  * @param {()=>string|null} [deps.units] the resolved unit system, so this
  *   figure and the home drawer's are never in two different systems.
+ * @param {()=>number} [deps.now] the clock, injectable for the same reason
+ *   `ui/view-home.js` injects one: this block filters flood alerts by their
+ *   expiry, and an expiry check against `Date.now()` can only be tested during
+ *   an actual flood warning. The one captured set of live alerts this project
+ *   has is from August, so the suite has to be able to stand there.
  */
-export function createRainStorm({ loadAdvisory, rain = null, house = null, units = null }) {
+export function createRainStorm({
+  loadAdvisory, rain = null, house = null, units = null, now = () => Date.now(),
+}) {
   let state = { phase: 'idle', rec: null, forId: null, forKey: null };
   let seq = 0;
 
@@ -262,7 +271,7 @@ export function createRainStorm({ loadAdvisory, rain = null, house = null, units
         <button class="detail-retry" type="button" data-retry="rain-house">Retry</button></p>`);
     }
 
-    const out = rainSummary(res.payload, { system: units?.() ?? null });
+    const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });
 
     if (out.state !== 'ok') {
       /* The payload arrived and could not be read — an unrecognised unit, or a
@@ -271,6 +280,35 @@ export function createRainStorm({ loadAdvisory, rain = null, house = null, units
       return wrap(`<p class="detail-soft">The forecast for your house came back in a
         form this app could not read.</p>`);
     }
+
+    /* ==> A WARNING IN FORCE OUTRANKS ANY FORECAST AND RENDERS ABOVE IT. <==
+     * §48.6. A total is what MIGHT happen; a Flash Flood Warning is what IS
+     * happening.
+     *
+     * ==> THIS BLOCK SHIPPED WITHOUT THEM AND THAT WAS A REAL BUG. <== The
+     * reasoning was that the dashboard already showed them and the app must
+     * not say things twice. It is not said twice: `In effect` carries NHC's
+     * hurricane and tropical-storm products, and `Local agency alerts` asks
+     * its upstream for Cyclone, Typhoon, Hurricane, Tropical and Storm Surge
+     * — flood is in none of them. So a reader who taps a storm during a
+     * hurricane and never opens the dashboard saw a rainfall total and no
+     * warning at all, on the screen most likely to be the only one they open.
+     * That is §5's silence with a number in front of it. */
+    const alerts = floodAlertRows(out.alerts);
+
+    /* ==> `alerts: null` MEANS TWO OPPOSITE THINGS AND GETS TWO OPPOSITE
+     * SENTENCES (§48.16). <== From NWS it means the alerts hop failed while
+     * the grid succeeded — what is in force is UNKNOWN, which is not "nothing
+     * in force" and must not render as silence. From the global model it means
+     * there is no flood-warning source for this place at all, which is durable;
+     * "could not be checked just now" there invites a reader to wait for an
+     * answer that is never coming. */
+    const alertsUnknown = res.payload?.alerts != null
+      ? ''
+      : out.provider?.name === 'open-meteo'
+        ? `<p class="detail-rain-note">Flood warnings aren’t published for this
+            location — this is a rainfall forecast only.</p>`
+        : `<p class="detail-rain-note">Flood warnings could not be checked just now.</p>`;
 
     const through = out.throughWords ? ` through ${esc(out.throughWords)}` : '';
 
@@ -282,10 +320,15 @@ export function createRainStorm({ loadAdvisory, rain = null, house = null, units
           expected${through}.</p>`;
 
     /* The heaviest block, only when one dominates. On this screen it is the
-     * sentence that separates a flood from a wet week. */
+     * sentence that separates a flood from a wet week.
+     *
+     * ==> IT NAMES WHEN, AND IT SHIPPED WITHOUT THAT. <== The time was cut for
+     * brevity on a phone and that was the wrong half to cut: "three inches in
+     * six hours" is a fact, "three inches in six hours starting Saturday noon"
+     * is something a reader can act on. Same sentence the dashboard writes. */
     const peak = out.peak
       ? `<p class="detail-rain-para">The heaviest ${esc(out.peak.lengthWords)} bring about
-          ${esc(out.peak.text)}.</p>`
+          ${esc(out.peak.text)}, from ${esc(formatClockDay(out.peak.startMs))}.</p>`
       : '';
 
     /* ==> WHOSE FORECAST, FOR WHAT POINT, AND FROM WHAT CAUSE. <== §48.12's
@@ -312,7 +355,9 @@ export function createRainStorm({ loadAdvisory, rain = null, house = null, units
           differ and both be right.</p>`
       : '';
 
-    return wrap(`${line}${peak}${compare}
+    /* WARNINGS FIRST, ALWAYS — then what is in doubt about them, then the
+     * forecast they outrank. */
+    return wrap(`${alerts}${alertsUnknown}${line}${peak}${compare}
       <p class="detail-rain-note">${where} Total rain from all causes, not this
         storm alone.</p>`);
   }

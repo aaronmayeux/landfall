@@ -34,6 +34,9 @@ const {
   peakBlock, formatRainTotal, floodAlerts, rainSummary, houseRainInRange,
 } = await import(path.join(ROOT, 'lib/rainfall.js'));
 const { APPROACH } = await import(path.join(ROOT, 'config/constants.js'));
+const { createRainStorm } = await import(path.join(ROOT, 'ui/rain-storm.js'));
+const { projectOpenMeteo } =
+  await import(path.join(ROOT, 'functions/api/rain/global.js'));
 const { projectPoint, stripAlerts } =
   await import(path.join(ROOT, 'functions/api/nws/rainfall.js'));
 const { advisoryRainfall, hazardsBlock, rewrapProduct, extractNhcProduct } =
@@ -504,6 +507,106 @@ console.log('\nMutations — each bug must change the answer');
   truthy('no argument at all is not in range', !houseRainInRange());
   truthy('a non-finite distance is not in range',
     !houseRainInRange({ distanceNm: NaN, approachNm: null }));
+}
+
+/* ==========================================================================
+ * §48.17 — WHAT THE STORM DRAWER'S HOUSE BLOCK ACTUALLY RENDERS.
+ *
+ * ==> THESE EXIST BECAUSE THE BLOCK SHIPPED WITH A REAL BUG THAT NOTHING
+ * CAUGHT. <== It rendered a rainfall total for the house and DROPPED the flood
+ * warnings in force, on the reasoning that the dashboard already showed them
+ * and the app must not say things twice. It is not said twice: `In effect`
+ * carries NHC's hurricane and tropical-storm products, and `Local agency
+ * alerts` asks its upstream only for Cyclone, Typhoon, Hurricane, Tropical and
+ * Storm Surge. Flood is in none of them. So a reader who tapped a storm and
+ * never opened the dashboard got a number and no warning at all.
+ *
+ * Every suite passed. It is not an exception, not a parse failure and not a
+ * wrong figure — it is a true sentence that was never printed, which is
+ * exactly the shape §5 exists to forbid and exactly what a unit test of the
+ * arithmetic cannot see. So these assert the RENDERED STRING.
+ *
+ * The controller is string building with no DOM, so this runs on plain node.
+ * ========================================================================== */
+{
+  const hiloAlerts = load('alerts-hilo-hi');
+  /* The moment those warnings were live. Pinned off the capture itself rather
+   * than typed, so the suite cannot drift from its own fixture. */
+  const LIVE = Date.parse(hiloAlerts.features[0].properties.sent);
+
+  const nws = projectPoint({
+    grid: load('grid-hilo-hi'),
+    point: { properties: { gridId: 'HFO', relativeLocation: { properties: { city: 'Hilo', state: 'HI' } } } },
+    alerts: hiloAlerts,
+    alertsOk: true,
+  });
+  /* The SAME grid with the alerts hop having failed — `alerts: null` means
+   * "not known", which is a different sentence from "none in force". */
+  const nwsNoAlertsHop = projectPoint({
+    grid: load('grid-hilo-hi'), point: null, alerts: null, alertsOk: false,
+  });
+  const openMeteo = projectOpenMeteo({ body: load('openmeteo-manila-ph'), fetchedAt: null });
+
+  /** Render the house block for a GDACS storm (no advisory range above it) at
+   *  a chosen moment. Returns the HTML the section would write. */
+  async function render(payload, atMs) {
+    const storm = { id: 'g1', source: 'gdacs', advisoryKey: null };
+    const c = createRainStorm({
+      loadAdvisory: async () => ({ state: 'unsupported' }),
+      rain: { loadRainfall: async () => ({ status: 'ok', payload }), retryRainfall: async () => ({}) },
+      house: { get: () => ({ lat: 19.72, lon: -155.08 }), rangeNm: () => ({ distanceNm: 200 }) },
+      units: () => 'imperial',
+      now: () => atMs,
+    });
+    await c.ensure(storm, () => {});
+    return c.html(storm);
+  }
+
+  const live = await render(nws, LIVE);
+
+  /* THE BUG, ASSERTED DIRECTLY. */
+  truthy('a live Flash Flood Warning reaches the storm drawer',
+    live.includes('Flash Flood Warning'));
+
+  /* ==> AND IT IS ABOVE THE NUMBER, NOT BELOW IT (§48.6). <== A warning under
+   * a total is a warning most readers scroll past. Index order is the only
+   * thing that can assert this without a browser. */
+  truthy('the warning renders above the total',
+    live.indexOf('Flash Flood Warning') < live.indexOf('expected through'));
+
+  /* AN EXPIRED WARNING IS NOT A WARNING. Same bytes, a week later: the block
+   * must print the forecast and nothing about a flood. Without this, a test
+   * of the line above would also pass on code that renders every alert it is
+   * ever handed, forever. */
+  const later = await render(nws, LIVE + 7 * 24 * 60 * 60 * 1000);
+  truthy('an expired warning does not reach the storm drawer',
+    !later.includes('Flash Flood Warning') && later.includes('expected through'));
+
+  /* THE PEAK NAMES A TIME. It shipped without one — "three inches in six
+   * hours" is a fact, "starting Saturday noon" is what a reader can act on. */
+  truthy('the heaviest block names when it starts',
+    /The heaviest[^<]*from [A-Z][a-z]{2} /.test(live.replace(/\s+/g, ' ')));
+
+  /* ==> THE TWO MEANINGS OF `alerts: null`, AND THEY MUST NOT SWAP (§48.16).
+   * <== From NWS it is a hiccup and retryable; from the global model it is a
+   * durable fact. Each case asserts the sentence it SHOULD have and the
+   * absence of the other one, because a block that printed both would pass a
+   * test that only looked for the right one. */
+  const hopFailed = await render(nwsNoAlertsHop, LIVE);
+  truthy('a failed NWS alerts hop says so, and does not claim none are published',
+    hopFailed.includes('could not be checked') &&
+    !hopFailed.includes('aren’t published'));
+
+  const global = await render(openMeteo, LIVE);
+  truthy('the global model says warnings are not published here, not that they failed',
+    global.includes('aren’t published') &&
+    !global.includes('could not be checked'));
+
+  /* THE ATTRIBUTION SENTENCE. A gridded total is all rain from all causes, and
+   * a figure under a storm's name reads as that storm's doing unless it says
+   * otherwise. */
+  truthy('the total is not attributed to the storm',
+    live.includes('not this') && live.includes('storm alone'));
 }
 
 console.log(

@@ -2043,6 +2043,16 @@ home in the `In effect` section and must not be duplicated; High Surf and the
 local statement belong to neither. A warning in force is a fact about now and
 outranks any forecast total, so it renders **above** the number.
 
+**Both rainfall surfaces draw them** — the home dashboard's Rain section (§48.8)
+and the storm drawer's house block (§48.17) — from the one shared row builder
+`ui/rain-alerts.js`. **That is not a duplication**, and the check that settles it
+is worth writing down because §48.17 shipped once without them on exactly this
+reasoning: `In effect` carries only NHC's hurricane and tropical-storm products,
+and `Local agency alerts` (§50) asks its upstream only for Cyclone, Typhoon,
+Hurricane, Tropical and Storm Surge. **Nothing else in the app renders a flood
+warning.** A surface that shows a rainfall total and omits them is not avoiding
+repetition, it is the only thing standing between a reader and a live warning.
+
 **==> SEVERITY IS NOT THE ORDER; URGENCY IS. <==** A Flood Watch and a Flash
 Flood Warning are both `Severe`, so the word cannot separate them.
 `urgency: Immediate` sorts first and takes the error ink; everything else takes

@@ -2726,11 +2726,32 @@ drawers pays once. What is genuinely new is the reader who never opens the
 dashboard: for them it is one JSON fetch per fifteen minutes, gated on a home
 being set **and** the storm being near it.
 
-**The Retry is scoped and the flood alerts are not repeated here.** The button
-carries `data-retry="rain-house"` so the panel's blanket `.detail-retry` binding
-cannot also fire a geometry refetch, and it evicts before refetching so a cached
-failure cannot answer a press. Flood warnings in force stay in the home drawer
-(§48.6) and are not said twice.
+**==> FLOOD WARNINGS IN FORCE RENDER HERE, ABOVE THE NUMBER, AND THE FIRST
+BUILD DROPPED THEM. <==** §48.6's rule — a warning is what IS happening, a total
+is what MIGHT — applies on this surface exactly as it does on the dashboard. It
+was left out on the reasoning that the dashboard already showed them and the app
+must not say things twice. **It is not said twice.** `In effect` carries NHC's
+hurricane and tropical-storm products; `Local agency alerts` asks its upstream
+only for Cyclone, Typhoon, Hurricane, Tropical and Storm Surge. Flood is in
+none of them. So a reader who tapped a storm during a hurricane and never opened
+the dashboard got a rainfall total and no warning at all — §5's silence with a
+number in front of it, on the screen most likely to be the only one they open.
+The two opposite meanings of `alerts: null` (§48.16) travel with them.
+
+**The rows themselves are `ui/rain-alerts.js`, shared with §48.8.** Extracted
+before the second use, per §12: two copies of a warning row is two places for
+`Immediate` to stop meaning "happening now", and the one that drifts is the one
+nobody is looking at. Their rules live in `panels.css` because they are no
+longer the dashboard's alone.
+
+**The clock is injectable** (`now`), threaded from `ui/view-storm-detail.js` the
+same way `ui/view-home.js` threads one. Alert expiry is otherwise only testable
+during an actual flood warning, and the one captured set of live alerts this
+project has is from August.
+
+**The Retry is scoped.** The button carries `data-retry="rain-house"` so the
+panel's blanket `.detail-retry` binding cannot also fire a geometry refetch, and
+it evicts before refetching so a cached failure cannot answer a press.
 
 ### 51.6 Coastal flooding — the home drawer's section
 

@@ -29,6 +29,7 @@
 
 import { rainSummary } from '../lib/rainfall.js';
 import { formatClockDay } from '../lib/time.js';
+import { floodAlertRows } from './rain-alerts.js';
 import { DOTS } from './loading-dots.js';
 
 const esc = (s) =>
@@ -53,18 +54,6 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
     home && Number.isFinite(home.lat) ? `${home.lat},${home.lon}` : null;
 
   const isCurrent = (home) => !!home && state.forKey === keyOf(home);
-
-  /** One alert row: what it is, and when it runs out. The expiry is in the
-   *  reader's own local clock — never UTC, the same rule the environment
-   *  paragraph follows, and it matters more here because these expire in
-   *  minutes rather than days. */
-  function alertRow(a) {
-    const until = a.untilMs ? `until ${formatClockDay(a.untilMs)}` : 'no end time given';
-    return `<li class="home-rain-alert" data-urgency="${a.immediate ? 'now' : 'later'}">
-      <span class="home-rain-alert-name">${esc(a.event)}</span>
-      <span class="home-rain-alert-until">${esc(until)}</span>
-    </li>`;
-  }
 
   function body(home) {
     if (!home) return '';
@@ -115,9 +104,7 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
     }
 
     /* WARNINGS FIRST, ALWAYS. */
-    const alerts = out.alerts.length
-      ? `<ul class="home-rain-alerts">${out.alerts.map(alertRow).join('')}</ul>`
-      : '';
+    const alerts = floodAlertRows(out.alerts);
 
     /* ==> `alerts: null` MEANS TWO DIFFERENT THINGS AND THEY GET TWO DIFFERENT
      * SENTENCES (§48.16). <== From NWS it means the alerts hop failed while

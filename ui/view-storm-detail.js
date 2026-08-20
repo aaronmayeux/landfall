@@ -219,6 +219,9 @@ function disclaimerHtml() {
  *   point-rainfall facade (§48.17), the same one the home dashboard is given.
  *   Optional: without it the Rainfall section's house block is simply absent,
  *   which is what the older suites that build this view get.
+ * @param {() => number} [opts.now] the clock, injectable — the same convention
+ *   `ui/view-home.js` follows, and for the same reason: a flood warning's
+ *   expiry can otherwise only be tested during a flood warning.
  * @param {(storm) => void}      opts.onRetryGeometry
  * @param {(storm, opts?) => Promise<object>} opts.loadAdvisory  injected
  *   facade over data/advisory.js — ui/ never imports data/ (§12).
@@ -233,7 +236,7 @@ function disclaimerHtml() {
  */
 export function createStormDetailView({
   home, onRetryGeometry, loadAdvisory, loadAlerts, envShips, rain, units,
-  siblings, onStep,
+  siblings, onStep, now = () => Date.now(),
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -254,6 +257,11 @@ export function createStormDetailView({
     rain,
     house: { get: () => home.get(), rangeNm: (s) => rangeToHome(s) },
     units,
+    /* The house block filters flood alerts by expiry (§48.6), and an expiry
+     * check against the real clock can only be tested during a real flood
+     * warning. Injected here so a suite can stand at the moment the one
+     * captured set of live alerts was issued. */
+    now,
   });
 
   /* Local agency alerts (§50.5), same shape again. It reads a GLOBAL list

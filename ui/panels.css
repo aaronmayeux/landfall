@@ -2801,6 +2801,61 @@ button.drawer-identity:focus-visible {
   color: var(--text-muted);
 }
 
+/* FLOOD WARNINGS IN FORCE (§48.6) — drawn by `ui/rain-alerts.js` on BOTH the
+   home dashboard's Rain section and the storm drawer's house block.
+
+   ==> THE WARNING BLOCK AND THE FORECAST BLOCK ARE DELIBERATELY DIFFERENT
+   SHAPES. <== A flood warning is a fact about now, published by somebody else,
+   with an expiry attached; a total is our arithmetic on a forecast. Given the
+   same styling they read as one list of similar things, and the one that
+   matters loses. So the alerts are bordered rows with their own ink and the
+   total is prose underneath.
+
+   THESE LIVE HERE RATHER THAN IN home.css because they are no longer the home
+   dashboard's alone. Both stylesheets ship to every visitor, so the file is a
+   question of where the next reader looks for them, and shared panel furniture
+   is what this one holds. */
+.rain-alerts {
+  list-style: none;
+  margin: 0 0 var(--space-base);
+  padding: 0;
+  display: grid;
+  gap: var(--space-tight);
+}
+
+.rain-alert {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  padding: var(--space-snug);
+  border-radius: var(--radius);
+  /* The panel's own raised fill, not a tinted one. The COLOR carries the
+     urgency; a filled amber row would compete with the storm's own category
+     color three inches above it. */
+  background: var(--glass-raised);
+  font-size: var(--type-body);
+}
+
+/* `Immediate` is happening now; `Expected` and `Future` are not, and the two
+   must not read the same. Severity cannot make this distinction — a Flood
+   Watch and a Flash Flood Warning are both `Severe`. */
+.rain-alert[data-urgency='now'] .rain-alert-name {
+  color: var(--error);
+  font-weight: 600;
+}
+.rain-alert[data-urgency='later'] .rain-alert-name {
+  color: var(--stale);
+  font-weight: 600;
+}
+
+.rain-alert-until {
+  flex: 0 0 auto;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 /* AT YOUR HOUSE (§48.17) — the point forecast, under NHC's area range.
 
    ==> THE RULE IS THE WHOLE POINT OF THIS CLASS. <== §48.10's risk is a reader
