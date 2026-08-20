@@ -265,6 +265,15 @@ if ! node tools/type-scale-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking every drawer selector holds its text role...\n'
+if ! node tools/text-role-check.mjs; then
+  printf '\nA piece of drawer text is off its role. There were eighteen distinct\n'
+  printf 'size+colour pairings before the role table, headings were dimmer than\n'
+  printf 'the prose under them, and none of that was a decision. Six roles: a\n'
+  printf 'piece of text is one of them or it is a bug.\n'
+  fail=1
+fi
+
 printf 'pre-push: checking the constants table of contents is current...\n'
 if ! node tools/constants-toc.mjs --check; then
   printf '\nA block was added, removed or renamed in config/constants.js without\n'

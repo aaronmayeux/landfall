@@ -2,7 +2,7 @@
  * view-settings.js — the Settings view (SPEC §16).
  *
  * Seven blocks, in this order and the order is deliberate: install, theme,
- * units, mesh height, globe drift, storm imagery, about. **Globe-shape controls
+ * units, mesh height, globe drift, satellite imagery, about. **Globe-shape controls
  * come before globe-motion ones** — mesh height changes what the planet IS, and
  * drift changes what it is doing, so the one that alters the picture sits
  * above the one that animates it. `build()` is the only place that order
@@ -284,12 +284,18 @@ export function createSettingsView({ resolvedUnits, install } = {}) {
   function imageryBlock() {
     return `
       <div class="settings-block">
-        <p class="settings-label">Storm imagery</p>
+        <!-- ==> "SATELLITE", NOT "STORM". <== Both sliders below feed
+             map/imagery.js, which draws the satellite disc and nothing else.
+             Radar has been its own file since Wave 6 (map/radar-layer.js) and
+             reads neither value — it is a tile pyramid with no disc, no radius
+             and no edge to fade. The old heading promised control over a layer
+             these sliders cannot touch. -->
+        <p class="settings-label">Satellite imagery</p>
         ${sliderRow('imageryRadiusKm', 'set-radius', 'Cloud radius')}
         ${sliderRow('imageryFade', 'set-fade', 'Edge fade')}
         <div class="layer-reset-wrap">
           <button class="layer-reset" type="button" id="set-imagery-reset">
-            Reset imagery to defaults
+            Reset satellite imagery to defaults
           </button>
         </div>
       </div>`;

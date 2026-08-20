@@ -2031,38 +2031,62 @@ rail can multiply it by a line height). The check also holds the scale AT seven
 — a scale that grows a step per component is the old sprawl with `var()`
 wrapped round it.
 
-**Two section-heading levels, listed as grouped selectors in `ui/panels.css`.**
-Both lists are the extraction: a new heading is added to one of them rather than
-written out again. Selectors from `home.css` appear in them deliberately —
-`panels.css` loads first, so those rules carry only their own layout.
+**One text system, six roles, every drawer.** A piece of text in a drawer is one
+of these or it is a bug. The roles are grouped selectors at the head of
+`ui/panels.css` and `tools/text-role-check.mjs` holds every listed selector to
+its role after the whole cascade has resolved.
 
-- **Level one — a heading that names a whole section.** `--type-body`, weight
-  700, `0.06em`, uppercase, `--text-muted`. `.basin-head`, `.watch-head`,
-  `.layer-group-head`, `.detail-section-head h2`, `.home-kicker`.
-- **Level two — a label on one figure inside a section.** `--type-micro`, weight
-  700, `0.09em`, uppercase, `--text-muted`. `.model-family-head`,
-  `.detail-kicker`, `.area-source`, `.home-figs-k`.
+| Role | Size | Colour | What it is |
+|---|---|---|---|
+| 1 Section heading | `--type-body`, 700, caps, `0.06em` | `--text-primary` | Names a whole section. "WATCHES AND WARNINGS" |
+| 2 Sub-label | `--type-micro`, 700, caps, `0.09em` | `--text-secondary` | Labels one figure inside a section. "DISTANCE" |
+| 3 Headline figure | `--type-xl` or `--type-hero` | `--text-primary` | The one number a section exists to state. At most ONE per section |
+| 4 Value | `--type-body`, numeric face when numeric | `--text-primary` | An answer in a row. "86 mph" |
+| 5 Body | `--type-body` | `--text-secondary` | Any sentence |
+| 6 Footnote | `--type-small` | `--text-muted` | Provenance, caveats, timestamps, the disclaimer |
 
-It was one flat level at `--type-micro` until 2026-08-20, and that had two
-faults at once. A heading naming a section was set identically to a label on a
-figure inside one, so a reader scrolling the storm panel got no signal about
-which of the two they had just passed. And level one was SMALLER than its own
-body text — `0.6875rem` over `0.875rem` — so the labels read as captions on the
-paragraph above rather than as titles of the one below. The fix is both halves
-together: level one goes up a step and level two stays put, so the gap between
-them is the hierarchy. Level one is `--type-body` and not `--type-lead` because
-capitals are taller than lowercase at the same size, so all-caps at the body
-step already reads larger than the sentence beneath it without becoming a
-second voice. The tracking came down with the size for the same reason it was
-`0.09em` before: tracking on all-caps exists to keep small capitals from
-colliding, and the same figure at a larger size is a visible gap between every
-pair of letters.
+**It replaced eighteen distinct size-and-colour pairings, and the contrast ran
+backwards.** Headings were `--text-muted` and prose beneath them was
+`--text-primary`, so on every panel the least important line was the brightest
+and the thing naming it was the faintest. Two measured cases: the People section
+set the sentence stating its figure MUTED and the caveat under it SECONDARY, so
+the caveat outshone what it qualified; and `.settings-label` was 600 weight,
+sentence case and primary, making Settings the one drawer whose headings did not
+look like headings — while being, ironically, the one already coloured the way
+all of them should be. Aaron on glass 2026-08-20. Nine pairings remain: the six
+roles plus the three excluded groups below.
 
-**Every level-one heading carries an icon, and the shapes are in
+**Role 4 is `--type-body` and not `--type-lead`, and that is the interesting
+one.** A value used to be a step larger than the prose around it, which across a
+panel produced a saw-tooth — 15px, 14px, 15px, 12.5px, 15px. At one size the
+panel sits on one baseline rhythm and a value is told apart by being WHITE and,
+where it is a number, by the tabular face. **Size is spent on roles 1 and 3
+only.**
+
+**Role 1 is still `--type-body` rather than a step up.** Capitals are taller than
+lowercase at the same size, so all-caps white at the body step already leads the
+sentence beneath it; bigger AND white at once is where a heading shouts. Its
+tracking is `0.06em` against role 2's `0.09em` — tracking on all-caps exists to
+keep small capitals from colliding, and the same figure at a larger size is a
+visible gap between every pair of letters.
+
+**Three things are deliberately outside the table.** TONE COLOURS — `--error`,
+`--stale`, category and watch/warning ink — are semantic state (§6); a rule may
+paint one on top of a role but may not invent a neutral. DRAWER CHROME (title,
+back button, eyebrow, storm pill, stepper) and LIST ROWS (`.storm-row`,
+`.watch-row` and their parts) are settled components with their own internal
+hierarchy, and neither was what read as disjointed.
+
+**Selectors from `home.css` appear in the grouped lists on purpose.**
+`index.html` loads `panels.css` first, so anything `home.css` declares for the
+same property still wins; those rules therefore carry only their own layout —
+margins, grid placement — and nothing about type.
+
+**Every role-1 heading carries an icon, and the shapes are in
 `ui/section-icon.js`.** Beside the label, never instead of it — the icons buy
 SCANNING rather than reading, and a heading nobody can read is a section nobody
-can skip past. Each one is stroke-only in a 24 box, `currentColor` so a heading
-and its icon cannot drift apart, `aria-hidden` because the words beside them are
+can skip past. Each is stroke-only in a 24 box, `currentColor` so a heading and
+its icon cannot drift apart, `aria-hidden` because the words beside them are
 already the accessible name, and sized by `.sect-ico` in CSS rather than by a
 width attribute so one rule retunes every icon in the app. **One idea, one
 shape, both drawers**: the storm panel's Wind field takes Home's How strong
@@ -2070,7 +2094,7 @@ glyph and its Rainfall takes Home's Rain cloud, and the storm panel's Home
 section takes Home's crosshair rather than a house, because both of those
 sections are about the RANGE to the house rather than the house itself.
 
-The collapsible headings in the storm detail panel take the level-one recipe
+The collapsible headings in the storm detail panel take the role-1 recipe
 unchanged and say they are pressable with a chevron, a full-width 44px target
 and a hover, not with extra type weight. Their icon is passed in at the call
 site rather than looked up from the section id: a map from id to icon is a

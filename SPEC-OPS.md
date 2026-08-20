@@ -58,12 +58,32 @@ jurisdiction, and deriving one from it would be inventing authority. The reader
 knows theirs.
 
 **AND THE LINK IS LABELLED `National Hurricane Center (US)` FOR THE SAME
-REASON.** Both surfaces render that label as a bare link directly beneath the
-sentence. Unqualified it reads as an ANSWER to it — *here is your national
-weather agency* — which is the one misreading that could send somebody to the
-wrong forecast mid-storm. The two characters make it an example belonging to
-one country. `tools/detail-disclaimer-check.mjs` still finds the NHC in the
-footer through that label.
+REASON.** The first-run strip and Settings render that label as a bare link
+directly beneath the sentence. Unqualified it reads as an ANSWER to it — *here
+is your national weather agency* — which is the one misreading that could send
+somebody to the wrong forecast mid-storm. The two characters make it an example
+belonging to one country.
+
+**ON THE STORM PANEL THE LINK FOLLOWS THE STORM'S SOURCE AND IS NOT ALWAYS THE
+NHC.** It was hardcoded, so a Philippine typhoon's footer offered a US agency
+with no jurisdiction over it, publishing nothing about it — a live link pointing
+somewhere confidently irrelevant, which is worse than a dead one. Aaron on glass
+2026-08-20.
+
+**AND THE FIX IS NOT "GUESS THE RIGHT AGENCY."** A storm's position is not a
+jurisdiction any more than home is, and inventing one is how you send somebody
+to the wrong forecast. So the link answers a different question, and one we can
+actually answer: **where the numbers on this panel came from.** The sentence
+above it already tells the reader to follow their own agency; the link stops
+pretending to be that answer and becomes provenance. On an NHC storm the two
+coincide, which is why the old behaviour read as correct for as long as it did.
+
+`DISCLAIMER.sourceLink(source)` owns the table — NHC to `nhc.noaa.gov`, GDACS to
+`gdacs.org`. **An unrecognised source returns `null` and the footer renders with
+no link at all**: not a fallback to NHC, which is the bug, and not a guessed
+third URL either. A link nobody verified is worse than none.
+`tools/detail-disclaimer-check.mjs` still finds the NHC in the footer through
+the label, on an NHC storm.
 
 **THE TEST FOR ANY FUTURE EDIT, BOTH HALVES:** does the sentence stay true if a
 source is added or dropped, and does it stay true for a reader anywhere on
@@ -82,9 +102,9 @@ Three surfaces:
   **Not the credits pill:** `map/attribution.js` animates its width from a
   measurement of its own single-line label, and a wrapped paragraph inside it
   breaks that measurement.
-- **The storm detail panel footer** — `DISCLAIMER.short` plus a live link to the
-  NHC, rendered last in `ui/view-storm-detail.js`'s body, **including on the
-  ghost form**, since a storm that has left the feed is exactly when a reader is
+- **The storm detail panel footer** — `DISCLAIMER.short` plus a live link to
+  whichever source this storm came from (above), rendered last in
+  `ui/view-storm-detail.js`'s body, **including on the ghost form**, since a storm that has left the feed is exactly when a reader is
   most likely to be looking at something out of date. This is the highest-value
   placement of the three: the other two speak at the moment of ARRIVAL, this one
   at the moment of DECISION.

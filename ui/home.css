@@ -67,9 +67,7 @@
  * does not. */
 .home-now-coords {
   margin: var(--space-tight) 0 0;
-  color: var(--text-muted);
   font-family: var(--font-ui);
-  font-size: var(--type-small);
   font-variant-numeric: tabular-nums;
 }
 
@@ -222,8 +220,6 @@
 .home-locate-help {
   display: block;
   margin-top: var(--space-tight);
-  color: var(--text-secondary);
-  font-size: var(--type-body);
   line-height: 1.45;
 }
 .home-locate-help b { color: var(--text-primary); font-weight: 600; }
@@ -368,9 +364,7 @@
  * that pair would read as two different kinds of thing. */
 .home-confirm-coords {
   margin: 0 0 var(--space-snug);
-  color: var(--text-muted);
   font-family: var(--font-ui);
-  font-size: var(--type-small);
   font-variant-numeric: tabular-nums;
 }
 
@@ -690,6 +684,12 @@
    * drawer. A figure that outweighs the name of the thing it is about makes
    * the reader work out what they are looking at from context. */
   font-size: var(--type-xl);
+  /* STATED, NOT INHERITED. It happened to be primary because `#drawer` sets
+   * primary and nothing between here and there overrode it — which is not the
+   * same as a decision, and would have quietly gone secondary the day any
+   * ancestor changed. This is role 3: the one number a section exists to
+   * state, and it is never quieter than the prose beside it. */
+  color: var(--text-primary);
   line-height: 1.15;
   letter-spacing: -0.02em;
   margin-top: 2px;
@@ -700,15 +700,13 @@
   color: var(--text-secondary);
 }
 
-.home-when { color: var(--text-secondary); font-size: var(--type-body); margin-top: 2px; }
+.home-when { margin-top: 2px; }
 
 /* ==> THE BAND SITS IN THE HEADLINE BLOCK ON PURPOSE. <== It is the second
  * half of the closest-approach sentence, not a footnote to it: a pass figure
  * read without its error is a true number under a false impression. Nothing
  * here collapses. */
 .home-band {
-  color: var(--text-muted);
-  font-size: var(--type-small);
   line-height: 1.45;
   margin: var(--space-snug) 0 0;
 }
@@ -773,8 +771,6 @@
 /* --- where it is ---------------------------------------------------------- */
 
 .home-where-motion {
-  color: var(--text-secondary);
-  font-size: var(--type-body);
   margin: 2px 0 0;
 }
 
@@ -850,8 +846,7 @@
 .home-figs-v,
 .home-figs-s { text-align: center; }
 
-.home-figs-v { font-family: var(--font-numeric); font-size: var(--type-lead); }
-.home-figs-s { color: var(--text-muted); font-size: var(--type-small); }
+.home-figs-v { font-family: var(--font-numeric); }
 .home-trendline { margin: var(--space-snug) 0 0; }
 
 /* The advisory's age, riding on the "How strong" heading. Deliberately NOT
@@ -1056,15 +1051,13 @@
   line-height: var(--rail-lead-line);
   color: var(--text-muted);
 }
-.home-rail-ev { font-size: var(--type-lead); margin-top: 1px; }
+.home-rail-ev { margin-top: 1px; }
 .home-rail li[data-key="true"] .home-rail-ev { font-weight: 600; }
-.home-rail-det { color: var(--text-muted); font-size: var(--type-small); margin-top: 1px; }
+.home-rail-det { margin-top: 1px; }
 
 /* --- vitals and the stamp ------------------------------------------------ */
 
 .home-stamp {
-  color: var(--text-muted);
-  font-size: var(--type-small);
   margin: var(--space-snug) 0 0;
 }
 
@@ -1081,9 +1074,7 @@
   background: none;
   border: 0;
   border-radius: var(--radius);
-  color: var(--text-secondary);
   font: inherit;
-  font-size: var(--type-body);
   text-align: left;
   cursor: pointer;
 }
@@ -1121,8 +1112,6 @@
  * section existed. Quiet, because it is the least actionable figure here: a
  * reader compares wind to wind, and pressure is corroboration. */
 .home-pressure {
-  color: var(--text-muted);
-  font-size: var(--type-small);
   margin: var(--space-snug) 0 0;
 }
 
@@ -1136,17 +1125,13 @@
 
 .home-rain-line {
   margin: 0;
-  font-size: var(--type-lead);
   line-height: 1.4;
-  color: var(--text-primary);
 }
 .home-rain-line strong { font-variant-numeric: tabular-nums; }
 
 .home-rain-peak {
   margin: var(--space-tight) 0 0;
-  font-size: var(--type-body);
   line-height: 1.45;
-  color: var(--text-secondary);
 }
 
 /* Provenance, and the coverage sentence, in the quietest register on the
@@ -1155,9 +1140,7 @@
    read, so it is not allowed to compete with the number. */
 .home-rain-note {
   margin: var(--space-snug) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }
 
 /* ==> IT CLAIMED TO MATCH THE DETAIL PANEL'S RETRY AND DID NOT. <== It shipped
@@ -1191,9 +1174,7 @@
 
 .home-surge-line {
   margin: 0;
-  font-size: var(--type-lead);
   line-height: 1.4;
-  color: var(--text-primary);
 }
 .home-surge-line strong { font-variant-numeric: tabular-nums; }
 
@@ -1202,9 +1183,7 @@
    with no other figure beside it reads as an all-clear, which it is not. */
 .home-surge-worst {
   margin: var(--space-tight) 0 0;
-  font-size: var(--type-body);
   line-height: 1.45;
-  color: var(--text-secondary);
 }
 
 /* Provenance, and the "this is a gap not an all-clear" sentence, in the same
@@ -1213,7 +1192,5 @@
    American storm's is feet (§51.1). */
 .home-surge-note {
   margin: var(--space-snug) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }

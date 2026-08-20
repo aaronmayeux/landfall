@@ -103,6 +103,15 @@ jobs:
       - name: every size is on the type scale
         run: node tools/type-scale-check.mjs
 
+      # Its sibling. type-scale-check holds the SIZES to a scale; this holds the
+      # PAIRINGS to a meaning. Eighteen distinct size+colour combinations were
+      # in use across the three stylesheets, and headings were muted while the
+      # prose under them was primary -- so on every panel the least important
+      # line was the brightest. Six roles now, and a selector in the contract
+      # must resolve to its role's size and colour after the whole cascade.
+      - name: every drawer selector holds its text role
+        run: node tools/text-role-check.mjs
+
       # config/constants.js is 63 blocks in one file, deliberately (§12.1 — the
       # split was measured and declined). The generated table of contents at its
       # head is the only map of it, and a map missing the newest thing is worse

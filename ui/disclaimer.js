@@ -123,6 +123,50 @@ export const DISCLAIMER = Object.freeze({
    * belonging to one country instead of a resolution of "yours". */
   officialUrl: 'https://www.nhc.noaa.gov/',
   officialLabel: 'National Hurricane Center (US)',
+
+  /** Where THIS storm's numbers came from.
+   *
+   * ==> [APPROVE] THE FOOTER LINK USED TO BE THE NHC ON EVERY STORM, AND ON A
+   * PACIFIC TYPHOON THAT WAS THE WRONG DOOR. <== Aaron on glass 2026-08-20.
+   * The NHC has no jurisdiction over a storm in the Philippine Sea, publishes
+   * nothing about it, and a reader who followed that link during Saudel would
+   * have found a page that does not mention their storm. Worse than a dead
+   * link: a live one pointing somewhere confidently irrelevant.
+   *
+   * ==> AND THE FIX IS NOT "GUESS THE RIGHT AGENCY". <== We cannot name the
+   * agency with authority over an arbitrary storm — home is a point on a
+   * globe, not a jurisdiction, and a storm's position is not a jurisdiction
+   * either. Inventing one is how you send somebody to the wrong forecast.
+   *
+   * SO THE LINK ANSWERS A DIFFERENT QUESTION, AND ONE WE CAN ACTUALLY ANSWER:
+   * where did the numbers on this panel come from. The sentence above it
+   * already tells the reader to follow their own national agency; the link
+   * stops pretending to be that answer and becomes provenance instead. On an
+   * NHC storm the two happen to coincide, which is why it read as correct for
+   * as long as it did.
+   *
+   * AN UNKNOWN SOURCE RETURNS NULL AND THE FOOTER RENDERS WITH NO LINK. Not a
+   * fallback to NHC — that is the bug — and not a guessed third URL either.
+   * The sentence stands on its own; a link nobody verified is worse than none.
+   *
+   * @param {string} source - the storm's `source` field.
+   * @returns {{url: string, label: string}|null}
+   */
+  sourceLink(source) {
+    if (source === 'nhc') {
+      return Object.freeze({
+        url: 'https://www.nhc.noaa.gov/',
+        label: 'National Hurricane Center (US)',
+      });
+    }
+    if (source === 'gdacs') {
+      return Object.freeze({
+        url: 'https://www.gdacs.org/',
+        label: 'GDACS (data source)',
+      });
+    }
+    return null;
+  },
 });
 
 /* --- persisted flag -------------------------------------------------------

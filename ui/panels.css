@@ -492,89 +492,280 @@
   .drawer-view[data-active="true"] { animation: none; }
 }
 
-/* ==> ONE SECTION HEADING, USED BY EVERY DRAWER. <==
+/* ==========================================================================
+ * ONE TEXT SYSTEM, SIX ROLES, EVERY DRAWER (SPEC-UI §"One text system").
+ * ==========================================================================
  *
- * There were TWO recipes doing this identical job and nobody chose between
- * them. The storm list, Layers and Settings ran 0.6875rem / 600 / 0.08em; the
- * storm panel, the home dashboard and the area panel ran 0.7-0.75rem / 700 /
- * 0.1em. Neither is wrong. Having both is: flip from Layers to a storm and
- * every heading on the screen changes weight and spacing at once, which is
- * most of what made the drawers read as separate apps sharing a sheet.
+ * ==> WHAT THIS REPLACED, COUNTED RATHER THAN COMPLAINED ABOUT. <== Across
+ * `panels.css`, `home.css` and `nudge.css` there were EIGHTEEN distinct
+ * combinations of type step and text colour in use. Not eighteen decisions —
+ * eighteen accumulations, each one made while looking at a single component
+ * and none of them held up against the component beside it.
  *
- * THE LOUDER RECIPE WON. A heading's job is to be findable while the eye is
- * moving down a panel, and at this size the extra weight is what does it —
- * 600 at 11px against a muted grey is a suggestion, not a heading.
+ * On glass that does not read as "slightly inconsistent". Aaron's words,
+ * 2026-08-20: "inconsistent/random text size and color changes throughout the
+ * drawers... it makes our text look disjointed."
  *
- * THE LIST IS THE EXTRACTION. Plain CSS has no mixin, so the shared thing has
- * to be a grouped selector, and that means this list is the authoritative
- * answer to "what is a section heading in this app". A new one is added HERE,
- * not written out again three hundred lines down — that is exactly how the
- * two recipes happened.
+ * ==> AND THE CONTRAST RAN BACKWARDS. <== Headings were `--text-muted` and the
+ * prose beneath them was `--text-primary`, so on every panel the least
+ * important line on screen was the brightest and the thing naming it was the
+ * faintest. Two measured examples:
  *
- * SELECTORS FROM home.css ARE IN THIS LIST ON PURPOSE, and the cascade is
+ *   PEOPLE IN THE PATH   "people in 2 towns inside the wind field" rendered
+ *                        MUTED, and the footnote below it — "Estimate. Counts
+ *                        residents of towns of 1,000 or more" — rendered
+ *                        SECONDARY. The caveat outshone the sentence it
+ *                        qualified.
+ *   SETTINGS             `.settings-label` was 600 weight, sentence case,
+ *                        `--text-primary`. Every other heading in the app was
+ *                        700, uppercase, tracked, muted. Settings was the one
+ *                        drawer whose headings did not look like headings —
+ *                        and, ironically, the one that already looked the way
+ *                        all of them should.
+ *
+ * ==> THE SIX ROLES. A PIECE OF TEXT IS ONE OF THESE OR IT IS A BUG. <==
+ *
+ *   1 SECTION HEADING   body / 700 / caps / 0.06em / PRIMARY
+ *                       Names a whole section. "WATCHES AND WARNINGS".
+ *   2 SUB-LABEL         micro / 700 / caps / 0.09em / SECONDARY
+ *                       Labels one figure inside a section. "DISTANCE".
+ *   3 HEADLINE FIGURE   xl or hero / PRIMARY
+ *                       The one number a section exists to state. "≈90K".
+ *                       At most ONE per section — a second is role 4.
+ *   4 VALUE             body / PRIMARY (numeric face where it is a number)
+ *                       An answer in a row. "86 mph". "Hurricane Warning".
+ *   5 BODY              body / SECONDARY
+ *                       Any sentence.
+ *   6 FOOTNOTE          small / MUTED
+ *                       Provenance, caveats, timestamps, the disclaimer.
+ *
+ * ==> ROLE 4 IS `--type-body` AND NOT `--type-lead`, WHICH IS AARON'S CALL AND
+ * IS THE INTERESTING ONE. <== A value used to be a step larger than the prose
+ * around it, and across a panel that produced a saw-tooth: 15px, 14px, 15px,
+ * 12.5px, 15px. At one size the whole panel sits on one baseline rhythm and a
+ * value is told apart by being WHITE and, where it is a number, by the numeric
+ * face — never by being bigger. Size is spent on roles 1 and 3 only.
+ *
+ * ==> WHAT IS DELIBERATELY OUTSIDE THIS TABLE. <==
+ *
+ *   TONE COLOURS       `--error`, `--stale`, category and watch/warning inks.
+ *                      These are SEMANTIC STATE, not typography — §6 fixes
+ *                      them and a role must never overwrite one. A rule may
+ *                      set a tone colour on top of a role; it may not invent a
+ *                      neutral one.
+ *   DRAWER CHROME      the title, back button, eyebrow, storm pill and
+ *                      stepper. One settled component apiece, above the body
+ *                      content this table governs.
+ *   LIST ROWS          `.storm-row` / `.watch-row` and their parts. A row is
+ *                      a compact object with its own internal hierarchy, and
+ *                      it was not what read as disjointed.
+ *
+ * `tools/text-role-check.mjs` holds every selector below to its role and fails
+ * the push otherwise. A comment asking the next person to use the table is not
+ * a guard — this project already watched that fail with the fixture tokens in
+ * tools/drawer-head-harness.html.
+ *
+ * SELECTORS FROM home.css APPEAR IN THESE LISTS ON PURPOSE, and the cascade is
  * what makes it work: index.html loads panels.css FIRST, so anything home.css
  * declares for the same property still wins. Those rules therefore carry only
- * their own layout (margins, grid placement) and nothing about type. If a
- * heading here ever stops matching the others, look for a type declaration
- * that crept back into home.css.
+ * their own layout — margins, grid placement — and nothing about type. If one
+ * of them stops matching its role, look for a type or colour declaration that
+ * crept back into home.css.
+ * ------------------------------------------------------------------------ */
+
+/* ----- ROLE 1: SECTION HEADING -------------------------------------------
  *
- * ==> AND IT IS TWO LEVELS NOW, NOT ONE. <== The list above used to be a
- * single rule, so "WATCHES AND WARNINGS" — which names a whole section — was
- * set identically to "DISTANCE", which labels one figure INSIDE a section. A
- * reader scrolling the storm panel got no signal at all about which of those
- * two things they had just passed. Everything was a heading, therefore nothing
- * was.
+ * PRIMARY, and that is the change that fixes the reversal. The heading is now
+ * the brightest thing in its section and the prose steps down from it, which
+ * is the direction every other reading surface on Earth uses.
  *
- * ==> AND THE HEADING WAS SMALLER THAN ITS OWN CONTENT. <== 0.6875rem over
- * 0.875rem body text. That is upside down, and Aaron called it on glass
- * 2026-08-20: the section labels read as captions on the paragraphs above
- * them rather than as titles of the ones below.
+ * STILL `--type-body` AND NOT A STEP UP. Capitals are taller than lowercase at
+ * the same size, so all-caps white at the body step already leads the sentence
+ * beneath it. Making it bigger AND white at once is where a heading starts to
+ * shout. If it reads weak on glass the step above is one line.
  *
- * The fix is BOTH halves at once, and it has to be. Enlarging every heading
- * would have kept the panel just as flat, only louder; splitting the levels
- * without enlarging would have left the top level still under its own body
- * text. Level one goes up a step and level two stays exactly where it was, so
- * the gap between them IS the hierarchy.
+ * THE TRACKING IS 0.06em, not the 0.09em role 2 uses. Tracking on all-caps
+ * exists to stop small capitals colliding; the same figure at a larger size is
+ * a visible gap between every pair of letters and the word stops reading as a
+ * word.
  *
- * WHY --type-body AND NOT --type-lead for level one. Capitals are taller than
- * lowercase at the same size, so all-caps at the body step already reads
- * larger than the sentence beneath it without being a second voice. The step
- * above is where a tracked all-caps label starts to shout.
- *
- * THE LETTER-SPACING COMES DOWN, 0.09em to 0.06em, and it is not a separate
- * opinion. Tracking on all-caps exists to stop small capitals colliding; at
- * 0.6875rem 0.09em is right and at 0.875rem the same figure is a visible gap
- * between every pair of letters. The word has to still read as a word.
- *
- * ----- LEVEL ONE: a heading that names a whole section ------------------- */
+ * `.settings-label` JOINED THIS LIST and lost its own recipe with it. It is a
+ * section heading in Settings exactly as `.layer-group-head` is one in Layers,
+ * and the only reason it looked different is that it was written out
+ * separately three hundred lines away — which is precisely the failure this
+ * grouped selector exists to prevent. */
 .basin-head,
 .watch-head,
 .layer-group-head,
 .detail-section-head h2,
+.settings-label,
 .home-kicker {
   font-size: var(--type-body);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-muted);
+  color: var(--text-primary);
 }
 
-/* ----- LEVEL TWO: a label on one figure INSIDE a section -----------------
+/* ----- ROLE 2: SUB-LABEL -------------------------------------------------
  *
- * Unchanged, and staying unchanged is the point — these are the fixed floor
- * that level one is now measured against. `.area-source` is in here because it
- * is a byline under the area's name rather than a heading of anything, and it
- * has always taken this treatment; it sits in this list so that fact is
- * written down somewhere instead of being inferred from where the selector
- * happened to land. */
+ * SECONDARY, not muted. It sits one step under a section heading and one step
+ * over the prose it introduces, and muted put it BELOW its own value — the
+ * same inversion, one level down.
+ *
+ * `.area-source` is in here because it is a byline under the area's name
+ * rather than a heading of anything, and it has always taken this treatment;
+ * it sits in the list so that fact is written down instead of inferred from
+ * where the selector happened to land.
+ *
+ * `.detail-env-figs-head` and `.area-discussion-head` JOINED, and both were
+ * hand-rolled copies of this recipe that had already drifted — one at 0.08em
+ * and one at 0.06em/600. Neither was a decision. */
 .model-family-head,
 .detail-kicker,
+.detail-env-figs-head,
+.area-discussion-head,
 .area-source,
 .home-figs-k {
   font-size: var(--type-micro);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ----- ROLE 4: VALUE -----------------------------------------------------
+ *
+ * (Role 3, the headline figure, is not a grouped selector: there are four of
+ * them, each sized to the block it anchors, and they are listed in the checker
+ * rather than merged here. Merging them would mean one size for a population
+ * count and a distance, which are not the same object.)
+ *
+ * ==> EVERY ONE OF THESE WAS `--type-lead`. <== The saw-tooth in the header's
+ * note is this list against the body text between its rows. They are all
+ * `--type-body` now and tell themselves apart by colour and, where numeric, by
+ * the tabular face.
+ *
+ * THE LABEL HALF OF A PAIR TAKES ROLE 5, not role 2 — `.detail-vitals dt` says
+ * "Winds", sentence case, beside its value. A sub-label is a caps heading over
+ * a block; a row label is prose in a column. They are different objects that
+ * were both being paid in `--text-muted`. */
+.detail-vitals,
+.detail-figure,
+.detail-ww,
+.detail-env-fig-v,
+.area-facts,
+.area-horizon-value,
+.switch-row,
+.layer-row-label,
+.home-figs-v,
+.home-rail-ev,
+.home-rain-line,
+.home-surge-line {
+  font-size: var(--type-body);
+}
+.detail-vitals dd,
+.detail-figure,
+.detail-env-fig-v,
+.area-facts dd,
+.area-horizon-value,
+.home-figs-v,
+.home-rail-ev,
+.home-rain-line,
+.home-surge-line {
+  color: var(--text-primary);
+}
+/* The label half. Prose in a column, so role 5's colour. */
+.detail-vitals dt,
+.area-facts dt,
+.detail-env-fig-k {
+  color: var(--text-secondary);
+}
+.detail-env-fig-k { font-size: var(--type-body); }
+
+/* ----- ROLE 5: BODY ------------------------------------------------------
+ *
+ * SECONDARY, which is a step DOWN for six of these and a step UP for four.
+ * Both directions are the same fix: a sentence is a sentence, and whether it
+ * happened to be written in a component that reached for primary or one that
+ * reached for muted was never a decision about the sentence.
+ *
+ * `.detail-soft` IS THE BIG ONE — 73 call sites across ten files, doing duty
+ * as both body prose and footnote depending on who wrote the line. It is BODY
+ * here, which is its dominant use, and the lines that genuinely belong a step
+ * lower already carry their own class and appear under role 6. Re-sorting 73
+ * call sites by hand would be a week of glass judgements to buy less than this
+ * costs nothing to get right.
+ *
+ * `.detail-advisory` GREW rather than dimmed: it was `--type-small` primary,
+ * and it is the one place on the panel holding a full agency product somebody
+ * actually reads end to end. A wall of teletype at the footnote size was the
+ * wrong trade. */
+.detail-soft,
+.detail-empty,
+.detail-env-paragraph,
+.detail-people-note,
+.detail-rain-para,
+.detail-cap-english,
+.detail-cap-words,
+.detail-advisory,
+.settings-note,
+.list-note,
+.area-horizon-label,
+.area-horizon-risk,
+.area-discussion,
+.install-steps,
+.slider-label,
+.home-where-motion,
+.home-when,
+.home-locate-help,
+.home-edit,
+.home-rain-peak,
+.home-surge-worst {
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+
+/* ----- ROLE 6: FOOTNOTE --------------------------------------------------
+ *
+ * MUTED and one step down, and this is where the People inversion actually
+ * gets fixed: the caveat under a figure lands here while the sentence stating
+ * the figure lands in role 5, so the two stop competing.
+ *
+ * A TIMESTAMP IS A FOOTNOTE UNTIL IT IS A PROBLEM. `.detail-stamp`,
+ * `.row-stamp` and friends take this treatment at rest and a TONE COLOUR when
+ * the data is aging, stale or silent — the tone rules live beside each
+ * component and are outside this table by design. Muted is the resting state,
+ * never the alarm state. */
+.detail-env-note,
+.detail-ww-note,
+.detail-rain-note,
+.detail-cap-meta,
+.detail-cap-note,
+.detail-cap-toggle,
+.detail-advisory-from,
+.detail-stamp,
+.detail-stamp-detail,
+.detail-geo-detail,
+.detail-disclaimer,
+.env-legend-note,
+.layer-row-sub,
+.layer-note,
+.model-sub,
+.settings-soft,
+.area-note,
+.area-stamp,
+.rain-alert-until,
+.home-band,
+.home-stamp,
+.home-pressure,
+.home-figs-s,
+.home-rail-det,
+.home-now-coords,
+.home-confirm-coords,
+.home-rain-note,
+.home-surge-note {
+  font-size: var(--type-small);
   color: var(--text-muted);
 }
 
@@ -1447,8 +1638,6 @@ button.drawer-identity:focus-visible {
 .detail-stamp {
   flex: 0 0 auto;
   padding: var(--space-tight) var(--space-base);
-  font-size: var(--type-small);
-  color: var(--text-secondary);
   border-bottom: 1px solid var(--glass-border);
 }
 .detail-stamp[data-band="aging"] { color: var(--stale); }
@@ -1490,8 +1679,6 @@ button.drawer-identity:focus-visible {
 
 .detail-stamp-detail {
   margin-top: 2px;
-  color: var(--text-secondary);
-  font-size: var(--type-small);
   line-height: 1.4;
 }
 
@@ -1573,9 +1760,7 @@ button.drawer-identity:focus-visible {
    * ANY ROW PAIRING TWO TYPEFACES OR TWO SIZES NEEDS IT. */
   align-items: baseline;
   margin: 0;
-  font-size: var(--type-lead);
 }
-.detail-vitals dt { color: var(--text-muted); }
 .detail-vitals dd {
   margin: 0;
   font-family: var(--font-numeric);
@@ -1594,20 +1779,15 @@ button.drawer-identity:focus-visible {
 .detail-kicker:first-child { margin-top: 0; }
 .detail-figure {
   font-family: var(--font-numeric);
-  font-size: var(--type-lead);
   margin-top: 2px;
 }
-.detail-soft { color: var(--text-muted); font-size: var(--type-body); }
-.detail-empty { color: var(--text-muted); font-size: var(--type-body); }
 
 /* The storm health paragraph (§47.8) — running prose, the only multi-sentence
  * body text on this panel, so it gets the reading line height the row grids
  * deliberately do not have. */
 .detail-env-paragraph {
   margin: 0;
-  font-size: var(--type-body);
   line-height: 1.5;
-  color: var(--text-primary);
 }
 
 /* The figures under it (§47.8). The paragraph tells the story and this tells
@@ -1623,10 +1803,6 @@ button.drawer-identity:focus-visible {
  * a desktop drawer without a media query deciding it. */
 .detail-env-figs-head {
   margin-top: var(--space-base);
-  font-size: var(--type-micro);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
 .detail-env-figs {
@@ -1638,15 +1814,11 @@ button.drawer-identity:focus-visible {
 .detail-env-fig { min-width: 0; }
 .detail-env-fig-k {
   display: block;
-  font-size: var(--type-small);
-  color: var(--text-secondary);
   line-height: 1.25;
 }
 .detail-env-fig-v {
   display: block;
   margin-top: var(--space-tight);
-  font-size: var(--type-lead);
-  color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -1657,9 +1829,7 @@ button.drawer-identity:focus-visible {
  * margin is separating it from the bar's labels rather than from the grid. */
 .detail-env-note {
   margin: var(--space-base) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }
 /* There is exactly ONE of these now (§47.8) — the source credit, under the
    legend. The stacking rule that used to live here went with the two footnotes
@@ -1717,9 +1887,7 @@ button.drawer-identity:focus-visible {
 
 .env-legend-note {
   margin: var(--space-snug) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }
 
 /* The Layers-panel home. Indented under its parent row and hung off a
@@ -1739,7 +1907,6 @@ button.drawer-identity:focus-visible {
   padding: 0;
   display: grid;
   gap: var(--space-tight);
-  font-size: var(--type-lead);
 }
 .detail-ww li { display: flex; align-items: center; gap: var(--space-snug); }
 
@@ -1759,8 +1926,6 @@ button.drawer-identity:focus-visible {
  * second claim competing with it. */
 .detail-ww-note {
   margin-top: var(--space-tight);
-  color: var(--text-muted);
-  font-size: var(--type-small);
 }
 
 .detail-ghost-note {
@@ -1784,23 +1949,51 @@ button.drawer-identity:focus-visible {
   margin: var(--space-base);
   padding-top: var(--space-snug);
   border-top: 1px solid var(--glass-border);
-  color: var(--text-muted);
-  font-size: var(--type-small);
   line-height: 1.5;
 }
 
-/* Same shape as .about-link in the Settings view — a link in a touch panel
- * still owes a 44px target (§10), and inline-block is what makes the padding
- * apply. Kept as its own rule rather than sharing the class: this one sits on
- * a muted footer at a smaller size, and the two would drift into each other's
- * constraints the first time either is tuned. */
+/* A link in a touch panel still owes a 44px target (§10) — but this one sits
+ * INSIDE A SENTENCE, and that is the whole difficulty.
+ *
+ * ==> IT USED TO BUY THE TARGET WITH `line-height: var(--touch-target)`, AND
+ * THAT PUT A 44px LINE BOX IN THE MIDDLE OF A PARAGRAPH. <== The line the link
+ * lands on grew to 44px tall while the line above it stayed at ~19px, so the
+ * footer read as two lines with a hole between them. Aaron on glass
+ * 2026-08-20: "the double space between the lines". Nothing was broken; the
+ * tap target was simply being paid for out of the paragraph's leading.
+ *
+ * VERTICAL PADDING ON AN INLINE BOX IS THE ANSWER, and it works precisely
+ * because of the thing that usually makes it a nuisance: padding on a
+ * non-replaced INLINE element does not contribute to line box height. The hit
+ * area grows, the line does not move. `display: inline` is therefore
+ * load-bearing — the old `inline-block` is what made the height count.
+ *
+ * SAFE HERE SPECIFICALLY because this is the last element in the last block of
+ * the panel: the padding overhangs into the panel's own bottom margin and
+ * there is nothing beneath it to swallow a tap. Do not copy this to a link
+ * with content under it without checking that.
+ *
+ * The target is still really 44px and `tools/detail-disclaimer-check.mjs`
+ * still measures it — `getBoundingClientRect` on an inline box reports the
+ * padded height. */
 .detail-disclaimer-link {
   color: var(--focus-ring);
   text-decoration: underline;
   text-underline-offset: 2px;
-  display: inline-block;
-  min-height: var(--touch-target);
-  line-height: var(--touch-target);
+  display: inline;
+  /* ==> DERIVED FROM 1em, NOT FROM THE LINE HEIGHT, AND THAT DISTINCTION COST
+   * A MEASUREMENT. <== The first version subtracted `1.35em` on the assumption
+   * that an inline box is as tall as its line. It is not: the box an inline
+   * element reports is the FONT'S CONTENT AREA — roughly 1.17em for this
+   * stack — and the leading around it belongs to the line, not to the element.
+   * Subtracting the larger figure under-padded by 2px, which was invisible at
+   * phone width where the label wraps to two lines and showed up at 768px and
+   * above where it does not. Measured 42px against a 44px floor.
+   *
+   * `1em` is the conservative subtrahend: the content area is always taller
+   * than that, so the result always clears the target rather than landing on
+   * it. Verified 46px at 390, 768 and 1280. */
+  padding: calc((var(--touch-target) - 1em) / 2) 0;
 }
 .detail-disclaimer-link:focus-visible {
   outline: 2px solid var(--focus-ring);
@@ -1828,7 +2021,6 @@ button.drawer-identity:focus-visible {
   border: 0;
   color: var(--text-primary);
   font: inherit;
-  font-size: var(--type-lead);
   text-align: left;
   cursor: pointer;
 }
@@ -1917,8 +2109,6 @@ button.drawer-identity:focus-visible {
 .detail-geo-detail {
   margin-top: var(--space-tight);
   font-family: var(--font-numeric);
-  font-size: var(--type-small);
-  color: var(--text-muted);
   word-break: break-word;
 }
 
@@ -1954,7 +2144,6 @@ button.drawer-identity:focus-visible {
   min-width: 0;
 }
 .layer-row-label {
-  font-size: var(--type-lead);
   min-height: var(--touch-target);
   display: flex;
   align-items: center;
@@ -1962,8 +2151,6 @@ button.drawer-identity:focus-visible {
 .layer-row-text .layer-row-label { min-height: 0; display: block; }
 
 .layer-row-sub {
-  font-size: var(--type-small);
-  color: var(--text-muted);
 }
 /* An error outranks a note — a layer that exists and broke is more urgent
  * than one that has not shipped (§5: errors surface near their source). */
@@ -1976,8 +2163,6 @@ button.drawer-identity:focus-visible {
 
 .layer-note {
   margin: 2px 0 0;
-  font-size: var(--type-small);
-  color: var(--text-muted);
 }
 
 /* --- segmented control ----------------------------------------------------
@@ -2072,10 +2257,8 @@ button.drawer-identity:focus-visible {
 
 .settings-note {
   margin: var(--space-base) calc(var(--drawer-inset) - var(--drawer-body-pad)) 0;
-  font-size: var(--type-body);
-  color: var(--text-primary);
 }
-.settings-soft { color: var(--text-muted); font-size: var(--type-small); }
+.settings-soft {  }
 
 /* One setting: its name, its control, and the sentence explaining what the
  * chosen value actually does. The horizontal inset matches .settings-note so
@@ -2085,9 +2268,6 @@ button.drawer-identity:focus-visible {
 }
 .settings-label {
   margin: 0 0 var(--space-tight);
-  font-size: var(--type-body);
-  font-weight: 600;
-  color: var(--text-primary);
 }
 /* The block already carries the inset; the note inside it must not add a
  * second one or it would step in from the control above it. */
@@ -2208,9 +2388,7 @@ button.drawer-identity:focus-visible {
 /* The second line: what sets this model apart. Quieter than the name — it is
  * read once and then ignored, while the name is scanned every time. */
 .model-sub {
-  font-size: var(--type-small);
   line-height: 1.35;
-  color: var(--text-muted);
 }
 
 /* The tick. Drawn, not a glyph — a checkmark character renders differently on
@@ -2246,8 +2424,6 @@ button.drawer-identity:focus-visible {
 
 .detail-advisory-from {
   margin-bottom: var(--space-tight);
-  color: var(--text-muted);
-  font-size: var(--type-small);
 }
 
 .detail-advisory {
@@ -2256,11 +2432,9 @@ button.drawer-identity:focus-visible {
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  color: var(--text-primary);
   font-family: var(--font-numeric);
   /* Small, because a teletype line is long. Not smaller than this: the whole
    * point of the section is that it can be read. */
-  font-size: var(--type-small);
   line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -2309,8 +2483,6 @@ button.drawer-identity:focus-visible {
   justify-content: space-between;
   gap: var(--space-tight);
   margin-bottom: var(--space-tight);
-  font-size: var(--type-body);
-  color: var(--text-secondary);
   cursor: pointer;
 }
 
@@ -2488,8 +2660,6 @@ button.drawer-identity:focus-visible {
 .install-steps {
   margin: var(--space-snug) 0 0;
   padding-left: 1.35em;
-  color: var(--text-secondary);
-  font-size: var(--type-body);
   line-height: 1.5;
 }
 .install-steps li { margin-bottom: var(--space-tight); }
@@ -2581,8 +2751,6 @@ button.drawer-identity:focus-visible {
  * got out of the way. */
 .detail-people-note {
   margin-top: var(--space-snug);
-  color: var(--text-secondary);
-  font-size: var(--type-body);
 }
 
 /* --- watched-area detail view (SPEC §45) ----------------------------------
@@ -2682,8 +2850,6 @@ button.drawer-identity:focus-visible {
  * capitalised in CSS rather than duplicating the string in two cases —
  * `capitalize` would give "In 2 Days", so it is the first letter only. */
 .area-horizon-label {
-  color: var(--text-secondary);
-  font-size: var(--type-body);
 }
 .area-horizon-label::first-letter { text-transform: uppercase; }
 
@@ -2695,9 +2861,7 @@ button.drawer-identity:focus-visible {
  * the column alignment that was the actual point, at no cost to the prose. */
 .area-horizon-value {
   flex: 0 0 auto;
-  font-size: var(--type-lead);
   font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
   text-align: right;
 }
 
@@ -2706,14 +2870,10 @@ button.drawer-identity:focus-visible {
  * qualifier reads as two facts when it is one. */
 .area-horizon-risk {
   margin-left: 0.5em;
-  color: var(--text-secondary);
-  font-size: var(--type-body);
 }
 
 .area-stamp {
   margin: var(--space-snug) 0 0;
-  font-size: var(--type-small);
-  color: var(--text-secondary);
 }
 
 /* --- the heading over the forecaster's paragraph --------------------------
@@ -2722,11 +2882,6 @@ button.drawer-identity:focus-visible {
  * not compete with the area's name at the top of the panel. */
 .area-discussion-head {
   margin: var(--space-comfy) 0 0;
-  font-size: var(--type-micro);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
 }
 .area-discussion-head + .area-discussion { margin-top: var(--space-snug); }
 
@@ -2743,12 +2898,10 @@ button.drawer-identity:focus-visible {
  * fixed-width column breaks stranded mid-sentence at phone width. */
 .area-discussion {
   margin: var(--space-base) 0 0;
-  font-size: var(--type-body);
   /* 1.5, the same as the other prose block in this file. There are no
    * line-height tokens in this project and inventing one for a single rule
    * would be a token nobody else uses. */
   line-height: 1.5;
-  color: var(--text-secondary);
   white-space: pre-line;
   overflow-wrap: anywhere;
 }
@@ -2767,7 +2920,6 @@ button.drawer-identity:focus-visible {
   margin: var(--space-comfy) 0 0;
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
-  font-size: var(--type-body);
 }
 .area-facts dt { color: var(--text-muted); }
 .area-facts dd {
@@ -2789,8 +2941,6 @@ button.drawer-identity:focus-visible {
   margin: var(--space-comfy) 0 0;
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
-  color: var(--text-muted);
-  font-size: var(--type-small);
   line-height: 1.5;
 }
 
@@ -2864,9 +3014,7 @@ button.drawer-identity:focus-visible {
 
 .detail-rain-para {
   margin: 0;
-  font-size: var(--type-body);
   line-height: 1.5;
-  color: var(--text-primary);
 }
 /* Between paragraphs of one forecast: tighter than between sections, because
    this is one thought continuing rather than a new one starting. */
@@ -2877,9 +3025,7 @@ button.drawer-identity:focus-visible {
    the whole content of the line. */
 .detail-rain-note {
   margin: var(--space-base) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }
 
 /* FLOOD WARNINGS IN FORCE (§48.6) — drawn by `ui/rain-alerts.js` on BOTH the
@@ -2932,8 +3078,6 @@ button.drawer-identity:focus-visible {
 
 .rain-alert-until {
   flex: 0 0 auto;
-  font-size: var(--type-small);
-  color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -2980,16 +3124,12 @@ button.drawer-identity:focus-visible {
 }
 
 .detail-cap-english {
-  font-size: var(--type-body);
   line-height: 1.45;
-  color: var(--text-primary);
 }
 
 .detail-cap-words {
   margin-top: var(--space-tight);
-  font-size: var(--type-body);
   line-height: 1.45;
-  color: var(--text-secondary);
 }
 
 /* THE DISCLOSURE (SPEC §50.4). Only ever rendered for text that is NOT in
@@ -3014,9 +3154,7 @@ button.drawer-identity:focus-visible {
   border: 0;
   text-align: left;
   cursor: pointer;
-  color: var(--text-muted);
   font: inherit;
-  font-size: var(--type-small);
 }
 .detail-cap-toggle:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring);
@@ -3051,16 +3189,12 @@ button.drawer-identity:focus-visible {
 
 .detail-cap-meta {
   margin-top: var(--space-tight);
-  font-size: var(--type-small);
   line-height: 1.4;
-  color: var(--text-muted);
 }
 
 /* Who is speaking, and the limits of what the match means. Same register as
    the rainfall and environment footnotes. */
 .detail-cap-note {
   margin: var(--space-base) 0 0;
-  font-size: var(--type-small);
   line-height: 1.45;
-  color: var(--text-muted);
 }

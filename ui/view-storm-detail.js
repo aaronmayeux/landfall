@@ -187,7 +187,7 @@ function sourceLabel(source) {
   return 'the feed it came from';
 }
 
-/** The footer that says this is not the National Hurricane Center.
+/** The footer that says this app is not an official source.
  *
  *  `role="note"` and not `aria-live`: it is standing context, not something
  *  that just happened. A screen reader meets it in reading order like anyone
@@ -195,13 +195,24 @@ function sourceLabel(source) {
  *
  *  Rendered on the ghost form too. A storm that has left the feed is the case
  *  where a reader is MOST likely to be looking at something out of date, so
- *  dropping the provenance line there would be exactly backwards. */
-function disclaimerHtml() {
+ *  dropping the provenance line there would be exactly backwards.
+ *
+ *  ==> THE LINK TAKES THE STORM'S SOURCE AND IS NOT ALWAYS THE NHC. <== It was
+ *  hardcoded, so a Philippine typhoon's footer offered a US agency that
+ *  publishes nothing about it. `DISCLAIMER.sourceLink` owns the table and the
+ *  reasoning; this only has to hand it the source and cope with a null, which
+ *  is what an unrecognised source returns rather than a guess. */
+function disclaimerHtml(source) {
+  const src = DISCLAIMER.sourceLink(source);
   return `
     <div class="detail-disclaimer" role="note">
-      ${esc(DISCLAIMER.short)}
-      <a class="detail-disclaimer-link" href="${DISCLAIMER.officialUrl}"
-         target="_blank" rel="noopener noreferrer">${esc(DISCLAIMER.officialLabel)}</a>
+      ${esc(DISCLAIMER.short)}${
+        src
+          ? `
+      <a class="detail-disclaimer-link" href="${src.url}"
+         target="_blank" rel="noopener noreferrer">${esc(src.label)}</a>`
+          : ''
+      }
     </div>`;
 }
 
@@ -825,6 +836,13 @@ export function createStormDetailView({
       return html;
     }
 
+    /* ==> "FORECAST" IS PART OF THE HEADING, NOT A SPAN INSIDE IT. <== These
+     * three labels used to read `Closest approach <span class="detail-soft">
+     * forecast</span>`, which put BODY text inside a SUB-LABEL: the qualifier
+     * rendered larger than the heading containing it and in a different color.
+     * Aaron on glass 2026-08-20. One phrase, one treatment — and the word has
+     * to stay, because an approach figure is a claim about a future and a
+     * heading that hides that is the §5 problem in two words. */
     if (geo.state === 'ok' && geo.bundle?.forecast?.length) {
       const ca = home.closestApproach({ ...storm, forecast: geo.bundle.forecast });
       if (ca && ca.trend === 'closing' && ca.relevant) {
@@ -832,16 +850,16 @@ export function createStormDetailView({
           ? ` · ${esc(formatClockDay(ca.time))}${formatUntil(ca.time) ? ` (${esc(formatUntil(ca.time))})` : ''}`
           : '';
         html += `
-          <div class="detail-kicker">Closest approach <span class="detail-soft">forecast</span></div>
+          <div class="detail-kicker">Closest forecasted approach</div>
           <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)${when}</div>`;
       } else if (ca && ca.trend === 'receding') {
         html += `
-          <div class="detail-kicker">Nearest point <span class="detail-soft">forecast</span></div>
+          <div class="detail-kicker">Nearest forecasted point</div>
           <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)</div>
           <div class="detail-soft">Moving away, never closer than current position.</div>`;
       } else if (ca) {
         html += `
-          <div class="detail-kicker">Nearest point <span class="detail-soft">forecast</span></div>
+          <div class="detail-kicker">Nearest forecasted point</div>
           <div class="detail-figure">${esc(formatDistance(ca.nm, sys()))} (${Math.round(ca.nm).toLocaleString()} nm)</div>
           <div class="detail-soft">Moving away — never comes near home.</div>`;
       }
@@ -1531,7 +1549,7 @@ export function createStormDetailView({
         <div class="detail-ghost-note">This storm is no longer in ${sourceLabel(storm.source)}.
         Last known information is shown below.</div>
         ${section('vitals', 'Last known', 'gauge', vitalsHtml())}
-        ${disclaimerHtml()}`;
+        ${disclaimerHtml(storm.source)}`;
       wireSections();
       return;
     }
@@ -1583,7 +1601,7 @@ export function createStormDetailView({
       section(ADVISORY_SECTION, 'Advisory', 'doc', advisoryHtml(), { defaultCollapsed: true }),
       /* Last, always. Everything above is what the sources say; this is who
        * is saying it. */
-      disclaimerHtml(),
+      disclaimerHtml(storm.source),
     ].join('');
     wireSections();
     wireAdvisoryRetry(bodyEl);
