@@ -113,6 +113,27 @@ LIGHTER than it was — but that is a prediction, not a measurement, and
 RainViewer's terms say plainly that they block abusive IPs. The archive runner
 has open internet and could sample it.
 
+**0c. THE SURGE COAST DIM HAS NEVER WORKED, AND ITS TEST IS GREEN.**
+`dimCoast` in `map/layers/surge.js` reads `line-opacity` off `coast-glow` and
+`coast-core` and wraps it as `['*', original, OPACITY.surgeCoastDim]`. That
+opacity is a zoom interpolate, and MapLibre forbids a zoom expression anywhere
+except the top level of a `step` or `interpolate` — so `setPaintProperty` throws
+on every call and the coast never dims. Visible in the console at every boot.
+**The fix is to scale the interpolate's OUTPUT stops rather than wrap the whole
+expression.** ==> AND `tools/test-surge.mjs` PASSES AGAINST THIS. <== It drives
+`dimCoast` with a stub map that does not validate expressions, so the suite has
+been green over a feature that has never once run. The test is half the fix, and
+it is the half worth doing first: make it fail, then make it pass.
+
+**0d. SOMETHING RESOLVES A COLOUR TO `null`, DOZENS OF TIMES PER LOAD.**
+`Could not parse color from value 'null'` out of MapLibre's expression
+evaluator, on every boot. **Which property is NOT known** — it was seen in a
+console paste and never traced, and guessing at it is how the wrong thing gets
+"fixed". Needs a real hunt through the paint properties and the tokens they read
+before anything is written. The cost is unknown too: it may be drawing nothing
+where something belongs, or falling through to a default that happens to look
+right. Do not assume the second.
+
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by
 765 ms, but 462 of that is gone before our JavaScript runs and our own stage is
