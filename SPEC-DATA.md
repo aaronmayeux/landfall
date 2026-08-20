@@ -56,7 +56,7 @@ browser. This table is browser-tested; do not "correct" it from a server probe.
 | `www.gdacs.org/gdacsapi/.../geteventlist/SEARCH` | OK |
 | `ftp.nhc.noaa.gov/atcf/aid_public/` (a-decks) | **BLOCKED** |
 | Satellite vendors (GIBS, EUMETSAT) | OK — `*` |
-| NOAA radar ImageServer | **BLOCKED** |
+| `api.rainviewer.com` and `tilecache.rainviewer.com` (radar) | OK — `cors` |
 
 **The browser now fetches no upstream source directly.** Every `ENDPOINT` URL is
 reached by a Pages Function. CORS is no longer the reason for most relay hops —
@@ -98,7 +98,8 @@ reader.
 | `/api/nws/rainfall` | Two hops to the gridded QPF at a point (§48.7) |
 | `/api/rain/global` | Open-Meteo, reshaped into the NWS body (§48.15) |
 | `/api/imagery/satellite` | Forward + cache satellite frames |
-| `/api/imagery/radar` | Forward radar (CORS-blocked, pixels must be read) |
+| `/api/imagery/radar` | RainViewer frames — CSP, and caching a free no-SLA service |
+| `/api/imagery/radar-coverage` | RainViewer's coverage mask — where radar exists at all |
 | `/api/geocode` | Proxy Mapbox — a secret problem, not a CORS one |
 | `/api/reverse` | The same, backwards: a point becomes a place name |
 | `/api/replay/*` | Serves an archived storm as if it were live (§8) |
@@ -928,11 +929,40 @@ what the *cloud* is doing.
   Bounded at `maxDiscs * 2` — both sides of the toggle. Cold starts are the edge
   cache's job.
 
-**Radar coverage is decided by measuring the frame, not by a box.**
-- `/api/imagery/radar` exists because radar sends **no CORS header** and the client
-  must read its pixels to feather the rim. That is the only reason.
-  `nowcoast.noaa.gov` is dead (403 via a CDN error page); the service is
-  `mapservices.weather.noaa.gov/.../radar_base_reflectivity_time/ImageServer`.
+**Radar is RainViewer, single-source, and NOAA is deleted.** A composite of
+1200+ radars across 150+ countries. The west Pacific, the north Indian Ocean and
+Australia are reached; **the south-west Indian Ocean is not** — a cyclone making
+landfall on Madagascar or Mozambique has no radar, and the standing note below
+must keep saying so. US coverage did not degrade in the swap: Miami measures the
+same rung as Taiwan and Cuba.
+- **`/api/imagery/radar` no longer exists for CORS.** RainViewer sends CORS on
+  both hosts, so the browser could read these pixels directly. The relay
+  survives on two other arguments and both must hold: a direct fetch would add
+  **two** origins to `connect-src`, which this project charges for; and the
+  terms ask for aggressive caching against a free no-SLA service that blocks
+  abusive IPs, which the edge does once for everybody rather than once per
+  device.
+- **Two hops, not one.** The tile path carries a hash that rolls every ten
+  minutes, so the 818-byte frame index must be read before an image can be
+  addressed. The frame route therefore keys its cache on **our own** (lat, lon,
+  z, px) rather than on the upstream URL — an upstream key would mean fetching
+  the index on every request just to discover which key to look under.
+- **`radar.nowcast` is ignored.** It is a forecast of where rain will be, and
+  this layer's job is where rain IS. Drawing a prediction under a label reading
+  "radar" is a §5 confidently-wrong answer.
+- **`smooth` must be 0.** With smoothing on, an open-Pacific frame containing no
+  radar coverage at all came back 10 KB with blended colour and a non-zero kept
+  fraction; at `smooth=0` the same request was 1,096 bytes at a kept fraction of
+  exactly 0. Blur invents alpha outside the data, and alpha is the signal
+  `emptyKeptFraction` reads — so a smoothed tile puts a blank raster over a live
+  storm and leaves the row silent. Guarded by `test-relay-mirrors.mjs`.
+- **The palette is "Universal Blue" (`colorScheme` 2) and it is the only one
+  offered.** It runs blue → yellow where NOAA ran green → yellow → red. The
+  terms explicitly permit recolouring, so a remap stays open if it reads badly —
+  but nothing is built until there is a complaint.
+- **Frames are older than NOAA's and that is accepted.** NOAA was roughly two
+  minutes behind; RainViewer measured 355 seconds, on 600-second steps. About
+  one pixel at our sampling.
 - Radar arrives already keyed transparent, so it needs no knockout — only the rim
   feather.
 - **`featherOnly` returns a kept fraction**, counted *inside the rim* (the disc is
@@ -942,26 +972,99 @@ what the *cloud* is doing.
 - **A frame with nothing in it is hidden, never drawn**, decided before the encode.
   A blank transparent raster over a live hurricane with a silent status row is the
   §5 failure this whole layer keeps finding new roads to.
-- **`IMAGERY.emptyKeptFraction` = 0.002.** Measured through the relay, one 900 km
-  disc per point: 0.00% (334-byte PNG) over open Pacific; 0.06–0.08% Honolulu, San
-  Juan, mid-Atlantic; 0.58% Anchorage; 2.2–3.7% CONUS coasts. **0.005 would not
-  have done** — too close to Anchorage, which is a real radar picture of a real
-  city. Satellite is nowhere near either bound, so one constant serves both paths.
-- **The `IMAGERY.radar` bbox is a request guard and is deliberately NOT tightened.**
-  Its only job is to avoid asking NOAA about the Indian Ocean. A narrower box would
-  be a geography table nobody can verify, and every degree it is wrong by is a
-  storm that HAD radar and was refused it unasked.
+- **`IMAGERY.emptyKeptFraction` = 0.002.** Measured 2026-07-26 through the relay
+  against NOAA, one 900 km disc per point: 0.00% over open Pacific; 0.06–0.08%
+  Honolulu, San Juan, mid-Atlantic; 0.58% Anchorage; 2.2–3.7% CONUS coasts.
+  **0.005 would not have done** — too close to Anchorage, which is a real radar
+  picture of a real city. Satellite is nowhere near either bound, so one constant
+  serves both paths. **The measurements predate the RainViewer swap and the
+  constant was NOT re-derived**, deliberately: it is a threshold on the fraction
+  of a disc that has any alpha in it, which is a property of the question rather
+  than of the vendor. If a real storm ever draws blank on a covered box, this is
+  the number to re-measure first.
+- **DO NOT USE A BYTE COUNT AS THE EMPTY TEST.** It is px-dependent and has been
+  wrong in the spec before — NOAA's empty frame measured 334 bytes at one request
+  size and 2,367 at the 768 px the app actually asked for. RainViewer's measured
+  1,096. The kept FRACTION is the test; the byte counts are trivia.
+- **RADAR IS ADDRESSED BY CENTRE AND ZOOM, NOT BY A BOX.** RainViewer takes a
+  centre and a zoom, and the zoom alone sets the extent — `{size}` is pixel
+  DENSITY (the same z5 tile at 256 and 512 returned the same coverage fraction).
+  The centring is genuine rather than snapped to the tile grid, proved by
+  nudging the centre inside one tile and getting three different images by
+  SHA-1. So radar keeps the one-image-per-eye contract with no stitching.
+- **The Cloud radius slider governs radar too — Aaron's call, 2026-08-19.**
+  `radarZoomFor()` picks the sharpest whole zoom that still covers the requested
+  radius and `radarBox().rimFraction` feathers away the leftover, so the slider
+  feels continuous across its whole 300–1500 km range. **The cost is that
+  sharpness steps by a factor of two at a boundary.** At 512 px: ±156 km at 0.61
+  km/px (z7), ±313 at 1.22 (z6), ±626 at 2.45 (z5), ±1252 at 4.89 (z4). **So the
+  900 km default lands on z4 at 4.89 km/px, coarser than NOAA's 2.3** — the
+  claim that "RainViewer is lower resolution is false" holds only below about
+  626 km, and the boundary moves with latitude because projected metres shrink
+  by cos(lat). The alternative was pinning radar at z5 and letting the slider
+  silently not apply to one of two layers, which is worse to ship than a step.
+- **`rimFraction` also narrows what `keptFraction` measures**, and that is
+  required rather than incidental: a frame counted across the full image while
+  only its middle is painted would read as having content when the drawn part is
+  blank — the §5 silent-blank failure rebuilt in a new place.
+- **THE COVERAGE MASK IS WHAT MAKES SINGLE-SOURCE SAFE, AND THE §5 CONTRACT
+  HANGS FROM IT.** `/api/imagery/radar-coverage`, `data/radar-coverage.js`.
+  Transparent means radar exists; **opaque black means it does not** — inverted
+  from the obvious reading. Measured: Japan 19% black, Congo 100%, open Pacific
+  100%, Miami 0.07, Madagascar 0.99. `IMAGERY.radar.noCoverageFraction` = 0.995,
+  which sits above the worst measured real coverage.
+- **Measured coverage, as the fraction of a z5 box with NO radar** (lower is
+  better; a coastal point is mostly ocean, so read these as "is there a network
+  here", not as a score). Read 2026-08-19 off the mask:
+
+  | Point | No radar | Point | No radar | Point | No radar |
+  |---|---|---|---|---|---|
+  | Bay of Bengal | 0.04 | Japan | 0.16 | Manila | 0.49 |
+  | Vietnam | 0.05 | Hawaii | 0.21 | Mexico | 0.53 |
+  | Taiwan | 0.07 | Brisbane | 0.32 | Guam | 0.54 |
+  | Miami | 0.07 | Perth | 0.35 | Oman | 0.60 |
+  | Cuba | 0.08 | Réunion | 0.44 | New Caledonia | 0.76 |
+  | Amazon | 0.14 | Fiji | 0.81 | Papua New Guinea | 0.97 |
+  | Madagascar | 0.99 | Mozambique | 1.00 | Open Pacific | 1.00 |
+
+  **Miami at 0.07 — the same rung as Taiwan and Cuba — is the number that made
+  dropping NOAA defensible at all.** US coverage did not degrade.
+- **Three states, and the third is the whole point:** `covered` (a blank frame
+  here really is no rain), `none` (nobody is looking, and "clear" would be a
+  lie), `unknown` (the mask did not load). **A mask failure must never collapse
+  into `none`**, and `data/radar-coverage.js` never caches an `unknown`.
+- **The mask is asked ONLY of a frame that came back empty**, never as a
+  pre-check, and it never gates a request. A frame with weather in it is its own
+  proof. That also makes box alignment harmless: a storm whose mask cell reads
+  `none` while its rainbands fall on a covered coast still gets its frame drawn,
+  because the frame was never conditional on the mask.
+- **A set of blank discs is summarised by its WORST member.** `radarEmptyMessage`
+  is worst-case-first: any `none` outranks any `covered`, anything unresolved
+  outranks a clean sweep of `covered`, and only an all-`covered` set may say
+  there is no rain. A `null` verdict — the lookup has not landed yet — reads the
+  same as `unknown`. `test-radar-coverage.mjs` holds every mixed case to this.
+- **The `IMAGERY.radar` bbox is DELETED, and the reasoning is superseded rather
+  than stale.** It read `-170..-60, 10..72` — a box with no southern hemisphere
+  in it at all, so Australia, Réunion, Madagascar, Fiji and New Caledonia were
+  not "poorly covered" but structurally unreachable. It was NOAA's geography and
+  NOAA is gone. The mask replaces it; radar has no honest coverage story without
+  one.
 - **The standing note is "Radar only reaches storms near land. Satellite is
-  worldwide."** It does not name territories, and it stays that way. The limit
-  that matters is RANGE, not nationality: a WSR-88D sees roughly 230 km, so a
-  storm in open ocean has no radar no matter whose mosaic covers the water.
-- **The mosaic's footprint is settled — do not re-probe it.** The service
-  describes itself as covering "the Continental United States, Alaska, The
-  Caribbean, Guam, and Hawaii" (`ImageServer?f=json`, read 2026-07-28), with a
-  `fullExtent` spanning roughly 176°W–150°E and 9°N–72°N. Hawaii and Puerto Rico
-  ARE in it. The 0.06–0.08% readings above are therefore clear skies or
-  out-of-range water, not a hole in the mosaic — which is exactly why the
-  measured-frame test, not a geography box, remains the right call.
+  worldwide."** It does not name territories, and it stays that way — the limit
+  that matters is RANGE, not nationality. A ground radar sees roughly 230 km, so
+  a storm in open ocean has no radar no matter whose composite covers the water,
+  and that was true of NOAA and is true of RainViewer.
+- **What the swap changed about the note is the FOOTNOTE, not the sentence.**
+  Radar reaches many more coastlines than it did — the west Pacific, the north
+  Indian Ocean and Australia are all new — but the honest summary is still not
+  "global": **the south-west Indian Ocean is not covered**, so Madagascar and
+  Mozambique have none. Any wording that implies worldwide radar is wrong.
+- **The service's footprint is NOT a settled table and must not become one.**
+  RainViewer states plainly that it holds no contracts with the radar owners and
+  that a country can vanish from the composite without notice, so **a regional
+  blackout is possible and invisible from the API alone**. That is precisely why
+  the mask is load-bearing rather than a nicety: a hardcoded footprint would go
+  stale silently and be believed.
 - `rec.url` is tracked separately from `rec.req`, so `retry()` can evict a disc
   whose frame came back blank and holds no `req`.
 

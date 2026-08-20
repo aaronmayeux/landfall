@@ -318,6 +318,32 @@ export const CACHE = Object.freeze({
    *  list can never be served from wildly different moments. */
   abpwFresh: 15 * MINUTE,
 
+  /**
+   * Relay: one RainViewer radar frame (§4.9). Mirrors `FRESH_SECONDS` in
+   * `functions/api/imagery/radar.js`.
+   *
+   * TEN MINUTES, NOT FIVE, AND IT MOVED WITH THE SOURCE. NOAA published on a
+   * roughly five-minute cadence and the old route cached for five. RainViewer
+   * publishes on 600-second steps — measured, thirteen frames spanning two
+   * hours — so a five-minute cache asks twice for bytes that cannot have
+   * changed, against a free service with no SLA whose terms explicitly ask for
+   * aggressive caching and whose stated penalty for abuse is an IP block.
+   */
+  radarFresh: 10 * MINUTE,
+
+  /**
+   * Relay: RainViewer's coverage mask (§4.9).
+   *
+   * A DIFFERENT KIND OF THING FROM EVERY OTHER WINDOW IN THIS TABLE. The rest
+   * cache weather, which is why they are measured in minutes. This caches
+   * GEOGRAPHY — where the radars physically are — which RainViewer says it
+   * updates rarely. A day is already far shorter than the truth changes, and
+   * the cost of being a day stale is that a newly-added national network is
+   * called "no coverage" for one more day, on a screen that is already saying
+   * so honestly.
+   */
+  radarCoverageFresh: 24 * HOUR,
+
   /** Relay: the CAP alert feed (§50). Mirrors `FRESH_SECONDS` in
    *  `functions/api/cap/alerts.js`. Ten minutes rather than fifteen because an
    *  alert is a human act with no publication cadence to sit inside — an
@@ -4982,42 +5008,106 @@ export const IMAGERY = Object.freeze({
     relay: '/api/imagery/satellite',
   }),
 
-  /** Radar, which is a different problem: already a transparent PNG, needs no
-   *  knockout, and covers only the US and its territories. */
+  /**
+   * Radar — RAINVIEWER, a global composite of 1200+ radars across 150+
+   * countries. It replaced NOAA's `radar_base_reflectivity_time` ImageServer
+   * outright; there is no fallback and no second source (§4.9).
+   *
+   * ==> THE BOUNDING BOX THAT USED TO LIVE HERE IS GONE, AND NOT BECAUSE IT
+   * WENT STALE. <== It read `-170..-60, 10..72`, which is a box with NO
+   * SOUTHERN HEMISPHERE IN IT — Australia, Réunion, Madagascar, Fiji and New
+   * Caledonia were not "poorly covered", they were structurally unreachable.
+   * The box was NOAA's geography and NOAA is deleted, so the reasoning is
+   * superseded rather than merely out of date and it goes rather than being
+   * annotated. What replaces it is `coverageRelay` below — a mask published by
+   * the service itself, which is the only authority on where it has radars.
+   *
+   * Radar is still a transparent PNG that needs no colour knockout, and it is
+   * still blank over open ocean. The difference is that the app can now tell
+   * "no radar reaches here" apart from "radar reaches here and there is no
+   * rain", which a box never could.
+   */
   radar: Object.freeze({
-    /** MEASURED 2026-07-25: nowcoast.noaa.gov is GONE (403 through a CDN
-     *  error page). The service lives here now, and it sends NO CORS header,
-     *  which is why radar goes through our relay and satellite does not. */
+    /** RainViewer sends CORS on both hosts (measured 2026-08-19), so unlike
+     *  NOAA the browser COULD read these pixels directly. The relay survives on
+     *  two other arguments: a direct fetch would add two origins to
+     *  `connect-src` for one feature, and RainViewer's terms ask for aggressive
+     *  caching, which the edge does once for everybody rather than once per
+     *  device (§4.9). */
     relay: '/api/imagery/radar',
 
-    /* ==> THIS BOX IS A REQUEST GUARD, NOT A COVERAGE CLAIM. <==
+    /** The coverage mask — transparent where radar exists, opaque black where
+     *  it does not. ==> THIS IS WHAT THE §5 CONTRACT NOW HANGS FROM. <== Without
+     *  it every blank frame is ambiguous, because "no radar here" and "no rain
+     *  here" are the same transparent PNG, and shipping that ambiguity as an
+     *  all-clear is the failure this layer keeps finding new roads to. */
+    coverageRelay: '/api/imagery/radar-coverage',
+
+    /**
+     * Pixels per side, and it is 512 rather than `requestPx`'s 768 because
+     * RainViewer offers 256 or 512 and nothing else.
      *
-     * It used to be documented as "the service's stated extent" and read as the
-     * answer to "does this storm have radar" — which it is not, and Aaron caught
-     * the consequence: Genevieve at 12.9N 108.3W sits inside this box, a
-     * thousand miles from the nearest ground radar, and the app cheerfully
-     * declared her covered.
-     *
-     * THE SERVICE IS THE ONLY HONEST AUTHORITY on whether it has data, and it
-     * answers plainly — a fully transparent PNG. THE BYTE COUNT IS NOT THE TEST
-     * and is px-dependent: 334 bytes measured 2026-07-26 at a smaller request
-     * size, 2,367 bytes at the 768 px the app actually asks for (measured
-     * 2026-08-19). The kept FRACTION is the test.
-     * So coverage is now decided by MEASURING THE FRAME (see
-     * `emptyKeptFraction`), and this box's only remaining job is to avoid
-     * requests that cannot possibly return anything: nothing in the Indian Ocean
-     * or the western Pacific needs to ask NOAA about ground radar.
-     *
-     * WHICH IS WHY IT IS DELIBERATELY NOT TIGHTENED. A narrower box would be a
-     * geography table nobody can verify, and every degree it is wrong by is a
-     * storm that HAD radar and was refused it without asking. Being generous
-     * costs one 334-byte round trip and buys a guarantee that the answer came
-     * from the service rather than from a constant.
+     * `{size}` on this service is pixel DENSITY, not extent — measured, the
+     * same z5 tile at 256 and at 512 returned the same coverage fraction
+     * (0.1926 / 0.1935). Extent is set by the zoom alone, which is what
+     * `radarZoomFor()` picks.
      */
-    lonMin: -170,
-    lonMax: -60,
-    latMin: 10,
-    latMax: 72,
+    requestPx: 512,
+
+    /**
+     * The zoom range the service publishes. 7 is documented as the maximum;
+     * 0 is the whole world in one tile.
+     *
+     * ONE ZOOM STEP IS A FACTOR OF TWO IN BOTH DIRECTIONS AT ONCE — half the
+     * disc, twice the sharpness. At 512 px: z7 is ±156 km at 0.61 km/px, z5 is
+     * ±626 km at 2.45 km/px, z4 is ±1252 km at 4.89 km/px. Aaron's call
+     * (2026-08-19) is that the Cloud radius slider governs BOTH layers, so the
+     * zoom is DERIVED from the requested radius rather than pinned — see
+     * `radarZoomFor()`, which also explains why the sharpness steps.
+     */
+    minZoom: 0,
+    maxZoom: 7,
+
+    /**
+     * The relay's three URL fields, mirrored here so `test-relay-mirrors.mjs`
+     * fails when the two sides drift. A Pages Function cannot import this file
+     * (§3), so these are hand-copies, and every hand-copy in this project gets
+     * a test.
+     *
+     * ==> `smooth` MUST BE 0, AND THIS ONE WOULD HAVE SHIPPED A BUG. <==
+     * Measured: an open-Pacific frame with NO radar coverage at all came back
+     * 10 KB with a non-zero kept fraction and muddy blended colours at
+     * `smooth=1`, and 1,096 bytes at a kept fraction of exactly 0 at
+     * `smooth=0`. Blur invents alpha outside the data, and alpha is the signal
+     * `emptyKeptFraction` reads — so a smoothed tile defeats the empty-frame
+     * test at the exact place it matters, putting a blank raster over a live
+     * storm with a silent status row.
+     *
+     * `colorScheme` 2 is "Universal Blue", and it is the ONLY scheme offered —
+     * the NEXRAD Level-III option an earlier pass assumed existed does not.
+     * It runs blue → yellow where NOAA's reflectivity ran green → yellow → red.
+     */
+    colorScheme: 2,
+    smooth: 0,
+    snow: 0,
+
+    /**
+     * At or above this fraction of the mask being opaque, the box has NO RADAR
+     * NETWORK in it, and a blank frame there means nobody is looking rather
+     * than nothing is happening.
+     *
+     * Not 1.0, and the margin is the point: PNG resampling and the mask's own
+     * edges leave a handful of not-quite-opaque pixels around a coastline, and
+     * an exact test would call a genuinely empty box "covered" on the strength
+     * of three pixels. Measured reference points from §4.9 — Miami 0.07,
+     * Madagascar 0.99, open Pacific and Mozambique 1.00 — so 0.995 sits in open
+     * space between the worst real coverage and none at all.
+     *
+     * ==> A MASK THAT FAILS TO LOAD IS NEITHER STATE. <== It is "could not
+     * tell", and it must never collapse into "no coverage", which reads as an
+     * all-clear (§5).
+     */
+    noCoverageFraction: 0.995,
   }),
 });
 

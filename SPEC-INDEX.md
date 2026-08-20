@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 234 numbered headings.
+Covering 9 files, 223 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -29,19 +29,19 @@ real home is the other row carrying the same section number.
 | `4` | Data architecture | -> `SPEC-DATA.md` | SPEC.md:391 |
 | `4.1` | &nbsp;&nbsp;Companion documents | `SPEC-DATA.md` | 23-43 |
 | `4.2` | &nbsp;&nbsp;CORS ground truth | `SPEC-DATA.md` | 44-64 |
-| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-207 |
-| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 208-243 |
-| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 244-486 |
-| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 487-619 |
-| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 620-674 |
-| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 675-770 |
-| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 771-976 |
-| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 977-1057 |
-| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 1058-1099 |
-| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 1100-1116 |
-| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 1117-1203 |
-| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1204-1218 |
-| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1219-1246 |
+| `4.3` | &nbsp;&nbsp;The relay — keep it dumb | `SPEC-DATA.md` | 65-208 |
+| `4.4` | &nbsp;&nbsp;Sources and split | `SPEC-DATA.md` | 209-244 |
+| `4.5` | &nbsp;&nbsp;NHC MapServer | `SPEC-DATA.md` | 245-487 |
+| `4.6` | &nbsp;&nbsp;GDACS geometry | `SPEC-DATA.md` | 488-620 |
+| `4.7` | &nbsp;&nbsp;The wind field — four numbers, three tiers | `SPEC-DATA.md` | 621-675 |
+| `4.8` | &nbsp;&nbsp;Surge | `SPEC-DATA.md` | 676-771 |
+| `4.9` | &nbsp;&nbsp;Imagery | `SPEC-DATA.md` | 772-1079 |
+| `4.10` | &nbsp;&nbsp;The normalized storm object | `SPEC-DATA.md` | 1080-1160 |
+| `4.11` | &nbsp;&nbsp;Advisory identity | `SPEC-DATA.md` | 1161-1202 |
+| `4.12` | &nbsp;&nbsp;Polling | `SPEC-DATA.md` | 1203-1219 |
+| `4.13` | &nbsp;&nbsp;Cache TTLs | `SPEC-DATA.md` | 1220-1306 |
+| `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1307-1321 |
+| `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1322-1349 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 396-397 |
 | `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1031-1111 |
 | `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1112-1142 |
@@ -165,16 +165,16 @@ real home is the other row carrying the same section number.
 | `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1051-1096 |
 | `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1097-1148 |
 | `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1149-1185 |
-| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1269-1270 |
-| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1271-1298 |
-| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1299-1458 |
-| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1459-1501 |
+| `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1372-1373 |
+| `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1374-1401 |
+| `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1402-1561 |
+| `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1562-1604 |
 | `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 3068-3127 |
-| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1502-1588 |
+| `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1605-1691 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3256-3273 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3274-3282 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2221-2412 |
-| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1589-1719 |
+| `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1692-1822 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 71-72 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 73-89 |
 | `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 90-215 |
@@ -187,27 +187,27 @@ real home is the other row carrying the same section number.
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2431-2528 |
 | `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 855-878 |
 | `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 879-974 |
-| `48` | Rainfall — the sources | `SPEC-DATA.md` | 1720-1721 |
-| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1722-1747 |
-| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1748-1790 |
-| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-DATA.md` | 1791-1818 |
-| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-DATA.md` | 1819-1840 |
-| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1841-1870 |
-| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1871-1898 |
-| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 1899-1943 |
+| `48` | Rainfall — the sources | `SPEC-DATA.md` | 1823-1824 |
+| `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1825-1850 |
+| `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1851-1893 |
+| `48.3` | &nbsp;&nbsp;Source — gridded rainfall at a point | `SPEC-DATA.md` | 1894-1921 |
+| `48.4` | &nbsp;&nbsp;Two traps in the payload, both measured | `SPEC-DATA.md` | 1922-1943 |
+| `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 1944-1973 |
+| `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 1974-2001 |
+| `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2002-2046 |
 | `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2529-2593 |
 | `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2594-2613 |
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2614-2629 |
-| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 1944-1989 |
+| `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2047-2092 |
 | `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 2630-2654 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1082-1101 |
-| `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2076-2112 |
-| `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2113-2145 |
-| `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2146-2196 |
+| `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2179-2215 |
+| `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2216-2248 |
+| `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2249-2299 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 975-976 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 977-1032 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1033-1058 |
-| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 1990-2075 |
+| `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2093-2178 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2703-2725 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1059-1111 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1112-1163 |
@@ -221,51 +221,40 @@ real home is the other row carrying the same section number.
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1528-1570 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1571-1613 |
 | `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1614-1694 |
-| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2197-2198 |
-| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2199-2237 |
-| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2238-2257 |
-| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2258-2280 |
-| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2281-2332 |
-| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2333-2365 |
-| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2366-2386 |
-| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2387-2404 |
-| `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2405-2431 |
-| `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2432-2456 |
-| `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2457-2476 |
-| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2477-2548 |
-| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2549-2601 |
-| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2602-2603 |
-| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2604-2690 |
-| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2691-2720 |
-| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2721-2769 |
-| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2770-2820 |
-| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 2821-2859 |
+| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2300-2301 |
+| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2302-2340 |
+| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2341-2360 |
+| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2361-2383 |
+| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2384-2435 |
+| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2436-2468 |
+| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2469-2489 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2490-2507 |
+| `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2508-2534 |
+| `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2535-2559 |
+| `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2560-2579 |
+| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2580-2651 |
+| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2652-2704 |
+| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2705-2706 |
+| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2707-2793 |
+| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2794-2823 |
+| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2824-2872 |
+| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2873-2923 |
+| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 2924-2962 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2655-2702 |
-| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 2860-2907 |
+| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 2963-3010 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1695-1732 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1752-1784 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1785-1821 |
-| `54` | More coastlines for radar — RainViewer, measured | `SPEC-NEXT.md` | 1822-1828 |
-| `54.1` | &nbsp;&nbsp;The gap, stated as it actually is | `SPEC-NEXT.md` | 1829-1845 |
-| `54.2` | &nbsp;&nbsp;THE DECISION — RainViewer REPLACES NOAA. It is not a second source. | `SPEC-NEXT.md` | 1846-1883 |
-| `54.3` | &nbsp;&nbsp;What RainViewer is, measured | `SPEC-NEXT.md` | 1884-1926 |
-| `54.4` | &nbsp;&nbsp;The coverage mask is what makes single-source safe | `SPEC-NEXT.md` | 1927-1944 |
-| `54.5` | &nbsp;&nbsp;One request per storm, and the zoom is now a free choice | `SPEC-NEXT.md` | 1945-1980 |
-| `54.6` | &nbsp;&nbsp;SMOOTH MUST BE 0, AND THIS ONE WOULD HAVE SHIPPED A BUG | `SPEC-NEXT.md` | 1981-1994 |
-| `54.7` | &nbsp;&nbsp;The palette changes, and that is now the only glass call | `SPEC-NEXT.md` | 1995-2022 |
-| `54.8` | &nbsp;&nbsp;Licence, attribution, and what is being accepted | `SPEC-NEXT.md` | 2023-2040 |
-| `54.9` | &nbsp;&nbsp;Relay, not direct — and the relay's REASON changes | `SPEC-NEXT.md` | 2041-2063 |
-| `54.10` | &nbsp;&nbsp;What the build is | `SPEC-NEXT.md` | 2064-2091 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 171,984 | 55 |
+| `SPEC-DATA.md` | 179,322 | 55 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 129,346 | 39 |
+| `SPEC-NEXT.md` | 114,886 | 28 |
 | `SPEC-OPS.md` | 73,025 | 20 |
 | `SPEC-UI.md` | 159,589 | 12 |
-| `SPEC.md` | 151,123 | 14 |
+| `SPEC.md` | 151,926 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

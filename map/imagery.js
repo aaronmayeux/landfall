@@ -33,7 +33,8 @@
 
 import { IMAGERY, POLL, SATELLITES } from '../config/constants.js';
 import { IMAGERY_OPACITY } from '../config/tokens.js';
-import { discBox, discUrl, inRadarCoverage, radarUrl, satelliteForLon } from '../lib/imagery.js';
+import { discBox, discUrl, radarBox, radarUrl, radarZoomFor, satelliteForLon } from '../lib/imagery.js';
+import { radarCoverage, radarEmptyMessage } from '../data/radar-coverage.js';
 import {
   clearFrames,
   evictFrame,
@@ -182,15 +183,15 @@ export function addStormImagery(map, { onStatus } = {}) {
         message: 'Satellite sent a grey frame — the color filter has nothing to keep',
       });
     }
-    /* NOT an error, and §5 is emphatic about the difference. "This storm is
-     * outside radar range" is a true, useful sentence; offering a retry for it
-     * would be a button that cannot work. */
+    /* NOT an error, and §5 is emphatic about the difference. "Nothing is
+     * showing here" is a true, useful sentence; offering a retry for it would
+     * be a button that cannot work. */
     if (rows.every((d) => d.empty)) {
       return onStatus({
         state: 'empty',
         message:
           mode === 'radar'
-            ? 'No radar coverage for these storms'
+            ? radarEmptyMessage(rows.map((d) => d.radarCoverage))
             : 'No satellite coverage for these storms',
       });
     }
@@ -266,6 +267,9 @@ export function addStormImagery(map, { onStatus } = {}) {
        * re-ask), so the address outlives the payload. */
       url: null,
       busy: false, failed: false, empty: false, noColor: false,
+      /* 'covered' | 'none' | 'unknown', and null until a blank radar frame
+       *  makes the question worth asking. Never read on the satellite path. */
+      radarCoverage: null,
       /* AUTOMATIC RECOVERY FROM A SLOW VENDOR. `retryTimer` is the pending
        * attempt, `retryStep` is how far into POLL.retryBackoff we are. Both
        * live on the RECORD rather than in a module-level map, so a disc that
@@ -401,10 +405,14 @@ export function addStormImagery(map, { onStatus } = {}) {
   }
 
   /* --- fetch + paint ---------------------------------------------------------
-   * The satellite vendors all send Access-Control-Allow-Origin: * (measured
-   * 2026-07-25), so the browser may read their pixels directly and no relay is
-   * needed. Radar's host sends NO CORS header, which is the entire reason
-   * /api/imagery/radar exists. That asymmetry is measured, not assumed.
+   * BOTH PATHS GO THROUGH OUR RELAY, AND THE ASYMMETRY THAT USED TO BE HERE IS
+   * GONE. It said radar's host sent no CORS header and satellite's did, which
+   * was true of NOAA and is NOT true of RainViewer — measured 2026-08-19, both
+   * of its hosts answer a cross-origin fetch. Radar stays behind the relay for
+   * two other reasons (`connect-src` would need two more origins, and a free
+   * no-SLA service should be cached once at the edge rather than once per
+   * device); satellite stays behind it because GIBS forbids caching outright
+   * and answers between 0.8 and 30.7 seconds. Different arguments, same road.
    * ------------------------------------------------------------------------ */
 
   /**
@@ -433,13 +441,37 @@ export function addStormImagery(map, { onStatus } = {}) {
        * between. A storm that moved mid-fetch had its frame drawn at
        * coordinates the image does not describe. */
       radiusKm: tuning.radiusKm,
+      /* ==> THE PIXEL SIZE TRAVELS WITH THE REQUEST NOW, BECAUSE THE TWO PATHS
+       * NO LONGER AGREE ON IT. <== Satellite asks for 768, which is derived
+       * from the disc radius to hold 2.3 km/px. Radar asks for 512, because
+       * RainViewer serves 256 or 512 and nothing else. Reading a single module
+       * constant at render time — which is what this used to do — would size
+       * the read-back buffer for one path while decoding the other's bytes,
+       * and getImageData against the wrong dimensions is silent corruption,
+       * not an error. */
+      px: IMAGERY.requestPx,
+      /* Radar only. `null` on the satellite path rather than absent, so a
+       * `req` is always the same shape and a reader never has to know which
+       * branch built it. */
+      z: null,
+      rimFraction: 1,
       url: null,
     };
 
     if (mode === 'radar') {
-      if (!inRadarCoverage(storm.lat, storm.lon)) return null;
-      const { bbox } = discBox(storm.lat, storm.lon, req.radiusKm);
-      req.url = radarUrl(bbox, IMAGERY.requestPx);
+      /* ==> NO COVERAGE PRE-CHECK. THE BOX THAT USED TO BE ONE IS DELETED. <==
+       *
+       * Every storm gets asked for, everywhere on Earth, and what comes back
+       * decides. The old `inRadarCoverage()` was a hand-written rectangle that
+       * refused to ask on behalf of a service perfectly capable of answering —
+       * and being a rectangle, it refused the entire southern hemisphere.
+       * Coverage is now a question asked ONLY of a frame that came back empty
+       * (see `explainEmptyRadar`), which costs nothing when there is weather to
+       * draw and cannot suppress a real frame. */
+      req.px = IMAGERY.radar.requestPx;
+      req.z = radarZoomFor(storm.lat, req.radiusKm);
+      req.rimFraction = radarBox(storm.lat, storm.lon, req.z, req.radiusKm).rimFraction;
+      req.url = radarUrl(storm.lat, storm.lon, req.z, req.px);
       return req;
     }
 
@@ -469,7 +501,15 @@ export function addStormImagery(map, { onStatus } = {}) {
       return;
     }
 
-    const px = IMAGERY.requestPx;
+    /* SIZED FROM THE REQUEST, and resized only when it actually differs.
+     * Assigning to `canvas.width` reallocates and clears the backing store even
+     * when the value is unchanged, so doing it unconditionally would throw away
+     * the reuse this canvas exists for. */
+    const px = req.px;
+    if (canvas.width !== px || canvas.height !== px) {
+      canvas.width = px;
+      canvas.height = px;
+    }
     ctx.clearRect(0, 0, px, px);
     ctx.drawImage(bmp, 0, 0, px, px);
     bmp.close?.();
@@ -495,7 +535,7 @@ export function addStormImagery(map, { onStatus } = {}) {
        * no knockout — only the rim feather, so it sits on the globe the same
        * way the satellite disc does. The pass also COUNTS what it kept, which
        * is what makes "no radar out here" reportable at all. */
-      keptFraction = featherOnly(img, tuning.fadeWidth).keptFraction;
+      keptFraction = featherOnly(img, tuning.fadeWidth, req.rimFraction).keptFraction;
     }
 
     /* ==> A FRAME WITH NOTHING IN IT IS HIDDEN, NEVER DRAWN. <==
@@ -518,6 +558,14 @@ export function addStormImagery(map, { onStatus } = {}) {
       rec.noColor = noColor;
       rec.empty = !noColor;
       clearDisc(rec, id);
+      /* ==> AND NOW GO AND FIND OUT WHY IT IS BLANK. <== A blank radar frame is
+       * two completely different sentences wearing the same bytes — "radar
+       * watches this and there is no rain" and "nothing watches this" — and
+       * until this call lands the app does not know which one it is holding.
+       * Deliberately NOT awaited: the disc is already hidden and correct, and
+       * blocking the render on a second network request to improve the WORDING
+       * of a row would make every blank frame slower for no pixels. */
+      if (req.mode === 'radar') explainEmptyRadar(id, rec, req);
       return;
     }
 
@@ -530,7 +578,20 @@ export function addStormImagery(map, { onStatus } = {}) {
     /* THE REQUEST'S OWN BOX. Re-deriving this from the record would draw these
      * pixels wherever the storm has moved to since, which is a picture of one
      * place presented as another. */
-    drawFrame(id, next, discBox(req.lat, req.lon, req.radiusKm).corners);
+    /* TWO BOXES, BECAUSE THE TWO SERVICES ARE ADDRESSED DIFFERENTLY. Satellite
+     * asked a WMS for an exact rectangle, so `discBox` reproduces it. Radar
+     * asked for a zoom, and the picture that came back is one tile's worth at
+     * that zoom — a different rectangle, and drawing it at the satellite's
+     * corners would put real weather in the wrong place on the globe. Both are
+     * rebuilt from THE REQUEST, never from the record, so a storm that moved
+     * mid-fetch cannot have its frame drawn where it now is. */
+    drawFrame(
+      id,
+      next,
+      req.mode === 'radar'
+        ? radarBox(req.lat, req.lon, req.z, req.radiusKm).corners
+        : discBox(req.lat, req.lon, req.radiusKm).corners,
+    );
 
     /* Object-URL lifecycle, one generation of grace. Revoking the URL we just
      * replaced can kill an image MapLibre has not finished loading, so the one
@@ -543,6 +604,35 @@ export function addStormImagery(map, { onStatus } = {}) {
      * returned above, before the encode. So this is only ever clearing a stale
      * `empty` from a previous refresh of the same disc. */
     rec.empty = false;
+    /* And the explanation for a blankness that no longer exists goes with it.
+     * Left behind, it would sit on a disc with weather on it and wait to
+     * describe the NEXT blank frame with the last one's answer. */
+    rec.radarCoverage = null;
+  }
+
+  /**
+   * Why is this radar frame blank — no rain, or nobody looking?
+   *
+   * ==> THE ANSWER IS THE DIFFERENCE BETWEEN A TRUE STATEMENT AND AN ALL-CLEAR
+   * OVER AN UNWATCHED CYCLONE, WHICH IS THE WORST THING THIS APP CAN SAY. <==
+   *
+   * Fire-and-forget, and every branch here is about not making things worse:
+   *
+   * - It writes onto the record only if the request is STILL current. The
+   *   lookup spans a network round trip, and a mode toggle or a moved storm
+   *   inside it means this verdict is about a frame nobody is looking at.
+   * - `radarCoverage` never throws and never returns anything but the three
+   *   states, so there is nothing to catch and no default to invent.
+   * - An 'unknown' is written down like any other answer. It has to be: leaving
+   *   the field null would let the row fall back to whatever it says when it
+   *   knows nothing, and "we could not tell" is a thing we know.
+   */
+  function explainEmptyRadar(id, rec, req) {
+    radarCoverage(req.lat, req.lon, req.radiusKm).then((verdict) => {
+      if (!isCurrent(id, rec, req) || !rec.empty) return;
+      rec.radarCoverage = verdict;
+      report();
+    });
   }
 
   /**
@@ -578,15 +668,23 @@ export function addStormImagery(map, { onStatus } = {}) {
 
     const req = addressRequest(storm);
     if (!req) {
-      /* Outside coverage. Say so — never leave the last frame sitting under a
-       * storm it does not describe, and never draw a blank raster, which
-       * reads as clear sky (§5). */
+      /* ==> THIS IS A SATELLITE-ONLY BRANCH NOW. <== It used to catch radar
+       * too, via a bounding box that declined to ask about most of the planet.
+       * That box is deleted and radar always addresses, so the only way here is
+       * `satelliteForLon` finding no bird — which can only happen if the
+       * SATELLITES table has been edited into a gap, and which returns null
+       * rather than guessing precisely because a wrong bird draws a black frame
+       * and a black frame over a storm reads as clear sky.
+       *
+       * Say so either way — never leave the last frame sitting under a storm it
+       * does not describe, and never draw a blank raster. */
       rec.empty = true;
       rec.failed = false;
       clearDisc(rec, storm.id);
-      /* Nothing was asked for, so there is no address to remember. This is what
-       * makes `retry()` a no-op for a storm outside the request guard — correct,
-       * because re-asking a question we declined to ask cannot change. */
+      /* Nothing was asked for, so there is no address to remember, which makes
+       * `retry()` a no-op for this storm — correct, because re-asking a question
+       * we declined to ask cannot change the answer. It used to be reachable by
+       * radar and is not any more. */
       rec.url = null;
       report();
       return;
@@ -694,6 +792,10 @@ export function addStormImagery(map, { onStatus } = {}) {
        * blob goes too: it was addressed to a box we may no longer be drawing,
        * and repainting it would put old weather under a moved storm. */
       rec.noColor = false;
+      /* The coverage verdict goes with it. It explained a blank frame we no
+       * longer have, and a stale one would answer for the next blank frame
+       * whether or not it is still true. */
+      rec.radarCoverage = null;
       rec.blob = null;
       rec.req = null;
       rec.fetchedAt = null;
@@ -756,13 +858,29 @@ export function addStormImagery(map, { onStatus } = {}) {
    * `paintDisc` does: the feather is geometry, and it must not contaminate a
    * measurement about content.
    */
-  function featherOnly(img, fadeWidth) {
+  function featherOnly(img, fadeWidth, rimFraction = 1) {
     const d = img.data;
     const w = img.width;
     const h = img.height;
     const cx = (w - 1) / 2;
     const cy = (h - 1) / 2;
-    const rim = Math.min(cx, cy);
+    /* ==> `rimFraction` IS WHAT KEEPS THE RADIUS SLIDER CONTINUOUS. <==
+     *
+     * RainViewer sizes a frame by ZOOM, and a zoom is a power of two, so the
+     * image almost never covers exactly the radius the user asked for — it
+     * covers the next power of two out. The leftover is trimmed here rather
+     * than in the request, because trimming it here is free and there is no
+     * request that could do it. Without this the disc would jump between 626
+     * and 1252 km as the slider crossed a boundary.
+     *
+     * IT ALSO NARROWS WHAT `keptFraction` MEASURES, and that is required, not
+     * incidental: the count below has to describe the pixels actually DRAWN. A
+     * frame counted across the full image while only its middle is painted
+     * would read as having content when the drawn part is blank — the §5
+     * silent-blank failure, rebuilt in a new place.
+     *
+     * Satellite passes nothing and gets 1, which is the old behaviour exactly. */
+    const rim = Math.min(cx, cy) * rimFraction;
     const inner = rim * (1 - fadeWidth);
     let inDisc = 0;
     let lit = 0;

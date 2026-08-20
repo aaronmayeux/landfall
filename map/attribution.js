@@ -42,7 +42,13 @@ const CREDITS = Object.freeze([
    * credit that is missing whenever someone goes looking for it. */
   { label: 'NASA GIBS / Worldview — GOES & Himawari imagery', href: 'https://nasa-gibs.github.io/gibs-api-docs/' },
   { label: 'EUMETSAT — Meteosat imagery', href: 'https://www.eumetsat.int/' },
-  { label: 'NOAA / NWS MRMS — radar', href: 'https://www.weather.gov/' },
+  /* ==> RAINVIEWER'S CREDIT IS A LICENCE CONDITION, NOT A COURTESY. <== The
+   * terms require the words "Weather data by RainViewer" and a link to the
+   * site, in exchange for a free service with no key and no fee. It replaced
+   * the NOAA/NWS MRMS row outright in 2026-08 — radar is single-source and NOAA
+   * is deleted, so leaving the old row would credit a service that no longer
+   * sends us a single byte. */
+  { label: 'Weather data by RainViewer — radar', href: 'https://www.rainviewer.com/' },
 
   /* Population. GeoNames is CC BY 4.0, which makes this credit a LICENCE
    * CONDITION rather than a courtesy — the strongest kind on this list. Listed

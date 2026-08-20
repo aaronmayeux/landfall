@@ -45,36 +45,53 @@
 **Each wave is sized for ONE session.** Do not start two. When a wave lands,
 delete it from here and put what it built in the spec.
 
-**WAVE 5 IS DONE.** All four passes have landed and what they found is in the
-spec. **How to reach the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
+**WAVES 5 AND 6 ARE DONE.** What they built is described as-built in the spec —
+radar in `SPEC-DATA.md` §4.9. **How to reach the world from a sandbox that
+cannot: `SPEC-OPS.md` §18.**
 
-**WAVE 6 — SWAP RADAR TO RAINVIEWER AND DELETE NOAA. One session.** Pass 2
-researched it and Aaron took the decision: **radar stays single-source, NOAA
-goes.** That choice deleted most of the work — there is no provider-list
-refactor and no palette collision, because there is only ever one source. The
-seven-step brief is `SPEC-NEXT.md` §54.10, the costs being accepted are §54.2,
-and the two glass calls are the new blue palette (§54.7) and whether z5 reads
-sharp enough (§54.5).
+**NO WAVE IS IN PROGRESS. The next session picks one, or picks one of the four
+items under `NEXT UP`.** Nothing below is half-built.
 
-**Do not reopen the two-source question.** §54.2 records what it was traded for.
+**Do not reopen the single-source radar question.** §4.9 records what it was
+traded for.
 
 ---
 
 ## IN FLIGHT
 
-**NOTHING. THE HEADING IS EMPTY AND THAT IS A REAL STATE, NOT AN OVERSIGHT.**
-Everything built is either judged or waiting on weather it has not got. The four
-that stood here — the live reverse-geocoded home name, rainfall's global second
-source, the no-home privacy sentence and the slider grab — all passed on glass
-and are described as-built in `SPEC-UI.md` §8, `SPEC-DATA.md` §48.14–§48.16 and
-`SPEC.md` §10.
+**TWO GLASS CALLS ON RADAR, AND BOTH NEED ONLY A STORM ANYWHERE NEAR A COAST —
+NOT PARTICULAR WEATHER.** Wave 6 replaced NOAA with RainViewer and is deployed.
+Everything measurable was measured; these two cannot be.
 
-**So the next session starts a wave rather than asking Aaron to look at
-anything.** If work lands and this heading is still empty afterwards, that means
-the thing built could not be judged — put it under `HELD FOR WEATHER` with the
-storm named, and do not quietly file it here to make the section look busy.
+**1. THE PALETTE.** Radar is now "Universal Blue" — blue → yellow — where NOAA
+ran green → yellow → red. It is the ONLY scheme offered, so this is not a choice
+between ramps: does it read on a dark globe beside Saffir-Simpson colours?
+Blue for light rain may claw back a little of the §9 cool-toned rule that §4
+records imagery trading away. A remap stays open if it reads badly — the terms
+permit recolouring — but do not build one before there is a complaint.
+
+**2. IS z4 SHARP ENOUGH AT THE DEFAULT RADIUS?** The direct cost of Aaron's call
+that the slider governs radar too. Zoom is a power of two, so **the 900 km
+default lands on 4.89 km/px against NOAA's 2.3**; dragging the radius down
+crosses a boundary and doubles it. **Compare the default against roughly 550 km
+on one storm.** Three acceptable answers: leave it, lower the default, or add a
+crop tolerance so a sharper zoom may cut a few percent off the outer feather —
+that band is already fading to nothing, so the trade is nearly free and is the
+obvious dial if the answer is "close but soft".
+
+**Anything that turns out to need weather goes to `HELD FOR WEATHER` with the
+storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
+
+**0. RADAR CAN NOW REPORT A TRUE FRAME TIME; THE ROW STILL SAYS "DOWNLOADED".**
+Left out of Wave 6 deliberately. Every vendor before this one sent no time at
+all — that is what `IMAGERY_SENDS_NO_TIME` is about, and why the age row honestly
+reports when WE fetched rather than when the picture was taken. RainViewer's
+index carries a real per-frame `time`, in SECONDS. One response header plus a
+branch in the row. Held back because the row is SHARED with satellite, and giving
+one layer a different meaning for the same words wants its own look on glass
+rather than a ride on an upstream swap.
 
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by

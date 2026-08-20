@@ -40,14 +40,20 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { MODEL_TRACKS, SATELLITES, GEOCODE, CACHE } from '../config/constants.js';
+import { MODEL_TRACKS, SATELLITES, GEOCODE, CACHE, IMAGERY } from '../config/constants.js';
 import { MODEL_FAMILY } from '../config/constants.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
 
 let failures = 0;
+/* COUNTED, NOT WRITTEN DOWN. The summary line used to name a fixed number of
+ * mirrors, which meant adding one and forgetting the sentence left the suite
+ * reporting a smaller job than it had done — a stale claim in the one place a
+ * reader looks to see whether the suite is keeping up. */
+let checked = 0;
 const check = (label, actual, expected) => {
+  checked++;
   const a = JSON.stringify(actual);
   const e = JSON.stringify(expected);
   if (a === e) return;
@@ -175,6 +181,43 @@ check('jtwc/abpw.js FRESH_SECONDS matches CACHE.abpwFresh',
 check('nhc/mapserver.js EMPTY_FRESH_SECONDS matches CACHE.geometryRetryMs',
   ms(numberConst(read('functions/api/nhc/mapserver.js'), 'EMPTY_FRESH_SECONDS')), CACHE.geometryRetryMs);
 
+/* --- RADAR (§4.9) ------------------------------------------------------------
+ * FOUR MIRRORS, AND ONE OF THEM WOULD HAVE SHIPPED A SILENT BUG. RainViewer's
+ * `{options}` field is `{smooth}_{snow}`, and with smoothing ON an area with NO
+ * RADAR COVERAGE AT ALL comes back with blended colour and a non-zero alpha
+ * fraction — which is precisely the signal `emptyKeptFraction` reads to decide
+ * whether a frame has anything in it. Flip that one digit in the route and the
+ * app draws a blank raster over a live cyclone with a silent status row: §5's
+ * worst failure, arriving with no error anywhere and nothing looking wrong.
+ *
+ * The cache windows are here for the ordinary reason — a route quietly caching
+ * for half as long as the config claims is an unexplained load on a free
+ * service that has said it blocks abusive IPs.
+ * -------------------------------------------------------------------------- */
+check('imagery/radar.js FRESH_SECONDS matches CACHE.radarFresh',
+  ms(numberConst(read('functions/api/imagery/radar.js'), 'FRESH_SECONDS')), CACHE.radarFresh);
+
+check('imagery/radar-coverage.js FRESH_SECONDS matches CACHE.radarCoverageFresh',
+  ms(numberConst(read('functions/api/imagery/radar-coverage.js'), 'FRESH_SECONDS')), CACHE.radarCoverageFresh);
+
+check('imagery/radar.js COLOR_SCHEME matches IMAGERY.radar.colorScheme',
+  numberConst(read('functions/api/imagery/radar.js'), 'COLOR_SCHEME'), IMAGERY.radar.colorScheme);
+
+check('imagery/radar.js SMOOTH matches IMAGERY.radar.smooth (and MUST be 0)',
+  numberConst(read('functions/api/imagery/radar.js'), 'SMOOTH'), IMAGERY.radar.smooth);
+
+check('IMAGERY.radar.smooth is 0 — blur invents alpha and defeats the empty-frame test',
+  IMAGERY.radar.smooth, 0);
+
+check('imagery/radar.js SNOW matches IMAGERY.radar.snow',
+  numberConst(read('functions/api/imagery/radar.js'), 'SNOW'), IMAGERY.radar.snow);
+
+check('imagery/radar.js MAX_Z matches IMAGERY.radar.maxZoom',
+  numberConst(read('functions/api/imagery/radar.js'), 'MAX_Z'), IMAGERY.radar.maxZoom);
+
+check('imagery/radar-coverage.js MAX_Z matches IMAGERY.radar.maxZoom',
+  numberConst(read('functions/api/imagery/radar-coverage.js'), 'MAX_Z'), IMAGERY.radar.maxZoom);
+
 /* ---------------------------------------------------------------------------
  * 5. THE PARSERS THEMSELVES — a check that reads nothing reports nothing.
  *
@@ -190,6 +233,10 @@ const found = {
   'BIRDS table': Object.keys(relayBirds).length ? relayBirds : null,
   'geocode MAX_RESULTS': numberConst(geoSrc, 'MAX_RESULTS'),
   'mapserver EMPTY_FRESH_SECONDS': numberConst(read('functions/api/nhc/mapserver.js'), 'EMPTY_FRESH_SECONDS'),
+  'radar FRESH_SECONDS': numberConst(read('functions/api/imagery/radar.js'), 'FRESH_SECONDS'),
+  'radar SMOOTH': numberConst(read('functions/api/imagery/radar.js'), 'SMOOTH'),
+  'radar COLOR_SCHEME': numberConst(read('functions/api/imagery/radar.js'), 'COLOR_SCHEME'),
+  'radar-coverage FRESH_SECONDS': numberConst(read('functions/api/imagery/radar-coverage.js'), 'FRESH_SECONDS'),
 };
 for (const [label, value] of Object.entries(found)) {
   if (value !== null && value !== undefined) continue;
@@ -203,4 +250,4 @@ if (failures) {
   console.error(`\n${failures} mirror(s) out of sync. The app and the relay disagree, and neither will say so at runtime.\n`);
   process.exit(1);
 }
-console.log('✓ relay mirrors hold: 6 hand-copied facts, config and relay agree');
+console.log(`✓ relay mirrors hold: ${checked} hand-copied facts, config and relay agree`);
