@@ -49,7 +49,7 @@ delete it from here and put what it built in the spec.
 radar in `SPEC-DATA.md` §4.9. **How to reach the world from a sandbox that
 cannot: `SPEC-OPS.md` §18.**
 
-**NO WAVE IS IN PROGRESS. The next session picks one, or picks one of the four
+**NO WAVE IS IN PROGRESS. The next session picks one, or picks one of the
 items under `NEXT UP`.** Nothing below is half-built.
 
 **Do not reopen the single-source radar question.** §4.9 records what it was
@@ -109,6 +109,22 @@ recolouring if it needs to change.
 storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
+
+**`no_ribs` IS TWO DIFFERENT FAILURES WEARING ONE SENTENCE, AND IT COST A
+SESSION.** `lib/cone-ribbon.js` returns `no_ribs` both when the cone could not
+be measured AND when `hoursAlong` cannot line the run up against the ribs —
+different files, different fixes. `app/layer-status.js` says *"This cone could
+not be measured"* for both. On 2026-08-20 that sentence was the only evidence
+available from a phone, and it pointed at one of two files with no way to tell
+which; the bug was found by pulling Lala's bytes off the archive instead.
+**Split the reason and give the second one its own words.** Small, and the next
+seam-shaped bug is unreadable without it.
+
+**AND THE ARCHIVE ALREADY HAD THE BYTES.** `tools/archive-fetch.mjs`
+`nhcTrackSources` captures NHC's cone, forecast track, forecast points, wind
+swath and wind field per storm, hourly, under `latest/geometry/nhc-*`. Two
+sessions in a row have gone looking for a way to reach NHC from the sandbox and
+missed them. They are the reason the date-line bug was diagnosable at all.
 
 **THE SAUDEL CONTRADICTION IS FIXED AND CONFIRMED ON GLASS — DO NOT RE-OPEN
 IT.** Vitals said `Country  Japan` while the section below said no country was
@@ -378,7 +394,9 @@ a decision rather than a glitch.
 one poll, identical to one captured live.
 
 **A storm in an unfavorable environment** — `SPEC-MAP.md` §47.5. Only the
-FAVORABLE end of the ribbon's ramp has ever been seen.
+FAVORABLE end of the ribbon's ramp has ever been seen. The ribbon itself is now
+confirmed on glass across the date line (Lala, 2026-08-20), so what is left
+here is the COLOUR at the hostile end and nothing structural.
 
 **Fifteen storms in the list** — `SPEC-UI.md` §16. The freshness column is never
 blank, so grey timestamps are new visual weight and the amber ones must win
