@@ -89,10 +89,24 @@ function officeFor(bin) {
  *  pattern rather than an escape — nothing else reaches the upstream URL. */
 const BIN_RE = /^[A-Z]{2}\d$/;
 
-/** SPEC §4 cache table. Advisories issue every 6 h with intermediates as
- *  often as every 2 h; 5 min matches the storm list and means a reader
- *  reopening the section never waits on a second round trip. */
-const FRESH_SECONDS = 5 * 60;
+/**
+ * SPEC §4 cache table. Advisories issue every 6 h with intermediates as often
+ * as every 2 h.
+ *
+ * ==> IT WAS 5 MINUTES AGAINST A 5-MINUTE CRON, WHICH IS THE COLLISION §4.13
+ * BANS IN CAPITALS. <== An entry that expires on the same beat the warmer runs
+ * is a coin flip: land a moment early and the warm request refreshes nothing,
+ * land a moment late and the first real reader pays the upstream round trip on
+ * a route that exists to have been warmed already. §4.13 is named for
+ * DOLPHIN-26, where exactly this produced an intermittent cold read nobody
+ * could reproduce.
+ *
+ * FOUR MINUTES, NOT SIX. The window has to be SHORTER than the cron interval,
+ * not longer — a longer one leaves the entry alive when the warmer arrives and
+ * the same coin flip happens with the sides swapped. A minute of headroom is
+ * enough to absorb the warmer running late without ever outliving it.
+ */
+const FRESH_SECONDS = 4 * 60;
 
 /** Serve-stale window on upstream failure: ~1.5x advisory cadence. A stale
  *  advisory shown with its own issuance line beats a blank panel (§5) — and

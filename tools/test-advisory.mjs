@@ -25,9 +25,11 @@
  *   bytes; both inspect routes are permanent and cost nothing idle.
  */
 
+import fs from 'node:fs';
 import {
   extractNhcProduct,
   nhcAdvisoryNumber,
+  nhcGustKt,
   parseJtwcWarning,
   stormNameKey,
   matchJtwcStorm,
@@ -122,6 +124,76 @@ ok(nhcAdvisoryNumber(PRODUCT_BODY) === '25', 'plain number');
 ok(nhcAdvisoryNumber('Tropical Storm Bertha Advisory Number  12A') === '12A',
   'intermediate advisories keep their letter');
 ok(nhcAdvisoryNumber('nothing here') === null, 'absent reads as null, not as zero');
+
+/* ---------------------------------------------------------------------------
+ * THE GUST — §16 vitals. NHC publishes it in ONE place and it is not the page
+ * this app used to read.
+ *
+ * Checked against the live feed and the archive 2026-08-20: `CurrentStorms.json`
+ * has no gust field at any depth, and the PUBLIC advisory says only "with
+ * higher gusts" in all nineteen archived Bertha advisories. The coded FORECAST
+ * advisory states a number, and `samples/bertha-al022026/fstadv-010.txt` is a
+ * real one.
+ * ------------------------------------------------------------------------- */
+section('the gust, out of the coded forecast advisory');
+
+const FSTADV = fs.readFileSync('samples/bertha-al022026/fstadv-010.txt', 'utf8');
+
+ok(nhcGustKt(FSTADV) === 60, 'the CURRENT gust is read, in knots');
+
+/* ==> AND THE FORECAST GUSTS ARE NOT — TESTED AGAINST THE BLOCK ALONE, WHICH
+ * IS THE ONLY WAY THIS ASSERTION MEANS ANYTHING. <==
+ *
+ * The same product carries six more gust figures below the current one, one
+ * per forecast hour, written `MAX WIND  45 KT...GUSTS  55 KT.` — no "TO". A
+ * pattern loose enough to accept those would print a 24-hour forecast under a
+ * row labelled in the present tense.
+ *
+ * THE FIRST DRAFT OF THIS CHECK WAS WORTHLESS AND IS WORTH RECORDING. It
+ * asserted `nhcGustKt(FSTADV) !== 55` against the whole document — but the
+ * current gust always appears ABOVE the forecast block, so a loose regex
+ * returns 60 from the first line anyway and the test passes over the bug.
+ * Verified by loosening the pattern on purpose: 66 assertions, all green.
+ *
+ * Feeding the forecast block on its own is what actually separates the two
+ * patterns. There is no "GUSTS TO" anywhere in it, so the strict version must
+ * find nothing at all. */
+const FORECAST_BLOCK =
+  'FORECAST VALID 22/0600Z 29.6N  87.9W\n'
+  + 'MAX WIND  45 KT...GUSTS  55 KT.\n'
+  + '34 KT... 60NE  90SE  50SW  40NW.';
+ok(
+  /GUSTS\s+55 KT/.test(FORECAST_BLOCK),
+  'the block really does state a gust — otherwise the check below passes for '
+  + 'the wrong reason'
+);
+ok(
+  nhcGustKt(FORECAST_BLOCK) === null,
+  'A FORECAST GUST IS NOT A CURRENT GUST. `MAX WIND ... GUSTS 55 KT` carries '
+  + 'no "TO" and must not be read at all — this is the assertion that fails '
+  + 'when the pattern is loosened, and the one above it does not'
+);
+
+ok(
+  nhcGustKt('MAX SUSTAINED WINDS  30 KT WITH GUSTS TO  40 KT.') === 40,
+  'the three-column padding NHC pads its numbers with is absorbed'
+);
+ok(nhcGustKt('MAX SUSTAINED WINDS 85 KT WITH GUSTS TO 105 KT.') === 105,
+  'and a three-digit gust needs no padding to be read');
+ok(
+  nhcGustKt('Maximum sustained winds are near 60 mph (95 km/h) with higher gusts.') === null,
+  'THE PUBLIC ADVISORY YIELDS NULL, which is the whole reason a second product '
+  + 'is fetched — this phrase is what the app had available before and it '
+  + 'carries no number at all'
+);
+ok(nhcGustKt('') === null, 'an empty read is null, never zero');
+ok(nhcGustKt(null) === null, 'and so is a missing one');
+ok(
+  nhcGustKt('WITH GUSTS TO 0 KT.') === null && nhcGustKt('WITH GUSTS TO 999 KT.') === null,
+  'AN IMPOSSIBLE FIGURE IS REFUSED RATHER THAN CLAMPED. A wrong number on a '
+  + 'hurricane panel looks exactly as authoritative as a right one, so the '
+  + 'row is dropped instead'
+);
 
 section('text hygiene');
 ok(decodeEntities('a &amp; b &lt;c&gt; &quot;d&quot;') === 'a & b <c> "d"', 'named entities decode');

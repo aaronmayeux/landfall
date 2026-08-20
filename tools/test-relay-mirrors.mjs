@@ -175,8 +175,15 @@ check('nhc/genesis.js FRESH_SECONDS matches CACHE.genesisFresh',
 check('nhc/outlook.js FRESH_SECONDS matches CACHE.outlookFresh',
   ms(numberConst(read('functions/api/nhc/outlook.js'), 'FRESH_SECONDS')), CACHE.outlookFresh);
 
-check('jtwc/abpw.js FRESH_SECONDS matches CACHE.abpwFresh',
-  ms(numberConst(read('functions/api/jtwc/abpw.js'), 'FRESH_SECONDS')), CACHE.abpwFresh);
+/* ==> THE CONSTANT MOVED WHEN THE SECOND BULLETIN ARRIVED, AND THIS CHECK HAS
+ * TO MOVE WITH IT. <== `abpw.js` and `abio.js` are now two zero-parameter
+ * routes over one shared body in `_area-bulletin.js`, which is where
+ * FRESH_SECONDS lives. Reading it out of `abpw.js` would find nothing —
+ * `numberConst` would return undefined and this mirror would quietly stop
+ * checking anything. ONE WINDOW FOR BOTH OCEANS is the point of the shared
+ * file, so there is one constant and one check. */
+check('jtwc/_area-bulletin.js FRESH_SECONDS matches CACHE.abpwFresh',
+  ms(numberConst(read('functions/api/jtwc/_area-bulletin.js'), 'FRESH_SECONDS')), CACHE.abpwFresh);
 
 check('nhc/mapserver.js EMPTY_FRESH_SECONDS matches CACHE.geometryRetryMs',
   ms(numberConst(read('functions/api/nhc/mapserver.js'), 'EMPTY_FRESH_SECONDS')), CACHE.geometryRetryMs);

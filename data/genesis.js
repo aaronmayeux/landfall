@@ -60,7 +60,11 @@ const LAYER_BASIN = Object.freeze({
 });
 
 const nhcUrl = () => `${ENDPOINT.relay}/nhc/genesis?part=areas`;
-const jtwcUrl = () => `${ENDPOINT.relay}/jtwc/abpw`;
+/** JTWC's two area bulletins. Between them they cover every ocean NHC does
+ *  not — Pacific in `abpw`, Indian Ocean in `abio` — and they are the same
+ *  document twice, so one parser reads both. */
+const JTWC_BULLETINS = Object.freeze(['abpw', 'abio']);
+const jtwcUrl = (slug) => `${ENDPOINT.relay}/jtwc/${slug}`;
 const outlookUrl = (basin) => `${ENDPOINT.relay}/nhc/outlook?basin=${basin}`;
 
 /**
@@ -276,11 +280,11 @@ async function fetchNhc(outlooks) {
   }
 }
 
-/** JTWC's bulletin. `parseAbpw` returns a state and never throws, so the only
- *  catch here is the fetch itself. */
-async function fetchJtwc(now = Date.now()) {
+/** ONE of JTWC's bulletins. `parseAbpw` returns a state and never throws, so
+ *  the only catch here is the fetch itself. */
+async function fetchJtwcBulletin(slug, now = Date.now()) {
   try {
-    const { text, fetchedAt, relayStale } = await fetchText(jtwcUrl());
+    const { text, fetchedAt, relayStale } = await fetchText(jtwcUrl(slug));
     const parsed = parseAbpw(text, { now });
 
     /* ==> THE BULLETIN'S ISSUE TIME BELONGS ON EVERY SYSTEM IN IT. <==
@@ -303,6 +307,51 @@ async function fetchJtwc(now = Date.now()) {
   } catch (e) {
     return slot('unavailable', [], { reason: e?.message || 'failed' });
   }
+}
+
+/**
+ * Both bulletins, in parallel, as ONE JTWC slot.
+ *
+ * ==> THE SAME PARTIAL-OUTAGE RULE THE SECTION USES ONE LEVEL UP. <== The
+ * Pacific and the Indian Ocean fail independently, and a dead Indian Ocean
+ * must not blank a live Pacific. So: any areas at all is `ok`; both dead is
+ * `unavailable`; anything else is `none_matched`. Collapsing a half-outage
+ * into `unavailable` would hide real Pacific systems, and collapsing it into
+ * a plain `none_matched` would let a dead ocean read as a calm one — which is
+ * why `reason` carries the surviving bulletin's complaint upward.
+ *
+ * ONE STAMP FOR THE PAIR, AND IT IS THE OLDER ONE. Each system already
+ * carries its own bulletin's `issuedAt` (see the note in `fetchJtwcBulletin`),
+ * so the slot-level stamp is only ever used to describe the SOURCE. Reporting
+ * the newer of two would let a fresh Pacific bulletin vouch for a stale Indian
+ * Ocean one.
+ */
+async function fetchJtwc(now = Date.now()) {
+  const parts = await Promise.all(
+    JTWC_BULLETINS.map(async (slug) => ({ slug, ...(await fetchJtwcBulletin(slug, now)) }))
+  );
+
+  const areas = parts.flatMap((p) => p.areas);
+  const dead = parts.filter((p) => p.status === 'unavailable');
+  const status = areas.length
+    ? 'ok'
+    : dead.length === parts.length
+      ? 'unavailable'
+      : 'none_matched';
+
+  const stamps = parts.map((p) => p.issuedAt).filter((t) => Number.isFinite(t));
+  const fetched = parts.map((p) => p.fetchedAt).filter(Boolean);
+
+  return slot(status, areas, {
+    fetchedAt: fetched.length ? fetched.slice().sort()[0] : null,
+    relayStale: parts.some((p) => p.relayStale),
+    issuedAt: stamps.length ? Math.min(...stamps) : null,
+    /* NAMED, NOT COUNTED. "abio: bulletin is over a day old" is actionable;
+     * "1 of 2 sources failed" is not. */
+    reason: dead.length
+      ? dead.map((p) => `${p.slug}: ${p.reason || 'failed'}`).join('; ')
+      : null,
+  });
 }
 
 function slot(status, areas, extra = {}) {

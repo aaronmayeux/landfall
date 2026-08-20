@@ -1617,17 +1617,38 @@ it never fires, the apparatus is a candidate for deletion rather than a fixture.
 
 ### 45.3 Source — JTWC, everywhere else
 
-`https://www.metoc.navy.mil/jtwc/products/abpwweb.txt`, relayed through
-`/api/jtwc/abpw` because that host sends no usable CORS header.
+**Two bulletins, one parser.** JTWC publishes exactly two Significant Tropical
+Weather Advisories — checked against its own RSS index, there is no third — and
+between them they cover every ocean NHC does not:
+
+| product | relayed as | regions |
+| --- | --- | --- |
+| `abpwweb.txt` | `/api/jtwc/abpw` | 1. Western North Pacific (180 to the Malay Peninsula) · 2. South Pacific (west coast of South America to 135E) |
+| `abioweb.txt` | `/api/jtwc/abio` | 1. North Indian Ocean (Malay Peninsula west to the coast of Africa) · 2. South Indian Ocean (135E west to the coast of Africa) |
+
+Both are relayed because `www.metoc.navy.mil` sends no usable CORS header. With
+NHC covering the North Atlantic and everything east of 180 in the North
+Pacific, the watch list now has no hole in it. The one basin nobody publishes a
+genesis outlook for is the South Atlantic, where a tropical cyclone is a
+once-a-decade event.
+
+They are the same template with the ocean names swapped, so `lib/abpw.js` reads
+both and `GENESIS.ABPW` holds one set of patterns for the pair. The file keeps
+its name for the reason a spec section keeps its number when it moves.
+
+**A dead half is not a dead source.** `data/genesis.js` reports JTWC
+`unavailable` only when BOTH bulletins fail; one down leaves the other's areas
+on screen and names the failure in `reason`. Same partial-outage rule the storm
+list follows.
 
 The Significant Tropical Weather Advisory. Plain text. It is the only genesis
 product outside NHC that carries a probability — RSMC Nadi, Météo-France La
 Réunion and IMD publish narrative bulletins with no structured formation odds
 at all, so this is not a placeholder for something better.
 
-Structure: a WMO header (`ABPW10 PGTW 090300`), then numbered areas, each with
-lettered blocks. `lib/abpw.js` reads **section B, the tropical disturbance
-summary, and nothing else**. Section A is the tropical cyclone summary and
+Structure: a WMO header (`ABPW10 PGTW 090300`, `ABIO10 PGTW 191800`), then
+numbered areas, each with lettered blocks. `lib/abpw.js` reads **section B, the
+tropical disturbance summary, and nothing else**. Section A is the tropical cyclone summary and
 those systems are already in the storm list from JTWC's own warnings; parsing
 them here would put one typhoon on screen twice.
 
@@ -1641,9 +1662,21 @@ sentence, so every pattern is applied to whitespace-collapsed text. The
 position pattern anchors on `NOW LOCATED NEAR`: the same sentence opens with a
 `PREVIOUSLY LOCATED NEAR` fix roughly 100 nm behind.
 
-The WMO header's date-time group is the stamp. A bulletin whose header will not
-parse has no honest timestamp and is reported `unavailable` rather than stamped
-with the device clock. Over a day old is also `unavailable` — it is reissued
+**A block we cannot read fails the whole bulletin.** A disturbance block says
+one of exactly two things: `NONE.` on the same line, or a numbered list. A
+block that is neither is a rewording, and the empty list a rewording produces
+is indistinguishable on screen from a genuinely calm ocean — §45.3's original
+scar, one level up. `GENESIS.ABPW.noneAssertion` is the guard, and it is what
+made the Indian Ocean half safe to build: JTWC reissues ABIO once a day and
+every snapshot captured to date has been empty, so
+`samples/genesis/jtwc-abio-busy.txt` is assembled from a real Pacific
+disturbance body rather than captured. If a real Indian Ocean disturbance turns
+out to be worded differently, the app reports a gap. It does not report calm.
+Replace that fixture the first time a busy ABIO reaches the archive.
+
+The WMO header's date-time group is the stamp, and its pattern accepts either
+product. A bulletin whose header will not parse has no honest timestamp and is
+reported `unavailable` rather than stamped with the device clock. Over a day old is also `unavailable` — it is reissued
 several times a day, so a full day of silence is a broken product, and a
 day-old "HIGH" is worse than an honest gap.
 

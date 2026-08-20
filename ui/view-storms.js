@@ -1152,34 +1152,32 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
           : 'The NHC outlook is not responding. This does not mean nothing is forming in the Atlantic or East Pacific.',
       });
     }
-    /* ==> THE OCEANS NAMED HERE ARE THE BULLETIN'S OWN, AND THE OLD LINE
-     * NAMED ONE WE HAVE NEVER READ. <== It said "Northwest Pacific and Indian
-     * Ocean". `functions/api/jtwc/abpw.js` fetches `abpwweb.txt` and nothing
-     * else, and those bytes (archive branch, 2026-08-20 06:00Z) are headed
-     * SIGNIFICANT TROPICAL WEATHER ADVISORY FOR THE WESTERN AND SOUTH PACIFIC
-     * OCEANS, with exactly two regions in the body:
+    /* ==> THE OCEANS NAMED HERE ARE THE BULLETINS' OWN, READ OFF THEIR OWN
+     * HEADERS. <== This line has been wrong in both directions before — it
+     * once claimed the Indian Ocean, which was not fetched, while omitting
+     * the South Pacific, which was. Both bulletins are read now
+     * (`functions/api/jtwc/abpw.js`, `abio.js`), and between them the four
+     * regions in their bodies are:
      *
-     *     1. WESTERN NORTH PACIFIC AREA (180 TO MALAY PENINSULA):
-     *     2. SOUTH PACIFIC AREA (WEST COAST OF SOUTH AMERICA TO 135 EAST):
+     *     ABPW  1. WESTERN NORTH PACIFIC AREA (180 TO MALAY PENINSULA)
+     *           2. SOUTH PACIFIC AREA (WEST COAST OF SOUTH AMERICA TO 135 EAST)
+     *     ABIO  1. NORTH INDIAN OCEAN AREA (MALAY PENINSULA WEST TO AFRICA)
+     *           2. SOUTH INDIAN OCEAN AREA (135E WEST TO COAST OF AFRICA)
      *
-     * No Indian Ocean anywhere in it. So the line claimed coverage of an
-     * ocean we do not watch and omitted one we do — wrong in both directions
-     * at once.
+     * "outside the Americas" is the shortest true description of that, and
+     * short matters: this is an error line on a phone, not a coverage table.
+     * If a third bulletin is ever added, check this sentence again — the
+     * temptation is to leave a stale ocean list in place because it still
+     * reads fine.
      *
-     * ==> IT WILL NEED CHANGING WHEN ABIO SHIPS, AND THAT IS THE RIGHT ORDER.
-     * <== JTWC publishes `abioweb.txt` for the Indian Ocean, it is already
-     * linked in the RSS index this app fetches for storm warnings, and it is
-     * dropped by `PRODUCT_RE` in `functions/api/jtwc/storms.js` as a side
-     * effect of filtering out area bulletins. Aaron's call, 2026-08-20: the
-     * message stays honest about today and changes when the coverage does.
-     * Writing it for the intended future would put back the exact false claim
-     * being removed here. `tools/archive-fetch.mjs` now snapshots the
-     * bulletin so the parser can be written against real bytes (§45.3's
-     * scar). */
+     * ONE LINE FOR BOTH BULLETINS, DELIBERATELY. `data/genesis.js` only
+     * reports `unavailable` here when BOTH are dead; a half outage keeps the
+     * live half's areas on screen and stays quiet, which is the same
+     * partial-outage rule the storm list follows. */
     if (g.sources?.jtwc?.status === 'unavailable') {
       partial.push({
         tone: 'error',
-        text: 'JTWC is not responding. Areas being watched in the western and South Pacific may be missing.',
+        text: 'JTWC is not responding. Areas being watched outside the Americas may be missing.',
       });
     }
 

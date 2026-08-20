@@ -225,6 +225,11 @@ function disclaimerHtml() {
  * @param {(storm) => void}      opts.onRetryGeometry
  * @param {(storm, opts?) => Promise<object>} opts.loadAdvisory  injected
  *   facade over data/advisory.js — ui/ never imports data/ (§12).
+ * @param {(storm) => Promise<number|null>} [opts.loadGustKt]  the gust for an
+ *   NHC storm, in knots. Optional: without it the Gusts row is simply absent
+ *   on NHC storms, which is what every suite predating it gets — and which is
+ *   also exactly how the panel behaved before this shipped, so an older
+ *   caller degrades to the old behaviour rather than to a broken one.
  * @param {() => Array} [opts.siblings]  every storm, in the order the storm
  *   list draws them. The stepper's whole content. Injected rather than
  *   imported for the usual §12 reason, and injected as a FUNCTION because the
@@ -235,7 +240,7 @@ function disclaimerHtml() {
  *   the reader had gone back and tapped it.
  */
 export function createStormDetailView({
-  home, onRetryGeometry, loadAdvisory, loadAlerts, envShips, rain, units,
+  home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, rain, units,
   siblings, onStep, now = () => Date.now(),
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
@@ -307,12 +312,34 @@ export function createStormDetailView({
   let adv = { phase: 'idle', rec: null, forId: null, forKey: null };
   let advSeq = 0;
 
+  /**
+   * The gust, in knots, and WHICH storm/advisory it belongs to.
+   *
+   * ==> BOUND TO forId/forKey FOR THE SAME REASON THE ADVISORY IS. <== This is
+   * a second async read landing into a panel the reader can step away from
+   * mid-flight, and an unbound number here would put one hurricane's gust
+   * under another hurricane's name — the exact bug the block above describes,
+   * with a worse payload, because a wrong wind figure looks perfectly
+   * plausible where a wrong paragraph is obviously wrong.
+   *
+   * NO `phase`. The advisory needs one because it renders loading, empty and
+   * error states in a section of its own; this is a single row inside a
+   * section that has already painted from a different source. It is absent,
+   * then it is there. `kt: null` and "not fetched yet" render identically and
+   * are allowed to.
+   */
+  let gust = { kt: null, forId: null, forKey: null };
+  let gustSeq = 0;
+
   /** Only onEnter writes this, so no other method can clobber the comparison
    *  the way titleFor clobbered the last one. */
   let enteredId = null;
 
   const advisoryIsForCurrentStorm = () =>
     !!storm && adv.forId === storm.id && adv.forKey === storm.advisoryKey;
+
+  const gustIsForCurrentStorm = () =>
+    !!storm && gust.forId === storm.id && gust.forKey === storm.advisoryKey;
   let collapsed = readSections();
   /* The drawer re-renders its header when a view asks it to — a poll can
    * change a storm's category, and the title carries the swatch. */
@@ -529,12 +556,34 @@ export function createStormDetailView({
         'Winds',
         `${formatWind(storm.windKt, sys())} (${Math.round(storm.windKt)} kt)${from}`,
       ]);
-      /* Gusts only ever arrive with a JTWC fix; NHC's storm list does not
-       * publish them. Omitted, never zeroed, when absent. */
-      if (Number.isFinite(storm.gustKt)) {
+      /* ==> GUSTS, FROM WHICHEVER PRODUCT ACTUALLY STATES ONE. <==
+       *
+       * This used to read "Gusts only ever arrive with a JTWC fix; NHC's storm
+       * list does not publish them", and it was half right in a way that read
+       * as a settled fact. NHC's storm list really does carry no gust field at
+       * any depth, and the PUBLIC advisory really does say only "with higher
+       * gusts" — a phrase, not a number. But NHC's coded FORECAST advisory
+       * states it outright, and nothing was reading that page. So a GDACS
+       * typhoon showed a Gusts row and an American hurricane did not, and the
+       * cause was a product nobody had asked for rather than data that does
+       * not exist.
+       *
+       * `storm.gustKt` IS STILL THE JTWC FIX and is preferred when present:
+       * it rides in on the same warning the wind above it came from, so the
+       * two numbers are one agency's one observation. `gust.kt` is the NHC
+       * read, and it only ever fills in where the fix is silent.
+       *
+       * OMITTED, NEVER ZEROED, when neither has one — same rule as every
+       * other null on this panel. A dissipating storm's last advisory can drop
+       * the clause, and "Gusts 0 mph" under a live hurricane would be a lie
+       * dressed as precision. */
+      const gustKt = Number.isFinite(storm.gustKt)
+        ? storm.gustKt
+        : (gustIsForCurrentStorm() ? gust.kt : null);
+      if (Number.isFinite(gustKt)) {
         rows.push([
           'Gusts',
-          `${formatWind(storm.gustKt, sys())} (${Math.round(storm.gustKt)} kt)`,
+          `${formatWind(gustKt, sys())} (${Math.round(gustKt)} kt)`,
         ]);
       }
     } else {
@@ -657,6 +706,36 @@ export function createStormDetailView({
      * expected — nobody expects an aggregator to name its source). */
     if (storm.source === 'gdacs' && storm.raw?.agency) {
       rows.push(['Forecast by', `${storm.raw.agency} · via GDACS`]);
+    }
+
+    /* ==> AND NHC STORMS GET ONE TOO, BECAUSE "NHC" IS NOT ALWAYS THE ANSWER.
+     * <==
+     *
+     * This row was skipped for NHC storms on the grounds that "the panel's
+     * disclaimer already names NHC". IT DOES NOT. The footer says Landfall is
+     * not an official source; the only place NHC gets named is inside the
+     * Advisory section, which is collapsed by default and which most readers
+     * never open. So the panel named the forecaster for a typhoon and left an
+     * American hurricane unattributed — the reverse of what the reasoning
+     * claimed.
+     *
+     * AND ON A CENTRAL PACIFIC STORM IT WAS ACTIVELY WRONG BY OMISSION.
+     * Hurricane Lala (CP1, 2026-08-20) is forecast by CPHC in Honolulu, not by
+     * Miami. The app already knows this — `functions/api/nhc/advisory.js`
+     * builds `HFO…` rather than `MIA…` for a CP bin, a distinction that cost
+     * the whole Central Pacific its advisory text once. Saying nothing here
+     * let a reader assume Miami; this says which desk.
+     *
+     * THE BIN, NOT THE BASIN, for exactly that reason: the bin is what NHC
+     * itself keys the product on, and it is the same field the relay routes
+     * by. No `via` clause — unlike GDACS there is no aggregator in the middle,
+     * and adding one would invent a hop. Absent bin, absent row, like every
+     * null above. */
+    if (storm.source === 'nhc') {
+      const office = String(storm.raw?.binNumber || '').startsWith('CP')
+        ? 'Central Pacific Hurricane Center'
+        : 'National Hurricane Center';
+      if (storm.raw?.binNumber) rows.push(['Forecast by', office]);
     }
 
     if (!rows.length) return '<div class="detail-empty">No current vitals.</div>';
@@ -1379,6 +1458,59 @@ export function createStormDetailView({
     }
   }
 
+  /** Repaint ONLY the Vitals section, for the same reason `renderAdvisoryBody`
+   *  exists: the gust lands after first paint, and a full `renderBody()` would
+   *  throw away the reader's scroll position and collapse-state animations
+   *  over one `<dd>`. */
+  function renderVitalsBody() {
+    const host2 = bodyEl?.querySelector(
+      '.detail-section[data-section="vitals"] .detail-section-body'
+    );
+    if (!host2) return;
+    host2.innerHTML = vitalsHtml();
+  }
+
+  /**
+   * Fetch the gust once per storm per advisory, on panel open.
+   *
+   * ==> NOT GATED ON A SECTION EXPANDING, UNLIKE THE ADVISORY. <== Vitals is
+   * always open, so there is no gate to hang this on; the panel opening IS the
+   * gate, and it is a good one — a reader who never taps a storm never pays.
+   *
+   * SILENT ON FAILURE, AND THAT IS NOT A §5 VIOLATION. §5 forbids silence
+   * where a claim was expected. Nothing on this panel promises a gust, the
+   * Winds row above it is already correct and complete on its own, and there
+   * is no action a reader could take with "we could not read NHC's coded
+   * advisory". A Retry button for one row inside a section fed by a different
+   * source would be noise pretending to be honesty.
+   *
+   * SKIPPED ENTIRELY WHEN THE FIX ALREADY HAS ONE. A GDACS storm with a JTWC
+   * warning carries `gustKt` in the storm object, so asking NHC for a second
+   * opinion would be a round trip to render a row that is already right.
+   */
+  async function ensureGust() {
+    if (!storm || ghost || !loadGustKt) return;
+    if (storm.source !== 'nhc' || Number.isFinite(storm.gustKt)) return;
+    if (gustIsForCurrentStorm()) return;
+
+    const seq = ++gustSeq;
+    const forId = storm.id;
+    const forKey = storm.advisoryKey;
+    let kt = null;
+    try {
+      kt = await loadGustKt(storm);
+    } catch {
+      kt = null;
+    }
+    /* THE RACE GUARD AND THE STALENESS GUARD, both, exactly as `ensureAdvisory`
+     * carries both — a sequence number alone would not stop a landed-but-never-
+     * refreshed value being shown under the next storm. */
+    if (seq !== gustSeq) return;
+    gust = { kt, forId, forKey };
+    if (!Number.isFinite(kt)) return; // nothing changed on screen
+    if (gustIsForCurrentStorm()) renderVitalsBody();
+  }
+
   function renderBody() {
     if (!bodyEl || !storm) return;
     if (ghost) {
@@ -1454,6 +1586,10 @@ export function createStormDetailView({
      * expanded section that sits on "Loading advisory…" forever, because
      * nothing ever dispatched the fetch. */
     if (advisoryOpen()) ensureAdvisory();
+
+    /* Unconditional, because Vitals has no collapse gate to wait on. `ensureGust`
+     * is the thing that decides whether there is anything to fetch. */
+    ensureGust();
 
     /* ALL of them, by class. There is more than one Retry on this panel now
      * — the Home block grew its own when the forecast track fails — and
@@ -1575,6 +1711,11 @@ export function createStormDetailView({
          * storm cannot land here. */
         adv = { phase: 'idle', rec: null, forId: null, forKey: null };
         advSeq++;
+        /* The same drop for the same reason — another storm's gust under this
+         * storm's name is a plausible-looking wrong number, which is the worst
+         * kind. `renderBody` re-dispatches. */
+        gust = { kt: null, forId: null, forKey: null };
+        gustSeq++;
       } else if (s) {
         storm = s;
       }
@@ -1630,6 +1771,11 @@ export function createStormDetailView({
         if (live.advisoryKey !== storm.advisoryKey) {
           adv = { phase: 'idle', rec: null, forId: null, forKey: null };
           advSeq++;
+          /* A NEW ADVISORY MEANS A NEW GUST. The forKey binding already stops
+           * the old one rendering; the bump cancels a read still in flight for
+           * the advisory that has just been superseded. */
+          gust = { kt: null, forId: null, forKey: null };
+          gustSeq++;
         }
         storm = live;
         ghost = false;

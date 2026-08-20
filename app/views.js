@@ -77,7 +77,7 @@ import { getAdeck, evictAdeck } from '../data/adeck.js';
 import { evictTcgpIndex } from '../data/tcgp-index.js';
 import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
-import { fetchAdvisory } from '../data/advisory.js';
+import { fetchAdvisory, fetchNhcGustKt } from '../data/advisory.js';
 import { loadRainfall, evictRainfall } from '../data/rainfall.js';
 import { loadGdacsSurge, retryGdacsSurge } from '../data/gdacs-surge.js';
 import { loadAlerts } from '../data/cap.js';
@@ -631,6 +631,13 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       countAction('advisory_open');
       return fetchAdvisory(storm, opts);
     },
+    /* ==> THE GUST, WHICH NHC PUBLISHES IN A PRODUCT NOTHING ELSE READS. <==
+     * `data/advisory.js` `fetchNhcGustKt` carries the measurement behind
+     * that. NOT COUNTED, unlike `advisory_open`: this is dispatched by the
+     * panel opening rather than by a reader choosing to read something, so a
+     * counter here would measure storm selections a second time under a name
+     * that implied otherwise. */
+    loadGustKt: (storm) => fetchNhcGustKt(storm),
     /* The national-alert facade (§50). ONE global list shared by every storm,
      * so this is called on every GDACS storm opened and costs a fetch only the
      * first time — `data/cap.js` holds the answer for CACHE.capClient.

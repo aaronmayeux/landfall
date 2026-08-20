@@ -777,10 +777,49 @@ The normalized shape both parsers emit, and what the user actually sees.
 | `can.forecastPoints` | gates `"Loading forecast track…"` under kicker `"Closest approach"` | | |
 | `can.watchWarning` | false → `"None in effect."` | | |
 | `can.*` (7 others) | **written, never read** | | |
-| `raw.binNumber` | error string `` `geometry: unusable binNumber "…"` `` | | |
-| `raw.agency` | detail Vitals row `Forecast by` | `JTWC · via GDACS` — GDACS's `source` field, the real originating office | row omitted; NHC storms never carry it |
+| `raw.binNumber` | error string `` `geometry: unusable binNumber "…"` ``; detail Vitals row `Forecast by` on NHC storms | `Central Pacific Hurricane Center` when the bin starts `CP`, else `National Hurricane Center` | row omitted |
+| `raw.agency` | detail Vitals row `Forecast by` on GDACS storms | `JTWC · via GDACS` — GDACS's `source` field, the real originating office | row omitted |
 | `raw.countries` | detail Vitals rows `Country`/`Countries` | structured `affectedcountries[].countryname`, comma-joined | row omitted when empty |
 | `raw.*` (others) | **written, never read** | | |
+
+**`Forecast by` is on BOTH sources now, and it used to be on one.** NHC storms
+were skipped on the grounds that "the panel's disclaimer already names NHC". It
+does not — the footer says Landfall is not an official source, and the only
+place NHC is named is inside the Advisory section, which is collapsed by
+default. So the panel credited the forecaster for a typhoon and left an
+American hurricane unattributed. **And on a Central Pacific storm the silence
+was actively misleading:** Lala (CP1) is forecast by CPHC Honolulu, not Miami,
+a distinction the app already tracks because `functions/api/nhc/advisory.js`
+must build `HFO…` rather than `MIA…` for a CP bin. No `via` clause on the NHC
+side — unlike GDACS there is no aggregator in the middle, and naming one would
+invent a hop.
+
+**The `Gusts` row, and the product it comes from.** NHC publishes no gust
+anywhere the app used to look: `CurrentStorms.json` has no gust field at any
+depth, and the public advisory says only "with higher gusts" — a phrase, not a
+number, in all nineteen archived Bertha advisories. The **coded forecast
+advisory** (TCM) states it outright: `MAX SUSTAINED WINDS  85 KT WITH GUSTS TO
+105 KT.` So a GDACS typhoon showed a gust and an American hurricane did not,
+and the cause was an unread page rather than absent data.
+
+`lib/advisory.js` `nhcGustKt` reads it, in knots, anchored on `GUSTS TO` —
+**the "TO" is load-bearing.** The same product carries six forecast gusts below
+the current one written `MAX WIND  45 KT...GUSTS  55 KT.`, and a pattern loose
+enough to accept those prints a 24-hour forecast under a present-tense row.
+
+`data/advisory.js` `fetchNhcGustKt` fetches it **lazily, on panel open**, with
+its own LRU keyed per advisory — not from `observeDeclarations`, which would
+double an unprompted per-poll cost for a row most readers never scroll to. A
+JTWC fix's own `gustKt` still wins when present: it rides in on the same
+warning the wind above it came from, so the two numbers stay one agency's one
+observation. Absent both, the row is omitted, never zeroed.
+
+**A failed gust read is silent, and that is not a §5 violation.** §5 forbids
+silence where a claim was expected. Nothing on the panel promises a gust, the
+Winds row is complete without it, and there is no action a reader could take
+with "we could not read NHC's coded advisory". A Retry button for one row
+inside a section fed by a different source would be noise wearing honesty's
+clothes.
 
 ### 34.2 Units — `lib/units.js`
 

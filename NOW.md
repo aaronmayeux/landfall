@@ -110,40 +110,26 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
-**INDIAN OCEAN GENESIS — THE ARCHIVE IS COLLECTING THE BYTES, THEN BUILD IT.**
-"Being watched" reads `abpwweb.txt`, which is the WESTERN AND SOUTH PACIFIC
-bulletin and contains no Indian Ocean at all. JTWC publishes the Indian Ocean
-as `abioweb.txt`; it is already linked in the RSS index the app fetches every
-poll, and `PRODUCT_RE` in `functions/api/jtwc/storms.js` drops it as a side
-effect of filtering area bulletins out of the storm list. So an Arabian Sea or
-Mozambique Channel disturbance never appears until it becomes a storm. **Storms
-there are unaffected** — GDACS is global and `io####`/`sh####` warnings already
-flow. §45.3 carries the detail.
+**GLASS: TWO VITALS ROWS ON AN NHC STORM.** Open Lala (or any Atlantic/Pacific
+storm) and look at Vitals. Two things are new and neither has been seen.
 
-`tools/archive-fetch.mjs` snapshots it hourly as `jtwc-abio.txt`. **First bytes
-are in and they are a QUIET-DAY sample** (`ABIO10 PGTW 191800`): both regions —
-`1. NORTH INDIAN OCEAN AREA (MALAY PENINSULA WEST TO COAST OF AFRICA)` and
-`2. SOUTH INDIAN OCEAN AREA (135E WEST TO COAST OF AFRICA)` — read
-`A/B/C ... SUMMARY: NONE.` all the way down. Same lettering and same numbered
-regions as ABPW, so the shape is encouraging, **but there is not one
-disturbance block in it to write a pattern against.** That is precisely §45.3's
-scar waiting to happen again: patterns written against an empty bulletin match
-nothing and fail silently.
+**1. A `Gusts` row now appears on NHC storms.** It arrives a moment AFTER the
+panel paints, because it comes out of a second NHC product fetched on open —
+the storm list carries no gust and the public advisory says only "with higher
+gusts". The question is whether that late arrival reads as the panel filling
+in or as the panel twitching. The rest of the section is already settled by
+then, so it should be one row appearing under Winds and nothing moving above
+it. **If the shift is annoying, the fallback is not showing gusts on NHC at
+all** rather than shipping a jumpy panel — that is a real option, say so.
 
-**Two concrete findings already:**
-- `GENESIS.ABPW.headerPattern` is `/\bABPW\d{2}\s+(\w{4})\s+(\d{6})/` and will
-  not match `ABIO10`. Whatever else is shared, the header pattern has to widen
-  or fork.
-- `disturbanceBlock` must survive `B. TROPICAL DISTURBANCE SUMMARY: NONE.` on
-  one line — ABPW's live copy always has a body there, so that form is untested.
+**2. `Forecast by` now appears on NHC storms**, and on a Central Pacific storm
+it says **Central Pacific Hurricane Center**, not National Hurricane Center.
+Lala is CP1, so it is the storm to check it on. Does naming the Honolulu desk
+read as useful precision or as a confusing second agency? A GDACS storm's row
+says `JTWC · via GDACS` — the two should read as the same kind of fact.
 
-**WAIT FOR A BUSY SNAPSHOT before writing the parser.** Diff `history/` until
-an Indian Ocean disturbance shows up with a real position and probability
-sentence. The 72-hour window rolls, so check back rather than assuming it is
-still there.
-
-The JTWC outage note says *western and South Pacific* on purpose until this
-ships. Change it in `ui/view-storms.js` as part of the same pass, not before.
+*(Also worth a glance while there: a GDACS storm JTWC has a warning on should
+still show its own `Gusts` from the JTWC fix, unchanged.)*
 
 **0-PERF. THE BOOT PATH HAS BEEN MEASURED AND THE FINDINGS ARE IN
 `PERF-AUDIT.md`.** Read that file, not this entry — it carries the numbers, the
@@ -267,6 +253,22 @@ weather alone can trigger "this is a gap in what we know, not an all-clear" on a
 day with no cyclone alerts on Earth. Decide whether the gap sentence should count
 only alerts that could plausibly be a cyclone, or whether `%Hurricane%` needs a
 companion exclusion.
+
+**A BUSY INDIAN OCEAN BULLETIN — not a glass call, a fixture swap.**
+`SPEC-DATA.md` §45.3. ABIO ships and is live; both bulletins are read and the
+watch list now has no ocean-sized hole in it. But JTWC reissues ABIO once a
+day and every snapshot ever captured reads `SUMMARY: NONE.` all the way down,
+so `samples/genesis/jtwc-abio-busy.txt` is ASSEMBLED — a real Pacific
+disturbance body transplanted into the real ABIO skeleton. It proves the
+template parses; it cannot prove JTWC words an Indian Ocean disturbance the
+same way.
+
+**That gap is guarded, not ignored.** `GENESIS.ABPW.noneAssertion` makes a
+disturbance block that neither says NONE nor lists numbered items fail the
+whole bulletin as `unavailable`. A wording we cannot read reports a gap, never
+a calm ocean — and `tools/test-genesis.mjs` drives exactly that, verified by
+reintroducing the bug. **When a real busy ABIO lands in `history/`, replace
+the fixture with it.** The 72-hour window rolls, so check rather than assume.
 
 ## HELD FOR WEATHER
 

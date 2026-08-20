@@ -117,35 +117,34 @@ const SOURCES = [
       'Covers the WESTERN and SOUTH PACIFIC only — its Indian Ocean sibling ' +
       'is the entry below.',
   },
-  /* ==> ARCHIVED BEFORE ANYTHING PARSES IT, WHICH IS THE WHOLE POINT.
-   * ADDED 2026-08-20. <== Landfall reads `abpwweb.txt` and not this, so the
-   * genesis list watches the western and South Pacific and is blind to the
-   * Indian Ocean — a real hole in a globe app. `abioweb.txt` is already
-   * LINKED IN THE RSS INDEX this app fetches every poll for storm warnings;
-   * `PRODUCT_RE` in `functions/api/jtwc/storms.js` drops it as a side effect
-   * of filtering area bulletins out of the storm list, which is correct there
-   * and is why nobody noticed it was never picked up anywhere else.
+  /* ==> THE APP READS THIS NOW, AND THE ARCHIVE IS STILL THE ONLY PLACE A
+   * BUSY ONE WILL EVER BE SEEN FIRST. <== Shipped 2026-08-20 as the second
+   * half of the genesis watch list (`functions/api/jtwc/abio.js`). Before
+   * that the list watched the Pacific and was blind to the Indian Ocean — a
+   * real hole in a globe app.
    *
-   * IT IS NOT SAFE TO ASSUME IT IS AN ABPW WITH DIFFERENT COORDINATES. §45.3
-   * carries the scar: the first ABPW parser was written from the spec's PROSE
-   * DESCRIPTION and three of its four patterns matched nothing against the
-   * live bulletin — silently, because a parser that finds nothing returns an
-   * empty list and an empty list renders as "nothing is brewing". The region
-   * headings, the section lettering and the probability sentence all have to
-   * be read off real bytes before `lib/abpw.js` is asked to handle a second
-   * product.
+   * THE PARSER WAS BUILT WITHOUT A BUSY SAMPLE, AND THIS ENTRY IS HOW THAT
+   * GETS CLOSED. JTWC reissues ABIO once a day and every snapshot to date has
+   * read `SUMMARY: NONE.` all the way down, so `samples/genesis/
+   * jtwc-abio-busy.txt` is ASSEMBLED — a real Pacific disturbance body
+   * transplanted into the real ABIO skeleton. It proves the template parses;
+   * it cannot prove JTWC words an Indian Ocean disturbance the same way.
+   * ==> WHEN A REAL BUSY ABIO LANDS HERE, REPLACE THAT FIXTURE WITH IT. <==
    *
-   * So this entry ships first and alone. An hour of runs, then the parser. */
+   * What makes the gap survivable meanwhile is `GENESIS.ABPW.noneAssertion`:
+   * a disturbance block that neither says NONE nor lists numbered items makes
+   * the whole bulletin `unavailable`. A rewording we cannot read reports as a
+   * gap, never as a calm ocean. That is §45.3's scar closed by a guard rather
+   * than by a promise to be careful. */
   {
     name: 'jtwc-abio.txt',
     url: 'https://www.metoc.navy.mil/jtwc/products/abioweb.txt',
     note:
-      'JTWC Significant Tropical Weather Advisory for the INDIAN OCEAN — the ' +
-      'sibling of abpwweb.txt, and NOT YET READ BY THE APP. Archived so the ' +
-      'Indian Ocean genesis parser can be written against verbatim bytes ' +
-      'rather than against an assumption that it matches ABPW. Compare its ' +
-      'region headings and section lettering with jtwc-abpw.txt before ' +
-      'touching GENESIS.ABPW.',
+      'JTWC Significant Tropical Weather Advisory for the INDIAN OCEAN, read ' +
+      'live by the app since 2026-08-20. Every snapshot so far has been a ' +
+      'QUIET day. The first one carrying a real disturbance block should ' +
+      'replace samples/genesis/jtwc-abio-busy.txt, which is assembled rather ' +
+      'than captured.',
   },
   /* ==> THE TEXT OUTLOOKS. ADDED 2026-08-11 AND THEY ARE THE POINT OF THAT
    * NIGHT. <== NHC's GIS layer 3 reported zero areas while NHC's own bulletin

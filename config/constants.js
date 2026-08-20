@@ -313,9 +313,12 @@ export const CACHE = Object.freeze({
    *  manufacture a "the layer is broken" verdict out of nothing but timing. */
   outlookFresh: 15 * MINUTE,
 
-  /** Relay: JTWC's abpwweb.txt (§45). A plain-text bulletin reissued a few
-   *  times a day. Same window as the outlook so the two halves of the watch
-   *  list can never be served from wildly different moments. */
+  /** Relay: JTWC's two area bulletins, `abpwweb.txt` and `abioweb.txt` (§45).
+   *  Plain-text bulletins reissued a few times a day. Same window as the
+   *  outlook so the halves of the watch list can never be served from wildly
+   *  different moments — ONE constant for both routes, because a skew between
+   *  the Pacific and the Indian Ocean is the same manufactured disagreement a
+   *  skew against the outlook would be. */
   abpwFresh: 15 * MINUTE,
 
   /**
@@ -3051,12 +3054,51 @@ export const GENESIS = Object.freeze({
      * WHITESPACE-COLLAPSED text for that reason — matching the raw bytes works
      * on a good day and fails the moment a line breaks in a new place. */
 
-    /** The WMO header, e.g. `ABPW10 PGTW 090300` — DDHHMM in UTC.
+    /** The WMO header, e.g. `ABPW10 PGTW 090300` or `ABIO10 PGTW 191800` —
+     *  DDHHMM in UTC.
+     *
+     *  ==> ONE PATTERN FOR BOTH AREA BULLETINS, AND THE `PW` VERSION DID NOT
+     *  MATCH `ABIO`. <== JTWC publishes exactly two of these (measured off the
+     *  RSS index, 2026-08-20 — there is no third), and they are the same
+     *  template with the ocean names swapped: same numbered regions, same
+     *  A/B/C lettering, same `SUMMARY:` phrasing. Everything below this line
+     *  is shared between them; only the header ever needed widening.
+     *
+     *  THE PRODUCT IS A NON-CAPTURING GROUP ON PURPOSE. The groups this
+     *  returns are office, day, hour, minute, and `parseHeaderTime` reads them
+     *  by number. Capturing `PW|IO` here would silently shift all four.
+     *
      *  ITS TIME IS THE STAMP. The bulletin carries no other, and the fetch
      *  time is the device's clock wearing a disguise (§17.7). A bulletin whose
      *  header will not parse has no honest timestamp and is reported
      *  unavailable rather than stamped with `Date.now()`. */
-    headerPattern: /\bABPW\d{2}\s+(\w{4})\s+(\d{2})(\d{2})(\d{2})\b/,
+    headerPattern: /\bAB(?:PW|IO)\d{2}\s+(\w{4})\s+(\d{2})(\d{2})(\d{2})\b/,
+
+    /** Which of the two this is — `PW` or `IO`. Read only for the label a
+     *  failure wears, so a session reading a bug report knows which ocean went
+     *  quiet without having to fetch the bytes again. */
+    productPattern: /\bAB(PW|IO)\d{2}\b/i,
+
+    /** ==> THE TRIPWIRE THAT STOPS AN UNREADABLE BLOCK READING AS AN
+     *  ALL-CLEAR. <==
+     *
+     *  A disturbance block says one of exactly two things: `NONE.` on the same
+     *  line, or a list of `(1) (2) (3)` items. `parseAbpw` requires every
+     *  block it finds to be one or the other, and calls the bulletin
+     *  UNAVAILABLE when a block is neither.
+     *
+     *  WITHOUT IT, A REWORDING IS INVISIBLE. The item pattern finding nothing
+     *  and JTWC saying nothing produce the identical empty list, and that list
+     *  renders as "nothing is brewing" over an ocean somebody lives on. That
+     *  is §45.3's scar exactly, and it is the whole reason the Indian Ocean
+     *  half could be built against a bulletin that has only ever been seen
+     *  empty: a pattern that turns out to be wrong reports a GAP rather than
+     *  a calm.
+     *
+     *  `NONE` UNQUALIFIED, AND ANCHORED. `SUMMARY: NONE.` is the only form
+     *  JTWC publishes for an empty block; anything with more words in it is a
+     *  body we are supposed to have understood. */
+    noneAssertion: /^NONE\.?$/i,
 
     /** The disturbance block — everything between `B. TROPICAL DISTURBANCE
      *  SUMMARY:` and the next lettered heading. THE ONLY PART READ.

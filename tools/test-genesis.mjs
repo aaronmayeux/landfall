@@ -81,6 +81,20 @@ const FIXTURE_NOW = Date.parse('2026-08-09T04:00:00Z');
 let RELAY = {};
 globalThis.fetch = async (url) => {
   const key = Object.keys(RELAY).find((k) => String(url).includes(k));
+  /* ==> ONE ROUTE HAS A DEFAULT, AND IT IS STILL A FIXTURE RATHER THAN THE
+   * WIRE. <== `fetchGenesis` asks for both JTWC bulletins. Every test in this
+   * file below predates the Indian Ocean one and cares about NHC or the
+   * Pacific, so rather than repeat `'/api/jtwc/abio': ...` in twenty route
+   * maps, an unstubbed ABIO answers with the real QUIET bulletin — the same
+   * background a live app would have on an ordinary day.
+   *
+   * IT IS NOT A FALLTHROUGH TO THE NETWORK. Anything else unrecognised still
+   * throws, because the bug this stub exists for was a seam between two
+   * correct pieces that nobody drove. The Indian Ocean tests stub it
+   * explicitly and are not affected by this line. */
+  if (!key && String(url).includes('/api/jtwc/abio')) {
+    return { ok: true, status: 200, headers: { get: () => null }, json: async () => null, text: async () => ABIO_QUIET };
+  }
   if (!key) throw new Error(`no test in this file may touch the network: ${url}`);
   const r = RELAY[key];
   if (r.throw) throw new Error('network error');
@@ -152,6 +166,29 @@ const OUTLOOKS_BUSY = {
   '/api/nhc/outlook?basin=epacific': { text: TWO_EP },
 };
 const ABPW = fs.readFileSync('samples/genesis/jtwc-abpw.txt', 'utf8');
+
+/* ==> THE INDIAN OCEAN FIXTURES, AND ONE OF THEM IS NOT A REAL BULLETIN. <==
+ *
+ * `jtwc-abio-quiet.txt` IS real — the 2026-08-19 bulletin off the archive
+ * branch, verbatim except for the six digits in its WMO header, re-stamped to
+ * this suite's pinned hour for the same reason the outlook fixtures are.
+ *
+ * `jtwc-abio-busy.txt` IS ASSEMBLED, and that is stated here rather than
+ * buried, because a fabricated fixture is normally exactly how a parser comes
+ * to be tested against its own assumptions. JTWC reissues ABIO once a day and
+ * every snapshot the archive has ever held is empty, so there was no busy one
+ * to capture. Its disturbance body is a REAL Pacific one, transplanted word
+ * for word out of `jtwc-abpw.txt`, with the designator and position moved to
+ * the South Indian Ocean — so what it proves is narrow and honest: THE SAME
+ * TEMPLATE PARSES OUT OF THE ABIO SKELETON. It does NOT prove JTWC words an
+ * Indian Ocean disturbance the same way.
+ *
+ * That remaining risk is carried by the tripwire, not by this fixture: a body
+ * this parser cannot read makes the bulletin `unavailable`, never quiet. The
+ * test three sections down drives exactly that. Replace this file with real
+ * bytes the first time a busy ABIO lands in the archive. */
+const ABIO_QUIET = fs.readFileSync('samples/genesis/jtwc-abio-quiet.txt', 'utf8');
+const ABIO_BUSY = fs.readFileSync('samples/genesis/jtwc-abio-busy.txt', 'utf8');
 
 /* ---------------------------------------------------------------------------
  * THE PERCENT STRINGS — the single most likely bug in this feature
@@ -666,6 +703,86 @@ ok(
   + 'than an honest gap'
 );
 
+/* ---------------------------------------------------------------------------
+ * §45.3 — THE INDIAN OCEAN, AND THE TRIPWIRE THAT MADE IT SAFE TO BUILD
+ *
+ * `abioweb.txt` was missing entirely until 2026-08-20: `abpwweb.txt` is the
+ * PACIFIC bulletin and contains no Indian Ocean at all, so an Arabian Sea or
+ * Mozambique Channel disturbance never reached `Being watched`. Storms there
+ * were always fine — GDACS is global and JTWC's own io####/sh#### warnings
+ * flow through `warning.js` — so this was a genesis-only hole.
+ * ------------------------------------------------------------------------- */
+section('§45.3 — the Indian Ocean bulletin');
+
+ok(
+  parseAbpw(ABIO_QUIET, { now: NOW }).status === 'none_matched',
+  'THE REAL QUIET INDIAN OCEAN BULLETIN PARSES, and reads as `none_matched` — '
+  + 'JTWC looked at both regions and said NONE, which is an answer'
+);
+ok(
+  /^ABIO/.test(ABIO_QUIET),
+  'and the fixture really is an ABIO — the old header pattern was ABPW-only '
+  + 'and matched none of this, which is the bug this section exists for'
+);
+
+const io = parseAbpw(ABIO_BUSY, { now: NOW });
+ok(io.status === 'ok', 'a busy Indian Ocean bulletin parses to `ok`');
+ok(io.systems.length === 1, 'and yields the one disturbance in it');
+ok(io.systems[0].title === 'Invest 93S', 'with JTWC’s own designator');
+ok(
+  io.systems[0].centroid.lat < 0 && io.systems[0].centroid.lon > 0,
+  'in the SOUTHERN INDIAN OCEAN — a hemisphere sign flip here would put a '
+  + 'Réunion system off Mexico, and the position pattern has never been run '
+  + 'against a south-and-east fix before now'
+);
+ok(
+  io.systems[0].risk === 'Medium' || normalizeRisk('MEDIUM') === io.systems[0].risk,
+  'and carries the probability word out of the closing sentence'
+);
+ok(
+  io.systems[0].prob2day === null && io.systems[0].prob7day === null,
+  'with NO percentage invented for it — JTWC states a word over 24 hours and '
+  + 'that is all this object is allowed to carry (§45.3)'
+);
+
+/* ==> THE ONE THAT MATTERS. <== Everything above proves the parser works on a
+ * bulletin shaped the way we expect. This proves what happens when it is not
+ * — which is the only question that could not be settled from bytes, because
+ * no busy ABIO has ever been captured.
+ *
+ * Written the way this repo requires: the bug is REINTRODUCED (a disturbance
+ * block whose body the item pattern cannot read) and the assertion is that
+ * the app reports a GAP. Before the tripwire this exact input returned
+ * `none_matched` and rendered as a calm ocean. */
+const reworded = parseAbpw(
+  ABIO_BUSY.replace(/\(1\)/, 'FIRST -').replace(/\(2\)/, 'SECOND -'),
+  { now: NOW }
+);
+ok(
+  reworded.status === 'unavailable',
+  'A DISTURBANCE BLOCK WE CANNOT READ MAKES THE WHOLE BULLETIN `unavailable`. '
+  + 'This is the entire reason the Indian Ocean half could be built without '
+  + 'ever seeing a busy bulletin: if JTWC words one differently, the app says '
+  + 'it cannot read it. It does NOT say the ocean is calm'
+);
+ok(
+  reworded.systems.length === 0 && /neither empty nor a numbered list/.test(reworded.reason || ''),
+  'and it says so in words a person can act on, not a bare state'
+);
+ok(
+  parseAbpw(
+    ABIO_QUIET.replace('B. TROPICAL DISTURBANCE SUMMARY: NONE.', 'B. TROPICAL DISTURBANCE SUMMARY: NIL.'),
+    { now: NOW }
+  ).status === 'unavailable',
+  'AND THE OTHER HALF OF THE SAME GUARD: an empty block that stops saying '
+  + '"NONE." is a rewording too, and is refused rather than believed'
+);
+ok(
+  parseAbpw(ABIO_QUIET, { now: NOW }).status === 'none_matched',
+  'while the untouched bulletin still reads as quiet — the guard has to be '
+  + 'able to tell those two apart or it is just an outage generator'
+);
+
 section('the header time, including month rollover');
 const jan1 = new Date(Date.UTC(2026, 0, 1, 6, 0, 0));
 const rolled = parseHeaderTime('31', '18', '00', jan1);
@@ -755,12 +872,60 @@ ok(
   + 'by the relay precisely so this can be told apart from an empty answer'
 );
 
+/* ==> ALL THREE FEEDS, NOT TWO. <== JTWC is two bulletins now, and the
+ * section only reports `unavailable` when BOTH of them are dead — a live
+ * Indian Ocean must keep the section from claiming a total outage, which is
+ * the same partial-outage rule one level down. Leaving `abio` on its quiet
+ * default here would have made this test assert the opposite of its name. */
 RELAY = {
   '/api/nhc/genesis': { throw: true },
   '/api/jtwc/abpw': { throw: true },
+  '/api/jtwc/abio': { throw: true },
   ...OUTLOOKS_BUSY,
 };
 const bothDown = await fetchGenesis({ now: FIXTURE_NOW });
+
+/* A DEAD INDIAN OCEAN MUST NOT BLANK A LIVE PACIFIC, and vice versa. Driven
+ * through `fetchGenesis` rather than the parser, because the merge that has
+ * to get this right lives in `data/genesis.js` and the parser knows nothing
+ * about it. */
+RELAY = {
+  '/api/nhc/genesis': { json: AREAS_FC },
+  '/api/jtwc/abpw': { text: ABPW },
+  '/api/jtwc/abio': { throw: true },
+  ...OUTLOOKS_BUSY,
+};
+const halfJtwc = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  halfJtwc.sources.jtwc.status === 'ok',
+  'ONE DEAD JTWC BULLETIN IS NOT A DEAD JTWC. The Pacific bulletin still '
+  + 'listed a system, so the source is `ok` and its areas stay on screen'
+);
+ok(
+  halfJtwc.areas.some((a) => /98W/.test(a.title || '')),
+  'and the surviving bulletin’s system is actually in the list, not just '
+  + 'implied by a status word'
+);
+ok(
+  /abio/.test(halfJtwc.sources.jtwc.reason || ''),
+  'while the dead half is NAMED in the reason — "the Indian Ocean bulletin '
+  + 'failed" is actionable, "1 of 2 sources failed" is not'
+);
+
+RELAY = {
+  '/api/nhc/genesis': { json: AREAS_FC },
+  '/api/jtwc/abpw': { throw: true },
+  '/api/jtwc/abio': { text: ABIO_BUSY },
+  ...OUTLOOKS_BUSY,
+};
+const halfOther = await fetchGenesis({ now: FIXTURE_NOW });
+ok(
+  halfOther.areas.some((a) => /93S/.test(a.title || '')),
+  'AND THE MIRROR: a dead Pacific bulletin still lets an Indian Ocean system '
+  + 'through. Testing only one direction proves the merge works for whichever '
+  + 'source happens to be listed first'
+);
+
 ok(
   bothDown.status === 'unavailable',
   'both sources unreachable is `unavailable` — the one state where the section '

@@ -35,7 +35,7 @@
  */
 
 import { ADVISORY_TEXT, ENDPOINT } from '../config/constants.js';
-import { extractNhcProduct, nhcAdvisoryNumber, matchJtwcStorm } from '../lib/advisory.js';
+import { extractNhcProduct, nhcAdvisoryNumber, nhcGustKt, matchJtwcStorm } from '../lib/advisory.js';
 import { fetchText } from './relay.js';
 import { getJtwcIndex, evictJtwcIndex } from './jtwc-index.js';
 
@@ -188,4 +188,74 @@ export async function fetchAdvisory(storm, { retry = false } = {}) {
   }
 
   return cachePut(key, rec);
+}
+
+/* --- the gust, out of a second NHC product -----------------------------------
+ *
+ * ==> A SEPARATE CACHE, BECAUSE IT IS A SEPARATE PAGE. <== The store above is
+ * keyed on `advisoryKey` and holds the PUBLIC advisory. The gust comes out of
+ * the coded FORECAST advisory (`lib/advisory.js` `nhcGustKt` explains why it
+ * has to), which is a different URL under the same key. Sharing one map would
+ * mean the second read evicting the first and the panel refetching the
+ * advisory text every time it rendered a wind row.
+ * ------------------------------------------------------------------------ */
+
+const gustStore = new Map();
+
+export function evictNhcGust(advisoryKey) {
+  gustStore.delete(advisoryKey);
+}
+
+/**
+ * The gust for an NHC storm, in knots, or null.
+ *
+ * ==> LAZY, AND ONLY EVER FROM THE DRAWER. <== `observeDeclarations` already
+ * reads one text product per NHC storm on a poll, unprompted, for every storm
+ * in the list. Adding a second one there would double a cost nobody asked for
+ * on behalf of a row most readers never scroll to. This is called when a storm
+ * panel opens, so a reader who never taps a storm pays nothing, and the result
+ * is cached per advisory — six hours — so stepping between two storms and back
+ * costs one round trip each and no more.
+ *
+ * NULL COVERS BOTH "NO GUST STATED" AND "COULD NOT READ IT", DELIBERATELY, and
+ * this is the one place in this file that collapses two states on purpose. The
+ * distinction earns its keep when a reader is looking at a section and needs to
+ * know whether to retry; it does not earn its keep for ONE ROW inside a section
+ * that has already rendered from a different source. A failed gust read leaves
+ * the Winds row exactly as it was, which is the honest picture — we know the
+ * wind, we do not know the gust. There is nothing for a Retry button to be
+ * attached to and nothing a reader could do with the difference.
+ *
+ * FAILURES ARE CACHED like every other read here. A dead product must not be
+ * refetched on every repaint.
+ */
+export async function fetchNhcGustKt(storm) {
+  if (!storm || storm.source !== 'nhc') return null;
+  const bin = storm.raw?.binNumber;
+  const key = storm.advisoryKey;
+  if (!bin || !key) return null;
+
+  if (gustStore.has(key)) {
+    const v = gustStore.get(key);
+    gustStore.delete(key);
+    gustStore.set(key, v);
+    return v;
+  }
+
+  let kt = null;
+  try {
+    const { text: html } = await fetchText(
+      `${ENDPOINT.relay}/nhc/advisory?bin=${encodeURIComponent(bin)}&kind=TCM`
+    );
+    const product = extractNhcProduct(html);
+    kt = product ? nhcGustKt(product.text) : null;
+  } catch {
+    kt = null;
+  }
+
+  gustStore.set(key, kt);
+  while (gustStore.size > ADVISORY_TEXT.lruStorms) {
+    gustStore.delete(gustStore.keys().next().value);
+  }
+  return kt;
 }
