@@ -87,6 +87,10 @@ import { windThresholdFromProps, windColor, WIND_LABEL } from '../lib/wind.js';
 import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
 import { loadTowns, townsOrNull, populationState } from '../data/population.js';
 import { POPULATION } from '../config/constants.js';
+/* The same shapes Home draws beside its headings, for the same ideas — Wind
+ * field takes Home's wind glyph, Rainfall takes its rain cloud. See
+ * ui/section-icon.js for why the set is a file rather than a private helper. */
+import { iconSvg } from './section-icon.js';
 import { DOTS } from './loading-dots.js';
 import { createEnvHealth, ENV_SECTION } from './env-health.js';
 import { createRainStorm, RAIN_SECTION } from './rain-storm.js';
@@ -525,13 +529,20 @@ export function createStormDetailView({
    * teletype product and would push every one of them off screen (§16 item 7
    * — "never auto-expanded"). The user's own choice, once made, is persisted
    * and wins over the default from then on. */
-  function section(id, title, innerHtml, { defaultCollapsed = false } = {}) {
+  /* ==> THE ICON IS AN ARGUMENT, NOT A LOOKUP KEYED ON `id`. <== A map from
+   * section id to icon would have to live somewhere, and wherever it lived it
+   * would be a second list of this panel's sections that a new section could
+   * be added to only half of — the failure being that the new section silently
+   * gets no icon and looks like a rendering bug. Passed in at the call site,
+   * an icon is impossible to forget: it sits in the same line as the heading
+   * it belongs to. */
+  function section(id, title, icon, innerHtml, { defaultCollapsed = false } = {}) {
     const isCollapsed =
       collapsed[id] === undefined ? defaultCollapsed : !!collapsed[id];
     return `
       <section class="detail-section" data-section="${id}" data-collapsed="${isCollapsed}">
         <button class="detail-section-head" type="button" aria-expanded="${!isCollapsed}">
-          <h2>${esc(title)}</h2>
+          <h2>${iconSvg(icon)}<span>${esc(title)}</span></h2>
           <span class="detail-chevron" aria-hidden="true"></span>
         </button>
         <div class="detail-section-body">${innerHtml}</div>
@@ -1519,7 +1530,7 @@ export function createStormDetailView({
       bodyEl.innerHTML = `
         <div class="detail-ghost-note">This storm is no longer in ${sourceLabel(storm.source)}.
         Last known information is shown below.</div>
-        ${section('vitals', 'Last known', vitalsHtml())}
+        ${section('vitals', 'Last known', 'gauge', vitalsHtml())}
         ${disclaimerHtml()}`;
       wireSections();
       return;
@@ -1533,8 +1544,12 @@ export function createStormDetailView({
        * measurement of a moment that has passed, and "Vitals" reads as present
        * tense. One word, and it stops the panel from asserting a current wind
        * for a storm nobody is measuring. */
-      section('vitals', isEnded(storm) ? 'Last known' : 'Vitals', vitalsHtml()),
-      homeBlock ? section('home', 'Home', homeBlock) : '',
+      section('vitals', isEnded(storm) ? 'Last known' : 'Vitals', 'gauge', vitalsHtml()),
+      /* `target`, NOT A HOUSE. This section is the distance to home and the
+       * closest approach — the same two figures Home's own closest-pass
+       * section carries, under the same crosshair. A house here would name the
+       * place; both sections are about the RANGE to it. */
+      homeBlock ? section('home', 'Home', 'target', homeBlock) : '',
       /* ==> ONE SECTION, BOTH SOURCES. <== This was TWO — "In effect" and
        * "Local agency alerts" — and exactly one of them ever held content,
        * because they are selected by source and the sources are exclusive. An
@@ -1559,12 +1574,13 @@ export function createStormDetailView({
        * reading — so a cancellation under a heading reading IN EFFECT is the
        * heading contradicting the row beneath it. The new one is true of both
        * halves without claiming anything about any single row. */
-      section('ww', 'Watches and warnings', wwHtml()),
-      section('wind', 'Wind field', windHtml()),
-      section(RAIN_SECTION, 'Rainfall', rainHtml()),
-      section(ENV_SECTION, 'Environment', envHtml()),
-      section(PEOPLE_SECTION, 'People in the path', peopleHtml()),
-      section(ADVISORY_SECTION, 'Advisory', advisoryHtml(), { defaultCollapsed: true }),
+      section('ww', 'Watches and warnings', 'alert', wwHtml()),
+      /* Home's "How strong" glyph. Same idea, same shape, both drawers. */
+      section('wind', 'Wind field', 'wind', windHtml()),
+      section(RAIN_SECTION, 'Rainfall', 'rain', rainHtml()),
+      section(ENV_SECTION, 'Environment', 'thermo', envHtml()),
+      section(PEOPLE_SECTION, 'People in the path', 'people', peopleHtml()),
+      section(ADVISORY_SECTION, 'Advisory', 'doc', advisoryHtml(), { defaultCollapsed: true }),
       /* Last, always. Everything above is what the sources say; this is who
        * is saying it. */
       disclaimerHtml(),

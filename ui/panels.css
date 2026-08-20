@@ -516,21 +516,102 @@
  * declares for the same property still wins. Those rules therefore carry only
  * their own layout (margins, grid placement) and nothing about type. If a
  * heading here ever stops matching the others, look for a type declaration
- * that crept back into home.css. */
+ * that crept back into home.css.
+ *
+ * ==> AND IT IS TWO LEVELS NOW, NOT ONE. <== The list above used to be a
+ * single rule, so "WATCHES AND WARNINGS" — which names a whole section — was
+ * set identically to "DISTANCE", which labels one figure INSIDE a section. A
+ * reader scrolling the storm panel got no signal at all about which of those
+ * two things they had just passed. Everything was a heading, therefore nothing
+ * was.
+ *
+ * ==> AND THE HEADING WAS SMALLER THAN ITS OWN CONTENT. <== 0.6875rem over
+ * 0.875rem body text. That is upside down, and Aaron called it on glass
+ * 2026-08-20: the section labels read as captions on the paragraphs above
+ * them rather than as titles of the ones below.
+ *
+ * The fix is BOTH halves at once, and it has to be. Enlarging every heading
+ * would have kept the panel just as flat, only louder; splitting the levels
+ * without enlarging would have left the top level still under its own body
+ * text. Level one goes up a step and level two stays exactly where it was, so
+ * the gap between them IS the hierarchy.
+ *
+ * WHY --type-body AND NOT --type-lead for level one. Capitals are taller than
+ * lowercase at the same size, so all-caps at the body step already reads
+ * larger than the sentence beneath it without being a second voice. The step
+ * above is where a tracked all-caps label starts to shout.
+ *
+ * THE LETTER-SPACING COMES DOWN, 0.09em to 0.06em, and it is not a separate
+ * opinion. Tracking on all-caps exists to stop small capitals colliding; at
+ * 0.6875rem 0.09em is right and at 0.875rem the same figure is a visible gap
+ * between every pair of letters. The word has to still read as a word.
+ *
+ * ----- LEVEL ONE: a heading that names a whole section ------------------- */
 .basin-head,
 .watch-head,
 .layer-group-head,
+.detail-section-head h2,
+.home-kicker {
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ----- LEVEL TWO: a label on one figure INSIDE a section -----------------
+ *
+ * Unchanged, and staying unchanged is the point — these are the fixed floor
+ * that level one is now measured against. `.area-source` is in here because it
+ * is a byline under the area's name rather than a heading of anything, and it
+ * has always taken this treatment; it sits in this list so that fact is
+ * written down somewhere instead of being inferred from where the selector
+ * happened to land. */
 .model-family-head,
 .detail-kicker,
-.detail-section-head h2,
 .area-source,
-.home-kicker,
 .home-figs-k {
   font-size: var(--type-micro);
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--text-muted);
+}
+
+/* ==> THE ICON BESIDE A LEVEL-ONE HEADING. <==
+ *
+ * One layout rule for both drawers, because Home's headings and the storm
+ * panel's are the same object in different markup — a plain block on one and a
+ * button that collapses a section on the other. The shapes are in
+ * ui/section-icon.js.
+ *
+ * SIZED HERE AND NOT ON THE <svg>. A width attribute in the icon function
+ * would mean every heading icon in the app is retuned by editing JavaScript,
+ * and it would drift from the type step beside it the first time that step
+ * moved. 16px against the 0.875rem cap height reads as one object with the
+ * word rather than a bullet in front of it.
+ *
+ * `align-items: center` and not `baseline`: an icon has no baseline worth
+ * agreeing with, and centering it on the cap height is what stops it sitting
+ * low. */
+.home-kicker--icon,
+.detail-section-head h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  /* The heading is inside a flex row with the chevron on the storm panel; a
+   * long title has to be allowed to shrink rather than push the chevron off
+   * the edge. Harmless on Home, which has no second child. */
+  min-width: 0;
+}
+
+.sect-ico {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  /* Inherits the heading's color, so the two can never drift apart. */
+  color: inherit;
+  opacity: 0.9;
 }
 
 /* --- basin groups ---------------------------------------------------------

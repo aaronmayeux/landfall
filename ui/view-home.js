@@ -54,6 +54,10 @@ import { createRainHome } from './rain-home.js';
 import { createSurgeHome } from './surge-home.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
+/* The icon set lives in its own file now — the storm panel draws the same
+ * shapes for the same ideas, and a set owned by one of its two callers is a
+ * set that drifts. See ui/section-icon.js. */
+import { iconSvg } from './section-icon.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -759,56 +763,17 @@ export function createHomeDashboardView({
   }
 
   /**
-   * A section heading: an icon and its words.
+   * A section heading on THIS panel: an icon and its words.
    *
-   * ==> THE ICON IS BESIDE THE LABEL, NOT INSTEAD OF IT. <== A pin, a gauge
-   * and a wind arrow are not a shared vocabulary — the reader has to learn
-   * this app's meaning for each one, and a heading nobody can read is a
-   * section nobody can skip past. What the icons buy is SCANNING: on a screen
-   * of five stacked blocks of text, a shape at the left edge of each heading
-   * is what the eye uses to find its place, and that works whether or not the
-   * reader ever decodes the shape.
-   *
-   * `aria-hidden` on every one of them, because the words beside them are
-   * already the accessible name and "image, pin, Where it is" is noise on the
-   * one surface that cannot afford it.
+   * The shapes themselves are in ui/section-icon.js, shared with the storm
+   * panel. What stays here is only the wrapper — Home's headings are plain
+   * blocks, the storm panel's are buttons that collapse a section, and those
+   * two are different markup for a reason rather than by accident.
    */
   function sectHead(icon, label) {
     return `<div class="home-kicker home-kicker--icon">
         ${iconSvg(icon)}<span>${esc(label)}</span>
       </div>`;
-  }
-
-  /** The icon set, in one place. Stroke-only, 24-box, inheriting `currentColor`
-   *  so a heading and its icon can never drift apart in color. */
-  const ICON_PATH = Object.freeze({
-    /* Where it is — a map pin. */
-    pin: '<path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/>',
-    /* How strong — the wind glyph, three trailing streams. */
-    wind: '<path d="M3 8h10a3 3 0 1 0-3-3"/><path d="M3 12h14a3 3 0 1 1-3 3"/><path d="M3 16h7"/>',
-    /* Rain — a cloud with fall lines under it. */
-    rain: '<path d="M7 15.5a4 4 0 0 1 .5-7.97 5 5 0 0 1 9.4 1.02A3.5 3.5 0 0 1 17 15.5Z"/>' +
-      '<path d="M9 18.5 8 21M13 18.5 12 21M17 18.5 16 21"/>',
-    /* Timeline — a clock, because every row on it is a time. */
-    clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
-    /* Vitals — a gauge needle. */
-    gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 17l4-5"/>',
-    /* Coastal flooding — a wave crest over a level line. Deliberately NOT the
-     * rain cloud with more drops: these two sections sit adjacent and their
-     * icons are the only thing distinguishing them at a glance while
-     * scrolling. */
-    surge: '<path d="M3 16c2 0 2-1.5 4-1.5S9 16 11 16s2-1.5 4-1.5S17 16 19 16"/>' +
-      '<path d="M3 20h18"/><path d="M6 11c0-3 3-4 6-7 3 3 6 4 6 7"/>',
-    /* The closest pass — a crosshair over the house. */
-    target: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2"/>' +
-      '<path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
-  });
-
-  function iconSvg(name) {
-    const d = ICON_PATH[name];
-    if (!d) return '';
-    return `<svg class="home-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
   }
 
   /** The headline: the closest pass, and — always beside it — the band.

@@ -762,26 +762,13 @@
 
 /* --- section headings ----------------------------------------------------
  *
- * The icon is BESIDE the label, never instead of it. What it buys is
- * scanning: on a stack of five text blocks, a shape at the left edge of each
- * heading is what the eye uses to find its place — and that works whether or
- * not the reader ever learns what a gauge or a pin is meant to mean here.
+ * NOTHING LEFT HERE. `.home-kicker--icon` and the icon itself were declared in
+ * this file when Home was the only panel with icons beside its headings. The
+ * storm panel draws the same shapes now, so the layout and the icon size moved
+ * to the shared block in ui/panels.css (`.sect-ico`), next to the type recipe
+ * they have to stay in step with. `.home-kicker` keeps its margin below, which
+ * is Home's own spacing and nobody else's.
  * ----------------------------------------------------------------------- */
-
-.home-kicker--icon {
-  display: flex;
-  align-items: center;
-  gap: var(--space-tight);
-}
-
-.home-ico {
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-  /* Inherits the heading's color, so the two can never drift apart. */
-  color: inherit;
-  opacity: 0.9;
-}
 
 /* --- where it is ---------------------------------------------------------- */
 
