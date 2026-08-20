@@ -59,6 +59,43 @@ traded for.
 
 ## IN FLIGHT
 
+**FOUR POLISH CALLS FROM 2026-08-20, ALL DEPLOYED, ALL VISIBLE RIGHT NOW WITH NO
+WEATHER NEEDED.** Open the app, open the home drawer on any storm, open the
+credits pill. Ten minutes, and this really is ten minutes — unlike everything
+under `HELD FOR WEATHER`.
+
+**1. THE HOME DRAWER'S SECOND LINE IS BARE TEXT NOW.** It was a bordered pill
+(`Hours away`) in the slot where the storm detail panel puts `Tropical Storm`.
+Same words, same ladder, no box — and the `calm` tone went with the box, so the
+line is one colour on both drawers. **Step between the two drawers and see
+whether the header now reads as one design.** The name's position must not move
+between them; `tools/drawer-head-check.mjs` asserts that to 1.5px, but it
+measures a harness, not the app.
+
+**2. RAIL LABELS DODGE THE DOTTED VERTICALS.** The `now` line was running
+through the middle of an arrival time. They now merge to whichever side of the
+bar is free, or slide a few pixels past the line if neither side is. **The
+question is the slide: a merged chip pushed clear of a vertical sits in a small
+gap away from its bar.** It stays on the bar's centre line in the bar's colour,
+which is the argument that it still reads as belonging to that row — worth
+checking that argument is true. Swept across 216 rendered frames with zero
+crossings (`tools/test-home-ida.mjs`), so what is left is taste, not geometry.
+
+**3. THE CREDITS PILL: NEW GLYPH, AND IT WRAPS.** The "i" is an italic serif
+letter drawn as paths. It was one unwrapped line about 1,100px wide on a 390px
+phone, running off the edge and passing behind the storm pill and the controls;
+it wraps now, is capped against the viewport, grows upward, and lifts above the
+drawer and the controls while open. **Two things to judge:** does the glyph read
+as a letter at 28px, and does a five-line panel of grey credits over a lit globe
+read, or turn to mud. Verified at 390/768/1280 and through a rotation by
+`tools/attrib-check.mjs` — the geometry is settled, the legibility is not.
+
+**4. AND IT IS NOW A LONGER LIST, WHICH IS THE PART MOST LIKELY TO NEED
+TRIMMING.** Five credits were added (below). On a phone that is eight lines and
+covers a real slice of the screen. If it reads as a wall, the lever is wording —
+`NOAA — National Hurricane Center, NWS and JTWC` is the longest row and owes
+nothing legally, so it is the first thing that can be shortened.
+
 **§48.10 IS STILL UNSETTLED, AND THE ONE THING THAT SETTLES IT IS AN NHC STORM
 NEAR A HOME PIN.** The storm drawer's Rainfall section now holds NHC's area
 range and the house's point total, one above the other, separated by a hairline,
@@ -109,6 +146,29 @@ recolouring if it needs to change.
 storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
+
+**THE CREDITS PANEL HAS A GATE NOW, AND THAT CHANGES WHAT LANDING A FEED
+COSTS.** `tools/test-attribution.mjs` reads every external host the app can
+reach — the client's exported constants, and every `https://` literal in
+`functions/` and `worker/` — and fails unless each one is in `CREDIT_HOSTS` in
+`map/attribution.js`, mapped either to a credit that is really in the panel or
+to `null` with a reason. **Wiring up a new feed now turns the push red until
+somebody decides which it is.** That is the point, not a nuisance: the panel is
+hand-maintained precisely because MapLibre's auto-derived one could not be made
+to start collapsed, and a hand-maintained list guarded only by a comment is the
+thing this repo has already watched drift.
+
+**It found three real gaps on the day it was written**, all now fixed and
+deployed: Open-Meteo (CC BY 4.0, credited only in the rain provenance line, so
+absent from every screen where rain had not rendered), Esri's CAP alerts feed
+(fetched and shown since it was wired, credited nowhere), and Mapbox (live,
+billed address search, credited nowhere). NHC/NWS/JTWC and GDACS were added too;
+the American products owe nothing legally and are listed because this panel is
+where a reader goes to find out where the numbers came from.
+
+**WHAT IT STILL CANNOT DO, so nobody over-trusts a green run:** it cannot judge
+whether a credit's WORDING satisfies a licence. It checks that a decision was
+made and that the two lists agree with each other. A human reads the terms.
 
 **`no_ribs` IS TWO DIFFERENT FAILURES WEARING ONE SENTENCE, AND IT COST A
 SESSION.** `lib/cone-ribbon.js` returns `no_ribs` both when the cone could not

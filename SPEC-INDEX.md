@@ -90,32 +90,32 @@ real home is the other row carrying the same section number.
 | `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1664-1694 |
 | `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1695-1729 |
 | `13` | Inherited hard-won rules | `SPEC.md` | 1730-1731 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2239-2245 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2246-2252 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2296-2302 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2303-2309 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1049-1050 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2253 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2310 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1625-1805 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1806-2103 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1806-2124 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2259 |
-| `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-147 |
-| `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 148-160 |
-| `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 161-202 |
-| `17.4` | &nbsp;&nbsp;`_headers` and the CSP | `SPEC-OPS.md` | 203-272 |
-| `17.5` | &nbsp;&nbsp;Telemetry | `SPEC-OPS.md` | 273-526 |
-| `17.6` | &nbsp;&nbsp;The app has a failure state for its own boot | `SPEC-OPS.md` | 527-555 |
-| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 556-848 |
-| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 849-909 |
-| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 910-975 |
-| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 976-987 |
-| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 988-1039 |
-| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1091-1129 |
-| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1150-1160 |
-| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1161-1171 |
-| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1172-1193 |
-| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1194-1223 |
-| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1224-1230 |
-| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1231-1242 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2316 |
+| `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
+| `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
+| `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
+| `17.4` | &nbsp;&nbsp;`_headers` and the CSP | `SPEC-OPS.md` | 207-276 |
+| `17.5` | &nbsp;&nbsp;Telemetry | `SPEC-OPS.md` | 277-530 |
+| `17.6` | &nbsp;&nbsp;The app has a failure state for its own boot | `SPEC-OPS.md` | 531-559 |
+| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 560-852 |
+| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 853-913 |
+| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 914-979 |
+| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 980-991 |
+| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 992-1043 |
+| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1095-1133 |
+| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1154-1164 |
+| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1165-1175 |
+| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1176-1197 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1227 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1228-1234 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1235-1246 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -173,7 +173,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1728-1814 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 3340-3357 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 3358-3366 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2295-2486 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2316-2507 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1815-1945 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 71-72 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 73-89 |
@@ -184,7 +184,7 @@ real home is the other row carrying the same section number.
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 446-471 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 472-508 |
 | `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 509-854 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2505-2602 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2526-2623 |
 | `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 855-878 |
 | `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 879-974 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1946-1947 |
@@ -195,21 +195,21 @@ real home is the other row carrying the same section number.
 | `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 2067-2096 |
 | `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 2097-2134 |
 | `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2135-2179 |
-| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2603-2667 |
-| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2668-2697 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2698-2729 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2624-2688 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2689-2718 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2719-2750 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2180-2225 |
-| `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 2730-2754 |
-| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1130-1149 |
+| `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 2751-2775 |
+| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1134-1153 |
 | `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2312-2348 |
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2349-2381 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2382-2432 |
-| `48.17` | &nbsp;&nbsp;At your house — the point forecast in the storm drawer | `SPEC-UI.md` | 2755-2830 |
+| `48.17` | &nbsp;&nbsp;At your house — the point forecast in the storm drawer | `SPEC-UI.md` | 2776-2851 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 975-976 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 977-1032 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1033-1058 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2226-2311 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2879-2901 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2900-2922 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1059-1111 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1112-1163 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1164-1282 |
@@ -242,7 +242,7 @@ real home is the other row carrying the same section number.
 | `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 3028-3076 |
 | `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 3077-3127 |
 | `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3128-3166 |
-| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2831-2878 |
+| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2852-2899 |
 | `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3167-3214 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1800-1837 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1857-1889 |
@@ -255,8 +255,8 @@ real home is the other row carrying the same section number.
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 214,373 | 38 |
 | `SPEC-NEXT.md` | 121,628 | 29 |
-| `SPEC-OPS.md` | 75,801 | 20 |
-| `SPEC-UI.md` | 170,568 | 13 |
-| `SPEC.md` | 155,168 | 14 |
+| `SPEC-OPS.md` | 76,106 | 20 |
+| `SPEC-UI.md` | 172,130 | 13 |
+| `SPEC.md` | 159,572 | 14 |
 | `spec-parameter.md` | 56,804 | 49 |
 

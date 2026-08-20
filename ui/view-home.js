@@ -508,15 +508,30 @@ export function createHomeDashboardView({
    * only the dashboard has walked the track and the wind fields. This chooses
    * words for them and nothing else.
    *
-   * `data-tone="calm"` is on the rungs that are not a warning and off the ones
-   * that are — so the color and the word can never disagree. */
+   * ==> IT IS PLAIN TEXT NOW, NOT A PILL, AND THE WORDS ARE UNCHANGED. <== It
+   * rendered as a bordered `.home-chip` in the drawer header's second line,
+   * directly beside a detail panel whose second line is bare text in the same
+   * slot. Two drawers, one header shape, two different objects in it — Aaron's
+   * call on glass 2026-08-20 was that the header should read the same on both.
+   * The LADDER is the thing worth keeping and it is untouched; only the box
+   * around it is gone.
+   *
+   * ==> AND THE `calm` TONE WENT WITH THE BOX, DELIBERATELY. <== Each rung used
+   * to carry a boolean that painted the non-warning rungs muted and the warning
+   * rungs secondary, so the colour and the word could not disagree. The detail
+   * panel's classification line is one colour, always, and a second line that
+   * changes colour on one drawer and not the other is exactly the inconsistency
+   * this change exists to remove. Nothing is lost that the screen does not say
+   * louder elsewhere: the category dot sits directly above these words in the
+   * storm's own Saffir-Simpson ink, and the sections below state the approach
+   * in sentences. */
   const STAGE_CHIP = Object.freeze({
-    'wind-here':     ['On you now', false],
-    overhead:        ['Passing you now', false],
-    imminent:        ['Hours away', false],
-    'bearing-down':  ['Bearing down', false],
-    closing:         ['Closing in', false],
-    'just-passed':   ['Just passed you', true],
+    'wind-here':     'On you now',
+    overhead:        'Passing you now',
+    imminent:        'Hours away',
+    'bearing-down':  'Bearing down',
+    closing:         'Closing in',
+    'just-passed':   'Just passed you',
     /* ==> `past` USED TO CARRY TWO DIFFERENT FACTS AND ONE WORD. <== It was
      * both "this storm came close to you and that is behind you now" and
      * "this storm is simply heading away", and "Moving away" is only true of
@@ -524,13 +539,13 @@ export function createHomeDashboardView({
      * a departed storm is just its current distance — so a storm that went 12
      * miles past the house three days ago read as `far-off`: "Not near you".
      *
-     * Two facts, two rungs, two chips. `gone-by` is a statement about
+     * Two facts, two rungs, two sets of words. `gone-by` is a statement about
      * something that happened to THIS house; `past` is a statement about which
-     * way the storm is pointed. Both stay `calm` — neither is a warning. */
-    'gone-by':       ['Has passed', true],
-    past:            ['Moving away', true],
-    'far-off':       ['Not near you', true],
-    'track-unknown': ['Track unknown', true],
+     * way the storm is pointed. */
+    'gone-by':       'Has passed',
+    past:            'Moving away',
+    'far-off':       'Not near you',
+    'track-unknown': 'Track unknown',
     /* ==> THE THREE RUNGS BELOW WERE ONE WORD, AND TWO OF THEM NEVER MOVED
      * OFF IT. <== `pending` covered every reason the curve was missing, so a
      * storm whose forecast had ALREADY come back — failed, or answered with
@@ -539,21 +554,25 @@ export function createHomeDashboardView({
      * track, his own detail panel said so plainly, and the home drawer beside
      * it claimed to still be working.
      *
-     * All three are `calm`, and that is the point — none of them is a warning
-     * about the storm. They are statements about what is KNOWN. */
-    'no-track': ['No forecast yet', true],
-    'track-failed': ['Track unavailable', true],
+     * None of the three is a warning about the storm. They are statements
+     * about what is KNOWN. */
+    'no-track': 'No forecast yet',
+    'track-failed': 'Track unavailable',
     /* Geometry has not arrived yet, and ONLY that. The dots move on this one
-     * (ui/loading-dots.js), so it is the single chip on this ladder allowed to
+     * (ui/loading-dots.js), so it is the single rung on this ladder allowed to
      * imply something is still happening. */
-    pending:         ['Checking…', true],
+    pending:         'Checking…',
   });
 
-  function chipHtml(dash, threat) {
-    const [word, calm] =
+  /** The stage word for the drawer header's second line — bare text, in the
+   *  same slot and the same type role the detail panel's classification line
+   *  uses. No element of its own: an extra `<span>` here would be a hook for
+   *  exactly the kind of per-drawer styling this pass removed. */
+  function stageWordHtml(dash, threat) {
+    const word =
       STAGE_CHIP[dash?.stage] ||
       (threat?.why === 'closing' ? STAGE_CHIP['bearing-down'] : STAGE_CHIP.pending);
-    return `<span class="home-chip"${calm ? ' data-tone="calm"' : ''}>${dotted(esc(word))}</span>`;
+    return dotted(esc(word));
   }
 
   /* --- the dashboard proper ----------------------------------------------- */
@@ -614,10 +633,16 @@ export function createHomeDashboardView({
    * and its chevrons in a thin row underneath. Two steppers in two shapes for
    * one job.
    *
-   * So the name and its chip go into the drawer header, in the SAME identity
-   * block the detail panel supplies (`.drawer-identity`), and the chevrons go
-   * into the SAME pinned stepper. The two drawers are now one design. Aaron's
-   * call on glass 2026-08-12.
+   * So the name and its stage word go into the drawer header, in the SAME
+   * identity block the detail panel supplies (`.drawer-identity`), and the
+   * chevrons go into the SAME pinned stepper. The two drawers are now one
+   * design. Aaron's call on glass 2026-08-12.
+   *
+   * ==> AND THE SECOND LINE IS BARE TEXT ON BOTH, AS OF 2026-08-20. <== The
+   * shapes matched from the day above; the CONTENTS did not. This drawer put a
+   * bordered pill in the slot where the detail panel puts its classification,
+   * so stepping between the two showed the same header wearing two different
+   * objects. The words are unchanged — see STAGE_CHIP — only the box is gone.
    *
    * WHAT IT COST: the name is smaller than it was. Header type is smaller than
    * 1.35rem, and sizing it back up would grow the pinned header on the panel
@@ -654,7 +679,7 @@ export function createHomeDashboardView({
         <span class="drawer-identity-dot" style="--dot-ink: ${esc(stormSwatch(s))}" aria-hidden="true"></span>
         <h1 class="drawer-title">${esc(s.name)}</h1>
       </div>
-      <div class="drawer-identity-sub">${chipHtml(dash, threat)}</div>
+      <div class="drawer-identity-sub">${stageWordHtml(dash, threat)}</div>
     `;
     return wrap;
   }

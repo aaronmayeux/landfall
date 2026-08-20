@@ -99,9 +99,13 @@ Three surfaces:
 - **Permanently, in Settings** — plus the sources, the privacy statement and the
   copyright line. Settings is where people already look for "what is this," it is
   where the install door lives, and it is reachable by tap, click and keyboard.
-  **Not the credits pill:** `map/attribution.js` animates its width from a
-  measurement of its own single-line label, and a wrapped paragraph inside it
-  breaks that measurement.
+  **Not the credits pill:** it is a licensing surface — a list of who owns
+  what — and a paragraph about what the app is for is a different kind of
+  statement that would read as one more credit. (The reason recorded here used
+  to be mechanical: the pill measured a single unwrapped line and a paragraph
+  broke the measurement. That stopped being true on 2026-08-20 when the label
+  was made to wrap. The decision stands on the first reason, which was always
+  the better one.)
 - **The storm detail panel footer** — `DISCLAIMER.short` plus a live link to
   whichever source this storm came from (above), rendered last in
   `ui/view-storm-detail.js`'s body, **including on the ghost form**, since a storm that has left the feed is exactly when a reader is

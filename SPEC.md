@@ -1306,7 +1306,7 @@ wrong row says a file was looked at and judged when it was not.
 | `map/radar-layer.js` | 428 | **New in Wave 6, and still comfortably under.** Radar as a MapLibre raster tile source: the frame lookup, the tiles template, the bounded install/teardown, the throttle guard, the coverage sentence and the refresh cadence. No canvas in it at all. Grew 101 lines fixing the unbounded-tiles outage (§4.9) — the bounds bookkeeping and the failure counter — and the geometry that decides the boxes went OUT to `lib/imagery.js` rather than in here, which is why it did not grow more. |
 | `data/lifecycle.js` | 1021 | **Watch, and closer to a cut than the number alone says.** The registry, the persisted shape, the three ending routes and the track repair's two seams are already four separable concerns; the FETCHING half of the repair went to `data/ended-track.js` rather than in here, which is the pattern the eventual split should follow. |
 | `ui/view-home.js` | 1659 | **Over the line, and the first cut on its list is taken.** `countdownHtml` was 168 lines of CODE — the longest function in the app by more than double, which is the shape §12 actually cares about — and it moved out whole to `ui/countdown-home.js` with `headingOf` and `motionDetail`, which are its other caller's too. No behaviour changed in the move: the two things the rail used to close over, the unit system and `sectHead`, are handed in as arguments, and `tools/test-home.mjs` and `test-home-ida.mjs` cover it (557 assertions, and a reversed sort in the moved file fails five of them). Two concerns remain on the list: the strength strip and its figures, and the quiet/error/no-home states. **§49's passes 3 and 5 put 275 lines back** — pass 5 added the past-tense wind clause and the four arms the sentence now splits into — — the past-tense headline, the mid-pass line and the tense arms of the strength strip — and that is the pass the split now waits on: it is a CORRECTNESS change, and moving code in the same breath as changing its meaning means a break could be either. The split is the next pass on this file and it carries no behaviour with it. **§51.3 added ~118 lines and took the one seam the rule allows** — a section string, an ensure, a repaint and an icon, with the whole controller in `ui/surge-home.js`, exactly as Rain did. That is the shape this file's growth is now limited to until the split lands. **And it shrank by 35 for the first time**: the seven-shape icon set and `iconSvg` moved out to `ui/section-icon.js` when the storm panel became their second caller. `sectHead` stays here — it is the wrapper, and Home's headings are plain blocks where the storm panel's are collapse buttons. |
-| `ui/chart-home.js` | 958 | **Newly over the line, by seventeen lines, and the cut list is already legible.** Crossed it when §49's pass 4 gave the picture a left half — the past window's two cuts, the observed path, and the rule that decides which closest pass the marker names. It is four things: the frame arithmetic (`niceStep`, the header/rail/plot geometry), the wind rail's bars and their label placement, the plot itself (bands, tracks, grid, marker), and `summary()`, which is the accessible twin and shares nothing with the drawing. **`summary()` is the clean lift** — it is pure text, it is the one part with a separate reader, and §49.9 will grow it again when the corridor learns a past arm. Take it out before the next thing lands here. **§49.9 has now landed and grew it by 53 lines**, exactly as predicted: the measured wind field is a second series feeding the same bands and bars, and the past-only case needed the domain to survive an empty forward walk. Moving the solid/dotted seam to `now` added a further 114, most of it the argument for the reversal rather than the arithmetic — `path()` and `splitAtNow()` are 45 lines between them. **`summary()` is still the clean lift and is now well overdue: nothing else should land in this file before it is taken out.** ==> AND SOMETHING DID LAND, AND THAT IS RECORDED HERE RATHER THAN QUIETLY ABSORBED. <== §49.17 added 74 lines (mostly the reason, not the arithmetic): `railClock`, and the rule that a wind field with no width is not painted, which splits each band into RUNS of positive reach instead of one polygon. It went in against this instruction because it is a correctness fix on what the screen states about arriving wind, and a refactor in the same commit would have made a safety change harder to read and harder to revert. **The lift is now the next thing to happen in this file, ahead of any feature.** |
+| `ui/chart-home.js` | 1037 | **Newly over the line, by seventeen lines, and the cut list is already legible.** Crossed it when §49's pass 4 gave the picture a left half — the past window's two cuts, the observed path, and the rule that decides which closest pass the marker names. It is four things: the frame arithmetic (`niceStep`, the header/rail/plot geometry), the wind rail's bars and their label placement, the plot itself (bands, tracks, grid, marker), and `summary()`, which is the accessible twin and shares nothing with the drawing. **`summary()` is the clean lift** — it is pure text, it is the one part with a separate reader, and §49.9 will grow it again when the corridor learns a past arm. Take it out before the next thing lands here. **§49.9 has now landed and grew it by 53 lines**, exactly as predicted: the measured wind field is a second series feeding the same bands and bars, and the past-only case needed the domain to survive an empty forward walk. Moving the solid/dotted seam to `now` added a further 114, most of it the argument for the reversal rather than the arithmetic — `path()` and `splitAtNow()` are 45 lines between them. **`summary()` is still the clean lift and is now well overdue: nothing else should land in this file before it is taken out.** ==> AND SOMETHING DID LAND, AND THAT IS RECORDED HERE RATHER THAN QUIETLY ABSORBED. <== §49.17 added 74 lines (mostly the reason, not the arithmetic): `railClock`, and the rule that a wind field with no width is not painted, which splits each band into RUNS of positive reach instead of one polygon. It went in against this instruction because it is a correctness fix on what the screen states about arriving wind, and a refactor in the same commit would have made a safety change harder to read and harder to revert. **The lift is now the next thing to happen in this file, ahead of any feature.** ==> AND IT DID NOT HAPPEN, AND 79 MORE LINES WENT IN. <== 2026-08-20: the rail's label placement learned that the two dotted verticals are obstacles, not just the bar and the frame edges — the `now` line was running through the middle of an arrival time on glass. Same defence as last time and it is wearing thin: a correctness fix on what the screen states about arriving wind, in a commit where a refactor would have made it harder to read and harder to revert. The count is recorded rather than quietly absorbed. **`summary()` is still the lift. This file is now 337 lines over the ceiling and the next session that opens it for any reason should take `summary()` out first, feature or not.** |
 | `data/home.js` | 701 | **Newly over the line, by one line, and the crossing is honest rather than creeping.** §49's pass 3 added `closestPassed` — the closest approach walked BACKWARDS over the observed track — and lifted the densify/scan/refine core out of `closestApproach` into one shared `walkToClosest` so the two directions cannot drift apart. That extraction is why the file grew by less than the feature: one copy of the geometry, two callers. What is in here is one concern throughout — where home is, and how far a storm is from it — and it has no seam worth cutting on. Watch, don't split. |
 | `data/home-dashboard.js` | 1066 | **Over the line, and it has now grown for two passes running.** Three concerns are already visible and already independent: the approach maths (`closestApproach` feeding `band`, `atClosest`, `nearRing`), the intensity story (`peak`, `arrivalTrend`, `peakWhen`, `milestones`), and the `stage` ladder, which reads all of them and is the only part that has to. `nearRingWindow` and the corridor call are the natural seam. §49's pass 3 added 134 lines and pass 4 added 88 more — the observed class walk, the past peak gate and `pastSamples` — and every one of them landed inside the two concerns already named rather than making a third, which is why the file is still readable at 997. **THE SEAM IS UNCHANGED AND THE DEBT IS NOW THE LARGEST ON THIS TABLE THAT NOBODY HAS ACTED ON.** §49's pass 5 went in without the cut — it needed the corridor gate and a densified `pastSamples`, both of which land inside the existing concerns, and doing surgery in the same breath as a safety fix means a break could be either. That reasoning has now been used twice and does not get a third turn: the split is the next thing this file gets, before any feature. |
 | `ui/home.css` | 1196 | **Watch, and it grew for a good reason.** Same cascade-order argument as `panels.css`, at half the size. It crossed 1,000 when the setup screen's three doors became one shared `.home-choice` recipe, and 1,100 when the Rain section landed with its alert rows. The Surge section (§51.3) added 70 more and deliberately borrowed Rain's type scale rather than inventing one — the two water sections sit adjacent and should read as one rhythm. The visible seam if it grows again is the SETUP screen against the DASHBOARD; they share only tokens. |
@@ -1978,9 +1978,43 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   `#globe`. The rule is general and still binding — the home marker hit the
   same trap later (§9).
 - **MapLibre's `AttributionControl` IS NOT USED. We ship our own**
-  (`map/attribution.js`, ~40 lines): a 24 px "i" always visible, a small glass
-  panel that opens on tap, closed at rest. Attribution must be REACHABLE at all
+  (`map/attribution.js`): an italic serif "i" always visible, and a glass panel
+  that opens on tap, closed at rest. Attribution must be REACHABLE at all
   times; it does not have to be asserted on arrival.
+
+  **The glyph is drawn as filled paths, not set as text.** An `<text>` node
+  with `font-style: italic` would be one line instead of five, and it would be
+  a DIFFERENT letter on every device, because it resolves through whatever that
+  platform calls `serif` — its own widths, its own baseline. A letter 20px tall
+  inside a 28px circle cannot afford to be optically centred on one phone and
+  off on another. `tools/attrib-glyph-preview.html` renders it at true size and
+  ×11 so a session can look at it before Aaron has to;
+  `tools/test-attribution.mjs` asserts the fixture draws the same four shapes
+  the control does.
+
+  **The panel WRAPS, and grows upward.** It was one `nowrap` line with a width
+  measured off it, which on a 390px phone came to about 1,100px: the credits
+  ran off the right edge and passed behind the storm pill and the control
+  cluster, on screen and unreadable. The label is now capped at whatever the
+  viewport leaves after both safe-area insets, so the pill cannot exceed the
+  width of the screen it is on at any size, and `#attrib-host` is pinned by its
+  **bottom** edge, so the extra height can only go up — away from the OS
+  gesture zone. Both dimensions are set in px from JS, because neither `auto`
+  width nor `auto` height interpolates, and leaving one to the browser makes it
+  snap while the other animates.
+
+  **It is z-index 20 while CLOSED and 60 while OPEN, and that is one rule
+  rather than an exception to one.** Closed, it is a 30px circle competing for
+  a corner and it must not outrank the drawer (30) — a licensing credit does
+  not belong on top of a storm warning. Open, it is a panel the reader
+  deliberately asked for, and credits nobody can read are the exact failure
+  this control exists to prevent. The lift is driven by `data-open` on the
+  host from `map/attribution.js`, not by `:has()` — no support question, and
+  it lasts exactly as long as the panel does.
+
+  `tools/attrib-check.mjs` holds all of that in a real browser. It builds its
+  page at run time from `index.html`'s own `:root` and `#attrib-host` rules
+  rather than keeping a fixture, so there is nothing to drift.
 
   **It could not be made to start collapsed from outside.** There is no
   `collapsed` option — the docs say it "is expanded by default, regardless of
@@ -1994,11 +2028,34 @@ Earned on the keyboard pass. Each of these cost a wrong fix before the right one
   The rewrite was smaller than the workarounds.**
 
   **THE TRADE, AND THE ONE MAINTENANCE RULE.** MapLibre's control derived
-  credits from the style's sources automatically. **Ours does not.** If the
-  basemap tile source ever changes, the credits in `map/attribution.js` must be
-  updated BY HAND — today OpenFreeMap/OpenMapTiles; flipping `TILES.useR2` back
-  to Protomaps would need Protomaps' attribution added there. This is the one
-  way that file can silently go wrong.
+  credits from the style's sources automatically. **Ours does not.** The list is
+  hand-maintained in `map/attribution.js`, and that was the one way this file
+  could silently go wrong.
+
+  **It is a gate now, not a note.** `tools/test-attribution.mjs` collects every
+  external host the app can reach — from the exported constants the client
+  fetches through, and from every `https://` literal in `functions/` and
+  `worker/` — and fails unless each one appears in `CREDIT_HOSTS`, mapped either
+  to a credit that really is in the panel or to `null`. **`null` is a decision,
+  not a skip**: wiring up a new feed turns the push red until somebody writes
+  down which it is, and that moment of choosing is the whole product of the
+  check. It runs the other way too, so a credit left behind after its feed was
+  deleted is caught as well. What it cannot do is judge whether a credit's
+  WORDING satisfies a licence; a human reads that.
+
+  **Three gaps it found the day it was written.** Open-Meteo is CC BY 4.0 and
+  was credited only in the rain section's provenance line (§48.14) — correct
+  for a reader looking at that number, absent everywhere else, which is exactly
+  the condition the imagery credits are listed unconditionally to avoid. Esri's
+  CAP Alerts Feed had been fetched and displayed since the feed was wired and
+  credited nowhere; naming the ISSUING agency on each row (§50.5) is about not
+  misattributing an alert, and is not the same thing. Mapbox powers live, billed
+  address search and was credited nowhere. NHC, NWS, JTWC and GDACS are also
+  listed now: the American products are public domain and owe nothing, but this
+  panel is where a reader goes to find out where the numbers came from, and the
+  file's own rule — over-crediting costs a line, under-crediting is a licence
+  breach nobody gets an alert about — cuts the same way for a source that owes
+  nothing.
 
   Two bullets below are kept as METHOD lessons even though the code they
   described is gone: they are about reading a library before overriding it, not

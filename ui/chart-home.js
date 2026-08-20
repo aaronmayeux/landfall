@@ -104,6 +104,15 @@ const PLOT_H = 148; // home line to the bottom of the plot, fixed
  * pay for them: five timestamps will not fit horizontally at this width set
  * flat — they collide at about three — and a rotated label needs vertical room
  * its flat version did not. */
+/** How far a rail label keeps from a dotted vertical, each side, in px.
+ *
+ *  The verticals are one-pixel hairlines, so this is not about overlap — it is
+ *  about the label reading as a label. At 1px the dots land between the
+ *  letters and the eye stitches them into the word; at 2.5 there is a visible
+ *  channel and the timestamp is a timestamp again. Small enough that the merge
+ *  fallback is not triggered by a line politely passing nearby. */
+const VERTICAL_CLEAR = 2.5;
+
 const AXIS_GAP = 12; // plot bottom to the axis labels' anchor
 const CAP_GAP = 62; // plot bottom to the first caption row
 const FOOT_H = 78; // plot bottom to the bottom of the SVG
@@ -763,33 +772,103 @@ export function homeChart(dash, system) {
      * four characters of a rail already short of room. */
     const at = r.startsBefore ? null : railClock(r.at, co.now);
 
-    const leftRoom = r.x0 - PAD_L;
-    const rightRoom = W - PAD_R - r.x1;
-    /* ==> MEASURED FROM THE STRING, NOT FROM A REMEMBERED CHARACTER COUNT.
-     * <== These were flat 37/22/58, sized for "7:14 AM". A dated arrival is
-     * half as long again and would have overrun them silently, which is how
-     * the label lands on the bar. */
-    const atRoom = at ? at.length * CPA_CH + 3 : 0;
-    const durRoom = dur.length * CPA_CH + 4;
     const text = (x, anchor, weight, str) =>
       `<text x="${x.toFixed(1)}" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" ` +
       `text-anchor="${anchor}"${weight ? ' font-weight="600"' : ''} fill="${c}">${esc(str)}</text>`;
 
-    if (at && leftRoom > atRoom && rightRoom > durRoom) {
-      railSvg.push(text(r.x0 - 3, 'end', false, at));
-      railSvg.push(text(r.x1 + 4, 'start', true, dur));
-    } else {
-      const merged = at ? `${at} · ${dur}` : dur;
-      const mergedRoom = merged.length * CPA_CH + 4;
-      if (rightRoom > mergedRoom) railSvg.push(text(r.x1 + 4, 'start', true, merged));
-      else if (leftRoom > mergedRoom) railSvg.push(text(r.x0 - 3, 'end', true, merged));
-      /* Nowhere beside it: the bar spans the frame. Sit the chip just above
-       * its left end, in the gap the row spacing already leaves. */
-      else railSvg.push(
-        `<text x="${(r.x0 + 2).toFixed(1)}" y="${(r.y - 2).toFixed(1)}" font-size="7.5" ` +
-        `font-weight="600" fill="${c}">${esc(merged)}</text>`
-      );
-    }
+    /* ==> MEASURED FROM THE STRING, NOT FROM A REMEMBERED CHARACTER COUNT.
+     * <== The room figures were flat 37/22/58, sized for "7:14 AM". A dated
+     * arrival is half as long again and would have overrun them silently,
+     * which is how the label lands on the bar. */
+    const atW = at ? at.length * CPA_CH : 0;
+    const durW = dur.length * CPA_CH;
+    const merged = at ? `${at} · ${dur}` : dur;
+    const mergedW = merged.length * CPA_CH;
+
+    /* ==> A LABEL IS A SPAN, NEVER A POINT. <== `end`-anchored text occupies
+     * the room to the LEFT of its x and `start`-anchored the room to the
+     * right, so anything that compares x positions alone waves a collision
+     * through. The closest-pass stamp learned this at the top of the file;
+     * this is the same pair of helpers for the rail. */
+    const LX = r.x0 - 3; // the anchor just left of the bar
+    const RX = r.x1 + 4; // the anchor just right of it
+    const spanL = (w) => ({ anchor: 'end', x: LX, lo: LX - w, hi: LX });
+    const spanR = (w) => ({ anchor: 'start', x: RX, lo: RX, hi: RX + w });
+    const inFrame = (p) => p.lo >= PAD_L && p.hi <= W - PAD_R;
+
+    /* ==> AND THE TWO DOTTED VERTICALS ARE OBSTACLES, WHICH THIS DID NOT USED
+     * TO KNOW. <== "now" and the closest-pass stamp both run the full height
+     * of the frame, straight through the rail band, and the placement logic
+     * only ever asked about the BAR and the FRAME EDGES. On glass 2026-08-20
+     * (Saudel) the "now" line ran through the middle of a 39 kt arrival time,
+     * which is a timestamp a reader has to squint at to read — on the one row
+     * of this chart that tells them when to stop what they are doing.
+     *
+     * The dodge is the merge that already existed: when the split pair cannot
+     * clear the verticals, both labels go to whichever side of the bar is free.
+     * Nothing new is drawn and nothing is dropped. */
+    const verticals = [nowShown ? nowX : null, cpaShown ? cpaX : null].filter(Number.isFinite);
+    const clear = (p) =>
+      verticals.every((vx) => p.hi <= vx - VERTICAL_CLEAR || p.lo >= vx + VERTICAL_CLEAR);
+
+    /* ==> AND WHEN NEITHER SIDE OF THE BAR IS FREE, THE CHIP SLIDES ALONG THE
+     * ROW UNTIL IT IS. <== A wide bar near the left edge has no room on its
+     * left and a vertical sitting just off its right end, so both merged
+     * positions are crossed and there is no third side to try. Pushing the
+     * chip a few pixels further out costs a small gap between it and the bar
+     * — and it stays on the bar's own centre line, in the bar's own colour,
+     * with nothing else in the row to be confused with, so the pairing still
+     * reads. A gap is cheaper than a hairline through a timestamp. */
+    const slide = (w, dir) => {
+      let x = dir > 0 ? RX : LX;
+      for (let i = 0; i <= verticals.length; i++) {
+        const p = dir > 0
+          ? { anchor: 'start', x, lo: x, hi: x + w }
+          : { anchor: 'end', x, lo: x - w, hi: x };
+        if (clear(p)) return p;
+        /* Past the furthest vertical still in the way, not merely the first —
+         * clearing one and landing on the next is how this loops forever. */
+        const blockers = verticals.filter(
+          (vx) => p.lo < vx + VERTICAL_CLEAR && p.hi > vx - VERTICAL_CLEAR
+        );
+        if (!blockers.length) return p;
+        x = dir > 0
+          ? Math.max(...blockers) + VERTICAL_CLEAR
+          : Math.min(...blockers) - VERTICAL_CLEAR;
+      }
+      return null;
+    };
+
+    const atL = at ? spanL(atW) : null;
+    const durR = spanR(durW);
+
+    const splitFits = Boolean(atL) && inFrame(atL) && inFrame(durR);
+    const pushSplit = () => {
+      railSvg.push(text(atL.x, 'end', false, at));
+      railSvg.push(text(durR.x, 'start', true, dur));
+    };
+    const pushMerged = (p) => railSvg.push(text(p.x, p.anchor, true, merged));
+
+    /* THE MERGED CANDIDATES, IN PREFERENCE ORDER: hard against the bar on
+     * either side first, then slid clear on either side. Only the ones that
+     * fit inside the plot survive. */
+    const cand = [spanR(mergedW), spanL(mergedW), slide(mergedW, +1), slide(mergedW, -1)]
+      .filter((p) => p && inFrame(p));
+    const clearMerged = cand.find(clear);
+
+    /* PREFERENCE ORDER OVERALL: two labels where two labels fit AND clear;
+     * then a merged chip somewhere clear; then the old fits-only answers,
+     * because a label with a hairline through it still beats no label. */
+    if (splitFits && clear(atL) && clear(durR)) pushSplit();
+    else if (clearMerged) pushMerged(clearMerged);
+    else if (splitFits) pushSplit();
+    else if (cand.length) pushMerged(cand[0]);
+    /* Nowhere beside it: the bar spans the frame. Sit the chip just above
+     * its left end, in the gap the row spacing already leaves. */
+    else railSvg.push(
+      `<text x="${(r.x0 + 2).toFixed(1)}" y="${(r.y - 2).toFixed(1)}" font-size="7.5" ` +
+      `font-weight="600" fill="${c}">${esc(merged)}</text>`
+    );
     /* The threshold itself, in the gutter, so a color nobody has learned yet
      * still says which wind it is. */
     /* ==> IN THE READER'S OWN UNITS, NOT KNOTS. <== This was the last figure

@@ -292,24 +292,28 @@ for (const [label, h] of [['dashboard', homeHead], ['detail panel', detailHead]]
 }
 
 ok(
-  Math.abs(homeHead.chipVsHead) < CENTRED_PX,
-  `the dashboard's chip is on that same centre, under the dot and name (off by ${homeHead.chipVsHead?.toFixed(1)}px)`
+  Math.abs(homeHead.subInkVsHead) < CENTRED_PX,
+  `the dashboard's stage word is on that same centre, under the dot and name (off by ${homeHead.subInkVsHead?.toFixed(1)}px)`
 );
 ok(
   Math.abs(detailHead.subInkVsHead) < CENTRED_PX,
   `and so is the detail panel's classification line (off by ${detailHead.subInkVsHead?.toFixed(1)}px)`
 );
 
-/* THE PAIRING THAT REPRODUCES THE BUG: a name wider than the chip, so the
- * second line has room in it for something to go wrong. */
+/* THE PAIRING THAT REPRODUCES THE BUG: a name wider than the second line, so
+ * that line has room in it for something to go wrong. The bug was a stray
+ * `margin-left: auto` following `.home-chip` into this block; the pill is gone
+ * as of 2026-08-20 and the case is kept anyway — free space beside a centred
+ * line is what ANY future stray margin would need, and this is the only
+ * arrangement that provides it. */
 await page.evaluate(() => window.__harness.go('home'));
 await page.evaluate(() => window.__harness.useWideNameNarrowChip());
 const wideName = await read();
-console.log(`  note  chip off head centre: ${wideName.chipVsHead?.toFixed(1)}px behind a name wider than the chip`);
+console.log(`  note  second line off head centre: ${wideName.subInkVsHead?.toFixed(1)}px behind a wider name`);
 ok(
-  Math.abs(wideName.chipVsHead) < CENTRED_PX,
-  `and it stays centred when the name is WIDER than the chip, which is the ` +
-    `arrangement a stray auto margin needs (off by ${wideName.chipVsHead?.toFixed(1)}px)`
+  Math.abs(wideName.subInkVsHead) < CENTRED_PX,
+  `and it stays centred when the name is WIDER than it, which is the ` +
+    `arrangement a stray auto margin needs (off by ${wideName.subInkVsHead?.toFixed(1)}px)`
 );
 ok(
   wideName.lineW > 200,

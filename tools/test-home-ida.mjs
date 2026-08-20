@@ -593,6 +593,62 @@ section('what the first glass read found');
       }
     }
   }
+
+  /* ==> AND THE TWO DOTTED VERTICALS ARE OBSTACLES TOO, WHICH THE PLACEMENT
+   * LOGIC DID NOT USED TO KNOW. <== "now" and the closest-pass stamp both run
+   * the full height of the frame, straight through the rail band, and the
+   * label placement only ever asked about the BAR and the FRAME EDGES. Seen on
+   * glass 2026-08-20 (Saudel): the "now" line through the middle of a 39 kt
+   * arrival time — the one row of this chart that says when to stop what you
+   * are doing.
+   *
+   * ==> SWEPT, NOT SPOT-CHECKED, BECAUSE THE COLLISION IS A FUNCTION OF THE
+   * CLOCK. <== Where "now" lands depends on how long ago the advisory was
+   * issued, so a fixture rendered once at its own issue time exercises exactly
+   * one of the positions the line can take. Nineteen advisories at twelve
+   * hourly offsets is 216 frames.
+   *
+   * REINTRODUCING THE BUG TURNS THIS RED, verified rather than assumed: with
+   * the `clear` tests deleted from the preference ladder in ui/chart-home.js
+   * the sweep reports 118 crossings. */
+  const CH = 4.4; // px per character at font-size 7.5, as above
+  let frames = 0;
+  const crossings = [];
+  for (const f of fs.readdirSync(`${DIR}/fstadv`).sort()) {
+    const nnn = f.match(/\.(\d{3})\.txt$/)[1];
+    const a = parseTcm(readAdv(nnn), { sourceId: 'al092021' });
+    for (let shift = 0; shift < 12; shift++) {
+      const d = buildHomeDashboard({
+        storm: { ...a.storm, category: categoryFromKt(a.storm.windKt) },
+        forecast: a.forecast.map((p) => ({ ...p, category: categoryFromKt(p.windKt) })),
+        radii: a.radii, home: HOME, now: a.issuedMs + shift * 3_600_000 });
+      const svg = homeChart(d, 'imperial');
+      if (!svg) continue;
+      frames++;
+      /* The dashed ones only. The axis gridlines are solid, start at the home
+       * line and never enter the rail band, so they are not in this set. */
+      const verticals = [...svg.matchAll(
+        /<line x1="([\d.]+)" y1="[-\d.]+" x2="\1"[^>]*stroke-dasharray/g)].map((m) => +m[1]);
+      const placed = [...svg.matchAll(
+        /<text x="([\d.]+)" y="([\d.]+)" font-size="7\.5" text-anchor="(\w+)"[^>]*fill="var\(--kt(\d+)\)">([^<]*)</g)]
+        .map((m) => {
+          const x = +m[1];
+          const w = m[5].length * CH;
+          return { text: m[5], lo: m[3] === 'end' ? x - w : x, hi: m[3] === 'end' ? x : x + w };
+        });
+      for (const l of placed) {
+        for (const vx of verticals) {
+          if (l.lo < vx && vx < l.hi) {
+            crossings.push(`adv ${nnn} +${shift}h "${l.text}" [${l.lo.toFixed(0)}-${l.hi.toFixed(0)}] crossed at ${vx.toFixed(1)}`);
+          }
+        }
+      }
+    }
+  }
+  ok(frames > 200, `the sweep really rendered the frames it claims (${frames})`);
+  ok(crossings.length === 0,
+     `no rail label has a dotted vertical through it, at any hour ` +
+     `(${crossings.length}: ${crossings.slice(0, 3).join('; ')})`);
 }
 
 /* ==> (vi) THE CHART MARKS NOW, AND NO LONGER CLAIMS ITS LEFT EDGE IS NOW.

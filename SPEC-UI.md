@@ -1864,11 +1864,26 @@ the distance is, and that is still the biggest figure below.
 The top edge is the sheet's rounded corner and the phone's own glass; the bottom
 edge is the stepper, which brings its own touch target of breathing space. More
 important, the header centres its columns vertically, so the identity block's
-height decides where the name sits — and the dashboard's second line is a pill
-with padding and a border while the detail panel's is plain text. Equal header
-padding still put the name several pixels higher on the dashboard. Pinning the
-second line to the taller of the two makes the block a constant height and the
-name's inset identical on both drawers.
+height decides where the name sits — and the dashboard's second line used to be
+a pill with padding and a border while the detail panel's was plain text. Equal
+header padding still put the name several pixels higher on the dashboard.
+Pinning the second line to the taller of the two makes the block a constant
+height and the name's inset identical on both drawers.
+
+**Both second lines are bare text as of 2026-08-20, so that min-height is no
+longer derived from anything — it is a chosen constant, and it stays.** The
+dashboard put its stage word (`Hours away`, `Track unknown`, `Checking…`) in a
+bordered `.home-chip` in the slot where the detail panel puts its
+classification, so stepping between the two showed one header shape wearing two
+different objects. Aaron's call: the words are the thing worth keeping and they
+are unchanged — the ladder in `STAGE_CHIP` is untouched — only the box is gone.
+The `calm` tone went with it: each rung used to paint itself muted or secondary,
+and a second line that changes colour on one drawer and not the other is the
+inconsistency the change exists to remove. Nothing is lost that the screen does
+not say louder elsewhere, since the category dot sits directly above those words
+in the storm's own Saffir-Simpson ink. `--identity-sub-h` is kept at the old
+pill's height only because `--drawer-head-h` is computed from it and five other
+headers match that figure; shortening it is a whole-chrome pass, not a tweak.
 
 **The dot and the name are centred together, and the pair is what lands on the
 panel's axis.** The dot is the storm's category, not an ornament beside the
@@ -1919,19 +1934,25 @@ positively: an element carrying a glow class is handed a custom property, never 
 **A chip does not carry another row's layout.** `.home-chip` is pushed to the
 right end of the quiet state's threat row, and that push belongs to the row —
 `.home-threat .home-chip` — not to the chip. As a bare `margin-left: auto` on
-the chip itself it followed the chip into the centred identity block and threw it
-to the far right of the name; measured at 260px of used margin behind a long
+the chip itself it followed the chip into the centred identity block and threw
+it to the far right of the name; measured at 260px of used margin behind a long
 storm name. Cancelling it from `panels.css` did not work and could not: same
 specificity as the chip's own rule, in the stylesheet `index.html` loads first,
-so source order decided it and the override applied to nothing.
+so source order decided it and the override applied to nothing. **The chip no
+longer appears in the identity block at all** (above), which removes this
+particular collision without removing the lesson — the quiet state's row still
+owns its own push, and the next component reused for its appearance will
+inherit its old parent's corrections the same way.
 
 **Measure the ink, never the box that contains it.** Three assertions in this
 header's check have now read 0.0px while the pixels were visibly wrong, each
 because they compared two full-width boxes whose centres are equal by
 construction rather than the content inside them. The centring assertions
-measure the dot's left edge to the name's right edge, the chip's own box, and a
-`Range` around bare text — never `.drawer-identity-line` or
-`.drawer-identity-sub` themselves.
+measure the dot's left edge to the name's right edge, and a `Range` around the
+second line's bare text — never `.drawer-identity-line` or
+`.drawer-identity-sub` themselves. That `Range` probe now covers both drawers,
+because both second lines are bare text; the separate probe for the dashboard
+pill's own box went when the pill did.
 
 **The fixture's design tokens are the app's, and a check holds them there.**
 Every number in `tools/drawer-head-check.mjs` is a distance expressed in the

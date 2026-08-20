@@ -32,6 +32,73 @@
  * Imports: nothing. main.js/globe.js mounts it into #attrib-host.
  */
 
+/**
+ * ==> EVERY EXTERNAL HOST THIS APP CAN REACH, AND WHAT IT OWES. <==
+ *
+ * The maintenance rule above is the one way this file goes silently wrong, and
+ * a rule stated in a comment is the guard this project has already watched
+ * fail. This table turns it into something `tools/test-attribution.mjs` can
+ * check: it collects every `https://` host named in `config/constants.js` and
+ * in the Pages Functions, and fails if one of them is missing from here. Add a
+ * feed, and the push stops until somebody has DECIDED whether it needs a
+ * credit — which is the whole job.
+ *
+ * A host maps to the exact `label` of the credit that covers it, or to `null`
+ * with a reason. `null` means "considered, owes nothing" — it is not a skip
+ * list, and a reason that is only "probably fine" is not one.
+ */
+export const CREDIT_HOSTS = Object.freeze({
+  /* The basemap. */
+  'tiles.openfreemap.org': 'OpenFreeMap',
+
+  /* Imagery and radar. */
+  'gibs.earthdata.nasa.gov': 'NASA GIBS / Worldview — GOES & Himawari imagery',
+  'view.eumetsat.int': 'EUMETSAT — Meteosat imagery',
+  'api.rainviewer.com': 'Weather data by RainViewer — radar',
+  'tilecache.rainviewer.com': 'Weather data by RainViewer — radar',
+
+  /* Rainfall at a point. Open-Meteo is CC BY 4.0. */
+  'api.open-meteo.com': 'Open-Meteo — global rainfall forecasts',
+
+  /* Search. Mapbox's terms require the service to be credited wherever its
+   * results are shown. */
+  'api.mapbox.com': 'Mapbox — address search',
+
+  /* Government cyclone alerts, aggregated by Esri. The issuing agency is named
+   * on every row in the app; this credits the aggregator that delivers them. */
+  'services9.arcgis.com': 'Esri — CAP alerts feed',
+
+  /* The storm data itself. US federal products are public domain and owe
+   * nothing legally; they are credited anyway, because over-crediting costs a
+   * line and this panel is where somebody goes to find out where the numbers
+   * came from. GDACS is the JRC's and asks to be named. */
+  'www.nhc.noaa.gov': 'NOAA — National Hurricane Center, NWS and JTWC',
+  'ftp.nhc.noaa.gov': 'NOAA — National Hurricane Center, NWS and JTWC',
+  'mapservices.weather.noaa.gov': 'NOAA — National Hurricane Center, NWS and JTWC',
+  'api.weather.gov': 'NOAA — National Hurricane Center, NWS and JTWC',
+  'www.metoc.navy.mil': 'NOAA — National Hurricane Center, NWS and JTWC',
+  'www.gdacs.org': 'GDACS — European Commission Joint Research Centre',
+
+  /* ==> NOT CREDITED, WITH THE REASON, NOT A SHRUG. <== */
+
+  /* Ours. */
+  'landfall.getgravitate.app': null,
+  'landfall-relay.internal': null,
+
+  /* Named ONLY inside `functions/api/imagery/inspect.js`, which is a diagnostic
+   * route behind `_inspect-guard.js`. Nothing they serve reaches a visitor, and
+   * three of the four were candidate vendors that lost — see SPEC-DATA.md §4.9
+   * for why radar is single-source. If any of them is ever wired into a
+   * user-facing layer, it needs a credit and this entry has to go. */
+  'mesonet.agron.iastate.edu': null,
+  'nowcoast.noaa.gov': null,
+  'rammb-slider.cira.colostate.edu': null,
+  'verif.rap.ucar.edu': null,
+
+  /* Placeholders in test fixtures and doc comments, never fetched. */
+  'example.com': null,
+});
+
 /** The credits. See the maintenance rule above before editing. */
 const CREDITS = Object.freeze([
   { label: 'OpenStreetMap contributors', href: 'https://www.openstreetmap.org/copyright' },
@@ -50,12 +117,48 @@ const CREDITS = Object.freeze([
    * sends us a single byte. */
   { label: 'Weather data by RainViewer — radar', href: 'https://www.rainviewer.com/' },
 
+  /* ==> OPEN-METEO IS CC BY 4.0, AND IT WAS CREDITED IN ONLY ONE PLACE. <==
+   * §48.14 discharges the licence in the rain section's provenance line, which
+   * names the source beside the number it produced — the right place for a
+   * reader who is looking at that number. But that line renders only when a
+   * rain forecast has landed AND the global model was the one that answered
+   * it, so on every other screen in the app the credit is simply absent. That
+   * is exactly the condition the imagery note above rejects. Both now: the
+   * provenance line stays, and the licence is also discharged here, where
+   * somebody goes deliberately to check the licensing. */
+  { label: 'Open-Meteo — global rainfall forecasts', href: 'https://open-meteo.com/' },
+
+  /* Address search. Mapbox's terms require attribution wherever their
+   * geocoding results are displayed. */
+  { label: 'Mapbox — address search', href: 'https://www.mapbox.com/about/maps/' },
+
+  /* ==> THE ALERT AGGREGATOR, WHICH WAS CREDITED NOWHERE AT ALL. <== The app
+   * fetches live government cyclone warnings through Esri's CAP Alerts Feed
+   * and shows them under a storm. The ISSUING AGENCY is named on every row —
+   * that is §50.5's requirement and it is about not misattributing an alert.
+   * It is not the same as crediting the service that delivers them, which had
+   * simply been missed since the feed was wired. */
+  { label: 'Esri — CAP alerts feed', href: 'https://www.esri.com/en-us/disaster-response/overview' },
+
   /* Population. GeoNames is CC BY 4.0, which makes this credit a LICENCE
    * CONDITION rather than a courtesy — the strongest kind on this list. Listed
    * unconditionally, like the imagery credits above and for the same reason:
    * a credit that appears only while a toggle is on is missing at exactly the
    * moment somebody opens this panel to check the licensing. */
   { label: 'GeoNames — town populations', href: 'https://www.geonames.org/' },
+
+  /* ==> THE STORM DATA ITSELF, WHICH OWES NOTHING AND IS CREDITED ANYWAY. <==
+   * NHC, NWS and JTWC products are US federal works in the public domain, and
+   * the app already names whichever of them spoke on every storm panel (§5).
+   * Neither fact makes this panel the wrong place for them: it is the surface
+   * a reader opens to find out where the numbers on the screen come from, and
+   * a licensing list that omits the primary source reads as an oversight. The
+   * rule this file already states — over-crediting costs a line, under-
+   * crediting is a licence breach nobody gets an alert about — cuts the same
+   * way for a source that owes nothing. GDACS is the JRC's and asks to be
+   * named, so it is the one row here that is closer to a condition. */
+  { label: 'NOAA — National Hurricane Center, NWS and JTWC', href: 'https://www.nhc.noaa.gov/' },
+  { label: 'GDACS — European Commission Joint Research Centre', href: 'https://www.gdacs.org/' },
 
   /* ==> THE VOLCANO AND ASH CREDITS WERE REMOVED 2026-08-08 BECAUSE THE DATA
    * WAS, NOT BECAUSE THE RULE CHANGED. <== Smithsonian GVP, USGS VHP, the nine
@@ -67,6 +170,10 @@ const CREDITS = Object.freeze([
    * it ships. Over-crediting costs a line; under-crediting is a licence breach
    * nobody gets an alert about. */
 ]);
+
+/** The credit labels, for the check. Exported rather than re-parsed out of the
+ *  source, so the test reads the same array the pill renders. */
+export const CREDIT_LABELS = Object.freeze(CREDITS.map((c) => c.label));
 
 /**
  * Mount the control into a host element.
@@ -95,17 +202,37 @@ export function createAttribution(host) {
    * there was a letter there at all. The pill IS the circle; the glyph only has
    * to be the letter, so it gets the whole box.
    *
-   * OPTICALLY CENTRED, NOT GEOMETRICALLY. A lowercase "i" carries its weight
-   * low — the stem is most of the ink and the tittle is a dot — so a glyph
-   * centred on the viewBox reads as sitting high. The stem runs 10.5 -> 19 and
-   * the dot sits at 6.5 against a 24 box, which puts the visual mass on the
-   * centre line. Hand-drawn to match every other icon in the app: 24x24
-   * viewBox, currentColor, round caps (§9 — no icon pack). */
+   * ==> AND IT IS AN ITALIC SERIF "i" NOW, NOT A STRAIGHT STROKE. <== The
+   * previous glyph was two round-capped strokes — a vertical bar and a dot —
+   * which is the app's icon language and reads as a bar, not as a letter. The
+   * information "i" is a typographic mark everywhere else in the world and it
+   * is recognised as one because of the slant and the serifs. Aaron's call,
+   * 2026-08-20.
+   *
+   * ==> DRAWN AS PATHS, NOT SET AS TEXT. <== An `<text>` node with
+   * `font-style: italic` would be a real serif face and would be one line
+   * instead of five — and it would be a DIFFERENT letter on every platform,
+   * because it resolves through whatever each device calls `serif`, with its
+   * own widths and its own baseline. A glyph that is 20px tall in a 28px
+   * circle cannot afford to be optically centred on one phone and off on
+   * another. These coordinates render identically everywhere.
+   *
+   * THE CONSTRUCTION, so it can be adjusted rather than redrawn: the stem is a
+   * parallelogram slanted 0.2 to the right per unit of height, the two slabs
+   * are its serifs — the top one extends LEFT only, as an entry stroke does,
+   * the foot extends both ways — and the tittle sits above and right, on the
+   * slant the stem would follow if it kept going. Filled, not stroked, because
+   * a stroked parallelogram fattens at the corners.
+   *
+   * OPTICALLY CENTRED, NOT GEOMETRICALLY. Most of the ink is the stem, so the
+   * ink's bounding box (which includes a wide foot serif and a small dot) is
+   * not what the eye centres on. Verified by rendering, not by arithmetic. */
   icon.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
-         stroke-linecap="round" aria-hidden="true">
-      <path d="M12 10.5v8.5"/>
-      <path d="M12 6.4v.2"/>
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M11.9 9.8 L13.8 9.8 L11.9 18.3 L10.0 18.3 Z"/>
+      <path d="M9.9 9.8 L14.0 9.8 L14.0 10.95 L9.9 10.95 Z"/>
+      <path d="M8.2 17.2 L14.0 17.2 L14.0 18.3 L8.2 18.3 Z"/>
+      <circle cx="14.0" cy="6.9" r="1.25"/>
     </svg>`;
 
   const label = document.createElement('span');
@@ -123,35 +250,72 @@ export function createAttribution(host) {
 
   /* The pill ships CLOSED, so the links start inert. Applied here rather than
    * left to the first setOpen() call — until something toggles it, the initial
-   * DOM is the state the user actually meets. */
+   * DOM is the state the user actually meets. Same for the host's stacking
+   * flag: a missing attribute and `data-open="false"` style the same, but only
+   * one of them says so. */
+  host.dataset.open = 'false';
   label.inert = true;
   for (const a of label.querySelectorAll('a')) a.tabIndex = -1;
 
   let open = false;
 
-  /** Width is measured from the CONTENT, never hardcoded — a hand-set width
-   *  drifts the moment the credits or the font change, which is §12's
-   *  "derive, never hand-tune twice" applied to one number.
+  /** The pill's open size, measured from the CONTENT, never hardcoded — a
+   *  hand-set number drifts the moment the credits or the font change, which
+   *  is §12's "derive, never hand-tune twice" applied to a box.
    *
-   *  Measured as icon box + label's own width, NOT via the pill's
-   *  scrollWidth: the pill carries `overflow: hidden` and an explicit width
-   *  while collapsed, and a clipped element's scrollWidth cannot be relied on
-   *  to report the full content extent. The label is unclipped, so its
-   *  offsetWidth is the honest number.
+   *  Measured from the LABEL, not from the pill's scroll size: the pill
+   *  carries an explicit width and height while collapsed, and a clipped
+   *  element's scroll extents cannot be relied on to report its content. The
+   *  label is unclipped in the layout sense — `clip-path` hides it without
+   *  changing its box — so its own offsets are the honest numbers, and they
+   *  already account for the wrap, because its `max-width` applies whether the
+   *  pill is open or shut.
    *
-   *  Returns null when the element has not been laid out yet (offsetWidth 0
-   *  in the same task as insertion, §13) — the caller then falls back to
-   *  `auto`, which renders correctly and merely skips the animation. */
-  const expandedWidth = () => {
+   *  Returns null when the element has not been laid out yet (offsets 0 in the
+   *  same task as insertion, §13) — the caller then falls back to `auto`,
+   *  which renders correctly and merely skips the animation. */
+  const expandedBox = () => {
     const iconW = icon.offsetWidth;
+    const iconH = icon.offsetHeight;
     const labelW = label.offsetWidth;
-    if (!iconW || !labelW) return null;
-    return `${iconW + labelW}px`;
+    const labelH = label.offsetHeight;
+    if (!iconW || !iconH || !labelW || !labelH || !chrome) return null;
+    return {
+      w: `${iconW + labelW + chrome.w}px`,
+      h: `${Math.max(iconH, labelH) + chrome.h}px`,
+    };
+  };
+
+  /** ==> WHAT THE BORDER COSTS, DERIVED ONCE RATHER THAN TYPED. <== The pill
+   *  is `border-box`, so its border counts inside both dimensions, and an
+   *  earlier version simply added icon + label and came up 2px short — which
+   *  the label's right padding absorbed, so nothing looked wrong and the text
+   *  sat fractionally tight.
+   *
+   *  A CLOSED PILL IS THE ONLY THING THAT CAN ANSWER IT. Closed, its box is
+   *  the icon plus its border by construction, so the difference IS the
+   *  border. Open, the pill is already the size being computed and the
+   *  subtraction is circular. Captured on the first open and kept. */
+  let chrome = null;
+  const captureChrome = () => {
+    if (chrome || open) return;
+    const iconW = icon.offsetWidth;
+    const iconH = icon.offsetHeight;
+    if (!iconW || !iconH) return;
+    chrome = {
+      w: Math.max(0, pill.offsetWidth - iconW),
+      h: Math.max(0, pill.offsetHeight - iconH),
+    };
   };
 
   const setOpen = (next) => {
+    captureChrome();
     open = next;
     pill.setAttribute('aria-expanded', String(open));
+    /* The host, not the pill, carries the stacking flag: z-index applies to
+     * the positioned element, and the pill's own z-index would be resolved
+     * inside the host's stacking context and lift nothing. */
+    host.dataset.open = String(open);
     /* ==> A CLOSED PILL'S LINKS ARE INERT, NOT MERELY INVISIBLE. <==
      * They sit at opacity 0 and are clipped by the pill's overflow, and neither
      * of those removes an element from the tab order or from hit-testing.
@@ -170,13 +334,16 @@ export function createAttribution(host) {
     label.inert = !open;
     if (!open) {
       pill.style.width = '';
+      pill.style.height = '';
       return;
     }
-    /* An explicit px width is what makes the transition animate at all —
+    /* Explicit px values are what make the transition animate at all —
      * `auto` is not an interpolatable value. If the measurement is not
      * available yet, `auto` still shows the credits correctly; a missing
      * animation beats a pill that will not open. */
-    pill.style.width = expandedWidth() || 'auto';
+    const box = expandedBox();
+    pill.style.width = box ? box.w : 'auto';
+    pill.style.height = box ? box.h : 'auto';
   };
 
   pill.addEventListener('click', (e) => {
@@ -216,10 +383,15 @@ export function createAttribution(host) {
     }
   });
 
-  /* A resize can change the rendered text width (font fallback, zoom), so an
-   * open pill re-measures rather than holding a stale px value. */
+  /* A resize changes both the rendered text width (font fallback, zoom) AND
+   * how many lines it wraps to — the label's cap is a `vw` expression, so a
+   * rotation from portrait to landscape can turn four lines into two. An open
+   * pill re-measures rather than holding a stale box. */
   window.addEventListener('resize', () => {
-    if (open) pill.style.width = expandedWidth();
+    if (!open) return;
+    const box = expandedBox();
+    pill.style.width = box ? box.w : 'auto';
+    pill.style.height = box ? box.h : 'auto';
   });
 
   return {

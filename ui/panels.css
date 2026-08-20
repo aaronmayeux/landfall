@@ -1508,13 +1508,20 @@
 }
 /* ==> A CONSTANT HEIGHT, OR THE NAME ABOVE IT MOVES BETWEEN DRAWERS. <== The
  * header centres its three columns vertically, so the identity block's total
- * height decides where the name sits. The detail panel's second line is plain
- * text (~16px); the dashboard's is a pill with padding and a border (~27px).
- * Same padding on the header, and the name still landed several pixels higher
- * on the dashboard than on the detail panel — which is exactly what Aaron saw
- * as "the padding isn't the same between the two". Pinning the line to the
- * taller of the two makes the block a fixed height and the name's top edge
- * identical on both.
+ * height decides where the name sits. This was written when the two drawers
+ * disagreed about what went in the slot — the detail panel's second line was
+ * plain text (~16px) and the dashboard's was a pill with padding and a border
+ * (~27px), so equal header padding still landed the name several pixels higher
+ * on the dashboard, which is exactly what Aaron saw as "the padding isn't the
+ * same between the two". Pinning the line to the taller of the two fixed it.
+ *
+ * ==> BOTH SLOTS HOLD BARE TEXT NOW (2026-08-20), SO THE MIN-HEIGHT IS NO
+ * LONGER DERIVED FROM ANYTHING — IT IS A CHOSEN CONSTANT, AND IT STAYS. <==
+ * The two lines would agree on their own at the text height. It is kept
+ * because `--drawer-head-h` is computed from it and every other drawer's
+ * header matches that figure; dropping ~11px here would shorten five headers
+ * to fix a difference that no longer exists. If it is ever revisited, that is
+ * the thing to look at, and it is a whole-chrome pass rather than a tweak.
  *
  * ==> AND THE SECOND LINE NEEDS NO SHIFT OF ITS OWN. <== It centres on the
  * block, the block's centre is the panel's centre, and the line above has been

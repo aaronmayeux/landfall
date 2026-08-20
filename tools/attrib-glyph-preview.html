@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>attribution glyph preview</title>
+<!--
+  attrib-glyph-preview.html — the credits pill's "i", drawn large and at true
+  size, side by side.
+
+  ==> IT EXISTS BECAUSE A HAND-DRAWN GLYPH CANNOT BE REVIEWED AS COORDINATES.
+  <== The letter is 20px tall inside a 28px circle and the whole question about
+  it — does it read as an italic serif "i" or as a smudge — is answered by
+  looking, not by arithmetic. The sandbox has a chromium, so a session can look
+  before Aaron has to.
+
+  IT IS A FIXTURE AND NOT PART OF THE APP. Nothing links here and the service
+  worker never caches it. The glyph markup is duplicated from
+  map/attribution.js on purpose: importing the module would drag in the whole
+  control, its document listeners and its measurement, none of which this page
+  can provide. tools/test-attribution.mjs asserts the two copies match.
+-->
+<style>
+  body {
+    margin: 0; padding: 40px; background: #0B111A; color: #9DB3C7;
+    font: 13px system-ui, sans-serif; display: flex; gap: 48px; align-items: center;
+  }
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .pill {
+    width: 30px; height: 30px; border-radius: 16px;
+    border: 1px solid rgba(120, 190, 225, 0.16);
+    background: #101722; display: grid; place-items: center;
+  }
+  .pill svg { width: 20px; height: 20px; display: block; }
+  .big svg { width: 220px; height: 220px; display: block; }
+  .big { border: 1px dashed rgba(120, 190, 225, 0.25); }
+  .grid { position: relative; }
+  /* Centre lines, so "is it centred" is a look rather than a guess. */
+  .grid::before, .grid::after {
+    content: ''; position: absolute; background: rgba(255, 120, 120, 0.5);
+  }
+  .grid::before { left: 50%; top: 0; bottom: 0; width: 1px; }
+  .grid::after { top: 50%; left: 0; right: 0; height: 1px; }
+</style>
+</head>
+<body>
+  <div class="stage">
+    <div class="pill grid" id="true-size"></div>
+    <div>true size</div>
+  </div>
+  <div class="stage">
+    <div class="big grid" id="blown-up"></div>
+    <div>×11</div>
+  </div>
+<script>
+  /* Kept byte-identical to the `icon.innerHTML` in map/attribution.js. */
+  const GLYPH = `
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+      <path d="M11.9 9.8 L13.8 9.8 L11.9 18.3 L10.0 18.3 Z"/>
+      <path d="M9.9 9.8 L14.0 9.8 L14.0 10.95 L9.9 10.95 Z"/>
+      <path d="M8.2 17.2 L14.0 17.2 L14.0 18.3 L8.2 18.3 Z"/>
+      <circle cx="14.0" cy="6.9" r="1.25"/>
+    </svg>`;
+  document.getElementById('true-size').innerHTML = GLYPH;
+  document.getElementById('blown-up').innerHTML = GLYPH;
+</script>
+</body>
+</html>

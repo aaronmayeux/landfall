@@ -609,20 +609,31 @@ html, body {
 
 /* ONE PILL THAT GROWS. Not a panel opening behind a button — that read as two
  * separate objects stacked, the same mistake the home pointer's enclosing
- * ring made (§9). The control is a single element whose width animates from
+ * ring made (§9). The control is a single element whose box animates from
  * a 28px circle to fit its text.
  *
- * ON ANIMATING WIDTH. §9 says animate transform and opacity only, and that
- * rule stands for anything covering real area — a growing panel or a moving
- * marker. This is a 28px-tall chip in a corner: the layout it can invalidate
- * is its own, it composites over the globe rather than through it, and it
- * moves only on an explicit tap, never per-frame or during camera motion. A
- * transform: scaleX() would avoid the layout pass but stretch the glyph and
- * the type, which is exactly the "looks kinda shitty" being fixed here. The
- * width transition is the honest tool for a chip this size; do not "fix" it
- * into a scale.
+ * ON ANIMATING WIDTH AND HEIGHT. §9 says animate transform and opacity only,
+ * and that rule stands for anything covering real area — a growing panel or a
+ * moving marker. This is a chip in a corner: the layout it can invalidate is
+ * its own, it composites over the globe rather than through it, and it moves
+ * only on an explicit tap, never per-frame or during camera motion. A
+ * transform: scale() would avoid the layout pass but stretch the glyph and the
+ * type, which is exactly the "looks kinda shitty" being fixed here. The size
+ * transition is the honest tool for a chip this size; do not "fix" it into a
+ * scale.
  *
- * The height NEVER changes, so the pill cannot shift anything around it. */
+ * ==> THE HEIGHT USED TO BE FIXED, AND THAT IS WHAT PUT THE CREDITS OFF THE
+ * SIDE OF THE PHONE. <== One immovable line of text, `white-space: nowrap`,
+ * and a width measured from it: on a 390px screen the pill grew to about
+ * 1100px, ran off the right edge and passed behind the storm pill and the
+ * control cluster. Seen on glass 2026-08-20. The label wraps now and the pill
+ * grows UPWARD to fit it — `#attrib-host` is pinned by its `bottom` edge, so
+ * extra height can only go up, away from the OS gesture zone.
+ *
+ * WHY BOTH DIMENSIONS ARE SET FROM JS RATHER THAN LEFT TO `auto`. Neither
+ * `auto` width nor `auto` height is an interpolatable value, so either one
+ * left to the browser snaps while the other animates — which reads as the
+ * chip glitching rather than opening. */
 #attrib-host .attrib {
   display: flex;
   align-items: center;      /* vertical centring for the text */
@@ -640,9 +651,19 @@ html, body {
   --attrib-border: 1px;
   height: calc(var(--attrib-size) + var(--attrib-border) * 2);
   width: calc(var(--attrib-size) + var(--attrib-border) * 2);
+  /* A floor, so nothing can shrink the closed circle out of round even if a
+   * measurement comes back wrong. */
+  min-height: calc(var(--attrib-size) + var(--attrib-border) * 2);
+  min-width: calc(var(--attrib-size) + var(--attrib-border) * 2);
   padding: 0;
   border: var(--attrib-border) solid var(--glass-border);
-  border-radius: 999px;
+  /* ==> ONE RADIUS THAT IS A CIRCLE WHEN CLOSED AND A CARD WHEN OPEN. <== A
+   * 999px radius on a four-line box gives a stadium with enormous round ends,
+   * which reads as a swollen pill rather than as a panel. `--radius-large` is
+   * 16px against a 30px closed box — the browser scales overlapping radii down
+   * to half the side, so the closed state is still a true circle — and stays
+   * 16px once the box is tall. No state class, no transition, one value. */
+  border-radius: var(--radius-large);
   background: var(--glass-raised);
   backdrop-filter: blur(var(--glass-blur-raised));
   -webkit-backdrop-filter: blur(var(--glass-blur-raised));
@@ -656,11 +677,11 @@ html, body {
    * target down to this 30px circle, because overflow clips hit-testing too.
    * The label carries its own clip-path instead, which hides the credits
    * without shrinking anything the finger is aiming at. */
-  white-space: nowrap;
   position: relative;
   -webkit-appearance: none;
   appearance: none;
   transition: width var(--duration-base) var(--ease-settle),
+              height var(--duration-base) var(--ease-settle),
               color var(--duration-base) var(--ease-settle);
 }
 
@@ -688,24 +709,54 @@ html, body {
  * edge as the glyph does from its left. Derived from the icon box and glyph
  * size rather than eyeballed (§12: derive, never hand-tune twice). */
 #attrib-host .attrib-label {
-  display: flex;
-  align-items: center;
-  height: 100%;
+  /* ==> A BLOCK, NOT A FLEX ROW, OR THE CREDITS CANNOT WRAP. <== This was
+   * `display: flex` so it could centre one line vertically. Flex makes every
+   * `<a>` a flex ITEM, and flex items do not participate in line wrapping —
+   * with `flex-wrap` off they simply overflow, which is half of why the open
+   * pill ran off the screen. The pill's own `align-items: center` does the
+   * vertical centring instead, on this whole box. */
+  display: block;
+  /* ==> A `<button>` CENTRES ITS TEXT, AND THIS IS A BUTTON. <== It never
+   * showed while the credits were one nowrap line, because a line that fills
+   * its box looks the same centred as it does left-aligned. Wrapped to eight
+   * lines it read as a centred poem with a ragged left edge. Stated here
+   * rather than left to the UA. */
+  text-align: left;
+  /* ==> CAPPED AGAINST THE VIEWPORT, NOT AGAINST A GUESS. <== The room the
+   * credits may take is whatever is left of the screen after the safe-area
+   * insets on BOTH sides — the host is pinned to the left one — and the pill's
+   * own circle and border. So the pill can never exceed the width of the
+   * screen it is on, at any size, without this file knowing what that screen
+   * is. The second term is a reading limit rather than a fitting one: a line
+   * of small type much past 32rem is tiring to track back from, so a desktop
+   * gets three tidy lines instead of one very long one. */
+  max-width: min(
+    calc(100vw - var(--safe-left) - var(--safe-right)
+         - var(--attrib-size) - var(--attrib-border) * 2),
+    32rem
+  );
+  white-space: normal;
+  /* Loose enough that a wrapped credit list reads as lines rather than as a
+   * block, tight enough that four of them stay a corner chip. */
+  line-height: 1.5;
   /* Half the icon box: the same 7px the glyph gets from the pill edge, plus
    * the same 7px gap that sits between glyph and text. Derived from the icon
    * size so it tracks any change to it (§12). */
   padding-right: calc(var(--attrib-size) / 2);
-  /* NEVER shrink. The label is clipped by the pill's overflow while
-   * collapsed, but it must keep its full laid-out width — that width is what
-   * JS measures to know how far to grow. A flex default of `shrink: 1` would
-   * squeeze it to the collapsed pill and the measurement would read back the
-   * collapsed size. */
+  /* Air above and below once the text is more than one line. Small enough
+   * that a single-line open state stays inside the closed circle's height and
+   * so does not jump. */
+  padding-block: var(--space-tight);
+  /* NEVER shrink. The label is clipped while collapsed, but it must keep its
+   * full laid-out width — that width is what JS measures to know how far to
+   * grow. A flex default of `shrink: 1` would squeeze it to the collapsed
+   * pill and the measurement would read back the collapsed size. */
   flex: 0 0 auto;
   opacity: 0;
   /* CLIP-PATH, NOT OVERFLOW ON THE PARENT. It hides the credits while the pill
    * is closed without clipping the pill's touch target, and — unlike a width
-   * of 0 — it does not change `offsetWidth`, which is the number JS measures to
-   * know how far to grow the pill. */
+   * of 0 — it does not change `offsetWidth` or `offsetHeight`, which are the
+   * numbers JS measures to know how far to grow the pill. */
   clip-path: inset(0 100% 0 0);
   transition: opacity var(--duration-instant) var(--ease-settle);
 }
@@ -811,12 +862,23 @@ html, body {
  * correct zoomed in. Chrome must never live inside an animating-opacity
  * element.
  *
- * Z-INDEX 20, BELOW THE DRAWER (30) — attribution is the LOWEST-priority
- * chrome in the app. It sat at 40 alongside #controls on the reasoning that
- * both were floating controls; that stopped being true when the drawer
- * arrived, and the "i" rendered over the bottom sheet's content. A licensing
- * credit must be present and legible, which it is at every zoom — it does
- * not have to be on top of a storm warning. */
+ * Z-INDEX 20 WHILE CLOSED, BELOW THE DRAWER (30) — attribution is the
+ * LOWEST-priority chrome in the app. It sat at 40 alongside #controls on the
+ * reasoning that both were floating controls; that stopped being true when the
+ * drawer arrived, and the "i" rendered over the bottom sheet's content. A
+ * licensing credit must be present and legible, which it is at every zoom — it
+ * does not have to be on top of a storm warning.
+ *
+ * ==> AND ABOVE EVERYTHING WHILE OPEN, WHICH IS THE SAME RULE AND NOT AN
+ * EXCEPTION TO IT. <== Closed, this is a 30px circle competing for the corner.
+ * Open, it is a panel the reader deliberately asked for, and it was rendering
+ * BEHIND the storm pill and the control cluster — the credits were on screen
+ * and unreadable, which is the one thing this control exists to prevent. The
+ * lift is driven by `data-open` from map/attribution.js rather than by
+ * `:has()`, so there is no support question and no third state to get wrong;
+ * it lasts exactly as long as the panel does. Below #boot (100), which covers
+ * the whole app, and above #veil (50), which is only up before first paint —
+ * the pill ships closed, so it is never lifted while the veil is there. */
 #attrib-host {
   /* The pill is a single in-flow element, so this host only needs to place
    * it clear of the safe-area insets. */
@@ -825,6 +887,7 @@ html, body {
   bottom: var(--safe-bottom);
   z-index: 20;
 }
+#attrib-host[data-open="true"] { z-index: 60; }
 
 /* --- Map controls: bottom-right, clear of the OS gesture zone ------------ */
 #controls {

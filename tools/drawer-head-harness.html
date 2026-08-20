@@ -173,7 +173,12 @@ const homeStepper = createStormStepper({
 drawer.register({
   id: 'home',
   title: 'Home',
-  titleFor: () => identity(currentStorm, `<span class="home-chip">${chipText}</span>`),
+  /* ==> BARE TEXT, BECAUSE THAT IS WHAT ui/view-home.js EMITS. <== It was a
+   * `.home-chip` pill until 2026-08-20, when the dashboard's second line was
+   * made to match the detail panel's. A fixture still wrapping it in a pill
+   * would measure a box the app no longer draws — the same class of fault as
+   * the missing stylesheet noted at the top of this file. */
+  titleFor: () => identity(currentStorm, chipText),
   eyebrow: () => 'Home',
   onEnter: record('home'),
   mount(host) {
@@ -359,22 +364,15 @@ window.__harness = {
       /* ==> MEASURE THE INK, NOT THE BOXES. <== This used to compare the centre
        * of `.drawer-identity-sub` against the centre of `.drawer-identity-line`.
        * Both are full-width block boxes inside the same parent, so their centres
-       * are IDENTICAL BY CONSTRUCTION — the number was 0.0 whatever the chip
-       * did, and two assertions rode on it while the chip sat visibly off to one
-       * side. An assertion that cannot go red is worse than none, because it
-       * reads as proof.
+       * are IDENTICAL BY CONSTRUCTION — the number was 0.0 whatever the second
+       * line did, and two assertions rode on it while that line sat visibly off
+       * to one side. An assertion that cannot go red is worse than none, because
+       * it reads as proof.
        *
-       * What matters is where the chip's own box lands against the header's own
-       * centre — the axis the dot-and-name pair above it and the stepper below
-       * it both use. */
-      chipVsHead: (() => {
-        const chip = box('.home-chip');
-        if (!chip || !head) return null;
-        return (chip.left + chip.right) / 2 - (head.left + head.right) / 2;
-      })(),
-
-      /** The same question for a second line that is plain text and so has no
-       *  box of its own — a Range around its contents gives the ink's extent. */
+       * There was a `chipVsHead` beside this one, measuring the dashboard pill's
+       * own box. The pill is gone (2026-08-20) and both drawers' second lines
+       * are now bare text, so ONE probe covers both — a Range around the
+       * contents gives the ink's extent whichever drawer is showing. */
       subInkVsHead: (() => {
         const subEl = document.querySelector('.drawer-identity-sub');
         if (!subEl || !head || !subEl.textContent.trim()) return null;
