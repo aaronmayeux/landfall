@@ -1,6 +1,13 @@
 /**
- * cap-storm.js (ui) — the "Local agency alerts" section of the storm detail
- * drawer. SPEC §50.5.
+ * cap-storm.js (ui) — the GDACS half of the storm detail drawer's "Watches and
+ * warnings" section. SPEC §50.5.
+ *
+ * ==> IT USED TO BE A SECTION OF ITS OWN, CALLED "Local agency alerts". <==
+ * Merged 2026-08-20, Aaron's call on glass. The two sections were selected by
+ * source and the sources are exclusive, so exactly one of them ever held
+ * content and the other held a sentence pointing at it. This file is now
+ * routed to by `wwHtml()` for any storm that is not NHC's, and renders the
+ * whole of what that section says about one.
  *
  * A SELF-CONTAINED CONTROLLER, same shape as `ui/rain-storm.js` and
  * `ui/env-health.js`, because `ui/view-storm-detail.js` is past §12's file
@@ -13,19 +20,26 @@
  * verbatim below it, labelled with their language when it is not English. We
  * do not machine-translate a safety message we cannot check.
  *
- * ==> THE HEADER IS A WEAKER CLAIM THAN "THIS ALERT IS ABOUT THIS STORM". <==
+ * ==> THE CLOSING NOTE IS LOAD-BEARING AND THE MERGE MADE IT MORE SO. <==
  * §50.1. The match is by country, because the shapes are national outlines and
- * basin-sized boxes (§50.2). So the section says these agencies cover the
- * countries this storm is affecting and currently have a cyclone alert out —
- * which is true — and never that the alert was issued for this storm, which we
- * cannot know.
+ * basin-sized boxes (§50.2). So this says these agencies cover the countries
+ * this storm is affecting and currently have a cyclone alert out — true — and
+ * never that the alert was issued for this storm, which we cannot know. These
+ * rows now sit under the same heading that shows NHC's storm-specific orders
+ * for an Atlantic hurricane, and NOTHING ON SCREEN MARKS THE SEAM. The note
+ * that ends the list is the only thing standing between "an agency has an
+ * alert out" and "an agency warned about THIS storm". It is not decoration and
+ * it does not get trimmed for length.
  *
  * ==> NOTHING IN THIS FILE PAINTS, BUT THE ALERTS DO. <== §50.9. The stripe
  * is drawn by `map/layers/cap-coast.js`, which bands a CAP area onto the
  * coastline through the same selector and the same widths as §7.7's NHC one —
  * so the polygon never reaches the globe as a polygon. What that layer paints
  * and what this section lists differ on purpose: only alerts IN FORCE reach
- * the coast, while a cancellation is worth reading and appears here.
+ * the coast, while a cancellation is worth reading and appears here. That
+ * difference is also why the merged heading is "Watches and warnings" and not
+ * "In effect": a cancellation row under a heading asserting currency would be
+ * the heading contradicting the row beneath it.
  *
  * Imports: lib/ and ui/ siblings, never data/ — the fetch arrives injected
  * (§12).
@@ -52,7 +66,15 @@ function hashKey(s) {
   return h;
 }
 
-export const CAP_SECTION = 'local-alerts';
+/* ==> THIS FILE NO LONGER OWNS A SECTION, AND `CAP_SECTION` IS GONE. <== It
+ * exported `'local-alerts'` while "Local agency alerts" was a heading of its
+ * own. Since 2026-08-20 it is one half of "Watches and warnings" (`ww`), whose
+ * id belongs to `ui/view-storm-detail.js` because that file decides what the
+ * section is. Two files naming one section is how a repaint selector and a
+ * render target drift apart. The retry token below stays `local-alerts`: it is
+ * a scoping handle inside a body, not a section name, and the host view's
+ * catch-all binding is defined as "every `.detail-retry` that does NOT name
+ * its own section". */
 
 /** Is this language tag English? CAP publishes RFC-5646 tags, so the archived
  *  rows read `en-CA`, `es` and `en` — the base subtag is the answer and the
@@ -170,21 +192,19 @@ export function createCapStorm({ loadAlerts }) {
     </div>`;
   }
 
-  /** The section body's inner HTML for the current state. Pure of the DOM. */
+  /** The section body's inner HTML for the current state. Pure of the DOM.
+   *
+   *  ==> ONLY EVER CALLED FOR A GDACS STORM. <== `wwHtml()` routes here on
+   *  `source !== 'nhc'` and renders NHC's own layer otherwise, so this returns
+   *  the whole of what "Watches and warnings" says about a GDACS storm.
+   *
+   *  IT USED TO OPEN WITH A BRANCH POINTING NHC STORMS AT THE SECTION ABOVE —
+   *  deleted with the two-section layout that made it necessary. An NHC storm
+   *  never reaches this function now, and a dead branch that renders a
+   *  sentence about a heading which no longer exists is worse than no branch:
+   *  the first person to read it would believe that heading was still there. */
   function html(storm, now = Date.now()) {
     if (!storm) return '';
-
-    /* ==> AN NHC STORM IS ANSWERED WITHOUT A FETCH, AND POINTED AT THE ANSWER
-     * IT ALREADY HAS. <== §50.3. NHC storms carry a basin and no country, so
-     * there is nothing to match on — but they are also the only storms whose
-     * watches and warnings we DO paint, in "In effect" above and on the globe.
-     * Saying "unavailable" here would be false; saying nothing would be
-     * §5-silence. It says where the answer is. */
-    if (storm.source !== 'gdacs') {
-      return `<div class="detail-soft">The National Hurricane Center's own
-        watches and warnings for this storm are in <strong>In effect</strong>
-        above, and painted on the coast.</div>`;
-    }
 
     if (!isCurrent(storm) || state.phase === 'idle' || state.phase === 'loading') {
       return `<div class="detail-soft">Checking national agencies${DOTS}</div>`;

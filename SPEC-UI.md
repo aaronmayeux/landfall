@@ -2742,10 +2742,11 @@ being set **and** the storm being near it.
 BUILD DROPPED THEM. <==** §48.6's rule — a warning is what IS happening, a total
 is what MIGHT — applies on this surface exactly as it does on the dashboard. It
 was left out on the reasoning that the dashboard already showed them and the app
-must not say things twice. **It is not said twice.** `In effect` carries NHC's
-hurricane and tropical-storm products; `Local agency alerts` asks its upstream
-only for Cyclone, Typhoon, Hurricane, Tropical and Storm Surge. Flood is in
-none of them. So a reader who tapped a storm during a hurricane and never opened
+must not say things twice. **It is not said twice.** `Watches and warnings`
+carries NHC's hurricane and tropical-storm products in one half, and in the
+other asks CAP only for Cyclone, Typhoon, Hurricane, Tropical and Storm Surge.
+Flood is in none of them. So a reader who tapped a storm during a hurricane and
+never opened
 the dashboard got a rainfall total and no warning at all — §5's silence with a
 number in front of it, on the screen most likely to be the only one they open.
 The two opposite meanings of `alerts: null` (§48.16) travel with them.

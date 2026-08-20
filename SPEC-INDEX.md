@@ -204,12 +204,12 @@ real home is the other row carrying the same section number.
 | `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2279-2315 |
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2316-2348 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2349-2399 |
-| `48.17` | &nbsp;&nbsp;At your house — the point forecast in the storm drawer | `SPEC-UI.md` | 2693-2767 |
+| `48.17` | &nbsp;&nbsp;At your house — the point forecast in the storm drawer | `SPEC-UI.md` | 2693-2768 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 975-976 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 977-1032 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1033-1058 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2193-2278 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2816-2838 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 2817-2839 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1059-1111 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1112-1163 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1164-1282 |
@@ -222,27 +222,27 @@ real home is the other row carrying the same section number.
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1528-1570 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1571-1613 |
 | `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1614-1694 |
-| `50` | Local agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2400-2401 |
-| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2402-2440 |
-| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2441-2460 |
-| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2461-2483 |
-| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2484-2535 |
-| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2536-2568 |
-| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2569-2589 |
-| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2590-2607 |
-| `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2608-2634 |
-| `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2635-2659 |
-| `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2660-2679 |
-| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2680-2768 |
-| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2769-2821 |
-| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2822-2823 |
-| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2824-2910 |
-| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2911-2940 |
-| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2941-2989 |
-| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 2990-3040 |
-| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3041-3079 |
-| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2768-2815 |
-| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3080-3127 |
+| `50` | National agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2400-2406 |
+| `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2407-2454 |
+| `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2455-2474 |
+| `50.3` | &nbsp;&nbsp;Matching — by country, and only for GDACS storms | `SPEC-DATA.md` | 2475-2497 |
+| `50.4` | &nbsp;&nbsp;Translation — the coded fields only | `SPEC-DATA.md` | 2498-2549 |
+| `50.5` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2550-2582 |
+| `50.6` | &nbsp;&nbsp;The three states | `SPEC-DATA.md` | 2583-2603 |
+| `50.7` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2604-2621 |
+| `50.8` | &nbsp;&nbsp;A warning, a stand-down and a drill are three different things | `SPEC-DATA.md` | 2622-2648 |
+| `50.9` | &nbsp;&nbsp;Severity onto the NHC colour rungs | `SPEC-DATA.md` | 2649-2673 |
+| `50.10` | &nbsp;&nbsp;The shape route | `SPEC-DATA.md` | 2674-2693 |
+| `50.11` | &nbsp;&nbsp;The warning area as a coast selector | `SPEC-DATA.md` | 2694-2798 |
+| `50.12` | &nbsp;&nbsp;Coverage is the storms we list, and an unattributed storm says so | `SPEC-DATA.md` | 2799-2851 |
+| `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2852-2853 |
+| `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2854-2940 |
+| `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2941-2970 |
+| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 2971-3019 |
+| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 3020-3070 |
+| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3071-3109 |
+| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2769-2816 |
+| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3110-3157 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1695-1732 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1752-1784 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1785-1821 |
@@ -251,11 +251,11 @@ real home is the other row carrying the same section number.
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 186,337 | 55 |
+| `SPEC-DATA.md` | 188,297 | 55 |
 | `SPEC-MAP.md` | 209,270 | 38 |
 | `SPEC-NEXT.md` | 114,886 | 28 |
 | `SPEC-OPS.md` | 74,543 | 20 |
-| `SPEC-UI.md` | 166,495 | 13 |
+| `SPEC-UI.md` | 166,504 | 13 |
 | `SPEC.md` | 152,255 | 14 |
 | `spec-parameter.md` | 54,194 | 49 |
 

@@ -90,7 +90,7 @@ import { POPULATION } from '../config/constants.js';
 import { DOTS } from './loading-dots.js';
 import { createEnvHealth, ENV_SECTION } from './env-health.js';
 import { createRainStorm, RAIN_SECTION } from './rain-storm.js';
-import { createCapStorm, CAP_SECTION } from './cap-storm.js';
+import { createCapStorm } from './cap-storm.js';
 
 /* --- small helpers --------------------------------------------------------- */
 
@@ -803,37 +803,33 @@ export function createStormDetailView({
     return html;
   }
 
+  /**
+   * The Watches and warnings section — WHO HAS OFFICIALLY WARNED WHOM about
+   * this storm, whichever centre is tracking it.
+   *
+   * ==> ONE SECTION, TWO HALVES, AND THEY ARE MUTUALLY EXCLUSIVE BY SOURCE.
+   * <== An NHC storm carries a basin and no country, so CAP has nothing to
+   * join on (§50.3) and NHC's own watch/warning layer is the answer. A GDACS
+   * storm has the reverse. Neither half ever needs to mention the other, which
+   * is what let both pointer sentences be deleted when these merged.
+   *
+   * THE SILENCE GATE RUNS FIRST, FOR BOTH. It used to be applied twice, once
+   * inside each of the two section bodies, which was the same rule written
+   * down in two places and free to drift. This section's empty states are
+   * "None in effect." and "No national weather agency ... has a tropical
+   * cyclone alert in force" — both all-clears on live government orders. A
+   * silenced or ended storm hands over an empty slot, so without this gate the
+   * fix for a frozen feed would publish exactly the false all-clear §5 forbids.
+   * Of every section on this panel, this is the one that must not guess.
+   */
   function wwHtml() {
-    /* `can` distinguishes "this source never had it" from "the fetch died"
-     * (§4). GDACS publishes no watch/warning product — that is unsupported,
-     * not clear and not broken. Three strings, all different, by design.
-     *
-     * ==> AND IT POINTS DOWN, BECAUSE SINCE §50.11 THERE IS SOMEWHERE TO
-     * POINT. <== This read "Not available for GDACS storms." and stopped.
-     * True about NHC's product and false about the app: foreign agencies'
-     * cyclone warnings now list in "Local agency alerts" directly below and
-     * paint the same coastal stripe through the same selector
-     * (map/layers/cap-coast.js). A reader could see an orange stripe on the
-     * Philippine coast while the section above it said nothing was available.
-     *
-     * IT PROMISES A LIST, NOT A WARNING. "Any national agency warnings are
-     * listed below" stays true when the list is empty, when the country is
-     * unattributed, and when the fetch failed — the section below owns those
-     * three answers and words them separately (§50.6). Claiming a stripe from
-     * here would be asserting a fact this function cannot see. */
-    if (storm.source !== 'nhc') {
-      return `<div class="detail-soft">The National Hurricane Center doesn’t
-        cover this storm. Any national agency warnings are listed in
-        <strong>Local agency alerts</strong> below.</div>`;
-    }
-    /* BEFORE THE SLOT IS READ, ALWAYS. This section's empty state is the
-     * sentence "None in effect." — an all-clear on live government orders.
-     * The silenced bundle hands it an empty slot, so without this branch the
-     * fix for a frozen feed would publish exactly the false all-clear §5 is
-     * written to forbid. Of every section on this panel, this is the one that
-     * must not guess. */
     const silenced = withheldNote();
     if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+
+    /* THE GDACS HALF IS A WHOLE CONTROLLER, not a branch — `ui/cap-storm.js`
+     * has its own fetch, its own retry and its own three empty states, and it
+     * owns every word it prints (§50.6). Routed to, never reimplemented. */
+    if (storm.source !== 'nhc') return capH.html(storm);
 
     const slot = geo.state === 'ok' ? geo.bundle?.layers?.watchWarning : null;
     if (geo.state === 'loading') return `<div class="detail-soft">Checking${DOTS}</div>`;
@@ -1307,23 +1303,19 @@ export function createStormDetailView({
     return rainH.html(storm);
   }
 
-  /** The Local alerts section's body (§50.5) — behind the same withheld-note
-   *  gate every other section uses, so a silent or ended storm never carries a
-   *  block of alerts read as currently in force. */
-  function capHtml() {
-    const silenced = withheldNote();
-    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
-    return capH.html(storm);
-  }
-
-  /** Repaint ONLY the Local alerts section — same scroll-position reasoning as
-   *  every other section repaint here. */
+  /** Repaint ONLY the Watches and warnings section when the CAP fetch lands —
+   *  same scroll-position reasoning as every other section repaint here.
+   *
+   *  ==> IT TARGETS `ww` BECAUSE THAT IS WHERE THE ALERTS NOW LIVE. <== There
+   *  is no `local-alerts` section any more, and a selector naming one would
+   *  find nothing and fail silently: the fetch would land, this would return
+   *  early, and the section would sit on "Checking national agencies…"
+   *  forever. `tools/selector-contract-check.mjs` is the guard that every
+   *  selector in the app still names something real. */
   function renderCapBody() {
-    const el = bodyEl?.querySelector(
-      `.detail-section[data-section="${CAP_SECTION}"] .detail-section-body`
-    );
+    const el = bodyEl?.querySelector('.detail-section[data-section="ww"] .detail-section-body');
     if (!el || !storm) return;
-    el.innerHTML = capHtml();
+    el.innerHTML = wwHtml();
     capH.wire(bodyEl, storm, renderCapBody);
   }
 
@@ -1411,11 +1403,31 @@ export function createStormDetailView({
        * for a storm nobody is measuring. */
       section('vitals', isEnded(storm) ? 'Last known' : 'Vitals', vitalsHtml()),
       homeBlock ? section('home', 'Home', homeBlock) : '',
-      section('ww', 'In effect', wwHtml()),
-      /* Directly under "In effect" because it answers the same question for
-       * the rest of the world — who has warned whom. The order also makes the
-       * NHC storm's pointer ("see In effect above") literally true. */
-      section(CAP_SECTION, 'Local agency alerts', capHtml()),
+      /* ==> ONE SECTION, BOTH SOURCES. <== This was TWO — "In effect" and
+       * "Local agency alerts" — and exactly one of them ever held content,
+       * because they are selected by source and the sources are exclusive. An
+       * NHC storm got a legend and a sentence pointing down at nothing; a
+       * GDACS storm got a sentence pointing up at nothing and a list. Two
+       * headings, one of which was always a redirect. Aaron's call on glass,
+       * 2026-08-20: it reads as the app apologising for its own filing system.
+       *
+       * ==> AND BOTH POINTERS DELETED THEMSELVES. <== That is the whole win.
+       * The redirects existed only because there was somewhere else to be; one
+       * section has nowhere to point, so a Philippine typhoon no longer has to
+       * mention the National Hurricane Center to explain itself.
+       *
+       * THE ID STAYS `ww`. It is the persisted collapse key
+       * (lib/section-state.js) — renaming it would silently reopen a section
+       * every existing reader had closed, to buy a tidier string nobody sees.
+       *
+       * "WATCHES AND WARNINGS" AND NOT "IN EFFECT", AND THE REASON IS §5. The
+       * old heading is NHC's phrase and it asserts CURRENCY. The CAP half
+       * deliberately carries cancellations — §50.1 measured two rows out of
+       * five announcing weather ENDING, and "the wave has passed" is worth
+       * reading — so a cancellation under a heading reading IN EFFECT is the
+       * heading contradicting the row beneath it. The new one is true of both
+       * halves without claiming anything about any single row. */
+      section('ww', 'Watches and warnings', wwHtml()),
       section('wind', 'Wind field', windHtml()),
       section(RAIN_SECTION, 'Rainfall', rainHtml()),
       section(ENV_SECTION, 'Environment', envHtml()),

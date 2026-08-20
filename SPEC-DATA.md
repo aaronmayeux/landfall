@@ -2081,10 +2081,10 @@ outranks any forecast total, so it renders **above** the number.
 and the storm drawer's house block (§48.17) — from the one shared row builder
 `ui/rain-alerts.js`. **That is not a duplication**, and the check that settles it
 is worth writing down because §48.17 shipped once without them on exactly this
-reasoning: `In effect` carries only NHC's hurricane and tropical-storm products,
-and `Local agency alerts` (§50) asks its upstream only for Cyclone, Typhoon,
-Hurricane, Tropical and Storm Surge. **Nothing else in the app renders a flood
-warning.** A surface that shows a rainfall total and omits them is not avoiding
+reasoning: `Watches and warnings` carries only NHC's hurricane and
+tropical-storm products on one side, and on the other (§50) asks CAP only for
+Cyclone, Typhoon, Hurricane, Tropical and Storm Surge. **Nothing else in the
+app renders a flood warning.** A surface that shows a rainfall total and omits them is not avoiding
 repetition, it is the only thing standing between a reader and a live warning.
 
 **==> SEVERITY IS NOT THE ORDER; URGENCY IS. <==** A Flood Watch and a Flash
@@ -2397,7 +2397,12 @@ from a raw global model reads as the same kind of number an American one does.
 The two halves of §48 are one feature to a reader, which was the goal.
 
 
-## 50. Local agency alerts — what the rest of the world publishes
+## 50. National agency alerts — what the rest of the world publishes
+
+*The on-screen heading was `Local agency alerts` until 2026-08-20, when this
+merged into the storm drawer's `Watches and warnings` section alongside NHC's
+own products (§50.11). This section number still addresses the CAP source and
+everything built on it; it no longer names anything a reader sees.*
 
 ### 50.1 Why this exists, and what it deliberately is not
 
@@ -2410,8 +2415,8 @@ field and no indication that anyone has told anybody to move.
 what the Hub aggregates — every member country's official alerts — as an
 ordinary ArcGIS feature service: public, anonymous, no key.
 
-**==> IT IS A TEXT SECTION AND IT PAINTS NOTHING, AND THAT DECISION CAME OUT
-OF THE BYTES. <==** Measured on the archive branch, 2026-08-19, at an hour when
+**==> IT SHIPPED AS A TEXT SECTION THAT PAINTED NOTHING, AND THAT CAME OUT OF
+THE BYTES. <==** Measured on the archive branch, 2026-08-19, at an hour when
 GDACS was tracking eleven active cyclones, the entire global cyclone-alert feed
 held FIVE rows:
 
@@ -2429,9 +2434,18 @@ held FIVE rows:
 A CAP area is whatever the issuing country drew, and what countries draw is
 administrative: a province, a nation, a basin. Banded onto a coast the way §7.7
 bands NHC's breakpoint lines, that shades seventeen degrees of open ocean
-because a depression exists somewhere inside it. **Painting it would be a
-worse lie than leaving the coast unpainted**, so the stripe stays NHC-only and
-this section is words.
+because a depression exists somewhere inside it.
+
+**==> THAT WAS REVERSED, AND §50.11 IS THE LIVE ANSWER. <==** Aaron's call,
+2026-08-19: a warning is a warning, and a reader in Manila should see the
+stripe a reader in Galveston sees. `map/layers/cap-coast.js` is wired in
+`map/layers/index.js` and paints today, through NHC's own selector and width
+curves. The measurement above is not wrong and is kept because it is what the
+areas actually are — a national outline, a monitoring basin — and §50.11's
+`UNJUDGED` note carries the same worry forward as the open question glass has
+still to settle. **Only alerts IN FORCE reach the coast**; a cancellation is
+text-only. Read §50.11 before touching the stripe; this paragraph is history,
+not instruction.
 
 **NOTHING IN THIS SECTION INFERS A THREAT.** It does not rank alerts, read
 severity as danger, or derive an all-clear. Two of the five archived rows
@@ -2743,22 +2757,38 @@ questions: whether a whole-country area paints far more coast than reads well
 that volume meets `COAST_BAND.maxBandVertices`. `areaPadKm` is the dial if the
 stripe undershoots at a river mouth or an offshore island.
 
-**==> AND "IN EFFECT" POINTS DOWN AT THIS, BECAUSE THE STRIPE MADE ITS OLD
-ANSWER A LIE. <==** Corrected 2026-08-20, Aaron caught it. The storm drawer's
-watch/warning section answered a GDACS storm with *"Not available for GDACS
-storms."* and stopped. True about NHC's product and false about the app the
-moment this section shipped: a reader could see an orange stripe on the
-Philippine coast, painted by `cap-coast.js`, while the section above it said
-nothing was available. It now reads *"The National Hurricane Center doesn't
-cover this storm. Any national agency warnings are listed in **Local agency
-alerts** below."* — the mirror of the pointer NHC storms already carry in the
-other direction (§50.3).
+**==> AND IT IS ONE SECTION WITH NHC'S OWN WARNINGS, NOT A SECOND ONE BESIDE
+THEM. <==** Merged 2026-08-20, Aaron's call on glass. The drawer carried
+`In effect` and `Local agency alerts` as two headings, selected by source —
+and the sources are exclusive, so exactly one ever held content while the
+other held a sentence pointing at it. An NHC hurricane showed a legend and a
+redirect to an empty section; a Philippine typhoon showed a redirect and then
+its alerts. Both pointer sentences deleted themselves in the merge, which is
+the whole argument for it: a typhoon no longer has to mention the National
+Hurricane Center to explain its own filing.
 
-**IT PROMISES A LIST, NOT A WARNING.** The sentence stays true when the list is
-empty, when GDACS has attributed no country (§50.12) and when the fetch failed.
-Those are three different answers and `ui/cap-storm.js` owns and words all
-three; a pointer that claimed a stripe would be asserting a fact `wwHtml()`
-cannot see.
+`wwHtml()` in `ui/view-storm-detail.js` is the router — NHC's watch/warning
+layer for `source === 'nhc'`, `ui/cap-storm.js` for anything else — behind ONE
+silence gate rather than the two that previously wrote the same rule twice.
+The section id stays `ww`, because it is the persisted collapse key and
+renaming it reopens a section every existing reader had closed.
+
+**THE HEADING IS `Watches and warnings` AND `In effect` WAS RETIRED WITH THE
+SPLIT.** The old one is NHC's phrase and it asserts CURRENCY. This section's
+CAP half deliberately carries cancellations — §50.1 measured two rows in five
+announcing weather *ending*, and "the wave has passed" is worth reading — so a
+cancellation under a heading reading IN EFFECT is the heading contradicting the
+row beneath it. The new heading is true of both halves and claims nothing about
+any single row.
+
+**==> NOTHING ON SCREEN MARKS THE SEAM, SO §50.5'S CLOSING NOTE IS NOW THE ONLY
+THING HOLDING THE DISTINCTION. <==** NHC's rows are storm-specific orders. A
+CAP row is a country-level alert matched by country, which §50.5 forbids
+presenting as being about this storm. Under one heading those two look alike.
+The note that ends the CAP list — *issued by national weather agencies for the
+countries this storm is affecting, not by the forecast centre tracking it, and
+not necessarily about this storm* — is what keeps them apart, and it is not
+decoration to be trimmed for length.
 9. A Spanish alert arrives with its wording COLLAPSED and the English coded
    line visible. Tapping the chevron opens it; the chevron rotates and nothing
    else on the panel moves.
