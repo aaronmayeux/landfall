@@ -456,7 +456,18 @@ function forecastRadiiFrom(bands, zeroBands, forecast) {
       out.push({ tau: pt.tau, kt, ne: 0, se: 0, sw: 0, nw: 0 });
       return;
     }
-    const q = quadrantRadiiNm(f.geometry, [pt.lon, pt.lat], GDACS_GEOMETRY.quadrantWindowDeg);
+    const q = quadrantRadiiNm(
+      f.geometry,
+      [pt.lon, pt.lat],
+      GDACS_GEOMETRY.quadrantWindowDeg,
+      /* ==> AND ONE SIDE OF A BAND CAN BE ZERO WITHOUT THE BAND BEING
+       * UNREADABLE. <== `isDegenerate` above catches a WHOLE band drawn at
+       * zero; this catches one SECTOR of one drawn that way, which GDACS does
+       * by collapsing its vertices onto this very dot. Without it the reader
+       * saw an empty quadrant, failed closed, and dropped the hour — which on
+       * SAUDEL-26 was the first published reading of every threshold. */
+      GDACS_GEOMETRY.centreCollapseNm
+    );
     /* Fails closed (lib/quadrant-radii.js). An unreadable shape publishes
      * NOTHING for that hour, which the corridor refuses to interpolate
      * across — rather than a zero, which would be an all-clear for a flank. */

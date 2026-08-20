@@ -66,6 +66,7 @@ globalThis.fetch = async () => ({
 
 const { quadrantRadiiNm } = await import('../lib/quadrant-radii.js');
 const { radiusAtBearing } = await import('../lib/windswath.js');
+const { greatCircleNm } = await import('../lib/geo.js');
 const { fetchGdacsGeometry } = await import('../data/gdacs-geometry.js');
 const { buildCorridor, crossings } = await import('../data/home-corridor.js');
 const { buildHomeDashboard } = await import('../data/home-dashboard.js');
@@ -249,6 +250,125 @@ ok(drawnCurrent.length === 3,
    `the map still draws exactly the three current bands (${drawnCurrent.length})`);
 
 /* ======================================================================
+ * 3b. A ZERO ON ONE FLANK IS NOT AN UNREADABLE BAND
+ *
+ * The section above is about a WHOLE band published at zero. This is the
+ * other half of the same habit and it went unnoticed for a month: where one
+ * SIDE of a band reaches nothing, GDACS collapses that sector's vertices onto
+ * the storm's own dot and leaves the other three sectors normal. The quadrant
+ * window then finds nothing in that corner, `quadrantRadiiNm` fails closed,
+ * and the ENTIRE hour's radii for that threshold are thrown away.
+ *
+ * ==> WHAT THAT COST, MEASURED, NOT ARGUED. <== On SAUDEL-26 (archive,
+ * 2026-08-20) it deleted the first published reading of all three thresholds —
+ * 34 kt at tau 0, 50 kt at tau 12, 64 kt at tau 24 — and on TWO-C-26 it
+ * deleted 34 kt at taus 9 and 21, a hole through the middle of the most
+ * important band. A deleted hour is not a gap on the home chart: the band is
+ * one polygon, so it BRIDGES the hole with a straight line and draws wind
+ * arriving on a slope nobody forecast. Aaron caught it on glass as bands that
+ * started late and crossed each other.
+ *
+ * THE FIXTURE IS FOUR REAL SAUDEL BANDS, three collapsed and one not, with
+ * every centre produced by the app's own point parser rather than transcribed.
+ * ====================================================================== */
+section('a quadrant drawn at zero');
+
+const ZQ = JSON.parse(fs.readFileSync('samples/gdacs/geometry-TC-zero-quadrant.json', 'utf8'));
+ok(ZQ.bands.length === 4, `four real bands in the fixture (${ZQ.bands.length})`);
+
+const collapsed = ZQ.bands.filter((b) => /zero/.test(b.note));
+const control = ZQ.bands.find((b) => !/zero/.test(b.note));
+ok(collapsed.length === 3 && !!control, 'three with a collapsed quadrant and one control');
+
+/* ==> THE FIXTURE IS WHAT THIS SECTION THINKS IT IS. <== Asserted off the
+ * geometry rather than trusted from the note: the collapsed three each carry
+ * vertices sitting ON the published centre, and the control carries none. If a
+ * future payload swap quietly removed that property, every assertion below
+ * would still pass while proving nothing. */
+const centredCount = (b) => {
+  const rings = b.geometry.type === 'Polygon' ? b.geometry.coordinates : b.geometry.coordinates.flat();
+  let n = 0;
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      if (greatCircleNm(b.centre[0], b.centre[1], x, y) <= GDACS_GEOMETRY.centreCollapseNm) n++;
+    }
+  }
+  return n;
+};
+ok(collapsed.every((b) => centredCount(b) > 0),
+   `each collapsed band has vertices on the centre (${collapsed.map(centredCount).join(', ')})`);
+ok(centredCount(control) === 0,
+   `and the control band has none (${centredCount(control)})`);
+
+/* ==> THE TOLERANCE IS NOWHERE NEAR ANYTHING REAL. <== The collapsed vertices
+ * sit at 0.0000 nm and the nearest genuine vertex on the same shapes is 10 nm
+ * out, because GDACS rounds its radii to 5 nm steps. This states that gap so
+ * the constant cannot drift into a real arc without the suite noticing. */
+{
+  const nearest = collapsed.map((b) => {
+    const rings = b.geometry.type === 'Polygon' ? b.geometry.coordinates : b.geometry.coordinates.flat();
+    let m = Infinity;
+    for (const ring of rings) {
+      for (const [x, y] of ring) {
+        const d = greatCircleNm(b.centre[0], b.centre[1], x, y);
+        if (d > GDACS_GEOMETRY.centreCollapseNm && d < m) m = d;
+      }
+    }
+    return m;
+  });
+  ok(Math.min(...nearest) >= 5,
+     `the nearest real vertex on any collapsed band is ${Math.min(...nearest).toFixed(1)} nm out — ` +
+     `the tolerance has an order of magnitude of clearance`);
+}
+
+/* THE FIX ITSELF. A full set of four comes back, exactly one corner is zero,
+ * and the other three land on the source's own round 5 nm figures — which is
+ * what proves the centred vertices were held OUT of the sampling rather than
+ * averaged into it. */
+for (const b of collapsed) {
+  const q = quadrantRadiiNm(b.geometry, b.centre, GDACS_GEOMETRY.quadrantWindowDeg,
+                            GDACS_GEOMETRY.centreCollapseNm);
+  const label = `${b.class} tau ${b.tau}`;
+  ok(!!q, `${label}: reads as a published zero rather than as unreadable`);
+  if (!q) continue;
+  const vals = ['ne', 'se', 'sw', 'nw'].map((k) => q[k]);
+  ok(vals.filter((v) => v === 0).length === 1,
+     `${label}: exactly one flank is zero (${vals.map((v) => v.toFixed(0)).join('/')})`);
+  ok(vals.filter((v) => v > 0).every((v) => Math.abs(v - Math.round(v / 5) * 5) < 0.5),
+     `${label}: the other three are still the source's round figures — not dragged toward zero`);
+}
+
+/* ==> MUTATION: THE BUG MUST COME BACK WHEN THE FIX IS TAKEN AWAY. <== A
+ * tolerance of zero IS the old code path — every empty window fails closed —
+ * so this is the bug reintroduced, not an approximation of it. If these came
+ * back non-null the assertions above would be guarding nothing. */
+for (const b of collapsed) {
+  ok(quadrantRadiiNm(b.geometry, b.centre, GDACS_GEOMETRY.quadrantWindowDeg, 0) === null,
+     `${b.class} tau ${b.tau}: with the tolerance off, the whole band is discarded again`);
+}
+
+/* AND THE CONTROL IS UNMOVED. Turning the behaviour on must not change a band
+ * that never had a collapsed quadrant — otherwise the fix is not narrow. */
+{
+  const on = quadrantRadiiNm(control.geometry, control.centre,
+                             GDACS_GEOMETRY.quadrantWindowDeg, GDACS_GEOMETRY.centreCollapseNm);
+  const off = quadrantRadiiNm(control.geometry, control.centre,
+                              GDACS_GEOMETRY.quadrantWindowDeg, 0);
+  ok(!!on && !!off && JSON.stringify(on) === JSON.stringify(off),
+     'a band with no collapsed quadrant reads identically either way');
+}
+
+/* ==> AND IT STILL FAILS CLOSED WHERE IT SHOULD. <== The shape below occupies
+ * one quadrant and has nothing on the centre, so the tolerance must not rescue
+ * it. This is the assertion that stops the fix becoming "zero everything we
+ * cannot read", which is the all-clear §5 forbids. */
+ok(quadrantRadiiNm(
+     { type: 'Polygon', coordinates: [[[0.5, 0.5], [0.6, 0.5], [0.6, 0.6], [0.5, 0.5]]] },
+     [0, 0], 45, GDACS_GEOMETRY.centreCollapseNm
+   ) === null,
+   'a shape with no centred vertices still returns null even with the tolerance on');
+
+/* ======================================================================
  * 4. THE CORRIDOR — THE WHOLE POINT
  * ====================================================================== */
 section('the wind-arrival corridor');
@@ -408,6 +528,65 @@ ok(!/Wind could start this early/.test(rail),
 
 const svg = homeChart(dash, 'imperial');
 ok(!!svg && svg.length > 1000, `the chart renders (${svg?.length || 0} chars)`);
+
+/* ==> A FIELD WITH NO WIDTH IS NOT DRAWN, AND A GAP IN ONE IS NOT BRIDGED.
+ * <== A published zero is real data the arithmetic needs, and it is not a
+ * picture: drawn, its leading edge and the storm's own track are the same
+ * points, so it renders as a coloured stroke lying on the centre line — which
+ * reads as hurricane-force wind AT the centre rather than as none existing
+ * yet. Seen on SAUDEL-26, whose 64 kt field is zero for its first 24 hours.
+ * Aaron's call on glass, 2026-08-20.
+ *
+ * THE INPUT IS DOCTORED AND THAT IS THE POINT. The rule under test is a
+ * DRAWING rule — "do not paint a band where the reach is zero" — so the test
+ * has to hand it a zero reach inside the plotted window and look at what comes
+ * out. This fixture's own zeros are real but sit past the window's right edge,
+ * where nothing is painted either way; they would prove nothing. The mutation
+ * is faithful to what a published zero looks like: reach 0, and the gap
+ * therefore the full distance to the centre. */
+{
+  const bandPaths = (s, kt) =>
+    [...s.matchAll(/<path d="M([^"]+)" fill="color-mix\(in srgb, var\(--kt(\d+)\)/g)]
+      .filter((m) => +m[2] === kt)
+      .map((m) => {
+        const xs = m[1].split(' ').map((t) => parseFloat(t.replace(/^L/, ''))).filter(Number.isFinite);
+        return [Math.min(...xs), Math.max(...xs)];
+      });
+  const zeroed = (kt, lo, hi) => {
+    const d = JSON.parse(JSON.stringify(dash));
+    for (const s of d.corridor.samples) {
+      if (s.h >= lo && s.h <= hi && s.reach[kt] != null) { s.reach[kt] = 0; s.gap[kt] = s.nm; }
+    }
+    return homeChart(d, 'imperial');
+  };
+
+  const base = bandPaths(svg, 64);
+  ok(base.length === 1, `the 120 km/h band is one polygon while it has width (${base.length})`);
+
+  /* THE FRONT IS TRIMMED. The field forms partway through the frame; the band
+   * must start where it does, not at the left edge. */
+  const front = bandPaths(zeroed(64, -1, 10), 64);
+  ok(front.length === 1 && front[0][0] > base[0][0] + 20,
+     `zeroed for its first hours, the band starts later instead of on the track ` +
+     `(x ${front[0]?.[0].toFixed(0)} vs ${base[0][0].toFixed(0)})`);
+
+  /* AND A HOLE IN THE MIDDLE STAYS A HOLE. `reach` is read along the bearing
+   * to this house, so a storm's quiet flank swinging toward home puts a
+   * genuine zero mid-series. One polygon over it would bridge the hole with a
+   * straight line — the fabricated slope this whole pass exists to delete. */
+  const holed = bandPaths(zeroed(64, 15, 20), 64);
+  ok(holed.length === 2,
+     `zeroed in the middle, the band breaks into two rather than bridging (${holed.length})`);
+  ok(holed.length === 2 && holed[1][0] > holed[0][1] + 5,
+     'and the two halves do not touch');
+
+  /* ==> MUTATION: these three assertions must be about the filter. <== If the
+   * zero-width rule were removed, every one of the charts above would come
+   * back as the single full-width polygon `base` already is — so `base` being
+   * different from both is what makes them real. */
+  ok(base[0][0] < front[0][0] && base.length !== holed.length,
+     'the undoctored band differs from both — the assertions are driven by the reach, not by the frame');
+}
 ok(!/stroke-dasharray="4 3"/.test(svg),
    'and draws no dashed hedge line on top of the band edge');
 ok(/aria-label="[^"]*wind reaches you[^"]*"/.test(svg),

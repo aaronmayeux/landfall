@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 224 numbered headings.
+Covering 9 files, 225 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -221,7 +221,8 @@ real home is the other row carrying the same section number.
 | `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1522-1545 |
 | `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1546-1588 |
 | `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1589-1631 |
-| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1632-1712 |
+| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1632-1711 |
+| `49.17` | &nbsp;&nbsp;A quadrant drawn at zero is a measurement, not an unreadable band | `SPEC-NEXT.md` | 1712-1799 |
 | `50` | National agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2433-2439 |
 | `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2440-2487 |
 | `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2488-2507 |
@@ -243,9 +244,9 @@ real home is the other row carrying the same section number.
 | `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3128-3166 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 2769-2816 |
 | `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3167-3214 |
-| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1713-1750 |
-| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1770-1802 |
-| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1803-1839 |
+| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1800-1837 |
+| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1857-1889 |
+| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1890-1926 |
 
 ## Files
 
@@ -253,9 +254,9 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 214,373 | 38 |
-| `SPEC-NEXT.md` | 116,081 | 28 |
+| `SPEC-NEXT.md` | 121,596 | 29 |
 | `SPEC-OPS.md` | 74,543 | 20 |
 | `SPEC-UI.md` | 166,504 | 13 |
-| `SPEC.md` | 153,209 | 14 |
+| `SPEC.md` | 153,809 | 14 |
 | `spec-parameter.md` | 56,804 | 49 |
 

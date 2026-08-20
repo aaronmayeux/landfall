@@ -3795,6 +3795,33 @@ export const GDACS_GEOMETRY = Object.freeze({
    *  MUST NOT EXCEED 90: wider and the four windows overlap, a vertex lands
    *  in two quadrants, and the seams come back. */
   quadrantWindowDeg: 45,
+
+  /** How close to the published centre a band vertex has to sit, in nautical
+   *  miles, before `lib/quadrant-radii.js` reads it as GDACS SAYING ZERO on
+   *  that flank rather than as an unreadable shape.
+   *
+   *  ==> A ZERO QUADRANT IS DRAWN, NOT OMITTED, AND IT COST US THE FIRST HOUR
+   *  OF EVERY WIND FIELD. <== `degenerateSpanDeg` above catches the case where
+   *  a WHOLE band is zero. This is the other half of the same habit: where one
+   *  SIDE of a band reaches nothing, GDACS collapses that sector's vertices
+   *  onto the storm's own dot and leaves the other three sectors normal. The
+   *  quadrant window then finds nothing, the reader fails closed, and the
+   *  entire hour's radii for that threshold are discarded.
+   *
+   *  MEASURED off `origin/archive:latest/geometry/`, 2026-08-20. SAUDEL-26
+   *  lost 34 kt at tau 0, 50 kt at tau 12 and 64 kt at tau 24 — the first
+   *  published reading of every threshold — and TWO-C-26 lost 34 kt at taus 9
+   *  and 21, a hole through the middle of its most important band. On the home
+   *  chart a discarded hour is not a gap, it is a STRAIGHT LINE bridged across
+   *  to the next published hour, which drew wind arriving on a slope nobody
+   *  forecast.
+   *
+   *  THE TOLERANCE IS NOT A JUDGEMENT CALL. Those vertices sit at 0.0000 nm
+   *  from the dot — GDACS writes the dot's own coordinates — and the nearest
+   *  REAL vertex on any of those bands is 10 nm out, because the source rounds
+   *  its radii to 5 nm steps. Anything between the two works; 1 nm leaves an
+   *  order of magnitude of headroom on both sides. */
+  centreCollapseNm: 1,
 });
 
 /**

@@ -1709,6 +1709,93 @@ the chart, which is what stops its numeric fallback ever appearing unnoticed.
 **Confirmed on glass 2026-08-18.** The shorter drawer reads as a source that
 knows less, not as an app that is missing something.
 
+### 49.17 A quadrant drawn at zero is a measurement, not an unreadable band
+
+**BUILT.** §49.16 recovers a GDACS band's four radii by sampling the middle
+half of each quadrant and taking the median. A quadrant with nothing in its
+window returned `null` for the WHOLE band, on the reasoning that a zero in a
+corner means "no wind that strong on that flank" and inventing one because a
+shape could not be read would be an all-clear for a side of the storm.
+
+**THAT REASONING IS RIGHT AND IT WAS ANSWERING THE WRONG QUESTION.** An empty
+window has two causes and they are opposite facts:
+
+1. **The shape is unreadable.** Nothing in that corner and nothing on the
+   centre either. Fail closed — unchanged.
+2. **GDACS drew that quadrant at zero.** Where a flank reaches nothing the
+   source does not shrink the sector or omit it — it collapses every one of
+   its vertices onto the storm's own published dot. That is the same habit
+   `isDegenerate()` already handles for a WHOLE band, applied to one side of
+   one. It is a published zero, and returning `null` throws away real data.
+
+**TELLING THEM APART IS A LOOKUP, NOT A JUDGEMENT.** Case 2 leaves vertices AT
+the centre, at 0.0000 nm, because GDACS writes the dot's own coordinates. Case
+1 does not. So an empty window beside centred vertices is a zero; an empty
+window beside none is still a refusal. The tolerance is
+`GDACS_GEOMETRY.centreCollapseNm` (1 nm): the nearest genuine vertex on any of
+the affected bands is 10 nm out, because the source rounds its radii to 5 nm
+steps, so there is an order of magnitude of clearance on both sides. Centred
+vertices are held OUT of the sampling entirely rather than bucketed — a point
+on the centre has no bearing, and letting it fall into whichever window
+contains due north would drag that quadrant's median toward zero.
+
+**WHAT IT COST, MEASURED off `origin/archive:latest/geometry/` on 2026-08-20.**
+The discarded row was almost always the FIRST published reading of a threshold,
+because that is the hour the field is still one-sided:
+
+| storm | rows recovered before | after | what was lost |
+|---|---|---|---|
+| SAUDEL-26 | 24 of 27 | 27 of 27 | 34 kt at tau 0, 50 kt at tau 12, 64 kt at tau 24 |
+| TWO-C-26 | 22 of 27 | 27 of 27 | 34 kt at taus 9 and 21 — a hole through the middle |
+| LALA-26 | 21 of 27 | 21 of 27 | nothing; GDACS publishes no bands at taus 93/117 |
+
+**A DISCARDED HOUR IS NOT A GAP ON THE CHART — IT IS A STRAIGHT LINE.**
+`sampleCorridor` interpolates a threshold only where BOTH bracketing taus
+publish it, so one missing row silences that field across two whole legs. The
+band is one polygon, so it then bridged the silence with a straight segment
+from a zero-size field to a full-size one a day later. On Saudel that put the
+34 kt band's start twelve hours late, the 50 kt twenty-four, and the 64 kt
+thirty-six, and drew the 50 and 64 kt edges crossing each other — which is
+impossible for nested fields and is how Aaron caught it on glass.
+
+**AND A FIELD WITH NO WIDTH IS NO LONGER PAINTED.** A published zero is data
+the arithmetic needs — it is what makes "never reaches you" a statement rather
+than a silence — and it is not a picture. Drawn, its leading edge and the
+storm's own track are the same points, so it renders as a coloured stroke lying
+on the centre line, which reads as hurricane-force wind AT the centre rather
+than as none existing yet. `ui/chart-home.js` now splits each threshold into
+RUNS of positive reach and draws one polygon per run. It is runs rather than a
+trim off the front because `reach` is measured along the bearing to THIS house,
+so a storm whose quiet flank swings toward home has a genuine zero in the
+MIDDLE of an otherwise live series — TWO-C-26 publishes 50 kt as 20/0/0/20 at
+tau 45. One polygon over that would bridge the hole with the same fabricated
+slope this section exists to delete. Aaron's call on glass, 2026-08-20.
+
+**THE RAIL NAMES THE DAY WHEN IT IS NOT TODAY.** The arrival label read "7:14
+AM" on a chart spanning five days and nothing on it said which 7:14 AM; on
+Saudel it was tomorrow's. `railClock()` adds the weekday only when the arrival
+falls on a different local calendar day, because the common case is a storm
+arriving today and four extra characters on every bar is real room on a rail
+whose bars can be eight pixels wide. The label-placement budgets are now
+measured from the string rather than hard-coded for an eight-character time.
+
+**THE FIXTURE IS REAL AND THE TEST BITES.**
+`samples/gdacs/geometry-TC-zero-quadrant.json` is four Saudel bands off the
+archive — three with a collapsed quadrant, one without as a control — with
+every centre produced by `parseGdacsPoints()` rather than transcribed.
+`tools/test-gdacs-corridor.mjs` asserts the fixture actually has the property
+it is named for, that the recovered figures still land on the source's round
+5 nm steps (which is what proves the centred vertices were excluded rather than
+averaged in), that a shape with nothing on the centre still fails closed, and
+that the chart trims a zero-width front and breaks rather than bridges a
+zero-width hole. Reintroducing either half of the bug fails the suite: the
+fail-closed path takes out three assertions, the zero-width drawing four.
+
+**GLASS: NOT YET CONFIRMED.** Saudel is the storm to look at, and what to check
+is that each band now begins where the field does rather than partway through
+the frame, that nothing coloured runs along the storm's own track, and that no
+two band edges cross.
+
 
 ## 51.8 A marker on the deepest towns — approved, not built, second pass
 

@@ -123,6 +123,34 @@ const esc = (t) =>
 const BAND_COLOR = { 34: 'var(--kt34)', 50: 'var(--kt50)', 64: 'var(--kt64)' };
 
 /**
+ * A rail arrival time — with its weekday when that is not today's.
+ *
+ * ==> WHY NOT JUST `formatClockDay` EVERYWHERE. <== That one always leads with
+ * the weekday and is right for the closest-pass stamp, which sits alone in the
+ * header with room to spare. The rail is three rows of bars that can be eight
+ * pixels wide, and four extra characters on every one of them pushes labels
+ * off their ends and into the merged fallback. Naming the day only when it
+ * differs buys the disambiguation exactly where it is needed and nowhere else.
+ *
+ * COMPARED ON LOCAL CALENDAR PARTS, not on a 24-hour difference: 11 PM tonight
+ * and 1 AM tomorrow are two hours apart and are different days, and that is the
+ * pair a reader most needs told apart.
+ */
+function railClock(t, now) {
+  const d = new Date(typeof t === 'number' ? t : Date.parse(t));
+  if (!Number.isFinite(d.getTime())) return null;
+  const time = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' }).format(d);
+  const n = new Date(now);
+  if (!Number.isFinite(n.getTime())) return time;
+  const sameDay =
+    d.getFullYear() === n.getFullYear() &&
+    d.getMonth() === n.getMonth() &&
+    d.getDate() === n.getDate();
+  if (sameDay) return time;
+  return `${new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(d)} ${time}`;
+}
+
+/**
  * A human gridline interval for a distance axis running 0..max.
  *
  * Aiming for roughly four lines and then snapping UP to the nearest round
@@ -349,6 +377,35 @@ export function homeChart(dash, system) {
     const lit = [...kept, ...litFwd.filter((s) => s.h > lastPastH)];
     if (lit.length < 2) continue;
 
+    /* ==> A FIELD OF ZERO WIDTH IS NOT A BAND, AND IS NOT DRAWN. <== GDACS
+     * says "this threshold does not reach this hour" by publishing the shape
+     * with every radius at zero (`config/constants.js centreCollapseNm`), and
+     * that is real data the arithmetic above needs — a published zero is what
+     * makes "never reaches you" a statement rather than a silence. But it is
+     * not a picture. Drawn, a zero-reach stretch is a band whose leading edge
+     * and whose centre line are the same points: a coloured stroke lying
+     * exactly on the storm's track, which reads as hurricane-force wind AT the
+     * centre rather than as none existing yet. Aaron's call on glass.
+     *
+     * ==> AND IT IS RUNS, NOT A TRIM OFF THE FRONT. <== The zeros are usually
+     * at the start, while the field is still forming. They are not only there:
+     * `reach` is read along the bearing to THIS house, so a storm whose quiet
+     * flank swings toward home has a genuine zero in the MIDDLE of an
+     * otherwise live series (TWO-C-26 publishes 50 kt as 20/0/0/20 at tau 45,
+     * archive 2026-08-20). One polygon over that would bridge the hole with a
+     * straight line — the same fabricated slope this whole pass exists to
+     * delete. So each unbroken stretch gets its own polygon and the gaps stay
+     * gaps. */
+    const runs = [];
+    let run = null;
+    for (const s of lit) {
+      if (s.reach?.[kt] > 0) (run ||= []).push(s);
+      else if (run) { runs.push(run); run = null; }
+    }
+    if (run) runs.push(run);
+    /* A single sample is a dot, not a band. */
+    const shown = runs.filter((r) => r.length >= 2);
+
     /* One bar per window this field is on the house. Built only for a field
      * that actually arrives — a threshold that comes near without reaching
      * gets a band and no bar, which is the true distinction between "close"
@@ -384,7 +441,11 @@ export function homeChart(dash, system) {
       }
     }
     wins.sort((u, v) => u.x0 - v.x0);
-    drawn.push({ kt, lit, wins });
+    /* Nothing to draw and nothing to say. A threshold that reaches the house
+     * always has width where it does it, so this cannot silently delete a
+     * rail row. */
+    if (!shown.length && !wins.length) continue;
+    drawn.push({ kt, runs: shown, wins });
   }
   /* Ascending, and it is the ORDER that positions the rows — 34 nearest the
    * house, then whatever is next. A storm whose 34 kt field misses while its
@@ -477,15 +538,17 @@ export function homeChart(dash, system) {
   const bands = [];
   const rail = [];
   for (const d of drawn) {
-    /* Top edge = the field's leading edge, clamped AT the house. It cannot
-     * cross to the far side: a negative distance is not a place. */
-    const top = d.lit.map((s) => `${X(s.h).toFixed(1)},${Y(Math.max(0, s.gap[d.kt])).toFixed(1)}`);
-    const bottom = d.lit.slice().reverse().map((s) => `${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`);
-    bands.push(
-      `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" ` +
-        `fill="color-mix(in srgb, ${BAND_COLOR[d.kt]} 24%, transparent)" ` +
-        `stroke="${BAND_COLOR[d.kt]}" stroke-width="1.4" stroke-linejoin="round"/>`
-    );
+    for (const seg of d.runs) {
+      /* Top edge = the field's leading edge, clamped AT the house. It cannot
+       * cross to the far side: a negative distance is not a place. */
+      const top = seg.map((s) => `${X(s.h).toFixed(1)},${Y(Math.max(0, s.gap[d.kt])).toFixed(1)}`);
+      const bottom = seg.slice().reverse().map((s) => `${X(s.h).toFixed(1)},${Y(s.nm).toFixed(1)}`);
+      bands.push(
+        `<path d="M${top.join(' L')} L${bottom.join(' L')} Z" ` +
+          `fill="color-mix(in srgb, ${BAND_COLOR[d.kt]} 24%, transparent)" ` +
+          `stroke="${BAND_COLOR[d.kt]}" stroke-width="1.4" stroke-linejoin="round"/>`
+      );
+    }
     const rowY = HOME_Y - RAIL_PITCH * (railKts.indexOf(d.kt) + 1);
     for (const win of d.wins) rail.push({ ...win, y: rowY });
   }
@@ -691,24 +754,35 @@ export function homeChart(dash, system) {
     const dur =
       `${r.openEnded ? '≥' : ''}` +
       (hrs >= 1 ? `${Math.round(hrs)}h` : `${Math.max(5, Math.round((hrs * 60) / 5) * 5)}m`);
-    const at = r.startsBefore
-      ? null
-      : new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' })
-          .format(new Date(r.at));
+    /* ==> THE DAY IS NAMED WHENEVER IT IS NOT TODAY. <== The rail read "7:14
+     * AM" on a chart spanning five days, and nothing on it said which 7:14 AM
+     * — on Saudel it was tomorrow's, twenty-four hours from the reading, and a
+     * preparation time being a day out is the one direction this screen must
+     * never be wrong in. It is not added unconditionally, because the common
+     * case is a storm arriving today and "Thu" beside it is noise that costs
+     * four characters of a rail already short of room. */
+    const at = r.startsBefore ? null : railClock(r.at, co.now);
 
     const leftRoom = r.x0 - PAD_L;
     const rightRoom = W - PAD_R - r.x1;
+    /* ==> MEASURED FROM THE STRING, NOT FROM A REMEMBERED CHARACTER COUNT.
+     * <== These were flat 37/22/58, sized for "7:14 AM". A dated arrival is
+     * half as long again and would have overrun them silently, which is how
+     * the label lands on the bar. */
+    const atRoom = at ? at.length * CPA_CH + 3 : 0;
+    const durRoom = dur.length * CPA_CH + 4;
     const text = (x, anchor, weight, str) =>
       `<text x="${x.toFixed(1)}" y="${(mid + 2.5).toFixed(1)}" font-size="7.5" ` +
       `text-anchor="${anchor}"${weight ? ' font-weight="600"' : ''} fill="${c}">${esc(str)}</text>`;
 
-    if (at && leftRoom > 37 && rightRoom > 22) {
+    if (at && leftRoom > atRoom && rightRoom > durRoom) {
       railSvg.push(text(r.x0 - 3, 'end', false, at));
       railSvg.push(text(r.x1 + 4, 'start', true, dur));
     } else {
       const merged = at ? `${at} · ${dur}` : dur;
-      if (rightRoom > 58) railSvg.push(text(r.x1 + 4, 'start', true, merged));
-      else if (leftRoom > 58) railSvg.push(text(r.x0 - 3, 'end', true, merged));
+      const mergedRoom = merged.length * CPA_CH + 4;
+      if (rightRoom > mergedRoom) railSvg.push(text(r.x1 + 4, 'start', true, merged));
+      else if (leftRoom > mergedRoom) railSvg.push(text(r.x0 - 3, 'end', true, merged));
       /* Nowhere beside it: the bar spans the frame. Sit the chip just above
        * its left end, in the gap the row spacing already leaves. */
       else railSvg.push(
