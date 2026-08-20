@@ -75,11 +75,16 @@ const drawableOnly = (r, a) => a.filter((_, i) => r.drawable[i]);
  * their eyewall block, the latest-published run and the one published early.
  * A parser that handles all of them handles the season. Twelve were promoted
  * for the parser (§47.10); three more — the §47.8 acceptance storms Hernan,
- * 94L and Lala — came with the health paragraph, and this count moves with
- * the table so a fixture silently dropped from the repo still fails loudly.
+ * 94L and Lala — came with the health paragraph. The sixteenth is Lala's
+ * 12Z run of 2026-08-20, which is here to be the RUN half of
+ * `tools/test-cone-dateline.mjs`: that test needs a real SHIPS file to pair
+ * with a real dateline-split cone, and a made-up run beside real geometry
+ * would prove only that the two halves of the fixture agree with each other.
+ * This count moves with the table so a fixture silently dropped from the repo
+ * still fails loudly.
  * ======================================================================= */
 console.log('\nfixtures parse');
-check('fifteen fixtures are present', files.length, 15);
+check('sixteen fixtures are present', files.length, 16);
 for (const f of files) {
   try {
     parsed.set(f, parseShips(raw(f)));

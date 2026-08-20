@@ -1036,7 +1036,8 @@ from running and being no good, and cost a full round of work to notice.
 
 **A REFUSAL COSTS THE DRAWING NOTHING AND MUST NOT COST THE MEASUREMENT
 EITHER.** `lib/cone-measure.js` `measureConeRibs` is the second path, taken by
-`lib/cone-smooth.js` whenever the rebuild declines. It casts the same
+`lib/cone-smooth.js` whenever the rebuild declines **or was never offered the
+cone at all**. It casts the same
 perpendicular rays at the same stations and then stops — no blur, no gap-fill,
 no fold test, no ring. Every point it returns is a ray hit on the published
 polygon, which is the shape being drawn on that path, so §47.5's ribbon fits it
@@ -1100,6 +1101,36 @@ continuous line across the seam — while the cone arrives wrapped into
 across the western half of the West Pacific. Everything is moved onto the
 track's branch before it is measured; rings move as one piece after being made
 continuous, because per-vertex would tear a straddling ring across the world.
+
+**AND THE SAME SEAM TOOK THE RIBBON A SECOND WAY, THROUGH A GATE RATHER THAN
+THROUGH ARITHMETIC.** Fixed 2026-08-20. `lib/cone-smooth.js` put ONE test in
+front of both paths — single polygon only. That bar belongs to the REBUILD, and
+it is correct there: a multi-part cone has no single spine, and sweeping one
+track through two shapes would merge them into an outline no source published.
+**It does not belong to the measurement**, which rays against every ring and
+returns nothing that is drawn.
+
+Sharing it mattered because **NHC's MapServer cuts a cone at ±180 and returns
+the halves as a `MultiPolygon`.** Lala CP012026 advisory 33: one part spanning
+−180.00 to −170.58, a second of 191 points spanning 178.78 to 180.00. She
+failed the shared gate, came back with `ribs: null`, and §47.6's row told the
+reader *"This cone could not be measured"* — about a cone that measures
+perfectly. Handed the same two rings directly, `measureConeRibs` returns **236
+stations out of 236, with no station losing its ray to the seam**, and the
+ribbon builds 81 slices from hour 0 to hour 120.
+
+**THIS WAS A WHOLE FEATURE MISSING FROM A LIVE BASIN, NOT A CORNER CASE.**
+SHIPS covers the Central Pacific, whose five-day cones reach the seam as a
+matter of routine. The two gates are now separate: `sweepable` still demands a
+single polygon, the measurement asks only for a track and at least one ring.
+The drawing is untouched — a multi-part cone is still never swept, and still
+ships as the published parts with their corners rounded.
+
+`tools/test-cone-dateline.mjs` asserts against Lala's actual bytes
+(`samples/lala-cp012026/`) rather than a two-part cone somebody drew, because a
+synthetic fixture built from the same idea of the bug as the fix is a test that
+agrees with the code instead of checking it. Reinstating the shared gate fails
+eight of its assertions.
 
 
 ### 7.10 When there is no coast to paint — the dashed chord and its breakpoints
