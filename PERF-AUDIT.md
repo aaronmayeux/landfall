@@ -47,6 +47,10 @@ It is not the module graph's depth, not the network, and not the service worker
 existing. It is that nothing our app ships is allowed to be served from a cache
 without asking the network first.
 
+**The recommended fix is §7 — ask once about the whole app instead of 167 times
+about its parts. No build step, and it keeps the guard that stopped the
+mixed-version bug.**
+
 ---
 
 ## 1. Every warm load revalidates 167 modules over the network
@@ -298,20 +302,79 @@ zero-dependency suites. Tier 3 needs a decision or a measurement first.
 | 12 | Dynamic-import the eight post-data / user-gated modules | ~30 modules off boot |
 | 13 | Make `dimCoast`'s test fail, then fix the expression | a feature that has never once run |
 
-### Tier 3 — the real wins, each needs a call first
+### Tier 3 — the real wins
 
-| | Fix | Why it needs a decision |
+**#14 IS THE RECOMMENDED NEXT MOVE.** It is smaller than bundling, reversible,
+needs no toolchain, and takes the cost off the 98% who are repeat visitors.
+Bundling is kept below it, with a number attached, rather than assumed.
+
+| | Fix | Why |
 |---|---|---|
-| 14 | **Dynamic-import the seven drawer views** | 45 modules / 849 KB / 27% of the graph, and it collapses the two deepest waves. ~15 call sites in `main.js` must become optional-chained. Lift `homeMarker` out first — it genuinely draws at boot. |
-| 15 | **Bundle.** No-build is on the table now | This is the fix that actually kills §1. 167 revalidations become ~3. It is also the largest change to how the repo works, and the no-build rule bought real things — Aaron can read every file and there is no toolchain to rot. A bundler that emits ES modules and keeps sources readable in the repo keeps most of that. |
-| 16 | Batch the 9-layer mapserver fan-out at the relay, then warm it | 27 boot requests → 3, and warm instead of cold per colo. Biggest absolute win on the data side. Must preserve per-layer independence and per-layer cache slots. |
-| 17 | ETag + `no-cache` across the relay | Turns full-body transfers into 304s with no correctness change. Medium-sized, touches every route. |
+| **14** | **Version-gate the service worker — see §7. PREFERRED.** | Turns 167 revalidation round trips into **one** for a repeat visitor, with **no build step** and no change to how the repo works. |
+| 15 | Dynamic-import the seven drawer views | 45 modules / 849 KB / 27% of the graph, and it collapses the two deepest waves. ~15 call sites in `main.js` become optional-chained. Lift `homeMarker` out first — it genuinely draws at boot. |
+| 16 | Batch the 9-layer mapserver fan-out at the relay, then warm it | 27 boot requests → 3, warm instead of cold per colo. Biggest absolute win on the data side. Must preserve per-layer independence and per-layer cache slots. |
+| 17 | ETag + `no-cache` across the relay | Turns full-body transfers into 304s with no correctness change. Medium, touches every route. |
+| 18 | **Bundle. Only if §7 leaves time on the table.** | The complete fix for §1 — 167 requests become ~3, on first visit as well as repeat. It is also the only item here that ends "no build step, ever", so it should be bought with a measurement, not a hunch. |
 
-**Do not do #15 before running `tools/perf-audit.mjs` once on the runner.** It is
-the most expensive change here and it should have a measured before-number
-attached to it. The harness exists so that number costs one workflow run.
+**Do not do #18 before doing #14 and re-running the audit.** Bundling is the
+most expensive change in this file and the only one that ends the no-build rule.
+It should be bought with a measured before-and-after, and the harness exists so
+that number costs one workflow run.
 
 ---
+
+---
+
+## 7. The preferred fix — version-gate the service worker, no build step
+
+**The problem in one sentence: our file names never change, so the browser can
+never assume its copy is current, so it has to ask about all 167 of them.**
+
+`/vendor/` already proves the cure. `maplibre-gl-5.6.0.js` carries its version in
+the filename, so that URL can never mean something new — which is exactly why
+`sw.js:72` is allowed to list it as immutable and serve it from cache forever
+without asking. Our own modules have no such guarantee, so `networkFirst` has to
+ask every time, and §1 is the bill.
+
+**The fix is to ask ONCE about the whole app instead of 167 times about its
+parts.**
+
+Ship a tiny version file — one line, a build id or the commit sha. The service
+worker fetches only that, `no-cache`, on activation and on each navigation:
+
+- **Version unchanged** → serve all 167 modules straight from CacheStorage.
+  Zero network, zero revalidation. The staircase collapses to disk-read speed.
+- **Version changed** → treat the cached copies as dead, refetch, repopulate,
+  and carry on. Exactly today's behaviour, but once per deploy instead of once
+  per load.
+
+**WHY THIS DOES NOT REOPEN THE MIXED-VERSION BUG.** `sw.js:159-183` records the
+real failure: `index.html` was pinned no-cache while modules were not, so a fresh
+shell imported stale modules underneath it and the app ran two versions at once —
+seen live as an ended storm grey in the list and pink on the globe. The guard
+that closed it was "always ask". A version gate keeps the guard and moves it: the
+app still verifies it is current on every single load, it just does it with one
+request that covers everything rather than 167 that each cover one. **A partial
+update becomes impossible rather than merely unlikely** — today, 167 independent
+revalidations can in principle half-succeed; a single gate is all-or-nothing.
+
+**What it costs.** First visit is unchanged — 167 requests either way, because
+there is nothing cached yet. The visit immediately after a deploy is unchanged
+for the same reason. Everything in between, which is **1,991 of 2,036 measured
+sessions**, pays one request instead of 167.
+
+**What to watch.** The gate must be checked before any module is served from
+cache, or a stale bundle wins a race against its own invalidation. And the
+version file must be genuinely uncacheable — it is the one thing in the app that
+cannot be allowed to go stale, because everything else now trusts it.
+
+**Effort:** contained, inside `sw.js`, roughly a day including a test that fails
+when the gate is bypassed. **No build step. No change to how the repo is laid
+out. Reversible by deleting it.**
+
+**Then re-run the audit.** If the staircase is gone, #18 is unnecessary and the
+no-build rule survives on merit rather than on principle. If a second is still
+sitting there, that is when bundling has earned the argument.
 
 ## The instrument
 

@@ -94,8 +94,16 @@ jobs:
       # run says nothing; the same run every night says whether a change helped.
       # Appended to a branch rather than main so the history does not churn the
       # working tree, and force-push is never used so nothing is ever lost.
+      #
+      # ===> EVERY RUN RECORDS, NOT JUST THE NIGHTLY ONE. <=== This was gated on
+      # `schedule` at first, which meant a manual run left its numbers ONLY in a
+      # build artifact — and an artifact can only be fetched through
+      # api.github.com, which the dev sandbox cannot reach (measured: HTTP 000).
+      # So a hand-triggered audit produced a result nobody working in the
+      # sandbox could read. The branch is the only channel that reaches both,
+      # because plain git over HTTPS does work there.
       - name: append to the perf history branch
-        if: always() && github.event_name == 'schedule'
+        if: always()
         run: |
           test -f perf-latest.json || exit 0
           git config user.name 'Andy (Cowork)'
