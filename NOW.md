@@ -96,6 +96,35 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
+**0-PERF. THE BOOT PATH HAS BEEN MEASURED AND THE FINDINGS ARE IN
+`PERF-AUDIT.md`.** Read that file, not this entry — it carries the numbers, the
+citations and a ranked plan in three tiers. The one-line version: **a returning
+visitor revalidates all 167 application modules over the network on every load**,
+because `sw.js:72` treats only `/vendor/` as immutable and everything else goes
+through `networkFirst` with `cache: 'no-cache'`. Measured at 1,899 ms of queue
+against a 1,960 ms staircase, and **1,991 of 2,036 D1 sessions are
+service-worker controlled**, so it is the product rather than an edge case.
+
+**The recommended fix is §7 — version-gate the service worker.** One request
+instead of 167 for a repeat visitor, no build step, and it keeps the guard that
+`sw.js:159` records rather than removing it. Bundling is in the plan below it and
+is deliberately gated on a measurement, because it is the only item that ends
+"no build step, ever".
+
+**Tiers 1 and 2 need nothing and nobody** — six one-liners and seven contained
+changes, all doable from the sandbox with no internet. `functions/api/nhc/advisory.js:95`
+is still `FRESH_SECONDS = 5 * 60` against a 5-minute cron, which is the DOLPHIN-26
+collision §4.13 bans in capitals.
+
+**Two things are still UNMEASURED** and `tools/perf-audit.mjs` measures them on
+the Actions runner: radar's request volume (item 0b below, still a prediction)
+and the colour-null count (item 0d, still untraced). The budget sets colour-nulls
+to 0, so that run fails until it is fixed. **`node tools/load-probe.mjs` and
+`boot-profile.mjs` both build their browser with `serviceWorkers: 'block'`** —
+every module number this repo held before today was taken on a path 98% of
+sessions are not on.
+
+
 **0. RADAR CAN NOW REPORT A TRUE FRAME TIME; THE ROW SAYS NOTHING ABOUT AGE AT
 ALL.** `/api/imagery/radar-frames` already returns the frame's `time`, in
 SECONDS, and `map/radar-layer.js` throws it away. Every vendor before this one
