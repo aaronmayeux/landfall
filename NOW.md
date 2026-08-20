@@ -120,12 +120,27 @@ Mozambique Channel disturbance never appears until it becomes a storm. **Storms
 there are unaffected** — GDACS is global and `io####`/`sh####` warnings already
 flow. §45.3 carries the detail.
 
-`tools/archive-fetch.mjs` now snapshots it hourly as `jtwc-abio.txt`. **Read
-those bytes before touching `GENESIS.ABPW`** — region headings, section
-lettering, probability sentence. §45.3's scar is that the first ABPW parser was
-written from prose and three of four patterns matched nothing, silently, and an
-empty genesis list renders as "nothing is brewing". Assuming ABIO is an ABPW
-with different coordinates is the same mistake wearing a new hat.
+`tools/archive-fetch.mjs` snapshots it hourly as `jtwc-abio.txt`. **First bytes
+are in and they are a QUIET-DAY sample** (`ABIO10 PGTW 191800`): both regions —
+`1. NORTH INDIAN OCEAN AREA (MALAY PENINSULA WEST TO COAST OF AFRICA)` and
+`2. SOUTH INDIAN OCEAN AREA (135E WEST TO COAST OF AFRICA)` — read
+`A/B/C ... SUMMARY: NONE.` all the way down. Same lettering and same numbered
+regions as ABPW, so the shape is encouraging, **but there is not one
+disturbance block in it to write a pattern against.** That is precisely §45.3's
+scar waiting to happen again: patterns written against an empty bulletin match
+nothing and fail silently.
+
+**Two concrete findings already:**
+- `GENESIS.ABPW.headerPattern` is `/\bABPW\d{2}\s+(\w{4})\s+(\d{6})/` and will
+  not match `ABIO10`. Whatever else is shared, the header pattern has to widen
+  or fork.
+- `disturbanceBlock` must survive `B. TROPICAL DISTURBANCE SUMMARY: NONE.` on
+  one line — ABPW's live copy always has a body there, so that form is untested.
+
+**WAIT FOR A BUSY SNAPSHOT before writing the parser.** Diff `history/` until
+an Indian Ocean disturbance shows up with a real position and probability
+sentence. The 72-hour window rolls, so check back rather than assuming it is
+still there.
 
 The JTWC outage note says *western and South Pacific* on purpose until this
 ships. Change it in `ui/view-storms.js` as part of the same pass, not before.
@@ -259,6 +274,28 @@ companion exclusion.
 weather arrives.** Do not tell Aaron these are ten minutes of looking — they are
 not. Each names its condition first, then the question; the as-built description
 is in the spec section cited.
+
+**A GDACS STORM WHOSE COUNTRY IS ATTRIBUTED, WITH AN ALERT IN FORCE** —
+`SPEC-DATA.md` §50.11, §50.12. The merged `Watches and warnings` section
+(2026-08-20) is glass-approved on its NHC half and on the unattributed GDACS
+half, both seen live. **What has never been on screen is the section actually
+listing a foreign agency's alert** — the rows, the agency/area/expiry meta line,
+a non-English disclosure chevron, and the closing note that keeps a
+country-level alert from reading as an order about this storm.
+
+One wording question rides on it and is deliberately left open: under the old
+`Local agency alerts` heading, *"No country is listed as affected by this storm
+yet."* explained itself. Under `Watches and warnings` it may read as a
+non-sequitur — a reader can reasonably wonder whether that means there are
+warnings or not. A lead-in naming the matching method (*national agency
+warnings are matched by country, and no country is listed…*) would explain the
+gap without answering it, but §50.12 says one sentence and nothing follows, and
+`tools/test-cap.mjs` asserts the render is identical whether the rest of the
+world is quiet or busy. **Aaron's wording, Aaron's call** — judge it against a
+real attributed storm rather than in the abstract.
+
+The archive manifest's `countryMatch.unmatchedAlertCountries` is the tripwire:
+when a country leaves that list and attaches to a live storm, this is judgeable.
 
 **A GDACS-basin storm near a coast** — `SPEC-DATA.md` §50.11, §51.4, §51.7.
 Three things ride on this one condition. Do the two coastal stripes read as
@@ -400,6 +437,25 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
 
 ## KNOWN AND ACCEPTED
+
+- **THE WORK PC'S JITTER IS THE CORPORATE VPN, NOT THE APP. SETTLED, DO NOT
+  RE-DIAGNOSE.** Established 2026-08-20 by elimination: the same build on
+  Aaron's *other* work PC pans smoothly. The VPN (GlobalProtect) was already
+  known to make the site look dead on an empty-cache hard reload; it also
+  produces stuttering pans and slow-feeling storm loads, which is the part that
+  looks like a code regression and is not.
+  **What the telemetry says, so nobody re-derives it:** `transfer_bytes` is
+  byte-identical across every Windows session for days, boot is flat
+  (`boot_longtask_n` 2–3, scripts ~1.2 s, globe ~1.3 s), `t_storms_ms` sits at
+  1.5–1.9 s with no trend, and `events` carries no app error at all. The damage
+  is entirely post-boot `longtask_ms`, it is episodic, and the single worst
+  session on record (421 tasks, 38.7 s blocked) landed eighteen hours before the
+  commits it was blamed on. Two of three bad sessions had `storm_select = 0`, so
+  the drawer never even rendered.
+  **The rule this earns: check `boot_longtask_n` against `longtask_n` before
+  believing a perf report.** A flat boot with a wrecked runtime, on one machine,
+  with no error rows, is an environment story. Confirm on a phone on cell data
+  with the VPN off before touching code.
 
 - **`aoi_surge` IS NOT A SURGE FOOTPRINT. SETTLED, DO NOT RE-ASK.**
   `SPEC-DATA.md` §51.1. An affected-PLACES export — cities and provinces,
