@@ -110,14 +110,25 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
-**GLASS: SAUDEL'S ALERTS SECTION SHOULD HAVE STOPPED CONTRADICTING ITSELF.**
-Vitals said `Country  Japan` while `Watches and warnings` below it said no
-country was listed. That was a field-path bug in `lib/cap.js`, not a wording
-problem — and it had kept every foreign agency alert off every screen since the
-feature shipped. Open Saudel and check the two agree. If a Japanese agency has
-a cyclone alert out, this is also the FIRST TIME the alert rows have ever
-rendered; if not, the section should say no agency in the affected countries
-has one in force, which is a different sentence from the old one.
+**THE SAUDEL CONTRADICTION IS FIXED AND CONFIRMED ON GLASS — DO NOT RE-OPEN
+IT.** Vitals said `Country  Japan` while the section below said no country was
+listed; that was `lib/cap.js` reading `storm.countries` instead of
+`storm.raw.countries` (§50.3). Confirmed 2026-08-20: Saudel now shows *"No
+national weather agency in the affected countries currently has a tropical
+cyclone alert in force."* — **the OTHER branch**, which is the proof the
+country join is live. Japan simply has nothing out.
+
+**AND THE PHILIPPINE ALERT IS NOT MISSING — IT IS ABOUT SOMETHING WE DO NOT
+HAVE.** Asked and answered, so nobody re-derives it. PAGASA's row reads
+`Tropical Cyclone Alert : Neneng`, area `Philippine Area of Responsibility`.
+Saudel is at 12.8N 150.2E — roughly 900 nm EAST of the PAR's 135E edge and
+tracking away toward Japan. Showing that row under Saudel would be the causal
+claim §50.5 forbids. `Neneng` is a PAGASA local name, and PAGASA declares
+systems JTWC has not warned on, so the likely explanation is that **PAGASA is
+warning about a system this app holds as neither a storm nor a watched area.**
+==> THAT LAST SENTENCE IS AN INFERENCE, NOT A MEASUREMENT. <== No published
+crosswalk maps a PAGASA local name to a JTWC invest number, and nothing here
+has verified it.
 
 **GLASS: TWO VITALS ROWS ON AN NHC STORM.** Open Lala (or any Atlantic/Pacific
 storm) and look at Vitals. Two things are new and neither has been seen.
@@ -401,6 +412,36 @@ storm source, and one hour cannot tell them apart. NEXT UP item 4 pollutes the
 denominator.
 
 ## SCOPED, NOT STARTED
+
+**AN ALERT IN FORCE THAT REACHES NOBODY — AND THE OBVIOUS FIX IS THE WRONG
+ONE.** `SPEC-DATA.md` §50.3, §50.12. The app fetches live government cyclone
+warnings and can currently show them only under an attributed GDACS storm. An
+alert for a system we do not track is fetched, held, and displayed to no one.
+
+**REJECTED: joining alerts to WATCHED AREAS by position** (Aaron's suggestion,
+2026-08-20, talked through and dropped). An area carries a centroid, a shape,
+two probabilities, a risk word and a basin — **no country**. NHC publishes none
+for its areas; JTWC publishes a bearing off a landmark ("151 NM SSW OF KADENA
+AIR FORCE BASE"), which is not attribution. Joining would mean deciding which
+nation an area sits in from its position — exactly what §50.3 refuses to do for
+storms, and on weaker evidence, since a JTWC area's shape is a circle WE drew.
+It would also have matched wrong on the day it was proposed: 94W (23.9N 127.1E,
+inside the PAR, rated **Low**) would have taken the alert while 95W (19.6N
+110.3E, outside the PAR, rated **High**) got nothing.
+
+**SURVIVING OPTION: a global line attached to nothing** — e.g. at the foot of
+`Being watched`, naming the agency and the area and stopping there. Honest
+precisely BECAUSE it claims no connection.
+
+**GATED, AND THE GATE IS REAL.** Do not build it before the alert feed is
+clean. `NEXT UP` item 4 is the reason: the Esri query asks for
+`event LIKE '%Hurricane%'` and DWD writes "hurricane-force gusts", so on
+2026-08-19 four of the five alerts in force worldwide were GERMAN
+THUNDERSTORMS. A global surface makes that bug user-facing instead of a
+footnote. Fix the query first, then watch several days of
+`countryMatch.unmatchedAlertCountries` in the archive — a country that later
+attaches was attribution LAG, one that never attaches is a coverage HOLE, and
+one hour cannot tell them apart.
 
 **JTWC'S `.tcw` IS A BETTER SOURCE THAN THE PRODUCT WE PARSE.** `SPEC-NEXT.md`
 §53 — four separable wins, the strongest of which deletes the relay's
