@@ -4999,7 +4999,10 @@ export const IMAGERY = Object.freeze({
      * declared her covered.
      *
      * THE SERVICE IS THE ONLY HONEST AUTHORITY on whether it has data, and it
-     * answers plainly — a 334-byte fully transparent PNG (measured 2026-07-26).
+     * answers plainly — a fully transparent PNG. THE BYTE COUNT IS NOT THE TEST
+     * and is px-dependent: 334 bytes measured 2026-07-26 at a smaller request
+     * size, 2,367 bytes at the 768 px the app actually asks for (measured
+     * 2026-08-19). The kept FRACTION is the test.
      * So coverage is now decided by MEASURING THE FRAME (see
      * `emptyKeptFraction`), and this box's only remaining job is to avoid
      * requests that cannot possibly return anything: nothing in the Indian Ocean

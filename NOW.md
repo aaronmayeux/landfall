@@ -45,12 +45,15 @@
 **Each wave is sized for ONE session.** Do not start two. When a wave lands,
 delete it from here and put what it built in the spec.
 
-**WAVE 5 — research. ONE PASS LEFT.** Passes 1, 3 and 4 have landed; what they
-built is in the spec. **How to reach the world from a sandbox that cannot:
-`SPEC-OPS.md` §18.**
+**WAVE 5 IS DONE.** All four passes have landed and what they found is in the
+spec. **How to reach the world from a sandbox that cannot: `SPEC-OPS.md` §18.**
 
-- **Pass 2 — global radar.** Its own session. The honest framing is MORE
-  COASTLINES, not global — see SCOPED, NOT STARTED.
+**WAVE 6 — build the second radar source. ONE SESSION, AND IT IS A REFACTOR
+FIRST.** Pass 2 researched and decided the source: RainViewer, measured, with the
+five-step build brief in `SPEC-NEXT.md` §54.9. **Step 1 is the pass** — radar is
+hard-wired single-provider in four places and has to become a list the way
+`SATELLITES` already is. Adding the source is the easy half. One decision inside
+it needs Aaron on glass, not code: the palette question in §54.6.
 
 ---
 
@@ -206,12 +209,6 @@ storm source, and one hour cannot tell them apart. NEXT UP item 4 pollutes the
 denominator.
 
 ## SCOPED, NOT STARTED
-
-**PASS 2 — global radar, through the fewest sources that hold quality.**
-`SPEC-DATA.md` §4. Today's box is NOAA only, roughly the Americas. **The honest
-framing is MORE COASTLINES, not global** — ground radar needs ground, and no
-radar exists over open ocean anywhere on Earth. The storms it would newly reach
-are ones already near land, which is when radar matters most.
 
 **JTWC'S `.tcw` IS A BETTER SOURCE THAN THE PRODUCT WE PARSE.** `SPEC-NEXT.md`
 §53 — four separable wins, the strongest of which deletes the relay's

@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 223 numbered headings.
+Covering 9 files, 233 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -244,7 +244,17 @@ real home is the other row carrying the same section number.
 | `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 2860-2907 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1695-1732 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1752-1784 |
-| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1785-1819 |
+| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1785-1821 |
+| `54` | More coastlines for radar — RainViewer, measured | `SPEC-NEXT.md` | 1822-1828 |
+| `54.1` | &nbsp;&nbsp;The gap, stated as it actually is | `SPEC-NEXT.md` | 1829-1845 |
+| `54.2` | &nbsp;&nbsp;RainViewer is the only source that answers this in one hop | `SPEC-NEXT.md` | 1846-1884 |
+| `54.3` | &nbsp;&nbsp;The coverage mask is the finding that makes this safe | `SPEC-NEXT.md` | 1885-1903 |
+| `54.4` | &nbsp;&nbsp;One request per storm — the tile-stitching objection is dead | `SPEC-NEXT.md` | 1904-1933 |
+| `54.5` | &nbsp;&nbsp;SMOOTH MUST BE 0, AND THIS IS THE ONE THAT WOULD HAVE SHIPPED A BUG | `SPEC-NEXT.md` | 1934-1947 |
+| `54.6` | &nbsp;&nbsp;The palette collides, and the licence is what solves it | `SPEC-NEXT.md` | 1948-1971 |
+| `54.7` | &nbsp;&nbsp;Licence, attribution and the honest caveat | `SPEC-NEXT.md` | 1972-1990 |
+| `54.8` | &nbsp;&nbsp;Relay or direct — recommend the relay | `SPEC-NEXT.md` | 1991-2007 |
+| `54.9` | &nbsp;&nbsp;What Pass 3 builds | `SPEC-NEXT.md` | 2008-2030 |
 
 ## Files
 
@@ -252,7 +262,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 171,984 | 55 |
 | `SPEC-MAP.md` | 208,997 | 38 |
-| `SPEC-NEXT.md` | 114,881 | 28 |
+| `SPEC-NEXT.md` | 126,038 | 38 |
 | `SPEC-OPS.md` | 73,025 | 20 |
 | `SPEC-UI.md` | 159,589 | 12 |
 | `SPEC.md` | 151,123 | 14 |
