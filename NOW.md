@@ -105,16 +105,33 @@ through `networkFirst` with `cache: 'no-cache'`. Measured at 1,899 ms of queue
 against a 1,960 ms staircase, and **1,991 of 2,036 D1 sessions are
 service-worker controlled**, so it is the product rather than an edge case.
 
-**The recommended fix is §7 — version-gate the service worker.** One request
-instead of 167 for a repeat visitor, no build step, and it keeps the guard that
-`sw.js:159` records rather than removing it. Bundling is in the plan below it and
-is deliberately gated on a measurement, because it is the only item that ends
-"no build step, ever".
+**PRESSURE-TESTED AND CORRECTED 2026-08-19.** A second session re-verified every
+citation and re-derived every module number in the sandbox, and found five items
+wrong. The two that matter: **Tier 1's "delete the dead data/surge.js import"
+would have shipped a ReferenceError on every load** — `fixtureAdvisory()` is
+called synchronously at `main.js:651` and `:1051`, so the module is inert, not
+dead. And **the dynamic-import savings were inflated**: the eight-module item is
+worth 3 modules / 36 KB once the unsafe ones are removed, while the seven drawer
+views are worth 33 modules / 656 KB. The plan is now grouped into pushes with a
+verification route tagged on every item.
 
-**Tiers 1 and 2 need nothing and nobody** — six one-liners and seven contained
-changes, all doable from the sandbox with no internet. `functions/api/nhc/advisory.js:95`
-is still `FRESH_SECONDS = 5 * 60` against a 5-minute cron, which is the DOLPHIN-26
-collision §4.13 bans in capitals.
+**§7 — version-gating the service worker — IS NO LONGER THE FIRST MOVE.** Its
+payoff has never been measured, and the arithmetic behind it (171 × 11.17 ms) is
+equally consistent with the gap being browser dispatch, which a version gate does
+not remove. **`tools/perf-audit.mjs:149` already records `workerStart` per
+resource**, and `/vendor/` is already cache-first in the shipping build, so the
+deployed app contains its own control group. One workflow run settles it with no
+code change. Do not start §7 before reading that JSON.
+
+**THE `perf-history` BRANCH DOES NOT EXIST — NO RUN HAS EVER RECORDED.** The
+nightly cron has not fired since the workflow landed. **Actions → perf-audit →
+Run workflow** is the first thing to do, and it costs four minutes. Expect it to
+go red: `colorNulls` is budgeted at 0. The JSON is written before the failure.
+
+**Tiers 1 and 2 need nothing and nobody** — all doable from the sandbox with no
+internet. `functions/api/nhc/advisory.js:95` is still `FRESH_SECONDS = 5 * 60`
+against a 5-minute cron, which is the DOLPHIN-26 collision §4.13 bans in capitals
+— and the review confirmed it is the ONLY such collision among warmed routes.
 
 **Two things are still UNMEASURED** and `tools/perf-audit.mjs` measures them on
 the Actions runner: radar's request volume (item 0b below, still a prediction)
