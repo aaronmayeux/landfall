@@ -32,6 +32,7 @@ import fs from 'node:fs';
 import { smoothCone } from '../lib/cone-smooth.js';
 import { buildRibbon } from '../lib/cone-ribbon.js';
 import { measureConeRibs } from '../lib/cone-measure.js';
+import { stitchDatelineSplit } from '../lib/seam-stitch.js';
 import { parseShips } from '../functions/api/nhc/_ships-parse.js';
 import { DARK } from '../config/tokens.js';
 
@@ -110,15 +111,45 @@ ok(Array.isArray(ribs) && ribs.length >= 2,
 ok(smoothed.layers.cone.caps?.start && smoothed.layers.cone.caps?.end,
    'with both end caps');
 
-/* THE DRAWING IS UNTOUCHED, which is half the promise of the change. The
- * rebuild is still refused on a multi-part cone — nothing swept it — so what
- * ships to MapLibre is the published outline with its corners rounded, in the
- * same two parts it arrived in. */
+/* THE DRAWING IS THE OTHER HALF OF THE PROMISE, AND IT USED TO BE THE UGLY
+ * HALF. The cone is stitched back into one polygon before anything reads it,
+ * so what ships to MapLibre is a single continuous outline with no artificial
+ * edge down the meridian. */
 const drawn = smoothed.layers.cone.fc.features[0];
-ok(drawn.properties._swept === false,
-   'and the cone itself is still NOT swept — the rebuild bar is unchanged');
-ok(drawn.geometry.type === 'MultiPolygon' && drawn.geometry.coordinates.length === 2,
-   'it is drawn as the same two parts NHC published, curved in place');
+ok(drawn.geometry.type === 'Polygon',
+   `the cone is drawn as one continuous Polygon (${drawn.geometry.type})`);
+ok(drawn.geometry.coordinates.length === 1, 'with a single ring and no holes');
+
+/* ==> AND IT REACHES PAST −180 RATHER THAN STOPPING AT IT. <== The eastern
+ * half is carried unwrapped, the same convention lib/trackline.js uses for the
+ * track, which is what makes the two halves one shape instead of two on
+ * opposite rims of the map. */
+{
+  const lons = drawn.geometry.coordinates[0].map((c) => c[0]);
+  ok(Math.min(...lons) < -180,
+     `and runs past the meridian to ${Math.min(...lons).toFixed(2)}, not stopping at −180`);
+  ok(Math.max(...lons) < 0, 'with no vertex wrapping back to positive longitude');
+}
+
+/* ==> NO STRAIGHT EDGE LEFT ALONG THE MERIDIAN. <== This is the assertion that
+ * describes what Aaron actually saw: `curveGeometry` rounds every corner it is
+ * given, so an artificial seam edge became a curved nose bulging across the
+ * line — western half to −180.24, eastern to +180.22 — and the cone's outline
+ * layer stroked both as if they were real cone edges. Two overlapping lens
+ * shapes with a hard line down the middle. A stitched ring may still CROSS the
+ * meridian, but it must never run ALONG it. */
+{
+  const ring = drawn.geometry.coordinates[0];
+  let adjacent = 0;
+  for (let i = 0; i < ring.length - 1; i++) {
+    const a = ring[i];
+    const b = ring[i + 1];
+    if (Math.abs(Math.abs(a[0]) - 180) < 1e-3 && Math.abs(Math.abs(b[0]) - 180) < 1e-3
+        && Math.abs(a[1] - b[1]) > 1e-3) adjacent++;
+  }
+  ok(adjacent === 0,
+     `no segment runs along the meridian (${adjacent} found) — the cut edge is gone, not rounded`);
+}
 
 /* ========================================================================= */
 section('and the ribbon paints, on a real SHIPS run');
@@ -159,6 +190,60 @@ ok(Math.max(...allLons) < 0,
    `no ribbon vertex jumps back to positive longitude (max ${Math.max(...allLons).toFixed(2)})`);
 ok(Math.min(...allLons) > -190,
    `and none runs away past one turn (min ${Math.min(...allLons).toFixed(2)})`);
+
+/* ========================================================================= */
+section('the two halves are stitched back into one shape');
+
+/* ==> AREA IS THE ASSERTION THAT CANNOT BE FUDGED. <== A stitch that dropped a
+ * stretch of outline, doubled one back on itself, or tied a bow at the join
+ * would still close and still look plausible in a coordinate dump. The area
+ * would not survive any of them. NHC publishes its own figure in
+ * `st_area(shape)`, so this is checked against the SOURCE's arithmetic rather
+ * than against ours. */
+{
+  const stitched = stitchDatelineSplit(geom);
+  ok(stitched.type === 'Polygon', `two parts become one ${stitched.type}`);
+
+  const shoelace = (ring) => {
+    let a = 0;
+    for (let i = 0; i < ring.length - 1; i++) {
+      a += ring[i][0] * ring[i + 1][1] - ring[i + 1][0] * ring[i][1];
+    }
+    return Math.abs(a / 2);
+  };
+  const whole = shoelace(stitched.coordinates[0]);
+  const parts = geom.coordinates.reduce((a, p) => a + shoelace(p[0]), 0);
+  const published = CONE.features[0].properties['st_area(shape)'];
+  ok(Math.abs(whole - parts) < 1e-6,
+     `the stitched area equals the two parts summed (${whole.toFixed(4)} vs ${parts.toFixed(4)})`);
+  ok(Math.abs(whole - published) < 1e-3,
+     `and equals NHC's own st_area(shape) of ${published.toFixed(4)}`);
+
+  const ring = stitched.coordinates[0];
+  ok(ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1],
+     'the ring closes');
+  ok(ring.length === geom.coordinates[0][0].length + geom.coordinates[1][0].length - 3,
+     `every published vertex survives bar the three the join makes duplicate (${ring.length})`);
+}
+
+/* ==> AND IT DECLINES ANYTHING THAT IS NOT A CLEAN TWO-PART CUT. <== §5: the
+ * repair must never return something worse than what it was handed. */
+{
+  const single = { type: 'Polygon', coordinates: [geom.coordinates[0][0]] };
+  ok(stitchDatelineSplit(single) === single, 'a Polygon is handed straight back');
+
+  /* Two parts that both touch the meridian but do not share the same cut —
+   * the second half's latitudes moved — must not be joined. */
+  const mismatched = structuredClone(geom);
+  mismatched.coordinates[1][0] = mismatched.coordinates[1][0].map((c) => [c[0], c[1] + 5]);
+  ok(stitchDatelineSplit(mismatched).type === 'MultiPolygon',
+     'two halves whose seam edges disagree are left alone');
+
+  const three = structuredClone(geom);
+  three.coordinates.push(structuredClone(geom.coordinates[1]));
+  ok(stitchDatelineSplit(three).type === 'MultiPolygon',
+     'and so is anything that is not exactly two parts');
+}
 
 /* ========================================================================= */
 section('a single-polygon cone is unaffected');

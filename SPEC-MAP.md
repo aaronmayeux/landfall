@@ -1102,6 +1102,54 @@ across the western half of the West Pacific. Everything is moved onto the
 track's branch before it is measured; rings move as one piece after being made
 continuous, because per-vertex would tear a straddling ring across the world.
 
+**THE SAME SEAM CUT THE CONE ITSELF IN HALF, AND THE APP DREW BOTH HALVES AS
+IF THEY WERE WHOLE.** Fixed 2026-08-20. NHC serves geometry wrapped into
+(−180, 180], so a cone that crosses the antimeridian CANNOT be one polygon: it
+is cut along the meridian and returned as a `MultiPolygon` whose two parts each
+carry a straight artificial edge down the seam. Lala CP012026 advisory 33:
+1,332 points spanning −180.00 to −170.58, and 191 points spanning 178.78 to
+180.00. **The two seam edges are the same edge** — both run between latitude
+37.8069 and latitude 33.9638, to ten decimal places.
+
+Two things then went wrong, both seen on glass:
+
+- **`curveGeometry` rounded the artificial edges.** It thins each ring to knots
+  and puts arcs back between them, and it has no way to know one of those
+  corners is not real. The western half bulged to −180.24 and the eastern to
+  +180.22, each pushing a curved nose across the meridian into the other's
+  ground.
+- **The outline layer stroked them.** `map/layers/cone.js` draws a fill and a
+  line, and the line strokes every ring it is handed — so both cut edges were
+  painted as real cone edges. On screen: two overlapping lens shapes with a
+  hard line down the middle of a cone that has no edge there at all.
+
+**`lib/seam-stitch.js` puts the shape back together before anything reads it**,
+and it is its own file because nothing in `lib/` owned the question *did this
+polygon arrive whole?* — every consumer assumed it had, and each went wrong
+differently when it had not. It is a STITCH rather than a union: the two halves
+share one exact edge, so the repair is to delete that edge from both and splice
+the open paths, with the eastern half moved one whole turn onto the western
+one's branch. **Area is the assertion that proves it** — a stitch that dropped
+a stretch of outline or tied a bow at the join would still close and still look
+plausible in a coordinate dump, and the test checks the result against NHC's
+own published `st_area(shape)` of 48.1509 rather than against our arithmetic.
+Anything that is not a clean two-part cut is handed straight back untouched
+(§5: the repair must never return something worse than its input).
+
+The stitched cone is a single Polygon again, so it is also **offered to the
+rebuild** instead of being turned away at the door. Its longitudes run past
+−180 rather than stopping there, which is `lib/trackline.js`'s convention for
+the track and is what makes it one shape instead of two on opposite rims of the
+map.
+
+**ONLY THE CONE IS STITCHED TODAY, AND THAT IS SCOPE RATHER THAN A FINDING.**
+Every layer on the MapServer arrives wrapped the same way, so the wind swath,
+the current wind field and a watch/warning chord are all cuttable by the same
+meridian. None of Lala's were — all of them sit well east of it — so there are
+no bytes to build against, and §5's rule about not guessing at payload shapes
+applies to a repair as much as to a parse. The stitch is written to take any
+geometry, so the day one of them arrives cut it is a call site, not a design.
+
 **AND THE SAME SEAM TOOK THE RIBBON A SECOND WAY, THROUGH A GATE RATHER THAN
 THROUGH ARITHMETIC.** Fixed 2026-08-20. `lib/cone-smooth.js` put ONE test in
 front of both paths — single polygon only. That bar belongs to the REBUILD, and
@@ -1123,8 +1171,10 @@ ribbon builds 81 slices from hour 0 to hour 120.
 SHIPS covers the Central Pacific, whose five-day cones reach the seam as a
 matter of routine. The two gates are now separate: `sweepable` still demands a
 single polygon, the measurement asks only for a track and at least one ring.
-The drawing is untouched — a multi-part cone is still never swept, and still
-ships as the published parts with their corners rounded.
+The stitch above hands most seam cones back whole, so this gate rarely decides
+anything on one any more — it stays split because a genuinely multi-part cone,
+one the stitch could not recognise, must still be MEASURABLE even though it can
+never be swept.
 
 `tools/test-cone-dateline.mjs` asserts against Lala's actual bytes
 (`samples/lala-cp012026/`) rather than a two-part cone somebody drew, because a

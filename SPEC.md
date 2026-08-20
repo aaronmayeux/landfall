@@ -1515,7 +1515,8 @@ lib/        abpw.js  adeck.js  advisory.js  bandmerge.js  basin.js
             imagery-paint.js  jtwc-wind.js  lifecycle.js  outlook.js
             perf.js  place-label.js  population-count.js  replay-mode.js
             ringpolish.js
-            section-state.js  silence.js  simplify.js  telemetry.js
+            seam-stitch.js  section-state.js  silence.js  simplify.js
+            telemetry.js
             time.js  track-point.js  trackline.js  units.js  usage.js
             watchwarning.js  wind.js  windswath.js
 data/       adeck.js  advisory.js  cache.js  carq.js  gdacs.js
