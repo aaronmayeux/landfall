@@ -329,6 +329,8 @@ ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan +
 # ------------------------------------------------------------ 6. orientation
 say ""
 say "ORIENTATION — read these, not the spec"
+say "  CLAUDE.md       6 KB   how to work in here. READ FIRST, it is the shortest"
+say "                         and it overrides session config that disagrees"
 say "  NOW.md         16 KB   live state, what is actually being worked on"
 say "  README.md       4 KB   what this is"
 say "  SPEC-INDEX.md          section number -> file and line range"

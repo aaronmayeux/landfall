@@ -31,6 +31,50 @@ were caught by stopping and writing a throwaway script instead of a sentence.
 invites a second look.** When a figure is about to appear in prose: compute it,
 print it, then quote what printed.
 
+## Match the ceremony to the change
+
+**Not every change earns the full treatment, and spending an hour on a one-word
+heading is its own kind of failure.** Aaron asked for this on 2026-08-21 after a
+copy change cost roughly as much as the arithmetic fix underneath it.
+
+Three tiers. Pick one honestly — when in doubt, go up, not down.
+
+**Tier 1 — words only.** On-screen copy, comments, docs, commit wording. Nothing
+about what the code *does* changed.
+- Run `check-syntax` and the suites that touch the files you edited.
+- Fix any doc text the change made untrue. Do NOT write a new spec section.
+- **No new test.** There is no logic to mutate; a test asserting a string equals
+  itself is noise that will be wrong the next time the wording improves.
+
+**Tier 2 — behaviour.** Logic, arithmetic, state, thresholds, anything that
+changes what a reader sees for a given input.
+- Full treatment, no shortcuts: spec entry, `NOW.md` if it is in flight, and a
+  **mutation-verified** test — proven to fail when the rule is removed.
+- Full gate chain before push.
+
+**Tier 3 — a new feed, parser, or geometry.** Tier 2, plus **read the real bytes
+off the `archive` branch before writing a line of parser.** Invented fixtures
+inherit the wrong assumptions and the tests then pass on them.
+
+**Run the affected suites while working; run the FULL chain once, before the
+push.** `test-lifecycle.mjs` alone is 65 seconds. Running all 38 after every
+edit buys nothing the pre-push run does not.
+
+**Neither of these tiers is an excuse to skip a gate that fires.** A tier-1
+change that turns `doc-check` red has stopped being tier 1 — that is the gate
+telling you the change is bigger than you thought. Listen to it.
+
+## Do not volunteer follow-on work
+
+Finish what was asked, then **say in one line what else is worth doing and let
+Aaron decide.** Do not start it. Do not fold it into the same push because it
+was "right there". Aaron is the one deciding what this project spends time on,
+and an unasked-for improvement still costs him a review.
+
+The exception is work the repo's own gates demand — if `doc-check` says a file
+is over its ceiling and the spec says split it before adding to it, that is not
+volunteering, that is the change's actual cost.
+
 ## Work off `main`. Always.
 
 - **Commit and push straight to `main`.** Do not create a per-session working

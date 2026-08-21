@@ -2387,6 +2387,8 @@ forecast into one polygon per threshold. That is the right shape to draw and
 the wrong shape to caption — counted whole under a heading reading *in the
 path*, it warns about wind that has already fallen.
 
+**Confirmed on glass 2026-08-21.** Shipped, checked on a phone, and correct.
+
 **Measured, on glass, 2026-08-21.** Hurricane Lala, advisory 34A, sat 900 miles
 west-northwest of Hawaii heading north into empty ocean. The section read
 **≈1.3M people in 121 towns**. Rebuilt from the archived bytes: 1,337,723 people

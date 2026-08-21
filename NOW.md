@@ -130,6 +130,23 @@ storm named — do not leave it here to make the section look busy.**
 
 ## NEXT UP
 
+**THE MAP STILL TELLS THE LIE THE HEADCOUNT JUST STOPPED TELLING.** §54 split
+the Population affected count into what is still coming and what has already
+been through, and Lala's panel now reads past tense correctly — confirmed on
+glass 2026-08-21. **The drawn swath did not change.** It is a record where it is
+behind the storm and a forecast where it is ahead, painted in one shade, so a
+green wash still sitting over Honolulu reads as a warning days after the wind
+stopped. The forward-only geometry the fix needed already exists in every NHC
+bundle as the `windAhead` slot, so the data side of this is done — what is left
+is a styling call about how "already happened" should look next to "still to
+come", and that is Aaron's to make on glass. Logged as OPEN in §54.
+
+**"IT WENT THROUGH ON SUNDAY" IS AVAILABLE AND NOT BUILT.** The split says
+*whether* a storm has passed, not *when*. The past track carries timestamps, so
+the date is there for the taking. Deferred deliberately on 2026-08-21: the
+useful half is the tense, and a date is a second thing to get wrong. Logged as
+OPEN in §54.
+
 **THE CREDITS PANEL IS GATED NOW, AND IT CHANGES WHAT LANDING A FEED COSTS.**
 `tools/test-attribution.mjs` fails unless every external host in
 `config/constants.js`, `functions/` and `worker/` is accounted for in
