@@ -58,7 +58,7 @@ const GROUPS = [
 
   ['THE CAMERA AND THE GLOBE',
    'zoom ladder, dive, idle motion, and what the sphere itself does',
-   ['ZOOM', 'GLOBE', 'DIVE', 'GLOW', 'MOTION', 'APPROACH']],
+   ['ZOOM', 'GLOBE', 'DIVE', 'GLOW', 'RIM', 'MOTION', 'APPROACH']],
 
   ['MAP FURNITURE',
    'borders, place names and label placement — everything under the storms',

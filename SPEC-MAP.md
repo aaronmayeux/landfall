@@ -2131,8 +2131,14 @@ storm's color; everything else is fully transparent. It makes a storm read as a
   would have. **Do not "restore" a third pass.**
 - Depth fade: line opacity and width driven by zoom, so distant coastlines are
   faint threads and near ones are crisp.
-- The thin rim light at the horizon comes from the 3D clear globe, NOT from
-  MapLibre's sky layer.
+- **The rim light at the horizon is `map/limb-rim.js` (§9.17), and until
+  2026-08-21 this paragraph claimed it came from the 3D clear globe.** It did
+  not. There was no rim-light material in `map/globe3d.js` and there never had
+  been — no shader, no shell — so between the handoff and §9.17 the horizon had
+  nothing on it at all. It is emphatically not MapLibre's sky layer either:
+  that layer is forced fully transparent on the globe projection, which is why
+  the `atmosphere` token spent months wired to `horizon-color` and reaching
+  nothing.
 - **No day/night shading — `atmosphere-blend: 0` AND `light.intensity: 0`.** On
   the globe projection MapLibre's atmosphere darkens the sphere away from the
   camera-facing centre, producing a lit face and a dark limb. **It is not a
@@ -3018,6 +3024,90 @@ the top half of an empty screen for a panel nobody can see.
 
 **The chevrons do not go through this.** Stepping is a deliberate "show me that
 one" and flies to the storm via `onFocusStorm`, unchanged.
+
+---
+
+### 9.17 The glass rim at the horizon
+
+**Once MapLibre owns the picture, a soft ring is painted on its limb** —
+`map/limb-rim.js`, its own 2D canvas (`#rim`) above the basemap and below the
+3D globe. An edge all the way round, plus a stronger arc on one side so it
+reads as light catching curved glass rather than as an outline someone drew.
+
+**Without it the horizon has nothing on it, and three separate facts stack up
+to make that true.**
+
+1. **MapLibre paints nothing outside the sphere.** The atmosphere pass is off
+   (§9.6) and nothing else fills those pixels.
+2. **The whole `sky` block in `map/style.js` is inert on the globe
+   projection.** MapLibre forces the sky's blend factor to 1 in globe mode,
+   which fades `sky-color`, `horizon-color` and `fog-color` to fully
+   transparent, and zeroes the fog opacity as well. Seven style properties,
+   none of which reach a pixel. **They are kept only because the flat
+   transform still reads them; nothing on the globe does.**
+3. **So the pixel outside the limb is the CSS backdrop and the pixel inside it
+   is the sea — and in the light theme those are the same hex.** `space` is set
+   to `ocean` exactly, deliberately, so the 3D globe's own limb is the only
+   edge. Once the 3D globe has gone there is no such limb.
+
+**It is a wide-screen feature and a phone pays almost nothing for it.** With the
+globe centred, the limb leaves the viewport once its radius passes the
+half-diagonal. **Bisected against the live layer in a browser, not derived:**
+the rim switches off at z5.65 on a 3440x1440 viewport, z4.67 on 1920x1080,
+z4.31 on 1512x945, and z3.02 on a 390x844 phone — where it only appears from
+about z2.5, because below that the 3D globe still owns the picture. Past the
+cut-off the layer switches off and does not pay for the fill.
+
+**Where the ring goes is asked, never derived.** The radius comes from
+`limbRadiusPx()` in `map/marker-home-geometry.js`, which bisects on MapLibre's
+own `isLocationOccluded`. **The obvious closed form is wrong here in two
+independent ways, both growing with zoom.** `map/globe-follow.js` matches the
+two globes at the screen CENTRE, and the Three camera runs at `DIVE.fov` while
+MapLibre runs at its own default — two lenses matched in the middle do not agree
+at the edge. And MapLibre's clipping plane cuts at cos = 1/(*d*+1) rather than
+at the true tangent 1/*d*, so the edge it **draws** is about 4% outside the edge
+the geometry gives. On a 900-tall viewport the rendered limb is at 487 px at
+zoom 3 and 794 px at zoom 4, against 465 and 761 for the closed form; the ring's
+brightest stop lands within a pixel of the rendered figure at both.
+
+**Two fills, and the second is not an approximation.** A radial gradient across
+an annulus straddling the limb — `oceanDeep` inward as the sea turns away,
+`atmosphere` at the edge, a bloom fading outward — then the same annulus filled
+with a linear gradient of `atmosphereDeep` running along the light direction. On
+a circle the screen-space normal at angle *t* is (cos *t*, sin *t*), so the
+shading term is cos(*t* − *t*<sub>light</sub>), which is exactly what a linear
+gradient along that direction evaluates to on the ring. There is no error term.
+
+**The light direction is derived from the backdrop's own, never typed.**
+`RIM.lightAt` mirrors the `radial-gradient(... at 42% 30% ...)` literal in
+`index.html`, so the ring and the sky cannot disagree about where the light is.
+
+**The lit arc sits on opposite sides in the two themes.** Dark: the lit side of
+a limb against a night sky is the brighter side, so the arc goes toward the
+light. Light: there is no headroom above near-white and every attempt to add
+light to that backdrop has come back off glass as a smudge — but a near-white
+ball reads as a ball because of the shading that gathers on the side *away*
+from the light. Same geometry, opposite end. **This is one of the few places
+the two themes need a different sign rather than a different number**, and
+`tools/test-limb-rim.mjs` pins both.
+
+**It hands off from the cage, on the cage's own band.** The 3D cage's outer
+silhouette is the last 3D edge on screen, so the rim rises on exactly
+`DIVE.fade.cage` as the cage falls on it — never two edges, never none, and
+because both read one constant they cannot drift. **It must not be given its
+own band.** It is therefore the one layer driven from the `p >= 1` branch of
+`map/globe3d.js`'s render loop, where everything else is cleared.
+
+**Drawn at 1:1 CSS pixels, unlike `map/limb-glow.js`'s fifth-scale buffer.** An
+edge is the one thing here with high-frequency detail to lose, so it cannot be
+blurred back afterwards. Only the annulus is ever rasterised, so the painted
+area is a band, not a screen, and the band's width is in **pixels rather than
+globe radii** — a lit edge does not get fatter because you walked closer.
+
+**No `mix-blend-mode`, in either theme.** `#glow` paints light and must add or
+tint; this paints an edge, and an edge is allowed to be darker than what is
+under it — which is exactly what the light theme needs. Plain alpha, one code
+path.
 
 ---
 

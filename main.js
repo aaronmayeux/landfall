@@ -227,6 +227,7 @@ function boot() {
     mapEl: globeEl,
     spaceEl: document.getElementById('spacebg'),
     glowEl: document.getElementById('glow'),
+    rimEl: document.getElementById('rim'),
   });
 
   /* ==> WEBGL CONTEXT LOSS, ON BOTH CANVASES. <==

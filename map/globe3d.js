@@ -29,6 +29,7 @@ import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
 import { attachFogFade } from './fog-fade.js';
 import { createLimbGlow } from './limb-glow.js';
+import { createLimbRim } from './limb-rim.js';
 import { spiralCanvas } from './glyph.js';
 import { createWatchMarks } from './watch-marks.js';
 
@@ -42,8 +43,10 @@ const R = 1.0; // unit globe
  * @param {HTMLElement} opts.spaceEl    - space background (#spacebg), fades OUT
  * @param {HTMLCanvasElement} opts.glowEl - storm-light layer (#glow), below the
  *                                          map; see map/limb-glow.js
+ * @param {HTMLCanvasElement} opts.rimEl  - the horizon rim (#rim), ABOVE the
+ *                                          map; see map/limb-rim.js
  */
-export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
+export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl, rimEl } = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
@@ -469,6 +472,21 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
       })
     : null;
 
+  /* ==> THE HORIZON RIM, AND IT IS THE ONE LAYER HERE THAT OUTLIVES THE DIVE.
+   * <==
+   *
+   * Everything else in this file fades to nothing by the time MapLibre owns the
+   * screen. The rim does the opposite: it rises on `DIVE.fade.cage` as the cage
+   * leaves, because the cage's outer silhouette is the last 3D edge on screen
+   * and the rim is what takes over from it. So it is driven from BOTH branches
+   * of `update()` below — including the fully-handed-off one, which is exactly
+   * the band it exists for.
+   *
+   * It is not part of the Three scene and does not touch WebGL; it lives here
+   * because this is the file that knows `p`. Same arrangement as limbGlow, one
+   * layer up. */
+  const limbRim = rimEl ? createLimbRim(rimEl, map) : null;
+
   /* Outage recolor now lives in the GEOMETRY, not here: heightfield.js writes
    * muted grey into every node's color the moment the feed goes unavailable and
    * restores live colors when it returns. Materials stay white multipliers —
@@ -542,6 +560,9 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
        * it. Told explicitly, or the last frame's light stays burnt onto the
        * backdrop for the whole time the flat map is up. */
       limbGlow?.update({ group: globe, camera, radiusPx: 0, p: 1 });
+      /* NOT skipped with the rest. The flat map is where the rim is the only
+       * thing left saying where the planet stops. */
+      limbRim?.update({ p: 1 });
       if (moving) map.triggerRepaint();
       return;
     }
@@ -576,6 +597,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
       radiusPx: radiusPxAt(dist),
       p,
     });
+    limbRim?.update({ p });
 
     if (moving) map.triggerRepaint(); // keep frames coming while the cage settles
   }
@@ -589,6 +611,7 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     limbGlow?.resize(); // its buffer is sized off the viewport too
+    limbRim?.resize();
     map.triggerRepaint(); // repaint the overlay at the new size
   }
   resize();
@@ -658,9 +681,13 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
      * night sky, `multiply` over a daylight one — for exactly the reason the
      * far-side land does above. Same call, one layer down. */
     limbGlow?.retheme();
+    /* The rim flips which SIDE its lit arc sits on as well as its colours —
+     * see map/limb-rim.js. Numbers alone would put the shading on the wrong
+     * half in one of the two themes. */
+    limbRim?.retheme();
 
     map.triggerRepaint();
   }
 
-  return { canvas, heightfield, watchMarks, limbGlow, resize, retheme };
+  return { canvas, heightfield, watchMarks, limbGlow, limbRim, resize, retheme };
 }

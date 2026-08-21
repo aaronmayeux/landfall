@@ -59,6 +59,38 @@ traded for.
 
 ## IN FLIGHT
 
+**THE HORIZON HAS A RIM ON IT NOW (§9.17), AND THE ONE THING GLASS DECIDES IS
+THE HANDOFF FROM THE CAGE.** No weather needed — zoom in on a wide monitor
+until MapLibre owns the picture and look at the edge of the planet, in BOTH
+themes.
+
+The rim rises on exactly `DIVE.fade.cage`, the band the 3D cage leaves on, so
+that there is always one edge on screen and never two. But the cage's outer
+silhouette and MapLibre's limb are not at the same radius — the cage floats at
+1.065 globe radii and the 3D globe's own edge sits 2–5% inside MapLibre's — so
+for the length of that crossfade there are two soft arcs a few dozen pixels
+apart. **The question is whether that reads as one edge handing over or as a
+double ring.** If it is a double ring, the fix is one constant: give
+`map/limb-rim.js` its own band starting where the cage's ENDS (`0.62`), and it
+will simply arrive later. Nothing else moves.
+
+Three smaller things to glance at while there, in this order:
+
+**1. IS THE ARC ON THE RIGHT SIDE IN LIGHT MODE?** It is deliberately on the
+OPPOSITE side from dark — you cannot paint a highlight on near-white paper, so
+the light theme reads through the shading that gathers away from the light
+instead. It should look like a white ball lit from the upper left. If it looks
+like the light is coming from the lower right, the sign is backwards.
+
+**2. IS IT TOO STRONG, OR NOT ENOUGH?** One dial per theme, `fx.rim` in
+`config/tokens.js` — 0.85 dark, 1.0 light. Light is the higher one on purpose:
+there the sea and the backdrop are the SAME hex, so the rim carries the entire
+edge on its own.
+
+**3. DOES IT LEAVE CLEANLY WHEN YOU KEEP ZOOMING?** It fades out as the horizon
+passes the corners of the screen and switches off entirely past them. It should
+not pop.
+
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).

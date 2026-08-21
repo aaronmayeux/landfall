@@ -467,7 +467,22 @@ export const DARK = Object.freeze({
   /* Atmosphere */
   skyHigh:        '#040711',
   skyLow:         '#0B2138',
+  /* ==> `atmosphere` AND `oceanDeep` ARE LIVE AGAIN, AND UNTIL 2026-08-21 THEY
+   * WERE BOTH DEAD. <==
+   *
+   * `atmosphere` was wired to MapLibre's `horizon-color` and `oceanDeep` to
+   * nothing at all. `horizon-color` belongs to the SKY layer, and MapLibre
+   * forces the sky fully transparent on the globe projection — so the one
+   * reference reached a shader that had already been faded out, and the token
+   * named "rim light at the horizon" had never lit a horizon. Both now drive
+   * the real one (`map/limb-rim.js`, §9.17), which is the job their names were
+   * written for. */
   atmosphere:     '#3D9BC4', // rim light at the horizon
+  /** The ring at its STRONGEST arc — where the light rakes the edge. Named for
+   *  strength, not for brightness, because the two themes disagree about which
+   *  direction that is: on a night sky the lit side of the limb is BRIGHTER,
+   *  on daylight paper the shaded side is DARKER. Same token, opposite arc. */
+  atmosphereDeep: '#B8E8FA',
   starfield:      '#8FA8C4',
   /* THE SPACE BACKDROP IS A RADIAL GRADIENT, NOT A COLOR — `#spacebg` in
    * index.html runs near -> space -> far from 42%/30% out to the corners.
@@ -664,6 +679,19 @@ export const DARK = Object.freeze({
      *  The reasoning for the real values lives on LIGHT.fx.glowGain. */
     glowGain:    1.0,
     glowSpread:  1.0,
+
+    /** THE GLASS RIM AT THE HORIZON (map/limb-rim.js, §9.17). Master strength
+     *  for the whole layer — the ring, its bloom and its lit arc all scale
+     *  together, so this is the one dial that turns the effect down without
+     *  changing its shape.
+     *
+     *  Dark needs LESS than light, which is the opposite of every other number
+     *  in this block, and the reason is that the job is different in the two
+     *  themes. Here the sea is near-black and the backdrop is near-black, so
+     *  the ring is a light on darkness and a little goes a long way. In light
+     *  the sea and the backdrop are the SAME GREY (see `space`), so the ring is
+     *  the only thing separating them and it has to carry the whole edge. */
+    rim:         0.85,
   }),
 
   /** SELECTED-STORM GEOMETRY, THEME-DEPENDENT HALF (see STORM_GEO below for
@@ -1046,6 +1074,13 @@ export const LIGHT = Object.freeze({
   skyHigh:        '#E9E9E7',
   skyLow:         '#D3D5D7',
   atmosphere:     '#9BA2A9', // rim light at the horizon
+  /** See DARK.atmosphereDeep. In this theme the strongest arc is the SHADED
+   *  one, so this is a deeper grey rather than a brighter light — you cannot
+   *  make a highlight on near-white paper, and every attempt to add light to
+   *  this backdrop has come back off glass as a smudge (see fx.glowSaturate).
+   *  A near-white ball on paper reads as a ball because of the shading that
+   *  gathers on the side AWAY from the light, and that is what this paints. */
+  atmosphereDeep: '#6E757C',
   /** No stars in daylight. Held near the sky rather than removed, so the
    *  starfield code path stays identical in both themes and there is no
    *  "if light, skip the stars" branch to forget. */
@@ -1346,6 +1381,14 @@ export const LIGHT = Object.freeze({
      *  the camera lens. Alpha was the thing that was short, not reach. */
     glowGain:    3.0,
     glowSpread:  1.0,
+
+    /** See DARK.fx.rim for why this is the higher of the two. The light theme
+     *  sets `space` to `ocean` EXACTLY — the backdrop and the sea are the same
+     *  hex, deliberately, so that the 3D globe's limb is the only edge. That
+     *  choice is what makes this layer necessary: once MapLibre owns the
+     *  picture there is no 3D limb left and nothing else on screen says where
+     *  the planet stops. */
+    rim:         1.0,
   }),
 
   /** Themed storm geometry. The cone and the tracks flip to ink; the dot ring
