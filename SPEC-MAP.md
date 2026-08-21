@@ -3095,13 +3095,25 @@ highlight on the surface is glass.** This app is asking for the second, and a
 real limb highlight — a Fresnel term on the front face — cannot reach past the
 edge by construction.
 
-**Two fills, and the second is not an approximation.** A radial gradient across
-an annulus straddling the limb — `oceanDeep` inward as the sea turns away,
-`atmosphere` at the edge, a bloom fading outward — then the same annulus filled
+**Two fills, and the second is not an approximation.** A radial gradient
+reaching inward from the limb — nothing at the inner end, `oceanDeep` as the sea
+turns away, `atmosphere` hard against the edge — then the same annulus filled
 with a linear gradient of `atmosphereDeep` running along the light direction. On
 a circle the screen-space normal at angle *t* is (cos *t*, sin *t*), so the
 shading term is cos(*t* − *t*<sub>light</sub>), which is exactly what a linear
 gradient along that direction evaluates to on the ring. There is no error term.
+
+**The arc is composited `source-atop`, and that is what keeps the inner edge
+soft.** A linear gradient varies around the circle and is dead flat *across* the
+band, so it has no falloff of its own; painted with plain alpha it lays an even
+slab over the whole width and cuts square at the inner diameter. That shipped,
+and it came back off glass — *"you still aren't fading in the inner edge, the
+inside diameter"* (Aaron, 2026-08-21). The ring underneath was fading correctly
+the whole time; the arc was covering it. Under `source-atop` the result's alpha
+is the **ring's**, untouched, and the arc can only pull the ring's colour toward
+its own — so **the arc can never paint where the ring does not**, by
+construction rather than by tuning. Its numbers are a mix fraction, not an ink
+quantity, and are deliberately not scaled by the layer's strength.
 
 **The light direction is derived from the backdrop's own, never typed.**
 `RIM.lightAt` mirrors the `radial-gradient(... at 42% 30% ...)` literal in

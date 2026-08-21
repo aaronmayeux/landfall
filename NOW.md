@@ -64,7 +64,17 @@ THE HANDOFF FROM THE CAGE.** No weather needed — zoom in on a wide monitor
 until MapLibre owns the picture and look at the edge of the planet, in BOTH
 themes.
 
-**THE FIRST CUT WAS A HOOP AND THAT IS FIXED — THIS IS THE SECOND LOOK.** It
+**TWO ROUNDS OF GLASS ARE FIXED — THIS IS THE THIRD LOOK.** Round two: the
+lit arc had no falloff across the band (a linear gradient is flat that way), so
+it laid an even slab over the ring and cut square at the inside diameter —
+"you still aren't fading in the inner edge, the inside diameter". It is
+composited `source-atop` now, which means it can only recolour the ring and can
+never add ink of its own, so the falloff is always the ring's. Sampled in a
+browser at zoom 3.6, alpha across the band now runs 118 at the limb, 80 at 5 px
+in, 39 at 15, 11 at 30, and nothing by 60; the largest single-pixel step
+anywhere is 8 of 255, at the outer edge where the planet genuinely ends.
+
+Round one: it
 shipped straddling the edge, 10 px inside and 44 px out, so most of the ink sat
 beyond the planet: "it doesn't look like glass and it's sitting outside the
 horizon" (Aaron, glass, 2026-08-21). **The position was never wrong** — swept

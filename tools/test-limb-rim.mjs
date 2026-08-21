@@ -46,7 +46,10 @@ function stubCanvas() {
   const arcs = [];
   const fills = [];
   let cur = null;
+  let composite = 'source-over';
   const ctx = {
+    set globalCompositeOperation(v) { composite = v; },
+    get globalCompositeOperation() { return composite; },
     createRadialGradient(x0, y0, r0, x1, y1, r1) {
       cur = { kind: 'radial', x0, y0, r0, x1, y1, r1, stops: [] };
       grads.push(cur);
@@ -65,7 +68,7 @@ function stubCanvas() {
       arcs.push({ x, y, r });
     },
     fill(rule) {
-      fills.push({ rule, path: (ctx._path || []).slice(), grad: cur });
+      fills.push({ rule, path: (ctx._path || []).slice(), grad: cur, composite });
     },
     clearRect() {},
     set fillStyle(_v) {},
@@ -79,6 +82,7 @@ function stubCanvas() {
     _grads: grads,
     _arcs: arcs,
     _fills: fills,
+    _ctx: ctx,
   };
 }
 
@@ -323,6 +327,35 @@ ok(
   rim.update({ p: 1 });
   ok(cv._fills.length === 0, 'no limb to find means nothing is drawn');
   ok(Number(cv.style.opacity) === 0, 'and the layer reports itself as absent');
+}
+
+/* 7 — THE ARC CANNOT PUT A HARD EDGE BACK ON THE INSIDE. -------------------
+ *
+ * The arc pass is a LINEAR gradient: it varies around the circle and is dead
+ * flat across the band, so it has no falloff of its own. Painted with plain
+ * alpha it lays an even slab over the whole width and cuts square at the inner
+ * diameter — which is what shipped, and what Aaron reported on glass as "you
+ * still aren't fading in the inner edge, the inside diameter". The ring
+ * underneath was fading correctly; the arc was covering it.
+ *
+ * `source-atop` makes that structurally impossible: the result's alpha is the
+ * ring's, untouched, and the arc can only pull the colour. So this asserts the
+ * composite op rather than sampling pixels, because the op IS the guarantee.
+ * MUTATION: take the `source-atop` back out of map/limb-rim.js and both fail.
+ * Verified. */
+{
+  setThemeMode(MODE.DARK);
+  const cv = paint(1);
+  const [ring, arc] = cv._fills;
+  ok(ring?.composite === 'source-over', 'the ring itself is painted with plain alpha');
+  ok(
+    arc?.composite === 'source-atop',
+    'the arc is composited ONTO the ring, so it inherits the ring\'s falloff and adds no ink'
+  );
+  ok(
+    cv._ctx.globalCompositeOperation === 'source-over',
+    'and the operator is put back afterwards — canvas state outlives the frame'
+  );
 }
 
 console.log(`  ${checks - failures}/${checks} checks passed`);

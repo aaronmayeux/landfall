@@ -1641,8 +1641,19 @@ export const RIM = Object.freeze({
    *  Fractions of the viewport, matching the CSS. */
   lightAt: Object.freeze([0.42, 0.30]),
 
-  /** How much brighter the lit arc is than the rest of the ring, and how
-   *  quickly it falls off around the circle.
+  /** The lit arc, as a MIX FRACTION rather than an ink quantity — 1 is fully
+   *  `atmosphereDeep` at the lit point, 0 leaves the ring its own colour.
+   *
+   *  ==> IT CANNOT ADD INK, BY CONSTRUCTION. <== The arc is composited
+   *  `source-atop`, so its alpha only decides how far the ring's colour is
+   *  pulled toward the arc's; the ring's radial falloff is untouched. That is
+   *  not a nicety — painted with plain alpha this pass has no falloff of its
+   *  own (it is a LINEAR gradient, flat across the band) and lays a slab with a
+   *  square cut at the inner diameter. Aaron, on glass, 2026-08-21: "you still
+   *  aren't fading in the inner edge, the inside diameter." See map/limb-rim.js.
+   *
+   *  How much the arc changes the ring, and how quickly it falls off around
+   *  the circle.
    *
    *  A LINEAR GRADIENT ACROSS THE RING IS NOT AN APPROXIMATION OF AN ANGULAR
    *  ONE — it is the same function. On a circle of radius r the screen-space

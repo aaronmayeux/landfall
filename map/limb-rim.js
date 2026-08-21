@@ -65,11 +65,12 @@
  * ---------------------------------------------------------------------------
  * TWO FILLS, AND THE SECOND ONE IS NOT AN APPROXIMATION.
  *
- *   BASE   a radial gradient across an annulus straddling the limb: the sea
- *          deepening inward (`oceanDeep`), the rim itself at the edge
- *          (`atmosphere`), and a bloom fading outward into the backdrop.
- *   ARC    the same annulus filled with a LINEAR gradient of `atmosphereDeep`,
- *          running along the light direction.
+ *   RING   a radial gradient reaching INWARD from the limb: nothing at the
+ *          inner end, the sea deepening as it turns away (`oceanDeep`), then
+ *          the rim itself hard against the edge (`atmosphere`).
+ *   ARC    the same annulus filled with a LINEAR gradient of `atmosphereDeep`
+ *          along the light direction, composited `source-atop` so it can only
+ *          recolour the ring and never add ink of its own.
  *
  * A linear gradient across a ring IS an angular one, exactly. On a circle of
  * radius r the screen-space normal at angle t is (cos t, sin t), so the shading
@@ -307,12 +308,43 @@ export function createLimbRim(canvas, map) {
     const by = cy - ly * rOut * side;
 
     const gl = ctx.createLinearGradient(ax, ay, bx, by);
-    gl.addColorStop(0, `rgba(${ink.deep},${alpha * RIM.glare})`);
-    gl.addColorStop(0.5, `rgba(${ink.deep},${alpha * RIM.glareMid})`);
+    gl.addColorStop(0, `rgba(${ink.deep},${RIM.glare})`);
+    gl.addColorStop(0.5, `rgba(${ink.deep},${RIM.glareMid})`);
     gl.addColorStop(1, `rgba(${ink.deep},0)`);
     ctx.fillStyle = gl;
+
+    /* ==> `source-atop`, AND IT IS WHAT STOPS THE ARC PUTTING A HARD EDGE BACK
+     * ON THE INSIDE OF THE RING. <==
+     *
+     * This pass is a LINEAR gradient, so it varies around the circle and is
+     * dead flat ACROSS the band — it has no falloff of its own. Painted with
+     * plain alpha it lays a slab of even ink over the whole width and cuts
+     * square at `rIn`, which is exactly what shipped and exactly what came back
+     * off glass: "you still aren't fading in the inner edge, the inside
+     * diameter." The base ring underneath was fading correctly the whole time;
+     * the arc was covering it up.
+     *
+     * `source-atop` composites the arc ONLY where the ring already is, and
+     * weighted by how much ring is there. The arithmetic is worth stating
+     * because it is the whole reason this is one composite flag rather than a
+     * masking pass: the result's alpha is the DESTINATION's, untouched, and the
+     * colour lerps from the ring's to the arc's by the arc's own alpha. So the
+     * radial falloff is the base's, always, and the arc can only change what
+     * COLOUR the ring is at each point — never how much ink is there.
+     *
+     * That makes it structurally impossible for this pass to paint where the
+     * ring does not, which is the invariant `tools/test-limb-rim.mjs` pins.
+     * A masking pass would have cost a third fill of the same annulus to buy
+     * the same guarantee.
+     *
+     * The arc's alphas are therefore NOT scaled by `alpha` any more — they are
+     * a mix fraction now, not an ink quantity, and multiplying them by the
+     * layer's strength would have made the arc weakest exactly where the ring
+     * is strongest. */
+    ctx.globalCompositeOperation = 'source-atop';
     band();
     ctx.fill('evenodd');
+    ctx.globalCompositeOperation = 'source-over';
 
     painted = true;
     setOpacity(dive * onScreen);
