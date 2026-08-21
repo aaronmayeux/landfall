@@ -59,6 +59,33 @@ traded for.
 
 ## IN FLIGHT
 
+**EIGHTEEN'S PAST TRACK DREW SOLID, AND IT WAS GDACS LYING ABOUT ITS OWN
+TRACK.** Fixed 2026-08-21, **needs one look on glass.** All eleven of
+EIGHTEEN-26's track segments carried `forecast: true`, four of which the storm
+had already travelled — so the past-track slot came back EMPTY and the whole
+track drew in the forecast's solid line. Aaron caught it on the phone.
+
+**The same payload already held the answer.** Its timestep dots carry real
+per-point times and put the first five positions before the issue time, so each
+segment is now dated from the dots and GDACS's flag is only the fallback
+(`splitTrackLines`, §32.6). **Verified as a REPAIR and not a second opinion:**
+Lala's 45 segments, Saudel's 21 and Two-C's 12 do not move at all; EIGHTEEN
+moves four. A correction says so on the console rather than happening silently.
+
+**What to look at:** open EIGHTEEN and confirm the track behind the storm is
+DOTTED, the forecast loop ahead of it is SOLID, and the two meet cleanly at the
+current-position dot without a gap or an overlap. That seam is the one thing the
+test cannot judge.
+
+**NHC LAYER 11 AND THE MODEL DECKS ARE IN THE ARCHIVE NOW — CHECK THE NEXT RUN.**
+Both were found missing while chasing the above, and both are the same species
+of gap: the archive held eight of the bundle's nine NHC layers and the missing
+one was `pastTrack`, the exact line every "track doubles back" warning is about;
+and it held the TCGP roster but not a single deck. **After the next hourly run,
+`latest/geometry/nhc-*-pastTrack.geojson` and `latest/adeck/` should both
+exist.** If they do not, that is the finding. Rule written into §18.3: archive a
+whole SET or name the excluded member in writing.
+
 **SAUDEL LOST ITS SAFFIR-SIMPSON GRADING ON TWO DEVICES AND KEPT IT ON A THIRD,
 AND THAT IS STILL UNEXPLAINED.** 2026-08-21. Forecast track drew nine pink `HU`
 pills on the phone and work PC #1; work PC #2, opened minutes later, drew the
@@ -337,12 +364,59 @@ it is the half worth doing first: make it fail, then make it pass.
 
 **0d. SOMETHING RESOLVES A COLOUR TO `null`, DOZENS OF TIMES PER LOAD.**
 `Could not parse color from value 'null'` out of MapLibre's expression
-evaluator, on every boot. **Which property is NOT known** — it was seen in a
-console paste and never traced, and guessing at it is how the wrong thing gets
-"fixed". Needs a real hunt through the paint properties and the tokens they read
-before anything is written. The cost is unknown too: it may be drawing nothing
-where something belongs, or falling through to a default that happens to look
-right. Do not assume the second.
+evaluator, on every boot — about fifteen times, counted off Aaron's console on
+2026-08-21. **Which property is NOT known.**
+
+**WHAT HAS NOW BEEN RULED OUT, so nobody re-walks it.** All twelve
+`['get', <colour>]` paint properties in `map/` were traced to their feature
+producers on 2026-08-21 and every one has a real fallback: `wind-field` skips
+the feature when `windColor` returns nothing, `watch-warning` and `cap-coast`
+both fall back to `CATEGORY_COLOR.GENERIC`, `model-tracks` and `genesis` always
+resolve (their tables are total and `P.ocean` exists in both palettes),
+`points-forecast` bottoms out at `PREGENESIS_COLOR`. `tools/test-theme-state.mjs`
+passes at 605 assertions, and a scan for the rule-1b killer — a `global-state`
+reference sharing an expression with a feature read — found nothing inline.
+
+**THE REMAINING SIGNAL IS WHERE IT FIRES.** All but one line comes from the
+MapLibre WORKER blob, not from `maplibre-gl-5.6.0.js` on the main thread, which
+points at the basemap style rather than at our storm layers. Unconfirmed —
+`tiles.openfreemap.org` is blocked from the sandbox, so the one place this can
+be caught is `tools/perf-audit.mjs` on the Actions runner, which already has a
+`colorNulls` budget of 0 wired up and has never run. **Run that before writing
+anything.** The cost is still unknown: it may be drawing nothing where something
+belongs, or falling through to a default that happens to look right. Do not
+assume the second.
+
+**0e. LALA'S PAST TRACK DOUBLES BACK, AND THE BYTES ARRIVE NEXT RUN.**
+`[landfall] Lala past track: track doubles back at 1 point(s) — keeping the
+longest run (37 of 41 vertices)`, from `lib/trackline.js unfold`. This is the
+**NHC** Lala, so it is MapServer layer 11 — not the GDACS storm and not §32.6,
+which is a different storm and a different mechanism.
+
+**A CANDIDATE, EXPLICITLY NOT A CONCLUSION.** Layer 10's past POINTS show Lala
+nearly stationary for her first six fixes — five of them at longitude −137.3,
+drifting 14.5° to 14.8° of latitude, with two exact coordinate repeats — and
+near-stationary jitter is what produces a near-180° turn. But layer 11 is a
+different product with a different vertex count (41 against 47 points), so this
+has NOT been tested against the geometry that actually warns. It is archived
+from the next hourly run on; read the real line before touching `unfold`.
+
+**AND THE ELEVEN REPEATS ARE A SEPARATE QUESTION.** That warning fires eleven
+times in one load, which is about the smoother re-running per push rather than
+per fetch, and has nothing to do with why the track folds. Do not fix them
+together.
+
+**0f. MODEL TRACKS DO NOT START AT THE CURRENT-POSITION DOT.** Reported on glass
+2026-08-21, on Lala and Two-C both: the dashed guidance lines converge at a
+point clearly off the white dot. `clipBehind` in `lib/adeck.js` prepends the
+storm's own position as an anchor vertex, so on paper this cannot happen, and
+nothing has been proven.
+
+**ONE MEASURED FACT WORTH KEEPING WHETHER OR NOT IT IS THE CAUSE.** At the same
+instant, `CurrentStorms.json` carried Lala at advisory **038, 21:00Z, 28.6N**
+while the MapServer geometry for the same storm was advisory **36A, 12:00Z,
+26.9N** — two advisories and nine hours apart. The dot, the models and the cone
+are not all reading from one clock. The decks are archived from the next run on.
 
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by

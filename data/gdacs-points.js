@@ -274,6 +274,141 @@ function measuredAnalysis(storm) {
 }
 
 /**
+ * Every timestep dot with a readable time, oldest first.
+ *
+ * Shared by `parseGdacsPoints` and `splitTrackLines` so the two can never
+ * disagree about which position happened when — the whole argument of §32.6
+ * is that ONE timeline decides both the dots and the lines between them.
+ */
+function timedDots(features, issueMs) {
+  const dots = [];
+  for (const f of features || []) {
+    const p = f?.properties || {};
+    if (!isTimestepDot(p)) continue;
+    const centre = centreOf(f.geometry);
+    if (!centre) continue;
+    const timeMs = parseGdacsPointTime(p.key, p.polygonlabel, issueMs);
+    if (timeMs == null) continue;
+    dots.push({ centre, timeMs });
+  }
+  dots.sort((a, b) => a.timeMs - b.timeMs);
+  return dots;
+}
+
+/** The first dot at or after the issue time — the storm's current fix. Null
+ *  when no dot reaches the issue, which is a payload we cannot reason about. */
+function analysisTimeOf(dots, issueMs) {
+  const first = dots.find((d) => d.timeMs >= issueMs);
+  return first ? first.timeMs : null;
+}
+
+/**
+ * Sort the `Line_*` track segments into past and forecast.
+ *
+ * ==> GDACS'S OWN `forecast` FLAG IS THE FALLBACK, NOT THE ANSWER. <==
+ *
+ * MEASURED, EIGHTEEN-26 eventid 1001307 episode 5, archived 2026-08-21: all
+ * ELEVEN of its segments carried `forecast: true`, including the four the
+ * storm had already travelled. Every segment therefore landed in the forecast
+ * slot, the past-track slot came back empty, and the whole track — history
+ * included — drew in the forecast's confident solid line instead of the
+ * dotted one history is entitled to (SPEC §7 line grammar). Caught on glass
+ * by Aaron the same afternoon.
+ *
+ * THE PAYLOAD CONTRADICTS ITSELF AND ONE HALF OF IT IS TRUSTWORTHY. The same
+ * response's timestep dots carry real per-point times in `key` and
+ * `polygonlabel` (§32.4), and those put EIGHTEEN's first five positions
+ * squarely before its own issue time. A segment's endpoints sit exactly on
+ * two of those dots, so the dots can date the segment — and a date beats a
+ * boolean that has been observed to be wrong.
+ *
+ * THE RULE: a segment is FORECAST when its EARLIER endpoint is at or after the
+ * analysis position. The earlier endpoint rather than the first one in the
+ * array, so a segment published backwards classifies the same either way —
+ * nothing in the format promises a direction. The segment ARRIVING at the
+ * analysis dot is past, because the storm has already travelled it; the one
+ * LEAVING it is forecast. They share that vertex, which is what makes the two
+ * halves meet at the current position rather than overlapping or gapping.
+ *
+ * A SEGMENT WE CANNOT DATE KEEPS GDACS'S FLAG. An endpoint that matches no
+ * dot, an unreadable issue time, or a payload whose dots never reach the issue
+ * all fall back to what the source said. Overriding evidence we have is right;
+ * inventing evidence we do not is the §5 failure pointed inward.
+ *
+ * VERIFIED AGAINST FOUR LIVE STORMS in one archived hour: LALA-26 (45
+ * segments), SAUDEL-26 (21) and TWO-C-26 (12) agree with the published flag on
+ * every single segment and nothing moves. EIGHTEEN-26 moves four. The
+ * correction is not a second opinion applied everywhere — it is a repair that
+ * fires only where the source is self-contradictory.
+ *
+ * @param {Array} features raw GeoJSON features from the geometry endpoint
+ * @param {number} issueMs the advisory issue time, epoch ms UTC
+ * @param {string} [label] the storm id, for the console line. Reporting lives
+ *   HERE rather than at the call site because the two counters exist only to
+ *   be said out loud — split them from their sentence and the next caller
+ *   quietly drops it.
+ * @returns {{pastTrack: Array, forecastTrack: Array, corrected: number,
+ *            undated: number}}
+ */
+export function splitTrackLines(features, issueMs, label = 'storm') {
+  const dots = Number.isFinite(issueMs) ? timedDots(features, issueMs) : [];
+  const analysisMs = analysisTimeOf(dots, issueMs);
+
+  const timeAt = (position) => {
+    for (const d of dots) if (near(d.centre, position)) return d.timeMs;
+    return null;
+  };
+
+  const pastTrack = [];
+  const forecastTrack = [];
+  let corrected = 0;
+  let undated = 0;
+
+  for (const f of features || []) {
+    const p = f?.properties || {};
+    if (!String(p.Class || '').startsWith(GDACS_GEOMETRY.linePrefix)) continue;
+
+    /* `forecast` arrives as a boolean on some payloads and as the STRING
+     * "true"/"false" on others — a plain truthiness test would put every
+     * segment in the forecast bucket, since "false" is a non-empty string. */
+    const flagged = String(p.forecast) === GDACS_GEOMETRY.forecastTrue;
+
+    const coords = f.geometry?.type === 'LineString' ? f.geometry.coordinates : null;
+    const a = coords && coords.length >= 2 ? timeAt(coords[0]) : null;
+    const b = coords && coords.length >= 2 ? timeAt(coords[coords.length - 1]) : null;
+
+    let isForecast = flagged;
+    if (analysisMs != null && a != null && b != null) {
+      isForecast = Math.min(a, b) >= analysisMs;
+      if (isForecast !== flagged) corrected++;
+    } else {
+      undated++;
+    }
+
+    (isForecast ? forecastTrack : pastTrack).push(f);
+  }
+
+  /* ==> A CORRECTION IS ANNOUNCED. <== GDACS disagreeing with itself is a fact
+   * about the feed, and the map just quietly draws the right thing afterwards.
+   * Silent repair is how the next session concludes the flag was reliable all
+   * along. */
+  if (corrected) {
+    console.info(
+      `[landfall] ${label}: GDACS mislabelled ${corrected} track segment(s) — ` +
+      'dated them from the timestep dots instead (SPEC \u00a732.6)'
+    );
+  }
+  if (undated) {
+    console.info(
+      `[landfall] ${label}: ${undated} track segment(s) could not be dated from ` +
+      'the timestep dots; keeping GDACS\u2019s own forecast flag on those'
+    );
+  }
+
+  return { pastTrack, forecastTrack, corrected, undated };
+}
+
+/**
  * Parse a GDACS geometry payload's centre dots.
  *
  * @param {Array} features raw GeoJSON features from the geometry endpoint
@@ -284,30 +419,17 @@ function measuredAnalysis(storm) {
 export function parseGdacsPoints(features, issueMs, storm) {
   const legs = trackLegs(features);
 
-  const dots = [];
-  for (const f of features) {
-    const p = f?.properties || {};
-    if (!isTimestepDot(p)) continue;
+  /* ONE TIMELINE FOR THE DOTS AND THE LINES BETWEEN THEM. `timedDots` sorts by
+   * PARSED TIME, not by the Class suffix — the suffix is chronological today;
+   * the times are chronological by construction. A dot whose time cannot be
+   * read is DROPPED there, not placed: position without time is not a track
+   * point, and a visible gap is the honest outcome (§5). */
+  const dots = timedDots(features, issueMs).map((d) => ({
+    ...d,
+    code: codeAt(legs, d.centre),
+  }));
 
-    const centre = centreOf(f.geometry);
-    if (!centre) continue;
-
-    /* A dot whose time cannot be read is DROPPED, not placed. Position
-     * without time is not a track point — it cannot be ordered, cannot be
-     * labelled, and cannot feed closest-approach. A visible gap is the
-     * honest outcome (§5). */
-    const timeMs = parseGdacsPointTime(p.key, p.polygonlabel, issueMs);
-    if (timeMs == null) continue;
-
-    dots.push({ centre, timeMs, code: codeAt(legs, centre) });
-  }
-
-  /* Sorted by PARSED TIME, not by the Class suffix. The suffix is
-   * chronological today; the times are chronological by construction. */
-  dots.sort((a, b) => a.timeMs - b.timeMs);
-
-  const firstForecast = dots.find((d) => d.timeMs >= issueMs);
-  const analysisMs = firstForecast ? firstForecast.timeMs : null;
+  const analysisMs = analysisTimeOf(dots, issueMs);
 
   const HOUR_MS = 3600 * 1000;
   const forecastPoints = [];

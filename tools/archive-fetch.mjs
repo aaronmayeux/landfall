@@ -535,6 +535,54 @@ function synopticStamps(now, count) {
   return out;
 }
 
+/* ---------------------------------------------------------------------------
+ * MODEL GUIDANCE DECKS
+ *
+ * ==> TWO ROUTES, BECAUSE THE APP USES TWO. <== `data/adeck.js resolveDeck`
+ * sends an NHC storm to `/api/nhc/adeck?storm=<sourceId>` and everything else
+ * to `/api/tcgp/adeck?storm=<tcgp id>`, and those are different upstreams with
+ * different coverage. Archiving only one would leave exactly half the world's
+ * guidance unreadable from a session — and the half that goes wrong is never
+ * reliably the half you archived.
+ *
+ * OUR RELAY, NOT THE UPSTREAM. Same argument §18.3 makes for every other
+ * relay route: a deck is only interesting alongside the cache headers the app
+ * actually received, and the app never reads a ucar.edu or nhc.noaa.gov deck
+ * URL directly.
+ * ------------------------------------------------------------------------- */
+function adeckSources(tcgpRoster, currentStormsJson) {
+  const out = [];
+
+  for (const s of currentStormsJson?.activeStorms || []) {
+    const id = String(s?.id || '').toLowerCase().trim();
+    if (!/^[a-z]{2}\d{6}$/.test(id)) continue;
+    out.push({
+      name: `adeck/nhc-${id}.txt`,
+      url: `https://landfall.getgravitate.app/api/nhc/adeck?storm=${id}`,
+      note:
+        `Model guidance for ${s.name} (${id}), through the relay the app reads. ` +
+        'Every model cycle, tau and position `lib/adeck.js` parses — the only ' +
+        'way to tell a stale cycle from a bad parse from a deck that was never ' +
+        'served. ATCF text, comma-separated, one row per model per tau.',
+    });
+  }
+
+  for (const s of tcgpRoster?.storms || []) {
+    const id = String(s?.id || '').toLowerCase().trim();
+    if (!/^[a-z]{2}\d{6}$/.test(id)) continue;
+    out.push({
+      name: `adeck/tcgp-${id}.txt`,
+      url: `https://landfall.getgravitate.app/api/tcgp/adeck?storm=${id}`,
+      note:
+        `Model guidance for ${s.label || id} from TCGP, through our relay. ` +
+        'The basins NOAA does not publish decks for. An INVEST in this roster ' +
+        'legitimately has no deck yet — an empty body is `none`, not a fault.',
+    });
+  }
+
+  return out;
+}
+
 function shipsSources(currentStormsJson, now = Date.now()) {
   const storms = Array.isArray(currentStormsJson?.activeStorms)
     ? currentStormsJson.activeStorms
@@ -865,12 +913,21 @@ function eventDataSources(eventListJson) {
  * Two layers a storm an hour is the price of never being in that position
  * again. It is also the pair that answers the first question about any cone
  * fault: did the rebuild decline, and if so at which guard. */
+/* ==> THIS LIST MUST MATCH `SUMMARY_LAYER` IN data/nhc-mapserver.js. <== It
+ * held eight of the app's nine layers for weeks, and the missing one was
+ * `pastTrack` (11) — the line every "track doubles back" warning in the
+ * console is about. A session chasing that on 2026-08-21 found the archive
+ * carried the past POINTS and not the past LINE, which are different products
+ * with different vertex counts, and had no way to read the bytes it needed.
+ * An archive that covers most of a bundle is an archive that fails on exactly
+ * the day something goes wrong with the rest. */
 const NHC_STORM_LAYER = Object.freeze({
   forecastPoints: 5,
   forecastTrack: 6,
   cone: 7,
   watchWarning: 8,
   pastPoints: 10,
+  pastTrack: 11,
   windPast: 13,
   windSwath: 15,
   windCurrent: 16,
@@ -1097,6 +1154,33 @@ try {
 } catch (err) {
   console.log(
     `\nno JTWC per-storm products this run — ${String(err && err.message ? err.message : err)}`
+  );
+}
+
+
+/* MODEL GUIDANCE. The decks themselves, one per storm the roster names, read
+ * through our own relay because that is the URL the app reads and the only one
+ * whose cache headers mean anything.
+ *
+ * ==> THE ONE INPUT TO `lib/adeck.js` THAT NOTHING COULD SEE. <== Model tracks
+ * were reported drawing from the wrong origin on 2026-08-21 and the session
+ * could not tell a parse fault from a stale cycle from a deck the relay never
+ * served, because the deck was not archived. Every OTHER track on the map had
+ * its bytes here.
+ *
+ * Its own try block like every derived phase: this must never be able to cost
+ * us a storm list. Deriving ZERO decks is a real answer — TCGP files nothing
+ * for a storm that formed an hour ago, and `data/adeck.js` calls that `none`
+ * rather than a failure. */
+try {
+  const roster = JSON.parse(readFileSync(join(OUT, 'relay-tcgp-storms.json'), 'utf8'));
+  const list = JSON.parse(readFileSync(join(OUT, 'nhc-currentstorms.json'), 'utf8'));
+  const derived = adeckSources(roster, list);
+  console.log(`\nderived ${derived.length} a-deck URL(s) from the two rosters`);
+  for (const src of derived) await run(src);
+} catch (err) {
+  console.log(
+    `\nno a-decks this run — ${String(err && err.message ? err.message : err)}`
   );
 }
 

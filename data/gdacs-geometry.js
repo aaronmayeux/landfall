@@ -32,7 +32,7 @@ import { smoothRadialSeams } from '../lib/ringpolish.js';
 import { quadrantRadiiNm } from '../lib/quadrant-radii.js';
 import { parseGdacsStamp } from '../lib/time.js';
 import { normalizePastPoints } from '../lib/track-point.js';
-import { parseGdacsPoints } from './gdacs-points.js';
+import { parseGdacsPoints, splitTrackLines } from './gdacs-points.js';
 import { fetchFeed } from './relay.js';
 
 const EMPTY_FC = () => ({ type: 'FeatureCollection', features: [] });
@@ -266,8 +266,6 @@ function sortFeatures(features) {
   const zeroBands = [];    // per-timestep bands GDACS published at zero area
   const swathBands = [];   // GDACS's OWN pre-merged swath, one per threshold
   const cone = [];
-  const pastTrack = [];
-  const forecastTrack = [];
 
   for (const f of features) {
     const p = f?.properties || {};
@@ -335,22 +333,19 @@ function sortFeatures(features) {
       continue;
     }
 
-    if (cls.startsWith(GDACS_GEOMETRY.linePrefix)) {
-      /* `forecast` arrives as the STRING "true"/"false", not a boolean —
-       * a plain truthiness test would put every segment in the forecast
-       * bucket, since "false" is a non-empty string. */
-      const isForecast = String(p.forecast) === GDACS_GEOMETRY.forecastTrue;
-      (isForecast ? forecastTrack : pastTrack).push(f);
-      continue;
-    }
-
-    /* Everything else — per-timestep centre dots (`PointRadii`) and the
+    /* ==> THE `Line_*` TRACK SEGMENTS ARE NOT SORTED HERE AT ALL. <== They used
+     * to be, on the segment's own `forecast` flag — which has been measured
+     * wrong on every segment of a storm at once. `splitTrackLines` dates them
+     * from the timestep dots instead (§32.6), and that needs an issue time
+     * this function does not have, so it reads the raw features downstream.
+     *
+     * Everything else — per-timestep centre dots (`PointRadii`) and the
      * centroid — is deliberately dropped. Those 30-odd polygons are NOT
      * wind bands; drawing them as such was the "soup" risk the census
      * existed to rule out. */
   }
 
-  return { bands, zeroBands, swathBands, cone, pastTrack, forecastTrack };
+  return { bands, zeroBands, swathBands, cone };
 }
 
 /**
@@ -560,8 +555,7 @@ export async function fetchGdacsGeometry(storm) {
   const features = Array.isArray(json?.features) ? json.features : [];
 
   const rawCount = features.reduce((n, f) => n + countCoordinates(f.geometry), 0);
-  const { bands, zeroBands, swathBands, cone, pastTrack, forecastTrack } =
-    sortFeatures(features);
+  const { bands, zeroBands, swathBands, cone } = sortFeatures(features);
   /* POLISH ONLY WHAT IS DRAWN. `splitPair` picks the analysis timestep for
    * the Current segment; the other ~15 band features feed only the swath
    * FALLBACK, which goes through lib/bandmerge.js and is already polished
@@ -622,6 +616,11 @@ export async function fetchGdacsGeometry(storm) {
   if (!Number.isFinite(issueMs) && features.length) {
     console.warn(`[landfall] ${storm.id}: GDACS issue time unreadable; track points skipped`);
   }
+
+  /* The track's past/forecast split, decided by the dots and not by the
+   * segments' own flag (§32.6). Here rather than in `sortFeatures` because it
+   * needs `issueMs`, which is only readable a few lines above. */
+  const { pastTrack, forecastTrack } = splitTrackLines(features, issueMs, storm.id);
 
   /* The wind field as NUMBERS rather than as a picture (§49.16). Built after
    * the points, because every radius is measured from a published centre and

@@ -1236,6 +1236,29 @@ routes are excused individually, because "needs a parameter" stops being a
 reason the moment somebody derives it and the entry should then read as a
 to-do.
 
+**IT DOES NOT CATCH A HALF-CAPTURED BUNDLE, AND TWICE THAT WAS THE THING THAT
+MATTERED.** The relay check asks whether a route is archived at all, not whether
+the archive covers the same product the app reads. Both gaps found the same way,
+on 2026-08-21:
+
+- **NHC layer 11.** `NHC_STORM_LAYER` held eight of the nine layers in
+  `SUMMARY_LAYER` and the missing one was `pastTrack` — the line every "track
+  doubles back" console warning is about. Past POINTS were archived and past
+  LINE was not; they are different products with different vertex counts, so
+  the archive answered the question next door to the one being asked.
+- **The a-deck.** The TCGP roster was archived — the response that maps a storm
+  to a deck filename — and no deck was. A session investigating model tracks
+  drawing from the wrong origin could not tell a parse fault from a stale cycle
+  from a deck the relay never served.
+
+Both are captured now, the decks under `latest/adeck/` via **both** relay
+routes, since `data/adeck.js resolveDeck` sends NHC storms to
+`/api/nhc/adeck` and everything else to `/api/tcgp/adeck`. **The rule the two
+gaps earn: when a source is a SET — layers of a bundle, products of a storm —
+archive the whole set or write down which member is excluded and why.** An
+archive that covers most of a bundle fails on exactly the day something goes
+wrong with the rest.
+
 **A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
 on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
 HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,

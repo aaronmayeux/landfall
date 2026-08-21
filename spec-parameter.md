@@ -659,6 +659,9 @@ Properties beyond the event-level block: `polygondate`, `polygonlabel`,
 
 - **`forecast` is a real boolean** here (`false` / `true`) — unlike `iscurrent`
   in the list feed, which is a string. Do not assume consistency between feeds.
+  **Being well-typed is not the same as being correct: it has been measured
+  wrong on every segment of a storm at once, and §32.6 is what the app does
+  about that.**
 - `polygonlabel` is the **intensity class code** for that leg: `TD`, `TS`, `HU`.
 - **Segments are ordered by intensity class, NOT chronologically.** Measured on
   Fausto, in array order:
@@ -694,6 +697,51 @@ all 95 features and all 7 class prefixes.**
 This means **there is no per-point or per-timestep wind number anywhere in the
 geometry payload.** Intensity must come from the polygon-containment test (§28.2)
 or the segment class label (§28.4).
+
+### 32.6 The `forecast` flag is unreliable, and the dots overrule it
+
+**A `Line_*` segment's own `forecast` boolean has been observed wrong, on every
+segment of a storm at once.** Measured on EIGHTEEN-26 (eventid 1001307 episode
+5, archived 2026-08-21T20:54Z): all **eleven** segments carried
+`forecast: true`, four of which the storm had already travelled. The past-track
+slot came back empty, so the entire track — history included — drew in the
+forecast's solid line rather than the dotted one history is entitled to
+(SPEC §7, line grammar).
+
+**The same payload contradicts itself, and one half of it is trustworthy.** The
+timestep dots carry real per-point times in `key` and `polygonlabel` (§32.4),
+and those put EIGHTEEN's first five positions before its own issue time. A
+segment's endpoints sit exactly on two dots, so the dots can date the segment.
+
+**THE RULE (`splitTrackLines`, `data/gdacs-points.js`).** A segment is
+**forecast** when its **earlier** endpoint is at or after the analysis position
+— the first dot at or after the issue time.
+
+- The **earlier** endpoint rather than the first one in the array, so a segment
+  published backwards classifies the same either way. Nothing in the format
+  promises a direction.
+- The segment **arriving at** the analysis dot is past; the storm has travelled
+  it. The one **leaving** it is forecast. They share that vertex, which is what
+  makes the two halves meet at the current position rather than overlapping or
+  gapping.
+- A segment that **cannot be dated** — an endpoint matching no dot, an
+  unreadable issue time, or a payload whose dots never reach the issue — keeps
+  GDACS's published flag. Overriding evidence we have is right; inventing
+  evidence we do not is the §5 failure pointed inward.
+
+**A CORRECTION IS ANNOUNCED ON THE CONSOLE, NAMING THE STORM AND THE COUNT.**
+GDACS disagreeing with itself is a fact about the feed, and the map just quietly
+draws the right thing afterwards. Silent repair is how the next session
+concludes the flag was reliable all along.
+
+**IT IS A REPAIR, NOT A SECOND OPINION.** Verified across four live storms in
+one archived hour: LALA-26 (45 segments), SAUDEL-26 (21) and TWO-C-26 (12) agree
+with the published flag on **every** segment and nothing moves; EIGHTEEN-26
+moves four. `tools/test-gdacs-track-split.mjs` drives both a defective and a
+healthy payload, verbatim off the archive, and is mutation-verified against
+seven breakages — including the two that a single-fixture test cannot tell
+apart, since EIGHTEEN's flags are uniformly `true` and therefore cannot
+distinguish "kept the flag" from "defaulted to forecast".
 
 ---
 

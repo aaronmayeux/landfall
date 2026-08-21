@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 228 numbered headings.
+Covering 9 files, 229 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -114,10 +114,10 @@ real home is the other row carrying the same section number.
 | `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1154-1164 |
 | `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1165-1175 |
 | `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1176-1197 |
-| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1244 |
-| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1245-1251 |
-| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1252-1263 |
-| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1264-1317 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1267 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1268-1274 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1275-1286 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1287-1340 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -142,31 +142,32 @@ real home is the other row carrying the same section number.
 | `32` | GDACS per-event geometry | `spec-parameter.md` | 604-609 |
 | `32.1` | &nbsp;&nbsp;Feature census (Fausto, 95 features) | `spec-parameter.md` | 610-624 |
 | `32.2` | &nbsp;&nbsp;Disambiguating the two polygon families | `spec-parameter.md` | 625-654 |
-| `32.3` | &nbsp;&nbsp;`Line_*` track segments | `spec-parameter.md` | 655-674 |
-| `32.4` | &nbsp;&nbsp;`Point_Polygon_Point_N` timestep dots | `spec-parameter.md` | 675-687 |
-| `32.5` | &nbsp;&nbsp;Event-level properties are stamped on every feature | `spec-parameter.md` | 688-699 |
-| `33` | GDACS `geteventdata` and the impacts chain | `spec-parameter.md` | 700-721 |
-| `33.1` | &nbsp;&nbsp;`impacts` — agency attribution and the buried wind number | `spec-parameter.md` | 722-753 |
-| `34` | How Landfall displays this data today | `spec-parameter.md` | 754-757 |
-| `34.1` | &nbsp;&nbsp;Field → display | `spec-parameter.md` | 758-823 |
-| `34.2` | &nbsp;&nbsp;Units — `lib/units.js` | `spec-parameter.md` | 824-852 |
-| `34.3` | &nbsp;&nbsp;Saffir-Simpson thresholds — `lib/category.js` | `spec-parameter.md` | 853-889 |
-| `34.4` | &nbsp;&nbsp;What the parsers actually match | `spec-parameter.md` | 890-919 |
-| `35` | Findings — what this audit changed | `spec-parameter.md` | 920-923 |
-| `35.1` | &nbsp;&nbsp;GDACS current wind — derived from band containment | `spec-parameter.md` | 924-936 |
-| `35.2` | &nbsp;&nbsp;NHC publishes `ssnum` and we derive category instead | `spec-parameter.md` | 937-943 |
-| `35.3` | &nbsp;&nbsp;MapServer `lat`/`lon` attributes are rounded to whole degrees | `spec-parameter.md` | 944-949 |
-| `35.4` | &nbsp;&nbsp;GDACS timestamps carry no timezone and are UTC | `spec-parameter.md` | 950-959 |
-| `35.5` | &nbsp;&nbsp;Six of 26 MapServer layers break the bin-prefix naming convention | `spec-parameter.md` | 960-967 |
-| `35.6` | &nbsp;&nbsp;CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes | `spec-parameter.md` | 968-984 |
-| `35.7` | &nbsp;&nbsp;`MH` is real and has now been seen | `spec-parameter.md` | 985-989 |
-| `35.8` | &nbsp;&nbsp;Dead weight | `spec-parameter.md` | 990-1005 |
-| `36` | Sample payloads | `spec-parameter.md` | 1006-1009 |
-| `36.1` | &nbsp;&nbsp;NHC `CurrentStorms.json` — one storm, trimmed to scalars | `spec-parameter.md` | 1010-1043 |
-| `36.2` | &nbsp;&nbsp;MapServer Forecast Points — tau 0 and tau 12 | `spec-parameter.md` | 1044-1089 |
-| `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1090-1135 |
-| `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1136-1187 |
-| `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1188-1224 |
+| `32.3` | &nbsp;&nbsp;`Line_*` track segments | `spec-parameter.md` | 655-677 |
+| `32.4` | &nbsp;&nbsp;`Point_Polygon_Point_N` timestep dots | `spec-parameter.md` | 678-690 |
+| `32.5` | &nbsp;&nbsp;Event-level properties are stamped on every feature | `spec-parameter.md` | 691-700 |
+| `32.6` | &nbsp;&nbsp;The `forecast` flag is unreliable, and the dots overrule it | `spec-parameter.md` | 701-747 |
+| `33` | GDACS `geteventdata` and the impacts chain | `spec-parameter.md` | 748-769 |
+| `33.1` | &nbsp;&nbsp;`impacts` — agency attribution and the buried wind number | `spec-parameter.md` | 770-801 |
+| `34` | How Landfall displays this data today | `spec-parameter.md` | 802-805 |
+| `34.1` | &nbsp;&nbsp;Field → display | `spec-parameter.md` | 806-871 |
+| `34.2` | &nbsp;&nbsp;Units — `lib/units.js` | `spec-parameter.md` | 872-900 |
+| `34.3` | &nbsp;&nbsp;Saffir-Simpson thresholds — `lib/category.js` | `spec-parameter.md` | 901-937 |
+| `34.4` | &nbsp;&nbsp;What the parsers actually match | `spec-parameter.md` | 938-967 |
+| `35` | Findings — what this audit changed | `spec-parameter.md` | 968-971 |
+| `35.1` | &nbsp;&nbsp;GDACS current wind — derived from band containment | `spec-parameter.md` | 972-984 |
+| `35.2` | &nbsp;&nbsp;NHC publishes `ssnum` and we derive category instead | `spec-parameter.md` | 985-991 |
+| `35.3` | &nbsp;&nbsp;MapServer `lat`/`lon` attributes are rounded to whole degrees | `spec-parameter.md` | 992-997 |
+| `35.4` | &nbsp;&nbsp;GDACS timestamps carry no timezone and are UTC | `spec-parameter.md` | 998-1007 |
+| `35.5` | &nbsp;&nbsp;Six of 26 MapServer layers break the bin-prefix naming convention | `spec-parameter.md` | 1008-1015 |
+| `35.6` | &nbsp;&nbsp;CLOSED 2026-07-26 — the app left `EVENTS4APP`, and not for the bytes | `spec-parameter.md` | 1016-1032 |
+| `35.7` | &nbsp;&nbsp;`MH` is real and has now been seen | `spec-parameter.md` | 1033-1037 |
+| `35.8` | &nbsp;&nbsp;Dead weight | `spec-parameter.md` | 1038-1053 |
+| `36` | Sample payloads | `spec-parameter.md` | 1054-1057 |
+| `36.1` | &nbsp;&nbsp;NHC `CurrentStorms.json` — one storm, trimmed to scalars | `spec-parameter.md` | 1058-1091 |
+| `36.2` | &nbsp;&nbsp;MapServer Forecast Points — tau 0 and tau 12 | `spec-parameter.md` | 1092-1137 |
+| `36.3` | &nbsp;&nbsp;GDACS event list — one TC feature, properties | `spec-parameter.md` | 1138-1183 |
+| `36.4` | &nbsp;&nbsp;GDACS geometry — the two Poly_Red kinds side by side | `spec-parameter.md` | 1184-1235 |
+| `37` | Quick reference — do not get these wrong | `spec-parameter.md` | 1236-1272 |
 | `45` | Genesis — the areas being watched | `SPEC-DATA.md` | 1428-1429 |
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1430-1457 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1458-1617 |
@@ -258,8 +259,8 @@ real home is the other row carrying the same section number.
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 231,146 | 39 |
 | `SPEC-NEXT.md` | 121,628 | 29 |
-| `SPEC-OPS.md` | 80,215 | 21 |
+| `SPEC-OPS.md` | 81,596 | 21 |
 | `SPEC-UI.md` | 186,151 | 14 |
 | `SPEC.md` | 160,779 | 14 |
-| `spec-parameter.md` | 56,804 | 49 |
+| `spec-parameter.md` | 59,622 | 50 |
 
