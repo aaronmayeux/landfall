@@ -91,6 +91,22 @@ jobs:
       - name: every selector still names something
         run: node tools/selector-contract-check.mjs
 
+      # ==> WE ARCHIVED THE INGREDIENTS AND NOT THE MEAL. <== On 2026-08-21 a
+      # typhoon lost its Saffir-Simpson grading on two devices and kept it on a
+      # third. The whole question was what the app received from
+      # /api/jtwc/storms, and the archive could not answer it: it held JTWC's
+      # raw warning products, so the upstream could be proven healthy and the
+      # parser proven correct, and then the trail stopped at the one hop in the
+      # middle. The app never reads an upstream URL. It reads the relay.
+      #
+      # The archive covered 7 of 21 routes at that point, and nobody had decided
+      # that — relay copies had been added one at a time, whenever some earlier
+      # investigation needed one. So the archive covered what we had already
+      # debugged and not what we had not, which is the exact inversion of what
+      # an archive is for. A comments-only rule would drift back within a month.
+      - name: every relay route is archived or excused
+        run: node tools/relay-archive-check.mjs
+
       # ==> TYPE DRIFT IS INVISIBLE ONE COMMIT AT A TIME AND OBVIOUS ON GLASS.
       # <== The drawers accumulated TWENTY-FIVE distinct font sizes, none of
       # them a decision — each was a number typed while writing one component

@@ -687,7 +687,21 @@ same confirmation count, same credibility guard, same words, `by: 'jtwc'`. **Thr
 guards.** Only a storm JTWC has ACTUALLY LISTED can be killed by leaving the list,
 because GDACS covers systems JTWC never warns on. An `unavailable` or `partial`
 index attaches no verdict at all, so a JTWC outage moves the tally by zero in
-either direction — held, not reset, and not counted. And **the storm must already
+either direction — held, not reset, and not counted.
+
+**A FORMATION ALERT IS NOT AN OUTAGE, AND MISTAKING IT FOR ONE DISABLED THIS
+WHOLE MECHANISM GLOBALLY.** JTWC's RSS lists Tropical Cyclone Formation Alerts
+beside numbered warnings. An alert has no designation and no warning number, so
+`/api/jtwc/storms` correctly drops it — but it used to count as a *listed
+product with no storm found in it*, which is the test for a degraded index, so
+the route answered `partial`. One invest anywhere on Earth therefore withheld
+`jtwcRoster` from every storm at once, and JTWC is watching a disturbance
+somewhere most of August. Formation alerts are now counted out of the health
+arithmetic and published as `formationAlerts` beside `productsListed`, so
+`productsListed: 5, storms: 4` can be read rather than guessed at. An ocean
+carrying nothing but alerts is `clear` — JTWC is warning on no storm and we read
+every product to establish it. A product that reads and will not parse is still
+`partial`, alert or no alert beside it. And **the storm must already
 be `silent`**: JTWC stops warning when a system leaves its area of responsibility
 or drops under its criteria, and GDACS can keep publishing real fixes afterwards —
 killing that storm would be a grey "no longer tracked" dot over a live system. The

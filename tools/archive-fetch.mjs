@@ -251,6 +251,66 @@ const SOURCES = [
       'through an empty upstream, and X-Landfall-Fetched-At says how old it is.',
   },
 
+  /* ==> ADDED 2026-08-21, AND THE REASON IS A SESSION THAT WENT THE LONG WAY
+   *     ROUND. <==
+   *
+   * SAUDEL-26 lost its Saffir-Simpson dots on two devices and kept them on a
+   * third. Diagnosing it meant answering one question — what did the app
+   * actually receive from /api/jtwc/storms — and the archive could not answer
+   * it. It held the Navy's raw warning products, so the upstream could be
+   * proven healthy and the parser could be proven correct against real bytes,
+   * and then the trail stopped at the one hop in the middle.
+   *
+   * ==> WE ARCHIVED THE INGREDIENTS AND NOT THE MEAL. <==
+   * The app never reads a navy.mil URL. It reads our relay, and only our relay.
+   * An upstream copy proves what JTWC published; it says nothing about what a
+   * phone was handed, which is the only thing a bug report is ever about.
+   *
+   * The rule this establishes, enforced by tools/relay-archive-check.mjs: every
+   * relay route the app calls is archived, or it is listed there with a stated
+   * reason why it cannot be. Routes that need a live storm to address are the
+   * legitimate exception and are named individually rather than waved at.
+   * ---------------------------------------------------------------------- */
+  {
+    name: 'relay-jtwc-storms.json',
+    url: 'https://landfall.getgravitate.app/api/jtwc/storms',
+    note:
+      'THE ONE THAT WAS MISSING. Every GDACS storm outside the NHC basins gets ' +
+      'its measured wind — and therefore its category, its color and its cage ' +
+      'height — from this response and nowhere else. Its `state` and its fix ' +
+      'ages are what decide whether a storm reads as a graded Cat 4 or as a ' +
+      'bare "HU", and both are invisible from the upstream copy.',
+  },
+  {
+    name: 'relay-tcgp-storms.json',
+    url: 'https://landfall.getgravitate.app/api/tcgp/storms',
+    note:
+      'The model-guidance roster. Same argument as the JTWC index above: this ' +
+      'is the join that turns a GDACS name into an a-deck filename, and when ' +
+      'model tracks go missing for one storm this is the first place to look.',
+  },
+  {
+    name: 'relay-cap-alerts.json',
+    url: 'https://landfall.getgravitate.app/api/cap/alerts',
+    note:
+      'Our relay in front of the CAP feed. Diff against capalerts-cyclone.json ' +
+      'below, which is the same query straight from ArcGIS: the relay filters ' +
+      'drills, cancellations and stand-downs, and this is the only way to see ' +
+      'what survived that filter rather than inferring it.',
+  },
+  {
+    name: 'relay-jtwc-abpw.txt',
+    url: 'https://landfall.getgravitate.app/api/jtwc/abpw',
+    note:
+      'Our relay in front of the Pacific significant-weather advisory. The ' +
+      'upstream copy is archived as jtwc-abpw.txt; this is what the app reads.',
+  },
+  {
+    name: 'relay-jtwc-abio.txt',
+    url: 'https://landfall.getgravitate.app/api/jtwc/abio',
+    note: 'The same, for the Indian Ocean bulletin.',
+  },
+
   /* ==> THE SAME AREAS, FROM A COMPLETELY DIFFERENT NHC PRODUCT. <==
    *
    * MEASURED 2026-08-11: the genesis layer answered 200 with an empty

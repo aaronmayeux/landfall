@@ -1219,6 +1219,23 @@ three models cannot eat a budget of six and leave the other basin unread. The
 `aoi_surge` pass is deliberately uncapped: it is bounded by how many storms
 publish one at all, which on 2026-08-19 was one of three.
 
+**EVERY RELAY ROUTE IS ARCHIVED, OR IS EXCUSED IN WRITING.** The archive
+captures upstream bytes *and* our relay's own answer for the same source, and
+the second is the one that settles a bug report. **The app never reads an
+upstream URL.** An upstream copy proves what NOAA or the Navy published; only
+the relay copy proves what a phone was handed, and that includes the relay's
+`state`, its `X-Landfall-Cache` path, and how old the answer it served was.
+
+`tools/relay-archive-check.mjs` enforces it, off the route files in
+`functions/api/` rather than off the call sites — the app addresses its relay
+three different ways and a scanner that knows one of them reports a clean bill
+of health over the two it cannot see. A route is archived, or it is named in
+that file's `EXCUSED` map with a sentence saying why no fixed hourly URL for it
+exists. Diagnostic probes and the telemetry sink are excused by kind; per-storm
+routes are excused individually, because "needs a parameter" stops being a
+reason the moment somebody derives it and the entry should then read as a
+to-do.
+
 **A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
 on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
 HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,

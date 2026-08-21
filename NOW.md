@@ -59,6 +59,53 @@ traded for.
 
 ## IN FLIGHT
 
+**SAUDEL LOST ITS SAFFIR-SIMPSON GRADING ON TWO DEVICES AND KEPT IT ON A THIRD,
+AND THAT IS STILL UNEXPLAINED.** 2026-08-21. Forecast track drew nine pink `HU`
+pills on the phone and work PC #1; work PC #2, opened minutes later, drew the
+graded dots correctly. Hard-close and reopen changed nothing on the two bad ones.
+
+**Everything server-side was proven healthy, on real bytes, and is NOT the
+cause:** JTWC has been issuing on schedule (warnings 10→14 across 18 archived
+hours); the relay parser was run against the archived `wp1726web.txt` and returns
+an 80 kt fix plus a nine-step ladder to 130 kt; `matchStormByName` resolves
+`SAUDEL-26` → `SAUDEL`; the two join guards both pass — GDACS and JTWC publish
+the *identical* position, so separation is 0 NM. Aaron's paste of the live
+`/api/jtwc/storms` at 20:10Z carries SAUDEL with the fresh fix. **The relay is
+fine. The break is on the device.**
+
+**The remaining candidate is a per-datacentre difference.** The relay caches per
+Cloudflare PoP. A PoP serving a `last-good` copy older than `JTWC_WIND.maxFixAge`
+(12 h) makes every storm fail `fix_too_old`, silently, and fall back to the class
+midpoint — which looks exactly like this. Untested: nothing in the sandbox can
+reach the live app, and the one thing that would settle it is opening
+`/api/jtwc/storms` **on a device that shows the bug** and reading `fetchedAt` and
+the fix `at`. **WAITING ON AARON FOR THAT.** Do not write a fix before it.
+
+**THE ARCHIVE NOW CAPTURES THE RELAY, NOT JUST THE UPSTREAMS.** The hour above
+was spent proving things the archive should have answered in thirty seconds: it
+held JTWC's raw products and not `/api/jtwc/storms`, and the app never reads a
+navy.mil URL. Five relay routes added (`jtwc/storms`, `tcgp/storms`, `cap/alerts`,
+`jtwc/abpw`, `jtwc/abio`), and `tools/relay-archive-check.mjs` now fails the push
+when a route in `functions/api/` is neither archived nor excused in writing
+(§18.3). Mutation-verified. **Check `archive:latest/relay-jtwc-storms.json`
+exists after the next hourly run** — the runner is the only thing that can prove
+these URLs answer, and the sandbox cannot dispatch it.
+
+**A FORMATION ALERT NO LONGER BREAKS THE JTWC INDEX.** Found while chasing the
+above. `/api/jtwc/storms` counted INVEST 91E as a listed product with no storm in
+it, so `state` read `partial` — and `partial` withholds `jtwcRoster`, which is one
+of the three ways a GDACS storm is allowed to die. One invest anywhere on Earth
+disabled that for every storm, and in August there is nearly always one.
+`isFormationAlert` counts them out; `formationAlerts` is published beside
+`productsListed` (§5). `tools/test-jtwc-formation-alert.mjs`, 13 assertions on the
+archived 91E bytes, mutation-verified. **Not the SAUDEL bug** — the join runs on
+`partial` too.
+
+**`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.** Noticed
+by the new gate. `functions/api/nhc/` has no `surge.js`; `lib/surge-locations.js`
+already says so in a comment. Every NHC surge request is a 404 today. Not touched
+this pass — see HELD FOR WEATHER.
+
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).

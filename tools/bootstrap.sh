@@ -256,6 +256,17 @@ if ! node tools/selector-contract-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking every relay route is archived or excused...\n'
+if ! node tools/relay-archive-check.mjs; then
+  printf '\nA relay route exists that the archive never captures. The app reads the\n'
+  printf 'relay and nothing else -- an upstream copy proves what NOAA published,\n'
+  printf 'not what a phone was handed, and a bug report is only ever about the\n'
+  printf 'second one. Add it to SOURCES in tools/archive-fetch.mjs, or to EXCUSED\n'
+  printf 'in tools/relay-archive-check.mjs with a sentence saying why no fixed\n'
+  printf 'hourly URL for it exists.\n'
+  fail=1
+fi
+
 printf 'pre-push: checking every size is on the type scale...\n'
 if ! node tools/type-scale-check.mjs; then
   printf '\nA raw font-size is back in ui/. The drawers once carried 25 distinct\n'

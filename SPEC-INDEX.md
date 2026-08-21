@@ -43,11 +43,11 @@ real home is the other row carrying the same section number.
 | `4.14` | &nbsp;&nbsp;Recovery from failure | `SPEC-DATA.md` | 1363-1377 |
 | `4.15` | &nbsp;&nbsp;The town list | `SPEC-DATA.md` | 1378-1405 |
 | `5` | Failure philosophy (non-negotiable) | `SPEC.md` | 396-397 |
-| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1031-1111 |
-| `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1112-1142 |
-| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1143-1165 |
+| `6` | Fixed color contracts (not themeable — identical in light and dark) | `SPEC.md` | 1045-1125 |
+| `6.0` | &nbsp;&nbsp;The glow, and the one thing that cannot be shared | `SPEC.md` | 1126-1156 |
+| `6.1` | &nbsp;&nbsp;NWS watch/warning products are the second fixed contract | `SPEC.md` | 1157-1179 |
 | `7` | Layer model | `SPEC-MAP.md` | 19-46 |
-| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1166 |
+| `7` | Layer model | -> `SPEC-MAP.md` | SPEC.md:1180 |
 | `7.1` | &nbsp;&nbsp;The layers panel | `SPEC-MAP.md` | 47-116 |
 | `7.2` | &nbsp;&nbsp;Full layer inventory | `SPEC-MAP.md` | 117-164 |
 | `7.3` | &nbsp;&nbsp;Tropics & equator | `SPEC-MAP.md` | 165-190 |
@@ -59,9 +59,9 @@ real home is the other row carrying the same section number.
 | `7.9` | &nbsp;&nbsp;The cone of uncertainty — measured, then redrawn along the track | `SPEC-MAP.md` | 976-1185 |
 | `7.10` | &nbsp;&nbsp;When there is no coast to paint — the dashed chord and its breakpoints | `SPEC-MAP.md` | 1186-1297 |
 | `8` | Home | `SPEC-UI.md` | 22-23 |
-| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1171 |
+| `8` | Home | -> `SPEC-UI.md` | SPEC.md:1185 |
 | `9` | Design | `SPEC-MAP.md` | 1581-1582 |
-| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1176 |
+| `9` | Design | -> `SPEC-MAP.md` | SPEC.md:1190 |
 | `9.1` | &nbsp;&nbsp;The visual contract | `SPEC-MAP.md` | 1583-1620 |
 | `9.2` | &nbsp;&nbsp;Light mode | `SPEC-MAP.md` | 1621-1758 |
 | `9.3` | &nbsp;&nbsp;Theming the map without rebuilding it | `SPEC-MAP.md` | 1759-1826 |
@@ -79,26 +79,26 @@ real home is the other row carrying the same section number.
 | `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 2696-2938 |
 | `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 2939-3029 |
 | `9.17` | &nbsp;&nbsp;The glass rim at the horizon | `SPEC-MAP.md` | 3030-3078 |
-| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1182-1253 |
+| `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1196-1267 |
 | `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 3159-3205 |
-| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1254 |
+| `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1268 |
 | `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 3206-3228 |
 | `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 3229-3325 |
 | `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 3326-3366 |
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 3367-3390 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 3391-3412 |
-| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1259-1278 |
-| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1665-1695 |
-| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1696-1730 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1731-1732 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2297-2303 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2304-2310 |
+| `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1273-1292 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1679-1709 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1710-1744 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1745-1746 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2311-2317 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2318-2324 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1088-1089 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2311 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2325 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1724-1904 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1905-2252 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2317 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2331 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
@@ -114,10 +114,10 @@ real home is the other row carrying the same section number.
 | `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1154-1164 |
 | `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1165-1175 |
 | `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1176-1197 |
-| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1227 |
-| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1228-1234 |
-| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1235-1246 |
-| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1247-1300 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1244 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1245-1251 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1252-1263 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1264-1317 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -258,8 +258,8 @@ real home is the other row carrying the same section number.
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 231,146 | 39 |
 | `SPEC-NEXT.md` | 121,628 | 29 |
-| `SPEC-OPS.md` | 79,137 | 21 |
+| `SPEC-OPS.md` | 80,215 | 21 |
 | `SPEC-UI.md` | 186,151 | 14 |
-| `SPEC.md` | 159,805 | 14 |
+| `SPEC.md` | 160,779 | 14 |
 | `spec-parameter.md` | 56,804 | 49 |
 

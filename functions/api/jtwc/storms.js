@@ -82,6 +82,11 @@ const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
  */
 const PRODUCT_RE = /\/products\/([a-z]{2}\d{4})web\.txt/gi;
 
+/** A product that read fine and simply was not a storm — see `isFormationAlert`.
+ *  A unique object rather than a string, so it can never collide with anything
+ *  a parser might legitimately return. */
+const ALERT = Symbol('formation-alert');
+
 /** How many warnings to read at once. JTWC has run three concurrent storms
  *  today and peaks around a dozen worldwide; six at a time finishes in one or
  *  two rounds without opening a dozen sockets to a government host. */
@@ -134,6 +139,46 @@ export function parseSubject(text) {
     name: name || null,
     warningNumber: m[4] || null,
   };
+}
+
+/**
+ * Is this product a TROPICAL CYCLONE FORMATION ALERT rather than a warning?
+ *
+ *   SUBJ/TROPICAL CYCLONE FORMATION ALERT (INVEST 91E)//
+ *
+ * ==> THIS EXISTS BECAUSE ITS ABSENCE TURNED THE INDEX PERMANENTLY `partial`
+ *     AND TOOK A STORM-ENDING SIGNAL DOWN WITH IT. <==
+ *
+ * The RSS lists formation alerts alongside numbered warnings, so the product
+ * loop fetches them like anything else. A formation alert has no designation
+ * and no warning number — it is JTWC saying a system MIGHT form, not that one
+ * has — so `parseSubject` correctly returns null and the product is correctly
+ * dropped. What was wrong was the arithmetic afterwards: a dropped product made
+ * `storms.length < keys.length`, which is the test for a DEGRADED index, so the
+ * route reported `partial`.
+ *
+ * That is not a cosmetic mislabel. `data/jtwc-wind.js` withholds the
+ * `jtwcRoster` field on anything but `ok`, deliberately, because a storm
+ * missing from a short list may be missing because its own product failed. So
+ * one invest anywhere on Earth suppressed the "JTWC has stopped warning on this
+ * storm" signal for EVERY storm — and JTWC is watching a disturbance somewhere
+ * most of the time in August.
+ *
+ * MEASURED on the real bytes: INVEST 91E, archived 2026-08-21, product
+ * `ep9126web.txt`. Its subject line is the one quoted above and its body says
+ * AVAILABLE DATA DOES NOT JUSTIFY ISSUANCE OF NUMBERED TROPICAL CYCLONE
+ * WARNINGS AT THIS TIME. Live that hour: 5 products listed, 4 storms parsed,
+ * state `partial`, with nothing whatsoever wrong.
+ *
+ * MATCHED ON THE SUBJECT LINE, NOT THE BODY. The body sentence is prose and
+ * could be reworded; `SUBJ/TROPICAL CYCLONE FORMATION ALERT` is the product's
+ * own type name and is the same field `parseSubject` reads. A product that
+ * matches NEITHER this nor `parseSubject` is still a real failure and still
+ * makes the index `partial`, which is the whole point of keeping the three
+ * states apart.
+ */
+export function isFormationAlert(text) {
+  return /SUBJ\/\s*TROPICAL\s+CYCLONE\s+FORMATION\s+ALERT/i.test(String(text || ''));
 }
 
 /**
@@ -488,6 +533,11 @@ export async function onRequestGet(context) {
     const now = Date.now();
     const parsed = await mapLimit(keys, CONCURRENCY, async (key) => {
       const text = await getText(`${HOST}/jtwc/products/${key}web.txt`);
+      /* A FORMATION ALERT IS NOT A FAILURE, and it is checked BEFORE the
+       * subject gate so the two cannot be confused. It is still not a storm
+       * and still never enters the index — it just stops counting against the
+       * index's health. See `isFormationAlert`. */
+      if (isFormationAlert(text)) return ALERT;
       const subj = parseSubject(text);
       if (!subj) return null;
       /* THE SUBJECT LINE IS STILL THE GATE. A product whose identity will not
@@ -508,17 +558,29 @@ export async function onRequestGet(context) {
       return { ...subj, product: key, fix, forecast, final: isFinalWarning(text) };
     });
 
-    const storms = parsed.filter(Boolean);
+    const alerts = parsed.filter((p) => p === ALERT).length;
+    const storms = parsed.filter((p) => p && p !== ALERT);
+
+    /* PRODUCTS THAT COULD HAVE BEEN A STORM. A formation alert was never going
+     * to be one, so counting it as a listed product and then not finding a
+     * storm in it manufactures a shortfall out of a healthy feed. */
+    const warnable = keys.length - alerts;
 
     /* THREE STATES, NOT TWO (§5). `clear` is JTWC genuinely warning on
      * nothing — a quiet ocean, which happens for months at a time. `partial`
      * is products listed that would not read or would not parse, which is a
      * DEGRADED index: a storm may be missing from it and the panel must not
      * say "no warning exists" on the strength of a list that is short. The
-     * client distinguishes these; a boolean could not. */
-    const state = keys.length === 0
+     * client distinguishes these; a boolean could not.
+     *
+     * `clear` NOW COVERS A SECOND CASE, and it is the honest one: an ocean with
+     * nothing but formation alerts on it is a quiet ocean by every definition
+     * this app uses. JTWC is warning on no storm, we know that for certain, and
+     * we read every product it listed to find out. That is `clear`, not
+     * `partial`. */
+    const state = warnable === 0
       ? 'clear'
-      : storms.length < keys.length
+      : storms.length < warnable
         ? 'partial'
         : 'ok';
 
@@ -531,6 +593,12 @@ export async function onRequestGet(context) {
       pubDate: pubDate ? pubDate.trim() : null,
       fetchedAt,
       productsListed: keys.length,
+      /** How many of `productsListed` were formation alerts rather than
+       *  warnings. Published because without it `productsListed: 5, storms: 4`
+       *  reads as a missing storm, which is exactly the wrong conclusion this
+       *  change was made to stop — and a reader looking at the JSON on a phone
+       *  has no other way to tell a quiet invest from a failed fetch. */
+      formationAlerts: alerts,
       storms,
     });
 
