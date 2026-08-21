@@ -1244,35 +1244,51 @@ export const LIGHT = Object.freeze({
      *  mode at the top of this dial, and it arrived. */
     glowSaturate: 0.65,
 
-    /** ==> THIS IS WHERE LIGHT MODE'S GLOW GETS BIGGER, BECAUSE `glow` ABOVE
-     *  IS OUT OF ROOM. <==
+    /** ==> THIS IS WHERE LIGHT MODE'S GLOW GETS STRONGER, AND IT IS THE ONLY
+     *  DIAL THAT SHOULD. <==
      *
-     *  `glow` is the canvas opacity and it is already at 0.94 with a ceiling
-     *  of 1.0 — six percent is not a change anyone sees. `glowSaturate` is
-     *  pinned at full chroma. Both of the dials that are LEFT live in
-     *  config/constants.js and are shared with dark, which is signed off, so
-     *  they get a multiplier here rather than a raise there.
+     *  `glow` above is the canvas opacity, and its own note is the reason it
+     *  cannot carry this: the gradient showing THROUGH the light is what makes
+     *  it read as light rather than as paint, so it has to stay well under 1.
+     *  (An earlier version of this note claimed it sat at 0.94 with nothing
+     *  left to give. It sits at 0.50. The note was stale, the conclusion was
+     *  right for a different reason.) `glowSaturate` is a hue dial, not a
+     *  strength one. The two dials that actually move the look live in
+     *  config/constants.js and are shared with dark, which is signed off on
+     *  glass — so light gets a multiplier here rather than a raise there.
      *
      *  `glowGain` multiplies the per-blob alpha ceiling (`GLOW.intensity`).
      *  Under `color` blending that alpha is "how much of the storm's hue soaks
-     *  into the backdrop", so raising it is more color, never less light —
-     *  the failure at the top is garish, not muddy. The alpha is clamped at 1,
-     *  which means a gain above 1 saturates the strongest storms first and
-     *  lifts the weak ones proportionally. That is the right shape: a Cat 5
-     *  should be able to max the channel out.
+     *  into the backdrop", so raising it is more color, never less light — the
+     *  failure at the top is garish, not muddy.
+     *
+     *  ==> 1.0 -> 3.0. AARON ON GLASS, 2026-08-21: "we need probably 3 times
+     *  the intensity in light mode." <== It went to 1.0 on 2026-08-18 in the
+     *  same pass that cut every strength dial, on the argument that light
+     *  should run the same numbers as dark through a different operator. That
+     *  argument was too clean. `screen` onto a near-black sky and `color` onto
+     *  a pale gradient are not the same job: dark has the whole luminance range
+     *  above the backdrop to work in, and `color` has only chroma, because it
+     *  keeps the backdrop's own brightness by design. The same alpha therefore
+     *  buys visibly less. The two themes still share one set of SOURCE numbers;
+     *  this is the conversion factor between them.
+     *
+     *  THE SWEEP KEEPS ITS SHAPE AT THIS VALUE, AND THAT IS WHY 3 IS SAFE.
+     *  `GLOW.intensity` is 0.16, so a gain of 3 puts the brightest storm at
+     *  0.48 alpha and the dimmest — front-lit and behind the planet — at 0.10.
+     *  Nothing reaches the `Math.min(1, ...)` clamp in map/limb-glow.js, so
+     *  every storm keeps its true distance from every other and the peak
+     *  sweeping past the limb still reads as a sweep. Past about 6 the clamp
+     *  starts flattening the strong end into a plateau, which is the point
+     *  where more gain stops buying more picture.
      *
      *  `glowSpread` multiplies the blob radius (`GLOW.radiusScale`). More area
-     *  of tinted backdrop is the half of "more glow" that alpha cannot buy.
-     *  Its own note warns that past about 1.4 effective the lights stop
-     *  reading as coming FROM the globe and start looking like weather on the
-     *  camera lens. It sat at 1.2 (1.38 effective) to buy reach for a single
-     *  light per storm; a light per color run already covers the sky several
-     *  times over, so the reach is now free and the multiplier is not needed.
-     *
-     *  Both back to 1.0 on 2026-08-18 — light is no longer running the effect
-     *  HARDER than dark, it is running the same effect through a different
-     *  operator, which is what the two themes were always supposed to be. */
-    glowGain:    1.0,
+     *  of tinted backdrop is the half of "more glow" that alpha cannot buy. It
+     *  stays at 1.0: a light per color run already covers the sky several times
+     *  over, and its own note warns that past about 1.4 effective the lights
+     *  stop reading as coming FROM the globe and start looking like weather on
+     *  the camera lens. Alpha was the thing that was short, not reach. */
+    glowGain:    3.0,
     glowSpread:  1.0,
   }),
 

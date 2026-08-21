@@ -764,6 +764,37 @@ ok(DARK.fx.glowGain === 1 && DARK.fx.glowSpread === 1,
    'dark is the untouched reference — both multipliers are exactly 1');
 ok(LIGHT.fx.glowGain > 0 && LIGHT.fx.glowSpread > 0,
    'light publishes both multipliers as real numbers');
+
+/* ==> LIGHT RUNS THE ALPHA HARDER THAN DARK, AND THAT IS NOT A SYMMETRY BUG.
+ * <== The two themes drive different OPERATORS on the same source numbers, and
+ * the operators are not equally strong. `screen` onto a near-black sky has the
+ * whole luminance range above the backdrop to work in; `color` has only chroma,
+ * because it keeps the backdrop's own brightness by design. The same alpha
+ * therefore buys visibly less in light. Aaron on glass, 2026-08-21: "we need
+ * probably 3 times the intensity in light mode."
+ * MUTATION: put LIGHT.fx.glowGain back to 1.0 and this fails. Verified. */
+ok(LIGHT.fx.glowGain > DARK.fx.glowGain,
+   'light needs more alpha than dark to say the same thing — `color` only has chroma to spend');
+
+/* ==> AND IT MUST NOT REACH THE CLAMP, OR THE SWEEP FLATTENS. <==
+ * `a` is clamped at 1 in map/limb-glow.js. Once the brightest storms hit that
+ * ceiling they stop being distinguishable from each other and the peak sweeping
+ * past the limb reads as a plateau instead of a sweep — the effect's whole
+ * shape. Checked against the brightest case the geometry can produce: aim and
+ * clearance both at their maximum of 1.
+ * MUTATION: raise glowGain past 1/GLOW.intensity (~6.25) and this fails. */
+ok(GLOW.intensity * LIGHT.fx.glowGain < 1,
+   'light stays under the alpha clamp, so every storm keeps its true distance from every other');
+{
+  /* Read off real paints rather than off the constants, or this pins a rule the
+   * picture may not obey. Same storm, same place, both themes. */
+  setThemeMode(MODE.DARK);
+  const inDark = alphaOf(paintAt(LIT_DEG));
+  setThemeMode(MODE.LIGHT);
+  const inLight = alphaOf(paintAt(LIT_DEG));
+  ok(inLight > inDark, 'and the painted alpha really is higher in light, not just the constant');
+  ok(inLight < 1, 'without any storm being clipped flat');
+}
 ok(GLOW.radiusScale * LIGHT.fx.glowSpread <= 1.4,
    'the light blob stays inside the "coming FROM the globe" limit (~1.4 effective)');
 

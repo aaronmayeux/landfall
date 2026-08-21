@@ -2797,16 +2797,36 @@ ramp runs pale, and a pale source under `color` is a pale tint. Hue survives at
 any value, so a green storm still throws green. Dark uses the category color
 verbatim.
 
-**Light mode's extra strength comes from `fx.glowGain` and `fx.glowSpread`, not
-from `fx.glow`.** The canvas opacity is at 0.94 against a ceiling of 1.0, so it
-has nothing left to give, and the two dials that actually change the look —
-`GLOW.intensity` and `GLOW.radiusScale` — are shared with dark, which is signed
-off on glass. Both are therefore multiplied per theme: dark's are exactly 1.0
-and its maths is untouched, light's run above 1.0. `glowGain` is how much of the
-storm's hue soaks in (clamped at 1, so a Cat 5 maxes the channel first);
-`glowSpread` is how much backdrop the tint covers. `radiusScale * glowSpread`
-must stay at or under about 1.4 — past that the lights stop reading as coming
-from the globe and start looking like weather on the camera lens.
+**Light mode's extra strength comes from `fx.glowGain`, not from `fx.glow`.**
+The canvas opacity is not the lever: the gradient showing THROUGH the light is
+what makes it read as light rather than as paint, so it has to stay well under
+1. The two dials that actually change the look — `GLOW.intensity` and
+`GLOW.radiusScale` — are shared with dark, which is signed off on glass, so
+light multiplies them per theme instead of raising them for both. Dark's
+multipliers are exactly 1.0 and its maths is untouched.
+
+**Light runs the alpha three times harder than dark, and that asymmetry is
+correct.** The two themes were briefly held to the same numbers on the argument
+that they should differ only by operator. That was too clean: `screen` onto a
+near-black sky has the whole luminance range above the backdrop to work in,
+while `color` has only chroma, because it keeps the backdrop's own brightness by
+design. The same alpha buys visibly less. Aaron on glass, 2026-08-21: *we need
+probably 3 times the intensity in light mode.* The themes still share one set of
+source numbers; `glowGain` is the conversion factor between them.
+
+**`GLOW.intensity × glowGain` must stay under 1.** The per-storm alpha is
+clamped there, and once the brightest storms reach the ceiling they stop being
+distinguishable from each other — the peak sweeping past the limb reads as a
+plateau instead of a sweep, which is the effect's whole shape. At 0.16 × 3 the
+brightest storm sits at 0.48 and the dimmest at 0.10, so nothing clips. Past
+about 6 the strong end starts flattening and more gain stops buying more
+picture.
+
+**`glowSpread` is how much backdrop the tint covers, and it stays at 1.0.** A
+light per color run already covers the sky several times over, so reach was
+never the thing that was short. `radiusScale * glowSpread` must stay at or under
+about 1.4 — past that the lights stop reading as coming from the globe and start
+looking like weather on the camera lens.
 
 **The halo is ambience, not a category readout.** It is the one place §6's fixed
 color semantics do not bind: two storms of different categories overlapping
