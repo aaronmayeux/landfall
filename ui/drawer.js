@@ -15,6 +15,35 @@
  *       storms → detail → layers   ⇒ back lands on that storm's detail,
  *       not on the list. Opening Layers from a storm is a side trip, and
  *       the storm survives it.
+ *
+ *   ==> AND THE SIDE TRIP IS A PROPERTY OF *WHICH* CLUSTER BUTTON, NOT OF
+ *   PRESSING ONE. <== That line above described the app for a month without
+ *   being true of it. The detail panel's own Layers shortcut was deleted on
+ *   2026-07-25 (one door per layer), which left the floating Layers button as
+ *   the only way in — and it called `go`, which throws the stack away. So the
+ *   documented route existed nowhere in the running code, and a reader who
+ *   opened Layers from a storm got no Back at all.
+ *
+ *   `clusterAction` below is the whole rule, in one place:
+ *
+ *     Layers and Settings are SIDE TRIPS. Open one while the drawer is
+ *     already showing something and it PUSHES — you went to look at a
+ *     setting, and the thing you were reading is still underneath.
+ *
+ *     Storms and Home are DESTINATIONS. They always `go`. Pressing Home is a
+ *     fresh ask by definition (see `fresh` below — the dashboard forgets
+ *     which storm you stepped to), and a pushed Home would also lose its
+ *     eyebrow, leaving a header that names a storm with nothing saying which
+ *     drawer you are in. Both are behaviour, not decoration.
+ *
+ *     One side trip on top of another SWAPS rather than stacks. Layers then
+ *     Settings is not two steps away from the storm, it is one step with a
+ *     change of mind, and Back should still be one press. This is what caps
+ *     the stack at three: destination → detail → side trip.
+ *
+ *   - At phone width the cluster is hidden (and untabbable) behind an open
+ *     drawer, so none of this arises there; it is the wide layout, where the
+ *     drawer is a left rail and the buttons stay in the corner, that needs it.
  *   - Close dismisses the drawer. Per §16 the camera and drawn geometry HOLD;
  *     recenter (button, or Esc twice) is the one way off a selection.
  *   - NO TAB ROW. Home and Settings are configuration — you arrive, you set,
@@ -26,7 +55,7 @@
  *
  * WHAT A VIEW IS
  *   { id, title, mount(host), onEnter?(arg, { fresh }), onLeave?(), focus?(),
- *     titleFor?(arg), eyebrow?() }
+ *     titleFor?(arg), eyebrow?(), backLabelFor?(arg) }
  *   `fresh` on onEnter means THIS IS A NEW VISIT, not a return: it is true
  *   only for `go`, which clears the history stack, and false for `push` and
  *   for `back`. A view that remembers a choice the reader made inside it —
@@ -39,6 +68,12 @@
  *   that gives its centre away to something else: the home dashboard titles
  *   itself with the STORM, so it names the drawer in the lead slot instead.
  *   It is only honoured while the view is a root (see renderChrome).
+ *   `backLabelFor` is how a view that titles itself with a NODE puts a NAME on
+ *   the button pointing back at it. The storm detail's title is a swatch, a
+ *   heading and a subtitle — there is no string in it — so the fallback was
+ *   the bare word "Storm", and `‹ Storm` from the Layers panel does not say
+ *   which storm survived the side trip, which is the entire promise of the
+ *   side trip. It returns a plain string or nothing.
  *   mount() is called ONCE, lazily, the first time the view is shown; the
  *   host element is then kept and re-shown. Views own their own DOM and
  *   never touch the drawer chrome.
@@ -56,15 +91,57 @@
  * Imports: nothing. main.js wires views in.
  */
 
+/**
+ * The two views that are somewhere you STEP ASIDE TO, not somewhere you go.
+ *
+ * The test is not "is it configuration" — Home is configuration too. It is
+ * whether arriving there means you have finished with what you were reading.
+ * You open Layers to change what is drawn ON the storm you are looking at, and
+ * Settings to change units or theme while you are mid-anything. Neither is a
+ * subject in its own right, and both are one press from the corner at every
+ * width where they can be reached at all.
+ */
+export const SIDE_TRIP_VIEWS = new Set(['layers', 'settings']);
+
+/**
+ * What a control-cluster press means, given what is already on screen.
+ *
+ * ==> A PURE FUNCTION, AND THAT IS THE POINT. <== The rule it encodes has four
+ * branches and every one of them is invisible when wrong: a `go` where a `push`
+ * belonged does not throw, it just quietly loses the Back button, which is
+ * exactly the bug this shipped to fix and exactly the bug that hid for a month.
+ * Inside main.js's boot closure there was no way to write an assertion about
+ * it. Out here, tools/test-drawer-nav.mjs states all four in a table.
+ *
+ * @returns {'close'|'go'|'push'|'swap'}
+ *   close — this view is already showing; the button that opened it dismisses it
+ *   go    — enter as a fresh root, throwing the history away
+ *   push  — a side trip onto whatever is open; Back returns to it
+ *   swap  — a side trip replacing another side trip; the stack does not grow
+ */
+export function clusterAction(viewId, { open, currentId } = {}) {
+  if (open && currentId === viewId) return 'close';
+  if (!open || !SIDE_TRIP_VIEWS.has(viewId)) return 'go';
+  return SIDE_TRIP_VIEWS.has(currentId) ? 'swap' : 'push';
+}
+
 export function createDrawer({ root }) {
   /** @type {Map<string, {def:object, host:HTMLElement, mounted:boolean}>} */
   const views = new Map();
 
-  /** History of {id, arg}. Last entry is the current view. Empty = closed. */
+  /** History of {id, arg, from}. Last entry is the current view. Empty = closed.
+   *
+   *  ==> `from` LIVES ON THE ENTRY, NOT IN ONE VARIABLE BESIDE THE STACK. <==
+   *  It is the control that put you on THIS step, and it is what focus returns
+   *  to on close (§13 — a keyboard user must land back on the thing they
+   *  pressed, not at the top of the document). A single `opener` was correct
+   *  while only a cluster button could start a session and nothing else ever
+   *  recorded one. Now Layers pushes from its own button on top of a storm, so
+   *  there are two answers live at once, and closing from the side trip should
+   *  return to the side trip's button. Entries pushed from a row tap carry no
+   *  `from` at all, so the lookup walks DOWN to the nearest one that does. */
   let stack = [];
   let open = false;
-  /** The control-cluster button that opened the drawer, for focus return. */
-  let opener = null;
   /** Change subscribers. The drawer REPORTS navigation rather than each
    *  caller remembering to sync — five call sites means one eventually gets
    *  missed. */
@@ -170,14 +247,32 @@ export function createDrawer({ root }) {
     if (canGoBack) {
       const prev = stack[stack.length - 2];
       const prevDef = entry(prev.id).def;
-      const prevTitle = prevDef.titleFor
-        ? prevDef.titleFor(prev.arg)
-        : prevDef.title;
-      /* A view that titles itself with a NODE (the storm identity) has no
-       * string to put on a button, so the plain `title` is the fallback — the
-       * word "Storms" rather than a storm's name. That is the right answer
-       * anyway: Back goes to the list, not to whichever storm was on screen. */
-      const dest = typeof prevTitle === 'string' ? prevTitle : prevDef.title;
+      /* ==> ASK FOR A LABEL BEFORE ASKING FOR A TITLE. <== `titleFor` may
+       * return a NODE (the storm identity block: swatch, heading, subtitle),
+       * and there is no string in a node to put on a button — which is why
+       * this fell through to the plain `title` and read `‹ Storm`. That was
+       * tolerable while Back from the detail panel only ever went UP to the
+       * list; it is not tolerable now that Layers pushes on TOP of a storm,
+       * because "the storm survives the side trip" is the whole promise and
+       * `‹ Storm` does not say which one survived.
+       *
+       * `backLabelFor` is the view's own answer and takes precedence.
+       * Otherwise a string title, otherwise the plain name. NEVER the node.
+       *
+       * ==> AND IT SHORT-CIRCUITS, WHICH IS NOT AN OPTIMISATION. <==
+       * `titleFor` is not guaranteed to be free of side effects — the detail
+       * panel's assigns its `storm` from the argument, deliberately, so the
+       * header can title itself from its own arg. Calling it to label a button
+       * pointing at a view that is not on screen would reach into that view's
+       * state to produce a string we are about to throw away, and it builds a
+       * whole identity node to do it, on every chrome render. */
+      let dest = prevDef.backLabelFor?.(prev.arg);
+      if (!dest) {
+        const prevTitle = prevDef.titleFor
+          ? prevDef.titleFor(prev.arg)
+          : prevDef.title;
+        dest = typeof prevTitle === 'string' ? prevTitle : prevDef.title;
+      }
       backTextEl.textContent = dest;
       backBtn.setAttribute('aria-label', `Back to ${dest}`);
     }
@@ -292,10 +387,19 @@ export function createDrawer({ root }) {
    * back() — pop one level.
    * ---------------------------------------------------------------------- */
 
+  /** The nearest control below the current step that recorded itself, for
+   *  focus return on close. Walks DOWN because the steps in between may have
+   *  come from a row tap, which has no button to go back to. */
+  function currentOpener() {
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i].from) return stack[i].from;
+    }
+    return null;
+  }
+
   function go(id, arg, { from } = {}) {
-    if (from) opener = from;
     leaveCurrent();
-    stack = [{ id, arg }];
+    stack = [{ id, arg, from }];
     setOpenState(true);
     /* ==> THE ONE FRESH ENTRY. <== `go` throws the history away, which is the
      * definition of starting over, so it is the only door that tells a view to
@@ -304,18 +408,31 @@ export function createDrawer({ root }) {
     notifyChange();
   }
 
-  function push(id, arg) {
+  /**
+   * @param {object} [opts]
+   * @param {HTMLElement} [opts.from] the control that pushed this step, for
+   *   focus return. A row tap passes nothing.
+   * @param {boolean} [opts.replaceTop] TAKE THE CURRENT STEP'S PLACE rather
+   *   than sitting on top of it. This is `clusterAction`'s `swap`: Layers then
+   *   Settings from the corner is one change of mind, not two steps away from
+   *   the storm, and Back has to stay one press. Without it the stack has no
+   *   ceiling — four buttons in a corner that always push is a stack a reader
+   *   can grow all afternoon and then have to unwind.
+   */
+  function push(id, arg, { from, replaceTop = false } = {}) {
     /* Re-pushing the view you are already on is a no-op, not a duplicate
      * stack entry — otherwise Back walks through the same view twice. */
     const cur = current();
     if (cur && cur.id === id) {
-      stack[stack.length - 1] = { id, arg };
+      stack[stack.length - 1] = { id, arg, from: from || cur.from };
       enter(id, arg);
       notifyChange();
       return;
     }
     leaveCurrent();
-    stack.push({ id, arg });
+    const step = { id, arg, from };
+    if (replaceTop && stack.length) stack[stack.length - 1] = step;
+    else stack.push(step);
     setOpenState(true);
     enter(id, arg);
     notifyChange();
@@ -334,12 +451,15 @@ export function createDrawer({ root }) {
   function close({ restoreFocus = true } = {}) {
     if (!open) return;
     leaveCurrent();
+    /* READ BEFORE CLEARING — the opener lives on the stack now, so a `stack =
+     * []` above this line would silently drop focus on the floor and a
+     * keyboard user would land at the top of the document (§13). */
+    const back = currentOpener();
     setOpenState(false);
     stack = [];
     /* Focus must not be left on a control inside a panel that is now
      * off-screen and untabbable (§13). */
-    if (restoreFocus) opener?.focus?.();
-    opener = null;
+    if (restoreFocus) back?.focus?.();
     notifyChange();
   }
 

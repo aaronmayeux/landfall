@@ -42,6 +42,7 @@ import { addStormImagery } from './map/imagery.js';
 import { createBoot } from './ui/boot.js';
 import { watchKeyboardInset } from './ui/keyboard.js';
 import { createFirstRun } from './ui/first-run.js';
+import { clusterAction } from './ui/drawer.js';
 import {
   isInstalled,
   canPromptInstall,
@@ -1129,10 +1130,18 @@ function boot() {
   });
 
   /* --- controls -----------------------------------------------------------
-   * Each cluster button ENTERS its view as a fresh root (drawer.go clears the
-   * history), or closes the drawer if that view is already showing — so the
-   * button that opened a thing also dismisses it. Storms and Layers are peers;
-   * Home and Settings are configuration you arrive at and leave.
+   * WHAT A CLUSTER PRESS MEANS IS `clusterAction`, IN ui/drawer.js, AND NOT
+   * HERE. Four outcomes — close, go, push, swap — chosen from what is already
+   * on screen. Storms and Home are destinations and always start fresh; Layers
+   * and Settings are side trips and land on top of whatever you were reading,
+   * so Back returns to it. The full reasoning is at the head of that file; the
+   * table of all four cases is tools/test-drawer-nav.mjs.
+   *
+   * ==> IT LIVES THERE BECAUSE IT COULD NOT BE TESTED HERE. <== This runs
+   * inside boot()'s closure with a live map and a real DOM, so the rule was
+   * unassertable — and its failure mode is silent. A `go` where a `push`
+   * belonged does not throw; it drops the Back button, which is exactly the
+   * bug that hid in this loop for a month.
    * ---------------------------------------------------------------------- */
   const CLUSTER = [
     ['btn-storms', 'storms'],
@@ -1144,8 +1153,13 @@ function boot() {
   for (const [id, viewId] of CLUSTER) {
     const btn = document.getElementById(id);
     btn.addEventListener('click', () => {
-      if (drawer.isOpen() && drawer.currentId() === viewId) drawer.close();
-      else drawer.go(viewId, undefined, { from: btn });
+      const act = clusterAction(viewId, {
+        open: drawer.isOpen(),
+        currentId: drawer.currentId(),
+      });
+      if (act === 'close') drawer.close();
+      else if (act === 'go') drawer.go(viewId, undefined, { from: btn });
+      else drawer.push(viewId, undefined, { from: btn, replaceTop: act === 'swap' });
     });
   }
 

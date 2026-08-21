@@ -1386,15 +1386,72 @@ one view everywhere means one state machine, and that is the point.
 storms → detail → layers      back ⇒ that storm's detail, not the list
 ```
 
-Opening Layers from a storm is a SIDE TRIP and the storm survives it. Cluster
-buttons ENTER a view as a fresh root (clearing the stack); Back walks the stack;
-Close dismisses the drawer entirely.
+Opening Layers from a storm is a SIDE TRIP and the storm survives it. Back walks
+the stack; Close dismisses the drawer entirely.
+
+**WHICH CORNER BUTTON DECIDES, NOT THE FACT OF PRESSING ONE.** The rule is
+`clusterAction` in `ui/drawer.js` — a pure function with four outcomes, stated
+as a table in `tools/test-drawer-nav.mjs`:
+
+| Pressed | Drawer state | Result |
+|---|---|---|
+| the view already showing | open | **close** — the button that opened it dismisses it |
+| **Storms** or **Home** | any | **go** — a fresh root, the stack thrown away |
+| **Layers** or **Settings** | shut | **go** — nothing to sit on top of |
+| **Layers** or **Settings** | open on anything else | **push** — Back returns to it |
+| **Layers** or **Settings** | open on the *other* side trip | **swap** — replaces it, the stack does not grow |
+
+Storms and Home are DESTINATIONS. Layers and Settings are SIDE TRIPS — places
+you step aside to while still reading something. The test is not "is it
+configuration", because Home is configuration too; it is whether arriving there
+means you have finished with what you were looking at.
+
+**Home must never push**, and that is behaviour rather than taste. Pressing it
+is a fresh ask by definition (`fresh` below — the dashboard forgets which storm
+you stepped to), and a pushed Home also loses its eyebrow, leaving a header that
+names a storm with nothing saying which drawer you are in. **The swap caps the
+stack at three** — destination → detail → side trip. Four corner buttons that
+all pushed would be a stack a reader could grow all afternoon and then have to
+unwind one press at a time.
+
+**The back button carries the previous view's NAME, and a view whose title is a
+node supplies one.** `backLabelFor(arg)` beats `titleFor`, which returns the
+storm identity block and has no string in it — so Back from Layers read
+`‹ Storm` rather than `‹ Hurricane Erin`, which does not say *which* storm
+survived the side trip. `titleFor` is NOT called when `backLabelFor` answers:
+the detail panel's assigns its `storm` from the argument, and labelling a button
+must not reach into a view that is not on screen.
+
+**Focus on close returns to the control that put you on the current step**, not
+to whatever opened the drawer. `from` lives on the stack entry; a step opened by
+a row tap carries none, so the lookup walks down to the nearest one that does.
+
+### This was wrong in this file for a month, and the shape of the mistake is the lesson
+
+The route above was written here as as-built and was reachable from nowhere. The
+detail panel's own Layers shortcut was deleted on 2026-07-25 (one door per
+layer), leaving the floating button as the only way in — and it called `go`.
+Nothing caught it: every module parsed, every suite passed, and the app worked.
+It simply had no Back button on a screen three files said had one. **A `go`
+where a `push` belonged does not throw.** Navigation has no error state, which
+is why the model now lives in a pure function with a test rather than inside
+`boot()`'s closure where no assertion could reach it.
 
 **At phone width the open drawer COVERS the control cluster, and that is
 intended.** Measured at 390×844: the drawer top sits at y=620 while `#btn-storms`
 spans y=636..680, so the button that opened a view cannot be tapped to close it.
 Nothing is trapped — the X and Esc both close the drawer — and the rule below is
-why this is right rather than tolerated. **Do not "fix" it.**
+why this is right rather than tolerated. **Do not "fix" it.** It is also why the
+side-trip push only ever matters on the WIDE layout, where the drawer is a left
+rail and the four buttons stay in the corner.
+
+**The hidden cluster is `visibility: hidden`, not merely transparent.** It was
+`opacity: 0` plus `pointer-events: none`, which hides four buttons from a finger
+and a mouse and leaves every one of them in the tab order and the accessibility
+tree — a keyboard user with a storm open could Tab out of the sheet into an
+invisible Layers button and press it, and a screen reader read all four aloud.
+Same delayed transition as the drawer itself (§13): the fade plays, then the
+buttons go untabbable on arrival.
 
 **NO TAB ROW inside the drawer.** Home and Settings are configuration — you
 arrive, you set, you leave — and nobody switches to them mid-storm. A persistent
@@ -1496,13 +1553,16 @@ not negotiable. Only the padding was ever available and it is 4px top and bottom
 — 52px total. Going further means shrinking the tap target, which trades a real
 accessibility guarantee for eight pixels.
 
-**THE HEADER IS BACK · TITLE · CLOSE, AND CLOSE IS ALWAYS AT THE TRAILING EDGE.**
-It is laid out with flex, deliberately: the back button is `display: none` in
-four views out of five, and under `grid-template-columns: auto 1fr auto` the two
-remaining children shifted one column left, so the close button landed
-left-aligned in a very wide box, apparently welded to the word "Layers". **The
-general trap: a positional layout plus a conditionally-hidden child is a layout
-that silently means something different in each state.**
+**THE HEADER IS LEAD · TITLE · CLOSE, AND CLOSE IS ALWAYS AT THE TRAILING EDGE.**
+The back button is `display: none` whenever the view is a root, and under the
+original `grid-template-columns: auto 1fr auto` the two remaining children
+shifted one column left, so the close button landed left-aligned in a very wide
+box, apparently welded to the word "Layers". **The general trap: a positional
+layout plus a conditionally-hidden child is a layout that silently means
+something different in each state.** It became flex, and is now a three-column
+grid again — but with `minmax(0,1fr) auto minmax(0,1fr)`, whose outer columns
+take equal shares so nothing is positional. See the centring note further down
+this section for why the title had to stop being left-aligned.
 
 **THE DRAWER TITLES A VIEW BEFORE IT ENTERS IT.** `enter()` calls
 `renderChrome()` — and therefore the view's `titleFor(arg)` — **before**
@@ -1874,12 +1934,14 @@ apart with 18px of horizontal separation. Clustered, it is 107px and 95px.
 `tools/drawer-head-check.mjs` holds both numbers against a floor of 88px, which
 is two touch targets.
 
-**The Back button carries its destination in words** — `‹ Storms`, `‹ Home` —
-which is the other half of that fix and the only change that stops the two left
-chevrons being twins. It also answers a question the icon never could: the
-detail panel is reachable from both the storm list and the dashboard, so where
-Back goes genuinely varies. The destination was already computed for the
-`aria-label`; this puts it on screen.
+**The Back button carries its destination in words** — `‹ Storms`, `‹ Home`,
+`‹ Hurricane Erin` — which is the other half of that fix and the only change
+that stops the two left chevrons being twins. It also answers a question the
+icon never could: the detail panel is reachable from both the storm list and the
+dashboard, and side trips push on top of it, so where Back goes genuinely
+varies. The destination was already computed for the `aria-label`; this puts it
+on screen. A view whose title is a node supplies the string itself via
+`backLabelFor` — see §16.
 
 **The header is a three-column grid whose outer columns take equal shares**
 (`minmax(0,1fr) auto minmax(0,1fr)`), which is what makes the middle column land
@@ -2288,9 +2350,12 @@ the real body and both segment orders.
 **NO SWITCHES LIVE HERE.** Two controls for one layer means two places to look
 when something is not drawing, and two places to keep in sync. There is exactly
 ONE toggle per layer and it is in the Layers view. This section names what is
-currently drawn for the selected storm and pushes there. The navigation is what
-makes that cheap rather than annoying — Layers opened from a storm is a side trip
-on the history stack, and Back lands on that storm's detail, not on the list.
+currently drawn for the selected storm; the way in is the floating Layers
+button, which is the ONLY door (the shortcut that used to live here was deleted
+on 2026-07-25 for the same one-door reason). The navigation is what makes that
+cheap rather than annoying — Layers is a side trip, so pressing it from a storm
+pushes rather than starting fresh, and Back lands on that storm's detail, not on
+the list. The rule and its table are in §16.
 
 **Environment** — the storm health paragraph, between the wind field and
 People in the path. The whole contract — the seven verdict shapes, the named

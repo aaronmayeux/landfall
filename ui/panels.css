@@ -129,15 +129,36 @@
    * only navigation anyone wants mid-view is Back, and Back is in the header.
    * (It is also why there is no tab row inside the drawer — a persistent nav
    * would cost ~44px of a 60vh sheet forever to duplicate these buttons.)
-   * Transform and opacity only. (#controls is a later sibling, hence ~.) */
+   * Transform and opacity only. (#controls is a later sibling, hence ~.)
+   *
+   * ==> AND `visibility`, WHICH WAS MISSING, AND IS THE SAME §13 BUG THE
+   * DRAWER ITSELF WAS FIXED FOR. <== `opacity: 0` plus `pointer-events: none`
+   * hides four buttons from a finger and from a mouse and leaves every one of
+   * them in the TAB ORDER and in the accessibility tree. A keyboard user with
+   * a storm open could Tab straight out of the sheet into an invisible Layers
+   * button and press it — and a screen reader read all four aloud as though
+   * they were on screen. The whole justification for hiding the cluster here
+   * is "nobody needs to navigate from it while the drawer is open"; that is
+   * not true of a reader who cannot see that it is hidden.
+   *
+   * Same delayed transition as the drawer: `0s linear` AFTER the fade on the
+   * way out, so the buttons are still visible while they slide away and go
+   * untabbable on arrival, and `0s` on the way back so they are focusable the
+   * moment they start moving. */
   #drawer[data-open="true"] ~ #controls {
     opacity: 0;
     transform: translateY(12px);
     pointer-events: none;
+    visibility: hidden;
+    transition: opacity var(--duration-base) var(--ease-swap),
+                transform var(--duration-base) var(--ease-swap),
+                visibility 0s linear var(--duration-base);
   }
   #controls {
+    visibility: visible;
     transition: opacity var(--duration-base) var(--ease-swap),
-                transform var(--duration-base) var(--ease-swap);
+                transform var(--duration-base) var(--ease-swap),
+                visibility 0s linear 0s;
   }
 }
 

@@ -1610,6 +1610,27 @@ export function createStormDetailView({
       return titleNode();
     },
 
+    /**
+     * ==> THE NAME FOR A BACK BUTTON POINTING AT THIS PANEL. <== `titleFor`
+     * returns a NODE, and there is no string in a node to put on a button, so
+     * the drawer fell through to the plain title and rendered `‹ Storm`. That
+     * was invisible while nothing could sit on top of this view. Layers and
+     * Settings push onto it now, and the promise of that side trip is that the
+     * storm survives it — which `‹ Storm` does not say. `‹ Hurricane Erin`
+     * does.
+     *
+     * ==> IT READS THE ARGUMENT, NOT `storm`. <== The drawer asks the PREVIOUS
+     * entry for its label while a different view is on screen, and `storm` is
+     * this closure's idea of what it is currently showing. Those are the same
+     * value today and would silently stop being the same the first time
+     * anything re-enters this view without going through the header. The
+     * argument is the stack's own record of what this step was for.
+     *
+     * No side effects, unlike `titleFor` — labelling a button must not reach
+     * into a view's state.
+     */
+    backLabelFor: (s) => (s || storm)?.name || null,
+
     mount(el) {
       buildSkeleton(el);
       renderAll();
