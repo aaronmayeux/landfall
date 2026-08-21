@@ -5566,4 +5566,22 @@ export const POPULATION = Object.freeze({
    */
   pathSlot: 'windSwath',
   pathThresholdKt: 34,
+
+  /**
+   * The forward-only half of the envelope, used to split the headcount into
+   * what is still coming and what has already happened.
+   *
+   * ==> `pathSlot` IS THE STORM'S WHOLE LIFE AND NOTHING INSIDE IT SAYS WHERE
+   * THE PAST ENDS. <== NHC's swept envelope merges the past track, the current
+   * field and the forecast into one polygon (`lib/windswath.js`). Counted whole
+   * under a heading reading "in the path", it warns about wind that fell days
+   * ago. Measured on Hurricane Lala, advisory 34A, 2026-08-21: 1,337,723 people
+   * in 121 towns, all of them Hawaii, all of them behind the storm, and zero
+   * people anywhere ahead of it.
+   *
+   * `data/nhc-mapserver.js` builds this slot with the same sweep and the past
+   * tier withheld. NHC only — GDACS publishes no past wind field, so its swath
+   * is already forward-only and its storms simply have no slot here.
+   */
+  aheadSlot: 'windAhead',
 });

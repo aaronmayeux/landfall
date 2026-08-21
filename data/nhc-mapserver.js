@@ -528,17 +528,25 @@ export async function fetchStormGeometry(storm) {
   const pastRadii =
     layers.windPast?.status === 'ok' ? normalizePastRadii(layers.windPast.fc) : [];
 
+  /* ==> THE RAW TIER FEATURES, READ ONCE, FOR THE SAME REASON THE NUMBERS
+   * ABOVE ARE. <== `layers.windSwath.fc.features` is the FORECAST tier's raw
+   * rings right now and something else entirely four lines below. It is read
+   * twice down there — once for the full envelope and once for the forward-only
+   * one — and reading it inline the second time would quietly feed the finished
+   * envelope back into the builder as if it were input. */
+  const tiers = {
+    pastRadii: layers.windPast?.status === 'ok' ? layers.windPast.fc.features : [],
+    pastPoints: layers.pastPoints?.status === 'ok' ? layers.pastPoints.fc.features : [],
+    currentField: layers.windCurrent?.status === 'ok' ? layers.windCurrent.fc.features : [],
+    forecastRadii: layers.windSwath?.status === 'ok' ? layers.windSwath.fc.features : [],
+    forecastPoints: layers.forecastPoints?.status === 'ok' ? layers.forecastPoints.fc.features : [],
+    currentPos: Number.isFinite(storm.lat) && Number.isFinite(storm.lon)
+      ? { lat: storm.lat, lon: storm.lon }
+      : null,
+  };
+
   try {
-    const built = buildFullTrack({
-      pastRadii: layers.windPast?.status === 'ok' ? layers.windPast.fc.features : [],
-      pastPoints: layers.pastPoints?.status === 'ok' ? layers.pastPoints.fc.features : [],
-      currentField: layers.windCurrent?.status === 'ok' ? layers.windCurrent.fc.features : [],
-      forecastRadii: layers.windSwath?.status === 'ok' ? layers.windSwath.fc.features : [],
-      forecastPoints: layers.forecastPoints?.status === 'ok' ? layers.forecastPoints.fc.features : [],
-      currentPos: Number.isFinite(storm.lat) && Number.isFinite(storm.lon)
-        ? { lat: storm.lat, lon: storm.lon }
-        : null,
-    });
+    const built = buildFullTrack(tiers);
     if (built.length) {
       layers.windSwath = {
         status: 'ok',
@@ -550,6 +558,36 @@ export async function fetchStormGeometry(storm) {
     }
   } catch (e) {
     console.warn(`[landfall] ${storm.id}: swath envelope failed (${e?.message || e}); drawing raw radii stack`);
+  }
+
+  /* ---- THE FORWARD-ONLY ENVELOPE (§54). ----
+   *
+   * ==> NOTHING DRAWS THIS. IT EXISTS SO THE HEADCOUNT CAN SAY "STILL TO COME"
+   * WITHOUT GUESSING. <== The full envelope above merges past, present and
+   * forecast into one polygon and keeps no record of where the past ends, so
+   * anything reading it can only make a claim about the storm's whole life. The
+   * People in the path section needs a narrower claim than that. Same builder,
+   * same inputs, past tier withheld: what is left is the current wind field
+   * swept forward through the forecast.
+   *
+   * ==> `none` AND `unavailable` ARE DIFFERENT ANSWERS HERE AND THE SECTION
+   * READS THEM DIFFERENTLY. <== `ok` means a real forward shape was built, so a
+   * headcount of zero inside it is a measured zero — nobody is ahead. Anything
+   * else means we do not know what is ahead, and the section falls back to
+   * counting the whole envelope rather than announcing an all-clear it cannot
+   * support (§5, and SPEC.md's rule that a silent all-clear is the worst
+   * failure this app has).
+   *
+   * Cost, measured on Lala's advisory 34A: 0.70 ms against 14.75 ms for the
+   * full sweep, because the past tier is 71 of the 90-odd rings that go in. */
+  try {
+    const ahead = buildFullTrack({ ...tiers, pastRadii: [], pastPoints: [] });
+    layers.windAhead = ahead.length
+      ? { status: 'ok', fc: { type: 'FeatureCollection', features: ahead }, error: null }
+      : { status: 'none', fc: null, error: null };
+  } catch (e) {
+    console.warn(`[landfall] ${storm.id}: forward envelope failed (${e?.message || e})`);
+    layers.windAhead = { status: 'unavailable', fc: null, error: e?.message || 'failed' };
   }
 
   /* Stamp preference order mirrors data quality: cone and forecast track are

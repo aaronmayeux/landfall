@@ -11,7 +11,8 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { peopleInFeatures, formatPeople } from '../lib/population-count.js';
+import { peopleInFeatures, peopleInPhases, formatPeople } from '../lib/population-count.js';
+import { FUTURE_SLOTS } from '../lib/future-slots.js';
 import { POPULATION } from '../config/constants.js';
 import { DARK, LIGHT } from '../config/tokens.js';
 
@@ -321,6 +322,100 @@ ok(POPULATION.weightMaxLog > POPULATION.weightMinLog, 'weight range is not inver
   const last = POPULATION.heatRadius[POPULATION.heatRadius.length - 1];
   ok(kmAt(last.zoom, last.px) < POPULATION.groundRadiusKm,
     'the local band is capped below ground scale, to bound heatmap cost');
+}
+
+/* --- THE PAST/AHEAD SPLIT (§54) --------------------------------------
+ *
+ * The bug these exist against: the full envelope covers where the storm has
+ * BEEN as well as where it is going, so a headcount over it captioned "in the
+ * path" warns about wind that already fell. Hurricane Lala, advisory 34A, put
+ * 1.3M Hawaiians on screen as though they were about to be hit, days after the
+ * storm cleared them, with nobody at all ahead of it.
+ * ---------------------------------------------------------------------- */
+
+{
+  /* Lala's shape, reduced to the fact that broke: a long envelope with people
+   * only at the back of it, and a forward half that reaches nobody. */
+  const towns = [
+    -158, 21, 350000,   // Honolulu — behind the storm
+    -157, 20, 50000,    // behind
+    -172, 25, 4000,     // ahead, but the forward shape misses it by design
+  ];
+  const all = poly([square(-175, 15, -150, 30)]);
+  const ahead = poly([square(-175, 24, -168, 30)]);
+
+  const r = peopleInPhases(towns, [all], [ahead]);
+  eq(r.ahead.people, 4000, 'ahead counts only what the forward shape reaches');
+  eq(r.ahead.towns, 1, 'ahead town count');
+  eq(r.past.people, 400000, 'past counts what the full shape reaches and the forward one does not');
+  eq(r.past.towns, 2, 'past town count');
+  eq(r.total.people, 404000, 'total is the two buckets and nothing else');
+  ok(r.total.people === r.ahead.people + r.past.people, 'the buckets sum to the total, always');
+  ok(r.total.towns === r.ahead.towns + r.past.towns, 'town counts sum too');
+}
+
+{
+  /* The Lala case proper: nobody ahead at all. A measured zero here is what
+   * flips the section into past tense, so it must be a real zero and not an
+   * absence — and `past` must still hold everybody. */
+  const towns = [-158, 21, 350000];
+  const all = poly([square(-175, 15, -150, 30)]);
+  const ahead = poly([square(-175, 24, -168, 30)]);
+
+  const r = peopleInPhases(towns, [all], [ahead]);
+  eq(r.ahead.people, 0, 'nobody ahead is a measured zero');
+  eq(r.past.people, 350000, 'and everybody is behind');
+}
+
+{
+  /* ==> THE REASON THIS IS NOT `total - ahead`. <== The two envelopes come off
+   * the same sweep but are smoothed over different runs, so the forward shape
+   * can poke a nautical mile or two outside the full one near its far end. A
+   * town in that sliver is inside `ahead` and outside `all`. Subtraction would
+   * return MINUS one town. Classification cannot. */
+  const towns = [5, 5, 1000];
+  const all = poly([square(-10, -10, 4, 10)]);      // does not reach the town
+  const ahead = poly([square(0, 0, 6, 10)]);        // does
+
+  const r = peopleInPhases(towns, [all], [ahead]);
+  eq(r.ahead.people, 1000, 'a town the forward shape reaches and the full one misses is ahead');
+  eq(r.past.people, 0, 'and past never goes negative');
+  eq(r.total.people, 1000, 'total includes it');
+}
+
+{
+  /* Empty forward shape — the "we could not build it" case must not silently
+   * become "everyone is behind you". The caller gates on slot status rather
+   * than on this, but the arithmetic still has to be honest about it. */
+  const towns = [0, 0, 1000];
+  const r = peopleInPhases(towns, [poly([square(-1, -1, 1, 1)])], []);
+  eq(r.ahead.people, 0, 'no forward rings means nobody measured ahead');
+  eq(r.past.people, 1000, 'and the full shape still counts');
+}
+
+{
+  const r = peopleInPhases(null, [], []);
+  ok(r === null, 'no town list is null, never a zero');
+}
+
+{
+  /* The whole-envelope path is unchanged for callers that have no forward
+   * shape — GDACS storms, which publish no past wind field at all. */
+  const towns = [0, 0, 1000, 10, 10, 2000];
+  const box = poly([square(-1, -1, 1, 1)]);
+  eq(peopleInFeatures(towns, [box]).people, 1000, 'the single-shape count still works');
+}
+
+{
+  /* ==> THE FORWARD SLOT IS A CLAIM ABOUT NEXT AND MUST DIE WITH THE OTHERS.
+   * <== A silent or ended storm drops every forward-looking slot. If this one
+   * were missed, the headcount would go on announcing who is still ahead of a
+   * storm whose agency stopped publishing — the exact confident-future problem
+   * `lib/future-slots.js` exists to remove. */
+  ok(FUTURE_SLOTS.includes(POPULATION.aheadSlot),
+    `${POPULATION.aheadSlot} is dropped for silent and ended storms`);
+  ok(FUTURE_SLOTS.includes(POPULATION.pathSlot),
+    `${POPULATION.pathSlot} is dropped for silent and ended storms`);
 }
 
 console.log(`population: ${pass} passed, ${fail} failed`);

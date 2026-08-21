@@ -2365,9 +2365,103 @@ Four states, per §5: a figure, "no wind field published for this advisory",
 storm in the open Atlantic genuinely has nobody in its path, and that gets its
 own sentence rather than reading as a failure.
 
+The figure itself is split into what is still coming and what has already
+happened; that is §54, and the heading follows the split.
+
 > **OPEN:** the copy says "estimate" but not that the undercount varies by
 > country. A Bay of Bengal figure is off by roughly four times in a way a Gulf
 > figure is not, and nothing on screen says so.
+
+---
+
+## 54. People in the path — still coming, or already been through
+
+*The count itself is "People in the path" above; the shape it counts is §4's
+full-track envelope. `config/constants.js` `POPULATION.aheadSlot`,
+`data/nhc-mapserver.js`, `lib/population-count.js` `peopleInPhases`,
+`ui/view-storm-detail.js`, `tools/test-population.mjs`.*
+
+**The swath is the storm's whole life and nothing inside it says where the past
+ends.** `buildFullTrack` sweeps the past track, the current wind field and the
+forecast into one polygon per threshold. That is the right shape to draw and
+the wrong shape to caption — counted whole under a heading reading *in the
+path*, it warns about wind that has already fallen.
+
+**Measured, on glass, 2026-08-21.** Hurricane Lala, advisory 34A, sat 900 miles
+west-northwest of Hawaii heading north into empty ocean. The section read
+**≈1.3M people in 121 towns**. Rebuilt from the archived bytes: 1,337,723 people
+in 121 towns, every town in Hawaii, every one of them behind the storm by days
+— and **zero people, in zero towns, anywhere ahead of it**. The panel was a
+future-tense warning about something entirely finished.
+
+### The forward-only envelope
+
+`data/nhc-mapserver.js` runs the same sweep a second time with the past tier
+withheld, into a slot named `windAhead`. Nothing draws it. It exists so the
+headcount can make a narrower claim than the drawn shape supports.
+
+**Cost is not the reason to hesitate.** The past tier is 71 of Lala's ~90 input
+rings, so the forward sweep is 0.70 ms against 14.75 ms for the full one, and
+the split count is 1.65 ms against 1.46 ms for the single count — the forward
+shape's bounding box rejects nearly every town before any ray cast. Measured in
+the sandbox on node, not on a phone.
+
+**`ok` is the only status that unlocks the split.** `none` and `unavailable`
+both mean the forward shape could not be built, and reading either as "nobody
+ahead" would put an all-clear on screen that no data supports — the worst
+failure this app has (SPEC.md §6). Without it the section counts the whole
+envelope in the words it always used: wrong in the same small way as before,
+rather than newly wrong in a large one.
+
+### Three shapes of sentence
+
+| What is true | Heading | Body |
+|---|---|---|
+| People ahead, none behind | People in the path | *≈N people in M towns are inside the tropical-storm-force wind field or ahead of it.* |
+| Both | People in the path | The ahead figure leads; one line beneath: *Another ≈N in M towns have already been through it.* |
+| Nobody ahead, people behind | **People it went through** | *≈N people in M towns have already been through the tropical-storm-force wind field. Nobody is ahead of the storm now.* |
+
+**The one that can still be acted on leads, and the past gets a line rather than
+a second figure.** Two big numbers stacked at phone width is two things to
+compare and nothing saying which matters — the same call §49.2 makes for the
+home drawer's mid-pass case.
+
+**The heading moves with the body or it is the same lie in smaller type.** The
+count lands well after the panel is built (the town list is a lazy download) and
+the repaint deliberately touches only the section body to hold the reader's
+scroll position, so `renderPeopleBody` updates the heading span explicitly.
+
+### Two rules that are load-bearing
+
+**Each town is classified once against both shapes. Never `past = total −
+ahead`.** The two envelopes come off the same sweep but are smoothed over
+different runs, so the forward shape can sit a nautical mile or two outside the
+full one near its far end. A town in that sliver is inside `ahead` and outside
+`all`, and the subtraction hands back a **negative number of people**. Reverting
+to it fails `tools/test-population.mjs` with `got -1000, want 0` — verified by
+mutation, not assumed.
+
+**`windAhead` is in `FUTURE_SLOTS`.** It is pure future by construction. A storm
+whose agency has gone silent or issued its last bulletin has no "still ahead"
+anybody is standing behind, and unlike the past track there is nothing in this
+slot that survives clipping.
+
+### NHC only, and that is correct rather than a gap
+
+GDACS publishes no past wind field at all — `data/gdacs-geometry.js` sets
+`windPast` to `none` — so its swath already begins at the current position and
+is already entirely "ahead". Those storms carry no `windAhead` slot, take the
+single-figure wording, and it means exactly what it always meant.
+
+> **OPEN:** the split says *whether* the storm has passed, not *when*. The past
+> track carries timestamps, so "it went through on Sunday" is available and not
+> built. Deferred deliberately — the useful half is the tense, and a date adds a
+> second thing to get wrong.
+
+> **OPEN:** the MAP has the same problem the caption had. The drawn swath is a
+> record where it is behind the storm and a forecast where it is ahead, in one
+> undifferentiated shade. A green wash still sitting over Honolulu reads as a
+> warning. Not touched here.
 
 ---
 

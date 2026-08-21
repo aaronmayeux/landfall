@@ -112,6 +112,10 @@ const full = {
     cone: slot(1), forecastTrack: slot(1), forecastPoints: slot(11),
     watchWarning: slot(3), modelTracks: slot(5), windCurrent: slot(3),
     pastTrack: slot(1), windSwath: slot(1),
+    /* The forward-only half of the envelope (§54). It is pure future by
+     * construction — the past tier is withheld on purpose — so it goes with
+     * the cone rather than with the past track. */
+    windAhead: slot(1),
   },
   forecast: [{ lon: 114, lat: 23, time: '2026-07-26T12:00:00Z' }],
   stamp: { advisnum: '13', filedate: '2026-07-26T00:00:00Z' },
