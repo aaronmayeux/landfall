@@ -59,25 +59,6 @@ traded for.
 
 ## IN FLIGHT
 
-**THE STORM LIGHT NO LONGER SHOWS A SOURCE, AND ONLY GLASS CAN SAY IF IT IS NOW
-TOO FAINT.** Three faults off Aaron's screenshots, 2026-08-21, all real and all
-fixed (§9.14). The falloff was peaked, which is what a light BULB looks like,
-and it sat directly above its storm's ridge — now flat-topped, no centre to
-find. Brightness tracked the cage's height by a back door: one light per color
-run meant a ridge that crossed six categories stacked six blobs to 0.96 alpha
-over its own peak, against 0.16 for a depression — now each storm composites
-through its own buffer, so six colors reach the backdrop no brighter than one.
-And the weave was real: 41 distinct alpha values in an 8-bit buffer contour into
-bands that bilinear magnification stretches into a crosshatch — now blurred in
-CSS, downstream of where it is made.
-
-**`GLOW.intensity` was deliberately NOT touched.** Three changes already move
-brightness around and a fourth would make it impossible to say which did what.
-A strong storm loses most of its old peak here, so the likely verdict is "too
-faint" — if so, that constant is the one dial, not the blur and not the radius.
-**Second thing to watch: frame rate while two-finger rotating on a phone.** The
-blur is full-screen and per-frame; `--glow-blur` halves cleanly if it bites.
-
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).
@@ -575,6 +556,28 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 **The three.js r128 → r182+ upgrade gates nothing.** Ordinary maintenance now.
 
 ## KNOWN AND ACCEPTED
+
+- **THE STORM LIGHT IS STRONGER ON A PHONE THAN ON A DESKTOP, AND THAT IS LEFT
+  ALONE.** Settled 2026-08-21, after the light-mode gain went to 3.0 (§9.14).
+  Aaron's first read was "perfect on desktop, too much on phone" and the
+  proposal was a strength slider in Settings. **Do not build it.** There are two
+  candidate causes and NEITHER WAS EVER TESTED, so do not repeat the earlier
+  wording that called it "almost certainly geometry" — that was a guess wearing
+  a conclusion's clothes. Candidate one is geometry: the blob radius is a
+  multiple of the globe's on-screen size, and the globe fills far more of a
+  phone than of a wide monitor, so the same light covers a much larger share of
+  what is being looked at. Candidate two is the display: light mode's glow is
+  pure chroma, and a wide-gamut phone held a foot away reads saturated color far
+  louder than a monitor at arm's length. A slider would have made a solo user
+  hand-tune whichever it is on every device forever, and if it is geometry it
+  would also have hidden the same problem on a desktop window dragged narrow.
+  **It grew on him and the verdict is now "leave it."** So the geometry fix was
+  never built either, and should not be built speculatively — it would be
+  correcting for something Aaron has since said he likes. If the complaint ever
+  returns, the question that separates the two causes is whether it is too much
+  when the globe is SMALL in the frame or only once it fills it: small-globe
+  fine means geometry, too-much-either-way means the phone's wider gamut and
+  the dial is `LIGHT.fx.glowSaturate`, not the gain.
 
 - **A SECOND CONSECUTIVE RED `verify` RUN IS A STOP-WORK SIGNAL.** Earned
   2026-08-21. The board ran red for **113 pushes** — from run 206 on 16 Aug to
