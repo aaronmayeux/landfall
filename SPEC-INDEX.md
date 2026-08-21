@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 225 numbered headings.
+Covering 9 files, 226 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -116,6 +116,7 @@ real home is the other row carrying the same section number.
 | `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1227 |
 | `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1228-1234 |
 | `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1235-1246 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1247-1300 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -255,7 +256,7 @@ real home is the other row carrying the same section number.
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 214,373 | 38 |
 | `SPEC-NEXT.md` | 121,628 | 29 |
-| `SPEC-OPS.md` | 76,106 | 20 |
+| `SPEC-OPS.md` | 79,137 | 21 |
 | `SPEC-UI.md` | 175,791 | 13 |
 | `SPEC.md` | 159,572 | 14 |
 | `spec-parameter.md` | 56,804 | 49 |

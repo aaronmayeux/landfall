@@ -35,6 +35,8 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { QUERIES } from './telemetry-queries.mjs';
+
 const OUT = process.argv[2];
 if (!OUT) {
   console.error('usage: node tools/cloudflare-telemetry.mjs <output-dir>');
@@ -150,91 +152,15 @@ if (!accountId) {
 console.log(`account ${accountId} — ${accountSource}`);
 
 /* --- the queries ---------------------------------------------------------- *
- * Written against the schema as understood on 2026-08-08. If one of these
- * fails because a column moved, THAT IS THE POINT — the manifest names the
- * query and the error instead of the whole thing going quiet. Fix the SQL here.
+ * They live in tools/telemetry-queries.mjs, which has no side effects and can
+ * therefore be imported by a test. This file cannot: it runs on load, talks to
+ * the network, and exits. Splitting them is what let the guards inside that SQL
+ * become checkable instead of merely commented.
  *
- * `timings_ok = 1` is always filtered where timings are involved: a session
- * that reported bad timings is noise, and including it moves the averages
- * without telling you it did.
+ * If one of these fails because a column moved, THAT IS THE POINT — the
+ * manifest names the query and the error instead of the whole thing going
+ * quiet. Fix the SQL there, not here.
  */
-const QUERIES = [
-  {
-    name: 'schema',
-    note: 'Every table and its CREATE statement. Read this first — it is the ' +
-      'ground truth for what the other queries can ask about.',
-    sql: "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
-  },
-  {
-    name: 'table-counts',
-    note: 'Row count per table. A count that stops moving is the first sign the writer died.',
-    sql:
-      "SELECT 'events' AS table_name, COUNT(*) AS rows FROM events " +
-      "UNION ALL SELECT 'sessions', COUNT(*) FROM sessions " +
-      "UNION ALL SELECT 'source_rollup', COUNT(*) FROM source_rollup",
-  },
-  {
-    name: 'platform-rollup',
-    note:
-      'THE WINDOWS QUESTION. Windows was averaging 2,403 ms blocked against ' +
-      '0 ms on iOS as of 2026-08-08, worst case 29,604 ms. ' +
-      'There is NO `blocked_ms` column — the first version of this query ' +
-      'invented one and failed with SQLITE_ERROR. Blocked time is ' +
-      '`longtask_ms`: main-thread long tasks, which is what a frozen globe ' +
-      'actually is. `worst_event_ms` is the single worst one.',
-    sql:
-      'SELECT platform, COUNT(*) AS clean_sessions, ' +
-      'ROUND(AVG(longtask_ms)) AS avg_blocked_ms, ' +
-      'MAX(longtask_ms) AS worst_blocked_ms, ' +
-      'MAX(worst_event_ms) AS worst_single_event_ms, ' +
-      'ROUND(AVG(longtask_n)) AS avg_longtask_count, ' +
-      'ROUND(AVG(t_globe_ms)) AS avg_veil_lift_ms, ' +
-      'ROUND(AVG(t_storms_ms)) AS avg_storms_ms, ' +
-      'ROUND(AVG(lcp_ms)) AS avg_lcp_ms ' +
-      'FROM sessions WHERE timings_ok = 1 ' +
-      'GROUP BY platform ORDER BY avg_blocked_ms DESC',
-  },
-  {
-    name: 'recent-sessions',
-    note:
-      'Sessions per day for the last 14 days. ' +
-      '==> `ts` IS IN SECONDS, NOT MILLISECONDS. <== The first version of ' +
-      'this query divided by 1000 and returned ONE row reading ' +
-      '"1970-01-21: 335 sessions". It did not error. It came back looking ' +
-      'entirely plausible and was completely wrong, which is worse than ' +
-      'failing. Verified against the schema: sessions.ts = 1786208965 is ' +
-      '2026-08-08T17:09Z read as seconds, and 1970 read as milliseconds.',
-    sql:
-      "SELECT DATE(ts, 'unixepoch') AS day, COUNT(*) AS sessions " +
-      'FROM sessions GROUP BY day ORDER BY day DESC LIMIT 14',
-  },
-  {
-    name: 'source-rollup',
-    note: 'Per-source health. Which feeds are answering and which are not.',
-    sql: 'SELECT * FROM source_rollup ORDER BY rowid DESC LIMIT 50',
-  },
-  {
-    name: 'recent-events',
-    note: 'The last 100 events, newest first. The raw trail behind everything above.',
-    sql: 'SELECT * FROM events ORDER BY rowid DESC LIMIT 100',
-  },
-  {
-    name: 'freshness',
-    note:
-      'How long ago the newest session landed. If `hours_since_newest` grows ' +
-      'past a few hours while the app is live, telemetry is not arriving and ' +
-      'every number above is stale WITHOUT LOOKING STALE. Read this before ' +
-      'trusting anything else here. Timestamps are rendered as text too, ' +
-      'because a bare integer is exactly how the seconds-vs-milliseconds bug ' +
-      'got past review.',
-    sql:
-      'SELECT MAX(ts) AS newest_ts, MIN(ts) AS oldest_ts, COUNT(*) AS total, ' +
-      "DATETIME(MAX(ts), 'unixepoch') AS newest_utc, " +
-      "DATETIME(MIN(ts), 'unixepoch') AS oldest_utc, " +
-      "ROUND((STRFTIME('%s','now') - MAX(ts)) / 3600.0, 1) AS hours_since_newest " +
-      'FROM sessions',
-  },
-];
 
 const report = [];
 let okCount = 0;

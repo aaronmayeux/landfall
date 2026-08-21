@@ -1243,3 +1243,57 @@ the whole archive branch was built to end.
 **Glass is the fourth transport and it is Aaron\x27s.** No tool here can say
 whether a layer is beautiful, legible at a glance, or fast enough on a phone.
 A research brief ends by naming what still needs a phone.
+
+### 18.6 The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS
+
+`tools/cloudflare-telemetry.mjs` runs on the archive runner every hour, asks D1
+directly, and commits the answers to `archive:latest/telemetry/`. **It exists
+because §18.4 can be absent.** On 2026-08-08 the Cloudflare MCP was simply not
+in a session and nobody noticed until someone went looking; a connector that can
+silently not be there is a bad single route to the numbers that say whether the
+app is healthy. Read them with plain git, no connector, no device:
+
+    git show origin/archive:latest/telemetry/manifest.json
+
+**Read `freshness.json` first.** If `hours_since_newest` has grown past a few
+hours while the app is live, every other file there is stale WITHOUT LOOKING
+STALE.
+
+**The SQL lives in `tools/telemetry-queries.mjs`, not in the runner.** That
+module has no side effects, so it can be imported; the runner cannot, because it
+runs on load, talks to the network and exits. The split is what makes
+`tools/test-telemetry-queries.mjs` possible, and every rule that test enforces
+was previously a comment that had already been broken at least once.
+
+**A COLUMN IS YOUNGER THAN ITS TABLE, AND THE DEFAULT IS NOT AN ANSWER.** This
+is the standing trap in this data and the reason two of the three answers below
+carry a caveat in their own output rather than in a note somebody has to
+remember to read:
+
+| column | added | what an old row holds | what that would mean if believed |
+|---|---|---|---|
+| `device` | 2026-08-05 | `''` | every earlier day was ONE person |
+| `ref_host` | 2026-08-14 | `''` | nine days of traffic arrived direct |
+
+`device = ''` is excluded from every people-count, and `daily-devices` returns
+`sessions_without_device` beside it so the hole is visible in the output. A
+people-count on a day where that number is not 0 is a FLOOR, not a total.
+
+`ref_host = ''` cannot be cleaned up the same way, because it legitimately means
+direct or same-site as well as "older than the column" — the two are genuinely
+indistinguishable in the data. It is therefore labelled `(direct, same-site, or
+pre-2026-08-14)` and **must never be shortened to "(direct)"**, which would turn
+missing data into a finding.
+
+**Three answers, three queries** — `daily-devices` for how many people,
+`referrers` for where they come from all time, `referrers-daily` for the shape
+of a spike. The last is separate on purpose: the all-time table flattens one
+busy day and a steady trickle into the same row, and a spike is exactly what
+gets asked about. It is bounded by a `WHERE` on `ts` rather than a `LIMIT`,
+because a `LIMIT` on a two-column grouping drops the quietest sources on the
+busiest day, and those are the new arrivals worth seeing.
+
+**Each query runs and reports independently.** One failing because a column
+moved must not cost the other nine, and a failure lands in the manifest as
+`unavailable` with the reason rather than writing an empty file — an empty
+result reads as "no traffic", which is the conflation §5 exists to prevent.

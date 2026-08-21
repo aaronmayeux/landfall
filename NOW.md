@@ -59,6 +59,26 @@ traded for.
 
 ## IN FLIGHT
 
+**THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
+ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
+`daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).
+The SQL moved out to `tools/telemetry-queries.mjs` so it could be tested; the
+guards inside it are now enforced by `tools/test-telemetry-queries.mjs`,
+mutation-verified against four separate breakages.
+
+**Verified against a stub, NOT against Cloudflare** — api.cloudflare.com is
+blocked from the sandbox, so the loop ran end to end with canned rows and wrote
+all three files, but no real SQL has touched D1. A query whose column name is
+wrong fails at the runner, not here. **Check `archive:latest/telemetry/manifest.json`
+after the next run: all three should read `ok`.** If one says `unavailable`, the
+reason is in that same entry and the fix is the SQL in the queries module.
+
+The question that prompted it: a link went on tigerdroppings.com on 2026-08-20
+and the archive could say visits doubled (34 → 76) but not say why. There is a
+15-session burst in the 13:00–14:00 UTC hour against a 2–3/hr background, which
+is the right shape, but attribution was not in any archived query. It will be
+from the next run on.
+
 **§48.10 IS STILL UNSETTLED, AND THE ONE THING THAT SETTLES IT IS AN NHC STORM
 NEAR A HOME PIN.** The storm drawer's Rainfall section now holds NHC's area
 range and the house's point total, one above the other, separated by a hairline,
