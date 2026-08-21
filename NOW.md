@@ -64,15 +64,25 @@ THE HANDOFF FROM THE CAGE.** No weather needed — zoom in on a wide monitor
 until MapLibre owns the picture and look at the edge of the planet, in BOTH
 themes.
 
+**THE FIRST CUT WAS A HOOP AND THAT IS FIXED — THIS IS THE SECOND LOOK.** It
+shipped straddling the edge, 10 px inside and 44 px out, so most of the ink sat
+beyond the planet: "it doesn't look like glass and it's sitting outside the
+horizon" (Aaron, glass, 2026-08-21). **The position was never wrong** — swept
+against the live transform, the ring's peak is on the true rendered limb to
+within about a pixel at every zoom. The PROFILE was. It now reaches inward only,
+with `RIM.bleedPx` of softening and nothing else outside. **Do not put a bloom
+back on the outside of the silhouette;** that is an atmosphere, not glass, and
+the Deep globe on the `worlds` branch recorded the same finding independently.
+
 The rim rises on exactly `DIVE.fade.cage`, the band the 3D cage leaves on, so
 that there is always one edge on screen and never two. But the cage's outer
 silhouette and MapLibre's limb are not at the same radius — the cage floats at
-1.065 globe radii and the 3D globe's own edge sits 2–5% inside MapLibre's — so
-for the length of that crossfade there are two soft arcs a few dozen pixels
-apart. **The question is whether that reads as one edge handing over or as a
-double ring.** If it is a double ring, the fix is one constant: give
-`map/limb-rim.js` its own band starting where the cage's ENDS (`0.62`), and it
-will simply arrive later. Nothing else moves.
+1.065 globe radii and the 3D globe's own edge sits inside MapLibre's — so for
+the length of that crossfade there are two arcs some pixels apart. **The
+question is whether that reads as one edge handing over or as a double ring.**
+If it is a double ring, the fix is one constant: give `map/limb-rim.js` its own
+band starting where the cage's ENDS (`0.62`), and it arrives later. Nothing
+else moves.
 
 Three smaller things to glance at while there, in this order:
 
@@ -82,10 +92,13 @@ the light theme reads through the shading that gathers away from the light
 instead. It should look like a white ball lit from the upper left. If it looks
 like the light is coming from the lower right, the sign is backwards.
 
-**2. IS IT TOO STRONG, OR NOT ENOUGH?** One dial per theme, `fx.rim` in
-`config/tokens.js` — 0.85 dark, 1.0 light. Light is the higher one on purpose:
-there the sea and the backdrop are the SAME hex, so the rim carries the entire
-edge on its own.
+**2. IS IT TOO STRONG, TOO THIN, OR TOO WIDE?** Three dials, and they are
+different questions. Strength: `fx.rim` in `config/tokens.js`, 0.85 dark and 1.0
+light — light is higher on purpose, because there the sea and the backdrop are
+the SAME hex and the rim carries the entire edge alone. Width: `RIM.reachFrac`,
+how far in it reaches as a share of the globe's radius. Concentration:
+`RIM.tailStop` / `shoulderStop`, how hard the light hugs the edge rather than
+spreading across the band.
 
 **3. DOES IT LEAVE CLEANLY WHEN YOU KEEP ZOOMING?** It fades out as the horizon
 passes the corners of the screen and switches off entirely past them. It should

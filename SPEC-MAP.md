@@ -3060,15 +3060,40 @@ cut-off the layer switches off and does not pay for the fill.
 
 **Where the ring goes is asked, never derived.** The radius comes from
 `limbRadiusPx()` in `map/marker-home-geometry.js`, which bisects on MapLibre's
-own `isLocationOccluded`. **The obvious closed form is wrong here in two
-independent ways, both growing with zoom.** `map/globe-follow.js` matches the
-two globes at the screen CENTRE, and the Three camera runs at `DIVE.fov` while
+own `isLocationOccluded`, and the ring's brightest stop lands on that figure
+within a pixel at every zoom.
+
+**Two reasons not to compute it instead.** `map/globe-follow.js` matches the two
+globes at the screen CENTRE, and the Three camera runs at `DIVE.fov` while
 MapLibre runs at its own default — two lenses matched in the middle do not agree
-at the edge. And MapLibre's clipping plane cuts at cos = 1/(*d*+1) rather than
-at the true tangent 1/*d*, so the edge it **draws** is about 4% outside the edge
-the geometry gives. On a 900-tall viewport the rendered limb is at 487 px at
-zoom 3 and 794 px at zoom 4, against 465 and 761 for the closed form; the ring's
-brightest stop lands within a pixel of the rendered figure at both.
+at the edge, by more the further in you go. And the closed form is itself about
+4% low: on a 900-tall viewport the rendered limb is at 487 px at zoom 3 and
+794 px at zoom 4, against 465 and 761 for radius = worldSize/2π at MapLibre's
+field of view. **Why it is low is open and deliberately not chased.** Swept
+against the live transform, the projected radius peaks at the exact arc where
+the occlusion flag flips and `limbRadiusPx` returns that same number to a tenth
+of a pixel — so the oracle is right and one of the formula's inputs is not what
+it is assumed to be. Nothing in the app uses the formula. This is recorded so
+the next session does not re-derive it and trust the answer.
+
+### The highlight is on the planet, not around it
+
+**Nothing is painted outside the silhouette but a few pixels of edge
+softening** (`RIM.bleedPx`). The reach goes inward, as a fraction of the limb
+radius rather than a pixel count, because how fast the surface turns away is a
+property of the sphere and not of the screen.
+
+**The first version straddled the edge — 10 px in, 44 px out — and it read as a
+hoop around the globe.** Aaron on glass, 2026-08-21: *"it doesn't look like
+glass and it's sitting outside the horizon."* The measurement was never at
+fault; the profile was. the Deep globe on the `worlds` branch had already
+recorded the same finding for the same reason: every earlier version of that
+globe's rim drew a hoop, because a separate shell is brightest at *its own*
+edge, and lighting the ball's own front face is what puts the bright line
+exactly on the silhouette. **A halo outside the silhouette is an atmosphere. A
+highlight on the surface is glass.** This app is asking for the second, and a
+real limb highlight — a Fresnel term on the front face — cannot reach past the
+edge by construction.
 
 **Two fills, and the second is not an approximation.** A radial gradient across
 an annulus straddling the limb — `oceanDeep` inward as the sea turns away,

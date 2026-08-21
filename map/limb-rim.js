@@ -41,20 +41,21 @@
  * renderer stops drawing. That is not a tidiness choice — the obvious closed
  * form is wrong here, and wrong in a way that grows:
  *
- *   THE 3D GLOBE'S SILHOUETTE IS NOT MAPLIBRE'S, TWICE OVER. map/globe-follow.js
- *   matches the two globes at the CENTRE of the screen, which is correct and
- *   was itself a fix for an earlier overshoot — but the Three camera runs at
- *   DIVE.fov (42 degrees) and MapLibre's at its own default (36.87), and two
- *   lenses matched in the middle do not agree at the edge. On top of that,
- *   MapLibre's clipping plane cuts at cos = 1/(d+1) rather than at the true
- *   tangent 1/d, so the edge it DRAWS is about 4% outside the edge the geometry
- *   says. Both errors point the same way and both grow with zoom.
+ *   THE 3D GLOBE'S SILHOUETTE IS NOT MAPLIBRE'S. map/globe-follow.js matches the
+ *   two globes at the CENTRE of the screen, which is correct and was itself a
+ *   fix for an earlier overshoot — but the Three camera runs at DIVE.fov (42
+ *   degrees) and MapLibre's at its own default (36.87), and two lenses matched
+ *   in the middle do not agree at the edge, by more the further in you go.
  *
- *   Neither is theoretical. On a 900-tall viewport the rendered limb is at
- *   487 px at zoom 3 and 794 px at zoom 4, against 465 and 761 for the closed
- *   form — and the ring's brightest stop lands within a pixel of the rendered
- *   figure at both, because it is the one being asked for. Anything positioned
- *   off the Three camera or off a formula drifts off the horizon as you zoom.
+ *   AND THE CLOSED FORM IS ALSO 4% OUT, FOR A REASON NOBODY HAS RUN DOWN. On a
+ *   900-tall viewport the rendered limb is at 487 px at zoom 3 and 794 px at
+ *   zoom 4; radius = worldSize/2pi with MapLibre's field of view says 465 and
+ *   761. Swept against the live transform, the projected radius peaks at the
+ *   exact arc where the occlusion flag flips and `limbRadiusPx` returns that
+ *   same number to a tenth of a pixel — so the ORACLE is right and one of the
+ *   formula's two inputs is not what it is assumed to be. It does not matter
+ *   which, because nothing here uses the formula. It is written down so the
+ *   next session does not derive it and believe the answer.
  *
  * The bisection is 18 clipping-plane dot products and two projections per
  * frame, which is cheaper than one of this layer's own gradient fills. It is
@@ -219,9 +220,14 @@ export function createLimbRim(canvas, map) {
      * half-diagonal. Fade it out on the way rather than switching it off, or a
      * slow zoom pops the corners. */
     const halfDiag = Math.hypot(cssW / 2, cssH / 2);
-    const reach = r / halfDiag;
+    const spanOfScreen = r / halfDiag;
     const [near, far] = RIM.offScreen;
-    const onScreen = reach <= near ? 1 : reach >= far ? 0 : 1 - smoothstep(reach, near, far);
+    const onScreen =
+      spanOfScreen <= near
+        ? 1
+        : spanOfScreen >= far
+          ? 0
+          : 1 - smoothstep(spanOfScreen, near, far);
     if (onScreen <= 0) {
       setOpacity(0);
       clear();
@@ -237,8 +243,13 @@ export function createLimbRim(canvas, map) {
 
     const cx = cssW / 2;
     const cy = cssH / 2;
-    const rIn = Math.max(0, r - RIM.innerPx);
-    const rOut = r + RIM.outerPx;
+    /* ==> THE HIGHLIGHT IS ON THE PLANET, NOT AROUND IT. <== The reach goes
+     * INWARD from the limb and scales with the ball; `bleedPx` is the couple of
+     * pixels of softening on the outside and is not a bloom. See RIM's header
+     * for the version that straddled the edge and read as a hoop. */
+    const reach = Math.min(RIM.reachMaxPx, Math.max(RIM.reachMinPx, r * RIM.reachFrac));
+    const rIn = Math.max(0, r - reach);
+    const rOut = r + RIM.bleedPx;
     /* Where the limb itself falls between the two ends of the gradient. The
      * peak has to sit HERE and not at a round number, or the brightest line of
      * the ring is not the edge of the planet — which is the one thing this
@@ -256,21 +267,20 @@ export function createLimbRim(canvas, map) {
       ctx.arc(cx, cy, rIn, 0, Math.PI * 2, true);
     };
 
-    /* --- 1. the base ring ------------------------------------------------ */
+    /* --- 1. the highlight on the limb ------------------------------------ */
     const g = ctx.createRadialGradient(cx, cy, rIn, cx, cy, rOut);
-    /* Inward: the sea turning away. Starts at nothing so the band has no inner
-     * edge of its own to read as a second line. */
+    /* Running OUTWARD from the inner end to the edge: nothing, then the sea
+     * deepening as it turns away, then the rim itself. The two shoulder stops
+     * sit well below a straight ramp, so the light is concentrated hard against
+     * the silhouette rather than spread evenly across a band. */
     g.addColorStop(0, `rgba(${ink.sea},0)`);
-    g.addColorStop(Math.max(0, edge - 1e-4), `rgba(${ink.sea},${alpha * 0.6})`);
+    g.addColorStop(edge * RIM.tailStop, `rgba(${ink.sea},${alpha * RIM.tailAlpha})`);
+    g.addColorStop(edge * RIM.shoulderStop, `rgba(${ink.base},${alpha * RIM.shoulderAlpha})`);
     /* The limb. */
     g.addColorStop(edge, `rgba(${ink.base},${alpha})`);
-    /* Outward: the bloom. The shoulder sits BELOW a straight falloff so the
-     * light leaves quickly and then has a long faint tail — a linear ramp reads
-     * as a drawn band with a soft edge rather than as light. */
-    g.addColorStop(
-      Math.min(1, edge + (1 - edge) * RIM.shoulderStop),
-      `rgba(${ink.base},${alpha * RIM.shoulderAlpha})`
-    );
+    /* And out. This is `bleedPx` wide — the softening on a hard edge, not a
+     * halo. Anything that reads as a glow OUTSIDE the planet is the hoop this
+     * profile exists to avoid. */
     g.addColorStop(1, `rgba(${ink.base},0)`);
     ctx.fillStyle = g;
     band();

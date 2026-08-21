@@ -1575,25 +1575,59 @@ export const GLOW = Object.freeze({
  * zoom.
  * ------------------------------------------------------------------------- */
 export const RIM = Object.freeze({
-  /** How far INSIDE the limb the band starts, CSS px. Short on purpose: this
-   *  side is the sea deepening as it turns away, and any more of it starts
-   *  tinting real map near the edge. */
-  innerPx: 10,
+  /* ==> THE RING LIVES INSIDE THE LIMB. IT USED TO STRADDLE IT, AND THAT WAS
+   * THE FIRST VERSION'S WHOLE PROBLEM. <==
+   *
+   * It shipped 10 px inside and 44 px outside, so four fifths of the ink sat
+   * beyond the planet. Aaron's verdict on glass, 2026-08-21: "it doesn't look
+   * like glass and it's sitting outside the horizon." The measurement was not
+   * the fault — the peak was on the true edge to within a tenth of a pixel —
+   * the PROFILE was.
+   *
+   * the Deep globe on the `worlds` branch had already written this down
+   * and it is worth quoting, because it is the same mistake: "every earlier
+   * version drew a hoop. They were all separate shells, and a shell is
+   * brightest at its OWN edge... Lighting the ball's own front face instead
+   * puts the bright edge exactly at the silhouette." A halo around a planet is
+   * an ATMOSPHERE. Light on the planet's own surface is GLASS. This app is
+   * asking for the second one, and the second one has nothing outside the
+   * silhouette at all.
+   *
+   * That also makes the honest geometric read the cheap one: a real limb
+   * highlight IS a Fresnel term on the sphere's front face, which by
+   * construction cannot reach past the edge. */
 
-  /** How far OUTSIDE the limb it reaches, CSS px. This is the half that reads
-   *  as light spilling off the planet, so it is the longer one. */
-  outerPx: 44,
+  /** How far inward the highlight reaches, as a fraction of the limb radius.
+   *  A FRACTION, not a pixel count: the falloff is a property of how steeply
+   *  the surface is turning away, so it scales with the ball. The clamps below
+   *  are what keep the painted band — and therefore the cost — bounded at the
+   *  extremes. */
+  reachFrac: 0.09,
+  reachMinPx: 22,
+  reachMaxPx: 130,
 
-  /** Peak alpha at the limb itself, before the theme's own `fx.rim`
-   *  multiplier and before either fade. */
+  /** How far the highlight bleeds OUTSIDE the limb, CSS px. Nearly nothing,
+   *  and not zero: the planet's edge is genuinely hard, but a razor cut on a
+   *  curve reads as a jagged polygon rather than as an edge. This is the width
+   *  of the softening and nothing else. **If it ever needs to be more than a
+   *  few pixels, the answer is a different effect, not a bigger number.** */
+  bleedPx: 3,
+
+  /** Peak alpha, AT the limb, before the theme's own `fx.rim` multiplier and
+   *  before either fade. */
   intensity: 0.55,
 
-  /** The gradient's shoulder — alpha at `shoulderStop` of the way from the
-   *  limb out to `outerPx`. Below the straight line a linear falloff would
-   *  give, so the bloom leaves quickly and then has a long faint tail, which
-   *  is what stops it reading as a drawn band with a soft edge. */
-  shoulderStop: 0.28,
-  shoulderAlpha: 0.34,
+  /** The inward falloff, as two points on the curve. Both are fractions of the
+   *  inward reach — 0 is the inner end of the band, 1 is the limb itself.
+   *
+   *  Well below a straight line on purpose. A linear ramp inward reads as a
+   *  painted band with a soft inner edge; a real limb highlight is
+   *  concentrated hard against the silhouette and gone a moment later, which
+   *  is what these two stops shape. */
+  tailStop: 0.55,
+  tailAlpha: 0.10,
+  shoulderStop: 0.86,
+  shoulderAlpha: 0.45,
 
   /** ==> WHERE THE LIGHT IS, AND IT IS NOT A NEW OPINION. <==
    *
@@ -1632,13 +1666,17 @@ export const RIM = Object.freeze({
    *  blinking out while still visible.
    *
    *  ==> THESE ZOOMS ARE MEASURED IN A REAL BROWSER, NOT DERIVED, AND THE
-   *  DERIVED ONES WERE WRONG. <== The obvious closed form — globe radius
-   *  worldSize/2pi, MapLibre's default field of view, solve for the tangent —
-   *  comes out about 4% low at every zoom, because MapLibre's clipping plane
-   *  is deliberately a little permissive (it cuts at cos = 1/(d+1) rather than
-   *  at the true tangent 1/d, so a sliver of the far side stays drawn). The
-   *  rendered edge is therefore slightly outside the geometric one, which is
-   *  exactly why `limbRadiusPx` asks instead of computing.
+   *  DERIVED ONES WERE WRONG BY ABOUT 4%. <== The obvious closed form — globe
+   *  radius worldSize/2pi, MapLibre's default field of view, solve for the
+   *  tangent — comes out low at every zoom. WHY it is low has NOT been run
+   *  down, and the guess that went in here first (that MapLibre's clipping
+   *  plane is permissive) was checked and is wrong: swept against the live
+   *  transform, the projected radius peaks at the exact arc where the
+   *  occlusion flag flips, and `limbRadiusPx` returns that same figure to a
+   *  tenth of a pixel. So one of the two inputs to the formula is not what it
+   *  is assumed to be. That question is open and it does not need answering,
+   *  because nothing in the app uses the formula — this is a note so the next
+   *  session does not re-derive it and trust the answer.
    *
    *  Bisected against the live layer, full-window viewports: the rim switches
    *  off at z5.65 on 3440x1440, z4.67 on 1920x1080, z4.31 on 1512x945, and

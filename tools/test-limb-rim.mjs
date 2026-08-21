@@ -165,9 +165,30 @@ for (const dist of [3, 2.4, 2.0]) {
   ok(!!base, `d=${dist}: a base radial gradient was built`);
   const rIn = base.r0;
   const rOut = base.r1;
+  /* ==> NOTHING OUTSIDE THE PLANET. <== This is the rule the first version
+   * broke: it put 44 px of bloom outside the limb against 10 px inside, and on
+   * glass that reads as a hoop AROUND the globe rather than as light ON it.
+   * A halo outside the silhouette is an atmosphere; this is meant to be glass.
+   * `bleedPx` is the couple of pixels that keep the edge from being a razor
+   * cut, and it is the entire allowance.
+   * MUTATION: put the reach back on the outside and this fails at every
+   * distance. Verified. */
   ok(
-    Math.abs(rOut - rIn - (RIM.innerPx + RIM.outerPx)) < 0.51,
-    `d=${dist}: the band is innerPx+outerPx wide, in CSS pixels, whatever the zoom`
+    rOut - trueR <= RIM.bleedPx + 0.51,
+    `d=${dist}: nothing is painted outside the limb but the edge softening`
+  );
+  ok(
+    trueR - rIn > RIM.bleedPx * 2,
+    `d=${dist}: and the highlight itself lives inside the planet`
+  );
+  /* The reach scales with the ball, clamped. A fixed pixel width would be a
+   * different fraction of the globe at every zoom, which is the one thing a
+   * limb highlight is not — how fast the surface turns away is a property of
+   * the sphere, not of the screen. */
+  const wantReach = Math.min(RIM.reachMaxPx, Math.max(RIM.reachMinPx, trueR * RIM.reachFrac));
+  ok(
+    Math.abs(trueR - rIn - wantReach) < 1.0,
+    `d=${dist}: the inward reach scales with the limb radius, within its clamps`
   );
   /* The stop with the largest alpha IS the limb. Parsed out of the rgba
    * string, because that is what the browser will read. */
