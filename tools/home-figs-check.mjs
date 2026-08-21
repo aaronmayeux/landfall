@@ -39,11 +39,42 @@ let pass = 0;
 const failures = [];
 const ok = (cond, msg) => { if (cond) pass++; else failures.push(msg); };
 
-/* The real stylesheet and the real tokens — not a copy. A fixture that
+/* The real stylesheets and the real tokens — not a copy. A fixture that
  * restates either is measuring a different app, which this project has already
- * paid for once (see tools/drawer-head-harness.html). */
-const homeCss = readFileSync(join(ROOT, 'ui/home.css'), 'utf8');
+ * paid for once (see tools/drawer-head-harness.html).
+ *
+ * ==> AND THE LIST OF THEM IS READ OUT OF index.html, NOT TYPED HERE. <==
+ * This file used to load `ui/home.css` and nothing else. On 2026-08-20 the
+ * text-system pass moved `.home-figs-k`'s font size OUT of home.css and into
+ * panels.css — a correct change, and one this check could not see. The label
+ * fell back to the browser's default 16px, "When it's closest" wrapped at
+ * 308px, and the check reported a wrapped label in a page that was not the
+ * app. It stayed red for eight runs and took the three gates after it down
+ * with it, none of which ran again.
+ *
+ * A hand-picked stylesheet list is a SECOND copy of a fact that already lives
+ * in the markup, and the two drift the first time a rule moves house. Reading
+ * the <link> tags means the harness cannot fall behind: move a rule anywhere
+ * the app loads and this page loads it too, in the same cascade order, with
+ * no edit here. */
 const idx = readFileSync(join(ROOT, 'index.html'), 'utf8');
+
+const sheets = [...idx.matchAll(/<link\b[^>]*>/g)]
+  .map((m) => m[0])
+  .filter((tag) => /rel\s*=\s*["']stylesheet["']/.test(tag))
+  .map((tag) => (tag.match(/href\s*=\s*["']([^"']+)["']/) || [])[1])
+  .filter(Boolean)
+  .map((href) => href.replace(/^\.\//, ''));
+
+/* If the markup stops naming any stylesheet, every assertion below would
+ * measure unstyled text and the failures would read like layout regressions.
+ * Say what actually happened instead. */
+if (!sheets.length) {
+  console.error('home-figs-check: index.html names no stylesheets. Did the <link> tags move?');
+  process.exit(1);
+}
+
+const homeCss = sheets.map((p) => readFileSync(join(ROOT, p), 'utf8')).join('\n');
 const rootStart = idx.indexOf(':root {');
 const rootBlock = idx.slice(rootStart, idx.indexOf('}', idx.lastIndexOf('--keyboard-inset', idx.indexOf('</style>'))) + 1);
 

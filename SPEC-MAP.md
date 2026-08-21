@@ -1813,6 +1813,13 @@ being short an entry.
 against `THEME_STATE` in both directions and resolves every palette path against
 both palettes; it also fails on a single `palette()` call in `map/style.js`. A
 missing key is not an error in MapLibre — it is a silently rejected layer.
+
+It also resolves the local alias `P`, **but only in a file that contains
+`const P = palette()`.** `P` is a one-letter name and the palette does not own
+it: the check once read `ui/chart-home.js`'s `const P = []` — a list of past
+track points — as a palette, and demanded colours named `push` and `length`. A
+file declares itself by aliasing, so a new builder is covered the moment it
+does and nothing is skipped by name.
 `tools/test-theme-state.mjs` walks the generated style in both themes and both
 tile schemas and asserts it is byte-identical outside its `state` block, which is
 the property that makes `setGlobalState` sufficient.

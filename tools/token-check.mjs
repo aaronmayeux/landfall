@@ -69,14 +69,41 @@ const GROUPS = [
     objs: { 'DARK.geo': DARK.geo, 'LIGHT.geo': LIGHT.geo }, consume: true },
   { pattern: /\bpalette\(\)\.([A-Za-z_$][\w$]*)/g,
     objs: { DARK, LIGHT } },
+  /* ==> `P` IS ONLY THE PALETTE IN A FILE THAT SAYS SO. <== These two groups
+   * carry a `when`, and they are the only ones that do.
+   *
+   * `P` is a one-letter name and the palette does not own it. This check
+   * assumed it did, so `ui/chart-home.js` writing `const P = []` for a list of
+   * past track points turned `P.push` and `P.length` into demands for a colour
+   * called "push" and a colour called "length" — six failures against code
+   * that is perfectly correct, on 2026-08-16, and the board stayed red for a
+   * hundred runs after it.
+   *
+   * That was the SECOND time. The first was the volcano plume files, and the
+   * reason it went green again is that those files were deleted, not that this
+   * was fixed — so the trap was still set, and the next short local variable
+   * sprang it. A check that cries wolf trains you to ignore the board, which
+   * costs more than the bug it was written to catch.
+   *
+   * So the file has to declare itself. `const P = palette()` is the alias
+   * pattern every real palette holder uses — app/theme-switch.js,
+   * map/globe3d.js, map/glyph.js, map/heightfield.js, map/layers/genesis.js —
+   * and a file that does not write it is not talking about colours. Nothing is
+   * skipped by name and nothing is on a list; a new builder that aliases the
+   * palette is covered the moment it does, with no edit here. */
   { pattern: /\bP\.geo\.([A-Za-z_$][\w$]*)/g,
-    objs: { 'DARK.geo': DARK.geo, 'LIGHT.geo': LIGHT.geo }, consume: true },
-  /* `const P = palette()` is the local alias a builder uses when it resolves
-   * one. map/style.js no longer does — see the ZERO check below — but
-   * map/globe3d.js and map/heightfield.js still do, and they are the files
-   * where a `P.geo.coneFyll` would go unnoticed. */
-  { pattern: /\bP\.([A-Za-z_$][\w$]*)/g, objs: { DARK, LIGHT } },
+    objs: { 'DARK.geo': DARK.geo, 'LIGHT.geo': LIGHT.geo },
+    when: aliasesPalette, consume: true },
+  { pattern: /\bP\.([A-Za-z_$][\w$]*)/g,
+    objs: { DARK, LIGHT }, when: aliasesPalette },
 ];
+
+/** True when the file resolves the palette into the local alias `P`. Run on
+ *  the COMMENT-STRIPPED source, so the paragraph above — which contains the
+ *  words `const P = palette()` — cannot make a file claim to be one. */
+function aliasesPalette(src) {
+  return /\bconst\s+P\s*=\s*palette\s*\(\s*\)/.test(src);
+}
 
 /* Files the app actually ships. The vendor bundle is not ours. SKIP_FILES is
  * empty and kept: it held the two prototype pages until they were deleted with
@@ -109,7 +136,8 @@ for (const file of walk(ROOT)) {
   let text = stripComments(readFileSync(file, 'utf8'));
   const rel = relative(ROOT, file);
 
-  for (const { pattern, objs, consume } of GROUPS) {
+  for (const { pattern, objs, consume, when } of GROUPS) {
+    if (when && !when(text)) continue;
     const hits = [...text.matchAll(pattern)];
     for (const m of hits) {
       const key = m[1];

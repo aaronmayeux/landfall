@@ -557,6 +557,21 @@ engine upgrade** — both are surgery on `map/globe3d.js`.
 
 ## KNOWN AND ACCEPTED
 
+- **A SECOND CONSECUTIVE RED `verify` RUN IS A STOP-WORK SIGNAL.** Earned
+  2026-08-21. The board ran red for **113 pushes** — from run 206 on 16 Aug to
+  run 318 — on two checks that were both wrong about a working app, and every
+  push in between sailed straight past them. `ci.yml` already says at the top
+  that a permanently red check trains you to ignore the whole board; that is
+  precisely what happened, and the cost was that four gates behind them stopped
+  running at all and nobody noticed.
+  **Both failures were the same species: a check holding a second copy of a
+  fact the app already owns.** `token-check` assumed the name `P` belonged to
+  the palette; `home-figs-check` kept its own list of stylesheets. Neither
+  survived an ordinary edit elsewhere, and neither was fixed the first time it
+  went green — the offending files were simply deleted, so the trap stayed set.
+  When a gate fires, the first question is whether it is describing the app or
+  describing itself.
+
 - **THE WORK PC'S JITTER IS THE CORPORATE VPN, NOT THE APP. SETTLED, DO NOT
   RE-DIAGNOSE.** Established 2026-08-20 by elimination: the same build on
   Aaron's *other* work PC pans smoothly. The VPN (GlobalProtect) was already

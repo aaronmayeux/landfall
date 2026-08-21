@@ -298,15 +298,15 @@ export function homeChart(dash, system) {
   if (Number.isFinite(passedH) && passedH < 0) {
     backH = Math.max(backH, -passedH + HOME_DASH.chartPastPassMarginHours);
   }
-  const P = [];
+  const past = [];
   for (const p of dash.pastSamples || []) {
     if (!Number.isFinite(p.h) || !Number.isFinite(p.nm)) continue;
     if (p.h < -backH || p.h > 0) continue;
-    if (p.nm > limit) { P.length = 0; continue; }
-    P.push(p);
+    if (p.nm > limit) { past.length = 0; continue; }
+    past.push(p);
   }
 
-  const hMin = Math.min(0, S.length ? S[0].h : 0, P.length ? P[0].h : 0);
+  const hMin = Math.min(0, S.length ? S[0].h : 0, past.length ? past[0].h : 0);
   /* ==> THE RIGHT EDGE IS `now` WHEN THERE IS NO FORECAST. <== A past-only
    * chart runs from the earliest kept observation to the present and stops
    * there. Reading `S[S.length - 1]` on an empty array threw, which is why
@@ -316,7 +316,7 @@ export function homeChart(dash, system) {
 
   let nmMax = 0;
   for (const s of S) nmMax = Math.max(nmMax, s.nm);
-  for (const p of P) nmMax = Math.max(nmMax, p.nm);
+  for (const p of past) nmMax = Math.max(nmMax, p.nm);
   nmMax = Math.max(nmMax, 1);
 
   const X = (h) => PAD_L + ((W - PAD_L - PAD_R) * (h - hMin)) / (hMax - hMin);
@@ -625,12 +625,12 @@ export function homeChart(dash, system) {
    *
    * ==> ONE TRACK, ORDERED BY TIME, NOT TWO ARRAYS CONCATENATED. <== The
    * observations and the corridor overlap: the newest fix trails the advisory
-   * position by up to a synoptic step, so `P` can end AFTER `S` begins. Laying
+   * position by up to a synoptic step, so `past` can end AFTER `S` begins. Laying
    * them end to end drew a line that walked backwards for one segment, and any
    * split of that sequence lands the seam in the wrong place. Sorted, they are
    * what they always were — one storm's distance from the house, measured then
    * forecast. */
-  const track = [...P, ...S].sort((a, b) => a.h - b.h);
+  const track = [...past, ...S].sort((a, b) => a.h - b.h);
   const nowPt = splitAtNow(track);
   /* Left of the seam: everything already behind the clock, then the seam. */
   const solidPts = [...track.filter((p) => p.h < 0), ...(nowPt ? [nowPt] : [])];

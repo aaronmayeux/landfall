@@ -327,6 +327,14 @@ edge on a 320px phone, so the columns must be able to shrink and wrap rather
 than overflow. `tools/home-figs-check.mjs` measures all of it; the markup no
 longer declares a column count, because the flow derives it.
 
+**The harness loads every stylesheet `index.html` loads, read from the `<link>`
+tags rather than named in the check.** It used to load `ui/home.css` alone. When
+the text-system pass moved `.home-figs-k`'s size into `ui/panels.css` the label
+fell back to the browser's 16px default, wrapped at 308px, and the check
+reported a layout regression in a page that was not the app. A hand-picked
+stylesheet list is a second copy of a fact the markup already holds, and the two
+drift the first time a rule moves house.
+
 **And each column's three lines are centred on one vertical axis.** They were
 flush left, so a column read as ragged — "Strongest" is wider than "81 mph" and
 narrower than "after it passes", and three different line widths hung off one
