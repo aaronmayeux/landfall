@@ -59,34 +59,6 @@ traded for.
 
 ## IN FLIGHT
 
-**LAYERS AND SETTINGS OPENED FROM A STORM NOW HAVE A BACK BUTTON, AND THIS NEEDS
-A DESKTOP WINDOW TO JUDGE — NO WEATHER.** SPEC-UI §16 described
-`storms → detail → layers, back ⇒ that storm's detail` as as-built for a month
-and it was reachable from nowhere: the detail panel's own Layers shortcut was
-deleted on 2026-07-25, leaving the floating button, which called `go` and threw
-the stack away. `clusterAction` in `ui/drawer.js` is the rule now — Storms and
-Home are destinations and always start fresh; Layers and Settings push onto
-whatever you were reading; one side trip onto another swaps, which caps the
-stack at three.
-
-**Open a storm, press Layers, and look at the top-left of the sheet.** It should
-read `‹ Hurricane Erin` — the storm's own name, not the word "Storm" — and one
-press should put you back on that storm with its cone still drawn. Press
-Settings while Layers is open and Back should still be one press, not two.
-**Only visible at 720px and wider**, where the drawer is a left rail and the
-corner buttons stay reachable; at phone width the cluster is hidden behind the
-sheet and none of this arises.
-
-Two smaller things while there: closing from a pushed Layers should return
-keyboard focus to the **Layers** button, not the Storms one, and a Tab pass at
-phone width with the drawer open should no longer walk into the four invisible
-corner buttons (they were `opacity: 0` only, so they stayed focusable and a
-screen reader read them aloud).
-
-`tools/test-drawer-nav.mjs` holds all of it — 47 assertions, mutation-verified
-six ways. `tools/drawer-head-check.mjs` re-run in the browser: 55 pass, the
-header still centres behind the longer back label.
-
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).
