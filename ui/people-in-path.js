@@ -1,6 +1,7 @@
 /**
- * people-in-path.js (ui) — the People in the path section of the storm drawer.
- * SPEC-UI.md "People in the path" for the count; §54 for the past/ahead split.
+ * people-in-path.js (ui) — the Population affected section of the storm drawer.
+ * SPEC-UI.md "People in the path" for the count; §54 for the past/ahead split
+ * and for why the on-screen heading is neither of those names.
  *
  * A SELF-CONTAINED CONTROLLER, for the reason `ui/env-health.js` is one:
  * `ui/view-storm-detail.js` is past §12's file ceiling and the table entry says
@@ -26,8 +27,9 @@
  * ==> AND IT IS TWO NUMBERS, NOT ONE, BECAUSE THE SWATH IS THE STORM'S WHOLE
  * LIFE (§54). <== NHC's envelope covers where the storm has been as well as
  * where it is going, in one polygon with no mark on it saying where the past
- * ends. Counted whole under the heading "People in the path", it reads as a
- * warning about wind that has already fallen. Seen on glass 2026-08-21:
+ * ends. Counted whole under a heading reading "in the path" — which is what
+ * this section wore at the time — it reads as a warning about wind that has
+ * already fallen. Seen on glass 2026-08-21:
  * Hurricane Lala, advisory 34A, showed 1.3M people in 121 towns — every town in
  * Hawaii, every one of them behind the storm by days, and nobody at all in
  * front of it. The storm was 900 miles out to sea heading north into empty
@@ -163,15 +165,23 @@ export function createPeopleInPath({ loadTowns, townsOrNull, populationState }) 
     repaint();
   }
 
-  /** The section heading. It follows the body, because a heading reading
-   *  "People in the path" over a paragraph reading "already been through it" is
-   *  the same false claim in smaller type. */
+  /** The section heading. FIXED, and deliberately tense-neutral.
+   *
+   *  ==> IT USED TO CHANGE WITH THE COUNT AND THAT WAS THE WRONG FIX. <== The
+   *  first cut of §54 swapped the heading to "People it went through" whenever
+   *  nobody was ahead, on the grounds that "People in the path" over a
+   *  past-tense paragraph is the same false claim in smaller type. The claim
+   *  was right; the remedy was not. Aaron's call, 2026-08-21: "went through"
+   *  reads as though the storm walked through the people, and a section that
+   *  renames itself is harder to find when you are scanning the drawer — open
+   *  the same storm twice and the heading has moved.
+   *
+   *  "Population affected" is true in every state, so the heading never has to
+   *  lie and never has to move. THE BODY CARRIES THE TENSE, which is where a
+   *  tense belongs: it is a sentence, and a sentence can say "have already been
+   *  through" without a two-word heading trying to. */
   function title() {
-    if (people.state === 'ok' && people.split
-      && people.ahead.people === 0 && people.past.people > 0) {
-      return 'People it went through';
-    }
-    return 'People in the path';
+    return 'Population affected';
   }
 
   /**

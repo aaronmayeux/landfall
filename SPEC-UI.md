@@ -2415,21 +2415,31 @@ rather than newly wrong in a large one.
 
 ### Three shapes of sentence
 
-| What is true | Heading | Body |
-|---|---|---|
-| People ahead, none behind | People in the path | *≈N people in M towns are inside the tropical-storm-force wind field or ahead of it.* |
-| Both | People in the path | The ahead figure leads; one line beneath: *Another ≈N in M towns have already been through it.* |
-| Nobody ahead, people behind | **People it went through** | *≈N people in M towns have already been through the tropical-storm-force wind field. Nobody is ahead of the storm now.* |
+The heading is **Population affected** in all three. Only the body changes.
+
+| What is true | Body |
+|---|---|
+| People ahead, none behind | *≈N people in M towns are inside the tropical-storm-force wind field or ahead of it.* |
+| Both | The ahead figure leads; one line beneath: *Another ≈N in M towns have already been through it.* |
+| Nobody ahead, people behind | *≈N people in M towns have already been through the tropical-storm-force wind field. Nobody is ahead of the storm now.* |
 
 **The one that can still be acted on leads, and the past gets a line rather than
 a second figure.** Two big numbers stacked at phone width is two things to
 compare and nothing saying which matters — the same call §49.2 makes for the
 home drawer's mid-pass case.
 
-**The heading moves with the body or it is the same lie in smaller type.** The
-count lands well after the panel is built (the town list is a lazy download) and
-the repaint deliberately touches only the section body to hold the reader's
-scroll position, so `renderPeopleBody` updates the heading span explicitly.
+**THE HEADING IS FIXED, AND THE FIRST CUT OF THIS SECTION GOT THAT WRONG.** It
+swapped to *People it went through* whenever nobody was ahead, reasoning that
+*in the path* over a past-tense paragraph is the same false claim in smaller
+type. The claim was right and the remedy was not. Aaron's call, 2026-08-21:
+*went through* reads as though the storm walked through the people, and a
+section that renames itself is harder to find when scanning the drawer — open
+the same storm twice and the heading has moved.
+
+*Population affected* is true in every state, so the heading never lies and
+never moves. **The body carries the tense**, which is where a tense belongs: a
+sentence can say *have already been through* without a two-word heading trying
+to. `title()` is a constant, and the section repaint touches the body only.
 
 ### Two rules that are load-bearing
 

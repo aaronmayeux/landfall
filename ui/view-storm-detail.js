@@ -1355,17 +1355,6 @@ export function createStormDetailView({
     if (!host2) return;
     host2.innerHTML = peopleH.html(storm, { ghost, withheld: withheldNote() });
     peopleH.wire(host2, storm, ghost, geo, renderPeopleBody);
-
-    /* ==> THE HEADING IS REPAINTED HERE OR IT IS NEVER REPAINTED AT ALL. <==
-     * The count lands well after the panel is built — the town list is a lazy
-     * download — and this repaint deliberately touches only the body to keep
-     * the reader's scroll position. The title now depends on the count (§54),
-     * so leaving the heading alone would freeze "People in the path" above a
-     * paragraph that has just decided the storm already went through. */
-    const titleEl = bodyEl?.querySelector(
-      `.detail-section[data-section="${PEOPLE_SECTION}"] .detail-section-head h2 span`
-    );
-    if (titleEl) titleEl.textContent = peopleH.title();
   }
 
   /** Repaint ONLY the advisory section. A full renderBody() would rebuild
