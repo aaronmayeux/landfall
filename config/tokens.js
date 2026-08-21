@@ -615,6 +615,26 @@ export const DARK = Object.freeze({
     meshFill:    0.16,
     node:        0.85,
     stormDot3d:  0.95,
+
+    /** ==> HAZE INSIDE THE SPHERE — AND DARK DELIBERATELY ASKS FOR NONE. <==
+     *
+     *  How far the back half of the globe is faded OUT rather than merely
+     *  recoloured by distance fog. 0 is exactly today's behaviour; 1 takes the
+     *  far pole to fully transparent. See map/fog-fade.js for the mechanism and
+     *  why fog alone could never do this.
+     *
+     *  ZERO HERE IS A MEASUREMENT, NOT A DEFAULT. Dark's fog colour `space`
+     *  (#04070E) sits within a few levels of `spaceNear` (#0F1F38), the
+     *  backdrop actually behind the globe at the planet band — so a fully
+     *  fogged cage line already lands 8 levels off the backdrop and is gone.
+     *  Dark has looked right for a year for that reason. There is nothing here
+     *  to fix, and turning this up would start dissolving a far hemisphere that
+     *  is already invisible.
+     *
+     *  The light theme's 0.90 is tuned to arrive at that same 8-to-10 levels.
+     *  This is the pair of numbers that makes the two themes agree; it is not
+     *  a light-only hack bolted onto a dark-only mechanism. */
+    fogFade:     0.0,
     /** STORM LIGHT ON THE BACKDROP (map/limb-glow.js). Emitted light on a
      *  night sky, so it can run higher than the light theme's — there is a
      *  whole dark gradient of headroom above `space` for it to climb into, and
@@ -1195,6 +1215,37 @@ export const LIGHT = Object.freeze({
     meshFill:    0.40,
     node:        0.95,
     stormDot3d:  1.0,
+
+    /** ==> HAZE INSIDE THE SPHERE — THE NUMBER THIS THEME ACTUALLY NEEDED.
+     *
+     *  See DARK.fogFade for what this does and map/fog-fade.js for how. The
+     *  short version: distance fog only changes COLOUR, and this theme's fog
+     *  colour is the wrong colour for the job.
+     *
+     *  `space` is #C2C6CA, pinned to the OCEAN's value on purpose so the sea
+     *  and the backdrop agree and the limb is the only edge. But at the planet
+     *  band MapLibre is still at zero opacity and what sits behind the globe is
+     *  the `spaceNear` bloom at #EFF7FF — 30 levels lighter. So every far-side
+     *  fragment fogged "all the way" landed on that gap instead of vanishing.
+     *  Measured on the cage before this shipped: the far lattice read 44 levels
+     *  off its backdrop here against 8 in dark, better than five times as
+     *  visible. Aaron reported it as seeing straight through the globe, and
+     *  that ratio is what he was looking at.
+     *
+     *  ==> AND FIXING IT BY MOVING THE FOG COLOUR IS THE TRAP. <== Pointing
+     *  this theme's fog at the bloom would hide the far side at the planet band
+     *  and break the instant MapLibre fades up underneath — because MapLibre's
+     *  daylight ocean IS #C2C6CA. The right fog colour would have to change
+     *  with zoom. Alpha does not care what is behind it. That is the whole
+     *  argument for fading rather than recolouring.
+     *
+     *  0.90 puts the far lattice 10 levels off its backdrop, just shy of dark's
+     *  8 — a ghost rather than a diagram, matched to the theme that already
+     *  reads correctly. 0.95 would land on 8 exactly and is the next step if
+     *  Aaron wants it fully gone on glass; below about 0.80 the lattice starts
+     *  being legible again. The near shell is untouched at any value here —
+     *  `DIVE.fogFadeStart` holds the haze off until the limb. */
+    fogFade:     0.90,
     /** STORM LIGHT ON THE BACKDROP — and LOWER than dark's, which is the one
      *  place this pair inverts the usual rule that light's alphas run higher.
      *

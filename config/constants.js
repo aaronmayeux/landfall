@@ -964,6 +964,14 @@ export const GLOBE = Object.freeze({
  * (preserved on the `worlds` branch), validated on a phone before integration.
  * ------------------------------------------------------------------------- */
 
+/* The fog band, hoisted out of the frozen object below ONLY so `fogFadeStart`
+ * can be arithmetic on it — an object literal cannot read its own siblings, and
+ * a second hand-typed copy of these two numbers is exactly the drift this file
+ * exists to prevent. Both are re-exported as `DIVE.fogNearBack` /
+ * `DIVE.fogFarAhead`; nothing outside reads these names. */
+const FOG_NEAR_BACK = 1.15;
+const FOG_FAR_AHEAD = 1.70;
+
 export const DIVE = Object.freeze({
   /* --- ENTRY FRAMING ------------------------------------------------------ */
 
@@ -1180,6 +1188,43 @@ export const DIVE = Object.freeze({
    *  cageRadius. They fade with the nodes during the dive, handing off to
    *  MapLibre's own grey dots as the map fades in. */
   stormDotRadius: 1.012,
+
+  /* --- DISTANCE FOG, AND THE HAZE INSIDE THE SPHERE ----------------------- *
+   *
+   * The fog band is set relative to the CAMERA every frame, not to the world,
+   * so the far hemisphere recedes by the same amount at any zoom. Fixed planes
+   * went black when the camera pulled back. In globe radii, from the camera:
+   * fog starts `fogNearBack` in FRONT of the globe's centre and ends
+   * `fogFarAhead` BEHIND it, so the band always straddles the sphere.
+   *
+   * These were literals in map/globe3d.js. They live here now because
+   * `fogFadeStart` below is arithmetic on them, and a hand-set copy of a
+   * derived number is the exact drift SPEC §12 forbids. */
+  fogNearBack: FOG_NEAR_BACK,
+  fogFarAhead: FOG_FAR_AHEAD,
+
+  /* --- HOW FAR BACK THE HAZE STARTS -------------------------------------- *
+   *
+   * Fog only recolours; map/fog-fade.js adds the missing half and fades ALPHA
+   * with depth as well, which is what stops the light theme's far-side lattice
+   * reading straight through the planet. That fade must not touch the near
+   * shell — in the light theme the coastline is all that separates the
+   * continents from the bloom behind them, and a translucent limb would give
+   * that away for a problem that lives on the other side of the globe.
+   *
+   * So the haze starts exactly at the LIMB: the fog factor at the terminator,
+   * where depth equals the camera distance. Three's linear fog is a smoothstep
+   * across the band, so that is `smoothstep(fogNearBack / span)` and NOT the
+   * 0.40 a linear reading gives. Derived from the two numbers above rather
+   * than typed, so moving the band moves this with it.
+   *
+   * For orientation, the three values it produces: near pole 0.008, limb
+   * 0.357, far pole 0.849. Everything from the limb back is remapped 0..1
+   * across that last stretch. */
+  fogFadeStart: (() => {
+    const t = FOG_NEAR_BACK / (FOG_NEAR_BACK + FOG_FAR_AHEAD);
+    return t * t * (3 - 2 * t);
+  })(),
 
   /* --- FADE CHOREOGRAPHY (crossfade progress p, 0..1) --------------------- *
    * p is derived from the live MapLibre zoom (see zSpace/zHandoff), NOT a

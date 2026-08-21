@@ -1292,7 +1292,7 @@ wrong row says a file was looked at and judged when it was not.
 | File | Lines | Call |
 |---|---|---|
 | `config/constants.js` | 5569 | **Exempt — standing** (above), and the exemption was re-measured rather than re-asserted. Was 5,509 before `VOLCANO` (1,972 lines), `PLATE_LINE` (223) and `TILT` (64) moved to their own files, all three since deleted. **Only 705 of these lines are code**; the other 77% is the reason beside each number. `tools/module-graph.mjs` was run against all 63 blocks: every one is read by the SHIPPED app, zero are off-path. `WIND_BAND_KT` was the one dead export and is deleted. A grouped table of contents at the head of the file is generated and enforced by `tools/constants-toc.mjs` — see §12.1. §51 added `GDACS_SURGE` (64 blocks), which is the same shape as every row here: a reason per number, and every one of them read on the shipped path. |
-| `config/tokens.js` | 2119 | **Exempt** — same reason as constants.js: one table, no logic. |
+| `config/tokens.js` | 2277 | **Exempt** — same reason as constants.js: one table, no logic. |
 | `ui/panels.css` | 3190 | **Exempt, and the threshold below it was missed.** See below. Crossed 2,500 when the environment paragraph and the freshness column landed; still declarative all the way down. |
 | `functions/tiles/_pmtiles.js` | 1721 | **Exempt — vendored.** Third-party library, not our code, never edited by hand. |
 | `ui/view-storm-detail.js` | 1760 | **Over the line, and coming DOWN for the first time.** The Environment section (§47.8) went in as four seams — a section row, an ensure, a wire and a repaint — with its whole controller in `ui/env-health.js`, and Rainfall (§48.9) followed the same shape. The gust (§16) went in as state, a guard, an ensure and a second section repaint, all in this file, because it feeds one `<dd>` inside a section this file owns; that was the last addition that worked, and the entry said so: THE NEXT DETAIL PASS OF ANY SIZE DOES THE SPLIT FIRST. ==> §54 WAS THAT PASS AND IT PAID THE DEBT INSTEAD OF ADDING TO IT. <== The past/ahead headcount split would have put ~114 lines into this file. Instead the whole People in the path section moved out to `ui/people-in-path.js` — state machine, wording, arithmetic and all — and what is left here is four seams. Net 100 lines off. The stamp, the section renderers, the advisory record and the stepper remain the four separable concerns, and the next one out is the stepper. |
@@ -1531,7 +1531,8 @@ app/        bundle-pipeline.js  layer-status.js  source-status.js
             theme-switch.js  views.js
 map/        attribution.js  chrome-avoid.js  coast-band.js
             coast-band-cache.js  coast-source.js  coastline.js  globe.js
-            globe3d.js  globe-follow.js  glyph.js  glyph-home.js
+            fog-fade.js  globe3d.js  globe-follow.js  glyph.js
+            glyph-home.js
             graticule.js  heightfield.js  imagery.js  limb-glow.js
             marker-home.js  marker-home-geometry.js  markers.js
             pin-provisional.js  population.js  storm-mesh.js  style.js
@@ -1554,7 +1555,7 @@ tools/      check-syntax.mjs  doc-check.mjs  spec-index.mjs
             contrast-check.mjs  csp-hash-check.mjs  token-check.mjs
             headless-check.mjs  csp-check.mjs  module-graph.mjs
             area-shot.mjs  load-probe.mjs  boot-profile.mjs
-            bootstrap.sh  with-server.sh  (+ 64 test-*.mjs suites)
+            bootstrap.sh  with-server.sh  (+ 78 test-*.mjs suites)
 ```
 
 **Pages Functions — twenty-four files**, all self-contained on purpose: Pages

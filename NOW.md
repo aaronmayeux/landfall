@@ -59,6 +59,28 @@ traded for.
 
 ## IN FLIGHT
 
+**THE LIGHT-MODE GLOBE HAS SMOKE IN IT NOW, AND ONLY A PHONE IN DAYLIGHT SAYS
+WHETHER 0.90 IS THE RIGHT AMOUNT.** Aaron: "we can see too clearly through the
+globe" in light mode, and dark already looked right. Cause found and measured —
+distance fog only recolours, never fades, and dark's fog colour happens to match
+the backdrop behind the globe while light's is 30 levels off it. The far lattice
+read 44 levels off its backdrop in light against 8 in dark. `map/fog-fade.js`
+patches Three's fog block to spend alpha as well; `LIGHT.fx.fogFade` is the one
+dial (0.90), `DARK` is pinned at 0 so dark cannot have moved. Full writeup in
+SPEC-MAP §9.3.
+
+**What to look at:** light mode at the planet band, far continents and the far
+half of the cage. Should read as a ghost inside the sphere, not a diagram drawn
+across it. **The near limb must be unchanged** — the haze is held off until the
+terminator on purpose, and a soft or washed-out limb edge means
+`DIVE.fogFadeStart` is wrong, not the strength. Then toggle to dark and confirm
+nothing at all changed there.
+
+**The dial:** 0.95 takes light to exactly dark's read (far side effectively
+gone); below about 0.80 the lattice becomes legible again. Storm glyphs and
+watch rings deliberately do NOT fade — say so if a far-side storm now reads too
+loud against the hazed background, because the fix there is its own alpha.
+
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).

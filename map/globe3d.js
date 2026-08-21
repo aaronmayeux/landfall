@@ -27,6 +27,7 @@ import { lonLatToVec3, smoothstep } from '../lib/geo.js';
 import { divePhase, followMap, radiusPxAt } from './globe-follow.js';
 import { RINGS } from './coastline.js';
 import { createHeightfield } from './heightfield.js';
+import { attachFogFade } from './fog-fade.js';
 import { createLimbGlow } from './limb-glow.js';
 import { spiralCanvas } from './glyph.js';
 import { createWatchMarks } from './watch-marks.js';
@@ -368,6 +369,36 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
   nodes.renderOrder = 3;
   globe.add(nodes);
 
+  /* ==> THE HAZE INSIDE THE SPHERE (map/fog-fade.js). <==
+   *
+   * Distance fog recolours a far-away fragment and never fades it, which reads
+   * as "the back of the globe recedes" in the dark theme purely because dark's
+   * fog colour happens to match the backdrop behind the globe. The light theme
+   * gets no such luck and its far-side lattice reads straight through the
+   * planet. This teaches fog to spend alpha as well. The full argument, the
+   * measurements, and why a literal smoke shell is not available are all in
+   * that file's header.
+   *
+   * ==> WHICH SURFACES GET IT, AND THE ONE THAT DOES NOT. <==
+   *
+   * The five below are STRUCTURE — the shape of the planet. A structural
+   * surface on the far side is scenery, and scenery is allowed to dissolve.
+   *
+   * `matLandFront` is excluded because it is FrontSide only: it never reaches
+   * the back half, so all a fade could do there is thin the near limb, which is
+   * the one thing `DIVE.fogFadeStart` exists to prevent.
+   *
+   * ==> THE STORM GLYPHS AND THE WATCH RINGS ARE EXCLUDED ON PURPOSE, AND IT
+   * IS AN INFORMATION DECISION RATHER THAN A RENDERING ONE. <== They are the
+   * answer to "where are the storms", which is the question the planet band
+   * exists to answer. A cyclone does not become less true for being on the far
+   * side of the world, and a mark that dissolves with depth would be the app
+   * quietly under-reporting (§5 — never ship silence). They still FOG, so they
+   * still recede; they just never fade out. If a far-side glyph ever reads as
+   * too loud in the light theme, the lever is its own alpha, not this. */
+  const fogFades = [matLandBack, matCoast, matCage, matFill, matNodes]
+    .map((m) => attachFogFade(m, fx().fogFade));
+
   /* Storm glyphs on the surface (SPEC §9 planet band) — the app's own logo
    * mark, in the SAME category color. Per-storm color rides the geometry's
    * color attribute, so a basin holding a TS and a Cat 4 draws both true hues
@@ -521,10 +552,15 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
     const dist = followMap(map, { group: globe, camera, lastDist });
     lastDist = dist;
 
-    // Fog tracks the camera so the FAR hemisphere dims consistently at any
-    // distance. Fixed fog planes went black when the camera pulled back.
-    scene.fog.near = Math.max(0.05, dist - R * 1.15);
-    scene.fog.far = dist + R * 1.7;
+    /* Fog tracks the camera so the FAR hemisphere dims consistently at any
+     * distance. Fixed fog planes went black when the camera pulled back.
+     *
+     * The two offsets moved to DIVE because `DIVE.fogFadeStart` — where the
+     * interior haze begins — is arithmetic on them, and the haze silently
+     * lands in the wrong place if the band moves and the derived value does
+     * not follow. Changing either number here changes both. */
+    scene.fog.near = Math.max(0.05, dist - R * DIVE.fogNearBack);
+    scene.fog.far = dist + R * DIVE.fogFarAhead;
 
     applyFade(p);
     renderer.render(scene, camera);
@@ -598,6 +634,12 @@ export function createGlobe3d(canvas, map, { mapEl, spaceEl, glowEl } = {}) {
       if (c) m.color.set(c);
       m.needsUpdate = true;
     }
+
+    /* The interior haze is a THEME number, and the two themes ask for opposite
+     * things: dark wants none of it because its fog colour already does the job
+     * (see DARK.fogFade), light wants nearly all of it. One uniform per
+     * material, mutated in place — no shader is rebuilt here. */
+    for (const f of fogFades) f.set(fx().fogFade);
 
     /* THE STORM GLYPH SPRITES CARRY A BAKED-IN HALO. `spiralCanvas` draws the
      * spiral onto a canvas with `glyphHalo` as its drop shadow (map/glyph.js),

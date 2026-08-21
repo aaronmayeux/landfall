@@ -234,6 +234,16 @@ export function selectorLiterals(raw) {
  */
 const HEX_COLOR = /^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/;
 
+/* A SHADER DIRECTIVE IS NOT AN ID, same exemption as a hex colour above and for
+ * the same reason: both start with `#` and neither has ever been a selector.
+ * `map/fog-fade.js` holds `'#include <fog_fragment>'` because it patches
+ * Three.js's own fragment shader by string replacement, and that literal has to
+ * match Three's source byte for byte — it cannot be renamed to please a
+ * scanner. Anchored to the directive keyword rather than to `<`, so `#ifdef`,
+ * `#define`, `#endif` and `#version` are covered before someone writes one. */
+const GLSL_DIRECTIVE =
+  /^#(?:include|define|ifdef|ifndef|endif|else|elif|version|extension|pragma)\b/;
+
 /** Every id-selector string literal in a file, wherever it sits. */
 export function idSelectorLiterals(raw) {
   const src = codeOnly(raw);
@@ -241,6 +251,7 @@ export function idSelectorLiterals(raw) {
   for (const m of src.matchAll(/(['"`])(#[a-zA-Z][\w-]*(?:[^'"`\n]*)?)\1/g)) {
     const sel = m[2];
     if (HEX_COLOR.test(sel)) continue;
+    if (GLSL_DIRECTIVE.test(sel)) continue;
     out.push({ selector: sel, line: src.slice(0, m.index).split('\n').length });
   }
   return out;

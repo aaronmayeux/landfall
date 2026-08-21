@@ -1861,6 +1861,52 @@ opacity.** Fade choreography controls WHEN a surface is present; blend mode
 controls whether its presence is destructive. Different questions — pulling fade
 bands in dims the symptom and costs the dive its slow dissolve.
 
+**===> DISTANCE FOG RECOLOURS. IT DOES NOT FADE. <===** `scene.fog` blends a
+fragment toward `space` by depth and never touches alpha, and that distinction
+was invisible for as long as only the dark theme existed. Dark's `space`
+(`#04070E`) sits within a few levels of `spaceNear` (`#0F1F38`), the backdrop
+actually behind the globe at the planet band — so a fully fogged cage line lands
+on the backdrop's own value and disappears. Fog *appears* to fade things out
+there. It does not; it happens to arrive at the right colour.
+
+The light theme gets no such luck. `space` is `#C2C6CA`, pinned to the ocean's
+value on purpose, while the bloom behind the globe is `#EFF7FF` — about 30 levels
+apart, and every far-side fragment lands on that gap. Measured on the cage: the
+far lattice read **44 levels off its backdrop in light against 8 in dark**, better
+than five times as visible, which is the whole of "we can see too clearly through
+the globe."
+
+**`map/fog-fade.js` gives fog the missing half: it fades ALPHA with depth as
+well.** Eight lines of GLSL patched into Three's own fog block through
+`onBeforeCompile`, reusing the `fogFactor` already computed. Strength is
+`fx().fogFade` — **0 in dark, which is a measurement and not a default**, and
+0.90 in light, tuned to land on dark's own 8-to-10 levels. One number reconciles
+the two themes.
+
+- **The haze starts at the LIMB, never before it.** `DIVE.fogFadeStart` is the
+  fog factor at the terminator (0.357), *derived* from `fogNearBack` /
+  `fogFarAhead` rather than typed beside them. The near shell stays crisp glass
+  and only the inside of the sphere hazes. This matters in light specifically:
+  the coastline is all that holds the continents apart from the bloom, and a
+  translucent near limb would give that away to fix a far-side problem.
+- **Structure fades; information does not.** Far-side land, coast, cage,
+  storm-lit fill and nodes take the haze. **Storm glyphs and watch rings are
+  excluded** — a cyclone is not less true for being on the far side of the world,
+  and a mark that dissolves with depth is the app under-reporting (§5). They fog,
+  so they recede; they never fade out.
+- **Do not "fix" this by moving the light theme's fog colour to the bloom.** It
+  hides the far side at the planet band and breaks the moment MapLibre fades up
+  underneath, because MapLibre's daylight ocean *is* `#C2C6CA`. The correct fog
+  colour would have to change with zoom. Alpha does not care what is behind it.
+- **A translucent shell inside the sphere — literal smoke in a glass ball — is
+  not available.** It would have to draw after the far-side geometry and before
+  the near-side, and the cage, nodes, coastlines and fill are each ONE draw call
+  spanning both hemispheres. Only the land is split front/back. Rejected.
+- **The failure mode is silence.** The patch string-replaces a `#include`; if
+  Three ever stops emitting it the replace finds nothing, throws nothing,
+  compiles fine, and the far hemisphere quietly returns.
+  `tools/test-fog-fade.mjs` pins that chunk text against the vendored build.
+
 ### 9.4 The node cage — an information surface, not decoration
 
 **Node elevation AND node color encode live storm severity.** Each node rises by
