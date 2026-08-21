@@ -3146,6 +3146,14 @@ tint; this paints an edge, and an edge is allowed to be darker than what is
 under it — which is exactly what the light theme needs. Plain alpha, one code
 path.
 
+**The shipped numbers are settled on glass and are not a starting point.**
+`fx.rim`, `RIM.reachFrac`, `RIM.tailStop`, `RIM.shoulderStop`, `RIM.glare` and
+`RIM.glareMid` were judged on a real ultrawide monitor in both themes and
+signed off, 2026-08-21. Two rounds of correction got them there and both are
+recorded above, because both were mistakes a fresh pass would repeat: a bloom
+outside the silhouette, and an arc with no falloff across the band. **Change
+these because something is wrong on a screen, never to tidy them.**
+
 ---
 
 ## 11. Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design

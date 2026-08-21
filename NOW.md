@@ -59,61 +59,6 @@ traded for.
 
 ## IN FLIGHT
 
-**THE HORIZON HAS A RIM ON IT NOW (§9.17), AND THE ONE THING GLASS DECIDES IS
-THE HANDOFF FROM THE CAGE.** No weather needed — zoom in on a wide monitor
-until MapLibre owns the picture and look at the edge of the planet, in BOTH
-themes.
-
-**TWO ROUNDS OF GLASS ARE FIXED — THIS IS THE THIRD LOOK.** Round two: the
-lit arc had no falloff across the band (a linear gradient is flat that way), so
-it laid an even slab over the ring and cut square at the inside diameter —
-"you still aren't fading in the inner edge, the inside diameter". It is
-composited `source-atop` now, which means it can only recolour the ring and can
-never add ink of its own, so the falloff is always the ring's. Sampled in a
-browser at zoom 3.6, alpha across the band now runs 118 at the limb, 80 at 5 px
-in, 39 at 15, 11 at 30, and nothing by 60; the largest single-pixel step
-anywhere is 8 of 255, at the outer edge where the planet genuinely ends.
-
-Round one: it
-shipped straddling the edge, 10 px inside and 44 px out, so most of the ink sat
-beyond the planet: "it doesn't look like glass and it's sitting outside the
-horizon" (Aaron, glass, 2026-08-21). **The position was never wrong** — swept
-against the live transform, the ring's peak is on the true rendered limb to
-within about a pixel at every zoom. The PROFILE was. It now reaches inward only,
-with `RIM.bleedPx` of softening and nothing else outside. **Do not put a bloom
-back on the outside of the silhouette;** that is an atmosphere, not glass, and
-the Deep globe on the `worlds` branch recorded the same finding independently.
-
-The rim rises on exactly `DIVE.fade.cage`, the band the 3D cage leaves on, so
-that there is always one edge on screen and never two. But the cage's outer
-silhouette and MapLibre's limb are not at the same radius — the cage floats at
-1.065 globe radii and the 3D globe's own edge sits inside MapLibre's — so for
-the length of that crossfade there are two arcs some pixels apart. **The
-question is whether that reads as one edge handing over or as a double ring.**
-If it is a double ring, the fix is one constant: give `map/limb-rim.js` its own
-band starting where the cage's ENDS (`0.62`), and it arrives later. Nothing
-else moves.
-
-Three smaller things to glance at while there, in this order:
-
-**1. IS THE ARC ON THE RIGHT SIDE IN LIGHT MODE?** It is deliberately on the
-OPPOSITE side from dark — you cannot paint a highlight on near-white paper, so
-the light theme reads through the shading that gathers away from the light
-instead. It should look like a white ball lit from the upper left. If it looks
-like the light is coming from the lower right, the sign is backwards.
-
-**2. IS IT TOO STRONG, TOO THIN, OR TOO WIDE?** Three dials, and they are
-different questions. Strength: `fx.rim` in `config/tokens.js`, 0.85 dark and 1.0
-light — light is higher on purpose, because there the sea and the backdrop are
-the SAME hex and the rim carries the entire edge alone. Width: `RIM.reachFrac`,
-how far in it reaches as a share of the globe's radius. Concentration:
-`RIM.tailStop` / `shoulderStop`, how hard the light hugs the edge rather than
-spreading across the band.
-
-**3. DOES IT LEAVE CLEANLY WHEN YOU KEEP ZOOMING?** It fades out as the horizon
-passes the corners of the screen and switches off entirely past them. It should
-not pop.
-
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).
