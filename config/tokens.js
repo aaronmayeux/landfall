@@ -1239,12 +1239,17 @@ export const LIGHT = Object.freeze({
      *  with zoom. Alpha does not care what is behind it. That is the whole
      *  argument for fading rather than recolouring.
      *
-     *  0.90 puts the far lattice 10 levels off its backdrop, just shy of dark's
-     *  8 — a ghost rather than a diagram, matched to the theme that already
-     *  reads correctly. 0.95 would land on 8 exactly and is the next step if
-     *  Aaron wants it fully gone on glass; below about 0.80 the lattice starts
-     *  being legible again. The near shell is untouched at any value here —
-     *  `DIVE.fogFadeStart` holds the haze off until the limb. */
+     *  ==> 0.90 IS SETTLED ON GLASS, 2026-08-21. <== It puts the far lattice
+     *  10 levels off its backdrop, just shy of dark's 8 — a ghost inside the
+     *  sphere rather than a diagram drawn across it. Aaron confirmed it on a
+     *  phone in both themes: light reads correctly and dark is untouched, which
+     *  the 0.0 above guarantees.
+     *
+     *  If it is ever reopened, the range is narrow and known: 0.95 takes the
+     *  far side to dark's read exactly, and below about 0.80 the lattice starts
+     *  being legible again. The near shell is untouched at ANY value here —
+     *  `DIVE.fogFadeStart` holds the haze off until the limb, so a soft or
+     *  washed-out limb edge is that constant being wrong and never this one. */
     fogFade:     0.90,
     /** STORM LIGHT ON THE BACKDROP — and LOWER than dark's, which is the one
      *  place this pair inverts the usual rule that light's alphas run higher.

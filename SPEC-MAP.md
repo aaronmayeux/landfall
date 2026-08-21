@@ -1881,7 +1881,7 @@ well.** Eight lines of GLSL patched into Three's own fog block through
 `onBeforeCompile`, reusing the `fogFactor` already computed. Strength is
 `fx().fogFade` — **0 in dark, which is a measurement and not a default**, and
 0.90 in light, tuned to land on dark's own 8-to-10 levels. One number reconciles
-the two themes.
+the two themes. Confirmed on a phone in both themes, 2026-08-21.
 
 - **The haze starts at the LIMB, never before it.** `DIVE.fogFadeStart` is the
   fog factor at the terminator (0.357), *derived* from `fogNearBack` /

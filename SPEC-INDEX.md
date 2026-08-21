@@ -255,7 +255,7 @@ real home is the other row carrying the same section number.
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 191,964 | 55 |
-| `SPEC-MAP.md` | 222,687 | 38 |
+| `SPEC-MAP.md` | 222,736 | 38 |
 | `SPEC-NEXT.md` | 121,628 | 29 |
 | `SPEC-OPS.md` | 79,137 | 21 |
 | `SPEC-UI.md` | 186,151 | 14 |
