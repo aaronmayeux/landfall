@@ -193,6 +193,31 @@
   --globe-ring-radius: 14px;
   --radius: 10px;
 
+  /* ==> HOW HARD THE STORM LIGHT ON THE BACKDROP IS BLURRED (#glow, §9.14).
+     IT IS DOING TWO JOBS AND BOTH CAME OFF GLASS. <==
+
+     1. NO VISIBLE SOURCE. Aaron, 2026-08-21: "I only want to see the light
+        reflected onto the background. I don't want to see a source." A flat-
+        topped falloff (GLOW.plateauStop) removes the hot spot; this removes
+        every remaining edge, so what lands on the gradient is a region of
+        color rather than an object.
+     2. NO WEAVE. The glow canvas is a fifth of viewport size and an 8-bit
+        alpha channel only holds about 41 distinct values at the shipped
+        strength, so the falloff contours inside the buffer and the browser's
+        bilinear magnification stretches each contour into a facet along the
+        texel grid — a fine crosshatch. It is the one artifact that cannot be
+        fixed by drawing the blobs better, because it is created AFTER they are
+        drawn. Blurring here is downstream of where it is made.
+
+     vmin, not px: this has to be the same fraction of the picture on a phone
+     and on a desktop, exactly like the blob radius it softens. Cheaper than it
+     looks — browsers downsample before a large blur, so the cost is roughly
+     flat in the radius, and GLOW.pixelScale was cut from 0.25 to 0.2 in the
+     same pass to pay for it. If a low-end phone ever drops frames while
+     rotating the globe, THIS is the dial: halving it is visible but survivable,
+     removing it brings the weave straight back. */
+  --glow-blur: 5vmin;
+
   /* ==> THE GLOW'S ONE NUMBER, AND THE REASON IT IS ONLY A NUMBER. <==
      A colored dot means the same thing wherever it appears — on the globe, in
      the storm list, beside the storm's name, and on the countdown rail (§6) —
@@ -387,6 +412,12 @@ html, body {
   height: 100%;
   opacity: 0;
   pointer-events: none;
+  /* See --glow-blur. `filter` runs BEFORE `mix-blend-mode`, and a filter on an
+     element does not isolate that element from its own backdrop — only a filter
+     on an ANCESTOR would — so the blurred result still blends with #spacebg
+     exactly as the sharp one did. The element already carries `opacity`, which
+     makes a stacking context too, so this adds no new one. */
+  filter: blur(var(--glow-blur));
 }
 
 #globe {

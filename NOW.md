@@ -59,6 +59,25 @@ traded for.
 
 ## IN FLIGHT
 
+**THE STORM LIGHT NO LONGER SHOWS A SOURCE, AND ONLY GLASS CAN SAY IF IT IS NOW
+TOO FAINT.** Three faults off Aaron's screenshots, 2026-08-21, all real and all
+fixed (§9.14). The falloff was peaked, which is what a light BULB looks like,
+and it sat directly above its storm's ridge — now flat-topped, no centre to
+find. Brightness tracked the cage's height by a back door: one light per color
+run meant a ridge that crossed six categories stacked six blobs to 0.96 alpha
+over its own peak, against 0.16 for a depression — now each storm composites
+through its own buffer, so six colors reach the backdrop no brighter than one.
+And the weave was real: 41 distinct alpha values in an 8-bit buffer contour into
+bands that bilinear magnification stretches into a crosshatch — now blurred in
+CSS, downstream of where it is made.
+
+**`GLOW.intensity` was deliberately NOT touched.** Three changes already move
+brightness around and a fourth would make it impossible to say which did what.
+A strong storm loses most of its old peak here, so the likely verdict is "too
+faint" — if so, that constant is the one dial, not the blur and not the radius.
+**Second thing to watch: frame rate while two-finger rotating on a phone.** The
+blur is full-screen and per-frame; `--glow-blur` halves cleanly if it bites.
+
 **THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
 ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
 `daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).

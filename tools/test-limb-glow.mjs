@@ -114,15 +114,41 @@ class V3 {
 globalThis.THREE = { Vector3: V3, Matrix4: M4 };
 globalThis.window = { innerWidth: 400, innerHeight: 800 };
 
-function stubCanvas() {
-  const fills = [];
+/* ==> THE SCRATCH CANVAS IS PART OF THE THING UNDER TEST, SO THE STUB HAS TO
+ * MAKE ONE. <==
+ *
+ * limb-glow composites each storm through its own offscreen buffer so a ridge
+ * that crossed six categories cannot stack six blobs into a hot spot (see
+ * `GLOW.intensity`). It asks `document.createElement('canvas')` for that
+ * buffer, and there was no `document` here — so the module fell back to
+ * painting straight onto the main canvas and the ENTIRE per-storm path went
+ * untested while all 63 checks stayed green. That is the exact failure this
+ * repo's rule about tests inheriting the bug's assumptions is about.
+ *
+ * The scratch shares the SAME `fills` array as the main canvas, so `_fills`
+ * keeps meaning "every blob drawn this frame" wherever it landed, and the main
+ * canvas records `drawImage` in `_blits` — which is where a storm's real
+ * strength now lives, since the blobs themselves are normalised to the storm's
+ * peak inside the buffer. */
+function stubCanvas(fills = []) {
+  const blits = [];
   let composite = null;
+  let alpha = 1;
   const ctx = {
     set globalCompositeOperation(v) {
       composite = v;
     },
     get globalCompositeOperation() {
       return composite;
+    },
+    set globalAlpha(v) {
+      alpha = v;
+    },
+    get globalAlpha() {
+      return alpha;
+    },
+    drawImage() {
+      blits.push({ alpha, composite });
     },
     clearRect() {},
     beginPath() {},
@@ -166,9 +192,22 @@ function stubCanvas() {
     style: {},
     getContext: () => ctx,
     _fills: fills,
+    _blits: blits,
     _ctx: ctx,
   };
 }
+
+/* Set by `mount` just before the module builds its scratch buffer, so the two
+ * canvases share one fills array. */
+let _sharedFills = null;
+let _lastScratch = null;
+globalThis.document = {
+  createElement(tag) {
+    if (tag !== 'canvas') throw new Error(`the stub document only makes canvases, not <${tag}>`);
+    _lastScratch = stubCanvas(_sharedFills || []);
+    return _lastScratch;
+  },
+};
 
 const camera = { position: new V3(0, 0, 3), matrixWorldInverse: new M4(0, 0, -3) };
 const group = { matrixWorld: new M4(0, 0, 0) };
@@ -195,13 +234,19 @@ const { matchDistance, radiusPxAt } = await import('../map/globe-follow.js');
  * an arbitrary number here would make the occlusion test meaningless. */
 const R_PX = (1 / Math.sqrt(8)) * 0.5 * window.innerWidth;
 
+/* ONE mount path for every helper below. `_sharedFills` has to be set BEFORE
+ * createLimbGlow runs, because that is when it asks for its scratch buffer. */
 const paint = (pts, state = 'ok', p = 0) => {
-  const cv = stubCanvas();
+  const fills = [];
+  _sharedFills = fills;
+  _lastScratch = null;
+  const cv = stubCanvas(fills);
   const glow = createLimbGlow(cv, {
     getStormPoints: () => pts,
     getState: () => state,
   });
   glow.update({ group, camera, radiusPx: R_PX, p });
+  cv._scratch = _lastScratch;
   return cv;
 };
 
@@ -211,7 +256,20 @@ console.log('limb-glow');
 setThemeMode(MODE.DARK);
 let cv = paint([atAngleLit()]);
 ok(cv.style.mixBlendMode === 'screen', 'dark: canvas blends onto the backdrop with screen');
-ok(cv._fills[0]?.composite === 'lighter', 'dark: blobs blend with each other additively');
+/* ==> THE OPERATOR NOW SITS ON THE BLIT, NOT ON THE BLOB, AND THAT SPLIT IS
+ * THE 2026-08-21 FIX. <== Dark still adds — two separate storms really are two
+ * lights on a wall — but the thing being added is a whole STORM, composited in
+ * its own buffer. Additive between a storm's own color runs is what made a
+ * ridge that crossed six categories stack to near-white over exactly its
+ * tallest point: "the light intensity is proportional to the height of the
+ * mesh and I don't want it to be."
+ * MUTATION: draw the blobs onto the main context instead of the scratch and
+ * the second of these fails. Verified. */
+ok(cv._blits[0]?.composite === 'lighter', 'dark: whole storms add to each other');
+ok(
+  cv._fills[0]?.composite === 'source-over',
+  "dark: a storm's own color runs blend, never sum — severity must not brighten the light"
+);
 
 setThemeMode(MODE.LIGHT);
 cv = paint([atAngleLit()]);
@@ -220,15 +278,21 @@ ok(
   'light: the canvas TINTS the backdrop — `color` keeps its luminosity, `multiply` could only darken it'
 );
 ok(cv.style.mixBlendMode !== 'multiply', 'light never darkens the backdrop — that is the smudge');
-/* ==> BLOBS STACK WITH PLAIN ALPHA IN LIGHT, NOT `multiply`. <==
+/* ==> STORMS STACK WITH PLAIN ALPHA IN LIGHT, NOT `multiply`. <==
  * Multiply is per-channel arithmetic that does not know what a hue is: a
  * saturated Cat 1 yellow leaves red and green untouched and drives blue to
  * zero, so yellow could not be attenuated by anything else in the ramp and the
  * blues and greens were erased. It also manufactured hues no storm had —
  * yellow x TD blue reads green. Aaron on glass, 2026-08-18.
- * MUTATION: set it back to 'multiply' and this fails. Verified. */
-ok(cv._fills[0]?.composite === 'source-over', 'light: blobs stack with plain alpha, so no hue is invented');
-ok(cv._fills[0]?.composite !== 'multiply', 'light never multiplies blobs — that is what yellow could not lose to');
+ *
+ * The guard moved to the BLIT on 2026-08-21, because that is where two storms
+ * now meet — a storm's own runs blend inside its scratch buffer before either
+ * operator sees them. Both are pinned: an operator that invented hues would be
+ * just as wrong applied within one storm as between two.
+ * MUTATION: set either back to 'multiply' and this fails. Verified. */
+ok(cv._blits[0]?.composite === 'source-over', 'light: storms stack with plain alpha, so no hue is invented');
+ok(cv._blits[0]?.composite !== 'multiply', 'light never multiplies storms — that is what yellow could not lose to');
+ok(cv._fills[0]?.composite === 'source-over', "light: and a storm's own runs blend the same way");
 
 /* The pairing is the point — additive INSIDE a tinting canvas is the black
  * smear this test exists to catch. The two themes never share an operator. */
@@ -250,15 +314,24 @@ ok(
  * map/globe3d.js's retheme() does. */
 setThemeMode(MODE.DARK);
 {
-  const cv2 = stubCanvas();
+  const fills = [];
+  _sharedFills = fills;
+  const cv2 = stubCanvas(fills);
   const glow = createLimbGlow(cv2, { getStormPoints: () => [atAngleLit()], getState: () => 'ok' });
   setThemeMode(MODE.LIGHT);
   glow.retheme();
   glow.update({ group, camera, radiusPx: R_PX, p: 0 });
   ok(cv2.style.mixBlendMode === 'color', 'toggling to light re-blends the canvas as a tint');
   ok(
+    cv2._blits.at(-1)?.composite === 'source-over',
+    'toggling to light re-blends the STORMS to plain alpha too'
+  );
+  /* The scratch operator does not vary with the theme, so a live toggle is the
+   * one place a `retheme` that forgot to restore it would show — every other
+   * path gets a `resize` afterwards, which sets it again. */
+  ok(
     cv2._fills.at(-1)?.composite === 'source-over',
-    'toggling to light re-blends the BLOBS to plain alpha too'
+    "and the scratch is still blending a storm's own runs, not summing them"
   );
 }
 
@@ -284,9 +357,17 @@ ok(cv.style.opacity === '0', 'feed unavailable: the layer is fully transparent')
  *   straight behind     -> lands directly behind the planet, which hides it.
  *   just past the limb  -> lands outside the disc, aimed properly at the wall.
  *                          This band IS the effect. */
-const alphaOf = (c) => {
-  const m = /rgba\([^)]*,([0-9.]+)\)$/.exec(c._fills[0]?.stops?.[0]?.[1] ?? '');
-  return m ? parseFloat(m[1]) : NaN;
+/* ==> A LIGHT'S REAL STRENGTH IS THE STOP ALPHA TIMES THE BLIT ALPHA. <==
+ * Inside the scratch buffer a storm's blobs are normalised so its brightest run
+ * is fully opaque — that is what stops runs stacking and it is also what gives
+ * the falloff the full 8 bits to quantise into. The strength that actually
+ * reaches the backdrop is carried by the `drawImage` that blits the storm. Read
+ * only the stop and every storm looks identical; read only the blit and the
+ * relative weighting between one storm's runs disappears. */
+const alphaOf = (c, i = 0) => {
+  const m = /rgba\([^)]*,([0-9.]+)\)$/.exec(c._fills[i]?.stops?.[0]?.[1] ?? '');
+  if (!m) return NaN;
+  return parseFloat(m[1]) * (c._blits[0]?.alpha ?? 1);
 };
 
 /** A storm at `deg` from the camera axis: 0 faces you, 180 is straight behind. */
@@ -297,19 +378,10 @@ const atAngle = (deg, sev = 1) => {
 
 const paintAtColor = (deg, color) => {
   const t = (deg * Math.PI) / 180;
-  const pt = { dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 1, color, head: true };
-  const cv = stubCanvas();
-  const glow = createLimbGlow(cv, { getStormPoints: () => [pt], getState: () => 'ok' });
-  glow.update({ group, camera, radiusPx: R_PX, p: 0 });
-  return cv;
+  return paint([{ dir: new V3(Math.sin(t), 0, Math.cos(t)), sev: 1, color, head: true }]);
 };
 
-const paintAt = (deg, sev = 1) => {
-  const cv = stubCanvas();
-  const glow = createLimbGlow(cv, { getStormPoints: () => [atAngle(deg, sev)], getState: () => 'ok' });
-  glow.update({ group, camera, radiusPx: R_PX, p: 0 });
-  return cv;
-};
+const paintAt = (deg, sev = 1) => paint([atAngle(deg, sev)]);
 
 /* ==> NO LIVE STORM GOES DARK, ANYWHERE ON THE PLANET. <==
  *
@@ -508,6 +580,75 @@ ok(
   ok(runOf(GLOW.runFull * 3) === runOf(GLOW.runFull), 'and stops growing at runFull, so length cannot swamp');
 }
 
+/* ==> A STORM THAT WORE SIX COLORS IS NO BRIGHTER THAN ONE THAT WORE ONE. <==
+ *
+ * This is the 2026-08-21 bug, and it is the reason `intensity` is a ceiling per
+ * STORM rather than per blob. One light per color run means a ridge that
+ * climbed TD -> TS -> Cat 1 -> 2 -> 3 -> 4 spends six slots, and the six land
+ * on top of each other because categories change fastest near a storm's peak.
+ * Additively that summed to 0.96 alpha — a near-white hot spot over exactly the
+ * tallest part of the cage — against 0.16 for a storm that stayed a depression.
+ * No term multiplied by severity; the picture said it anyway. Aaron on glass:
+ * "the light intensity is proportional to the height of the mesh and I don't
+ * want it to be."
+ *
+ * MUTATION: draw the blobs onto the main context instead of compositing each
+ * storm through the scratch, and `many` comes back six times `one`. Verified.
+ * Softening the operator alone is NOT enough and this catches that too — plain
+ * `source-over` on the main canvas still accumulates six runs to 0.65. */
+{
+  const t = (LIT_DEG * Math.PI) / 180;
+  const dir = () => new V3(Math.sin(t), 0, Math.cos(t));
+  /* Every §6 category, stacked on one spot: six runs of one storm. Real ridges
+   * spread them along a track, but the peak is where they crowd and the peak is
+   * what went white. */
+  const ramp = ['#5BA8E0', '#3ECC7A', '#FFE14D', '#FFB52E', '#FF7A33', '#FF4D6D'];
+  const climber = [{ dir: dir(), sev: 1, color: ramp[0], head: true }];
+  for (const color of ramp) {
+    for (let k = 0; k < 4; k++) climber.push({ dir: dir(), sev: 1, color, head: false });
+  }
+  const flat = [
+    { dir: dir(), sev: 1, color: ramp[0], head: true },
+    ...Array.from({ length: 4 }, () => ({ dir: dir(), sev: 1, color: ramp[0], head: false })),
+  ];
+
+  const many = paint(climber);
+  const one = paint(flat);
+  ok(many._fills.length === ramp.length, 'a storm that crossed six categories throws six lights');
+  ok(one._fills.length === 1, 'and one that never changed throws one');
+
+  /* The blit is the whole storm's strength on the backdrop. One blit per storm,
+   * and the two storms are identically placed, so the numbers are comparable. */
+  ok(many._blits.length === 1, 'six runs still composite as ONE storm');
+  const manyA = many._blits[0]?.alpha ?? 0;
+  const oneA = one._blits[0]?.alpha ?? 0;
+  /* Both sides must be REAL strengths before they are compared. Without this
+   * the check passes when nothing was blitted at all — 0 === 0 — which is
+   * exactly what happened under the first mutation run. */
+  ok(manyA > 0 && oneA > 0, 'both storms actually reach the backdrop');
+  ok(
+    Math.abs(manyA - oneA) < 1e-9,
+    'and the six-color storm reaches the backdrop no brighter than the one-color storm'
+  );
+
+  /* The relative weighting BETWEEN a storm's own runs still has to survive —
+   * flattening every run to the storm's peak would trade one wrong picture for
+   * another. All six sit at the same aim here, so all six normalise to 1. */
+  const stops = many._fills.map((f) => parseFloat(/,([0-9.]+)\)$/.exec(f.stops[0][1])[1]));
+  ok(stops.every((s) => s > 0 && s <= 1), 'each run keeps its own share of the storm inside the buffer');
+
+  /* Two SEPARATE storms are a different claim and must still add up: that is a
+   * true statement about how many systems are out there, not a restatement of
+   * one storm's severity.
+   * MUTATION: composite all storms through one buffer and this fails. */
+  const at = (deg) => new V3(Math.sin((deg * Math.PI) / 180), 0, Math.cos((deg * Math.PI) / 180));
+  const two = paint([
+    { dir: at(LIT_DEG), sev: 1, color: ramp[0], head: true },
+    { dir: at(LIT_DEG + 12), sev: 1, color: ramp[5], head: true },
+  ]);
+  ok(two._blits.length === 2, 'two storms composite separately, so they can still stack');
+}
+
 ok(
   paint(Array.from({ length: GLOW.maxLights + 6 }, () => atAngleLit()))._fills.length ===
     GLOW.maxLights,
@@ -554,7 +695,41 @@ ok(
 );
 ok(GLOW.radiusFloor > 0 && GLOW.radiusFloor < 1, 'radius floor is a fraction');
 ok(GLOW.pixelScale > 0 && GLOW.pixelScale <= 1, 'the buffer is not larger than the viewport');
-ok(GLOW.coreStop > 0 && GLOW.coreStop < 1, 'the mid stop sits inside the gradient');
+
+/* ==> THE FALLOFF IS FLAT-TOPPED, NOT PEAKED, AND THAT IS WHAT STOPS IT
+ * READING AS A LAMP. <==
+ *
+ * A bright centre that fades outward is the visual signature of a SOURCE, and
+ * because a blob lands straight outward from its storm along the same line the
+ * ridge lifts, that hot spot sat directly over the peak. Aaron on glass,
+ * 2026-08-21: "it looks like there is a floating light source above the raised
+ * mesh... I only want to see the light reflected onto the background. I don't
+ * want to see a source."
+ *
+ * The shape is pinned here rather than the numbers: the inner stop has to hold
+ * nearly all the alpha, so there is no centre to find, and the outer stop has
+ * to be well down, so the tail does not read as a disc with a soft edge.
+ * MUTATION: restore the old single mid stop (0.32 at 0.62) and the plateau
+ * checks fail. Verified. */
+ok(GLOW.plateauStop > 0 && GLOW.plateauStop < GLOW.coreStop, 'the plateau ends before the shoulder');
+ok(GLOW.coreStop > GLOW.plateauStop && GLOW.coreStop < 1, 'the shoulder sits inside the gradient');
+ok(
+  GLOW.plateauAlpha >= 0.9,
+  'the plateau is FLAT — a light that peaks at its centre is a light source, which is the thing being removed'
+);
+ok(GLOW.coreAlpha < GLOW.plateauAlpha, 'and the shoulder is genuinely down from it, or there is no falloff');
+{
+  /* Read off a real paint, not off the constants: a stop table that is never
+   * emitted in that order is a rule the picture does not obey. */
+  const stops = paintAt(LIT_DEG)._fills[0].stops;
+  const alphas = stops.map((s) => parseFloat(/,([0-9.]+)\)$/.exec(s[1])[1]));
+  ok(stops.length === 4, 'four stops are emitted: centre, plateau, shoulder, rim');
+  ok(
+    alphas[1] / alphas[0] >= 0.9,
+    'the painted gradient is still level across the plateau, not just the constant'
+  );
+  ok(alphas.at(-1) === 0, 'and reaches zero at the rim, the identity for both `lighter` and `color`');
+}
 ok(GLOW.smear > 0, 'the smear is live, not a dead constant');
 ok(GLOW.squash > 0 && GLOW.squash < 1, 'the radial squash thins the light without inverting it');
 
@@ -598,6 +773,35 @@ ok(GLOW.radiusScale * LIGHT.fx.glowSpread <= 1.4,
      'the radius really is multiplied by the theme\'s glowSpread');
   ok(/const gain = F\.glowGain;/.test(src) && /\*\s*gain\b/.test(src),
      'the alpha really is multiplied by the theme\'s glowGain');
+}
+
+/* ==> THE BLUR ON `#glow` IS LOAD-BEARING AND NOTHING ELSE WOULD MISS IT. <==
+ *
+ * It is the only thing that removes the weave. An 8-bit alpha channel holds
+ * about `intensity * 255` distinct values, so the falloff contours into bands
+ * INSIDE the small buffer and bilinear magnification stretches every band edge
+ * into a facet along the texel grid — a fine crosshatch on an image whose whole
+ * job is to be smooth. Aaron on glass, 2026-08-21: "there's a weird grid/weave
+ * pattern in the reflection, it's not smooth. It is not my monitor." He was
+ * right; it is not the monitor and it is not the camera.
+ *
+ * Raising `pixelScale` does NOT fix it — the band count comes from alpha depth,
+ * not pixel count, so a bigger buffer only makes the weave finer. The blur has
+ * to act AFTER the magnification, which means CSS, which means no unit test can
+ * see the pixels. So the wiring is checked at the source instead, which cannot
+ * go quiet: a token that exists, and a rule that uses it.
+ * MUTATION: delete either line from index.html and this fails. Verified. */
+{
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  ok(/--glow-blur:\s*[0-9.]+vmin;/.test(html),
+     'index.html publishes --glow-blur, in vmin so it is the same fraction of the picture everywhere');
+  const rule = /#glow\s*\{[^}]*\}/.exec(html)?.[0] ?? '';
+  ok(/filter:\s*blur\(var\(--glow-blur\)\)/.test(rule),
+     '#glow really applies it — without the blur the falloff contours and the weave comes back');
+  /* The blur is what pays for a smaller buffer, so the two move together. If
+   * `pixelScale` is ever pushed back up as a "fix" for the weave, that is the
+   * wrong lever and this comment is the note explaining why. */
+  ok(GLOW.pixelScale <= 0.25, 'the buffer stays small — the blur carries the smoothing, not the resolution');
 }
 setThemeMode(MODE.DARK);
 

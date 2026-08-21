@@ -2677,14 +2677,45 @@ overlapping lights stacked toward a saturated wash. `LIGHT.fx.glowGain` and
 `glowSpread` went back to 1.0 in the same pass: light no longer runs the effect
 *harder* than dark, it runs the same numbers through a different operator.
 
-**Brightness is flat. Size is not.** Every color shines at `GLOW.intensity`,
-untouched by severity — elevation on the cage is already severity said in the
-loudest channel the globe has, and multiplying the light by it too left a
-depression's glow unfindable beside a hurricane's. The one thing that makes a
-color read louder is covering more sky, and that comes from how many beads wear
-it (`GLOW.runFull`): three days at Cat 1 throws a wide light, six hours at Cat 4
-a small one. Aaron's rule — *one color shouldn't overpower the others unless
-there is just more of it.*
+**Brightness is flat, and `GLOW.intensity` is a ceiling per STORM, not per
+blob.** Every color shines at the same strength, untouched by severity —
+elevation on the cage is already severity said in the loudest channel the globe
+has, and multiplying the light by it too left a depression's glow unfindable
+beside a hurricane's. The one thing that makes a color read louder is covering
+more sky, and that comes from how many beads wear it (`GLOW.runFull`): three
+days at Cat 1 throws a wide light, six hours at Cat 4 a small one. Aaron's rule
+— *one color shouldn't overpower the others unless there is just more of it.*
+
+**The per-storm part of that is not tidiness; it is the 2026-08-21 bug.** One
+light per color run means a ridge that climbed TD → TS → Cat 1 → 2 → 3 → 4
+spends six slots, and the six land on top of each other because categories
+change fastest near a storm's peak. Under dark's additive blend those six
+summed to 0.96 alpha — a near-white hot spot over exactly the tallest part of
+the cage — against 0.16 for a storm that never left depression. No term in the
+code multiplied by severity; the picture said it anyway. Aaron on glass: *the
+light intensity is proportional to the height of the mesh and I don't want it to
+be.* Each storm is now composited through its own scratch buffer, so its runs
+blend with each other instead of summing and the storm's brightest point is
+exactly `GLOW.intensity` however many colors it wears. Softening the operator
+alone is not enough and must not be mistaken for the fix — plain `source-over`
+on one canvas still accumulates six runs to 0.65.
+
+**Storms still stack with EACH OTHER.** Two separate lights on a wall really are
+brighter than one, and unlike the case above that is a true statement about how
+many systems are out there rather than a restatement of one storm's severity.
+The theme's operator therefore lives on the blit, not on the blob; the scratch
+is always `source-over`, in both themes, and that never varies.
+
+**The falloff is flat-topped, because a peak is what a SOURCE looks like.** The
+profile held 62% of its alpha out to only 32% of its radius, so every light had
+a findable hot centre — and because a blob lands straight outward from its storm
+along the same line the ridge lifts, that centre sat directly above the peak.
+Aaron on glass, 2026-08-21: *it looks like there is a floating light source
+above the raised mesh... I only want to see the light reflected onto the
+background. I don't want to see a source.* The alpha now holds essentially level
+across the inner `GLOW.plateauStop` and only then falls, with `coreStop` rolling
+the shoulder off so the tail does not read as a disc with a soft edge. No peak,
+nothing to read as a bulb.
 
 A grey point throws nothing. `stormSwatch` paints a storm nobody is publishing a
 wind for in the theme's neutral, and a light with no hue is a claim with no
@@ -2735,10 +2766,11 @@ effect lives. Below about `wallRadius` 1.3 the light collapses back onto the
 globe as a rim highlight, which is the Fresnel effect this was built to avoid.
 
 **The two themes use different OPERATORS, not different numbers.** Dark is
-emitted light — `lighter` between blobs, `screen` onto the backdrop; overlapping
-storms brighten and their hues mix, which is what two real lights on a wall do.
-Light blends blobs with plain `source-over`, so an overlap lands BETWEEN the two
-colors in proportion to how much of each is there. It multiplied them until
+emitted light — `lighter` between STORMS, `screen` onto the backdrop; two storms
+overlapping brighten and their hues mix, which is what two real lights on a wall
+do. Light blends storms with plain `source-over`, so an overlap lands BETWEEN
+the two colors in proportion to how much of each is there. Either way the
+operator applies to a finished storm, never to a single color run. It multiplied them until
 2026-08-18, and multiply is per-channel arithmetic that does not know what a hue
 is: a saturated Cat 1 yellow leaves red and green untouched and drives blue to
 zero, so yellow could not be attenuated by anything else in the §6 ramp and the
@@ -2792,18 +2824,39 @@ at the viewer, which this geometry says cannot be happening. The squash is not
 decoration: stretching alone inflates the lit area, and area is brightness once
 the falloffs overlap.
 
-**One light per storm** — `head` points only, capped at `GLOW.maxLights`. The
-list is `heightfield.getStormPoints()` outright, not a copy, so a storm that
-lifts the lattice is by construction the storm that lights the sky.
+**The light list is `heightfield.getStormPoints()` outright, not a copy**, so a
+storm that lifts the lattice is by construction the storm that lights the sky.
+`map/glow-lights.js` does that split — it is pure, knows nothing about canvases
+or cameras, and was cut out of `limb-glow.js` on 2026-08-21 when that file
+crossed the 700-line ceiling. The seam is one-directional: the painter imports
+the list builder, never the reverse.
 
 **A feed outage goes dark** (§5). The cage greys; this goes out entirely. A
 globe that knows nothing must not be running a light show.
 
 **Buffer is `GLOW.pixelScale` of the viewport and ignores device pixel ratio.**
-The image is soft by construction, so there is no detail to lose and the
-browser's upscaling is free extra smoothing. That is the whole performance
-story: a quarter-scale buffer is a sixteenth of the pixels, which is what makes
-eight overlapping fills affordable where eight full-size sprites would not be.
+That is the whole performance story: a fifth-scale buffer is a twenty-fifth of
+the pixels, which is what makes a dozen overlapping fills affordable where a
+dozen full-size sprites would not be.
+
+**The browser's upscaling is NOT free smoothing, and this section said it was.**
+An 8-bit alpha channel holds about `intensity × 255` distinct values — roughly
+41 at the shipped strength — so the falloff quantises into contour bands *inside*
+the small buffer, and bilinear magnification stretches every band boundary into
+a straight facet along the texel grid. The result is a fine crosshatch on an
+image whose entire job is to be smooth. Aaron on glass, 2026-08-21: *there's a
+weird grid/weave pattern in the reflection, it's not smooth. It is not my
+monitor.* It was not the monitor.
+
+**Raising `pixelScale` is the wrong lever and will not fix it** — the band count
+is set by alpha depth, not by pixel count, so a bigger buffer only makes the
+weave finer. The cure is `--glow-blur`, a CSS blur on `#glow`, which acts *after*
+the magnification, where the artifact is made. It does a second job at the same
+time: it removes every remaining edge, so what lands on the gradient is a region
+of color rather than an object. `pixelScale` came DOWN, from 0.25 to 0.2, to pay
+for it. If a low-end phone ever drops frames while rotating the globe, the blur
+radius is the dial — halving it is visible but survivable, removing it brings
+the weave straight back.
 
 **It fades out earlier than the cage** (`GLOW.fade`). Once MapLibre has faded up
 there is no visible backdrop left to catch light, so a glow still running past

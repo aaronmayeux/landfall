@@ -1269,11 +1269,26 @@ export const DIVE = Object.freeze({
 export const GLOW = Object.freeze({
   /** Buffer size as a fraction of the CSS viewport. A field of soft radial
    *  falloffs has no high-frequency detail to lose, so it is drawn small and
-   *  scaled up — the browser's bilinear filter is free smoothing rather than a
-   *  cost. This is ALSO the whole performance story: a quarter-scale buffer is
-   *  a sixteenth of the pixels, which is what makes eight overlapping fills
-   *  affordable on a phone where eight full-size sprites would not be. */
-  pixelScale: 0.25,
+   *  scaled up. This is the whole performance story: a fifth-scale buffer is a
+   *  twenty-fifth of the pixels, which is what makes a dozen overlapping fills
+   *  affordable on a phone where a dozen full-size sprites would not be.
+   *
+   *  ==> THE BROWSER'S UPSCALE IS NOT THE SMOOTHING. IT WAS THE WEAVE. <==
+   *  This file used to claim bilinear magnification was free extra smoothing.
+   *  It is the opposite. An 8-bit canvas can only hold `intensity * 255` — 41
+   *  distinct alpha values at the shipped strength — so the falloff quantises
+   *  into contour bands INSIDE the small buffer, and bilinear magnification
+   *  then stretches every band boundary into a straight facet along the texel
+   *  grid. The result is a fine crosshatch, which is exactly what Aaron
+   *  reported on glass, 2026-08-21: "there's a weird grid/weave pattern in the
+   *  reflection, it's not smooth. It is not my monitor." He was right.
+   *
+   *  Raising this only makes the weave finer, never absent — the band count is
+   *  set by alpha depth, not by resolution. The cure is the CSS blur on `#glow`
+   *  (`--glow-blur` in index.html), which dissolves the contours AFTER the
+   *  upscale, where they are made. With the blur carrying the smoothing this
+   *  number is free to go DOWN and pay for it. */
+  pixelScale: 0.2,
 
   /** Floor on either buffer dimension. Below roughly this the falloff starts
    *  quantising into visible rings on a narrow window. */
@@ -1339,6 +1354,24 @@ export const GLOW = Object.freeze({
    *  glass, 2026-08-18: "it should just be a faint, non-distracting glow on the
    *  background."
    *
+   *  ==> IT IS A CEILING PER STORM, NOT PER RUN, AND THAT DISTINCTION WAS A
+   *  BUG ON GLASS. <== One light per color run means a storm that climbed
+   *  TD -> TS -> Cat 1 -> 2 -> 3 -> 4 spends SIX slots, and the six land close
+   *  together because categories change fastest near a storm's peak. Under
+   *  dark's additive blend those six stacked to 0.96 alpha — a near-white hot
+   *  spot — while a storm that stayed a depression drew one run at 0.16. So
+   *  the light really was proportional to the cage's height, by way of how
+   *  many categories the ridge crossed, even though no term here multiplies by
+   *  severity. Aaron on glass, 2026-08-21: "the light intensity is
+   *  proportional to the height of the mesh and I don't want it to be."
+   *
+   *  Each storm is now composited through its own scratch buffer, so its runs
+   *  blend with each other instead of summing and the storm's brightest point
+   *  is exactly this number however many colors it wears (map/limb-glow.js).
+   *  Storms still stack with EACH OTHER additively in dark — two separate
+   *  lights on a wall really are brighter than one, and that is a true count
+   *  of live systems rather than a restatement of one storm's severity.
+   *
    *  ==> THIS IS BACKDROP MOOD, NOT A READOUT. <== Nothing is read off it —
    *  severity is the cage's height and the glyph's color, and both are still at
    *  full strength. The light is atmosphere behind them, so the bar it has to
@@ -1377,12 +1410,32 @@ export const GLOW = Object.freeze({
   rimInner: 0.85,
   rimOuter: 1.05,
 
-  /** Two shaping stops on the radial falloff. One linear ramp reads as a disc
-   *  with a soft edge; the mid stop is what makes it read as light falling
-   *  off. `coreStop` is where the mid stop sits, `coreAlpha` how much alpha is
-   *  left there. */
-  coreStop: 0.32,
-  coreAlpha: 0.62,
+  /** ==> THE FALLOFF IS FLAT-TOPPED, AND THAT IS WHAT STOPS IT READING AS A
+   *  LAMP. <==
+   *
+   *  A bright point that fades outward is the visual signature of a SOURCE.
+   *  That is what the eye is built to find, and it found it: the profile used
+   *  to peak hard at the centre (a mid stop at 0.32 holding 62% of the alpha),
+   *  so every light had a findable hot spot sitting directly outward from its
+   *  storm's ridge. Aaron on glass, 2026-08-21: "it looks like there is a
+   *  floating light source above the raised mesh... I only want to see the
+   *  light reflected onto the background. I don't want to see a source."
+   *
+   *  Reflected light on a wall has no centre to find. So the alpha now holds
+   *  essentially flat across the inner `plateauStop` of the radius and only
+   *  then falls, over a long tail. There is no peak, so there is nothing to
+   *  read as a bulb — what is left is a colored region of backdrop, which is
+   *  the whole ask.
+   *
+   *  `coreStop`/`coreAlpha` are the shaping stop on the TAIL. Without one the
+   *  fall from the plateau is a straight ramp and reads as a disc with a soft
+   *  edge; with it the shoulder rolls off. The alpha still reaches exactly
+   *  zero at the rim in both themes, which is the identity for `lighter` and
+   *  for `color` alike, so the blob has no edge to catch the eye either way. */
+  plateauStop: 0.30,
+  plateauAlpha: 0.94,
+  coreStop: 0.62,
+  coreAlpha: 0.40,
 
   /** ==> LIGHT ON A CURVED WALL IS AN ARC, NOT A DISC. <==
    *

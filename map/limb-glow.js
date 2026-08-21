@@ -43,9 +43,19 @@
  * Three are already holding two, and losing one is a black screen. Nothing
  * here needs a shader: soft blobs are the lowest-frequency image there is, so
  * the canvas renders at a FRACTION of screen size (GLOW.pixelScale) and CSS
- * scales it up. The browser's bilinear filtering is not a cost we pay to hide
- * the low resolution — it is free extra smoothing on an image whose entire
- * job is to be smooth.
+ * scales it up.
+ *
+ * ==> THE UPSCALE IS NOT FREE SMOOTHING. THIS FILE CLAIMED IT WAS, AND THAT
+ * CLAIM WAS THE WEAVE. <== An 8-bit alpha channel holds about 41 distinct
+ * values at the shipped strength, so the falloff quantises into contour bands
+ * inside the small buffer, and bilinear magnification stretches each band
+ * boundary into a straight facet along the texel grid — a fine crosshatch, on
+ * an image whose entire job is to be smooth. Aaron caught it on glass,
+ * 2026-08-21. Resolution cannot fix it, because the band COUNT is set by alpha
+ * depth rather than by pixel count; a bigger buffer only makes the weave finer.
+ * The smoothing is done by a CSS blur on `#glow` (`--glow-blur`), which acts
+ * after the magnification, where the artifact is made. `pixelScale` is free to
+ * go down to pay for that blur.
  *
  * That is also why the count cap is generous where a sprite budget could not
  * be: at a quarter scale, eight overlapping radial fills cover a fraction of
@@ -74,11 +84,13 @@
  * the canvas is simply cleared and never painted with a base color. Where
  * there are no storms, the backdrop is untouched, in either theme.
  *
- * Imports: config/ only. `THREE` is a global. Knows nothing about storms —
- * globe3d.js hands it points, a camera and a fade.
+ * Imports: config/ and map/glow-lights.js, which turns the cage's point list
+ * into the light list this file paints. `THREE` is a global. Knows nothing
+ * about storms — globe3d.js hands it points, a camera and a fade.
  */
 
 import { GLOW } from '../config/constants.js';
+import { buildLights } from './glow-lights.js';
 import { fx, isLight } from '../config/theme.js';
 
 /* Reused across frames — a Vector3 per storm per frame is garbage the phone
@@ -134,136 +146,6 @@ function rgbOf(hex, saturate = 0) {
   return `${pull(r)},${pull(g)},${pull(b)}`;
 }
 
-/** How far a color is from grey, 0..255. A colorless point makes no severity
- *  claim and throws no light — see `buildLights`. */
-function chromaOf(hex) {
-  const h = typeof hex === 'string' && hex.charCodeAt(0) === 35 ? hex.slice(1) : hex;
-  if (typeof h !== 'string') return 0;
-  const n = parseInt(h.length === 3 ? h[0] + h[0] + h[1] + h[1] + h[2] + h[2] : h, 16);
-  if (!Number.isFinite(n)) return 0;
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  return Math.max(r, g, b) - Math.min(r, g, b);
-}
-
-/**
- * ==> THE CAGE'S POINTS -> THE LIGHTS. ONE PER RUN OF ONE COLOR, NOT ONE PER
- * STORM. <==
- *
- * This used to be `pt.head === true` and nothing else: a single light per
- * storm, wearing that storm's CURRENT category color. Everything the cage
- * remembers threw no light at all — so a storm that peaked at Cat 4 and has
- * since weakened to a Cat 1 showed a large red ridge on the globe and a purely
- * yellow glow behind it. The red was not dim, it was never drawn. Aaron on
- * glass, 2026-08-18: "make sure all node mesh colors shine on the background,
- * in the correct position."
- *
- * So the list is walked as what it is — a per-storm ridge, in order — and every
- * consecutive stretch of ONE category color becomes one light, placed at that
- * stretch's middle bead. The colors on the backdrop are then the colors on the
- * cage, each where its own part of the cage is.
- *
- * ==> WEIGHT IS HOW MUCH CAGE WEARS THE COLOR, AND IT DRIVES SIZE ONLY. <==
- * Aaron's rule, same session: "one color shouldn't overpower the others unless
- * there is just more of it — height shouldn't dictate intensity." Severity is
- * already the loudest channel on the globe as ELEVATION; letting it also set
- * the light's brightness said the same thing twice and left a depression's
- * light too dim to find. Brightness is now flat across every color, and the
- * only thing that makes one read louder is covering more of the sky — which is
- * exactly "there is more of it", measured off the ridge rather than off height.
- *
- * THE HEAD IS ITS OWN RUN AND IS NOT MERGED WITH ITS NEIGHBOURS, because the
- * list is not chronological across that seam: `buildMeshPoints` enters the head
- * FIRST and then the beads oldest-first, so the point beside the head is the
- * oldest one in the window, days away. Merging them would put a run's midpoint
- * in open ocean between the two.
- *
- * A storm WITH beads drops its head light: the beads already cover the present
- * position with the present color, and keeping both double-lights it. A storm
- * with NO beads — CURRENT mesh mode, a failed geometry bundle, or a storm with
- * no current reading — keeps its head as its single light, so no live storm
- * ever goes dark.
- *
- * @param {Array} pts  the heightfield's live point list
- * @returns {Array<{dir, color, weight}>}
- */
-function buildLights(pts) {
-  const perStorm = [];
-  let runs = null;
-  let cur = null;
-
-  const closeRun = () => {
-    if (cur) runs.push(cur);
-    cur = null;
-  };
-  const closeStorm = () => {
-    if (!runs) return;
-    closeRun();
-    if (runs.length) perStorm.push(runs);
-    runs = null;
-  };
-
-  for (const pt of pts) {
-    if (!pt || !pt.dir) continue;
-    if (pt.head === true) {
-      closeStorm();
-      runs = [];
-    }
-    if (!runs) continue; // a bead before any head: not part of a storm we know
-    /* A point with no lift, or no color, states nothing worth lighting. Grey is
-     * what `stormSwatch` gives a storm nobody is publishing a wind for, and a
-     * light with no hue under `color` blending tints nothing anyway — so this
-     * refuses to shine on a claim the data does not make, rather than throwing
-     * a neutral wash the dark theme would render as plain white. */
-    if (!(pt.sev > 0) || chromaOf(pt.color) < GLOW.minChroma) {
-      closeRun();
-      continue;
-    }
-    if (pt.head === true) {
-      runs.push({ color: pt.color, pts: [pt], head: true });
-      continue;
-    }
-    if (cur && cur.color === pt.color) cur.pts.push(pt);
-    else {
-      closeRun();
-      cur = { color: pt.color, pts: [pt], head: false };
-    }
-  }
-  closeStorm();
-
-  const lights = [];
-  for (const stormRuns of perStorm) {
-    const beadRuns = stormRuns.filter((r) => !r.head);
-    const keep = beadRuns.length ? beadRuns : stormRuns;
-    for (const run of keep) {
-      lights.push({
-        dir: run.pts[(run.pts.length - 1) >> 1].dir,
-        color: run.color,
-        weight: run.pts.length,
-        storm: perStorm.indexOf(stormRuns),
-      });
-    }
-  }
-
-  if (lights.length <= GLOW.maxLights) return lights;
-
-  /* ==> OVER BUDGET: EVERY STORM KEEPS ITS BIGGEST RUN BEFORE ANY STORM KEEPS
-   * ITS SECOND. <== Sorting the whole list by weight and truncating would let
-   * one long-lived system's five color spans silence a smaller storm outright,
-   * which is a false reading of how many systems are out there — the same
-   * class of error as the head flag on the cage glyphs. Below the cap this
-   * branch never runs at all. */
-  const best = new Map();
-  for (const l of lights) {
-    const b = best.get(l.storm);
-    if (!b || l.weight > b.weight) best.set(l.storm, l);
-  }
-  const first = [...best.values()];
-  const rest = lights.filter((l) => !first.includes(l)).sort((a, b) => b.weight - a.weight);
-  return first.concat(rest).slice(0, GLOW.maxLights);
-}
-
 
 /**
  * @param {HTMLCanvasElement} canvas  - the #glow canvas
@@ -273,6 +155,32 @@ function buildLights(pts) {
  */
 export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
   const ctx = canvas.getContext('2d');
+
+  /* ==> ONE SCRATCH BUFFER, AND IT IS WHAT MAKES A STORM'S LIGHT INDEPENDENT
+   * OF ITS CATEGORY. <==
+   *
+   * A storm's runs are drawn HERE first, blending with each other under plain
+   * `source-over`, and the finished storm is then blitted onto the real canvas
+   * as one image. So a storm contributes one storm's worth of light no matter
+   * how many colors its ridge wears, and storms still stack with each other on
+   * the main canvas under whichever operator the theme wants.
+   *
+   * ==> WHY IT IS NOT ENOUGH TO JUST STOP USING `lighter`. <== Additive was
+   * the loud version of the bug — six runs at 0.16 alpha summed to 0.96, a
+   * near-white hot spot over exactly the tallest part of the cage. But plain
+   * `source-over` still accumulates, just more politely: the same six runs land
+   * at 0.65. Four times a lone depression's light is still "brighter because it
+   * got stronger", which is the thing Aaron asked for the light NOT to say
+   * (2026-08-21). Only compositing the storm as a UNIT removes it.
+   *
+   * Same buffer size as the real canvas, same fifth-scale economics. `resize`
+   * keeps them in step; nothing else may write to it. */
+  const scratch =
+    typeof document !== 'undefined' && document.createElement
+      ? document.createElement('canvas')
+      : null;
+  const sctx = scratch ? scratch.getContext('2d') : null;
+
   let cssW = 1;
   let cssH = 1;
   let painted = false; // was anything drawn last frame? skips redundant clears
@@ -351,6 +259,14 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
      * different storms are here", which is true. */
     canvas.style.mixBlendMode = light ? 'color' : 'screen';
     ctx.globalCompositeOperation = light ? 'source-over' : 'lighter';
+    /* ==> THE SCRATCH IS ALWAYS `source-over`, IN BOTH THEMES, AND IT IS SET
+     * HERE RATHER THAN LEFT TO THE DEFAULT. <== It happens to BE the default,
+     * which is exactly why it has to be written down: a rule that holds only
+     * because nobody touched it is a rule no test can see and no future edit
+     * has to respect. This is the operator that makes a storm's own color runs
+     * blend instead of sum, so it is load-bearing in a way the theme's
+     * between-storm operator is not — it does not vary, and it may not. */
+    if (sctx) sctx.globalCompositeOperation = 'source-over';
   }
 
   function resize() {
@@ -362,6 +278,10 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
      * narrow window from quantising the falloff into visible steps. */
     canvas.width = Math.max(GLOW.minBufferPx, Math.round(cssW * GLOW.pixelScale));
     canvas.height = Math.max(GLOW.minBufferPx, Math.round(cssH * GLOW.pixelScale));
+    if (scratch) {
+      scratch.width = canvas.width;
+      scratch.height = canvas.height;
+    }
     retheme(); // resizing a canvas resets its context state, including the mode
     painted = false;
   }
@@ -433,6 +353,13 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
     const rOuter = radiusPx * GLOW.rimOuter * Math.min(sx, sy);
 
     clear();
+
+    /* Insertion-ordered, so storms composite in the order `buildLights` found
+     * them and the picture does not reshuffle between frames. Rebuilt each
+     * frame rather than kept: a light's alpha depends on the camera, so last
+     * frame's buckets are stale by definition. */
+    const byStorm = new Map();
+    const peakOf = new Map();
 
     let drawn = 0;
     for (let i = 0; i < lights.length && drawn < GLOW.maxLights; i++) {
@@ -592,35 +519,91 @@ export function createLimbGlow(canvas, { getStormPoints, getState } = {}) {
         continue;
       }
 
-      const rgb = rgbOf(pt.color, saturate);
+      /* NOT DRAWN YET. Everything above is per-BLOB geometry; what a blob is
+       * finally worth depends on the brightest blob its STORM has, which is not
+       * known until the whole list has been walked. See the compositing pass
+       * below. */
+      const bucket = byStorm.get(pt.storm);
+      const rec = {
+        px, py, r, stretch, squash, a,
+        rot: Math.atan2(py - cy, px - cx) + Math.PI / 2,
+        rgb: rgbOf(pt.color, saturate),
+      };
+      if (bucket) bucket.push(rec);
+      else byStorm.set(pt.storm, [rec]);
+      if (a > (peakOf.get(pt.storm) || 0)) peakOf.set(pt.storm, a);
 
-      /* Drawn in a rotated, scaled space so one radial gradient renders as an
-       * ellipse. A canvas gradient cannot be elliptical on its own, and the
-       * alternative — many stacked circles along an arc — is the overdraw this
-       * whole layer is built to avoid. save/restore carries the composite
-       * operation through untouched. */
-      ctx.save();
-      ctx.translate(px, py);
-      ctx.rotate(Math.atan2(py - cy, px - cx) + Math.PI / 2);
-      ctx.scale(stretch, squash);
-
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-      /* Three stops, not two. A straight linear ramp to zero reads as a disc
-       * with a soft edge; the extra mid stop is what makes it read as light
-       * falling off. The alpha reaches zero at the rim in both themes, which
-       * is the identity for `lighter` AND for `color` — so the blob has no
-       * edge to catch the eye in either. */
-      g.addColorStop(0, `rgba(${rgb},${a})`);
-      g.addColorStop(GLOW.coreStop, `rgba(${rgb},${a * GLOW.coreAlpha})`);
-      g.addColorStop(1, `rgba(${rgb},0)`);
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(0, 0, r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-
-      painted = true;
       drawn++;
+    }
+
+    /* ==> ONE STORM, ONE STORM'S WORTH OF LIGHT. <==
+     *
+     * Each storm's runs go into the scratch buffer first, scaled so the
+     * brightest of them is fully opaque there, and the finished storm is then
+     * blitted onto the real canvas at that peak alpha. Two consequences, and
+     * both are the point:
+     *
+     *   - Runs of ONE storm blend instead of summing, so a ridge that crossed
+     *     six categories is exactly as bright as one that never left
+     *     depression. The relative weighting between a storm's own runs
+     *     survives, because each keeps its share of the storm's peak.
+     *   - Runs of DIFFERENT storms still meet under the theme's operator on the
+     *     main canvas — additive in dark, plain alpha in light. Two lights on a
+     *     wall really are brighter than one, and unlike the case above that is
+     *     a true statement about how many systems are out there.
+     *
+     * No scratch canvas (a non-browser host) falls back to painting straight
+     * onto the main one. The picture is the old, stacking one; nothing throws. */
+    for (const [storm, recs] of byStorm) {
+      const peak = peakOf.get(storm) || 0;
+      if (!(peak > 0)) continue;
+      const target = sctx || ctx;
+      if (sctx) sctx.clearRect(0, 0, scratch.width, scratch.height);
+
+      for (const rec of recs) {
+        /* Drawn in a rotated, scaled space so one radial gradient renders as an
+         * ellipse. A canvas gradient cannot be elliptical on its own, and the
+         * alternative — many stacked circles along an arc — is the overdraw
+         * this whole layer is built to avoid. */
+        target.save();
+        target.translate(rec.px, rec.py);
+        target.rotate(rec.rot);
+        target.scale(rec.stretch, rec.squash);
+
+        /* On the scratch the storm's peak is normalised to 1 and the blit
+         * carries the real strength. That is not just tidiness: an 8-bit alpha
+         * channel holds ~41 distinct values at `GLOW.intensity`, and drawing
+         * the falloff at full range before scaling it down is the difference
+         * between contouring in the buffer and contouring at composite time. */
+        const a = sctx ? rec.a / peak : rec.a;
+        const g = target.createRadialGradient(0, 0, 0, 0, 0, rec.r);
+        /* ==> FLAT-TOPPED, NOT PEAKED — SEE GLOW.plateauStop. <== A bright
+         * centre that fades outward is what a SOURCE looks like, and the eye
+         * finds it every time. Holding the alpha essentially level across the
+         * inner `plateauStop` leaves no centre to find; `coreStop` then rolls
+         * the shoulder off so the tail does not read as a disc with a soft
+         * edge. The alpha still reaches zero at the rim, which is the identity
+         * for `lighter` AND for `color`, so there is no edge in either theme. */
+        g.addColorStop(0, `rgba(${rec.rgb},${a})`);
+        g.addColorStop(GLOW.plateauStop, `rgba(${rec.rgb},${a * GLOW.plateauAlpha})`);
+        g.addColorStop(GLOW.coreStop, `rgba(${rec.rgb},${a * GLOW.coreAlpha})`);
+        g.addColorStop(1, `rgba(${rec.rgb},0)`);
+        target.fillStyle = g;
+        target.beginPath();
+        target.arc(0, 0, rec.r, 0, Math.PI * 2);
+        target.fill();
+        target.restore();
+      }
+
+      if (sctx) {
+        /* The theme's operator lives on `ctx` and is what makes storms stack
+         * with each other; `globalAlpha` is restored because it is context
+         * state that `clearRect` does NOT reset. */
+        ctx.globalAlpha = peak;
+        ctx.drawImage(scratch, 0, 0);
+        ctx.globalAlpha = 1;
+      }
+      painted = true;
     }
 
     setOpacity(painted ? fade : 0);
