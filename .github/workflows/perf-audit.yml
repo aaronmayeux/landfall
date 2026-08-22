@@ -122,6 +122,25 @@ jobs:
           git commit -m "perf-audit $(date -u +%Y-%m-%dT%H:%M:%SZ)" || exit 0
           git push origin perf-history
 
+      # ==> A CRASH MUST NOT LOOK LIKE A PASS. <== `continue-on-error` above is
+      # there so a BUDGET failure still writes its numbers, and it also swallows
+      # an outright crash. Measured 2026-08-21: the audit exited 2 before
+      # writing anything, the artifact step warned, the branch step hit its
+      # `test -f ... || exit 0`, this step grepped a stack trace and found no
+      # `FAIL` line — and the run went GREEN having measured nothing at all.
+      # A green tick on no data is worse than a red one, because nobody looks.
+      # The measurement file is the proof the audit ran; no file, no pass.
+      - name: fail the job if the audit produced nothing
+        if: always()
+        run: |
+          test -f perf-latest.json || {
+            echo 'the audit wrote no perf-latest.json — it did not complete'
+            echo '--- audit output ---'
+            cat /tmp/audit.txt || echo 'no output captured'
+            exit 1
+          }
+          echo 'measurement present'
+
       - name: fail the job if the budget was exceeded
         if: always()
         run: |

@@ -4284,6 +4284,29 @@ export const TRACK_LINE = Object.freeze({
    *  Direction of travel now outranks endpoint distance at the seam. */
   maxTurnDeg: 150,
 
+  /** How many times wider than the CLOSEST available join a corner-free join
+   *  may be before `maxTurnDeg`'s veto is overruled (lib/trackline.js `orient`).
+   *
+   *  THE TURN TEST DECIDES WHICH END OF THE PAST TRACK IS THE RECENT ONE, and
+   *  it is right to outrank distance — that is Genevieve, above. But it was an
+   *  absolute veto with no way to notice that the orientation it preferred was
+   *  absurd. On 2026-08-21 both live NHC storms drew their past track along the
+   *  whole forecast and their forecast backwards, because NHC's past track was
+   *  two advisories fresher than its forecast geometry: the storm had walked
+   *  past its own forecast start, the correct join therefore made a near-180
+   *  degree hairpin, and a REVERSED forecast passed the turn test on a gap of
+   *  ~11 degrees against the correct answer's ~1.3.
+   *
+   *  2 is deliberately tight, and the two failures it separates are far apart.
+   *  A stale forecast puts the seam one 6-hourly step out — a degree or two —
+   *  so the right join is always the near one. A wrong-end or reversed join is
+   *  the length of a track, tens of degrees. Nothing real lands between 2x and
+   *  8x. Raise it only if a real storm is ever seen losing its corner.
+   *
+   *  A RATIO OF DISTANCES, and `orient` compares SQUARED separations, so it is
+   *  squared at the point of use. */
+  orientGapRatio: 2,
+
   /** Floor on cos(latitude) when scaling longitude into the planar frame.
    *  A tropical cyclone never gets near the pole, but an extratropical
    *  remnant tracking past 80°N would otherwise stretch longitude toward

@@ -323,6 +323,19 @@ function checkBudget(results, radar) {
   let ok = true;
 
   const warm = results.find((r) => r.arm === budget.armUnderBudget) || results[0];
+
+  /* ==> A BUDGET THAT PASSES ON A RUN THAT MEASURED NOTHING IS A GREEN TICK
+   * ON SILENCE. <== `report` has always printed "STYLE NEVER LOADED — map
+   * numbers below are meaningless", and the budget then went on to check those
+   * same meaningless numbers and pass them. Measured 2026-08-21: all three
+   * arms reported `styleLoaded: false` and `colorNulls: 0 <= 0` was recorded as
+   * a pass — while the live app was emitting about fifteen colour-null errors
+   * per load. A zero from an instrument that never ran is not a zero. */
+  if (!warm.styleLoaded) {
+    notes.push(`FAIL styleLoaded: the map never built on ${warm.arm} — nothing below was measured`);
+    ok = false;
+  }
+
   for (const [key, max] of Object.entries(budget.max || {})) {
     const got = key === 'dataSerialDepth' ? warm.data.depth
       : key === 'radarTilesOnPan' ? (radar ? radar.radarOnPan : 0)

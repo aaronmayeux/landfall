@@ -1259,6 +1259,24 @@ archive the whole set or write down which member is excluded and why.** An
 archive that covers most of a bundle fails on exactly the day something goes
 wrong with the rest.
 
+**A NEW SOURCE FAMILY NEEDS ITS FOLDER IN THE SAME COMMIT.** A source `name`
+may carry a folder prefix — `geometry/…`, `ships/…`, `jtwc/…`, `adeck/…` — and
+Node does not create an intermediate directory on write. The a-deck family
+shipped on 2026-08-21 without its `mkdirSync` line, so the FIRST deck write
+threw `ENOENT`, the phase's own try/catch swallowed it, and the run reported
+`68/69 sources ok` with no deck and no complaint. Every hour, for a day.
+`tools/test-archive-dirs.mjs` reads the fetcher and fails when a prefixed family
+has no matching folder.
+
+**A DERIVED PHASE THAT THROWS MUST NOT LOOK LIKE A QUIET HOUR.** Every derived
+phase catches, deliberately — an experiment must never cost us a storm list —
+but a catch that only prints to stdout is invisible to every session, because a
+session reads the manifest and never the run log. Each catch now records
+`{ phase, reason }` in `derivedFailures`, which rides in `archive:latest/manifest.json` beside
+`ok` and `unavailable`. **An empty array is the healthy state and is written
+every hour**, so nothing has to remember the key exists. §5's silence rule
+applies to our own tooling exactly as it applies to the app.
+
 **A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
 on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
 HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,

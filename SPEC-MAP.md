@@ -219,6 +219,29 @@ last decoration in `forMap()` (§12): **stitch → orient → join → spline �
 - **Direction of travel outranks distance at the seam.** A pairing that makes the
   path reverse onto itself (`TRACK_LINE.maxTurnDeg`, 150°) is refused however near
   its endpoints happen to be; among what survives, the smallest gap wins.
+- **But the turn test may not buy a corner with a hole.** If the only pairing
+  without a sharp corner leaves a gap more than `TRACK_LINE.orientGapRatio` (2×)
+  wider than the closest pairing available, the turn veto is overruled and the
+  tight join is taken, corner and all. **A stale forecast makes a sharp corner; it
+  does not make an ocean-sized hole.** Reached glass on 2026-08-21, on both live
+  NHC storms at once: the past track (MapServer layer 11) was current while the
+  forecast geometry was two advisories behind, so the storm had already walked
+  past its own tau 0. The correct join therefore made a near-180° hairpin, the
+  turn test threw it out, and a REVERSED forecast won on a gap of ~11° against
+  the correct answer's ~1.3°. The dotted past track drew along the entire
+  forecast and the solid forecast line drew backwards. The override warns by name
+  when it fires, because a storm that has overtaken its own forecast is a
+  **clock** finding worth surfacing, not a geometry one.
+- **A run that repeats another run, forwards or backwards, is dropped before
+  stitching** (`runsFrom`). NHC published the final segment of the past track
+  TWICE on 2026-08-21 — identical coordinates, consecutive `objectid`s — for both
+  live storms. `stitch` can only chain a copy tail-to-tail, so the path walked out
+  along that leg and straight back down it, and `unfold` reported the fold on
+  every load. A repeated segment is a fault in the SOURCE and carries no
+  information the original did not, so it is dropped rather than repaired inside
+  `stitch`: the same rule the module already applies to duplicate VERTICES,
+  applied one level up to duplicate RUNS. Exact coordinate match at `joinEpsDeg`
+  only — near is how you delete a real leg of a track.
 
 **GDACS ships a track as ~30 disconnected segments in intensity order**, with the
 `forecast` flag flipping *inside* a class run. They chain because their shared

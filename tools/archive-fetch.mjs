@@ -1039,8 +1039,39 @@ mkdirSync(OUT, { recursive: true });
 mkdirSync(join(OUT, 'geometry'), { recursive: true });
 mkdirSync(join(OUT, 'ships'), { recursive: true });
 mkdirSync(join(OUT, 'jtwc'), { recursive: true });
+/* ==> A SOURCE NAME WITH A SLASH IN IT NEEDS ITS FOLDER MADE HERE. <== The
+ * a-deck phase landed on 2026-08-21 naming its sources `adeck/nhc-<id>.txt`
+ * and nobody added the line below, so the FIRST deck write threw ENOENT, the
+ * phase's own try/catch swallowed it, and the run reported 68/69 sources ok
+ * with no deck and no complaint. Every other prefixed family above is here for
+ * the same reason. Add the folder in the same commit as the family. */
+mkdirSync(join(OUT, 'adeck'), { recursive: true });
 
 const results = [];
+
+/* ==> A DERIVED PHASE THAT THROWS MUST NOT LOOK LIKE A QUIET HOUR. <== Every
+ * derived block below is wrapped in its own try/catch, deliberately: an
+ * experiment must never cost us a storm list. But the catch printed one line
+ * to stdout and nothing reached the manifest, so a phase that failed OUTRIGHT
+ * was indistinguishable from a phase that legitimately derived nothing.
+ *
+ * Measured 2026-08-21: the a-deck phase threw ENOENT on its first write, every
+ * hour, and `manifest.json` said `68/69 sources ok`. A session read that,
+ * concluded the relay had served no decks, and lost the run. §5's silence rule
+ * applies to our own tooling exactly as it applies to the app.
+ *
+ * `derivedFailures` rides in the manifest so the failure is readable with the
+ * same `git show` that reads everything else. An EMPTY array is the healthy
+ * state and is written every hour, so nothing has to remember the key exists. */
+const derivedFailures = [];
+
+/** Record a derived phase that threw. Prints loudly AND lands in the manifest;
+ *  the console alone is not a channel any session can read. */
+function phaseFailed(phase, err) {
+  const reason = String(err && err.message ? err.message : err);
+  derivedFailures.push({ phase, reason });
+  console.log(`\n!! DERIVED PHASE FAILED — ${phase}: ${reason}`);
+}
 
 /** Fetch one source, write it, log it. Extracted when the geometry phase
  *  arrived, because a second copy of this would be a second place for the
@@ -1082,9 +1113,7 @@ try {
     if (r.status === 'ok') geometryCount++;
   }
 } catch (err) {
-  console.log(
-    `\nno per-storm geometry this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('geometry', err);
 }
 
 /* GDACS event detail, §4.8. Its own try block for the same reason as every
@@ -1101,9 +1130,7 @@ try {
     if (r.status === 'ok') eventDataWritten.push(r.name);
   }
 } catch (err) {
-  console.log(
-    `\nno GDACS event detail this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('gdacs-event-detail', err);
 }
 
 /* The NHC half of phase two. Separate try block on purpose: a GDACS list that
@@ -1118,9 +1145,7 @@ try {
     if (r.status === 'ok') geometryCount++;
   }
 } catch (err) {
-  console.log(
-    `\nno NHC tracks this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('nhc-tracks', err);
 }
 
 /* SHIPS, §47. Its own try block for the same reason as the two above: this is
@@ -1135,9 +1160,7 @@ try {
   console.log(`\nderived ${derived.length} SHIPS URL(s) from CurrentStorms.json`);
   for (const src of derived) await run(src);
 } catch (err) {
-  console.log(
-    `\nno SHIPS this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('ships', err);
 }
 
 /* JTWC per-storm products. Its own try block like every other derived phase:
@@ -1152,9 +1175,7 @@ try {
   console.log(`\nderived ${derived.length} JTWC per-storm product URL(s) from jtwc.rss`);
   for (const src of derived) await run(src);
 } catch (err) {
-  console.log(
-    `\nno JTWC per-storm products this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('jtwc-storm-products', err);
 }
 
 
@@ -1179,9 +1200,7 @@ try {
   console.log(`\nderived ${derived.length} a-deck URL(s) from the two rosters`);
   for (const src of derived) await run(src);
 } catch (err) {
-  console.log(
-    `\nno a-decks this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('adeck', err);
 }
 
 
@@ -1480,9 +1499,7 @@ try {
   );
   for (const src of derived) await run(src);
 } catch (err) {
-  console.log(
-    `\nno GDACS surge/impact payloads this run — ${String(err && err.message ? err.message : err)}`
-  );
+  phaseFailed('gdacs-surge', err);
 }
 
 const okCount = results.filter((r) => r.status === 'ok').length;
@@ -1508,6 +1525,11 @@ writeFileSync(
        * one thing carried into `history/` every hour; a sibling file would
        * live in `latest/` only and answer nothing about a lag. */
       countryMatch,
+      /* Derived phases that THREW, as opposed to deriving nothing. Empty is
+       * the healthy state and is written every hour. A non-empty entry means
+       * a whole family of sources is missing from `sources` below and their
+       * absence is a fault, not a quiet hour. */
+      derivedFailures,
       ok: okCount,
       unavailable: results.length - okCount,
       sources: results,
@@ -1518,3 +1540,10 @@ writeFileSync(
 );
 
 console.log(`\n${okCount}/${results.length} sources ok — manifest.json written to ${OUT}`);
+if (derivedFailures.length) {
+  console.log(
+    `!! ${derivedFailures.length} derived phase(s) FAILED: ` +
+      derivedFailures.map((f) => f.phase).join(', ') +
+      ' — see derivedFailures in manifest.json'
+  );
+}

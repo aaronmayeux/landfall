@@ -24,6 +24,7 @@
  */
 
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
@@ -574,6 +575,104 @@ ok(wpp[0][0] === 176.0, 'the first vertex keeps its published longitude');
 ok(near(wpf[wpf.length - 1][0], 182.6, 1e-6),
    'the far end is expressed past 180 (182.6, not −177.4) so MapLibre draws it whole');
 ok(samePt(wpp[wpp.length - 1], wpf[0]), 'and it still joins across the seam');
+
+/* ---------------------------------------------------------------------------
+ * LALA, ADVISORY 038 — REAL BYTES, TWO FAULTS AT ONCE
+ *
+ * ==> NOT A FIXTURE. <== Both files are exactly what the NHC MapServer served
+ * for Hurricane Lala on 2026-08-21T21:31Z, lifted off the archive branch. They
+ * carry two independent faults, and both were on Aaron's phone at the time:
+ *
+ *   1. Layer 11 sends the past track as 14 segments, and `objectid` 742 and
+ *      743 are coordinate-for-coordinate IDENTICAL. `stitch` glues the copy on
+ *      reversed, the path folds back on itself, and `unfold` reports it on
+ *      every load.
+ *
+ *   2. The past track is FRESHER than the forecast. History reaches 28.1N;
+ *      the forecast still starts at 26.9N, two advisories behind. So the
+ *      correct join makes a near-180 degree hairpin, `maxTurnDeg` vetoed it,
+ *      and a REVERSED forecast won instead — drawing the dotted past track
+ *      along the entire forecast and the solid forecast line backwards.
+ *
+ * These are separate bugs with separate fixes, and the suite proves it by
+ * checking them separately. Fault 2 survives fault 1 being fixed.
+ * ------------------------------------------------------------------------- */
+section('Lala 038 — real NHC bytes, a doubled segment and a stale forecast');
+
+const lalaPastFc = JSON.parse(
+  readFileSync('samples/lala-cp012026/past-track-038-doubled.geojson', 'utf8')
+);
+const lalaFcFc = JSON.parse(
+  readFileSync('samples/lala-cp012026/forecast-track-038-stale.geojson', 'utf8')
+);
+
+/* The fixture has to keep carrying the fault, or every assertion below passes
+ * for the wrong reason. Checked first, by NHC's own ids. */
+const lalaOids = lalaPastFc.features.map((f) => f.properties.objectid);
+ok(lalaPastFc.features.length === 14, 'the archived past track is 14 segments');
+ok(String(lalaOids.slice(-2)) === '742,743', 'the last two are objectid 742 and 743');
+ok(JSON.stringify(lalaPastFc.features[12].geometry)
+   === JSON.stringify(lalaPastFc.features[13].geometry),
+   'and they are the same segment, published twice — the fault this fixture exists for');
+
+/* --- fault 1: the repeat is dropped, so nothing folds --------------------- */
+const lalaRuns = runsFrom(lalaPastFc);
+ok(lalaRuns.length === 13, `runsFrom drops the repeat: 14 features → ${lalaRuns.length} runs`);
+
+const lalaChains = stitch(lalaRuns);
+ok(lalaChains.length === 1, 'the 13 survivors chain into exactly one line');
+
+const lalaChain = lalaChains[0];
+let lalaWorstTurn = 0;
+for (let i = 1; i < lalaChain.length - 1; i++) {
+  lalaWorstTurn = Math.max(lalaWorstTurn, turnDeg(lalaChain[i - 1], lalaChain[i], lalaChain[i + 1]));
+}
+ok(lalaWorstTurn <= TRACK_LINE.maxTurnDeg,
+   `no fold anywhere in the chain (worst turn ${lalaWorstTurn.toFixed(1)}°)`);
+ok(unfold(lalaChain, 'Lala past track').length === lalaChain.length,
+   'unfold has nothing to cut, so the track keeps its full history');
+ok(samePt(lalaChain[lalaChain.length - 1], [-170.69999999960024, 28.099999999700344], 1e-9),
+   'and the surviving chain still ends at the real last fix — the leg is kept, the COPY is dropped');
+
+/* --- fault 2: the join runs the right way round --------------------------- */
+const lalaFcCoords = lalaFcFc.features[0].geometry.coordinates;
+const lalaTau0 = lalaFcCoords[0];
+const lalaTauEnd = lalaFcCoords[lalaFcCoords.length - 1];
+
+/* The fixture's own proof that the two halves disagree about the clock: the
+ * past track's end is NORTH of where the forecast claims the storm is now. */
+ok(lalaChain[lalaChain.length - 1][1] > lalaTau0[1],
+   'the archived past track has overtaken the archived forecast start');
+
+const lalaOut = smoothTracks(
+  { layers: { pastTrack: slot(lalaPastFc.features), forecastTrack: slot(lalaFcFc.features) } },
+  'Lala'
+);
+const lalaPastLine = coordsOf(lalaOut, 'pastTrack');
+const lalaFcLine = coordsOf(lalaOut, 'forecastTrack');
+
+ok(samePt(lalaPastLine[0], [-137.29999999980004, 14.49999999990024], 1e-6),
+   'the past track starts where the storm did');
+ok(samePt(lalaPastLine[lalaPastLine.length - 1], lalaTau0, 1e-6),
+   'the past track STOPS at the forecast\u2019s first dot — it does not run the length of the forecast');
+ok(samePt(lalaFcLine[0], lalaTau0, 1e-6),
+   'the forecast starts at that same dot, so the two halves share a vertex');
+ok(samePt(lalaFcLine[lalaFcLine.length - 1], lalaTauEnd, 1e-6),
+   'and the forecast runs FORWARD, ending at the far tau — not reversed');
+
+/* The shape of the failure, stated as an invariant rather than as a coordinate:
+ * a reversed forecast puts the past track's end at the FURTHEST forecast point
+ * instead of the nearest, so the past track swallows the whole forecast. */
+const pastEndToTau0 = Math.hypot(
+  lalaPastLine[lalaPastLine.length - 1][0] - lalaTau0[0],
+  lalaPastLine[lalaPastLine.length - 1][1] - lalaTau0[1]
+);
+const pastEndToTauEnd = Math.hypot(
+  lalaPastLine[lalaPastLine.length - 1][0] - lalaTauEnd[0],
+  lalaPastLine[lalaPastLine.length - 1][1] - lalaTauEnd[1]
+);
+ok(pastEndToTau0 < pastEndToTauEnd,
+   'the past track ends nearer the START of the forecast than its far end');
 
 /* ---------------------------------------------------------------------------
  * FRAME BUDGET

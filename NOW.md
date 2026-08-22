@@ -59,32 +59,67 @@ traded for.
 
 ## IN FLIGHT
 
-**EIGHTEEN'S PAST TRACK DREW SOLID, AND IT WAS GDACS LYING ABOUT ITS OWN
-TRACK.** Fixed 2026-08-21, **needs one look on glass.** All eleven of
-EIGHTEEN-26's track segments carried `forecast: true`, four of which the storm
-had already travelled — so the past-track slot came back EMPTY and the whole
-track drew in the forecast's solid line. Aaron caught it on the phone.
+**EIGHTEEN'S PAST TRACK — CONFIRMED ON GLASS BY AARON. Closed.** The mechanism
+is in `spec-parameter.md` §32.6. Do not reopen.
 
-**The same payload already held the answer.** Its timestep dots carry real
-per-point times and put the first five positions before the issue time, so each
-segment is now dated from the dots and GDACS's flag is only the fallback
-(`splitTrackLines`, §32.6). **Verified as a REPAIR and not a second opinion:**
-Lala's 45 segments, Saudel's 21 and Two-C's 12 do not move at all; EIGHTEEN
-moves four. A correction says so on the console rather than happening silently.
+**THE ARCHIVE CAPTURED LAYER 11 AND CAPTURED NO DECKS, AND THE REASON WAS OURS.**
+`latest/geometry/nhc-*-pastTrack.geojson` arrived as expected. `latest/adeck/`
+did not exist at all — not "no decks this hour", no folder. The a-deck phase
+landed without its `mkdirSync` line, so the first deck write threw `ENOENT`
+every hour, the phase's own try/catch swallowed it, and the manifest read
+`68/69 sources ok`. Both halves fixed: the folder, and every derived catch now
+records `{phase, reason}` into `derivedFailures` in the manifest.
+`tools/test-archive-dirs.mjs` guards both, mutation-verified. §18.3.
+**Check `latest/adeck/` and the manifest's `derivedFailures` after the next
+hourly run** — the sandbox cannot dispatch it.
 
-**What to look at:** open EIGHTEEN and confirm the track behind the storm is
-DOTTED, the forecast loop ahead of it is SOLID, and the two meet cleanly at the
-current-position dot without a gap or an overlap. That seam is the one thing the
-test cannot judge.
+**BUG 3 (model tracks not starting at the current-position dot) IS STILL
+BLOCKED UNTIL THAT RUN.** No deck bytes, nothing to read, do not start it.
 
-**NHC LAYER 11 AND THE MODEL DECKS ARE IN THE ARCHIVE NOW — CHECK THE NEXT RUN.**
-Both were found missing while chasing the above, and both are the same species
-of gap: the archive held eight of the bundle's nine NHC layers and the missing
-one was `pastTrack`, the exact line every "track doubles back" warning is about;
-and it held the TCGP roster but not a single deck. **After the next hourly run,
-`latest/geometry/nhc-*-pastTrack.geojson` and `latest/adeck/` should both
-exist.** If they do not, that is the finding. Rule written into §18.3: archive a
-whole SET or name the excluded member in writing.
+**TWO NHC TRACK FAULTS FIXED TOGETHER — NEEDS ONE LOOK ON GLASS.** 2026-08-21.
+Aaron on the phone: the dotted past track ran the whole length of the forecast
+on both Lala and Moke. **Not fallout from §32.6** — `lib/trackline.js` had not
+been touched in three pushes; NHC's data changed. Two independent faults,
+proven separate by mutation (each fix's tests fail alone):
+
+- **A segment published twice.** Layer 11 sent the final leg of the past track
+  twice, identically, on BOTH storms (`objectid` 742/743 and 745/746). `stitch`
+  can only chain a copy tail-to-tail, so the path folded 180° and `unfold`
+  reported it on every load. `runsFrom` drops a repeated run now.
+- **The past track had overtaken a stale forecast.** History reached 28.1N while
+  the forecast still began at 26.9N. The correct join is therefore a hairpin,
+  `maxTurnDeg` vetoed it, and a REVERSED forecast won on an 11° gap against the
+  right answer's 1.3°. `TRACK_LINE.orientGapRatio` (2×) overrules the turn veto
+  when the alternative leaves a far wider hole. SPEC-MAP.md §7.4.
+
+Real archived bytes are the fixture (`samples/lala-cp012026/*-038-*`), never an
+invented one. **What to look at:** on any NHC storm, the dotted past track stops
+AT the white ring and the solid forecast runs forward from it.
+
+**A NEW CONSOLE LINE IS EXPECTED AND IS THE POINT.** The override warns by name
+when it fires — "the past track has most likely overtaken a stale forecast".
+That is the same clock skew bug 3 measured (feed advisory 038/21:00Z against
+geometry 36A/12:00Z). It will fire on most NHC storms until that is understood.
+
+**THE PERF AUDIT WENT GREEN HAVING MEASURED NOTHING, TWICE OVER.** Two runs
+2026-08-21. The 21:11 run crashed at exit 2, wrote no JSON, and every step after
+it no-opped by design — artifact warned, branch push hit its `test -f || exit 0`,
+budget grep found no `FAIL` in a stack trace. Green tick, zero data. The 21:38
+run went red and DID write, so `perf-history` exists now with one file.
+Both holes closed: the job fails when no measurement file exists, and the budget
+fails outright when `styleLoaded` is false.
+
+**==> DO NOT TRUST `colorNulls: 0` FROM THAT RUN — IT IS BUG 2's EVIDENCE AND IT
+IS NOT IN HAND. <==** `tools/perf-instrument.mjs` counts colour-null errors by
+patching `console.error` on the MAIN PAGE, and the errors come from MapLibre's
+WORKER, which has its own global scope and its own console. A zero from an
+instrument pointed at the wrong thread is not a zero. All three arms also
+reported `styleLoaded: false`, which the audit's own report calls "map numbers
+below are meaningless". **Bug 2 needs the instrument fixed before it needs
+anything else.**
+
+The run's real findings, worth keeping: `blockedMs 26490` against a 1200 budget,
+`ourModules 179` against 175, and the radar arm at `loadMs 109802`.
 
 **SAUDEL LOST ITS SAFFIR-SIMPSON GRADING ON TWO DEVICES AND KEPT IT ON A THIRD,
 AND THAT IS STILL UNEXPLAINED.** 2026-08-21. Forecast track drew nine pink `HU`
@@ -324,11 +359,12 @@ internet. `functions/api/nhc/advisory.js:95` is still `FRESH_SECONDS = 5 * 60`
 against a 5-minute cron, which is the DOLPHIN-26 collision §4.13 bans in capitals
 — and the review confirmed it is the ONLY such collision among warmed routes.
 
-**Two things are still UNMEASURED** and `tools/perf-audit.mjs` measures them on
-the Actions runner: radar's request volume (item 0b below, still a prediction)
-and the colour-null count (item 0d, still untraced). The budget sets colour-nulls
-to 0, so that run fails until it is fixed. **`node tools/load-probe.mjs` and
-`boot-profile.mjs` both build their browser with `serviceWorkers: 'block'`** —
+**Two things are still UNMEASURED** and `tools/perf-audit.mjs` measures one of
+them on the Actions runner: radar's request volume (item 0b below, still a
+prediction). **It does NOT measure the colour-null count** — item 0d — however
+green the budget line looks; the instrument is pointed at the wrong thread. The
+budget's `colorNulls: 0` reads as a pass on nothing. **`node tools/load-probe.mjs`
+and `boot-profile.mjs` both build their browser with `serviceWorkers: 'block'`** —
 every module number this repo held before today was taken on a path 98% of
 sessions are not on.
 
@@ -379,32 +415,34 @@ reference sharing an expression with a feature read — found nothing inline.
 
 **THE REMAINING SIGNAL IS WHERE IT FIRES.** All but one line comes from the
 MapLibre WORKER blob, not from `maplibre-gl-5.6.0.js` on the main thread, which
-points at the basemap style rather than at our storm layers. Unconfirmed —
-`tiles.openfreemap.org` is blocked from the sandbox, so the one place this can
-be caught is `tools/perf-audit.mjs` on the Actions runner, which already has a
-`colorNulls` budget of 0 wired up and has never run. **Run that before writing
-anything.** The cost is still unknown: it may be drawing nothing where something
-belongs, or falling through to a default that happens to look right. Do not
-assume the second.
+points at the basemap style rather than at our storm layers.
 
-**0e. LALA'S PAST TRACK DOUBLES BACK, AND THE BYTES ARRIVE NEXT RUN.**
-`[landfall] Lala past track: track doubles back at 1 point(s) — keeping the
-longest run (37 of 41 vertices)`, from `lib/trackline.js unfold`. This is the
-**NHC** Lala, so it is MapServer layer 11 — not the GDACS storm and not §32.6,
-which is a different storm and a different mechanism.
+**==> THE AUDIT HAS NOW RUN, IT REPORTED `colorNulls: 0`, AND THAT NUMBER IS
+WORTHLESS. <==** 2026-08-21. `tools/perf-instrument.mjs` counts these by patching
+`console.error` on the MAIN PAGE via `addInitScript`. A dedicated worker has its
+own global scope and its own console, so the ~14 of 15 lines that come from the
+worker blob were never in range of the instrument. It measured the one thread
+the bug is not on and returned a clean bill. All three arms ALSO reported
+`styleLoaded: false`, which the audit's own report calls "map numbers below are
+meaningless" — the budget passed them anyway until this pass.
 
-**A CANDIDATE, EXPLICITLY NOT A CONCLUSION.** Layer 10's past POINTS show Lala
-nearly stationary for her first six fixes — five of them at longitude −137.3,
-drifting 14.5° to 14.8° of latitude, with two exact coordinate repeats — and
-near-stationary jitter is what produces a near-180° turn. But layer 11 is a
-different product with a different vertex count (41 against 47 points), so this
-has NOT been tested against the geometry that actually warns. It is archived
-from the next hourly run on; read the real line before touching `unfold`.
+**SO THE NEXT MOVE IS THE INSTRUMENT, NOT THE STYLE.** Get worker consoles into
+the count — or fail the metric honestly as unmeasurable — before reading another
+zero off it. The cost of the bug is still unknown: it may be drawing nothing
+where something belongs, or falling through to a default that happens to look
+right. Do not assume the second.
 
-**AND THE ELEVEN REPEATS ARE A SEPARATE QUESTION.** That warning fires eleven
-times in one load, which is about the smoother re-running per push rather than
-per fetch, and has nothing to do with why the track folds. Do not fix them
-together.
+**0e. LALA'S PAST TRACK DOUBLED BACK — SOLVED, and the candidate was wrong.**
+It was not stationary jitter at the start of the track. NHC published the FINAL
+segment of layer 11 twice, identically, on both live storms; `stitch` chained
+the copy reversed and the path folded at the tail. Fixed in `runsFrom`, see
+`IN FLIGHT`. The archived bytes are `samples/lala-cp012026/past-track-038-doubled.geojson`.
+
+**THE ELEVEN REPEATS ARE STILL OPEN and are a separate question.** The warning
+fired eleven times in one load, which is about `smoothTracks` re-running per
+push rather than per fetch. Nothing to do with why the track folded. The fold is
+gone, so the count is no longer observable from that warning — measure it off
+the new join warning instead, which fires from the same place.
 
 **0f. MODEL TRACKS DO NOT START AT THE CURRENT-POSITION DOT.** Reported on glass
 2026-08-21, on Lala and Two-C both: the dashed guidance lines converge at a
@@ -416,7 +454,15 @@ nothing has been proven.
 instant, `CurrentStorms.json` carried Lala at advisory **038, 21:00Z, 28.6N**
 while the MapServer geometry for the same storm was advisory **36A, 12:00Z,
 26.9N** — two advisories and nine hours apart. The dot, the models and the cone
-are not all reading from one clock. The decks are archived from the next run on.
+are not all reading from one clock. **THE DECKS ARE STILL NOT ARCHIVED** — see
+`IN FLIGHT`; the phase was throwing `ENOENT` every hour. Blocked until the next
+run after that fix deploys.
+
+**AND THE CLOCK SKEW HAS NOW BEEN SEEN FROM A SECOND DIRECTION.** The same
+mismatch made the past track overtake its own forecast and flip the seam
+orientation (`IN FLIGHT`). Two symptoms, one cause, and it is bigger than an
+adeck question: `TRACK_LINE.orientGapRatio`'s warning names every storm it
+happens to, so the console now measures how widespread it is.
 
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by

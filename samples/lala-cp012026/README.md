@@ -62,3 +62,36 @@ paragraph full of real numbers, and a grey cone.
 **Keep the coordinates verbatim.** The point of the fixture is that the two
 parts sit on opposite sides of ±180 — normalize them onto one branch and it
 stops testing anything.
+
+## The advisory-38 tracks — a segment sent twice, and a forecast running late
+
+`past-track-038-doubled.geojson` and `forecast-track-038-stale.geojson` are
+layers 11 and 6 of the MapServer at 2026-08-21T21:31Z, captured off the archive
+branch. They carry **two separate faults at once**, and both were visible on
+Aaron's phone the same evening.
+
+**Fault 1 — the same segment, published twice.** The past track arrives as 14
+`LineString` features, and `objectid` 742 and 743 are coordinate-for-coordinate
+identical: the final leg, −171.30/27.00 to −170.70/28.10, sent twice. `stitch`
+cannot chain a copy head-to-tail, so it chains it TAIL-to-tail — the path walks
+out along that leg and straight back down it. `unfold` caught the 180° fold and
+reported it on every load. Moke (`CP032026`) arrived the same hour with the same
+fault: 3 segments, `objectid` 745 and 746 identical. This is a source quirk, not
+a chaining bug, so `runsFrom` drops the repeat before `stitch` ever sees it.
+
+**Fault 2 — the past track has overtaken the forecast.** History reaches 28.1°N;
+the forecast still begins at 26.9°N, two advisories and nine hours behind. So
+joining the two correctly makes a near-180° hairpin at the seam, `maxTurnDeg`
+vetoed that orientation, and a REVERSED forecast passed the turn test instead —
+on a gap of roughly 11° against the correct answer's 1.3°. On glass: the dotted
+past track ran the entire length of the forecast and the solid forecast line was
+drawn backwards. `TRACK_LINE.orientGapRatio` is the fix and
+`tools/test-trackline.mjs` asserts against these bytes.
+
+**Fault 2 survives fault 1 being fixed**, which is why the suite checks them
+separately. Dropping the duplicate segment silences the console warning and
+changes nothing about the join.
+
+**Keep both files verbatim.** Remove the duplicate feature, or nudge the
+forecast's first point onto the past track's last, and neither fault is
+reproducible any more.
