@@ -1914,6 +1914,116 @@ threshold across a time NHC published no ring for. Moke's lower figure is the
 run-break rule doing its job. Neither is a bug; both are recorded so the numbers
 are not rediscovered as one.
 
+### 7.13 A wind ring is placed at its own centre
+
+`lib/windswath.js` `centreOfRadiiRing`, called from the forecast tier of
+`buildFullTrack`.
+
+NHC serves the 5-day forecast POINTS (layer 5) and the forecast wind RADII
+(layer 15) as separate ArcGIS layers on separate publish cycles. The swath took
+the quadrant NUMBERS from the radii and the CENTRES from the points, joined on
+`tau`. **That join assumes the two layers are the same advisory, and they are
+not always.**
+
+Measured on the archive run of 2026-08-21T23:30Z, Moke CP3:
+
+| product | advisory | published |
+|---|---|---|
+| forecast points, forecast track, cone | **4** | 09:13Z |
+| past points, past track | 6 | 21:04Z |
+| wind radii — past, current, forecast | **6** | 21:12Z |
+| `CurrentStorms.json` position, name, intensity | 6 | 21:00Z |
+
+Twelve hours and two advisories apart. The points still carried
+`stormname: "Tropical Depression Two-C"` at 30 kt while the feed had Tropical
+Storm Moke at 40. **Every wind band was drawn 108 to 151 nm east-southeast of
+where NHC drew it** — the layer that answers "where will tropical-storm-force
+winds be", off by the width of a small country.
+
+#### The ring states its centre, twice
+
+A wind rose is four quarter-circles about one point, so its bounding box is
+pinned to that point by the four published radii:
+
+```
+north edge = lat + max(ne, nw)      east edge = lon + max(ne, se)/cos(lat)
+south edge = lat − max(se, sw)      west edge = lon − max(nw, sw)/cos(lat)
+```
+
+Two independent answers for the latitude and two for the longitude. On a real
+rose they agree, and the disagreement is the confidence measure:
+`WIND_SWEEP.centreSolveTolNm` (2 nm). Measured across every archived forecast
+and past ring on both storms — Lala's three thresholds over 22 past times and 21
+forecast rings, plus Moke's ten — **the worst miss is 0.55 nm and most are under
+0.3.** That residual is the polygon's arc tessellation. The CURRENT wind field is
+a merged product rather than four arcs and misses by 5 to 33 nm on the same
+bytes; it is refused, which costs nothing because the current tier is placed at
+the feed position and never needed this.
+
+- **A centroid is still not a centre.** §4's rule stands. A rose with `ne` 130
+  and `sw` 80 has its centroid well northeast of its centre. This solves from
+  stated radii and never averages vertices.
+- **Seam-safe.** Geometry arrives wrapped into (−180, 180], so a ring straddling
+  the antimeridian has vertices at both ends of the number line and a raw
+  min/max spans the globe. Measured on Lala's tau-120 34 kt ring: unwrapped it
+  solves clean, wrapped it lands 17,000 nm out. Longitudes go onto one branch
+  before the box is taken.
+- **The tightest-closing threshold wins.** Several thresholds share a `tau` and
+  each solves the same point. Taking the one with the smallest miss avoids
+  averaging across the seam a second time, and avoids depending on a feature
+  order the service does not promise.
+- **The joined point is the fallback, not the default.** A ring that will not
+  solve is still placed the old way rather than dropped: a band in roughly the
+  right place beats no band (§5).
+
+#### The clock comes with the place
+
+**`validtime`, not `synoptime`.** On layer 15 `synoptime` is the RUN's base hour
+and is identical on every ring in the file — 2026082118 on all ten of Moke's —
+while `validtime` is the hour that ring is valid at. It is ten digits of UTC
+here and `DD/HHMM` on the forecast points: same field name, different format,
+different layer, which is why `lib/time.js` carries two parsers rather than one
+with a mode flag.
+
+**The centre and the hour are taken together or not at all.** §7.12 drops any
+forecast hour already behind the storm. Moke's points put tau 0 at 21/06Z and
+tau 12 at 21/18Z, both behind the feed's 21:00Z, so ordering by them silently
+drops her two nearest-term rings while her radii are valid 21:00Z and 22/06Z.
+Placing by one product's clock and ordering by another's is §7.12's fault
+mirrored, and taking only half of this section would recreate it.
+
+#### What it moves, and what it must not
+
+`tools/test-windswath-centre.mjs`, 30 assertions, 5 mutations.
+
+- Moke's tau-0 ring solves to **−147.20, 13.90** — the feed's position to the
+  digit. That is the tell that the radii are current and the points are not.
+- The 50 kt band used to end 2.3° east of its own tau-36 ring and the 34 kt band
+  2.6° east of its tau-96 ring; both now bracket every ring published.
+- Share of published wind-rose boundary points falling inside the drawn 34 kt
+  band, sampled at 0.8× radius: **81.2% solved against 58.7% stale.**
+- **Lala does not move.** Her points and her radii are both advisory 36A,
+  published five minutes apart, and her solved centres match her forecast points
+  to under 1 nm. Coverage 84.9% either way. **This is the third fault in this
+  family Lala's bytes cannot reproduce** (§7.9, §7.12), and she earns her keep
+  here as the no-op control: a fix that moved every storm's bands to correct one
+  storm's would be a regression wearing a fix's clothes.
+
+**THE PAST TIER IS DELIBERATELY LEFT ALONE.** It joins layer 13 to layer 10 on
+the ten-digit synoptic time, which is an exact key rather than a `tau`. A stale
+past-points product carries different stamps and simply fails to join, so its
+rings are dropped rather than misplaced — a different failure mode, already
+safe. The solve is asserted to work on past rings so the option stays open, but
+nothing reads it there.
+
+**NOT FIXED HERE, AND IT IS THE BIGGER PROBLEM.** The forecast points, forecast
+track and cone are still whatever advisory NHC's layer 5 and layer 4 happen to
+be serving, and §7.11 re-anchors that geometry onto the current fix — dragging a
+twelve-hour-old cone forward and rounding off the cut end with a half-ellipse no
+source published, which is the purple lobe Aaron reported on Moke. Whether the
+app should keep re-anchoring or draw the forecast where NHC drew it and stamp it
+as stale is an open decision, recorded in `NOW.md`.
+
 
 ## 9. Design
 

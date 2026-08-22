@@ -42,3 +42,35 @@ regression wearing a fix's clothes.
 
 The moment NHC publishes an advisory whose apex is at Moke's real position, the
 tail is gone and nothing here reproduces.
+
+## The second fault these bytes carry — two advisories at once
+
+Added 2026-08-22 with `wind-swath-adv6.geojson`, `wind-past-adv6.geojson`,
+`wind-current-adv6.geojson` and `past-points-adv6.geojson`.
+
+**The files named `006` in this folder are advisory 004.** The number came from
+`CurrentStorms.json`'s advisory count at capture time, not from the geometry's
+own `advisnum`, and it is wrong on three files. Left as-is rather than renamed —
+`tools/test-cone-cap.mjs` and `tools/test-forecast-now.mjs` cite them by name —
+but do not read the filename as the advisory.
+
+What the geometry actually says:
+
+| file | `advisnum` | published |
+|---|---|---|
+| `cone-006-stale`, `forecast-track-006-stale`, `forecast-points-006-stale` | **4** | 2026-08-21 09:13Z |
+| `past-points-adv6`, `wind-past-adv6`, `wind-current-adv6`, `wind-swath-adv6` | **6** | 21:04–21:12Z |
+
+Twelve hours and two advisories apart, in one capture, on one storm. The
+forecast points still call her `Tropical Depression Two-C` at 30 kt while the
+feed had Tropical Storm Moke at 40. See SPEC-MAP.md §7.13.
+
+**Lala cannot reproduce this one either — that is now three.** Her points and
+her radii are both advisory 36A, published five minutes apart, so her solved
+ring centres match her forecast points to under 1 nm and the fix is a no-op on
+her to the third decimal. `tools/test-windswath-centre.mjs` asserts both halves.
+
+## Do not refresh these either
+
+The moment NHC's layer 5 catches up with its layer 15, the two advisories agree
+and nothing here reproduces.

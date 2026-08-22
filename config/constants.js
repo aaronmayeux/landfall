@@ -3464,6 +3464,25 @@ export const WIND_SWEEP = Object.freeze({
    *  (§4). Value from the spec. */
   coincideDeg: 0.05,
 
+  /** How far the two independent solves of a wind ring's own centre may
+   *  disagree before the ring is declared not-a-quadrant-rose and its centre
+   *  is not used (nautical miles, §7.13).
+   *
+   *  A rose states its centre twice over: north extent minus max(ne,nw) must
+   *  equal south extent plus max(se,sw), and the same from east and west. On
+   *  a real ring those two answers agree because they describe one shape.
+   *
+   *  MEASURED on the archived bytes, every forecast and past ring on Lala
+   *  (advisory 36A, 3 thresholds x 22 past times + 21 forecast rings) and Moke
+   *  (advisory 6): worst disagreement 0.55 nm, most under 0.3 nm — that
+   *  residual is the polygon's arc tessellation, nothing more. The CURRENT
+   *  wind field is not a clean rose and misses by 5 to 33 nm on the same
+   *  bytes, which is the case this number exists to reject. Two is far above
+   *  the noise and far below any real disagreement; there is no measured
+   *  value anywhere in between, so this is a fence in an empty field rather
+   *  than a threshold anything sits near. */
+  centreSolveTolNm: 2,
+
   /** Hard ceiling on resample steps per run. A pathological track widens
    *  its step rather than exploding the vertex budget — jank is worse than
    *  a slightly coarser outline (§9: feel is the overriding lens). */

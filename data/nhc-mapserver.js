@@ -64,7 +64,7 @@
  */
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
-import { parseNhcValidtime } from '../lib/time.js';
+import { parseNhcValidtime, parseSynopticStamp } from '../lib/time.js';
 import { categoryFromKt } from '../lib/category.js';
 import { buildFullTrack } from '../lib/windswath.js';
 import { normalizePastPoints } from '../lib/track-point.js';
@@ -392,19 +392,13 @@ export function normalizePastRadii(fc) {
  * because layer 10 publishes the same value as one.
  */
 function synopticToIso(v) {
-  const s = v == null ? '' : String(v).trim();
-  if (!/^\d{10}$/.test(s)) return null;
-  const y = +s.slice(0, 4);
-  const mo = +s.slice(4, 6);
-  const d = +s.slice(6, 8);
-  const h = +s.slice(8, 10);
-  if (mo < 1 || mo > 12 || d < 1 || d > 31 || h > 23) return null;
-  const ms = Date.UTC(y, mo - 1, d, h);
-  /* Round-tripped, so 31 February is rejected rather than rolling into March
-   * and placing a wind field a day away from the storm that made it. */
-  const back = new Date(ms);
-  if (back.getUTCMonth() !== mo - 1 || back.getUTCDate() !== d) return null;
-  return back.toISOString();
+  /* ==> THE PARSE ITSELF MOVED TO `lib/time.js` (§7.13). <== `lib/windswath.js`
+   * needs the same ten digits to place a forecast ring on its own clock, and it
+   * cannot import from `data/`. This wrapper is the ISO face of that one
+   * parser, kept because everything downstream of normalization compares ISO
+   * instants; the ms face is what the swath builder reads. */
+  const ms = parseSynopticStamp(v);
+  return ms == null ? null : new Date(ms).toISOString();
 }
 
 export { synopticToIso as _synopticToIso };

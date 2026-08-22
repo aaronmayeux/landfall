@@ -59,6 +59,38 @@ traded for.
 
 ## IN FLIGHT
 
+**THE WIND SWATH WAS DRAWN 130 nm FROM WHERE NHC DREW IT. FIXED, NOT YET
+CONFIRMED ON GLASS.** `SPEC-MAP.md` §7.13,
+`tools/test-windswath-centre.mjs` (30 assertions, 5 mutations verified).
+
+NHC serves the 5-day forecast POINTS and the forecast wind RADII as separate
+ArcGIS layers on separate publish cycles. The swath took the quadrant numbers
+from the radii and the centres from the points, joined on `tau` — which assumes
+they are the same advisory. **On 2026-08-21 Moke's points were advisory 4
+published 09:13Z and her radii advisory 6 published 21:12Z: twelve hours and two
+advisories apart.** Every band sat 108–151 nm east-southeast of the truth. A
+wind ring states its own centre twice over through its bounding box and its four
+published radii, so it is placed there now, with its own `validtime` as its hour.
+Measured across every archived ring on both storms, the two solves agree to
+within 0.55 nm.
+
+**==> AARON: WHAT TO LOOK FOR ON THE PHONE. <==** The green 34 kt band should
+now start ON the storm rather than trailing behind and to the right of it, and
+should reach the full length of the forecast. The orange 50 kt band on Moke
+moved about 140 miles west. Lala should look **identical** — her two products
+already agreed, and that is the point.
+
+**==> THE BIGGER PROBLEM IS NOT FIXED AND IT IS AARON'S DECISION. <==** The
+cone, forecast track and forecast points are still whatever advisory NHC's
+layers happen to be serving, and §7.11 re-anchors that geometry onto the current
+fix. On Moke that drags a twelve-hour-old cone forward and rounds off the cut
+end with a half-ellipse no source published — **that is the purple lobe, and it
+is why last session's cap clamp made it smaller instead of gone.** The choice:
+keep re-anchoring and go on drawing a shape NHC never issued, or draw the
+forecast where NHC drew it and stamp it honestly as stale, accepting that the
+forecast line will visibly not start at the storm dot. **Not started. Waiting on
+Aaron.**
+
 **EIGHTEEN'S PAST TRACK — CONFIRMED ON GLASS BY AARON. Closed.** The mechanism
 is in `spec-parameter.md` §32.6. Do not reopen.
 
