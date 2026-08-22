@@ -78,6 +78,38 @@ const HOUR = 60 * MINUTE;
 export const ADVISORY_CADENCE = 6 * HOUR;
 
 /* ---------------------------------------------------------------------------
+ * OVERTAKE BASE — one distance, two readers (§7.14)
+ * ------------------------------------------------------------------------- */
+
+/**
+ * How far BEHIND the storm a published forecast hour has to sit before it is
+ * treated as history rather than as a forecast. Nautical miles, measured along
+ * the storm's own published heading.
+ *
+ * ==> ONE NUMBER, DELIBERATELY NOT TWO. <== `FORECAST_NOW` (the track line) and
+ * `WIND_SWEEP` (the wind swath) both read it. They are asking the same question
+ * about the same hours of the same advisory, and two dials set to 15 today is
+ * how one of them ends up at 20 next month and the corridor folds back around a
+ * track that does not. Not exported: nothing outside those two blocks has any
+ * business asking.
+ *
+ * WHY 15 AND NOT 0. NHC publishes positions on a 0.1° grid — 6 nm of latitude,
+ * about 5 nm of longitude in the tropics — and the current position and the
+ * forecast point are each rounded independently, so ~8 nm of pure rounding
+ * noise sits under every one of these comparisons. At zero a stalled storm
+ * would flip an hour in and out of the forecast between polls on nothing but
+ * the grid.
+ *
+ * WHY 15 AND NOT 60. It has to be far below what the fault actually looks like.
+ * MEASURED on the 2026-08-22T13:04Z archive: Lala's advisory-39 tau-12 sat
+ * 43 nm behind her 09:00Z position. Fifteen catches that with room to spare,
+ * and 15 nm of backwards leg against a corridor 130–150 nm wide is under a
+ * pixel at any zoom the app allows — so an hour this rule declines to drop
+ * cannot draw a fold anyone can see.
+ */
+const BEHIND_GRACE_NM = 15;
+
+/* ---------------------------------------------------------------------------
  * POLLING
  * ------------------------------------------------------------------------- */
 
@@ -3464,6 +3496,21 @@ export const WIND_SWEEP = Object.freeze({
    *  (§4). Value from the spec. */
   coincideDeg: 0.05,
 
+  /** ==> A FORECAST HOUR THE STORM HAS ALREADY DRIVEN PAST IS NOT A FORECAST,
+   *  WHATEVER ITS CLOCK SAYS. <== §7.14. Nautical miles behind the current
+   *  position, along the storm's published heading, before a LEADING forecast
+   *  entry is dropped from the swath timeline.
+   *
+   *  The rule above this one drops entries whose valid hour is at or behind the
+   *  fix's hour. That is a clock test and it is not enough: on 2026-08-22 Lala
+   *  was at 30.3N 172.0W at 09:00Z while advisory 39 — six hours older — still
+   *  forecast 30.1N 171.2W for 12:00Z. Noon had not happened yet, so the clock
+   *  test kept it, and the timeline ran 43 nm ESE and then turned 210° back to
+   *  the northwest. Both corridor walls swung round and crossed.
+   *
+   *  Shared with `FORECAST_NOW.behindGraceNm` — see `BEHIND_GRACE_NM`. */
+  behindGraceNm: BEHIND_GRACE_NM,
+
   /** How far the two independent solves of a wind ring's own centre may
    *  disagree before the ring is declared not-a-quadrant-rose and its centre
    *  is not used (nautical miles, §7.13).
@@ -4260,6 +4307,22 @@ export const FORECAST_NOW = Object.freeze({
    *  hours alive, and it is longer than any poll interval, so the decision is
    *  stable across a refresh. */
   expiryGraceMs: 1 * HOUR,
+
+  /** ==> THE CLOCK IS NOT THE ONLY WAY A FORECAST HOUR EXPIRES. <== §7.14.
+   *  Nautical miles behind the storm's current position, along its published
+   *  heading, before a LEADING forecast hour is dropped as overtaken.
+   *
+   *  `expiryGraceMs` above catches an hour that has already happened. It cannot
+   *  catch an hour that has not happened yet and is already wrong: when the
+   *  forecast layers are an advisory older than the position — routine, and
+   *  measured at 6 hours on Lala and 28 hours on Moke on 2026-08-22 — a storm
+   *  running faster than its own forecast said it would is already PAST the
+   *  next forecast hour's position while that hour is still in the future.
+   *  Lala at 09:00Z stood 43 nm northwest of where advisory 39 put her at noon.
+   *
+   *  Shared with `WIND_SWEEP.behindGraceNm` — see `BEHIND_GRACE_NM`. Both doors
+   *  onto the same fact must open on the same number. */
+  behindGraceNm: BEHIND_GRACE_NM,
 
   /** Degrees of slack when checking that the forecast LINE starts with the
    *  same coordinates as the forecast POINTS that have expired.

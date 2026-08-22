@@ -2024,6 +2024,110 @@ source published, which is the purple lobe Aaron reported on Moke. Whether the
 app should keep re-anchoring or draw the forecast where NHC drew it and stamp it
 as stale is an open decision, recorded in `NOW.md`.
 
+### 7.14 A forecast hour can be behind the storm before its clock runs out
+
+`lib/geo.js` `alongTrackNm`, read by `lib/forecast-now.js` (the track line,
+§7.11) and `lib/windswath.js` `leadingOvertaken` (the swath timeline, §7.12).
+
+§7.11 and §7.12 both drop forecast hours that have already happened. **Both
+asked what time it was, and the clock is only half the question.**
+
+#### Measured
+
+`samples/lala-cp012026-overtaken/`, the archive run of **2026-08-22T13:04Z**,
+straight from NOAA's ArcGIS — `archive:latest/manifest.json` records
+`cache-control: max-age=0,must-revalidate` and no `x-landfall-cache` on all
+eleven layer queries, so nothing of ours is in the path.
+
+| product | Lala CP2 | Moke CP3 |
+|---|---|---|
+| `CurrentStorms.json` position | **adv 040**, 09:00Z | **adv 008**, 09:00Z |
+| cone, forecast track, forecast points | adv 039, 03:27Z | **adv 004, 2026-08-21 09:13Z** |
+| wind radii — forecast, current | adv 039, 04:02Z | adv 008, 09:08Z |
+| past points, past track | — , 09:02Z | — , 09:02Z |
+| wind radii — past | adv 040, 09:02Z | adv 008, 09:02Z |
+
+Six hours of skew on one storm and twenty-eight on the other, in one poll.
+**Skew is the ordinary condition, not the fault.**
+
+The fault is what a storm does with it. Advisory 39 forecast Lala to move at
+8 kt; the record's own 00Z and 06Z fixes put her at **13.5 kt on a bearing of
+325°**, which is the feed's published motion to the degree. So advisory 39's
+tau-12 — valid **12:00Z**, at 30.1°N 171.2°W — sat 43 nm from her 09:00Z
+position and **34 nm behind it along her heading**, with three hours still to
+run. Noon had not happened. Both clock rules kept it.
+
+```
+track line   30.300,-172.000 -> 30.100,-171.200 -> 31.000,-172.200
+             leg 1 bearing 106°, leg 2 bearing 316° — a 150° hairpin
+wind swath   ...06Z fix -> 09Z fix -> noon (bearing 106°) -> tau-24 (bearing 316°)
+```
+
+On the line that drew as a hairpin beside the white ring. Inside a corridor
+130–150 nm wide it swung both walls round across themselves, and `lib/unloop.js`
+cut the crossings out — which is why it read on glass as a link in the swath
+rather than as an obvious fold. Aaron reported both at 07:53 local, screenshot
+4953.
+
+#### The rule
+
+**A forecast hour the storm has already driven past is not a forecast, whatever
+its clock says.** `alongTrackNm` projects the hour's position onto the storm's
+published heading; leading hours more than `BEHIND_GRACE_NM` behind are dropped
+alongside the ones the clock caught.
+
+- **The heading is the agency's published `movementDir` and nothing else.**
+  Deriving one from the forecast points asks the suspect for its own alibi.
+  Deriving one from the last two fixes is a chord across a 0.1° grid and came
+  out 44° from the published number on this very storm. **No published heading,
+  no ground test** — the clock rule stands alone, exactly as before, so a source
+  that states no motion loses nothing.
+- **Walked from the front, stopped at the first live hour.** A recurving storm's
+  later hours genuinely lie behind its present heading — that is what recurving
+  IS — and cutting those from the middle would delete real forecast wind.
+- **`BEHIND_GRACE_NM` is 15 nm, and it is one number read by both files.** Above
+  the ~8 nm of pure rounding noise under every one of these comparisons (NHC
+  publishes on a 0.1° grid and both positions round independently), far below
+  the 34 nm the fault measures, and small enough that an hour this rule declines
+  to drop cannot draw a fold anyone can see against a corridor that wide. Two
+  dials set to 15 today is how one reaches 20 next month and the corridor folds
+  back around a track that does not.
+- **One projection, in `lib/geo.js`.** `greatCircleNm` answers "how far apart"
+  and can never answer "which side": an hour 34 nm behind and one 34 nm ahead
+  are the same number to it, and only one of them is still a forecast.
+
+#### Why it did not exist until it did
+
+**The fault needs a storm OUTRUNNING its own forecast.** Skew alone does
+nothing. Moke carried 28 hours and four advisories of it and drew correctly,
+because advisory 4 forecast him well — its tau-24 named 14.3°N 148.4°W for
+06:00Z and the record put him at 14.1°N 148.7°W, 20 nm out after a day. Every
+hour he keeps is genuinely ahead of him and §7.14 changes his track by not one
+byte. **A rule that fired on staleness rather than on overtaking would have
+wrecked him to fix her.**
+
+**IT ALSO SELF-HEALS, WHICH IS WHY IT IS HARD TO CATCH.** Once noon aged past
+`FORECAST_NOW.expiryGraceMs` the clock test caught it after all. The window ran
+09:00Z to 13:00Z — four hours of a six-hour cycle. Any capture from outside one
+shows nothing wrong, and `samples/lala-cp012026/` (§7.11, §7.13) is such a
+capture. **Do not measure this section against it.**
+
+`tools/test-forecast-overtaken.mjs` — 45 assertions, 7 mutations run by hand and
+confirmed failing: the rule removed from each door separately, the compass sign
+mirrored, the antimeridian wrap dropped, a missing heading read as north, the
+two doors' grace distances drifted apart, and the walk turned into a filter. It
+also asserts up front that the raw bytes still reproduce the overtake, so if
+NHC's clocks ever line up the suite says so rather than passing vacuously.
+
+**WHAT IT CANNOT PROVE:** whether a forecast line that starts at the storm and
+skips straight to tomorrow reads as a forecast or as a missing dot. That is
+glass, and it is Aaron's.
+
+**STILL NOT FIXED, AND STILL THE BIGGER PROBLEM.** None of this makes a
+28-hour-old cone honest. It stops the drawing from folding; it does not stop the
+app from presenting advisory 4's cone as current. That decision is unchanged and
+still open — see `NOW.md`.
+
 
 ## 9. Design
 

@@ -534,8 +534,18 @@ export async function fetchStormGeometry(storm) {
     currentField: layers.windCurrent?.status === 'ok' ? layers.windCurrent.fc.features : [],
     forecastRadii: layers.windSwath?.status === 'ok' ? layers.windSwath.fc.features : [],
     forecastPoints: layers.forecastPoints?.status === 'ok' ? layers.forecastPoints.fc.features : [],
+    /* `headingDeg` is NHC's published `movementDir`, carried through by
+     * data/nhc.js. §7.14 projects each leading forecast hour onto it to decide
+     * which ones the storm has already driven past. Absent (a stationary storm
+     * publishes none) means that rule does not run — never that the heading is
+     * north. */
     currentPos: Number.isFinite(storm.lat) && Number.isFinite(storm.lon)
-      ? { lat: storm.lat, lon: storm.lon, at: storm.observedAt ?? null }
+      ? {
+        lat: storm.lat,
+        lon: storm.lon,
+        at: storm.observedAt ?? null,
+        headingDeg: Number.isFinite(storm.headingDeg) ? storm.headingDeg : null,
+      }
       : null,
   };
 
