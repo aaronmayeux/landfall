@@ -2797,7 +2797,10 @@ reader taking the word at face value is being misled on one storm in ten.
 *What the air around the storm adds to or takes off its strength* is the same
 claim in words a person uses. It is literally what a contribution in knots IS
 rather than a judgement about it, and it survives both signs read aloud —
-§47.4's own test for a name. **The layer keeps the NAME Environment** (§47.4's
+§47.4's own test for a name. **Confirmed on glass, 2026-08-22:** naming the AIR
+reads as precision rather than as a hint at some second layer, which was the
+open risk in dropping the word *environment* from the line that defines the row
+called Environment. **The layer keeps the NAME Environment** (§47.4's
 one-thing-one-name rule); this is the line that defines it, and the water is
 carried in words by §47.8's paragraph instead of being smuggled into the color.
 

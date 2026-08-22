@@ -1706,7 +1706,9 @@ would only look like the problem had been addressed. The palette repeats the
 stop instead. **Everything past −15 kt therefore draws exactly what it always
 drew**, a −52 kt hour and a −23 kt hour still draw identically, and the KEY now
 shows that flat quarter rather than hiding it behind an end-stop — the bar
-stopped implying a distinction the cone does not make.
+stopped implying a distinction the cone does not make. **Confirmed on glass,
+2026-08-22:** the map is unchanged to the eye, `Balanced` sits where a reader
+expects it, and the flat quarter reads as the scale bottoming out.
 
 **AND NO DRAWN COLOUR MOVED.** −15 / 0 / +15 / +40 land on stops 1 / 2 / 3 / 4
 exactly. Between them the blend reaches the same fraction by a different

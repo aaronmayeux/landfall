@@ -1107,7 +1107,10 @@ already said "in the middle" and became true without being edited.
 **THE HOSTILE QUARTER IS FLAT AND THE BAR IS RIGHT TO SHOW IT.** There is
 nothing below the sea to ramp into (§47.5), so every reading past −15 kt draws
 one colour on the map. The old bar hid that behind an end-stop and implied a
-distinction the cone does not make; this one states it. `Feeding it` stays hard
+distinction the cone does not make; this one states it. **Confirmed on glass,
+2026-08-22:** the flat quarter reads as the scale bottoming out, not as a bar
+that failed to render, so it needs no tick mark or inset edge at −15 to
+explain itself. `Feeding it` stays hard
 right and covers the bright extension, which is what the words always meant.
 
 **The bar carries a hairline border.** Its hostile end *is* the sea in both

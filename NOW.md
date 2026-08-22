@@ -69,23 +69,6 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> GLASS: THE ENVIRONMENT LEGEND'S HOSTILE QUARTER IS NOW FLAT, AND THAT IS
-THE ONE THING TO LOOK AT. <==** §47.5, §47.11. The ramp is symmetric so
-`Balanced` sits in the middle of the bar, which is what Aaron asked for. There
-is nothing below the sea to ramp into, so the extension repeats the hostile stop
-and **the left quarter of the key is one flat colour** — honest, because every
-reading past −15 kt draws that same colour on the map, and the old bar hid it.
-**No drawn colour moved: worst deviation 1/255, measured at quarter-knot steps
-across both palettes.** So the map should look identical and only the key should
-change. The call is whether that flat quarter reads as *"the scale bottoms out
-here"* or as *"the bar failed to render"*. If it is the second, the dial is a
-visible tick or an inset shadow at the −15 mark, not re-litigating the scale.
-
-*Also worth a glance while there:* the Environment row's description changed —
-it now reads **"Colors the cone by what the air around the storm adds to or
-takes off its strength"**, where it said "the environment's net contribution to
-intensity". Does naming the AIR read as precision or as a second layer?
-
 **==> THE DECISION: MOKE'S FORECAST GEOMETRY IS A DAY OLD AND NHC IS NOT FIXING
 IT. <==** Measured on the 14:28Z archive, not inferred. Her cone, forecast track
 and forecast points are still **advisory 4, filed 2026-08-21 09:13Z** — nearly
