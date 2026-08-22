@@ -4667,17 +4667,26 @@ export const ENV_RIBBON = Object.freeze({
    *  darker to extend into. See DARK.geo.envRamp. */
   scaleOuterKt: 40,
 
-  /** How much of the ramp the MEASURED domain occupies, now that there is
-   *  something past it.
+  /** How much of the ramp the MEASURED domain occupies. The rest is split
+   *  EVENLY between the two extensions, which is what puts zero knots in the
+   *  middle of the scale.
    *
-   *  ==> THIS NUMBER IS TIED TO THE PALETTE HAVING EXACTLY FOUR STOPS AND
+   *  ==> A HALF, BECAUSE `Balanced` HAS TO BE IN THE MIDDLE (Aaron, 2026-08-22).
+   *  <== It was 2/3 with one extension at the bright end only, which put zero
+   *  a third along and forced the legend's label row to a lopsided
+   *  `1fr auto 2fr`. A key whose midpoint label is not at its midpoint
+   *  mis-states its own scale, and it does it silently — every colour on the
+   *  bar is still a real ramp colour, just in the wrong place.
+   *
+   *  ==> THIS NUMBER IS TIED TO THE PALETTE HAVING EXACTLY FIVE STOPS AND
    *  NOTHING ENFORCES THAT BUT A TEST. <== `rampAt` spaces stops evenly, so
-   *  four stops sit at 0, 1/3, 2/3 and 1. Two thirds is what puts the original
-   *  three stops back on 0, 1/3 and 2/3 — which is the whole reason every
-   *  reading inside +/-15 keeps its old colour exactly rather than nearly. Add
-   *  a fifth stop without changing this and the middle silently shifts.
-   *  `tools/test-cone-ribbon.mjs` asserts both palettes are four long. */
-  scaleInnerFraction: 2 / 3,
+   *  five sit at 0, 1/4, 1/2, 3/4 and 1. A half is what puts -15 / 0 / +15 /
+   *  +40 back on stops 1 / 2 / 3 / 4 — which is the whole reason every reading
+   *  keeps its old colour exactly rather than nearly. Change either without
+   *  the other and the middle silently shifts.
+   *  `tools/test-cone-ribbon.mjs` asserts both palettes are five long and
+   *  re-derives eleven knots against the original three-stop ramp. */
+  scaleInnerFraction: 1 / 2,
 
   /** How long one painted slice is, DEGREES in the same planar frame
    *  CONE_SWEEP.stepDeg uses (≈65 km).

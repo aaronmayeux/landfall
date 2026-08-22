@@ -494,10 +494,28 @@ export const LAYER_TOGGLES = Object.freeze([
      *  plain and is also the one register this layer must not use: helping and
      *  hurting are OUR verbs for a number SHIPS published, and a row that
      *  sounds like a judgement invites the reader to treat the color as our
-     *  opinion. "Net contribution to intensity" is what the file's own
-     *  contribution table is called, and naming the model says out loud that
-     *  we are reporting rather than scoring — §47's founding rule. */
-    note: "Colors the cone by the environment's net contribution to intensity, from NHC's SHIPS model.",
+     *  opinion. Naming the model says out loud that we are reporting rather
+     *  than scoring — §47's founding rule.
+     *
+     *  ==> IT THEN SAID "net contribution to intensity" AND THAT WAS WRONG
+     *  TWICE (2026-08-22). <== First, the file's own table is called
+     *  INDIVIDUAL CONTRIBUTIONS TO INTENSITY **CHANGE**, and dropping the last
+     *  word turns a change in wind speed into a share of the wind speed.
+     *  Second and worse, it over-claimed: "the environment's" invites the
+     *  reader to include the ocean, and the coloured sum is the ten
+     *  ATMOSPHERIC rows — `SST POTENTIAL` is excluded on purpose (§47.4) and
+     *  the sea's own ceiling is not in the table at all. Measured on the 2026
+     *  corpus, 34 runs end in the ramp's brightest violet over water whose
+     *  ceiling has collapsed 20 kt or more, so a reader taking "environment"
+     *  to mean air AND sea is being misled on one storm in ten.
+     *
+     *  "What the air around the storm adds to or takes off its strength" is
+     *  the same claim in words a person uses, it is literally what a
+     *  contribution in knots IS rather than a judgement about it, and it
+     *  survives both signs read aloud. The layer keeps the NAME Environment
+     *  (§47.4's one-thing-one-name rule); this is the line that defines it,
+     *  and the water is carried in words by §47.8's paragraph instead. */
+    note: "Colors the cone by what the air around the storm adds to or takes off its strength, from NHC's SHIPS model.",
     engineKey: 'environment',
     /** ==> THE ROW CARRIES THE KEY TO ITS OWN COLOR (§47.11). <== The note
      *  above says the color means "helping or hurting"; it cannot say WHICH

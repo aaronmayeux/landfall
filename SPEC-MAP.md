@@ -1687,6 +1687,36 @@ the sea instead of sitting on it as haze. Violet is the one hue nothing else on
 the globe uses — not a category, not a watch or warning, not a wind band, not
 the genesis teal.
 
+**FIVE STOPS, AND THE SCALE IS SYMMETRIC ABOUT ZERO KNOTS — 2026-08-22, Aaron
+on glass.** §47.4 extended the ramp past +15 kt to stop a storm living up there
+drawing half its cone in one flat violet. With that extension at the bright end
+only the scale ran −15..+40, which put 0 kt a THIRD of the way along and forced
+§47.11's key to be drawn lopsided, its midpoint label off the midpoint of its
+own bar. **A key that mis-states the middle of its own scale is the worst kind
+of wrong, because every colour on it is still a real ramp colour** — nothing
+about it looks broken. `Balanced` is 0 kt and has to sit in the middle, so the
+scale runs **−40..+40** and `ENV_RIBBON.scaleInnerFraction` is **1/2**: the
+measured domain occupies the middle half and each extension takes a quarter.
+
+**THE HOSTILE PAIR IS ONE COLOUR REPEATED, BECAUSE THERE IS NOTHING BELOW THE
+SEA.** The dark palette's hostile stop sits within three units of the night
+ocean and the light palette's *is* the daylight sea — that is the design, not an
+accident — so a genuinely darker or paler fifth colour would be invisible and
+would only look like the problem had been addressed. The palette repeats the
+stop instead. **Everything past −15 kt therefore draws exactly what it always
+drew**, a −52 kt hour and a −23 kt hour still draw identically, and the KEY now
+shows that flat quarter rather than hiding it behind an end-stop — the bar
+stopped implying a distinction the cone does not make.
+
+**AND NO DRAWN COLOUR MOVED.** −15 / 0 / +15 / +40 land on stops 1 / 2 / 3 / 4
+exactly. Between them the blend reaches the same fraction by a different
+arithmetic path, so a float's last bit can round a channel the other way:
+measured at quarter-knot steps from −60 to +60 in both palettes, the worst
+deviation anywhere is **1/255**, on 7 samples of 481 in the dark theme and 1 of
+481 in the light. `tools/test-cone-ribbon.mjs` pins the stops as exact and that
+ceiling at one unit, so if either moves the restructure HAS re-litigated §47.4's
+measured domain and the suite says so.
+
 **The light theme's ramp is not the dark one lightened.** The rule that
 survives the theme is "hostile dissolves into the sea", and the daylight sea is
 pale — so the first stop is `LIGHT.ocean` and "more environment" runs toward a

@@ -165,7 +165,7 @@ ok(refs.has('--kt34'), 'and the chart does reference them, so this is not testin
  * They stay named here even though the sweep now reads stylesheets too. A
  * sweep failure prints a list; these print a sentence saying what goes blank,
  * and the legend's bar going blank is not a thing to work out from a name. */
-for (const v of ['--env-ramp-lo', '--env-ramp-mid', '--env-ramp-hi']) {
+for (const v of ['--env-ramp-floor', '--env-ramp-lo', '--env-ramp-mid', '--env-ramp-hi', '--env-ramp-out']) {
   ok(declared.has(v),
      `${v} is declared — without it the environment legend's bar renders as nothing`);
 }

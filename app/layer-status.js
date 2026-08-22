@@ -270,8 +270,14 @@ export function rowForOneShips(result, reason) {
     return { state: 'empty', message: 'Not published for storms in this basin' };
   }
 
+  /* ==> "THE INTENSITY MODEL", NOT "SHIPS" (2026-08-22). <== §47.8 is explicit
+   * that no replacement sentence says SHIPS at the reader — the name is real
+   * provenance and belongs on the credit line, which is where the drawer puts
+   * it. This row said SHIPS while the drawer said "the intensity model" about
+   * the identical condition, so one storm produced two names for one thing on
+   * two surfaces a tap apart. */
   if (result.status === 'no_run') {
-    return { state: 'empty', message: 'No SHIPS run published for this storm yet' };
+    return { state: 'empty', message: 'No intensity model run published for this storm yet' };
   }
 
   /* A RUN EXISTS AND PUBLISHES NOTHING DRAWABLE, which the season proved is
@@ -382,7 +388,7 @@ export function rowForAllShips(results, reasons = []) {
   }
 
   if (results.every((r) => r.status === 'no_run')) {
-    return { state: 'empty', message: 'No SHIPS run published for these storms yet' };
+    return { state: 'empty', message: 'No intensity model run published for these storms yet' };
   }
 
   /* THE GEOMETRY ABSENCES, and only when every storm on screen shares ONE of

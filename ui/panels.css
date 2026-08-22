@@ -1925,11 +1925,17 @@ button.drawer-identity:focus-visible {
 .env-legend-bar {
   height: 10px;
   border-radius: 5px;
+  /* FIVE STOPS, EVENLY SPACED, because the map's ramp is (§47.5). 0 kt is the
+     middle one, which is what puts `Balanced` under the middle of the bar. The
+     hostile quarter is flat on purpose: every reading past -15 kt draws the
+     same colour on the map, so a key that ramped there would be inventing a
+     distinction the cone does not make. */
   background: linear-gradient(
     90deg,
-    var(--env-ramp-lo) 0%,
-    var(--env-ramp-mid) 33.333%,
-    var(--env-ramp-hi) 66.667%,
+    var(--env-ramp-floor) 0%,
+    var(--env-ramp-lo) 25%,
+    var(--env-ramp-mid) 50%,
+    var(--env-ramp-hi) 75%,
     var(--env-ramp-out) 100%
   );
   /* The hostile end IS the sea in both themes (§47.5), so without an edge the
@@ -1953,7 +1959,11 @@ button.drawer-identity:focus-visible {
 .env-legend-ends {
   margin-top: var(--space-tight);
   display: grid;
-  grid-template-columns: 1fr auto 2fr;
+  /* SYMMETRIC, because the scale is (§47.5). This was `1fr auto 2fr` while the
+     ramp ran -15..+40 and 0 kt sat a third along — a midpoint label that was
+     not at the midpoint. The ramp is -40..+40 now, so the middle is the
+     middle, and the `role="img"` label in ui/env-legend.js is true as written. */
+  grid-template-columns: 1fr auto 1fr;
   align-items: baseline;
   gap: var(--space-tight);
   font-size: var(--type-small);

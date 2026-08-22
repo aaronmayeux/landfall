@@ -789,16 +789,36 @@ export const DARK = Object.freeze({
      *  environment CHANGES along a forecast and it was showing none of the
      *  largest move in the run. +18 and +34 are now 54 units apart.
      *
-     *  ==> AND THERE IS NO MATCHING STOP AT THE HOSTILE END, DELIBERATELY. <==
-     *  The clip is worse there (3.5%), and EP9326 reads -52 kt where the ramp
-     *  stops at -15. But this end is already within a few units of the night
-     *  ocean — that is the whole point of it, §47.5 — so there is nowhere
-     *  darker to go on a night-sky map. A fifth stop below this one would be
-     *  invisible and would only look like the problem had been addressed.
+     *  ==> FIVE STOPS, AND THE FIRST TWO ARE THE SAME COLOUR ON PURPOSE. <==
+     *  2026-08-22. Aaron asked for `Balanced` to sit in the MIDDLE of the
+     *  legend bar, which it cannot while the scale runs -15..+40: zero was a
+     *  third along, and a key that mis-states the middle of its own scale is a
+     *  key to nothing.
+     *
+     *  The scale is therefore symmetric now, -40..+40, with zero dead centre.
+     *  There is still NOTHING DARKER TO PUT AT THE HOSTILE END — this stop is
+     *  already within three units of the night ocean (#070D18), which is the
+     *  whole point of it (§47.5) — so the extension below -15 kt is this exact
+     *  colour repeated. Everything past -15 kt therefore draws what it has
+     *  always drawn, and the BAR now says so out loud: its hostile quarter is
+     *  flat because the map's hostile quarter is flat.
+     *
+     *  ==> THE MAP DOES NOT CHANGE. <== With five evenly-walked stops,
+     *  -15 / 0 / +15 / +40 land on stops 1 / 2 / 3 / 4 EXACTLY, and every
+     *  reading between them resolves to the colour it had under four stops to
+     *  within one unit in one channel — the blend now reaches the same
+     *  fraction by a different arithmetic path, so the last bit of a float can
+     *  round the other way. Measured across -60..+60 kt at quarter-knot steps
+     *  in both themes: worst deviation 1/255, on 7 samples of 481 in the dark
+     *  theme and 1 of 481 in the light. That is below anything a screen shows.
+     *  `tools/test-cone-ribbon.mjs` asserts the stops are exact and pins the
+     *  deviation ceiling, so if either moves, this restructure HAS
+     *  re-litigated §47.4's measured domain and the suite says so.
+     *
      *  ==> SO A -52 KT HOUR AND A -23 KT HOUR STILL DRAW IDENTICALLY. <== That
-     *  was already true, this does not make it worse, and it is written down
-     *  rather than left for someone to rediscover. */
-    envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF', '#EFE9FF']),
+     *  was already true, this does not make it worse, and it is now visible on
+     *  the key rather than hidden by it. */
+    envRamp: Object.freeze(['#0A1420', '#0A1420', '#5B4A9E', '#C4B0FF', '#EFE9FF']),
 
     /** ==> THE FORECAST LINE USES THIS RAMP TOO, AND IT DID NOT USED TO. <==
      *  There was a second list here, `envRampLine`, lifted so every one of its
@@ -1478,15 +1498,19 @@ export const LIGHT = Object.freeze({
      *  sea and letting the middle carry the saturation, never flipping the
      *  direction: the direction is what keeps "hostile dissolves into the sea"
      *  true in both themes. */
-    /** FOUR STOPS HERE TOO, AND THE EXTENSION RUNS THE OTHER WAY. See
-     *  DARK.geo.envRamp for what the fourth is for. Brightness inverts between
-     *  the themes and saturation does not, so "even more environment" is a
-     *  DEEPER, more saturated violet here where the dark theme goes paler. The
-     *  first three stops are unchanged, on the same knots, for the same reason.
+    /** FIVE STOPS HERE TOO, AND THE EXTENSION RUNS THE OTHER WAY. See
+     *  DARK.geo.envRamp for the whole argument. Brightness inverts between the
+     *  themes and saturation does not, so "even more environment" is a DEEPER,
+     *  more saturated violet here where the dark theme goes paler. The stops on
+     *  -15 / 0 / +15 / +40 are unchanged, on the same knots, for the same
+     *  reason.
      *
-     *  Same asymmetry, same reason: the hostile end IS the daylight sea
-     *  (#C2C6CA) and there is nothing paler to reach for. */
-    envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E', '#2A1263']),
+     *  The doubled hostile stop is the same trick and the same necessity: this
+     *  end IS the daylight sea (#C2C6CA) and there is nothing paler to reach
+     *  for that is not simply white. So -40..-15 repeats it, the scale becomes
+     *  symmetric, zero lands in the middle of the legend, and no drawn colour
+     *  moves. */
+    envRamp: Object.freeze(['#C2C6CA', '#C2C6CA', '#8E7BC6', '#4B2C9E', '#2A1263']),
 
     /* The line's floor is computed against `ocean`, not listed — see
      * DARK.geo.envRamp. THE LIGHT THEME NEEDS IT MORE, NOT LESS: its hostile

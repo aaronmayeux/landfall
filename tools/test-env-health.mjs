@@ -27,7 +27,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const { parseShips } = await import(path.join(ROOT, 'functions/api/nhc/_ships-parse.js'));
 const { envHealth } = await import(path.join(ROOT, 'lib/env-health.js'));
-const { closeWindParts, windDelta } = await import(path.join(ROOT, 'lib/units.js'));
+const { closeWindParts, windDelta, formatWind } = await import(path.join(ROOT, 'lib/units.js'));
+const { lastDrawableHr, lastForecastHr } = await import(path.join(ROOT, 'lib/env-series.js'));
 const { formatDayPart } = await import(path.join(ROOT, 'lib/time.js'));
 
 let failures = 0;
@@ -429,12 +430,162 @@ console.log('\nClosure in both unit systems, across every fixture');
     checked > 0 && broke.length === 0);
   if (broke.length) fail('closure detail', broke.join('\n      '));
 
+  /* ==> AND NOW THE SENTENCES THEMSELVES, WHICH NOTHING HAD EVER SWEPT. <==
+   * The block above adds up the GRID, and it was green for the whole life of
+   * a bug that printed a missing number into the prose:
+   *
+   *   "The intensity model has it falling from 81 mph to — by Thursday morning"
+   *
+   * `formatWind(null)` renders the app's em-dash placeholder, which is right
+   * everywhere a figure is genuinely absent and is a lie inside a sentence
+   * that has already promised one. §47.2 made the POSITION alone decide
+   * drawability on 2026-08-22; `bottomLine` went on reading the wind at the
+   * last DRAWABLE hour, which is now allowed to have none. Measured on the
+   * 2026 corpus at the time: 57 of 342 runs with a drawn track, 16.7%, 31 of
+   * them named storms. Every suite passed.
+   *
+   * So: no sentence may contain the placeholder, in either unit system, on any
+   * fixture. Cheap, total, and it would have caught it on the day. */
+  /* ==> IT LOOKS FOR THE PLACEHOLDER WHERE A FIGURE WAS PROMISED, NOT ANYWHERE.
+   * <== The placeholder IS an em dash and §47.8's prose uses em dashes as
+   * punctuation — "plenty of room to grow — 23 mph over water" — so a bare
+   * `includes` fires on every healthy paragraph in the suite. What separates
+   * them is the word before: a punctuation dash follows a complete clause
+   * ("grow ", "ceiling ", "less "), while the bug follows one of the handful of
+   * words this generator uses to promise a number. Those words are the whole
+   * list of figure slots in §47.8, so this is exact rather than heuristic. */
+  const PLACEHOLDER = formatWind(null, 'imperial');
+  const PROMISES = ['to', 'near', 'reaching', 'hold', 'holds', 'costs', 'adds', 'worth'];
+  const missingFigure = (s) =>
+    PROMISES.some((w) => s.includes(`${w} ${PLACEHOLDER}`));
+
+  const dashed = [];
+  for (const f of readdirSync(dir)) {
+    const run = parseShips(readFileSync(path.join(dir, f), 'utf8'));
+    for (const sys of ['imperial', 'metric']) {
+      const out = envHealth({ status: 'ok', run }, { system: sys });
+      if (out.kind !== 'paragraph') continue;
+      const bad = out.sentences.find(missingFigure);
+      if (bad) dashed.push(`${f} ${sys}: ${bad}`);
+    }
+  }
+  truthy('no sentence on any fixture prints a missing number', dashed.length === 0);
+  if (dashed.length) fail('missing-number detail', dashed.join('\n      '));
+
+  /* The detector itself has to bite, or the sweep above is decoration: the
+   * exact sentence the app shipped must be recognised. */
+  truthy('the detector recognises the sentence that shipped',
+    missingFigure(`The intensity model has it falling from 81 mph to ${PLACEHOLDER} by Thursday morning.`));
+  truthy('and does NOT fire on an em dash used as punctuation',
+    !missingFigure(`There is plenty of room to grow ${PLACEHOLDER} 23 mph over water that could hold 185 mph.`));
+
+  /* THE MUTATION. The bug was reading the wind at the last hour with a
+   * POSITION rather than the last hour with a WIND. Blank this fixture's wind
+   * row from its real last-forecast hour onward and the two ends collapse onto
+   * each other — the generator then has no published wind to quote and the
+   * sweep above MUST go red. The fixture is the one Aaron found on glass. */
+  {
+    const lala = load('26082212CP0126');
+    const lastPos = lastDrawableHr(lala);
+    const lastFc = lastForecastHr(lala);
+    truthy('the two ends really do differ on this fixture, or the mutation proves nothing',
+      lastPos !== lastFc && lala.vLandKt[lala.hours.indexOf(lastPos)] == null);
+    const blanked = {
+      ...lala,
+      vLandKt: lala.vLandKt.map((v, i) => (lala.hours[i] >= lastFc ? null : v)),
+    };
+    const mutantOut = envHealth({ status: 'ok', run: blanked }, { system: 'imperial' });
+    truthy('a run with no quotable wind at all drops the bottom line rather than dashing it',
+      mutantOut.kind !== 'paragraph' || !mutantOut.sentences.some(missingFigure));
+    /* And the positive half: the wind at the OLD hour IS the placeholder, so
+     * the old code path really did produce what the detector is looking for. */
+    truthy('reading the wind at the last DRAWABLE hour is exactly the placeholder again',
+      formatWind(lala.vLandKt[lala.hours.indexOf(lastPos)], 'imperial') === PLACEHOLDER);
+  }
+
   /* And the mutation that proves the check bites: drop the closing cell and
    * the sum must stop matching on a storm that needs one. */
   const hernan = paragraph(load('26081506EP0826'));
   const mutant = { ...hernan.figures, cells: hernan.figures.cells.slice(0, -1) };
   truthy('dropping the closing cell breaks the sum',
     mutant.cells.reduce((a, c) => a + figNum(c.value), 0) !== figNum(hernan.figures.total));
+}
+
+/* ---------------------------------------------------------------------------
+ * THE WATER SENTENCE, §47.8.
+ *
+ * ==> IT EXISTS BECAUSE THE COLOUR CANNOT SAY THIS AND MUST NOT BE MADE TO.
+ * <== §47.4 keeps `SST POTENTIAL` out of the ribbon for a measured reason that
+ * still stands. `POT. INT.` is the other number — the sea's ceiling itself,
+ * absolute — and on Lala's 22 Aug run her air improves +1 kt to +34 while that
+ * ceiling drops 130 kt to 87. The cone brightens the whole way and is right to.
+ *
+ * The gate is the ROOM BAND changing, not a knot threshold, so it stays quiet:
+ * a ceiling falling 168 kt to 131 over a 50 kt storm is a big move and means
+ * nothing. Measured on the 2026 corpus: 40 of 342 runs, 11.7%, and all forty
+ * tighten.
+ * ------------------------------------------------------------------------- */
+console.log('\nThe water sentence');
+{
+  const water = (id, sys = 'imperial') => {
+    const out = paragraph(load(id), { system: sys });
+    return out.sentences.find((s) => s.startsWith('The water ahead of it')) || null;
+  };
+
+  /* Computed by running the generator and pasted, per CLAUDE.md. */
+  eq('Lala 22 Aug — the run Aaron found on glass', water('26082212CP0126'),
+    'The water ahead of it holds less — down to 100 mph by Thursday morning.');
+  eq('and in metric, the same two published numbers',
+    water('26082212CP0126', 'metric'),
+    'The water ahead of it holds less — down to 161 km/h by Thursday morning.');
+  eq('Lala 20 Aug', water('26082012CP0126'),
+    'The water ahead of it holds less — down to 114 mph by Tuesday morning.');
+  eq('Genevieve 1 Aug', water('26080100EP0726'),
+    'The water ahead of it holds less — down to 102 mph by Wednesday evening.');
+
+  /* ==> AND IT IS SILENT ON THE STORMS WHERE THE WATER IS NOT THE STORY. <==
+   * This is the half that matters: a sentence that fired on every run would be
+   * noise, and noise in this paragraph is what §47.8 cut three footnotes for. */
+  eq('Hernan — ceiling barely moves, so nothing is said', water('26081506EP0826'), null);
+  eq('Genevieve at peak — near her ceiling already, band unchanged',
+    water('26072706EP0726'), null);
+  eq('94L — plenty of room at both ends', water('26081506AL9426'), null);
+
+  /* It sits directly after the room sentence and before the bottom line. */
+  {
+    const s = paragraph(load('26082212CP0126')).sentences;
+    const wi = s.findIndex((x) => x.startsWith('The water ahead of it'));
+    truthy('the room sentence is immediately above it',
+      wi > 0 && /room|ceiling/.test(s[wi - 1]));
+    inSentence('and the published forecast is immediately below it', s, wi + 1,
+      'The intensity model');
+  }
+
+  /* ==> THE MUTATION. <== Flatten the ceiling series to the fix's value and
+   * the sentence must vanish — proving it is driven by the file rather than
+   * appearing on every storm that happens to be weakening. */
+  {
+    const run = load('26082212CP0126');
+    const flat = { ...run, potIntKt: run.potIntKt.map(() => run.potIntNowKt) };
+    const out = envHealth({ status: 'ok', run: flat }, { system: 'imperial' });
+    truthy('a ceiling that never moves says nothing',
+      !out.sentences.some((s) => s.startsWith('The water ahead of it')));
+  }
+
+  /* The name has to survive both signs (§47.4). A rising ceiling is not in the
+   * 2026 corpus at a band boundary, so it is driven directly. */
+  {
+    const run = load('26082212CP0126');
+    const rising = {
+      ...run,
+      potIntNowKt: 80,
+      potIntKt: run.potIntKt.map((v) => (v == null ? null : 160)),
+    };
+    const out = envHealth({ status: 'ok', run: rising }, { system: 'imperial' });
+    const s = out.sentences.find((x) => x.startsWith('The water ahead of it'));
+    truthy('a rising ceiling reads the other way and is still true aloud',
+      !!s && s.includes('holds more — up to'));
+  }
 }
 
 console.log('\nDay-and-part buckets, US Central');

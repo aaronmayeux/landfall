@@ -434,7 +434,7 @@ them, clipping 3.5% at the dark end and 2.0% at the bright end. Widening to
 −20..+20 would capture 98.3% at the cost of flattening the middle, where half
 the season lives. It stays at ±15.
 
-**AND THE RAMP NOW REACHES PAST IT WITHOUT MOVING IT — a fourth stop, 2026-08-22.**
+**AND THE RAMP NOW REACHES PAST IT ON BOTH SIDES WITHOUT MOVING IT — 2026-08-22.**
 The domain above is unchanged and is not being re-litigated. The palette gained
 one stop beyond its bright end, and `rampT` became piecewise: −15..+15 maps onto
 the first two thirds of the ramp (`ENV_RIBBON.scaleInnerFraction`), which with
@@ -453,15 +453,40 @@ whose entire purpose is how the environment CHANGES along a forecast. Aaron
 reported it on glass as a ribbon that needed smoothing. `ENV_RIBBON.scaleOuterKt`
 is +40 — the season topped out at +38 — and +18 and +34 are now 54 units apart.
 
-**THERE IS NO MATCHING STOP AT THE HOSTILE END AND THE ASYMMETRY IS DELIBERATE.**
-The clip is worse there (3.5%), and EP9326 reads −52 kt against a ramp that
-stops at −15. But that end IS the ocean colour in both palettes — that is the
-whole design (§47.5) — so there is nowhere darker to go on a night-sky map and
-nowhere paler to go on the daylight one. A fifth stop below the first would be
-invisible and would only look like the problem had been addressed. **So a −52 kt
-hour and a −23 kt hour still draw identically.** That was already true, this
-does not make it worse, and the suite asserts it so nobody "fixes" the asymmetry
-without reading why it is there.
+**THE HOSTILE EXTENSION CARRIES NO NEW COLOUR, AND IT IS THERE FOR THE LEGEND.**
+The clip is worse there (3.5%), and EP9326 reads −52 kt against a ramp whose
+measured domain stops at −15. But that end IS the ocean colour in both palettes
+— that is the whole design (§47.5) — so there is nowhere darker to go on a
+night-sky map and nowhere paler to go on the daylight one. **So a −52 kt hour
+and a −23 kt hour still draw identically.** That was always true and this does
+not change it.
+
+**WHAT CHANGED IS THAT THE SCALE IS SYMMETRIC, BECAUSE `Balanced` HAS TO BE IN
+THE MIDDLE** (Aaron, on glass, 2026-08-22). With the extension at the bright end
+only, the scale ran −15..+40 and 0 kt sat a THIRD of the way along — so §47.11's
+key had to be drawn `1fr auto 2fr`, with its midpoint label off the midpoint of
+its own bar. Every colour on such a bar is a real ramp colour in the wrong
+place, which is the worst kind of wrong: nothing about it looks broken. The
+domain therefore runs −40..+40 now, the palettes carry **five** stops, and
+`ENV_RIBBON.scaleInnerFraction` is **1/2** — the measured ±15 occupies the
+middle half and each extension takes a quarter.
+
+**THE HOSTILE PAIR IS THE SAME COLOUR TWICE, AND THAT IS THE HONEST SHAPE.**
+Since there is nothing below the sea to reach for, the palette repeats its first
+stop rather than inventing one that cannot be seen. Everything past −15 kt
+therefore draws exactly what it drew before, and the KEY now shows that flat
+quarter instead of hiding it behind an end-stop — the bar stopped implying a
+distinction the cone does not make.
+
+**AND NO DRAWN COLOUR MOVED.** With five evenly walked stops, −15 / 0 / +15 /
++40 land on stops 1 / 2 / 3 / 4 exactly, so every reading resolves to the colour
+it had under four stops. Between the stops the blend reaches the same fraction
+by a different arithmetic path, so a float's last bit can round a channel the
+other way: measured across both palettes at quarter-knot steps from −60 to +60,
+**the worst deviation anywhere is 1/255**, on 7 samples of 481 in the dark theme
+and 1 of 481 in the light. `tools/test-cone-ribbon.mjs` pins the stops as exact
+and that ceiling as one unit, so if either moves, the restructure HAS
+re-litigated the measured domain and the suite says so.
 
 **BRIGHTNESS INVERTS BETWEEN THE THEMES AND SO DOES THE EXTENSION.** The dark
 palette's fourth stop is paler than its third; the light palette's is deeper.
@@ -529,8 +554,8 @@ four acceptance storms figure by figure.
 
 **The parser has been run against the ENTIRE 2026 corpus — all 365 files, 31
 storms, both kinds and all three basins — and nothing threw** (most recently
-after `potIntNowKt` was added: `POT. INT.` at hour 0 is published on all 365,
-range 77–174 kt).** That is the
+after the whole `POT. INT.` row was put on the wire: it is published at hour 0
+on all 365, range 77–174 kt).** That is the
 strongest correctness statement available to this layer and it is recorded here
 so nobody sweeps the season again to re-establish it. The twelve fixtures are
 the regression suite; the corpus is the proof, and `.github/workflows/ships-corpus.yml`
@@ -544,7 +569,15 @@ The route answers four ways and never blank (§47.6): the run; `basin_not_covere
 (NOAA is down), because only the first is ours to fix. The payload is column-
 oriented — one list of forecast hours and one list per number, lined up — which
 is the shape the cone slices want and roughly half the size of per-hour objects.
-It carries `lastWindHr` and `lastPositionHr` alongside `drawable`. That question
+It carries `lastWindHr` and `lastPositionHr` alongside `drawable`, and
+`potIntKt` — the sea's own ceiling at every forecast hour — alongside
+`potIntNowKt`, which is the same row at hour 0. **The two are separate fields on
+purpose:** the room sentence reads the fix and the water sentence reads down the
+track (§47.8), and one index into the other is how those two sentences later
+disagree about the same storm in the same paragraph. It is the ONLY raw
+environment row that goes on the wire; the rest — SST, shear speed — stays in
+the relay, because the ribbon reports the model's accounting of them rather than
+the numbers themselves (§47.4). That question
 is settled now (position-only, §47.2), so `lastWindHr` gates nothing — but it is
 the one place the file says where the INTENSITY forecast stops, which is a
 different fact from where the environment stops, and it is kept for the drawer
@@ -583,7 +616,8 @@ Lives in the storm detail drawer, under the figures already shown there.
 
 **Structure — a paragraph, a grid, the legend, and one credit, in that order.**
 
-**The paragraph is four sentences and carries the STORY.**
+**The paragraph is four sentences, five when the water has something to say,
+and carries the STORY.**
 
 1. **The verdict.** What the environment does *across the whole track*, and
    whether the storm is strengthening or weakening with it or against it.
@@ -591,9 +625,44 @@ Lives in the storm detail drawer, under the figures already shown there.
    work is spread; then **the other side in its own sentence**, named, or said
    to be empty. **No figures in either.**
 3. **Room to grow**, said as the storm's strength beside the sea's ceiling, and
-   what its own structure is worth.
-4. **The bottom line.** The published intensity forecast in plain words, with at
+   what its own structure is worth. Both halves at the fix.
+4. **The water ahead**, and it is CONDITIONAL — see below. What the sea can hold
+   at the far end of the drawn track, when that changes the answer sentence 3
+   just gave.
+5. **The bottom line.** The published intensity forecast in plain words, with at
    most one closing clause.
+
+**SENTENCE 4 EXISTS BECAUSE THE COLOUR CANNOT SAY IT AND MUST NOT BE MADE TO.**
+§47.4 keeps `SST POTENTIAL` out of the ribbon and that exclusion still stands:
+it is how far below its own ceiling the storm sits, so folding it in would paint
+the season's only major hurricane as the most hostile environment of the year.
+**`POT. INT.` is the other number entirely** — the ceiling itself, absolute, a
+fact about the water rather than about the storm — and it moves a long way along
+a cone. Measured on the 2026 corpus: it falls by a median of 12 kt over the
+drawn track, by 20 kt or more in **37.7% of runs**, reaching −93 kt. And **34
+runs end in the ramp's brightest violet over water whose ceiling has collapsed
+20 kt or more.** Lala's 22 Aug run is the case in one line: her air improves +1
+to +34 kt so the cone brightens the whole way, while the sea drops 130 kt to 87
+and the published forecast has her falling 70 kt to 24. Every part of that is
+right. The cone is simply not answering that question, and a reader looking at
+bright violet has no way to know it.
+
+**THE GATE IS THE ROOM BAND, NOT A KNOT THRESHOLD, AND THAT IS WHY IT IS QUIET.**
+A ceiling falling 168 kt to 131 over a 50 kt storm is a 37 kt move and means
+nothing — the water still holds three times what the storm is. So the sentence
+fires only when the ratio sentence 3 already uses lands in a **different band**
+at the far end than at the fix (`roomFarRatio` / `roomNearRatio`, the same two
+numbers). Measured: **40 of 342 runs, 11.7%, and all forty tighten** — the room
+never widens down a track, because storms move poleward into cooler water. One
+gate, no new constant, and it can never contradict the sentence above it.
+
+**It reports and does not predict.** Two published figures, a time, and no verb
+about what the storm will do: *"The water ahead of it holds less — down to
+100 mph by Thursday morning."* *"The water will stop it growing"* is this
+section forecasting and is banned. The name survives both signs, per §47.4's own
+test — **holds less** and **holds more** are each true read aloud. The far end
+is capped at the drawn track for the same reason the bottom line is: a figure
+about ground the map paints nothing for is a figure about nowhere.
 
 **The grid under it carries the NUMBERS.** Its heading is the hour the verdict
 named and the environment's total there; its cells are the named factors,
@@ -644,6 +713,22 @@ because a paragraph was the only surface available. Once there is a grid, the
 closing clause becomes a closing CELL — named `Rounding` where nothing was left
 out and `Everything else` where something was — and the sentence goes back to
 being a sentence.
+
+**THE BOTTOM LINE QUOTES THE LAST HOUR WITH A WIND, NOT THE LAST HOUR WITH A
+POSITION, AND GETTING THAT WRONG SHIPPED A MISSING NUMBER.** Until 2026-08-22
+drawability required a position AND a wind, so the last drawable hour always had
+one. §47.2 then made the POSITION alone decide — right for the map — and left
+this sentence reading a column that is now allowed to be empty. It printed
+*"falling from 81 mph to — by Thursday morning"*, and worse, `null` coerces to
+ZERO in the arithmetic, so the closing clause was also chosen from a total
+collapse the file never forecast. **Measured on the 2026 corpus: 57 of 342 runs
+with a drawn track, 16.7%, 31 of them named storms.** Every suite was green,
+because nothing had ever swept the SENTENCES — the all-fixture sweep added up
+the grid. `lib/env-series.js` `lastForecastHr` requires BOTH (209 files publish
+winds past their last position, and quoting one of those puts the sentence on
+ground the ribbon does not paint), the sentence names whichever hour it lands
+on, and `tools/test-env-health.mjs` now sweeps every fixture's prose in both
+unit systems for a placeholder sitting where a figure was promised.
 
 **Whether that room is being USED is the bottom line's closing clause**, taken
 from `V (KT) LAND` alone. (The headroom FIGURE briefly had a home in the
@@ -890,7 +975,11 @@ morning, 12–17 afternoon, 18–23 evening. At most FOUR terms are named
 (`ENV_HEALTH.namedTermsMax` and `namedPerSideMax`, ranked by magnitude, ties by
 the parser's key order) — the selection rule all four acceptance cases
 demonstrate. The room sentence's ceiling is `POT. INT.` at hour 0, carried by
-the parser as `potIntNowKt`.
+the parser as `potIntNowKt`; the water sentence reads the same row down the
+track from `potIntKt` and is built in `lib/env-health.js` beside it, sharing one
+`roomBand` so the two can never place the same storm in two different amounts of
+trouble. **None of the four acceptance storms above fires it** — their ceilings
+do not change the room band — which is the point: it is silent on 88% of runs.
 
 The generator returns three things, and **a build that renders the prose and
 drops the grid has published the paragraph with its figures missing**:
@@ -992,24 +1081,34 @@ want a fifth about methodology. Both surfaces now call `envLegendHtml({ note:
 false })`, so the `note` option is currently unused — kept because the sentence
 itself is worth not losing, and turning it back on is one argument.
 
-**THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The four stops arrive as
-`--env-ramp-lo/mid/hi/out`, written by `app/theme-switch.js` `applyTokens()` from
+**THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The five stops arrive as
+`--env-ramp-floor/lo/mid/hi/out`, written by `app/theme-switch.js` `applyTokens()` from
 the same `palette().geo.envRamp` that `lib/cone-ribbon.js` walks to color the slices.
 Hexes typed into `ui/panels.css` would be right the day they were typed and
 quietly lying after the first retune. Themed, so the bar repaints with the globe
 — the light ramp is not the dark one lightened and its hostile end is the
 daylight sea, so a fixed gradient would be inverted rather than merely off.
 
-**THE KNOTS ARE NOT EVENLY SPACED, BECAUSE THE KNOTS ON THE MAP ARE NOT EITHER.**
-§47.4 extended the ramp past +15 kt with a fourth stop, so the measured domain
-−15..+15 is the first TWO THIRDS of the bar and the last third runs +15 to +40.
-The gradient is drawn 0 / 33.3 / 66.7 / 100% to match, and **the label row moved
-with it**: `Balanced` is 0 kt and 0 kt is a third of the way along now, so the
-grid is `1fr auto 2fr` rather than centred. A bar drawn 0/50/100 against a map
-drawn 0/33/67/100 is a key that mis-states the middle of its own scale, and it
-would do it silently — the colors would still all be real ramp colors, just in
-the wrong places. `Feeding it` stays hard right and now covers the extension too,
-which is what the words always meant.
+**`Balanced` IS IN THE MIDDLE, AND THE RAMP WAS RESHAPED TO PUT IT THERE**
+(Aaron, 2026-08-22). It was not, briefly, and that is the whole story of this
+paragraph. §47.4's first extension added a stop at the bright end only, so the
+scale ran −15..+40 and 0 kt sat a THIRD of the way along; the bar was drawn
+0 / 33.3 / 66.7 / 100% and the label row was forced to `1fr auto 2fr` to follow
+it. That was *internally* consistent and still wrong on the thing a key exists
+to do: the reader's eye takes the middle of a bar as the middle of its scale,
+and every colour on it was a real ramp colour, in the wrong place, silently.
+
+**The fix went into the ribbon rather than into the key.** §47.5's scale is
+symmetric now, −40..+40 with five stops, so the gradient is drawn
+**0 / 25 / 50 / 75 / 100%** and the label grid is back to **`1fr auto 1fr`**.
+`Balanced` is 0 kt and 0 kt is the middle. The `role="img"` label on the bar
+already said "in the middle" and became true without being edited.
+
+**THE HOSTILE QUARTER IS FLAT AND THE BAR IS RIGHT TO SHOW IT.** There is
+nothing below the sea to ramp into (§47.5), so every reading past −15 kt draws
+one colour on the map. The old bar hid that behind an end-stop and implied a
+distinction the cone does not make; this one states it. `Feeding it` stays hard
+right and covers the bright extension, which is what the words always meant.
 
 **The bar carries a hairline border.** Its hostile end *is* the sea in both
 themes (§47.5), so without one the scale appears to start a third of the way

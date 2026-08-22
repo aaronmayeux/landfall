@@ -95,15 +95,22 @@ export function applyTokens() {
    * THEMED, so the bar repaints with the globe: the light theme's ramp is not
    * the dark one lightened and its hostile end is the DAYLIGHT sea, so a fixed
    * gradient would be inverted rather than merely off. */
-  r.setProperty('--env-ramp-lo', P.geo.envRamp[0]);
-  r.setProperty('--env-ramp-mid', P.geo.envRamp[1]);
-  r.setProperty('--env-ramp-hi', P.geo.envRamp[2]);
-  /* ==> THE FOURTH STOP, AND PUBLISHING IT IS NOT OPTIONAL. <== §47.4 extended
-   * the ramp past +15 kt. A legend bar still drawn from three stops would be a
-   * key to a scale the map stopped using — it would show the cone's brightest
-   * hour as a colour the cone no longer paints there. The bar's knots are moved
-   * to match in ui/panels.css. */
-  r.setProperty('--env-ramp-out', P.geo.envRamp[3]);
+  /* ==> THE NAMES ARE THE KNOTS, NOT THE ARRAY INDICES. <== `lo` is -15 kt,
+   * `mid` is 0, `hi` is +15 and `out` is +40, and each has meant that since the
+   * legend existed. The palette gained a stop BELOW `lo` (§47.5's symmetry
+   * fix), so the indices all shifted by one while the meanings did not — which
+   * is exactly why the names are worth keeping still. */
+  r.setProperty('--env-ramp-floor', P.geo.envRamp[0]);
+  r.setProperty('--env-ramp-lo', P.geo.envRamp[1]);
+  r.setProperty('--env-ramp-mid', P.geo.envRamp[2]);
+  r.setProperty('--env-ramp-hi', P.geo.envRamp[3]);
+  /* ==> THE OUTER STOPS, AND PUBLISHING THEM IS NOT OPTIONAL. <== §47.4
+   * extended the ramp past +15 kt and §47.5 made it symmetric so 0 kt sits in
+   * the middle. A legend bar drawn from fewer stops would be a key to a scale
+   * the map stopped using — it would show the cone's brightest hour as a colour
+   * the cone no longer paints there, and put `Balanced` in the wrong place. The
+   * bar's knots are spaced to match in ui/panels.css. */
+  r.setProperty('--env-ramp-out', P.geo.envRamp[4]);
 
   /* ==> THE WIND BANDS, AND THEY WERE MISSING FOR THE WHOLE LIFE OF THE CHART.
    * <== `ui/chart-home.js` fills its 34/50/64 kt bands from the

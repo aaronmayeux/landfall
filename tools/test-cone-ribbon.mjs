@@ -83,10 +83,12 @@ ok(rampAt(STOPS, 0).toUpperCase() === STOPS[0].toUpperCase(),
   'the dark end IS the first stop — a ramp that drifted off its token would still look like a ramp');
 ok(rampAt(STOPS, 1).toUpperCase() === STOPS[STOPS.length - 1].toUpperCase(),
   'and the bright end IS the last');
-ok(rampAt(STOPS, 1 / 3).toUpperCase() === STOPS[1].toUpperCase(),
-  'the neutral stop sits a third along — FOUR stops, evenly walked (§47.4)');
-ok(rampAt(STOPS, 2 / 3).toUpperCase() === STOPS[2].toUpperCase(),
-  'and the old bright end sits two thirds along, where +15 kt now lands');
+ok(rampAt(STOPS, 1 / 2).toUpperCase() === STOPS[2].toUpperCase(),
+  'the neutral stop sits in the MIDDLE — FIVE stops, evenly walked (§47.4, §47.5)');
+ok(rampAt(STOPS, 1 / 4).toUpperCase() === STOPS[1].toUpperCase(),
+  'the hostile end of the measured domain sits a quarter along');
+ok(rampAt(STOPS, 3 / 4).toUpperCase() === STOPS[3].toUpperCase(),
+  'and the old bright end sits three quarters along, where +15 kt now lands');
 
 ok(rampAt(STOPS, -5) === rampAt(STOPS, 0) && rampAt(STOPS, 5) === rampAt(STOPS, 1),
   'out of range clamps rather than wrapping or extrapolating');
@@ -107,13 +109,41 @@ ok(ENV_RIBBON.scaleLoKt === -15 && ENV_RIBBON.scaleHiKt === 15,
  * stops 0, 1 and 2 exactly, so every reading inside the domain resolves to the
  * colour it had before the stop existed. If this ever stops being byte-exact,
  * the fourth stop HAS re-litigated the domain and this says so. */
-ok(near(rampT(0), 1 / 3), 'zero knots lands on the neutral stop, a third along');
-ok(near(rampT(-15), 0), 'the hostile end of the domain is still the ramp floor');
-ok(near(rampT(15), 2 / 3), 'and +15 kt is still the old bright stop, not the new one');
+ok(near(rampT(0), 1 / 2), 'ZERO KNOTS IS THE MIDDLE OF THE RAMP — the whole reason it is symmetric');
+ok(near(rampT(-15), 1 / 4), 'the hostile end of the measured domain is a quarter along');
+ok(near(rampT(15), 3 / 4), 'and +15 kt is still the old bright stop, not the new one');
 for (const kt of [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15]) {
-  const before = rampAt(STOPS.slice(0, 3), (kt + 15) / 30);
+  const before = rampAt(STOPS.slice(1, 4), (kt + 15) / 30);
   ok(rampAt(STOPS, rampT(kt)).toUpperCase() === before.toUpperCase(),
     `${kt} kt draws exactly the colour the three-stop ramp gave it`);
+}
+
+/* ==> AND BETWEEN THE STOPS IT IS WITHIN ONE UNIT, WHICH IS THE HONEST CLAIM.
+ * <== The symmetric ramp reaches the same blend fraction by a different
+ * arithmetic path (t*4 rather than t*3), so the last bit of a float can round
+ * a channel the other way. Measured across both palettes at quarter-knot steps
+ * from -60 to +60: worst deviation 1/255, which no screen shows. Pinned so a
+ * future change to `rampT` cannot quietly move a colour and call it rounding. */
+for (const [name, pal, three] of [
+  ['dark', DARK.geo.envRamp, ['#0A1420', '#5B4A9E', '#C4B0FF', '#EFE9FF']],
+  ['light', LIGHT.geo.envRamp, ['#C2C6CA', '#8E7BC6', '#4B2C9E', '#2A1263']],
+]) {
+  const oldT = (k) => {
+    const lo = -15, hi = 15, outer = 40, inner = 2 / 3;
+    if (k <= lo) return 0;
+    if (k <= hi) return ((k - lo) / (hi - lo)) * inner;
+    return inner + Math.min(1, Math.max(0, (k - hi) / (outer - hi))) * (1 - inner);
+  };
+  let worst = 0;
+  for (let kt = -60; kt <= 60; kt += 0.25) {
+    const a = rampAt(three, oldT(kt));
+    const b = rampAt(pal, rampT(kt));
+    for (let c = 1; c < 7; c += 2) {
+      worst = Math.max(worst, Math.abs(parseInt(a.substr(c, 2), 16) - parseInt(b.substr(c, 2), 16)));
+    }
+  }
+  ok(worst <= 1,
+    `${name}: the five-stop ramp draws the four-stop ramp's colour to within ${worst}/255 everywhere`);
 }
 
 /* THE EXTENSION ITSELF. */
@@ -122,8 +152,17 @@ ok(near(rampT(40), 1), 'which is the far stop');
 ok(near(rampT(60), 1), 'and past it clamps rather than wrapping');
 ok(rampAt(STOPS, rampT(18)).toUpperCase() !== rampAt(STOPS, rampT(34)).toUpperCase(),
   '+18 kt and +34 kt are no longer the same colour — the flat half-cone Aaron reported');
-ok(DARK.geo.envRamp.length === 4 && LIGHT.geo.envRamp.length === 4,
-  'both palettes carry FOUR stops — scaleInnerFraction is 2/3 only because of this');
+ok(DARK.geo.envRamp.length === 5 && LIGHT.geo.envRamp.length === 5,
+  'both palettes carry FIVE stops — scaleInnerFraction is 1/2 only because of this');
+ok(ENV_RIBBON.scaleInnerFraction === 1 / 2,
+  'and the measured domain occupies the middle HALF, which is what centres 0 kt');
+/* ==> THE DOUBLED HOSTILE STOP IS THE POINT, NOT A TYPO. <== There is nothing
+ * darker than the night ocean and nothing paler than the daylight sea (§47.5),
+ * so the extension below -15 kt repeats the stop rather than inventing a colour
+ * that cannot be seen. Asserted so nobody "fixes" the duplicate. */
+ok(DARK.geo.envRamp[0].toUpperCase() === DARK.geo.envRamp[1].toUpperCase() &&
+   LIGHT.geo.envRamp[0].toUpperCase() === LIGHT.geo.envRamp[1].toUpperCase(),
+  'the hostile extension repeats its stop — symmetry without inventing a colour');
 
 /* ==> THE HOSTILE END IS STILL FLAT AND THAT IS DELIBERATE. <== It is already
  * the ocean colour in both themes (§47.5), so there is nowhere darker to go on
@@ -131,7 +170,10 @@ ok(DARK.geo.envRamp.length === 4 && LIGHT.geo.envRamp.length === 4,
  * why it is there. */
 ok(rampAt(STOPS, rampT(-23)).toUpperCase() === rampAt(STOPS, rampT(-52)).toUpperCase(),
   'a -23 kt hour and a -52 kt hour still draw identically — no headroom below the sea');
-ok(rampT(-40) === 0 && rampT(40) === 1, 'beyond the domain clips, which §47.4 measured and accepted');
+ok(rampT(-40) === 0 && rampT(40) === 1, 'the scale runs -40..+40, symmetric, and clips beyond');
+ok(rampT(-60) === 0 && rampT(60) === 1, 'and past both ends clamps rather than wrapping');
+ok(near(rampT(-40) + rampT(40), 1) && near(rampT(-15) + rampT(15), 1),
+  'the two halves are mirror images — if this fails, `Balanced` is no longer the middle');
 
 /* ---------------------------------------------------------------------------
  * 2. A ZERO IS NOT AN ENDING

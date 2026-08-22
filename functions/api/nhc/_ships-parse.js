@@ -340,16 +340,29 @@ export function parseShips(text) {
   const latAll = topRow(lines, 'LAT (DEG N)').map((t, c) => toNumber(t, `LAT (DEG N) ${c}`));
   const lonAll = topRow(lines, 'LONG(DEG W)').map((t, c) => toNumber(t, `LONG(DEG W) ${c}`));
 
-  /* ==> ONE EXCEPTION TO "THE RAW ENVIRONMENT STAYS OFF THE WIRE", AND ONLY AT
-   * HOUR 0. <== §47.8's room-to-grow sentence pairs the storm's current wind
-   * with the sea's ceiling — "a 29 mph system over water that could hold
+  /* ==> THE SEA'S CEILING IS THE ONE RAW ROW THAT GOES ON THE WIRE, AND IT NOW
+   * GOES WHOLE. <== §47.8's room-to-grow sentence pairs the storm's current
+   * wind with the sea's ceiling — "a 29 mph system over water that could hold
    * 158 mph" — and BOTH halves are read at the fix, because pairing now's wind
    * with a ceiling five days down the track once produced a sentence about two
-   * different moments (§47.8). The ceiling is `POT. INT.` at hour 0; the rest
-   * of the row stays unread for the same reason the rest of the raw table
-   * does. The whole row is still validated token-by-token, like Storm Type is,
-   * because an unrecognised token anywhere in a row we read means the file has
-   * changed shape. */
+   * different moments (§47.8).
+   *
+   * ==> BUT THE CEILING MOVES, AND THE COLOUR CANNOT SAY SO. <== The ribbon is
+   * the sum of the ten ENVIRONMENT rows and the sea is not one of them (§47.4,
+   * and that exclusion is right — `SST POTENTIAL` reports the storm back to
+   * itself). `POT. INT.` is the other thing entirely: an absolute ceiling, a
+   * fact about the water rather than about the storm, published at every
+   * forecast hour. Measured across the 2026 corpus, along the drawn track it
+   * falls by a median of 12 kt and by 20 kt or more in 37.7% of runs, reaching
+   * −93 kt — and in 34 runs the cone ends in the ramp's brightest violet over
+   * water whose ceiling has collapsed. The atmosphere really is improving in
+   * every one of those; the sea is not, and only words can carry that.
+   *
+   * So the whole row goes on the wire, aligned to `hours` like every other
+   * series. It is roughly 16 numbers per storm per advisory. The rest of the
+   * raw table stays unread for the reason above it. The whole row is still
+   * validated token-by-token, like Storm Type is, because an unrecognised
+   * token anywhere in a row we read means the file has changed shape. */
   const potIntAll = topRow(lines, 'POT. INT. (KT)').map((t, c) =>
     toNumber(t, `POT. INT. (KT) column ${c}`)
   );
@@ -452,6 +465,11 @@ export function parseShips(text) {
   const lon = lonAll.slice(1).map(westToSigned);
   const vNoLand = vNoLandAll.slice(1);
   const vLand = vLandAll.slice(1);
+  /* Sliced like the rest, so `potIntKt[c]` is the ceiling at `hours[c]`.
+   * `potIntNowKt` above is the SAME row at hour 0 and is deliberately its own
+   * field rather than an index into this one — the room sentence reads the fix
+   * and this series reads down the track, and they are different sentences. */
+  const potIntKt = potIntAll.slice(1);
 
   /* ==> WINDS AND POSITIONS TRUNCATE INDEPENDENTLY AND EITHER CAN COME FIRST.
    * <== 209 files in the season publish winds past the last position, 57
@@ -514,6 +532,7 @@ export function parseShips(text) {
     lastWindHr,
     lastPositionHr,
     potIntNowKt,
+    potIntKt,
     environmentKt,
     headroomKt,
     stormKt,

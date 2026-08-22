@@ -2764,8 +2764,8 @@ plainly.
 
 ```
 Environment
-Colors the cone by the environment's net contribution to intensity, from NHC's
-SHIPS model.
+Colors the cone by what the air around the storm adds to or takes off its
+strength, from NHC's SHIPS model.
 ```
 
 Label and `note` in `config/layers.js`, using the standing-caveat mechanism
@@ -2779,10 +2779,27 @@ class of storm, a watch, or a wind band.
 **IT USED TO SAY "whether the environment is helping or hurting the storm" AND
 THAT WAS THE WRONG REGISTER** (Aaron, 2026-08-16). Helping and hurting are OUR
 verbs for a number SHIPS published, and a row that sounds like a judgement
-invites the reader to read the color as our opinion. *Net contribution to
-intensity* is what the file's own contribution table is called, and naming the
-model says out loud that this layer reports rather than scores — §47's founding
-rule, in the one sentence most readers of it will ever see.
+invites the reader to read the color as our opinion. Naming the model says out
+loud that this layer reports rather than scores — §47's founding rule, in the
+one sentence most readers of it will ever see.
+
+**IT THEN SAID "net contribution to intensity" AND THAT WAS WRONG TWICE —
+2026-08-22.** First, the file's own table is `INDIVIDUAL CONTRIBUTIONS TO
+INTENSITY CHANGE`, and dropping the last word turns a change in wind speed into
+a share of the wind speed. Second and worse, **it over-claimed the ocean.** The
+colored sum is the ten ATMOSPHERIC rows: `SST POTENTIAL` is excluded on purpose
+(§47.4) and the sea's own ceiling is not in the contribution table at all. To
+anyone who is not a forecaster the ocean is obviously part of a storm's
+environment, and measured on the 2026 corpus **34 runs end in the ramp's
+brightest violet over water whose ceiling has collapsed 20 kt or more** — so a
+reader taking the word at face value is being misled on one storm in ten.
+
+*What the air around the storm adds to or takes off its strength* is the same
+claim in words a person uses. It is literally what a contribution in knots IS
+rather than a judgement about it, and it survives both signs read aloud —
+§47.4's own test for a name. **The layer keeps the NAME Environment** (§47.4's
+one-thing-one-name rule); this is the line that defines it, and the water is
+carried in words by §47.8's paragraph instead of being smuggled into the color.
 
 **Default OFF, and grouped with the cone** — it modifies the cone rather than
 adding a shape, so it belongs beside the thing it changes rather than in a
@@ -2801,8 +2818,13 @@ count, and ENDED is checked before SILENT:
 
 - Outside the Atlantic and East/Central Pacific: *Not published for storms in
   this basin.*
-- Inside those basins, before the first run appears: *No SHIPS run published for
-  this storm yet.*
+- Inside those basins, before the first run appears: *No intensity model run
+  published for this storm yet.* **It said "No SHIPS run" until 2026-08-22**,
+  while the drawer said "the intensity model" about the identical condition —
+  one storm, two names for one thing, on two surfaces a tap apart. §47.8 is
+  explicit that no replacement sentence says SHIPS at the reader: the name is
+  real provenance and belongs on the credit line and in this row's standing
+  note, which is where both now carry it.
 - A run that exists and publishes no forecast position (§47.6's fourth case,
   6% of the season): *This run publishes no forecast track to color.*
 - The relay failed: *Environment data unavailable — tap to retry.* The only one
