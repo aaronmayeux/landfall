@@ -346,6 +346,11 @@ one to pick. The console line is the measurement to take next time it happens.
 
 ### 7.5 Forecast point dots, and the ring that says which way
 
+**WHICH dot the ring lands on is decided upstream of this section (§7.11).** By
+the time `stampFirst` runs, any forecast hour that has already passed is gone
+and tau-0 sits on the storm feed's own position. This section is about how the
+ring LOOKS; §7.11 is about where it is.
+
 **Every forecast dot wears a dark ring (`geo.pointStroke`, 1.5 px) except the
 earliest one of each storm, which wears WHITE at 3 px
 (`geo.pointStrokeFirst` / `pointStrokeWidthFirst`). White in BOTH themes, with
@@ -1599,6 +1604,96 @@ the layer is *more* expressive on a strong storm, not less.
 
 Reference implementation: `mockups/environment-ribbon.html`, built on real
 SHIPS numbers.
+
+
+### 7.11 "Now" is where the storm is — re-anchoring an overtaken forecast
+
+`lib/forecast-now.js`, run from `app/bundle-pipeline.js` `forMap`, **before**
+`smoothTracks` (§7.4).
+
+**A forecast's first dot is never "now". It is the ANALYSIS hour.** Three
+published clocks describe one storm and none of them agree:
+
+| source | what it is | how fresh |
+|---|---|---|
+| `CurrentStorms.json` | the storm's position | freshest we ever hold |
+| MapServer past track / points | the record | behind the feed |
+| MapServer forecast track / points | the projection | behind BOTH — its first hour is an analysis hour, not a publication time |
+
+Measured on the archived bytes of 2026-08-21T23:30Z (`samples/lala-cp012026`,
+and reproduced identically on Moke CP3):
+
+```
+storm feed       advisory 038, 21:00Z, 28.6N 170.4W, HU 80 kt
+past points      published 21:04Z, newest fix 18:00Z at 28.1N 170.7W
+forecast points  advisory 36A, published 12:02Z
+                   tau-0  valid 09:00Z at 26.9N 171.2W
+                   tau-12 valid 18:00Z at 28.1N 171.3W
+```
+
+**The forecast was not wrong. It had been overtaken.** Its tau-12 named 28.1N
+at 18Z and the record independently put the storm at 28.1N at 18Z — that hour
+verified. Two of its hours had simply become history and were still being drawn
+as future.
+
+**What that did on glass** (Aaron, 2026-08-22): the white ring is drawn on the
+lowest-tau forecast point (§7.5 `stampFirst`), so it sat 117 miles behind the
+storm; and §7.4 joins the end of the record to the start of the forecast, so the
+dotted history climbed to its own newest fix at 28.1N and **doubled back 83
+miles** to reach the ring. The return leg lies half a degree from the outbound
+one, so it reads as one line that ran too far and stopped beside the second
+forecast dot. Aaron identified that the thing beside that dot was itself a real
+position; it was the 18Z fix.
+
+**THE RULE. A forecast hour that has already passed is not a forecast.** Leading
+expired hours are dropped, and one new tau-0 is placed on the storm feed's
+position. Both the forecast line and the record then join there.
+
+- **Expiry is walked from the front, never filtered.** A source publishing taus
+  out of order would otherwise have a hole cut from the middle of its forecast,
+  and the forecast LINE — which carries no times at all — could not follow.
+- **The line is trimmed by COORDINATE, not by count.** Its leading vertices must
+  BE the expired points (`FORECAST_NOW.matchEps`, a float-equality tolerance far
+  smaller than NHC's ~0.1° position grid). A line and a point set from different
+  advisories fail this and the whole re-anchor is abandoned.
+- **The new tau-0 takes its position from the feed and its classification from
+  the newest published past point** — reported, never derived (§4). The ring is
+  therefore coloured by the same fix that colours the last leg of the trail
+  behind it. Identity fields (`basin`, `stormnum`, `idp_source`, `advisnum`,
+  `_stormId`) ride through from the hour it replaces, so grouping, tap targets
+  and label placement are unchanged. It is stamped `_now: true`.
+- **`FORECAST_NOW.expiryGraceMs` is one hour**, shorter than the shortest gap
+  between published taus (12 h) so it can never keep two expired hours alive,
+  and longer than any poll interval so the decision is stable across a refresh.
+
+**THE RECORD IS NEVER TRIMMED.** The tempting fix was to cut the past track back
+to the forecast's start so the picture tidies itself. That deletes the storm's
+two most recent real positions to make a line look neat — the confident-wrong
+failure §5 exists to prevent. History is kept whole; the stale claims about the
+future are what go.
+
+**EVERY GUARD BAILS WHOLE.** No feed position, an unreadable time, a line that
+disagrees with the points, an entirely expired forecast — each returns the
+bundle untouched. A half-applied re-anchor, points moved and line not, is a
+worse picture than the one this fixes. A wholly expired forecast belongs to
+`lib/silence.js` and its badge, not here, and says so on the console rather than
+blanking silently.
+
+**Side effect, and a wanted one:** §7.4's seam warning ("the past track has most
+likely overtaken a stale forecast") was firing on every NHC storm. Once the
+overtake is removed at source it stops firing, and goes back to meaning
+something.
+
+`tools/test-forecast-now.mjs` asserts all of it against the archived bytes, and
+asserts that the raw bytes still reproduce the fault — if NHC's clocks ever line
+up, the suite says so rather than passing vacuously.
+
+**Still open, and NOT a subsection of this one:** the wind swath draws fins and
+spurs at close zoom. Reported the same evening, not caused by this, and it reads
+from NHC's published quadrant polygons rather than from the track. The archived
+advisory carries forecast POINTS on a 09Z cycle against wind SWATH polygons on a
+06Z one — two clocks again, but whether that is the cause is UNPROVEN. It gets
+its own number when it gets a fix; do not fold it in here.
 
 
 ## 9. Design

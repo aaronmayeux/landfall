@@ -72,8 +72,8 @@ const GROUPS = [
 
   ['DRAWING A STORM',
    'track line, cone, wind swath, glyph — the geometry of one storm on the map',
-   ['MESH_TRACK', 'TRACK_LINE', 'CONE_SWEEP', 'CONE_CURVE', 'RING_POLISH',
-    'WIND_SWEEP', 'BAND_MERGE']],
+   ['MESH_TRACK', 'FORECAST_NOW', 'TRACK_LINE', 'CONE_SWEEP', 'CONE_CURVE',
+    'RING_POLISH', 'WIND_SWEEP', 'BAND_MERGE']],
 
   ['FEATURES WITH THEIR OWN SECTION',
    'each of these owns a spec section and a piece of the drawer',

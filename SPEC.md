@@ -2335,3 +2335,144 @@ panel.
 libraries and the service-worker type check, the CSP, telemetry and the privacy
 contract, the boot failure screen, the origin collapse and the cron Worker, the
 Cloudflare setup, the two things that can bill, push, and the IP position.
+
+
+## 55. Known and accepted
+
+**MOVED OUT OF `NOW.md`, 2026-08-22, and it must still be read.** `NOW.md` is a
+list of what is IN FLIGHT; these are decisions that are FINISHED. They were
+sitting in the live file only because there was nowhere else to put them, and
+they were 131 of its 855 lines.
+
+Everything here is a thing somebody will otherwise rediscover, re-report and
+re-argue. A `NOW.md` reader is pointed here from its last section.
+
+- **`SPEC-MAP.md` HAS TWO SECTIONS NUMBERED 9.3** — "Theming the map without
+  rebuilding it" and "The crossfade". Found 2026-08-21 while writing the fog
+  fade into the second of them. Section numbers are permanent addresses — the rule
+  is in SPEC.md's preamble, above §1 — so a code comment or a doc citing §9.3 currently resolves to whichever
+  one the index picked. Nothing is broken today and `doc-check` passes, because
+  both headings exist and the citation lands on a real section. **The fix is to
+  give ONE of them a fresh number at the end of the §9 range and update the
+  handful of citations, never to renumber the other around it.** Which one moves
+  is Aaron's call: the crossfade is the more heavily cited of the two, so the
+  theming section is the cheaper thing to move.
+
+- **THE STORM LIGHT IS STRONGER ON A PHONE THAN ON A DESKTOP, AND THAT IS LEFT
+  ALONE.** Settled 2026-08-21, after the light-mode gain went to 3.0 (§9.14).
+  Aaron's first read was "perfect on desktop, too much on phone" and the
+  proposal was a strength slider in Settings. **Do not build it.** There are two
+  candidate causes and NEITHER WAS EVER TESTED, so do not repeat the earlier
+  wording that called it "almost certainly geometry" — that was a guess wearing
+  a conclusion's clothes. Candidate one is geometry: the blob radius is a
+  multiple of the globe's on-screen size, and the globe fills far more of a
+  phone than of a wide monitor, so the same light covers a much larger share of
+  what is being looked at. Candidate two is the display: light mode's glow is
+  pure chroma, and a wide-gamut phone held a foot away reads saturated color far
+  louder than a monitor at arm's length. A slider would have made a solo user
+  hand-tune whichever it is on every device forever, and if it is geometry it
+  would also have hidden the same problem on a desktop window dragged narrow.
+  **It grew on him and the verdict is now "leave it."** So the geometry fix was
+  never built either, and should not be built speculatively — it would be
+  correcting for something Aaron has since said he likes. If the complaint ever
+  returns, the question that separates the two causes is whether it is too much
+  when the globe is SMALL in the frame or only once it fills it: small-globe
+  fine means geometry, too-much-either-way means the phone's wider gamut and
+  the dial is `LIGHT.fx.glowSaturate`, not the gain.
+
+- **A SECOND CONSECUTIVE RED `verify` RUN IS A STOP-WORK SIGNAL.** Earned
+  2026-08-21. The board ran red for **113 pushes** — from run 206 on 16 Aug to
+  run 318 — on two checks that were both wrong about a working app, and every
+  push in between sailed straight past them. `ci.yml` already says at the top
+  that a permanently red check trains you to ignore the whole board; that is
+  precisely what happened, and the cost was that four gates behind them stopped
+  running at all and nobody noticed.
+  **Both failures were the same species: a check holding a second copy of a
+  fact the app already owns.** `token-check` assumed the name `P` belonged to
+  the palette; `home-figs-check` kept its own list of stylesheets. Neither
+  survived an ordinary edit elsewhere, and neither was fixed the first time it
+  went green — the offending files were simply deleted, so the trap stayed set.
+  When a gate fires, the first question is whether it is describing the app or
+  describing itself.
+
+- **THE WORK PC'S JITTER IS THE CORPORATE VPN, NOT THE APP. SETTLED, DO NOT
+  RE-DIAGNOSE.** Established 2026-08-20 by elimination: the same build on
+  Aaron's *other* work PC pans smoothly. The VPN (GlobalProtect) was already
+  known to make the site look dead on an empty-cache hard reload; it also
+  produces stuttering pans and slow-feeling storm loads, which is the part that
+  looks like a code regression and is not.
+  **What the telemetry says, so nobody re-derives it:** `transfer_bytes` is
+  byte-identical across every Windows session for days, boot is flat
+  (`boot_longtask_n` 2–3, scripts ~1.2 s, globe ~1.3 s), `t_storms_ms` sits at
+  1.5–1.9 s with no trend, and `events` carries no app error at all. The damage
+  is entirely post-boot `longtask_ms`, it is episodic, and the single worst
+  session on record (421 tasks, 38.7 s blocked) landed eighteen hours before the
+  commits it was blamed on. Two of three bad sessions had `storm_select = 0`, so
+  the drawer never even rendered.
+  **The rule this earns: check `boot_longtask_n` against `longtask_n` before
+  believing a perf report.** A flat boot with a wrecked runtime, on one machine,
+  with no error rows, is an environment story. Confirm on a phone on cell data
+  with the VPN off before touching code.
+
+- **`aoi_surge` IS NOT A SURGE FOOTPRINT. SETTLED, DO NOT RE-ASK.**
+  `SPEC-DATA.md` §51.1. An affected-PLACES export — cities and provinces,
+  `intensity: 1` on every feature, no height/surge/water/depth field among its
+  twenty keys. Nothing in it to draw. §51.4's town bands are not a stand-in for a
+  better geometry; they are the whole of what this product publishes.
+- **NOBODY PUBLISHES PAST WIND EXTENT OUTSIDE NHC. SETTLED, DO NOT RE-ASK.**
+  `SPEC-NEXT.md` §53, `SPEC-DATA.md` §45.3. GDACS bands are all dated at or after
+  their bulletin; none of JTWC's four per-storm products carries a past radius. The
+  `.tcw` is the proof it is deliberate — its best track repeats each past hour once
+  per wind threshold met, radius columns stripped. NHC layer 13 is the only source
+  on Earth, so that feature stays American. Stitching a history from our own hourly
+  snapshots would make what a user sees depend on how long their phone happened to
+  be open — the exact bug `data/ended-track.js` exists to fix.
+- **NHC's live layer 13 publishes real history.** Lala carried 21 six-hourly steps
+  with real quadrant radii back to 13 Aug against a past track reaching 10 Aug —
+  three days shallower, not a token amount. `partial` already says so. The past
+  track's `stormtype` carries DB/LO/TS/HU.
+- **A shapeless watch looks like one bad advisory, not a basin quirk.** Lala's
+  watch and warning both carried real LineStrings. One snapshot, so evidence rather
+  than proof — but it points away from a Central Pacific problem.
+- **The `Where it is` / countdown duplication is APPROVED.** `SPEC-UI.md` §8. Both
+  say the same words on a near storm; the countdown is the chart's accessible twin
+  and has to be self-contained. Aaron ruled: keep as is.
+- **The Windows main-thread fix is confirmed on glass.** The coast-layer select
+  memo no longer re-keys on `coastGeneration()`, so an engine push stops paying a
+  full basemap decode. Confirmed running well on Chromium / Beelink mini PC driving
+  a 43" touchscreen.
+- **`/?replay=ida` paints TODAY's imagery over a 2021 storm, and that is
+  accepted.** Satellite and radar do not route through `ENDPOINT.relay` and there
+  is no archived imagery. Replay is a mock-up, not a user-facing feature — not
+  worth suppressing the toggle for.
+- **The water probe is only as good as the tiles loaded.** `map/water-at.js` reads
+  `queryRenderedFeatures` against the ocean fill. A pin on obvious land reading
+  `Unnamed location` is this; the dial is `GEOCODE.waterProbeMs`.
+- **Every relay route rebuilds its cache hit, and GDACS reports its own age.**
+  `SPEC-OPS.md` §17.7. GDACS can raise the delayed banner for the first time ever;
+  a false alarm would show up as an unexplained banner.
+- **`functions/tiles/` is dormant, and dormant SERVER-side.** `TILES.useR2` is
+  false, so the Protomaps branch in `map/style.js` and the 1,721 vendored pmtiles
+  lines never run, and a Pages Function is not downloaded by a visitor. **R2 is no
+  longer wanted** (§2 SETTLED); not urgent to delete, but nobody should maintain it.
+- **The drawer does not say which watch/warning products fell back to a chord.**
+  `SPEC-UI.md` §16, `SPEC-MAP.md` §7.10. Saying it there means plumbing map state
+  into the panel. Left undone deliberately now the map admits it itself.
+- **`overallStatus` returns `ok`, not `clear`, when only ended storms are held.**
+  Deliberate — `clear` would fire an all-clear while a grey dot sits on the globe.
+- **Ended storms keep their track but not their wind swath.** Cosmetic.
+- **The gap between a warning being issued and the winds arriving is not
+  computable in the app.** Layer 8 carries what is in force, not when it was
+  issued, and nothing stores advisory history on device. The most actionable number
+  in the archive, and out of reach.
+- **iOS long-task numbers are an instrumentation gap, not a result.** WebKit does
+  not implement the observer, so `longtask_n = 0` everywhere and `ttfb_ms`,
+  `mem_gb`, `conn_type` are blank. Never read those as "iPhones never block".
+- **Filter telemetry on `timings_ok = 1` or repeat a mistake this project already
+  made.** Backgrounded tabs (`timings_ok = 2`, averaging 322,440 ms to storms)
+  poisoned every iPhone average ever computed here. **But it EXCLUDES valid usage
+  rows** — do not use it when counting people or sessions.
+- **GDACS's `alertlevel` never reaches the screen and that is correct.** It is a
+  humanitarian-impact score, so it can rate a Cat-5-equivalent Green. Strength comes
+  from GDACS's own `severitytext`.
+- **Three suites need Playwright and do not run in a bare sandbox.** Expected.

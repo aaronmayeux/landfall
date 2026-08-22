@@ -53,6 +53,7 @@ import { tracksToFeatures } from '../lib/adeck.js';
 import { isSilent } from '../lib/silence.js';
 import { isEnded } from '../lib/lifecycle.js';
 import { withoutFuture } from '../lib/future-slots.js';
+import { reanchorNow } from '../lib/forecast-now.js';
 import { smoothTracks } from '../lib/trackline.js';
 import { smoothCone } from '../lib/cone-smooth.js';
 
@@ -251,11 +252,23 @@ export function forMap(storm, bundle, deps) {
    * disagree and a track reaches for a mark that is not drawn. */
   const noReading = isSilent(storm) || isEnded(storm);
   const label = storm?.name || storm?.id || 'storm';
+  /* ==> RE-ANCHOR BEFORE SMOOTHING, NEVER AFTER. <== smoothTracks joins the end
+   * of the record to whatever the forecast's FIRST point is. Run the re-anchor
+   * after it and that join has already been made against the analysis hour the
+   * re-anchor exists to remove — which is the hairpin Aaron saw. It is a no-op
+   * on a silenced or ended storm, whose forecast slots withoutFuture has
+   * already emptied, so the two need no ordering between them (§5). */
+  const anchored = reanchorNow(
+    noReading ? withoutFuture(decorated) : decorated,
+    storm,
+    Date.now(),
+    label
+  );
   return withEnvRibbon(
     storm,
     smoothCone(
       smoothTracks(
-        noReading ? withoutFuture(decorated) : decorated,
+        anchored,
         label,
         noReading ? [storm?.lon, storm?.lat] : null
       ),

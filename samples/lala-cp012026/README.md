@@ -95,3 +95,30 @@ changes nothing about the join.
 **Keep both files verbatim.** Remove the duplicate feature, or nudge the
 forecast's first point onto the past track's last, and neither fault is
 reproducible any more.
+
+---
+
+## `forecast-points-038-stale.geojson` + `past-points-038.geojson`
+
+Same 2026-08-21T23:30Z archive run as the two files above. These are the halves
+`tools/test-forecast-now.mjs` needs, and they carry the fact that turned the
+whole diagnosis around:
+
+| layer | advisory | published | first / newest position |
+|---|---|---|---|
+| forecast points | 36A | 12:02Z | tau-0 valid **09:00Z** at 26.9°N 171.2°W |
+| past points | — | 21:04Z | newest fix **18:00Z** at 28.1°N 170.7°W |
+| `CurrentStorms.json` | 038 | 21:00Z | **28.6°N 170.4°W**, HU, 80 kt |
+
+**The forecast is not wrong. It has been overtaken.** Its tau-12 is valid
+18:00Z at 28.1°N — and the record independently puts the storm at 28.1°N at
+18:00Z. That hour verified. It is still being drawn as future, and the white
+ring is still being drawn on tau-0, 117 miles behind the storm.
+
+Two forecast hours here have already passed at the wall clock Aaron reported
+against (2026-08-22T00:39Z). `lib/forecast-now.js` drops both and puts a single
+tau-0 on the feed's position, so the record joins the forecast going forwards
+instead of doubling back 83 miles to reach it.
+
+**Do not refresh these against a newer advisory.** The moment NHC's two clocks
+line up, nothing here reproduces.
