@@ -12,13 +12,20 @@
 > short enough to read at a glance; length accumulates BELOW them.
 >
 > **THE TRIGGER IS MET AND THE RESIDUE IS STRUCTURAL, SO DO NOT AUDIT BLIND.**
-> This file came down from 510. What is left is mostly `HELD FOR WEATHER` and
-> `KNOWN AND ACCEPTED`, and both grow with the APP rather than with neglect — a
-> bigger app has more built-but-unwitnessed surfaces and more settled questions
-> worth not re-asking. If it climbs again, the lever is structural rather than
-> editorial: move `KNOWN AND ACCEPTED` into SPEC.md as a SETTLED section. That
-> has been left alone because its whole job is stopping a session re-asking a
-> closed question, and it only does that job if it is read at session start.
+> This file has been cut twice — 510, then 978 down to here. **Both times the
+> bulk of it was landed work kept "until the next session reads it once," and
+> both times that session never came.** A diagnosis is worth writing down while
+> it is hot; it is worth keeping only in the spec, which describes what IS. If
+> you find yourself writing "kept for the next session" into this file, write it
+> into the spec instead and delete it from here.
+>
+> What is left is mostly `NEXT UP`, `HELD FOR WEATHER` and `KNOWN AND ACCEPTED`,
+> and those grow with the APP rather than with neglect — a bigger app has more
+> built-but-unwitnessed surfaces and more settled questions worth not re-asking.
+> If it climbs again the lever is structural rather than editorial: move
+> `KNOWN AND ACCEPTED` into SPEC.md as a SETTLED section. That has been left
+> alone deliberately, because its whole job is stopping a session re-asking a
+> closed question and it only does that job if it is read at session start.
 >
 > **`IN FLIGHT` MEANS WAITING ON AARON AND NOTHING ELSE.** ==> THIS IS THE RULE
 > THE 2026-08-19 CUT EXISTED TO RESTORE. <== The heading had silted up with items
@@ -59,423 +66,111 @@ traded for.
 
 ## IN FLIGHT
 
-**THE ARCHIVE IS ALIVE AGAIN — CONFIRMED. Closed.** `SPEC-OPS.md` §18.3.
-Eleven consecutive runs failed 01:41Z–12:53Z on 2026-08-22 because a3fb3b4's new
-`adeck/` folder met a hardcoded list of the three directories `archive.yml` knew
-to skip before a plain `cp`. The list is gone; the workflow asks the filesystem.
-Aaron dispatched it at 13:03Z on c937312: **success, `fetchedAt`
-2026-08-22T13:04:00Z, 102/103 sources ok, `derivedFailures []`, 22 geometry
-storms.** Do not reopen.
-
-**BUG 3 IS UNBLOCKED — `latest/adeck/` HAS BYTES.** Seven deck files
-(`nhc-cp012026`, `nhc-cp022026`, five `tcgp-wp*`). The manifest's `fetchedAt` is
-now LATER than a3fb3b4, which was the stated condition. Model tracks not
-starting at the current dot can be worked.
-
-**==> START HERE: MOKE'S FORECAST GEOMETRY IS TWENTY-EIGHT HOURS OLD AND NHC IS
-NOT FIXING IT. <==** Measured on the fresh 13:04Z archive, not inferred:
-
-| storm | cone / forecast points | wind radii | feed | forecast starts behind the storm |
-|---|---|---|---|---|
-| Moke | **adv 4, 2026-08-21 09:13Z** | adv 8, 09:08Z today | adv 008 | **215 nm** |
-| Lala | adv 39, 03:27Z today | adv 39, 04:02Z | adv 040 | 87 nm |
-
-**This is not a publish-cycle wobble that clears on its own.** Moke's layer-4 and
-layer-5 products have been frozen at advisory 4 across four advisories and a
-full day. §7.13 is doing real work on both storms right now.
-
-**THE DECISION AARON HAS NOT MADE, AND IT JUST GOT LARGER.** §7.11 re-anchors
-that geometry onto the current fix — so the app is dragging a 28-hour-old cone
-215 nm forward and rounding off the cut end with a half-ellipse no source
-published. **That is the purple lobe.** Options unchanged: keep re-anchoring and
-go on drawing a cone NHC never issued, or draw the forecast where NHC drew it
-and stamp it as a day old, accepting the forecast line will visibly not start at
-the storm dot. A third option now worth weighing: **refuse a forecast this
-stale** and show the storm with past track and wind field only, saying why.
-
-**LALA'S TRACK STILL HAS A KINK IN IT.** Aaron on glass 2026-08-22 07:53,
-screenshot 4953: the past track doubles back near the current dot. NOT
-diagnosed — fresh bytes now exist for it in `archive:latest/geometry/`
-(`nhc-Lala-CP2-pastTrack`/`pastPoints`, adv 40 09:02Z, against forecast points
-at adv 39). **Dump the actual past-track vertices before theorising**, the same
-way §7.13 was found. Do not measure against the 23:30Z capture — §7.11 and §7.13
-were both built from it and it will reproduce yesterday's fault.
-
-**THE WIND SWATH WAS DRAWN 130 nm FROM WHERE NHC DREW IT. FIXED, NOT YET
-CONFIRMED ON GLASS.** `SPEC-MAP.md` §7.13,
-`tools/test-windswath-centre.mjs` (30 assertions, 5 mutations verified).
-
-NHC serves the 5-day forecast POINTS and the forecast wind RADII as separate
-ArcGIS layers on separate publish cycles. The swath took the quadrant numbers
-from the radii and the centres from the points, joined on `tau` — which assumes
-they are the same advisory. **On 2026-08-21 Moke's points were advisory 4
-published 09:13Z and her radii advisory 6 published 21:12Z: twelve hours and two
-advisories apart.** Every band sat 108–151 nm east-southeast of the truth. A
-wind ring states its own centre twice over through its bounding box and its four
-published radii, so it is placed there now, with its own `validtime` as its hour.
-Measured across every archived ring on both storms, the two solves agree to
-within 0.55 nm.
-
-**==> AARON: WHAT TO LOOK FOR ON THE PHONE. <==** The green 34 kt band should
-now start ON the storm rather than trailing behind and to the right of it, and
-should reach the full length of the forecast. The orange 50 kt band on Moke
-moved about 140 miles west. Lala should look **identical** — her two products
-already agreed, and that is the point.
-
-**==> THE BIGGER PROBLEM IS NOT FIXED AND IT IS AARON'S DECISION. <==** The
-cone, forecast track and forecast points are still whatever advisory NHC's
-layers happen to be serving, and §7.11 re-anchors that geometry onto the current
-fix. On Moke that drags a twelve-hour-old cone forward and rounds off the cut
-end with a half-ellipse no source published — **that is the purple lobe, and it
-is why last session's cap clamp made it smaller instead of gone.** The choice:
-keep re-anchoring and go on drawing a shape NHC never issued, or draw the
-forecast where NHC drew it and stamp it honestly as stale, accepting that the
-forecast line will visibly not start at the storm dot. **Not started. Waiting on
-Aaron.**
-
-**EIGHTEEN'S PAST TRACK — CONFIRMED ON GLASS BY AARON. Closed.** The mechanism
-is in `spec-parameter.md` §32.6. Do not reopen.
-
-**THE ARCHIVE CAPTURED LAYER 11 AND CAPTURED NO DECKS, AND THE REASON WAS OURS.**
-`latest/geometry/nhc-*-pastTrack.geojson` arrived as expected. `latest/adeck/`
-did not exist at all — not "no decks this hour", no folder. The a-deck phase
-landed without its `mkdirSync` line, so the first deck write threw `ENOENT`
-every hour, the phase's own try/catch swallowed it, and the manifest read
-`68/69 sources ok`. Both halves fixed: the folder, and every derived catch now
-records `{phase, reason}` into `derivedFailures` in the manifest.
-`tools/test-archive-dirs.mjs` guards both, mutation-verified. §18.3.
-**Check `latest/adeck/` and the manifest's `derivedFailures` after the next
-hourly run** — the sandbox cannot dispatch it.
-
-**==> AN EMPTY `latest/adeck/` IS NOT YET A FINDING, AND ONE SESSION ALREADY
-READ IT AS ONE. <==** Checked 2026-08-22: the newest archive run is 23:30Z and
-the folder fix shipped at 00:27Z, so no run has carried it. The archive branch
-is force-pushed as one commit, so there is no earlier run to compare against
-either. It only becomes a finding if it is still empty after a run stamped
-LATER than the commit that fixed it — check `fetchedAt` in the manifest, not the
-wall clock.
-
-**BUG 3 (model tracks not starting at the current-position dot) IS STILL
-BLOCKED UNTIL THAT RUN.** No deck bytes, nothing to read, do not start it.
-
-**THE PAST TRACK DOUBLING BACK — CONFIRMED ON GLASS BY AARON. Closed.**
-Deployed at bed43ba, checked on the phone 2026-08-22: past and forecast tracks
-both draw correctly on Lala and Moke. The mechanism is `SPEC-MAP.md` §7.11 and
-§7.4. Do not reopen. What follows is the diagnosis, kept until the next session
-reads it once. 2026-08-22. Aaron, on the a3fb3b4 build: the dotted past track still ran past
-the white ring and stopped near the SECOND forecast dot, model guidance off.
-
-**His read was right and it broke the case open.** There IS a point next to that
-dot — the storm's real 18Z fix at 28.1N 170.7W. NHC's tau-12 dot is 28.1N
-171.3W. Near twins.
-
-**The line was not stopping there. It was turning around there.** Reproduced
-from archived bytes with the forecast fully present: the record climbs to 28.1N
-and doubles back 83 miles to the ring at 26.9N. The two legs lie half a degree
-apart, so it reads as one line that overshot.
-
-**==> LAST SESSION'S AMBIENT-BUNDLE THEORY IS DEAD. DO NOT RUN THE TAP TEST. <==**
-That measurement checked where the line ENDS (the ring — correct) and never
-checked where it GOES. It reproduces with both slots present.
-
-**The cause is three clocks.** Feed: advisory 038, 21:00Z, 28.6N. Record:
-published 21:04Z, newest fix 18:00Z at 28.1N. Forecast: advisory 36A, published
-12:02Z, tau-0 valid 09:00Z at 26.9N. **A forecast's first dot is never "now" —
-it is the analysis hour**, and the white ring is drawn on it, so the ring sat
-117 miles behind the storm. The forecast was not WRONG: its tau-12 named 28.1N
-at 18Z and the record independently put the storm there at 18Z. That hour
-verified. It had been overtaken, not falsified.
-
-**The fix:** `lib/forecast-now.js` drops leading forecast hours that have already
-passed and puts one tau-0 on the feed's real position; the record and the
-forecast line both join there. The record is NEVER trimmed — cutting it back to
-fit a stale forecast would delete two verified positions to tidy a line.
-`SPEC-MAP.md` §7.11, `FORECAST_NOW`, `tools/test-forecast-now.mjs`, six
-mutations verified. Confirmed on Lala AND Moke: overshoot 1.20° and 0.70° both
-to 0.00°.
-
-**CONFIRMED ON GLASS.** The dotted past track runs forward into the white ring
-and stops; the ring sits on the storm; nothing doubles back.
-
-**THE OVERTAKEN-FORECAST CONSOLE LINE SHOULD NOW BE SILENT.** It fired on every
-NHC storm before this. If you still see "the past track has most likely
-overtaken a stale forecast" after this deploys, the re-anchor bailed on a guard
-and the console will say which one — that is a finding, not noise.
-
-**A SEGMENT PUBLISHED TWICE — separate fault, fixed 2026-08-21, still valid.**
-Layer 11 sent the final past-track leg twice on both storms (`objectid` 742/743,
-745/746); `runsFrom` drops a repeated run. `TRACK_LINE.orientGapRatio` from the
-same pass also stays — it is the backstop for a hairpin the re-anchor cannot
-remove. SPEC-MAP.md §7.4.
-
-**THE WIND SWATH'S FINS — ROOT CAUSE FOUND, FIXED, NEEDS GLASS.** 2026-08-22.
-Aaron zoomed in on Lala: the bands carried fins, spurs and slivers instead of
-reading as continuous corridors. **One symptom, two causes, proven separate.**
-
-- **The timeline folded back.** The swath lays centres out past -> current ->
-  forecast by tau, and dropped forecast tau 0 before splicing because the
-  analysis hour sits behind the storm. That reasoning was right and the list was
-  one entry long: on a nine-hour-stale advisory **tau 12 is behind the storm
-  too**. The spine ran current 28.6N -> tau-12 28.1N -> tau-24 29.8N. Half a
-  degree backwards against a corridor 130-160 nm wide, and both walls crossed.
-  Every expired hour is dropped now, on the centre's own clock, with the old
-  tau-0 rule kept as the fallback when no clock is readable.
-- **The offset walls crossed themselves.** Offset a curve inward past its own
-  radius of curvature and it self-intersects over tens of vertices at honest
-  spacing with gentle turns — every local test passes, and the existing despike
-  only sees hairlines. Measured on Lala's recurve: 34 kt crossed 3 times (loops
-  of 90, 41, 25 vertices), 50 kt 3 times, one 64 kt run once. A spatial grid
-  finds the crossing; the larger piece by area survives.
-
-**==> A SELF-INTERSECTING BAND WAS NOT JUST UGLY, IT WAS PUNCHING HOLES. <==**
-Fill treats the doubled-over region as outside. Cutting the loops raised
-published-wind coverage from 77.8% to 78.8% while area FELL 0.85%.
-
-`SPEC-MAP.md` §7.12, `WIND_SWEEP.maxLoopCuts`,
-`tools/test-windswath-folds.mjs`, five mutations verified. Fixtures are real
-archived bytes; the past wind field is deliberately excluded as a megabyte that
-the fault reproduces without.
-
-**WHAT TO LOOK AT ON GLASS:** zoom into Lala or any recurving storm. Each wind
-band should read as ONE continuous blob — no slivers crossing it, no triangular
-fins hanging off it, no thin spurs. Green, orange and red should nest inside
-each other cleanly.
-
-**IF YOU SEE THE CONSOLE SAY "a band still crosses itself after 8 loop cuts",
-that is a finding.** It means a shape nobody has measured. The band is drawn
-anyway rather than dropped.
-
-**KNOWN AND NOT CHASED, so it is not rediscovered as a bug:** sampled at their
-exact published radius, 78.8% of Lala's wind-rose boundary points and 65.1% of
-Moke's fall inside the drawn band; at 0.8x radius, 95.8% and 76.2%. That is the
-documented smoothing shrink plus §5's run-break rule refusing to sweep across a
-time NHC published no ring for. Both deliberate.
-
-**THE CONE DRAWING OFF OLD DATA — FIXED, NEEDS GLASS.** 2026-08-22. Aaron on
-the phone: the cone was not aligning with the storm's current position. **He was
-right.** The app was drawing NHC's PUBLISHED outline, whose apex sits at the
-stale analysis position — advisory 36A's tip at 26.65N against the storm at
-28.60N, **135 miles behind**.
-
-**We only saw the published shape because the §7.9 rebuild was declining.** Two
-reasons, and one of them was mine:
-
-- **The walls folded, and that was the wrong question.** The old guard refused
-  whenever an edge stepped backwards against the track. The harm is a RING that
-  crosses itself. Measured: Lala's flanks fold and her assembled ring does NOT
-  cross. The ring is asked directly now and any loop is cut (`lib/unloop.js`,
-  extracted because §7.12's wind swath is the other caller).
-- **==> THE UNDERCUT GUARD BROKE WHEN §7.11 MOVED THE TRACK'S START, AND THAT
-  WAS MY REGRESSION. <==** A cone redrawn along a track starting at the storm
-  cannot cover the published cone's tail: **1.62 deg undercut against a 1.27
-  allowance**, where before the re-anchor it was 0.12. The guard now asks its
-  question only where the track actually goes, skipping published vertices
-  behind the first station.
-
-**THE COST IS ACCEPTED (Aaron, 2026-08-22):** the drawn cone is SMALLER than
-NHC's, by whatever the feed is ahead of the advisory. What is dropped is
-uncertainty about hours that already happened. `CONE_SWEEP.minAheadFrac` is the
-backstop — under half the cone ahead of the storm and it falls back to the
-published outline rather than presenting a sliver as the whole forecast.
-
-**THE SIDE EFFECT IS BIGGER THAN THE CONE.** The fold veto was refusing **12 of
-Ida's 35 advisories**, and every refusal put §47.5's environment ribbon on the
-fallback path. **All 35 rebuild now.** That is the ribbon Aaron watched come and
-go on Lala, 2026-08-18.
-
-Measured on Lala: cone apex moves from 135 miles behind the storm to 33, which
-is its own rounded start cap. `SPEC-MAP.md` §7.9, `CONE_SWEEP.minAheadFrac` /
-`maxLoopCuts`.
-
-**WHAT TO LOOK AT ON GLASS:** the cone's narrow tail should start AT the white
-ring with a rounded nose, not hook down past it. And the environment ribbon
-should stay put on a recurving storm instead of vanishing and returning.
-
-**TWO SUITES CHANGED SHAPE AND THAT IS NOT A REGRESSION.**
-`tools/test-cone-sweep.mjs` and `test-cone-smooth.mjs` both hunted the Ida corpus
-for a naturally-declining advisory. There are none left. Both had warned in
-their own comments that a change accepting everything would leave them testing
-nothing; the refusal is now CONSTRUCTED (a track trimmed to its last 30% trips
-`minAheadFrac`) rather than found.
-
-**MOKE'S PURPLE LOBE — FIXED, NEEDS GLASS.** 2026-08-22. Aaron, twice: a big
-purple blob hanging east and south of Moke, outside the cone it belonged to.
-
-**It was the cone's TAIL CAP, and it was my own knock-on from §7.11.** Each cap's
-length comes from a ray cast out of the cone until it leaves the published
-outline. Right while the track began at tau 0 — the published apex. §7.11 moved
-the first station onto the STORM, which sits inside the cone ahead of its stale
-apex, so the backward ray started running the whole length of the advisory's
-leftover tail and the cap ballooned to fit.
-
-Measured, each cap's reach against the flank it caps:
-
-```
-Lala  tail 0.48 / 0.52 = 0.91x     nose 2.35 / 2.33 = 1.01x
-Moke  tail 1.56 / 0.64 = 2.43x     nose 2.32 / 2.26 = 1.03x
-```
-
-Three of four agree within a tenth — the end of a corridor of half-width w IS a
-cap of radius about w. The outlier was measuring something else. The flank is a
-CEILING on the tail now. **The nose is deliberately NOT clamped**: the last
-station is still the published cone's own day-5 nose, so its ray is right.
-
-**==> THE RIBBON WAS THE MESSENGER, NOT THE FAULT. <==** §47.5 paints the caps,
-so on Moke it put confident environment colour over 112 miles of water she had
-already crossed. The wrong shape had been there all along; painting it is what
-made it obvious. `lib/cone-ribbon.js`'s comment "the tail cap sits behind the
-current position" had gone from description to bug without anyone touching it —
-corrected in place.
-
-**Moke's cone BODY is not too wide.** Checked and dropped: NHC published it 24
-degrees of longitude across. Real data.
-
-`SPEC-MAP.md` §7.9, `samples/moke-cp032026/`, `tools/test-cone-cap.mjs`, four
-mutations verified. Moke's cap bounding box 2.22 -> 0.96 sq deg; Lala unchanged.
-
-**==> LALA'S BYTES CANNOT REPRODUCE THIS, WHICH IS WHY MOKE HAS HER OWN CORPUS.
-<==** A suite built on Lala alone passes before AND after the fix. Verified by
-doing it. Same trap as `test-cone-anchor.mjs`.
-
-**WHAT TO LOOK AT ON GLASS:** Moke, zoomed in. The cone should end in a small
-rounded cap at the storm, not a lobe hanging behind it. The environment ribbon
-should stop at the storm. Lala should look exactly as she did.
-
-**THE PERF AUDIT WENT GREEN HAVING MEASURED NOTHING, TWICE OVER.** Two runs
-2026-08-21. The 21:11 run crashed at exit 2, wrote no JSON, and every step after
-it no-opped by design — artifact warned, branch push hit its `test -f || exit 0`,
-budget grep found no `FAIL` in a stack trace. Green tick, zero data. The 21:38
-run went red and DID write, so `perf-history` exists now with one file.
-Both holes closed: the job fails when no measurement file exists, and the budget
-fails outright when `styleLoaded` is false.
-
-**==> DO NOT TRUST `colorNulls: 0` FROM THAT RUN — IT IS BUG 2's EVIDENCE AND IT
-IS NOT IN HAND. <==** `tools/perf-instrument.mjs` counts colour-null errors by
-patching `console.error` on the MAIN PAGE, and the errors come from MapLibre's
-WORKER, which has its own global scope and its own console. A zero from an
-instrument pointed at the wrong thread is not a zero. All three arms also
-reported `styleLoaded: false`, which the audit's own report calls "map numbers
-below are meaningless". **Bug 2 needs the instrument fixed before it needs
-anything else.**
-
-The run's real findings, worth keeping: `blockedMs 26490` against a 1200 budget,
-`ourModules 179` against 175, and the radar arm at `loadMs 109802`.
-
-**SAUDEL LOST ITS SAFFIR-SIMPSON GRADING ON TWO DEVICES AND KEPT IT ON A THIRD,
-AND THAT IS STILL UNEXPLAINED.** 2026-08-21. Forecast track drew nine pink `HU`
-pills on the phone and work PC #1; work PC #2, opened minutes later, drew the
-graded dots correctly. Hard-close and reopen changed nothing on the two bad ones.
-
-**Everything server-side was proven healthy, on real bytes, and is NOT the
-cause:** JTWC has been issuing on schedule (warnings 10→14 across 18 archived
-hours); the relay parser was run against the archived `wp1726web.txt` and returns
-an 80 kt fix plus a nine-step ladder to 130 kt; `matchStormByName` resolves
-`SAUDEL-26` → `SAUDEL`; the two join guards both pass — GDACS and JTWC publish
-the *identical* position, so separation is 0 NM. Aaron's paste of the live
-`/api/jtwc/storms` at 20:10Z carries SAUDEL with the fresh fix. **The relay is
-fine. The break is on the device.**
-
-**The remaining candidate is a per-datacentre difference.** The relay caches per
-Cloudflare PoP. A PoP serving a `last-good` copy older than `JTWC_WIND.maxFixAge`
-(12 h) makes every storm fail `fix_too_old`, silently, and fall back to the class
-midpoint — which looks exactly like this. Untested: nothing in the sandbox can
-reach the live app, and the one thing that would settle it is opening
-`/api/jtwc/storms` **on a device that shows the bug** and reading `fetchedAt` and
-the fix `at`. **WAITING ON AARON FOR THAT.** Do not write a fix before it.
-
-**THE ARCHIVE NOW CAPTURES THE RELAY, NOT JUST THE UPSTREAMS.** The hour above
-was spent proving things the archive should have answered in thirty seconds: it
-held JTWC's raw products and not `/api/jtwc/storms`, and the app never reads a
-navy.mil URL. Five relay routes added (`jtwc/storms`, `tcgp/storms`, `cap/alerts`,
-`jtwc/abpw`, `jtwc/abio`), and `tools/relay-archive-check.mjs` now fails the push
-when a route in `functions/api/` is neither archived nor excused in writing
-(§18.3). Mutation-verified. **Check `archive:latest/relay-jtwc-storms.json`
-exists after the next hourly run** — the runner is the only thing that can prove
-these URLs answer, and the sandbox cannot dispatch it.
-
-**A FORMATION ALERT NO LONGER BREAKS THE JTWC INDEX.** Found while chasing the
-above. `/api/jtwc/storms` counted INVEST 91E as a listed product with no storm in
-it, so `state` read `partial` — and `partial` withholds `jtwcRoster`, which is one
-of the three ways a GDACS storm is allowed to die. One invest anywhere on Earth
-disabled that for every storm, and in August there is nearly always one.
-`isFormationAlert` counts them out; `formationAlerts` is published beside
-`productsListed` (§5). `tools/test-jtwc-formation-alert.mjs`, 13 assertions on the
-archived 91E bytes, mutation-verified. **Not the SAUDEL bug** — the join runs on
-`partial` too.
-
-**`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.** Noticed
-by the new gate. `functions/api/nhc/` has no `surge.js`; `lib/surge-locations.js`
-already says so in a comment. Every NHC surge request is a 404 today. Not touched
-this pass — see HELD FOR WEATHER.
-
-**THE TELEMETRY PULL NOW ASKS WHERE VISITORS COME FROM, AND THE NEXT HOURLY
-ARCHIVE RUN IS THE PROOF.** Three queries added to the D1 pull on 2026-08-20 —
-`daily-devices` (people, not just visits), `referrers`, `referrers-daily` (§18.6).
-The SQL moved out to `tools/telemetry-queries.mjs` so it could be tested; the
-guards inside it are now enforced by `tools/test-telemetry-queries.mjs`,
-mutation-verified against four separate breakages.
-
-**Verified against a stub, NOT against Cloudflare** — api.cloudflare.com is
-blocked from the sandbox, so the loop ran end to end with canned rows and wrote
-all three files, but no real SQL has touched D1. A query whose column name is
-wrong fails at the runner, not here. **Check `archive:latest/telemetry/manifest.json`
-after the next run: all three should read `ok`.** If one says `unavailable`, the
-reason is in that same entry and the fix is the SQL in the queries module.
-
-The question that prompted it: a link went on tigerdroppings.com on 2026-08-20
-and the archive could say visits doubled (34 → 76) but not say why. There is a
-15-session burst in the 13:00–14:00 UTC hour against a 2–3/hr background, which
-is the right shape, but attribution was not in any archived query. It will be
-from the next run on.
-
-**§48.10 IS STILL UNSETTLED, AND THE ONE THING THAT SETTLES IT IS AN NHC STORM
-NEAR A HOME PIN.** The storm drawer's Rainfall section now holds NHC's area
-range and the house's point total, one above the other, separated by a hairline,
-with one line between them explaining why they can differ. **The question is
-whether that reads as two answers or as the app contradicting itself.** Aaron
-has seen the house block ALONE (GDACS storm, no range above it) and said it
-looks good — that is §48.17 working, and it is NOT the §48.10 call. Needs an
-Atlantic or Pacific storm with a rainfall paragraph, within
-`APPROACH.relevanceNm` of the pin.
-
-Two smaller things to glance at while there: a far-away typhoon should show NO
-house block at all rather than a stray figure, and a live Flash Flood Warning
-should appear at the TOP of the house block, in red, above the total.
-
-**THREE GLASS CALLS ON RADAR, AND ALL OF THEM WORK ON `?replay=ida` — NO
-WEATHER NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay
-draws today's live radar over Ida's 2021 position: real US radar, right ground,
-wrong storm, which is all these three need. Wave 6 replaced NOAA with
-RainViewer and then replaced the disc with a tile layer; both are deployed.
-
-**1. IS IT SHARP NOW?** Radar shipped as a per-storm disc first and Aaron's
-verdict on glass was that it looked like ass. He was right and the cause was
-structural: one 512 px image over a whole disc is 8.5 km/px at the widest
-radius, against the 1.2 km/px RainViewer's own site draws at the same zoom, and
-no amount of tuning reaches it. **It is a MapLibre raster tile layer now** —
-the same mechanism as the basemap — so the clarity should match RainViewer's
-site because it is what their site does. Compare `?replay=ida` against
-RainViewer's own live radar map at the same zoom; they should now be
-indistinguishable on detail.
-
-**2. IS THE CLIP TIGHT ENOUGH, OR TOO TIGHT?** Radar is no longer global — it is
-fetched only within 8° of the live storms, above zoom 3. **That was not a taste
-call in the end: unbounded tiles on a globe made MapLibre request the whole world
-pyramid and Cloudflare 429'd the origin, which took satellite down too.** §4.9
-records it. What is left to judge is the padding: 8° is about 880 km, meant to
-reach past the rainbands. If radar visibly stops short of weather you want to
-see, that constant is the dial. With no storms tracked, radar draws nothing and
-says so.
-
-**3. THE PALETTE, still unjudged.** "Universal Blue" is the only scheme offered.
-Sampled off real weather it runs cyan → blue → orange → red → magenta — the
-spec's old "blue → yellow" was read off light rain and has been corrected. Two
-collisions worth looking for: heavy-rain magenta against the Saffir-Simpson
-cat-4 dot, and light-rain cyan against the coastline glow. The terms permit
-recolouring if it needs to change.
-
-**Anything that turns out to need weather goes to `HELD FOR WEATHER` with the
-storm named — do not leave it here to make the section look busy.**
+**Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
+WEATHER` below.**
+
+**==> THE DECISION: MOKE'S FORECAST GEOMETRY IS A DAY OLD AND NHC IS NOT FIXING
+IT. <==** Measured on the 14:28Z archive, not inferred. Her cone, forecast track
+and forecast points are still **advisory 4, filed 2026-08-21 09:13Z** — nearly
+thirty hours and four advisories frozen — while her wind radii, her record and
+the feed are all advisory 8 from this morning. Her forecast starts **215 nm**
+behind her. Lala, for contrast, runs six hours of skew.
+
+Skew is the ordinary condition (§7.14). This is not: §7.11 re-anchors that
+geometry onto her real position, so the app drags a day-old cone 215 nm forward
+and presents it as current, with nothing on screen saying otherwise. §7.14
+stopped the drawing folding; it did not make the cone honest.
+
+Three ways out:
+
+1. **Keep re-anchoring.** Today's behaviour. Looks right, stays wrong.
+2. **Draw it where NHC drew it, stamped a day old.** Honest, and it reads as a
+   fault: the forecast line visibly starts 215 nm behind the storm dot. The gap
+   IS the information, drawn to scale, but a reader who thinks the app is broken
+   stops reading it.
+3. **Refuse a forecast this stale** — past track and wind field only, saying
+   why. Nothing wrong is drawn; the reader loses the cone on a storm whose
+   day-old forecast actually verified to within 20 nm.
+
+**Andy's recommendation is 3, with a threshold well past a normal publish lag**
+(≈6 h) so an ordinary wobble never trips it — the only option where nothing on
+screen is a claim we cannot back. **Aaron has not decided. Do not build until he
+has.**
+
+**BUG 2 — THE COLOUR-NULL ERRORS ARE UNCOUNTED AND THE INSTRUMENT IS POINTED AT
+THE WRONG THREAD.** `tools/perf-instrument.mjs` counts them by patching
+`console.error` on the MAIN page; they come from MapLibre's WORKER, which has
+its own global scope and its own console. **A zero from that instrument is not a
+zero.** Fix the instrument before anything else here. The same run also reported
+`styleLoaded: false` on all three arms, which its own report calls "map numbers
+below are meaningless".
+
+Real findings from it, worth keeping: `blockedMs 26490` against a 1200 budget,
+`ourModules 179` against 175, radar arm `loadMs 109802`.
+
+**SAUDEL LOST ITS SAFFIR-SIMPSON GRADING ON TWO DEVICES AND KEPT IT ON A THIRD.**
+Nine pink `HU` pills on the phone and work PC #1; work PC #2, minutes later, drew
+graded dots. Hard-close changed nothing on the bad two.
+
+**Everything server-side was proven healthy on real bytes and is NOT the cause** —
+JTWC issuing on schedule, the relay parser returning an 80 kt fix and a nine-step
+ladder off the archived `wp1726web.txt`, `matchStormByName` resolving, both join
+guards passing at 0 NM separation. **The break is on the device.**
+
+**The remaining candidate is a per-PoP cache.** A Cloudflare datacentre serving a
+`last-good` copy older than `JTWC_WIND.maxFixAge` (12 h) fails every storm
+`fix_too_old`, silently, and falls back to the class midpoint — which looks
+exactly like this. **WAITING ON AARON:** open `/api/jtwc/storms` on a device that
+shows the bug and read `fetchedAt` and the fix `at`. Nothing in the sandbox can
+reach the live app. Do not write a fix before that.
+
+**`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.**
+`functions/api/nhc/` has no `surge.js`. Every NHC surge request is a 404 today,
+and `lib/surge-locations.js` already says so in a comment. Building it needs a
+real storm with surge data to verify against — see `HELD FOR WEATHER`.
+
+**THREE GLASS CALLS ON RADAR, AND ALL THREE WORK ON `?replay=ida` — NO WEATHER
+NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay draws
+today's live radar over Ida's 2021 position: real US radar, right ground, wrong
+storm, which is all these need.
+
+1. **Is it sharp now?** It shipped as a per-storm disc and Aaron's verdict was
+   that it looked like ass. He was right and the cause was structural — 8.5 km/px
+   at the widest radius against RainViewer's own 1.2. It is a MapLibre raster
+   tile layer now, the same mechanism as the basemap, so compare `?replay=ida`
+   against RainViewer's own map at the same zoom: they should be
+   indistinguishable on detail.
+2. **Is the clip tight enough, or too tight?** Radar is fetched only within 8° of
+   live storms, above zoom 3. The bound itself is not negotiable — unbounded
+   tiles made MapLibre request the whole world pyramid and Cloudflare 429'd the
+   origin, taking satellite down with it (§4.9). What is open is the padding: 8°
+   is ~880 km, meant to reach past the rainbands. If radar stops short of weather
+   you want, that constant is the dial.
+3. **The palette.** "Universal Blue" is the only scheme offered; sampled off real
+   weather it runs cyan → blue → orange → red → magenta. Two collisions to look
+   for: heavy-rain magenta against the Saffir-Simpson cat-4 dot, and light-rain
+   cyan against the coastline glow. The terms permit recolouring.
+
+**MOKE'S CAP AND HER WIND BANDS HAVE NOT BEEN SEEN.** Both fixes are deployed and
+both were measured on Moke's own bytes, because Lala cannot reproduce either
+(`samples/moke-cp032026/`). Lala has been confirmed on glass and is the no-op
+control for both — she should look unchanged.
+
+- **The tail cap** (`SPEC-MAP.md` §7.9, `tools/test-cone-cap.mjs`). Her cone
+  should end in a small rounded cap AT the storm, not a lobe hanging east and
+  south of it, and the environment ribbon should stop there too.
+- **The wind-band centres** (§7.13, `tools/test-windswath-centre.mjs`). Her
+  orange 50 kt band moved about 140 miles west; every band should start ON her
+  and run the full forecast.
+
+**TWO CONSOLE LINES ARE FINDINGS, NOT NOISE, IF THEY APPEAR.**
+
+- `"the past track has most likely overtaken a stale forecast"` — it fired on
+  every NHC storm before §7.11 and should now be silent. If it returns, the
+  re-anchor bailed on a guard and the console names which.
+- `"a band still crosses itself after 8 loop cuts"` (§7.12) — a shape nobody has
+  measured. The band is drawn anyway rather than dropped.
+
 
 ## NEXT UP
 
@@ -496,15 +191,6 @@ the date is there for the taking. Deferred deliberately on 2026-08-21: the
 useful half is the tense, and a date is a second thing to get wrong. Logged as
 OPEN in §54.
 
-**THE CREDITS PANEL IS GATED NOW, AND IT CHANGES WHAT LANDING A FEED COSTS.**
-`tools/test-attribution.mjs` fails unless every external host in
-`config/constants.js`, `functions/` and `worker/` is accounted for in
-`CREDIT_HOSTS`. **Wiring up a new feed turns the push red until somebody decides
-whether it needs a credit** — that is the point, not a nuisance. Full reasoning,
-and the three real gaps it found on day one, are as-built in `SPEC.md` under
-Chrome, focus and third-party controls. Noted here only so the next session
-meeting a red push knows what it is looking at.
-
 **`no_ribs` IS TWO DIFFERENT FAILURES WEARING ONE SENTENCE, AND IT COST A
 SESSION.** `lib/cone-ribbon.js` returns `no_ribs` both when the cone could not
 be measured AND when `hoursAlong` cannot line the run up against the ribs —
@@ -515,21 +201,7 @@ which; the bug was found by pulling Lala's bytes off the archive instead.
 **Split the reason and give the second one its own words.** Small, and the next
 seam-shaped bug is unreadable without it.
 
-**AND THE ARCHIVE ALREADY HAD THE BYTES.** `tools/archive-fetch.mjs`
-`nhcTrackSources` captures NHC's cone, forecast track, forecast points, wind
-swath and wind field per storm, hourly, under `latest/geometry/nhc-*`. Two
-sessions in a row have gone looking for a way to reach NHC from the sandbox and
-missed them. They are the reason the date-line bug was diagnosable at all.
-
-**THE SAUDEL CONTRADICTION IS FIXED AND CONFIRMED ON GLASS — DO NOT RE-OPEN
-IT.** Vitals said `Country  Japan` while the section below said no country was
-listed; that was `lib/cap.js` reading `storm.countries` instead of
-`storm.raw.countries` (§50.3). Confirmed 2026-08-20: Saudel now shows *"No
-national weather agency in the affected countries currently has a tropical
-cyclone alert in force."* — **the OTHER branch**, which is the proof the
-country join is live. Japan simply has nothing out.
-
-**AND THE PHILIPPINE ALERT IS NOT MISSING — IT IS ABOUT SOMETHING WE DO NOT
+**THE PHILIPPINE ALERT IS NOT MISSING — IT IS ABOUT SOMETHING WE DO NOT
 HAVE.** Asked and answered, so nobody re-derives it. PAGASA's row reads
 `Tropical Cyclone Alert : Neneng`, area `Philippine Area of Responsibility`.
 Saudel is at 12.8N 150.2E — roughly 900 nm EAST of the PAR's 135E edge and
@@ -589,10 +261,11 @@ resource**, and `/vendor/` is already cache-first in the shipping build, so the
 deployed app contains its own control group. One workflow run settles it with no
 code change. Do not start §7 before reading that JSON.
 
-**THE `perf-history` BRANCH DOES NOT EXIST — NO RUN HAS EVER RECORDED.** The
-nightly cron has not fired since the workflow landed. **Actions → perf-audit →
-Run workflow** is the first thing to do, and it costs four minutes. Expect it to
-go red: `colorNulls` is budgeted at 0. The JSON is written before the failure.
+**`perf-history` HOLDS ONE FILE AND NOTHING HAS BEEN RUN SINCE.** **Actions →
+perf-audit → Run workflow** is the first thing to do here; it costs four
+minutes and the sandbox cannot dispatch it. Expect red — `colorNulls` is
+budgeted at 0, and until Bug 2's instrument is fixed (`IN FLIGHT`) that number
+is measuring the wrong thread anyway. The JSON is written before the failure.
 
 **Tiers 1 and 2 need nothing and nobody** — all doable from the sandbox with no
 internet. `functions/api/nhc/advisory.js:95` is still `FRESH_SECONDS = 5 * 60`
@@ -672,37 +345,11 @@ zero off it. The cost of the bug is still unknown: it may be drawing nothing
 where something belongs, or falling through to a default that happens to look
 right. Do not assume the second.
 
-**0e. LALA'S PAST TRACK DOUBLED BACK — SOLVED, and the candidate was wrong.**
-It was not stationary jitter at the start of the track. NHC published the FINAL
-segment of layer 11 twice, identically, on both live storms; `stitch` chained
-the copy reversed and the path folded at the tail. Fixed in `runsFrom`, see
-`IN FLIGHT`. The archived bytes are `samples/lala-cp012026/past-track-038-doubled.geojson`.
-
-**THE ELEVEN REPEATS ARE STILL OPEN and are a separate question.** The warning
-fired eleven times in one load, which is about `smoothTracks` re-running per
-push rather than per fetch. Nothing to do with why the track folded. The fold is
-gone, so the count is no longer observable from that warning — measure it off
-the new join warning instead, which fires from the same place.
-
-**0f. MODEL TRACKS DO NOT START AT THE CURRENT-POSITION DOT.** Reported on glass
-2026-08-21, on Lala and Two-C both: the dashed guidance lines converge at a
-point clearly off the white dot. `clipBehind` in `lib/adeck.js` prepends the
-storm's own position as an anchor vertex, so on paper this cannot happen, and
-nothing has been proven.
-
-**ONE MEASURED FACT WORTH KEEPING WHETHER OR NOT IT IS THE CAUSE.** At the same
-instant, `CurrentStorms.json` carried Lala at advisory **038, 21:00Z, 28.6N**
-while the MapServer geometry for the same storm was advisory **36A, 12:00Z,
-26.9N** — two advisories and nine hours apart. The dot, the models and the cone
-are not all reading from one clock. **THE DECKS ARE STILL NOT ARCHIVED** — see
-`IN FLIGHT`; the phase was throwing `ENOENT` every hour. Blocked until the next
-run after that fix deploys.
-
-**AND THE CLOCK SKEW HAS NOW BEEN SEEN FROM A SECOND DIRECTION.** The same
-mismatch made the past track overtake its own forecast and flip the seam
-orientation (`IN FLIGHT`). Two symptoms, one cause, and it is bigger than an
-adeck question: `TRACK_LINE.orientGapRatio`'s warning names every storm it
-happens to, so the console now measures how widespread it is.
+**0e. THE ELEVEN REPEATS.** The seam warning fired eleven times in one load,
+which is `smoothTracks` re-running per push rather than per fetch — a cost
+question, nothing to do with the folds §7.4/§7.11/§7.14 fixed. Those are gone,
+so the count is no longer observable from that warning; measure it off the join
+warning instead, which fires from the same place.
 
 **1. THREE.JS ON THE BOOT PATH IS AIMED AT THE WRONG PLATFORM.** `SPEC-NEXT.md`
 §52 has the per-platform boot table. Short version: Windows trails an iPhone by
