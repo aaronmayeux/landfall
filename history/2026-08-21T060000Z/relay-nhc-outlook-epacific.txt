@@ -1,0 +1,47 @@
+en Español
+
+964 
+ABPZ20 KNHC 210531
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 PM PDT Thu Aug 20 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lala, located near Laysan Island, and on Tropical Depression Two-C, 
+located about 800 miles east-southeast of Hilo, Hawaii.
+
+South-Southwest of Mexico:
+A broad area of low pressure located a few hundred miles south of 
+the coast of southern Mexico is producing disorganized showers and 
+thunderstorms. Environmental conditions appear favorable for gradual 
+development, and a tropical depression could form late this weekend 
+or early next week while the system moves northwestward, remaining 
+well offshore of Mexico.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...medium...60 percent.
+
+Central East Pacific (EP91):
+An area of low pressure located several hundred miles south of the 
+southern tip of the Baja California Peninsula is producing a large 
+area of disorganized showers and thunderstorms. Environmental 
+conditions appear favorable for gradual development, and a tropical 
+depression is likely to form this weekend or early next week while 
+the system moves west-northwestward or northwestward at 5 to 10 
+mph.
+* Formation chance through 48 hours...medium...60 percent.
+* Formation chance through 7 days...high...80 percent.
+
+&&
+Public Advisories on Tropical Depression Two-C are issued 
+under WMO header WTPA33 PHFO and under AWIPS header HFOTCPCP3.
+Forecast/Advisories on Tropical Depression Two-C are issued under 
+WMO header WTPA23 PHFO and under AWIPS header HFOTCMCP3.
+
+$$
+Forecaster Evans/Gibbs
+  

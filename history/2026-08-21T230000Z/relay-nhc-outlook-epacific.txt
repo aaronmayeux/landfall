@@ -1,0 +1,49 @@
+en Español
+
+000
+ABPZ20 KNHC 212326
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Fri Aug 21 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lala, located near or just north of the Papahanaumokuakea Marine 
+National Monument, and on Tropical Storm Moke, located about 700 
+miles southeast of Hilo, Hawaii.
+
+South-Southwest of Mexico:
+A broad area of low pressure located a few hundred miles south of 
+the coast of southwestern Mexico is producing a large area of 
+disorganized showers and thunderstorms. This system is moving 
+west-northwestward and could become a tropical depression over the 
+weekend or early next week before it interacts, or possibly merges 
+with, the disturbance to its west (EP91).
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+Central East Pacific (EP91):
+A broad area of low pressure located several hundred miles south of 
+the southern tip of the Baja California Peninsula is producing 
+disorganized showers and thunderstorms. Environmental conditions 
+appear favorable for gradual development, and a tropical depression 
+is likely to form this weekend or early next week before it 
+interacts, or possibly merges with, the disturbance to its east.  
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...80 percent.
+
+Well Southwest of Southwestern Mexico:
+Another area of low pressure is expected to develop well south of 
+the southern tip of the Baja California Peninsula during the middle 
+portion of next week. Some slow development is expected thereafter 
+while the system moves generally west-northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Evans/Gibbs
+  

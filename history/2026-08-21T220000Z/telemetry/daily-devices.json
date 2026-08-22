@@ -1,0 +1,128 @@
+[
+  {
+    "day": "2026-08-21",
+    "sessions": 64,
+    "people": 30,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-20",
+    "sessions": 76,
+    "people": 30,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-19",
+    "sessions": 34,
+    "people": 23,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-18",
+    "sessions": 44,
+    "people": 19,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-17",
+    "sessions": 47,
+    "people": 25,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-16",
+    "sessions": 227,
+    "people": 54,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-15",
+    "sessions": 275,
+    "people": 89,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-14",
+    "sessions": 447,
+    "people": 311,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-13",
+    "sessions": 58,
+    "people": 26,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-12",
+    "sessions": 88,
+    "people": 53,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-11",
+    "sessions": 59,
+    "people": 21,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-10",
+    "sessions": 171,
+    "people": 61,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-09",
+    "sessions": 180,
+    "people": 94,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-08",
+    "sessions": 66,
+    "people": 4,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-07",
+    "sessions": 29,
+    "people": 9,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-06",
+    "sessions": 15,
+    "people": 11,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-08-05",
+    "sessions": 19,
+    "people": 6,
+    "sessions_without_device": 8
+  },
+  {
+    "day": "2026-08-04",
+    "sessions": 11,
+    "people": 0,
+    "sessions_without_device": 11
+  },
+  {
+    "day": "2026-08-03",
+    "sessions": 12,
+    "people": 0,
+    "sessions_without_device": 12
+  },
+  {
+    "day": "2026-08-02",
+    "sessions": 8,
+    "people": 0,
+    "sessions_without_device": 8
+  },
+  {
+    "day": "2026-08-01",
+    "sessions": 32,
+    "people": 0,
+    "sessions_without_device": 32
+  }
+]

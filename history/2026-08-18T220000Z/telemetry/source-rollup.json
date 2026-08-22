@@ -1,0 +1,502 @@
+[
+  {
+    "bucket": 1787090760,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090760,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090760,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090760,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090160,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090160,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090160,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787090160,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787084940,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787084940,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787084940,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787084940,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787082420,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787082420,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787082420,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787082420,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081520,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081520,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081520,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081520,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081400,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081400,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787081400,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787080500,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787080500,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787080500,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787080500,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787077560,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787077560,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787073180,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787073180,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787073180,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787073180,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787072820,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787072820,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787072820,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787072820,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787071020,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787071020,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787071020,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787071020,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787070840,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787070840,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787070840,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787069940,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 2
+  },
+  {
+    "bucket": 1787069940,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 2
+  },
+  {
+    "bucket": 1787069940,
+    "source": "gdacs",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 2
+  },
+  {
+    "bucket": 1787069940,
+    "source": "nhc",
+    "status": "loading",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 2
+  },
+  {
+    "bucket": 1787069520,
+    "source": "gdacs",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  },
+  {
+    "bucket": 1787069520,
+    "source": "nhc",
+    "status": "ok",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "reason": "",
+    "n": 1
+  }
+]

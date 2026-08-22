@@ -1,0 +1,42 @@
+en Español
+
+441 
+ABNT20 KNHC 210537
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Fri Aug 21 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Northeastern Atlantic:
+A non-tropical area of low pressure is developing along a front over 
+the northeastern Atlantic a few hundred miles north-northeast of 
+the Azores. This system could separate from its front and acquire 
+some subtropical or tropical characteristics on Saturday or early 
+Sunday while it moves east-southeastward at 10 to 15 mph toward 
+Portugal and northwestern Spain. For more information, see High Seas 
+Forecasts issued by Meteo France.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...20 percent.
+
+Central Subtropical Atlantic:
+A weak area of low pressure located over the central subtropical 
+Atlantic a few hundred miles east-southeast of Bermuda is producing 
+a concentrated area of showers and thunderstorms southeast of its 
+center. Surface pressures in the area are relatively high, therefore 
+development of this system, if any, is expected to be slow to occur 
+while it drifts west-southwestward through Sunday and then turns 
+northward early next week.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+High Seas Forecasts issued by Meteo France can be found under WMO 
+header FQNT50 LFPW and on the web at 
+https://tgftp.nws.noaa.gov/data/raw/fq/fqnt50.lfpw..txt
+
+$$
+Forecaster Berg
+  

@@ -1,0 +1,51 @@
+[
+  {
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 2043,
+    "people": 542,
+    "first_seen": "2026-07-28",
+    "last_seen": "2026-08-21"
+  },
+  {
+    "source": "www.reddit.com",
+    "sessions": 42,
+    "people": 37,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-21"
+  },
+  {
+    "source": "com.reddit.frontpage",
+    "sessions": 32,
+    "people": 25,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-16"
+  },
+  {
+    "source": "old.reddit.com",
+    "sessions": 7,
+    "people": 7,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-14"
+  },
+  {
+    "source": "www.google.com",
+    "sessions": 2,
+    "people": 1,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-14"
+  },
+  {
+    "source": "github.com",
+    "sessions": 1,
+    "people": 1,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-14"
+  },
+  {
+    "source": "172.66.44.131",
+    "sessions": 1,
+    "people": 1,
+    "first_seen": "2026-08-20",
+    "last_seen": "2026-08-20"
+  }
+]

@@ -1,0 +1,31 @@
+en Español
+
+000
+ABNT20 KNHC 201722
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 PM EDT Thu Aug 20 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Northeastern Atlantic:
+A non-tropical area of low pressure is expected to develop along a 
+front over the northeastern Atlantic by early Friday. This system 
+could separate from its fronts and acquire some subtropical or 
+tropical characteristics later this weekend while it moves generally 
+eastward or east-northeastward toward Portugal and northwestern 
+Spain. For more information, see High Seas Forecasts issued by 
+Meteo France.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+High Seas Forecasts issued by Meteo France can be found under WMO 
+header FQNT50 LFPW and on the web at 
+https://tgftp.nws.noaa.gov/data/raw/fq/fqnt50.lfpw..txt
+
+$$
+Forecaster Reinhart
+  

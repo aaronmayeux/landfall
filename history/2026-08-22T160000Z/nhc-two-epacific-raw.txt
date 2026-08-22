@@ -1,0 +1,49 @@
+ABPZ20 KNHC 221152
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Sat Aug 22 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lala, located north of the Papahanaumokuakea Marine National 
+Monument, and on Tropical Storm Moke, located about 500 miles 
+southeast of Hilo, Hawaii.
+
+Southwest of Mexico (EP92):
+A broad area of low pressure located several hundred miles southwest 
+of the coast of southwestern Mexico is producing a large area of 
+showers and thunderstorms that are starting to show signs of 
+organization.  This system is moving west-northwestward and is 
+likely to become a tropical depression by the end of this weekend or 
+early next week.  This system is likely to merge with, or absorb, 
+the disturbance to its west (EP91) by late Sunday.
+* Formation chance through 48 hours...medium...60 percent.
+* Formation chance through 7 days...high...80 percent.
+
+Central East Pacific (EP91):
+A broad area of low pressure located well to the south-southwest of 
+the southern tip of the Baja California Peninsula is producing 
+disorganized showers and thunderstorms.  Environmental conditions 
+appear favorable for gradual development, and a tropical depression 
+could form before it merges with the disturbance to its east (EP92) 
+by late Sunday.
+* Formation chance through 48 hours...medium...50 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+Well Southwest of Southwestern Mexico:
+Another area of low pressure is expected to develop well south of 
+the southern tip of the Baja California Peninsula during the middle 
+portion of next week. Some slow development is expected thereafter, 
+and a tropical depression could form by the end of next week while 
+the system moves generally west-northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+$$
+Forecaster Hagen
+
+

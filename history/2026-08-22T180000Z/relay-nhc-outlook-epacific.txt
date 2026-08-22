@@ -1,0 +1,52 @@
+en Español
+
+000
+ABPZ20 KNHC 221716
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Sat Aug 22 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lala, located north of the Papahanaumokuakea Marine National 
+Monument, and on Tropical Storm Moke, located about 450 miles 
+southeast of Hilo, Hawaii.
+
+Southwest of Mexico (EP92):
+Showers and thunderstorms are quickly becoming better organized in 
+association with a broad area of low pressure located several 
+hundred miles south of the southern tip of the Baja California 
+Peninsula.  However, recent satellite-derived wind data indicates 
+that the system does not yet have a well-defined circulation. 
+Environmental conditions are quite favorable for development, and a 
+tropical depression or tropical storm is expected to form on Sunday 
+as the system moves west-northwestward at 10 to 15 mph.
+* Formation chance through 48 hours...high...90 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Central East Pacific (EP91):
+Disorganized showers and thunderstorms are persisting with a broad 
+area of low pressure located well to the south-southwest of the 
+southern tip of the Baja California Peninsula.  Environmental 
+conditions appear favorable for gradual development, and a tropical 
+depression could form before it interacts with, or merges with the 
+disturbance to its east (EP92) late this weekend or early next week.
+* Formation chance through 48 hours...medium...50 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+Well Southwest of Southwestern Mexico:
+Another area of low pressure is expected to develop well south of 
+the southern tip of the Baja California Peninsula during the middle 
+portion of next week.  Some slow development is expected thereafter, 
+and a tropical depression could form by the end of next week while 
+the system moves generally west-northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+$$
+Forecaster Hagen
+  

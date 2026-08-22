@@ -1,0 +1,39 @@
+ABPZ20 KNHC 191735
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Wed Aug 19 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lala, located a few hundred miles southeast of Lisianski Island.
+
+Central Pacific (EP90):
+An area of low pressure located well to the east-southeast of the 
+Hawaiian Islands is producing showers and thunderstorms that 
+continue to show signs of organization. Environmental conditions 
+appear favorable for further development of this system, and a 
+tropical depression is likely to form during the next day or so as 
+the system moves westward to west-northwestward at 10 to 15 mph and 
+crosses into the Central Pacific. Interests in the Hawaiian Islands 
+should closely monitor the progress of this system.
+* Formation chance through 48 hours...high...90 percent.
+* Formation chance through 7 days...high...90 percent.
+
+South-Southwest of Mexico:
+An area of low pressure is forecast to form several hundred miles 
+south-southwest of the coast of southern Mexico around the end of 
+the week. Gradual development of this system is likely thereafter, 
+and a tropical depression is expected to form this weekend while the 
+system moves generally west-northwestward, remaining well offshore 
+of Mexico.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...high...80 percent.
+
+$$
+Forecaster Kelly
+
+

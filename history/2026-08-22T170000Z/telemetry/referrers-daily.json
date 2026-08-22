@@ -1,0 +1,80 @@
+[
+  {
+    "day": "2026-08-22",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 30,
+    "people": 13
+  },
+  {
+    "day": "2026-08-21",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 67,
+    "people": 29
+  },
+  {
+    "day": "2026-08-21",
+    "source": "www.reddit.com",
+    "sessions": 1,
+    "people": 1
+  },
+  {
+    "day": "2026-08-20",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 75,
+    "people": 30
+  },
+  {
+    "day": "2026-08-20",
+    "source": "172.66.44.131",
+    "sessions": 1,
+    "people": 1
+  },
+  {
+    "day": "2026-08-19",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 34,
+    "people": 23
+  },
+  {
+    "day": "2026-08-18",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 43,
+    "people": 18
+  },
+  {
+    "day": "2026-08-18",
+    "source": "www.reddit.com",
+    "sessions": 1,
+    "people": 1
+  },
+  {
+    "day": "2026-08-17",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 47,
+    "people": 25
+  },
+  {
+    "day": "2026-08-16",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 226,
+    "people": 54
+  },
+  {
+    "day": "2026-08-16",
+    "source": "com.reddit.frontpage",
+    "sessions": 1,
+    "people": 1
+  },
+  {
+    "day": "2026-08-15",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 109,
+    "people": 44
+  },
+  {
+    "day": "2026-08-15",
+    "source": "www.reddit.com",
+    "sessions": 1,
+    "people": 1
+  }
+]

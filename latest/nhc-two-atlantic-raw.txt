@@ -1,0 +1,54 @@
+ABNT20 KNHC 221713
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 PM EDT Sat Aug 22 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Northeastern Atlantic:
+A strong non-tropical area of low pressure is located over the 
+northeastern Atlantic several hundred miles west of the coast of 
+Portugal. This system could acquire some subtropical or tropical 
+characteristics later today or on Sunday while it moves 
+east-southeastward at 10 to 15 mph toward Portugal and northwestern 
+Spain. The opportunity for tropical or subtropical development 
+should end Sunday night when the system encounters unfavorable 
+environmental conditions. For more information, see High Seas 
+Forecasts issued by Meteo France.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...20 percent.
+
+Central Subtropical Atlantic:
+A trough of low pressure located over the central subtropical 
+Atlantic a few hundred miles east of Bermuda is producing 
+disorganized shower activity. Development of this system, if any, is 
+expected to be slow to occur while it drifts westward through Sunday 
+and then accelerates northward early next week. By the middle of 
+next week, the system could merge with a frontal boundary over the 
+north Atlantic, which should diminish any remaining chances of 
+development.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...20 percent.
+
+Eastern Tropical Atlantic:
+A tropical wave is expected to move off the west coast of Africa on 
+Monday. An area of low pressure could form in association with the 
+wave soon after it moves off the coast. Environmental conditions are 
+marginally conducive for development, and a tropical depression 
+could form by the middle to latter portions of next week while the 
+system moves westward at 15 to 20 mph across the eastern and central 
+tropical Atlantic.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+&&
+High Seas Forecasts issued by Meteo France can be found under WMO 
+header FQNT50 LFPW and on the web at 
+https://tgftp.nws.noaa.gov/data/raw/fq/fqnt50.lfpw..txt
+
+$$
+Forecaster Mahoney/Cangialosi
+
+
