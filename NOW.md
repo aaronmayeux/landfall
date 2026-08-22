@@ -59,32 +59,47 @@ traded for.
 
 ## IN FLIGHT
 
-**==> THE ARCHIVE WAS DEAD FOR THIRTEEN HOURS AND NOTHING SAID SO. FIXED,
-NEEDS A RUN. <==** `SPEC-OPS.md` §18.3.
+**THE ARCHIVE IS ALIVE AGAIN — CONFIRMED. Closed.** `SPEC-OPS.md` §18.3.
+Eleven consecutive runs failed 01:41Z–12:53Z on 2026-08-22 because a3fb3b4's new
+`adeck/` folder met a hardcoded list of the three directories `archive.yml` knew
+to skip before a plain `cp`. The list is gone; the workflow asks the filesystem.
+Aaron dispatched it at 13:03Z on c937312: **success, `fetchedAt`
+2026-08-22T13:04:00Z, 102/103 sources ok, `derivedFailures []`, 22 geometry
+storms.** Do not reopen.
 
-Eleven consecutive scheduled runs failed at the `rebuild the archive branch`
-step, 01:41Z through 12:53Z on 2026-08-22. Last good run: 23:30Z. The cause was
-a3fb3b4's new `adeck/` folder meeting a HARDCODED list of the three directories
-`archive.yml` knew to skip before a plain `cp` — a comment directly above the
-list warned that a directory would exit 1 and take the job with it under
-`set -e`, and that is exactly what happened. The list is gone; the workflow asks
-the filesystem now, and one loop rebuilds every directory instead of three named
-blocks. Reproduced locally against a fixture tree, old step fails and new step
-passes on the same fixture.
+**BUG 3 IS UNBLOCKED — `latest/adeck/` HAS BYTES.** Seven deck files
+(`nhc-cp012026`, `nhc-cp022026`, five `tcgp-wp*`). The manifest's `fetchedAt` is
+now LATER than a3fb3b4, which was the stated condition. Model tracks not
+starting at the current dot can be worked.
 
-**==> AARON, ONE THING TO DO: PRESS RUN ON THE `archive` WORKFLOW. <==**
-github.com → Actions → archive → Run workflow. The PAT cannot dispatch (§48.13,
-403), so this is the one hands-on step. Otherwise it self-heals at the top of
-the next hour. **Until a run lands, everything under `archive:latest/` is
-stamped 2026-08-21T23:30:41Z and is four advisories out of date — do not measure
-anything against it.**
+**==> START HERE: MOKE'S FORECAST GEOMETRY IS TWENTY-EIGHT HOURS OLD AND NHC IS
+NOT FIXING IT. <==** Measured on the fresh 13:04Z archive, not inferred:
 
-**LALA'S TRACK STILL HAS A KINK IN IT, AND BUG 3 IS STILL BLOCKED.** Aaron on
-glass 2026-08-22 07:53, screenshot 4953: the past track doubles back near the
-current dot on Lala. Not diagnosed — there are no current bytes to diagnose it
-from. **Do not chase it against the 23:30Z archive**; that capture is the one
-§7.11 and §7.13 were already built from, and it will reproduce yesterday's fault
-rather than today's. Start it after a fresh run lands.
+| storm | cone / forecast points | wind radii | feed | forecast starts behind the storm |
+|---|---|---|---|---|
+| Moke | **adv 4, 2026-08-21 09:13Z** | adv 8, 09:08Z today | adv 008 | **215 nm** |
+| Lala | adv 39, 03:27Z today | adv 39, 04:02Z | adv 040 | 87 nm |
+
+**This is not a publish-cycle wobble that clears on its own.** Moke's layer-4 and
+layer-5 products have been frozen at advisory 4 across four advisories and a
+full day. §7.13 is doing real work on both storms right now.
+
+**THE DECISION AARON HAS NOT MADE, AND IT JUST GOT LARGER.** §7.11 re-anchors
+that geometry onto the current fix — so the app is dragging a 28-hour-old cone
+215 nm forward and rounding off the cut end with a half-ellipse no source
+published. **That is the purple lobe.** Options unchanged: keep re-anchoring and
+go on drawing a cone NHC never issued, or draw the forecast where NHC drew it
+and stamp it as a day old, accepting the forecast line will visibly not start at
+the storm dot. A third option now worth weighing: **refuse a forecast this
+stale** and show the storm with past track and wind field only, saying why.
+
+**LALA'S TRACK STILL HAS A KINK IN IT.** Aaron on glass 2026-08-22 07:53,
+screenshot 4953: the past track doubles back near the current dot. NOT
+diagnosed — fresh bytes now exist for it in `archive:latest/geometry/`
+(`nhc-Lala-CP2-pastTrack`/`pastPoints`, adv 40 09:02Z, against forecast points
+at adv 39). **Dump the actual past-track vertices before theorising**, the same
+way §7.13 was found. Do not measure against the 23:30Z capture — §7.11 and §7.13
+were both built from it and it will reproduce yesterday's fault.
 
 **THE WIND SWATH WAS DRAWN 130 nm FROM WHERE NHC DREW IT. FIXED, NOT YET
 CONFIRMED ON GLASS.** `SPEC-MAP.md` §7.13,
