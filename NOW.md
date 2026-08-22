@@ -174,6 +174,49 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**==> §48.21 SHIPPED BROKEN AND THE FIX IS PUSHED. THREE BUGS, ONE PUSH, AND
+NONE OF THEM WAS CAUGHT BY ANY EXISTING GATE. <==** Aaron's report was *"no
+layer toggle, nothing different, and the environment ribbon no longer works"* —
+which was one cause and three faults.
+
+1. **`main.js` wrote to `layerStatus`, which lives in `app/views.js` and has
+   never been in main.js's scope.** A ReferenceError inside `applyLayerState()`,
+   on the DEFAULT path — the else-branch clearing the row runs whenever the
+   toggle is off, which is always. Everything after it died: the genesis glyphs
+   in the 3D globe, every exclusive pair, the imagery mode, and — in the
+   `subscribeLayers` callback — the Environment ribbon's warm and both pipeline
+   repushes. **The ribbon was the symptom; a layer nobody had switched on was
+   the cause.** Now routed through `views.setFloodSlot`, the shape
+   `setImageryStatus` beside it already used.
+2. **The toggle was never added to `SHIPPED_EARLY`,** so `isLive` saw
+   `phase: 9` against `SHIPPED_THROUGH: 4` and presented the control as
+   not-built-yet. The manifest entry, engine key and layer file were all
+   correct. **Adding a layer past the numbered phases is TWO edits and this is
+   the second one.**
+3. **`floodLineWidth` went into `STORM_GEO` and the layer read it from `Z`.**
+   MapLibre rejected the whole line layer at `addLayer` with *number expected,
+   undefined found*, so the polygons never drew. Found by the new gate below,
+   not by a human.
+
+**`tools/boot-smoke.mjs` IS NEW AND IT IS THE GATE THAT WAS MISSING.** It boots
+the app in chromium, fails on any uncaught exception, and flips every toggle
+both ways. Verified against all three bugs above — each one turns it red with
+the exact error text. In the pre-push hook and in CI.
+
+**==> ITS FIRST VERSION PASSED WITH BUG 1 REINTRODUCED, WHICH IS THE FAILURE
+§12 CALLS WORSE THAN NO TEST. <==** It listened on `pageerror` and
+`console.error`. `data/layer-prefs.js` `emit()` wraps every subscriber in a
+try/catch ON PURPOSE so one bad listener cannot stop the others — the right
+call, and the reason a dead `applyLayerState` did not take the page down. The
+only trace was a **`console.warn`** reading `[landfall] layer-prefs subscriber
+failed`. **A swallowed exception is now a failure in that file.** If another
+catch-and-warn site is added anywhere, add its marker to `SWALLOWED` or this
+gate goes blind to it.
+
+**STILL UNSEEN ON GLASS: everything §48.21 actually draws.** The layer has never
+been looked at. See the flood entry below.
+
+
 **GLASS: FLOOD ALERTS (§48.21). A NEW MAP LAYER AND A NEW DRAWER BLOCK, NEITHER
 SEEN.** The toggle is **Layers → Storm detail → Flood alerts**, off by default.
 

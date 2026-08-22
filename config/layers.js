@@ -122,6 +122,22 @@ export const SHIPPED_EARLY = Object.freeze(
      * "Not published for storms in this basin" rather than a flat cone that
      * looks like a calm environment, which is the one outcome §5 forbids. */
     'environment',
+    /* §48.21 — NWS flood alerts. Its own step, past every numbered phase, so it
+     * has no whole phase for SHIPPED_THROUGH to cover.
+     *
+     * ==> IT SHIPPED WITHOUT THIS LINE AND THE ROW WAS INVISIBLE. <== The
+     * manifest entry, the engine key, the layer file and the toggle were all
+     * correct and complete; `isLive` reads THIS SET, saw `phase: 9` against a
+     * `SHIPPED_THROUGH` of 4, and presented the control as not-built-yet. The
+     * feature was live, the switch was not, and nothing failed — which is the
+     * dimming mechanism doing exactly its job against a layer that forgot to
+     * declare itself. Adding a row here is two edits, and this is the second.
+     *
+     * US ONLY, and §14's both-sources rule is not satisfied and cannot be: NWS
+     * publishes flood products for the United States and no global equivalent
+     * of /alerts/active has been found. The switch's own note says so rather
+     * than a reader discovering it over a typhoon. */
+    'floodAlerts',
   ])
 );
 

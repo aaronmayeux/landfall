@@ -31,7 +31,7 @@ import { getHome } from './data/home.js';
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
-import { createViews, recenterTarget, noteFloodSlot } from './app/views.js';
+import { createViews, recenterTarget } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -549,12 +549,14 @@ function boot() {
       /* The words go up FIRST and unconditionally — the row is the only place
        * an outage can be said out loud, and returning early on a failure below
        * would leave it saying whatever it said last. */
-      layerStatus.setFloodAlerts({ on: toggleOn('floodAlerts'), slot });
-      /* ==> THE DRAWER READS THE SAME SLOT THE GLOBE DREW FROM. <== Two fetches
-       * would be two answers either side of a fifteen-minute cache boundary,
-       * and a panel counting nineteen alerts over a map drawing eleven is the
-       * kind of disagreement that costs a reader their trust in both. */
-      noteFloodSlot(slot);
+      /* ==> THE DRAWER READS THE SAME SLOT THE GLOBE DREW FROM, AND ONE CALL
+       * SETS BOTH. <== Two fetches would be two answers either side of a
+       * fifteen-minute cache boundary, and a panel counting nineteen alerts
+       * over a map drawing eleven is the kind of disagreement that costs a
+       * reader their trust in both. `layerStatus` lives in app/views.js and is
+       * NOT in scope here — writing to it directly is what took the whole
+       * layer-apply path down; see `setFloodSlot` there. */
+      views.setFloodSlot(slot);
       if (slot.state !== 'ok' || !styleReady) return;
       setFloodAlerts(map, slot.alerts);
     });
@@ -587,7 +589,7 @@ function boot() {
     /* ==> AND THE ROW IS CLEARED WHEN THE SWITCH GOES OFF. <== Without this the
      * last sentence it printed — including an outage — survives the layer being
      * turned off and reappears under a row nobody has asked anything of. */
-    else layerStatus.setFloodAlerts({ on: false, slot: null });
+    else views.setFloodSlot(null);
     /* ==> GENESIS IS THE ONE LAYER THAT DRAWS IN BOTH ENGINES, SO ITS TOGGLE
      *     HAS TO REACH BOTH. <== The loop above only speaks to MapLibre layer
      * ids; the planet-band glyphs live in the 3D globe. Without this line,

@@ -46,7 +46,13 @@
  * Imports: config/, lib/, data/ and map/ siblings. No DOM beyond the map.
  */
 
-import { FLOOD_COLOR, FLOOD_COLOR_LIGHT, OPACITY, Z } from '../../config/tokens.js';
+/* `STORM_GEO` and not `Z`: the outline's WIDTH is drawn geometry, which is what
+ * that table holds — `Z` is the stacking order. Reading `Z.floodLineWidth`
+ * resolved to `undefined`, MapLibre rejected the whole layer at addLayer time
+ * with `number expected, undefined found`, and the polygons never drew. Caught
+ * by `tools/boot-smoke.mjs`, which is the only gate in this repo that watches
+ * the map's own error channel. */
+import { FLOOD_COLOR, FLOOD_COLOR_LIGHT, OPACITY, STORM_GEO } from '../../config/tokens.js';
 import { isLight } from '../../config/theme.js';
 import { inForce } from '../../lib/flood.js';
 import { registerLayer } from './registry.js';
@@ -159,7 +165,7 @@ registerLayer({
         source: SOURCE,
         paint: {
           'line-color': colorExpr(),
-          'line-width': Z.floodLineWidth,
+          'line-width': STORM_GEO.floodLineWidth,
           'line-opacity': OPACITY.floodLine,
         },
       },

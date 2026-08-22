@@ -249,6 +249,8 @@ jobs:
       # button rather than the search field, which is what stopped a phone
       # throwing a keyboard over the panel on arrival. Every one of those
       # passes any markup assertion you could write.
+      - name: boot-smoke
+        run: node tools/boot-smoke.mjs
       - name: home-setup-check
         run: node tools/home-setup-check.mjs
 

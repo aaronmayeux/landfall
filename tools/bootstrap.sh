@@ -321,6 +321,15 @@ fi
 # /opt/pw-browsers/... is the sandbox's chromium and exists nowhere else; the
 # first version of this named it and failed on the CI runner immediately.
 if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [ -d "${PLAYWRIGHT_BROWSERS_PATH}" ]; then
+  printf 'pre-push: checking the app boots clean...\n'
+  if ! bash tools/with-server.sh node tools/boot-smoke.mjs; then
+    printf '\nThe app threw during boot, or a layer toggle did nothing. This gate\n'
+    printf 'exists because a one-line scope error shipped and every other check\n'
+    printf 'passed: layerStatus was written from main.js where it has never been\n'
+    printf 'in scope, applyLayerState died on the DEFAULT path, and the visible\n'
+    printf 'symptom was the Environment ribbon going dark. Push refused.\n'
+    fail=1
+  fi
   printf 'pre-push: checking the home setup panel in a browser...\n'
   if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
     printf '\nThe three ways to set a home must READ as peers — one shared style,\n'
@@ -335,7 +344,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + home-setup)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + boot-smoke + home-setup)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

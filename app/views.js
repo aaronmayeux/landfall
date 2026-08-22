@@ -70,19 +70,13 @@ import { loadFloodAlerts, evictFlood } from '../data/flood.js';
 /* ==> THE FLOOD LIST AS THIS MODULE LAST SAW IT (§48.21). <== `data/flood.js`
  * holds the cache; this holds the last RESOLVED slot, because the drawer needs
  * to render synchronously and a promise is not a render. Filled by the map
- * layer's fetch through `noteFloodSlot` and by the Retry below — never by the
- * drawer itself, which must not turn opening a storm into a national request
- * nobody asked for.
+ * layer's fetch through `views.setFloodSlot` and by the Retry below — never by
+ * the drawer itself, which must not turn opening a storm into a national
+ * request nobody asked for.
  *
  * `null` means nobody has asked yet, which the block renders as `loading`
  * rather than as an all-clear. */
 let floodSlot = null;
-
-/** Called by main.js after the layer's own fetch resolves, so the drawer and
- *  the globe report one answer rather than two. */
-export function noteFloodSlot(slot) {
-  floodSlot = slot || null;
-}
 import {
   get as getLayers,
   pairValue,
@@ -1073,5 +1067,37 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     applyHomeMarker,
     /** map/imagery.js reports its row state through here (installOnStyle). */
     setImageryStatus: (row) => layerStatus.setImagery(row),
+
+    /**
+     * The flood list's resolved slot, reported by main.js after its own fetch.
+     * §48.21.
+     *
+     * ==> ONE CALL DOES BOTH JOBS, AND THAT IS THE FIX FOR A REAL OUTAGE. <==
+     * The first cut had main.js write the status row directly —
+     * `layerStatus.setFloodAlerts(...)` — but `layerStatus` is created HERE and
+     * has never been in main.js's scope. That is a ReferenceError inside
+     * `applyLayerState()`, which runs on every layer change and at boot, and
+     * which fires on the DEFAULT path because the else-branch clearing the row
+     * runs whenever the toggle is off. Everything after it in that function
+     * died: the genesis glyphs in the 3D globe, every exclusive pair, and the
+     * imagery mode. Everything after it in the `subscribeLayers` callback died
+     * too, which is where the Environment ribbon's warm and the two pipeline
+     * repushes live — so the visible symptom was "the ribbon stopped working"
+     * and the cause was a layer nobody had switched on.
+     *
+     * ==> `check-syntax` CANNOT SEE THIS AND DID NOT. <== It parses every module
+     * and resolves every named IMPORT; a bare identifier that was never
+     * imported or declared is a runtime error, and the suite that would have
+     * caught it is a boot smoke test, which this repo does not have. Recorded
+     * in §48.21 rather than left as a lesson nobody wrote down.
+     *
+     * Routed through the views object like `setImageryStatus` beside it, so
+     * the slot the drawer reads and the row the panel prints can never come
+     * from two different answers.
+     */
+    setFloodSlot: (slot) => {
+      floodSlot = slot || null;
+      layerStatus.setFloodAlerts({ on: toggleOn('floodAlerts'), slot });
+    },
   };
 }
