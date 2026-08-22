@@ -32,17 +32,69 @@ const esc = (s) =>
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /**
- * One row: what it is, and when it runs out.
+ * One row: what it is, where it applies, and how long it has to run.
  *
- * `data-urgency` and not severity — a Flood Watch and a Flash Flood Warning are
- * BOTH `Severe`, so the word cannot separate them. `Immediate` is happening,
- * `Expected` and `Future` are not, and the two must not read the same.
+ * ==> THE URGENCY IS IN THE WORDS NOW, NOT IN THE COLOUR. <== These shipped as
+ * filled rows with a red name for `Immediate` and an amber one for everything
+ * else, and Aaron's verdict on glass was that the highlight and the colour
+ * shifts read as decoration rather than as information — two tinted boxes in
+ * the middle of a section of plain prose, competing with the Saffir-Simpson dot
+ * a few inches above.
+ *
+ * ==> BUT §48.6's RULE SURVIVED THE RESTYLE, WHICH IS THE WHOLE POINT. <== A
+ * Flood Watch and a Flash Flood Warning are BOTH `Severe`, so severity cannot
+ * separate them; `urgency` is what does, and "happening now" must never read
+ * the same as "later today". Deleting the colour without replacing the signal
+ * would have quietly deleted the distinction as well. So `Immediate` says *in
+ * force* in the sentence itself, which survives a stylesheet, a screen reader
+ * and a colour-blind reader — none of which the red ever did on its own.
+ *
+ * ==> THE AREA IS THE LINE THAT WAS MISSING (§48.20). <== A warning with no
+ * area attached asks the reader to assume it is about them. On the flood
+ * family that is the one assumption worth not making: the captured Flood Watch
+ * covers thirteen named zones and the Flash Flood Warning covers one. Printed
+ * WHOLE and never shortened — the reader is hunting for their own zone in that
+ * list, and truncating it is how you hide it from them.
+ *
+ * ==> AND THE TENSE COMES FROM THE CLOCK, NEVER FROM `urgency`. <== The
+ * captured Flood Watch reads `urgency: Future` with an `onset` four hours in
+ * the PAST, because the urgency is about when the HAZARD is expected and the
+ * onset is about when the MESSAGE took effect. `begun` is the comparison
+ * against the reader's own moment; see `lib/rainfall.js` `floodAlerts()`.
+ *
+ * `data-urgency` stays on the element. Nothing paints off it any more, but it
+ * is what `tools/test-rainfall.mjs` asserts against, and an attribute is the
+ * cheapest place for a test to find a fact that the prose also carries.
  */
 function alertRow(a) {
-  const until = a.untilMs ? `until ${formatClockDay(a.untilMs)}` : 'no end time given';
+  const until = a.untilMs ? formatClockDay(a.untilMs) : null;
+
+  /* THREE SHAPES, AND EACH ONE IS A DIFFERENT FACT. Already running with a
+   * known end; not yet started; running with no end published — which is a
+   * real shape rather than a gap, so it is stated rather than guessed at. */
+  const when = !a.begun && a.onsetMs
+    ? (until
+      ? `from ${formatClockDay(a.onsetMs)} until ${until}`
+      : `from ${formatClockDay(a.onsetMs)}`)
+    : a.immediate
+      ? (until ? `in force until ${until}` : 'in force now, no end time given')
+      : (until ? `until ${until}` : 'no end time given');
+
+  /* HOW LONG IS LEFT, beside when it ends and not instead of it. A clock time
+   * is what somebody plans against; a duration is what tells them whether to
+   * move now. Omitted rather than faked when there is no end time. */
+  const left = a.remaining ? `<span class="rain-alert-left">${esc(a.remaining)}</span>` : '';
+
+  const area = a.area
+    ? `<p class="rain-alert-area">${esc(a.area)}</p>`
+    : '';
+
   return `<li class="rain-alert" data-urgency="${a.immediate ? 'now' : 'later'}">
-    <span class="rain-alert-name">${esc(a.event)}</span>
-    <span class="rain-alert-until">${esc(until)}</span>
+    <p class="rain-alert-head">
+      <span class="rain-alert-name">${esc(a.event)}</span>
+      <span class="rain-alert-until">${esc(when)}</span>
+    </p>
+    ${area}${left}
   </li>`;
 }
 

@@ -223,7 +223,12 @@ function disclaimerHtml(source) {
 
 /**
  * @param {object} opts
- * @param {object}      opts.home                injected: {get, distanceTo, closestApproach}
+ * @param {object}      opts.home  injected: {get, distanceTo, closestApproach,
+ *        windReach}. `windReach` (§48.18) answers whether a storm's published
+ *        wind field actually crosses the house — `'reaches'`, `'misses'`, or
+ *        null when nobody published one to measure. Optional: without it the
+ *        Rainfall section's house block falls back to distance alone, which is
+ *        what the older suites that build this view get.
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js. ui/ never imports data/ (§12),
  *        and every formatter on this panel is handed the SAME answer so two
@@ -782,28 +787,53 @@ export function createStormDetailView({
   }
 
   /**
-   * How near this storm comes to home, in nautical miles: where it is now, and
-   * the nearest point on its forecast track. §48.17.
+   * Whether this storm reaches home, and how near it comes. §48.18.
    *
-   * ==> THE SAME TWO NUMBERS THE HOME BLOCK ALREADY PRINTS, READ ONCE MORE
-   * RATHER THAN RECOMPUTED DIFFERENTLY. <== Both come from the injected `home`
-   * facade, so the Rainfall section can never decide a storm is near home while
-   * the Home block three inches above it says "never comes near home".
+   * ==> `reach` IS THE ANSWER AND THE DISTANCES ARE THE FALLBACK. <==
+   * `home.windReach` walks the storm's own published 34/50/64 kt fields against
+   * the house — the identical measurement `ui/chart-home.js` draws, off the
+   * identical bundle — and answers `reaches`, `misses` or null for "nobody
+   * published a field to walk". Only that last case falls through to distance,
+   * because only that last case is an absence rather than an answer.
    *
-   * `approachNm` stays null until the geometry bundle lands and null for a
-   * silenced or ended storm — a claim about a future nobody is publishing is
-   * exactly what `homeHtml` refuses to make, and this must refuse it too.
+   * ==> THE SAME THREE FIGURES THE HOME SCREEN ALREADY USES, READ ONCE MORE
+   * RATHER THAN RECOMPUTED DIFFERENTLY. <== All of them come from the injected
+   * `home` facade, so the Rainfall section can never decide a storm reaches the
+   * house while the Home block three inches above it says it never comes near.
+   *
+   * `approachNm` and `reach` both stay null until the geometry bundle lands and
+   * null for a silenced or ended storm — a claim about a future nobody is
+   * publishing is exactly what `homeHtml` refuses to make, and this must refuse
+   * it too.
    */
   function rangeToHome(s) {
     const target = s || storm;
-    if (!target) return { distanceNm: null, approachNm: null };
+    if (!target) return { reach: null, distanceNm: null, approachNm: null };
     const d = home.distanceTo(target);
     let approachNm = null;
+    let reach = null;
     if (!withheldNote() && geo.state === 'ok' && geo.bundle?.forecast?.length) {
       const ca = home.closestApproach({ ...target, forecast: geo.bundle.forecast });
       if (ca && Number.isFinite(ca.nm)) approachNm = ca.nm;
     }
-    return { distanceNm: d && Number.isFinite(d.nm) ? d.nm : null, approachNm };
+    /* NOT GATED ON A FORECAST TRACK, unlike the line above. A storm whose
+     * forecast radii have stopped — which NHC does routinely late in a storm's
+     * life — can still have a PAST wind field that went over the house, and
+     * that is the storm most likely to have just done so. `reachesHome` reads
+     * both arms; asking it only when there is a forecast would throw the past
+     * one away. Still gated on the withheld note: an ended or silenced storm's
+     * whole section is replaced above this, so nothing here should be measuring. */
+    if (!withheldNote() && geo.state === 'ok' && home.windReach) {
+      reach = home.windReach({
+        storm: target,
+        forecast: geo.bundle?.forecast || [],
+        radii: geo.bundle?.forecastRadii || [],
+        past: geo.bundle?.past || [],
+        pastRadii: geo.bundle?.pastRadii || [],
+        now: now(),
+      });
+    }
+    return { reach, distanceNm: d && Number.isFinite(d.nm) ? d.nm : null, approachNm };
   }
 
   function homeHtml() {

@@ -156,14 +156,31 @@ eq('and a stray value is not trusted', provenance({ provider: 'somewhere-else' }
  * ------------------------------------------------------------------------- */
 console.log('\nthe shapes of nothing — never an empty series');
 
-/* ==> A 200 WITH NO SERIES IS NOT "NO RAIN HERE". <== This model covers the
- * planet, so it cannot report a place as uncovered. Emitting `values: []`
- * would read downstream as a forecast of nothing, which is a claim nobody
- * made; `values: null` reads as unreadable, which is the truth. */
+/* ==> A 200 WITH NO SERIES IS NOT "NO RAIN HERE" AND IT IS NOT "NOWHERE".
+ * <== This model covers the planet, so it cannot report a place as uncovered.
+ * Emitting `values: []` would read downstream as a forecast of nothing, which
+ * is a claim nobody made; `values: null` reads as unreadable, which is the
+ * truth. */
 eq('an empty body yields no series rather than an empty one',
   projectOpenMeteo({ body: {} }).values, null);
-eq('and readSeries calls that not_covered rather than dry',
-  readSeries(projectOpenMeteo({ body: {} })).state, 'not_covered');
+
+/* ==> AND `readSeries` NOW AGREES WITH THIS ROUTE'S OWN COMMENTS. <== It
+ * called this `not_covered`, which the section renders as *"neither the
+ * National Weather Service nor the global model has a forecast for this
+ * point"* with no Retry — a confident, permanent claim about somebody's house,
+ * assembled entirely out of our own failure to read a payload. The route
+ * always intended `unreadable` here and the reading did the opposite, which is
+ * the kind of gap that survives because both halves look right on their own.
+ * `provider` is what settles it: nothing carrying `open-meteo` can be a
+ * statement about coverage. */
+eq('and readSeries calls that unreadable, because a global model covers everywhere',
+  readSeries(projectOpenMeteo({ body: {} })).state, 'unreadable');
+/* AN UNRECOGNISED UNIT TAKES THE SAME PATH, for the same reason: the model
+ * answered, we could not read what it said. */
+eq('an unrecognised unit is unreadable too, not uncovered',
+  readSeries(projectOpenMeteo({
+    body: { hourly_units: { precipitation: 'furlongs' }, hourly: { time: ['2026-08-19T00:00'], precipitation: [1] } },
+  })).state, 'unreadable');
 
 /* A null inside the series is a gap, not a dry hour. Never seen in the
  * archive; asserted because summing one as zero would quietly shrink a total

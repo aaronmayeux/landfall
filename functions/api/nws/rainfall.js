@@ -131,6 +131,21 @@ export const stripAlerts = (body) =>
     const p = f?.properties || {};
     return {
       event: p.event || null,
+      /* ==> WHERE IT APPLIES, IN THE AGENCY'S OWN WORDS (§48.20). <== The
+       * zone list NWS writes: `Hawaii in Hawaii, HI` on the Flash Flood
+       * Warning, a thirteen-zone semicolon list on the Flood Watch. A warning
+       * with no area attached asks the reader to assume it is about them,
+       * which on the flood family is the one assumption worth not making.
+       *
+       * NOT TRUNCATED HERE AND NOT TRUNCATED DOWNSTREAM. The reader is looking
+       * for their OWN zone in this list and we do not know which one that is,
+       * so dropping the tail is how you hide it from them. Measured on the
+       * captured set: 20 bytes on the warning, 307 on the watch, and the 694
+       * byte one is a Tropical Cyclone Local Statement that never reaches the
+       * flood filter. The whole point of this projection is the 55 KB of
+       * `description`, `instruction` and polygon it drops; a few hundred bytes
+       * of place names is not what makes it worth doing. */
+      areaDesc: p.areaDesc || null,
       severity: p.severity || null,
       urgency: p.urgency || null,
       headline: p.headline || null,

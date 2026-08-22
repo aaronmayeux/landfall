@@ -646,3 +646,44 @@ export function bandVisible(corridor, kt) {
   if (!c) return false;
   return c.everInside || c.closestGapNm <= HOME_DASH.nearRingNm;
 }
+
+/**
+ * Does this storm's wind actually reach the house? §48.18.
+ *
+ * ==> THREE ANSWERS, AND THE THIRD ONE IS THE POINT. <== A boolean here would
+ * fold "measured, and it misses" together with "nobody published a wind field
+ * to measure", and those want opposite treatment: the first is a real all-clear
+ * a screen may act on, the second is an absence that must not be read as one
+ * (§5). This is the same distinction `forwardOk` already carries inside the
+ * corridor, surfaced as one word so a caller does not have to re-derive it.
+ *
+ *   'reaches'  a published field crosses the house — forecast, or already did
+ *   'misses'   the fields were published, walked, and none of them touches it
+ *   null       nothing was published to walk, so nothing is known either way
+ *
+ * ==> THE PAST ARM COUNTS AS REACHING. <== Wind that already blew over the
+ * house is wind that reached it, and a storm whose forecast radii have stopped
+ * being issued — which NHC does routinely late in a storm's life — is the one
+ * most likely to have just gone over somebody. Answering 'misses' there would
+ * be an all-clear derived from the forecast having ended.
+ *
+ * ==> AND A PAST ARM THAT MISSES DOES NOT SETTLE THE FUTURE. <== On a
+ * past-only corridor (`forwardOk: false`) there is no forecast wind field at
+ * all, so "it has not reached you yet" is every bit as unknown as it was
+ * before. That case returns null, not 'misses'.
+ *
+ * Pure, and reads only what `buildCorridor` returned.
+ */
+export function reachesHome(corridor) {
+  if (!corridor?.ok) return null;
+
+  const past = corridor.past;
+  if (past?.worst != null) return 'reaches';
+
+  /* No forecast wind field was published, and the past arm — if there was one
+   * — did not touch the house. Neither half is a statement about what is
+   * still coming. */
+  if (!corridor.forwardOk) return null;
+
+  return corridor.worst != null || corridor.begun ? 'reaches' : 'misses';
+}

@@ -777,6 +777,8 @@
 .area-note,
 .area-stamp,
 .rain-alert-until,
+.rain-alert-area,
+.rain-alert-left,
 .home-band,
 .home-stamp,
 .home-pressure,
@@ -3141,34 +3143,82 @@ button.drawer-identity:focus-visible {
   gap: var(--space-tight);
 }
 
+/* ==> NO FILL AND NO COLOUR SHIFT. <== These were raised, tinted rows with a
+   red name for `Immediate` and an amber one otherwise. Judged on glass: the
+   highlight and the two inks read as decoration rather than as information, and
+   they competed with the storm's own Saffir-Simpson colour a few inches above —
+   which is the one place in this app where colour is load-bearing and fixed
+   (§4.7). Two tinted boxes dropped into a section of plain prose made the
+   section look like it had a widget in it.
+
+   ==> §48.6'S RULE DID NOT GO WITH THE COLOUR. <== `Immediate` is happening and
+   `Expected`/`Future` are not, and the two must still not read the same;
+   severity cannot separate them, because a Flood Watch and a Flash Flood
+   Warning are both `Severe`. The distinction moved into the SENTENCE — an
+   immediate alert says *in force* — where it survives a stylesheet, a screen
+   reader and a colour-blind reader, none of which the red ever did.
+
+   What is left is what a warning still needs and prose does not give it: the
+   name and the expiry on one line, so the two are read as one fact, and the
+   name in the primary ink so the row is not muted into the note beneath it. */
 .rain-alert {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-snug);
-  padding: var(--space-snug);
-  border-radius: var(--radius);
-  /* The panel's own raised fill, not a tinted one. The COLOR carries the
-     urgency; a filled amber row would compete with the storm's own category
-     color three inches above it. */
-  background: var(--glass-raised);
   font-size: var(--type-body);
+  color: var(--text-primary);
 }
 
-/* `Immediate` is happening now; `Expected` and `Future` are not, and the two
-   must not read the same. Severity cannot make this distinction — a Flood
-   Watch and a Flash Flood Warning are both `Severe`. */
-.rain-alert[data-urgency='now'] .rain-alert-name {
-  color: var(--error);
-  font-weight: 600;
+/* THE ROW IS THREE STACKED FACTS NOW (§48.20): what it is and when, where it
+   applies, and how long is left. They stack rather than sitting on one line
+   because the area is a semicolon list of up to thirteen named zones — the
+   captured Flood Watch runs 307 bytes — and a list that long cannot share a
+   line with anything on a phone. */
+.rain-alert {
+  display: block;
 }
-.rain-alert[data-urgency='later'] .rain-alert-name {
-  color: var(--stale);
-  font-weight: 600;
+
+/* The name and the window DO share a line: they are one fact read together,
+   and splitting them makes the row look like two warnings. */
+.rain-alert-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  margin: 0;
+}
+
+/* THE NAME TAKES THE SLACK AND THE WINDOW DOES NOT. `Flash Flood Warning` plus
+   `from Sat 6:00 PM until Sun 6:00 AM` is long enough to wrap on a phone, and
+   without `min-width: 0` a flex item refuses to shrink below its longest word
+   — which pushes the window off the row rather than wrapping the name. It
+   carries no colour of its own: it inherits the row's primary ink, which is
+   what makes the muted lines beneath read as the secondary halves of one fact. */
+.rain-alert-name {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .rain-alert-until {
   flex: 0 0 auto;
+  text-align: right;
+}
+
+/* WHERE IT APPLIES. Muted and small, because the reader scans it for their own
+   zone rather than reading it — and because at thirteen zones it would
+   otherwise outweigh the warning it belongs to. */
+.rain-alert-area {
+  margin: var(--space-tight) 0 0;
+}
+
+/* HOW LONG IS LEFT, beside the clock time rather than instead of it: a clock
+   time is what somebody plans against, a duration is what tells them whether
+   to move now. Tabular figures so a list of rows does not jitter as the
+   minutes count down. */
+.rain-alert-left {
+  display: block;
+  margin-top: var(--space-tight);
   font-variant-numeric: tabular-nums;
 }
 

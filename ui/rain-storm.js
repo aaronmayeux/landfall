@@ -75,7 +75,7 @@
  */
 
 import { advisoryRainfall } from '../lib/advisory.js';
-import { houseRainInRange, rainSummary } from '../lib/rainfall.js';
+import { houseRainScope, rainSummary } from '../lib/rainfall.js';
 import { formatClockDay } from '../lib/time.js';
 import { DOTS } from './loading-dots.js';
 import { floodAlertRows } from './rain-alerts.js';
@@ -135,16 +135,25 @@ export function createRainStorm({
   const homeKeyOf = (home) =>
     home && Number.isFinite(home.lat) ? `${home.lat},${home.lon}` : null;
 
-  /** The home this block should be showing, or null when there is nothing to
-   *  show — no facade, no home, or a storm that never comes near it (§48.17).
-   *  ONE gate, asked by every function below, so the block cannot be fetched
-   *  in a state where it would not be drawn. */
-  function houseTarget(storm) {
-    if (!rain?.loadRainfall || !house?.get || !storm) return null;
+  /** How much of the house block this storm earns — `'full'`, `'alerts'` or
+   *  `'none'` (§48.20). ONE gate, asked by every function below, so the block
+   *  can never be fetched in a state where it would not be drawn.
+   *
+   *  ==> TWO TIERS, BECAUSE A FLOOD WARNING IS NOT THE STORM'S. <== The figure
+   *  needs the storm's weather to actually reach the house; the warning is an
+   *  agency's statement about the reader's own address and is true whichever
+   *  storm they tapped. See `houseRainScope`. */
+  function houseScope(storm) {
+    if (!rain?.loadRainfall || !house?.get || !storm) return 'none';
     const home = house.get();
-    if (!home || !Number.isFinite(home.lat)) return null;
-    if (!houseRainInRange(house.rangeNm?.(storm) || {})) return null;
-    return home;
+    if (!home || !Number.isFinite(home.lat)) return 'none';
+    return houseRainScope(house.rangeNm?.(storm) || {});
+  }
+
+  /** The home this block is about, or null when this storm earns nothing. */
+  function houseTarget(storm) {
+    if (houseScope(storm) === 'none') return null;
+    return house.get();
   }
 
   /** The section body's inner HTML for the current state. Pure of the DOM. */
@@ -237,13 +246,58 @@ export function createRainStorm({
    * failure included.
    */
   function houseBlock(storm) {
-    const home = houseTarget(storm);
+    const scope = houseScope(storm);
+    if (scope === 'none') return '';
+    const home = house.get();
     if (!home) return '';
 
     const head = `<div class="detail-rain-house">
       <div class="detail-kicker">At your house</div>`;
     const close = '</div>';
     const wrap = (inner) => `${head}${inner}${close}`;
+
+    /* ==> THE WARNINGS-ONLY TIER (§48.20). <== This storm is in the reader's
+     * world but its weather does not reach the house, so there is no rainfall
+     * figure to print under its name — and a flood warning in force is still
+     * an agency's statement about the reader's own address, true whichever
+     * storm they happened to tap. Everything that would imply the storm caused
+     * it stays off: no total, no peak, no provenance line.
+     *
+     * ==> AND IT RENDERS NOTHING WHEN THERE IS NOTHING TO SAY. <== A heading
+     * over "no flood warnings are in force" on a storm that misses the house
+     * is noise on the screen where noise costs the most, and §5 does not
+     * require announcing the absence of a hazard nobody asked about. What §5
+     * DOES require is that an UNKNOWN never reads as an all-clear, so a failed
+     * alerts hop still gets its sentence. */
+    if (scope === 'alerts') {
+      if (houseState.forKey !== homeKeyOf(home) ||
+          houseState.phase === 'idle' || houseState.phase === 'loading') return '';
+
+      const res = houseState.result || {};
+      if (res.status !== 'ok') return '';
+
+      const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });
+      const rows = floodAlertRows(out.alerts);
+      /* Only NWS knows about warnings at all; the global model publishes none
+       * and says so on the full tier. Repeating "not published here" under a
+       * storm that misses would be an apology for an absence nobody noticed. */
+      const unknown = res.payload?.alerts == null && out.provider?.name !== 'open-meteo'
+        ? `<p class="detail-rain-note">Flood warnings could not be checked just now.</p>`
+        : '';
+      if (!rows && !unknown) return '';
+
+      /* ==> WHY THE NUMBER IS NOT HERE, BUT ONLY WHEN WE MEASURED IT. <== On a
+       * `misses` verdict the wind fields were published and walked, so this is
+       * a fact. Reached by distance alone it is not — nobody published a field
+       * — and claiming it would be inventing an all-clear (§5). */
+      const why = house.rangeNm?.(storm)?.reach === 'misses'
+        ? `<p class="detail-rain-note">This storm's wind field is not forecast to
+            reach your house, so there is no rainfall figure for it here. Your
+            own forecast is on the home screen.</p>`
+        : '';
+
+      return wrap(`${rows}${unknown}${why}`);
+    }
 
     if (houseState.forKey !== homeKeyOf(home) ||
         houseState.phase === 'idle' || houseState.phase === 'loading') {
@@ -272,6 +326,17 @@ export function createRainStorm({
     }
 
     const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });
+
+    if (out.state === 'lapsed') {
+      /* ==> RAN OUT IS NOT DRY (§48.19). <== Every hour in the held payload has
+       * already passed, so there is nothing left to total. "No meaningful rain
+       * expected" here would be an all-clear built out of an absence, which is
+       * §5 with a storm's name over it. Retryable — a stale last-good copy is
+       * exactly what this looks like. */
+      return wrap(`<p class="detail-soft">This rainfall forecast has run out — every
+        hour in it has already passed.
+        <button class="detail-retry" type="button" data-retry="rain-house">Retry</button></p>`);
+    }
 
     if (out.state !== 'ok') {
       /* The payload arrived and could not be read — an unrecognised unit, or a

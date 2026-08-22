@@ -57,6 +57,13 @@ import {
   distanceTo,
   closestApproach,
 } from '../data/home.js';
+/* ==> THE RAINFALL GATE'S MEASUREMENT (§48.18). <== The storm drawer decides
+ * whether a house rainfall figure belongs beside a storm by asking whether that
+ * storm's published wind field actually crosses the house — the same walk
+ * `ui/view-home.js` already draws as the chart. It is composed HERE because
+ * ui/ never imports data/ (§12), and it is the same two functions the home
+ * dashboard composes, so one implementation answers both screens. */
+import { buildCorridor, reachesHome } from '../data/home-corridor.js';
 import {
   get as getLayers,
   pairValue,
@@ -603,7 +610,19 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * left behind: a function nothing calls is a function that rots. */
 
   const detailView = createStormDetailView({
-    home: { get: getHome, distanceTo, closestApproach },
+    home: {
+      get: getHome,
+      distanceTo,
+      closestApproach,
+      /* ==> DOES THIS STORM'S WIND ACTUALLY REACH THE HOUSE? (§48.18) <== The
+       * gate on the Rainfall section's house block. The view owns the geometry
+       * bundle and hands the pieces in; this only composes the two data/
+       * functions, so there is one corridor implementation behind both this
+       * answer and the home chart and they cannot disagree. Returns
+       * `'reaches'`, `'misses'`, or null when no wind field was published to
+       * walk — and null is NOT a no (see `lib/rainfall.js`). */
+      windReach: (args) => reachesHome(buildCorridor({ ...args, home: getHome() })),
+    },
     units: unitSystem,
     /* THE STEPPER READS THE LIST'S ORDER, IT DOES NOT RECOMPUTE IT. Passed as
      * a function, not an array: the list re-sorts on every poll and on every

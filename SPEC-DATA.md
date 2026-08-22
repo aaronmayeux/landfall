@@ -2097,7 +2097,8 @@ throwing.
 ### 48.6 Flood warnings in force
 
 `ENDPOINT.nwsAlerts` returns what is in force at a point as structured GeoJSON
-with `event`, `severity`, `urgency`, `headline`, `onset`, `expires` and `ends`.
+with `event`, `areaDesc`, `severity`, `urgency`, `headline`, `onset`, `expires`
+and `ends`. **`areaDesc` is the zone list the row prints — §48.20.**
 Same host, same relay, so it costs one route rather than a new source.
 
 Measured at Hilo during Lala: Flash Flood Warning (Severe/Immediate), Hurricane
@@ -2122,8 +2123,14 @@ repetition, it is the only thing standing between a reader and a live warning.
 
 **==> SEVERITY IS NOT THE ORDER; URGENCY IS. <==** A Flood Watch and a Flash
 Flood Warning are both `Severe`, so the word cannot separate them.
-`urgency: Immediate` sorts first and takes the error ink; everything else takes
-the stale ink.
+`urgency: Immediate` sorts first and says *in force* in its own sentence;
+everything else states only its expiry. **It used to take the error ink against
+the other's stale ink, inside a filled row.** Judged on glass 2026-08-22 as
+decoration rather than information — two tinted boxes in a section of plain
+prose, competing with the Saffir-Simpson colour a few inches above, which is the
+one place in this app where colour is fixed and load-bearing (§4.7). The rule did
+not go with the ink: the signal moved into the sentence, where a stylesheet, a
+screen reader and a colour-blind reader all reach it.
 
 **`expires` is authoritative and is honoured AT RENDER, not only at fetch.**
 The Hilo Flash Flood Warning expired 52 minutes after it was issued. Flash
@@ -2156,7 +2163,8 @@ is otherwise unreachable from a sandbox, and so is its upstream.
 a decision about which SECTION owns a fact, and it lives beside the sentence it
 governs (§48.6). What the relay drops is `description`, `instruction` and the
 polygon, which is the entire 55 KB; the five stripped alerts at Hilo come to
-1.4 KB, so passing all of them costs nothing and keeps this route dumb.
+**2.6 KB** — 1.4 KB before §48.20 added the zone list — so passing all of them
+still costs nothing and keeps this route dumb.
 
 **A failed alerts hop never fails the request** and comes back as `null`, which
 is "not known" — distinct from `[]`, which is "nothing in force". Rendering
@@ -2202,9 +2210,20 @@ hand-written fixture proves nothing about this API's real shapes.
 | Multi-paragraph, fifth label | Ida `public.011` | two paragraphs kept, `TORNADOES:` not swept in |
 | Whitespace-only paragraph break | Ida `public.001` | `\n \n` separates two paragraphs |
 | The relay projection | `grid-hilo-hi` | 58,373 stored bytes to 2,702; alerts 34,369 to 1,379 |
+| Rain that already fell is not "expected" (§48.19) | `grid-hilo-hi` | read at the probe's own 01:49Z: 20 blocks to 18, 282.956 mm to 219.202, 11 inches to 9 |
+| The block `now` sits inside is kept whole | `grid-hilo-hi` | `22:00Z/PT6H` survives — 84.836 mm, the heaviest in the series — rather than being prorated or dropped |
+| The peak's share is of what is still coming | `grid-hilo-hi` | 30% of the whole series against 39% of the remainder; the old denominator carried the past |
+| A wholly elapsed forecast is `lapsed`, not dry | `grid-hilo-hi` | seven days on, the section says it has run out and offers Retry; it never says "no meaningful rain" |
+| A global payload is never `not_covered` (§48.16) | synthesised | `provider: 'open-meteo'` with no series reads `unreadable`; the same shape without it stays `not_covered` |
+| The wind field decides, not the distance (§48.18) | synthesised | `misses` at 40 nm is out; `reaches` at 900 nm is in; `null` falls back to `RAIN.houseFallbackNm` |
+| Unknown is never a miss | synthesised | no corridor, an unbuilt corridor and a past-only corridor that missed all read `null` |
+| Urgency is in the words now | `alerts-hilo-hi` | the `Immediate` row says *in force until*; the watch says only *until*; neither carries colour |
 
-**Every rule is shown to fail when broken.** Eight mutations reintroduce a named
-bug and assert the output moves (§12).
+**Every rule is shown to fail when broken.** Fourteen mutations reintroduce a
+named bug and assert the output moves (§12) — including removing the §48.19
+clip, clipping on the block's start instead of its end, restoring the borrowed
+1,500 nm gate, folding `null` into `misses`, letting a global payload read as
+`not_covered`, and flattening the urgency wording.
 
 **==> ONE CASE IS SYNTHESISED AND THE SUITE SAYS SO. <==** `no_hazards` — a
 storm publishing `HAZARDS AFFECTING LAND` followed by exactly `None.` — is

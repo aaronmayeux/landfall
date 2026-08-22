@@ -2444,6 +2444,33 @@ export const RAIN = Object.freeze({
    *  said twice, and High Surf and the local statement belong to neither
    *  section. Matched against the alert's `event` text, case-insensitively. */
   alertEventMatch: 'flood',
+
+  /** How near a storm has to come, NAUTICAL MILES, for the house block to draw
+   *  when NOBODY PUBLISHED A WIND FIELD TO MEASURE. §48.18.
+   *
+   *  ==> IT IS THE FALLBACK AND NOT THE GATE. <== The gate is
+   *  `data/home-corridor.js`: whether the storm's own published 34/50/64 kt
+   *  field actually crosses the house. That is a measurement and it is what
+   *  §48.18 asks for. This number only fires where that measurement cannot be
+   *  taken at all — geometry still in flight, a storm too weak to have
+   *  published radii, an ended storm rebuilt from a skeleton. Silence in those
+   *  cases would hide a real answer behind a missing one.
+   *
+   *  ==> 300, AND IT IS EDITORIAL, BUT IT IS ANCHORED. <== Measured off the
+   *  archive on 2026-08-22, the widest 34 kt field on the globe that hour was
+   *  220 nm (Lala's northeast quadrant) against 100 nm (Moke). 300 sits just
+   *  past the widest wind field this project has ever measured, which is the
+   *  honest posture when there is no wind field to measure: assume something
+   *  at least as large as the largest we have seen, and no larger. A rain
+   *  shield does reach past the wind field, so this errs tight rather than
+   *  wide — a figure printed under a storm that never touches the house is the
+   *  noise §48.18 exists to delete.
+   *
+   *  ==> IT REPLACES A BORROWED `APPROACH.relevanceNm` (1,500 nm). <== That
+   *  constant answers "is this storm in the reader's world at all", which is a
+   *  question about a whole basin. Reused here it drew a rainfall total under
+   *  every storm within about 1,725 miles. */
+  houseFallbackNm: 300,
 });
 
 /* ---------------------------------------------------------------------------

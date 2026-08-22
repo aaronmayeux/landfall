@@ -95,6 +95,17 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
     if (out.state === 'not_covered') {
       return `<p class="detail-soft">No rainfall forecast for this location.</p>`;
     }
+    if (out.state === 'lapsed') {
+      /* ==> THE FORECAST RAN OUT, WHICH IS NOT A FORECAST OF NO RAIN (§48.19).
+       * <== Every block in the held payload has already ended. Printing "no
+       * meaningful rain expected" here would be an all-clear assembled from an
+       * absence, on the one section where an all-clear is worth most (§5).
+       * Retryable, because it is exactly what a genuinely old last-good copy
+       * looks like and a fresh fetch is the fix. */
+      return `<p class="detail-soft">This rainfall forecast has run out — every
+        hour in it has already passed.</p>
+        <button class="home-rain-retry" type="button" data-retry="rain">Retry</button>`;
+    }
     if (out.state !== 'ok') {
       /* The payload arrived and could not be read — an unrecognised unit, or a
        * series with nothing readable in it. Stated as ours and NOT retryable,

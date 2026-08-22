@@ -2900,16 +2900,17 @@ In order:
 1. **Any flood warning or watch in force**, each with its expiry **in the
    reader's own local clock** — never UTC, the same rule §47.8 follows, and it
    matters more here because these expire in minutes rather than days. An
-   `Immediate` alert takes `--error`; everything else takes `--stale`.
+   `Immediate` alert says *in force* in the sentence itself (§48.18's
+   restyle removed the ink; the distinction survives in words).
    When the alerts hop failed, the section says the warnings could not be
    checked rather than showing nothing (§48.7).
-2. **The total, with its window** — *About 11 inches expected through early
-   Thursday.*
+2. **The total, with its window** — *About 9 inches expected through early
+   Thursday.* **What is still ahead, never the whole series — §48.19.**
 3. **The heaviest block**, when one carries at least `RAIN.peakShare` of the
    total — *The heaviest six hours bring about 3 inches, from Sat 12:00 PM.*
-   Hilo's peak six hours are 30% of four days, and "most of it in six hours" is
-   the sentence that distinguishes a flood from a wet week. Below a quarter
-   there is no heaviest block worth naming and the line is omitted.
+   Hilo's peak six hours are 39% of the rain still to come, and "most of it in
+   six hours" is the sentence that distinguishes a flood from a wet week. Below
+   a quarter there is no heaviest block worth naming and the line is omitted.
 4. **Where the number is from** — *At your house — National Weather Service,
    nearest point Hilo, HI.*
 
@@ -2920,10 +2921,10 @@ than claiming five days. A label computed from the window instead is unmoved
 when the series is cut short, which is the bug the suite mutates for.
 
 **ROUNDING.** Whole inches above one, one decimal below, and metric gets whole
-millimetres in both bands. The grid says 282.956 mm — 11.14 inches — and
-printing the tenth claims a precision no four-day rainfall forecast has; the
-reader's decision does not turn on it. One millimetre in eleven inches is a
-third of a percent, which nobody reads as a precision claim.
+millimetres in both bands. Hilo's remaining series says 219.202 mm — 8.63
+inches — and printing the tenth claims a precision no four-day rainfall
+forecast has; the reader's decision does not turn on it. One millimetre in nine
+inches is under half a percent, which nobody reads as a precision claim.
 
 **NEGLIGIBLE RAIN IS WORDS.** Under `RAIN.negligibleMm` (2.5 mm, a tenth of an
 inch, the bottom rung NWS itself uses) the section says *No meaningful rain
@@ -2983,7 +2984,8 @@ of §48.1's complaint, which is that rainfall currently sits where nobody opens 
 Lala's advisory says eastern Maui gets 8 to 12 inches. The grid at Kahului says
 2.91. Both are correct: the advisory quotes the heaviest band across an area,
 and Kahului sits off that axis. At Hilo the two agree — the advisory says 10 to
-20 inches for the Big Island and the grid says 11.14.
+20 inches for the Big Island and the grid says 8.63 for the rain still to come
+(11.14 counting what had already fallen — §48.19).
 
 **==> THIS IS THE ONE REAL DESIGN RISK IN §48. <==** A reader whose home is on
 Maui, looking at the home drawer's "about 3 inches" and then at the storm
@@ -3065,16 +3067,10 @@ house forecast is noise on the one screen where noise costs most. Every state
 where a source **was** asked is written out — checking, failed with a Retry,
 not covered without one, and unreadable without one.
 
-**==> THE RANGE GATE REUSES `APPROACH.relevanceNm` AND INVENTS NOTHING. <==**
-That constant already answers "is this storm in the reader's world at all" for
-the Home block's three sentences. A second threshold would mean a storm that is
-"never near home" three inches up the panel and near enough to earn a rainfall
-figure three inches down. `lib/rainfall.js` `houseRainInRange()` checks **both**
-the current distance and the forecast closest approach, and the nearer one wins:
-a storm 1,800 nm out whose track closes to 400 is one the reader cares about
-now, and gating on where it happens to be at this moment would hide the figure
-for exactly the days it matters most. Nothing known is **not** near — an
-unknown must never render as an answer.
+**==> THE RANGE GATE IS THE STORM'S OWN WIND FIELD, AND §48.18 IS THE WHOLE OF
+IT. <==** `lib/rainfall.js` `houseRainInRange()` takes a verdict from
+`data/home-corridor.js` and falls back to distance only where no verdict exists.
+Nothing known is **not** near — an unknown must never render as an answer.
 
 **The cost is one small request this panel did not make before, and only one.**
 The client holds the answer for `RAIN.clientTtlMs`, so a reader who has already
@@ -3110,6 +3106,208 @@ project has is from August.
 **The Retry is scoped.** The button carries `data-retry="rain-house"` so the
 panel's blanket `.detail-retry` binding cannot also fire a geometry refetch, and
 it evicts before refetching so a cached failure cannot answer a press.
+
+### 48.18 Which storms earn a house figure
+
+**==> IT USED TO BE 1,500 NAUTICAL MILES AND THAT WAS THE WRONG QUESTION.
+<==** The gate borrowed `APPROACH.relevanceNm` on the reasoning that a second
+threshold would mean a storm reading "never near home" three inches up the panel
+and near enough for a rainfall figure three inches down. The reasoning was sound
+and the constant was not: `relevanceNm` answers *is this storm in the reader's
+world at all*, which is a question about a whole basin. Reused here it printed a
+rainfall total under every storm within about 1,725 miles — a true number under
+a storm that will never touch the house, which §48.17 already concedes by
+closing the block with *"not this storm alone"*.
+
+**THE GATE IS `data/home-corridor.js`.** That module already walks the storm's
+published 34/50/64 kt quadrant radii along its track, hour by hour, and measures
+the distance from the house to the nearest edge of each field. Whether any of
+them crosses the point is the honest reading of "does this storm impact my
+home", it is the agency's own numbers rather than a threshold of ours, and it is
+**the identical measurement `ui/chart-home.js` draws** — so the two surfaces
+cannot disagree about whether a storm reaches somebody.
+
+`reachesHome(corridor)` returns one of three words, and the third is the point:
+
+| | when |
+|---|---|
+| `reaches` | a published field crosses the house — forecast, already did, or a window that opened and closed |
+| `misses` | the fields were published, walked, and none of them touches it |
+| `null` | nothing was published to walk, so nothing is known either way |
+
+**A BOOLEAN HERE WOULD FOLD THE SECOND AND THIRD TOGETHER**, which is §5 pointed
+at the reader's own house: "measured, and it misses" is a real all-clear a screen
+may act on, and "nobody published a field to measure" is an absence that must not
+be read as one. It is the same distinction `forwardOk` already carries inside the
+corridor, surfaced as one word so a caller does not re-derive it.
+
+**THE PAST ARM COUNTS AS REACHING.** Wind that already blew over the house is
+wind that reached it, and NHC stops issuing forecast radii late in a storm's
+life — so the storm with no forward field is the one most likely to have just
+gone over somebody. **But a past arm that MISSED settles nothing about the
+future**: on a past-only corridor there is no forecast field at all, so that
+case is `null`, not `misses`.
+
+**THE FALLBACK IS `RAIN.houseFallbackNm`, 300 NM, AND IT FIRES ONLY ON `null`.**
+Geometry still in flight, a storm too weak to have published radii, an ended
+storm rebuilt from a skeleton. Silence there would hide a real answer behind a
+missing one. Anchored rather than picked: measured off the archive on
+2026-08-22, the widest 34 kt field on the globe that hour was **220 nm** (Lala's
+northeast quadrant) against 100 nm (Moke). 300 sits just past the widest wind
+field this project has ever measured, which is the honest posture when there is
+nothing to measure — assume something at least as large as the largest seen, and
+no larger. It errs tight; a rain shield does reach past the wind field, and a
+figure printed under a storm that never touches the house is the noise this
+section exists to delete.
+
+**`misses` GETS NO SECOND VOTE FROM DISTANCE.** A storm passing 40 nm offshore
+whose field is measured to stop short is precisely the storm this gate exists
+for, and both distances would say yes twice over.
+
+**BOTH DISTANCES ARE STILL CHECKED ON THE FALLBACK PATH, NEARER ONE WINS** — a
+storm currently 900 nm out whose track closes to 200 is one the reader cares
+about now, and gating on this moment would hide the figure for exactly the days
+it matters most.
+
+**THE COMPOSITION LIVES IN `app/views.js`**, injected as `home.windReach`,
+because `ui/` never imports `data/` (§12). The view owns the geometry bundle and
+hands in the pieces; one corridor implementation stands behind both this answer
+and the home chart.
+
+**==> THE GATE IS SPLIT IN TWO, AND §48.20 IS WHY. <==** The first cut gated the
+whole block on the wind field, warnings included. That deleted the one thing on
+the screen that was never the storm's to begin with. Aaron settled it on
+2026-08-22: warnings survive a miss, the figure does not.
+
+### 48.19 "Expected" means expected
+
+**==> BOTH SOURCES SEND A SERIES THAT BEGINS BEFORE THE MOMENT IT IS READ, AND
+NEITHER OF THEM SAYS SO. <==** The total was summed over every block in the
+payload and labelled *About 11 inches expected through early Thursday*. Some of
+that rain had already fallen.
+
+- **Open-Meteo's `forecast_days` always starts at 00:00 UTC of the current
+  day.** Measured on the archive runner's own capture, fetched
+  2026-08-22T17:27:18Z: **15.600 mm across the series, of which 3.600 mm —
+  23.1% — had already fallen** before anybody could read it. That share climbs
+  through the UTC day toward everything.
+- **Every NWS grid captured starts hours before its own `updateTime`:** Hilo
+  6h11m early, San Juan 6h16m, Guam 6h05m, Galveston 2h20m. Read at the §48.13
+  probe's own instant, Hilo's total goes **282.956 mm to 219.202 mm** — 11
+  inches to 9 — with 63.754 mm of the previous evening removed.
+
+A fluent wrong number with nothing on the page inviting a second look is the
+most expensive kind this project ships (`CLAUDE.md`). The peak sentence carried
+the same fault, putting a future tense on a cloudburst that finished at
+breakfast.
+
+**`futureBlocks(blocks, now)` DROPS BLOCKS THAT HAVE ALREADY ENDED, AND IT RUNS
+BEFORE THE WINDOW.** So `RAIN.windowHours` is anchored on the first block still
+to come rather than on the first block the source happened to send. Every figure
+inherits it: the total, the `through` label, and the peak — whose share of the
+total moves from 30% to 39% at Hilo, because the old denominator was carrying
+the past and understating exactly the "most of it in six hours" signal §48.8
+says separates a flood from a wet week.
+
+**==> THE BLOCK CONTAINING `now` IS KEPT WHOLE, NEVER PRORATED. <==** Splitting
+it means inventing a rate inside it, which is the same thing `windowBlocks`
+already refuses at the other end of the series and for the same reason: nobody
+published an hourly breakdown of a six-hour block. Keeping it overstates by at
+most part of one block and invents nothing; dropping it would lose rain the
+reader is about to get. At Hilo the block the probe stands inside is the
+heaviest in the series, 84.836 mm.
+
+**A SERIES THAT HAS ENTIRELY RUN OUT IS `lapsed`, AND IT IS NOT A DRY
+FORECAST.** Printing *no meaningful rain expected* off an empty list would be an
+all-clear built from an absence (§5). Both surfaces say the forecast has run out
+and offer Retry — a fresh fetch is the fix, and this is exactly what a last-good
+copy at the edge's six-hour limit looks like.
+
+### 48.20 The warnings outlive the figure
+
+**==> A FLOOD WARNING IS NOT THE STORM'S, AND THAT IS THE WHOLE SECTION. <==**
+§48.18's first cut gated the entire house block on whether the storm's wind
+reaches the house. That was right about the rainfall total and wrong about
+everything beside it. The total under a storm that misses is noise — **its
+position implies a connection nobody claimed**, which is the failure §48.18
+exists to delete. The warning under the same storm makes no claim about the
+storm at all: it is an agency's statement about the reader's own address, in
+force right now, true whichever storm they happened to tap. **And nothing else
+in this app renders a flood warning** — `Watches and warnings` carries NHC's
+hurricane and tropical-storm products, and §50 asks CAP only for Cyclone,
+Typhoon, Hurricane, Tropical and Storm Surge. This is the same bug §48.17
+already shipped once, arriving from the opposite direction.
+
+**TWO TIERS, TWO QUESTIONS.** `houseRainScope()` in `lib/rainfall.js`:
+
+| | the question | the test |
+|---|---|---|
+| `full` | does this storm's weather reach the house? | the wind field, or `RAIN.houseFallbackNm` (§48.18) |
+| `alerts` | is this storm in the reader's world at all? | `APPROACH.relevanceNm` |
+| `none` | neither | — |
+
+**==> AND `APPROACH.relevanceNm` IS FINALLY BEING ASKED THE QUESTION IT WAS
+WRITTEN FOR. <==** §48.18 took it off the figure because *is this storm in the
+reader's world* is a question about a whole basin and the figure needed a
+question about a house. That is exactly why it fits here: the warnings tier IS
+the basin-sized question. One constant, one meaning, in the one place it is
+true. The two rings must stay different sizes — collapse them and one tier has
+silently stopped existing.
+
+**`none` IS WHAT STOPS THE NOISE COMING BACK.** Without it a flood warning at
+home would appear under every cyclone on Earth, which is §48.18's own failure
+re-entering through the warnings door.
+
+**THE `alerts` TIER RENDERS NOTHING WHEN THERE IS NOTHING TO SAY.** No total, no
+peak, no provenance line — those are the things whose position under a storm's
+name makes a claim. A heading over *"no flood warnings are in force"* on a storm
+that misses is noise on the screen where noise costs most, and §5 does not
+require announcing the absence of a hazard nobody asked about. What §5 **does**
+require is that an unknown never reads as an all-clear, so a failed alerts hop
+still gets its sentence.
+
+**THE READER IS TOLD WHY THE NUMBER IS ABSENT — AND ONLY WHERE IT WAS
+MEASURED.** On a `misses` verdict the fields were published and walked, so *"this
+storm's wind field is not forecast to reach your house"* is a fact, and the line
+points at the home screen where their own forecast lives. Reached by distance
+alone, with no field published, that sentence would be an all-clear nobody
+verified — so it is suppressed and the warnings still show.
+
+#### The row itself
+
+**THE AFFECTED AREA, VERBATIM AND WHOLE.** A warning with no area attached asks
+the reader to assume it is about them, which on the flood family is the one
+assumption worth not making. `areaDesc` now survives the relay projection.
+Measured on the captured set: 20 bytes on the Flash Flood Warning (`Hawaii in
+Hawaii, HI`), 307 on the Flood Watch (seventeen named zones). **Never truncated,
+here or downstream** — the reader is hunting for their OWN zone in that list and
+we do not know which one it is, so dropping the tail is how you hide it from
+them.
+
+**THE PROJECTION RATIO MOVED AND THE THRESHOLD MOVED WITH IT.** Alerts go from
+34,369 stored bytes to **2,607**, the grid body to **3,930** from 58,373. The
+suite asserted a twentieth and now asserts a tenth; what it is really guarding
+is a projection that stops projecting and ships the 55 KB of `description`,
+`instruction` and polygon. Both figures print in the output, so drift shows even
+while the test passes.
+
+**HOW LONG IS LEFT, BESIDE WHEN IT ENDS — NOT INSTEAD OF IT.** A clock time is
+what somebody plans against; a duration is what tells them whether to move now.
+`remainingWords()` states **minutes under an hour**, and that is the one figure
+in §48 where minutes matter: Hilo's Flash Flood Warning ran **52 minutes**, and
+`durationWords`' whole-hour rounding would call that "an hour" — overstating the
+time a reader has, on the number whose entire point is how little is left. An
+alert with no end time gets no duration rather than an invented one; two of the
+five captured alerts carry `ends: null`.
+
+**==> THE TENSE COMES FROM THE CLOCK, NEVER FROM `urgency`. <==** Measured on the
+captured set: the Flood Watch reads **`urgency: Future` with an `onset` four
+hours in the PAST**, because the urgency describes when the HAZARD is expected
+and the onset describes when the MESSAGE took effect. A row reading "starts at
+3:55 AM" off that urgency, or "not yet begun" off it, would be wrong in opposite
+directions. `begun` compares `onset` against the reader's own moment, and the
+three shapes — running with a known end, not yet started, running with no end
+published — each get their own words.
 
 ### 51.6 Coastal flooding — the home drawer's section
 

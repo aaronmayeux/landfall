@@ -174,6 +174,43 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**GLASS: THE RAINFALL PASS. FOUR THINGS CHANGED AND NONE HAS BEEN SEEN.**
+§48.18 and §48.19 are as-built in `SPEC-UI.md`; this is only what to look at.
+
+1. **The house block should now be GONE from most storms.** It used to draw
+   under anything within 1,500 nm. The gate is now whether the storm's own
+   published wind field crosses the house (`data/home-corridor.js`), with a
+   300 nm distance fallback only where no field was published. **Lala is the
+   storm to check it on** — open several storms and confirm the block appears
+   only where the home chart also shows wind reaching you. The two read the
+   same measurement now, so they agreeing is the test.
+2. **The totals dropped and that is the fix, not a fault.** "About 11 inches"
+   became "about 9" on the Hilo fixture because two blocks totalling 63.754 mm
+   had already fallen when it was read. On the global source it is larger: 23%
+   of today's Manila capture was already on the ground. If a figure looks
+   smaller than you remember, that is why.
+3. **Flood warnings lost the box and the colours** — no fill, no red, no amber,
+   no bold. The urgency moved into the sentence: *in force until 4:15 PM*
+   against *until 6:00 AM*. **The question is whether an immediate warning
+   still reads as more urgent than a watch with the ink gone.** If it does not,
+   the fallback is a weight change rather than the old fill coming back.
+4. **A new `lapsed` state.** A forecast whose every hour has passed says it has
+   run out and offers Retry, rather than "no meaningful rain expected". Only
+   reachable on a genuinely old last-good copy, so it may not be seeable.
+
+5. **A storm that MISSES your house still shows the flood warnings, and not the
+   number** (§48.20, settled 2026-08-22). Two rings now: the figure needs the
+   storm's wind to reach you, the warnings only need the storm to be within
+   1,500 nm. **The thing to check is that a warning does NOT appear under every
+   storm in the list** — a storm on the far side of the planet should show no
+   house block at all.
+6. **The warning rows carry their affected area and how long is left.** *Hawaii
+   in Hawaii, HI* under the name, *52 min left* under that. **The watch's area
+   is seventeen zones and is printed whole on purpose** — the reader is hunting
+   for their own zone and truncating hides it. On a phone that is a real block
+   of text, and whether it reads as thorough or as a wall is a glass call.
+
+
 **THE MAP STILL TELLS THE LIE THE HEADCOUNT JUST STOPPED TELLING.** §54 split
 the Population affected count into what is still coming and what has already
 been through, and Lala's panel now reads past tense correctly — confirmed on
