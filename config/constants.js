@@ -4651,6 +4651,34 @@ export const ENV_RIBBON = Object.freeze({
   scaleLoKt: -15,
   scaleHiKt: 15,
 
+  /** ==> WHERE THE RAMP'S FOURTH STOP LANDS, KNOTS (§47.4). <== The measured
+   *  domain above is unchanged and is not being re-litigated: -15..+15 still
+   *  maps to the same three colours on the same knots. This is the outer knot
+   *  of the EXTENSION beyond it, and it only ever affects readings the old ramp
+   *  had already flattened.
+   *
+   *  +40 because the season's measured full range is -26 to +38, so this is the
+   *  brightest reading a real file produced with a hair of headroom. Anything
+   *  past it clamps, which is the same promise the domain always made — just
+   *  made 25 kt further out.
+   *
+   *  ==> IT IS THE BRIGHT END ONLY, AND THE ASYMMETRY IS THE POINT. <== The
+   *  hostile end of both palettes IS the ocean (§47.5), so there is nothing
+   *  darker to extend into. See DARK.geo.envRamp. */
+  scaleOuterKt: 40,
+
+  /** How much of the ramp the MEASURED domain occupies, now that there is
+   *  something past it.
+   *
+   *  ==> THIS NUMBER IS TIED TO THE PALETTE HAVING EXACTLY FOUR STOPS AND
+   *  NOTHING ENFORCES THAT BUT A TEST. <== `rampAt` spaces stops evenly, so
+   *  four stops sit at 0, 1/3, 2/3 and 1. Two thirds is what puts the original
+   *  three stops back on 0, 1/3 and 2/3 — which is the whole reason every
+   *  reading inside +/-15 keeps its old colour exactly rather than nearly. Add
+   *  a fifth stop without changing this and the middle silently shifts.
+   *  `tools/test-cone-ribbon.mjs` asserts both palettes are four long. */
+  scaleInnerFraction: 2 / 3,
+
   /** How long one painted slice is, DEGREES in the same planar frame
    *  CONE_SWEEP.stepDeg uses (≈65 km).
    *

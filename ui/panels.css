@@ -1907,10 +1907,18 @@ button.drawer-identity:focus-visible {
  * into looking like different objects.
  *
  * ==> THE BAR'S COLORS COME FROM THE PALETTE THROUGH `applyTokens()`, NEVER
- * FROM THIS FILE. <== `--env-ramp-lo/mid/hi` are the same three stops
+ * FROM THIS FILE. <== `--env-ramp-lo/mid/hi/out` are the same four stops
  * `lib/cone-ribbon.js` walks to color the cone. Hardcoding them here is how a
  * legend ends up keying a ramp the map stopped using — and §6 forbids a raw
  * hex in feature CSS for exactly this reason.
+ *
+ * ==> AND THE KNOTS ARE NOT EVENLY SPACED, BECAUSE THE KNOTS ON THE MAP ARE
+ * NOT EITHER. <== §47.4. The measured domain, -15 to +15 kt, is the first two
+ * thirds of the ramp (ENV_RIBBON.scaleInnerFraction); the last third runs +15
+ * to +40. So `Balanced` belongs at 33.3%, not at the middle of the bar, and the
+ * label row below is laid out to put it there. A bar drawn 0/50/100 against a
+ * map drawn 0/33/67/100 is a legend that lies about the middle of its own
+ * scale.
  * ------------------------------------------------------------------------ */
 .env-legend { margin-top: var(--space-base); }
 
@@ -1920,8 +1928,9 @@ button.drawer-identity:focus-visible {
   background: linear-gradient(
     90deg,
     var(--env-ramp-lo) 0%,
-    var(--env-ramp-mid) 50%,
-    var(--env-ramp-hi) 100%
+    var(--env-ramp-mid) 33.333%,
+    var(--env-ramp-hi) 66.667%,
+    var(--env-ramp-out) 100%
   );
   /* The hostile end IS the sea in both themes (§47.5), so without an edge the
    * bar appears to start a third of the way along — it fades into the panel it
@@ -1933,11 +1942,18 @@ button.drawer-identity:focus-visible {
 /* Three labels, not two. `space-between` alone would centre the middle word on
  * the middle of the REMAINING space rather than on the bar, which lands it
  * visibly right of the midpoint whenever the two end labels differ in length —
- * and they always do. A three-column grid pins it to the true centre. */
+ * and they always do.
+ *
+ * ==> AND THE MIDDLE ONE IS NOT AT THE MIDDLE ANY MORE (§47.4). <== `Balanced`
+ * is 0 kt, and 0 kt sits a third of the way along the bar now that the ramp
+ * carries a fourth stop past +15. The columns are 1fr / auto / 2fr so the word
+ * lands on its own colour; a centred grid would put it on a favourable violet
+ * and quietly mis-key the whole scale. `Feeding it` stays hard right and now
+ * covers the extension as well, which is what it always meant. */
 .env-legend-ends {
   margin-top: var(--space-tight);
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr auto 2fr;
   align-items: baseline;
   gap: var(--space-tight);
   font-size: var(--type-small);

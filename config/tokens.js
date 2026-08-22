@@ -775,7 +775,30 @@ export const DARK = Object.freeze({
      *  has failed, which is the whole thing this ramp gambled on. If a future
      *  storm stays hostile end to end and does read as dead, THE DIAL IS THIS
      *  FIRST STOP, not ENV_RIBBON's scale. */
-    envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF']),
+    /** ==> FOUR STOPS, AND THE FOURTH IS THE ONLY ONE THAT IS NEW (§47.4).
+     *  <== The first three sit on exactly the knots they always sat on — -15,
+     *  0 and +15 kt — so every reading inside the measured domain keeps the
+     *  colour it had before this stop existed, byte for byte. §47.4's argument
+     *  for +/-15 is untouched because nothing inside +/-15 moved.
+     *
+     *  WHAT IT BUYS: the readings that were already flat. The domain clips 2.0%
+     *  of the season bright, and on a storm that lives up there the clip is not
+     *  a rounding — on Lala (2026-08-22) the environment ran +18 kt at +48 h to
+     *  +34 kt at +108 h, so SIX of her eleven painted hours, more than half the
+     *  cone, came out one identical violet. The layer exists to show how the
+     *  environment CHANGES along a forecast and it was showing none of the
+     *  largest move in the run. +18 and +34 are now 54 units apart.
+     *
+     *  ==> AND THERE IS NO MATCHING STOP AT THE HOSTILE END, DELIBERATELY. <==
+     *  The clip is worse there (3.5%), and EP9326 reads -52 kt where the ramp
+     *  stops at -15. But this end is already within a few units of the night
+     *  ocean — that is the whole point of it, §47.5 — so there is nowhere
+     *  darker to go on a night-sky map. A fifth stop below this one would be
+     *  invisible and would only look like the problem had been addressed.
+     *  ==> SO A -52 KT HOUR AND A -23 KT HOUR STILL DRAW IDENTICALLY. <== That
+     *  was already true, this does not make it worse, and it is written down
+     *  rather than left for someone to rediscover. */
+    envRamp: Object.freeze(['#0A1420', '#5B4A9E', '#C4B0FF', '#EFE9FF']),
 
     /** ==> THE FORECAST LINE USES THIS RAMP TOO, AND IT DID NOT USED TO. <==
      *  There was a second list here, `envRampLine`, lifted so every one of its
@@ -1455,7 +1478,15 @@ export const LIGHT = Object.freeze({
      *  sea and letting the middle carry the saturation, never flipping the
      *  direction: the direction is what keeps "hostile dissolves into the sea"
      *  true in both themes. */
-    envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E']),
+    /** FOUR STOPS HERE TOO, AND THE EXTENSION RUNS THE OTHER WAY. See
+     *  DARK.geo.envRamp for what the fourth is for. Brightness inverts between
+     *  the themes and saturation does not, so "even more environment" is a
+     *  DEEPER, more saturated violet here where the dark theme goes paler. The
+     *  first three stops are unchanged, on the same knots, for the same reason.
+     *
+     *  Same asymmetry, same reason: the hostile end IS the daylight sea
+     *  (#C2C6CA) and there is nothing paler to reach for. */
+    envRamp: Object.freeze(['#C2C6CA', '#8E7BC6', '#4B2C9E', '#2A1263']),
 
     /* The line's floor is computed against `ocean`, not listed — see
      * DARK.geo.envRamp. THE LIGHT THEME NEEDS IT MORE, NOT LESS: its hostile

@@ -83,8 +83,10 @@ ok(rampAt(STOPS, 0).toUpperCase() === STOPS[0].toUpperCase(),
   'the dark end IS the first stop — a ramp that drifted off its token would still look like a ramp');
 ok(rampAt(STOPS, 1).toUpperCase() === STOPS[STOPS.length - 1].toUpperCase(),
   'and the bright end IS the last');
-ok(rampAt(STOPS, 0.5).toUpperCase() === STOPS[1].toUpperCase(),
-  'the middle stop sits at exactly halfway — three stops, evenly walked');
+ok(rampAt(STOPS, 1 / 3).toUpperCase() === STOPS[1].toUpperCase(),
+  'the neutral stop sits a third along — FOUR stops, evenly walked (§47.4)');
+ok(rampAt(STOPS, 2 / 3).toUpperCase() === STOPS[2].toUpperCase(),
+  'and the old bright end sits two thirds along, where +15 kt now lands');
 
 ok(rampAt(STOPS, -5) === rampAt(STOPS, 0) && rampAt(STOPS, 5) === rampAt(STOPS, 1),
   'out of range clamps rather than wrapping or extrapolating');
@@ -99,7 +101,36 @@ ok(LIGHT.geo.envRamp[0].toUpperCase() !== DARK.geo.envRamp[0].toUpperCase(),
  * it here means a later tidy-up that "simplifies" the domain fails loudly. */
 ok(ENV_RIBBON.scaleLoKt === -15 && ENV_RIBBON.scaleHiKt === 15,
   'the ramp domain is the measured -15..+15 kt');
-ok(near(rampT(0), 0.5), 'zero knots is dead centre of the ramp');
+/* ==> AND THE MAPPING INSIDE THE DOMAIN IS UNCHANGED, WHICH IS THE WHOLE
+ * ARGUMENT FOR THE FOURTH STOP. <== §47.4 measured ±15 against a season and
+ * said not to re-litigate it. The extension did not: -15, 0 and +15 land on
+ * stops 0, 1 and 2 exactly, so every reading inside the domain resolves to the
+ * colour it had before the stop existed. If this ever stops being byte-exact,
+ * the fourth stop HAS re-litigated the domain and this says so. */
+ok(near(rampT(0), 1 / 3), 'zero knots lands on the neutral stop, a third along');
+ok(near(rampT(-15), 0), 'the hostile end of the domain is still the ramp floor');
+ok(near(rampT(15), 2 / 3), 'and +15 kt is still the old bright stop, not the new one');
+for (const kt of [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15]) {
+  const before = rampAt(STOPS.slice(0, 3), (kt + 15) / 30);
+  ok(rampAt(STOPS, rampT(kt)).toUpperCase() === before.toUpperCase(),
+    `${kt} kt draws exactly the colour the three-stop ramp gave it`);
+}
+
+/* THE EXTENSION ITSELF. */
+ok(ENV_RIBBON.scaleOuterKt === 40, 'the extension reaches +40 kt — the season topped out at +38');
+ok(near(rampT(40), 1), 'which is the far stop');
+ok(near(rampT(60), 1), 'and past it clamps rather than wrapping');
+ok(rampAt(STOPS, rampT(18)).toUpperCase() !== rampAt(STOPS, rampT(34)).toUpperCase(),
+  '+18 kt and +34 kt are no longer the same colour — the flat half-cone Aaron reported');
+ok(DARK.geo.envRamp.length === 4 && LIGHT.geo.envRamp.length === 4,
+  'both palettes carry FOUR stops — scaleInnerFraction is 2/3 only because of this');
+
+/* ==> THE HOSTILE END IS STILL FLAT AND THAT IS DELIBERATE. <== It is already
+ * the ocean colour in both themes (§47.5), so there is nowhere darker to go on
+ * a night-sky map. Asserted so nobody "fixes" the asymmetry without reading
+ * why it is there. */
+ok(rampAt(STOPS, rampT(-23)).toUpperCase() === rampAt(STOPS, rampT(-52)).toUpperCase(),
+  'a -23 kt hour and a -52 kt hour still draw identically — no headroom below the sea');
 ok(rampT(-40) === 0 && rampT(40) === 1, 'beyond the domain clips, which §47.4 measured and accepted');
 
 /* ---------------------------------------------------------------------------

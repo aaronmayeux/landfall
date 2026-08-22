@@ -98,6 +98,12 @@ export function applyTokens() {
   r.setProperty('--env-ramp-lo', P.geo.envRamp[0]);
   r.setProperty('--env-ramp-mid', P.geo.envRamp[1]);
   r.setProperty('--env-ramp-hi', P.geo.envRamp[2]);
+  /* ==> THE FOURTH STOP, AND PUBLISHING IT IS NOT OPTIONAL. <== §47.4 extended
+   * the ramp past +15 kt. A legend bar still drawn from three stops would be a
+   * key to a scale the map stopped using — it would show the cone's brightest
+   * hour as a colour the cone no longer paints there. The bar's knots are moved
+   * to match in ui/panels.css. */
+  r.setProperty('--env-ramp-out', P.geo.envRamp[3]);
 
   /* ==> THE WIND BANDS, AND THEY WERE MISSING FOR THE WHOLE LIFE OF THE CHART.
    * <== `ui/chart-home.js` fills its 34/50/64 kt bands from the

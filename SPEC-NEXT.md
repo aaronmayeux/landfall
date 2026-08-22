@@ -434,6 +434,41 @@ them, clipping 3.5% at the dark end and 2.0% at the bright end. Widening to
 −20..+20 would capture 98.3% at the cost of flattening the middle, where half
 the season lives. It stays at ±15.
 
+**AND THE RAMP NOW REACHES PAST IT WITHOUT MOVING IT — a fourth stop, 2026-08-22.**
+The domain above is unchanged and is not being re-litigated. The palette gained
+one stop beyond its bright end, and `rampT` became piecewise: −15..+15 maps onto
+the first two thirds of the ramp (`ENV_RIBBON.scaleInnerFraction`), which with
+four evenly-spaced stops puts the original three back on 0, 1/3 and 2/3.
+**Every reading inside the domain therefore resolves to the colour it had
+before the stop existed, byte for byte** — asserted at eleven knots in
+`tools/test-cone-ribbon.mjs`, so if it ever stops being exact the extension HAS
+re-litigated the domain and the suite says so.
+
+**What it buys is the 2.0% that was already flat.** Two percent sounds like a
+rounding until it lands on a storm that lives up there. Lala, 2026-08-22 12Z:
+the environment ran +18 kt at +48 h to +34 kt at +108 h, so **six of her eleven
+painted hours — more than half the cone — came out one identical violet**
+(`#c4b0ff`), and the largest move in the whole run was invisible on a layer
+whose entire purpose is how the environment CHANGES along a forecast. Aaron
+reported it on glass as a ribbon that needed smoothing. `ENV_RIBBON.scaleOuterKt`
+is +40 — the season topped out at +38 — and +18 and +34 are now 54 units apart.
+
+**THERE IS NO MATCHING STOP AT THE HOSTILE END AND THE ASYMMETRY IS DELIBERATE.**
+The clip is worse there (3.5%), and EP9326 reads −52 kt against a ramp that
+stops at −15. But that end IS the ocean colour in both palettes — that is the
+whole design (§47.5) — so there is nowhere darker to go on a night-sky map and
+nowhere paler to go on the daylight one. A fifth stop below the first would be
+invisible and would only look like the problem had been addressed. **So a −52 kt
+hour and a −23 kt hour still draw identically.** That was already true, this
+does not make it worse, and the suite asserts it so nobody "fixes" the asymmetry
+without reading why it is there.
+
+**BRIGHTNESS INVERTS BETWEEN THE THEMES AND SO DOES THE EXTENSION.** The dark
+palette's fourth stop is paler than its third; the light palette's is deeper.
+Both mean "even more environment", which is the saturation channel §9.2 already
+leans on. **And the legend moved with it** — see §47.11. A key drawn from three
+stops against a map drawn from four is a key to a scale the app stopped using.
+
 **The five bands, verified.** Tearing it down (< −8) 12.3%, working against it
 (< −3) 14.8%, neutral (< +3) 50.1%, helping (< +8) 14.9%, feeding it (≥ +8)
 8.0%. No band is empty and none dominates to the point of uselessness. Neutral
@@ -957,13 +992,24 @@ want a fifth about methodology. Both surfaces now call `envLegendHtml({ note:
 false })`, so the `note` option is currently unused — kept because the sentence
 itself is worth not losing, and turning it back on is one argument.
 
-**THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The three stops arrive as
-`--env-ramp-lo/mid/hi`, written by `app/theme-switch.js` `applyTokens()` from the
-same `palette().geo.envRamp` that `lib/cone-ribbon.js` walks to color the slices.
+**THE BAR IS THE MAP'S OWN RAMP, NOT A COPY OF IT.** The four stops arrive as
+`--env-ramp-lo/mid/hi/out`, written by `app/theme-switch.js` `applyTokens()` from
+the same `palette().geo.envRamp` that `lib/cone-ribbon.js` walks to color the slices.
 Hexes typed into `ui/panels.css` would be right the day they were typed and
 quietly lying after the first retune. Themed, so the bar repaints with the globe
 — the light ramp is not the dark one lightened and its hostile end is the
 daylight sea, so a fixed gradient would be inverted rather than merely off.
+
+**THE KNOTS ARE NOT EVENLY SPACED, BECAUSE THE KNOTS ON THE MAP ARE NOT EITHER.**
+§47.4 extended the ramp past +15 kt with a fourth stop, so the measured domain
+−15..+15 is the first TWO THIRDS of the bar and the last third runs +15 to +40.
+The gradient is drawn 0 / 33.3 / 66.7 / 100% to match, and **the label row moved
+with it**: `Balanced` is 0 kt and 0 kt is a third of the way along now, so the
+grid is `1fr auto 2fr` rather than centred. A bar drawn 0/50/100 against a map
+drawn 0/33/67/100 is a key that mis-states the middle of its own scale, and it
+would do it silently — the colors would still all be real ramp colors, just in
+the wrong places. `Feeding it` stays hard right and now covers the extension too,
+which is what the words always meant.
 
 **The bar carries a hairline border.** Its hostile end *is* the sea in both
 themes (§47.5), so without one the scale appears to start a third of the way
