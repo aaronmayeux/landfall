@@ -224,6 +224,49 @@ their own comments that a change accepting everything would leave them testing
 nothing; the refusal is now CONSTRUCTED (a track trimmed to its last 30% trips
 `minAheadFrac`) rather than found.
 
+**MOKE'S PURPLE LOBE — FIXED, NEEDS GLASS.** 2026-08-22. Aaron, twice: a big
+purple blob hanging east and south of Moke, outside the cone it belonged to.
+
+**It was the cone's TAIL CAP, and it was my own knock-on from §7.11.** Each cap's
+length comes from a ray cast out of the cone until it leaves the published
+outline. Right while the track began at tau 0 — the published apex. §7.11 moved
+the first station onto the STORM, which sits inside the cone ahead of its stale
+apex, so the backward ray started running the whole length of the advisory's
+leftover tail and the cap ballooned to fit.
+
+Measured, each cap's reach against the flank it caps:
+
+```
+Lala  tail 0.48 / 0.52 = 0.91x     nose 2.35 / 2.33 = 1.01x
+Moke  tail 1.56 / 0.64 = 2.43x     nose 2.32 / 2.26 = 1.03x
+```
+
+Three of four agree within a tenth — the end of a corridor of half-width w IS a
+cap of radius about w. The outlier was measuring something else. The flank is a
+CEILING on the tail now. **The nose is deliberately NOT clamped**: the last
+station is still the published cone's own day-5 nose, so its ray is right.
+
+**==> THE RIBBON WAS THE MESSENGER, NOT THE FAULT. <==** §47.5 paints the caps,
+so on Moke it put confident environment colour over 112 miles of water she had
+already crossed. The wrong shape had been there all along; painting it is what
+made it obvious. `lib/cone-ribbon.js`'s comment "the tail cap sits behind the
+current position" had gone from description to bug without anyone touching it —
+corrected in place.
+
+**Moke's cone BODY is not too wide.** Checked and dropped: NHC published it 24
+degrees of longitude across. Real data.
+
+`SPEC-MAP.md` §7.9, `samples/moke-cp032026/`, `tools/test-cone-cap.mjs`, four
+mutations verified. Moke's cap bounding box 2.22 -> 0.96 sq deg; Lala unchanged.
+
+**==> LALA'S BYTES CANNOT REPRODUCE THIS, WHICH IS WHY MOKE HAS HER OWN CORPUS.
+<==** A suite built on Lala alone passes before AND after the fix. Verified by
+doing it. Same trap as `test-cone-anchor.mjs`.
+
+**WHAT TO LOOK AT ON GLASS:** Moke, zoomed in. The cone should end in a small
+rounded cap at the storm, not a lobe hanging behind it. The environment ribbon
+should stop at the storm. Lala should look exactly as she did.
+
 **THE PERF AUDIT WENT GREEN HAVING MEASURED NOTHING, TWICE OVER.** Two runs
 2026-08-21. The 21:11 run crashed at exit 2, wrote no JSON, and every step after
 it no-opped by design — artifact warned, branch push hit its `test -f || exit 0`,

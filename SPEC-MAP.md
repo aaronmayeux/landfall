@@ -1027,6 +1027,55 @@ perpendicular to the track. Smooth those two 1-D profiles. Redraw the edges as
 track ± width, with half-ellipse caps at each end that leave the flank along the
 track so they do not corner where they join.
 
+#### The tail cap is capped, and the nose cap is not
+
+Each cap's length along the track comes from a ray cast OUT of the cone until it
+leaves the published outline. **That measurement broke at one end when §7.11
+moved the track's first station.**
+
+It was right while the first station was tau 0 — the published cone's own apex.
+The backward ray hit the apex a short way back and the cap came out as the small
+rounded nose a cone has. Since §7.11 the first station is the **storm**, which
+sits inside the published cone, ahead of its stale apex. The ray now runs the
+whole length of the advisory's leftover tail and the cap balloons to fit.
+
+Measured on the archived bytes, 2026-08-22 — each cap's reach against the flank
+it caps:
+
+| storm | tail cap | nose cap |
+|---|---|---|
+| Lala | 0.48 / 0.52 = **0.91×** | 2.35 / 2.33 = 1.01× |
+| Moke | 1.56 / 0.64 = **2.43×** | 2.32 / 2.26 = 1.03× |
+
+Three of those four agree within a tenth, because the end of a corridor of
+half-width `w` **is** a cap of radius about `w`. The outlier is not a longer cone
+end; it is a different quantity being measured.
+
+**So the flank width became a CEILING on the tail, not only a fallback.** In the
+healthy case it changes nothing — Lala's tail is already under it — and it cannot
+shrink a genuine apex either, since at a real tau 0 the published cone is a
+circle of that same radius. That is where the 0.91× comes from.
+
+**The nose cap is deliberately NOT clamped, and the asymmetry is the point.** The
+LAST station is still the published cone's own day-5 nose — the track ends where
+the cone ends — so the forward ray measures this cone's end and is right to. Only
+the start moved. Clamping both would shave a few percent off every correct nose
+to fix one wrong tail.
+
+**Why Aaron saw it on Moke and not Lala.** Moke ran nearly due west with a long
+east-west cone, so her advisory's leftover tail was 2.43× the cone's width at her
+position; Lala was recurving north and hers was already comfortable. §47.5 paints
+the caps, so on Moke the ribbon put confident environment colour over 112 miles of
+water she had already crossed — which is what turned a long-standing wrong shape
+into an obvious purple lobe. The layer that revealed it was not the layer at
+fault.
+
+`samples/moke-cp032026/` exists for exactly this: **Lala's bytes cannot reproduce
+it**, so a suite built on her alone would have passed before and after the fix.
+`tools/test-cone-cap.mjs` asserts the clamp on Moke, asserts Lala's cap does not
+move, and asserts the nose stays unclamped — the last of those on Moke too,
+because Lala's nose reaches only 0.79× her flank and no ceiling would bind on it.
+
 **Every width is read off the source's polygon.** Nothing about how far the cone
 reaches is invented, the two sides are measured independently so nothing assumes
 symmetry, and no forecast points are needed. The only deliberate change is where
