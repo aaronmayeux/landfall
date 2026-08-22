@@ -455,25 +455,53 @@ export function parseShips(text) {
 
   /* ==> WINDS AND POSITIONS TRUNCATE INDEPENDENTLY AND EITHER CAN COME FIRST.
    * <== 209 files in the season publish winds past the last position, 57
-   * publish positions past the last wind (§47.2). So drawability is decided
-   * per hour against BOTH, not by taking whichever end came first and calling
-   * it the length of the file. Twenty-three files have no position past hour 0
-   * at all while publishing winds to +120 h — a perfectly healthy file with
-   * nothing to paint, which §47.6 says out loud rather than drawing a bare
-   * cone. */
-  const drawable = hours.map(
-    (_, c) => lat[c] !== null && lon[c] !== null && vNoLand[c] !== null
-  );
+   * publish positions past the last wind (§47.2). So drawability cannot be
+   * decided by taking whichever end came first and calling it the length of the
+   * file. Twenty-three files have no position past hour 0 at all while
+   * publishing winds to +120 h — a perfectly healthy file with nothing to
+   * paint, which §47.6 says out loud rather than drawing a bare cone.
+   *
+   * ==> IT IS THE POSITION ALONE, AND THE ANSWER WAS UNDECIDED UNTIL
+   * 2026-08-22. <== The rule used to require a forecast WIND as well, and the
+   * §47.10 fixture note recorded the two definitions disagreeing by 22 kt on
+   * EP9326 without picking one. Aaron picked, on glass, on Lala.
+   *
+   * MEASURED on her 2026-08-22 12Z run: the environment climbs +1 kt at +6 h to
+   * +34 kt at +108 h and keeps a number all the way to +168 h. Her POSITIONS
+   * run to +120 h. Her `V (KT) NO LAND` goes N/A at +120 h — and that switched
+   * the ribbon off for +108 h to +120 h AND for the nose cap that borrows from
+   * the last station, so a cone whose run published a number for every hour it
+   * covers ended in a grey blob. That is the §47.5 reads-as-missing-data
+   * failure, caused by a column the ribbon does not draw.
+   *
+   * ==> THE WIND ROW IS A THIRD THING AND IT IS NOT EVIDENCE ABOUT THIS ONE.
+   * <== `environmentKt` is the sum of the ten ENVIRONMENT contribution rows.
+   * `V (KT) NO LAND` is the intensity model's own forecast, which folds in the
+   * SST potential and the storm's bookkeeping too. On Lala those pull opposite
+   * ways — her atmosphere improves the whole way while the water fails under
+   * her at 38°N, which is why she is forecast to fall from 70 kt to 24 with an
+   * environment reading +34. The model declining to name a wind at +120 h says
+   * something about the model. It says nothing about whether the shear and the
+   * ocean heat are known, and they are: they are printed in the file.
+   *
+   * WHAT IT COSTS, RECORDED BECAUSE IT IS THE PART THAT COULD BITE: EP9326's
+   * most hostile drawable hour becomes -52 kt where it was -30. A far more
+   * alarming color now appears on a stretch whose wind forecast had stopped.
+   * That is the right way round — -52 is a real published number at the hostile
+   * end, and swallowing it is the §5 silence failure — but it is a bigger
+   * change than filling in a cap and it is written here rather than discovered.
+   *
+   * `lastWindHr` is still carried. Nothing decides drawability from it now, but
+   * it is what the drawer would need to say "the intensity forecast stops here"
+   * if that is ever wanted, and re-deriving it would mean a second parse. */
+  const drawable = hours.map((_, c) => lat[c] !== null && lon[c] !== null);
 
-  /* ==> THE TWO ENDS ARE REPORTED SEPARATELY, AND THAT IS NOT REDUNDANT. <==
-   * `drawable` above applies §47.2's rule — both, or nothing. But §47.10's own
-   * fixture note for EP9326 was measured against POSITIONS ONLY, and the two
-   * rules disagree on that file by 22 kt: its position runs to +120 h while
-   * its wind stops at +84 h, and the -52 kt the section calls the season's
-   * most hostile drawable hour sits in that gap. One of the two is wrong and
-   * the answer is a product call, not a parser's. Carrying both ends means
-   * changing the rule later is one line in the layer and no re-parse, rather
-   * than a second pass through this file. */
+  /* ==> THE TWO ENDS ARE STILL REPORTED SEPARATELY, AND THAT IS NOT REDUNDANT.
+   * <== `drawable` above is decided from the position alone, so `lastWindHr` no
+   * longer gates anything — but it is the one place the file says where the
+   * INTENSITY forecast stops, which is a different fact from where the
+   * environment stops and is the thing a drawer would state if it ever wanted
+   * to. Carrying both means answering that costs a field, not a re-parse. */
   const lastWindHr = lastHourWith(hours, vNoLand);
   const lastPositionHr = lastHourWith(hours, lat);
 

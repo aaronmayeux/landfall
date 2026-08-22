@@ -84,7 +84,7 @@ const drawableOnly = (r, a) => a.filter((_, i) => r.drawable[i]);
  * still fails loudly.
  * ======================================================================= */
 console.log('\nfixtures parse');
-check('sixteen fixtures are present', files.length, 16);
+check('seventeen fixtures are present', files.length, 17);
 for (const f of files) {
   try {
     parsed.set(f, parseShips(raw(f)));
@@ -287,7 +287,47 @@ check('so nothing about it is drawable', noPos.drawableHours, 0);
 const longPos = parsed.get('26061618EP9326_ships.txt');
 check('EP9326 runs the other way: wind stops at +84 h', longPos.lastWindHr, 84);
 check('while its position runs to +120 h', longPos.lastPositionHr, 120);
-check('drawable takes where BOTH exist (§47.2), so nine hours', longPos.drawableHours, 9);
+
+/* ==> THE POSITION ALONE DECIDES, SINCE 2026-08-22 (§47.2). <== The rule used
+ * to require a forecast wind too, and this file is the one the two definitions
+ * disagreed on. Twelve hours now, not nine: +96, +108 and +120 have a position
+ * and an environment and no intensity forecast, and the ribbon paints them. */
+check('drawable is where a POSITION exists, so twelve hours', longPos.drawableHours, 12);
+
+/* ==> AND THIS IS THE PART THAT COULD BITE, SO IT IS PINNED. <== Those three
+ * recovered hours carry the file's most hostile readings. Under the old rule
+ * its worst drawable environment was -30 kt; it is -52 now, which is a far more
+ * alarming color appearing on a stretch whose WIND forecast had stopped. That
+ * is the right way round — -52 is a real published number at the hostile end
+ * and swallowing it is the §5 silence failure — but it is a change in what the
+ * app states about a storm, not a tidy-up, and it is asserted rather than
+ * discovered. */
+check(
+  'and its worst drawable environment is now -52 kt, not the old -30',
+  Math.min(...drawableOnly(longPos, longPos.environmentKt)),
+  -52
+);
+check(
+  'which ties the Atlantic file for the season\u2019s most hostile drawable hour',
+  Math.min(...drawableOnly(hostileAl, hostileAl.environmentKt)),
+  -52
+);
+
+/* ==> AND THE FILE THAT SENT AARON LOOKING. <== Lala's 2026-08-22 12Z run:
+ * environment to +168 h, positions to +120 h, intensity forecast N/A from
+ * +120 h. Under the old rule her ribbon stopped at +108 h and the nose cap that
+ * borrows from the last station was not drawn either, so a cone whose run
+ * published a number for every hour it covers ended in a grey blob (glass,
+ * 2026-08-22, screenshot 4954). */
+const lala = parsed.get('26082212CP0126_ships.txt');
+check('Lala CP0126 12Z: intensity forecast stops at +108 h', lala.lastWindHr, 108);
+check('while her positions run to +120 h', lala.lastPositionHr, 120);
+check('so the ribbon reaches +120 h and the nose cap has a number', lala.drawableHours, 12);
+check(
+  'and that recovered hour is +32 kt \u2014 a real reading, not a gap',
+  lala.environmentKt[lala.hours.indexOf(120)],
+  32
+);
 
 /* ==========================================================================
  * 9. UNITS AND SIGNS.

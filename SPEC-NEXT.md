@@ -138,8 +138,21 @@ of them or it is not finished:
   below.
 - **The forecast has two independent ends and either can come first.** Winds and
   positions truncate separately: 209 files publish winds past the last position,
-  57 publish positions past the last wind. The ribbon can only be drawn where
-  both exist.
+  57 publish positions past the last wind. **THE POSITION ALONE DECIDES
+  DRAWABILITY, since 2026-08-22.** It used to be both, and the ribbon therefore
+  went dark wherever the intensity model stopped forecasting a wind — a column
+  it does not draw. `environmentKt` is the sum of the ten ENVIRONMENT
+  contribution rows; `V (KT) NO LAND` is the intensity model's own answer, which
+  folds in the SST potential and the storm's bookkeeping too, and the two
+  genuinely pull opposite ways. On Lala's 2026-08-22 12Z run her atmosphere
+  improves the whole way (+1 kt at +6 h to +34 kt at +108 h) while the water
+  fails under her at 38°N, so she is forecast to fall from 70 kt to 24 with an
+  environment reading +34. Her wind row goes N/A at +120 h; her positions do
+  not. Under the old rule that switched the ribbon off for +108 h to +120 h AND
+  for the nose cap that borrows from the last station, leaving a grey blob on
+  the end of a cone whose run published a number for every hour it covers —
+  §47.5's reads-as-missing-data failure, caused by a third column. **The cost is
+  recorded in §47.10's EP9326 row and it is not small.**
 - **Positions stop at any hour, not just at +120 h.** A position never appears
   past +120 h, but only 256 of 365 files reach it. Twenty-three files — 6% —
   have **no forecast position at all past hour 0** while still publishing winds
@@ -496,8 +509,11 @@ The route answers four ways and never blank (§47.6): the run; `basin_not_covere
 (NOAA is down), because only the first is ours to fix. The payload is column-
 oriented — one list of forecast hours and one list per number, lined up — which
 is the shape the cone slices want and roughly half the size of per-hour objects.
-It carries `lastWindHr` and `lastPositionHr` alongside `drawable` so the
-unsettled question in §47.10's EP9326 row can be answered without a re-parse.
+It carries `lastWindHr` and `lastPositionHr` alongside `drawable`. That question
+is settled now (position-only, §47.2), so `lastWindHr` gates nothing — but it is
+the one place the file says where the INTENSITY forecast stops, which is a
+different fact from where the environment stops, and it is kept for the drawer
+that may one day want to say so.
 
 One text file per NHC-basin storm per advisory, cached in KV like every other
 feed. Parsing happens in the relay; the browser receives a small JSON of
@@ -863,7 +879,7 @@ be representative. A parser that handles all fifteen handles the season; the las
 | `26072706EP0726_ships.txt` | **The season's only major hurricane, at 140 kt.** Its environment runs −13..+3 on this run while headroom runs −83..−1 — the single file that proves the headroom exclusion (§47.4) and the file the dark-end ramp question (§47.5) has to be judged against. |
 | `26080100EP0726_ships.txt` | The same storm five days later at 45 kt, its environment number reaching +26 kt — the most helpful this storm ever gets — with a `Storm Type` row that turns extratropical partway along. |
 | `26080218EP0726_ships.txt` | The **only file in the season containing `SUBT`**, and it also carries `EXTP` and `TROP` in the same row. Full storm-type token coverage. |
-| `26061618EP9326_ships.txt` | **The file where the two definitions of "drawable" disagree, and by 22 kt.** Its wind stops at +84 h while its position runs to +120 h, and the −52 kt this table used to call the season's most hostile drawable hour sits in that gap. Under §47.2's rule — where BOTH exist — it is −30. Under a position-only rule it is −52 and ties the Atlantic file below. **Undecided; the parser applies §47.2 and carries both ends so the layer can change its mind in one line.** |
+| `26061618EP9326_ships.txt` | **The file the two definitions of "drawable" disagreed on, by 22 kt — SETTLED 2026-08-22, position-only.** Its wind stops at +84 h while its position runs to +120 h. It now draws twelve hours rather than nine, and **its worst drawable environment is −52 kt where it was −30**, which ties the Atlantic file below for the season's most hostile drawable hour. ==> THAT IS A FAR MORE ALARMING COLOUR ON A STRETCH WHOSE INTENSITY FORECAST HAD STOPPED, AND IT IS THE PART OF THE CHANGE THAT COULD BITE. <== It is the right way round — −52 is a real published number at the hostile end and swallowing it is the §5 silence failure — but it is a change in what the app STATES about a storm rather than a tidy-up. `tools/test-ships.mjs` pins both numbers so it can never move back by accident. |
 | `26072012EP0526_ships.txt` | **Most helpful environment of any named storm in the season, +38 kt.** Bright clip case. Its winds and positions both stop at +60 h — an earlier version of this row said the winds ran further, measured wrong. |
 | `26071600CP9126_ships.txt` | **Biggest headroom, +67 kt on a 25 kt system**, and the **biggest ocean-heat term that ever reaches the map, 4 kt** (the same file reaches 8 kt of magnitude at +168 h, where nothing is drawn — and it is −8, not +8, which this row previously had the wrong way round) — the Central Pacific case that falsified §47.3's old claim. |
 | `26060618EP9126_ships.txt` | **No forecast position at all past hour 0** while still publishing winds. The run-exists-but-nothing-to-draw case (§47.6). |
@@ -874,6 +890,7 @@ be representative. A parser that handles all fifteen handles the season; the las
 | `26081106CP9326_ships.txt` | **Published 41 minutes _before_ its nominal hour.** A parser or relay that assumes lag is never negative gets this one wrong. |
 | `26081506EP0826_ships.txt` | **§47.8 acceptance: Hernan.** Turning against with near-total agreement (push 1, pull −12 at the peak) and the far-below-ceiling, hostile-environment room case — 30 kt under a 139 kt ceiling. |
 | `26081506AL9426_ships.txt` | **§47.8 acceptance: 94L.** Early help then turning against; strengthening IN SPITE of the environment (gains 35 kt against a hostile track — the storm that proves direction comes only from `V (KT) LAND`); nothing-dominates term spread; positions stop at +120 h while winds run to +168 (the partial-track note). |
+| `26082212CP0126_ships.txt` | **The file that settled drawability, and Aaron found it on glass.** Environment to +168 h, positions to +120 h, intensity forecast N/A from +120 h — so under the old both-ends rule her ribbon stopped at +108 h and the nose cap went unpainted (screenshot 4954, 2026-08-22). The recovered hour reads **+32 kt**, a real number and not a gap. She is also the clearest case of the two halves disagreeing: her atmosphere improves the whole way while the SST potential collapses under her at 38°N, so the intensity forecast falls 70 kt to 24 with the environment at +34. |
 | `26081506CP0126_ships.txt` | **§47.8 acceptance: Lala.** Brief dip then turning for; one term carrying the whole net (cold air aloft 12 of 12 kt); the closer-to-ceiling room case. |
 
 ### 47.11 The legend

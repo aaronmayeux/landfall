@@ -184,16 +184,16 @@ real home is the other row carrying the same section number.
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1815-1945 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 71-72 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 73-89 |
-| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 90-215 |
-| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 216-250 |
-| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 251-445 |
+| `47.2` | &nbsp;&nbsp;Source — SHIPS | `SPEC-NEXT.md` | 90-228 |
+| `47.3` | &nbsp;&nbsp;Ocean heat for the rest of the world — investigated, not adopted | `SPEC-NEXT.md` | 229-263 |
+| `47.4` | &nbsp;&nbsp;What the color means | `SPEC-NEXT.md` | 264-458 |
 | `47.5` | &nbsp;&nbsp;The environment ribbon — the cone, colored by what the environment is worth | `SPEC-MAP.md` | 1441-1723 |
-| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 446-471 |
-| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 472-508 |
-| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 509-854 |
+| `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 459-484 |
+| `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 485-524 |
+| `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 525-870 |
 | `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2763-2860 |
-| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 855-878 |
-| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 879-974 |
+| `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 871-895 |
+| `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 896-991 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 1946-1947 |
 | `48.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 1948-1973 |
 | `48.2` | &nbsp;&nbsp;Source — the advisory paragraph | `SPEC-DATA.md` | 1974-2016 |
@@ -212,24 +212,24 @@ real home is the other row carrying the same section number.
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2349-2381 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2382-2432 |
 | `48.17` | &nbsp;&nbsp;At your house — the point forecast in the storm drawer | `SPEC-UI.md` | 3013-3088 |
-| `49` | Time has a direction | `SPEC-NEXT.md` | 975-976 |
-| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 977-1032 |
-| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1033-1058 |
+| `49` | Time has a direction | `SPEC-NEXT.md` | 992-993 |
+| `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 994-1049 |
+| `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1050-1075 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2226-2311 |
 | `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3137-3159 |
-| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1059-1111 |
-| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1112-1163 |
-| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1164-1282 |
-| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1283-1380 |
-| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1381-1456 |
-| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1457-1474 |
-| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1475-1495 |
-| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1496-1521 |
-| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1522-1545 |
-| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1546-1588 |
-| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1589-1631 |
-| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1632-1711 |
-| `49.17` | &nbsp;&nbsp;A quadrant drawn at zero is a measurement, not an unreadable band | `SPEC-NEXT.md` | 1712-1799 |
+| `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1076-1128 |
+| `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1129-1180 |
+| `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1181-1299 |
+| `49.8` | &nbsp;&nbsp;The chart's left half | `SPEC-NEXT.md` | 1300-1397 |
+| `49.9` | &nbsp;&nbsp;The wind that already reached you | `SPEC-NEXT.md` | 1398-1473 |
+| `49.10` | &nbsp;&nbsp;Moving home is not an edge case | `SPEC-NEXT.md` | 1474-1491 |
+| `49.11` | &nbsp;&nbsp;Fixtures | `SPEC-NEXT.md` | 1492-1512 |
+| `49.12` | &nbsp;&nbsp;Open questions for glass | `SPEC-NEXT.md` | 1513-1538 |
+| `49.13` | &nbsp;&nbsp;The passes | `SPEC-NEXT.md` | 1539-1562 |
+| `49.14` | &nbsp;&nbsp;The rungs that describe the past | `SPEC-NEXT.md` | 1563-1605 |
+| `49.15` | &nbsp;&nbsp;A wind band is one field, not two halves | `SPEC-NEXT.md` | 1606-1648 |
+| `49.16` | &nbsp;&nbsp;A GDACS storm gets the same wind countdown | `SPEC-NEXT.md` | 1649-1728 |
+| `49.17` | &nbsp;&nbsp;A quadrant drawn at zero is a measurement, not an unreadable band | `SPEC-NEXT.md` | 1729-1816 |
 | `50` | National agency alerts — what the rest of the world publishes | `SPEC-DATA.md` | 2433-2439 |
 | `50.1` | &nbsp;&nbsp;Why this exists, and what it deliberately is not | `SPEC-DATA.md` | 2440-2487 |
 | `50.2` | &nbsp;&nbsp;The payload, and the geometry we refuse | `SPEC-DATA.md` | 2488-2507 |
@@ -251,9 +251,9 @@ real home is the other row carrying the same section number.
 | `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3128-3166 |
 | `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 3089-3136 |
 | `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3167-3214 |
-| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1800-1837 |
-| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1857-1889 |
-| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1890-1926 |
+| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1817-1854 |
+| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 1874-1906 |
+| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 1907-1943 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
 | `55` | Known and accepted | `SPEC.md` | 2341-2480 |
 
@@ -263,7 +263,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 191,964 | 55 |
 | `SPEC-MAP.md` | 262,044 | 43 |
-| `SPEC-NEXT.md` | 121,628 | 29 |
+| `SPEC-NEXT.md` | 123,802 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
 | `SPEC-UI.md` | 186,151 | 14 |
 | `SPEC.md` | 172,954 | 15 |

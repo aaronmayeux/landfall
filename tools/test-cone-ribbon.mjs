@@ -59,9 +59,18 @@ const MAJOR = runOf('26072706EP0726_ships.txt');
 /* No forecast position at all past hour 0, while still publishing winds. The
  * run-exists-but-nothing-to-draw case. */
 const NO_POSITION = runOf('26060618EP9126_ships.txt');
-/* Position runs to +120 h, wind stops at +84 h — the file where the two
- * definitions of "drawable" disagree by 22 kt. */
+/* Position runs to +120 h, wind stops at +84 h — the file the two definitions
+ * of "drawable" disagreed on by 22 kt, SETTLED position-only on 2026-08-22
+ * (§47.2). It now draws all twelve hours, so it is the fixture that proves the
+ * wind row no longer gates anything. */
 const SPLIT_ENDS = runOf('26061618EP9326_ships.txt');
+/* ==> THE RUN-STOPS-SHORT FIXTURE, AND IT HAD TO CHANGE. <== §47.6's cap rule
+ * needs a file whose POSITIONS end before the cone does, and EP9326 used to
+ * stand in for that because its WIND ended early. Under the position-only rule
+ * it no longer stops short of anything, so the case needs a file that really
+ * does: EP0726's 2026-08-02 18Z run loses its positions at +72 h. Substituting
+ * one that only LOOKED short would have left §47.6 asserted against nothing. */
+const SHORT_POSITIONS = runOf('26080218EP0726_ships.txt');
 
 /* ---------------------------------------------------------------------------
  * 1. THE RAMP
@@ -163,11 +172,21 @@ ok(NO_POSITION.drawableHours === 0,
 ok(SPLIT_ENDS.lastWindHr !== SPLIT_ENDS.lastPositionHr,
   'the split-ends fixture really does end its two rows at different hours');
 ok(SPLIT_ENDS.drawable[SPLIT_ENDS.hours.indexOf(SPLIT_ENDS.lastWindHr)] === true,
-  'the last hour with BOTH a wind and a position is drawable');
+  'the last hour with both a wind and a position is drawable');
 {
+  /* ==> THE RULE CHANGED HERE ON 2026-08-22 AND THIS IS THE ASSERTION THAT
+   * SAYS SO. <== An hour with a POSITION and no wind used to be undrawable, and
+   * that is what left a grey blob on the end of Lala's cone. The environment is
+   * the sum of the ten environment rows; the wind row is the intensity model's
+   * own answer and is not evidence about them. */
   const past = SPLIT_ENDS.hours.find((h) => h > SPLIT_ENDS.lastWindHr);
-  ok(environmentAtHour(SPLIT_ENDS, past) === null,
-    'and an hour with a position but no wind is not — §47.2\'s rule, applied where the two disagree by 22 kt');
+  ok(Number.isFinite(environmentAtHour(SPLIT_ENDS, past)),
+    'and an hour with a position but NO wind is drawable too — the position alone decides');
+  ok(environmentAtHour(SPLIT_ENDS, SPLIT_ENDS.lastPositionHr) === -52,
+    'which is how its worst reading becomes -52 kt where the old rule showed -30');
+  const pastPos = SPLIT_ENDS.hours.find((h) => h > SPLIT_ENDS.lastPositionHr);
+  ok(environmentAtHour(SPLIT_ENDS, pastPos) === null,
+    'past the last POSITION it still stops — that end is unchanged');
 }
 
 /* ---------------------------------------------------------------------------
@@ -510,8 +529,9 @@ section('the caps — the two ends that are not ribs');
    * in the season lost their positions before +120 h. The ribbon must stop
    * mid-cone with plain fill beyond it, and painting the far cap would jump
    * that gap and put confident color on the one stretch we know nothing
-   * about. SPLIT_ENDS stops its winds at +84 h while its cone runs to +120. */
-  const short = buildRibbon({ ribs, caps, forecast: fakeForecast(), run: SPLIT_ENDS, stops: STOPS });
+   * about. SHORT_POSITIONS loses its positions at +72 h while its cone runs to
+   * +120 — a real short run, not one that merely lost its wind row. */
+  const short = buildRibbon({ ribs, caps, forecast: fakeForecast(), run: SHORT_POSITIONS, stops: STOPS });
   ok(short.status === 'ok', 'the short run still paints what it has');
   const shortLast = short.features[short.features.length - 1].geometry.coordinates[0];
   ok(Math.max(...lons(shortLast)) <= ribs[ribs.length - 1].lon,
