@@ -494,6 +494,9 @@ section('every cone Ida ever published');
   const swept = [];
   const measured = [];
   const blind = [];
+  /* Kept so the constructed-refusal block below works the SAME pairs this loop
+   * saw, rather than re-reading and re-smoothing them into a second answer. */
+  const corpusPairs = [];
   let crossed = 0;
   let outside = 0;
   let unusable = 0;
@@ -544,6 +547,7 @@ section('every cone Ida ever published');
     if (feats.length !== 1 || feats[0].geometry.type !== 'LineString') continue;
     const track = feats[0].geometry.coordinates;
     const rings = poly.geometry.coordinates;
+    corpusPairs.push([track, rings]);
 
     const out = sweepConeDetail(track, rings);
     if (out) {
@@ -590,12 +594,40 @@ section('every cone Ida ever published');
   ok(blind.length === 0,
      `every advisory yields stations to slice — ${swept.length} swept, ${measured.length} measured${blind.length ? `, ${blind.length} blind (${blind.join(', ')})` : ''}`);
 
-  /* ==> AND THE CORPUS MUST STILL CONTAIN BOTH PATHS. <== If a future change
-   * makes the sweep accept everything, `measured` goes to zero and every
-   * assertion above passes while the path they were written for stops being
-   * exercised at all — a suite that quietly tests nothing. */
-  ok(measured.length > 0 && swept.length > 0,
-     `and both paths are exercised (${swept.length} swept, ${measured.length} measured)`);
+  /* ==> AND BOTH PATHS MUST STILL BE EXERCISED. <== The warning this comment
+   * used to carry came true: "if a future change makes the sweep accept
+   * everything, `measured` goes to zero and every assertion above passes while
+   * the path they were written for stops being exercised at all".
+   *
+   * §7.9's loop cut is that change. The old wall-fold veto turned away a third
+   * of Ida's advisories; the sweep now takes all of them, which is the whole
+   * point — those refusals were taking §47.5's environment ribbon down with
+   * them. `measured` from this corpus is therefore expected to be ZERO now.
+   *
+   * The measure path is exercised deliberately instead, on a track trimmed to
+   * its last 30% so most of the published cone sits behind the first station
+   * and `CONE_SWEEP.minAheadFrac` turns the sweep away. Constructed, because
+   * the corpus no longer volunteers one. */
+  ok(swept.length > 0,
+     `the sweep path is exercised (${swept.length} swept, ${measured.length} measured)`);
+
+  {
+    let forcedRefusal = 0;
+    let forcedMeasured = 0;
+    for (const [track, rings] of corpusPairs) {
+      const tail = track.slice(Math.floor(track.length * 0.7));
+      if (tail.length < 3) continue;
+      if (sweepConeDetail(tail, rings)) continue;
+      forcedRefusal++;
+      const m = measureConeRibs(tail, rings);
+      if (m && m.ribs.some((r) => r.ok)) forcedMeasured++;
+    }
+    ok(forcedRefusal > 0,
+       `a refusal can still be constructed — ${forcedRefusal} of the corpus decline on a trimmed track`);
+    ok(forcedMeasured === forcedRefusal,
+       'and EVERY cone the sweep declines is still measurable — that is the whole '
+       + `reason the two gates are separate (${forcedMeasured}/${forcedRefusal})`);
+  }
 
   ok(outside === 0, 'every measured rib end lands ON the outline it was measured from, within a metre');
   ok(unusable === 0,

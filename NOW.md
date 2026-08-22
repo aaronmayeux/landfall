@@ -177,6 +177,53 @@ Moke's fall inside the drawn band; at 0.8x radius, 95.8% and 76.2%. That is the
 documented smoothing shrink plus §5's run-break rule refusing to sweep across a
 time NHC published no ring for. Both deliberate.
 
+**THE CONE DRAWING OFF OLD DATA — FIXED, NEEDS GLASS.** 2026-08-22. Aaron on
+the phone: the cone was not aligning with the storm's current position. **He was
+right.** The app was drawing NHC's PUBLISHED outline, whose apex sits at the
+stale analysis position — advisory 36A's tip at 26.65N against the storm at
+28.60N, **135 miles behind**.
+
+**We only saw the published shape because the §7.9 rebuild was declining.** Two
+reasons, and one of them was mine:
+
+- **The walls folded, and that was the wrong question.** The old guard refused
+  whenever an edge stepped backwards against the track. The harm is a RING that
+  crosses itself. Measured: Lala's flanks fold and her assembled ring does NOT
+  cross. The ring is asked directly now and any loop is cut (`lib/unloop.js`,
+  extracted because §7.12's wind swath is the other caller).
+- **==> THE UNDERCUT GUARD BROKE WHEN §7.11 MOVED THE TRACK'S START, AND THAT
+  WAS MY REGRESSION. <==** A cone redrawn along a track starting at the storm
+  cannot cover the published cone's tail: **1.62 deg undercut against a 1.27
+  allowance**, where before the re-anchor it was 0.12. The guard now asks its
+  question only where the track actually goes, skipping published vertices
+  behind the first station.
+
+**THE COST IS ACCEPTED (Aaron, 2026-08-22):** the drawn cone is SMALLER than
+NHC's, by whatever the feed is ahead of the advisory. What is dropped is
+uncertainty about hours that already happened. `CONE_SWEEP.minAheadFrac` is the
+backstop — under half the cone ahead of the storm and it falls back to the
+published outline rather than presenting a sliver as the whole forecast.
+
+**THE SIDE EFFECT IS BIGGER THAN THE CONE.** The fold veto was refusing **12 of
+Ida's 35 advisories**, and every refusal put §47.5's environment ribbon on the
+fallback path. **All 35 rebuild now.** That is the ribbon Aaron watched come and
+go on Lala, 2026-08-18.
+
+Measured on Lala: cone apex moves from 135 miles behind the storm to 33, which
+is its own rounded start cap. `SPEC-MAP.md` §7.9, `CONE_SWEEP.minAheadFrac` /
+`maxLoopCuts`.
+
+**WHAT TO LOOK AT ON GLASS:** the cone's narrow tail should start AT the white
+ring with a rounded nose, not hook down past it. And the environment ribbon
+should stay put on a recurving storm instead of vanishing and returning.
+
+**TWO SUITES CHANGED SHAPE AND THAT IS NOT A REGRESSION.**
+`tools/test-cone-sweep.mjs` and `test-cone-smooth.mjs` both hunted the Ida corpus
+for a naturally-declining advisory. There are none left. Both had warned in
+their own comments that a change accepting everything would leave them testing
+nothing; the refusal is now CONSTRUCTED (a track trimmed to its last 30% trips
+`minAheadFrac`) rather than found.
+
 **THE PERF AUDIT WENT GREEN HAVING MEASURED NOTHING, TWICE OVER.** Two runs
 2026-08-21. The 21:11 run crashed at exit 2, wrote no JSON, and every step after
 it no-opped by design — artifact warned, branch push hit its `test -f || exit 0`,

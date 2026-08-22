@@ -4479,6 +4479,31 @@ export const CONE_SWEEP = Object.freeze({
    *  cone that does not belong to this track — and falls back. */
   undercutSlack: 0.5,
   undercutFloorDeg: 0.02,
+
+  /** ==> HOW MUCH OF THE PUBLISHED CONE MUST STILL LIE AHEAD OF THE STORM. <==
+   *
+   *  The undercut guard above skips published vertices sitting BEHIND the first
+   *  station, because §7.11 puts that station on the storm's real position and
+   *  a lagged advisory's cone starts where the storm WAS. That skip is right
+   *  for a tail and wrong for a whole cone: past some point the advisory is old
+   *  enough that its shape says almost nothing about where the storm is going,
+   *  and redrawing the sliver that remains would present a fragment as the
+   *  whole forecast.
+   *
+   *  Half. Measured on Lala 2026-08-22, the worst real lag seen so far — nine
+   *  hours, apex 135 miles back — left well over 90% of the published outline
+   *  still ahead of her. A cone with less than half of itself in front of the
+   *  storm is a different situation from anything measured, and falls back to
+   *  the published outline, which carries its own age stamp (§4). */
+  minAheadFrac: 0.5,
+
+  /** Self-intersection loops one rebuilt cone may have cut out before it is
+   *  refused instead. Same guard, same reasoning and the same file as
+   *  `WIND_SWEEP.maxLoopCuts` — both are offset curves and both fold the same
+   *  way (lib/unloop.js). Kept as a separate number rather than shared because
+   *  a cone and a wind corridor have different shapes and there is no reason
+   *  their budgets must move together. */
+  maxLoopCuts: 8,
 });
 
 

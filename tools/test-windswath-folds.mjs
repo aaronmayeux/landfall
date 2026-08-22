@@ -52,10 +52,10 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { buildFullTrack, __internals } = await import('../lib/windswath.js');
+const { buildFullTrack } = await import('../lib/windswath.js');
 const { WIND_SWEEP } = await import('../config/constants.js');
 const { parseNhcValidtime } = await import('../lib/time.js');
-const { segCross, firstCrossing, cutLoop, ringArea2 } = __internals;
+const { segCross, firstCrossing, cutLoop, ringArea2 } = await import('../lib/unloop.js');
 
 const S = 'samples/lala-cp012026';
 const feats = (f) => JSON.parse(readFileSync(`${S}/${f}`, 'utf8')).features;

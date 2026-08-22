@@ -1056,11 +1056,68 @@ the model-based design, feeding it garbage widths, and is the likeliest reason
 it refused itself on every storm.
 
 **It refuses rather than draws** when the track cannot see the cone at 60% of its
-stations, when a flank would fold through itself on a tight recurve, when the
-outline is degenerate, or when the rebuild sits deeper inside the published cone
-than the blur window can account for. **Every refusal is said once on the
+stations, when the assembled ring still crosses itself after `maxLoopCuts`, when
+the outline is degenerate, when the rebuild sits deeper inside the published cone
+than the blur window can account for, or when less than `minAheadFrac` of the
+published cone lies ahead of the storm. **Every refusal is said once on the
 console** — the first version fell back silently, which is indistinguishable
 from running and being no good, and cost a full round of work to notice.
+
+#### The ring is asked, not the walls (2026-08-22)
+
+**This refused on a flank that FOLDED, and that was the wrong question.** A
+`folds` helper asked whether either edge ever stepped backwards against the
+track's own direction. Good smell, wrong harm: the harm is a RING that crosses
+itself, because MapLibre fills the doubled-over region as a hole.
+
+Measured on Lala's archived bytes: her flanks fold on the recurve and **the
+assembled ring does not cross itself**. A wall can reverse into a cusp without
+the boundary ever crossing. So the rebuild was turning away a shape that was
+perfectly safe to draw.
+
+The ring is now assembled first and asked directly, and any loop it does carry is
+CUT (`lib/unloop.js`, shared with §7.12's wind swath — both are offset curves and
+both fold the same way). Refusal is kept for a ring still crossing after
+`CONE_SWEEP.maxLoopCuts`: that is a shape nobody has measured, and a cone with a
+hole in it is worse than the published one.
+
+**THE COST OF THE OLD VETO WAS BIGGER THAN THE CONE.** Across Ida's 35
+advisories it refused 12. Every one of those took §47.5's environment ribbon onto
+the fallback path with it — which is what Aaron saw come and go on Lala
+(2026-08-18). **All 35 now rebuild**, and none of them crosses itself.
+
+#### The published cone's tail is behind the storm, and is not ours to cover
+
+§7.11 moved the forecast track's start onto the storm's real position. The
+published cone still starts at the ANALYSIS position, which on a lagged advisory
+is a long way back: measured on Lala 2026-08-22, advisory 36A's apex sat at
+26.65°N while the feed had her at 28.60°N — **135 miles ahead**.
+
+A cone redrawn along the track cannot cover ground the track no longer crosses,
+so the undercut guard read that as a **1.62° undercut against a 1.27° allowance**
+and refused an otherwise sound rebuild. Before the re-anchor the same measurement
+was 0.12°. **That regression arrived with §7.11 and is recorded rather than
+quietly patched over.**
+
+**The guard now asks its question only where the track actually goes.** A
+published vertex whose projection falls behind the first station is skipped;
+everything from the storm forward is checked exactly as before, so the guard's
+real job — catching a cone that does not belong to this track — is untouched.
+
+**THE COST IS REAL AND IT IS ACCEPTED (Aaron, 2026-08-22).** The drawn cone is
+SMALLER than the one NHC published, by whatever the feed is ahead of the
+advisory. What is dropped is the uncertainty about hours that have already
+happened — water the storm has crossed — and nobody is at risk from a claim about
+where it might have been yesterday. Drawing it would be §7.11's lie in a third
+place. Measured effect on Lala: the drawn cone's apex moves from 135 miles behind
+the storm to 33, which is its own rounded start cap.
+
+**`CONE_SWEEP.minAheadFrac` is the backstop.** A cone with less than half of
+itself in front of the storm is a different situation from anything measured —
+the advisory is old enough that its shape says little about where the storm is
+going — and it falls back to the published outline, which carries its own age
+stamp (§4). Presenting a sliver as the whole forecast would be the §5 failure
+this skip could otherwise cause.
 
 **A REFUSAL COSTS THE DRAWING NOTHING AND MUST NOT COST THE MEASUREMENT
 EITHER.** `lib/cone-measure.js` `measureConeRibs` is the second path, taken by
@@ -1105,9 +1162,18 @@ recorded in `lib/cone-measure.js`: clipping to a half-plane self-intersects on a
 hooked cone, and the rebuild's half-ellipse sat up to 17.5 km off the ring
 actually on screen.
 
-**Measured across every Ida advisory (35 cones, `samples/ida-al092021/gis`):** 23
-rebuild, 12 are measured, none are blind, and every one colors 100.0% of its cone
-with no slice sitting outside the drawn outline and none crossing itself.
+**Measured across every Ida advisory (35 cones, `samples/ida-al092021/gis`):**
+**all 35 rebuild** since the loop cut replaced the fold veto (it was 23 rebuilt
+and 12 measured), none are blind, and every one colors 100.0% of its cone with no
+slice sitting outside the drawn outline and none crossing itself.
+
+**The corpus no longer volunteers a refusal, so the fallback path is now
+exercised deliberately** — `tools/test-cone-sweep.mjs` and
+`tools/test-cone-smooth.mjs` trim a track to its last 30%, which puts most of the
+published cone behind the first station and trips `minAheadFrac`. Both suites had
+warned in their own comments that a change accepting everything would leave them
+silently testing nothing; this is that change, and the warning was honoured
+rather than deleted.
 
 **THE REBUILD'S BAR STAYS HIGH, AND ONE ATTEMPT TO LOWER IT IS WORTH THE
 PARAGRAPH.** The fold guard was found to be refusing a third of Ida's advisories
@@ -1764,6 +1830,10 @@ treats the doubled-over region as outside. Measured: cutting the loops raised
 the share of published wind-rose boundary points falling INSIDE the drawn band
 from 77.8% to 78.8% while total area fell 0.85%. Less area, more coverage.
 
+- **The cutter lives in `lib/unloop.js`, not here.** §7.9's cone rebuild is the
+  second caller — both are offset curves and both fold the same way, and two
+  copies of this maths could drift into a wind band that cleans up beside a cone
+  that does not.
 - **A uniform spatial grid finds the crossings, not an index window.** An index
   window is a guess: too small and a wide fold draws, too large and the O(n²) is
   back. The measured folds spanned 5 to 90 vertices and nothing says the next

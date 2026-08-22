@@ -359,6 +359,18 @@ section('a rebuild that declines still hands over stations');
   let refusedCone = null;
   let refusedTrack = null;
 
+  /* ==> THE DECLINE IS NOW CONSTRUCTED, NOT FOUND. <== This block used to hunt
+   * the corpus for an advisory the sweep happened to turn away, and there were
+   * plenty: the old wall-fold veto refused a third of Ida's. §7.9's loop cut
+   * removed that veto and the sweep now accepts all 35, which is the point of
+   * that change and would have left this block silently testing nothing — the
+   * exact failure its own header warns about.
+   *
+   * So a refusal is MADE, using the gate that is hardest to reach by accident:
+   * a track trimmed to its last 30% starts deep inside the published cone, so
+   * most of that cone lies BEHIND the first station and `CONE_SWEEP.minAheadFrac`
+   * turns it away. The cone is still perfectly measurable, which is precisely
+   * the situation this block exists for. */
   for (const d of fs.readdirSync(idaDir).sort()) {
     const pg = `${idaDir}/${d}/5day_pgn.geojson`;
     const ln = `${idaDir}/${d}/5day_lin.geojson`;
@@ -373,14 +385,20 @@ section('a rebuild that declines still hands over stations');
     );
     const feats = sm.layers.forecastTrack.fc.features;
     if (feats.length !== 1 || feats[0].geometry.type !== 'LineString') continue;
-    if (sweepConeDetail(feats[0].geometry.coordinates, poly.geometry.coordinates)) continue;
+
+    const full = feats[0].geometry.coordinates;
+    const tail = full.slice(Math.floor(full.length * 0.7));
+    if (tail.length < 3) continue;
+    if (sweepConeDetail(tail, poly.geometry.coordinates)) continue;
+
+    feats[0].geometry.coordinates = tail;
     refusedCone = poly;
     refusedTrack = sm;
     break;
   }
 
   ok(!!refusedCone,
-     'the corpus still contains an advisory the rebuild declines — without one this block proves nothing');
+     'a declining case could be constructed — without one this block proves nothing');
 
   if (refusedCone) {
     const bundle = smoothCone({
