@@ -3497,6 +3497,27 @@ export const WIND_SWEEP = Object.freeze({
    *  fold vertices bunch far below step spacing; honest vertices sit at
    *  it. */
   spikeMaxSegNm: 6,
+
+  /** ==> HOW MANY SELF-INTERSECTION LOOPS ONE RING MAY HAVE CUT OUT. <==
+   *
+   *  The despike above only removes HAIRLINE folds — a sharp turn on short
+   *  segments. It cannot see a genuine crossing: offset a curve inward by
+   *  more than its own radius of curvature and the wall loops round and
+   *  crosses itself, over tens of vertices, at honest step spacing. That is
+   *  a real self-intersection, not a spike, and it drew as the fins and
+   *  spurs Aaron reported on 2026-08-21.
+   *
+   *  MEASURED on the archived bytes, before the cut: Lala's 34 kt ring
+   *  carried 3 crossings enclosing 90, 41 and 25 vertices; 50 kt carried 3
+   *  (52, 25, 5); one 64 kt run carried 1 (26). Every one sat between 27.8N
+   *  and 30.4N — the recurve.
+   *
+   *  Eight is far above the six a real storm produced and far below a
+   *  runaway. This is a GUARD, not a tuning dial: hitting it means the cut
+   *  is not converging, and the ring is emitted with a warning rather than
+   *  the loop pass spinning. Raising it to hide a warning would be treating
+   *  the symptom. */
+  maxLoopCuts: 8,
 });
 
 /* ---------------------------------------------------------------------------

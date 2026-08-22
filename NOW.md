@@ -84,8 +84,11 @@ wall clock.
 **BUG 3 (model tracks not starting at the current-position dot) IS STILL
 BLOCKED UNTIL THAT RUN.** No deck bytes, nothing to read, do not start it.
 
-**THE PAST TRACK DOUBLING BACK — ROOT CAUSE FOUND, FIXED, NEEDS GLASS.**
-2026-08-22. Aaron, on the a3fb3b4 build: the dotted past track still ran past
+**THE PAST TRACK DOUBLING BACK — CONFIRMED ON GLASS BY AARON. Closed.**
+Deployed at bed43ba, checked on the phone 2026-08-22: past and forecast tracks
+both draw correctly on Lala and Moke. The mechanism is `SPEC-MAP.md` §7.11 and
+§7.4. Do not reopen. What follows is the diagnosis, kept until the next session
+reads it once. 2026-08-22. Aaron, on the a3fb3b4 build: the dotted past track still ran past
 the white ring and stopped near the SECOND forecast dot, model guidance off.
 
 **His read was right and it broke the case open.** There IS a point next to that
@@ -117,9 +120,8 @@ fit a stale forecast would delete two verified positions to tidy a line.
 mutations verified. Confirmed on Lala AND Moke: overshoot 1.20° and 0.70° both
 to 0.00°.
 
-**WHAT TO LOOK AT ON GLASS:** on any NHC storm, unselected and selected, the
-dotted past track runs forward into the white ring and stops. The ring sits on
-the storm, not behind it. Nothing doubles back.
+**CONFIRMED ON GLASS.** The dotted past track runs forward into the white ring
+and stops; the ring sits on the storm; nothing doubles back.
 
 **THE OVERTAKEN-FORECAST CONSOLE LINE SHOULD NOW BE SILENT.** It fired on every
 NHC storm before this. If you still see "the past track has most likely
@@ -132,15 +134,48 @@ Layer 11 sent the final past-track leg twice on both storms (`objectid` 742/743,
 same pass also stays — it is the backstop for a hairpin the re-anchor cannot
 remove. SPEC-MAP.md §7.4.
 
-**THE WIND SWATH DRAWS FINS AND SPURS — NOT STARTED, SCOPED ON ITS OWN.**
-Reported 2026-08-21 zoomed in on Lala. **Not caused by the track work** — the
-swath is built in `data/nhc-mapserver.js` -> `lib/windswath.js` from NHC's
-published quadrant polygons and never reads the smoothed track. One measured
-fact worth keeping: archived advisory 36A carries forecast POINTS timed
-21/0900, 21/1800, 22/0600 (a 09Z cycle) against wind SWATH polygons timed
-2026082112, 2026082121, 2026082209 (a 06Z synoptic). Same advisory number, two
-clocks. **Whether that causes the fins is UNPROVEN.** Do not work it in the same
-pass as anything else.
+**THE WIND SWATH'S FINS — ROOT CAUSE FOUND, FIXED, NEEDS GLASS.** 2026-08-22.
+Aaron zoomed in on Lala: the bands carried fins, spurs and slivers instead of
+reading as continuous corridors. **One symptom, two causes, proven separate.**
+
+- **The timeline folded back.** The swath lays centres out past -> current ->
+  forecast by tau, and dropped forecast tau 0 before splicing because the
+  analysis hour sits behind the storm. That reasoning was right and the list was
+  one entry long: on a nine-hour-stale advisory **tau 12 is behind the storm
+  too**. The spine ran current 28.6N -> tau-12 28.1N -> tau-24 29.8N. Half a
+  degree backwards against a corridor 130-160 nm wide, and both walls crossed.
+  Every expired hour is dropped now, on the centre's own clock, with the old
+  tau-0 rule kept as the fallback when no clock is readable.
+- **The offset walls crossed themselves.** Offset a curve inward past its own
+  radius of curvature and it self-intersects over tens of vertices at honest
+  spacing with gentle turns — every local test passes, and the existing despike
+  only sees hairlines. Measured on Lala's recurve: 34 kt crossed 3 times (loops
+  of 90, 41, 25 vertices), 50 kt 3 times, one 64 kt run once. A spatial grid
+  finds the crossing; the larger piece by area survives.
+
+**==> A SELF-INTERSECTING BAND WAS NOT JUST UGLY, IT WAS PUNCHING HOLES. <==**
+Fill treats the doubled-over region as outside. Cutting the loops raised
+published-wind coverage from 77.8% to 78.8% while area FELL 0.85%.
+
+`SPEC-MAP.md` §7.12, `WIND_SWEEP.maxLoopCuts`,
+`tools/test-windswath-folds.mjs`, five mutations verified. Fixtures are real
+archived bytes; the past wind field is deliberately excluded as a megabyte that
+the fault reproduces without.
+
+**WHAT TO LOOK AT ON GLASS:** zoom into Lala or any recurving storm. Each wind
+band should read as ONE continuous blob — no slivers crossing it, no triangular
+fins hanging off it, no thin spurs. Green, orange and red should nest inside
+each other cleanly.
+
+**IF YOU SEE THE CONSOLE SAY "a band still crosses itself after 8 loop cuts",
+that is a finding.** It means a shape nobody has measured. The band is drawn
+anyway rather than dropped.
+
+**KNOWN AND NOT CHASED, so it is not rediscovered as a bug:** sampled at their
+exact published radius, 78.8% of Lala's wind-rose boundary points and 65.1% of
+Moke's fall inside the drawn band; at 0.8x radius, 95.8% and 76.2%. That is the
+documented smoothing shrink plus §5's run-break rule refusing to sweep across a
+time NHC published no ring for. Both deliberate.
 
 **THE PERF AUDIT WENT GREEN HAVING MEASURED NOTHING, TWICE OVER.** Two runs
 2026-08-21. The 21:11 run crashed at exit 2, wrote no JSON, and every step after

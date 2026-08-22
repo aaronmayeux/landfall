@@ -541,7 +541,7 @@ export async function fetchStormGeometry(storm) {
     forecastRadii: layers.windSwath?.status === 'ok' ? layers.windSwath.fc.features : [],
     forecastPoints: layers.forecastPoints?.status === 'ok' ? layers.forecastPoints.fc.features : [],
     currentPos: Number.isFinite(storm.lat) && Number.isFinite(storm.lon)
-      ? { lat: storm.lat, lon: storm.lon }
+      ? { lat: storm.lat, lon: storm.lon, at: storm.observedAt ?? null }
       : null,
   };
 

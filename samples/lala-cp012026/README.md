@@ -122,3 +122,30 @@ instead of doubling back 83 miles to reach it.
 
 **Do not refresh these against a newer advisory.** The moment NHC's two clocks
 line up, nothing here reproduces.
+
+---
+
+## `wind-swath-038-recurve.geojson` + `wind-current-038.geojson`
+
+Same 2026-08-21T23:30Z archive run. NHC's per-tau, per-threshold quadrant
+polygons (22 features) and the current-position wind field. These are what
+`tools/test-windswath-folds.mjs` builds a corridor from.
+
+**Two things in these bytes matter.**
+
+1. **The features arrive out of tau order.** Index 6 is tau 48 sitting between
+   tau 12 and tau 24. `buildFullTrack` sorts, but a fixture tidied into order
+   would stop testing that it does.
+2. **Two clocks in one advisory.** The wind roses carry `validtime` 2026082112,
+   2026082121, 2026082209 against `synoptime` 2026082106 — a 06Z synoptic —
+   while the forecast POINTS for the same advisory 36A run on a 09Z cycle. The
+   swath is ordered by the CENTRE's hour, not the rose's, and that distinction
+   only exists because these two disagree.
+
+**The past wind field is deliberately NOT here.** It is a megabyte and the fault
+reproduces without it. On the full tiers the timeline fix alone leaves one
+folding band on Lala and the loop cut clears it — measured, recorded in
+`SPEC-MAP.md` §7.12, and not reproducible from the repo by design.
+
+**Do not refresh these against a newer advisory.** The moment NHC's two clocks
+line up, the timeline stops folding and nothing here reproduces.

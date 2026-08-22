@@ -1688,12 +1688,112 @@ something.
 asserts that the raw bytes still reproduce the fault — if NHC's clocks ever line
 up, the suite says so rather than passing vacuously.
 
-**Still open, and NOT a subsection of this one:** the wind swath draws fins and
-spurs at close zoom. Reported the same evening, not caused by this, and it reads
-from NHC's published quadrant polygons rather than from the track. The archived
-advisory carries forecast POINTS on a 09Z cycle against wind SWATH polygons on a
-06Z one — two clocks again, but whether that is the cause is UNPROVEN. It gets
-its own number when it gets a fix; do not fold it in here.
+**The same fact arrives through a second door in §7.12.** The wind swath builds
+its own timeline and had the same stale hours folding it back. Fixed there
+separately, because the swath never reads this module's output.
+
+
+### 7.12 The wind swath's two folds — the timeline, and the walls
+
+`lib/windswath.js`, built at parse time in `data/nhc-mapserver.js`. It never
+reads the smoothed track (§7.4) — it is assembled from NHC's published quadrant
+polygons and the centres they hang on.
+
+**Aaron on glass, 2026-08-21: the bands carried fins, spurs and slivers instead
+of reading as continuous corridors.** One symptom, two causes, proven separate.
+
+#### Fault 1 — the timeline folded back on itself
+
+The swath lays its centres out in travel order: past fixes, then the feed's
+current position, then the forecast by ascending tau. The old rule dropped
+forecast tau 0 before splicing, on the stated reasoning that the synoptic
+analysis sits BEHIND the current position and inserting it after would fold the
+timeline. **That reasoning was exactly right and the list was one entry long.**
+
+Measured on the archived bytes: the feed had Lala at 28.6N at 21:00Z while
+advisory 36A, published nine hours earlier, ran tau 0 at 26.9N *and tau 12 at
+28.1N*. Dropping tau 0 alone left the spine going
+
+```
+current 28.6N  ->  tau-12 28.1N  ->  tau-24 29.8N
+```
+
+Half a degree backwards, against a corridor 130-160 nm wide. Both walls swung
+round and crossed.
+
+**Every forecast hour behind the current position is dropped now, not just tau
+0.** Decided on the centre's own valid hour against the feed's `observedAt`,
+which `data/nhc-mapserver.js` passes in as `currentPos.at`. **Time first, tau as
+the fallback** — a source publishing no usable clock keeps the old tau-0
+behaviour exactly, because an absent time is not evidence an hour has passed.
+
+The centre's hour, not the wind rose's. NHC published this advisory with
+forecast POINTS on a 09Z cycle and wind RADII on a 06Z synoptic; ordering the
+timeline by one clock and placing it by the other is how this gets subtly wrong
+in a way nobody sees.
+
+**This is §7.11's fact arriving through a second door.** A forecast hour that
+has already happened is not a forecast, wherever it is being drawn. The two
+modules fix it independently because the swath does not read the track.
+
+#### Fault 2 — the offset walls crossed themselves
+
+Offset a curve inward by more than its own radius of curvature and the wall
+swings round and genuinely crosses itself, over tens of vertices, at honest step
+spacing with gentle per-vertex turns. **Every local test passes.** The existing
+despike only sees a hairline fold — a near-reversal on sub-step segments — and
+is blind to this.
+
+Measured before the fix, all of it between 27.8N and 30.4N, Lala's recurve:
+
+| band | crossings | loops enclosing |
+|---|---|---|
+| 34 kt | 3 | 90, 41, 25 vertices |
+| 50 kt | 3 | 52, 25, 5 vertices |
+| 64 kt (one run) | 1 | 26 vertices |
+
+**Cutting the loop is the correct answer, not a cosmetic one.** The region the
+ring describes is the UNION of every wind rose along the path. On the inside of
+a tight turn, the boundary of that union is the ENVELOPE of the offset curve —
+the offset curve with its self-intersection loops trimmed. The loop is an
+artefact of tracing a boundary the swept area never had, and every point inside
+a cut loop is still inside the ring, claimed by the samples either side.
+
+**A self-intersecting ring was not merely ugly — it was punching holes.** Fill
+treats the doubled-over region as outside. Measured: cutting the loops raised
+the share of published wind-rose boundary points falling INSIDE the drawn band
+from 77.8% to 78.8% while total area fell 0.85%. Less area, more coverage.
+
+- **A uniform spatial grid finds the crossings, not an index window.** An index
+  window is a guess: too small and a wide fold draws, too large and the O(n²) is
+  back. The measured folds spanned 5 to 90 vertices and nothing says the next
+  storm's sit in that range. Bucketing by position has no such parameter.
+- **The larger piece wins, by area.** A crossing splits the ring in two; which
+  is the storm and which is the artefact is decided by comparing areas, never by
+  assuming the loop is the shorter run of indices. That assumption holds for
+  every fold measured here and would fail silently the day it did not.
+- **`WIND_SWEEP.maxLoopCuts` is a guard, not a dial.** Eight, against the six a
+  real storm produced. Hitting it means the cut is not converging: the band is
+  drawn as it is — a slightly wrong band beats a missing one (§5) — and it says
+  so on the console. Raising it to silence a warning would be treating the
+  symptom.
+
+#### Both are needed
+
+On the repo fixture (forecast and current tiers) fix 1 alone clears every fold.
+On the FULL tiers, past wind field included, fix 1 alone leaves one folding band
+on Lala and the cut clears it. `tools/test-windswath-folds.mjs` asserts fault 1
+end-to-end and exercises the cut on constructed rings, where its behaviour can
+be reasoned about exactly.
+
+**KNOWN AND NOT CHASED.** Sampling published wind-rose boundaries at their exact
+radius, 78.8% of Lala's and 65.1% of Moke's fall inside the drawn band; at 0.8x
+radius that is 95.8% and 76.2%. The shortfall is the documented smoothing shrink
+(a smoothed radius can never exceed a published one — Aaron's stated trade,
+smoothness over accuracy) plus §5's run-break rule, which refuses to sweep a
+threshold across a time NHC published no ring for. Moke's lower figure is the
+run-break rule doing its job. Neither is a bug; both are recorded so the numbers
+are not rediscovered as one.
 
 
 ## 9. Design
