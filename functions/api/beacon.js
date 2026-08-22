@@ -326,7 +326,7 @@ function refHostStr(value) {
  *  a client cannot import this file and this file cannot import the client's,
  *  so the two are kept in step by hand and by
  *  tools/test-session-row.mjs, the same way `device`'s length is. */
-const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain', 'surge']);
+const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain', 'surge', 'flood']);
 
 /**
  * The names of the Retry buttons this visit pressed, or nothing.
@@ -336,7 +336,8 @@ const RETRY_BUTTONS = Object.freeze(['storms', 'geometry', 'env', 'rain', 'surge
  * comma-joined list, which is the shape most likely to be treated as "clip it
  * and store it". It is not. The incoming value is only ever CONSULTED — the
  * output is assembled here out of this file's own four constants, so the
- * longest string that can reach the column is `storms,geometry,env,rain` and
+ * longest string that can reach the column is
+ * `storms,geometry,env,rain,surge,flood` and
  * there is no input that produces anything else.
  *
  * Emitted in RETRY_BUTTONS order rather than the order it was sent, so one

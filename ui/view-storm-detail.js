@@ -234,6 +234,10 @@ function disclaimerHtml(source) {
  *        and every formatter on this panel is handed the SAME answer so two
  *        figures in one drawer can never disagree about what system they are
  *        in.
+ * @param {{value:Function, summarize:Function, retry:Function}} [opts.flood] the
+ *   national flood alert facade (§48.21). Optional: without it the Rainfall
+ *   section's flood block is simply absent, which is what the older suites that
+ *   build this view get.
  * @param {{loadRainfall:Function, retryRainfall:Function}} [opts.rain] the
  *   point-rainfall facade (§48.17), the same one the home dashboard is given.
  *   Optional: without it the Rainfall section's house block is simply absent,
@@ -260,7 +264,7 @@ function disclaimerHtml(source) {
  */
 export function createStormDetailView({
   home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, rain, units,
-  siblings, onStep, now = () => Date.now(),
+  flood: floodFacade = null, siblings, onStep, now = () => Date.now(),
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -280,6 +284,15 @@ export function createStormDetailView({
      * drawer open. */
     rain,
     house: { get: () => home.get(), rangeNm: (s) => rangeToHome(s) },
+    /* ==> FLOOD ALERTS INSIDE THIS STORM'S CONE (§48.21). <== The view owns the
+     * geometry bundle, so it reads the cone off it and hands the controller a
+     * finished answer rather than a fetch. `flood` itself is the injected
+     * facade (ui/ never imports data/); the cone comes from `geo`, which is
+     * the same object the map draws from — so the sentence in the drawer and
+     * the polygons on the globe can never disagree about which cone was used. */
+    flood: floodFacade
+      ? { summaryFor: (s) => floodSummary(s) }
+      : null,
     units,
     /* The house block filters flood alerts by expiry (§48.6), and an expiry
      * check against the real clock can only be tested during a real flood
@@ -834,6 +847,30 @@ export function createStormDetailView({
       });
     }
     return { reach, distanceNm: d && Number.isFinite(d.nm) ? d.nm : null, approachNm };
+  }
+
+  /**
+   * The flood answer for this storm, or null when the section should not draw.
+   *
+   * ==> IT REFUSES ON A SILENCED OR ENDED STORM, LIKE EVERY OTHER SECTION.
+   * <== `withheldNote` already replaces the whole Rainfall body in that case,
+   * but this is asked from inside the controller too, and a block that measured
+   * a dead storm's cone against live warnings would be pairing today's hazard
+   * with a forecast nobody is publishing any more.
+   */
+  function floodSummary(target) {
+    const s = target || storm;
+    if (!s || withheldNote()) return null;
+
+    const slot = floodFacade.value();
+    if (!slot || slot.state === 'loading') return { state: 'loading' };
+    if (slot.state !== 'ok') return { state: 'unavailable' };
+
+    /* The cone as the map has it. `geo.bundle.layers.cone.fc` is the same
+     * FeatureCollection map/layers/cone.js draws. */
+    const fc = geo.state === 'ok' ? geo.bundle?.layers?.cone?.fc : null;
+    const geom = fc?.features?.[0]?.geometry || null;
+    return floodFacade.summarize(slot.alerts, geom, now());
   }
 
   function homeHtml() {

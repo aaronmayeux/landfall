@@ -1952,7 +1952,8 @@ does. The app answers two different questions about it, on two different
 surfaces: the storm drawer says what the forecaster wrote about this storm's
 rain (§48.9), and the home drawer says how much is coming to the house (§48.8).
 
-**==> THERE IS NO MAP LAYER IN THIS SECTION, AND THAT IS A DECISION, NOT A GAP. <==**
+**==> THERE IS NO MAP LAYER FOR RAINFALL, AND THAT IS A DECISION, NOT A GAP.
+— BUT SEE §48.21, WHICH DRAWS SOMETHING ELSE. <==**
 NHC publishes no rainfall geometry. This was checked against NHC's own GIS
 index, where every other hazard has a product and rainfall has none: track,
 cone, watches/warnings, wind field, best track, wind arrival time, the outlook,
@@ -1963,6 +1964,14 @@ everywhere rather than the storm's, is lower-48 only, and would have been
 useless for the storm that motivated this work. The storm-specific graphic NHC
 links as *Rainfall Potential* is a GIF and ships as nothing else. **Do not
 re-research this.**
+
+**==> AND §48.21 DOES NOT CONTRADICT ANY OF IT. <==** Everything above is about
+NHC's rainfall FORECAST and remains true. What §48.21 draws is a different
+product from a different agency: an NWS **flood warning**, issued for a polygon
+a forecaster drew, which is a statement about water already on the ground rather
+than a forecast of rain. The paragraph above is a finding about one source, not
+a rule about the section — a distinction worth keeping, because the next thing
+that can honestly be drawn will arrive the same way.
 
 The disqualifying limits on the CONUS QPF polygons, recorded so the map
 question does not get reopened from memory: extent is −132 to −59 longitude and

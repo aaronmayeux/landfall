@@ -405,6 +405,24 @@ export const CACHE = Object.freeze({
    *  moment the relay has one. */
   capClient: 5 * MINUTE,
 
+  /** How long the BROWSER holds the national flood alert list (§48.21).
+   *
+   *  ==> THREE MINUTES, AND IT IS THE SHORTEST WINDOW IN THIS TABLE. <== Every
+   *  other entry here is set by how often a SOURCE republishes. This one is set
+   *  by how fast its contents stop being true: the captured Hilo Flash Flood
+   *  Warning expired **52 minutes** after it was issued, and a flash flood
+   *  warning routinely outlives neither a poll nor a coffee. The relay holds
+   *  fifteen and answers from its own cache in a millisecond, so a client
+   *  asking more often costs one local round trip and gets the newer answer the
+   *  moment the relay has one.
+   *
+   *  ==> IT IS NOT THE ONLY GUARD AND MUST NOT BE THE ONLY GUARD. <== Expiry is
+   *  filtered again at render, off each row's own `ends`/`expires`, exactly as
+   *  §48.6 does for the house rows. A shape on a map saying somebody is in
+   *  danger who is not is worse than a stale number, which is also why neither
+   *  this nor the relay keeps a last-good copy. */
+  floodClient: 3 * MINUTE,
+
   /** Service worker: last-good storm data. ~1.5x advisory cadence, carried
    *  from the HA project. Served flagged stale with its age. */
   lastGoodStormData: 9 * HOUR,

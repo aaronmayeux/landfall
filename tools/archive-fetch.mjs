@@ -456,6 +456,52 @@ const SOURCES = [
       'the 72-hour history.',
   },
   {
+    name: 'relay-nws-flood.json',
+    url: 'https://landfall.getgravitate.app/api/nws/flood',
+    note:
+      '==> OUR RELAY IN FRONT OF THE FLOOD LIST, AND THE ONLY ONE OF THE THREE ' +
+      'THAT PROVES ANYTHING ABOUT THE APP. <== \u00a748.21. The two upstream ' +
+      'captures below show what NWS published; this shows what a phone was ' +
+      'actually handed, which is the only thing a bug report is ever about. ' +
+      'Three things live here and nowhere else: the projection (does the ' +
+      'polygon survive, does `drawable` agree with the geometry beside it), ' +
+      'the two counts the drawer\u2019s sentence is built from (`total` against ' +
+      '`drawable` \u2014 a warning carries a shape and a watch does not), and the ' +
+      'X-Landfall-Cache header, which no session can see any other way. ' +
+      'Diff `total` across history/ through a landfall to get the volume ' +
+      'number this feature was built without.',
+  },
+  {
+    name: 'nws-alerts-flood-national.json',
+    url: 'https://api.weather.gov/alerts/active?event=Flash%20Flood%20Warning',
+    headers: { accept: 'application/geo+json' },
+    note:
+      '==> ARCHIVED BECAUSE ITS VOLUME IS THE ONE THING §48.21 COULD NOT ' +
+      'MEASURE. <== The flood map layer draws NWS flood polygons nationally. ' +
+      'The per-feature SHAPE was known before a line was written — the five ' +
+      'captured Hilo alerts in samples/rain/ are the same objects this ' +
+      'returns — but HOW MANY come back on an active day was not, and a ' +
+      'layer whose payload nobody has ever seen is a layer tuned against a ' +
+      'guess. What this settles: the row count, the wire bytes, and how many ' +
+      'of them carry a real polygon. Measured on the Hilo capture, a Flash ' +
+      'Flood Warning carries a 346-byte polygon and a Flood Watch carries ' +
+      'geometry: null with seventeen zone URLs instead — so the count that ' +
+      'matters is not the number of alerts, it is the number that can be ' +
+      'DRAWN. Diff across history/ to see it through a landfall.',
+  },
+  {
+    name: 'nws-alerts-flood-watch-national.json',
+    url: 'https://api.weather.gov/alerts/active?event=Flood%20Watch',
+    headers: { accept: 'application/geo+json' },
+    note:
+      'The other half, and the half that cannot be drawn. Every Flood Watch ' +
+      'captured so far is zone-based with a null geometry, which is why ' +
+      '§48.21 puts watches in the list and keeps them off the globe. ==> IF ' +
+      'A WATCH EVER TURNS UP HERE WITH A REAL POLYGON, THAT DECISION IS ' +
+      'REOPENABLE ON EVIDENCE. <== Kept separate from the warnings above so ' +
+      'the two counts never have to be untangled from one file.',
+  },
+  {
     name: 'openmeteo-rain-outside-nws.json',
     url:
       'https://api.open-meteo.com/v1/forecast' +

@@ -519,5 +519,46 @@ export function createLayerStatus(onChange) {
       else delete next.imagery;
       commit(next);
     },
+
+    /**
+     * The flood alerts row (§48.21), pushed up from main.js.
+     *
+     * ==> THREE OUTCOMES AND ONLY ONE OF THEM IS AN ALL-CLEAR. <== §5. A feed
+     * that errored, a feed that answered with nothing in force, and a feed
+     * whose alerts all turned out to be watches with no shape are three
+     * different facts that produce the SAME empty globe. A row that could not
+     * tell them apart would let an outage read as a quiet afternoon over a
+     * flooding county — which is the exact failure this app is written against,
+     * and it is worse here than anywhere because the layer's whole subject is
+     * water already on the ground.
+     *
+     * ==> THE MIDDLE ONE IS NOT AN ERROR AND MUST NOT WEAR ONE'S CLOTHES. <==
+     * "Alerts are in force but none of them has a shape to draw" is a fact
+     * about how NWS issues watches (by forecast zone, with no polygon), not a
+     * fault of ours, and it carries no Retry — asking again returns the same
+     * shapeless rows. Same rule `data/radar-coverage.js` follows for a storm
+     * outside radar range.
+     *
+     * The key is deleted outright when the layer is off, so a sentence from a
+     * previous fetch cannot survive the switch being flipped.
+     */
+    setFloodAlerts({ on, slot }) {
+      const next = { ...status };
+      delete next.floodAlerts;
+      if (on && slot) {
+        next.floodAlerts =
+          slot.state !== 'ok'
+            ? { state: 'error', message: 'Flood alerts could not be checked \u2014 tap to retry' }
+            : slot.drawable
+              ? { state: 'ok' }
+              : {
+                state: 'empty',
+                message: slot.total
+                  ? 'Flood alerts are in force, but they are issued by zone and have no shape to draw'
+                  : 'No flood alerts are in force anywhere in the US',
+              };
+      }
+      commit(next);
+    },
   };
 }

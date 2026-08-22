@@ -3309,6 +3309,163 @@ directions. `begun` compares `onset` against the reader's own moment, and the
 three shapes — running with a known end, not yet started, running with no end
 published — each get their own words.
 
+### 48.21 Flood alerts — the first drawn thing in §48
+
+**==> IT REOPENS §48.1 ON EVIDENCE RATHER THAN CONTRADICTING IT. <==** That
+section says rainfall has no map layer and that this is a decision, not a gap,
+because **NHC publishes no rainfall geometry** — checked against their own GIS
+index, where every other hazard has a product and rainfall has none. Still true,
+and nothing here disputes it. A flood warning is a **different product from a
+different agency**: NWS issues it for a polygon a forecaster drew, and that
+polygon travels in the alert. §48.1's finding was about NHC's rainfall
+*forecast*; this is NWS's statement about water already on the ground.
+
+#### The attribution problem, which is the whole difficulty
+
+**An NWS flood warning does not name a storm.** It reads *Flash Flood Warning,
+Hawaii in Hawaii, HI* and nothing else — the hurricane sitting on top of it is
+mentioned nowhere in the product. So every row this app puts under a storm's
+name is this app asserting a connection the source never made, which is exactly
+what §50.3 forbids for the CAP list: **a geographic match is not a causal
+claim.**
+
+What is claimed is therefore the weakest true thing: **this alert's area
+overlaps this storm's forecast cone.** A statement about two shapes, verifiable
+from the shapes, asserting nothing about cause. The UI is required to word it
+that way — *"in force inside this storm's forecast cone"*, never *"this storm's
+flooding"* — and the closing line says out loud that an alert inside the cone
+may have another cause. **A stalled front can flood a county while the hurricane
+goes out to sea, and the wording is the only defence.**
+
+**THE MAP LAYER SIDESTEPS THE PROBLEM ENTIRELY BY NOT MENTIONING A STORM.** The
+toggle is a global additive switch, the kind `genesis` is, and it answers *what
+flood alerts are in force* — a question with no storm in it and therefore no
+causal claim to get wrong. The per-storm question is answered in the drawer, in
+words, where the rule can be enforced on a sentence. **Two surfaces, two
+questions, and the one that cannot be worded carefully is the one that never
+names a storm.**
+
+#### Warnings draw, watches do not, and that is the source's doing
+
+Measured on real NWS bytes (`samples/rain/alerts-hilo-hi.json`):
+
+| product | geometry | zones |
+|---|---|---|
+| Flash Flood Warning | Polygon, 346 bytes | 1 |
+| Hurricane Warning | Polygon, 1,142 bytes | 1 |
+| Flood Watch | **null** | 17 |
+| High Surf Warning | **null** | 7 |
+| Tropical Cyclone Local Statement | **null** | 43 |
+
+A warning is issued for a box a forecaster drew; a watch is issued for a list of
+forecast zones and its shape is seventeen more requests away. So both reach the
+drawer's list and only warnings reach the globe — and **the count says so.** A
+layer drawing eleven of nineteen under a sentence claiming nineteen is §5's
+silence with a map over it, so `total` and `drawable` both travel and the
+sentence names the difference.
+
+**A SHAPELESS WATCH IS NEVER GIVEN A SHAPE.** No zone centroid, no circle,
+nothing. That would be this app drawing a boundary NWS did not draw — the §5
+fabrication in its most literal form.
+
+#### The antimeridian, and the bug that was caught before it shipped
+
+**==> A PLAIN BOUNDING BOX ON LALA'S REAL CONE MEASURED −180 TO 180 — THE WHOLE
+PLANET. <==** She is a Central Pacific storm at 30N 172W and her published ring
+has vertices either side of the seam. Every flood warning in the United States
+falls inside a box that wide, so **every Central Pacific storm would have
+claimed every flood warning in the country.** Nothing threw. Nothing on screen
+looked odd. The sentence read perfectly.
+
+`extent()` measures longitude in **both frames** — −180..180 and 0..360 — and
+takes whichever is narrower, returning one longitude span or two. Lala's cone
+comes out as 177.15E→180 and −180→172.11W: **10.75 degrees wide, computed, not
+typed.** A span wider than 180° is read as a crossing rather than as a genuinely
+hemispheric shape; no cone or county warning is ever that wide, and the failure
+directions are not symmetric — reading a crossing as global matches everything,
+while reading a wide box as a crossing matches slightly less.
+
+The fixture is `samples/flood/cone-lala-cp2.geojson`, her real cone off the
+archive branch. `lib/seam-stitch.js` is the drawing side of this same seam; this
+is the measuring side.
+
+#### An extent, not an intersection
+
+Matching bounding extents rather than true polygons is **a choice about which
+way to be wrong.** The cone is an uncertainty envelope that is already
+approximate and the alert is a box drawn by hand around a county, so a precise
+intersection answers a question nobody is asking. Extent matching overstates the
+overlap slightly and in **one direction** — toward including an alert just
+outside the cone, never toward dropping one just inside. On a hazard surface
+that is the direction to be wrong in, and it is the same reasoning §48.19 uses
+to keep a partly-elapsed rainfall block rather than prorate it.
+
+#### `no_cone` is not `none_matched`
+
+Both produce an empty list and **this is the §5 distinction this feature is most
+likely to lose.** A storm with no published cone has nothing to test against and
+the honest answer is that we cannot say. A storm whose cone *was* tested and
+held nothing is a real all-clear. The drawer says *"this storm has no published
+forecast cone, so flood alerts can't be matched to it"* for the first and *"no
+flood alerts are in force inside this storm's forecast cone"* for the second.
+
+#### Nothing is held, and the reason is not the usual one
+
+Every forecast route in this app keeps a last-good copy, because a stale
+forecast beats a blank section. **This one keeps none, at the relay or on the
+client.** An expired flood warning is not a stale reading of a live fact; it is
+a shape on a map telling somebody they are in danger when they are not. §50.5
+reaches the same conclusion about the CAP list.
+
+`CACHE.floodClient` is **three minutes, the shortest window in that table**, and
+it is set by how fast the contents stop being true rather than by how often the
+source republishes: the captured Hilo Flash Flood Warning expired **52 minutes**
+after it was issued. Expiry is filtered **again at render**, off each row's own
+`ends`/`expires`, exactly as §48.6 does for the house rows.
+
+#### The route
+
+`functions/api/nws/flood.js` asks the upstream for **three products by name** —
+Flash Flood Warning, Flood Warning, Flood Watch — rather than pulling
+`/alerts/active` unfiltered and sieving it. Deliberately not a wildcard on
+"Flood": that would also catch Coastal Flood Advisory and Lakeshore Flood
+Warning, which are real products about different water that §51 already owns.
+**Adding an event is a decision; discovering one through a wildcard is an
+accident.** `isFloodFamily` on the client is the belt to that brace, and it
+earns its place — the captured Hurricane Warning carries a polygon over the same
+island and is not a flood product.
+
+**ONE FAILING EVENT FAILS THE WHOLE REQUEST** (`Promise.all`, not
+`allSettled`). A partial answer here is a map missing warnings it does not know
+are missing — an all-clear over a flooding county, assembled out of a 500.
+
+**==> THE VOLUME HAS NEVER BEEN MEASURED AND THE ARCHIVE NOW MEASURES IT. <==**
+The per-feature shape was known from real bytes before a line was written. The
+row **count** on an active day was not, and nothing in a sandbox can reach
+api.weather.gov. Both queries are archived hourly so the first tuning pass reads
+bytes rather than guessing. **Until that lands, every sizing claim about this
+feature is a guess and should be treated as one.**
+
+#### The layer
+
+Green, because every other hue on this globe is spoken for and fixed:
+Saffir-Simpson owns the dots, `WATCH_WARNING_COLOR` owns the coast, the surge
+ramps own blue through magenta (§4.7). NWS draws flood warnings green on its own
+maps, so this agrees with the agency rather than minting a third vocabulary.
+
+**IT DOES NOT JOIN `main.js`'s THEME RE-PUSH LIST, AND THAT IS THE NOTE THERE
+BEING OBEYED.** That list caps itself at three and says a fourth is the signal to
+build the real repaint path rather than to add a line. This layer has exactly two
+colours, so it uses a `['case']` paint expression with no `global-state` in it
+(safe from `map/theme-state.js` rule 1b) and rethemes with two
+`setPaintProperty` calls touching no geometry.
+
+**Off by default**, like model tracks and Environment, and the off default gates
+the fetch: nothing asks the relay for this list until the switch goes on. The
+toggle's note names the two limits that would otherwise read as faults — **US
+only**, because NWS is and no global equivalent has been found, and **watches
+have no shape to draw.**
+
 ### 51.6 Coastal flooding — the home drawer's section
 
 Directly under Rain, above the figures. **The pairing is the point:** these are

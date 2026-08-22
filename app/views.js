@@ -64,6 +64,25 @@ import {
  * ui/ never imports data/ (§12), and it is the same two functions the home
  * dashboard composes, so one implementation answers both screens. */
 import { buildCorridor, reachesHome } from '../data/home-corridor.js';
+import { coneSummary } from '../lib/flood.js';
+import { loadFloodAlerts, evictFlood } from '../data/flood.js';
+
+/* ==> THE FLOOD LIST AS THIS MODULE LAST SAW IT (§48.21). <== `data/flood.js`
+ * holds the cache; this holds the last RESOLVED slot, because the drawer needs
+ * to render synchronously and a promise is not a render. Filled by the map
+ * layer's fetch through `noteFloodSlot` and by the Retry below — never by the
+ * drawer itself, which must not turn opening a storm into a national request
+ * nobody asked for.
+ *
+ * `null` means nobody has asked yet, which the block renders as `loading`
+ * rather than as an all-clear. */
+let floodSlot = null;
+
+/** Called by main.js after the layer's own fetch resolves, so the drawer and
+ *  the globe report one answer rather than two. */
+export function noteFloodSlot(slot) {
+  floodSlot = slot || null;
+}
 import {
   get as getLayers,
   pairValue,
@@ -690,6 +709,26 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     /* The house block's forecast (§48.17). THE SAME OBJECT the dashboard's
      * Rain section gets — see `rainFacade` above for why that matters. */
     rain: rainFacade,
+    /* ==> THE FLOOD FACADE (§48.21). <== `value()` is READ-ONLY and never
+     * fetches: the map layer's toggle owns the fetch, and a drawer that kicked
+     * one of its own would make opening a storm cost a national request the
+     * reader did not ask for. So the block reports what the app already holds
+     * and offers a Retry that is the only thing here allowed to go to the
+     * network. `summarize` is `lib/flood.js` composed with nothing — ui/ never
+     * imports lib's data siblings, and this keeps the cone matching testable
+     * without a browser. */
+    flood: {
+      value: () => floodSlot,
+      summarize: (alerts, cone, now) => coneSummary(alerts, cone, now),
+      retry: () => {
+        countRetry('flood');
+        evictFlood();
+        return loadFloodAlerts({ retry: true }).then((slot) => {
+          floodSlot = slot;
+          return slot;
+        });
+      },
+    },
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());
 

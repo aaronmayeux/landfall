@@ -590,6 +590,58 @@ export const LAYER_TOGGLES = Object.freeze([
      * because §16 allows one view at a time and there is no stack to push. */
     expands: true,
   }),
+  /**
+   * FLOOD ALERTS (§48.21) — NWS flood warnings, painted where they apply.
+   *
+   * ==> IT REOPENS §48.1 ON EVIDENCE RATHER THAN CONTRADICTING IT. <== That
+   * section says rainfall has no map layer and that this is a decision, not a
+   * gap, because NHC publishes no rainfall geometry — checked against their own
+   * GIS index, where every other hazard has a product and rainfall has none.
+   * Still true. A flood warning is a different product from a different agency,
+   * issued for a polygon a forecaster drew, and that polygon travels in the
+   * alert. §48.1's finding was about NHC's rainfall FORECAST; this is NWS's
+   * statement about water already on the ground.
+   *
+   * SHIPS OFF, and for the reason model tracks and Environment do: the question
+   * a stranger arriving by shared link during a hurricane is asking is "where
+   * is it going" (§1), and green boxes over inland counties are not that
+   * answer. The off default also gates the FETCH — nothing asks the relay for
+   * this list until the switch goes on or a storm drawer needs its count — so a
+   * first-time visitor pays nothing on their connection.
+   *
+   * `fetches: true` — its own upstream, so this row CAN go amber and it must be
+   * able to. §5's three states all exist here and only one of them is an
+   * all-clear: `unavailable` (the list errored), `none_matched` (it answered and
+   * nothing is in force), and a genuinely quiet country. A row that could not
+   * show a source outage would let the first render as the last, over a
+   * flooding county.
+   *
+   * ==> THE NOTE NAMES THE TWO LIMITS THAT WILL OTHERWISE READ AS FAULTS. <==
+   * It is UNITED STATES ONLY, because NWS is, and no global equivalent of
+   * /alerts/active has been found — the same shape of limit radar and surge
+   * carry, and it is stated up front rather than discovered over a typhoon.
+   * And WATCHES DO NOT DRAW: measured on real NWS bytes, a Flash Flood Warning
+   * carries a polygon and a Flood Watch carries `geometry: null` with a list of
+   * forecast zones instead, so there is nothing to paint without seventeen more
+   * requests. Both facts belong on the switch, because a reader who turns this
+   * on during a watch and sees an empty map will read our plumbing as the
+   * weather.
+   */
+  Object.freeze({
+    key: 'floodAlerts',
+    group: LAYER_GROUP.STORM,
+    label: 'Flood alerts',
+    default: false,
+    phase: 9,
+    fetches: true,
+    note: 'US only. Warnings are drawn where they apply; watches are issued by zone and have no shape to draw.',
+    /* The engine key this drives (map/layers/flood.js). Identical to the pref
+     * key and STILL stated, for the reason `modelTracks` learned the hard way:
+     * main.js only pushes toggles that name one, so omitting it means the
+     * switch flips, the data loads, the features build — and the map layer
+     * stays `visibility: none`. */
+    engineKey: 'floodAlerts',
+  }),
   /* ADVISORY TEXT USED TO BE A ROW HERE. It is not a layer and never was.
    *
    * Removed 2026-07-25, Phase 6 step 6. A layer in this app is something

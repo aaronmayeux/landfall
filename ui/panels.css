@@ -3245,6 +3245,25 @@ button.drawer-identity:focus-visible {
   border-top: 0;
 }
 
+/* FLOOD ALERTS NEARBY (§48.21) — what is in force inside this storm's cone.
+
+   ==> THE SAME RULE AND GAP THE HOUSE BLOCK USES, BECAUSE IT IS THE SAME KIND
+   OF SEAM. <== This section now holds up to three answers to three different
+   questions — what NHC says about an area, what the grid says about this house,
+   and what other agencies have in force inside the cone — and §48.10's whole
+   defence is that a reader can SEE they are separate answers before reading a
+   word of any of them. A hairline does that; a heading alone does not. */
+.detail-rain-flood {
+  margin-top: var(--space-base);
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+}
+.detail-rain-flood:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
 /* ---------------------------------------------------------------------------
    LOCAL AGENCY ALERTS (SPEC §50.5)
 

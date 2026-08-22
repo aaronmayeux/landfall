@@ -1927,6 +1927,20 @@ export const OPACITY = Object.freeze({
    *  the first dim rather than by re-deriving it. */
   surgeCoastDim: 0.35,
 
+  /** FLOOD ALERT POLYGONS (§48.21).
+   *
+   *  ==> WEAKER THAN ANY OTHER FILL ON THIS GLOBE, AND THAT IS THE POINT. <==
+   *  Every other translucent shape here sits over OCEAN. These sit over LAND,
+   *  which is where the coastline, the place labels and the storm's own track
+   *  all live — and the reader's actual question is *which county*, which they
+   *  cannot answer if the wash hides the geography under it. The edge carries
+   *  the shape; the fill only has to say "inside". */
+  floodFill: 0.16,
+  /** The outline does the work, so it is nearly opaque. A hand-drawn warning
+   *  box is a hard-edged official boundary and should read as one, unlike a
+   *  cone or a genesis patch where the soft edge IS the uncertainty. */
+  floodLine: 0.9,
+
   /** POPULATION HEAT. Deliberately shy of opaque: this layer draws UNDER every
    *  storm layer, and a cone read through it must still read as a cone. If it
    *  ever competes with the track for attention the number is too high, not
@@ -2021,6 +2035,37 @@ export const GENESIS_COLOR_LIGHT = Object.freeze({
   LOW:    '#5E7B85',
   MEDIUM: '#3F7286',
   HIGH:   '#1F5E75',
+});
+
+/* ---------------------------------------------------------------------------
+ * FLOOD ALERTS — NWS flood products, drawn (SPEC §48.21)
+ *
+ * ==> GREEN, AND THAT IS THE ONLY COLOUR LEFT THAT MEANS NOTHING ELSE HERE.
+ * <== Every warm hue on this globe is already spoken for and fixed: Saffir-
+ * Simpson owns yellow through red on the dots, `WATCH_WARNING_COLOR` owns
+ * yellow / blue / pink / red on the coast, and the surge ramps own blue through
+ * magenta. NWS itself draws flood warnings green, so this agrees with the
+ * agency's own map rather than inventing a third vocabulary — and green is the
+ * one family a reader cannot confuse with a category or a hurricane warning.
+ *
+ * ==> A WARNING AND A WATCH ARE NOT THE SAME SHADE, FOR §48.6's REASON. <== A
+ * Flood Watch and a Flash Flood Warning are BOTH `Severe`, so severity cannot
+ * separate them and colour has to. In practice only warnings reach the globe at
+ * all — a watch carries no polygon — but the pair is defined here so that the
+ * legend and the list can use one table, and so a watch that ever DOES arrive
+ * with geometry has a shade waiting rather than borrowing a warning's.
+ * ------------------------------------------------------------------------- */
+export const FLOOD_COLOR = Object.freeze({
+  WARNING: '#3FBF6F',
+  WATCH:   '#2A7A4A',
+});
+
+/** The LIGHT set. Same hues, darker so a translucent fill still reads against
+ *  the daylight ocean and against lit land — the same problem
+ *  `GENESIS_COLOR_LIGHT` solves and the same answer. */
+export const FLOOD_COLOR_LIGHT = Object.freeze({
+  WARNING: '#1E7A45',
+  WATCH:   '#14532E',
 });
 
 /* ---------------------------------------------------------------------------
@@ -2344,6 +2389,13 @@ export const STORM_GEO = Object.freeze({
    *  A LONGER DASH THAN THE PAST TRACK'S DOTS, on purpose: at the zoom where
    *  both are on screen, [1,2] dots and a short dash turn into the same grey
    *  texture, and the two mean completely different things. */
+  /** FLOOD ALERT OUTLINE (§48.21). Between the model tracks' 1.1 and the
+   *  forecast track's 1.75: heavier than a model run because it is a thing
+   *  that IS happening rather than a guess, lighter than the official track
+   *  because the track must stay the most legible line on the globe when a
+   *  green box is drawn under it. */
+  floodLineWidth:   1.4,
+
   modelLineWidth:   1.1,
   modelDash:        Object.freeze([3, 2]),
 

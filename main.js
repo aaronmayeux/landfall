@@ -31,7 +31,7 @@ import { getHome } from './data/home.js';
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
-import { createViews, recenterTarget } from './app/views.js';
+import { createViews, recenterTarget, noteFloodSlot } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -58,6 +58,8 @@ import {
   genesisAtPoint,
   GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
+import { setFloodAlerts, rethemeFlood } from './map/layers/flood.js';
+import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
  * ambient deck push still read directly. */
@@ -530,6 +532,34 @@ function boot() {
     });
   }
 
+  /** Fetch the national flood list and push it, if the switch is on (§48.21).
+   *
+   *  ==> GATED ON THE SWITCH, LIKE POPULATION AND UNLIKE EVERY FEED. <== There
+   *  is no warm loop and no poll here. A reader who never turns the row on
+   *  never asks the relay for this list, which is the whole reason the layer
+   *  defaults off.
+   *
+   *  ==> AN OUTAGE MUST NOT PUSH AN EMPTY ARRAY. <== `setFloodAlerts(map, [])`
+   *  draws a clean globe, and a clean globe is the correct picture for "nothing
+   *  is in force" and a lie for "the list did not load". The layer's own header
+   *  says never to call it with `[]` to stand for a failure; this is the caller
+   *  that has to honour it. The words go up through the layer status row. */
+  function ensureFlood() {
+    loadFloodAlerts().then((slot) => {
+      /* The words go up FIRST and unconditionally — the row is the only place
+       * an outage can be said out loud, and returning early on a failure below
+       * would leave it saying whatever it said last. */
+      layerStatus.setFloodAlerts({ on: toggleOn('floodAlerts'), slot });
+      /* ==> THE DRAWER READS THE SAME SLOT THE GLOBE DREW FROM. <== Two fetches
+       * would be two answers either side of a fifteen-minute cache boundary,
+       * and a panel counting nineteen alerts over a map drawing eleven is the
+       * kind of disagreement that costs a reader their trust in both. */
+      noteFloodSlot(slot);
+      if (slot.state !== 'ok' || !styleReady) return;
+      setFloodAlerts(map, slot.alerts);
+    });
+  }
+
   /** Push the whole layer state onto the map. ONE function, called on every
    *  change, rather than a handler per layer — a per-layer path is how the
    *  graticule ended up with a different mechanism from the forecast times. */
@@ -550,6 +580,14 @@ function boot() {
     for (const t of LAYER_TOGGLES) {
       if (t.engineKey) engine.setToggle(t.engineKey, toggleOn(t.key));
     }
+    /* Flood alerts fetch before they can draw, exactly as population does.
+     * Visibility is pushed by the engine loop above so switching OFF works
+     * with no data present; the fetch is kicked only when on (§48.21). */
+    if (toggleOn('floodAlerts')) ensureFlood();
+    /* ==> AND THE ROW IS CLEARED WHEN THE SWITCH GOES OFF. <== Without this the
+     * last sentence it printed — including an outage — survives the layer being
+     * turned off and reappears under a row nobody has asked anything of. */
+    else layerStatus.setFloodAlerts({ on: false, slot: null });
     /* ==> GENESIS IS THE ONE LAYER THAT DRAWS IN BOTH ENGINES, SO ITS TOGGLE
      *     HAS TO REACH BOTH. <== The loop above only speaks to MapLibre layer
      * ids; the planet-band glyphs live in the 3D globe. Without this line,
@@ -793,6 +831,14 @@ function boot() {
        * sets three as the ceiling for this list; a fourth is the signal to
        * build the real repaint path rather than to add a line here. */
       rethemeGenesis(map);
+      /* ==> NOT A FOURTH ENTRY IN THE SENSE THE NOTE ABOVE WARNS ABOUT. <== The
+       * ceiling is on FEATURE RE-PUSHES — rebuilding a whole collection to
+       * change a hue. Flood alerts (§48.21) read the note and took the other
+       * road: two colours, a `['case']` paint expression with no `global-state`
+       * in it, and a retheme that is two `setPaintProperty` calls touching no
+       * geometry at all. If a FIFTH layer wants to bake colours into features,
+       * that is still the signal to build the real repaint path. */
+      rethemeFlood(map);
     },
   });
 

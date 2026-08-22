@@ -112,7 +112,8 @@ export const RAIN_SECTION = 'rainfall';
  *   has is from August, so the suite has to be able to stand there.
  */
 export function createRainStorm({
-  loadAdvisory, rain = null, house = null, units = null, now = () => Date.now(),
+  loadAdvisory, rain = null, house = null, flood = null, units = null,
+  now = () => Date.now(),
 }) {
   let state = { phase: 'idle', rec: null, forId: null, forKey: null };
   let seq = 0;
@@ -156,6 +157,79 @@ export function createRainStorm({
     return house.get();
   }
 
+  /**
+   * Flood alerts in force inside this storm's forecast cone. §48.21.
+   *
+   * ==> THE WORDING IS THE WHOLE SAFETY PROPERTY OF THIS BLOCK. <== An NWS
+   * flood warning does not name a storm. It says *Flash Flood Warning, Hawaii
+   * in Hawaii, HI* and nothing else — the hurricane sitting on top of it is
+   * mentioned nowhere in the product. So every row here is this app asserting
+   * a connection the source never made, which is exactly what §50.3 forbids
+   * for the CAP list: **a geographic match is not a causal claim.** What is
+   * claimed is the weakest true thing — *inside the forecast cone* — and it is
+   * a statement about two shapes, verifiable from the shapes. It must never
+   * become "this storm's flooding", and a stalled front can flood a county
+   * while the hurricane goes out to sea.
+   *
+   * ==> `no_cone` AND `none_matched` BOTH PRODUCE AN EMPTY LIST AND MUST NOT
+   * READ THE SAME. <== §5. A storm with no published cone has nothing to test
+   * against; a storm whose cone was tested and held nothing is a real
+   * all-clear. This is the distinction this feature is most likely to lose.
+   */
+  function floodBlock(storm) {
+    if (!flood?.summaryFor || !storm) return '';
+    const out = flood.summaryFor(storm);
+    if (!out) return '';
+
+    const head = `<div class="detail-rain-flood">
+      <div class="detail-kicker">Flood alerts nearby</div>`;
+    const wrap = (inner) => `${head}${inner}</div>`;
+
+    if (out.state === 'loading') {
+      return wrap(`<p class="detail-soft">Checking flood alerts${DOTS}</p>`);
+    }
+
+    if (out.state === 'unavailable') {
+      /* NEVER an all-clear. The list not loading and nothing being in force
+       * are opposite facts that look identical on screen. */
+      return wrap(`<p class="detail-soft">Flood alerts couldn’t be checked.
+        <button class="detail-retry" type="button" data-retry="flood">Retry</button></p>`);
+    }
+
+    if (out.state === 'no_cone') {
+      /* ==> IT SAYS WHY, AND IT DOES NOT SAY “NONE”. <== No cone means nothing
+       * to test alerts against. Saying "no flood alerts nearby" here would be
+       * an all-clear derived from our own missing geometry. */
+      return wrap(`<p class="detail-soft">This storm has no published forecast
+        cone, so flood alerts can’t be matched to it.</p>`);
+    }
+
+    if (out.state === 'none_matched') {
+      /* A REAL ANSWER: the cone was measured and nothing falls inside it. */
+      return wrap(`<p class="detail-soft">No flood alerts are in force inside
+        this storm’s forecast cone.</p>`);
+    }
+
+    /* ==> THE COUNT OF ALERTS IS NOT THE COUNT OF SHAPES, AND BOTH GET SAID.
+     * <== A watch is issued by forecast zone and carries no polygon, so the map
+     * cannot draw it. A sentence claiming nineteen are on the globe while
+     * eleven are drawn is §5 with a map under it. */
+    const n = out.total;
+    const noun = n === 1 ? 'flood alert is' : 'flood alerts are';
+    const undrawn = n - out.drawable;
+    const drawNote = undrawn > 0
+      ? ` ${undrawn === 1 ? 'One is' : `${undrawn} are`} issued by zone and
+          ${undrawn === 1 ? 'has' : 'have'} no shape to draw on the map.`
+      : '';
+
+    return wrap(`<p class="detail-rain-para"><strong>${n} ${noun}</strong> in force
+        inside this storm’s forecast cone.${drawNote}</p>
+      ${floodAlertRows(out.alerts)}
+      <p class="detail-rain-note">Issued by the National Weather Service for the
+        areas named, not attributed to this storm — an alert inside the cone may
+        have another cause.</p>`);
+  }
+
   /** The section body's inner HTML for the current state. Pure of the DOM. */
   function html(storm) {
     if (!storm) return '';
@@ -165,7 +239,7 @@ export function createRainStorm({
      * decided it, rather than asked again with the same input — two answers to
      * one question is how they start disagreeing. */
     const range = advisoryBlock(storm);
-    return `${range}${houseBlock(storm)}`;
+    return `${range}${houseBlock(storm)}${floodBlock(storm)}`;
   }
 
   /** Whether `advisoryBlock` put an area range on screen in THIS render. Read
@@ -478,6 +552,7 @@ export function createRainStorm({
    *  button so the geometry retry binding in the host view never collects it. */
   function wire(bodyEl, storm, repaint) {
     wireHouse(bodyEl, storm, repaint);
+    wireFlood(bodyEl, repaint);
     const btn = bodyEl?.querySelector?.('[data-retry="rainfall"]');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -508,6 +583,24 @@ export function createRainStorm({
       const result = await rain.retryRainfall(home);
       if (mySeq !== houseSeq) return;
       houseState = { phase: 'done', result, forKey: homeKeyOf(home) };
+      repaint?.();
+    });
+  }
+
+  /** The flood block's own Retry (§48.21).
+   *
+   *  `data-retry="flood"` and not `rainfall` — `ui/view-storm-detail.js` binds
+   *  every `.detail-retry` on the panel by class, and three buttons answering
+   *  to one selector is how two of them silently stop working.
+   *
+   *  ==> IT IS THE ONLY THING IN THIS BLOCK ALLOWED TO REACH THE NETWORK. <==
+   *  The block otherwise reports what the app already holds; the map layer's
+   *  toggle owns the fetch. A press here is a reader explicitly asking. */
+  function wireFlood(bodyEl, repaint) {
+    const btn = bodyEl?.querySelector?.('[data-retry="flood"]');
+    if (!btn || !flood?.retry) return;
+    btn.addEventListener('click', async () => {
+      await flood.retry();
       repaint?.();
     });
   }

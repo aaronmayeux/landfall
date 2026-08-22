@@ -324,7 +324,7 @@ const clientButtons = stringList(usageSrc, 'RETRY_BUTTONS');
 const serverButtons = stringList(beaconSrc, 'RETRY_BUTTONS');
 
 check('the client declares a retry button list', clientButtons,
-  ['storms', 'geometry', 'env', 'rain', 'surge']);
+  ['storms', 'geometry', 'env', 'rain', 'surge', 'flood']);
 check('the server list matches the client list exactly', serverButtons, clientButtons);
 
 /* Every name actually passed to countRetry(), from live code only — a call
