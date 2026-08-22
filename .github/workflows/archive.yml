@@ -133,103 +133,74 @@ jobs:
             base="$(basename "$f")"
             case "$base" in
               *.error.txt) continue ;;
-              # A directory would blow up the plain `cp` below and take the
-              # whole job with it under `set -e`. geometry/, ships/ and jtwc/
-              # have their own rules immediately after this loop.
-              geometry) continue ;;
-              ships) continue ;;
-              jtwc) continue ;;
             esac
+            # ==> EVERY DIRECTORY IS SKIPPED HERE AND REBUILT BY THE LOOP
+            # BELOW, AND THIS TEST IS WHY. <== A plain `cp` on a directory
+            # exits 1 and `set -e` takes the whole job with it. This used to be
+            # a hardcoded list of the three directories that existed —
+            # geometry/, ships/, jtwc/ — with a comment warning that a
+            # directory would blow the job up. On 2026-08-22 a3fb3b4 added a
+            # fourth, adeck/, the list was not updated, and the archive stopped
+            # dead for THIRTEEN HOURS across eleven scheduled runs. Nothing
+            # noticed, because a branch that stops being force-pushed looks
+            # exactly like a branch nobody changed. Asking the filesystem what
+            # is a directory cannot go out of date the way a list can.
+            if [ -d "$f" ]; then continue; fi
             cp "$f" "/tmp/arc/latest/$base"
           done
 
-          # ==> geometry/ IS REBUILT FROM SCRATCH, WHICH BREAKS THE RULE
-          # DIRECTLY ABOVE ON PURPOSE. <==
+          # ==> EVERY DIRECTORY UNDER /tmp/new IS REBUILT FROM SCRATCH IN
+          # latest/, WHICH BREAKS THE RULE DIRECTLY ABOVE ON PURPOSE. <==
           #
           # Everywhere else, a source that failed keeps its previous good bytes,
-          # because stale-with-a-timestamp beats blank. This directory is
-          # different in kind: it is not a fixed set of sources, it is a MIRROR
-          # OF THE CURRENT STORM SET, and its filenames carry the event and
-          # episode ids. Carrying files forward would leave polygons for storms
-          # that ended last week sitting beside this hour's, with nothing on the
-          # filename saying which is which — a listing that looks current and is
-          # not, which is the confusion SPEC §5 exists to forbid. It would also
-          # grow without bound, one file per episode per storm, forever.
+          # because stale-with-a-timestamp beats blank. These directories are
+          # different in kind: none is a fixed set of sources, each is a MIRROR
+          # OF THE CURRENT STORM SET, and their filenames carry storm ids —
+          # GDACS event and episode ids in geometry/, ATCF ids in jtwc/, source
+          # ids in adeck/, synoptic hours in ships/. Carrying files forward
+          # would leave last week's storms sitting beside this hour's with
+          # nothing on the filename saying which is which: a listing that looks
+          # current and is not, which is the confusion SPEC §5 exists to forbid.
+          # It would also grow without bound, one file per storm, forever.
           #
-          # So the directory always says exactly what GDACS is serving right
-          # now. A storm whose geometry fetch failed is simply absent, and
-          # manifest.json carries the reason like every other failure.
-          # ==> ships/ IS REBUILT LIKE geometry/, BUT IT DOES GO INTO HISTORY.
-          # <== §47, the environment ribbon.
+          # So each directory always says exactly what its feed is serving right
+          # now. A storm whose fetch failed is simply absent, and manifest.json
+          # carries the reason like every other failure.
           #
-          # Rebuilt in latest/ for the same reason as geometry: it mirrors the
-          # CURRENT storm set, so carrying files forward would leave last
-          # week's storms sitting beside this hour's with nothing saying which
-          # is which.
+          # ==> WRITTEN AS ONE LOOP OVER WHATEVER IS THERE, NOT THREE NAMED
+          # BLOCKS. <== It was three near-identical blocks, and a fourth
+          # directory arriving without a fourth block is what killed eleven
+          # consecutive runs on 2026-08-22. A new phase in
+          # tools/archive-fetch.mjs now works here the hour it lands.
           #
-          # But UNLIKE geometry it is kept in the 72-hour history, because the
-          # question here really is "when did this change". A SHIPS file is
-          # ~10 KB and its own filename carries the synoptic hour, so the
-          # window is a few megabytes and gives a parser consecutive real runs
-          # to be tested against. Hernan's 00 and 06 UTC files already
-          # disagree about whether he survives past 60 hours — exactly the
-          # kind of variation a parser has to meet before it ships. That
-          # happens automatically: the history loop above only skips
-          # geometry/, so ships/ is copied by the `cp -r` there.
+          # WHAT IS EXPECTED TO BE MISSING, so a thin listing is not read as a
+          # fault: ships/ requests two synoptic slots per storm and usually only
+          # the older one is published, so roughly half are absent every run —
+          # a run where SOME fail is normal, a run where ALL fail is the signal.
+          # jtwc/ is legitimately EMPTY for stretches of the year, because JTWC
+          # warns on nothing at all and its RSS says so in plain text.
           #
-          # ROUGHLY HALF THESE FILES ARE EXPECTED TO BE MISSING. Two synoptic
-          # slots are requested per storm and usually only the older one is
-          # published. A run where SOME fail is normal; a run where ALL fail
-          # is the signal, and manifest.json carries the reason either way.
-          rm -rf /tmp/arc/latest/ships
-          mkdir -p /tmp/arc/latest/ships
-          if [ -d /tmp/new/ships ]; then
-            for f in /tmp/new/ships/*; do
+          # HISTORY IS A SEPARATE QUESTION and is decided in the loop further
+          # up, which skips geometry/ alone. ships/, jtwc/ and adeck/ are all
+          # small enough to keep for 72 hours and all answer "when did this
+          # change" — whether a wind radius appears only near landfall, whether
+          # a model cycle moved — which is answerable from consecutive runs and
+          # from nothing else. geometry/ is ~400 KB per storm and answers only
+          # "what is the feed serving right now", which latest/ answers whole.
+          for d in /tmp/new/*/; do
+            [ -d "$d" ] || continue
+            base="$(basename "$d")"
+            rm -rf "/tmp/arc/latest/$base"
+            mkdir -p "/tmp/arc/latest/$base"
+            for f in "$d"*; do
               [ -f "$f" ] || continue
               case "$(basename "$f")" in
                 *.error.txt) continue ;;
               esac
-              cp "$f" "/tmp/arc/latest/ships/$(basename "$f")"
+              cp "$f" "/tmp/arc/latest/$base/$(basename "$f")"
             done
-          fi
-
-          # ==> jtwc/ FOLLOWS ships/ EXACTLY. <== Rebuilt in latest/ because it
-          # mirrors the CURRENT storm set — the filenames are ATCF ids, so
-          # carrying them forward would leave last season's typhoon sitting
-          # beside this hour's with nothing saying which is which. Kept in the
-          # 72-hour history because here the question really is "when did this
-          # change": whether a wind radius appears only near landfall, or at
-          # every synoptic hour, is answerable from consecutive runs and from
-          # nothing else. Three small text/zip files a storm, so the window
-          # costs a few megabytes.
-          #
-          # ZERO FILES IS A REAL ANSWER, NOT A FAULT. JTWC warns on nothing at
-          # all for stretches of the year, and its RSS says so in plain text.
-          rm -rf /tmp/arc/latest/jtwc
-          mkdir -p /tmp/arc/latest/jtwc
-          if [ -d /tmp/new/jtwc ]; then
-            for f in /tmp/new/jtwc/*; do
-              [ -f "$f" ] || continue
-              case "$(basename "$f")" in
-                *.error.txt) continue ;;
-              esac
-              cp "$f" "/tmp/arc/latest/jtwc/$(basename "$f")"
-            done
-          fi
-          echo "latest/jtwc holds $(ls -1 /tmp/arc/latest/jtwc | wc -l) file(s)"
-
-          rm -rf /tmp/arc/latest/geometry
-          mkdir -p /tmp/arc/latest/geometry
-          if [ -d /tmp/new/geometry ]; then
-            for f in /tmp/new/geometry/*; do
-              [ -f "$f" ] || continue
-              case "$(basename "$f")" in
-                *.error.txt) continue ;;
-              esac
-              cp "$f" "/tmp/arc/latest/geometry/$(basename "$f")"
-            done
-          fi
-          echo "latest/geometry holds $(ls -1 /tmp/arc/latest/geometry | wc -l) storm(s)"
+            echo "latest/$base holds $(ls -1 "/tmp/arc/latest/$base" | wc -l) file(s)"
+          done
 
           # Prune. Snapshot directory names sort chronologically, so keeping the
           # tail is enough. This is the "clean up as we go" step — without it

@@ -59,6 +59,33 @@ traded for.
 
 ## IN FLIGHT
 
+**==> THE ARCHIVE WAS DEAD FOR THIRTEEN HOURS AND NOTHING SAID SO. FIXED,
+NEEDS A RUN. <==** `SPEC-OPS.md` §18.3.
+
+Eleven consecutive scheduled runs failed at the `rebuild the archive branch`
+step, 01:41Z through 12:53Z on 2026-08-22. Last good run: 23:30Z. The cause was
+a3fb3b4's new `adeck/` folder meeting a HARDCODED list of the three directories
+`archive.yml` knew to skip before a plain `cp` — a comment directly above the
+list warned that a directory would exit 1 and take the job with it under
+`set -e`, and that is exactly what happened. The list is gone; the workflow asks
+the filesystem now, and one loop rebuilds every directory instead of three named
+blocks. Reproduced locally against a fixture tree, old step fails and new step
+passes on the same fixture.
+
+**==> AARON, ONE THING TO DO: PRESS RUN ON THE `archive` WORKFLOW. <==**
+github.com → Actions → archive → Run workflow. The PAT cannot dispatch (§48.13,
+403), so this is the one hands-on step. Otherwise it self-heals at the top of
+the next hour. **Until a run lands, everything under `archive:latest/` is
+stamped 2026-08-21T23:30:41Z and is four advisories out of date — do not measure
+anything against it.**
+
+**LALA'S TRACK STILL HAS A KINK IN IT, AND BUG 3 IS STILL BLOCKED.** Aaron on
+glass 2026-08-22 07:53, screenshot 4953: the past track doubles back near the
+current dot on Lala. Not diagnosed — there are no current bytes to diagnose it
+from. **Do not chase it against the 23:30Z archive**; that capture is the one
+§7.11 and §7.13 were already built from, and it will reproduce yesterday's fault
+rather than today's. Start it after a fresh run lands.
+
 **THE WIND SWATH WAS DRAWN 130 nm FROM WHERE NHC DREW IT. FIXED, NOT YET
 CONFIRMED ON GLASS.** `SPEC-MAP.md` §7.13,
 `tools/test-windswath-centre.mjs` (30 assertions, 5 mutations verified).

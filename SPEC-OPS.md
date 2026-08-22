@@ -1268,6 +1268,40 @@ threw `ENOENT`, the phase's own try/catch swallowed it, and the run reported
 `tools/test-archive-dirs.mjs` reads the fetcher and fails when a prefixed family
 has no matching folder.
 
+**AND THE FOLDER ALONE WAS NOT ENOUGH — THE SAME FAMILY THEN KILLED THE JOB FOR
+THIRTEEN HOURS.** `archive.yml`'s copy into `latest/` ran a plain `cp` over
+everything in `/tmp/new`, skipping a HARDCODED LIST of the three directories
+that existed at the time — `geometry/`, `ships/`, `jtwc/` — under a comment
+warning that a directory left in the list's blind spot would exit 1 and take the
+whole job with it under `set -e`. `adeck/` arrived on 2026-08-22 as the fourth.
+Eleven consecutive scheduled runs failed at the same step, the branch stopped
+being force-pushed, and the next session found `latest/` still stamped
+`23:30:41Z` while the app had moved on through four advisories.
+
+- **The list is gone. The filesystem is asked instead** (`if [ -d "$f" ]`), and
+  every directory under `/tmp/new` is rebuilt in `latest/` by ONE loop rather
+  than three near-identical named blocks. A new phase in
+  `tools/archive-fetch.mjs` now works here the hour it lands, with no second
+  edit in a second language.
+- **A COMMENT WARNING ABOUT A TRAP IS NOT A GUARD AGAINST IT.** The warning was
+  accurate, sat directly above the list, and was read by whoever added the
+  fourth folder — or was not, which is the same outcome. §5's rule that an
+  unenforced rule regresses applies to shell exactly as it applies to modules.
+- **A DEAD HOURLY JOB IS INVISIBLE, AND THAT IS THE EXPENSIVE PART.** A branch
+  that stops being force-pushed looks precisely like a branch nobody changed.
+  Nothing in the app, the manifest, or a session's normal reading says "the last
+  eleven runs failed" — `archive:latest/manifest.json` looked healthy because it
+  was the last GOOD one. **Check `fetchedAt` against the wall clock before trusting anything
+  from `archive:latest/`**, and if the gap is more than about two hours, look at
+  the workflow runs before looking at the data.
+- **THE FAILING STEP'S LOG CANNOT BE READ FROM A SESSION.** The Actions API
+  answers `/jobs` fine, but `/logs` is a 302 to
+  `productionresultssa*.blob.core.windows.net`, which the wall blocks. The run
+  list, the job list and each STEP's name and conclusion are all reachable and
+  are usually enough to name the failing step; the body is not. Reproduce the
+  step locally against a fixture directory tree instead — the whole `run:` block
+  is ordinary bash and lifts straight out of the YAML.
+
 **A DERIVED PHASE THAT THROWS MUST NOT LOOK LIKE A QUIET HOUR.** Every derived
 phase catches, deliberately — an experiment must never cost us a storm list —
 but a catch that only prints to stdout is invisible to every session, because a
