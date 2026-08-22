@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 9 files, 238 numbered headings.
+Covering 10 files, 252 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -260,12 +260,27 @@ real home is the other row carrying the same section number.
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2055-2091 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
 | `55` | Known and accepted | `SPEC.md` | 2345-2484 |
+| `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
+| `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
+| `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
+| `56.3` | &nbsp;&nbsp;The corridor replaces the cone | `SPEC-FLOOD-PLAN.md` | 112-154 |
+| `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 155-186 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 187-236 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 237-259 |
+| `56.7` | &nbsp;&nbsp;One Flooding section, both kinds of water | `SPEC-FLOOD-PLAN.md` | 260-302 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gains one line | `SPEC-FLOOD-PLAN.md` | 303-334 |
+| `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 335-362 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-FLOOD-PLAN.md` | 363-382 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 383-406 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 407-439 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 440-455 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 194,712 | 55 |
+| `SPEC-FLOOD-PLAN.md` | 23,044 | 14 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,021 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |

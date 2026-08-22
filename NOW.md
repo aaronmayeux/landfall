@@ -217,43 +217,18 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**GLASS: FLOOD ALERTS (§48.21). A NEW MAP LAYER AND A NEW DRAWER BLOCK, NEITHER
-SEEN.** The toggle is **Layers → Storm detail → Flood alerts**, off by default.
+**==> §48.21 IS BEING REPLACED WHOLE. DO NOT TUNE IT, DO NOT LOOK AT IT ON
+GLASS. <==** Agreed with Aaron 2026-08-22. The cone is the wrong match shape,
+the map draws all of America from a toggle in the `Storm detail` group, and home
+data is in the storm drawer. **The plan is `SPEC-FLOOD-PLAN.md` §56 — five
+phases, one per session, in order, starting with the corridor.** Every number it
+needed was measured first and is written into §56.2. Read that file before
+touching anything flood-shaped; the glass questions that used to live here are
+moot.
 
-1. **Turn it on over the US.** Green polygons where NWS has a flood warning in
-   force. **Warnings draw; watches do not** — a watch is issued by forecast zone
-   and carries no polygon at all, so there is nothing to paint. The layer status
-   row says so when every alert in force is a watch. If the map looks empty with
-   the switch on, read that row before assuming it is broken.
-2. **Is the green readable over land?** The fill is 0.16 — the weakest on the
-   globe — because these sit over coastline, place labels and the storm's own
-   track, and the reader's real question is *which county*. If the boxes are too
-   faint to find, `OPACITY.floodFill` is the dial; if they hide the geography,
-   it is the same dial the other way.
-3. **The drawer block.** Rainfall section, under `At your house`, headed *Flood
-   alerts nearby*. Four states and only one is common: a count with the rows, a
-   measured all-clear, "no published cone so they can't be matched", and a
-   Retry. **The count sentence is the one to read hardest** — it must say *in
-   force inside this storm's forecast cone* and never imply the storm caused
-   them.
-
-**==> THE VOLUME IS STILL UNMEASURED, AND THAT IS THE ONE REAL GAP. <==** The
-per-feature shape came off real bytes; the row COUNT on an active day did not,
-because nothing in a sandbox can reach api.weather.gov. THREE archive sources
-were added this session and the runner picks them up hourly — the two upstream
-queries, plus **our own relay route, which is the only one of the three that
-proves anything about the app** (the upstream shows what NWS published; the
-relay shows what a phone was handed). Read them off the archive branch:
-
-    git show origin/archive:latest/relay-nws-flood.json
-
-**Read that before tuning anything here** — every sizing claim about this
-feature is currently a guess.
-
-**HELD FOR WEATHER: nothing verifies the drawer block until a US storm has a
-flood warning inside its cone.** The map layer can be judged today; the count
-sentence cannot.
-
+**The one live gap it names:** the national volume is a single snapshot, 27
+alerts on a quiet day. Re-read `git show origin/archive:latest/relay-nws-flood.json`
+before tuning anything that depends on the count.
 
 **GLASS: THE RAINFALL PASS. FOUR THINGS CHANGED AND NONE HAS BEEN SEEN.**
 §48.18 and §48.19 are as-built in `SPEC-UI.md`; this is only what to look at.

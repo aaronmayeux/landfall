@@ -36,7 +36,7 @@ const VERBOSE = process.argv.includes('--list');
 const DOCS = [
   'NOW.md', 'README.md', 'CLAUDE.md',
   'SPEC.md', 'SPEC-DATA.md', 'SPEC-MAP.md', 'SPEC-UI.md', 'SPEC-OPS.md',
-  'SPEC-NEXT.md', 'SPEC-HOME-PLAN.md', 'spec-parameter.md',
+  'SPEC-NEXT.md', 'SPEC-HOME-PLAN.md', 'SPEC-FLOOD-PLAN.md', 'spec-parameter.md',
 ];
 
 const SRC_DIRS = [
