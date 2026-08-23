@@ -275,9 +275,81 @@ built only on the dashboard path, which needs a threat storm — so a genuinely
 calm day showed neither. Building the gate alone would have shipped a change
 that only ever subtracted. Both halves are in.
 
-**The next phase is 4 — zone shapes for watches.** Resolve and cache the zone
+**==> PHASE 4 IS NEXT AND IT IS BLOCKED ON BYTES. THE PROBE THAT UNBLOCKS IT
+SHIPPED 2026-08-22; THE PHASE ITSELF DID NOT. <==** Resolve and cache the zone
 polygons a watch names, so a shapeless watch becomes drawable AND matchable and
 the watch/warning special case disappears downstream.
+
+**WHY IT DID NOT GET BUILT.** Phase 4 is tier 3 (`CLAUDE.md`) — a new feed and a
+new geometry — so the real bytes come first. **They did not exist.** No zone URL
+has ever been archived, `api.weather.gov` is outside the wall, and WebFetch comes
+back EMPTY against it because NWS answers 403 without a contact in the User-Agent
+and WebFetch cannot set one. So the envelope, the geometry type, the vertex
+count and the byte cost of a zone boundary were all guesses, and §12 forbids a
+parser built on those.
+
+**==> WHAT THE NEXT SESSION DOES FIRST, BEFORE ANY CODE. <==**
+
+```
+git fetch origin archive
+git show origin/archive:latest/geometry/nws-zone-HIZ023.geojson
+git show origin/archive:latest/geometry/nws-zones-bulk-probe.geojson
+git show origin/archive:latest/manifest.json     # bytes, headers, derivedFailures
+```
+
+Write what those say into `SPEC-FLOOD-PLAN.md` §56.4 — **then** write the
+parser. If the files are not there, check `derivedFailures` in the manifest for
+`nws-zone-shapes` and read the reason; a run with no Flood Watch in force
+anywhere derives zero URLs, which is a quiet hour and not a fault.
+
+**==> THE BULK PROBE MAY MAKE THIS PHASE MUCH CHEAPER THAN THE PLAN SAYS. <==**
+§56.4 prices zone resolution at "seventeen more requests per watch" and §48.21
+rejected the whole idea on that number. The probe asks all of this hour's zones
+in ONE request against an endpoint nobody here has ever tried. If it answers,
+the cost argument is gone. **Do not re-price the phase until that file is read.**
+
+**WHAT SHIPPED WITH THE PROBE, so nobody rebuilds it:**
+
+- `tools/archive-fetch.mjs` — a derived `nws-zone-shapes` phase, one URL per
+  forecast zone named by every live Flood Watch plus one bulk probe, under
+  `geometry/` so a boundary that changes once a year never enters the 72-hour
+  history. Capped at 40 zones so a national flood day cannot turn into hundreds
+  of requests at one agency; a run reporting exactly 40 was cut. Plus the
+  Open-Meteo `past_days` probe that unblocks Phase 6 (§56.14).
+- `tools/zone-codes.mjs` — `watchZoneCodes()`, pure. Its own file because
+  `archive-fetch.mjs` runs on import, so a test could otherwise only reach it by
+  regexing the source and eval-ing it, which tests a copy rather than the code.
+- `tools/test-zone-codes.mjs` — 20 assertions, **seven mutations verified red.**
+- `samples/flood/watches-national.json` — the real watch bytes, frozen because
+  the archive window is 72 hours and rolls. 3 watches, 8 + 11 + 4 zones, 23
+  distinct, every one `geometry: null`. Counts computed off the file, not typed.
+
+**==> AND THE MUTATION PASS FOUND A REAL BUG BEFORE IT SHIPPED. <==** Two
+mutations passed green on the first version of that suite — §12's "worse than no
+test". `geocode.UGC` carries forecast zones (`OHZ011`, at `/zones/forecast/`) AND
+counties (`OHC011`, at `/zones/county/`), and **every code in the captured
+watches happens to be a `Z`** — so a resolver accepting both passed everything
+while building a county URL that 404s, which in the manifest is indistinguishable
+from a zone NWS does not publish. They are split now, and the county codes are
+REPORTED rather than dropped. The second gap was dedupe: no zone in the capture
+is named by two watches, so removing the Set changed nothing.
+
+**ONE PIECE OF PHASE 4 NEEDS NO NEW BYTES AND IS READY TO BUILD:** the relay
+discards `geocode.UGC` today — verified, zero mentions in
+`functions/api/nws/flood.js`, `data/flood.js` or `lib/flood.js` — and §56.2
+established the state is recoverable from nowhere else. **A Pages Function
+cannot import from `lib/` (§4.13), so it is a mirrored copy kept honest by
+`tools/test-relay-mirrors.mjs`, not an import.**
+
+**TWO THINGS THIS SESSION FOUND AND DID NOT FIX**, both one-liners, both
+Aaron's call:
+1. `functions/api/nws/flood.js:57` names the mirror checker without its
+   `test-` prefix — a file by that name does not exist. The real one is
+   `tools/test-relay-mirrors.mjs`. `doc-check` does not scan source comments,
+   so it caught the same wrong name in the spec and not this one.
+2. `tools/test-home-ida.mjs` fails one assertion — a rail label crossed by a
+   dotted vertical at adv 010 +6h and +7h. **Confirmed pre-existing on clean
+   `main`**, same numbers with this session's work stashed. Not flood-related.
 
 **AND THERE IS A PHASE 6 NOW — PAST RAINFALL, added 2026-08-22 after Phase 2
 shipped.** `SPEC-FLOOD-PLAN.md` §56.14. How much has already fallen at the

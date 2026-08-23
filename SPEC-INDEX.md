@@ -260,24 +260,24 @@ real home is the other row carrying the same section number.
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
-| `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 142-173 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 174-223 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 224-246 |
+| `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 142-206 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 207-256 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 257-279 |
 | `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3307-3342 |
 | `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3485-3525 |
 | `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3566-3615 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3682-3711 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 247-278 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 279-388 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 389-406 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 407-410 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 280-311 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 312-442 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 443-460 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 461-464 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 29,676 | 11 |
+| `SPEC-FLOOD-PLAN.md` | 33,686 | 11 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |

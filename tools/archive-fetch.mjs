@@ -44,6 +44,10 @@ import { join } from 'node:path';
  * imports nothing and touches no DOM, so it runs on the bare runner. */
 import { isInForce, normalizeAlert } from '../lib/cap.js';
 
+/* The UGC reader, in its own file because `archive-fetch.mjs` runs on import
+ * and a test therefore cannot reach anything declared inside it. §12. */
+import { watchZoneCodes } from './zone-codes.mjs';
+
 const OUT = process.argv[2];
 if (!OUT) {
   console.error('usage: node tools/archive-fetch.mjs <output-dir>');
@@ -516,6 +520,35 @@ const SOURCES = [
       'point, and what the units and time base actually say. Attribution is ' +
       'required (CC BY 4.0) and the free tier is non-commercial with a daily ' +
       'call ceiling — both are constraints on shipping it, not on reading it.',
+  },
+  {
+    name: 'openmeteo-rain-past-days-probe.json',
+    url:
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=14.5995&longitude=120.9842' +
+      '&hourly=precipitation&past_days=2&forecast_days=3&timezone=UTC',
+    note:
+      '==> THE PROBE PHASE 6 OF THE FLOOD PLAN IS BLOCKED ON, AND NOTHING ' +
+      'ELSE BLOCKS IT. <== §56.14 says in as many words that not a line of ' +
+      'past-rainfall code gets written until this is measured, because ' +
+      '`api.open-meteo.com` is outside the wall. The SAME point and the same ' +
+      'hourly variable as `openmeteo-rain-outside-nws.json` above, with ' +
+      '`past_days=2` added and nothing else changed — so the two files diff ' +
+      'cleanly and the delta IS the answer. Four of §56.14’s five questions ' +
+      'fall out of this one capture. (1) Do the past hours arrive in the same ' +
+      '`hourly.precipitation` array or a separate one — ==> DO NOT ASSUME THE ' +
+      'ARRAY IS SIMPLY LONGER. <== (2) Is the join between past and forecast ' +
+      'marked at all, or must it be found against the clock, and is the hour ' +
+      'containing `now` counted once or twice. (3) The real byte cost and ' +
+      'latency, against the arithmetic-on-one-capture table in §56.14 which ' +
+      'is not a measurement. (4) What it reports over sparse land — Manila is ' +
+      'a tropical coastal point, which is the case that matters. The fifth ' +
+      'question, the free tier’s quota, has no runtime answer: §48.14 records ' +
+      'there is no `x-ratelimit-*` header of any kind, so it can only come ' +
+      'from Open-Meteo’s documentation. ==> IT IS A MODEL, NOT A RAIN GAUGE. ' +
+      '<== Whatever comes back is reanalysis output, and §56.14 makes the ' +
+      'wording carry that. Reading these numbers as observations is the single ' +
+      'most likely way to get this feature wrong.',
   },
   {
     name: 'openmeteo-rain-cors-probe.json',
@@ -1080,6 +1113,123 @@ async function grab(src) {
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * NWS ZONE SHAPES — THE BYTES PHASE 4 OF THE FLOOD PLAN IS BLOCKED ON.
+ *
+ * ==> A FLOOD WATCH CARRIES `geometry: null` AND THEREFORE CANNOT BE MATCHED,
+ * NOT JUST CANNOT BE DRAWN. <== §56.4. The corridor test measures a distance
+ * from the storm's track to the alert's shape; with no shape there is nothing
+ * to measure, so a watch is invisible to the very test that decides whether it
+ * is near the reader. The zones ARE named, in `geocode.UGC`, and NWS serves
+ * each one's real boundary. Resolving them is what makes a watch drawable AND
+ * matchable through the same test as everything else.
+ *
+ * ==> THE SHAPE OF THAT RESPONSE HAS NEVER BEEN READ IN THIS PROJECT. <== Not
+ * once, by anything. `api.weather.gov` is outside the sandbox wall, WebFetch
+ * comes back empty against it (NWS answers 403 without a contact in the
+ * User-Agent and WebFetch cannot set one), and no zone URL has ever been
+ * archived. So every input Phase 4 needs is currently a guess: the envelope
+ * (Feature or FeatureCollection), the geometry type, how many rings an island
+ * zone carries, how many BYTES a zone costs, and whether the boundary is fine
+ * enough to need `lib/simplify.js` before it goes near a phone. §12's rule is
+ * that a parser written against a guessed payload inherits the wrong
+ * assumptions and its tests then pass on them. This entry exists so the next
+ * session opens with the real bytes instead.
+ *
+ * ==> AND ONE OF THESE IS NOT LIKE THE OTHERS: THE BULK QUERY. <== §56.4 costs
+ * this feature at "seventeen more requests per watch", and that figure is the
+ * whole reason §48.21 rejected zone resolution in the first place. NWS also
+ * documents a collection endpoint taking a comma-separated id list, which — if
+ * it answers — turns seventeen requests into one and retires the cost argument
+ * entirely. Nobody has asked it. It is asked here beside the per-zone requests
+ * so the two can be compared in one snapshot: same zones, same hour, one
+ * request against many. **A 400 here is a real and useful answer** — it means
+ * the per-zone loop is the only route and the plan's arithmetic stands.
+ *
+ * Under `geometry/` for exactly the reason that directory exists: a zone
+ * boundary changes on the order of once a year, so 72 hours of hourly copies
+ * buys nothing. The question these answer is about the SHAPE, not about now.
+ *
+ * ==> DERIVED FROM THIS RUN'S LIVE WATCHES, NEVER FROM A HARDCODED LIST. <==
+ * Same rule the GDACS geometry and NHC track phases follow. A UGC this script
+ * invents that 404s is indistinguishable in the manifest from a zone NWS
+ * genuinely does not publish, and the point of the exercise is to find out
+ * which. Zero watches in force is a real answer and derives zero URLs.
+ */
+
+/** How many distinct zones to resolve in one run.
+ *
+ *  ==> A BOUND, NOT A TUNING KNOB. <== Three watches on the quiet day this was
+ *  written named 8, 11 and 4 zones — 23 in all. A national flood event could
+ *  name hundreds, and this script must never turn a bad weather day into
+ *  several hundred requests at one agency. The cap is deliberately larger than
+ *  the measured day so a normal run is never truncated, and small enough that
+ *  the worst case stays neighbourly. If a run reports exactly this many, the
+ *  set was cut and the next question is what got left out. */
+const ZONE_SHAPE_CAP = 40;
+
+
+/** The per-zone requests, plus the one bulk request that could replace them. */
+function zoneShapeSources(watchBody) {
+  const { forecast, county, malformed } = watchZoneCodes(watchBody);
+  const codes = forecast.slice(0, ZONE_SHAPE_CAP);
+  if (!codes.length) return [];
+
+  /* ==> WHAT WAS LEFT OUT RIDES ON EVERY NOTE, BECAUSE THE MANIFEST IS THE
+   * ONLY CHANNEL A SESSION CAN READ. <== A capped set, a county code nobody
+   * fetched and a malformed code all look identical to a quiet hour otherwise,
+   * and §5's silence rule applies to our own tooling exactly as it applies
+   * to the app. */
+  const caveats = [
+    forecast.length > codes.length
+      ? ` ==> CUT FROM ${forecast.length} FORECAST ZONES BY ZONE_SHAPE_CAP — the set is incomplete this run. <==`
+      : '',
+    county.length
+      ? ` ==> ${county.length} COUNTY CODE(S) WERE NAMED AND NOT FETCHED: ${county.join(', ')}. <== They live at /zones/county/, not /zones/forecast/, and nothing here has read one. If Phase 4 has to handle them, this is the hour that proved it.`
+      : '',
+    malformed ? ` ${malformed} code(s) matched neither shape and were dropped.` : '',
+  ].join('');
+
+  const out = codes.map((ugc) => ({
+    name: `geometry/nws-zone-${ugc}.geojson`,
+    url: `https://api.weather.gov/zones/forecast/${ugc}`,
+    headers: { accept: 'application/geo+json' },
+    note:
+      `Forecast zone ${ugc}, named by a Flood Watch in force this hour. ` +
+      'THE FIRST ZONE BOUNDARY THIS PROJECT HAS EVER READ (§56.4). What it ' +
+      'settles, none of which is currently known: the response envelope, the ' +
+      'geometry type, the vertex count and byte cost of one zone, and whether ' +
+      'the boundary needs simplifying before a phone draws seventeen of them. ' +
+      '==> IT IS NWS’S OWN BOUNDARY, WHICH IS WHY RESOLVING IT IS PERMITTED ' +
+      'AT ALL. <== §48.21 forbids giving a shapeless watch an INVENTED shape ' +
+      '— a centroid, a circle. Fetching the polygon the agency itself ' +
+      'publishes for the zone it itself named is the opposite of that.' +
+      caveats,
+  }));
+
+  out.push({
+    name: 'geometry/nws-zones-bulk-probe.geojson',
+    url:
+      'https://api.weather.gov/zones?type=forecast&id=' +
+      encodeURIComponent(codes.join(',')),
+    headers: { accept: 'application/geo+json' },
+    note:
+      `THE SAME ${codes.length} ZONES ASKED FOR IN ONE REQUEST. ==> THIS IS THE ` +
+      'ENTRY THAT COULD DELETE §56.4’S COST ARGUMENT. <== That section ' +
+      'prices zone resolution at "seventeen more requests per watch", and ' +
+      '§48.21 rejected the whole idea on that number. If this returns a ' +
+      'FeatureCollection carrying the same boundaries, seventeen requests ' +
+      'become one and the objection is gone. Compare it against the per-zone ' +
+      'files beside it: same geometry, or a coarser one? All of the zones, or ' +
+      'a silently capped page? ==> A 400 OR 404 IS A REAL ANSWER AND MUST NOT ' +
+      'BE READ AS AN OUTAGE. <== It means the collection endpoint does not ' +
+      'take an id list, the per-zone loop is the only route, and the plan’s ' +
+      'arithmetic stands as written.' + caveats,
+  });
+
+  return out;
+}
+
 const stamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 mkdirSync(OUT, { recursive: true });
 mkdirSync(join(OUT, 'geometry'), { recursive: true });
@@ -1223,6 +1373,33 @@ try {
 } catch (err) {
   phaseFailed('jtwc-storm-products', err);
 }
+
+/* NWS ZONE SHAPES, §56.4. Its own try block like every derived phase: this is
+ * the newest and least proven of them and it must never be able to cost us a
+ * track or a polygon. Reads the watch file that was WRITTEN rather than a body
+ * held in memory, so it derives from exactly the bytes a session will read.
+ *
+ * ==> DERIVING ZERO IS A REAL ANSWER AND IS THE COMMON CASE. <== Most hours
+ * have no Flood Watch in force anywhere in the United States. A run that
+ * derives nothing means the weather was quiet, not that the phase broke — the
+ * broken case lands in `derivedFailures` and says so. */
+let zoneShapeCount = 0;
+try {
+  const watches = JSON.parse(
+    readFileSync(join(OUT, 'nws-alerts-flood-watch-national.json'), 'utf8')
+  );
+  const derived = zoneShapeSources(watches);
+  console.log(
+    `\nderived ${derived.length} NWS zone-shape URL(s) from the live Flood Watches`
+  );
+  for (const src of derived) {
+    const r = await run(src);
+    if (r.status === 'ok') zoneShapeCount++;
+  }
+} catch (err) {
+  phaseFailed('nws-zone-shapes', err);
+}
+
 
 
 /* MODEL GUIDANCE. The decks themselves, one per storm the roster names, read

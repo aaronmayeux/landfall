@@ -164,6 +164,39 @@ distinction that makes it permissible at all. §48.21 forbids giving a shapeless
 watch a shape — a centroid, a circle, anything invented. Fetching the boundary
 the agency itself publishes for that zone is the opposite of inventing one.
 
+**==> THE CAPTURE IS IN THE RUNNER AND THE BOUNDARY IS STILL UNREAD. <==**
+Added 2026-08-22. `tools/archive-fetch.mjs` now derives a zone-shape URL from
+every forecast zone named by every Flood Watch in force that hour, plus one bulk
+probe, all under `geometry/`. **Nothing in this project has ever read a zone
+boundary** — not its envelope, not its geometry type, not its vertex count, not
+its byte cost. Until that capture lands, every one of those is a guess and §12
+forbids a parser built on it. Read them with:
+
+```
+git fetch origin archive
+git show origin/archive:latest/geometry/nws-zone-HIZ023.geojson
+git show origin/archive:latest/geometry/nws-zones-bulk-probe.geojson
+```
+
+**==> AND THE BULK PROBE MAY DELETE THIS SECTION'S COST ARGUMENT. <==** The
+"seventeen more requests per watch" figure above — the number §48.21 rejected
+zone resolution on — assumes one request per zone. NWS also documents a
+collection endpoint taking a comma-separated id list, and **nobody has ever
+asked it.** If the bulk probe in the block above comes back carrying the
+same boundaries, seventeen requests become one and the objection is gone. A 400
+is equally useful: it means the per-zone loop is the only route and the
+arithmetic above stands as written. **Do not re-price this feature until that
+capture exists.**
+
+**==> `Z` AND `C` ARE DIFFERENT GEOGRAPHIES AND A MUTATION TEST CAUGHT IT. <==**
+`geocode.UGC` can carry both a forecast zone (`OHZ011`, at `/zones/forecast/`)
+and a county (`OHC011`, at `/zones/county/`). Every code in the captured watches
+happens to be a `Z`, so a resolver accepting both passed every assertion while
+building a county URL that would 404 — indistinguishable in the manifest from a
+zone NWS genuinely does not publish. `tools/zone-codes.mjs` separates them and
+**reports the county codes rather than dropping them**, so the hour that proves
+Phase 4 must handle counties is readable rather than silent.
+
 **IF THE ZONE FETCH FAILS, THE WATCH IS SAID AND NOT DRAWN.** It reaches the
 list with its area text and no shape, and the layer status row says how many
 could not be placed. Never silently dropped, and never given a substitute
@@ -366,6 +399,27 @@ calm day. See §56.9 above.
 watch names. Ends with watches drawable and matchable, and the watch/warning
 special case gone from every surface downstream.
 
+**==> BLOCKED ON A CAPTURE THAT IS NOW IN THE RUNNER, 2026-08-22. <==** This is
+a tier-3 change (`CLAUDE.md`) and the real bytes did not exist: `api.weather.gov`
+is outside the wall, WebFetch returns empty against it — NWS answers 403 without
+a contact in the User-Agent and WebFetch cannot set one — and no zone URL had
+ever been archived. The probe is pushed; **the next session on this phase starts
+by reading `geometry/nws-zone-*.geojson` off `archive`, writes what it finds into
+§56.4, and only then writes a parser.** What landed with the probe, so nobody
+rebuilds it: `tools/zone-codes.mjs` (`watchZoneCodes`, pure, splits forecast
+zones from counties and counts what it drops), `tools/test-zone-codes.mjs`
+(20 assertions, seven mutations verified red), and
+`samples/flood/watches-national.json` frozen off the archive because that
+branch's window is 72 hours and rolls.
+
+**AND ONE PIECE OF PHASE 4 NEEDS NO NEW BYTES AT ALL:** the relay discards
+`geocode.UGC` today — verified, zero mentions in `functions/api/nws/flood.js`,
+`data/flood.js` or `lib/flood.js` — and §56.2 established the state is
+recoverable from nowhere else. Keeping it is provable offline against
+`samples/flood/watches-national.json`. **A Pages Function cannot import from
+`lib/` (§4.13), so that is a mirrored copy of the UGC split, kept honest by
+`tools/test-relay-mirrors.mjs` — not an import.**
+
 **PHASE 5 — THE MAP.** Interior points, clustering, the polygon zoom gate, the
 icon, and tap-to-detail. Last because it is the only phase that cannot be judged
 without weather, and because Phase 2 already gave the feature a keyboard-reachable
@@ -524,6 +578,21 @@ those two rendering the same. Reuse `RAIN.negligibleMm`'s judgement — a modell
 forecast (§48.8).
 
 #### What must be MEASURED before a line of this is written
+
+**==> THE PROBE IS IN THE RUNNER AS OF 2026-08-22, AND FOUR OF THE FIVE FALL
+OUT OF IT. <==** A past-days entry in `tools/archive-fetch.mjs` asks the same
+point for the same variable as the capture above, with `past_days=2` added and
+nothing else changed, **so the two diff cleanly and the delta is the answer:**
+
+```
+git fetch origin archive
+git show origin/archive:latest/openmeteo-rain-past-days-probe.json
+git show origin/archive:latest/openmeteo-rain-outside-nws.json
+```
+ Question 5 —
+the free tier's quota — has no runtime answer and never will: §48.14 records
+there is no `x-ratelimit-*` header of any kind, so it comes off Open-Meteo's
+documentation or not at all.
 
 **Nothing below can be answered from the sandbox** — `api.open-meteo.com` is
 outside the wall (`SPEC-OPS.md` §18). These go to the archive runner, which has
