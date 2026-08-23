@@ -372,6 +372,43 @@ does not project `senderName`. The panel prints no office and the spec is
 corrected rather than the relay widened inside a map phase. **Adding it is small
 and separate and it is Aaron's call.**
 
+**==> IT SHIPPED SLOW AND THAT WAS FIXED THE SAME DAY. <==** Aaron reported the
+drawers dragging between storms hours after the push. Three causes, all
+measured, none of which any existing suite could see because every one of them
+asks what the code produces rather than how often:
+
+1. **The corridor match ran for an INVISIBLE layer.** The engine calls `update`
+   on every definition on every `setBundle`, and this layer is off by default —
+   so a reader who had never touched the switch paid the full match on every
+   storm switch and every poll to draw nothing. Five switches went from ~500 ms
+   to under 10.
+2. **A poll re-pushing an unchanged bundle redid all of it.** Memoized on the
+   bundle, the alert list and the moment. Ten identical re-pushes: ~1,000 ms to
+   0.4. **The first cut keyed on the SAMPLES and never hit once** — densifying
+   makes a new array every call, so it compared against the copy it had just
+   made.
+3. **The status row committed when nothing had changed**, and a commit rewrites
+   the whole Layers panel and rewires it. Compared now — which fixes the two
+   renders §56.5 added and the two that were already there.
+
+**AND THE COUNTY-SIZED FILL CAME OUT OF THE HOVER QUERY.** MapLibre runs a
+delegated hover listener on every mousemove, once per bound layer. The chip
+stays; the polygon is click-only.
+
+**==> ONE NUMBER IS UNCHANGED AND IT IS THE HONEST ONE. <==** A genuine new
+selection with the layer ON still costs ~100 ms against 12 zone-backed watches
+— `nearestNm` is **7.1 ms per resolved zone boundary** (HIZ023 is 1,970
+vertices against 471 track samples). Three watches, the number §56.4 measured
+in force on a quiet day, is ~21 ms and fine. **A real national flood day has
+never been read**, so the levers — fewer samples, a bbox prefilter, simplifying
+a zone before matching — are not worth building against a guessed volume.
+**Aaron's call if it is bad on glass.**
+
+**`tools/test-flood-layer.mjs` guards all of it and asserts COST, not output.**
+Four mutations verified red. `map/layers/flood-chip.js` was split out because
+the file crossed §12's 700-line ceiling and `doc-check` refused the push — the
+gate was right and the cut was already there.
+
 **HELD FOR WEATHER, AND THIS IS THE PHASE THAT NEEDED GLASS MOST.** Not one
 pixel has been looked at. Three calls are waiting: whether the chip reads as
 "not a storm" at a glance, whether a warning still outranks a watch fifty times

@@ -217,7 +217,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2251-2336 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4032-4054 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4084-4106 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -262,11 +262,11 @@ real home is the other row carrying the same section number.
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-148 |
 | `56.5` | &nbsp;&nbsp;The map — icon and polygon, each doing the job the other cannot | `SPEC-UI.md` | 3434-3459 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-UI.md` | 3562-3626 |
-| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3627-3662 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3805-3845 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3886-3935 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4002-4031 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-UI.md` | 3614-3678 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3679-3714 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3857-3897 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3938-3987 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4054-4083 |
 | `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 232-267 |
 | `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 268-430 |
 | `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 431-448 |
@@ -281,7 +281,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 239,422 | 20 |
+| `SPEC-UI.md` | 242,422 | 20 |
 | `SPEC.md` | 175,540 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

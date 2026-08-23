@@ -87,6 +87,7 @@ import {
 import { isLight } from '../../config/theme.js';
 import { alertsNearTrack, trackChains, trackSamples } from '../../lib/flood.js';
 import { floodSources } from '../../lib/flood-features.js';
+import { chipName, ensureChipImages } from './flood-chip.js';
 import { registerLayer } from './registry.js';
 
 const SHAPE_SOURCE = 'flood-alerts';
@@ -105,6 +106,16 @@ export const FLOOD_LAYER_IDS = Object.freeze([FILL, LINE, CHIP]);
  *  chip, still opens the alert. */
 export const FLOOD_HIT_LAYERS = Object.freeze([CHIP, FILL]);
 
+/** What the CURSOR is bound to, and it is deliberately not the same list.
+ *
+ *  ==> MAPLIBRE RUNS A DELEGATED HOVER LISTENER ON EVERY MOUSEMOVE, ONCE PER
+ *  BOUND LAYER. <== The fill is county-sized shapes — on a real flood day some
+ *  of them resolved forecast zones of two thousand vertices — and querying
+ *  that on every mousemove taxes every drag of the globe to change a cursor.
+ *  The chip is what a pointer is aiming at; the fill stays in the CLICK test
+ *  above, which runs once per tap. */
+export const FLOOD_HOVER_LAYERS = Object.freeze([CHIP]);
+
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 
 /** Held so a theme change, a visibility flip, a new selection or a fresh alert
@@ -112,108 +123,11 @@ const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
  *  list is small and already in memory. */
 let lastAlerts = [];
 let lastNow = 0;
+/** The selected storm's geometry bundle, held raw. The track samples are
+ *  derived from it on demand — see `update`. */
+let lastBundle = null;
 let lastSamples = null;
 let visible = false;
-
-/* ---------------------------------------------------------------------------
- * THE CHIP
- *
- * ==> IT IS A ROUNDED SQUARE AND IT MUST NEVER BECOME A CIRCLE. <== The rule
- * is `GENESIS_GEO`'s, stated there and inherited here: a storm in this app IS
- * a filled dot with a spiral and a halo, and that equation is the whole
- * legibility of the globe. Genesis obeys it by having no point marker at all.
- * A flood alert cannot do that — a chip at a point is the only thing that
- * survives §56.2's pixel table at planet distance — so it obeys the rule the
- * other way, by not being round. A reader who has learnt "round means a storm"
- * is never asked to unlearn it, and the distinction still holds for somebody
- * who cannot tell the green from the orange.
- *
- * FOUR IMAGES: warning and watch, times two themes, pre-added under stable
- * names. Pre-adding both themes means a theme flip is a layout-property write
- * and never an `addImage` — a texture upload on the frame the reader is
- * looking at is the thing `map/layers/genesis.js` learnt to avoid.
- * ------------------------------------------------------------------------- */
-
-const chipName = (watch, light) => `flood-chip-${watch ? 'watch' : 'warning'}-${light ? 'light' : 'dark'}`;
-
-/**
- * One chip, drawn at 2x.
- *
- * ==> NO DOM, NO CHIP, AND THAT IS A DEGRADE RATHER THAN A FAILURE. <== The
- * headless suites drive the layer engine with a stub map and no `document` at
- * all. `map/layers/genesis.js` records what happens when a layer throws in
- * `ensure`: the WHOLE engine goes down, every storm layer with it. Returning
- * null costs the chips and nothing else — the polygons are ordinary paint and
- * still draw, so an alert is still a green shape on the map. That is the right
- * trade for a texture upload that cannot happen, and it is invisible in
- * practice because the only place without a `document` is a suite where
- * nobody is looking at the globe.
- */
-function chipImage(fill, stroke) {
-  if (typeof document === 'undefined' || !document.createElement) return null;
-
-  const scale = 2;
-  const size = FLOOD_GEO.chipSizePx * scale;
-  const r = FLOOD_GEO.chipRadiusPx * scale;
-  const w = FLOOD_GEO.chipStrokeWidth * scale;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext?.('2d');
-  if (!ctx) return null;
-
-  ctx.clearRect(0, 0, size, size);
-  /* Inset by half the stroke so the border is drawn INSIDE the tile. A stroke
-   * centred on the path spills half its width past the edge and the canvas
-   * clips it, which shows up as a chip with two crisp sides and two soft ones. */
-  const a = w / 2;
-  const b = size - w / 2;
-
-  ctx.beginPath();
-  ctx.moveTo(a + r, a);
-  ctx.lineTo(b - r, a);
-  ctx.quadraticCurveTo(b, a, b, a + r);
-  ctx.lineTo(b, b - r);
-  ctx.quadraticCurveTo(b, b, b - r, b);
-  ctx.lineTo(a + r, b);
-  ctx.quadraticCurveTo(a, b, a, b - r);
-  ctx.lineTo(a, a + r);
-  ctx.quadraticCurveTo(a, a, a + r, a);
-  ctx.closePath();
-
-  ctx.fillStyle = fill;
-  ctx.fill();
-  ctx.lineWidth = w;
-  ctx.strokeStyle = stroke;
-  ctx.stroke();
-
-  return { data: ctx.getImageData(0, 0, size, size), pixelRatio: scale };
-}
-
-/** Add all four chips if they are not already there. Idempotent: `ensure` may
- *  run more than once and `hasImage` is the cheap guard. */
-function ensureChipImages(map) {
-  for (const light of [false, true]) {
-    const colors = light ? FLOOD_COLOR_LIGHT : FLOOD_COLOR;
-    /* THE OUTLINE INK IS THE THEME'S LABEL HALO, WHICH IS THE INK THIS APP
-     * ALREADY USES FOR "SEPARATE THIS MARK FROM THE MAP UNDER IT" — dark in
-     * the dark theme, near-white in the light one. Borrowing it rather than
-     * minting a fifth hex means the chip tracks any future change to how marks
-     * are separated from the basemap.
-     *
-     * ==> BOTH PALETTES ARE READ BY NAME, NOT THROUGH `palette()`. <== That
-     * function answers for the ACTIVE theme only, and this loop is building
-     * the images for BOTH so a theme flip never has to upload a texture. */
-    const stroke = (light ? LIGHT : DARK).geo.labelHalo;
-    for (const watch of [false, true]) {
-      const name = chipName(watch, light);
-      if (map.hasImage?.(name)) continue;
-      const img = chipImage(watch ? colors.WATCH : colors.WARNING, stroke);
-      if (img) map.addImage(name, img.data, { pixelRatio: img.pixelRatio });
-    }
-  }
-}
 
 /* ---------------------------------------------------------------------------
  * PAINT
@@ -338,7 +252,46 @@ const countHaloExpr = () => {
  * be a panel counting four alerts over a globe drawing three, which is the
  * kind of disagreement that costs a reader their trust in both.
  */
+/**
+ * The last answer, kept against the exact inputs that produced it.
+ *
+ * ==> A POLL RE-PUSHES AN UNCHANGED BUNDLE AND THAT USED TO REDO EVERYTHING.
+ * <== `pipeline.repushSelected()` runs on every poll that touches the selected
+ * storm, on a theme change, and on a restyle — and each one called `update`,
+ * which re-densified the same track and re-measured the same alerts against
+ * it. Measured on real bytes: a watch carrying a resolved zone boundary costs
+ * **7.1 ms** in `nearestNm` alone (HIZ023 is 1,970 vertices against 471 track
+ * samples), and the 23 zones §56.4 found in force came to **108 ms**. Paying
+ * that again for an answer that cannot have changed is the whole of this memo.
+ *
+ * ==> KEYED ON THE BUNDLE, NOT ON THE SAMPLES DERIVED FROM IT. <== The first
+ * cut keyed on `lastSamples` and never hit once: densifying produces a NEW
+ * array every call, so the identity test failed against the copy it had just
+ * made and a re-push still cost the full 102 ms. The bundle and the alert list
+ * are the things this module is HANDED — a new poll or a new fetch produces
+ * new objects and an unchanged one does not — so they are the honest key, and
+ * `===` on them is exactly right where a deep compare would cost more than the
+ * work it saves.
+ *
+ * `lastNow` is in the key too, because expiry is filtered at render and an
+ * answer is only good for the moment it was asked for.
+ */
+let memo = null;
+
 function buildSources() {
+  if (memo && memo.bundle === lastBundle && memo.alerts === lastAlerts && memo.now === lastNow) {
+    return memo.value;
+  }
+  const value = computeSources();
+  memo = { bundle: lastBundle, alerts: lastAlerts, now: lastNow, value };
+  return value;
+}
+
+function computeSources() {
+  /* Derived here rather than in `update`, and cached on the bundle so a second
+   * push for the same storm does not densify the same track twice. */
+  if (!lastSamples && lastBundle) lastSamples = samplesFor(lastBundle);
+
   if (!lastSamples?.length) {
     return { shapes: EMPTY, points: EMPTY, report: { selected: false } };
   }
@@ -386,9 +339,25 @@ export function setFloodReporter(fn) {
   reporter = typeof fn === 'function' ? fn : null;
 }
 
-/** Push both sources, and tell the row what went on them. ONE function, so a
- *  path that repaints without reporting cannot exist. */
+/**
+ * Push both sources, and tell the row what went on them. ONE function, so a
+ * path that repaints without reporting cannot exist.
+ *
+ * ==> IT DOES NOTHING AT ALL WHEN THE LAYER IS INVISIBLE, AND THAT IS THE
+ * WHOLE OF THE FIX. <== This layer is **off by default**. Until 2026-08-23 the
+ * engine still called `update` on it for every definition on every
+ * `setBundle`, so a reader who had never turned the switch on was paying the
+ * full corridor match — densify the track, measure every national alert
+ * against it, compute an interior point for each match — on every storm
+ * switch and every poll, for a layer that draws nothing. Aaron felt it as the
+ * drawers going slow between storms.
+ *
+ * ==> WHICH MEANS `setVisible` HAS TO PUSH, AND FORGETTING THAT IS THE OBVIOUS
+ * WAY TO BREAK THIS. <== Turning the switch on has to pay the cost that was
+ * skipped, or the layer comes up empty and stays empty until the next poll.
+ */
 function push(map) {
+  if (!visible) return;
   const built = buildSources();
   map.getSource?.(SHAPE_SOURCE)?.setData(built.shapes);
   map.getSource?.(POINT_SOURCE)?.setData(built.points);
@@ -540,7 +509,18 @@ registerLayer({
    * now and `clear` is the no-selection state rather than an empty stub.
    */
   update(map, storm, bundle) {
-    lastSamples = samplesFor(bundle);
+    /* ==> THE SAMPLES ARE DERIVED LAZILY, NOT HERE. <== `samplesFor` densifies
+     * the whole past-and-forecast track, and this hook fires for every
+     * definition on every `setBundle` whether or not this layer is on. Holding
+     * the BUNDLE and letting `push` decide costs nothing for the reader who
+     * never turns the switch on, which is the default. */
+    /* ==> ONLY DROP THE SAMPLES WHEN THE BUNDLE ACTUALLY MOVED. <== A poll
+     * that re-pushes the same object must reuse the densified track, or the
+     * memo below is keyed on something this line just invalidated. */
+    if (bundle !== lastBundle) {
+      lastBundle = bundle;
+      lastSamples = null;
+    }
     push(map);
   },
 
@@ -548,6 +528,7 @@ registerLayer({
    *  empty globe under a switch the reader turned on is §5's silence, and the
    *  words are the half of this that cannot live in a layer. */
   clear(map) {
+    lastBundle = null;
     lastSamples = null;
     push(map);
   },
@@ -564,12 +545,17 @@ registerLayer({
    * put unattributed green over half the map with no panel open. */
 
   setVisible(map, on) {
+    const was = visible;
     visible = !!on;
     for (const id of FLOOD_LAYER_IDS) {
       if (map.getLayer(id)) {
         map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none');
       }
     }
+    /* ==> TURNING IT ON PAYS THE COST `push` HAS BEEN SKIPPING. <== Without
+     * this the layer comes up empty and stays empty until the next poll
+     * happens to re-push a bundle, which reads as a switch that does nothing. */
+    if (visible && !was) push(map);
   },
 });
 

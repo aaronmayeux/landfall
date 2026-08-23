@@ -3548,6 +3548,58 @@ because the chips carry the layer at distance: a scatter of clustered counts is
 the honest read of "twenty-five alerts, most of them here", a picture the
 polygons genuinely cannot draw at that size.
 
+#### What it costs, and the three places it was costing too much
+
+**Aaron reported the drawers going slow between storms on 2026-08-23, hours
+after this landed. Measured rather than guessed, and there were three causes.**
+
+**==> THE MATCH RAN FOR AN INVISIBLE LAYER, AND THIS ONE IS OFF BY DEFAULT.
+<==** The engine calls `update` on every definition on every `setBundle`, so a
+reader who had never touched the switch was densifying a track and measuring
+every national alert against it on every storm switch and every poll, to draw
+nothing. `push()` now returns immediately when the layer is not visible, and
+`setVisible` pays the skipped cost when the switch goes on — **forgetting that
+second half is the obvious way to break this**, and it shows up as a switch
+that appears to do nothing until the next poll.
+
+**==> AND A POLL RE-PUSHING AN UNCHANGED BUNDLE REDID ALL OF IT. <==**
+`repushSelected()` fires on every poll touching the selected storm, on a theme
+change and on a restyle. The match is memoized on the bundle, the alert list
+and the moment — **the bundle, not the samples derived from it**, because
+densifying produces a new array every call and the first cut's identity test
+never hit once. The clock is in the key because expiry is filtered at render:
+a memo that ignored it would keep an expired warning on the globe.
+
+**==> AND THE STATUS ROW COMMITTED WHEN NOTHING HAD CHANGED. <==**
+`app/layer-status.js` `commit()` calls `layersView.refresh()`, which rewrites
+that panel's whole `innerHTML` and rewires it. Every refresh path committed
+unconditionally, and §56.5 added a fourth caller firing on every bundle push.
+It compares now. That fixes the two renders this section added **and the two
+that were already there**.
+
+Measured on the real captured shapes — Lala's published track and HIZ023, a
+1,970-vertex NWS forecast zone, which is what §56.4 made watches carry:
+
+| | before | after |
+|---|---|---|
+| five storm switches, layer off | ~500 ms | **under 10 ms** |
+| ten polls re-pushing one bundle, layer on | ~1,000 ms | **0.4 ms** |
+| one storm switch, layer on, 12 zone-backed watches | ~100 ms | ~100 ms |
+
+**==> THE LAST ROW IS UNCHANGED AND IT IS THE HONEST NUMBER. <==** A genuine
+new selection with the layer on still pays the full match, and the cost is
+`nearestNm` against zone boundaries: **7.1 ms per zone-backed watch**, against
+471 track samples. Three watches — the number §56.4 measured in force on a
+quiet day — is ~21 ms and fine. A real national flood day has never been read
+(§56.13), and if it is bad on glass the levers are the sample count, a
+bounding-box prefilter before the vertex loop, or simplifying a zone boundary
+before matching rather than after. **None of that is worth building against a
+guessed volume.**
+
+**`tools/test-flood-layer.mjs` is the guard**, and it asserts cost rather than
+output — every other suite asks what the code produces, which is exactly why
+none of these three had a test. Four mutations verified red.
+
 #### The status row describes the layer, so the layer is what tells it
 
 `setFloodReporter` — the same channel `map/imagery.js` uses. Before Phase 5 the

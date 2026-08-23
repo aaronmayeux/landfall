@@ -59,7 +59,7 @@ import {
   GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
 import {
-  FLOOD_HIT_LAYERS,
+  FLOOD_HOVER_LAYERS,
   floodAlertAtPoint,
   rethemeFlood,
   setFloodAlerts,
@@ -826,7 +826,9 @@ function boot() {
     'sel-fpoints',
     'amb-fpoints',
     ...GENESIS_HIT_LAYERS,
-    ...FLOOD_HIT_LAYERS,
+    /* THE CHIP ONLY. `FLOOD_HOVER_LAYERS` is a shorter list than
+     * `FLOOD_HIT_LAYERS` on purpose — its header has the reason. */
+    ...FLOOD_HOVER_LAYERS,
   ]) {
     map.on('mouseenter', id, () => {
       map.getCanvas().style.cursor = 'pointer';

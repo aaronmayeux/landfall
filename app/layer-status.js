@@ -559,7 +559,29 @@ function floodRow(slot, draw) {
 export function createLayerStatus(onChange) {
   let status = {};
 
+  /**
+   * ==> A COMMIT THAT CHANGED NOTHING COSTS A WHOLE PANEL, SO IT IS NOT MADE.
+   * <== `onChange` is `layersView.refresh()`, which rewrites the Layers panel's
+   * entire `innerHTML` and rewires every control in it. Every refresh path here
+   * committed unconditionally, so one storm switch rebuilt that panel once per
+   * row whether or not a single word had moved — and §56.5 added a fourth
+   * caller that fires on every bundle push, which is every poll as well as
+   * every selection.
+   *
+   * The rows are a handful of small flat objects, so comparing them is
+   * cheaper than the DOM write by orders of magnitude. Serialising is fine
+   * here and would not be if these ever held a function or a cycle: they hold
+   * a state word and a sentence, and `tools/test-layer-status.mjs` is where
+   * that stays true.
+   *
+   * ==> KEY ORDER IS THE ONE TRAP. <== Every writer builds `next` as
+   * `{ ...status }` and then adds or deletes ONE key, so insertion order is
+   * stable across calls and a stringify compare is sound. A writer that rebuilt
+   * the object from scratch could reorder the keys and defeat this — it would
+   * cost a redundant repaint, never a stale row, which is the safe direction.
+   */
   const commit = (next) => {
+    if (JSON.stringify(next) === JSON.stringify(status)) return;
     status = next;
     onChange?.();
   };
