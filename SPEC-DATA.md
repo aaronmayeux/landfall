@@ -1330,6 +1330,30 @@ behaviour is finished until both sources have it** — is what closed it. The
 files cannot import this project's config (Pages Functions, no bundler), so both
 mirror this table by hand and say so.
 
+**==> `gdacs/geometry.js` CARRIES THE 10-SECOND BUDGET TOO, AND FOR TWO YEARS OF
+SESSIONS IT DID NOT. <==** It waited on gdacs.org with no cap at all. On
+2026-08-23 GDACS was intermittently answering slower than thirty seconds, the
+route held the line, and the CLIENT's `POLL.fetchTimeout` fired first — so the
+phone logged `storm geometry failed: timeout` and **every non-US storm lost its
+cone, its track and its wind field** while the storm list beside it, which comes
+off the capped route, stayed perfectly healthy. The parity rule above is why
+this is written down rather than just fixed: it was read as a rule about
+**sources**, and both GDACS routes are the same source, so a route with no cap
+sat next to a route with one and nothing in the wording said that was wrong.
+**The rule is about ROUTES.** Every route that fetches an upstream caps its
+wait, and the cap has real headroom under the client's abort — half, not
+"under", because 20 s against a 20 s client is what DOLPHIN-26 already was.
+`tools/test-upstream-budget.mjs` asserts both halves for every GDACS route and
+is mutation-verified against all three ways the cap can be undone.
+
+**AND THE SHARPER LESSON IS ABOUT THE FALLBACK, NOT THE TIMEOUT.** That route's
+last-good path, warm-copy path and honest 502 were all written, all correct, and
+all **unreachable** — control never got that far, because the reader had already
+gone. A fallback underneath an uncapped wait is dead code that passes every test
+which does not measure the wait. When a route grows a recovery path, the
+question is not only "is it right" but "can anything still be listening when it
+runs".
+
 **EVERY TABLE ROW ABOVE IS A CLOUDFLARE CLOCK. THE BROWSER HAS ITS OWN, AND IT IS
 SET TO ZERO.** Every client fetch of relay data sets `cache: 'no-store'` —
 `data/relay.js` (feed, advisory text), `data/adeck.js` (models),

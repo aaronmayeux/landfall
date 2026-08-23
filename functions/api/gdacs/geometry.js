@@ -45,6 +45,44 @@ const FRESH_SECONDS = 30 * 60;
  *  and past it the client gets an honest failure instead of an old shape. */
 const STALE_SECONDS = 12 * 60 * 60;
 
+/**
+ * How long this route will wait on gdacs.org before giving up on it.
+ *
+ * ==> WITHOUT THIS, EVERY FALLBACK BELOW IS UNREACHABLE. <== Measured on
+ * 2026-08-23. GDACS was intermittently taking longer than thirty seconds to
+ * answer; this route held the line to Europe with no cap, and the CLIENT's own
+ * `POLL.fetchTimeout` (30 s, config/constants.js) fired first. The phone logged
+ * `storm geometry failed: timeout`, drew nothing for SAUDEL-26 and NARRA-26,
+ * and every non-US storm on the globe lost its cone, its track and its wind
+ * field — while the last-good copy this function already knows how to serve sat
+ * one `cache.match` away, in code that could never run because nobody was still
+ * listening when execution reached it. A safety net below a floor nobody falls
+ * through is not a safety net.
+ *
+ * ==> IT IS THE SAME BUG AS DOLPHIN-26, ON THE ROUTE THAT DID NOT GET THE FIX.
+ * <== SPEC-DATA §4 records the 2026-08-01 outage: an uncached GDACS trip
+ * measured ~20 s against a 20 s client abort, and a Super Typhoon was missing
+ * from a hurricane tracker while every layer of the cache worked as designed.
+ * That fix went into `gdacs/events.js` and `nhc/storms.js` — the two STORM
+ * LISTS — under the parity rule that no data behaviour is finished until both
+ * sources have it. The rule was read as being about SOURCES; this is a third
+ * route, on a source that already had it, and it was missed. The shapes are as
+ * load-bearing as the list: a storm you can see in the list and cannot see on
+ * the map is not a storm this app has told you about.
+ *
+ * TEN SECONDS, AND IT IS `gdacs/events.js`'s NUMBER RATHER THAN A NEW ONE —
+ * Aaron's stated ceiling for how long a storm may take to appear. Two files
+ * cannot import one constant here (Pages Functions, no bundler), so this
+ * mirrors that value by hand and says so, exactly as the cache numbers above
+ * mirror SPEC §4's table.
+ *
+ * ==> RAISING THE CLIENT'S PATIENCE IS THE WRONG FIX AND THE CONSTANT SAYS SO.
+ * <== `POLL.fetchTimeout`'s own comment: "If a feed is ever seen reaching 30 s,
+ * raising this again is the wrong move: it means a route lost its cache, and
+ * the route is where to look." This is the route.
+ */
+const UPSTREAM_BUDGET_MS = 10 * 1000;
+
 /** Identify the app honestly to a public-good endpoint (SPEC §15 scale pass). */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
 
@@ -139,9 +177,18 @@ export async function onRequestGet(context) {
   }
 
   let upstreamError;
+  /* ==> THE ABORT IS SET UP OUTSIDE THE `try` AND CLEARED IN `finally`. <== A
+   * timer left running holds the invocation alive after the response has been
+   * returned, and a controller created inside the `try` cannot be cleaned up by
+   * a `catch` that may run before it exists. Same shape as
+   * `gdacs/events.js`'s `pullUpstream()`, deliberately — two spellings of one
+   * mechanism is how the two drift apart. */
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), UPSTREAM_BUDGET_MS);
   try {
     const r = await fetch(upstream, {
       headers: { 'User-Agent': USER_AGENT, Accept: 'application/json' },
+      signal: ctl.signal,
     });
     if (!r.ok) throw new Error(`upstream HTTP ${r.status}`);
     const body = await r.text();
@@ -177,6 +224,8 @@ export async function onRequestGet(context) {
     return new Response(body, { headers });
   } catch (e) {
     upstreamError = e;
+  } finally {
+    clearTimeout(timer);
   }
 
   /* Upstream failed. Serve last-good flagged stale — the client shows it with
