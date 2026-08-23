@@ -260,28 +260,28 @@ real home is the other row carrying the same section number.
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
-| `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-148 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 571-620 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 621-651 |
+| `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 586-635 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 636-666 |
 | `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3473-3508 |
 | `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3651-3691 |
 | `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3732-3781 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3848-3877 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 652-683 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 684-827 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 828-845 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 846-849 |
-| `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 224-232 |
-| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 307-331 |
-| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 404-456 |
-| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 491-570 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 667-698 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 699-842 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 843-860 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 861-864 |
+| `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
+| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-338 |
+| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 411-463 |
+| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 498-585 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 55,551 | 15 |
+| `SPEC-FLOOD-PLAN.md` | 56,531 | 15 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |

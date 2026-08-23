@@ -245,59 +245,17 @@ The short version, because it is the kind of mistake that repeats:
   session stops.** That disagreement happened after the first patch and was
   ignored.
 
-**==> THE PREREQUISITE IS DONE AND IT CAME WITH A FINDING THAT NEARLY REPEATED
-THE WHOLE MISTAKE. <==** Shipped 2026-08-23, `SPEC-FLOOD-PLAN.md` §56.18 and
-§56.17, as-built in `SPEC-UI.md` §48.21.
+**==> THE PREREQUISITE LANDED AND WAS CONFIRMED ON GLASS 2026-08-23. <==**
+`SPEC-FLOOD-PLAN.md` §56.17 and §56.18; as-built in `SPEC-UI.md` §48.21. The
+`Flooding` section fetches its own list, the corridor match is cheap, and both
+were judged on a phone against Moke with the map switch off — eight resolved Big
+Island zones, and it felt good. **Nothing from that pass is outstanding.**
 
-Letting the `Flooding` section fetch — the plan's own recommendation — would have
-put the corridor match on every storm open for every reader. **That match cost
-800 ms of pure arithmetic for one US storm**, measured in `node`, which is faster
-than a phone. Building the prerequisite as written would have recreated the
-Phase 5 lag in a new place wearing the plan's blessing.
-
-Two causes, neither of which was the number of alerts: **the only prefilter was
-latitude**, and Hawaii shares latitudes with the Gulf, so a Hawaii zone against
-an Atlantic storm was rejected by nothing; and **NWS draws zone outlines at 65
-metres per point** against a 300 nm corridor. Now: a bounding-box lower bound,
-a thinned outline at 1 nm, and the full outline only where a shape sits close
-enough to the corridor edge to change the verdict.
-
-| list | before | after |
-| --- | --- | --- |
-| 33 real warning polygons | 4.6 ms | 3.0 ms |
-| + 23 watch zones far away | 800 ms | 2.4 ms |
-| + 23 watch zones on the track | 235 ms | 15 ms |
-
-**The verdict is exact at every radius; only the reported distance moves, by at
-most 1 nm, and only upward.**
-
-**==> AND ITS GUARDING TEST PASSED WITH A DELIBERATE 2% INFLATION IN THE BOUND.
-<==** That is the mutation that silently drops live flood warnings off a storm.
-`tools/test-flood-fast.mjs` was testing the CONSEQUENCE through a probe grid too
-coarse to land in the band where the bug bites. `boxLowerNm` is exported now and
-the inequality is asserted head-on, with a second assertion whose only job is to
-prove the first has teeth. Both mutants verified red, then green.
-
-**WHAT WAS DELIBERATELY NOT BUILT: the per-storm memo the plan called for.** A
-repaint costs 3 ms on a real list, 15 ms worst case. The memo would buy
-milliseconds against an expiry-invalidation problem on a hazard surface. If the
-phone disagrees it is a small addition — §56.18 says where to start.
-
-**`lib/flood.js` CROSSED §12's CEILING AND WAS CUT.** The measurement is
-`lib/shape-distance.js` now: it answers *how near does this shape come to this
-track* and knows nothing about floods. Flood imports distance; distance imports
-nothing of flood's.
-
-**GLASS, AND IT IS THE ONLY GATE THAT COUNTS.** Open a storm with the
-`Flood alerts` switch OFF — the default. `Flooding` should now show a real answer
-instead of *Checking flood alerts…* forever. Then tap four storms in a row on the
-globe and step through them on the home dashboard: **that is the motion that
-exposed the first attempt.** Nothing in the sandbox can measure it —
-`perf-select` needs the basemap and the tile host is outside the wall, verified
-this session.
-
-**SLICE A IS NEXT AND WAS DELIBERATELY NOT STARTED.** §56.16's three slices are
-unchanged. Do not start it before the above has been felt on a phone.
+**==> SLICE A IS THE NEXT WAVE AND IT HAS NOT BEEN STARTED. <==** §56.16's three
+slices are unchanged: the layer goes per-storm, polygons only, no chips and no
+clustering, judged on glass before anything else is written. **Read §56.15 and
+§56.16 before touching it** — the first attempt at Phase 5 was reverted whole and
+those two sections are why.
 
 **THE TOOLS FOR THE RETRY ARE IN, AND ONE OF THEM NEEDS A HUMAN BEFORE IT IS
 WORTH ANYTHING.** Added 2026-08-23:
@@ -388,46 +346,28 @@ built only on the dashboard path, which needs a threat storm — so a genuinely
 calm day showed neither. Building the gate alone would have shipped a change
 that only ever subtracted. Both halves are in.
 
-**PHASE 4 — ZONE SHAPES FOR WATCHES — SHIPPED 2026-08-23.** A Flood Watch
-carries no shape, so it could be neither drawn nor matched. Its zones are
-resolved now through a new route and joined onto the alert list in `data/flood.js`,
-and a watch measured **23.0 nm** from Lala's real track matches where before it
-was held back entirely. As-built in `SPEC-UI.md` §48.21; what was measured stays
-in `SPEC-FLOOD-PLAN.md` §56.4.
-
-**==> THE BULK PROBE ANSWERED, AND IT ANSWERED WITHOUT SHAPES. <==** This was
-the open question that could have deleted the phase's cost argument. Asked for
-the first time: `GET /zones?type=forecast&id=…` returns 200 with all 23 zones in
-one request, 30,172 bytes — and `geometry: null` on every feature. The id list
-works; the boundaries do not come with it. So the per-zone loop shipped: 23
-zones, 23 requests, held thirty days at the edge on NWS's own `max-age`.
+**PHASE 4 — ZONE SHAPES FOR WATCHES — CONFIRMED ON GLASS 2026-08-23.** A Flood
+Watch carries no shape of its own, so it could be neither drawn nor matched. Its
+zones are resolved now and joined onto the alert list in `data/flood.js`. Moke's
+watch rendered on a phone with eight Big Island zones named in the drawer — the
+first time a resolved watch has been on screen. As-built in `SPEC-UI.md` §48.21;
+what was measured stays in `SPEC-FLOOD-PLAN.md` §56.4.
 
 **==> ONE PARAMETER IS STILL UNTESTED AND IT WOULD TURN 40 REQUESTS INTO 1. <==**
-NWS documents `include_geometry` on that endpoint and this project has never
-sent it. The probe is in the runner as of this push. **Read
+NWS documents `include_geometry` on the zones endpoint and this project has never
+sent it. The probe has been in the runner since 2026-08-23. **Read
 `geometry/nws-zones-bulk-probe-geometry.geojson` off `archive` before touching
 `functions/api/nws/zone.js`** — if it carries the boundaries, that route should
-ask once instead of forty times.
+ask once instead of forty times. The bulk probe WITHOUT it already answered:
+all 23 zones in one request, `geometry: null` on every feature, which is why the
+per-zone loop shipped.
 
-**WHAT THE ZONE BYTES SAID, since nobody had ever read one.** Both `Polygon` and
-`MultiPolygon` are real (islands make the difference). 23 zones are 1.63 MB as
-served and only 22% of that is geometry — NWS pretty-prints and ships an
-observation-station list — which is why the route projects to `name`, `state`
-and the shape. Coordinates are rounded to four places, about 11 m: **a rounding,
-not a simplification**, every vertex still travels.
-
-**==> THE SILENT CASE IS GONE AND THE HONEST ONE REPLACED IT. <==** The drawer's
-clause *"issued by zone and has no shape to draw"* counted `total - drawable`,
-which is always zero — nothing shapeless reaches the match — so it had never
-printed once. `unplaceable` does that job now and CAN be non-zero: a watch whose
-boundaries did not come back is counted, and on `none_matched` the all-clear is
-withheld rather than printed over it.
-
-**HELD FOR WEATHER, AND THE SHAPES ARE THE LEAST-SEEN THING IN THE APP.** A
-resolved watch draws whole forecast zones — a Hawaii zone is 0.7° tall against a
-median warning polygon 0.270° wide. **Whether a warning still reads as more
-urgent than a watch fifty times its area is a glass call nobody has made**, and
-Phase 5 owns the map that has to make it.
+**STILL UNSEEN: THE ZONE SHAPES DRAWN ON THE MAP.** The drawer's rows are
+confirmed; not one boundary has been painted. A resolved watch draws whole
+forecast zones — a Hawaii zone is 0.7° tall against a median warning polygon
+0.270° wide. **Whether a warning still reads as more urgent than a watch fifty
+times its area is a glass call nobody has made**, and Slice A owns the map that
+has to make it.
 
 **ONE THING FIXED IN PASSING** because this change depends on the file it was
 wrong in: `functions/api/nws/flood.js` named the mirror checker without its
@@ -498,12 +438,14 @@ the fix is one line in `dashboardHtml` and one in `renderBody`.**
 6. **And with NO storm on screen they should BOTH be there** — on a calm day,
    and on a day a source is down. That half did not exist before this phase; a
    quiet home screen showed neither. Check it with the globe empty.
-7. **The warning rows carry their affected area and how long is left.** *Hawaii
-   in Hawaii, HI* under the name, *52 min left* under that. **The watch's area
-   is seventeen zones and is printed whole on purpose** — the reader is hunting
-   for their own zone and truncating hides it. On a phone that is a real block
-   of text, and whether it reads as thorough or as a wall is a glass call. They
-   are in `Flooding` now, not in Rain.
+7. **CONFIRMED 2026-08-23 — the alert rows carry their area and their time
+   left, and eight zones read as thorough rather than as a wall.** Moke's watch
+   printed *Kona; Kohala; Big Island Interior; Big Island Summit; Big Island
+   South; Big Island Southeast; Big Island East; Big Island North* over two
+   lines with *37 hours left* under it. **The untruncated area list is settled
+   at eight; seventeen is still unseen** — the reader is hunting for their own
+   zone and truncating hides it, so the wording stands, but twice this length on
+   a phone is a different question.
 
 8. **The `Flooding` section itself, on a calm day with a home set.** It renders
    with no storm on screen — that is the point of gating it on the house rather

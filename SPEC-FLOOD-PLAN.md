@@ -139,9 +139,16 @@ therefore still a guess, and every phase below inherits that.
 
 ---
 
-### 56.4 Watches need their zone shapes — ==> SHIPPED 2026-08-23 <==
+### 56.4 Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <==
 
-**Phase 4 landed. What it built is as-built in `SPEC-UI.md` §48.21** under *The
+**Confirmed on glass against Moke**, whose Flood Watch rendered in the storm
+drawer naming eight resolved Big Island zones. That is the first resolved watch
+ever on screen: without this phase it carried `geometry: null`, matched nothing
+and was held back entirely. **The zone SHAPES have still never been drawn** —
+that is Slice A's, and §56.5 owns the question of whether a warning still reads
+as more urgent than a watch fifty times its area.
+
+**What it built is as-built in `SPEC-UI.md` §48.21** under *The
 zone codes, and the two geographies inside them* and *Zone boundaries, and the
 watch that finally has a shape*. Read it there. What stays here is what was
 MEASURED, because those numbers were the whole reason the phase waited.
@@ -401,7 +408,7 @@ of session config.
 
 ---
 
-### 56.17 The `Flooding` section says it is checking, and it never is — ==> FIXED 2026-08-23 <==
+### 56.17 The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <==
 
 **==> OPTION 1 WAS BUILT: THE LIST IS FETCHED FOR EVERY READER, AND ONLY THE
 DRAWING IS STILL GATED ON THE MAP SWITCH. <==** As-built in `SPEC-UI.md` §48.21.
@@ -488,7 +495,15 @@ had data is how a fault gets attributed to the wrong change.
 
 ---
 
-### 56.18 Making the corridor match cheap — ==> SHIPPED 2026-08-23 <==
+### 56.18 Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <==
+
+**==> CONFIRMED ON THE EXPENSIVE CASE, NOT A QUIET ONE. <==** Judged on a phone
+against Moke with the `Flood alerts` switch off — the default, and the path that
+matters. Her watch resolved to **eight large Hawaii coastal zones**, the same
+family of boundary as the 1,970-point fixture the measurements below were taken
+against. Aaron's verdict was that it works and feels good. The first attempt at
+Phase 5 was reverted for exactly this motion, so this is the gate that counts
+rather than a formality.
 
 **==> §56.17 WOULD HAVE HANDED EVERY READER AN 800 ms BLOCK, AND THE PLAN DID
 NOT SEE IT COMING. <==** Letting the `Flooding` section fetch means the corridor
