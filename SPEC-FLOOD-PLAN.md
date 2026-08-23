@@ -409,13 +409,17 @@ and the alert rows becoming buttons. Mostly DOM and mostly cheap, and it is last
 because §56.6's keyboard path is meaningless until there is something to open.
 **Judge on glass.**
 
-**==> AND IT DOES THE FILE SPLIT FIRST. <==** `map/layers/flood.js` crossed
-§12's 700-line ceiling on Slice B (724) and has a row in SPEC.md's inventory
-naming the cut: `chipImage`, `ensureChipImages` and the five paint expressions
-are pure functions with no module state, so they lift out with no behaviour
-change and nothing new to thread. It was not done in the push that crossed the
-line because folding a behaviour-neutral split into the same commit as new
-behaviour is what made the first attempt unbisectable.
+**==> AND IT DID THE FILE SPLIT FIRST, IN A COMMIT OF ITS OWN. <==**
+`map/layers/flood.js` crossed §12's ceiling on Slice B and SPEC.md's inventory
+named the cut twice while the file grew both times. The chip half —
+`chipName`, `chipImage`, `drawWaves`, `waves`, `ensureChipImages` and the four
+expressions that pick one — is `map/layers/flood-chip.js` now, and it took
+`map/`'s only import from `ui/` with it, which is the tidier place for it. **484
+and 315 lines, both under the ceiling, and the layer's row is off the inventory
+because it is no longer over the line.** Four functions come back across an
+import and nothing else moved; the move shipped before the tapping so that a
+phone finding Slice C slow has something to bisect, which is exactly what the
+first attempt at this phase did not have.
 
 #### Before Slice A, and this is a gate rather than a suggestion
 

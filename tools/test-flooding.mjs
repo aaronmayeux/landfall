@@ -527,10 +527,19 @@ section('§56.10 — one water mark, and only one');
   ok(d.length === 3 && d.every((x) => x.startsWith('M')),
     'the waves are readable as raw path data, which is what a canvas needs');
 
-  const layerSrc = fs.readFileSync(new URL('../map/layers/flood.js', import.meta.url), 'utf8');
-  ok(/iconPathData/.test(layerSrc) && /section-icon\.js/.test(layerSrc),
+  /* ==> BOTH MAP FILES ARE READ, AND THAT IS WHAT SURVIVING SLICE C'S SPLIT
+   * MEANS. <== The chip moved to `map/layers/flood-chip.js`. Reading only the
+   * file this gate was written against would have gone quietly green on an
+   * empty check — the import it looks for would simply not be in the file any
+   * more, which is the failure mode of every assertion pinned to a path. So it
+   * reads the pair and asks the question of the PAIR: somewhere in what the
+   * globe draws with, the shape is imported, and nowhere in it is the shape
+   * copied. */
+  const mapSrc = ['../map/layers/flood.js', '../map/layers/flood-chip.js']
+    .map((f) => fs.readFileSync(new URL(f, import.meta.url), 'utf8'));
+  ok(mapSrc.some((s) => /iconPathData/.test(s) && /section-icon\.js/.test(s)),
     'and the map layer takes them from ui/section-icon.js');
-  ok(!d.some((x) => layerSrc.includes(x)),
+  ok(!mapSrc.some((s) => d.some((x) => s.includes(x))),
     'and carries no copy of its own — one shape, two surfaces');
 }
 

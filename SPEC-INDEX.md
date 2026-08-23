@@ -92,17 +92,17 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 3950-3973 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 3974-3995 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1273-1292 |
-| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1686-1716 |
-| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1717-1751 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1752-1753 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2318-2324 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2325-2331 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1685-1715 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1716-1750 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1751-1752 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2317-2323 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2324-2330 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1088-1089 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2332 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2331 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1724-1904 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1905-2252 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2338 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2337 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
@@ -255,38 +255,38 @@ real home is the other row carrying the same section number.
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2032-2064 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2065-2101 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
-| `55` | Known and accepted | `SPEC.md` | 2346-2485 |
+| `55` | Known and accepted | `SPEC.md` | 2345-2484 |
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 667-716 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 717-747 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 671-720 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 721-751 |
 | `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3609-3644 |
 | `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3787-3827 |
 | `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3868-3917 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3984-4057 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 748-779 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 780-923 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 924-941 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 942-945 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 752-783 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 784-927 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 928-945 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 946-949 |
 | `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
-| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-419 |
-| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 492-544 |
-| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 579-666 |
-| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1112-1129 |
+| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-423 |
+| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 496-548 |
+| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 583-670 |
+| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1116-1133 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 67,334 | 16 |
+| `SPEC-FLOOD-PLAN.md` | 67,625 | 16 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
 | `SPEC-UI.md` | 241,855 | 18 |
-| `SPEC.md` | 176,423 | 15 |
+| `SPEC.md` | 175,168 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
