@@ -256,29 +256,31 @@ The short version, because it is the kind of mistake that repeats:
 were judged on a phone against Moke with the map switch off — eight resolved Big
 Island zones, and it felt good. **Nothing from that pass is outstanding.**
 
-**==> SLICES A AND B ARE BUILT AND PUSHED, AND NOT ONE PIXEL OF EITHER HAS BEEN
-SEEN. <==** 2026-08-23. **Slice A** made the layer per-storm — polygons only,
-national draw deleted. **Slice B** added the chips: a clustered point source, a
-true interior point per alert, four rounded-square images across two themes, and
-the cluster count with per-chip ink. Both as-built in `SPEC-UI.md` §48.21.
-**Tapping is still not built** — that is Slice C.
+**==> THE FLOOD LAYER DRAWS THE WHOLE COUNTRY AGAIN, AND SLICE A IS REVERSED.
+<==** 2026-08-23. Aaron judged it on a phone: the switch drew nothing until he
+picked a storm, and *"I don't want to have to select a storm. It should draw on
+the map like any other layer."* §56.1's argument for per-storm was wrong —
+`Areas being watched` is in the same group and draws globally with nothing
+selected — and the reversal also retires the causal-claim risk §56.5 accepted
+knowingly. As-built in `SPEC-UI.md` §48.21 and `SPEC-FLOOD-PLAN.md` §56.16.
 
-**SLICE B TOUCHED NOTHING SLICE A SHIPPED, SO THEY ARE STILL SEPARATELY
-REVERTABLE.** The zoom ramp, the corridor memo and the visibility gate are
-unchanged, deliberately: changing any of them in the same push would have made
-the two impossible to tell apart on a phone.
+**IT IS A NET DELETION AND IT TOOK THE LAYER OFF THE SELECTION PATH.**
+`update()` and `clear()` are empty, so §56.15's faults 1 and 2 are unreachable
+rather than gated: a selection costs this layer nothing, switch on or off. The
+corridor match, the memo, the held storm, the held bundle and `floodMatchRuns`
+are gone. `map/layers/flood.js` came down 91 lines the day it crossed the
+ceiling.
 
-**WHAT SLICE B DID ABOUT COST.** The interior-point search is the one piece of
-arithmetic here big enough to be felt alone — about 8 ms for a single
-1,970-vertex forecast zone, about 16 ms for the 33 national warning polygons,
-measured in the sandbox and therefore **a floor for a phone, never a measurement
-of one**. The first attempt ran all of it on every push. It is cached per alert
-id now, and the cache outlives the selection, so stepping between storms whose
-corridors overlap pays once per shared alert instead of once per storm.
+**WHAT IS BUILT: THE NATIONAL POLYGONS AND THE CHIPS.** Slice B's clustered
+point source, the interior point per alert, four rounded-square images across
+two themes, and the cluster count with per-chip ink. The point cache survives —
+it is keyed on the alert id and nothing in the layer's life invalidates one.
+**Tapping is still not built; that is Slice C**, and Slice C lifts the chip half
+of the file out before it does anything else.
 
-**`map/layers/flood.js` IS 724 LINES AND HAS A ROW IN SPEC.md's §12 INVENTORY.**
-The cut is named: the chip images and the five paint expressions are pure and
-lift out clean. **Slice C does that split before it does anything else.**
+**==> NONE OF IT HAS BEEN SEEN DRAWING. <==** Aaron has seen the layer draw
+nothing, which is how the reversal was found. Nobody has yet looked at a green
+polygon or a chip on this globe.
 
 **THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
 three minutes, in that order — taps on the globe first, chevrons on the home

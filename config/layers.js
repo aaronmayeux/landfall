@@ -632,16 +632,22 @@ export const LAYER_TOGGLES = Object.freeze([
    * show a source outage would let the first render as the last, over a
    * flooding county.
    *
-   * ==> THE NOTE NAMES THE TWO LIMITS THAT WILL OTHERWISE READ AS FAULTS. <==
-   * It is UNITED STATES ONLY, because NWS is, and no global equivalent of
+   * ==> THE NOTE NAMES THE LIMIT THAT WILL OTHERWISE READ AS A FAULT. <== It is
+   * UNITED STATES ONLY, because NWS is, and no global equivalent of
    * /alerts/active has been found — the same shape of limit radar and surge
-   * carry, and it is stated up front rather than discovered over a typhoon.
-   * And WATCHES DO NOT DRAW: measured on real NWS bytes, a Flash Flood Warning
-   * carries a polygon and a Flood Watch carries `geometry: null` with a list of
-   * forecast zones instead, so there is nothing to paint without seventeen more
-   * requests. Both facts belong on the switch, because a reader who turns this
-   * on during a watch and sees an empty map will read our plumbing as the
-   * weather.
+   * carry, and it is stated up front rather than discovered over a typhoon. It
+   * also names the residue: a watch is issued by forecast zone rather than for a
+   * drawn box, its boundaries are fetched separately (§56.4), and any that do
+   * not come back are listed in words and never handed an invented shape.
+   *
+   * ==> IT SITS IN `Storm detail` AND IT IS NOT PER-STORM, AND THAT IS NOT A
+   * MISMATCH. <== §56.1 once called it one, and Slice A made the layer
+   * per-storm to resolve it. **That reading was wrong**: `genesis` — *Areas
+   * being watched* — is in this same group and draws every watched area on
+   * Earth with nothing selected. A map-wide layer in this group is already what
+   * ships. The layer draws the whole country again as of 2026-08-23, Aaron's
+   * call on glass, and the group stays put. Do not move it back on the old
+   * argument.
    */
   Object.freeze({
     key: 'floodAlerts',

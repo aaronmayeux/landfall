@@ -598,26 +598,19 @@ export function createLayerStatus(onChange) {
      *
      * The key is deleted outright when the layer is off, so a sentence from a
      * previous fetch cannot survive the switch being flipped.
+     *
+     * ==> IT USED TO CARRY A FOURTH STATE AND THAT STATE IS GONE. <== Slice A
+     * made the layer per-storm, so a reader who flipped the switch on an empty
+     * globe got a control that appeared to do nothing, and this row said
+     * *Select a storm — this layer draws the alerts near its track*. **The layer
+     * draws the whole country again** (2026-08-23, Aaron's call on glass), so
+     * that state is unreachable and is deleted rather than left as an
+     * explanation for something that cannot happen.
      */
-    setFloodAlerts({ on, slot, selected = true }) {
+    setFloodAlerts({ on, slot }) {
       const next = { ...status };
       delete next.floodAlerts;
-      /* ==> WITH NO STORM SELECTED THIS LAYER DRAWS NOTHING, AND THIS ROW IS
-       * THE ONLY THING THAT CAN SAY WHY (SPEC-FLOOD-PLAN §56.5). <== Slice A
-       * made the layer per-storm, so a reader who flips the switch on an empty
-       * globe gets a control that appears to do nothing. That is the §5 silence
-       * in its smallest form: a truthfully empty map with no account of itself.
-       *
-       * It sits ABOVE the slot checks deliberately. Whether the national list
-       * loaded is not the reader's problem yet — there is nothing to filter it
-       * against — and leading with an outage sentence would send somebody to a
-       * Retry that could not change what they are looking at. */
-      if (on && !selected) {
-        next.floodAlerts = {
-          state: 'empty',
-          message: 'Select a storm — this layer draws the alerts near its track',
-        };
-      } else if (on && slot) {
+      if (on && slot) {
         next.floodAlerts =
           slot.state !== 'ok'
             ? { state: 'error', message: 'Flood alerts could not be checked \u2014 tap to retry' }

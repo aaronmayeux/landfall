@@ -430,14 +430,19 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * only the live one would leave the other's last sentence sitting in the
    * status object after its switch was flipped off.
    */
-  /** The flood layer's status row. Its own function because TWO things move it
-   *  now — the fetch resolving and the selection changing — and a row written
-   *  in two places with two argument lists is how the two drift apart. */
+  /** The flood layer's status row. Its own function because two things reach it
+   *  — the fetch resolving and `applyLayerState` — and a row written in two
+   *  places with two argument lists is how the two drift apart.
+   *
+   *  ==> IT NO LONGER PASSES A SELECTION, AND THAT IS THE LAYER GOING NATIONAL.
+   *  <== Slice A made the layer per-storm and gave this row a `selected` flag so
+   *  it could say *Select a storm*. The layer draws the whole country again
+   *  (2026-08-23, Aaron's call on glass), so which storm is open has nothing to
+   *  do with what is painted and the flag is gone. */
   function refreshFloodRow() {
     layerStatus.setFloodAlerts({
       on: toggleOn('floodAlerts'),
       slot: floodSlot,
-      selected: !!pipeline.selected(),
     });
   }
 
@@ -450,13 +455,12 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       storms: all,
       deckFor: getAdeck,
     });
-    /* ==> THE FLOOD ROW RECOMPUTES ON SELECTION NOW, AND BEFORE SLICE A IT DID
-     * NOT NEED TO. <== It used to be written only when the fetch resolved,
-     * because the layer drew the whole country and the answer did not depend on
-     * which storm was open. The layer is per-storm now (§56.5), so "no storm
-     * selected" is one of its states and selection is exactly when that
-     * changes. Left out, the row would go on claiming alerts were drawn over a
-     * globe that had just been cleared. */
+    /* ==> THE ROW DOES NOT DEPEND ON THE SELECTION ANY MORE, AND IT IS STILL
+     * RECOMPUTED HERE. <== Slice A made the layer per-storm and this call was
+     * added because "no storm selected" was one of its states. The layer draws
+     * the whole country again, so that state is gone — but this function is also
+     * how the row learns the SWITCH moved, which it still has to. Cheap, and
+     * `commit()` drops a recompute that says the same thing as the last one. */
     refreshFloodRow();
     layerStatus.refreshEnvironment({
       on: toggleOn('environment'),

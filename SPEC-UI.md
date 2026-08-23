@@ -3124,37 +3124,55 @@ radius and left to judge it. An unnamed proximity is a claim wearing a
 measurement's clothes. It prints through `formatDistance` in the reader's own
 units, like every other length in the app.
 
-**==> THE MAP LAYER USED TO SIDESTEP THIS BY DRAWING THE WHOLE COUNTRY, AND
-SLICE A ENDED THAT. <==** This paragraph said the toggle was a global additive
-switch answering *what flood alerts are in force* — a question with no storm in
-it and therefore no causal claim to get wrong. It is now per-storm
-(`SPEC-FLOOD-PLAN.md` §56.5): it draws the alerts whose shapes fall inside the
-selected storm's corridor, the same set the drawer counts, and nothing when no
-storm is selected.
+**==> THE MAP LAYER DRAWS THE WHOLE COUNTRY, AND THAT IS WHAT KEEPS IT CLEAR OF
+THIS PROBLEM ENTIRELY. <==** The `Flood alerts` toggle is a global additive
+switch answering *what flood alerts are in force in the United States* — a
+question with no storm in it and therefore no causal claim to get wrong. Turn it
+on and the alerts paint whether or not anything is selected; select a storm and
+nothing about the layer changes.
 
-**That trades the sidestep for a risk this plan cannot word away, knowingly.**
-Green shapes drawn only inside one storm's corridor tell the reader *this storm
-did this*, in pictures, where there is no sentence to hedge with. **Aaron made
-that call on 2026-08-22.** The mitigations are structural rather than verbal:
-the layer draws only while that storm is selected, so the drawer's wording —
-which does carry the hedge — is on screen at the same moment as the shapes; and
-the shapes are the same set the sentence counts, so the two surfaces cannot
-disagree about what is being claimed.
+**==> IT WAS PER-STORM FOR ONE DAY AND AARON REVERSED IT ON GLASS. <==** Slice A
+made the layer draw only the alerts inside the selected storm's corridor, on
+§56.1's argument that a toggle in the `Storm detail` group painting Ohio under a
+Hawaii storm contradicted its own manifest entry. On 2026-08-23 Aaron opened it
+on a phone and found a switch that drew nothing until he picked a storm: *"I
+don't want to have to select a storm. It should draw on the map like any other
+layer."*
 
-**What it buys is that the toggle finally means what the manifest always said.**
-The row sits in the `Storm detail` group, and a layer painting every county in
-the United States from that group was the contradiction §56.1 opened this
-rebuild to resolve.
+**THAT ARGUMENT WAS WEAKER THAN IT LOOKED, AND THE CORRECTION IS WORTH KEEPING
+SO NOBODY REVERSES IT BACK.** `Areas being watched` sits in the same group and
+draws every watched area on Earth with nothing selected (§45). A map-wide layer
+in `Storm detail` is already what ships, so the group was never the
+contradiction it was read as. The row stays where it is.
 
-**WITH NO STORM SELECTED IT DRAWS NOTHING AND THE STATUS ROW SAYS WHY.** A
-switch that appears to do nothing is its own bug, and it is the §5 silence in
-its smallest form — a truthfully empty map with no account of itself. The row
-reads *Select a storm — this layer draws the alerts near its track*, and it sits
-ABOVE the outage and empty-list states deliberately: whether the national list
-loaded is not yet the reader's problem, and leading with an outage sentence
-would send somebody to a Retry that could not change what they see. The row is
-recomputed on selection as well as on the fetch, because selection is exactly
-when this state changes.
+**AND THE REVERSAL RETIRED A RISK RATHER THAN TAKING ONE ON.** Slice A's own
+entry recorded, knowingly, that drawing green shapes only inside one storm's
+corridor tells the reader *this storm did this*, in pictures, where there is no
+sentence to hedge with — a risk it could only mitigate by keeping the drawer's
+wording on screen at the same moment. **A national draw asserts nothing about
+any storm**, so the risk is gone rather than managed.
+
+**WHAT IT COSTS IS THAT THE MAP AND THE DRAWER NO LONGER SHOW THE SAME SET, AND
+BOTH ARE STILL TRUE.** The `Flooding` section counts what comes within
+`RAIN.floodCorridorNm` of that storm's track; the globe paints the country. Two
+different questions, and no sentence in that section claims the globe is showing
+its set. **Do not "reconcile" them by filtering the map** — that is the per-storm
+layer arriving by a side door, with the causal claim it carries.
+
+**AND IT TOOK THE LAYER OFF THE SELECTION PATH ALTOGETHER, WHICH IS THE WHOLE OF
+§56.15's FIRST TWO FAULTS.** `update()` and `clear()` are empty. The engine calls
+`update` on every definition on every `setBundle` — every selection and every
+poll — and an empty function cannot run a corridor match, so there is no memo to
+key correctly and nothing for a re-push to repeat. The corridor match, the memo,
+the held storm and the held bundle are all deleted from `map/layers/flood.js`.
+
+**THE STATUS ROW HAS THREE STATES AND ONLY ONE OF THEM IS AN ALL-CLEAR.** §5. A
+feed that errored, a feed that answered with nothing in force, and a feed whose
+alerts all turned out to be watches whose boundaries did not come back are three
+different facts producing the same empty globe. A fourth existed for one day —
+*Select a storm — this layer draws the alerts near its track* — and went with the
+per-storm layer. It is deleted rather than left standing as an explanation for
+something that can no longer happen.
 
 #### What carries a shape, and what has to be resolved one
 

@@ -42,9 +42,17 @@
  * same one. See that file for why they are said as often as they are.
  *
  * ==> KEYBOARD IS NOT OPTIONAL AND THE MAP ALONE DOES NOT PROVIDE IT (§10,
- * §56.6). <== Phase 5 puts these alerts on the globe as tappable icons. An
- * icon reachable only by tapping a sphere does not exist for a keyboard user,
- * so THESE ROWS ARE THE KEYBOARD PATH and they land first on purpose.
+ * §56.6). <== Slice C makes the globe's flood chips tappable. A chip reachable
+ * only by tapping a sphere does not exist for a keyboard user, so THESE ROWS ARE
+ * THE KEYBOARD PATH and they land first on purpose.
+ *
+ * ==> THIS SECTION IS PER-STORM AND THE MAP LAYER IS NOT, AND BOTH ARE RIGHT.
+ * <== As of 2026-08-23 the globe paints every flood alert in force in the United
+ * States, with no selection involved. This section counts only what comes within
+ * `RAIN.floodCorridorNm` of THIS storm's track, so the globe shows more shapes
+ * than this section counts. Two different questions — *where is flooding* and
+ * *what is near this storm* — and no sentence here claims the globe is showing
+ * its set. Do not "reconcile" them by filtering the map.
  *
  * A SELF-CONTAINED CONTROLLER, same shape as `ui/rain-storm.js` and
  * `ui/env-health.js`, because `ui/view-storm-detail.js` is past §12's file
@@ -89,9 +97,12 @@ export function spreadWords(arrivalHours, peakHours) {
 /**
  * @param {object} deps injected by ui/view-storm-detail.js.
  * @param {{ summaryFor:(storm:object)=>object|null }} [deps.flood] the
- *   corridor answer, already measured against the same track FeatureCollections
- *   the map draws — so the sentence in the drawer and the shapes on the globe
- *   can never disagree about which track was used.
+ *   corridor answer, measured against this storm's own track FeatureCollections.
+ *   ==> IT USED TO SAY THIS GUARANTEED AGREEMENT WITH THE GLOBE, AND THAT IS NO
+ *   LONGER WHAT IS TRUE. <== The map layer went national on 2026-08-23 and does
+ *   not measure a track at all, so there is no shared rule left to agree about.
+ *   What this dependency guarantees is that the sentence and the ROWS below it
+ *   come from one measurement.
  * @param {{ waterFor:(storm:object)=>object|null, retry:()=>Promise<any> }}
  *   [deps.cap] the storm-surge half of the CAP list (§56.8). The SAME
  *   controller `Watches and warnings` reads, so one fetch feeds both sections

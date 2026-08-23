@@ -331,12 +331,50 @@ leaves the suite green and only removing both turns it red — recorded in the
 suite so nobody mistakes that for blindness. **The phone pass below is still the
 only real gate and it has not been run.**
 
-**SLICE A — THE LAYER GOES PER-STORM. POLYGONS ONLY.** No chips, no clustering,
-no interior points, no new panel. Delete the national draw, gate the work on
-visibility, add the zoom ramp. This is the smallest change that closes §56.1's
-first fault, and it is the one most likely to be the expensive one — it is where
-county-scale geometry starts being pushed into a source on every selection.
-**Judge on glass before anything else is written.**
+**==> SLICE A IS REVERSED. THE LAYER DRAWS THE WHOLE COUNTRY AGAIN, AND THIS IS
+THE ENTRY THAT STOPS IT BEING REVERSED BACK. <==** Slice A made the layer
+per-storm — polygons only, national draw deleted — on §56.1's argument that a
+toggle in the `Storm detail` group painting Ohio under a Hawaii storm
+contradicted its own manifest entry. Aaron judged it on a phone on 2026-08-23
+and found a switch that drew nothing until he picked a storm: *"I don't want to
+have to select a storm. It should draw on the map like any other layer."*
+
+**§56.1's ARGUMENT WAS WRONG AND THE CORRECTION IS THE PART WORTH KEEPING.**
+`map/layers/genesis.js` — *Areas being watched* — is in that same group and
+draws every watched area on Earth with nothing selected. **A map-wide layer in
+`Storm detail` is already what ships**, so the group was never the contradiction
+it was read as, and it does not move.
+
+**THE REVERSAL RETIRES A RISK RATHER THAN TAKING ONE ON.** §56.5 records,
+knowingly, that drawing shapes only inside one storm's corridor tells the reader
+*this storm did this* in pictures, with no sentence to hedge with. A national
+draw asserts nothing about any storm at all.
+
+**AND IT ANSWERS §56.15's FIRST TWO FAULTS BY DELETION RATHER THAN BY GATING.**
+`update()` and `clear()` are empty functions. The engine still calls them for
+every definition on every `setBundle`, and an empty function cannot run a
+corridor match — so there is no memo to key correctly and nothing for a re-push
+to repeat. **A selection costs this layer nothing, switch on or off.** The
+corridor match, the memo, the held storm, the held bundle and the
+`floodMatchRuns` seam are all gone; `map/layers/flood.js` came down ninety-one
+lines on the day it crossed §12's ceiling.
+
+**THE VOLUME WAS MEASURED BEFORE THE DECISION, NOT AFTER IT.** Off the archive
+branch on 2026-08-23: **17 alerts nationally, 16 drawable, 112 vertices between
+them.** The frozen quiet-day capture in `samples/flood/` is 36 alerts and 289
+vertices. The expensive shapes are resolved WATCH zones — one Hawaii zone is
+1,970 vertices on its own — so **a busy national watch day is the case to
+re-measure** before tuning anything here.
+`git show origin/archive:latest/relay-nws-flood.json`.
+
+**WHAT IT COSTS: THE MAP AND THE DRAWER NO LONGER SHOW THE SAME SET.** §56.5
+promised *one rule, two surfaces, so the map and the sentence cannot disagree*.
+That promise is withdrawn. The `Flooding` section still counts what comes within
+`RAIN.floodCorridorNm` of the storm's track; the globe paints the country. Two
+different questions, both answered truthfully, and no sentence in that section
+claims the globe is showing its set. **Do not reconcile them by filtering the
+map** — that is the per-storm layer arriving by a side door with its causal
+claim intact.
 
 **==> SLICE B SHIPPED 2026-08-23 AND HAS NOT BEEN JUDGED ON GLASS EITHER. <==**
 Interior points, the clustered point source, the four chip images, the count and
