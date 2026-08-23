@@ -333,7 +333,52 @@ ok(st.value().modelTracks && st.value().imagery, 'the two rows do not clobber ea
 
 st.setImagery(null);
 ok(!('imagery' in st.value()), 'a null imagery row is removed, not stored as null');
-ok(notified === 4, 'every change notifies exactly once');
+/* THREE, NOT FOUR. The first call switched a layer OFF that was already absent,
+ * which produced an identical status object — see the no-op section below. */
+ok(notified === 3, 'every real change notifies exactly once');
+
+/* --- the no-op guard (SPEC-FLOOD-PLAN §56.15, fault 3) --------------------
+ *
+ * `onChange` rewrites the whole Layers panel and re-attaches a listener to
+ * every row. Selecting a storm commits three or four times, and most of those
+ * rebuilt a panel whose sentences had not moved. These assertions are the ones
+ * that go red if the guard is removed. */
+section('an unchanged status does not notify');
+
+let n = 0;
+const g = createLayerStatus(() => { n++; });
+
+g.setImagery({ state: 'info', message: 'Downloaded 4 min ago' });
+ok(n === 1, 'a new row notifies');
+
+const beforeRepeat = g.value();
+g.setImagery({ state: 'info', message: 'Downloaded 4 min ago' });
+ok(n === 1, 'the SAME row pushed again does not notify — a fresh object is not a change');
+ok(g.value() === beforeRepeat,
+   'and the held object keeps its identity, so identity stays a truthful signal');
+
+g.setImagery({ state: 'info', message: 'Downloaded 5 min ago' });
+ok(n === 2, 'a row whose message moved DOES notify');
+
+g.setImagery({ state: 'error', message: 'Downloaded 5 min ago' });
+ok(n === 3, 'a row whose state moved DOES notify');
+
+g.setImagery(null);
+ok(n === 4, 'removing a row notifies');
+g.setImagery(null);
+ok(n === 4, 'removing a row that is already gone does not');
+
+/* ==> THE GUARD MUST NOT SWALLOW A REAL CHANGE, AND THAT IS THE HALF WORTH
+ * TESTING HARDEST. <== A missed notification is a stale sentence sitting under
+ * a switch the reader has already flipped — §5's failure, quietly. */
+const h = createLayerStatus(() => { n++; });
+n = 0;
+h.refreshModelTracks({ on: true, selected: null, storms: [live('a')], deckFor: () => undefined });
+h.setImagery({ state: 'info', message: 'x' });
+ok(n === 2, 'two different rows arriving are two notifications, not one');
+h.refreshModelTracks({ on: false, selected: null, storms: [live('a')], deckFor: () => undefined });
+ok(n === 3 && !('modelTracks' in h.value()),
+   'switching a layer off while another row stands is a real change and notifies');
 
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {

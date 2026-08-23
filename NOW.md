@@ -231,10 +231,15 @@ slices and the baseline that must exist first) and §56.17 (the prerequisite).**
 
 The short version, because it is the kind of mistake that repeats:
 
-- **Every perf number behind that push was headless `node` in this sandbox.** It
-  cannot open a browser, so it could not see the costs that were actually felt.
-  **A sandbox measurement is evidence about the sandbox and never about the
-  app.** Perf claims come off the CI runner or off Aaron's phone.
+- **Every perf number behind that push was headless `node` in this sandbox**, so
+  it could not see the costs that were actually felt. **A sandbox measurement is
+  evidence about the sandbox and never about the app.** Perf claims come off the
+  CI runner or off Aaron's phone. ==> **THE REASON IS THE BASEMAP, NOT THE
+  BROWSER, AND THIS LINE USED TO GET IT WRONG.** <== The sandbox has chromium
+  1194 and `boot-smoke.mjs` passes in it; what is blocked is
+  `tiles.openfreemap.org`, so the map never finishes building and `perf-select`
+  hard-fails. Correctness in a browser works here. Timings do not. `CLAUDE.md`
+  carries the commands.
 - **The layer engine calls `update()` on EVERY definition on EVERY
   `setBundle`**, visible or not. Work put there is paid by every reader on every
   selection for a layer that may be switched off. Gate it, and make `setVisible`

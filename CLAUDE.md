@@ -33,7 +33,34 @@ print it, then quote what printed.
 
 ## A sandbox measurement is never evidence that the app is fast
 
-**This sandbox cannot open a browser.** So a millisecond figure from `node` is
+**==> THIS SANDBOX DOES HAVE A BROWSER, AND THE RULE BELOW SURVIVES THAT
+INTACT. <==** The line here used to read "this sandbox cannot open a browser".
+That was measured false on 2026-08-23: chromium build 1194 is at
+`/opt/pw-browsers` and `tools/bootstrap.sh` pins the playwright that speaks to
+it. **`boot-smoke.mjs` was run in here and passed.** Believing otherwise costs a
+session the one gate that catches swallowed exceptions, so:
+
+```
+bash tools/with-server.sh node tools/boot-smoke.mjs
+```
+
+**The server must be in the SAME shell command** — a background process does not
+survive between shell calls, the sandbox reaps it, and the "connection refused"
+that follows has already eaten a session once.
+
+**WHAT STILL CANNOT RUN HERE IS ANY CHECK THAT NEEDS THE MAP, AND THE REASON IS
+THE NETWORK WALL RATHER THAN THE BROWSER.** `tiles.openfreemap.org` is blocked,
+so `map.isStyleLoaded()` never turns true and MapLibre never finishes building.
+`perf-select.mjs` and `perf-audit.mjs` hard-fail on exactly that, on purpose, and
+**a run that cannot see the map must never report a fast time.** So: correctness
+in a browser, here. Interaction and boot timings, off the CI runner or off
+Aaron's phone, and nowhere else.
+
+**==> AND DO NOT STUB THE BASEMAP TO GET A NUMBER OUT OF IT. <==** A green figure
+from an invented environment is the fluent-wrong-number failure with a chart
+under it, and it would read as authoritative to the next session.
+
+So a millisecond figure from `node` is
 evidence about `node`. It says nothing about MapLibre pushing geometry into a
 source, a panel rewriting its own markup, style recalculation, or paint — and
 those are where a phone actually spends its time.

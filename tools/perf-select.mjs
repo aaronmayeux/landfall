@@ -32,9 +32,14 @@
  * problem.
  *
  * ==> IT NEEDS A REAL BROWSER AND THE BASEMAP, SO IT RUNS ON CI AND NOWHERE
- * ELSE. <== The sandbox has no chromium and cannot reach the tile host. **Do
- * not try to make this run there, and do not read a sandbox number from it as
- * evidence about the app** — that mistake is the reason this file exists.
+ * ELSE. <== ==> AND THE REASON IS THE TILE HOST, NOT THE BROWSER. <== This line
+ * used to say the sandbox has no chromium. It has one — build 1194, at
+ * `/opt/pw-browsers` — and `boot-smoke.mjs` runs in there and passes. What the
+ * sandbox cannot reach is `tiles.openfreemap.org`, so `isStyleLoaded()` never
+ * turns true and the hard failure below fires every time. **That is this file
+ * working, not this file being broken: do not stub the basemap to get a number
+ * out of it.** An invented environment produces a confident figure about
+ * nothing, which is the mistake this file exists to prevent.
  *
  * Needs the static server in the SAME shell command:
  *   bash tools/with-server.sh node tools/perf-select.mjs

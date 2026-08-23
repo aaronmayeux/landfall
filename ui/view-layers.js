@@ -73,6 +73,8 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
    * a fresh element that has never been scrolled. */
   let bodyEl = null;
   let unsubscribe = null;
+  /** A render was asked for while the host was hidden. See `render()`. */
+  let dirty = false;
 
   /* --- markup --------------------------------------------------------------
    * Rebuilt wholesale on state change. The view is small and static in shape,
@@ -375,6 +377,34 @@ export function createLayersView({ prefs, getLayerStatus, onRetry }) {
 
   function render() {
     if (!bodyEl) return;
+
+    /* ==> A PANEL NOBODY CAN SEE IS NOT REBUILT. <== The drawer shows one view
+     * at a time and hides the rest with the `hidden` attribute, so while a
+     * storm's detail is open this host is `display: none` — and a rebuild into
+     * it still parses a screenful of markup and re-attaches a listener to
+     * every row, for nothing. Selecting a storm fires this several times
+     * (`SPEC-FLOOD-PLAN.md` §56.15, fault 3), and once a reader has opened
+     * Layers even once this view stays mounted for the session and pays it on
+     * every tap for the rest of it.
+     *
+     * ==> NOTHING CAN GO STALE BEHIND THIS, BECAUSE `onEnter()` ALREADY
+     * RENDERS. <== That was true before this guard and is what makes it safe:
+     * the view has always rebuilt itself on the way in, precisely because
+     * runtime status can move while it is elsewhere. `dirty` is belt and
+     * braces for a future caller that shows the host without going through
+     * `onEnter`.
+     *
+     * ==> IT DOES NOT COVER THE DRAWER BEING CLOSED, AND THAT IS STATED RATHER
+     * THAN QUIETLY ROUNDED UP. <== `close()` leaves the last view's host
+     * un-hidden, so a reader who closes the drawer from Layers still pays the
+     * rebuild until they open something else. Testing for that needs the
+     * drawer's open state plumbed into this view; the case that was actually
+     * felt — stepping between storms with a detail panel open — is this one. */
+    if (host?.hidden) {
+      dirty = true;
+      return;
+    }
+    dirty = false;
 
     /* Read BEFORE the innerHTML write — after it, both are gone. */
     const scrollTop = bodyEl.scrollTop;

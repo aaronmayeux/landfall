@@ -464,10 +464,60 @@ export function environmentRow(selected, storms, shipsFor, ribbonFor) {
  *
  * @param {() => void} onChange  called after any change — the view's refresh
  */
+/**
+ * Is this the same set of rows, saying the same things?
+ *
+ * ==> A ROW IS FLAT — `{ state, message? }` — AND THAT IS WHY TWO LEVELS IS
+ * EXACT AND NOT AN APPROXIMATION. <== Every producer in this file returns an
+ * object literal of primitives, so comparing keys and then comparing each row's
+ * own keys by value answers the question completely.
+ *
+ * ==> AND IF A ROW EVER GAINS A NESTED FIELD, THIS FAILS IN THE SAFE
+ * DIRECTION. <== Two freshly-built objects are never `===`, so a nested value
+ * would read as "changed", the refresh would fire, and the only thing lost is
+ * the saving. It cannot report a real change as a no-op, which is the failure
+ * that would matter — a stale sentence surviving under a flipped switch.
+ */
+function sameStatus(a, b) {
+  const ak = Object.keys(a);
+  const bk = Object.keys(b);
+  if (ak.length !== bk.length) return false;
+  for (const k of ak) {
+    if (!Object.prototype.hasOwnProperty.call(b, k)) return false;
+    const ra = a[k];
+    const rb = b[k];
+    if (ra === rb) continue;
+    if (!ra || !rb || typeof ra !== 'object' || typeof rb !== 'object') return false;
+    const rak = Object.keys(ra);
+    if (rak.length !== Object.keys(rb).length) return false;
+    for (const f of rak) {
+      if (ra[f] !== rb[f]) return false;
+    }
+  }
+  return true;
+}
+
 export function createLayerStatus(onChange) {
   let status = {};
 
+  /**
+   * ==> AN UNCHANGED STATUS DOES NOT NOTIFY, AND THAT IS A COST FIX ON THE
+   * SELECTION PATH. <== `onChange` is `layersView.refresh()`, which rewrites
+   * the whole Layers panel's markup and re-attaches a listener to every row.
+   * Selecting a storm ran this three or four times — two from
+   * `refreshLayerStatus()`, one from the flood slot, one from imagery — and
+   * most of those rebuilt a panel whose sentences had not moved. `SPEC-FLOOD-
+   * PLAN.md` §56.15 named it as fault 3 and as a trap for anything new landing
+   * on this path.
+   *
+   * ==> THE HELD OBJECT IS KEPT ON A NO-OP RATHER THAN SWAPPED FOR AN EQUAL
+   * ONE. <== The store's contract is that the value is REPLACED whenever it
+   * changes, so identity is a truthful signal to anything downstream that
+   * compares it. Replacing it with an equal copy while suppressing the
+   * notification would make identity lie in the other direction.
+   */
   const commit = (next) => {
+    if (sameStatus(status, next)) return;
     status = next;
     onChange?.();
   };

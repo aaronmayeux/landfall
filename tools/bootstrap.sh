@@ -182,6 +182,22 @@ if [ "$WANT_SERVER" = "1" ]; then
     if port_open; then
       ok "static server up on 127.0.0.1:8099 — DIES when this command ends"
       say "        for browser checks:  bash tools/with-server.sh node tools/csp-check.mjs"
+      say ""
+      say "  ==> THIS SANDBOX HAS A REAL BROWSER. Chromium 1194 is installed and"
+      say "      boot-smoke has been run in here and passed. Anything telling you"
+      say "      otherwise is a stale comment — correct it, do not work around it."
+      say ""
+      say "          bash tools/with-server.sh node tools/boot-smoke.mjs"
+      say ""
+      say "      The server must be in the SAME shell command; a background one"
+      say "      is reaped between calls and you get 'connection refused'."
+      say ""
+      say "      WHAT WILL NOT RUN HERE is anything needing the BASEMAP —"
+      say "      perf-select and perf-audit. tiles.openfreemap.org is blocked, so"
+      say "      the map never finishes building and they hard-fail on purpose."
+      say "      Those numbers come off CI or off Aaron's phone. Never stub the"
+      say "      basemap to get one: an invented environment gives a confident"
+      say "      figure about nothing."
     else
       warn "static server did not come up — see /tmp/landfall-server.log"
     fi
