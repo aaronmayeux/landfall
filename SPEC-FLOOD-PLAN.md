@@ -193,14 +193,18 @@ is not an implementation choice; it is the only route.** Phase 4 shipped on it:
 23 zones, 23 requests, cached thirty days at the edge and keyed per zone so
 overlapping watches share what they have already paid for.
 
-**==> ONE THING IS STILL UNTESTED AND IT WOULD CHANGE THE ARITHMETIC. <==** NWS
-documents an `include_geometry` parameter on that endpoint and nobody here has
-ever sent it. A probe for it is in `tools/archive-fetch.mjs` as of this phase,
-under `origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson`.
-**If it comes back
-carrying the same boundaries, 40 requests become 1** and `functions/api/nws/zone.js`
-should be rewritten to ask once. A 400, or another page of nulls, is equally
-useful and closes the question for good. Read it before touching that route.
+**==> `include_geometry` IS ANSWERED AND THE ANSWER IS NO. DO NOT RE-PROBE IT.
+<==** Read off
+`origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson` on
+2026-08-23: **200 OK, and byte-for-byte identical to the plain bulk probe beside
+it** — same MD5, the same 24,282 bytes, `geometry: null` on all 19 features.
+NWS accepts the parameter and ignores it.
+
+So the per-zone loop is not an implementation choice, it is the only route, and
+`functions/api/nws/zone.js` is correct as written. The probe stays in the runner
+so the day NWS starts honouring the parameter is a day somebody notices — but
+that is a watch, not an open question. **A session that re-measures this has
+wasted its first hour.**
 
 #### What was NOT measured, and must not be assumed
 
@@ -214,6 +218,213 @@ glass call and nobody has made it.** Phase 5 owns the map and inherits this.
 **And the national volume is still one snapshot on a quiet day.** Three watches
 naming 23 zones. `RAIN.zonesPerRequest` caps a request at 40 on that evidence
 alone; a genuine national flood day has never been read.
+
+---
+
+### 56.15 The first attempt at Phase 5, and why it was reverted
+
+**==> READ THIS BEFORE §56.5. IT IS THE MOST EXPENSIVE THING IN THIS FILE.
+<==** Phase 5 was built and pushed on 2026-08-23 (`9c236dc`), patched twice
+(`0439ba6`), and reverted whole (`0882353`) the same day. It was correct and it
+was **slow**: tapping a storm on the globe and stepping between storms in either
+drawer all dragged. The revert cleared it, which settles the cause — it was this
+work, not something older.
+
+#### The mistake was the evidence, not the code
+
+**Every performance number behind that push was headless JavaScript measured in
+a sandbox that cannot open a browser.** The interior-point search at 6 ms for 35
+shapes, `nearestNm` at 7.1 ms per zone boundary, the whole corridor match at
+2.8 ms —
+all true, all reproducible, and all beside the point. The cost that was actually
+felt lived where the sandbox cannot see: pushing county-scale geometry into
+MapLibre sources, the Layers panel rewriting its own markup, style recalculation
+and paint.
+
+**==> SO THE RULE, AND IT IS NOT NEGOTIABLE ON THIS PHASE. <==** A measurement
+taken in the sandbox is evidence about the sandbox. It is **never** evidence that
+the app is fast. Any claim about how this feature performs comes off the CI
+runner, which has a real browser, or off Aaron's phone. Nothing else counts, and
+a session that reports millisecond figures from `node` as reassurance is
+repeating the whole failure.
+
+#### Three faults, and two of them are traps for the next attempt
+
+1. **==> THE LAYER ENGINE CALLS `update()` ON EVERY DEFINITION ON EVERY
+   `setBundle`, WHETHER OR NOT THE LAYER IS VISIBLE. <==** This layer is off by
+   default, so a reader who never touched the switch paid the full corridor
+   match on every storm selection and every poll, to draw nothing. **Any work in
+   that hook must be gated on visibility, and `setVisible` must then push when
+   it is turned on** or the switch appears to do nothing until the next poll.
+2. **A poll re-pushing an unchanged bundle repeated all of it.**
+   `repushSelected()` fires on every poll touching the selected storm, on a
+   theme change and on a restyle. If the match is memoized, **key it on the
+   bundle and not on the samples derived from it** — densifying produces a new
+   array every call, so an identity test on samples compares against the copy it
+   just made and never hits. The clock belongs in the key too: expiry is
+   filtered at render.
+3. **`app/layer-status.js` `commit()` fires `layersView.refresh()`
+   unconditionally**, and that rewrites the panel's whole markup and rewires it.
+   Four rows meant four rebuilds per selection for text that had not moved.
+   **This one is pre-existing and survived the revert** — it is not Phase 5's to
+   fix, but Phase 5 made it hurt.
+
+**Neither the visibility gate nor the memo made the app usable.** Both were
+measured to work — in the sandbox — and Aaron reported no improvement. That
+disagreement between the measurement and the glass is the moment the session
+should have stopped, and it is why the third attempt is a slice plan rather than
+a fourth patch.
+
+#### What was learned that is worth keeping
+
+These are facts about the world and the data, independent of the code that was
+reverted. **Do not re-derive them.**
+
+- **The bounding-box centre falls outside its own polygon 6 times in 35** on the
+  frozen national capture plus the two archived zone boundaries. §56.2 recorded
+  5 of 25 on a narrower set; both are the same finding.
+- **The area-weighted centroid in `lib/genesis.js` did NOT fail on that set** —
+  it landed inside all 35. It carries no *guarantee* (a crescent puts a centroid
+  in the hole by construction), but the claim that it fails like the bbox centre
+  does was written before anybody ran it, and it is false.
+- **HIZ023 is three members, not eight islands** — one island of 1,959 vertices
+  and two slivers of six and five with effectively zero area, which NWS ships.
+  Flattening them into one ring set returns a point inside a *sliver*, about a
+  hundred metres off the island, which passes a naive "inside any member" check.
+- **`nearestNm` costs about 7.1 ms against one resolved zone boundary** at 471
+  track samples. Twelve of them is roughly 100 ms per selection, in JavaScript
+  alone, before anything is drawn.
+- **A rounded-square marker, not a dot.** `GENESIS_GEO` refuses a point marker
+  outright because a storm in this app IS a filled dot with a spiral and a halo.
+  A flood chip has to be separated by SHAPE, which also holds for a reader who
+  cannot tell the green from the orange.
+- **One ink for the cluster count fails WCAG AA on a reachable case** — the dark
+  theme's ink measures 3.51 against a watch chip, under 4.5 for text that size.
+  It has to be chosen per chip.
+
+---
+
+### 56.16 How Phase 5 gets built the second time
+
+**==> IT LANDS IN THREE PUSHES, NOT ONE. <==** The first attempt was 2,523
+inserted lines in a single commit: interior points, two sources, clustering, the
+zoom gate, four generated chip images, tap-to-detail, keyboard rows and a
+rewritten status row. When it was slow there was nothing to bisect, and the
+session guessed twice rather than knowing once. **Each slice below is a separate
+push Aaron can feel on a phone and revert on its own.**
+
+**SLICE A — THE LAYER GOES PER-STORM. POLYGONS ONLY.** No chips, no clustering,
+no interior points, no new panel. Delete the national draw, gate the work on
+visibility, add the zoom ramp. This is the smallest change that closes §56.1's
+first fault, and it is the one most likely to be the expensive one — it is where
+county-scale geometry starts being pushed into a source on every selection.
+**Judge on glass before anything else is written.**
+
+**SLICE B — THE CHIPS.** Interior points, the clustered point source, the four
+chip images, the count and its per-chip ink. Adds a second source and a symbol
+layer. **Judge on glass.**
+
+**SLICE C — TAPPING.** The detail panel, the click dispatch, the cluster split,
+and the alert rows becoming buttons. Mostly DOM and mostly cheap, and it is last
+because §56.6's keyboard path is meaningless until there is something to open.
+**Judge on glass.**
+
+#### Before Slice A, and this is a gate rather than a suggestion
+
+**==> THERE IS NO BASELINE, SO THERE IS NOTHING TO COMPARE AGAINST. <==**
+Nobody can say a change made the app slower without a number from before it.
+`NOW.md` records `blockedMs 26490` against a 1200 budget from 2026-08-21, and
+the same run reported `styleLoaded: false` on all three arms — which its own
+report calls meaningless. **`tools/perf-instrument.mjs` counts console errors on
+the main page while they come from MapLibre's worker, so its zero is not a
+zero.**
+
+Fix the instrument, take one honest reading of *tap a storm on the globe to the
+drawer being painted* on the current `main`, and write the number into `NOW.md`.
+**Until that exists, every perf argument on this phase — including one arguing
+that a slice is fine — is somebody's impression.**
+
+**AND THE GATE THAT WOULD HAVE STOPPED THE FIRST ATTEMPT DOES NOT EXIST.** Every
+check in this repo tests correctness. CI has a chromium — it is where
+`boot-smoke` and `home-setup-check` run — so a check that boots the app, selects
+a storm and fails over a budget is buildable there and belongs beside them.
+
+---
+
+### 56.17 The `Flooding` section says it is checking, and it never is
+
+**==> THIS IS SHIPPED BEHAVIOUR ON `main` TODAY, IT IS NOT PHASE 5's, AND IT
+SURVIVED THE REVERT. <==** Aaron found it on 2026-08-23. Open any storm with the
+`Flood alerts` map switch off — which is the default — and the `Flooding`
+section reads *Checking flood alerts…* **forever**. No request was ever made and
+none ever will be.
+
+The chain, verified rather than inferred:
+
+- `ui/flooding-storm.js` prints the checking line whenever the summary state is
+  `loading`.
+- The state is `loading` when `floodFacade.value()` returns null.
+- That is `floodSlot` in `app/views.js`, and the only thing that ever fills it
+  is `views.setFloodSlot(...)`.
+- `main.js` calls that from `ensureFlood()`, which runs **only** when
+  `toggleOn('floodAlerts')`. The else branch sets the slot back to null
+  explicitly.
+
+**==> IT IS §5's WORST SENTENCE, PRINTED BY THE FEATURE WRITTEN TO PREVENT IT.
+<==** "Checking…" asserts a fetch is in flight. None is. A reader on a bad
+connection reads it as their connection; a reader on a good one reads it as a
+hung app. Both are wrong, and neither can tell.
+
+**AND THE TWO FILES DISAGREE IN WRITING ABOUT WHOSE JOB THIS IS.**
+`data/flood.js`'s header says the list is fetched "when either the Flood alerts
+toggle goes on **or a storm drawer asks for its count**." The facade in
+`app/views.js` says the opposite — `value()` is read-only and never fetches,
+because a drawer that kicked its own request would make opening a storm cost a
+national download. **The code follows the second. The first describes something
+that does not exist**, and that stale half-sentence is most of why nobody
+noticed.
+
+#### The gate was right once and is not right now
+
+Nothing is wrong with the relay. `/api/nws/flood` exists, projects the national
+list down small, and serves it from the edge. **The device simply never asks.**
+
+The rule — do not download this for somebody who never turned the map layer on
+— was written when flood alerts were only ever painted on the globe. §56.7 then
+made `Flooding` a permanent section on **both** screens. A section that renders
+every time a storm is opened, but whose data arrives only if the reader happens
+to flip an unrelated map switch, is broken by construction.
+
+**Three ways out. Aaron's call, and it has not been made:**
+
+1. **The section fetches, like every other section does.** One national request
+   per client TTL, shared by the map and both screens. The original objection —
+   opening a storm should not cost a national download — was written when
+   nothing else needed the data; the section is now always on screen, so that
+   download is simply what the section costs. **Andy's recommendation.**
+2. **Say the true thing instead** — *not checked yet*, with a control that
+   checks. Honest, and it makes the reader press a button for something the app
+   could have done.
+3. **Do not render the section without the layer on.** Cheapest, and it quietly
+   removes a section §56.7 deliberately put on both screens.
+
+Whichever wins, the stale sentence in `data/flood.js`'s header is deleted with
+it (§12: documentation matches reality or it is worse than nothing).
+
+**==> AND FLOOD IS NOT ON THE CRON WARM LIST. <==** Checked 2026-08-23:
+`worker/src/sources.js` warms NHC storms, JTWC storms, GDACS events, TCGP
+storms, genesis areas, both outlooks, and the derived adecks, ships, advisories,
+JTWC warnings and GDACS geometry. **Neither `/api/nws/flood` nor
+`/api/nws/zone` is among them.** So whoever asks first on a cold edge waits for
+the relay to go to NWS — which under option 1 is a reader opening a storm.
+Adding flood to that list is a small, separate change and it makes the section
+fill from the edge instead of from a round trip.
+
+**IT IS A PREREQUISITE, NOT A PHASE.** It is small, it is independent of the map,
+and it is the difference between the `Flooding` section working for everybody and
+working only for people who found a switch. **Do it before Slice A** — Phase 5
+puts more weight on this same data path, and building on a section that has never
+had data is how a fault gets attributed to the wrong change.
 
 ---
 
@@ -275,7 +486,15 @@ it, and it removes the "which of these fifteen did I just tap" problem without
 any chooser UI.
 
 **THE DETAIL VIEW SHOWS WHAT THE RELAY ALREADY CARRIES** — event, the whole area
-list, when it began, when it ends, how long is left, and the issuing office.
+list, when it began, when it ends, and how long is left.
+
+**==> THIS SECTION USED TO SAY "AND THE ISSUING OFFICE" AND THAT WAS WRONG.
+<==** Checked 2026-08-23: `functions/api/nws/flood.js` projects id, event,
+areaDesc, severity, urgency, onset, expires, ends, geometry, drawable, zones and
+counties. **`senderName` is not among them.** The office is not in hand and the
+panel cannot print one. Adding it is one short string per alert and a separate,
+deliberate decision about the projection — **not something to slip into a map
+phase because it was named here by mistake.**
 **Do not widen the relay projection to carry NWS's `description` and
 `instruction`.** That projection takes 34,369 stored bytes down to 2,607 and a
 suite asserts the ratio; putting the prose back blows it on every phone for a
@@ -433,10 +652,23 @@ recoverable from nowhere else. Keeping it is provable offline against
 `lib/` (§4.13), so that is a mirrored copy of the UGC split, kept honest by
 `tools/test-relay-mirrors.mjs` — not an import.**
 
-**PHASE 5 — THE MAP.** Interior points, clustering, the polygon zoom gate, the
-icon, and tap-to-detail. Last because it is the only phase that cannot be judged
-without weather, and because Phase 2 already gave the feature a keyboard-reachable
-home.
+**PHASE 5 — THE MAP. ==> ATTEMPTED AND REVERTED 2026-08-23. READ §56.15 AND
+§56.16 BEFORE §56.5. <==** Interior points, clustering, the polygon zoom gate,
+the icon, and tap-to-detail. Last because it is the only phase that cannot be
+judged without weather, and because Phase 2 already gave the feature a
+keyboard-reachable home.
+
+**It was built, pushed, patched twice and reverted whole in one day.** It worked
+and it was slow, and the revert cleared the slowness — so the cause is settled.
+§56.15 has the diagnosis and the findings worth keeping; §56.16 has the three
+slices it lands in next time and the baseline that has to exist first. **§56.17
+is a prerequisite and comes before any of it.**
+
+**==> THE ONE-LINE VERSION, IF NOTHING ELSE IS READ: <==** a measurement taken
+in the sandbox is evidence about the sandbox, never about the app; work in the
+layer engine's `update()` hook is paid by every reader on every selection whether
+the layer is on or not; and this phase ships in three pushes so that the next
+time something is slow, there is something to bisect.
 
 **PHASE 6 — PAST RAINFALL, THE GLOBAL FIGURE.** How much has already fallen at
 the reader's address, in a window we choose rather than one the source hands us.

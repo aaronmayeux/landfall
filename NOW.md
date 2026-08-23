@@ -124,6 +124,24 @@ exactly like this. **WAITING ON AARON:** open `/api/jtwc/storms` on a device tha
 shows the bug and read `fetchedAt` and the fix `at`. Nothing in the sandbox can
 reach the live app. Do not write a fix before that.
 
+**==> THE `Flooding` SECTION SAYS *Checking flood alerts…* FOREVER, AND NOTHING
+IS BEING CHECKED. <==** Aaron found it 2026-08-23. With the `Flood alerts` map
+switch off — the default — no request is ever made and the section sits on that
+sentence permanently. It is shipped §48.21 behaviour, it is not Phase 5's, and
+it survived the revert.
+
+The relay is fine: `/api/nws/flood` exists and serves the projected list. **The
+device never asks.** `ensureFlood()` in `main.js` runs only when the map toggle
+is on, and the drawer's facade is deliberately read-only. The gate made sense
+when flood was only a map layer; §56.7 then put `Flooding` on both screens
+permanently, and a section that renders every time but can only get data via an
+unrelated switch is broken by construction.
+
+**WAITING ON AARON — three ways out, in `SPEC-FLOOD-PLAN.md` §56.17.** Andy
+recommends the first: let the section fetch, like every other section does.
+**Also found: flood is NOT on the cron warm list** (`worker/src/sources.js`), so
+the first ask on a cold edge pays a round trip to NWS.
+
 **`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.**
 `functions/api/nhc/` has no `surge.js`. Every NHC surge request is a 404 today,
 and `lib/surge-locations.js` already says so in a comment. Building it needs a
@@ -221,6 +239,35 @@ been looked at. See the flood entry below.
 NOT TUNE THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron
 2026-08-22: `SPEC-FLOOD-PLAN.md` §56, one phase per session, in order. Read that
 file before touching anything flood-shaped.
+
+**==> PHASE 5 WAS BUILT, PUSHED, PATCHED TWICE AND REVERTED WHOLE ON 2026-08-23.
+IT WORKED AND IT WAS SLOW. <==** Tapping a storm on the globe and stepping
+between storms in either drawer all dragged; the revert (`0882353`) cleared it,
+so the cause is settled. **Before rebuilding it, read `SPEC-FLOOD-PLAN.md`
+§56.15 (what went wrong and the findings worth keeping), §56.16 (the three
+slices and the baseline that must exist first) and §56.17 (the prerequisite).**
+
+The short version, because it is the kind of mistake that repeats:
+
+- **Every perf number behind that push was headless `node` in this sandbox.** It
+  cannot open a browser, so it could not see the costs that were actually felt.
+  **A sandbox measurement is evidence about the sandbox and never about the
+  app.** Perf claims come off the CI runner or off Aaron's phone.
+- **The layer engine calls `update()` on EVERY definition on EVERY
+  `setBundle`**, visible or not. Work put there is paid by every reader on every
+  selection for a layer that may be switched off. Gate it, and make `setVisible`
+  push on turn-on.
+- **It went out as one 2,523-line commit**, so when it was slow there was
+  nothing to bisect and the session guessed twice instead of knowing once.
+- **When the measurement and the glass disagree, the glass is right and the
+  session stops.** That disagreement happened after the first patch and was
+  ignored.
+
+**AND THERE IS NO BASELINE AND NO PERF GATE.** `tools/perf-instrument.mjs` is
+broken (see BUG 2 above — it watches the wrong thread), every check in this repo
+tests correctness, and CI has a chromium that nothing times anything on. **Fixing
+the instrument and recording one honest tap-to-paint number on `main` is the
+first thing, ahead of any flood work.**
 
 **PHASE 1 — THE CORRIDOR — SHIPPED 2026-08-22.** The match is no longer an
 overlap with the forecast cone; it is a great-circle distance from the storm's

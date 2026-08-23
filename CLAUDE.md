@@ -31,6 +31,46 @@ were caught by stopping and writing a throwaway script instead of a sentence.
 invites a second look.** When a figure is about to appear in prose: compute it,
 print it, then quote what printed.
 
+## A sandbox measurement is never evidence that the app is fast
+
+**This sandbox cannot open a browser.** So a millisecond figure from `node` is
+evidence about `node`. It says nothing about MapLibre pushing geometry into a
+source, a panel rewriting its own markup, style recalculation, or paint — and
+those are where a phone actually spends its time.
+
+Written down on 2026-08-23, the day flood Phase 5 was built, pushed, patched
+twice and reverted whole. Every perf number behind it was headless and every one
+was true: the interior-point search at 6 ms for 35 shapes, the corridor match at
+2.8 ms. The app was still unusable, because none of those numbers was about the
+app. **A fast number from the wrong place is the same failure as a fluent wrong
+number above — nothing about it invites a second look.**
+
+- **Perf claims come off the CI runner, which has a chromium, or off Aaron's
+  phone. Nothing else counts.** Reporting sandbox timings as reassurance is the
+  mistake itself, not a smaller version of it.
+- **Get a BEFORE number or do not claim an AFTER one.** "It is faster now" with
+  no baseline is an impression.
+- **When the measurement and the glass disagree, the glass is right and you
+  stop.** Aaron said it was still slow when the numbers said it could not be,
+  and the session shipped a second guess instead of stopping. That is the
+  debug-loop rule below, and this is what ignoring it costs.
+
+**One structural trap worth naming here rather than only in the spec:** the
+layer engine calls `update()` on EVERY layer definition on EVERY `setBundle` —
+on every selection and every poll — whether or not that layer is visible. Work
+placed there is paid by every reader for a feature that may be switched off.
+
+## Ship it in slices somebody can feel
+
+**A change nobody can bisect is a change nobody can debug.** Phase 5 went out as
+2,523 inserted lines in one commit: eight features at once. When it was slow
+there was nothing to narrow it to, so the session guessed twice and then reverted
+everything, including the parts that were fine.
+
+If a change touches the render or selection path, it lands in pieces Aaron can
+judge one at a time and revert one at a time. **Slower to land, and the only
+version that survives contact with a phone.**
+
 ## Match the ceremony to the change
 
 **Not every change earns the full treatment, and spending an hour on a one-word
