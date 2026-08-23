@@ -1,0 +1,190 @@
+{
+  "at": "2026-08-23T07:51:35.362Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "styleLoaded": false,
+      "storms": 5,
+      "ttfbMs": 200,
+      "fcpMs": 412,
+      "lcpMs": 412,
+      "dclMs": 2450,
+      "loadMs": 3137,
+      "bootMarks": {
+        "create": 2276.199999999997,
+        "load": 5426,
+        "fullLoad": 5426.799999999996
+      },
+      "longTaskCount": 21,
+      "blockedMs": 15187,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 189,
+      "ourWaves": 14,
+      "staircaseMs": 1736,
+      "firstModuleAtMs": 226,
+      "lastModuleAtMs": 1962,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 32,
+      "apiKB": 221,
+      "totalRequests": 228,
+      "transferKB": 2116,
+      "firstApiAtMs": 2428,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nhc/storms",
+            "startMs": 2428
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP2&kind=TCP",
+            "startMs": 3778
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP3&kind=TCP",
+            "startMs": 6369
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=wp192026&carq=1",
+            "startMs": 12689
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 15212
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "styleLoaded": false,
+      "storms": 2,
+      "ttfbMs": 20,
+      "fcpMs": 2480,
+      "lcpMs": 2480,
+      "dclMs": 4434,
+      "loadMs": 4442,
+      "bootMarks": {
+        "create": 2497.100000000006,
+        "load": 17123.800000000003,
+        "fullLoad": 17125.100000000006
+      },
+      "longTaskCount": 13,
+      "blockedMs": 20240,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 189,
+      "ourWaves": 6,
+      "staircaseMs": 679,
+      "firstModuleAtMs": 1125,
+      "lastModuleAtMs": 1804,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 26,
+      "apiKB": 107,
+      "totalRequests": 221,
+      "transferKB": 107,
+      "firstApiAtMs": 4369,
+      "data": {
+        "depth": 4,
+        "chain": [
+          {
+            "url": "/api/nhc/storms",
+            "startMs": 4369
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP2&kind=TCP",
+            "startMs": 14781
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 16065
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP3&kind=TCP",
+            "startMs": 19034
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "styleLoaded": false,
+    "storms": 0,
+    "ttfbMs": 86,
+    "fcpMs": 4236,
+    "lcpMs": 4236,
+    "dclMs": 10935,
+    "loadMs": 70149,
+    "bootMarks": {
+      "create": 4272.599999999991
+    },
+    "longTaskCount": 4,
+    "blockedMs": 68940,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 189,
+    "ourWaves": 15,
+    "staircaseMs": 3640,
+    "firstModuleAtMs": 142,
+    "lastModuleAtMs": 3782,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 5,
+    "apiKB": 15,
+    "totalRequests": 199,
+    "transferKB": 1910,
+    "firstApiAtMs": 10916,
+    "data": {
+      "depth": 2,
+      "chain": [
+        {
+          "url": "/api/nhc/storms",
+          "startMs": 10916
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 11270
+        }
+      ]
+    },
+    "radarTiles": 1,
+    "radarOnLoad": 1,
+    "radarOnPan": 7,
+    "frames": {
+      "frames": 2,
+      "medianMs": 3699.9,
+      "p95Ms": 3699.9,
+      "worstMs": 3699.9,
+      "droppedPct": 50,
+      "approxFps": 0
+    }
+  },
+  "budget": {
+    "ok": false,
+    "notes": [
+      "FAIL styleLoaded: the map never built on warm-sw — nothing below was measured",
+      "FAIL ourModules: 189 > 175",
+      "ok   ourWaves: 6 <= 8",
+      "ok   staircaseMs: 679 <= 3000",
+      "ok   dataSerialDepth: 4 <= 6",
+      "FAIL blockedMs: 20240 > 1200",
+      "ok   transferKB: 107 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 7 <= 120"
+    ]
+  }
+}
