@@ -156,22 +156,47 @@ export function createFloodingStorm({ flood = null, cap = null, surge = null, un
     if (out.state === 'none_matched') {
       /* A REAL ANSWER — the track was measured and nothing came near it — and
        * the coverage sentence beside it, because "nothing within 345 mi" is
-       * only an answer for a place NWS forecasts at all. */
+       * only an answer for a place NWS forecasts at all.
+       *
+       * ==> UNLESS SOMETHING COULD NOT BE PLACED, IN WHICH CASE IT IS NOT AN
+       * ANSWER AT ALL. <== §56.4. An alert whose zone boundaries did not
+       * resolve never reaches the distance test, so "none within 345 mi" would
+       * be an all-clear built out of our own missing geometry — the same
+       * mistake `no_track` above exists to avoid, arriving by a different
+       * road. It is the worst sentence this feature can print, so the
+       * qualification goes FIRST and the all-clear is withheld. */
+      if (out.unplaceable > 0) {
+        const one = out.unplaceable === 1;
+        return `<p class="flood-line">${one ? 'One flood alert' : `${out.unplaceable} flood alerts`}
+            in force could not be placed on the map, so
+            ${one ? 'it' : 'they'} can’t be measured against this storm’s track.
+            Nothing else is in force within
+            ${formatDistance(out.radiusNm, units?.() ?? null)} of it.</p>
+          <p class="flood-note">${esc(NWS_US_ONLY)}</p>`;
+      }
       return `<p class="flood-line">No flood alerts are in force within
           ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.</p>
         <p class="flood-note">${esc(NWS_US_ONLY)}</p>`;
     }
 
-    /* ==> THE COUNT OF ALERTS IS NOT THE COUNT OF SHAPES, AND BOTH GET SAID.
-     * <== A watch is issued by forecast zone and carries no polygon, so the
-     * map cannot draw it. A sentence claiming nineteen are on the globe while
-     * eleven are drawn is §5 with a map under it. */
+    /* ==> THE CLAUSE THAT USED TO SAY "ISSUED BY ZONE" IS GONE, BECAUSE PHASE 4
+     * MADE IT UNTRUE AND IT HAD NEVER BEEN REACHABLE ANYWAY. <== §56.4. It
+     * counted `total - drawable`, and nothing shapeless ever reaches this
+     * branch — the distance test cannot match what it cannot measure — so the
+     * difference was always zero and the sentence never printed. Its job was
+     * real, though: an alert the map is not showing must be accounted for.
+     *
+     * That job now belongs to `unplaceable`, which counts the alerts held back
+     * from the match entirely — a watch whose zone boundaries did not come
+     * back. Those ARE invisible on the globe and in the list, and this is the
+     * only sentence that admits they exist. */
     const n = out.total;
     const noun = n === 1 ? 'flood alert is' : 'flood alerts are';
-    const undrawn = n - out.drawable;
-    const drawNote = undrawn > 0
-      ? ` ${undrawn === 1 ? 'One is' : `${undrawn} are`} issued by zone and
-          ${undrawn === 1 ? 'has' : 'have'} no shape to draw on the map.`
+    const unplaced = out.unplaceable || 0;
+    const drawNote = unplaced > 0
+      ? ` ${unplaced === 1 ? 'One more is' : `${unplaced} more are`} in force but
+          could not be placed on the map, so ${unplaced === 1 ? 'it is' : 'they are'}
+          not counted here.`
       : '';
 
     /* ==> THE SENTENCE NAMES THE DISTANCE, AND THAT IS NOT DECORATION. <==

@@ -37,11 +37,30 @@
  * because the feed being empty and this storm having nothing near it are
  * different facts and the panel words them differently.
  *
- * No DOM. Imports config/, lib/ and data/relay.js.
+ * ==> IT MAKES A SECOND FETCH, AND THAT IS THE JOIN §56.4 IS BUILT AROUND. <==
+ * A Flood Watch arrives with `geometry: null` — issued for a list of zones
+ * rather than for a box a forecaster drew — so it can be neither drawn nor
+ * matched to a track. The zones it names are resolved through `data/zones.js`
+ * and joined on here, once, where the whole national list is in hand.
+ *
+ * ==> THE TWO FETCHES ARE SEPARATE BECAUSE THE TWO FACTS HAVE DIFFERENT
+ * LIFETIMES. <== This list stops being true in minutes. A county line last
+ * moved in April. Merging them would either re-fetch boundaries every three
+ * minutes or serve a stale alert list, and neither is survivable on a hazard
+ * surface.
+ *
+ * ==> AND THE SECOND FETCH CANNOT FAIL THE FIRST. <== The alerts are already in
+ * hand when it runs, so a boundary that does not come back costs that alert its
+ * shape and costs the list nothing. It stays `ok`, the watch stays in it, and
+ * the watch is said and not drawn.
+ *
+ * No DOM. Imports config/, lib/ and data/.
  */
 
 import { ENDPOINT, CACHE } from '../config/constants.js';
+import { zonesNeeded, applyZones } from '../lib/zones.js';
 import { fetchFeed } from './relay.js';
+import { loadZones } from './zones.js';
 
 const url = () => `${ENDPOINT.relay}/nws/flood`;
 
@@ -97,7 +116,19 @@ export async function loadFloodAlerts({ now = Date.now(), retry = false } = {}) 
         return slot('unavailable', [], { reason: 'the flood list came back in a form this app could not read' });
       }
 
-      return slot('ok', json.alerts, { fetchedAt, stale: !!relayStale });
+      /* ==> THE ZONE JOIN, AND IT IS DELIBERATELY INSIDE THE ONE PLACE THE
+       * WHOLE LIST EXISTS. <== Every consumer — the map layer, both screens'
+       * sections, the corridor match — reads this slot, so joining here means
+       * not one of them has to know a watch ever lacked a shape. §56.4.
+       *
+       * Awaited rather than fired and forgotten: a section that renders
+       * without the shapes and then rearranges itself a second later is worse
+       * than one that takes a moment. The boundaries are held for the session
+       * after the first call, so this costs a round trip once. */
+      const needed = zonesNeeded(json.alerts);
+      const { zones } = needed.length ? await loadZones(needed, { now }) : { zones: {} };
+
+      return slot('ok', applyZones(json.alerts, zones), { fetchedAt, stale: !!relayStale });
     } catch (e) {
       return slot('unavailable', [], { reason: e?.message || 'the flood list did not load' });
     }

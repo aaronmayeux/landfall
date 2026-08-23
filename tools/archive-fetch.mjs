@@ -1227,6 +1227,54 @@ function zoneShapeSources(watchBody) {
       'arithmetic stands as written.' + caveats,
   });
 
+  out.push({
+    name: 'geometry/relay-nws-zone.json',
+    url:
+      'https://landfall.getgravitate.app/api/nws/zone?ids=' +
+      encodeURIComponent(codes.join(',')),
+    note:
+      '==> OUR RELAY IN FRONT OF THE ZONE BOUNDARIES, AND THE ONLY CAPTURE HERE ' +
+      'THAT PROVES ANYTHING ABOUT THE APP. <== \u00a756.4. The per-zone files ' +
+      'beside this one show what NWS published; this shows what a phone was ' +
+      'actually handed, which is the only thing a bug report is ever about. ' +
+      'Three things live here and nowhere else: the projection (is the boundary ' +
+      'still there after name, state and shape are the only fields kept, and ' +
+      'did the rounding to four places survive the trip), the `missing` array ' +
+      '(a zone the route could not resolve is named rather than dropped, and a ' +
+      'watch that reaches a reader unplaced is unplaced BECAUSE of a row in ' +
+      'here), and X-Landfall-Cache, which says whether the thirty-day per-zone ' +
+      'hold is actually holding. ==> THE ID LIST IS THIS HOUR\u2019S WATCHES, SO ' +
+      'THE URL MOVES. <== That is the point: it asks for exactly what a phone ' +
+      'would ask for at the moment of capture. A quiet hour derives no codes ' +
+      'and this entry does not exist, which is a quiet hour and not a fault.' +
+      caveats,
+  });
+
+  out.push({
+    name: 'geometry/nws-zones-bulk-probe-geometry.geojson',
+    url:
+      'https://api.weather.gov/zones?type=forecast&include_geometry=true&id=' +
+      encodeURIComponent(codes.join(',')),
+    headers: { accept: 'application/geo+json' },
+    note:
+      'THE SAME BULK REQUEST WITH ONE PARAMETER ADDED, AND IT IS THE ONLY ' +
+      'THING STILL STANDING BETWEEN §56.4 AND A ONE-REQUEST RESOLVER. ==> THE ' +
+      'PLAIN BULK PROBE BESIDE THIS ONE ANSWERED, AND ANSWERED WITHOUT ' +
+      'SHAPES. <== Measured 2026-08-23: 200 OK, all 23 zones asked for, 30,172 ' +
+      'bytes, and a null geometry on every single feature. So the collection ' +
+      'endpoint DOES take an id list — the half nobody had ever tested — but ' +
+      'serves metadata only, which left the per-zone loop as the only route to ' +
+      'a boundary and Phase 4 shipped on it: 23 zones cost 23 requests and ' +
+      '1.63 MB. NWS documents an include_geometry parameter on this endpoint ' +
+      'and this project has never sent it. ==> IF IT COMES BACK CARRYING THE ' +
+      'SAME BOUNDARIES, THE RESOLVER SHOULD ASK ONCE INSTEAD OF FORTY TIMES. ' +
+      '<== Compare against the per-zone files: same geometry type, same vertex ' +
+      'count, or a coarser boundary? All of the zones, or a silently capped ' +
+      'page? A 400, or a 200 with null geometries again, is equally useful — ' +
+      'it means the parameter is not real on this route and the loop stays.' +
+      caveats,
+  });
+
   return out;
 }
 

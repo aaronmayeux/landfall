@@ -40,8 +40,15 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { MODEL_TRACKS, SATELLITES, GEOCODE, CACHE, IMAGERY } from '../config/constants.js';
+import { MODEL_TRACKS, SATELLITES, GEOCODE, CACHE, IMAGERY, RAIN } from '../config/constants.js';
 import { MODEL_FAMILY } from '../config/constants.js';
+/* ==> THE ONLY NON-CONFIG TRUTH IN THIS SUITE, AND IT BELONGS HERE ANYWAY. <==
+ * Every mirror above is config-against-relay. §56.4's UGC split is lib-against-
+ * relay, because a regex describing NWS's own code format is a fact about a
+ * feed rather than a knob anybody tunes, and `config/constants.js` is for
+ * things Aaron changes. The hazard is identical: two hand-copies, one wire,
+ * drifting silently. */
+import { UGC_FORECAST_ZONE, UGC_COUNTY } from '../lib/zones.js';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const read = (rel) => fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -237,6 +244,83 @@ check('imagery/radar-frames.js FRESH_SECONDS matches CACHE.radarFramesFresh',
 check('the tile cache is far longer than the index cache',
   CACHE.radarFresh > CACHE.radarFramesFresh * 60, true);
 
+/* --- THE UGC SPLIT (§56.4) --------------------------------------------------
+ * ==> A FLOOD WATCH CARRIES NO SHAPE, SO THESE TWO PATTERNS ARE THE WHOLE ROUTE
+ * BACK TO ONE. <== The relay splits `geocode.UGC` into forecast zones and
+ * counties because they are served from different paths and a county code sent
+ * to the forecast path 404s — which in a manifest looks exactly like a zone NWS
+ * does not publish. `lib/zones.js` holds the rule; the route holds a hand-copy.
+ *
+ * ==> AND THE DRIFT HERE IS THE QUIET KIND. <== Loosen the pattern on one side
+ * only and the route starts emitting codes the app will build broken URLs from,
+ * or starts counting real zones as unreadable. Nothing 500s, nothing logs, and
+ * a watch simply never gets a boundary. §5.
+ * -------------------------------------------------------------------------- */
+
+const floodSrc = read('functions/api/nws/flood.js');
+
+/** A `const NAME = /…/;` regex literal, as its source text. */
+function regexConst(src, name) {
+  const m = src.match(new RegExp(`const ${name}\\s*=\\s*(/.*/)[a-z]*;`));
+  return m ? m[1] : null;
+}
+
+check('functions/api/nws/flood.js UGC_FORECAST_ZONE mirrors lib/zones.js',
+  regexConst(floodSrc, 'UGC_FORECAST_ZONE'), String(UGC_FORECAST_ZONE));
+
+check('functions/api/nws/flood.js UGC_COUNTY mirrors lib/zones.js',
+  regexConst(floodSrc, 'UGC_COUNTY'), String(UGC_COUNTY));
+
+/* ==> THE TWO MUST NOT BE THE SAME PATTERN. <== The mutation that started all
+ * of this was one regex accepting both letters, which passed every assertion
+ * because every captured code happens to be a `Z`. If a later edit collapses
+ * them, the two checks above still pass — they only compare across the wire. */
+check('the forecast-zone and county patterns are genuinely different',
+  String(UGC_FORECAST_ZONE) === String(UGC_COUNTY), false);
+
+/* --- THE ZONE ROUTE (§56.4) -------------------------------------------------
+ * ==> FOUR MORE HAND-COPIES, AND THE CACHE ONE IS THE DANGEROUS ONE. <==
+ * `/api/nws/zone` holds a boundary for THIRTY DAYS, which is three orders of
+ * magnitude longer than anything else in this app. Config and route disagreeing
+ * about that number is either a month of somebody else's server being hammered
+ * or a month of a boundary this app cannot refresh. Neither errors.
+ *
+ * The route repeats the UGC patterns too, for a different reason than the flood
+ * route does: there they classify, here they are the ALLOWLIST. A caller-supplied
+ * id that reached a URL unchecked would make this an open proxy for arbitrary
+ * api.weather.gov paths.
+ * -------------------------------------------------------------------------- */
+
+const zoneSrc = read('functions/api/nws/zone.js');
+
+check('functions/api/nws/zone.js FRESH_SECONDS matches CACHE.zoneFresh',
+  ms(numberConst(zoneSrc, 'FRESH_SECONDS')), CACHE.zoneFresh);
+
+check('functions/api/nws/zone.js MAX_IDS mirrors RAIN.zonesPerRequest',
+  numberConst(zoneSrc, 'MAX_IDS'), RAIN.zonesPerRequest);
+
+check('functions/api/nws/zone.js WIRE_DECIMALS mirrors RAIN.zoneWireDecimals',
+  numberConst(zoneSrc, 'WIRE_DECIMALS'), RAIN.zoneWireDecimals);
+
+check('functions/api/nws/zone.js UGC_FORECAST_ZONE mirrors lib/zones.js',
+  regexConst(zoneSrc, 'UGC_FORECAST_ZONE'), String(UGC_FORECAST_ZONE));
+
+check('functions/api/nws/zone.js UGC_COUNTY mirrors lib/zones.js',
+  regexConst(zoneSrc, 'UGC_COUNTY'), String(UGC_COUNTY));
+
+/* ==> AND THE CONTACT STRING, ACROSS ALL THREE NWS ROUTES. <== NWS answers 403
+ * without one. Three files carry it because a Pages Function cannot import from
+ * another; a fourth route added without it fails ONLY against NWS's edge, which
+ * from inside a sandbox is indistinguishable from the feed being down. */
+const userAgents = ['flood', 'rainfall', 'zone'].map((r) => {
+  const src = read(`functions/api/nws/${r}.js`);
+  return (src.match(/const USER_AGENT = '([^']+)'/) || [])[1] || null;
+});
+check('all three NWS routes send the same contact in their User-Agent',
+  new Set(userAgents).size, 1);
+check('and it is actually there to read',
+  userAgents.every((u) => u && u.includes('@')), true);
+
 /* ---------------------------------------------------------------------------
  * 5. THE PARSERS THEMSELVES — a check that reads nothing reports nothing.
  *
@@ -256,6 +340,11 @@ const found = {
   'radar SMOOTH': numberConst(read('functions/api/imagery/radar.js'), 'SMOOTH'),
   'radar COLOR_SCHEME': numberConst(read('functions/api/imagery/radar.js'), 'COLOR_SCHEME'),
   'radar-coverage FRESH_SECONDS': numberConst(read('functions/api/imagery/radar-coverage.js'), 'FRESH_SECONDS'),
+  'flood UGC_FORECAST_ZONE': regexConst(floodSrc, 'UGC_FORECAST_ZONE'),
+  'flood UGC_COUNTY': regexConst(floodSrc, 'UGC_COUNTY'),
+  'zone FRESH_SECONDS': numberConst(zoneSrc, 'FRESH_SECONDS'),
+  'zone MAX_IDS': numberConst(zoneSrc, 'MAX_IDS'),
+  'zone UGC_FORECAST_ZONE': regexConst(zoneSrc, 'UGC_FORECAST_ZONE'),
 };
 for (const [label, value] of Object.entries(found)) {
   if (value !== null && value !== undefined) continue;

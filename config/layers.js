@@ -650,7 +650,7 @@ export const LAYER_TOGGLES = Object.freeze([
     default: false,
     phase: 9,
     fetches: true,
-    note: 'US only. Warnings are drawn where they apply; watches are issued by zone and have no shape to draw.',
+    note: 'US only. A watch is issued by forecast zone, and its boundary is fetched separately — any that could not be resolved are listed and not drawn.',
     /* The engine key this drives (map/layers/flood.js). Identical to the pref
      * key and STILL stated, for the reason `modelTracks` learned the hard way:
      * main.js only pushes toggles that name one, so omitting it means the

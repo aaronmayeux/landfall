@@ -23,10 +23,15 @@
  *   High Surf Warning     geometry: null,      7 zones
  *
  * A warning is issued for a drawn box; a watch is issued for a list of forecast
- * zones and its shape lives behind seventeen more requests. So both are fetched
- * and both reach the drawer's list, and only the ones that can be drawn are
- * offered to the globe. That split is stated in the payload rather than left
- * for the client to infer from a null.
+ * zones and arrives with no shape at all. Both are fetched, both reach the
+ * drawer's list, and the split is stated in the payload rather than left for
+ * the client to infer from a null.
+ *
+ * ==> AND SINCE §56.4 THE NULL IS NO LONGER THE END OF THE STORY. <== The zone
+ * codes this route now keeps are resolved to real boundaries by
+ * `/api/nws/zone`, and `data/flood.js` joins the two. So a watch usually ends
+ * up drawable after all — but not here, and not on this row. What this route
+ * says is what NWS said.
  *
  * ==> TWO UPSTREAM CALLS, NOT ONE UNFILTERED ONE. <== `/alerts/active` with no
  * filter returns every hazard in the United States — fire weather, marine, heat
@@ -54,7 +59,7 @@ const ALERTS = 'https://api.weather.gov/alerts/active';
 /** ==> NWS ANSWERS 403 WITHOUT A CONTACT IN THE USER-AGENT. <== The same
  *  string §48.13's probe measured working, and the same one
  *  `functions/api/nws/rainfall.js` sends. Two copies because a Pages Function
- *  cannot import from another (§4.13); `tools/relay-mirrors.mjs` is what keeps
+ *  cannot import from another (§4.13); `tools/test-relay-mirrors.mjs` is what keeps
  *  them honest. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app, andy@getgravitate.app)';
 
@@ -72,15 +77,60 @@ const EVENTS = Object.freeze([
   'Flood Watch',
 ]);
 
-/** Which of them can be drawn. Everything else rides the list only.
+/* --------------------------------------------------------------------------
+ * THE ZONE CODES, AND WHY THIS ROUTE STOPPED THROWING THEM AWAY
  *
- *  ==> THIS IS A STATEMENT ABOUT NWS'S PRODUCTS, NOT ABOUT OUR PARSER. <== A
- *  warning is issued for a polygon the forecaster drew. A watch is issued for a
- *  list of zones, and its shape is seventeen more requests away. If a watch
- *  ever arrives carrying real geometry, the payload will say so on that row and
- *  this list stops being the authority — see `drawable` below, which reads the
- *  feature rather than this table. */
-const USUALLY_DRAWN = Object.freeze(['Flash Flood Warning', 'Flood Warning']);
+ * ==> A WATCH'S ZONE LIST IS THE ONLY ROUTE BACK TO A SHAPE, AND THE ONLY
+ * PLACE ITS STATE IS WRITTEN DOWN. <== §56.2 measured both. `geometry` is null
+ * on every Flood Watch ever captured, so §56.3's distance-from-the-track match
+ * has nothing to measure against; the zones NWS names are what a boundary can
+ * be resolved from. And `areaDesc` reads `Cuyahoga; Lake; Geauga; …` with no
+ * state anywhere in it, so `OHZ011` is the only thing in the payload that says
+ * Ohio.
+ *
+ * This route used to drop the field. Recovering it downstream is impossible —
+ * the client never sees the upstream body — so it is kept here and split here.
+ *
+ * ==> TWO PATTERNS, HAND-COPIED FROM `lib/zones.js`. <== A Pages Function
+ * cannot import from `lib/` (§4.13) and this project has no bundler. So the
+ * rule is written down twice on opposite sides of a wire, exactly like the
+ * cache windows and the model codes this file's siblings mirror, and
+ * `tools/test-relay-mirrors.mjs` fails when the two copies stop agreeing.
+ * Change one, change both.
+ *
+ * ==> `Z` AND `C` ARE DIFFERENT GEOGRAPHIES. <== `OHZ011` is a forecast zone
+ * and `OHC011` is a county, served from different paths. Feeding a county code
+ * to the forecast path builds a URL that 404s, and that 404 is indistinguishable
+ * from a zone NWS genuinely does not publish — so they are split rather than
+ * lumped, and the counties are REPORTED rather than dropped.
+ * ----------------------------------------------------------------------- */
+const UGC_FORECAST_ZONE = /^[A-Z]{2}Z\d{3}$/;
+const UGC_COUNTY = /^[A-Z]{2}C\d{3}$/;
+
+/**
+ * One alert's `geocode.UGC` array, split into the two geographies.
+ *
+ * ==> SORTED AND DEDUPLICATED, BECAUSE CACHE KEYS GET BUILT FROM THIS. <== An
+ * unsorted list re-keys every zone the moment NWS reorders its array, and two
+ * neighbouring offices routinely name the same zone in one hour.
+ *
+ * Mirrors `splitUgc` in `lib/zones.js`.
+ */
+const splitUgc = (codes) => {
+  const forecast = new Set();
+  const county = new Set();
+  let malformed = 0;
+
+  for (const raw of codes || []) {
+    const ugc = String(raw ?? '').trim().toUpperCase();
+    if (!ugc) continue;
+    if (UGC_FORECAST_ZONE.test(ugc)) forecast.add(ugc);
+    else if (UGC_COUNTY.test(ugc)) county.add(ugc);
+    else malformed++;
+  }
+
+  return { forecast: [...forecast].sort(), county: [...county].sort(), malformed };
+};
 
 /* --------------------------------------------------------------------------
  * CACHE
@@ -115,11 +165,14 @@ const json = (obj, status, extra) =>
 /**
  * Does this feature carry a shape we can draw?
  *
- * ==> IT READS THE FEATURE, NEVER THE EVENT NAME. <== `USUALLY_DRAWN` records
- * what has been measured; this decides. A Flood Watch that one day arrives with
- * a real polygon gets drawn without anybody editing a table, and a Flash Flood
- * Warning that arrives without one is honestly reported as undrawable rather
- * than silently vanishing off the globe with the layer switched on.
+ * ==> IT READS THE FEATURE, NEVER THE EVENT NAME. <== There used to be a table
+ * of the products that usually carry a polygon, kept beside this as a record of
+ * what had been measured. It was deleted in §56.4: nothing consulted it, and a
+ * table naming which products can be drawn is exactly the thing that goes
+ * quietly out of date. A Flood Watch that one day arrives with a real polygon
+ * gets drawn without anybody editing anything, and a Flash Flood Warning that
+ * arrives without one is honestly reported as undrawable rather than silently
+ * vanishing off the globe with the layer switched on.
  */
 const drawable = (f) => {
   const t = f?.geometry?.type;
@@ -141,12 +194,16 @@ const drawable = (f) => {
 export function projectFlood(collections) {
   const rows = [];
   let drawn = 0;
+  let ugcUnread = 0;
 
   for (const body of collections || []) {
     for (const f of body?.features || []) {
       const p = f?.properties || {};
       const canDraw = drawable(f);
       if (canDraw) drawn++;
+
+      const ugc = splitUgc(p?.geocode?.UGC);
+      ugcUnread += ugc.malformed;
 
       rows.push({
         /* The alert's own id, so a client can key on it. Two of these queries
@@ -171,6 +228,16 @@ export function projectFlood(collections) {
          * "we could not draw it" and "there was nothing to draw" are different
          * facts and only one of them is about the source. */
         drawable: canDraw,
+        /* ==> THE ZONES THIS ALERT NAMES, KEPT BECAUSE NOTHING DOWNSTREAM CAN
+         * RECOVER THEM. <== §56.4. On a watch this is the only route back to a
+         * shape and the only place the state is written; on a warning it is
+         * usually the one zone the drawn box sits in. Empty is a real answer
+         * and means the alert named none, never that this route dropped them. */
+        zones: ugc.forecast,
+        /* Counties are a DIFFERENT geography served from a different path, and
+         * they are carried rather than dropped so the hour that proves this
+         * feature has to handle them is readable instead of silent. */
+        counties: ugc.county,
       });
     }
   }
@@ -182,6 +249,13 @@ export function projectFlood(collections) {
      * that draws eleven of nineteen must be able to say so (§5). */
     total: rows.length,
     drawable: drawn,
+    /* ==> A COUNT OF CODES THIS ROUTE COULD NOT READ, AND IT IS HERE SO A FEED
+     * THAT CHANGES SHAPE CANNOT LOOK LIKE A QUIET DAY. <== §5. Zero is the
+     * normal answer. Anything else means NWS is publishing UGC codes in a form
+     * neither pattern above matches, and every zone in them is being skipped —
+     * which without this number is indistinguishable from an alert that named
+     * no zones at all. */
+    ugcUnread,
     alerts: rows,
   };
 }

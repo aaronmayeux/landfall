@@ -532,12 +532,19 @@ export function createLayerStatus(onChange) {
      * and it is worse here than anywhere because the layer's whole subject is
      * water already on the ground.
      *
-     * ==> THE MIDDLE ONE IS NOT AN ERROR AND MUST NOT WEAR ONE'S CLOTHES. <==
-     * "Alerts are in force but none of them has a shape to draw" is a fact
-     * about how NWS issues watches (by forecast zone, with no polygon), not a
-     * fault of ours, and it carries no Retry — asking again returns the same
-     * shapeless rows. Same rule `data/radar-coverage.js` follows for a storm
-     * outside radar range.
+     * ==> THE MIDDLE ONE CHANGED MEANING IN PHASE 4 AND STILL IS NOT AN ERROR.
+     * <== §56.4. It used to say a watch is issued by zone and therefore cannot
+     * be drawn, which was a fact about NWS's products. Zone boundaries are
+     * resolved now, so what reaches this state is narrower and is about a
+     * fetch: the alerts in force are ones whose boundaries did not come back.
+     *
+     * **It still carries no Retry**, and the reason is now weaker than it was —
+     * asking again used to return the same shapeless rows by definition, where
+     * a failed boundary lookup might succeed on a second try. It is left alone
+     * because the boundaries are re-asked for on the next flood poll anyway,
+     * and a Retry that fires a second fetch of a thirty-day-cached shape is a
+     * button that mostly lies about what it did. Same rule
+     * `data/radar-coverage.js` follows for a storm outside radar range.
      *
      * The key is deleted outright when the layer is off, so a sentence from a
      * previous fetch cannot survive the switch being flipped.
@@ -554,7 +561,7 @@ export function createLayerStatus(onChange) {
               : {
                 state: 'empty',
                 message: slot.total
-                  ? 'Flood alerts are in force, but they are issued by zone and have no shape to draw'
+                  ? 'Flood alerts are in force, but their boundaries could not be fetched'
                   : 'No flood alerts are in force anywhere in the US',
               };
       }

@@ -205,6 +205,61 @@ console.log('\nThe relay projection');
   truthy('the watch keeps every zone it covers',
     /Maui Windward West/.test(watch.areaDesc) && /Big Island North/.test(watch.areaDesc));
 
+  /* -------------------------------------------------------------------------
+   * THE ZONE CODES SURVIVE THE RELAY (§56.4)
+   *
+   * ==> A WATCH HAS NO SHAPE, SO ITS ZONE LIST IS THE ONLY ROUTE TO ONE. <==
+   * And the client never sees the upstream body, so a field dropped here is
+   * gone for good. These assertions are the guard on that.
+   *
+   * ==> EVERY COUNT BELOW IS RECOMPUTED OFF THE FIXTURE, NEVER TYPED. <==
+   * CLAUDE.md's first rule. Swap the capture for a busier hour and these fail
+   * loudly instead of quietly agreeing with a stale sentence.
+   * ---------------------------------------------------------------------- */
+  const ugcOf = (event) =>
+    RAW.features.find((f) => f.properties.event === event).properties.geocode.UGC;
+
+  eq('the watch keeps every forecast zone NWS named',
+    watch.zones, [...new Set(ugcOf('Flood Watch'))].sort());
+  truthy('which is more than one, or this proves nothing', watch.zones.length > 1);
+
+  /* ==> AND THE STATE COMES BACK WITH THEM, WHICH IS THE POINT. <== §56.2
+   * measured that a watch's `areaDesc` names zones and never a state. The
+   * two-letter prefix on these codes is the only place in the whole payload
+   * that says which state this watch is about. */
+  eq('and every one of them carries the state as its prefix',
+    [...new Set(watch.zones.map((z) => z.slice(0, 2)))], ['HI']);
+
+  /* ==> THE WARNING IS GEOCODED TO A COUNTY, NOT A ZONE, AND THAT IS MEASURED
+   * HERE RATHER THAN ASSUMED. <== The captured Flash Flood Warning names
+   * `HIC001` — a `C` code. Every code in the captured WATCHES is a `Z`, which
+   * is exactly the coincidence §56.4's mutation pass caught; the warnings in
+   * the same capture are the counter-example, and they are real bytes. A
+   * resolver that lumped the two together would build `/zones/forecast/HIC001`
+   * and get a 404 indistinguishable from a zone NWS does not publish. */
+  eq('the warning is geocoded to a county', ugcOf('Flash Flood Warning'), ['HIC001']);
+  eq('so it lands in counties, never in zones', ffw.counties, ['HIC001']);
+  eq('and its zone list is honestly empty', ffw.zones, []);
+
+  /* ZERO IS THE NORMAL ANSWER, AND ANYTHING ELSE MEANS THE FEED CHANGED SHAPE
+   * UNDER US. Without this number, a pattern that has stopped matching looks
+   * exactly like a batch of alerts that named no zones (§5). */
+  eq('nothing in this capture is unreadable', out.ugcUnread, 0);
+
+  /* ==> AND THE COUNTER IS PROVEN ON A CODE THAT CANNOT BE READ, BECAUSE THE
+   * ASSERTION ABOVE DOES NOT PROVE IT. <== Every code in every capture this
+   * project holds is well formed, so `ugcUnread === 0` passes whether the
+   * arithmetic works or is hardwired to zero — verified: hardwiring it changed
+   * nothing. §12 calls a test that passes on the same assumption as the bug
+   * worse than no test, so here is the half that fails when it is hardwired.
+   * The SHAPE is real bytes; only these four codes are made up, which is the
+   * one thing a fixture may invent — a classifier's inputs, not a payload. */
+  const junk = projectFlood([{ features: [{ geometry: null, properties: {
+    event: 'Flood Watch', geocode: { UGC: ['HIZ001', 'HI0001', 'nonsense', '   '] } } }] }]);
+  eq('a code in no shape this app knows is counted, not swallowed', junk.ugcUnread, 2);
+  eq('a blank one is skipped rather than counted as a fault', junk.alerts[0].counties, []);
+  eq('and the readable zone beside them still comes through', junk.alerts[0].zones, ['HIZ001']);
+
   /* THE 55 KB OF TEXT AND POLYGON DETAIL STILL GOES. */
   const wire = JSON.stringify(out);
   truthy('description and instruction are gone',

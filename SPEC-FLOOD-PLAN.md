@@ -139,68 +139,81 @@ therefore still a guess, and every phase below inherits that.
 
 ---
 
-### 56.4 Watches need their zone shapes, and that unlocks everything
+### 56.4 Watches need their zone shapes — ==> SHIPPED 2026-08-23 <==
 
-A Flood Watch carries `geometry: null`. It therefore **cannot be drawn and
-cannot be matched to a corridor** — there is nothing to measure a distance
-from. Widening the search does not help; there is no shape to test.
+**Phase 4 landed. What it built is as-built in `SPEC-UI.md` §48.21** under *The
+zone codes, and the two geographies inside them* and *Zone boundaries, and the
+watch that finally has a shape*. Read it there. What stays here is what was
+MEASURED, because those numbers were the whole reason the phase waited.
 
-**THE ZONE SHAPES ARE PUBLISHED AND THEY BARELY CHANGE.** Each watch names its
-forecast zones in `geocode.UGC`, and NWS serves each zone's real polygon. So:
-resolve the zones an active watch names, cache them hard, and a watch gets real
-geometry — which makes it drawable **and** matchable through the same distance
-test as everything else.
+#### The boundaries, read for the first time on 2026-08-23
 
-**WHY THIS IS NOW WORTH THE REQUESTS AND WAS NOT BEFORE.** §48.21 rejected it as
-"seventeen more requests per watch", which was true and is still true — but it
-was weighed against drawing alone. It now buys drawing *and* matching *and*
-deletes the whole watch/warning special case from every surface downstream.
-The captured watches named 13 and 8 zones; zone boundaries change on the order
-of once a year, so a long cache makes this a handful of requests total rather
-than per watch.
+Nothing in this project had ever seen a zone boundary — not its envelope, not
+its geometry type, not its vertex count, not its byte cost. All four were
+guesses and §12 forbids a parser built on those. The archive runner fetched
+23 of them, every forecast zone named by the three Flood Watches in force.
 
-**==> A ZONE SHAPE IS NWS's OWN BOUNDARY, NOT ONE WE DREW. <==** This is the
-distinction that makes it permissible at all. §48.21 forbids giving a shapeless
-watch a shape — a centroid, a circle, anything invented. Fetching the boundary
-the agency itself publishes for that zone is the opposite of inventing one.
+| | |
+|---|---|
+| zones asked for | **23**, one request each, all 200 OK |
+| upstream latency | **20–218 ms** |
+| total as served | **1,627,853 bytes** |
+| median document | **34,854 bytes**; largest **229,320** (`HIZ023`, Kona) |
+| geometry, compact | **361,930 bytes** — 22% of what was served |
+| vertices | **15,335** across 23 zones; median 340, worst 2,171 |
+| geometry types | **both** — `Polygon` and `MultiPolygon` |
+| `cache-control` | `public, max-age=2592000` — **thirty days** |
+| `last-modified` | **2026-04-16**, four months before the read |
 
-**==> THE CAPTURE IS IN THE RUNNER AND THE BOUNDARY IS STILL UNREAD. <==**
-Added 2026-08-22. `tools/archive-fetch.mjs` now derives a zone-shape URL from
-every forecast zone named by every Flood Watch in force that hour, plus one bulk
-probe, all under `geometry/`. **Nothing in this project has ever read a zone
-boundary** — not its envelope, not its geometry type, not its vertex count, not
-its byte cost. Until that capture lands, every one of those is a guess and §12
-forbids a parser built on it. Read them with:
+**==> THE DOCUMENT IS FOUR TIMES THE BOUNDARY IN IT, AND MOST OF THE REST IS
+WHITESPACE. <==** NWS serves these pretty-printed with four-space indentation,
+plus a list of every observation station in the zone, forecast-office URLs and
+effective dates. Kona is 229,320 bytes on the wire and 46,870 of them are the
+polygon. This is why the relay projects rather than forwards.
 
-```
-git fetch origin archive
-git show origin/archive:latest/geometry/nws-zone-HIZ023.geojson
-git show origin/archive:latest/geometry/nws-zones-bulk-probe.geojson
-```
+**==> BOTH GEOMETRY TYPES ARE REAL. <==** A zone with offshore islands is a
+`MultiPolygon`; one without is a plain `Polygon`. Handling only the second was
+the obvious guess and it would have been wrong for a third of the captured set.
 
-**==> AND THE BULK PROBE MAY DELETE THIS SECTION'S COST ARGUMENT. <==** The
-"seventeen more requests per watch" figure above — the number §48.21 rejected
-zone resolution on — assumes one request per zone. NWS also documents a
-collection endpoint taking a comma-separated id list, and **nobody has ever
-asked it.** If the bulk probe in the block above comes back carrying the
-same boundaries, seventeen requests become one and the objection is gone. A 400
-is equally useful: it means the per-zone loop is the only route and the
-arithmetic above stands as written. **Do not re-price this feature until that
-capture exists.**
+**==> AND THE CACHE HEADER SETTLES THE HOLD. <==** Thirty days is NWS's own
+number, on a document last modified four months earlier. A county line is not
+weather, and `CACHE.zoneFresh` is that number rather than one this project
+invented.
 
-**==> `Z` AND `C` ARE DIFFERENT GEOGRAPHIES AND A MUTATION TEST CAUGHT IT. <==**
-`geocode.UGC` can carry both a forecast zone (`OHZ011`, at `/zones/forecast/`)
-and a county (`OHC011`, at `/zones/county/`). Every code in the captured watches
-happens to be a `Z`, so a resolver accepting both passed every assertion while
-building a county URL that would 404 — indistinguishable in the manifest from a
-zone NWS genuinely does not publish. `tools/zone-codes.mjs` separates them and
-**reports the county codes rather than dropping them**, so the hour that proves
-Phase 4 must handle counties is readable rather than silent.
+#### The bulk probe: it answers, and it answers without shapes
 
-**IF THE ZONE FETCH FAILS, THE WATCH IS SAID AND NOT DRAWN.** It reaches the
-list with its area text and no shape, and the layer status row says how many
-could not be placed. Never silently dropped, and never given a substitute
-shape.
+§48.21 rejected zone resolution as *"seventeen more requests per watch"*, and
+the collection endpoint was the hope that would delete the objection. **Asked
+for the first time on 2026-08-23, `GET /zones?type=forecast&id=…` returned 200,
+all 23 zones, 30,172 bytes, in 153 ms — with `geometry: null` on every single
+feature.**
+
+So the id list works and the boundaries do not come with it. **The per-zone loop
+is not an implementation choice; it is the only route.** Phase 4 shipped on it:
+23 zones, 23 requests, cached thirty days at the edge and keyed per zone so
+overlapping watches share what they have already paid for.
+
+**==> ONE THING IS STILL UNTESTED AND IT WOULD CHANGE THE ARITHMETIC. <==** NWS
+documents an `include_geometry` parameter on that endpoint and nobody here has
+ever sent it. A probe for it is in `tools/archive-fetch.mjs` as of this phase,
+under `origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson`.
+**If it comes back
+carrying the same boundaries, 40 requests become 1** and `functions/api/nws/zone.js`
+should be rewritten to ask once. A 400, or another page of nulls, is equally
+useful and closes the question for good. Read it before touching that route.
+
+#### What was NOT measured, and must not be assumed
+
+**Nothing has been seen on glass, and the shapes are the least-seen thing in the
+app.** A resolved watch draws a MultiPolygon covering entire forecast zones —
+far larger than the small river polygons §56.2 measured for warnings, whose
+median width is 0.270°. A Hawaii zone is 0.7° tall. **Whether a warning still
+reads as more urgent than a watch when the watch is fifty times its area is a
+glass call and nobody has made it.** Phase 5 owns the map and inherits this.
+
+**And the national volume is still one snapshot on a quiet day.** Three watches
+naming 23 zones. `RAIN.zonesPerRequest` caps a request at 40 on that evidence
+alone; a genuine national flood day has never been read.
 
 ---
 

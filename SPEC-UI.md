@@ -3284,6 +3284,128 @@ api.weather.gov. Both queries are archived hourly so the first tuning pass reads
 bytes rather than guessing. **Until that lands, every sizing claim about this
 feature is a guess and should be treated as one.**
 
+#### The zone codes, and the two geographies inside them
+
+**The route keeps `geocode.UGC`.** It used to drop it, and dropping it was
+unrecoverable: the client never sees the upstream body, so a field thrown away
+at the edge is gone for every surface downstream forever.
+
+**==> TWO FACTS LIVE IN THAT FIELD AND NOWHERE ELSE. <==**
+
+1. **A watch's only route back to a shape.** Every Flood Watch this project has
+   captured carries `geometry: null`, so §48.21's distance-from-the-track match
+   has nothing to measure. The zones NWS names are what a real boundary can be
+   resolved from — NWS's own boundary, never one this app drew.
+2. **The state.** A watch's `areaDesc` reads *Cuyahoga; Lake; Geauga; Ashtabula
+   Inland; …* — zone names, no state anywhere in the string. `OHZ011` is the
+   only thing in the whole payload that says Ohio.
+
+**==> `Z` AND `C` ARE DIFFERENT GEOGRAPHIES SERVED FROM DIFFERENT PATHS, AND
+THE CAPTURED BYTES CONTAIN BOTH. <==** `OHZ011` is a forecast zone at
+`/zones/forecast/`; `OHC011` is a county at `/zones/county/`. Measured on
+`samples/rain/alerts-hilo-hi.json`, which is one real NWS response:
+
+| product | geometry | UGC codes | kind |
+|---|---|---|---|
+| Flash Flood Warning | Polygon | `HIC001` | **county** |
+| Flood Watch | null | 17 codes | **forecast zones** |
+
+**The warning is geocoded to a county and the watch to zones.** That is the
+counter-example §56.4's mutation pass went looking for: every code in the
+captured *watches* happens to be a `Z`, so a resolver accepting both letters
+passes every watch-shaped assertion while building `/zones/forecast/HIC001` —
+a URL that 404s, and a 404 that is indistinguishable from a zone NWS genuinely
+does not publish. So the route splits them: `zones` and `counties`, sorted and
+deduplicated per alert, and the counties are **carried rather than dropped**.
+
+**AND A CODE IN NEITHER SHAPE IS COUNTED, NOT SWALLOWED.** `ugcUnread` travels
+on the body — zero on every capture so far. Without it, a feed that changes the
+format of its codes looks exactly like a batch of alerts that named no zones,
+which is §5's silent failure in the field the next phase depends on entirely.
+
+**THE COST, MEASURED RATHER THAN ESTIMATED:** the five-alert Hilo capture
+projects to **4,930 bytes with the codes and 4,175 without** — **755 bytes for
+69 codes**. Nothing else in the row changed; the description and instruction
+text this route exists to drop is still dropped.
+
+**==> THE SPLIT IS A HAND-COPIED PAIR AND IT HAS A GUARD. <==** `lib/zones.js`
+holds `splitUgc` and the two patterns; `functions/api/nws/flood.js` carries the
+same two patterns written out again, because a Pages Function cannot import
+from `lib/` (§4.13) and this project has no bundler. `tools/test-relay-mirrors.mjs`
+fails when the copies stop agreeing — and separately asserts the two patterns
+are not the same pattern, since collapsing them is the exact mutation that
+started this and the across-the-wire check would not catch it.
+
+#### Zone boundaries, and the watch that finally has a shape
+
+**Landed 2026-08-23.** A Flood Watch arrives with `geometry: null`. Since the
+match became a distance from the storm's track, that made it **neither drawable
+nor matchable** — there is nothing to measure from — and it was held back from
+every storm's list. The zones it names are the way back.
+
+**`/api/nws/zone?ids=HIZ023,PAZ017` resolves them**, and `data/flood.js` joins
+the two lists in the one place the whole national list exists, so no consumer
+downstream has to know a watch ever lacked a shape.
+
+**==> IT IS NWS's OWN BOUNDARY AND THAT IS WHY THIS IS ALLOWED AT ALL. <==**
+This section's rule against giving a shapeless watch a shape stands untouched:
+no centroid, no circle, no hull, nothing computed. The polygons are the ones the
+agency publishes for the zones the agency named. They are collected into a
+MultiPolygon rather than dissolved — a real union would need a clipping library
+and would put a **computed** line where two zones meet, which is the one thing
+that would make the shape ours.
+
+**TWO FETCHES, BECAUSE TWO FACTS HAVE DIFFERENT LIFETIMES.** The alert list
+holds fifteen minutes at the edge and three in the browser, because its contents
+stop being true. A boundary holds **thirty days**, which is NWS's own
+`max-age=2592000` on a document last modified four months earlier. Merging them
+would either re-fetch boundaries every three minutes or serve a stale alert list.
+
+**THE EDGE CACHE IS KEYED PER ZONE, NOT PER REQUEST.** Two watches naming
+overlapping zones, or one reader asking for four while another asks for twenty,
+would otherwise share nothing.
+
+**==> A PARTIAL ANSWER IS ALLOWED HERE AND IT IS THE ONLY ROUTE IN §48 WHERE IT
+IS. <==** `/api/nws/flood` uses `Promise.all` on purpose — a half-fetched alert
+list is an all-clear over a flooding county. This is a lookup of boundaries, not
+a list of hazards, so one zone that will not answer must not cost the other
+twenty-two theirs. Every id is settled independently and the failures come back
+**by name** under `missing`.
+
+**AND WHAT THAT COSTS IS SAID OUT LOUD, THREE TIMES OVER:**
+
+- A watch whose zones **partly** resolved carries `zonesUnresolved` naming the
+  ones that did not. The shape drawn is smaller than its real area, and a
+  surface presenting it as the whole would be committing exactly the failure
+  this feature exists to avoid.
+- A watch whose zones **all** failed keeps its null. **Said and not drawn** — it
+  stays in the list with its area text and nothing about it pretends to a
+  location.
+- The corridor match counts what it could not place. `unplaceable` travels on
+  every state including `none_matched`, where *"no flood alerts within 345 mi"*
+  printed over an unplaced watch would be the worst sentence this feature can
+  produce. When the count is non-zero the all-clear is **withheld** and the
+  qualification goes first.
+
+**==> AND IT SAYS WHERE THE SHAPE CAME FROM. <==** `placedFromZones` marks an
+alert whose boundary was fetched separately rather than drawn by the forecaster
+who issued it. Nothing words that difference yet; the flag exists so that a
+surface which wants to can, without re-deriving it from a null that is no longer
+there.
+
+**THE CLAUSE THAT SAID *"issued by zone and has no shape to draw"* IS GONE FROM
+THE DRAWER, AND IT HAD NEVER PRINTED.** It counted `total - drawable`, and
+nothing shapeless ever reaches that branch — the distance test cannot match what
+it cannot measure — so the difference was always zero. Its job was real, and
+`unplaceable` now does it with a number that can actually be non-zero.
+
+**THE PROJECTION, AND THE ONE NUMBER THAT IS OURS.** The route keeps `name`,
+`state` and the geometry, and drops the observation-station list, the office
+URLs and the dates — measured at **four fifths of the document**. Coordinates
+are rounded to `RAIN.zoneWireDecimals`, four places, about 11 m against a
+corridor 300 nautical miles wide. **A rounding, not a simplification:** every
+vertex NWS drew still travels and no ring changes shape.
+
 #### The layer
 
 Green, because every other hue on this globe is spoken for and fixed:

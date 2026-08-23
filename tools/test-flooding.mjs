@@ -86,6 +86,19 @@ const NATIONAL = load('samples/flood/alerts-national.json').alerts;
 /** A moment they were all live, taken off the capture rather than typed. */
 const LIVE = Date.parse(NATIONAL[0].onset);
 
+/** ==> THE SAME HOUR WITH EVERY ALERT PLACEABLE, AND IT NEEDS A NAME OF ITS
+ *  OWN SINCE PHASE 4. <== §56.4. This capture predates the zone join: its three
+ *  Flood Watches carry `geometry: null` AND no zone codes, so nothing in this
+ *  suite can resolve them the way the app now does. To `corridorSummary` they
+ *  are three alerts that could not be placed — and an all-clear is deliberately
+ *  WITHHELD while any alert is in that state.
+ *
+ *  So the all-clear cases below run on the alerts that DID carry a shape, which
+ *  is what the app hands them on a day the boundaries resolve. The withheld
+ *  case gets its own assertions further down, on the full fixture, because that
+ *  behaviour is the point rather than an obstacle. */
+const PLACEABLE = NATIONAL.filter((a) => a.geometry);
+
 /** Lala's real published track — fourteen past LineStrings plus a forecast. */
 const LALA_SAMPLES = trackSamples(trackChains(
   load('samples/flood/track-lala-cp2-past.geojson'),
@@ -239,7 +252,7 @@ section('§56.7 — the two coverage gaps');
    * 345 mi" is only an answer for a place NWS forecasts at all. */
   const nothingNear = await renderStorm({
     storm: gdacsStorm,
-    summary: corridorSummary(NATIONAL, LALA_SAMPLES, LIVE, 300),
+    summary: corridorSummary(PLACEABLE, LALA_SAMPLES, LIVE, 300),
     surgePayload: LALA_SURGE,
   });
   ok(flat(nothingNear).includes('No flood alerts are in force within'),
@@ -263,7 +276,7 @@ section('§5 — unavailable is not none_matched is not no_track');
   const unavailable = await renderStorm({ summary: { state: 'unavailable' } });
   const noTrack = await renderStorm({ summary: { state: 'no_track' } });
   const noneMatched = await renderStorm({
-    summary: corridorSummary(NATIONAL, LALA_SAMPLES, LIVE, 300),
+    summary: corridorSummary(PLACEABLE, LALA_SAMPLES, LIVE, 300),
   });
 
   ok(flat(unavailable).includes('couldn’t be checked'),
@@ -280,6 +293,23 @@ section('§5 — unavailable is not none_matched is not no_track');
 
   ok(flat(noneMatched).includes('No flood alerts are in force within'),
     'a measured miss IS an all-clear, and says so plainly');
+
+  /* ==> AND A MISS IS NOT AN ALL-CLEAR WHILE SOMETHING COULD NOT BE PLACED.
+   * <== §56.4. An alert whose zone boundaries did not resolve never reaches the
+   * distance test, so "nothing within 345 mi" would be an all-clear assembled
+   * out of our own missing geometry — the same mistake `no_track` above exists
+   * to prevent, arriving by a different road. It is the worst sentence this
+   * feature can print. The full capture has three such watches. */
+  const withUnplaceable = corridorSummary(NATIONAL, LALA_SAMPLES, LIVE, 300);
+  ok(withUnplaceable.unplaceable === NATIONAL.length - PLACEABLE.length,
+    `every shapeless alert is counted rather than forgotten (${withUnplaceable.unplaceable})`);
+
+  const withheld = await renderStorm({ summary: withUnplaceable });
+  ok(!flat(withheld).startsWith('No flood alerts are in force within')
+    && flat(withheld).includes('could not be placed on the map'),
+    'and the all-clear is withheld, with the reason said first');
+  ok(says(withheld, NWS_US_ONLY),
+    'while the coverage sentence still rides along');
 
   /* THE PROPERTY, NOT THE THREE STRINGS: no two of them may read the same. */
   const three = [unavailable, noTrack, noneMatched].map(flat);
@@ -305,13 +335,21 @@ section('§48.21 — a geographic match is not a causal claim');
   ok(!/this storm’s flooding|caused by this storm/i.test(flat(matched)),
     'and never claims the storm caused any of them');
 
-  /* THE COUNT OF ALERTS IS NOT THE COUNT OF SHAPES, and both get said. */
+  /* ==> THE ALERTS THAT COULD NOT BE PLACED ARE NAMED IN THE SENTENCE TOO, AND
+   * THIS REPLACED A CHECK THAT COULD NEVER FIRE. <== §56.4. The old assertion
+   * was guarded on `total > drawable` — a difference that is always zero,
+   * because nothing shapeless survives the distance test — so it never ran
+   * once. `unplaceable` is the number that CAN differ, and it is not guarded:
+   * this fixture has three shapeless watches in it and the sentence has to
+   * account for them. */
   const s = corridorSummary(NATIONAL, overIndiana, LIVE, 300);
   ok(s.state === 'ok' && s.total > 0, 'the probe actually matches something');
-  if (s.total > s.drawable) {
-    ok(flat(matched).includes('no shape to draw on the map'),
-      'an undrawable alert is named, because the globe cannot say it');
-  }
+  ok(s.unplaceable === NATIONAL.length - PLACEABLE.length,
+    `and the shapeless ones are counted, not dropped (${s.unplaceable})`);
+  ok(flat(matched).includes('could not be placed on the map'),
+    'the sentence admits the alerts the globe cannot show');
+  ok(flat(matched).includes(`${s.unplaceable} more are`),
+    'and says how many, because a vague admission is not one');
 }
 
 /* =========================================================================

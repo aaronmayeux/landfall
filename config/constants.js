@@ -423,6 +423,29 @@ export const CACHE = Object.freeze({
    *  this nor the relay keeps a last-good copy. */
   floodClient: 3 * MINUTE,
 
+  /** How long the EDGE holds one NWS forecast-zone boundary (§56.4).
+   *
+   *  ==> THIRTY DAYS, AND IT IS NWS'S OWN NUMBER RATHER THAN OURS. <== Measured
+   *  off the captured responses on 2026-08-23: every zone came back with
+   *  `cache-control: public, max-age=2592000` — thirty days — and a
+   *  `last-modified` of 2026-04-16, four months earlier. A county line is not
+   *  weather. This is the longest hold in this table by three orders of
+   *  magnitude and it is still shorter than the source says it may be.
+   *
+   *  ==> THE HAZARD IT AVOIDS IS SOMEBODY ELSE'S SERVER. <== A national flood
+   *  day names dozens of zones, and without a long hold every reader who opens
+   *  the app re-asks api.weather.gov for a boundary that last moved in April.
+   *  The alert list beside it holds for fifteen MINUTES because its contents
+   *  stop being true; a boundary does not. Two facts, two lifetimes, one
+   *  payload only because the client joins them. */
+  zoneFresh: 30 * 24 * HOUR,
+
+  /** How long the BROWSER holds a resolved zone shape, in this session's
+   *  memory. Same reasoning, one order smaller: the tab is not a CDN and a
+   *  reader who leaves the app open for a day should not be holding a
+   *  boundary the edge may have refreshed. */
+  zoneClient: 12 * HOUR,
+
   /** Service worker: last-good storm data. ~1.5x advisory cadence, carried
    *  from the HA project. Served flagged stale with its age. */
   lastGoodStormData: 9 * HOUR,
@@ -2491,6 +2514,34 @@ export const RAIN = Object.freeze({
    *  precisely the case that floods people. Scaling by wind radii would shrink
    *  the search area exactly where the hazard is worst. */
   floodCorridorNm: 300,
+
+  /** Decimal places kept on a zone boundary's coordinates as it crosses the
+   *  wire (§56.4).
+   *
+   *  ==> FOUR PLACES IS ELEVEN METRES AND NWS PUBLISHES SIX. <== Measured on
+   *  the 23 captured boundaries: as served they are 362 KB of compact
+   *  coordinates; rounded to four places, 301 KB — 17% for a shift no reader
+   *  can see and no test here can measure. The corridor these shapes are
+   *  tested against is 300 NAUTICAL MILES wide.
+   *
+   *  ==> IT IS A ROUNDING AND NOT A SIMPLIFICATION, AND THE DIFFERENCE
+   *  MATTERS. <== Every vertex NWS drew still travels. Nothing is dropped, no
+   *  ring changes shape, and the boundary is still theirs — which is the whole
+   *  reason §56.4 permits fetching it at all. `lib/simplify.js` is a separate
+   *  question for the map, and it belongs on the client where the zoom is
+   *  known. */
+  zoneWireDecimals: 4,
+
+  /** How many zones one call to `/api/nws/zone` may ask for.
+   *
+   *  ==> A CAP, NOT A BUDGET, AND IT PROTECTS SOMEBODY ELSE'S SERVER. <== Each
+   *  id is one upstream request on a cold miss. Uncapped, a caller can turn one
+   *  request to us into hundreds at api.weather.gov. Forty is the same ceiling
+   *  `tools/archive-fetch.mjs` puts on the hourly capture, chosen there so a
+   *  national flood day cannot become a hundred requests at one agency, and one
+   *  number for both is one number to move. The three watches in force on
+   *  2026-08-23 named 23 zones between them. */
+  zonesPerRequest: 40,
 });
 
 /* ---------------------------------------------------------------------------
