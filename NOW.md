@@ -278,9 +278,30 @@ it is keyed on the alert id and nothing in the layer's life invalidates one.
 **Tapping is still not built; that is Slice C**, and Slice C lifts the chip half
 of the file out before it does anything else.
 
-**==> NONE OF IT HAS BEEN SEEN DRAWING. <==** Aaron has seen the layer draw
-nothing, which is how the reversal was found. Nobody has yet looked at a green
-polygon or a chip on this globe.
+**==> IT DRAWS, AND THE FIRST LOOK FOUND THE CHIP WAS THE WRONG MARK. <==**
+2026-08-23, Aaron on a phone: the polygons and one chip painted over the Big
+Island, and the chip was a **blank** rounded square. `SPEC-UI.md` §56.10 had
+committed in Phase 2 to the globe stroking the `Flooding` heading's own three
+waves — *the same path data, not a redrawn one* — and Slice B ignored it. **No
+gate in this repo noticed.** Fixed: the chip carries the waves,
+`ui/section-icon.js` exports `iconPathData`, and `tools/test-flooding.mjs`
+asserts the layer imports the shape and holds no copy of it (mutation-verified).
+
+**TWO THINGS THAT WENT WITH IT AND ARE UNSEEN.** `FLOOD_GEO.chipSizePx` is 24,
+not 20, so the waves get a 19 px clear area — larger than the 16 px the heading
+reads fine at. And **a cluster shows its count with no waves**, because both
+cannot share a 24 px chip. If a numbered chip reads as a different layer, the
+fallback is a smaller numeral beside smaller waves, not dropping the count.
+
+**ONE CHIP OVER EIGHT ZONES IS CORRECT AND IS STILL AN OPEN QUESTION.** Moke's
+watch is ONE alert naming eight forecast zones, joined into one shape, so it gets
+one marker — placed in the largest zone, which is the middle of Mauna Loa where
+nobody lives. The drawer lists eight names and the map paints eight outlines
+against that one marker. **A chip per zone would fix the findability and break
+the count**: eight markers cluster into a chip reading "8" while the drawer says
+one alert. **Deferred deliberately until a real multi-alert cluster has been seen
+on the mainland** — sixteen separate warnings sit in the Wabash valley right now
+and that is the case the counting was built for.
 
 **==> THE FEATURE IS NOT FINISHED WHILE IT DRAWS NOTHING OUTSIDE THE UNITED
 STATES, AND §56.19 IS THE ENTRY THAT SAYS SO. <==** Aaron's question on

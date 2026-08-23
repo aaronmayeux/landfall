@@ -3352,12 +3352,15 @@ that distance — a scatter of counted marks is the honest read of *eleven alert
 most of them here*, a picture the polygons genuinely cannot draw at six pixels
 across.
 
-**IT IS A ROUNDED SQUARE AND IT MUST NEVER BECOME A CIRCLE.** `GENESIS_GEO`'s
-rule, inherited: a storm in this app IS a filled dot with a spiral and a halo,
-and that equation is the whole legibility of the globe. Genesis obeys it by
-having no point marker at all; a flood alert cannot do that, so it obeys the
-rule the other way — separated by SHAPE, not by hue, which still holds for a
-reader who cannot tell the green from the orange.
+**IT IS A ROUNDED SQUARE CARRYING THE THREE-WAVE FLOOD GLYPH, AND IT MUST NEVER
+BECOME A CIRCLE.** `GENESIS_GEO`'s rule, inherited: a storm in this app IS a
+filled dot with a spiral and a halo, and that equation is the whole legibility of
+the globe. Genesis obeys it by having no point marker at all; a flood alert
+cannot do that, so it obeys the rule the other way — separated by SHAPE, not by
+hue, which still holds for a reader who cannot tell the green from the orange.
+**The waves inside it are the `Flooding` section heading's own path data**, so
+the mark on the globe and the mark on the panel cannot drift — §56.10, which also
+records that Slice B shipped this blank and that there is a gate under it now.
 
 **TWO SOURCES, BECAUSE MAPLIBRE CLUSTERS `Point` GEOMETRY ONLY.** The chips
 cannot ride the polygon source. Both are built by one walk over one alert list
@@ -3995,11 +3998,55 @@ adjacent on both screens and the icon is what separates them while scrolling. A
 cloud is weather arriving; these are the ground already under water.
 
 **IT IS CENTRED ON THE 24-BOX (x 4 to 20)** rather than inheriting `surge`'s
-off-centre 3-to-19 span, because Phase 5 strokes these same path strings onto a
+off-centre 3-to-19 span, because the map strokes these same path strings onto a
 canvas for `map.addImage` — **the same path data, not a redrawn one.** Tap a
 wave on the globe and the panel that opens is headed with the same wave. An icon
 that is going to be rasterised has to be balanced inside its own box, where a
 heading glyph could get away with a lean.
+
+**==> AND THAT PROMISE WAS BROKEN FOR ONE DAY, WHICH IS WHY IT NOW HAS A GATE
+UNDER IT. <==** Slice B shipped a **blank** rounded square. The chip's own
+argument — a storm is a round dot, so a flood must differ by SHAPE — is about not
+being round and was never an argument for featureless, but nothing in the repo
+was checking. **Aaron caught it on a phone on 2026-08-23.**
+`tools/test-flooding.mjs` now asserts three things: the waves are readable as
+raw path data, `map/layers/flood.js` imports them from here, and it carries no
+copy of its own. Mutation-verified by pasting the `d` strings into the layer.
+
+**`iconPathData(name)` IS THE SEAM, AND IT PARSES RATHER THAN DUPLICATING.** It
+strips the `d` attributes out of the markup above, so the icon set stays the
+single source. **It returns `<path>` subpaths only** — `pin`, `clock` and
+`people` also carry `<circle>` elements this drops, which is harmless because
+`flood` is the one icon the map draws and is three paths and nothing else. Any
+future caller wanting a circle-bearing icon has to widen it deliberately.
+
+**IT IS THE ONE IMPORT FROM `map/` INTO `ui/`.** Nothing in `ui/` imports from
+`map/`, so this is a direction rather than a cycle (§12), and `ui/section-icon.js`
+is already on the boot path — no new module and no new request. If a third
+caller appears, the right answer is moving the set into `config/`, and that is a
+file move touching every heading rather than something to slip into a visual fix.
+
+**THE PROPORTIONS ARE THE HEADING'S, DRAWN LARGER.** The whole 24-box maps into
+the chip's clear area exactly as `.sect-ico` maps it into 16 px, so nothing is
+stretched and the weight-to-amplitude ratio cannot drift. `FLOOD_GEO.chipSizePx`
+went 20 → 24 to make that clear area **19 px** — bigger than the heading, which
+is the margin a mark needs when it sits on a moving map over a basemap instead of
+still beside a word. Still far under §10's 44 px touch target, which is a hit box
+rather than a drawn size.
+
+**A CLUSTER GETS THE COUNT AND NO WAVES, AND THAT IS A TRADE.** Both cannot share
+a 24 px chip — three waves under a numeral is two marks fighting, and the numeral
+loses. So a single alert says WHAT it is and a pile says HOW MANY, while the
+colour and the silhouette still say *flood, not a storm* in both cases. **Unseen
+on glass.** If a numbered chip reads as belonging to a different layer, the
+fallback is a smaller numeral beside smaller waves rather than dropping the
+count.
+
+**THE WAVES TAKE THE SAME INK THE COUNT WOULD**, from one `countInk` rule read
+two ways — a string for the canvas, a paint expression for MapLibre. WCAG asks
+3.0 of a non-text graphic and 4.5 of text this size, so reusing the text ink
+holds the waves to the stricter of the two at no cost, since the same four greens
+are underneath either way.
 
 **AND THE NAMING RULE EARNED ITS KEEP THE DAY IT WAS TESTED.** That file's
 standing instruction is to name an icon for the IDEA and not the picture. A

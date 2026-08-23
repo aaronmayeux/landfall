@@ -2084,24 +2084,59 @@ export const FLOOD_COLOR_LIGHT = Object.freeze({
  * hue, so a reader who has learnt "round means a storm" is never asked to
  * unlearn it, and the distinction still holds for somebody who cannot tell the
  * green from the orange.
+ *
+ * ==> AND THE CHIP IS NOT BLANK. IT CARRIES THE THREE-WAVE FLOOD GLYPH. <==
+ * `SPEC-UI.md` §56.10 committed to this before the map phase was written: the
+ * globe strokes the SAME path data as the `Flooding` section heading, not a
+ * redrawn shape, so tapping a wave opens a panel headed with the same wave.
+ * **Slice B shipped a blank rounded square and nobody caught it until Aaron saw
+ * it on a phone on 2026-08-23.** The silhouette argument above was never an
+ * argument for featureless — "not round" and "carries the section's mark" are
+ * both satisfied at once.
  * ------------------------------------------------------------------------- */
 export const FLOOD_GEO = Object.freeze({
   /** The chip's side, in CSS pixels. Drawn at 2x and handed to MapLibre with
    *  `pixelRatio: 2`, the same way `GENESIS_GEO`'s hatch is, so the corner
-   *  radius is a crisp curve on a phone rather than a soft smear. */
-  chipSizePx: 20,
+   *  radius is a crisp curve on a phone rather than a soft smear.
+   *
+   *  ==> IT WAS 20 AND THE WAVES ARE WHY IT IS 24. <== The chip carries the
+   *  three-wave flood glyph (§56.10), drawn from the same path data as the
+   *  section heading. The heading renders that 24-box at **16 px**
+   *  (`.sect-ico`) and reads as waves there. At a 20 px chip the clear area
+   *  inside the border and inset is 15 px — SMALLER than the heading, on a
+   *  moving map, over a basemap rather than beside a word. At 24 it is 19 px,
+   *  comfortably larger, and still well under §10's 44 px touch target, which
+   *  is a hit box rather than a drawn size.
+   *
+   *  **Unseen. This is a dial Aaron moves on glass** — three waves this small
+   *  can read as three straight lines, and if they do the answer is a bigger
+   *  chip before it is a different glyph. */
+  chipSizePx: 24,
 
-  /** Corner radius, in CSS pixels. A quarter of the side: enough that the
-   *  silhouette reads as "square with soft corners" at a glance and never as a
-   *  circle, which is the one thing it must not be. */
-  chipRadiusPx: 5,
+  /** Corner radius, in CSS pixels. Enough that the silhouette reads as "square
+   *  with soft corners" at a glance and never as a circle, which is the one
+   *  thing it must not be — `GENESIS_GEO`'s rule, and the whole reason a flood
+   *  is separated from a storm by SHAPE rather than by hue. */
+  chipRadiusPx: 6,
 
   /** The chip's border. It sits over land, over the coastline glow and over
    *  place labels, and a flat green square on a green-brown basemap disappears
    *  without one. */
   chipStrokeWidth: 1.5,
 
-  /** The cluster count, printed on the chip. */
+  /** Clear space between the inside of the border and the glyph's 24-box, in
+   *  CSS pixels. Waves touching the border read as a smudge against it. */
+  glyphInsetPx: 1,
+
+  /** The glyph's stroke, in the ICON's OWN 24-box units, scaled with it.
+   *
+   *  ==> IT IS `iconSvg`'s `stroke-width` AND THAT IS THE POINT. <== The map
+   *  draws the heading's path data at the heading's weight, scaled up. Any
+   *  other number here would make the same mark look like two different marks
+   *  in two places, which is exactly what §56.10 exists to prevent. */
+  glyphStrokeWidth: 1.8,
+
+  /** The cluster count, printed on the chip in place of the waves. */
   countSize: 12,
   countHaloWidth: 1.2,
 });

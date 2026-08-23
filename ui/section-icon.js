@@ -123,3 +123,35 @@ export function iconSvg(name) {
   return `<svg class="sect-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor"
     stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 }
+
+/**
+ * The same icon as RAW PATH DATA — the `d` strings with the markup stripped,
+ * ready for `new Path2D(d)` on a canvas.
+ *
+ * ==> THIS EXISTS SO THE GLOBE CAN STROKE THE SAME SHAPE AS THE HEADING RATHER
+ * THAN A SECOND COPY OF IT. <== `SPEC-UI.md` §56.10 committed to it in as many
+ * words when the flood waves were drawn: *the same path data, not a redrawn
+ * one*. Tap a wave on the globe and the panel that opens is headed with the
+ * same wave. **Slice B shipped a plain rounded square instead and nobody
+ * noticed until Aaron saw it on a phone** — the fix is this function, not a
+ * second set of coordinates in `map/`.
+ *
+ * ==> IT IS THE ONE EDGE FROM `map/` INTO `ui/`, AND IT IS DELIBERATE. <== No
+ * file in `ui/` imports from `map/`, so there is no cycle (§12). The
+ * alternative — moving the whole set into `config/` — is a file move touching
+ * every heading in the app, and doing it in the same pass as a visual fix is
+ * exactly the mixing this project keeps out of its commits. If a third caller
+ * ever appears, that move is the right answer and this comment is the pointer.
+ *
+ * ==> AND IT PARSES THE MARKUP RATHER THAN STORING THE `d` STRINGS TWICE. <==
+ * Two arrays that have to stay in step is the drift this file's whole existence
+ * argues against. The set above stays the single source; this reads it.
+ *
+ * @param {string} name
+ * @returns {string[]} one `d` string per subpath, empty for an unknown name.
+ */
+export function iconPathData(name) {
+  const markup = ICON_PATH[name];
+  if (!markup) return [];
+  return [...markup.matchAll(/\sd="([^"]+)"/g)].map((m) => m[1]);
+}

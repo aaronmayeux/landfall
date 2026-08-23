@@ -62,7 +62,7 @@ const { projectLocations } = await import('../functions/api/gdacs/surge.js');
 const { readAlerts, partitionSurge, alertsForStorm } = await import('../lib/cap.js');
 const { _normalizeGdacsEvent } = await import('../data/gdacs.js');
 const { createCapStorm } = await import('../ui/cap-storm.js');
-const { ICON_PATH } = await import('../ui/section-icon.js');
+const { ICON_PATH, iconPathData } = await import('../ui/section-icon.js');
 
 let pass = 0;
 const failures = [];
@@ -513,6 +513,25 @@ section('§56.10 — one water mark, and only one');
    * a reader that the difference between them means something, which is the
    * finding §56.7 is built on. */
   ok(!('surge' in ICON_PATH), 'and the old surge crest is deleted, not kept beside it');
+
+  /* ==> AND THE GLOBE DRAWS THIS SHAPE, NOT A COPY OF IT. <== §56.10 committed
+   * to that in Phase 2 — *the same path data, not a redrawn one* — and Slice B
+   * shipped a blank rounded square anyway. **No gate in this repo noticed; Aaron
+   * did, on a phone, on 2026-08-23.** These three assertions are that gate.
+   *
+   * MUTATION-VERIFIED: paste the wave `d` strings into `map/layers/flood.js` and
+   * delete the import, and the second and third go red together. Change the
+   * heading's waves and the first still passes — which is correct, because the
+   * point is that the two move TOGETHER, not that either one is frozen. */
+  const d = iconPathData('flood');
+  ok(d.length === 3 && d.every((x) => x.startsWith('M')),
+    'the waves are readable as raw path data, which is what a canvas needs');
+
+  const layerSrc = fs.readFileSync(new URL('../map/layers/flood.js', import.meta.url), 'utf8');
+  ok(/iconPathData/.test(layerSrc) && /section-icon\.js/.test(layerSrc),
+    'and the map layer takes them from ui/section-icon.js');
+  ok(!d.some((x) => layerSrc.includes(x)),
+    'and carries no copy of its own — one shape, two surfaces');
 }
 
 /* ===================================================================== */
