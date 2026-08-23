@@ -132,6 +132,17 @@ const EXCUSED = new Map([
     'Needs a lat/lon. Same as the global rainfall route above.',
   ],
   [
+    '/nws/alert',
+    'Needs a CAP alert URN, which exists only while that one alert is in ' +
+      'force — there is no fixed hourly URL for "an alert". Derivable in phase ' +
+      'two from relay-nws-flood.json, which is already archived and carries ' +
+      'the ids, exactly as the GDACS geometry URLs are derived from the event ' +
+      'list. Not done. ==> LISTED HERE BECAUSE IT SHIPPED WITH §56.6 AND WAS ' +
+      'NEITHER ARCHIVED NOR EXCUSED, so this check has been red on main since. ' +
+      'A permanently red gate trains everyone to ignore the whole board, which ' +
+      'is the one thing ci.yml says never to let happen.',
+  ],
+  [
     '/geocode',
     'Needs a search string. Nothing about a geocoder answer decays in a way ' +
       'an hourly snapshot would capture.',
