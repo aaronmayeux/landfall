@@ -45,6 +45,7 @@ import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
 import { createStormDetailView } from '../ui/view-storm-detail.js';
 import { createAreaDetailView } from '../ui/view-area-detail.js';
+import { createFloodAlertView } from '../ui/view-flood-alert.js';
 import { createHomeSetupView } from '../ui/view-home-setup.js';
 import { createHomeDashboardView } from '../ui/view-home.js';
 import { createLayersView } from '../ui/view-layers.js';
@@ -73,6 +74,17 @@ import { loadFloodAlerts, evictFlood } from '../data/flood.js';
  * `null` means nobody has asked yet, which the block renders as `loading`
  * rather than as an all-clear. */
 let floodSlot = null;
+
+/* ==> AND WHAT THE MAP LAYER LAST PUT ON THE GLOBE (§56.5). <== A different
+ * fact from the slot above: that one is the national list, this one is how
+ * much of it reached the selected storm's corridor. The status row is a
+ * sentence about the GLOBE, so it is built from this; the drawer's paragraph
+ * is a sentence about the STORM, so it is built from the slot and the storm's
+ * own track. Keeping the two apart is what stops a row claiming an all-clear
+ * over a map that never had a chance to draw anything.
+ *
+ * `null` means the layer has not reported yet — nobody has turned it on. */
+let floodDraw = null;
 import {
   get as getLayers,
   pairValue,
@@ -400,7 +412,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     },
   };
 
-  const drawer = createDrawer({ root: document.getElementById('drawer') });
+  /* Held rather than looked up twice: the same element the drawer owns is
+   * where the delegated flood-row listener below binds (§56.6). */
+  const drawerRoot = document.getElementById('drawer');
+  const drawer = createDrawer({ root: drawerRoot });
 
   /* Per-layer runtime status for the Layers view (§7: every row shows its own
    * state). The decisions live in app/layer-status.js, where they can be
@@ -450,6 +465,49 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * geometry vanished with no sentence anywhere (§47.9). */
       ribbonFor: pipeline.ribbonReasonFor,
     });
+    refreshFloodRow();
+  }
+
+  /**
+   * The flood alerts row (§56.5).
+   *
+   * ==> IT DEPENDS ON THE SELECTION NOW, WHICH IS WHY IT IS IN HERE AND NOT
+   * ONLY IN `setFloodSlot`. <== Phase 5 made the layer per-storm: with nothing
+   * selected it draws nothing, and a toggle that appears to do nothing is its
+   * own bug. The sentence saying so has to appear the moment the selection
+   * closes, not on the next flood fetch — so it is recomputed on the same path
+   * the model-tracks and environment rows are, which already runs on every
+   * select, focus and recenter.
+   */
+  function refreshFloodRow() {
+    layerStatus.setFloodAlerts({
+      on: toggleOn('floodAlerts'),
+      slot: floodSlot,
+      draw: floodDraw,
+    });
+  }
+
+  /**
+   * Open one flood alert's detail. §56.6.
+   *
+   * ==> IT TAKES AN ID AND LOOKS THE ALERT UP HERE, RATHER THAN TAKING THE
+   * OBJECT. <== The two callers have different things in hand: the delegated
+   * row listener has a `data-` attribute, and main.js's map handler has
+   * whatever `queryRenderedFeatures` put in the feature's properties — which
+   * MapLibre serialises, so the rich object never survives the round trip
+   * anyway. One lookup against the ONE list both the globe and the sections
+   * drew from means the panel cannot open on a copy that has drifted.
+   *
+   * ==> AN ID THAT IS NOT IN THE LIST OPENS NOTHING, SILENTLY, AND THAT IS
+   * CORRECT. <== It means the alert expired between the paint and the tap. The
+   * honest response to "the thing you tapped is over" is not a panel saying so
+   * about an alert we no longer hold — it is the next repaint removing it.
+   */
+  function openFloodAlert(id) {
+    if (!id) return;
+    const found = floodSlot?.alerts?.find((a) => a.id === id);
+    if (!found) return;
+    drawer.push('flood-alert', found);
   }
 
   /* `offsetWidth/Height` ignore the slide transform, so the measurement is
@@ -530,6 +588,13 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   /* --- the five views ------------------------------------------------------ */
 
   const areaDetailView = createAreaDetailView();
+
+  /* ==> ONE FLOOD ALERT, REACHED FROM TWO PLACES (§56.6). <== A chip tapped on
+   * the globe and a row pressed in the `Flooding` section open THIS panel. It
+   * needs no facade: the alert object is pushed through the drawer as the
+   * argument, exactly as a watched area is, and every fact on it came off the
+   * relay row. */
+  const floodAlertView = createFloodAlertView();
 
   /** Fly to a watched area.
    *
@@ -1024,10 +1089,32 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * swatch, and a re-pick moves the whole name. */
   homeDashView.setChromeRefresh(() => drawer.refreshChrome());
 
-  for (const v of [stormsView, detailView, areaDetailView, layersView,
+  for (const v of [stormsView, detailView, areaDetailView, floodAlertView, layersView,
                    homeDashView, homeSetupView, settingsView]) {
     drawer.register(v);
   }
+
+  /* ==> THE KEYBOARD PATH TO AN ALERT, DELEGATED ONCE RATHER THAN WIRED TWICE
+   * (§56.6). <== The row is rendered by `ui/rain-alerts.js`, which BOTH
+   * `Flooding` sections share — the storm drawer's and the home dashboard's —
+   * and both mount inside this root. Threading an `onAlert` dependency through
+   * two controllers to reach one shared row builder is two places for the same
+   * handler to drift; §12's rule is that a pattern used twice gets extracted
+   * before the second use, and a single delegated listener IS that extraction.
+   *
+   * It is a plain `click`, and that covers the keyboard for free: the row is a
+   * real `<button>`, so Enter and Space fire a click without a keydown handler
+   * anywhere. A `div` with a `tabindex` would have needed one, which is most of
+   * why it is not a div.
+   *
+   * Bound to the drawer root and never re-bound: the panels re-render their
+   * innards constantly, and a listener on the row itself would have to be
+   * re-attached on every repaint. */
+  drawerRoot?.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('[data-flood-alert]');
+    if (!btn) return;
+    openFloodAlert(btn.getAttribute('data-flood-alert'));
+  });
 
   /** The home marker is a LAYER now (§7, Reference group), so it draws only
    *  when both a home exists AND its toggle is on. The marker itself has no
@@ -1109,7 +1196,26 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      */
     setFloodSlot: (slot) => {
       floodSlot = slot || null;
-      layerStatus.setFloodAlerts({ on: toggleOn('floodAlerts'), slot });
+      /* ==> THROUGH THE SAME FUNCTION THE SELECTION PATH USES. <== §56.5 gave
+       * the row a second input — whether a storm is selected — and two places
+       * building the same row from different halves of the truth is how one of
+       * them ends up printing an all-clear while the other knows better. */
+      refreshFloodRow();
+    },
+
+    /** A flood chip was tapped on the globe (main.js). The rows in the
+     *  `Flooding` sections reach the same panel through the delegated listener
+     *  above — one handler, one lookup, one panel. */
+    openFloodAlert,
+
+    /**
+     * What the flood layer last drew, pushed up from `map/layers/flood.js`
+     * (§56.5). The same channel `setImageryStatus` is, and for the same
+     * reason: the row describes the LAYER, so the layer is what tells it.
+     */
+    setFloodDraw: (row) => {
+      floodDraw = row || null;
+      refreshFloodRow();
     },
   };
 }

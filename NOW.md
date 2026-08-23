@@ -217,8 +217,8 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1, 2, 3 AND 4 OF SIX ARE IN. DO
-NOT TUNE THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron
+**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1 THROUGH 5 OF SIX ARE IN. ONLY
+PHASE 6 IS LEFT AND IT IS BLOCKED ON A RUNNER PROBE. <==** Plan agreed with Aaron
 2026-08-22: `SPEC-FLOOD-PLAN.md` §56, one phase per session, in order. Read that
 file before touching anything flood-shaped.
 
@@ -289,12 +289,14 @@ one request, 30,172 bytes — and `geometry: null` on every feature. The id list
 works; the boundaries do not come with it. So the per-zone loop shipped: 23
 zones, 23 requests, held thirty days at the edge on NWS's own `max-age`.
 
-**==> ONE PARAMETER IS STILL UNTESTED AND IT WOULD TURN 40 REQUESTS INTO 1. <==**
-NWS documents `include_geometry` on that endpoint and this project has never
-sent it. The probe is in the runner as of this push. **Read
-`geometry/nws-zones-bulk-probe-geometry.geojson` off `archive` before touching
-`functions/api/nws/zone.js`** — if it carries the boundaries, that route should
-ask once instead of forty times.
+**==> AND `include_geometry` IS ANSWERED NOW: IT IS IGNORED. <==** Read off the
+archive on 2026-08-23 before Phase 5 touched anything —
+`origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson` returns
+200 and is
+**byte-for-byte identical to the plain bulk probe**: same MD5, the same 24,282
+bytes, `geometry: null` on all 19 features. NWS takes the parameter and does
+nothing with it. `functions/api/nws/zone.js` was NOT touched and is correct as
+written. **Do not re-open this** — §56.4 records it.
 
 **WHAT THE ZONE BYTES SAID, since nobody had ever read one.** Both `Polygon` and
 `MultiPolygon` are real (islands make the difference). 23 zones are 1.63 MB as
@@ -323,6 +325,59 @@ so. **Still open and still Aaron's call:** `tools/test-home-ida.mjs` fails one
 assertion — a rail label crossed by a dotted vertical at adv 010 +6h and +7h,
 **confirmed pre-existing on clean `main`** and not flood-related.
 
+
+**PHASE 5 — THE MAP — SHIPPED 2026-08-23.** The layer draws the SELECTED
+storm's corridor and nothing else; the national draw is gone and with it §56.1's
+first fault. Chips cluster, polygons fade in from z6 to z7, a tap on a chip
+opens the alert and a tap on a cluster zooms until it splits. As-built in
+`SPEC-UI.md` §56.5 and §56.6.
+
+**==> THE CHIP IS A ROUNDED SQUARE AND THAT IS `GENESIS_GEO`'s RULE BEING
+OBEYED, NOT A STYLE CHOICE. <==** A storm in this app is a filled dot with a
+spiral and a halo, and that equation is the whole legibility of the globe. A
+flood alert has to be findable at a point, so it is separated by SHAPE rather
+than by hue — which still holds for a reader who cannot tell the green from the
+orange.
+
+**==> THE CHEAP CENTRE IS WRONG SIX TIMES IN THIRTY-FIVE, RE-MEASURED HERE.
+<==** §56.2 recorded five of twenty-five; on the frozen national snapshot plus
+the two archived zone boundaries it is **6 of 35**, every one a river corridor.
+`lib/interior-point.js` is a pole of inaccessibility and enforces containment on
+the way out — and returns null rather than guessing, which the status row
+counts.
+
+**AND ONE CLAIM IN THAT FILE WAS WRONG UNTIL IT WAS MEASURED.** The header said
+the area-weighted centroid fails the same way. It does not: on those same 35
+shapes it landed inside all 35. What it lacks is a *guarantee*. The comment now
+says the measured thing. Second time this session a fluent sentence was caught
+by running the code instead of trusting it.
+
+**AND HIZ023 IS NOT EIGHT ISLANDS.** It is **three** members: one island of
+1,959 vertices and two slivers of six and five, effectively zero area, which NWS
+ships. Flattening them puts the chip on a *sliver* about a hundred metres off
+the island — passing a naive "inside any member" check. Hence largest-by-area.
+
+**THE COUNT'S INK HAD TO GO PER CHIP.** One ink across all four chips measures
+**3.51** against a dark-theme watch cluster, under AA's 4.5 for text that size,
+and a watch-only cluster is an ordinary thing to have on screen. Per chip clears
+4.5 on all four. Ratios are in `SPEC-UI.md` §56.5.
+
+**TWO NEW SUITES, FIVE MUTATIONS VERIFIED RED:** the bbox centre substituted for
+the interior point, MultiPolygon members flattened, the no-chip refusal replaced
+by a fallback, the expiry filter removed, and the two sources walked separately.
+
+**==> AND §56.6 ASKED FOR A FIELD THE RELAY DOES NOT CARRY. <==** It listed *the
+issuing office* among what was already in hand. `functions/api/nws/flood.js`
+does not project `senderName`. The panel prints no office and the spec is
+corrected rather than the relay widened inside a map phase. **Adding it is small
+and separate and it is Aaron's call.**
+
+**HELD FOR WEATHER, AND THIS IS THE PHASE THAT NEEDED GLASS MOST.** Not one
+pixel has been looked at. Three calls are waiting: whether the chip reads as
+"not a storm" at a glance, whether a warning still outranks a watch fifty times
+its area (§56.4 left this open and Phase 5 did not answer it — it cannot be
+answered offline), and whether z6 is the right place for the polygons to arrive.
+`FLOOD` in `config/constants.js` is where all three dials live.
 
 **AND THERE IS A PHASE 6 NOW — PAST RAINFALL, added 2026-08-22 after Phase 2
 shipped.** `SPEC-FLOOD-PLAN.md` §56.14. How much has already fallen at the

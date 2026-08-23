@@ -2430,3 +2430,39 @@ export const Z = Object.freeze({
  * how loud all of them are.
  */
 export const IMAGERY_OPACITY = 1.0;
+
+/* ---------------------------------------------------------------------------
+ * FLOOD GEOMETRY — how the alert chip and its polygon are drawn (SPEC §56.5)
+ *
+ * MAP styling values only, the same split `GENESIS_GEO` makes: colours and
+ * pixel geometry here, the zoom gates and the cluster radius in constants.js.
+ *
+ * ==> THERE IS NO DOT IN THIS BLOCK, AND `GENESIS_GEO` IS WHY. <== That block
+ * refuses a centroid marker outright, because a storm in this app IS a filled
+ * dot with a spiral and a halo and that equation is the whole legibility of
+ * the globe. A flood alert also has to be findable at a point, so it takes the
+ * other road available: a ROUNDED SQUARE chip. Separated from a storm by
+ * SHAPE, not by hue — a reader who has learnt "round means a storm" is never
+ * asked to unlearn it, and the chip stays right even for somebody who cannot
+ * tell the green from the orange.
+ * ------------------------------------------------------------------------- */
+export const FLOOD_GEO = Object.freeze({
+  /** The chip's side, in CSS pixels. Drawn at 2x and handed to MapLibre with
+   *  `pixelRatio: 2`, the same way `GENESIS_GEO`'s hatch is, so the corner
+   *  radius is a crisp curve on a phone rather than a soft smear. */
+  chipSizePx: 20,
+
+  /** Corner radius, in CSS pixels. A quarter of the side: enough that the
+   *  silhouette reads as "square with soft corners" at a glance and never as
+   *  a circle, which is the one thing it must not be. */
+  chipRadiusPx: 5,
+
+  /** The chip's border. It sits over land, over the coastline glow and over
+   *  place labels, and a flat green square on a green-brown basemap
+   *  disappears without one. */
+  chipStrokeWidth: 1.5,
+
+  /** The cluster count, printed on the chip. */
+  countSize: 12,
+  countHaloWidth: 1.2,
+});
