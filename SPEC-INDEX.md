@@ -217,7 +217,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2251-2336 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4058-4080 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4085-4107 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -261,32 +261,32 @@ real home is the other row carrying the same section number.
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 671-720 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 721-751 |
-| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3609-3644 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3787-3827 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3868-3917 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3984-4057 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 752-783 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 784-927 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 928-945 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 946-949 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 672-721 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert — ==> SHIPPED 2026-08-23, UNSEEN ON GLASS <== | `SPEC-FLOOD-PLAN.md` | 722-822 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3636-3671 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3814-3854 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3895-3944 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4011-4084 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 823-854 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 855-998 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 999-1016 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 1017-1020 |
 | `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
-| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-423 |
-| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 496-548 |
-| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 583-670 |
-| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1116-1133 |
+| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-424 |
+| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 497-549 |
+| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 584-671 |
+| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1187-1204 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 67,625 | 16 |
+| `SPEC-FLOOD-PLAN.md` | 72,242 | 16 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 241,855 | 18 |
-| `SPEC.md` | 175,168 | 15 |
+| `SPEC-UI.md` | 243,428 | 18 |
+| `SPEC.md` | 175,798 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

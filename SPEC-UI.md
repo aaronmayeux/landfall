@@ -3606,6 +3606,33 @@ toggle's note names the two limits that would otherwise read as faults — **US
 only**, because NWS is and no global equivalent has been found, and **watches
 have no shape to draw.**
 
+#### Tapping one — the detail panel (§56.6)
+
+**A chip on the globe and a row in `Flooding` open the same panel**,
+`ui/view-flood-detail.js`. Four facts: what it is, where it applies, when it
+runs, and how long is left. It borrows `ui/view-area-detail.js`'s shape on
+purpose — both are somebody else's published decision reprinted whole — and
+carries one line saying NWS issued it and Landfall does not decide it.
+
+**IT PRINTS NO ISSUING OFFICE AND NO PROSE, AND NEITHER IS AN OMISSION.**
+`functions/api/nws/flood.js` does not project `senderName`, so the office is not
+in hand. `description` and `instruction` ARE dropped deliberately: that
+projection takes 34,369 stored bytes to 2,607 and a suite asserts the ratio.
+If the panel reads thin on glass the answer is to fetch the one alert on demand,
+never to widen the list.
+
+**BOTH ENTRANCES NORMALIZE THROUGH `floodAlertFacts` (`lib/rainfall.js`) BEFORE
+THE VIEW SEES ANYTHING.** The globe hands over an alert as `data/flood.js` holds
+it and a row hands over one already shaped; extracted in Slice C because it
+acquired its second caller, which is §12's rule. The panel has one input shape
+and no branch asking where the reader came from.
+
+**`update()` IS A NO-OP AND THAT IS THE PERFORMANCE DECISION IN THAT FILE.** The
+drawer calls it on every registered view on every poll. What is on screen is
+also never blanked under somebody reading it: the alert list turns over every
+three minutes, and a countdown going stale is a smaller lie than an empty panel
+appearing under a reader deciding whether to move (§5).
+
 ### 56.7 Flooding — one section, both kinds of water
 
 **Landed 2026-08-22, on both screens at once.** `ui/flooding-storm.js` and

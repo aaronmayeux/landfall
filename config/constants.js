@@ -2645,6 +2645,24 @@ export const FLOOD = Object.freeze({
    *  so it should fire approximately never. See `trimPointCache` in
    *  `lib/flood-features.js` for why it clears wholesale instead of evicting. */
   pointCacheMax: 600,
+
+  /** How far either side of a tap the chip layer is queried, IN PIXELS (§56.6).
+   *
+   *  ==> DELIBERATELY NOT §10's 44, AND THE 44 IS ALREADY SPENT ELSEWHERE. <==
+   *  `clusterRadiusPx` above is 44 precisely because chips closer together than
+   *  a fingertip cannot be tapped apart, so the SOURCE has already merged them:
+   *  by the time two chips are both on screen they are two distinct places a
+   *  reader can see and aim at. Querying a 44 px box here would put both inside
+   *  it and let the winner be whichever MapLibre happened to list first — an
+   *  arbitrary answer to a deliberate tap, which is worse than a miss because
+   *  it opens the wrong panel silently.
+   *
+   *  A bare point would be the other error: the chip is 24 px, and a tap on its
+   *  very edge is a real gesture that a zero-width query misses by a pixel.
+   *  8 covers the edge without reaching the neighbour. `map/layers/genesis.js`
+   *  reasons its way to the same number from the opposite direction — its
+   *  patches are hundreds of miles across and it pads to catch the rim. */
+  chipHitPadPx: 8,
 });
 
 /* ---------------------------------------------------------------------------

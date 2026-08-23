@@ -40,8 +40,8 @@ const ok = (cond, label) => {
 };
 const section = (s) => console.log(`\n  ${s}\n`);
 
-const { setFloodAlerts, resetFloodLayer, floodPointRuns } =
-  await import('../map/layers/flood.js');
+const { setFloodAlerts, resetFloodLayer, floodPointRuns, floodAtPoint, floodAlertById,
+        floodClusterZoom } = await import('../map/layers/flood.js');
 const { floodSources } = await import('../lib/flood-features.js');
 /* Only to prove the layer is NOT doing this. See the national-draw section. */
 const { alertsNearTrack, trackChains, trackSamples } = await import('../lib/flood.js');
@@ -284,6 +284,164 @@ ok(late.shapes.features.length === 0 || late.shapes.features.length < withExpiry
  * one because it draws at every zoom. */
 ok(late.points.features.length === late.shapes.features.length,
    'and the chips shrink with them, alert for alert');
+
+/* =========================================================================
+ * TAPPING (§56.6) — Slice C
+ *
+ * ==> EVERY ASSERTION HERE WAS MUTATION-VERIFIED. <== §12's rule: a test that
+ * passes on the same wrong assumption as the bug is worse than no test. Each
+ * one below was checked by breaking the rule it guards in `map/layers/flood.js`
+ * and confirming it went red.
+ * ====================================================================== */
+section('§56.6 — the hit test, and what it refuses to do');
+
+/** A map that RECORDS whether it was queried at all, which is the whole
+ *  question for the off case. `queryRenderedFeatures` returning [] would let a
+ *  broken gate pass — the tap finds nothing either way — so the assertion is
+ *  about the CALL, never about its result. */
+function tapMap(features = []) {
+  const calls = { queries: 0, layersAsked: null };
+  return {
+    calls,
+    getSource: () => ({
+      setData() {},
+      getClusterExpansionZoom: (id) => Promise.resolve(id === 42 ? 7 : null),
+    }),
+    getLayer: () => ({}),
+    hasImage: () => true,
+    addImage() {}, addSource() {}, addLayer() {},
+    setPaintProperty() {}, setLayoutProperty() {},
+    queryRenderedFeatures(_box, opts) {
+      calls.queries++;
+      calls.layersAsked = opts?.layers || null;
+      return features;
+    },
+  };
+}
+
+const chipFeature = (id, watch = false) => ({
+  properties: { _id: id, _watch: watch },
+  geometry: { type: 'Point', coordinates: [-95, 39] },
+});
+const clusterFeature = (clusterId, count) => ({
+  properties: { cluster_id: clusterId, point_count: count, warnings: 1 },
+  geometry: { type: 'Point', coordinates: [-88, 38] },
+});
+
+/* ==> THE OFF CASE COSTS NOT ONE QUERY, AND THIS IS THE PERFORMANCE ASSERTION
+ * OF THE WHOLE SLICE. <== main.js runs this on EVERY tap of the globe,
+ * including the taps on empty ocean whose only job is closing the drawer. A
+ * reader who never turns the layer on must pay a boolean read and nothing more.
+ * MUTATION-VERIFIED: delete the `if (!visible) return null` line and this goes
+ * red while every other assertion in this file stays green. */
+{
+  resetFloodLayer();
+  const m = tapMap([chipFeature('urn:oid:x.1')]);
+  setFloodAlerts(m, ALERTS);
+  const hit = floodAtPoint(m, { x: 100, y: 100 });
+  ok(m.calls.queries === 0,
+     'with the switch OFF the hit test does not query the map at all');
+  ok(hit === null, 'and it answers null rather than something it did not look for');
+}
+
+/* Turn it on the way the app does — through the engine's setVisible — and the
+ * query happens. Without this the assertion above would also pass on a hit test
+ * that never queried under ANY condition, which is the bug it would then be
+ * agreeing with. */
+{
+  resetFloodLayer();
+  const m = tapMap([chipFeature('urn:oid:x.1')]);
+  const engine = createLayerEngine(m);
+  engine.attach();
+  engine.setToggle('floodAlerts', true);
+  const hit = floodAtPoint(m, { x: 100, y: 100 });
+  ok(m.calls.queries === 1, 'with the switch ON it queries exactly once');
+  ok(hit?.kind === 'alert' && hit.id === 'urn:oid:x.1',
+     'and a single chip answers with its alert id');
+
+  /* ==> ONLY THE CHIP LAYER IS NAMED. <== The fill and the outline describe the
+   * same alert, so naming them turns one tap into three hits to deduplicate for
+   * no gain — and a county-sized tap target under the storm dots would start
+   * eating taps meant for the water. MUTATION-VERIFIED: add FILL to the layer
+   * list and this goes red. */
+  ok(Array.isArray(m.calls.layersAsked) && m.calls.layersAsked.length === 1
+     && m.calls.layersAsked[0] === 'flood-alert-chip',
+     'and it asks the chip layer only, never the polygons');
+}
+
+/* ==> A CLUSTER IS RECOGNISED AS A CLUSTER EVEN WHEN IT ALSO CARRIES AN `_id`.
+ * <== MapLibre drops member properties on merge, so this shape should not
+ * occur — but if it ever did, answering `alert` would open a panel about ONE
+ * warning while fifteen sit under the finger. The cluster test runs first for
+ * exactly that reason. MUTATION-VERIFIED: swap the two branches and this goes
+ * red. */
+{
+  resetFloodLayer();
+  const poisoned = clusterFeature(42, 15);
+  poisoned.properties._id = 'urn:oid:should-not-win';
+  const m = tapMap([poisoned]);
+  const engine = createLayerEngine(m);
+  engine.attach();
+  engine.setToggle('floodAlerts', true);
+  const hit = floodAtPoint(m, { x: 10, y: 10 });
+  ok(hit?.kind === 'cluster' && hit.clusterId === 42,
+     'a pile answers as a cluster even when a stray _id rides along with it');
+  ok(hit.lon === -88 && hit.lat === 38,
+     'and it carries where to fly, because the caller owns the camera');
+}
+
+section('§56.6 — the lookup answers for the WHOLE country');
+
+/* ==> THE PANEL IS OPENED BY ID AGAINST THE LIVE LIST, NEVER OFF THE FEATURE.
+ * <== A feature's properties are a copy baked into a tile when the source was
+ * last written; opening the panel from them prints last poll's expiry to
+ * somebody deciding whether to move. */
+{
+  resetFloodLayer();
+  const m = tapMap();
+  setFloodAlerts(m, ALERTS);
+  const withId = ALERTS.find((a) => a.id);
+  ok(!!withId, 'the capture carries CAP ids, which is what the lookup keys on');
+  ok(floodAlertById(withId.id) === withId,
+     'and an id resolves to the alert object the layer is actually holding');
+  ok(floodAlertById('urn:oid:nothing-like-this') === null,
+     'an id nobody is holding answers null rather than undefined');
+  ok(floodAlertById(null) === null, 'and a missing id does not throw');
+}
+
+/* ==> THE LIST IT SEARCHES IS NATIONAL, AND THAT IS THE POINT. <== The drawer's
+ * `Flooding` section counts what is near ONE storm; the globe paints the
+ * country. Tapping a chip over Ohio while a Hawaii storm is selected has to
+ * resolve, and it only does because this lookup never sees a storm.
+ * MUTATION-VERIFIED: filter `lastAlerts` by anything storm-shaped and this goes
+ * red on the far half of the country. */
+{
+  resetFloodLayer();
+  const m = tapMap();
+  setFloodAlerts(m, ALERTS);
+  const ids = ALERTS.filter((a) => a.id).map((a) => a.id);
+  const resolved = ids.filter((id) => floodAlertById(id));
+  ok(resolved.length === ids.length,
+     `every alert in the national list resolves — ${resolved.length} of ${ids.length}`);
+}
+
+section('§56.6 — splitting a cluster');
+
+/* The zoom comes back from MapLibre's worker, so this is a promise. A null
+ * answer — the source or the cluster gone, which a poll landing mid-tap can do
+ * — must resolve rather than reject, or a tap would throw into the console. */
+{
+  resetFloodLayer();
+  const m = tapMap();
+  const zoom = await floodClusterZoom(m, 42);
+  ok(zoom === 7, 'a live cluster answers with the zoom that splits it');
+  const gone = await floodClusterZoom(m, 99);
+  ok(gone === null, 'and a cluster that has gone answers null rather than throwing');
+
+  const sourceless = { ...tapMap(), getSource: () => null };
+  ok((await floodClusterZoom(sourceless, 42)) === null,
+     'no source is null too — a tap between a restyle and the rebuild');
+}
 
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {

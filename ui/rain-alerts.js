@@ -66,7 +66,7 @@ const esc = (s) =>
  * is what `tools/test-rainfall.mjs` asserts against, and an attribute is the
  * cheapest place for a test to find a fact that the prose also carries.
  */
-function alertRow(a) {
+function alertRow(a, i) {
   const until = a.untilMs ? formatClockDay(a.untilMs) : null;
 
   /* THREE SHAPES, AND EACH ONE IS A DIFFERENT FACT. Already running with a
@@ -85,16 +85,42 @@ function alertRow(a) {
    * move now. Omitted rather than faked when there is no end time. */
   const left = a.remaining ? `<span class="rain-alert-left">${esc(a.remaining)}</span>` : '';
 
+  /* ==> A `<span>`, NOT A `<p>`, AND THE TEST THAT CAUGHT THIS IS THE POINT.
+   * <== The row became a `<button>` in Slice C and a `<p>` is not valid inside
+   * one: a browser does not complain, it CLOSES the button early and re-parents
+   * everything after the paragraph outside it. The row would still have looked
+   * exactly right and the bottom half of it would have been dead to a tap, with
+   * nothing on screen saying so. `display: block` in the stylesheet is what
+   * keeps the layout identical. */
   const area = a.area
-    ? `<p class="rain-alert-area">${esc(a.area)}</p>`
+    ? `<span class="rain-alert-area">${esc(a.area)}</span>`
     : '';
 
+  /* ==> THE ROW IS A BUTTON NOW, AND THAT IS §56.6's KEYBOARD PATH RATHER THAN
+   * A CONVENIENCE. <== Slice C put the same detail behind a chip on the globe.
+   * An icon reachable only by tapping a map does not exist for somebody driving
+   * this app from a keyboard, and §10 does not treat that as a limitation — it
+   * is a bug. These rows are the third input path, and they are the ONLY one
+   * that reaches the panel without a pointing device.
+   *
+   * ==> THE INDEX, NOT THE ID, AND THE INDEX IS THE SAFER HANDLE HERE. <== The
+   * caller resolves it against the array it just rendered, so the two cannot
+   * disagree by construction. An id would look sturdier and be worse: the
+   * home dashboard's rows come from the point-rainfall payload, whose relay
+   * projection does not carry one, so half of them would resolve to nothing.
+   *
+   * ==> `<button>` RATHER THAN A ROLE ON THE `<li>`. <== A real button is
+   * focusable, Enter- and Space-activated, and announced as a button by every
+   * screen reader with no ARIA at all. The `<li>` keeps the class the
+   * stylesheet knows, so nothing about the row's look moves. */
   return `<li class="rain-alert" data-urgency="${a.immediate ? 'now' : 'later'}">
-    <p class="rain-alert-head">
-      <span class="rain-alert-name">${esc(a.event)}</span>
-      <span class="rain-alert-until">${esc(when)}</span>
-    </p>
-    ${area}${left}
+    <button type="button" class="rain-alert-open" data-alert-index="${i}">
+      <span class="rain-alert-head">
+        <span class="rain-alert-name">${esc(a.event)}</span>
+        <span class="rain-alert-until">${esc(when)}</span>
+      </span>
+      ${area}${left}
+    </button>
   </li>`;
 }
 
@@ -112,4 +138,43 @@ function alertRow(a) {
 export function floodAlertRows(alerts) {
   if (!alerts?.length) return '';
   return `<ul class="rain-alerts">${alerts.map(alertRow).join('')}</ul>`;
+}
+
+/**
+ * Bind the rows inside an already-rendered section to the detail panel.
+ *
+ * ==> ONE LISTENER ON THE CONTAINER, NEVER ONE PER ROW. <== A quiet national
+ * day is 36 alerts and a busy one is low hundreds; binding per row would add
+ * that many listeners on every repaint, and the sections repaint on every poll.
+ * Delegation costs one listener whatever the list does, and it survives the
+ * `innerHTML` replacement a repaint performs — a per-row listener would not,
+ * which is the second bug this shape avoids rather than the first.
+ *
+ * ==> AND IT LIVES HERE, BESIDE THE MARKUP IT READS. <== §12's rule about a
+ * pattern used twice. The home dashboard and the storm drawer both draw these
+ * rows and both need this handler; two copies would be two places for the
+ * `data-alert-index` contract to drift from the markup that emits it, and the
+ * copy that drifts is the one nobody is looking at.
+ *
+ * @param {Element} scope the already-rendered section body
+ * @param {() => Array} current returns the alert array the rows were drawn
+ *   from. A FUNCTION rather than the array itself: the section repaints under
+ *   this listener, and a captured array would go stale the first time it did —
+ *   opening the panel on whatever was in force one poll ago.
+ * @param {(alert: object) => void} open
+ */
+export function wireFloodAlertRows(scope, current, open) {
+  if (!scope?.addEventListener || typeof open !== 'function') return;
+
+  scope.addEventListener('click', (e) => {
+    const btn = e.target?.closest?.('[data-alert-index]');
+    if (!btn || !scope.contains(btn)) return;
+
+    const i = Number(btn.dataset.alertIndex);
+    const alert = current?.()?.[i];
+    /* A row whose alert is gone does nothing rather than opening an empty
+     * panel. Reachable only if the list changed between the paint and the
+     * press, which is a race this cannot lose gracefully any other way. */
+    if (alert) open(alert);
+  });
 }

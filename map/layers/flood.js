@@ -482,3 +482,117 @@ export function resetFloodLayer() {
 export function floodPointRuns() {
   return pointCache.runs;
 }
+
+/* ===========================================================================
+ * TAPPING (§56.6)
+ *
+ * ==> THE HIT TEST ASKS THE LAYER'S OWN SWITCH FIRST, AND THAT IS THE WHOLE
+ * PERFORMANCE STORY OF SLICE C. <== `main.js` already runs up to three hit
+ * tests on every tap of the globe — the house, the storm dots, the watched
+ * areas — and every one of them is a `queryRenderedFeatures` against a tile
+ * index on the frame a finger went down. A fourth would be paid by every
+ * reader on every tap, including the taps on empty ocean whose only job is
+ * closing the drawer, and paid hardest by the readers who never turn this
+ * layer on at all. `visible` is false by default, so for them this returns on
+ * its first line and costs one boolean read.
+ *
+ * ==> ONLY THE CHIP IS QUERIED, NOT THE POLYGONS. <== The same rule
+ * `map/layers/genesis.js` states: the fill, the outline and the chip all
+ * describe the same alert, so naming more than one turns one tap into three
+ * hits to deduplicate for no gain. The polygon is also the wrong TARGET —
+ * counties are enormous, they ramp in only past `ZOOM.floodFadeIn`, and a
+ * county-sized tap area sitting under the storm dots would start eating taps
+ * meant for the water. The chip is the mark this layer asks to be tapped.
+ * ======================================================================== */
+
+/**
+ * What is under this point, if anything this layer owns.
+ *
+ * @returns {{kind:'alert', id:string}
+ *          |{kind:'cluster', clusterId:number, lon:number, lat:number}
+ *          |null}
+ *
+ * ==> IT RETURNS AN ID AND NEVER THE ALERT, MIRRORING `stormAtPoint` AND
+ * `genesisAtPoint`. <== A feature's properties are a COPY, baked into a tile
+ * when the source was last written. Handing that copy to a panel means the
+ * panel can be reading last poll's expiry under a reader who is deciding
+ * whether to move. The caller looks the id up in the live list instead, which
+ * is the only place the answer is current.
+ *
+ * A SMALL BOX RATHER THAN A BARE POINT, AND DELIBERATELY NOT THE FULL 44 px.
+ * §10's touch target is what `FLOOD.clusterRadiusPx` already enforces on the
+ * SOURCE: anything closer together than a fingertip has been merged into one
+ * chip, so by the time a chip is on screen it is a distinct place. Padding the
+ * query out to 44 here would put two neighbouring chips inside one box and let
+ * the winner be whichever MapLibre listed first — an arbitrary answer to a
+ * deliberate tap. `genesisAtPoint` reasons its way to the same 8 px from the
+ * opposite direction.
+ */
+export function floodAtPoint(map, point) {
+  if (!visible) return null;
+  if (!map.getLayer?.(CHIP)) return null;
+
+  const pad = FLOOD.chipHitPadPx;
+  const box = [
+    [point.x - pad, point.y - pad],
+    [point.x + pad, point.y + pad],
+  ];
+  const hits = map.queryRenderedFeatures(box, { layers: [CHIP] });
+
+  for (const h of hits) {
+    const p = h.properties || {};
+    /* ==> A CLUSTER IS TESTED FIRST BECAUSE IT CAN CARRY BOTH SHAPES OF
+     * PROPERTY. <== MapLibre's cluster features carry `point_count` and
+     * `cluster_id` and NONE of the accumulated members' own fields, but a
+     * `_id` left over from an earlier read of the same variable would send a
+     * pile of fifteen warnings to a panel about one. Asking the question that
+     * can only be true of a cluster first makes that unreachable. */
+    if (p.point_count) {
+      const c = h.geometry?.coordinates;
+      if (!Array.isArray(c)) continue;
+      return { kind: 'cluster', clusterId: p.cluster_id, lon: c[0], lat: c[1] };
+    }
+    if (p._id) return { kind: 'alert', id: p._id };
+  }
+  return null;
+}
+
+/**
+ * One alert out of the national list, by id.
+ *
+ * ==> THE LIST IS NATIONAL AND THE DRAWER'S `Flooding` SECTION IS NOT, SO THIS
+ * IS THE ONLY LOOKUP THAT ANSWERS FOR EVERY CHIP ON THE GLOBE. <== That
+ * section counts what comes within `RAIN.floodCorridorNm` of the selected
+ * storm's track (§56.3); the globe paints the country. Tapping a chip over
+ * Ohio while a Hawaii storm is selected is an ordinary thing to do, and
+ * looking that alert up in the storm's matched subset would find nothing and
+ * open an empty panel. Both answers are true — they are answers to different
+ * questions — and this is the one that matches what was tapped.
+ */
+export function floodAlertById(id) {
+  if (!id) return null;
+  return lastAlerts.find((a) => a.id === id) || null;
+}
+
+/**
+ * How far in a cluster has to be zoomed before it comes apart.
+ *
+ * ==> THE ANSWER LIVES IN THE WORKER, SO THIS IS A PROMISE. <== MapLibre keeps
+ * the cluster index off the main thread; `getClusterExpansionZoom` posts a
+ * message and resolves. That is a feature rather than a nuisance — the
+ * arithmetic that decides the zoom is not run on the frame the finger lifted.
+ *
+ * ==> AND THE CAMERA MOVE IS NOT DONE HERE. <== `map/globe.js` owns every
+ * camera travel in this app so the reduce-motion contract lives in one place
+ * (§10). A layer reaching for `easeTo` would be a second one, and the first
+ * thing it would get wrong is the reader who has asked their phone for less
+ * motion. This returns a number and `app/views.js` flies.
+ *
+ * @returns {Promise<number|null>} null when the source or the cluster is gone —
+ *   a poll can land between the tap and the answer.
+ */
+export function floodClusterZoom(map, clusterId) {
+  const src = map.getSource?.(POINT_SOURCE);
+  if (!src?.getClusterExpansionZoom) return Promise.resolve(null);
+  return Promise.resolve(src.getClusterExpansionZoom(clusterId)).catch(() => null);
+}

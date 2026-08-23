@@ -787,6 +787,8 @@
 .home-now-coords,
 .home-confirm-coords,
 .home-rain-note,
+.flood-detail-area,
+.flood-detail-source,
 .flood-note {
   font-size: var(--type-small);
   color: var(--text-muted);
@@ -3177,6 +3179,58 @@ button.drawer-identity:focus-visible {
   color: var(--text-primary);
 }
 
+/* ==> THE ROW IS A BUTTON NOW (§56.6), AND THIS BLOCK'S WHOLE JOB IS MAKING
+   THAT INVISIBLE UNTIL SOMEBODY REACHES FOR IT. <== Slice C put a flood
+   alert's detail behind a chip on the globe, and an icon reachable only by
+   tapping a map does not exist for a keyboard user (§10) — so the rows became
+   the third input path. What must NOT change is how the row reads: the
+   preceding block's argument is that a warning is a fact somebody else
+   published, styled apart from our arithmetic, and a row that suddenly looked
+   like a control would be a widget dropped into a section of prose, which is
+   the exact thing that block records being reverted once already.
+
+   So every default a `<button>` brings — its own font, its centred text, its
+   background, its border, its OS appearance — is reset, and what is added is
+   only what a control genuinely owes the reader: a pointer cursor, a hover
+   state where hovering exists, and a focus ring.
+
+   ==> `min-height` IS THE TOUCH TARGET AND IT IS A FLOOR, NOT A HEIGHT. <==
+   §10 asks 44px of every interactive element. Most of these rows clear it on
+   their own — three stacked facts, one of them a thirteen-zone list — but the
+   short one is `Flood Warning` with no area attached, and that is precisely
+   the row somebody is trying to hit in a hurry. */
+.rain-alert-open {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-target);
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ==> `(hover: hover)` AND NOT A DEVICE TEST. <== §10 — adapt to capability,
+   never to a device class. A touchscreen laptop gets the hover state because
+   it genuinely has a pointer that can hover; a phone does not, and on a phone
+   a sticky :hover left behind after a tap is worse than no hover at all. */
+@media (hover: hover) {
+  .rain-alert-open:hover .rain-alert-name { text-decoration: underline; }
+}
+
+/* NEVER `outline: none` WITHOUT A REPLACEMENT (§10). The offset is negative so
+   the ring is drawn INSIDE the row — these sit in a tight grid and an outward
+   ring on one clips under its neighbour. */
+.rain-alert-open:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}
+
 /* THE ROW IS THREE STACKED FACTS NOW (§56.7): what it is and when, where it
    applies, and how long is left. They stack rather than sitting on one line
    because the area is a semicolon list of up to thirteen named zones — the
@@ -3188,6 +3242,12 @@ button.drawer-identity:focus-visible {
 
 /* The name and the window DO share a line: they are one fact read together,
    and splitting them makes the row look like two warnings. */
+/* ==> IT IS A `<span>` INSIDE THE BUTTON NOW, NOT A `<p>`. <== A `<p>` is not
+   valid inside a `<button>`, and browsers do not merely complain — they close
+   the button early and re-parent the rest of the row outside it, which turns
+   one pressable row into a button with a fragment beside it. `display: flex`
+   is what it always had; it is stated here because a span has no block default
+   to inherit it from. */
 .rain-alert-head {
   display: flex;
   align-items: baseline;
@@ -3214,8 +3274,16 @@ button.drawer-identity:focus-visible {
 
 /* WHERE IT APPLIES. Muted and small, because the reader scans it for their own
    zone rather than reading it — and because at thirteen zones it would
-   otherwise outweigh the warning it belongs to. */
+   otherwise outweigh the warning it belongs to.
+
+   ==> `display: block` BECAUSE IT IS A `<span>` NOW, NOT A `<p>`. <== The row
+   became a `<button>` in §56.6 and a `<p>` inside one makes the browser close
+   the button early and re-parent the rest of the row outside it — the row looks
+   right and its bottom half stops responding to a tap. The element changed; the
+   layout must not, so the block behaviour a `<p>` had for free is stated here.
+   `margin` on a span only applies once it is a block, so the two go together. */
 .rain-alert-area {
+  display: block;
   margin: var(--space-tight) 0 0;
 }
 
@@ -3383,4 +3451,74 @@ button.drawer-identity:focus-visible {
 .detail-cap-note {
   margin: var(--space-base) 0 0;
   line-height: 1.45;
+}
+
+/* ---------------------------------------------------------------------------
+   ONE FLOOD ALERT, AS A PANEL (SPEC-FLOOD-PLAN §56.6).
+
+   ==> IT BORROWS `.area-*`'s SHAPE ON PURPOSE, BECAUSE IT IS THE SAME KIND OF
+   OBJECT. <== A watched area and a flood alert are both somebody else's
+   published decision, reprinted whole, with four facts and no geometry beyond
+   what is already drawn on the globe. Two panels of that shape looking
+   different would be teaching the reader that they are two different kinds of
+   thing. What is NOT shared is the class names: a rename to `.detail-*` for
+   both would have made every rule in this file ambiguous about which panel it
+   governs, and the storm drawer already owns that prefix.
+
+   The rules are deliberately few. Anything this panel needs that is not here
+   is a fact the relay does not carry — see the file header. */
+
+.flood-detail-name {
+  margin: 0;
+  font-size: var(--type-xl);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+/* Focused programmatically when the view opens, via tabindex="-1". No ring:
+   the reader did not Tab here, and a box around a heading they are already
+   looking at reads as an error state. Same call as `.area-name`. */
+.flood-detail-name:focus { outline: none; }
+
+/* THE WINDOW IS THE SECOND-MOST IMPORTANT FACT ON THE PANEL, so it takes the
+   primary ink and the body size rather than joining the muted list above. A
+   reader who opened this opened it to find out whether the thing is running
+   now. */
+.flood-detail-when {
+  margin: var(--space-tight) 0 0;
+  color: var(--text-primary);
+}
+
+/* HOW LONG IS LEFT. Tabular figures so it does not jitter as the minutes count
+   down — the same reason `.rain-alert-left` carries them. */
+.flood-detail-left {
+  margin: var(--space-tight) 0 0;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  font-size: var(--type-small);
+}
+
+.flood-detail-sub {
+  margin: var(--space-base) 0 var(--space-tight);
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* ==> THE ZONE LIST WRAPS AND IS NEVER CLIPPED. <== It is a semicolon list of
+   up to thirteen named zones and the reader is scanning it for their own. No
+   `text-overflow`, no line clamp, no fixed height: hiding the tail is hiding
+   the answer from the one person who came here for it. */
+.flood-detail-area {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* An alert with no area attached says so rather than showing a blank. Italic
+   because it is a sentence ABOUT the data rather than a piece of it. */
+.flood-detail-area--none { font-style: italic; }
+
+.flood-detail-source {
+  margin: var(--space-base) 0 0;
 }

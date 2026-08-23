@@ -58,7 +58,7 @@ import {
   genesisAtPoint,
   GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
-import { setFloodAlerts, rethemeFlood } from './map/layers/flood.js';
+import { setFloodAlerts, rethemeFlood, floodAtPoint, FLOOD_LAYER_IDS } from './map/layers/flood.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -416,7 +416,8 @@ function boot() {
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
   const { homeDashView } = views;
-  const { selectStorm, selectArea, recenterAndClear, refreshLayerStatus, applyHomeMarker } = views;
+  const { selectStorm, selectArea, tapFloodAlert, recenterAndClear, refreshLayerStatus,
+    applyHomeMarker } = views;
 
   /* Escape, once, at the document level (SPEC §10, §13). ONE contract, and
    * with the drawer it finally has one claimant instead of three: step BACK
@@ -785,6 +786,24 @@ function boot() {
       return;
     }
 
+    /* ==> FLOOD CHIPS GO AFTER STORMS AND BEFORE GENESIS, AND THE ORDER IS THE
+     * SAME RULE THE TWO BRANCHES ABOVE STATE: WHAT IS VISIBLY IN FRONT WINS.
+     * <== A chip is a deliberate 24 px mark; a watched area is a soft patch
+     * hundreds of miles across drawn below everything. Testing genesis first
+     * would let the patch underneath swallow a tap aimed at a chip sitting on
+     * top of it, which is the exact failure the storm/genesis order already
+     * exists to prevent. Storms still win over both — a storm dot is the one
+     * thing on this globe that must never lose a tap.
+     *
+     * ==> AND THIS COSTS NOTHING WHEN THE SWITCH IS OFF, WHICH IS THE WHOLE
+     * PERFORMANCE ARGUMENT FOR PUTTING A FOURTH HIT TEST HERE. <== Every tap
+     * on the globe already runs three `queryRenderedFeatures` calls, including
+     * the taps on empty ocean whose only job is closing the drawer. A fourth
+     * paid by every reader would be a real cost for a layer most never turn on.
+     * `floodAtPoint` asks the layer's own `visible` flag on its first line and
+     * returns, so for those readers this branch is one boolean read. */
+    if (tapFloodAlert(floodAtPoint(map, e.point))) return;
+
     /* ==> GENESIS IS TESTED AFTER STORMS, ALWAYS. <== A watched area is drawn
      * BELOW every storm layer (§45.4) and it is enormous — hundreds of miles
      * across — so a storm sitting inside or beside one would lose its tap to
@@ -812,7 +831,15 @@ function boot() {
    * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
    * these on a touch-only device, so no device sniffing is needed and the
    * touch path is untouched (§10). */
-  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints', ...GENESIS_HIT_LAYERS]) {
+  /* ==> THE FLOOD CHIP IS IN THIS LIST NOW, BECAUSE SLICE C MADE IT TAPPABLE.
+   * <== A mark that opens a panel and does not change the cursor reads as
+   * decoration on a desktop, and a reader who never learns it is pressable
+   * never presses it. `FLOOD_LAYER_IDS` is spread rather than the chip named
+   * on its own: the fill and the outline are not hit-tested, but hovering them
+   * is hovering the same alert, and a cursor that changed over the mark and
+   * not over the shape it belongs to would be the fussier answer. */
+  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints',
+                    ...GENESIS_HIT_LAYERS, ...FLOOD_LAYER_IDS]) {
     map.on('mouseenter', id, () => {
       map.getCanvas().style.cursor = 'pointer';
     });

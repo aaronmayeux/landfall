@@ -37,6 +37,7 @@
 import { flyToStorm, flyToPoint, recenter } from '../map/globe.js';
 import { homeFrame } from '../map/home-frame.js';
 import { setGenesisSelection } from '../map/layers/genesis.js';
+import { floodAlertById, floodClusterZoom } from '../map/layers/flood.js';
 import { GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
 import { createProvisionalPin } from '../map/pin-provisional.js';
@@ -45,6 +46,7 @@ import { createDrawer } from '../ui/drawer.js';
 import { createStormsView } from '../ui/view-storms.js';
 import { createStormDetailView } from '../ui/view-storm-detail.js';
 import { createAreaDetailView } from '../ui/view-area-detail.js';
+import { createFloodDetailView } from '../ui/view-flood-detail.js';
 import { createHomeSetupView } from '../ui/view-home-setup.js';
 import { createHomeDashboardView } from '../ui/view-home.js';
 import { createLayersView } from '../ui/view-layers.js';
@@ -95,6 +97,10 @@ import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory, fetchNhcGustKt } from '../data/advisory.js';
 import { loadRainfall, evictRainfall } from '../data/rainfall.js';
+/* ==> THE ONE PLACE A FLOOD ALERT IS SHAPED FOR THE PANEL. <== §56.6's two
+ * entrances — a chip on the globe and a row in the section — hand over two
+ * different objects, and this is what makes them one. */
+import { floodAlertFacts } from '../lib/rainfall.js';
 import { loadGdacsSurge, retryGdacsSurge } from '../data/gdacs-surge.js';
 import { loadAlerts } from '../data/cap.js';
 import { refresh } from '../data/store.js';
@@ -554,6 +560,84 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
 
   const areaDetailView = createAreaDetailView();
 
+  const floodDetailView = createFloodDetailView();
+
+  /* --- tapping a flood alert (§56.6) ---------------------------------------
+   *
+   * ==> TWO ENTRANCES, ONE PANEL, AND THE NORMALIZING HAPPENS HERE SO THEY
+   * CANNOT DIVERGE. <== A chip on the globe hands over an alert as
+   * `data/flood.js` holds it; a row in the `Flooding` section hands over one
+   * that `lib/rainfall.js` already shaped. Both go through `floodAlertFacts`
+   * before they reach the view, so the panel has exactly one input shape and
+   * no branch inside it asking where the reader came from.
+   *
+   * `push`, NOT `go`: the reader came from somewhere — a storm's drawer, the
+   * dashboard, or the globe with nothing open — and Back has to return them
+   * there rather than dumping them at the storm list (§13).
+   * ---------------------------------------------------------------------- */
+
+  /* ==> NOT COUNTED, AND THAT IS A DECISION RATHER THAN AN OVERSIGHT. <== Every
+   * name in `lib/usage.js` ACTIONS is a real COLUMN on the D1 `sessions` table
+   * (`functions/api/_telemetry-store.js` SESSION_COLUMNS), so adding one means
+   * an `ALTER TABLE` against a live database. That is a deliberate migration
+   * and it does not belong folded into a map phase — §56.15's whole lesson is
+   * that a slice carrying more than one kind of change cannot be bisected when
+   * it goes wrong. Nothing in §56.6 asks for a count. */
+  const openFloodAlert = (alert) => {
+    if (!alert) return;
+    idle.interrupt();
+    drawer.push('flood-alert', floodAlertFacts(alert, Date.now()));
+  };
+
+  /**
+   * A chip on the globe was tapped.
+   *
+   * ==> A SINGLE CHIP OPENS THE PANEL AND A CLUSTER ZOOMS UNTIL IT SPLITS. <==
+   * §56.6. The second is MapLibre's standard behaviour and readers already own
+   * it from every other clustered map they have used, and it answers "which of
+   * these fifteen did I just tap" without a chooser UI that would have to be
+   * built, styled, made keyboard-reachable and then explained.
+   *
+   * ==> THE LOOKUP IS BY ID AGAINST THE LIVE NATIONAL LIST, NEVER THE
+   * FEATURE'S OWN PROPERTIES. <== A feature's properties are a copy baked into
+   * a tile when the source was last written, so opening the panel from them
+   * would print last poll's expiry to somebody deciding whether to move.
+   *
+   * A TAP THAT FINDS NOTHING RETURNS FALSE rather than doing something. The
+   * caller in main.js needs to know, because the tap it just failed to handle
+   * has somewhere else to go — the watched areas underneath, and after those
+   * closing the drawer.
+   */
+  const tapFloodAlert = (hit) => {
+    if (!hit) return false;
+
+    if (hit.kind === 'cluster') {
+      idle.interrupt();
+      /* ==> THE ZOOM COMES BACK FROM A WORKER, SO THIS IS ASYNC AND THE
+       * CAMERA MOVE IS THE CONTINUATION. <== The cluster index lives off the
+       * main thread; asking it costs no arithmetic on the frame the finger
+       * lifted. A null answer — the source or the cluster gone, which a poll
+       * landing mid-tap can do — moves nothing rather than flying somewhere
+       * arbitrary. */
+      floodClusterZoom(map, hit.clusterId).then((zoom) => {
+        if (!Number.isFinite(zoom)) return;
+        flyToPoint(map, { lon: hit.lon, lat: hit.lat }, {
+          zoom,
+          /* Only when a panel is actually over the map. Splitting a cluster
+           * with the drawer shut should land the chips in the middle of the
+           * screen, not offset for furniture that is not there. */
+          offset: openPanelOffset(),
+        });
+      });
+      return true;
+    }
+
+    const alert = floodAlertById(hit.id);
+    if (!alert) return false;
+    openFloodAlert(alert);
+    return true;
+  };
+
   /** Fly to a watched area.
    *
    *  `flyToPoint`, NOT `flyToStorm`, AND AT A WIDER ZOOM. A storm is a point
@@ -667,6 +751,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
   };
 
   const detailView = createStormDetailView({
+    /* §56.6 — a row in `Flooding` opens the same panel a chip on the globe
+     * does. This is the keyboard path; without it the feature is gesture-only
+     * and does not exist for a keyboard user (§10). */
+    onOpenFloodAlert: openFloodAlert,
     home: {
       get: getHome,
       distanceTo,
@@ -1015,6 +1103,8 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * and is pushed onto it, so Back lands where you came from. */
   const homeDashView = createHomeDashboardView({
     units: () => unitSystem(),
+    /* §56.6 — the same panel, from the dashboard's own copy of the rows. */
+    onOpenFloodAlert: openFloodAlert,
     onEditHome: () => drawer.push('home-setup'),
     /* Tapping the storm's name is a request to GO to it — camera, cone, the
      * detail panel. That is `selectStorm`, exactly as a list row does, so
@@ -1055,8 +1145,8 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * swatch, and a re-pick moves the whole name. */
   homeDashView.setChromeRefresh(() => drawer.refreshChrome());
 
-  for (const v of [stormsView, detailView, areaDetailView, layersView,
-                   homeDashView, homeSetupView, settingsView]) {
+  for (const v of [stormsView, detailView, areaDetailView, floodDetailView,
+                   layersView, homeDashView, homeSetupView, settingsView]) {
     drawer.register(v);
   }
 
@@ -1101,10 +1191,14 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     homeDashView,
     detailView,
     areaDetailView,
+    floodDetailView,
     layersView,
     homeMarker,
     selectStorm,
     selectArea,
+    /* main.js routes a tap on the globe here — see the flood block above for
+     * why a miss has to be reported rather than swallowed. */
+    tapFloodAlert,
     recenterAndClear,
     refreshLayerStatus,
     applyHomeMarker,

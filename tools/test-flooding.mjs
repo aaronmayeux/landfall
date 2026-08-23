@@ -56,6 +56,7 @@ const {
   NWS_US_ONLY, MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE, NWS_NOT_ATTRIBUTED,
   FLOOD_POINTER,
 } = await import('../ui/flood-words.js');
+const { floodAlertRows, wireFloodAlertRows } = await import('../ui/rain-alerts.js');
 const { surgeOnStorm, surgeAtHome } = await import('../lib/surge-locations.js');
 const { corridorSummary, trackChains, trackSamples } = await import('../lib/flood.js');
 const { projectLocations } = await import('../functions/api/gdacs/surge.js');
@@ -541,6 +542,138 @@ section('§56.10 — one water mark, and only one');
     'and the map layer takes them from ui/section-icon.js');
   ok(!mapSrc.some((s) => d.some((x) => s.includes(x))),
     'and carries no copy of its own — one shape, two surfaces');
+}
+
+/* =====================================================================
+ * §56.6 — THE ROWS ARE THE KEYBOARD PATH INTO THE DETAIL PANEL
+ *
+ * ==> A PHASE THAT SHIPS THE ICON WITHOUT THE ROWS HAS SHIPPED A GESTURE-ONLY
+ * FEATURE. <== §56.6 says it in those words and §10 does not treat it as a
+ * limitation — an icon reachable only by tapping a globe does not EXIST for a
+ * keyboard user. These assertions are that rule's gate.
+ *
+ * Every one below was mutation-verified against `ui/rain-alerts.js`.
+ * ================================================================== */
+{
+  section('§56.6 — the rows open the same panel the chip does');
+
+  const ALERTS = [
+    { id: 'urn:oid:a', event: 'Flash Flood Warning', area: 'Hawaii in Hawaii, HI',
+      immediate: true, begun: true, untilMs: Date.now() + 3_600_000, remaining: '1 hour left' },
+    { id: 'urn:oid:b', event: 'Flood Watch', area: 'Maui Windward West',
+      immediate: false, begun: true, untilMs: Date.now() + 7_200_000, remaining: '2 hours left' },
+  ];
+  const html = floodAlertRows(ALERTS);
+
+  ok(/<button[^>]+type="button"/.test(html),
+    'each row is a real <button>, so Enter and Space work with no ARIA at all');
+
+  /* ==> AND IT CARRIES NO `<p>`, WHICH IS NOT A STYLE POINT. <== A <p> is not
+   * valid inside a <button>: browsers close the button early and re-parent the
+   * rest of the row OUTSIDE it, so one pressable row becomes a button with a
+   * fragment beside it — half the row goes dead and nothing says so.
+   * MUTATION-VERIFIED: put the <p> back on `.rain-alert-head` and this fails. */
+  const btnBody = html.slice(html.indexOf('<button'), html.indexOf('</button>'));
+  ok(!/<p[\s>]/.test(btnBody),
+    'and holds no <p>, which a browser would silently close the button around');
+
+  ok((html.match(/data-alert-index="/g) || []).length === ALERTS.length,
+    'every row carries the index the handler resolves it by');
+  ok(html.includes('data-alert-index="0"') && html.includes('data-alert-index="1"'),
+    'and the indexes are positional, matching the array that drew them');
+
+  /* THE ROW STILL SAYS EVERYTHING IT SAID BEFORE. Slice C made it pressable and
+   * was not allowed to change what it reads as — the preceding restyle exists
+   * because a row that looked like a widget was reverted once already. */
+  ok(html.includes('Hawaii in Hawaii, HI') && html.includes('Maui Windward West'),
+    'the area is still printed whole on every row');
+  ok(/in force until/.test(html) && !/Flood Watch<\/span>\s*<span class="rain-alert-until">in force/.test(html),
+    'and the immediate/later distinction still lives in the words');
+
+  /* --- the delegation ---------------------------------------------------
+   * A scope that behaves the way the real one does for the three things the
+   * handler actually uses. Deliberately NOT tools/fake-dom.mjs: that is a
+   * flat selector lookup table, and this is a question about event bubbling. */
+  function scopeStub() {
+    let handler = null;
+    const buttons = new Map();
+    return {
+      listeners: 0,
+      addEventListener(type, fn) { if (type === 'click') { handler = fn; this.listeners++; } },
+      contains: (el) => buttons.has(el),
+      button(i) {
+        const el = { dataset: { alertIndex: String(i) } };
+        el.closest = (sel) => (sel === '[data-alert-index]' ? el : null);
+        buttons.set(el, true);
+        return el;
+      },
+      /** Something in the section that is not a row — the Retry button. */
+      stray() {
+        const el = { dataset: {} };
+        el.closest = () => null;
+        return el;
+      },
+      click(el) { handler?.({ target: el }); },
+    };
+  }
+
+  {
+    const scope = scopeStub();
+    const opened = [];
+    wireFloodAlertRows(scope, () => ALERTS, (a) => opened.push(a));
+
+    /* ==> ONE LISTENER, WHATEVER THE LIST LENGTH. <== A quiet national day is
+     * 36 alerts and the sections repaint on every poll; binding per row would
+     * add that many listeners each time. MUTATION-VERIFIED: bind per row and
+     * this goes red. */
+    ok(scope.listeners === 1,
+      'one delegated listener on the container, never one per row');
+
+    scope.click(scope.button(1));
+    ok(opened.length === 1 && opened[0] === ALERTS[1],
+      'pressing a row opens THAT row’s alert, resolved by index');
+
+    scope.click(scope.stray());
+    ok(opened.length === 1,
+      'and a press on something else in the section opens nothing');
+  }
+
+  /* ==> THE ARRAY IS READ THROUGH A GETTER, NEVER CAPTURED. <== Both sections
+   * repaint on every poll. A captured array would open the panel on whatever
+   * was in force one poll ago — a stale expiry shown to somebody deciding
+   * whether to move. MUTATION-VERIFIED: take the array by value instead of by
+   * function and this goes red. */
+  {
+    const scope = scopeStub();
+    const opened = [];
+    let current = ALERTS;
+    wireFloodAlertRows(scope, () => current, (a) => opened.push(a));
+
+    const REPLACED = [{ id: 'urn:oid:c', event: 'Areal Flood Warning' }];
+    current = REPLACED;
+    scope.click(scope.button(0));
+    ok(opened.length === 1 && opened[0] === REPLACED[0],
+      'a press after a repaint opens the CURRENT list, not the one drawn earlier');
+  }
+
+  /* A row whose alert has gone does nothing rather than opening an empty
+   * panel. Reachable when the list shrinks between the paint and the press. */
+  {
+    const scope = scopeStub();
+    const opened = [];
+    wireFloodAlertRows(scope, () => [], (a) => opened.push(a));
+    scope.click(scope.button(3));
+    ok(opened.length === 0, 'and a row whose alert is gone opens nothing rather than a blank');
+  }
+
+  /* No callback, no crash: both sections default `openAlert` to null, so a
+   * caller that has not been updated still renders rows that simply do not
+   * open rather than taking the whole screen down. */
+  {
+    const scope = scopeStub();
+    wireFloodAlertRows(scope, () => ALERTS, null);
+    ok(scope.listeners === 0, 'with no open callback it binds nothing at all');
+  }
 }
 
 /* ===================================================================== */

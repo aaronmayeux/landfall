@@ -271,12 +271,21 @@ corridor match, the memo, the held storm, the held bundle and `floodMatchRuns`
 are gone. `map/layers/flood.js` came down 91 lines the day it crossed the
 ceiling.
 
-**WHAT IS BUILT: THE NATIONAL POLYGONS AND THE CHIPS.** Slice B's clustered
-point source, the interior point per alert, four rounded-square images across
-two themes, and the cluster count with per-chip ink. The point cache survives —
-it is keyed on the alert id and nothing in the layer's life invalidates one.
-**Tapping is still not built; that is Slice C**, and Slice C lifts the chip half
-of the file out before it does anything else.
+**==> ALL THREE SLICES ARE IN. PHASE 5 IS BUILT AND NONE OF SLICE C HAS BEEN
+LOOKED AT. <==** Slice C shipped in two pushes on 2026-08-23. The first lifted
+the chip half into `map/layers/flood-chip.js` with no behaviour at all — 757
+down to 484 and 315, both under §12's ceiling, and the layer's row is off
+SPEC.md's inventory. The second is the tapping: a chip opens a detail panel, a
+cluster zooms until it splits, and the alert rows in `Flooding` became buttons
+that open the same panel on both screens. As-built in `SPEC-FLOOD-PLAN.md` §56.6.
+
+**TWO THINGS THAT PUSH FOUND AND ARE WORTH NOT RE-LEARNING.** A `<p>` inside a
+`<button>` makes a browser close the button early and re-parent the rest of the
+row outside it — the row looks perfect and its bottom half is dead to a tap.
+Caught by an assertion, not on glass, which is the one time in this phase a gate
+got there first. And **no telemetry action was added**: every name in
+`lib/usage.js` ACTIONS is a real COLUMN on the D1 `sessions` table, so adding one
+is an `ALTER TABLE` on a live database rather than a line of code.
 
 **==> IT DRAWS, AND THE FIRST LOOK FOUND THE CHIP WAS THE WRONG MARK. <==**
 2026-08-23, Aaron on a phone: the polygons and one chip painted over the Big
@@ -328,6 +337,23 @@ git show origin/archive:latest/geometry/gdacs-floods-probe.json
 item 4** — `%Hurricane%` already pulls German thunderstorms, and a flood term is
 a broader word, not a narrower one. Read §56.19 before pricing it. **Neither is
 Slice C's work.**
+
+**==> TWO FINDINGS FROM SLICE C THAT ARE NOT SLICE C's WORK. <==**
+
+1. **`count('area_select')` HAS NEVER BEEN RECORDED AND STILL IS NOT.** The call
+   site in `app/views.js` asks for it; `lib/usage.js` ACTIONS does not list it,
+   and `count()` drops an unlisted name in silence. That is the exact bug that
+   file's own comment records happening to the Environment retry. **It is NOT a
+   one-line fix**: ACTIONS names are D1 columns, so restoring it means an
+   `ALTER TABLE` on `sessions`. Every tap on a watched area since §45 shipped is
+   counted as nothing. Aaron's call whether that is worth a session.
+2. **`tools/test-genesis.mjs` HANGS ON `main` AND DOES NOT FAIL — IT NEVER
+   RETURNS.** It stops after the section headed *a broken NHC half is an OUTAGE,
+   never an empty sky*, where `fetchGenesis` is driven with every relay hop
+   throwing. Killed at 130 s. **Confirmed pre-existing**: it hangs identically
+   with Slice C's only shared file (`config/constants.js`) reverted to HEAD, and
+   Slice C touches no genesis file. A suite that hangs rather than failing is
+   worse than a red one — it blocks whatever runs it and names nothing.
 
 **THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
 three minutes, in that order — taps on the globe first, chevrons on the home

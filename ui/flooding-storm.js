@@ -65,7 +65,7 @@
 import { surgeOnStorm, gdacsEventIdOf } from '../lib/surge-locations.js';
 import { formatDistance } from '../lib/units.js';
 import { DOTS } from './loading-dots.js';
-import { floodAlertRows } from './rain-alerts.js';
+import { floodAlertRows, wireFloodAlertRows } from './rain-alerts.js';
 import {
   NWS_US_ONLY, MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE, NWS_NOT_ATTRIBUTED,
 } from './flood-words.js';
@@ -112,7 +112,20 @@ export function spreadWords(arrivalHours, peakHours) {
  *   read one memoized answer per storm.
  * @param {()=>string|null} [deps.units] the resolved unit system.
  */
-export function createFloodingStorm({ flood = null, cap = null, surge = null, units = null }) {
+export function createFloodingStorm({
+  flood = null,
+  cap = null,
+  surge = null,
+  units = null,
+  /** Open one alert's detail panel (§56.6). Absent, the rows still render and
+   *  still say everything they said before — they simply do not open. */
+  openAlert = null,
+}) {
+  /** The alerts this section last DREW, for `wireFloodAlertRows` to resolve a
+   *  pressed row against. Held rather than captured because this section
+   *  repaints on every poll and on every storm step. */
+  let lastRows = [];
+
   /** The GDACS fetch's own state, keyed by STORM ALONE — there is no house in
    *  this question, which is the difference from the home dashboard's copy. */
   let state = { phase: 'idle', result: null, forKey: null };
@@ -215,6 +228,11 @@ export function createFloodingStorm({ flood = null, cap = null, surge = null, un
      * shape. A corridor is entirely ours, so the copy hands the reader the
      * radius and lets them judge it — an unnamed proximity is a claim wearing
      * a measurement's clothes. */
+    /* ==> WHAT WAS DRAWN IS HELD, BECAUSE THE ROWS ARE BUTTONS NOW (§56.6).
+     * <== Read through a getter by `wireFloodAlertRows`, never captured: this
+     * section repaints on every poll and every chevron press. */
+    lastRows = out.alerts;
+
     return `<p class="flood-line"><strong>${n} ${noun}</strong> in force within
         ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.${drawNote}</p>
       ${floodAlertRows(out.alerts)}
@@ -374,6 +392,11 @@ export function createFloodingStorm({ flood = null, cap = null, surge = null, un
    *  thing that failed — a Retry that refetches a source the reader did not
    *  ask about is a Retry that lies about what it did. */
   function wire(bodyEl, storm, repaint) {
+    /* The rows, as a keyboard- and pointer-reachable path into the same panel
+     * a chip on the globe opens (§56.6). One delegated listener whatever the
+     * list length — see `wireFloodAlertRows`. */
+    if (openAlert) wireFloodAlertRows(bodyEl, () => lastRows, openAlert);
+
     const on = (token, fn) => {
       const btn = bodyEl?.querySelector?.(`[data-retry="${token}"]`);
       if (btn) btn.addEventListener('click', fn);

@@ -263,6 +263,9 @@ function disclaimerHtml(source) {
 export function createStormDetailView({
   home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, units,
   flood: floodFacade = null, surge = null, siblings, onStep, now = () => Date.now(),
+  /* Open one flood alert's detail panel (§56.6). Forwarded straight to the
+   * Flooding controller — this file owns the seam, never the behaviour. */
+  onOpenFloodAlert = null,
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -300,6 +303,7 @@ export function createStormDetailView({
    * also reads — so the figure in this drawer, the figure on the dashboard and
    * the paint on the shoreline are one number. */
   const floodH = createFloodingStorm({
+    openAlert: onOpenFloodAlert,
     flood: floodFacade
       ? { summaryFor: (s2) => floodSummary(s2), retry: () => floodFacade.retry() }
       : null,

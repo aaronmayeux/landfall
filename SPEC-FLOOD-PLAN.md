@@ -404,10 +404,11 @@ the dark-theme watch chip. Recomputed rather than quoted, it fails on **three of
 the four**. The layer's header names the case that forced the split; the suite
 names the whole cost of undoing it.
 
-**SLICE C — TAPPING.** The detail panel, the click dispatch, the cluster split,
-and the alert rows becoming buttons. Mostly DOM and mostly cheap, and it is last
-because §56.6's keyboard path is meaningless until there is something to open.
-**Judge on glass.**
+**==> SLICE C SHIPPED 2026-08-23 IN TWO PUSHES AND HAS NOT BEEN JUDGED ON GLASS.
+<==** The file split first and alone; then the detail panel, the click dispatch,
+the cluster split and the rows becoming buttons. As-built in §56.6 and
+`SPEC-UI.md` §48.21. **Judge on glass** — and the five-step pass below is still
+the gate, because nothing about this slice was measured anywhere but here.
 
 **==> AND IT DID THE FILE SPLIT FIRST, IN A COMMIT OF ITS OWN. <==**
 `map/layers/flood.js` crossed §12's ceiling on Slice B and SPEC.md's inventory
@@ -718,12 +719,52 @@ must be selected — never an empty map with no explanation.
 
 ---
 
-### 56.6 Tapping an alert
+### 56.6 Tapping an alert — ==> SHIPPED 2026-08-23, UNSEEN ON GLASS <==
 
 **Tap a single icon → that alert's details. Tap a cluster → the map zooms until
 it splits.** The second is MapLibre's standard behaviour and readers already own
 it, and it removes the "which of these fifteen did I just tap" problem without
 any chooser UI.
+
+**==> THE HIT TEST ASKS THE LAYER'S OWN SWITCH BEFORE IT ASKS THE MAP, AND THAT
+IS THE WHOLE COST STORY OF THIS SLICE. <==** `main.js` already runs three
+`queryRenderedFeatures` calls on every tap of the globe — the house, the storm
+dots, the watched areas — including the taps on empty ocean whose only job is
+closing the drawer. A fourth paid by everybody would be a real cost for a layer
+most readers never switch on. `floodAtPoint` returns on its first line when the
+layer is off, so for them the branch is one boolean read.
+`tools/test-flood-layer.mjs` asserts the CALL rather than its result, because a
+query returning nothing looks identical to a query that never happened —
+mutation-verified by deleting the gate.
+
+**ORDER: house, storm, flood chip, genesis.** One rule, stated three times in
+`main.js`: what is visibly in front wins. A chip is a deliberate 24 px mark and
+a watched area is a soft patch hundreds of miles across drawn below everything,
+so testing genesis first would let the patch swallow a tap aimed at a chip on
+top of it. Storm dots still beat both — a storm dot is the one thing on this
+globe that must never lose a tap.
+
+**ONLY THE CHIP LAYER IS QUERIED.** The fill, the outline and the chip describe
+the same alert, so naming more than one turns a tap into three hits to
+deduplicate for nothing — and a county-sized target sitting under the storm
+dots would begin eating taps meant for the water. `FLOOD.chipHitPadPx` is 8 and
+deliberately not §10's 44: `clusterRadiusPx` already spends the 44 on the
+SOURCE, so anything closer than a fingertip has been merged and two chips on
+screen are two places a reader can aim at. A 44 px box would put both inside it
+and let MapLibre's listing order pick the winner.
+
+**THE LOOKUP IS BY ID AGAINST THE LIVE NATIONAL LIST, NEVER OFF THE FEATURE.** A
+feature's properties are a copy baked into a tile when the source was last
+written; opening a panel from them prints last poll's expiry to somebody
+deciding whether to move. And the list it searches is NATIONAL, which is what
+makes tapping a chip over Ohio while a Hawaii storm is selected resolve at all —
+the drawer's `Flooding` section answers a different question and its subset
+would find nothing.
+
+**THE CAMERA MOVE IS NOT IN THE LAYER.** `map/globe.js` owns every camera
+travel so the reduce-motion contract lives in one place (§10). The layer answers
+what zoom splits a cluster — from MapLibre's worker, so the arithmetic is not
+run on the frame the finger lifted — and `app/views.js` flies.
 
 **THE DETAIL VIEW SHOWS WHAT THE RELAY ALREADY CARRIES** — event, the whole area
 list, when it began, when it ends, and how long is left.
@@ -746,6 +787,36 @@ icon reachable only by tapping the globe does not exist for a keyboard user. The
 alert rows in the Flooding section are the keyboard path: each row opens the same
 detail the icon does. **A phase that ships the icon without the rows has shipped
 a gesture-only feature.**
+
+**AS BUILT: THE ROW IS A REAL `<button>`, AND ONE DELEGATED LISTENER SERVES THE
+WHOLE LIST.** A quiet national day is 36 alerts and the sections repaint on every
+poll, so a listener per row would rebind that many every time; delegation costs
+one whatever the list does and survives the `innerHTML` replacement a repaint
+performs. The handler resolves a press by INDEX against a getter, never a
+captured array — both sections repaint under it, and a captured array opens the
+panel on whatever was in force one poll ago.
+
+**==> AND MAKING IT A BUTTON BROKE THE MARKUP IN A WAY NOTHING ON SCREEN WOULD
+HAVE SHOWN. <==** A `<p>` is not valid inside a `<button>`: a browser does not
+complain, it closes the button early and re-parents the rest of the row outside
+it — so the row still looks exactly right and its bottom half is dead to a tap.
+The area line and the row head are `<span>`s with `display: block` now. **Caught
+by an assertion written for it, not on glass**, which is the one case in this
+phase where a gate found something first.
+
+**THE ROWS STILL READ AS PROSE, WHICH IS A CONSTRAINT RATHER THAN AN ACCIDENT.**
+§48.6 records the tinted rows being reverted because a widget dropped into a
+section of prose competed with the Saffir-Simpson colour a few inches above. So
+every default a `<button>` brings — its font, its centred text, its background,
+its border — is reset, and what is added is a pointer cursor, a hover state
+behind `(hover: hover)`, and a focus ring drawn INSIDE the row so it cannot clip
+under its neighbour.
+
+**WHAT IS NOT COUNTED, AND WHY.** No telemetry action was added. Every name in
+`lib/usage.js` ACTIONS is a real COLUMN on the D1 `sessions` table
+(`functions/api/_telemetry-store.js`), so adding one is an `ALTER TABLE` against
+a live database — a deliberate migration, not something to fold into a map
+phase. Nothing in this section asks for a count.
 
 ---
 

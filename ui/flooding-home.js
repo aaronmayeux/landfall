@@ -55,7 +55,7 @@
 import { rainSummary } from '../lib/rainfall.js';
 import { surgeAtHome, gdacsEventIdOf } from '../lib/surge-locations.js';
 import { DOTS } from './loading-dots.js';
-import { floodAlertRows } from './rain-alerts.js';
+import { floodAlertRows, wireFloodAlertRows } from './rain-alerts.js';
 import { spreadWords } from './flooding-storm.js';
 import { MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE } from './flood-words.js';
 
@@ -71,7 +71,22 @@ export const FLOOD_HOME_SECTION = 'flooding';
  *           units: ()=>string|null,
  *           now?: ()=>number }} deps
  */
-export function createFloodingHome({ rain = null, surge = null, units, now = () => Date.now() }) {
+export function createFloodingHome({
+  rain = null,
+  surge = null,
+  units,
+  now = () => Date.now(),
+  /** Open one alert's detail panel (§56.6). Absent, the rows still render and
+   *  still say everything they said before — they simply do not open. A
+   *  section that threw because a caller had not been updated would take the
+   *  whole dashboard down for a feature that is an enhancement. */
+  openAlert = null,
+}) {
+  /** The alerts this section last DREW, for `wireFloodAlertRows` to resolve a
+   *  pressed row against. Never read for rendering — the render owns its own
+   *  array — so the two cannot get out of step in the direction that matters. */
+  let lastRows = [];
+
   /** The point forecast's own record and sequence. Keyed by the HOUSE. */
   let rainState = { phase: 'idle', result: null, forKey: null };
   let rainSeq = 0;
@@ -159,6 +174,12 @@ export function createFloodingHome({ rain = null, surge = null, units, now = () 
         : `<p class="flood-note">Flood alerts could not be checked just now.</p>`;
     }
 
+    /* ==> WHAT WAS DRAWN IS HELD, BECAUSE THE ROWS ARE BUTTONS NOW (§56.6).
+     * <== `wireFloodAlertRows` resolves a pressed row against this array, and
+     * it reads it through a getter rather than capturing it — this section
+     * repaints on every poll, and a captured array would open the panel on
+     * whatever was in force one poll ago. */
+    lastRows = out.alerts;
     const rows = floodAlertRows(out.alerts);
     if (rows) return rows;
 
@@ -334,6 +355,11 @@ export function createFloodingHome({ rain = null, surge = null, units, now = () 
    *  to a press. Without that the button would look like it worked and change
    *  nothing, which is the worst of both. */
   function wire(scope, storm, home, repaint) {
+    /* The rows, as a keyboard- and pointer-reachable path into the same panel
+     * a chip on the globe opens (§56.6). One delegated listener whatever the
+     * list length — see `wireFloodAlertRows`. */
+    if (openAlert) wireFloodAlertRows(scope, () => lastRows, openAlert);
+
     const rainBtn = scope?.querySelector?.('[data-retry="flood"]');
     if (rainBtn && rain?.retryRainfall) {
       rainBtn.addEventListener('click', async () => {

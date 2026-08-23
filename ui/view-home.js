@@ -90,6 +90,9 @@ const esc = (t) =>
 export function createHomeDashboardView({
   units, onEditHome, onOpenStorm, onFocusStorm, onFrameHome,
   warmGeometry, rain, surge, now = () => Date.now(),
+  /* Open one flood alert's detail panel (§56.6). Forwarded straight to the
+   * Flooding controller — this file owns the seam, never the behaviour. */
+  onOpenFloodAlert = null,
 }) {
   /* Rain (§48.8) is a self-contained controller in ui/rain-home.js — this file
    * is the largest in the app and over §12's ceiling, so it gets one seam and
@@ -107,7 +110,7 @@ export function createHomeDashboardView({
    * land either side of a grid update, and an app showing one set of warnings
    * in Flooding and a total from a different payload in Rain is an app the
    * reader stops believing. */
-  const floodH = createFloodingHome({ rain, surge, units, now });
+  const floodH = createFloodingHome({ rain, surge, units, now, openAlert: onOpenFloodAlert });
   let host = null;
   let visible = false;
   let lastState = null;
