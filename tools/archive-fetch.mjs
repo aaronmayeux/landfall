@@ -1484,18 +1484,82 @@ for (const src of SOURCES) await run(src);
 /* ==> PHASE TWO: THE STORMS THE FIRST PHASE JUST FOUND. <==
  *
  * Reads the file that was WRITTEN rather than holding the body in memory, so
- * the geometry phase runs against exactly the bytes a session will read. If
- * the event list failed, there is nothing on disk, nothing is derived, and the
- * manifest already says the list is unavailable — no second complaint needed
- * and no invented storm list to fall back on. */
-let geometryCount = 0;
+ * the derived phases run against exactly the bytes a session will read.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The GDACS event list, from whichever copy landed — RELAY FIRST.
+ *
+ * ==> THIS USED TO READ `gdacs-events.json` AND NOTHING ELSE, AND THAT MADE
+ * EVERY DERIVED GDACS PHASE FAIL ON EXACTLY THE DAYS THEY WERE NEEDED. <==
+ * Measured on the 2026-08-23T22:05Z run, which is the run that produced this
+ * function. In one snapshot, one runner, one moment:
+ *
+ *     gdacs-events.json        (straight to gdacs.org)   ABORTED at 30,003 ms
+ *     relay-gdacs-events.json  (through our relay)       200 OK in 165 ms
+ *
+ * Same hundred rows, same six current storms, every one carrying its own
+ * `url.geometry`. The derivation had everything it needed sitting on disk and
+ * read the one file that was missing, so `geometry`, `relay-geometry` and
+ * `gdacs-event-detail` all threw and the hour captured nothing about GDACS —
+ * on an hour when GDACS being unwell was the entire thing worth recording.
+ *
+ * ==> IT IS THE SAME MISTAKE THE APP MADE THIS MORNING, IN THE SAME DIRECTION.
+ * <== `functions/api/gdacs/geometry.js` had a correct fallback that could never
+ * execute; this had a correct fallback source it never looked at. **A cache
+ * exists so that upstream being down stops mattering. Anything that reaches
+ * past the cache to the origin has opted out of the protection it is standing
+ * next to.**
+ *
+ * ==> AND THE RELAY COPY IS THE MORE FAITHFUL SOURCE ANYWAY, NOT MERELY THE
+ * SURVIVING ONE. <== §18.3's whole principle is that the app never reads an
+ * upstream URL, it reads the relay — so per-storm URLs derived from the relay's
+ * list are the URLs a phone would actually ask for. The upstream file is still
+ * fetched and still archived beside it, because proving what GDACS published is
+ * a different job from proving what we handed over. It is just no longer the
+ * thing the rest of the run depends on.
+ *
+ * The order is preference, not fallback-on-error alone: the relay copy is tried
+ * first even when both exist.
+ */
+function gdacsEventList() {
+  const tried = [];
+  for (const file of ['relay-gdacs-events.json', 'gdacs-events.json']) {
+    try {
+      const json = JSON.parse(readFileSync(join(OUT, file), 'utf8'));
+      if (Array.isArray(json?.features)) {
+        if (file !== 'relay-gdacs-events.json') {
+          console.log(`\nGDACS list: relay copy unusable, deriving from ${file}`);
+        }
+        return json;
+      }
+      tried.push(`${file}: no features array`);
+    } catch (err) {
+      tried.push(`${file}: ${err && err.message ? err.message : err}`);
+    }
+  }
+  /* Throwing rather than returning empty keeps the existing contract: each
+   * derived phase catches, and `derivedFailures` gets a reason naming BOTH
+   * copies, so a session can tell "GDACS is down" from "our relay is down too"
+   * without opening anything else. */
+  throw new Error(`no usable GDACS event list — ${tried.join('; ')}`);
+}
+
+/* ==> TWO COUNTERS, BECAUSE ONE COUNTER WAS A LIE. <== `geometryStorms` was
+ * incremented by BOTH the GDACS polygon phase and the NHC track phase below, so
+ * a run that captured zero GDACS storms still reported 27 — the NHC layer
+ * files — under a name that reads as GDACS coverage. It misled a session on
+ * 2026-08-23 that was reading the number across `history/` to judge exactly
+ * that. A shared counter under a specific name is worse than no number. */
+let gdacsGeometryCount = 0;
+let nhcTrackCount = 0;
+
 try {
-  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
-  const derived = geometrySources(list);
+  const derived = geometrySources(gdacsEventList());
   console.log(`\nderived ${derived.length} per-storm geometry URL(s) from the GDACS list`);
   for (const src of derived) {
     const r = await run(src);
-    if (r.status === 'ok') geometryCount++;
+    if (r.status === 'ok') gdacsGeometryCount++;
   }
 } catch (err) {
   phaseFailed('geometry', err);
@@ -1512,8 +1576,7 @@ try {
 const relayGeometryCache = {};
 let relayGeometryCount = 0;
 try {
-  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
-  const derived = relayGeometrySources(list);
+  const derived = relayGeometrySources(gdacsEventList());
   console.log(`\nderived ${derived.length} per-storm RELAY geometry URL(s) from the GDACS list`);
   for (const src of derived) {
     const r = await run(src);
@@ -1533,8 +1596,7 @@ try {
  * files back off disk — a failed one has no file and must not be opened. */
 const eventDataWritten = [];
 try {
-  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
-  const derived = eventDataSources(list);
+  const derived = eventDataSources(gdacsEventList());
   console.log(`\nderived ${derived.length} GDACS event-detail URL(s) from the GDACS list`);
   for (const src of derived) {
     const r = await run(src);
@@ -1553,7 +1615,7 @@ try {
   console.log(`\nderived ${derived.length} NHC track URL(s) from CurrentStorms.json`);
   for (const src of derived) {
     const r = await run(src);
-    if (r.status === 'ok') geometryCount++;
+    if (r.status === 'ok') nhcTrackCount++;
   }
 } catch (err) {
   phaseFailed('nhc-tracks', err);
@@ -1697,7 +1759,11 @@ function countryMatchSummary() {
   };
 
   try {
-    const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
+    /* Same relay-first read as every other GDACS-derived phase. The country
+     * join measures how far GDACS's attribution lags the warnings themselves,
+     * and an hour skipped because gdacs.org timed out is a hole in exactly the
+     * series it exists to produce. */
+    const list = gdacsEventList();
     const feats = Array.isArray(list?.features) ? list.features : [];
     out.storms = feats
       .filter((f) => f?.properties?.eventtype === 'TC' && isCurrentRow(f.properties.iscurrent))
@@ -1958,7 +2024,16 @@ writeFileSync(
         'latest/ ONLY and are not carried into history/ — a megabyte an hour ' +
         'across a 72-hour window buys nothing, because the question they ' +
         'answer is always about now. Do not go looking for them in a snapshot.',
-      geometryStorms: geometryCount,
+      /* ==> `geometryStorms` IS GONE AND IT IS NOT COMING BACK UNDER A NEW
+       * SPELLING. <== One counter was incremented by the GDACS polygon phase
+       * AND by the NHC track phase, under a name that reads as GDACS coverage.
+       * On 2026-08-23 a run that captured ZERO GDACS storms reported 27, and a
+       * session reading that number across `history/` to judge GDACS coverage
+       * believed it. The two phases fail independently, on purpose, so the two
+       * numbers have to be separate or the manifest cannot say which half of
+       * phase two is missing. */
+      gdacsGeometryStorms: gdacsGeometryCount,
+      nhcTrackLayers: nhcTrackCount,
       /* ==> THE ONE NUMBER THAT SURVIVES INTO `history/`, AND THAT IS THE WHOLE
        * REASON IT IS COMPUTED HERE. <== The per-storm relay bodies live under
        * `geometry/` in `latest/` only, so they are gone in an hour — but the

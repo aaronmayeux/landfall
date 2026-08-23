@@ -1311,6 +1311,47 @@ session reads the manifest and never the run log. Each catch now records
 every hour**, so nothing has to remember the key exists. §5's silence rule
 applies to our own tooling exactly as it applies to the app.
 
+**==> PHASE TWO DERIVES FROM THE RELAY'S COPY OF THE EVENT LIST, NOT GDACS'S.
+<==** Measured on the 2026-08-23T22:05Z run. In one snapshot, one runner, one
+moment: `archive:latest/gdacs-events.json` aborted at 30,003 ms while
+`archive:latest/relay-gdacs-events.json` answered **200 OK in 165 ms**, carrying the same hundred rows and the same six
+current storms, each with its own `url.geometry`. Every GDACS-derived phase read
+the upstream file and only the upstream file, so `geometry`, `relay-geometry`
+and `gdacs-event-detail` all threw and the hour recorded nothing at all about
+GDACS — **on the hour whose entire point was that GDACS was unwell.** The
+archive failed on precisely the day it was needed and worked on all the days it
+was not.
+
+`gdacsEventList()` is the one reader now: relay copy first, upstream as
+fallback, throwing with a reason that names BOTH when neither is usable —
+because `derivedFailures` is all a session reads, and a message naming one copy
+cannot distinguish "GDACS is down" from "our relay is down too". A body that
+parses but carries no `features` array counts as unusable, since that is the
+shape an error page serialises to.
+
+**The preference is not merely about survival.** §18.3's principle is that the
+app never reads an upstream URL, so per-storm URLs derived from the relay's list
+are the URLs a phone would actually ask for. The upstream copy is still fetched
+and still archived beside it — proving what GDACS published is a different job
+from proving what we handed over — it is simply no longer what the rest of the
+run depends on. `tools/test-archive-list-source.mjs` guards the order, the
+fallbacks and the single reader, mutation-verified five ways.
+
+**IT IS THE SAME MISTAKE THE RELAY MADE THE SAME MORNING, IN THE SAME
+DIRECTION.** `functions/api/gdacs/geometry.js` had a correct fallback that could
+never execute; this had a correct fallback source it never looked at. **A cache
+exists so that upstream being down stops mattering, and anything reaching past
+it to the origin has opted out of the protection it is standing next to.**
+
+**`geometryStorms` IS GONE, SPLIT INTO `gdacsGeometryStorms` AND
+`nhcTrackLayers`.** One counter was incremented by the GDACS polygon phase AND
+the NHC track phase, so a run capturing zero GDACS storms still reported 27 — the
+NHC layer files — under a name that reads as GDACS coverage. A session on
+2026-08-23 read that number across `history/` to judge exactly that and believed
+it. The two phases fail independently by design, so the two numbers have to be
+separate or the manifest cannot say which half of phase two is missing. **A
+shared counter under a specific name is worse than no number.**
+
 **A CLOUD SESSION CANNOT START THE RUN.** `archive.yml` fires on the hour and
 on manual dispatch only, and the fine-grained PAT cannot dispatch (measured:
 HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,
