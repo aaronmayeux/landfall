@@ -2515,6 +2515,28 @@ export const RAIN = Object.freeze({
    *  the search area exactly where the hazard is worst. */
   floodCorridorNm: 300,
 
+  /** How far apart the points on a THINNED outline may sit, in nautical miles,
+   *  during the corridor match's first pass (§56.18).
+   *
+   *  ==> IT IS AN ERROR BUDGET, NOT A SIMPLIFICATION. <== A thinned outline can
+   *  only ever report a shape as FURTHER from the track than it really is —
+   *  the nearest point may have been one of the ones dropped. That error is
+   *  bounded by this number, and it runs in the one direction §56.3 allows:
+   *  toward keeping an alert that is just outside, never toward dropping one
+   *  that is just inside. `lib/flood.js` closes the gap by measuring the FULL
+   *  outline whenever a shape lands within this distance of the corridor edge,
+   *  so the include/exclude decision is exact at every radius and only the
+   *  reported distance moves.
+   *
+   *  ==> ONE NAUTICAL MILE, AND THE MEASUREMENTS ARE IN §56.18. <== NWS zone
+   *  boundaries carry points 65 METRES apart — a Hawaii coastal zone is 1,970
+   *  of them — against a corridor 300 nautical miles wide. At one mile that
+   *  zone thins to 112 points and the worst distance error across 1,400
+   *  boundary decisions was 0.34 nm, which is below anything a row prints.
+   *  Tighter costs time for accuracy no reader can see; looser starts moving
+   *  a printed figure. */
+  floodCoarseTolNm: 1,
+
   /** Decimal places kept on a zone boundary's coordinates as it crosses the
    *  wire (§56.4).
    *

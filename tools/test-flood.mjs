@@ -49,9 +49,12 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const {
-  inForce, trackChains, trackSamples, nearestNm, alertsNearTrack, corridorSummary,
+  inForce, trackChains, trackSamples, alertsNearTrack, corridorSummary,
   isFloodFamily, stormSamples, homeInCorridor,
 } = await import(path.join(ROOT, 'lib/flood.js'));
+/* The measurement moved to its own file (§56.18); this suite still asserts
+ * against the EXACT one, which is what defines correct for the fast path. */
+const { nearestNm } = await import(path.join(ROOT, 'lib/shape-distance.js'));
 const { greatCircleNm } = await import(path.join(ROOT, 'lib/geo.js'));
 const { RAIN } = await import(path.join(ROOT, 'config/constants.js'));
 const { projectFlood } = await import(path.join(ROOT, 'functions/api/nws/flood.js'));
