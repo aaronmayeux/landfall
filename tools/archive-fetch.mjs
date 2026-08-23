@@ -911,6 +911,109 @@ function geometrySources(eventListJson) {
   return out;
 }
 
+/* ---------------------------------------------------------------------------
+ * THE RELAY'S COPY OF THE SAME SHAPES — and it is a different question
+ *
+ * ==> THE BLOCK ABOVE PROVES WHAT GDACS PUBLISHED. THIS ONE PROVES WHAT A PHONE
+ * WAS HANDED. <== Same pairing, same reason, as `geometry/relay-nws-zone.json`
+ * beside its per-zone upstream files: the app never reads an upstream URL, it
+ * reads the relay, and a bug report is only ever about the second one.
+ *
+ * ==> WRITTEN BECAUSE THE GAP COST A SESSION ON 2026-08-23. <== Every non-US
+ * storm lost its cone, its track and its wind field. `functions/api/gdacs/
+ * geometry.js` had no cap on its upstream wait, so it outlasted the client's
+ * own 30 s abort and the phone got nothing — while the route's last-good
+ * fallback sat one `cache.match` away in code that could never run. The trail
+ * to that stopped dead at the relay, exactly as it did for the JTWC grading bug
+ * that made this archive cover relay routes in the first place: we had GDACS's
+ * bytes and could prove the parser correct, and then nothing about the one hop
+ * in the middle.
+ *
+ * ==> WHAT ONLY THIS CAPTURE CAN ANSWER: `X-Landfall-Cache`. <== It names which
+ * layer served the shapes — `kv` (the global warm store the cron fills), `fresh`
+ * (that colo's own cache), `upstream` (this reader paid for a trip to Europe),
+ * `last-good` / `kv-stale` (GDACS failed and the fallback caught it). That is
+ * the difference between a warm store doing its job and every reader on Earth
+ * queuing behind gdacs.org, and it is invisible from everywhere else.
+ *
+ * ==> THE URL IS NORMALISED THROUGH `new URL().toString()` AND THAT IS NOT
+ * COSMETIC. <== The route keys its cache on the validated upstream URL
+ * (`safeUpstream()` in functions/api/gdacs/geometry.js, mirrored by
+ * `safeGeometryUrl()` in worker/src/sources.js). Two spellings of one URL are
+ * two different keys — so an archive asking in a different spelling from the
+ * cron would MISS every entry the cron writes and report `upstream` forever.
+ * It would look exactly like a broken warm store, and it would be this file's
+ * bug. Same normalisation, same key, or the reading is fiction.
+ *
+ * ==> AND THE RUNNER'S READING IS ABOUT THE RUNNER. <== `caches.default` is
+ * per-colo, so `fresh` here describes a GitHub datacentre nobody uses. `kv` is
+ * the meaningful one, because Workers KV is global — which is lucky, since the
+ * warm store is the thing actually being asked about. Do not quote a `fresh`
+ * reading as evidence about a phone.
+ * ==> THE LOAD WAS COUNTED, NOT ASSUMED. <== A run already makes 15 requests to
+ * our own relay; these add up to `GEOMETRY_MAX` (8) more, for 23 against a
+ * limiter of 120 per 60 s per IP (`functions/api/_middleware.js`). Comfortable,
+ * and serial besides — but the margin is the reason to check it again if
+ * `GEOMETRY_MAX` is ever raised. A runner tripping our own 429 would poison
+ * exactly the cache readings it came to collect, and a `rate_limited` body
+ * lands in the archive looking like a relay fault.
+ *
+ * ==> AND THE HOSTNAME BELOW IS WRITTEN OUT IN FULL RATHER THAN HELD IN A
+ * CONSTANT. DO NOT "TIDY" IT. <== `tools/relay-archive-check.mjs` finds the
+ * routes this file archives by TEXT SCAN, for the literal
+ * `landfall.getgravitate.app/api/...`. A `const RELAY` spliced in with a
+ * template hole breaks that match — the route silently stops counting as
+ * archived and the check goes red, or worse, an excuse gets written for a route
+ * that is in fact being captured. Caught here by the check itself, which is the
+ * check working.
+ * ------------------------------------------------------------------------- */
+
+function relayGeometrySources(eventListJson) {
+  const feats = Array.isArray(eventListJson?.features) ? eventListJson.features : [];
+  const out = [];
+  for (const f of feats) {
+    const p = f?.properties || {};
+    if ((p.eventtype || '') !== 'TC') continue;
+    if (!isCurrentRow(p.iscurrent)) continue;
+
+    const published = p.url?.geometry;
+    if (typeof published !== 'string' || !published.startsWith('https://www.gdacs.org/')) continue;
+
+    /* The route refuses anything that is not exactly this host and path, so a
+     * row we cannot normalise is skipped rather than sent to be 400'd — a
+     * refusal in the manifest would read as a relay fault. */
+    let normalized;
+    try {
+      normalized = new URL(published).toString();
+    } catch {
+      continue;
+    }
+
+    out.push({
+      name: `geometry/relay-gdacs-geometry-${slug(p.eventname)}-${p.eventid}.json`,
+      url: `https://landfall.getgravitate.app/api/gdacs/geometry?url=${encodeURIComponent(normalized)}`,
+      note:
+        `OUR RELAY'S COPY of ${p.eventname}'s polygons (event ${p.eventid}, ` +
+        `episode ${p.episodeid}) — the upstream twin sits beside it as ` +
+        `geometry/gdacs-${slug(p.eventname)}-${p.eventid}-e${p.episodeid}.json. ` +
+        '==> READ `X-Landfall-Cache` FIRST AND EVERYTHING ELSE SECOND. <== `kv` ' +
+        'means the cron-filled warm store had these shapes and no reader waited ' +
+        'on Europe. `upstream` means this request went the whole way, which is ' +
+        'the state that stalls a phone. `last-good` or `kv-stale` means GDACS ' +
+        'failed and the fallback caught it — working as designed, and only ' +
+        'reachable at all since the 10 s upstream budget landed on 2026-08-23. ' +
+        '==> `ms` IS THE OTHER HALF. <== A `kv` hit should be tens of ' +
+        'milliseconds; anything near ten seconds is the budget firing, whatever ' +
+        'the cache header says. ==> ONE RUN IS A SNAPSHOT, NOT A TREND. <== A ' +
+        'single `upstream` can be ordinary expiry and a single `kv` can be luck; ' +
+        'the question of whether the store STAYS filled is answered by diffing ' +
+        'these across history/, never by one reading.',
+    });
+    if (out.length >= GEOMETRY_MAX) break;
+  }
+  return out;
+}
+
 /** GDACS EVENT DETAIL — the storm's own record, not its polygons.
  *
  * Wave 5 pass 1 went looking for a storm surge product that covers the world
@@ -1398,6 +1501,32 @@ try {
   phaseFailed('geometry', err);
 }
 
+/* ==> THE RELAY'S COPY OF THE SAME SHAPES, IN ITS OWN TRY BLOCK. <== Same rule
+ * as every other derived phase: a relay that is down must never cost us the
+ * upstream polygons that already landed above. It runs AFTER them so the
+ * upstream bytes are on disk before anything here can fail.
+ *
+ * The rollup is built here rather than left for a session to count by hand,
+ * because the whole point of this capture is one header and a reader should not
+ * have to scan eight entries to see it. */
+const relayGeometryCache = {};
+let relayGeometryCount = 0;
+try {
+  const list = JSON.parse(readFileSync(join(OUT, 'gdacs-events.json'), 'utf8'));
+  const derived = relayGeometrySources(list);
+  console.log(`\nderived ${derived.length} per-storm RELAY geometry URL(s) from the GDACS list`);
+  for (const src of derived) {
+    const r = await run(src);
+    if (r.status === 'ok') relayGeometryCount++;
+    /* The header is the finding. A request that failed outright still counts —
+     * as `unavailable`, which is itself an answer about the relay. */
+    const path = (r.headers && r.headers['x-landfall-cache']) || 'unavailable';
+    relayGeometryCache[path] = (relayGeometryCache[path] || 0) + 1;
+  }
+} catch (err) {
+  phaseFailed('relay-geometry', err);
+}
+
 /* GDACS event detail, §4.8. Its own try block for the same reason as every
  * other derived phase: an experiment must never be able to cost us a polygon.
  * The NAMES that landed are kept, because the surge phase below reads these
@@ -1830,6 +1959,26 @@ writeFileSync(
         'across a 72-hour window buys nothing, because the question they ' +
         'answer is always about now. Do not go looking for them in a snapshot.',
       geometryStorms: geometryCount,
+      /* ==> THE ONE NUMBER THAT SURVIVES INTO `history/`, AND THAT IS THE WHOLE
+       * REASON IT IS COMPUTED HERE. <== The per-storm relay bodies live under
+       * `geometry/` in `latest/` only, so they are gone in an hour — but the
+       * QUESTION they answer ("is the warm store holding the shapes, or is
+       * every reader going to Europe?") is only answerable across time. This
+       * rollup counts each `X-Landfall-Cache` path this run saw, and diffing it
+       * across snapshots is the measurement. A run dominated by `kv` is a warm
+       * store doing its job; a run dominated by `upstream` is the 2026-08-23
+       * stall waiting to happen again. */
+      relayGeometry: {
+        note:
+          'Per-storm relay geometry, counted by which cache layer served it. ' +
+          '`kv` = the cron-filled global warm store. `fresh` = the RUNNER\'s ' +
+          'colo cache, which is a GitHub datacentre and says nothing about a ' +
+          'phone. `upstream` = this request went all the way to gdacs.org. ' +
+          '`last-good` / `kv-stale` = GDACS failed and the fallback caught it. ' +
+          '==> DIFF THIS ACROSS history/ RATHER THAN READING ONE RUN. <==',
+        storms: relayGeometryCount,
+        cachePaths: relayGeometryCache,
+      },
       /* IN THE MANIFEST AND NOT ITS OWN FILE, ON PURPOSE. manifest.json is the
        * one thing carried into `history/` every hour; a sibling file would
        * live in `latest/` only and answer nothing about a lag. */

@@ -75,13 +75,6 @@ const APP_FILES = ['main.js'];
  * ------------------------------------------------------------------------- */
 const EXCUSED = new Map([
   [
-    '/gdacs/geometry',
-    'Addressed by an upstream GDACS polygon URL that changes per storm and per ' +
-      'episode. The archive derives and fetches those URLs directly in phase ' +
-      'two and writes them under latest/geometry/, so the BYTES are captured — ' +
-      'what is missing is the relay\'s own headers on them. Derivable; not done.',
-  ],
-  [
     '/gdacs/surge',
     'Needs a GDACS eventid. Derivable from the event list in phase two, the ' +
       'same way the geometry URLs already are. Not done.',

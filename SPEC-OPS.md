@@ -1317,6 +1317,46 @@ HTTP 403 on `/dispatches`, §48.13). So the round trip is: add the source, push,
 then either wait for the top of the hour or ask Aaron to press Run. Plan a pass
 around that gap rather than discovering it mid-session.
 
+**==> THE RELAY'S COPY OF THE GDACS SHAPES IS CAPTURED PER STORM, AND IT IS A
+DIFFERENT QUESTION FROM THE UPSTREAM COPY BESIDE IT. <==** Phase two writes
+`geometry/gdacs-<NAME>-<id>-e<ep>.json` from gdacs.org and
+`geometry/relay-gdacs-geometry-<NAME>-<id>.json` from our own route. The first
+proves what GDACS published; the second proves **what a phone was handed**, and
+a bug report is only ever about the second one. That gap cost a session on
+2026-08-23 — every non-US storm lost its cone, its track and its wind field, and
+the trail stopped dead at the relay exactly as it had for the JTWC grading bug
+that made this archive cover relay routes at all.
+
+**The finding lives in one header.** `X-Landfall-Cache` names which layer served
+the shapes: `kv` (the cron-filled global warm store), `fresh` (that colo's own
+cache), `upstream` (this reader paid for the trip to Europe), `last-good` /
+`kv-stale` (GDACS failed and the fallback caught it). A `relayGeometry` rollup
+in the manifest counts them per run, because the per-storm bodies live in
+`latest/` only and are gone within the hour, while the question — *is the warm
+store holding, or is every reader queuing behind gdacs.org?* — is only ever
+answerable by **diffing that rollup across `history/`**. One run is a snapshot:
+a single `upstream` can be ordinary expiry and a single `kv` can be luck.
+
+**AND THE RUNNER'S `fresh` READING IS ABOUT A GITHUB DATACENTRE, NOT A PHONE.**
+`caches.default` is per-colo. Only `kv` generalises, because Workers KV is
+global — which is lucky, since the warm store is what is being asked about. Do
+not quote a `fresh` count as evidence about a device.
+
+**THE URL MUST BE NORMALISED THE SAME WAY THE ROUTE NORMALISES IT.** The route
+keys its cache on `new URL(raw).toString()` (`safeUpstream()` in
+`functions/api/gdacs/geometry.js`, mirrored by `safeGeometryUrl()` in
+`worker/src/sources.js`). Two spellings of one URL are two different keys, so an
+archive asking in a different spelling would miss every entry the cron writes
+and report `upstream` forever — indistinguishable from a broken warm store, and
+a fault in the measuring instrument rather than the thing measured.
+
+**==> AND THE HOSTNAME GOES IN AS A LITERAL, NEVER A CONSTANT. <==**
+`tools/relay-archive-check.mjs` finds what this fetcher archives by scanning its
+TEXT for `landfall.getgravitate.app/api/…`. A `const RELAY` spliced in with a
+template hole breaks the match, and the route silently stops counting as
+archived. Hit while writing this entry; caught by the check, which is the check
+working.
+
 ### 18.4 The Cloudflare MCP — OUR OWN NUMBERS
 
 Live and authenticated, and it does not travel the blocked network. Workers,
