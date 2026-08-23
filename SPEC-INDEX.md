@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 10 files, 251 numbered headings.
+Covering 10 files, 252 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -271,15 +271,16 @@ real home is the other row carrying the same section number.
 | `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 247-274 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3743-3772 |
 | `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 275-304 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 305-358 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 359-374 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 305-371 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 372-389 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 390-393 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,375 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 18,909 | 11 |
+| `SPEC-FLOOD-PLAN.md` | 28,484 | 12 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |

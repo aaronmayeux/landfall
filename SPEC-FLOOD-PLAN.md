@@ -354,6 +354,19 @@ icon, and tap-to-detail. Last because it is the only phase that cannot be judged
 without weather, and because Phase 2 already gave the feature a keyboard-reachable
 home.
 
+**PHASE 6 — PAST RAINFALL, THE GLOBAL FIGURE.** How much has already fallen at
+the reader's address, in a window we choose rather than one the source hands us.
+**See §56.14 for the whole of it** — the source, the wording, the two rules, and
+the five things the archive runner has to measure before a line is written.
+
+**==> IT IS LAST BY DEPENDENCY, NOT BY IMPORTANCE. <==** It needs the `Flooding`
+section to exist, which is Phase 2, and nothing else — so it could in principle
+move ahead of 3, 4 or 5. **It is here because it is the only phase gated on a
+measurement nobody has taken**, and because 3, 4 and 5 finish a feature that is
+half-built while this one starts a new one. If the runner probe comes back clean
+and a US storm still has not arrived to judge Phase 5 on, reordering is
+reasonable — say so out loud rather than quietly swapping them.
+
 ---
 
 ### 56.13 Open, and not to be guessed at
@@ -371,3 +384,161 @@ push, and say so plainly in the report rather than calling it done.
 Nobody has measured an active one. Re-read
 `git show origin/archive:latest/relay-nws-flood.json` before tuning anything
 that depends on the count — clustering thresholds most of all.
+
+---
+
+### 56.14 Past rainfall — the global figure this feature is missing
+
+**AGREED WITH AARON 2026-08-22, AFTER PHASE 2 SHIPPED. NOTHING BELOW IS BUILT.**
+
+#### The question it answers, and the hole it fills
+
+**RAIN ALREADY ON THE GROUND IS THE BIGGEST SINGLE INPUT TO WHETHER THE NEXT
+INCH FLOODS ANYBODY, AND THIS APP DELETES IT.** §48.19 clips every block that
+has already ended, correctly — the Rainfall section says *expected*, and summing
+rain that had already fallen into a forecast total was a fluent wrong number
+that read perfectly. That fix is not being reopened. **What is proposed is a
+SECOND figure, labelled as what it is, in a different section.**
+
+**==> AND IT IS THE ONLY GLOBAL FLOOD-RELEVANT NUMBER THIS PROJECT HAS FOUND.
+<==** That is the argument, not the convenience. Today a storm outside the
+United States gets a `Flooding` section containing a modelled coastal figure and
+a sentence explaining that NWS is US-only. §48.15 records the search: **no
+global equivalent of `/alerts/active` exists** and nothing has turned one up. So
+the coverage gap §56.7 documents is real and permanent for ALERTS — but rain
+that has already fallen is available at every point on Earth, keyless, from a
+source this app already relays.
+
+#### REJECTED: clipping the past out of the payload we already hold
+
+The cheap version, and it was looked at first. `rainSummary` parses the whole
+series and `futureBlocks` throws the past half away *inside* the function — so a
+past total is the mirror of a function already in that file, at zero network
+cost. §48.19's own measurements say how much is sitting there: the global path
+always starts at 00:00 UTC of the current day, and every NWS grid captured starts
+hours before its own `updateTime`.
+
+**==> IT IS REJECTED BECAUSE THE WINDOW WOULD BE AN ACCIDENT OF THE SOURCE
+RATHER THAN A CHOICE. <==** On the global path it is four hours at 04Z and
+twenty-three at 23Z. On NWS it is whatever that grid's publish lag happened to
+be. **Two readers a mile apart could be shown the same rain measured over
+different periods, and neither sentence would be wrong.** A figure whose window
+moves through the day and changes shape by provider is the class of number
+`CLAUDE.md` exists to stop — it reads perfectly and nothing about it invites a
+second look. Free is not the same as right.
+
+#### THE SOURCE — `past_days` on the route we already own
+
+`functions/api/rain/global.js` already asks Open-Meteo for
+`&hourly=precipitation&forecast_days=N&timezone=UTC`. **`past_days` is one more
+query parameter on the same call**, and `projectOpenMeteo` rebuilds every hour
+into NWS's `validTime` grammar regardless of how many there are, so nothing
+downstream learns the series got longer.
+
+**WHAT IT COSTS, MEASURED ON THE ARCHIVED MANILA CAPTURE** (72 hourly values,
+1,992 raw bytes, 4,383 bytes after projection — 27.7 raw and 60.9 projected
+bytes per hour):
+
+| window | hourly blocks added | raw bytes | projected bytes |
+|---|---|---|---|
+| `past_days=1` | 24 | ~665 | ~1,461 |
+| `past_days=2` | 48 | ~1,330 | ~2,922 |
+| `past_days=3` | 72 | ~1,994 | ~4,383 |
+
+**==> IT IS A MODEL, NOT A RAIN GAUGE, AND THE WORDING HAS TO CARRY THAT. <==**
+Open-Meteo's past hours are model and reanalysis output, not an observation from
+an instrument near the reader. "3.1 in fell" overclaims; the sentence has to say
+estimated and name the provider, exactly as the forecast line already does
+(§48.12). **This is the single most likely thing to get wrong**, because the
+number will look and behave identically either way.
+
+**==> AND NWS HAS NO MATCHING PAST SERIES, SO THE PAST COMES FROM ONE SOURCE
+EVERYWHERE. <==** `quantitativePrecipitation` is a forecast grid. An observed
+American figure would be a different service entirely and is not in scope here.
+So on an American house the forecast half stays NWS and the past half is
+Open-Meteo. **That seam is invisible to the reader and it is deliberate:** one
+source for what fell, one for what is coming, the same on every point on the
+planet, is more consistent than a past figure that exists in some countries and
+not others. Say so in the provenance line rather than hiding it.
+
+#### WHERE IT GOES: `Flooding`, NOT `Rain`
+
+**Rain answers *what is coming*. Flooding answers *is water going to be where I
+am*.** Rain already on the ground belongs to the second question, and a flood
+warning with *"about 3 inches fell here in the last two days"* under it is a
+warning that explains itself.
+
+**It also gives that section something true to say where it currently
+apologises.** On a Japan typhoon the rows are empty by coverage and the modelled
+figure is the only content; this is a real, local, present-tense fact to put
+beside it.
+
+**==> IT IS THE READER'S ADDRESS, NOT THE STORM'S FOOTPRINT, AND THOSE ARE
+DIFFERENT FEATURES. <==** The storm-wide version — how much has THIS STORM
+already dumped, and where — is GDACS's `images.rainaccumulationmap`, a PNG per
+storm with no bounds published in the payload. **Not in scope here.** It cannot
+be probed from the sandbox and nothing should be designed against it until a
+runner has fetched one and established whether it is georeferenced consistently.
+Recorded so the two do not get confused for one piece of work.
+
+**==> §51.5 IS NOT IN THE WAY, AND A LATER SESSION WILL THINK IT IS. <==** That
+section is about SURGE: NHC publishes an official inundation forecast and a
+global model must not be shown over coastline the responsible warning centre
+already forecasts for. **There is no competing NHC product here** — §48.1
+establishes NHC publishes no rainfall geometry at all — so the authority
+argument does not transfer. This proposal never needs a GDACS event id and never
+needs the name join §51.5 forbids.
+
+#### The wording, and the two rules that go with it
+
+> **About 3.1 in** has fallen at your house in the last 48 hours.
+> Estimated by Open-Meteo, nearest model point 14.60, 120.98.
+
+**1. IT IS NEVER SUMMED INTO THE FORECAST TOTAL.** *"9 inches expected"* and
+*"3 inches fell"* are different kinds of fact about different windows, and
+adding them makes a storm-total nobody published. This is §48.19's own lesson
+arriving from the other direction, and a later session WILL be tempted, because
+one big number looks more useful than two small ones.
+
+**2. DRY IS A REAL ANSWER AND A FAILED FETCH IS NOT.** Nothing having fallen is
+safe to state plainly. The fetch failing means we do not know, and §5 forbids
+those two rendering the same. Reuse `RAIN.negligibleMm`'s judgement — a modelled
+0.2 mm printed as `0.01 in` reads as a malfunction, said plainly it reads as a
+forecast (§48.8).
+
+#### What must be MEASURED before a line of this is written
+
+**Nothing below can be answered from the sandbox** — `api.open-meteo.com` is
+outside the wall (`SPEC-OPS.md` §18). These go to the archive runner, which has
+open internet, and the answers get written here before any code:
+
+1. **Does `past_days` return what the docs say, at a point with real rain?** Its
+   behaviour, its ceiling and whether the past hours arrive in the same
+   `hourly.precipitation` array or a separate one. **Do not assume the array is
+   simply longer.**
+2. **Where is the join?** Whether the boundary between past and forecast hours is
+   marked at all, or has to be found against the clock — and whether the hour
+   containing `now` is counted once or twice.
+3. **Does it change the response size or the latency enough to matter on a
+   phone?** The table above is arithmetic on one archived capture, not a
+   measurement of the real call.
+4. **What does it report over the ocean and over sparse land?** The forecast half
+   covers the planet; nothing has confirmed the past half does.
+5. **Does the free tier's quota treat it as one call or as more?** §48.14 records
+   that there is **no `x-ratelimit-*` header of any kind**, so this can only be
+   answered by asking Open-Meteo's documentation, never at runtime.
+
+#### Open, and Aaron's to settle
+
+- **How long is the window — 24, 48 or 72 hours?** 48 is the number in the
+  wording above and it is a placeholder, not a measurement. It wants a real
+  storm to judge: too short and it misses the front that soaked the ground, too
+  long and it stops being about this weather.
+- **Does it render with no storm on screen?** The rows already do — Flooding is
+  gated on the house, not the storm (§56.7). Past rain at a calm-day address may
+  be genuinely useful or may be clutter on the screen's quietest state.
+- **Does the storm drawer get one too?** It has no house (§56.9), so it would
+  need the footprint version, which is the GDACS-image work above. **Probably
+  not, and probably not in this phase.**
+
+---

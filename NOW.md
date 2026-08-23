@@ -257,7 +257,21 @@ toggle; Phase 5 replaces it. Nothing about that layer is worth tuning.
 
 **The next phase is 3 — home gating.** Strip the house block out of the storm
 drawer; gate the home dashboard's home sections on the corridor, with the
-no-storm-on-screen exception. Small, self-contained, no new data. **Phase 2
+no-storm-on-screen exception. Small, self-contained, no new data.
+
+**AND THERE IS A PHASE 6 NOW — PAST RAINFALL, added 2026-08-22 after Phase 2
+shipped.** `SPEC-FLOOD-PLAN.md` §56.14. How much has already fallen at the
+reader's address, from `past_days` on the Open-Meteo route this app already
+relays, in the `Flooding` section rather than in Rain. **It is the only global
+flood-relevant number this project has found** — §48.15 records that no global
+equivalent of NWS's alert feed exists, so the coverage gap §56.7 documents is
+permanent for ALERTS and this is what can honestly sit beside it.
+
+**==> IT IS BLOCKED ON A RUNNER PROBE AND NOTHING ELSE. <==** Five questions in
+§56.14 that the sandbox cannot answer — `api.open-meteo.com` is outside the wall.
+Nobody writes a line of it until those are measured and written into that
+section. It depends only on Phase 2, so it CAN move ahead of 3, 4 or 5; if it
+does, say so out loud rather than quietly swapping them. **Phase 2
 already emptied §48.20's warnings-only tier and closed its fetch gate** — that
 was this change's own cost, not a head start: leaving the tier would have shown
 the same alert in two sections of one panel.
