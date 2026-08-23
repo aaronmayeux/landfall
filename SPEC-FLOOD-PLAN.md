@@ -404,11 +404,17 @@ the dark-theme watch chip. Recomputed rather than quoted, it fails on **three of
 the four**. The layer's header names the case that forced the split; the suite
 names the whole cost of undoing it.
 
-**==> SLICE C SHIPPED 2026-08-23 IN TWO PUSHES AND HAS NOT BEEN JUDGED ON GLASS.
-<==** The file split first and alone; then the detail panel, the click dispatch,
-the cluster split and the rows becoming buttons. As-built in §56.6 and
-`SPEC-UI.md` §48.21. **Judge on glass** — and the five-step pass below is still
-the gate, because nothing about this slice was measured anywhere but here.
+**==> SLICE C SHIPPED AND WAS CONFIRMED ON GLASS 2026-08-23. <==** The file
+split first and alone; then the detail panel, the click dispatch, the cluster
+split and the rows becoming buttons; then a sixth pass for the prose, the office,
+the watch line, the not-drawn line, `Show on the globe` and the cluster fade.
+As-built in §56.6 and `SPEC-UI.md` §48.21.
+
+**THE ONE FAULT GLASS FOUND WAS THE CLUSTER FADE, AND IT IS THE ARGUMENT FOR
+THIS WHOLE SLICE PLAN.** Every automated gate passed on a build where tapping a
+cluster looked broken, because no gate here can see a chip riding a camera. Six
+separable pushes meant the fix was one small change against a known-good base
+rather than a bisect through 2,523 lines.
 
 **==> AND IT DID THE FILE SPLIT FIRST, IN A COMMIT OF ITS OWN. <==**
 `map/layers/flood.js` crossed §12's ceiling on Slice B and SPEC.md's inventory
@@ -719,7 +725,7 @@ must be selected — never an empty map with no explanation.
 
 ---
 
-### 56.6 Tapping an alert — ==> SHIPPED 2026-08-23, UNSEEN ON GLASS <==
+### 56.6 Tapping an alert — ==> SHIPPED AND CONFIRMED ON GLASS 2026-08-23 <==
 
 **Tap a single icon → that alert's details. Tap a cluster → the map zooms until
 it splits.** The second is MapLibre's standard behaviour and readers already own

@@ -213,402 +213,65 @@ failed`. **A swallowed exception is now a failure in that file.** If another
 catch-and-warn site is added anywhere, add its marker to `SWALLOWED` or this
 gate goes blind to it.
 
-**STILL UNSEEN ON GLASS: everything §48.21 actually draws.** The layer has never
-been looked at. See the flood entry below.
+**§48.21's LAYER HAS NOW BEEN JUDGED ON GLASS IN FULL** — polygons, chips,
+clustering, tapping and the detail panel. See the flood entry below for what it
+is and the one fault glass found.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1-4 AND PHASE 5 SLICE A ARE IN.
-SLICES B AND C ARE NOT. <==** Plan agreed with Aaron
-2026-08-22: `SPEC-FLOOD-PLAN.md` §56, one phase per session, in order. Read that
-file before touching anything flood-shaped.
+**==> §48.21 IS DONE. THE FLOOD FEATURE SHIPPED IN SIX PASSES AND EVERY ONE WAS
+CONFIRMED ON A PHONE. <==** 2026-08-22 to 2026-08-23. What it IS lives in
+`SPEC-FLOOD-PLAN.md` §56 and `SPEC-UI.md` §48.21 — read those before touching
+anything flood-shaped. **The narrative that used to sit here is deleted per this
+file's own rule: an item that lands leaves, and the spec describes what is.**
 
-**==> PHASE 5 WAS BUILT, PUSHED, PATCHED TWICE AND REVERTED WHOLE ON 2026-08-23.
-IT WORKED AND IT WAS SLOW. <==** Tapping a storm on the globe and stepping
-between storms in either drawer all dragged; the revert (`0882353`) cleared it,
-so the cause is settled. **Before rebuilding it, read `SPEC-FLOOD-PLAN.md`
-§56.15 (what went wrong and the findings worth keeping), §56.16 (the three
-slices and the baseline that must exist first) and §56.17 (the prerequisite).**
+**FOUR THINGS ARE STILL OPEN, AND ONLY FOUR.**
 
-The short version, because it is the kind of mistake that repeats:
+1. **==> THE LAYER DRAWS NOTHING OUTSIDE THE UNITED STATES. <==** NWS is a US
+   agency, so a reader watching a typhoon turns the switch on and gets an empty
+   globe. The switch says `US only`, which stops it reading as a fault and does
+   not stop it being a hole. **The GDACS flood probe is in the runner and nobody
+   has read it yet** — `git show origin/archive:latest/geometry/gdacs-floods-probe.json`.
+   That GDACS publishes drawable flood shapes is an INFERENCE from an API this
+   project already knows, not a measurement. Four questions in §56.19, and
+   nothing gets written until the bytes land.
 
-- **Every perf number behind that push was headless `node` in this sandbox**, so
-  it could not see the costs that were actually felt. **A sandbox measurement is
-  evidence about the sandbox and never about the app.** Perf claims come off the
-  CI runner or off Aaron's phone. ==> **THE REASON IS THE BASEMAP, NOT THE
-  BROWSER, AND THIS LINE USED TO GET IT WRONG.** <== The sandbox has chromium
-  1194 and `boot-smoke.mjs` passes in it; what is blocked is
-  `tiles.openfreemap.org`, so the map never finishes building and `perf-select`
-  hard-fails. Correctness in a browser works here. Timings do not. `CLAUDE.md`
-  carries the commands.
-- **The layer engine calls `update()` on EVERY definition on EVERY
-  `setBundle`**, visible or not. Work put there is paid by every reader on every
-  selection for a layer that may be switched off. Gate it, and make `setVisible`
-  push on turn-on.
-- **It went out as one 2,523-line commit**, so when it was slow there was
-  nothing to bisect and the session guessed twice instead of knowing once.
-- **When the measurement and the glass disagree, the glass is right and the
-  session stops.** That disagreement happened after the first patch and was
-  ignored.
+2. **STILL NO PERF BASELINE, AND IT IS ONE CI RUN AWAY.** `tools/perf-select.mjs`
+   exists and runs in CI's `browser` job, `continue-on-error: true` with every
+   budget `null` — because **a check nobody has seen pass does not get to block a
+   deploy**, and it was written in a sandbox that cannot execute it. **NEXT
+   ACTION: watch it print stable numbers over a few runs, fill
+   `tools/perf-budgets.json`, then drop `continue-on-error`.** Until then there
+   is no baseline, only a tool that can take one.
 
-**==> THE PREREQUISITE LANDED AND WAS CONFIRMED ON GLASS 2026-08-23. <==**
-`SPEC-FLOOD-PLAN.md` §56.17 and §56.18; as-built in `SPEC-UI.md` §48.21. The
-`Flooding` section fetches its own list, the corridor match is cheap, and both
-were judged on a phone against Moke with the map switch off — eight resolved Big
-Island zones, and it felt good. **Nothing from that pass is outstanding.**
+3. **`count('area_select')` HAS NEVER BEEN RECORDED.** The call site in
+   `app/views.js` asks for it; `lib/usage.js` ACTIONS does not list it, and
+   `count()` drops an unlisted name in silence — the exact bug that file's own
+   comment records happening to the Environment retry. **NOT a one-line fix**:
+   ACTIONS names are D1 columns, so restoring it means an `ALTER TABLE` on
+   `sessions`. Every tap on a watched area since §45 is counted as nothing.
 
-**==> THE FLOOD LAYER DRAWS THE WHOLE COUNTRY AGAIN, AND SLICE A IS REVERSED.
-<==** 2026-08-23. Aaron judged it on a phone: the switch drew nothing until he
-picked a storm, and *"I don't want to have to select a storm. It should draw on
-the map like any other layer."* §56.1's argument for per-storm was wrong —
-`Areas being watched` is in the same group and draws globally with nothing
-selected — and the reversal also retires the causal-claim risk §56.5 accepted
-knowingly. As-built in `SPEC-UI.md` §48.21 and `SPEC-FLOOD-PLAN.md` §56.16.
+4. **`tools/test-genesis.mjs` HANGS RATHER THAN FAILS.** It stops after the
+   section headed *a broken NHC half is an OUTAGE, never an empty sky*, where
+   `fetchGenesis` is driven with every relay hop throwing, and never returns.
+   Killed at 130 s. **Confirmed pre-existing** — it hangs identically with the
+   flood work reverted. A suite that hangs is worse than a red one: it blocks
+   whatever runs it and names nothing.
 
-**IT IS A NET DELETION AND IT TOOK THE LAYER OFF THE SELECTION PATH.**
-`update()` and `clear()` are empty, so §56.15's faults 1 and 2 are unreachable
-rather than gated: a selection costs this layer nothing, switch on or off. The
-corridor match, the memo, the held storm, the held bundle and `floodMatchRuns`
-are gone. `map/layers/flood.js` came down 91 lines the day it crossed the
-ceiling.
+**==> AND ONE THING TO READ BEFORE ADDING ANY ROUTE THAT TAKES AN IDENTIFIER
+FROM A QUERY STRING. <==** `functions/api/nws/alert.js` is the only route in this
+app that builds an upstream URL out of client input. The id must match NWS's CAP
+URN **anchored at both ends** or it is refused before any fetch — unanchored,
+`https://evil.example/?ok=urn:oid:…` passes and the function fetches it with our
+User-Agent from inside Cloudflare's network. Seven refusal cases are asserted and
+the anchors are mutation-verified.
 
-**==> ALL THREE SLICES ARE IN. PHASE 5 IS BUILT AND NONE OF SLICE C HAS BEEN
-LOOKED AT. <==** Slice C shipped in two pushes on 2026-08-23. The first lifted
-the chip half into `map/layers/flood-chip.js` with no behaviour at all — 757
-down to 484 and 315, both under §12's ceiling, and the layer's row is off
-SPEC.md's inventory. The second is the tapping: a chip opens a detail panel, a
-cluster zooms until it splits, and the alert rows in `Flooding` became buttons
-that open the same panel on both screens. As-built in `SPEC-FLOOD-PLAN.md` §56.6.
-
-**TWO THINGS THAT PUSH FOUND AND ARE WORTH NOT RE-LEARNING.** A `<p>` inside a
-`<button>` makes a browser close the button early and re-parent the rest of the
-row outside it — the row looks perfect and its bottom half is dead to a tap.
-Caught by an assertion, not on glass, which is the one time in this phase a gate
-got there first. And **no telemetry action was added**: every name in
-`lib/usage.js` ACTIONS is a real COLUMN on the D1 `sessions` table, so adding one
-is an `ALTER TABLE` on a live database rather than a line of code.
-
-**==> IT DRAWS, AND THE FIRST LOOK FOUND THE CHIP WAS THE WRONG MARK. <==**
-2026-08-23, Aaron on a phone: the polygons and one chip painted over the Big
-Island, and the chip was a **blank** rounded square. `SPEC-UI.md` §56.10 had
-committed in Phase 2 to the globe stroking the `Flooding` heading's own three
-waves — *the same path data, not a redrawn one* — and Slice B ignored it. **No
-gate in this repo noticed.** Fixed: the chip carries the waves,
-`ui/section-icon.js` exports `iconPathData`, and `tools/test-flooding.mjs`
-asserts the layer imports the shape and holds no copy of it (mutation-verified).
-
-**TWO THINGS THAT WENT WITH IT AND ARE UNSEEN.** `FLOOD_GEO.chipSizePx` is 24,
-not 20, so the waves get a 19 px clear area — larger than the 16 px the heading
-reads fine at. And **a cluster shows its count with no waves**, because both
-cannot share a 24 px chip. If a numbered chip reads as a different layer, the
-fallback is a smaller numeral beside smaller waves, not dropping the count.
-
-**ONE CHIP OVER EIGHT ZONES IS CORRECT AND IS STILL AN OPEN QUESTION.** Moke's
-watch is ONE alert naming eight forecast zones, joined into one shape, so it gets
-one marker — placed in the largest zone, which is the middle of Mauna Loa where
-nobody lives. The drawer lists eight names and the map paints eight outlines
-against that one marker. **A chip per zone would fix the findability and break
-the count**: eight markers cluster into a chip reading "8" while the drawer says
-one alert. **Deferred deliberately until a real multi-alert cluster has been seen
-on the mainland** — sixteen separate warnings sit in the Wabash valley right now
-and that is the case the counting was built for.
-
-**==> THE FEATURE IS NOT FINISHED WHILE IT DRAWS NOTHING OUTSIDE THE UNITED
-STATES, AND §56.19 IS THE ENTRY THAT SAYS SO. <==** Aaron's question on
-2026-08-23. The layer paints NWS products and NWS is a US agency, so a reader
-watching a typhoon turns the switch on and gets an empty globe. The switch's note
-says `US only`, which stops it reading as a fault and does not stop it being a
-hole.
-
-**THE PROBE IS IN THE RUNNER AND NOBODY HAS READ IT YET.** It lands on the
-`archive` branch as `geometry/gdacs-floods-probe.json` — GDACS's own SEARCH
-endpoint with
-`eventlist=FL` instead of the `eventlist=TC` every GDACS request this app makes
-has always carried. **That GDACS publishes drawable flood shapes is an INFERENCE
-from an API this project already knows, not a measurement**, and nothing gets
-written until the bytes land. Four questions in §56.19: polygon or only a point,
-how many worldwide at once, bytes, and whether there is enough to say WHERE
-without inventing anything.
-
-```
-git show origin/archive:latest/geometry/gdacs-floods-probe.json
-```
-
-**The other candidate is widening the CAP query, and it is gated on `NEXT UP`
-item 4** — `%Hurricane%` already pulls German thunderstorms, and a flood term is
-a broader word, not a narrower one. Read §56.19 before pricing it. **Neither is
-Slice C's work.**
-
-**==> TWO FINDINGS FROM SLICE C THAT ARE NOT SLICE C's WORK. <==**
-
-1. **`count('area_select')` HAS NEVER BEEN RECORDED AND STILL IS NOT.** The call
-   site in `app/views.js` asks for it; `lib/usage.js` ACTIONS does not list it,
-   and `count()` drops an unlisted name in silence. That is the exact bug that
-   file's own comment records happening to the Environment retry. **It is NOT a
-   one-line fix**: ACTIONS names are D1 columns, so restoring it means an
-   `ALTER TABLE` on `sessions`. Every tap on a watched area since §45 shipped is
-   counted as nothing. Aaron's call whether that is worth a session.
-2. **`tools/test-genesis.mjs` HANGS ON `main` AND DOES NOT FAIL — IT NEVER
-   RETURNS.** It stops after the section headed *a broken NHC half is an OUTAGE,
-   never an empty sky*, where `fetchGenesis` is driven with every relay hop
-   throwing. Killed at 130 s. **Confirmed pre-existing**: it hangs identically
-   with Slice C's only shared file (`config/constants.js`) reverted to HEAD, and
-   Slice C touches no genesis file. A suite that hangs rather than failing is
-   worse than a red one — it blocks whatever runs it and names nothing.
-
-**==> PHASE 5 IS CONFIRMED ON GLASS AND A SIXTH PASS WENT IN ON TOP OF IT.
-<==** 2026-08-23, Aaron on a phone: *"works and looks good"*, with one fault —
-a tapped cluster stayed painted for the whole flight and only broke apart on
-arrival. Fixed: the chip fades on the TAP, as an opacity write, restored on
-`moveend`, on a null zoom, and on every push. §56.6.
-
-**AND THE PANEL GAINED THE FIVE THINGS IT WAS THIN WITHOUT.** The forecaster's
-own `instruction` and `description`, fetched one alert at a time through a new
-`/api/nws/alert` route; the issuing office; one line saying what a watch is; a
-sentence when an alert has no drawable shape; and `Show on the globe`. **The
-instruction is the one that mattered** — until now this app could say when a
-flood warning expired and not what to do about it.
-
-**==> AND THAT NEW ROUTE IS THE ONLY ONE IN THE APP THAT BUILDS AN UPSTREAM URL
-FROM CLIENT INPUT. <==** The id must match NWS's CAP URN anchored at both ends
-or it is refused before any fetch. Unanchored, `https://evil.example/?ok=urn:oid:…`
-passes and the function fetches it with our User-Agent from inside Cloudflare's
-network. Seven refusal cases asserted, anchors mutation-verified. **If another
-route ever takes an identifier from a query string, read
-`functions/api/nws/alert.js` first.**
-
-**STILL UNSEEN ON GLASS: everything in this sixth pass.** The fade, the prose,
-the office, the watch line, the not-drawn line and the button. **Five minutes:
-tap a numbered cluster and watch it go; tap a single chip and read the panel;
-press Retry with the phone in airplane mode; press `Show on the globe` from a
-row on the home dashboard; and check a Flood Watch says what a watch is.**
-
-**THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
-three minutes, in that order — taps on the globe first, chevrons on the home
-dashboard second, the switch off-and-on third, a poll cycle fourth, and **only
-then** whether it looks any good. **If any of the first four feels worse than
-today's build, the rule is revert, not patch.** That is the rule the first
-attempt broke.
-
-**WHAT WAS DONE ABOUT THE LAG, AND WHAT WAS NOT.** Both structural faults §56.15
-named are designed out rather than patched on afterwards: the corridor match and
-the source write sit behind the layer's own `visible` gate, so a reader who never
-finds the switch pays nothing on a selection; `setVisible` pushes on turn-on so
-the control is not dead until the next poll; and the match is memoized **keyed on
-the bundle and the alert list by identity**, never on the samples derived from
-them, which is the trap that made the first memo never hit.
-`tools/test-flood-layer.mjs` counts the work rather than its result — a feature
-count is identical with the memo deleted — and every rule in it was
-mutation-verified.
-
-**==> AND NONE OF THAT IS A MEASUREMENT. <==** It is an argument about work not
-done. Nothing in the sandbox can time this; the basemap is blocked, so
-`perf-select` hard-fails by design. **The numbers come off CI or off the phone,
-and if they disagree with the phone, the phone is right.**
-
-**STILL NO BASELINE, AND IT IS ONE CI RUN AWAY NOW.** The push before this one
-(`5fc3eae`) touched only the selection path, so its `perf-select` run is the
-closest thing to a clean before-number this repo will get. **Read it, then read
-this push's, then fill `tools/perf-budgets.json` and drop `continue-on-error`.**
-
-**THE TOOLS FOR THE RETRY ARE IN, AND ONE OF THEM NEEDS A HUMAN BEFORE IT IS
-WORTH ANYTHING.** Added 2026-08-23:
-
-- **`tools/perf-select.mjs`** — the interaction measurement this repo never had.
-  Drives `?replay=ida` (samples off disk, so the storm is identical every run),
-  taps a storm row six times, discards the first, and reports the **worst single
-  main-thread block** per selection. Runs in CI's `browser` job.
-- **`tools/perf-budgets.json`** — ships with every value `null`, because a
-  budget nobody measured is a number somebody invented.
-- **The colour-null counter no longer lies.** `colorNullsMainThread` with
-  `workerConsoleWatched: false` beside it, and the report prints the blind spot
-  every run. Reaching the worker's console is a CDP attach and its own change;
-  what is fixed is that a 0 can no longer read as "none happened".
-
-**AND ITS FIRST CI RUN FAILED IMMEDIATELY, WHICH IS THE SYSTEM WORKING.** Run
-#361: `SyntaxError: Unexpected identifier 'colorNulls'`. The browser-side probe
-in `perf-instrument.mjs` is built as a TEMPLATE LITERAL, and a comment added
-inside it contained backticks, which closed the string early. **The file was a
-syntax error and every gate in this repo passed it** — because `tools` is in
-`SKIP_DIRS` in `check-syntax.mjs`, so nothing in that directory had ever been
-parsed at all.
-
-`check-syntax.mjs` now parses every `tools/*.mjs` as a second, PARSE-ONLY pass
-(no import resolution — these files legitimately import playwright, which is not
-in this repo). 142 tools, milliseconds, and the mutation was verified: put the
-backtick back and it goes red. **The pre-push hook runs check-syntax, so this
-class of bug cannot reach a runner again.**
-
-**==> IT IS NON-BLOCKING AND UNARMED, AND SOMEBODY HAS TO WATCH IT RUN. <==**
-`continue-on-error: true`, budgets `null`. It was written in a sandbox that
-cannot execute it, and this repo's rule is that **a check nobody has seen pass
-does not get to block a deploy**. **NEXT ACTION: watch `perf-select` print
-stable numbers over a few CI runs, fill the budgets, paste the baseline line it
-prints into this file, then drop `continue-on-error`.** Until then there is
-still no baseline — only a tool that can take one.
-
-**PHASE 1 — THE CORRIDOR — SHIPPED 2026-08-22.** The match is no longer an
-overlap with the forecast cone; it is a great-circle distance from the storm's
-whole densified track, past and forecast, under `RAIN.floodCorridorNm`. As-built
-in `SPEC-UI.md` §48.21. The three bounding-box functions that used to do the
-matching are gone, and the antimeridian problem is gone with them — a
-great-circle distance has no seam.
-
-**PHASE 2 — THE FLOODING SECTION — SHIPPED 2026-08-22.** One section on both
-screens: alert rows on top, the modelled coastal figure as prose below. The
-`Coastal flooding` section is deleted and its spec entry with it; the flood rows
-are out of both Rain sections; the national agencies' storm-surge rows moved
-across; `Watches and warnings` gained one line pointing here. As-built in
-`SPEC-UI.md` §56.7, §56.8 and §56.10.
-
-**==> THE RADIUS IS 300 nm, IT IS A GUESS, AND IT IS AARON'S TO MOVE. <==**
-Nothing in the sandbox can measure it. Do not write a derivation for it and do
-not let a later session quietly convince itself the number was measured.
-
-**HELD FOR WEATHER: nothing from Phase 1 or Phase 2 has been seen, and none of
-it can be.** Every assertion is offline against real bytes — 25 of the 33
-archived US alerts match Ida's real advisory-19 track at 300 nm, Lala matches
-none of them at 1,966 nm, and `tools/test-flooding.mjs` renders all six of
-Phase 2's states — but not one pixel has been judged. It needs a US storm near a
-flooding region. Expect this line to stay here after every flood phase.
-
-**Two live gaps §56 names.** The national volume is one snapshot on a quiet day
-(36 alerts at 2026-08-22T22:29:35Z, now frozen at
-`samples/flood/alerts-national.json`). Re-read
-`git show origin/archive:latest/relay-nws-flood.json` before tuning anything that
-depends on the count — clustering thresholds in Phase 5 most of all. And
-`map/layers/flood.js` still draws the whole country from a `Storm detail`
-toggle; Phase 5 replaces it. Nothing about that layer is worth tuning.
-
-**PHASE 3 — HOME GATING — SHIPPED 2026-08-22.** The house is off the storm
-drawer entirely, and the home dashboard's `Rain` and `Flooding` render only when
-the storm on screen is measured to reach the house — or when there is no storm
-on screen at all. One radius now means *near this storm* everywhere in the app.
-As-built in `SPEC-UI.md` §56.9.
-
-**IT WAS NOT SELF-CONTAINED, AND THE COST WAS DELETION.** Taking the house out
-of the storm drawer orphaned six exports and one constant reaching from `ui/`
-through `lib/` into `data/` and `config/` — both scope predicates, the
-three-word wind-field verdict, its composition in `app/views.js`, the
-range-to-home helper, the house-fallback distance, and a CSS rule. Retiring them
-cleanly was most of the diff, and three §48 sections went with them. Aaron
-approved the full chain rather than a half-removal.
-
-**AND ONE HALF OF §56.9 DID NOT EXIST TO BE GATED.** The plan said the sections
-render *when there is no storm on screen at all*; the audit found both were
-built only on the dashboard path, which needs a threat storm — so a genuinely
-calm day showed neither. Building the gate alone would have shipped a change
-that only ever subtracted. Both halves are in.
-
-**PHASE 4 — ZONE SHAPES FOR WATCHES — CONFIRMED ON GLASS 2026-08-23.** A Flood
-Watch carries no shape of its own, so it could be neither drawn nor matched. Its
-zones are resolved now and joined onto the alert list in `data/flood.js`. Moke's
-watch rendered on a phone with eight Big Island zones named in the drawer — the
-first time a resolved watch has been on screen. As-built in `SPEC-UI.md` §48.21;
-what was measured stays in `SPEC-FLOOD-PLAN.md` §56.4.
-
-**==> ONE PARAMETER IS STILL UNTESTED AND IT WOULD TURN 40 REQUESTS INTO 1. <==**
-NWS documents `include_geometry` on the zones endpoint and this project has never
-sent it. The probe has been in the runner since 2026-08-23. **Read
-`geometry/nws-zones-bulk-probe-geometry.geojson` off `archive` before touching
-`functions/api/nws/zone.js`** — if it carries the boundaries, that route should
-ask once instead of forty times. The bulk probe WITHOUT it already answered:
-all 23 zones in one request, `geometry: null` on every feature, which is why the
-per-zone loop shipped.
-
-**STILL UNSEEN: THE ZONE SHAPES DRAWN ON THE MAP.** The drawer's rows are
-confirmed; not one boundary has been painted. A resolved watch draws whole
-forecast zones — a Hawaii zone is 0.7° tall against a median warning polygon
-0.270° wide. **Whether a warning still reads as more urgent than a watch fifty
-times its area is a glass call nobody has made**, and Slice A owns the map that
-has to make it.
-
-**ONE THING FIXED IN PASSING** because this change depends on the file it was
-wrong in: `functions/api/nws/flood.js` named the mirror checker without its
-`test-` prefix. It is `tools/test-relay-mirrors.mjs` and that comment now says
-so. **Still open and still Aaron's call:** `tools/test-home-ida.mjs` fails one
-assertion — a rail label crossed by a dotted vertical at adv 010 +6h and +7h,
-**confirmed pre-existing on clean `main`** and not flood-related.
-
-
-**AND THERE IS A PHASE 6 NOW — PAST RAINFALL, added 2026-08-22 after Phase 2
-shipped.** `SPEC-FLOOD-PLAN.md` §56.14. How much has already fallen at the
-reader's address, from `past_days` on the Open-Meteo route this app already
-relays, in the `Flooding` section rather than in Rain. **It is the only global
-flood-relevant number this project has found** — §48.15 records that no global
-equivalent of NWS's alert feed exists, so the coverage gap §56.7 documents is
-permanent for ALERTS and this is what can honestly sit beside it.
-
-**==> IT IS BLOCKED ON A RUNNER PROBE AND NOTHING ELSE. <==** Five questions in
-§56.14 that the sandbox cannot answer — `api.open-meteo.com` is outside the wall.
-Nobody writes a line of it until those are measured and written into that
-section. It depends only on Phase 2, so it CAN move ahead of 3, 4 or 5; if it
-does, say so out loud rather than quietly swapping them. **Phase 2
-already emptied the warnings-only tier and closed its fetch gate** — that
-was this change's own cost, not a head start: leaving the tier would have shown
-the same alert in two sections of one panel.
-
-**==> ONE THING PHASE 2 TRADED AWAY, AND IT IS A GLASS CALL. <==** §48.6's rule
-is that a warning in force renders ABOVE any forecast. The section order is Rain
-then Flooding, so on both screens the warning is now one section BELOW the
-rainfall total. Inside the section the rows still lead. What was bought is a
-heading of its own instead of a footnote on a section about something else; what
-was sold is roughly one section's scroll height on a phone. **If it reads wrong,
-the fix is one line in `dashboardHtml` and one in `renderBody`.**
-
-**GLASS: THE RAINFALL PASS. NONE OF IT HAS BEEN SEEN.**
-§48.19 and §56.9 are as-built in `SPEC-UI.md`; this is only what to look at.
-
-1. **The house block is GONE from the storm drawer, on every storm** (§56.9).
-   Open any storm: `Rainfall` should now be NHC's paragraph and nothing else,
-   and on a GDACS storm one sentence saying it is not published for that basin.
-   **The thing to check is that nothing looks amputated** — a section that was
-   two blocks for a month is one now, and whether it reads as focused or as
-   half-loaded is a glass call.
-2. **The totals dropped and that is the fix, not a fault.** "About 11 inches"
-   became "about 9" on the Hilo fixture because two blocks totalling 63.754 mm
-   had already fallen when it was read. On the global source it is larger: 23%
-   of today's Manila capture was already on the ground. If a figure looks
-   smaller than you remember, that is why.
-3. **Flood warnings lost the box and the colours** — no fill, no red, no amber,
-   no bold. The urgency moved into the sentence: *in force until 4:15 PM*
-   against *until 6:00 AM*. **The question is whether an immediate warning
-   still reads as more urgent than a watch with the ink gone.** If it does not,
-   the fallback is a weight change rather than the old fill coming back.
-4. **A new `lapsed` state.** A forecast whose every hour has passed says it has
-   run out and offers Retry, rather than "no meaningful rain expected". Only
-   reachable on a genuinely old last-good copy, so it may not be seeable.
-
-5. **On HOME, `Rain` and `Flooding` now come and go with the stepper** (§56.9).
-   Step through storms on the home dashboard: both sections should be there for
-   a storm whose track passes within 300 nm of your house and **absent
-   entirely** for one that does not — no heading, no explanation, nothing.
-   **This is the one most likely to read as a bug rather than a rule.** A
-   section vanishing as you press a chevron is a strong signal; whether it reads
-   as *this storm has nothing to do with your house* or as *the app lost
-   something* is exactly the call nothing here can make. The fallback if it
-   reads wrong is a one-line placeholder saying why, which the gate deliberately
-   does not draw today.
-6. **And with NO storm on screen they should BOTH be there** — on a calm day,
-   and on a day a source is down. That half did not exist before this phase; a
-   quiet home screen showed neither. Check it with the globe empty.
-7. **CONFIRMED 2026-08-23 — the alert rows carry their area and their time
-   left, and eight zones read as thorough rather than as a wall.** Moke's watch
-   printed *Kona; Kohala; Big Island Interior; Big Island Summit; Big Island
-   South; Big Island Southeast; Big Island East; Big Island North* over two
-   lines with *37 hours left* under it. **The untruncated area list is settled
-   at eight; seventeen is still unseen** — the reader is hunting for their own
-   zone and truncating hides it, so the wording stands, but twice this length on
-   a phone is a different question.
-
-8. **The `Flooding` section itself, on a calm day with a home set.** It renders
-   with no storm on screen — that is the point of gating it on the house rather
-   than the storm — and on a quiet day it says *no flood alerts are in force for
-   your address* and nothing else. **Is that a useful line or a section of
-   nothing?** It exists because a section headed *Flooding* with a blank body
-   cannot be told from one that failed to load, but whether that reads as
-   reassurance or as clutter is glass. Also: three stacked waves beside the
-   heading, and whether they read as *water where it should not be* rather than
-   as surf.
+**THE RULE THE PHONE PASS ENFORCED IS NOT CLOSED EVEN THOUGH THE PASS IS.** If a
+future flood pass makes a selection, a chevron or a switch feel worse than
+today's build, **revert the whole thing rather than patching it**. That is the
+rule the first attempt broke, and the reason this one landed in six separable
+pushes — the one fault glass found (a tapped cluster staying painted for the
+whole flight) was fixed as one small change against a known-good base rather
+than a bisect through 2,523 lines.
 
 
 **THE MAP STILL TELLS THE LIE THE HEADCOUNT JUST STOPPED TELLING.** §54 split
