@@ -108,7 +108,7 @@ const CONTRACT = Object.freeze({
     '.home-figs-v',
     '.home-rail-ev',
     '.home-rain-line',
-    '.home-surge-line',
+    '.flood-line',
   ],
   valueLabel: ['.detail-env-fig-k'],
   body: [
@@ -132,7 +132,7 @@ const CONTRACT = Object.freeze({
     '.home-locate-help',
     '.home-edit',
     '.home-rain-peak',
-    '.home-surge-worst',
+    '.flood-worst',
   ],
   footnote: [
     '.detail-env-note',
@@ -162,7 +162,7 @@ const CONTRACT = Object.freeze({
     '.home-now-coords',
     '.home-confirm-coords',
     '.home-rain-note',
-    '.home-surge-note',
+    '.flood-note',
   ],
 });
 

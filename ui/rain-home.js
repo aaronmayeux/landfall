@@ -17,19 +17,24 @@
  * ("nearest point: Kahului, HI"). Whether that is enough is a glass question
  * and it needs a storm near a home to ask.
  *
- * ==> A WARNING IN FORCE OUTRANKS ANY FORECAST AND RENDERS ABOVE IT. <== §48.6.
- * A total is what might happen; a Flash Flood Warning is what IS happening.
- * Only the flood family reaches this section — hurricane and tropical storm
- * warnings already have a home in the storm drawer's `In effect` section, and
- * saying them twice makes the app look like it has lost track of what it has
- * already told you.
+ * ==> THE FLOOD WARNINGS LEFT THIS SECTION ON 2026-08-22 (§56.7). <== They led
+ * this block from §48.6, on the rule that a warning in force outranks any
+ * forecast — a total is what MIGHT happen and a Flash Flood Warning is what IS
+ * happening. That rule is unchanged and the move does not undo it: `Flooding`
+ * is the section directly below this one, so the warning still comes before
+ * the total a reader scrolls to, and it now has a heading of its own instead
+ * of being a footnote on a section about something else.
+ *
+ * What it buys is the merge §56.7 argues for: the rows sit beside the modelled
+ * coastal figure, because somebody deciding whether to move a car does not
+ * care whether the water came off the sky or off the sea. What is left here is
+ * a FORECAST, and only a forecast.
  *
  * Imports: config/, lib/, ui/ siblings. Never data/ — the fetch is injected (§12).
  */
 
 import { rainSummary } from '../lib/rainfall.js';
 import { formatClockDay } from '../lib/time.js';
-import { floodAlertRows } from './rain-alerts.js';
 import { DOTS } from './loading-dots.js';
 
 const esc = (s) =>
@@ -114,24 +119,6 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
         this app could not read.</p>`;
     }
 
-    /* WARNINGS FIRST, ALWAYS. */
-    const alerts = floodAlertRows(out.alerts);
-
-    /* ==> `alerts: null` MEANS TWO DIFFERENT THINGS AND THEY GET TWO DIFFERENT
-     * SENTENCES (§48.16). <== From NWS it means the alerts hop failed while
-     * the grid succeeded — what is in force is UNKNOWN, which is not "nothing
-     * in force" and must not be shown as silence (§5). From the global model
-     * it means there is no flood-warning source for this place at all, which
-     * is a durable fact rather than a hiccup. Saying "could not be checked
-     * just now" about the second reads as a temporary fault and invites a
-     * reader to wait for an answer that is never coming. */
-    const alertsUnknown = res.payload?.alerts != null
-      ? ''
-      : out.provider?.name === 'open-meteo'
-        ? `<p class="home-rain-note">Flood warnings aren’t published for this
-            location — this is a rainfall forecast only.</p>`
-        : `<p class="home-rain-note">Flood warnings could not be checked just now.</p>`;
-
     const through = out.throughWords ? ` through ${esc(out.throughWords)}` : '';
 
     /* ==> NEGLIGIBLE RAIN IS WORDS, NOT A NUMBER (§48.8). <== Galveston's
@@ -171,7 +158,7 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
         ? `At your house — National Weather Service, nearest point ${esc(out.place)}.`
         : 'At your house, from the National Weather Service.';
 
-    return `${alerts}${alertsUnknown}${headline}${peak}
+    return `${headline}${peak}
       <p class="home-rain-note">${where}</p>`;
   }
 

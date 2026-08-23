@@ -51,7 +51,7 @@ import { pickThreatStorm, buildHomeDashboard, APPROACH } from '../data/home-dash
 import { homeChart } from './chart-home.js';
 import { dotted } from './loading-dots.js';
 import { createRainHome } from './rain-home.js';
-import { createSurgeHome } from './surge-home.js';
+import { createFloodingHome } from './flooding-home.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
 /* The icon set lives in its own file now — the storm panel draws the same
@@ -94,11 +94,19 @@ export function createHomeDashboardView({
    * is the largest in the app and over §12's ceiling, so it gets one seam and
    * nothing else: a section string, an ensure, a wire. */
   const rainH = createRainHome({ ...rain, units, now });
-  /* Surge (§51.3) gets the same one seam for the same reason. It is passed the
-   * STORM as well as the house, which Rain is not: rainfall is about a point
-   * on the ground and is the same answer whichever storm is on screen, while a
-   * surge simulation belongs to one storm's bulletins. */
-  const surgeH = createSurgeHome({ ...surge, units });
+  /* Flooding (§56.7) gets the same one seam for the same reason. It is passed
+   * the STORM as well as the house, which Rain is not: the flood rows are
+   * about a point on the ground and are the same answer whichever storm is on
+   * screen, while a surge simulation belongs to one storm's bulletins.
+   *
+   * ==> IT TAKES BOTH FACADES, AND `rain` IS THE ONE `rainH` ALREADY HAS. <==
+   * `data/rainfall.js` holds exactly one answer keyed by the rounded home
+   * coordinates, so both controllers read one record. Handing this one its own
+   * fetch would cost nothing in bytes and everything in trust: two calls can
+   * land either side of a grid update, and an app showing one set of warnings
+   * in Flooding and a total from a different payload in Rain is an app the
+   * reader stops believing. */
+  const floodH = createFloodingHome({ rain, surge, units, now });
   let host = null;
   let visible = false;
   let lastState = null;
@@ -341,8 +349,8 @@ export function createHomeDashboardView({
      * would be a request for something nobody can see. */
     rainH.ensure(home, renderRainBody);
     rainH.wire(el, home, renderRainBody);
-    surgeH.ensure(threat?.storm, home, renderSurgeBody);
-    surgeH.wire(el, threat?.storm, home, renderSurgeBody);
+    floodH.ensure(threat?.storm, home, renderFloodBody);
+    floodH.wire(el, threat?.storm, home, renderFloodBody);
     afterRender();
   }
 
@@ -610,14 +618,23 @@ export function createHomeDashboardView({
        * section (§48.6), and a warning at the bottom of a scroll is a warning
        * nobody read. */
       rainSectHtml(),
-      /* ==> DIRECTLY UNDER RAIN, AND THE PAIRING IS THE POINT (§51.3). <==
+      /* ==> DIRECTLY UNDER RAIN, AND THE PAIRING IS THE POINT (§56.7). <==
        * These are the two sections on this screen about WATER AT THE HOUSE
        * rather than about the storm's own numbers, and a reader deciding
-       * whether to move a car wants them together. Rain is first because it
-       * reaches every house on Earth and surge only reaches coastal ones —
-       * putting the rarer section above the universal one would leave a gap
-       * on most screens where a heading used to be. */
-      surgeSectHtml(threat),
+       * whether to move a car wants them together. Rain is first because it is
+       * our arithmetic on a forecast and Flooding is somebody else's statement
+       * about water already on the ground — and because Rain answers for every
+       * house on Earth while Flooding fills from whichever of its two sources
+       * covers this one.
+       *
+       * ==> THIS WAS `Coastal flooding` AND IT NOW HOLDS BOTH KINDS OF WATER.
+       * <== That section carried the modelled figure alone while the flood
+       * warnings sat inside Rain two headings away. Two headings for *water is
+       * going to be where you are* is a distinction that matters to the
+       * plumbing and not to the reader, and the two barely ever co-occur —
+       * NWS alerts are US only, the GDACS model declines NHC's basins — so one
+       * of the two sections was always empty. */
+      floodSectHtml(threat),
       figuresHtml(dash),
       dash.far ? '' : countdownHtml(dash, sys, sectHead),
       homeRowHtml(home),
@@ -752,30 +769,33 @@ export function createHomeDashboardView({
     return `<div class="home-sect home-rain">${rainH.inner(home, sectHead('rain', 'Rain'))}</div>`;
   }
 
-  /** SURGE — how much water reaches the coast near the house (§51.3).
+  /** FLOODING — water already on the ground, and water modelled to arrive
+   *  (§56.7).
    *
-   *  ==> IT RENDERS FOR SOME STORMS AND NOT OTHERS, AND THAT IS NOT A BUG.
-   *  <== Only a storm carrying a GDACS event id can be asked, which excludes
-   *  every storm in an NHC basin (§51.5). The controller decides; this asks it
-   *  rather than re-deriving the rule, so the wrapper can never render around
-   *  an empty section. */
-  function surgeSectHtml(threat) {
+   *  ==> THE HOUSE IS THE GATE, NOT THE STORM. <== `Coastal flooding` drew
+   *  only for a storm carrying a GDACS event id, so on a US storm the section
+   *  vanished. Both halves of this one are questions about an ADDRESS, and the
+   *  flood-alert half is answerable with no storm on screen at all — which is
+   *  the calm-day case this dashboard exists for. The controller decides; this
+   *  asks it rather than re-deriving the rule, so the wrapper can never render
+   *  around an empty section. */
+  function floodSectHtml(threat) {
     const home = getHome();
     const storm = threat?.storm;
-    if (!surgeH.applies(storm, home)) return '';
-    return `<div class="home-sect home-surge">${surgeH.inner(storm, home, sectHead('surge', 'Coastal flooding'))}</div>`;
+    if (!floodH.applies(storm, home)) return '';
+    return `<div class="home-sect home-flood">${floodH.inner(storm, home, sectHead('flood', 'Flooding'))}</div>`;
   }
 
-  /** Repaint ONLY the Surge section when its fetch lands, for the reason
-   *  `renderRainBody` gives: a full render() throws away the reader's scroll
-   *  position. */
-  function renderSurgeBody() {
-    const el = body()?.querySelector('.home-surge');
+  /** Repaint ONLY the Flooding section when either of its fetches lands, for
+   *  the reason `renderRainBody` gives: a full render() throws away the
+   *  reader's scroll position. */
+  function renderFloodBody() {
+    const el = body()?.querySelector('.home-flood');
     const home = getHome();
     const storm = lastDash ? currentThreat()?.storm : null;
-    if (!el || !surgeH.applies(storm, home)) return;
-    el.innerHTML = surgeH.inner(storm, home, sectHead('surge', 'Coastal flooding'));
-    surgeH.wire(el, storm, home, renderSurgeBody);
+    if (!el || !floodH.applies(storm, home)) return;
+    el.innerHTML = floodH.inner(storm, home, sectHead('flood', 'Flooding'));
+    floodH.wire(el, storm, home, renderFloodBody);
   }
 
   /** Repaint ONLY the Rain section when its fetch lands. A full render()

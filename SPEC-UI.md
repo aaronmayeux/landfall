@@ -3525,51 +3525,248 @@ toggle's note names the two limits that would otherwise read as faults — **US
 only**, because NWS is and no global equivalent has been found, and **watches
 have no shape to draw.**
 
-### 51.6 Coastal flooding — the home drawer's section
+### 56.7 Flooding — one section, both kinds of water
 
-Directly under Rain, above the figures. **The pairing is the point:** these are
-the two sections about water at the house rather than about the storm's own
-numbers, and a reader deciding whether to move a car wants them together. Rain
-is first because it reaches every house on Earth and this only reaches coastal
-ones — putting the rarer section above the universal one leaves a gap on most
-screens where a heading used to be.
+**Landed 2026-08-22, on both screens at once.** `ui/flooding-storm.js` and
+`ui/flooding-home.js`, the shared sentences in `ui/flood-words.js`, the rows
+still drawn by `ui/rain-alerts.js`. **It replaced the `Coastal flooding` section
+— deleted, along with its spec entry — and it took the flood-alert rows out of
+both Rain sections.**
 
-**It renders for some storms and not others, and that is not a bug.** Only a
-storm carrying a GDACS event id can be asked, which excludes every storm in an
-NHC basin (§51.5). The controller decides; the view asks it rather than
-re-deriving the rule, so the `.home-sect` wrapper can never render around
-nothing.
+**RAIN AND FLOODING ARE SEPARATE SECTIONS; COASTAL FLOODING IS NOT.** Rainfall
+is our arithmetic on a forecast. A flood alert is an agency's statement about
+right now with an expiry on it. Burying the second inside the first makes the
+urgent thing look like a footnote on the other thing — which is what §48.21
+shipped — so Flood left Rain.
 
-**Its own icon.** A wave crest over a level line — deliberately not the rain
-cloud with more drops, because these two sections are adjacent and the icon is
-what separates them at a glance while scrolling.
+**BUT COASTAL FLOODING MERGED INTO IT RATHER THAN STANDING BESIDE IT.** Somebody
+deciding whether to move a car does not care whether the water came off the sky
+or off the sea. Two headings for *water is going to be where you are* is a
+distinction that matters to the plumbing and not to the reader.
 
-**It borrows Rain's type scale rather than inventing one.** Same lead, same
-secondary, same muted note. The two answer the same kind of question and should
-read as one rhythm; what distinguishes them is the icon and the words, which is
-where the difference actually is.
+**AND THE TWO BARELY EVER CO-OCCUR, WHICH SETTLED IT.** NWS flood alerts are US
+only. GDACS models coastal flooding and explicitly declines NHC's basins
+(§51.5). So a US storm has alert rows and no modelled figure; a Japan typhoon
+has a modelled figure and no alert rows. **Two sections where one is always
+empty is worse than one section that fills from whichever source has
+something.**
 
-**The Retry takes `.home-retry`'s declaration**, as the third member of that
-shared selector. §12 says a pattern used twice gets extracted before the second
-use, and this is the first control added since — it cost one selector name
-rather than a rediscovery of the bare-underlined-link bug `ui/home.css` records
-at the bottom.
+**THEY ARE DIFFERENT KINDS OF STATEMENT AND ARE NOT STYLED THE SAME.** An alert
+is somebody else's order. A modelled height is our reading of a model. Given one
+look, the model borrows the authority of the order. So the section takes the
+shape Rain already used: **bordered alert rows on top with their own ink, our
+modelled figure as plain prose underneath**, with a hairline between them —
+`.flood-model--after-rows`, drawn only when both halves are present, because a
+rule under nothing is a line across an empty section.
 
-**The four sentences** (§51.3 holds the states):
+**ORDER ON BOTH SCREENS: Rain, then Flooding.**
+
+#### ==> THE ONE THING THIS MERGE COST, AND IT IS A §5 COST <==
+
+**ONE SECTION NOW CARRIES TWO COVERAGE GAPS AND EACH ONE READS AS AN ALL-CLEAR
+IF IT IS SILENT.** This is the thing most likely to be got wrong, and the
+sentences that stop it are in `ui/flood-words.js` so both screens say the same
+one.
+
+| Empty half | What it must NOT read as | What the section says |
+|---|---|---|
+| no alert rows | *no flood warnings are in force* | `NWS_US_ONLY` — the NWS issues these for the United States only and there is no global equivalent, so an empty list is not an answer for anywhere else |
+| no modelled figure | *no coastal flooding expected* | `MODEL_NOT_THIS_BASIN` — coastal flooding is not modelled for storms in this basin; a gap in what the app can show, not a forecast |
+
+**THE STORM PANEL SAYS `NWS_US_ONLY` ON EVERY EMPTY RESULT, NOT ONLY OUTSIDE THE
+UNITED STATES, AND THAT IS DELIBERATE.** The quieter design needs a test for "is
+this storm somewhere NWS covers", and nothing in this project can get that test
+right: it is not the basin — a Central Pacific storm off Hawaii IS covered and
+an Atlantic storm mid-ocean is not — it is not the source, and this app has
+never had a US landfall on glass to check an answer against. **A wrong coverage
+claim is worse than a true one said once too often.**
+
+**THE HOME DASHBOARD DOES NOT USE IT, BECAUSE IT CAN ANSWER EXACTLY.** The
+rainfall payload names the provider, so the sentence there is about this house:
+from the global model, *flood alerts aren't published for this location*; from
+NWS with a failed alerts hop, *could not be checked just now* (§48.16, and the
+two must never swap).
+
+#### What each screen puts under the rows
+
+| | the rows | the figure |
+|---|---|---|
+| storm drawer | NWS alerts within `RAIN.floodCorridorNm` of the track (§56.3), plus the national agencies' storm-surge rows (§56.8) | `surgeOnStorm` — **the deepest coast this storm is modelled to flood, anywhere**, and where |
+| home dashboard | what is in force at the reader's own address, off the point forecast the Rain section already fetched | `surgeAtHome` — the nearest reporting point to the house |
+
+**NOTHING ABOUT THE READER'S HOUSE APPEARS IN THE STORM DRAWER'S HALF** (§56.9).
+A storm panel is about the storm, so `lib/surge-locations.js` gained
+`surgeOnStorm` rather than being handed a null house: `surgeAtHome`'s
+`out_of_range` state means *the model ran and nothing is near YOU*, which is a
+fact about an address and meaningless without one. **Two questions, two
+functions, and neither can answer as the other by accident.**
+
+**THE ROWS DO NOT READ THE STORM AT ALL ON HOME, AND THAT DELETED A RULE RATHER
+THAN MOVING IT.** §48.20 needed a second scope tier inside the storm drawer's
+house block so that a storm which misses the house keeps its warnings — the
+total is the storm's to imply and the warning is not. On the home dashboard
+there is now no tier: the rows render the same for a near storm, a distant storm
+and no storm at all. **A rule that cannot fire cannot fire wrongly.**
+
+**AND THE EMPTY RESULT BECAME SAYABLE.** Inside Rain an empty alert list was
+correctly silent — the total below it was the section's answer, and announcing
+the absence of a hazard nobody asked about is noise. A section headed *Flooding*
+with nothing under it cannot be told from one that failed to load, so the home
+dashboard states it: *no flood alerts are in force for your address.* That is
+the one behaviour this move changed rather than relocated.
+
+#### The states, and only one of them is an all-clear (§5)
 
 | State | What it says |
 |---|---|
-| `ok` | "About 0.5 m of coastal flooding is modelled at Shomushon, the nearest reporting point to your house. It keeps rising for about six hours after it first arrives." |
-| `ok`, negligible | "Only a trace of coastal flooding is modelled near you, at Hilo." |
-| `out_of_range` | "No coastal flooding has been modelled near your house for this storm. The deepest modelled anywhere on this storm is about X at Y." + "This model only reports at populated coastal places, so this is a gap in what we know rather than an all-clear." |
-| `none_matched` | "No coastal flooding is modelled for this storm — it isn't near enough to any populated coast." |
+| `unavailable` | the list didn't load — **never** "none in force" — with its own Retry |
+| `no_track` | this storm has no published track, so alerts can't be matched to it |
+| `none_matched` | no flood alerts are in force within *X* of this storm's track, **plus** `NWS_US_ONLY` |
+| `ok` | *N* flood alerts are in force within *X* of this storm's track, the rows, and the not-attributed note |
+| model `none_matched` | no coastal flooding is modelled for this storm — it isn't near enough to any populated coast. **The only all-clear in the modelled half**, and it is a fact about where the storm is |
+| model `out_of_range` (home) | nothing modelled near your house, the deepest elsewhere named, and *this model only reports at populated coastal places, so this is a gap in what we know rather than an all-clear* |
 
-**Only the last is an all-clear**, and the third is the one that must never read
-as one. The gap sentence is not optional garnish: an absence with no figure
-beside it reads as safety.
+**THREE RETRIES, THREE TOKENS, THREE SOURCES** on the storm panel — `flood` for
+the national NWS list, `flood-cap` for the CAP feed, `flood-model` for the GDACS
+run. They fail independently, and a Retry that refetches a source the reader did
+not ask about is a Retry that lies about what it did.
 
-**Heights are in the reader's own units**, through `formatSurge`, like every
-other length in the app. Never dual-printed.
+**KEYBOARD IS WHY THIS PHASE LANDED BEFORE THE MAP** (§10, §56.6). Phase 5 puts
+these alerts on the globe as tappable icons, and an icon reachable only by
+tapping a sphere does not exist for a keyboard user. **The rows are the keyboard
+path**, and a phase that shipped the icon without them would have shipped a
+gesture-only feature.
+
+**IT BORROWS RAIN'S TYPE SCALE RATHER THAN INVENTING ONE.** `.flood-line`,
+`.flood-worst`, `.flood-note` sit beside their rain counterparts in
+`ui/panels.css`'s role table. The two sections are adjacent and answer the same
+kind of question, so they should read as one rhythm; what distinguishes them is
+the icon and the words, which is where the difference actually is. **The rules
+moved from `home.css` to `panels.css`** when the section gained a second screen
+— the same move `.rain-alert` made.
+
+**==> AND IT PUT §48.6's WARNING BELOW THE RAINFALL TOTAL, WHICH IS THE ONE
+THING THIS SECTION TRADED AWAY. <==** §48.6's rule is that a warning in force
+outranks any forecast and renders above it. Within one section it still does —
+rows lead, prose follows. Across sections it no longer does, because the order
+is Rain then Flooding. **The trade is deliberate and it is worth naming rather
+than burying:** what was bought is that the warning has a heading of its own
+instead of being a footnote on a section about something else, and that it sits
+beside the other kind of water. What was sold is roughly one section's scroll
+height on a phone. **Judge it on glass during a US storm near a home** — nothing
+in the sandbox can, and if it reads wrong the fix is one line in
+`dashboardHtml` and one in `renderBody`.
+
+---
+
+### 56.8 Watches and warnings keeps its place, and gained one line
+
+**FLOOD ALERTS DID NOT MOVE INTO `Watches and warnings`.** The line that holds:
+**that section carries products that NAME this storm; Flooding carries products
+that do not.**
+
+- NHC's four — Tropical Storm and Hurricane Watch/Warning — are issued for this
+  storm, by name, in its own advisory. No attribution risk.
+- The foreign-agency CAP rows are matched by country (§50.3), which is weaker,
+  and §50.12's footnote already hedges it.
+- An NWS flood alert names nothing at all. It is a distance match **we**
+  performed. In a section whose other rows genuinely belong to the storm, that
+  difference would be laundered into looking official.
+
+**REJECTED: ONE MERGED WARNINGS LIST.** It would sit a Hurricane Warning — this
+storm, named, act now — beside a Flood Warning two states away that may have a
+different cause entirely, in one list with one look. The strong row lends its
+authority to the weak one.
+
+**THE COST IS ONE SENTENCE AND IT IS THE WHOLE DEFENCE.** A reader who opens
+`Watches and warnings` during a flood and finds no flood warning will not
+conclude "it must be filed elsewhere" — they will conclude the app did not see
+it. `FLOOD_POINTER` in `ui/flood-words.js` says so, once, in the quietest
+register the panel has.
+
+**IT IS APPENDED IN `wwHtml()`, NOT INSIDE EITHER HALF.** That section has two
+bodies — NHC's own legend and `ui/cap-storm.js` — and a line written into one of
+them would be missing from the other half of its own section, which is a blank
+space and therefore invisible. **It is unconditional, including on the empty
+state**, because the empty state is exactly when a reader is most likely to
+think something is missing. **Not on a withheld storm:** the whole section is
+replaced by one sentence saying why nothing in it can be trusted, and a signpost
+under that is furniture on a notice.
+
+**IT NAMES THE SECTION BY THE HEADING THE VIEW ACTUALLY RENDERS**, and
+`tools/test-flooding.mjs` asserts the two agree. A pointer to a heading that
+does not exist is worse than no pointer: the reader goes looking and concludes
+the app lost the alert, which is the exact failure the line was written to
+prevent — and renaming the section is otherwise a one-word change with no
+failing check anywhere.
+
+#### The storm-surge rows moved across
+
+`functions/api/cap/alerts.js` asks its upstream for `Storm Surge` alongside four
+cyclone terms, so a foreign Storm Surge Warning had always landed in `Watches
+and warnings`. Since §56.7 every other kind of water lives in Flooding, so
+leaving that one behind would **split water across two sections according to
+which feed happened to carry it** — the exact arbitrariness the merge deleted.
+
+**`partitionSurge()` IN `lib/cap.js` RETURNS BOTH HALVES, AND IT IS ONE FUNCTION
+RATHER THAN TWO PREDICATES.** The property worth guaranteeing is that every row
+lands in exactly one section: a row in **neither** is §5's silence with a filing
+system over it, and a row in **both** is the app saying one thing twice under two
+headings and leaving the reader to work out whether it is one alert or two. Two
+independent tests can drift into either failure; a partition cannot.
+
+**IT TESTS HOW THE ROW GOT HERE, NOT WHAT IT MEANS.** `CAP.surgeEventMatch` is
+`'storm surge'`, matched case-insensitively — English, on a field that is the
+agency's own words in the agency's own language. It cannot be a complete test of
+"is this about surge" and is not written as one. What it CAN test is whether the
+row came through the route's surge term, **which is the only door a surge-only
+product has into this list at all.** An agency publishing surge in Spanish under
+a cyclone name reaches `Watches and warnings`, which is where it was before this
+rule and is not made worse by it.
+
+**A ROW NAMING BOTH GOES TO FLOODING.** "Tropical Cyclone Storm Surge Warning"
+is a real shape for this field and it is a statement about water; the reader
+looking for water should find it in the one place the app now keeps water.
+
+**ONE FETCH, ONE STATE MACHINE, TWO SECTIONS.** `ui/cap-storm.js` keeps the
+fetch and hands Flooding finished markup through `waterHtml()`. A second
+controller with its own fetch would be two answers to "what has this agency got
+out right now" landing at different moments, with the older one showing in one
+section and nothing on screen saying so. **`renderCapBody()` repaints BOTH
+sections from one landing** for that reason, and for a second: the language
+disclosures register their DOM ids during a render, and repainting one half
+alone used to wipe the other half's — which would have stopped those disclosures
+opening with nothing throwing.
+
+---
+
+### 56.10 The glyph
+
+**THREE STACKED WAVES**, `flood` in `ui/section-icon.js`. Water where it should
+not be, whether it came off the sky or off the sea.
+
+**`surge`'s CREST IS DELETED WITH ITS SECTION.** Its own comment said it existed
+solely to separate `Coastal flooding` from `Rain` at a glance while scrolling.
+That section no longer exists, so the mark has no job. **There is exactly one
+water glyph in this app now, which is the point** — two would teach a reader
+that the difference between them means something, and §56.7's whole finding is
+that it does not.
+
+**DELIBERATELY NOT THE RAIN CLOUD WITH MORE DROPS.** Rain and Flooding sit
+adjacent on both screens and the icon is what separates them while scrolling. A
+cloud is weather arriving; these are the ground already under water.
+
+**IT IS CENTRED ON THE 24-BOX (x 4 to 20)** rather than inheriting `surge`'s
+off-centre 3-to-19 span, because Phase 5 strokes these same path strings onto a
+canvas for `map.addImage` — **the same path data, not a redrawn one.** Tap a
+wave on the globe and the panel that opens is headed with the same wave. An icon
+that is going to be rasterised has to be balanced inside its own box, where a
+heading glyph could get away with a lean.
+
+**AND THE NAMING RULE EARNED ITS KEEP THE DAY IT WAS TESTED.** That file's
+standing instruction is to name an icon for the IDEA and not the picture. A
+crest was replaced by three waves and **not one call site had to change**,
+because no call site had ever named a crest.
 
 ---
 

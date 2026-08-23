@@ -65,6 +65,15 @@
  * note says so in one short sentence rather than leaving the position of the
  * block to imply it.
  *
+ * ==> FLOOD ALERTS LEFT THIS SECTION ON 2026-08-22 (§56.7). <== They shipped
+ * here on 2026-08-21 as a third block, and the reason they went is not that
+ * they did not fit: it is that burying an agency's live order inside a section
+ * about a rainfall forecast makes the urgent thing look like a footnote on the
+ * other thing. They are `Flooding` now — `ui/flooding-storm.js`, directly
+ * below this — beside the modelled coastal figure, because a reader deciding
+ * whether to move a car does not care whether the water came off the sky or
+ * off the sea. What is left here is a FORECAST, and only a forecast.
+ *
  * ==> BOUND TO THE STORM IT BELONGS TO. <== `forId`/`forKey`, exactly the
  * advisory record's fix for a real on-glass bug: a record that infers "did the
  * storm change?" from call ordering shows the previous storm's words under the
@@ -77,9 +86,7 @@
 import { advisoryRainfall } from '../lib/advisory.js';
 import { houseRainScope, rainSummary } from '../lib/rainfall.js';
 import { formatClockDay } from '../lib/time.js';
-import { formatDistance } from '../lib/units.js';
 import { DOTS } from './loading-dots.js';
-import { floodAlertRows } from './rain-alerts.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -113,7 +120,7 @@ export const RAIN_SECTION = 'rainfall';
  *   has is from August, so the suite has to be able to stand there.
  */
 export function createRainStorm({
-  loadAdvisory, rain = null, house = null, flood = null, units = null,
+  loadAdvisory, rain = null, house = null, units = null,
   now = () => Date.now(),
 }) {
   let state = { phase: 'idle', rec: null, forId: null, forKey: null };
@@ -152,90 +159,17 @@ export function createRainStorm({
     return houseRainScope(house.rangeNm?.(storm) || {});
   }
 
-  /** The home this block is about, or null when this storm earns nothing. */
+  /** The home this block is about, or null when this storm earns nothing.
+   *
+   *  ==> IT IS THE `full` TIER ALONE SINCE §56.7. <== It used to admit
+   *  `alerts` as well, because that tier drew flood warnings off this same
+   *  payload. Those rows are `Flooding`'s now, so the tier draws nothing —
+   *  and a fetch dispatched for a state the renderer will not draw is a
+   *  request the reader pays for and never sees. The gate `ensureHouse` asks
+   *  is the gate the renderer asks, which is what keeps those two honest. */
   function houseTarget(storm) {
-    if (houseScope(storm) === 'none') return null;
+    if (houseScope(storm) !== 'full') return null;
     return house.get();
-  }
-
-  /**
-   * Flood alerts in force near this storm's track. §48.21, §56.3.
-   *
-   * ==> THE WORDING IS THE WHOLE SAFETY PROPERTY OF THIS BLOCK. <== An NWS
-   * flood warning does not name a storm. It says *Flash Flood Warning, Hawaii
-   * in Hawaii, HI* and nothing else — the hurricane sitting on top of it is
-   * mentioned nowhere in the product. So every row here is this app asserting
-   * a connection the source never made, which is exactly what §50.3 forbids
-   * for the CAP list: **a geographic match is not a causal claim.** What is
-   * claimed is the weakest true thing — *within a stated distance of the
-   * track* — and it is a statement about two shapes and one number, verifiable
-   * from all three. It must never become "this storm's flooding", and a
-   * stalled front can flood a county while the hurricane goes out to sea.
-   *
-   * ==> THE SENTENCE NAMES THE DISTANCE, AND THAT IS NOT DECORATION. <==
-   * §56.3. "Inside the forecast cone" at least sounded like somebody else's
-   * shape. A corridor is entirely ours, so the copy has to hand the reader the
-   * radius and let them judge it — an unnamed proximity is a claim wearing a
-   * measurement's clothes.
-   *
-   * ==> `no_track` AND `none_matched` BOTH PRODUCE AN EMPTY LIST AND MUST NOT
-   * READ THE SAME. <== §5. A storm with no published track has nothing to
-   * measure against; a storm whose track was measured and came near nothing is
-   * a real all-clear. This is the distinction this feature is most likely to
-   * lose.
-   */
-  function floodBlock(storm) {
-    if (!flood?.summaryFor || !storm) return '';
-    const out = flood.summaryFor(storm);
-    if (!out) return '';
-
-    const head = `<div class="detail-rain-flood">
-      <div class="detail-kicker">Flood alerts nearby</div>`;
-    const wrap = (inner) => `${head}${inner}</div>`;
-
-    if (out.state === 'loading') {
-      return wrap(`<p class="detail-soft">Checking flood alerts${DOTS}</p>`);
-    }
-
-    if (out.state === 'unavailable') {
-      /* NEVER an all-clear. The list not loading and nothing being in force
-       * are opposite facts that look identical on screen. */
-      return wrap(`<p class="detail-soft">Flood alerts couldn’t be checked.
-        <button class="detail-retry" type="button" data-retry="flood">Retry</button></p>`);
-    }
-
-    if (out.state === 'no_track') {
-      /* ==> IT SAYS WHY, AND IT DOES NOT SAY “NONE”. <== No track means nothing
-       * to measure alerts against. Saying "no flood alerts nearby" here would
-       * be an all-clear derived from our own missing geometry. */
-      return wrap(`<p class="detail-soft">This storm has no published track, so
-        flood alerts can’t be matched to it.</p>`);
-    }
-
-    if (out.state === 'none_matched') {
-      /* A REAL ANSWER: the track was measured and nothing came near it. */
-      return wrap(`<p class="detail-soft">No flood alerts are in force within
-        ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.</p>`);
-    }
-
-    /* ==> THE COUNT OF ALERTS IS NOT THE COUNT OF SHAPES, AND BOTH GET SAID.
-     * <== A watch is issued by forecast zone and carries no polygon, so the map
-     * cannot draw it. A sentence claiming nineteen are on the globe while
-     * eleven are drawn is §5 with a map under it. */
-    const n = out.total;
-    const noun = n === 1 ? 'flood alert is' : 'flood alerts are';
-    const undrawn = n - out.drawable;
-    const drawNote = undrawn > 0
-      ? ` ${undrawn === 1 ? 'One is' : `${undrawn} are`} issued by zone and
-          ${undrawn === 1 ? 'has' : 'have'} no shape to draw on the map.`
-      : '';
-
-    return wrap(`<p class="detail-rain-para"><strong>${n} ${noun}</strong> in force
-        within ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.${drawNote}</p>
-      ${floodAlertRows(out.alerts)}
-      <p class="detail-rain-note">Issued by the National Weather Service for the
-        areas named, not attributed to this storm — an alert near the track may
-        have another cause.</p>`);
   }
 
   /** The section body's inner HTML for the current state. Pure of the DOM. */
@@ -247,7 +181,7 @@ export function createRainStorm({
      * decided it, rather than asked again with the same input — two answers to
      * one question is how they start disagreeing. */
     const range = advisoryBlock(storm);
-    return `${range}${houseBlock(storm)}${floodBlock(storm)}`;
+    return `${range}${houseBlock(storm)}`;
   }
 
   /** Whether `advisoryBlock` put an area range on screen in THIS render. Read
@@ -338,48 +272,25 @@ export function createRainStorm({
     const close = '</div>';
     const wrap = (inner) => `${head}${inner}${close}`;
 
-    /* ==> THE WARNINGS-ONLY TIER (§48.20). <== This storm is in the reader's
-     * world but its weather does not reach the house, so there is no rainfall
-     * figure to print under its name — and a flood warning in force is still
-     * an agency's statement about the reader's own address, true whichever
-     * storm they happened to tap. Everything that would imply the storm caused
-     * it stays off: no total, no peak, no provenance line.
+    /* ==> THE WARNINGS-ONLY TIER IS EMPTY NOW, AND THAT IS NOT AN OVERSIGHT
+     * (§56.7). <== §48.20 built this tier for exactly one thing: a storm whose
+     * weather does not reach the house has no rainfall figure to print under
+     * its name, but a flood warning in force is still an agency's statement
+     * about the reader's own address and is true whichever storm they tapped.
+     * So the tier drew flood rows and nothing else.
      *
-     * ==> AND IT RENDERS NOTHING WHEN THERE IS NOTHING TO SAY. <== A heading
-     * over "no flood warnings are in force" on a storm that misses the house
-     * is noise on the screen where noise costs the most, and §5 does not
-     * require announcing the absence of a hazard nobody asked about. What §5
-     * DOES require is that an UNKNOWN never reads as an all-clear, so a failed
-     * alerts hop still gets its sentence. */
-    if (scope === 'alerts') {
-      if (houseState.forKey !== homeKeyOf(home) ||
-          houseState.phase === 'idle' || houseState.phase === 'loading') return '';
-
-      const res = houseState.result || {};
-      if (res.status !== 'ok') return '';
-
-      const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });
-      const rows = floodAlertRows(out.alerts);
-      /* Only NWS knows about warnings at all; the global model publishes none
-       * and says so on the full tier. Repeating "not published here" under a
-       * storm that misses would be an apology for an absence nobody noticed. */
-      const unknown = res.payload?.alerts == null && out.provider?.name !== 'open-meteo'
-        ? `<p class="detail-rain-note">Flood warnings could not be checked just now.</p>`
-        : '';
-      if (!rows && !unknown) return '';
-
-      /* ==> WHY THE NUMBER IS NOT HERE, BUT ONLY WHEN WE MEASURED IT. <== On a
-       * `misses` verdict the wind fields were published and walked, so this is
-       * a fact. Reached by distance alone it is not — nobody published a field
-       * — and claiming it would be inventing an all-clear (§5). */
-      const why = house.rangeNm?.(storm)?.reach === 'misses'
-        ? `<p class="detail-rain-note">This storm's wind field is not forecast to
-            reach your house, so there is no rainfall figure for it here. Your
-            own forecast is on the home screen.</p>`
-        : '';
-
-      return wrap(`${rows}${unknown}${why}`);
-    }
+     * Those rows are `Flooding` now — a section of their own, on both screens
+     * — so the tier's entire content has moved and there is nothing left for
+     * it to draw. It returns before fetching rather than fetching and
+     * rendering nothing.
+     *
+     * ==> IT IS NOT DELETED HERE BECAUSE THE WHOLE HOUSE BLOCK IS GOING. <==
+     * §56.9 takes the reader's house out of the storm drawer entirely, tier
+     * and scope logic and CSS together, in the phase after this one. Half-
+     * removing it now would leave `houseRainScope` answering a question with
+     * two live answers and one dead one, which is a worse file to read than
+     * either the before or the after. */
+    if (scope === 'alerts') return '';
 
     if (houseState.forKey !== homeKeyOf(home) ||
         houseState.phase === 'idle' || houseState.phase === 'loading') {
@@ -428,35 +339,6 @@ export function createRainStorm({
         form this app could not read.</p>`);
     }
 
-    /* ==> A WARNING IN FORCE OUTRANKS ANY FORECAST AND RENDERS ABOVE IT. <==
-     * §48.6. A total is what MIGHT happen; a Flash Flood Warning is what IS
-     * happening.
-     *
-     * ==> THIS BLOCK SHIPPED WITHOUT THEM AND THAT WAS A REAL BUG. <== The
-     * reasoning was that the dashboard already showed them and the app must
-     * not say things twice. It is not said twice: `In effect` carries NHC's
-     * hurricane and tropical-storm products, and `Local agency alerts` asks
-     * its upstream for Cyclone, Typhoon, Hurricane, Tropical and Storm Surge
-     * — flood is in none of them. So a reader who taps a storm during a
-     * hurricane and never opens the dashboard saw a rainfall total and no
-     * warning at all, on the screen most likely to be the only one they open.
-     * That is §5's silence with a number in front of it. */
-    const alerts = floodAlertRows(out.alerts);
-
-    /* ==> `alerts: null` MEANS TWO OPPOSITE THINGS AND GETS TWO OPPOSITE
-     * SENTENCES (§48.16). <== From NWS it means the alerts hop failed while
-     * the grid succeeded — what is in force is UNKNOWN, which is not "nothing
-     * in force" and must not render as silence. From the global model it means
-     * there is no flood-warning source for this place at all, which is durable;
-     * "could not be checked just now" there invites a reader to wait for an
-     * answer that is never coming. */
-    const alertsUnknown = res.payload?.alerts != null
-      ? ''
-      : out.provider?.name === 'open-meteo'
-        ? `<p class="detail-rain-note">Flood warnings aren’t published for this
-            location — this is a rainfall forecast only.</p>`
-        : `<p class="detail-rain-note">Flood warnings could not be checked just now.</p>`;
-
     const through = out.throughWords ? ` through ${esc(out.throughWords)}` : '';
 
     /* NEGLIGIBLE RAIN IS WORDS, NOT A NUMBER (§48.8). `0.01 in` reads as a
@@ -502,9 +384,13 @@ export function createRainStorm({
           differ and both be right.</p>`
       : '';
 
-    /* WARNINGS FIRST, ALWAYS — then what is in doubt about them, then the
-     * forecast they outrank. */
-    return wrap(`${alerts}${alertsUnknown}${line}${peak}${compare}
+    /* ==> THE WARNINGS THAT USED TO LEAD THIS BLOCK ARE IN `Flooding` NOW
+     * (§56.7). <== §48.6's ranking — a warning in force outranks any forecast
+     * — did not change and is not undone by the move: `Flooding` renders above
+     * the point the reader scrolls to for a total, and it renders under a
+     * heading instead of as a footnote on a section about something else. What
+     * is left here is a forecast, and only a forecast. */
+    return wrap(`${line}${peak}${compare}
       <p class="detail-rain-note">${where} Total rain from all causes, not this
         storm alone.</p>`);
   }
@@ -560,7 +446,6 @@ export function createRainStorm({
    *  button so the geometry retry binding in the host view never collects it. */
   function wire(bodyEl, storm, repaint) {
     wireHouse(bodyEl, storm, repaint);
-    wireFlood(bodyEl, repaint);
     const btn = bodyEl?.querySelector?.('[data-retry="rainfall"]');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -591,24 +476,6 @@ export function createRainStorm({
       const result = await rain.retryRainfall(home);
       if (mySeq !== houseSeq) return;
       houseState = { phase: 'done', result, forKey: homeKeyOf(home) };
-      repaint?.();
-    });
-  }
-
-  /** The flood block's own Retry (§48.21).
-   *
-   *  `data-retry="flood"` and not `rainfall` — `ui/view-storm-detail.js` binds
-   *  every `.detail-retry` on the panel by class, and three buttons answering
-   *  to one selector is how two of them silently stop working.
-   *
-   *  ==> IT IS THE ONLY THING IN THIS BLOCK ALLOWED TO REACH THE NETWORK. <==
-   *  The block otherwise reports what the app already holds; the map layer's
-   *  toggle owns the fetch. A press here is a reader explicitly asking. */
-  function wireFlood(bodyEl, repaint) {
-    const btn = bodyEl?.querySelector?.('[data-retry="flood"]');
-    if (!btn || !flood?.retry) return;
-    btn.addEventListener('click', async () => {
-      await flood.retry();
       repaint?.();
     });
   }

@@ -682,7 +682,7 @@
 .home-figs-v,
 .home-rail-ev,
 .home-rain-line,
-.home-surge-line {
+.flood-line {
   font-size: var(--type-body);
 }
 .detail-vitals dd,
@@ -693,7 +693,7 @@
 .home-figs-v,
 .home-rail-ev,
 .home-rain-line,
-.home-surge-line {
+.flood-line {
   color: var(--text-primary);
 }
 /* The label half. Prose in a column, so role 5's colour. */
@@ -742,7 +742,7 @@
 .home-locate-help,
 .home-edit,
 .home-rain-peak,
-.home-surge-worst {
+.flood-worst {
   font-size: var(--type-body);
   color: var(--text-secondary);
 }
@@ -787,7 +787,7 @@
 .home-now-coords,
 .home-confirm-coords,
 .home-rain-note,
-.home-surge-note {
+.flood-note {
   font-size: var(--type-small);
   color: var(--text-muted);
 }
@@ -3121,8 +3121,15 @@ button.drawer-identity:focus-visible {
   line-height: 1.45;
 }
 
-/* FLOOD WARNINGS IN FORCE (§48.6) — drawn by `ui/rain-alerts.js` on BOTH the
-   home dashboard's Rain section and the storm drawer's house block.
+/* FLOOD WARNINGS IN FORCE (§48.6) — drawn by `ui/rain-alerts.js` in the
+   `Flooding` section on BOTH screens (§56.7).
+
+   ==> IT HAD TWO CALLERS AND NOW IT HAS TWO DIFFERENT ONES. <== These rows led
+   the home dashboard's Rain section and the storm drawer's house block. Since
+   §56.7 they are `ui/flooding-home.js` and `ui/flooding-storm.js` — a section
+   of their own on each screen rather than a lead paragraph inside a section
+   about a forecast. Nothing about the ROWS changed, which is the point of them
+   having been extracted in the first place.
 
    ==> THE WARNING BLOCK AND THE FORECAST BLOCK ARE DELIBERATELY DIFFERENT
    SHAPES. <== A flood warning is a fact about now, published by somebody else,
@@ -3245,23 +3252,65 @@ button.drawer-identity:focus-visible {
   border-top: 0;
 }
 
-/* FLOOD ALERTS NEARBY (§48.21) — what is in force inside this storm's cone.
+/* ---------------------------------------------------------------------------
+   FLOODING (SPEC §56.7) — one section, both kinds of water, BOTH SCREENS.
 
-   ==> THE SAME RULE AND GAP THE HOUSE BLOCK USES, BECAUSE IT IS THE SAME KIND
-   OF SEAM. <== This section now holds up to three answers to three different
-   questions — what NHC says about an area, what the grid says about this house,
-   and what other agencies have in force inside the cone — and §48.10's whole
-   defence is that a reader can SEE they are separate answers before reading a
-   word of any of them. A hairline does that; a heading alone does not. */
-.detail-rain-flood {
+   ==> THESE LIVE IN panels.css AND NOT home.css BECAUSE THE SECTION IS NOW ON
+   TWO SURFACES. <== `Coastal flooding` was the home dashboard's alone, so its
+   rules sat in home.css. `Flooding` is drawn by `ui/flooding-home.js` and
+   `ui/flooding-storm.js` from one set of class names, and shared panel
+   furniture is what this file holds — the same move `.rain-alert` made when
+   the storm drawer became its second caller.
+
+   ==> IT BORROWS RAIN'S TYPE SCALE RATHER THAN INVENTING ONE. <== Same lead,
+   same secondary, same muted note — see roles 4, 5 and 6 above, where
+   `.flood-line`, `.flood-worst` and `.flood-note` sit beside their rain
+   counterparts. The two sections are adjacent and answer the same kind of
+   question, so a reader scanning past them should see one rhythm. What
+   distinguishes them is the icon and the words, which is where the difference
+   actually is.
+   ------------------------------------------------------------------------ */
+
+.flood-line {
+  margin: 0;
+  line-height: 1.4;
+}
+.flood-line strong { font-variant-numeric: tabular-nums; }
+
+/* The deepest town elsewhere. Secondary because it is context rather than the
+   reader's own answer — and present because "nothing near you" with no other
+   figure beside it reads as an all-clear, which it is not. */
+.flood-worst {
+  margin: var(--space-tight) 0 0;
+  line-height: 1.45;
+}
+
+/* Provenance, and the coverage sentences. In the quietest register the app
+   has, because they are not what anybody came to read — and always there,
+   because each one is the only thing standing between an empty half and a
+   reader reading safety into it (§56.7). */
+.flood-note {
+  margin: var(--space-snug) 0 0;
+  line-height: 1.45;
+}
+.flood-note + .flood-note { margin-top: var(--space-tight); }
+
+/* ==> THE SEAM BETWEEN SOMEBODY ELSE'S ORDER AND OUR READING OF A MODEL. <==
+   §56.7. An alert is an agency's statement with an expiry on it; a modelled
+   height is our reading of a simulation. Given one look the model borrows the
+   authority of the order, so the two halves are separated the way
+   `.detail-rain-house` separates NHC's range from the grid's point: a hairline
+   and a gap, which a reader sees before reading a word of either.
+
+   THE RULE ONLY WHEN THERE ARE ROWS ABOVE IT. The modifier is written by the
+   controllers rather than derived from `:first-child`, because the rows above
+   are a mix of paragraphs, lists and retry buttons — there is no one selector
+   that means "something came before this". Drawn under nothing, a hairline is
+   a line across an empty section. */
+.flood-model--after-rows {
   margin-top: var(--space-base);
   padding-top: var(--space-base);
   border-top: 1px solid var(--glass-border);
-}
-.detail-rain-flood:first-child {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
 }
 
 /* ---------------------------------------------------------------------------

@@ -217,8 +217,8 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. PHASE 1 OF FIVE IS IN. DO NOT TUNE THE
-REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron 2026-08-22:
+**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1 AND 2 OF FIVE ARE IN. DO NOT TUNE
+THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron 2026-08-22:
 `SPEC-FLOOD-PLAN.md` §56, five phases, one per session, in order. Read that file
 before touching anything flood-shaped.
 
@@ -229,15 +229,23 @@ in `SPEC-UI.md` §48.21. The three bounding-box functions that used to do the
 matching are gone, and the antimeridian problem is gone with them — a
 great-circle distance has no seam.
 
+**PHASE 2 — THE FLOODING SECTION — SHIPPED 2026-08-22.** One section on both
+screens: alert rows on top, the modelled coastal figure as prose below. The
+`Coastal flooding` section is deleted and its spec entry with it; the flood rows
+are out of both Rain sections; the national agencies' storm-surge rows moved
+across; `Watches and warnings` gained one line pointing here. As-built in
+`SPEC-UI.md` §56.7, §56.8 and §56.10.
+
 **==> THE RADIUS IS 300 nm, IT IS A GUESS, AND IT IS AARON'S TO MOVE. <==**
 Nothing in the sandbox can measure it. Do not write a derivation for it and do
 not let a later session quietly convince itself the number was measured.
 
-**HELD FOR WEATHER: none of Phase 1 has been seen, and none of it can be.** Every
-assertion is offline against real bytes — 25 of the 33 archived US alerts match
-Ida's real advisory-19 track at 300 nm, and Lala matches none of them at 1,966
-nm — but not one pixel has been judged. It needs a US storm near a flooding
-region. Expect this line to stay here after every flood phase.
+**HELD FOR WEATHER: nothing from Phase 1 or Phase 2 has been seen, and none of
+it can be.** Every assertion is offline against real bytes — 25 of the 33
+archived US alerts match Ida's real advisory-19 track at 300 nm, Lala matches
+none of them at 1,966 nm, and `tools/test-flooding.mjs` renders all six of
+Phase 2's states — but not one pixel has been judged. It needs a US storm near a
+flooding region. Expect this line to stay here after every flood phase.
 
 **Two live gaps §56 names.** The national volume is one snapshot on a quiet day
 (36 alerts at 2026-08-22T22:29:35Z, now frozen at
@@ -247,8 +255,20 @@ depends on the count — clustering thresholds in Phase 5 most of all. And
 `map/layers/flood.js` still draws the whole country from a `Storm detail`
 toggle; Phase 5 replaces it. Nothing about that layer is worth tuning.
 
-**The next phase is 2 — the Flooding section.** It is the one that gives
-keyboard users a path to an alert, so it must land before the map icons.
+**The next phase is 3 — home gating.** Strip the house block out of the storm
+drawer; gate the home dashboard's home sections on the corridor, with the
+no-storm-on-screen exception. Small, self-contained, no new data. **Phase 2
+already emptied §48.20's warnings-only tier and closed its fetch gate** — that
+was this change's own cost, not a head start: leaving the tier would have shown
+the same alert in two sections of one panel.
+
+**==> ONE THING PHASE 2 TRADED AWAY, AND IT IS A GLASS CALL. <==** §48.6's rule
+is that a warning in force renders ABOVE any forecast. The section order is Rain
+then Flooding, so on both screens the warning is now one section BELOW the
+rainfall total. Inside the section the rows still lead. What was bought is a
+heading of its own instead of a footnote on a section about something else; what
+was sold is roughly one section's scroll height on a phone. **If it reads wrong,
+the fix is one line in `dashboardHtml` and one in `renderBody`.**
 
 **GLASS: THE RAINFALL PASS. FOUR THINGS CHANGED AND NONE HAS BEEN SEEN.**
 §48.18 and §48.19 are as-built in `SPEC-UI.md`; this is only what to look at.
@@ -274,17 +294,28 @@ keyboard users a path to an alert, so it must land before the map icons.
    run out and offers Retry, rather than "no meaningful rain expected". Only
    reachable on a genuinely old last-good copy, so it may not be seeable.
 
-5. **A storm that MISSES your house still shows the flood warnings, and not the
-   number** (§48.20, settled 2026-08-22). Two rings now: the figure needs the
-   storm's wind to reach you, the warnings only need the storm to be within
-   1,500 nm. **The thing to check is that a warning does NOT appear under every
-   storm in the list** — a storm on the far side of the planet should show no
-   house block at all.
+5. **A storm that misses your house now shows NO house block at all** — §48.20's
+   warnings-only tier drew flood rows and nothing else, and those rows are the
+   `Flooding` section's since Phase 2. The two rings collapsed back to one: the
+   house block needs the storm's wind to reach you, full stop. **The thing to
+   check is that the warnings did not go with it** — they should be in Flooding,
+   under their own heading, on every storm and on none.
 6. **The warning rows carry their affected area and how long is left.** *Hawaii
    in Hawaii, HI* under the name, *52 min left* under that. **The watch's area
    is seventeen zones and is printed whole on purpose** — the reader is hunting
    for their own zone and truncating hides it. On a phone that is a real block
-   of text, and whether it reads as thorough or as a wall is a glass call.
+   of text, and whether it reads as thorough or as a wall is a glass call. They
+   are in `Flooding` now, not in Rain.
+
+7. **The `Flooding` section itself, on a calm day with a home set.** It renders
+   with no storm on screen — that is the point of gating it on the house rather
+   than the storm — and on a quiet day it says *no flood alerts are in force for
+   your address* and nothing else. **Is that a useful line or a section of
+   nothing?** It exists because a section headed *Flooding* with a blank body
+   cannot be told from one that failed to load, but whether that reads as
+   reassurance or as clutter is glass. Also: three stacked waves beside the
+   heading, and whether they read as *water where it should not be* rather than
+   as surf.
 
 
 **THE MAP STILL TELLS THE LIE THE HEADCOUNT JUST STOPPED TELLING.** §54 split
@@ -564,7 +595,7 @@ distinguishable from NHC's blue-to-purple at a glance.
 spans 0.10–0.48 m, rungs 0 and 1 of five. The top three surge colours and the
 "deepest town elsewhere" sentence have never rendered.
 
-**A GDACS-basin storm near the house** — `SPEC-DATA.md` §51, `SPEC-UI.md` §51.6.
+**A GDACS-basin storm near the house** — `SPEC-DATA.md` §51, `SPEC-UI.md` §56.7.
 Surge at home has never rendered. Useful or trivia beside the wind numbers; does
 the six-hours-of-rising clause earn its line; and — the one that matters — does
 `out_of_range` read as **a gap in what we know** or as an all-clear. All-clear is

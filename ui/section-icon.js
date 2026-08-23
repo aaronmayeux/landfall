@@ -35,8 +35,11 @@
 /**
  * The set, in one place.
  *
- * NAMED FOR THE IDEA, NOT THE PICTURE. `surge` rather than `wave`, so a later
- * pass can redraw the shape without every caller becoming a lie.
+ * NAMED FOR THE IDEA, NOT THE PICTURE. `flood` rather than `waves`, so a later
+ * pass can redraw the shape without every caller becoming a lie. That rule
+ * earned its keep on 2026-08-22: `surge` was replaced by three stacked waves
+ * and not one call site had to change, because no call site had ever named a
+ * crest.
  */
 export const ICON_PATH = Object.freeze({
   /* Where it is — a map pin. */
@@ -50,12 +53,35 @@ export const ICON_PATH = Object.freeze({
   clock: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   /* Vitals — a gauge needle. */
   gauge: '<path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 17l4-5"/>',
-  /* Coastal flooding — a wave crest over a level line. Deliberately NOT the
-   * rain cloud with more drops: those two sections sit adjacent and their
-   * icons are the only thing distinguishing them at a glance while
-   * scrolling. */
-  surge: '<path d="M3 16c2 0 2-1.5 4-1.5S9 16 11 16s2-1.5 4-1.5S17 16 19 16"/>' +
-    '<path d="M3 20h18"/><path d="M6 11c0-3 3-4 6-7 3 3 6 4 6 7"/>',
+  /* Flooding — three stacked waves. Water where it should not be, whether it
+   * came off the sky or off the sea; §56.7 merged those two into one section
+   * and this is its one mark.
+   *
+   * ==> IT REPLACED `surge`, WHICH WAS A CREST OVER A LEVEL LINE. <== That
+   * shape existed for one job its own comment named: separating `Coastal
+   * flooding` from `Rain` at a glance while scrolling. `Coastal flooding` is
+   * not a section any more, so the job is gone and the mark went with it.
+   * There is exactly one water glyph in this app now, which is the point —
+   * two would teach a reader that the difference between them means
+   * something, and §56.7's whole finding is that it does not.
+   *
+   * ==> DELIBERATELY NOT THE RAIN CLOUD WITH MORE DROPS. <== Rain and
+   * Flooding sit adjacent on both screens and the icon is what separates them
+   * while scrolling. A cloud is weather arriving; these are the ground
+   * already under water.
+   *
+   * ==> AND THE MAP WILL DRAW THE SAME PATH, NOT A REDRAWN ONE (§56.10). <==
+   * `map.addImage` wants pixels, so Phase 5 strokes THESE strings onto a
+   * canvas rather than authoring a second wave somewhere else. Tap a wave on
+   * the globe and the panel that opens is headed with the same wave — one
+   * continuous thought instead of two unrelated marks. That is why the shape
+   * is centred on the 24-box (x 4 to 20) rather than inheriting `surge`'s
+   * off-centre 3-to-19 span: an icon that is going to be rasterised has to be
+   * balanced inside its own box, where a heading glyph could get away with a
+   * lean. */
+  flood: '<path d="M4 7c2 0 2-1.5 4-1.5S10 7 12 7s2-1.5 4-1.5S18 7 20 7"/>' +
+    '<path d="M4 12c2 0 2-1.5 4-1.5S10 12 12 12s2-1.5 4-1.5S18 12 20 12"/>' +
+    '<path d="M4 17c2 0 2-1.5 4-1.5S10 17 12 17s2-1.5 4-1.5S18 17 20 17"/>',
   /* The closest pass, on Home — and the Home section on the storm panel, which
    * carries the same two figures (distance now, closest approach next) and so
    * takes the same mark rather than a house of its own. A house would say

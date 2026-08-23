@@ -51,6 +51,7 @@ const {
   readAlerts, normalizeAlert, plainEnglish, isExpired,
   dedupeAlerts, alertsForStorm, stormCountries,
   isActual, isRetracted, isAllClear, isInForce, severityRung,
+  partitionSurge, isSurgeAlert,
 } = await import('../lib/cap.js');
 const { _normalizeGdacsEvent } = await import('../data/gdacs.js');
 const { areaBand, areaSelect } = await import('../map/coast-band.js');
@@ -295,6 +296,80 @@ ok(
   FEED.features.find((f) => f.attributes.countryCode === 'ph'),
   'fixture country codes should be lowercase — the case fold is load-bearing'
 );
+
+/* =========================================================================
+ * 5b. THE SURGE SPLIT — §56.8
+ *
+ * ==> WATER LEFT THIS SECTION AND EVERY ROW HAS TO LAND IN EXACTLY ONE PLACE.
+ * <== `functions/api/cap/alerts.js` asks for `Storm Surge` alongside four
+ * cyclone terms, so a surge warning has always arrived in this list. Since
+ * §56.7 every other kind of water in the app lives in `Flooding`, so these
+ * rows go with it — otherwise water is split across two sections according to
+ * which feed happened to carry it.
+ *
+ * ==> THE TWO FAILURES WORTH GUARDING ARE OPPOSITE AND BOTH SILENT. <== A row
+ * in NEITHER half is §5's silence with a filing system over it. A row in BOTH
+ * is the app saying one thing twice under two headings and leaving the reader
+ * to work out whether it is one alert or two. A partition cannot produce
+ * either; two independent predicates can, which is why `partitionSurge`
+ * returns both halves rather than exporting two tests.
+ *
+ * THE FIXTURE IS REAL AND IT IS WHY THIS IS TESTABLE AT ALL: two of the five
+ * archived rows are Environment Canada storm-surge warnings for the Yukon.
+ * ====================================================================== */
+section('§56.8 — the surge split');
+
+const split = partitionSurge(alerts);
+
+ok(split.surge.length === 2,
+  `expected 2 archived storm-surge rows, got ${split.surge.length}`);
+ok(split.surge.every((a) => /storm surge/i.test(a.event)),
+  'every row in the surge half must actually name storm surge');
+ok(split.rest.every((a) => !/storm surge/i.test(a.event)),
+  'no row in the remainder may name storm surge');
+
+/* ==> THE PROPERTY, NOT THE COUNTS. <== Everything above could hold while a
+ * row was quietly dropped or duplicated. These two are the rules. */
+ok(split.surge.length + split.rest.length === alerts.length,
+  'every alert lands in exactly one half — none dropped, none duplicated');
+ok(
+  split.surge.every((a) => !split.rest.includes(a)),
+  'no alert may appear in both halves'
+);
+
+/* MUTATION: the naive implementation is two independent predicates, and the
+ * one that is easy to get wrong is the negative — `!isSurgeAlert` written as
+ * "is a cyclone term" instead. That version drops any row matching neither,
+ * and the archived feed has one: `Fin de Influencia de Onda Tropical` does not
+ * contain "cyclone", "typhoon" or "hurricane".
+ *
+ * If this assertion ever goes false the fixture has stopped containing a row
+ * that only the negative catches, and the guard above is proving nothing. */
+const cycloneish = (a) => /cyclone|typhoon|hurricane/i.test(a.event);
+ok(
+  split.rest.some((a) => !cycloneish(a)),
+  'MUTATION DEAD: every non-surge row now names a cyclone, so "the rest" and '
+  + '"the cyclone ones" have stopped being different sets'
+);
+
+/* THE PREDICATE ITSELF, on the two shapes that decide it. */
+ok(isSurgeAlert({ event: 'Storm Surge Warning' }), 'the route’s own term matches');
+ok(isSurgeAlert({ event: 'storm surge' }), 'and it matches case-insensitively');
+ok(!isSurgeAlert({ event: 'Tropical Cyclone Alert' }), 'a cyclone alert is not surge');
+ok(!isSurgeAlert({ event: null }), 'a row with no event name is not surge');
+ok(!isSurgeAlert(null), 'a missing row is not surge, and does not throw');
+
+/* ==> A ROW NAMING BOTH GOES TO FLOODING. <== "Tropical Cyclone Storm Surge
+ * Warning" is a real shape for this field and it is a statement about water.
+ * The reader looking for water should find it in the one place the app now
+ * keeps water. Asserted because the obvious ordering — cyclone terms first —
+ * sends it the other way and nothing on screen would say so. */
+const both = partitionSurge([{ event: 'Tropical Cyclone Storm Surge Warning' }]);
+ok(both.surge.length === 1 && both.rest.length === 0,
+  'a row naming both a cyclone and surge belongs to Flooding');
+
+ok(partitionSurge(null).surge.length === 0 && partitionSurge(null).rest.length === 0,
+  'a missing list partitions into two empty halves rather than throwing');
 
 /* =========================================================================
  * 6. UNREADABLE IS NOT EMPTY — THE §5 ASSERTION

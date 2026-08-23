@@ -37,6 +37,7 @@ const {
 const { RAIN, APPROACH } = await import(path.join(ROOT, 'config/constants.js'));
 const { reachesHome } = await import(path.join(ROOT, 'data/home-corridor.js'));
 const { createRainStorm } = await import(path.join(ROOT, 'ui/rain-storm.js'));
+const { createFloodingHome } = await import(path.join(ROOT, 'ui/flooding-home.js'));
 const { projectOpenMeteo } =
   await import(path.join(ROOT, 'functions/api/rain/global.js'));
 const { projectPoint, stripAlerts } =
@@ -709,23 +710,25 @@ console.log('\nMutations — each bug must change the answer');
 }
 
 /* ==========================================================================
- * §48.17 — WHAT THE STORM DRAWER'S HOUSE BLOCK ACTUALLY RENDERS.
+ * §48.17, §48.20, §56.7 — WHAT THE TWO SECTIONS ACTUALLY RENDER.
  *
- * ==> THESE EXIST BECAUSE THE BLOCK SHIPPED WITH A REAL BUG THAT NOTHING
+ * ==> THESE EXIST BECAUSE THE HOUSE BLOCK SHIPPED WITH A REAL BUG THAT NOTHING
  * CAUGHT. <== It rendered a rainfall total for the house and DROPPED the flood
  * warnings in force, on the reasoning that the dashboard already showed them
- * and the app must not say things twice. It is not said twice: `In effect`
- * carries NHC's hurricane and tropical-storm products, and `Local agency
- * alerts` asks its upstream only for Cyclone, Typhoon, Hurricane, Tropical and
- * Storm Surge. Flood is in none of them. So a reader who tapped a storm and
- * never opened the dashboard got a number and no warning at all.
+ * and the app must not say things twice. It was not said twice, and a reader
+ * who tapped a storm and never opened the dashboard got a number and no
+ * warning at all. Every suite passed: it is not an exception, not a parse
+ * failure and not a wrong figure — it is a TRUE SENTENCE THAT WAS NEVER
+ * PRINTED, which is exactly the shape §5 exists to forbid and exactly what a
+ * unit test of the arithmetic cannot see. So these assert the RENDERED STRING.
  *
- * Every suite passed. It is not an exception, not a parse failure and not a
- * wrong figure — it is a true sentence that was never printed, which is
- * exactly the shape §5 exists to forbid and exactly what a unit test of the
- * arithmetic cannot see. So these assert the RENDERED STRING.
+ * ==> THE ROWS MOVED TO `Flooding` ON 2026-08-22 (§56.7) AND THESE MOVED WITH
+ * THEM RATHER THAN BEING DELETED. <== Every assertion below still asserts the
+ * thing it was written to assert; what changed is which controller is asked.
+ * Deleting a §5 acceptance case because its code moved house is how the bug it
+ * was written for comes back.
  *
- * The controller is string building with no DOM, so this runs on plain node.
+ * Both controllers are string building with no DOM, so this runs on plain node.
  * ========================================================================== */
 {
   const hiloAlerts = load('alerts-hilo-hi');
@@ -744,16 +747,25 @@ console.log('\nMutations — each bug must change the answer');
   const nwsNoAlertsHop = projectPoint({
     grid: load('grid-hilo-hi'), point: null, alerts: null, alertsOk: false,
   });
+  /* The same grid with the hop having SUCCEEDED and returned nothing. A real
+   * all-clear, and the state that must not render the same as the one above. */
+  const nwsNoneInForce = projectPoint({
+    grid: load('grid-hilo-hi'), point: null,
+    alerts: { type: 'FeatureCollection', features: [] }, alertsOk: true,
+  });
   const openMeteo = projectOpenMeteo({ body: load('openmeteo-manila-ph'), fetchedAt: null });
 
-  /** Render the house block for a GDACS storm (no advisory range above it) at
-   *  a chosen moment. Returns the HTML the section would write. */
-  async function render(payload, atMs, range = { reach: 'reaches', distanceNm: 200 }) {
+  const HOME = { lat: 19.72, lon: -155.08 };
+  const flat = (h) => h.replace(/\s+/g, ' ');
+
+  /** Render the storm drawer's Rainfall section for a GDACS storm (no advisory
+   *  range above it) at a chosen moment. */
+  async function renderRain(payload, atMs, range = { reach: 'reaches', distanceNm: 200 }) {
     const storm = { id: 'g1', source: 'gdacs', advisoryKey: null };
     const c = createRainStorm({
       loadAdvisory: async () => ({ state: 'unsupported' }),
       rain: { loadRainfall: async () => ({ status: 'ok', payload }), retryRainfall: async () => ({}) },
-      house: { get: () => ({ lat: 19.72, lon: -155.08 }), rangeNm: () => range },
+      house: { get: () => HOME, rangeNm: () => range },
       units: () => 'imperial',
       now: () => atMs,
     });
@@ -761,51 +773,89 @@ console.log('\nMutations — each bug must change the answer');
     return c.html(storm);
   }
 
-  const live = await render(nws, LIVE);
+  /** Render the home dashboard's Flooding section at a chosen moment.
+   *
+   *  ==> NO STORM BY DEFAULT, AND THAT IS THE POINT OF THE MOVE. <== The rows
+   *  are an agency's statement about the reader's own address; nothing about
+   *  them depends on which storm is on screen, or on there being one. The old
+   *  house block had to carry a two-tier scope rule to get that right (§48.20)
+   *  and this has no tiers to get wrong. */
+  async function renderFlood(payload, atMs, storm = null) {
+    const c = createFloodingHome({
+      rain: { loadRainfall: async () => ({ status: 'ok', payload }), retryRainfall: async () => ({}) },
+      /* A model facade that is never actually asked: every storm in these
+       * fixtures is either absent or NHC's, and §51.5 declines those before a
+       * fetch. It is present rather than null because the SECTION only draws
+       * its second half when the feature is wired at all, and a null here
+       * would silently skip the half these assertions are about. */
+      surge: { loadSurge: async () => ({ status: 'unavailable' }), retrySurge: async () => ({}) },
+      units: () => 'imperial',
+      now: () => atMs,
+    });
+    await c.ensure(storm, HOME, () => {});
+    return c.inner(storm, HOME, '<HEAD>');
+  }
+
+  const live = await renderFlood(nws, LIVE);
+  const rainLive = await renderRain(nws, LIVE);
 
   /* THE BUG, ASSERTED DIRECTLY. */
-  truthy('a live Flash Flood Warning reaches the storm drawer',
+  truthy('a live Flash Flood Warning reaches the reader',
     live.includes('Flash Flood Warning'));
 
-  /* ==> AND IT IS ABOVE THE NUMBER, NOT BELOW IT (§48.6). <== A warning under
-   * a total is a warning most readers scroll past. Index order is the only
-   * thing that can assert this without a browser. */
-  truthy('the warning renders above the total',
-    live.indexOf('Flash Flood Warning') < live.indexOf('expected through'));
+  /* ==> AND IT IS ABOVE OUR OWN FIGURES, NOT BELOW THEM (§48.6). <== The rule
+   * is that somebody else's order about right now outranks our arithmetic on a
+   * forecast. It used to be asserted WITHIN one section, against the rainfall
+   * total. Since §56.7 the rainfall total is in the section above and the
+   * order is `Rain, then Flooding`, so what this asserts now is the surviving
+   * half: inside Flooding, the rows come before the modelled figure and the
+   * coverage prose. Index order is the only thing that can assert this without
+   * a browser. */
+  const withModel = await renderFlood(nws, LIVE, { id: 'n1', source: 'nhc' });
+  truthy('the rows render above our own modelled prose',
+    withModel.indexOf('Flash Flood Warning') < withModel.indexOf('flood-model'));
 
-  /* AN EXPIRED WARNING IS NOT A WARNING. Same bytes, later the same evening:
-   * the block must print the forecast and nothing about a flood. Without this,
-   * a test of the line above would also pass on code that renders every alert
-   * it is ever handed, forever.
+  /* ==> AND THE RAINFALL TOTAL IS NOT IN THIS SECTION AT ALL. <== §56.7 left
+   * Rain a forecast and only a forecast. A Flooding section that also printed
+   * the total would be the merge undone by a copy-paste. */
+  truthy('no rainfall total leaks into the Flooding section',
+    !live.includes('expected through') && !live.includes('The heaviest'));
+
+  /* AN EXPIRED WARNING IS NOT A WARNING. Same bytes, later the same evening.
+   * Without this, a test of the line above would also pass on code that
+   * renders every alert it is ever handed, forever.
    *
-   * ==> THE MOMENT IS PINNED TO THE WARNING'S OWN EXPIRY, NOT TO A ROUND
-   * NUMBER OF DAYS. <== It used to be a week out, which worked only because
-   * the total was summed over the whole series regardless of the clock. Since
-   * §48.19 a week later has no forecast left to print at all — that is the
-   * `lapsed` case below, and it would have made this assertion pass for
-   * entirely the wrong reason. One minute past the warning's own `ends` is the
-   * narrowest window that proves the expiry filter and nothing else. */
+   * ==> AND THE ROW IS REPLACED BY THE ALL-CLEAR, NOT BY NOTHING. <== That is
+   * new with §56.7 and it is the one behaviour the move actually changed:
+   * inside Rain an empty list was correctly silent, because the total below it
+   * was the section's answer. A section headed *Flooding* with nothing under
+   * it cannot be told from one that failed to load. */
   const floodEnds = Date.parse(
     hiloAlerts.features.find((f) => /Flash Flood Warning/.test(f.properties.event))
       .properties.ends
   );
-  const later = await render(nws, floodEnds + 60_000);
-  truthy('an expired warning does not reach the storm drawer',
-    !later.includes('Flash Flood Warning') && later.includes('expected through'));
+  const later = await renderFlood(nws, floodEnds + 60_000);
+  truthy('an expired warning does not reach the reader',
+    !later.includes('Flash Flood Warning'));
+  /* ==> THE WATCH IS STILL RUNNING AT THAT MOMENT, AND THAT IS THE POINT OF
+   * PINNING THIS ONE MINUTE PAST THE WARNING'S OWN `ends`. <== It proves the
+   * filter is per-alert rather than per-payload: one row goes and the other
+   * stays. A moment past everything would prove only that a list can be
+   * emptied. */
+  truthy('but the watch that is still running does',
+    later.includes('Flood Watch'));
 
-  /* ==> A FORECAST THAT HAS ENTIRELY RUN OUT IS NOT A FORECAST OF NO RAIN
-   * (§48.19). <== Every block in these bytes ended days before this moment.
-   * The honest answer is that the forecast has run out; "no meaningful rain
-   * expected" would be an all-clear assembled from an absence, which is §5
-   * with a storm's name over it. Reachable in the field on a last-good copy,
-   * which the edge holds for six hours. */
-  const lapsed = await render(nws, LIVE + 7 * 24 * 60 * 60 * 1000);
-  truthy('a wholly elapsed forecast says it ran out, and does not say "no rain"',
-    lapsed.includes('has run out') && !lapsed.includes('No meaningful rain'));
-  truthy('and it offers a Retry, because a fresh fetch is the fix',
-    lapsed.includes('data-retry="rain-house"'));
-  truthy('and it prints no total at all',
-    !lapsed.includes('expected through'));
+  /* PAST EVERY ALERT IN THE FIXTURE, and the section says so rather than going
+   * blank. That is new with §56.7 and it is the one behaviour the move
+   * actually changed: inside Rain an empty list was correctly silent, because
+   * the total below it was the section's answer. A section headed *Flooding*
+   * with nothing under it cannot be told from one that failed to load. */
+  const allEnds = Math.max(...hiloAlerts.features
+    .map((f) => Date.parse(f.properties.ends || f.properties.expires || ''))
+    .filter(Number.isFinite));
+  const afterAll = await renderFlood(nws, allEnds + 60_000);
+  truthy('and once every alert has run out the section says so rather than going blank',
+    flat(afterAll).includes('No flood alerts are in force for your address'));
 
   /* ==> THE URGENCY SIGNAL SURVIVED THE RESTYLE, AND THAT IS WHAT THIS
    * CHECKS. <== The rows lost their fill and their red/amber ink on 2026-08-22
@@ -814,11 +864,7 @@ console.log('\nMutations — each bug must change the answer');
    * cannot separate them — both flood alerts here are `Severe` — and deleting
    * the colour without replacing the signal would have quietly deleted the
    * distinction too. It lives in the SENTENCE now, which is the one place a
-   * stylesheet, a screen reader and a colour-blind reader all reach.
-   *
-   * Asserted on the rendered string, because that is where the regression
-   * would be: a future restyle can drop `data-urgency` and nothing else in
-   * this suite would notice. */
+   * stylesheet, a screen reader and a colour-blind reader all reach. */
   truthy('the immediate warning says it is in force, in words',
     /Flash Flood Warning[\s\S]*?in force until/.test(live));
   truthy('and the watch does not, so the two do not read the same',
@@ -836,7 +882,7 @@ console.log('\nMutations — each bug must change the answer');
     live.includes('Hawaii in Hawaii, HI'));
   truthy('and the watch names every zone it covers, untruncated',
     live.includes('Maui Windward West') && live.includes('Big Island North')
-      && !live.includes('\u2026') && !/\+\d+ more/.test(live));
+      && !live.includes('…') && !/\+\d+ more/.test(live));
 
   /* ==> AND HOW LONG IT HAS TO RUN, IN MINUTES WHERE THAT IS THE TRUTH. <==
    * Hilo's warning ran 52 minutes. Rounded to hours it would read "an hour",
@@ -853,74 +899,98 @@ console.log('\nMutations — each bug must change the answer');
     live.includes('in force until') && live.includes('min left'));
 
   /* ========================================================================
-   * §48.20 — A STORM THAT MISSES THE HOUSE KEEPS THE WARNINGS.
+   * §48.20 → §56.7 — A STORM THAT MISSES THE HOUSE KEEPS THE WARNINGS,
+   * AND NOW IT CANNOT DO OTHERWISE.
    *
-   * ==> THE FIRST CUT OF §48.18 DELETED THEM ALONG WITH THE FIGURE, AND THAT
-   * WAS THE SAME BUG §48.17 ALREADY SHIPPED ONCE. <== The total is the storm's
-   * to imply and the warning is not: it is an agency's statement about the
-   * reader's own address, true whichever storm they tapped, and nothing else
-   * in the app renders a flood warning.
+   * ==> THE FIRST CUT OF §48.18 DELETED THEM ALONG WITH THE FIGURE. <== The
+   * total is the storm's to imply and the warning is not: it is an agency's
+   * statement about the reader's own address, true whichever storm they
+   * tapped. §48.20 fixed that with a second scope tier inside the house block.
+   *
+   * ==> THE FIX IS STRUCTURAL NOW RATHER THAN CONDITIONAL, WHICH IS WHY THE
+   * ASSERTIONS CHANGED SHAPE. <== The rows do not read the storm at all. So
+   * these no longer prove that a rule fires correctly for a distant storm;
+   * they prove there is no longer a rule that COULD get it wrong — the same
+   * rendering for a near storm, a distant storm and no storm at all.
    * ===================================================================== */
-  const missed = await render(nws, LIVE, { reach: 'misses', distanceNm: 400 });
+  const nearStorm = await renderFlood(nws, LIVE, { id: 'g1', source: 'gdacs' });
+  const noStorm = live;
+  truthy('the warning renders with a storm on screen and with none',
+    nearStorm.includes('Flash Flood Warning') && noStorm.includes('Flash Flood Warning'));
+  truthy('with its area and its duration intact, either way',
+    nearStorm.includes('Hawaii in Hawaii, HI') && nearStorm.includes('52 min left')
+      && noStorm.includes('Hawaii in Hawaii, HI') && noStorm.includes('52 min left'));
 
-  truthy('a measured miss still shows the flood warning',
-    missed.includes('Flash Flood Warning'));
-  truthy('with its area and its duration intact',
-    missed.includes('Hawaii in Hawaii, HI') && missed.includes('52 min left'));
   /* ==> AND NOTHING THAT WOULD IMPLY THE STORM CAUSED IT. <== No total, no
    * peak, no provenance line — those are the things whose POSITION under a
    * storm's name makes a claim, which is the whole of §48.18. */
-  truthy('and no rainfall figure, because this storm does not reach the house',
+  const missed = await renderRain(nws, LIVE, { reach: 'misses', distanceNm: 400 });
+  truthy('a measured miss prints no rainfall figure for the house',
     !missed.includes('expected through') && !missed.includes('The heaviest'));
-  /* THE READER IS TOLD WHY THE NUMBER IS ABSENT, and only because it was
-   * MEASURED absent. */
-  /* WHITESPACE-NORMALISED, because the sentence is wrapped across source lines
-   * and the newline plus indent sits inside it. A test that matched the raw
-   * string would break the next time somebody rewraps a paragraph. */
-  const flat = (h) => h.replace(/\s+/g, ' ');
-  truthy('and it says why, and points at the home screen',
-    flat(missed).includes('not forecast to reach your house')
-      && flat(missed).includes('home screen'));
+  /* ==> AND IT NOW PRINTS NO HOUSE BLOCK AT ALL, WHICH IS NOT A LOSS. <==
+   * §48.20's warnings-only tier existed to carry the flood rows for exactly
+   * this case, and those rows are `Flooding`'s now. What is left for the tier
+   * to draw is nothing, so it draws nothing rather than a heading over an
+   * explanation of why there is no number. Nothing on screen makes a claim,
+   * which is the state §48.18 was reaching for. */
+  truthy('and no house heading is left standing over an empty explanation',
+    !missed.includes('At your house'));
 
-  /* ==> BUT ONLY WHERE WE ACTUALLY MEASURED IT. <== Reached by distance alone,
-   * with no wind field published, "this storm's wind does not reach you" is an
-   * all-clear nobody verified (§5). The warnings still show; the claim does not. */
-  const unmeasured = await render(nws, LIVE, { reach: null, distanceNm: 900 });
-  truthy('an unmeasured storm still shows the warning',
-    unmeasured.includes('Flash Flood Warning'));
-  truthy('but never claims the wind misses, because nobody published a field',
-    !flat(unmeasured).includes('not forecast to reach your house'));
-
-  /* THE FAR SIDE OF THE PLANET GETS NOTHING AT ALL. Without this, a flood
-   * warning at home would appear under every cyclone on Earth — which is the
-   * noise §48.18 exists to delete, reintroduced through the warnings tier. */
-  const faraway = await render(nws, LIVE, { reach: 'misses', distanceNm: 4000 });
-  truthy('a storm on the far side of the planet shows no house block at all',
-    !faraway.includes('At your house') && !faraway.includes('Flash Flood Warning'));
+  /* ==> BUT A STORM THAT DOES REACH STILL GETS ITS FIGURE. <== Without this,
+   * the assertion above would pass on a house block that had simply stopped
+   * rendering. */
+  truthy('a storm that reaches the house still prints the total',
+    rainLive.includes('At your house') && rainLive.includes('expected through'));
 
   truthy('the heaviest block names when it starts',
-    /The heaviest[^<]*from [A-Z][a-z]{2} /.test(live.replace(/\s+/g, ' ')));
+    /The heaviest[^<]*from [A-Z][a-z]{2} /.test(flat(rainLive)));
+
+  /* ==> A FORECAST THAT HAS ENTIRELY RUN OUT IS NOT A FORECAST OF NO RAIN
+   * (§48.19). <== Every block in these bytes ended days before this moment.
+   * The honest answer is that the forecast has run out; "no meaningful rain
+   * expected" would be an all-clear assembled from an absence. */
+  const lapsed = await renderRain(nws, LIVE + 7 * 24 * 60 * 60 * 1000);
+  truthy('a wholly elapsed forecast says it ran out, and does not say "no rain"',
+    lapsed.includes('has run out') && !lapsed.includes('No meaningful rain'));
+  truthy('and it offers a Retry, because a fresh fetch is the fix',
+    lapsed.includes('data-retry="rain-house"'));
+  truthy('and it prints no total at all',
+    !lapsed.includes('expected through'));
 
   /* ==> THE TWO MEANINGS OF `alerts: null`, AND THEY MUST NOT SWAP (§48.16).
    * <== From NWS it is a hiccup and retryable; from the global model it is a
    * durable fact. Each case asserts the sentence it SHOULD have and the
    * absence of the other one, because a block that printed both would pass a
-   * test that only looked for the right one. */
-  const hopFailed = await render(nwsNoAlertsHop, LIVE);
+   * test that only looked for the right one.
+   *
+   * ==> AND NEITHER MAY READ AS THE ALL-CLEAR, WHICH IS THE WHOLE §5 POINT
+   * AND IS NOW ASSERTABLE. <== Inside Rain there was no all-clear string to
+   * confuse them with; `Flooding` has one, so "nothing is in force" and "we
+   * could not find out" are three distinct outcomes that must stay distinct. */
+  const hopFailed = await renderFlood(nwsNoAlertsHop, LIVE);
   truthy('a failed NWS alerts hop says so, and does not claim none are published',
     hopFailed.includes('could not be checked') &&
     !hopFailed.includes('aren’t published'));
+  truthy('and a failed hop never reads as the all-clear',
+    !flat(hopFailed).includes('No flood alerts are in force for your address'));
 
-  const global = await render(openMeteo, LIVE);
-  truthy('the global model says warnings are not published here, not that they failed',
+  const global = await renderFlood(openMeteo, LIVE);
+  truthy('the global model says alerts are not published here, not that they failed',
     global.includes('aren’t published') &&
     !global.includes('could not be checked'));
+  truthy('and that never reads as the all-clear either',
+    !flat(global).includes('No flood alerts are in force for your address'));
 
-  /* THE ATTRIBUTION SENTENCE. A gridded total is all rain from all causes, and
-   * a figure under a storm's name reads as that storm's doing unless it says
-   * otherwise. */
+  const clear = await renderFlood(nwsNoneInForce, LIVE);
+  truthy('a successful hop with nothing in force IS the all-clear',
+    flat(clear).includes('No flood alerts are in force for your address') &&
+    !clear.includes('could not be checked') && !clear.includes('aren’t published'));
+
+  /* THE ATTRIBUTION SENTENCE, which stays with the rainfall total: a gridded
+   * total is all rain from all causes, and a figure under a storm's name reads
+   * as that storm's doing unless it says otherwise. */
   truthy('the total is not attributed to the storm',
-    live.includes('not this') && live.includes('storm alone'));
+    rainLive.includes('not this') && rainLive.includes('storm alone'));
 }
 
 console.log(

@@ -622,6 +622,31 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * which is on screen the whole time that panel is open. Deleted rather than
    * left behind: a function nothing calls is a function that rots. */
 
+  /* ==> ONE SURGE FACADE, TWO VIEWS, AND THAT IS THE WHOLE REASON IT IS A
+   * `const` UP HERE. <== §56.7 puts the modelled coastal figure in the
+   * `Flooding` section on BOTH screens — the storm drawer asks the storm's
+   * version of the question and the dashboard asks the house's — and both must
+   * read the same run. `data/gdacs-surge.js` memoizes per storm, so two facades
+   * would still have hit one memo; what a single object buys is that the
+   * COUNTING and the eviction rule cannot drift, which is the half that has
+   * gone wrong before (see `envShips.retryShips`).
+   *
+   * ==> THE FACADE TAKES A STORM AND HANDS DOWN AN EVENT ID. <== The views know
+   * about storms and `data/gdacs-surge.js` is keyed by GDACS event id, and
+   * `gdacsEventIdOf` is the one place that mapping lives — so it is applied
+   * once, here, rather than in each section and the map layer where the three
+   * could drift.
+   *
+   * THE RETRY IS COUNTED, NEVER THE LOAD: a section that fetches when it is
+   * drawn says nothing about what anybody wanted. */
+  const surgeFacade = {
+    loadSurge: (storm) => loadGdacsSurge(gdacsEventIdOf(storm)),
+    retrySurge: (storm) => {
+      countRetry('surge');
+      return retryGdacsSurge(gdacsEventIdOf(storm));
+    },
+  };
+
   const detailView = createStormDetailView({
     home: {
       get: getHome,
@@ -729,6 +754,13 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
         });
       },
     },
+    /* Modelled coastal flooding (§56.7) — THE SAME OBJECT the home dashboard
+     * is handed below, deliberately. `data/gdacs-surge.js` memoizes one answer
+     * per storm, so the figure in this drawer, the figure on the dashboard and
+     * the paint on the shoreline are one number and cannot disagree. Building
+     * a second facade here would have been the same three lines and a new way
+     * for two surfaces to drift. */
+    surge: surgeFacade,
   });
   detailView.setChromeRefresh(() => drawer.refreshChrome());
 
@@ -987,23 +1019,9 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * ONE object, shared with the storm drawer's house block: see `rainFacade`
      * above, which is where the counting rule and the allowlist note live. */
     rain: rainFacade,
-    /* Modelled coastal flooding (§51.3). The same facade shape — ui/ never
-     * imports data/ (§12) — and the same counting rule: the RETRY is counted,
-     * never the load, because a section that fetches when it is drawn says
-     * nothing about what anybody wanted.
-     *
-     * ==> THE FACADE TAKES A STORM AND HANDS DOWN AN EVENT ID. <== The view
-     * knows about storms and `data/gdacs-surge.js` is keyed by GDACS event id,
-     * and `gdacsEventIdOf` is the one place that mapping lives — so it is
-     * applied once, here, rather than in both the section and the map layer
-     * where the two could drift. */
-    surge: {
-      loadSurge: (storm) => loadGdacsSurge(gdacsEventIdOf(storm)),
-      retrySurge: (storm) => {
-        countRetry('surge');
-        return retryGdacsSurge(gdacsEventIdOf(storm));
-      },
-    },
+    /* Modelled coastal flooding (§56.7) — THE SAME OBJECT the storm drawer
+     * takes. See `surgeFacade` above. */
+    surge: surgeFacade,
   });
 
   /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This

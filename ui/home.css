@@ -288,17 +288,20 @@
 }
 
 /* THE ONE RETRY SHAPE IN THIS FILE. All three of home's retries take it, so a
-   Retry on the search row, one in the rainfall section and one in the surge
+   Retry on the search row, one in the rainfall section and one in the flooding
    section are the same control — same box, same ink, same 44px target — which
    is the same shape `.retry` and `.detail-retry` carry in panels.css.
 
    ==> THE THIRD ONE IS WHY THIS SELECTOR EXISTS. <== §12's rule is that a
-   pattern used twice gets extracted before the second use; the surge Retry is
+   pattern used twice gets extracted before the second use; the surge Retry was
    the first control added since, and it cost one selector name rather than a
-   rediscovery of the bare-link bug documented at the bottom of this file. */
+   rediscovery of the bare-link bug documented at the bottom of this file. It
+   has since been renamed `.home-flood-retry` and grown a sibling in the same
+   section (§56.7) — and that rename cost one line here, which is exactly what
+   the extraction was for. */
 .home-retry,
 .home-rain-retry,
-.home-surge-retry {
+.home-flood-retry {
   min-height: var(--touch-target);
   padding: 0 var(--space-snug);
   background: transparent;
@@ -455,7 +458,7 @@
 .home-search:focus-visible,
 .home-retry:focus-visible,
 .home-rain-retry:focus-visible,
-.home-surge-retry:focus-visible,
+.home-flood-retry:focus-visible,
 .home-result:focus-visible,
 .home-confirm-yes:focus-visible,
 .home-confirm-no:focus-visible,
@@ -1153,39 +1156,17 @@
    All this rule adds is the room to sit under its sentence rather than inside
    it; `ui/rain-home.js` puts it in its own paragraph for the same reason. */
 .home-rain-retry,
-.home-surge-retry {
+.home-flood-retry {
   margin-top: var(--space-snug);
 }
 
 /* ---------------------------------------------------------------------------
-   SURGE — modelled coastal flooding at the house (§51.3)
+   FLOODING (§56.7) — this section's rules are in panels.css.
 
-   ==> IT DELIBERATELY BORROWS RAIN'S TYPE SCALE RATHER THAN INVENTING ONE.
-   <== The two sections sit adjacent and answer the same kind of question —
-   how much water reaches this house — so a reader scanning past them should
-   see one rhythm, not two. What distinguishes them is the icon and the words,
-   which is where the difference actually is.
+   ==> THEY MOVED WHEN THE SECTION GAINED A SECOND SCREEN. <== `Coastal
+   flooding` was the home dashboard's alone and its rules belonged here.
+   `Flooding` is drawn on the storm drawer too, from one set of class names, so
+   the rules are shared panel furniture — the same move `.rain-alert` made.
+   Both stylesheets ship to every visitor, so the file is only ever a question
+   of where the NEXT reader looks for them. Look in panels.css, under FLOODING.
    ------------------------------------------------------------------------ */
-
-.home-surge-line {
-  margin: 0;
-  line-height: 1.4;
-}
-.home-surge-line strong { font-variant-numeric: tabular-nums; }
-
-/* The deepest town elsewhere on the storm. Secondary because it is context
-   rather than the reader's own answer — and present because "nothing near you"
-   with no other figure beside it reads as an all-clear, which it is not. */
-.home-surge-worst {
-  margin: var(--space-tight) 0 0;
-  line-height: 1.45;
-}
-
-/* Provenance, and the "this is a gap not an all-clear" sentence, in the same
-   quietest register rain's note uses. It names the modeller, which is the only
-   thing on screen explaining why this storm's figure is centimetres where an
-   American storm's is feet (§51.1). */
-.home-surge-note {
-  margin: var(--space-snug) 0 0;
-  line-height: 1.45;
-}

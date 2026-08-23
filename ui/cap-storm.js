@@ -45,7 +45,7 @@
  * (§12).
  */
 
-import { alertKey, alertsForStorm, plainEnglish, stormCountries } from '../lib/cap.js';
+import { alertKey, alertsForStorm, partitionSurge, plainEnglish, stormCountries } from '../lib/cap.js';
 import { formatUntil } from '../lib/time.js';
 import { DOTS } from './loading-dots.js';
 
@@ -245,9 +245,20 @@ export function createCapStorm({ loadAlerts }) {
         storm yet.</div>`;
     }
 
-    const mine = alertsForStorm(slot.alerts, storm);
-    /* Cleared per render so the id map holds only what is on screen. */
-    keyById.clear();
+    /* ==> THE SURGE ROWS ARE NOT THIS SECTION'S ANY MORE (§56.8). <== They
+     * render in `Flooding`, through `waterHtml()` below, off this same
+     * partition — so a row lands in exactly one of the two sections and the
+     * app never says one thing twice under two headings. */
+    const { rest: mine } = partitionSurge(alertsForStorm(slot.alerts, storm));
+    /* ==> IT IS NOT CLEARED HERE ANY MORE, AND THAT WAS A REAL BUG WAITING.
+     * <== It used to clear per render of this section, to stop the map
+     * growing. Since §56.8 there are TWO renderers writing into it — this one
+     * and `waterHtml()`, in two different sections — so a repaint of this half
+     * alone would wipe the ids the Flooding half had just registered, and
+     * every language disclosure over there would stop opening with nothing
+     * throwing. It is cleared when a new LIST lands instead (see `ensure` and
+     * `retry`), which is the only moment the set of alerts can actually
+     * change. */
 
     /* ANSWERED, AND NOTHING MATCHED. Completely different from the failure
      * above and worded so (§50.6). */
@@ -269,6 +280,65 @@ export function createCapStorm({ loadAlerts }) {
   }
 
   /**
+   * The storm-surge half of the same list, as the rows `Flooding` renders.
+   * §56.8.
+   *
+   * ==> ONE FETCH, ONE STATE MACHINE, TWO SECTIONS. <== The obvious
+   * alternative is a second controller for Flooding with its own copy of this
+   * fetch. That would be two answers to "what has this agency got out right
+   * now" landing at different moments, and the section showing the older one
+   * would be wrong with nothing on screen saying so. So this file keeps the
+   * state and hands the other section finished markup.
+   *
+   * ==> THE SHAPE MIRRORS `flood.summaryFor` DELIBERATELY. <== Both feed the
+   * same section, and a caller that has to remember two different state
+   * vocabularies for two halves of one block is a caller that will get one of
+   * them wrong. `loading` / `unavailable` / `ok`, and `null` for a storm this
+   * source is never asked about.
+   */
+  function waterHtml(storm, now = Date.now()) {
+    /* NOT ASKED, SO NO ANSWER. The CAP list is matched by country off GDACS's
+     * attribution, and an NHC storm never reaches `ensure()` at all. */
+    if (!storm || storm.source !== 'gdacs') return null;
+
+    if (!isCurrent(storm) || state.phase === 'idle' || state.phase === 'loading') {
+      return { state: 'loading' };
+    }
+
+    const slot = state.slot || { state: 'unavailable' };
+    if (slot.state !== 'ok') return { state: 'unavailable' };
+
+    /* No country attributed yet — `Watches and warnings` has already told the
+     * reader so, in the section whose job that is. Repeating it here would be
+     * this app explaining its own filing system twice. */
+    if (!stormCountries(storm).length) return { state: 'ok', alerts: [], rowsHtml: '' };
+
+    const { surge } = partitionSurge(alertsForStorm(slot.alerts, storm));
+    if (!surge.length) return { state: 'ok', alerts: [], rowsHtml: '' };
+
+    return {
+      state: 'ok',
+      alerts: surge,
+      rowsHtml: `${surge.map((a) => alertHtml(a, now)).join('')}
+        <div class="detail-cap-note">Issued by national weather agencies for the
+        countries this storm is affecting — not by the forecast centre tracking
+        it, and not necessarily about this storm. Wording is each agency's own
+        and is not translated.</div>`,
+    };
+  }
+
+  /** Refetch the list. The Flooding section's own Retry calls this, so both
+   *  sections recover from one press wherever it is made. */
+  async function retry(storm) {
+    const mySeq = ++seq;
+    state = { phase: 'loading', slot: null, forId: storm?.id ?? state.forId };
+    const slot = await loadAlerts({ retry: true });
+    if (mySeq !== seq) return;
+    keyById.clear();
+    state = { phase: 'done', slot, forId: storm?.id ?? state.forId };
+  }
+
+  /**
    * Dispatch the feed fetch if what we hold is not this storm's.
    *
    * Cheap to call on every render — the guard makes it idempotent and
@@ -282,6 +352,7 @@ export function createCapStorm({ loadAlerts }) {
     state = { phase: 'loading', slot: null, forId: storm.id };
     const slot = await loadAlerts();
     if (mySeq !== seq) return; // a newer storm took over mid-flight
+    keyById.clear();
     state = { phase: 'done', slot, forId: storm.id };
     repaint?.();
   }
@@ -317,10 +388,11 @@ export function createCapStorm({ loadAlerts }) {
       repaint?.();
       const slot = await loadAlerts({ retry: true });
       if (mySeq !== seq) return;
+      keyById.clear();
       state = { phase: 'done', slot, forId: storm.id };
       repaint?.();
     });
   }
 
-  return { html, ensure, wire };
+  return { html, waterHtml, retry, ensure, wire };
 }

@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 10 files, 252 numbered headings.
+Covering 10 files, 251 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -220,7 +220,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2254-2339 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3576-3598 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3773-3795 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -250,14 +250,13 @@ real home is the other row carrying the same section number.
 | `51` | Storm surge outside America — modelled water at named towns | `SPEC-DATA.md` | 2937-2938 |
 | `51.1` | &nbsp;&nbsp;The product, and the one that is not it | `SPEC-DATA.md` | 2939-3025 |
 | `51.2` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 3026-3055 |
-| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 3056-3104 |
-| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 3105-3155 |
-| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3156-3194 |
-| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 3528-3575 |
-| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3195-3242 |
-| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1965-2002 |
-| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2022-2054 |
-| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2055-2091 |
+| `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 3056-3114 |
+| `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 3115-3165 |
+| `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3166-3204 |
+| `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3205-3252 |
+| `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1965-2012 |
+| `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2032-2064 |
+| `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2065-2101 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
 | `55` | Known and accepted | `SPEC.md` | 2345-2484 |
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
@@ -267,24 +266,24 @@ real home is the other row carrying the same section number.
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 142-173 |
 | `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 174-223 |
 | `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 224-246 |
-| `56.7` | &nbsp;&nbsp;One Flooding section, both kinds of water | `SPEC-FLOOD-PLAN.md` | 247-289 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gains one line | `SPEC-FLOOD-PLAN.md` | 290-321 |
-| `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 322-349 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-FLOOD-PLAN.md` | 350-369 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 370-390 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 391-426 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 427-442 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3528-3563 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3662-3702 |
+| `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 247-274 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3743-3772 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 275-304 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 305-358 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 359-374 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 194,712 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 22,056 | 14 |
+| `SPEC-DATA.md` | 195,375 | 55 |
+| `SPEC-FLOOD-PLAN.md` | 18,909 | 11 |
 | `SPEC-MAP.md` | 264,284 | 43 |
-| `SPEC-NEXT.md` | 134,021 | 29 |
+| `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 212,281 | 18 |
-| `SPEC.md` | 173,542 | 15 |
+| `SPEC-UI.md` | 224,246 | 20 |
+| `SPEC.md` | 174,704 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

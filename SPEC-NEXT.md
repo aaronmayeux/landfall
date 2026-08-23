@@ -1991,7 +1991,17 @@ coastline vertices from whatever tiles happen to have arrived.
    Surge is not waves; it is the sea level itself rising. A reader who knows the
    difference reads it wrong and one who does not learns it wrong. It should
    read as water rising against something fixed — closer to a tide gauge than a
-   breaker, which is the same instinct behind the section's icon (§51.6).
+   breaker, which is the same instinct behind the section's icon.
+
+   **==> AND THE SECTION'S ICON IS NOW A WAVE, WHICH IS THIS POINT'S OWN
+   ARGUMENT LANDING ON THE OTHER SIDE. <==** §56.10 replaced the crest with
+   three stacked waves when `Coastal flooding` merged into `Flooding` — because
+   the section is no longer about surge alone, and a mark meaning *water where
+   it should not be* has to cover rain-driven flooding too. The reasoning above
+   is unchanged and still applies **to the map**: a marker on a shoreline is
+   read as sea state in a way a heading glyph beside the word "Flooding" is not.
+   If Phase 5 draws the section's glyph on the globe, this is the objection to
+   answer first.
 
 **The thing neither shape shows, and it may be the best fact in this data.**
 Arrival and peak. "Water starts rising in about 87 hours, still rising six hours

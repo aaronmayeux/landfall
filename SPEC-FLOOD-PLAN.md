@@ -244,81 +244,6 @@ a gesture-only feature.**
 
 ---
 
-### 56.7 One Flooding section, both kinds of water
-
-**RAIN AND FLOODING ARE SEPARATE SECTIONS; COASTAL FLOODING IS NOT.** Rainfall is
-our arithmetic on a forecast. A flood alert is an agency's statement about right
-now with an expiry on it. Burying the second inside the first makes the urgent
-thing look like a footnote on the other thing — so Flood leaves Rain.
-
-**BUT COASTAL FLOODING MERGES INTO IT RATHER THAN STANDING BESIDE IT.** Somebody
-deciding whether to move a car does not care whether the water came off the sky
-or off the sea. Two headings for *water is going to be where you are* is a
-distinction that matters to the plumbing and not to the reader. §51.6's separate
-`Coastal flooding` section is deleted and its content moves here.
-
-**AND THE TWO BARELY EVER CO-OCCUR, WHICH SETTLES IT.** NWS flood alerts are US
-only. GDACS models coastal flooding and explicitly does not cover NHC basins
-(§51.5). So a US storm has alert rows and no modelled figure; a Japan typhoon has
-a modelled figure and no alert rows. **Two sections where one is always empty is
-worse than one section that fills from whichever source has something.**
-
-**THEY ARE DIFFERENT KINDS OF STATEMENT AND MUST NOT BE STYLED THE SAME.** An
-alert is somebody else's order. A surge height is our reading of a model. Given
-one look, the model borrows the authority of the order. So the section takes the
-shape Rain already uses: **bordered alert rows on top with their own ink, our
-modelled figure as plain prose underneath.**
-
-**==> ONE SECTION NOW CARRIES TWO COVERAGE GAPS AND EACH ONE READS AS AN
-ALL-CLEAR IF IT IS SILENT. <==** This is the §5 cost of merging and it is the
-thing most likely to be got wrong.
-
-- A Japan typhoon shows a modelled figure and no rows. That must not read as
-  *no flood warnings are in force* — it means **NWS is US-only and we have no
-  global equivalent.** The section says so.
-- A US storm shows rows and no modelled figure. That must not read as *no
-  coastal flooding expected* — it means **this model does not cover this
-  basin.**
-
-Getting that right in one place rather than two is another point in favour of
-the merge.
-
-**ORDER ON BOTH SCREENS:** Rain, then Flooding.
-
----
-
-### 56.8 Watches and warnings keeps its place, and gains one line
-
-**FLOOD ALERTS DO NOT MOVE INTO `Watches and warnings`.** The line that holds:
-**that section carries products that name this storm; Flooding carries products
-that do not.**
-
-- NHC's four products — Tropical Storm Watch/Warning, Hurricane Watch/Warning —
-  are issued for this storm, by name, in its own advisory. No attribution risk.
-- The foreign-agency CAP rows are matched by country (§50.3), which is weaker,
-  and §50.12's footnote already hedges it.
-- An NWS flood alert names nothing at all. It is a distance match **we**
-  performed. In a section whose other rows genuinely belong to the storm, that
-  difference would be laundered into looking official.
-
-**REJECTED: one merged warnings list.** It would sit a Hurricane Warning — this
-storm, named, act now — beside a Flood Warning two states away that may have a
-different cause entirely, in one list with one look. The strong row lends its
-authority to the weak one.
-
-**THE COST IS ONE SENTENCE, AND IT IS THE WHOLE DEFENCE.** A reader who opens
-`Watches and warnings` during a flood and finds no flood warning will conclude
-the app missed it. That section carries a line pointing at Flooding.
-
-**ONE OVERLAP TO FIX: STORM SURGE ALERTS RENDER UNDER FLOODING.**
-`functions/api/cap/alerts.js` queries `%Storm Surge%`, so a foreign Storm Surge
-Warning currently lands in `Watches and warnings` while every other kind of water
-now lives in Flooding. That splits water across two sections according to which
-feed happened to carry it — the exact arbitrariness the merge just deleted. Same
-fetch, shown where the reader is already looking for water.
-
----
-
 ### 56.9 Home data leaves the storm drawer, and gates on the corridor at home
 
 **NOTHING ABOUT THE READER'S HOUSE APPEARS IN THE STORM DRAWER.** The house
@@ -347,26 +272,6 @@ render under a storm they have nothing to do with.
 
 ---
 
-### 56.10 The glyph
-
-**THREE STACKED WAVES, AND THE SAME SHAPE ON THE MAP.** Tap a wave on the globe
-and the panel that opens is headed with the same wave — one continuous thought
-rather than two unrelated marks. Added to `ui/section-icon.js` under a name for
-the idea rather than the picture, as that file requires.
-
-**`surge`'s ICON IS DELETED WITH ITS SECTION.** Its own comment says it exists
-solely to separate `Coastal flooding` from `Rain` at a glance while scrolling.
-That section no longer exists, so the mark has no job. **The wave-icon collision
-this plan worried about at one point is gone with it** — there is exactly one
-water mark now.
-
-**THE MAP ICON IS DRAWN FROM THE SAME PATH DATA, NOT REDRAWN.** `map.addImage`
-wants pixels, so the path is stroked onto a canvas the way `map/layers/genesis.js`
-builds its hatch — including that file's no-DOM degrade, which returns null
-rather than throwing and taking the whole layer engine down with it.
-
----
-
 ### 56.11 What gets deleted
 
 Deleted code is deleted, not commented out, and orphaned imports go with it
@@ -381,8 +286,17 @@ Deleted code is deleted, not commented out, and orphaned imports go with it
   **done, Phase 1.** The comment said the opposite of the code; the code was
   right. Once §56.4 gives watches real geometry the special case disappears
   entirely.
-- The house block in `ui/rain-storm.js`, its scope logic, and its CSS.
-- §51.6's `Coastal flooding` section, and `surge` from `ui/section-icon.js`.
+- The house block in `ui/rain-storm.js`, its scope logic, and its CSS. **Phase
+  2 emptied §48.20's warnings-only tier** — its entire content was the flood
+  rows, which now have a section — and closed the fetch gate to the `full` tier
+  so nothing is requested for a state that draws nothing. The block itself, the
+  scope logic and the CSS are still Phase 3's.
+- ~~The `Coastal flooding` section, and `surge` from `ui/section-icon.js`~~
+  — **done, Phase 2.** Both deleted rather than deprecated. `ui/surge-home.js`
+  is gone whole; its contents are the lower half of `ui/flooding-home.js`.
+- ~~The flood-alert rows inside both Rain sections, and the `alerts: null`
+  sentences that went with them~~ — **done, Phase 2.** Rain is a forecast and
+  only a forecast on both screens now.
 - `map/layers/flood.js`'s national-draw behaviour and the file header arguing
   for it.
 
@@ -403,11 +317,29 @@ sentence — so the copy followed the code. No new structure, no new sections. A
 later phase should read "no UI changes" as "no new UI", not as licence to leave
 a lie on screen.
 
-**PHASE 2 — THE FLOODING SECTION.** One section on both screens: alert rows on
-top, the modelled coastal figure as prose below. Merge in §51.6 and delete it.
-Add the three-wave glyph. Add the pointer line to `Watches and warnings` and
-move storm-surge CAP rows across. **This is the phase that gives keyboard users
-a path to an alert, so it must land before the map icons.**
+**PHASE 2 — THE FLOODING SECTION. ==> DONE, 2026-08-22. <==** See §56.7, §56.8
+and §56.10 above, and `SPEC-UI.md` for what it built.
+
+**IT ASKED ONE QUESTION THE PLAN DID NOT ANSWER, AND AARON ANSWERED IT: ALL
+FLOOD DATA ASSOCIATED WITH THAT STORM.** The plan said "the modelled coastal
+figure" on both screens without saying which figure the STORM drawer gets, and
+the only one it had was house-anchored — which §56.9 forbids there. So
+`lib/surge-locations.js` gained `surgeOnStorm`: the deepest coast this storm is
+modelled to flood anywhere, no house in it. The storm drawer's section now
+carries every flooding fact tied to the storm — corridor alerts, the agencies'
+storm-surge rows, the modelled figure — and the house-anchored version stays on
+the screen that has a house on it.
+
+**IT ALSO TOOK ONE THING OUT OF PHASE 3, AND THAT WAS THIS CHANGE'S COST RATHER
+THAN VOLUNTEERING.** §48.20's warnings-only tier in the storm drawer's house
+block drew flood rows and nothing else. Leaving it would have shipped the same
+alert in two sections of one panel — the duplication the merge exists to delete.
+The tier returns empty and its fetch gate closed; the block, the scope logic and
+the CSS are still Phase 3's.
+
+**AND IT TRADED AWAY §48.6's ORDERING, DELIBERATELY.** A warning in force now
+renders BELOW the rainfall total, because the section order is Rain then
+Flooding. Within the section the rows still lead. **Judge on glass.**
 
 **PHASE 3 — HOME GATING.** Strip the house block out of the storm drawer. Gate
 the home dashboard's home sections on the corridor, with the no-storm-on-screen

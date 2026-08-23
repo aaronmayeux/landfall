@@ -93,6 +93,8 @@ import { DOTS } from './loading-dots.js';
 import { createEnvHealth, ENV_SECTION } from './env-health.js';
 import { createPeopleInPath, PEOPLE_SECTION } from './people-in-path.js';
 import { createRainStorm, RAIN_SECTION } from './rain-storm.js';
+import { createFloodingStorm, FLOOD_SECTION } from './flooding-storm.js';
+import { FLOOD_POINTER } from './flood-words.js';
 import { createCapStorm } from './cap-storm.js';
 
 /* --- small helpers --------------------------------------------------------- */
@@ -264,7 +266,7 @@ function disclaimerHtml(source) {
  */
 export function createStormDetailView({
   home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, rain, units,
-  flood: floodFacade = null, siblings, onStep, now = () => Date.now(),
+  flood: floodFacade = null, surge = null, siblings, onStep, now = () => Date.now(),
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
    * ui/env-health.js — this file is past §12's ceiling and holds only the
@@ -306,6 +308,37 @@ export function createStormDetailView({
    * storm argument — the filtering to this storm's countries happens in
    * lib/cap.js, inside the controller. */
   const capH = createCapStorm({ loadAlerts });
+
+  /* Flooding (§56.7) — one section for both kinds of water, and the third
+   * controller on this panel to take this shape.
+   *
+   * ==> IT IS HANDED `capH` RATHER THAN A SECOND CAP FETCH. <== §56.8 moves
+   * the storm-surge rows out of `Watches and warnings` and into here, and the
+   * two sections must never disagree about what an agency has out. One
+   * controller owns that fetch; this reads the other half of the same
+   * partition, so a row lands in exactly one section.
+   *
+   * ==> AND `surge` IS THE SAME FACADE THE HOME DASHBOARD TAKES. <==
+   * `data/gdacs-surge.js` memoizes one answer per storm, which the coast layer
+   * also reads — so the figure in this drawer, the figure on the dashboard and
+   * the paint on the shoreline are one number. */
+  const floodH = createFloodingStorm({
+    flood: floodFacade
+      ? { summaryFor: (s2) => floodSummary(s2), retry: () => floodFacade.retry() }
+      : null,
+    /* ==> THE CAP RETRY REPAINTS BOTH SECTIONS, NOT JUST THIS ONE. <== One
+     * fetch feeds `Watches and warnings` and the storm-surge rows here, so a
+     * press in Flooding that redrew only Flooding would leave the section
+     * above it sitting on a failure that had just been fixed. `renderCapBody`
+     * is the function that redraws both; the controller's own repaint would
+     * redraw one. */
+    cap: {
+      waterFor: (s2) => capH.waterHtml(s2, now()),
+      retry: async () => { await capH.retry(storm); renderCapBody(); },
+    },
+    surge,
+    units,
+  });
 
   /** The resolved unit system, asked fresh on every render. NEVER cached: the
    *  user can change it in Settings while this panel is open, and a captured
@@ -1019,8 +1052,20 @@ export function createStormDetailView({
    */
   function wwHtml() {
     const silenced = withheldNote();
+    /* ==> NO POINTER ON A WITHHELD STORM. <== The whole section is replaced by
+     * one sentence saying why nothing here can be trusted; a signpost to
+     * another section under it would be furniture on a notice. */
     if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+    /* ==> THE POINTER IS APPENDED HERE AND NOT INSIDE EITHER HALF (§56.8).
+     * <== This section has two bodies — NHC's own legend below and
+     * `ui/cap-storm.js` for everything else — and a line written into one of
+     * them would be missing from the other half of its own section. Wording
+     * and reasoning: `ui/flood-words.js`. */
+    return `${wwBody()}${FLOOD_POINTER}`;
+  }
 
+  /** Whichever half of `Watches and warnings` this storm's source calls for. */
+  function wwBody() {
     /* THE GDACS HALF IS A WHOLE CONTROLLER, not a branch — `ui/cap-storm.js`
      * has its own fetch, its own retry and its own three empty states, and it
      * owns every word it prints (§50.6). Routed to, never reimplemented. */
@@ -1386,6 +1431,27 @@ export function createStormDetailView({
     return rainH.html(storm);
   }
 
+  /** The Flooding section's body (§56.7) — the controller's HTML behind the
+   *  same withheld-note gate every other section uses, so a silenced or ended
+   *  storm never gets alert rows read as a current match against a track
+   *  nobody is publishing any more. */
+  function floodHtml() {
+    const silenced = withheldNote();
+    if (silenced) return `<div class="detail-soft">${esc(silenced)}</div>`;
+    return floodH.html(storm);
+  }
+
+  /** Repaint ONLY the Flooding section — same scroll-position reasoning as
+   *  every other section repaint here. */
+  function renderFloodBody() {
+    const el = bodyEl?.querySelector(
+      `.detail-section[data-section="${FLOOD_SECTION}"] .detail-section-body`
+    );
+    if (!el || !storm) return;
+    el.innerHTML = floodHtml();
+    floodH.wire(bodyEl, storm, renderFloodBody);
+  }
+
   /** Repaint ONLY the Watches and warnings section when the CAP fetch lands —
    *  same scroll-position reasoning as every other section repaint here.
    *
@@ -1400,6 +1466,15 @@ export function createStormDetailView({
     if (!el || !storm) return;
     el.innerHTML = wwHtml();
     capH.wire(bodyEl, storm, renderCapBody);
+    /* ==> ONE FETCH, TWO SECTIONS, SO ONE LANDING REPAINTS BOTH (§56.8). <==
+     * The CAP list feeds `Watches and warnings` AND the storm-surge rows in
+     * `Flooding`. Repainting only this one would leave the other sitting on
+     * "Checking national agencies…" after the answer had already arrived —
+     * nothing would throw and nothing on screen would say so. It also matters
+     * for the language disclosures: `ui/cap-storm.js` registers their ids
+     * during a render, and both halves have to be rendered from one landing
+     * for both sets to exist. */
+    renderFloodBody();
   }
 
   /** Repaint ONLY the Rainfall section — same scroll-position reasoning as the
@@ -1562,6 +1637,19 @@ export function createStormDetailView({
       /* Home's "How strong" glyph. Same idea, same shape, both drawers. */
       section('wind', 'Wind field', 'wind', windHtml()),
       section(RAIN_SECTION, 'Rainfall', 'rain', rainHtml()),
+      /* ==> DIRECTLY UNDER RAINFALL, AND THE ORDER IS FIXED ON BOTH SCREENS
+       * (§56.7). <== Rain is our arithmetic on a forecast; Flooding is
+       * somebody else's statement about water already on the ground, with an
+       * expiry on it. They are adjacent because a reader deciding whether to
+       * move a car wants both, and Rain is first because it answers for every
+       * storm on Earth while Flooding fills from whichever of its two sources
+       * covers this one.
+       *
+       * ==> AND IT IS THE KEYBOARD PATH TO AN ALERT (§10, §56.6). <== Phase 5
+       * puts these alerts on the globe. An icon reachable only by tapping a
+       * sphere does not exist for a keyboard user, which is why this section
+       * lands BEFORE the map work rather than after it. */
+      section(FLOOD_SECTION, 'Flooding', 'flood', floodHtml()),
       section(ENV_SECTION, 'Environment', 'thermo', envHtml()),
       section(PEOPLE_SECTION, peopleH.title(), 'people', peopleH.html(storm, { ghost, withheld: withheldNote() })),
       section(ADVISORY_SECTION, 'Advisory', 'doc', advisoryHtml(), { defaultCollapsed: true }),
@@ -1580,6 +1668,8 @@ export function createStormDetailView({
       rainH.wire(bodyEl, storm, renderRainBody);
       capH.ensure(storm, renderCapBody);
       capH.wire(bodyEl, storm, renderCapBody);
+      floodH.ensure(storm, renderFloodBody);
+      floodH.wire(bodyEl, storm, renderFloodBody);
     }
     /* A reader who left this section open last time gets it open — and open
      * means fetched. Without this the persisted preference renders an

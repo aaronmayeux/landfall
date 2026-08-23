@@ -3055,9 +3055,19 @@ description grammar — so there is one parser.
 
 ### 51.3 Surge at the house — the home dashboard section
 
-`ui/surge-home.js`, under Rain and above the figures. The two water sections
-sit together; Rain is first because it reaches every house on Earth and this
-only reaches coastal ones.
+`ui/flooding-home.js`, the lower half of the `Flooding` section (§56.7), under
+Rain. **It was a file of its own and a section called `Coastal flooding` until
+2026-08-22**; §56.7 merged it with the flood-alert rows, because somebody
+deciding whether to move a car does not care whether the water came off the sky
+or off the sea — and because the two sources barely ever co-occur, so one of the
+two sections was always empty.
+
+**The storm drawer asks the same source a different question.** `surgeOnStorm`
+in `lib/surge-locations.js` returns the deepest coast this storm is modelled to
+flood ANYWHERE, with no house in it (§56.9). Both read one memo per storm from
+`data/gdacs-surge.js`, through one facade built once in `app/views.js`, so the
+figure in the drawer, the figure on the dashboard and the paint on the shoreline
+are one number.
 
 **Four states, and only one is an all-clear (§5).**
 
