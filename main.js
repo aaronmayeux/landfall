@@ -58,14 +58,7 @@ import {
   genesisAtPoint,
   GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
-import {
-  FLOOD_HOVER_LAYERS,
-  floodAlertAtPoint,
-  rethemeFlood,
-  setFloodAlerts,
-  setFloodReporter,
-  splitFloodCluster,
-} from './map/layers/flood.js';
+import { setFloodAlerts, rethemeFlood } from './map/layers/flood.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -663,16 +656,6 @@ function boot() {
     setPopulationTowns(map, townsOrNull());
 
     imagery = addStormImagery(map, { onStatus: (row) => views.setImageryStatus(row) });
-
-    /* ==> THE FLOOD LAYER REPORTS WHAT IT DREW, THE SAME WAY IMAGERY DOES
-     * (§56.5). <== The status row used to be composed from the NATIONAL alert
-     * slot, which stopped being a sentence about what is on screen the moment
-     * the layer became per-storm. The layer is the only thing that knows how
-     * many alerts made it onto this storm's corridor, so it is what says so.
-     *
-     * Set here rather than at module load for the same reason the imagery
-     * hook is: `views` does not exist until boot has run. */
-    setFloodReporter((row) => views.setFloodDraw(row));
     imagery.update(lastStorms.filter((s) => !isEnded(s)));
     /* Apply whatever the sliders were left on before the map existed. The
      * subscription below fires immediately too, but it may have fired while
@@ -788,24 +771,6 @@ function boot() {
       return;
     }
 
-    /* ==> FLOOD IS TESTED LAST, AND IT IS LAST FOR THE OPPOSITE REASON TO
-     * GENESIS. <== The chip is drawn near the TOP of this layer's stack, but
-     * the layer as a whole sits under the storm and its cone (order 5), and
-     * the polygon it also hit-tests is a county-sized shape that would swallow
-     * a storm dot standing on it. Same rule as the two branches above — what
-     * is visibly in front wins — applied to the layer rather than to the chip.
-     *
-     * ==> A CLUSTER ZOOMS, A SINGLE ALERT OPENS. <== §56.6. MapLibre's own
-     * expansion zoom is what splits the pile, which is behaviour readers
-     * already own from every other clustered map, and it removes the "which of
-     * these fifteen did I just tap" problem with no chooser UI. */
-    const flood = floodAlertAtPoint(map, e.point);
-    if (flood) {
-      if (flood.cluster) splitFloodCluster(map, flood);
-      else views.openFloodAlert(flood.id);
-      return;
-    }
-
     if (drawer.isOpen()) drawer.close();
   });
 
@@ -821,15 +786,7 @@ function boot() {
    * `(hover: hover)` in spirit, not in code: MapLibre simply never fires
    * these on a touch-only device, so no device sniffing is needed and the
    * touch path is untouched (§10). */
-  for (const id of [
-    'storm-dot-planet',
-    'sel-fpoints',
-    'amb-fpoints',
-    ...GENESIS_HIT_LAYERS,
-    /* THE CHIP ONLY. `FLOOD_HOVER_LAYERS` is a shorter list than
-     * `FLOOD_HIT_LAYERS` on purpose — its header has the reason. */
-    ...FLOOD_HOVER_LAYERS,
-  ]) {
+  for (const id of ['storm-dot-planet', 'sel-fpoints', 'amb-fpoints', ...GENESIS_HIT_LAYERS]) {
     map.on('mouseenter', id, () => {
       map.getCanvas().style.cursor = 'pointer';
     });

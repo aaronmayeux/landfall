@@ -193,16 +193,14 @@ is not an implementation choice; it is the only route.** Phase 4 shipped on it:
 23 zones, 23 requests, cached thirty days at the edge and keyed per zone so
 overlapping watches share what they have already paid for.
 
-**==> `include_geometry` WAS THE LAST WAY OUT AND IT IS CLOSED. <==** Read off
-`origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson` on
-2026-08-23, before Phase 5 touched anything: **200 OK, and byte-for-byte
-identical to the plain bulk probe beside it** — same MD5, the same 24,282 bytes,
-`geometry: null` on all 19 features. NWS accepts the parameter and ignores it.
-
-So the per-zone loop is not an implementation choice and never was, and
-`functions/api/nws/zone.js` is correct as written. **Do not re-open this.** The
-probe stays in the runner so the day NWS starts honouring the parameter is a day
-somebody notices, rather than a question re-asked from scratch.
+**==> ONE THING IS STILL UNTESTED AND IT WOULD CHANGE THE ARITHMETIC. <==** NWS
+documents an `include_geometry` parameter on that endpoint and nobody here has
+ever sent it. A probe for it is in `tools/archive-fetch.mjs` as of this phase,
+under `origin/archive:latest/geometry/nws-zones-bulk-probe-geometry.geojson`.
+**If it comes back
+carrying the same boundaries, 40 requests become 1** and `functions/api/nws/zone.js`
+should be rewritten to ask once. A 400, or another page of nulls, is equally
+useful and closes the question for good. Read it before touching that route.
 
 #### What was NOT measured, and must not be assumed
 
@@ -211,9 +209,7 @@ app.** A resolved watch draws a MultiPolygon covering entire forecast zones —
 far larger than the small river polygons §56.2 measured for warnings, whose
 median width is 0.270°. A Hawaii zone is 0.7° tall. **Whether a warning still
 reads as more urgent than a watch when the watch is fifty times its area is a
-glass call and nobody has made it.** Phase 5 shipped the map without answering
-it — it cannot be answered offline — so it is now a `HELD FOR WEATHER` item and
-not an open design question.
+glass call and nobody has made it.** Phase 5 owns the map and inherits this.
 
 **And the national volume is still one snapshot on a quiet day.** Three watches
 naming 23 zones. `RAIN.zonesPerRequest` caps a request at 40 on that evidence
@@ -221,13 +217,78 @@ alone; a genuine national flood day has never been read.
 
 ---
 
-### The map and tap-to-detail — ==> SHIPPED 2026-08-23, AND MOVED. <==
+### 56.5 The map
 
-The map and tap-to-detail are built. Both sections now live in `SPEC-UI.md`
-under the same numbers, describing what IS rather than what was planned — a
-section number is a permanent address and is never renumbered, and two headings
-with one address is a collision `tools/spec-index.mjs` fails on. §56.9 moved the
-same way for the same reason.
+**ICON AND POLYGON, EACH DOING THE JOB THE OTHER CANNOT.** The polygon is the
+honest answer to *which county* and is the whole point up close. The icon is
+what makes an alert findable and tappable when the polygon is three pixels.
+
+**THE POLYGON IS ZOOM-GATED, AND THE THRESHOLD COMES OFF THE MEASUREMENTS IN
+§56.2.** Below roughly z6 a median polygon is under 12 px and reads as dirt on
+the screen. Appears around z6, solid by z7. One constant, movable on glass.
+
+**THE ICONS CLUSTER AND SPLIT AS YOU ZOOM.** MapLibre's own clustering, so
+nothing here animates or counts anything by hand. A cluster carries the number
+of alerts inside it.
+
+**==> CLUSTERING NEEDS A POINT SOURCE, AND THE POINT MUST BE COMPUTED PROPERLY.
+<==** MapLibre clusters Point geometry only, so the icons cannot ride the
+polygon source the way a plain symbol layer could. The bounding-box centre —
+the obvious cheap point — **falls outside its own polygon five times in
+twenty-five on real data** (§56.2), every one of them a river corridor, which
+is exactly the shape being clustered. So compute a true interior point: the
+same pole-of-inaccessibility approach MapLibre uses internally for its own
+polygon labels. About forty lines, no dependency, no build step.
+
+**ONE LIST, TWO SOURCES, BUILT IN ONE PLACE.** Shapes in one source and points
+in the other is exactly the split that drifts apart. Both are built from a
+single function over a single alert list, so there is never a second list to
+keep in step.
+
+**THE TEST THAT GUARDS IT:** every computed point falls inside its own polygon,
+across the whole archived set. Mutation-verify by swapping in the bbox centre
+and confirming the suite goes red on those five.
+
+**THE LAYER IS PER-STORM AND DRAWS FOR THE SELECTED STORM ONLY.** Which puts it
+honestly in the `Storm detail` group where the manifest always had it.
+
+**==> AND THIS IS THE ONE PLACE THIS PLAN ACCEPTS A RISK IT CANNOT WORD AWAY.
+<==** Drawing green shapes only inside one storm's corridor tells the reader
+*this storm did this*, in pictures, where there is no sentence to hedge with —
+and an NWS flood alert names no storm (§48.21, §50.3). The mitigation is that
+the layer draws only while that storm is selected, so the drawer's wording is on
+screen at the same moment as the shapes. **Aaron made this call knowingly on
+2026-08-22.** It is written down here so that a later session finds the decision
+rather than the smell.
+
+**WITH NO STORM SELECTED THE LAYER DRAWS NOTHING, AND THE STATUS ROW SAYS WHY.**
+A toggle that appears to do nothing is its own bug. The row reads that a storm
+must be selected — never an empty map with no explanation.
+
+---
+
+### 56.6 Tapping an alert
+
+**Tap a single icon → that alert's details. Tap a cluster → the map zooms until
+it splits.** The second is MapLibre's standard behaviour and readers already own
+it, and it removes the "which of these fifteen did I just tap" problem without
+any chooser UI.
+
+**THE DETAIL VIEW SHOWS WHAT THE RELAY ALREADY CARRIES** — event, the whole area
+list, when it began, when it ends, how long is left, and the issuing office.
+**Do not widen the relay projection to carry NWS's `description` and
+`instruction`.** That projection takes 34,369 stored bytes down to 2,607 and a
+suite asserts the ratio; putting the prose back blows it on every phone for a
+field most readers never open. If the detail reads thin on glass, fetch that one
+alert on demand — do not widen the list.
+
+**KEYBOARD IS NOT OPTIONAL AND THE MAP ALONE DOES NOT PROVIDE IT (§10).** An
+icon reachable only by tapping the globe does not exist for a keyboard user. The
+alert rows in the Flooding section are the keyboard path: each row opens the same
+detail the icon does. **A phase that ships the icon without the rows has shipped
+a gesture-only feature.**
+
+---
 
 ### 56.11 What gets deleted
 
@@ -256,12 +317,8 @@ Deleted code is deleted, not commented out, and orphaned imports go with it
 - ~~The flood-alert rows inside both Rain sections, and the `alerts: null`
   sentences that went with them~~ — **done, Phase 2.** Rain is a forecast and
   only a forecast on both screens now.
-- ~~`map/layers/flood.js`'s national-draw behaviour and the file header arguing
-  for it~~ — **done, Phase 5.** The layer draws the selected storm's corridor
-  and nothing else; `update` and `clear` stopped being no-ops. The header
-  paragraph that argued the toggle was "a global additive switch... a question
-  with no storm in it" is gone, replaced by the per-storm reasoning and the
-  attribution risk Aaron accepted.
+- `map/layers/flood.js`'s national-draw behaviour and the file header arguing
+  for it.
 
 ---
 
@@ -376,42 +433,10 @@ recoverable from nowhere else. Keeping it is provable offline against
 `lib/` (§4.13), so that is a mirrored copy of the UGC split, kept honest by
 `tools/test-relay-mirrors.mjs` — not an import.**
 
-**PHASE 5 — THE MAP. ==> DONE, 2026-08-23. <==** As-built in `SPEC-UI.md` §56.5
-and §56.6.
-
-**WHAT IT BUILT**, so a later phase does not go looking:
-
-- `lib/interior-point.js` — new. `interiorPoint`, `pointInRings`,
-  `signedDistance`, `largestRingSet`. Pole of inaccessibility, no dependency.
-- `lib/flood-features.js` — new. `floodSources(alerts, now)`, one walk, two
-  collections, three counts.
-- `map/layers/flood.js` — rewritten per-storm. Two sources, clustering, a
-  rounded-square chip in four canvas images, a zoom-ramped polygon, a 44 px hit
-  test, and `setFloodReporter` feeding the status row.
-- `ui/view-flood-alert.js` — new drawer panel, registered in `app/views.js`.
-- `ui/rain-alerts.js` — rows are buttons carrying the alert id; `lib/rainfall.js`
-  `floodAlerts()` carries `id` at last.
-- `app/layer-status.js` — `floodRow()`, five outcomes, built off the layer's own
-  report rather than the national slot.
-- `FLOOD` in `config/constants.js`, `FLOOD_GEO` in `config/tokens.js`.
-- `tools/test-interior-point.mjs` (34 assertions) and
-  `tools/test-flood-features.mjs` (41). **Five mutations verified red:** the
-  bbox centre substituted for the interior point, MultiPolygon members
-  flattened, the no-chip refusal replaced by a fallback, the expiry filter
-  removed, and the two sources walked separately.
-
-**IT ANSWERED THE PROBE BEFORE IT TOUCHED THE ROUTE, AND THE PROBE SAID NO.**
-See §56.4 — `include_geometry` returns byte-identical nulls, so
-`functions/api/nws/zone.js` was not touched.
-
-**IT CORRECTED THE PLAN RATHER THAN OBEYING IT ONCE.** The plan's §56.6 listed
-*the issuing office* among the fields the relay already carries. It does not
-carry `senderName`. The panel prints no office and `SPEC-UI.md` §56.6 records
-why; widening the relay inside a map phase would have been the "right there"
-work §12 forbids.
-
-**AND IT COULD NOT BE JUDGED, WHICH THE PLAN SAID IT WOULD NOT BE.** Every
-assertion is offline against real bytes. Not one pixel has been looked at.
+**PHASE 5 — THE MAP.** Interior points, clustering, the polygon zoom gate, the
+icon, and tap-to-detail. Last because it is the only phase that cannot be judged
+without weather, and because Phase 2 already gave the feature a keyboard-reachable
+home.
 
 **PHASE 6 — PAST RAINFALL, THE GLOBAL FIGURE.** How much has already fallen at
 the reader's address, in a window we choose rather than one the source hands us.

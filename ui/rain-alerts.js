@@ -89,34 +89,12 @@ function alertRow(a) {
     ? `<p class="rain-alert-area">${esc(a.area)}</p>`
     : '';
 
-  const body = `<p class="rain-alert-head">
+  return `<li class="rain-alert" data-urgency="${a.immediate ? 'now' : 'later'}">
+    <p class="rain-alert-head">
       <span class="rain-alert-name">${esc(a.event)}</span>
       <span class="rain-alert-until">${esc(when)}</span>
     </p>
-    ${area}${left}`;
-
-  /* ==> WITH AN ID THE ROW IS A BUTTON, AND THAT IS §56.6's KEYBOARD PATH.
-   * <== The map draws a chip per alert and a tap on it opens the detail. An
-   * icon reachable only by tapping the globe DOES NOT EXIST for a keyboard
-   * user — §10 — so this row opens the same panel, by Tab and Enter, with no
-   * pointer anywhere near it. A phase that shipped the chip without this would
-   * have shipped a gesture-only feature.
-   *
-   * ==> WITHOUT ONE IT STAYS INERT, RATHER THAN BECOMING A BUTTON THAT OPENS
-   * NOTHING. <== The relay always sends an id, so this is the belt to that
-   * braces: a control that looks pressable and does nothing is worse than
-   * plain text, and it is worse specifically for the reader using the keyboard,
-   * who cannot tell by looking that the press was swallowed.
-   *
-   * The `<li>` keeps `data-urgency` either way — `tools/test-rainfall.mjs`
-   * asserts against it, and an attribute is the cheapest place for a test to
-   * find a fact the prose also carries. */
-  const inner = a.id
-    ? `<button type="button" class="rain-alert-open" data-flood-alert="${esc(a.id)}">${body}</button>`
-    : body;
-
-  return `<li class="rain-alert" data-urgency="${a.immediate ? 'now' : 'later'}">
-    ${inner}
+    ${area}${left}
   </li>`;
 }
 

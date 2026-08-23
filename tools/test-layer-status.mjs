@@ -333,36 +333,7 @@ ok(st.value().modelTracks && st.value().imagery, 'the two rows do not clobber ea
 
 st.setImagery(null);
 ok(!('imagery' in st.value()), 'a null imagery row is removed, not stored as null');
-
-/* ==> THREE, NOT FOUR, AND THE MISSING ONE IS THE POINT. <== The first call
- * above switches a layer OFF that was never on: it deletes a key that is not
- * there, and the resulting object is identical to the one already held. That
- * used to notify anyway.
- *
- * `onChange` is `layersView.refresh()`, which rewrites the whole Layers panel's
- * innerHTML and rewires every control in it. §56.5 made this expensive enough
- * to feel: the flood row is recomputed on every bundle push — every poll as
- * well as every selection — so a store that notified unconditionally rebuilt
- * that panel several times per storm switch for rows whose text had not moved.
- * Aaron reported it as the drawers going slow between storms on 2026-08-23. */
-ok(notified === 3, 'a commit that changed nothing does not notify');
-
-/* ==> AND THE SAME ROW WRITTEN TWICE IS ONE NOTIFICATION. <== The commonest
- * shape of the waste: a poll recomputes a row, the row says exactly what it
- * said last time, and the panel is rebuilt for nothing. */
-const before = notified;
-const row = { state: 'info', message: 'Downloaded 4 min ago' };
-st.setImagery(row);
-ok(notified === before + 1, 'a genuinely new row notifies');
-st.setImagery({ ...row });
-st.setImagery({ ...row });
-ok(notified === before + 1, 'and writing the identical row twice more notifies no further');
-
-/* THE HALF THAT KEEPS THE OTHER HALF HONEST. Suppressing a real change is a
- * stale row on screen, which is worse than a redundant repaint. */
-st.setImagery({ state: 'info', message: 'Downloaded 9 min ago' });
-ok(notified === before + 2, 'but a changed message does notify');
-ok(st.value().imagery.message === 'Downloaded 9 min ago', 'and the store holds the new one');
+ok(notified === 4, 'every change notifies exactly once');
 
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {

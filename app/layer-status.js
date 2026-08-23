@@ -464,124 +464,10 @@ export function environmentRow(selected, storms, shipsFor, ribbonFor) {
  *
  * @param {() => void} onChange  called after any change — the view's refresh
  */
-/**
- * The flood alerts row's whole sentence. §48.21, §56.5.
- *
- * ==> FIVE OUTCOMES AND ONLY ONE OF THEM IS AN ALL-CLEAR. <== §5. Every one of
- * them produces the SAME empty globe: the feed errored, no storm is selected,
- * the selected storm has no track to measure against, nothing came near it, or
- * something came near it and could not be placed. A row that could not tell
- * them apart would let an outage read as a quiet afternoon over a flooding
- * county — the exact failure this app is written against, and worse here than
- * anywhere because the layer's whole subject is water already on the ground.
- *
- * ==> PHASE 5 ADDED THE SECOND ONE AND IT IS THE COMMONEST. <== §56.5 made the
- * layer per-storm, so with nothing selected it draws nothing at all. A toggle
- * that appears to do nothing is its own bug; this is the row that says why.
- *
- * ==> AND IT COUNTS OFF THE LAYER'S OWN REPORT, NOT OFF THE NATIONAL SLOT.
- * <== `slot.drawable` is how many alerts have a shape ANYWHERE in the country.
- * That was the right number while the layer drew the country. It is now a
- * sentence about a different set than the one on screen, so the layer reports
- * what it actually drew and this reads that. The slot is still consulted for
- * one thing the layer cannot know: whether the FETCH failed.
- *
- * **No Retry on the empty states**, and the reason is that asking again
- * returns the same answer: the corridor is a measurement, not a request. The
- * error state keeps its Retry.
- *
- * @param {object|null} slot the national list, from `data/flood.js`.
- * @param {object|null} draw what `map/layers/flood.js` last put on the globe.
- */
-function floodRow(slot, draw) {
-  /* NO ANSWER YET IS NO ROW, exactly as before Phase 5. The fetch is kicked
-   * the moment the switch goes on, so this is a frame or two at boot, and a
-   * "checking\u2026" that flashes and vanishes is noise on a row whose whole job
-   * is that its sentences are worth reading. */
-  if (!slot) return null;
-
-  /* THE FETCH IS ASKED ABOUT NEXT, before the selection, because an outage
-   * makes every other question unanswerable rather than answering it "no" —
-   * and because "select a storm" over a dead feed would send the reader to do
-   * something that will not work. */
-  if (slot.state !== 'ok') {
-    return { state: 'error', message: 'Flood alerts could not be checked \u2014 tap to retry' };
-  }
-
-  if (!draw || !draw.selected) {
-    return {
-      state: 'empty',
-      message: 'Flood alerts draw for one storm at a time \u2014 select a storm to see them',
-    };
-  }
-
-  if (draw.state === 'no_track') {
-    /* NOT "none nearby". No track means nothing to measure against, and an
-     * all-clear built out of our own missing geometry is the worst sentence
-     * this feature can print — the same rule the storm drawer follows. */
-    return {
-      state: 'empty',
-      message: 'This storm has no published track, so flood alerts can\u2019t be matched to it',
-    };
-  }
-
-  if (draw.state !== 'ok') {
-    /* `none_matched`, and it is a real answer — UNLESS something was held back
-     * from the match entirely, in which case it is not an answer at all and
-     * the all-clear is withheld (§56.4). */
-    return draw.unplaceable > 0
-      ? {
-        state: 'empty',
-        message:
-            'Flood alerts are in force whose boundaries could not be fetched, so they can\u2019t be matched to this storm',
-      }
-      : { state: 'empty', message: 'No flood alerts are in force near this storm' };
-  }
-
-  /* ==> DRAWN AND MATCHED CAN DIFFER, AND THE DAY THEY DO THE ROW SAYS SO.
-   * <== `iconless` counts an alert whose shape produced no interior point
-   * (`lib/interior-point.js` refuses rather than guessing). Such an alert is a
-   * polygon with no chip over it: findable at z7 and invisible at z4, which is
-   * precisely the kind of thing that ships silently if nothing counts it. */
-  if (draw.iconless > 0) {
-    const one = draw.iconless === 1;
-    return {
-      state: 'empty',
-      message: one
-        ? 'One flood alert near this storm has no marker on the globe \u2014 zoom in to see its outline'
-        : `${draw.iconless} flood alerts near this storm have no marker on the globe \u2014 zoom in to see their outlines`,
-    };
-  }
-
-  return { state: 'ok' };
-}
-
 export function createLayerStatus(onChange) {
   let status = {};
 
-  /**
-   * ==> A COMMIT THAT CHANGED NOTHING COSTS A WHOLE PANEL, SO IT IS NOT MADE.
-   * <== `onChange` is `layersView.refresh()`, which rewrites the Layers panel's
-   * entire `innerHTML` and rewires every control in it. Every refresh path here
-   * committed unconditionally, so one storm switch rebuilt that panel once per
-   * row whether or not a single word had moved — and §56.5 added a fourth
-   * caller that fires on every bundle push, which is every poll as well as
-   * every selection.
-   *
-   * The rows are a handful of small flat objects, so comparing them is
-   * cheaper than the DOM write by orders of magnitude. Serialising is fine
-   * here and would not be if these ever held a function or a cycle: they hold
-   * a state word and a sentence, and `tools/test-layer-status.mjs` is where
-   * that stays true.
-   *
-   * ==> KEY ORDER IS THE ONE TRAP. <== Every writer builds `next` as
-   * `{ ...status }` and then adds or deletes ONE key, so insertion order is
-   * stable across calls and a stringify compare is sound. A writer that rebuilt
-   * the object from scratch could reorder the keys and defeat this — it would
-   * cost a redundant repaint, never a stale row, which is the safe direction.
-   */
   const commit = (next) => {
-    if (JSON.stringify(next) === JSON.stringify(status)) return;
     status = next;
     onChange?.();
   };
@@ -635,7 +521,7 @@ export function createLayerStatus(onChange) {
     },
 
     /**
-     * The flood alerts row (§48.21, §56.5), pushed up from main.js.
+     * The flood alerts row (§48.21), pushed up from main.js.
      *
      * ==> THREE OUTCOMES AND ONLY ONE OF THEM IS AN ALL-CLEAR. <== §5. A feed
      * that errored, a feed that answered with nothing in force, and a feed
@@ -663,11 +549,22 @@ export function createLayerStatus(onChange) {
      * The key is deleted outright when the layer is off, so a sentence from a
      * previous fetch cannot survive the switch being flipped.
      */
-    setFloodAlerts({ on, slot, draw = null }) {
+    setFloodAlerts({ on, slot }) {
       const next = { ...status };
       delete next.floodAlerts;
-      const row = on ? floodRow(slot, draw) : null;
-      if (row) next.floodAlerts = row;
+      if (on && slot) {
+        next.floodAlerts =
+          slot.state !== 'ok'
+            ? { state: 'error', message: 'Flood alerts could not be checked \u2014 tap to retry' }
+            : slot.drawable
+              ? { state: 'ok' }
+              : {
+                state: 'empty',
+                message: slot.total
+                  ? 'Flood alerts are in force, but their boundaries could not be fetched'
+                  : 'No flood alerts are in force anywhere in the US',
+              };
+      }
       commit(next);
     },
   };

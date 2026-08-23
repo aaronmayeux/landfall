@@ -217,7 +217,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2251-2336 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4084-4106 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3834-3856 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -261,27 +261,27 @@ real home is the other row carrying the same section number.
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-148 |
-| `56.5` | &nbsp;&nbsp;The map — icon and polygon, each doing the job the other cannot | `SPEC-UI.md` | 3434-3459 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-UI.md` | 3614-3678 |
-| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3679-3714 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3857-3897 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3938-3987 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4054-4083 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 232-267 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 268-430 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 431-448 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 449-452 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 220-269 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 270-292 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3429-3464 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3607-3647 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3688-3737 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3804-3833 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 293-324 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 325-455 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 456-473 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 474-477 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 33,170 | 9 |
+| `SPEC-FLOOD-PLAN.md` | 34,248 | 11 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 242,422 | 20 |
-| `SPEC.md` | 175,540 | 15 |
+| `SPEC-UI.md` | 228,084 | 18 |
+| `SPEC.md` | 174,972 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
