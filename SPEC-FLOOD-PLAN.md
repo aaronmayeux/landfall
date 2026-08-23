@@ -1109,3 +1109,98 @@ open internet, and the answers get written here before any code:
   not, and probably not in this phase.**
 
 ---
+### 56.19 The map draws nothing outside the United States, and what could change that
+
+**==> THIS IS A GAP THAT HAS TO BE CLOSED, OR CONSCIOUSLY DECLINED, BEFORE THIS
+FEATURE IS CALLED FINISHED. <==** Aaron's question on 2026-08-23, after the
+layer went national: *"Is there ever going to be anything to draw for non-US
+storms?"* Today the honest answer is no. The layer paints NWS products and NWS
+is a United States agency, so a reader watching a typhoon can turn the switch on
+and get an empty globe no matter how much water is on the ground. **The switch's
+own note says `US only`**, which stops it reading as a fault — it does not stop
+it being a hole.
+
+**IT IS NOT THE SAME HOLE §48.15 RECORDS, AND THE DIFFERENCE MATTERS.** That
+section says no global equivalent of NWS's `/alerts/active` has been found, and
+that stands: there is no one worldwide feed of *what a weather agency has in
+force*. What has never been examined is whether a DIFFERENT kind of source can
+put honest flood geometry on this globe. Two candidates exist and neither has
+been measured.
+
+#### Candidate 1 — GDACS floods. The stronger one, and it is one parameter.
+
+**Every GDACS request this app makes asks for `eventlist=TC`.** Cyclones only —
+`functions/api/gdacs/events.js`, `inspect.js`, `surge.js` and the geometry route
+all carry it. **GDACS also tracks floods as their own event type on the same
+API**, which this project already has working plumbing, caching and a relay for.
+
+**==> THAT LAST SENTENCE IS AN INFERENCE AND NOT A MEASUREMENT. <==** Nothing in
+a session can reach `gdacs.org`, and the hourly archive has only ever captured
+the cyclone list. **A probe is in the runner as of 2026-08-23** — `geometry/gdacs-floods-probe.json`
+on the `archive` branch, the same SEARCH endpoint with `eventlist=FL`
+(`git show origin/archive:latest/geometry/gdacs-floods-probe.json`).
+Four things it has to settle, none of which is currently known:
+
+1. **Does an FL row carry a drawable polygon**, or only a point and a bounding
+   box? A point is not nothing — but it is a different visual object from the
+   county shapes this layer draws, and mixing them silently would be this app
+   presenting two kinds of claim in one colour.
+2. **How many are in force worldwide at once?** The cyclone feed measures one to
+   five rows across a full day. Floods could be an order of magnitude more, and
+   the volume decides whether this is the same layer or a different product.
+3. **What does one cost in bytes?**
+4. **Is there enough to say WHERE without inventing anything?** §5's rule holds
+   at full strength here: a shape this app drew is a boundary nobody published.
+
+**A 400, an empty list, or rows with no geometry are all real answers** and all
+of them mean the global half does not arrive by this road.
+
+#### Candidate 2 — widening the CAP query. Real, and messier.
+
+`functions/api/cap/alerts.js` already pulls live government warnings worldwide,
+and `functions/api/cap/shapes.js` already fetches geometry for them. The query
+is filtered to `%Cyclone%`, `%Typhoon%`, `%Hurricane%`, `%Tropical%` and
+`%Storm Surge%`. Adding a flood term is one line. Two measured facts make it the
+harder option:
+
+- **The shapes are enormous, and this is measured, not feared.** Archive branch,
+  2026-08-19: the same query with geometry was **281,336 bytes for THREE
+  features**, because a CAP area is whatever the issuing country drew and Costa
+  Rica drew its own coastline at **6,585 points**. `shapes.js` exists because of
+  that number. **And it simplifies the outline on the argument that the polygon
+  is never painted** — it is used to ask the basemap coastline which of ITS
+  vertices fall inside. Painting a CAP polygon is a different job from the one
+  that route was built and justified for.
+- **The filter is already too loose in the direction this would make worse.**
+  §50.12: asking for `%Hurricane%` pulls in German thunderstorms, because DWD
+  writes "hurricane-force gusts", and on 2026-08-19 four of the five alerts in
+  force worldwide were German weather. A flood term is a broader word than
+  hurricane, not a narrower one. **`NEXT UP` item 4 in `NOW.md` gates this**:
+  clean the query first, or a global surface makes that bug user-facing.
+
+#### What is NOT the answer, so nobody reaches for it
+
+**Phase 6's past rainfall (§56.14) is global and does not help here.** It is how
+much rain has already fallen at the reader's own address, from a model that
+covers the planet — the only global flood-relevant figure this project has
+found, and the right thing to sit beside the coverage gap in WORDS. **It is a
+number in a section, not a shape on a globe**, and it can never put anything on
+the map.
+
+**And no shape gets invented to fill the hole.** Not a circle around a storm,
+not a country polygon, not a basin. §5, and §48.21 already refuses exactly this
+for a shapeless US watch. **An empty globe with the switch's note explaining why
+is the correct behaviour until a real source is measured**, and it is better
+than a drawn guess for the rest of the world.
+
+#### The order this gets settled in
+
+**Read `geometry/gdacs-floods-probe.json` off the `archive` branch first**
+(`git show origin/archive:latest/geometry/gdacs-floods-probe.json`). It is
+the cheaper question and the one with working plumbing behind it. Only if it
+comes back empty-handed does candidate 2 get priced, and candidate 2 is gated on
+the CAP query being cleaned first. **Neither is Slice C's work** — Slice C is
+tapping — but this section is why the feature is not finished when Slice C
+lands.
+
+---

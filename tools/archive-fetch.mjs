@@ -76,6 +76,44 @@ const SOURCES = [
       '?eventlist=TC&alertlevel=Green;Orange;Red',
     note: 'GDACS upstream. 100 rows verbatim, filtered downstream not here.',
   },
+  /* ==> THE GLOBAL FLOOD QUESTION, AND IT IS A PROBE RATHER THAN A SOURCE.
+     <== SPEC-FLOOD-PLAN.md \u00a756.19. The flood layer is NWS and therefore
+     UNITED STATES ONLY: outside the US it paints nothing, whatever the weather
+     is doing. GDACS is the one candidate this project already has working
+     plumbing for — every GDACS request the app makes asks for `eventlist=TC`,
+     cyclones only, and GDACS also tracks FLOODS as their own event type on the
+     same API.
+
+     ==> NOBODY HAS EVER LOOKED AT THAT FEED AND THIS IS THE ENTRY THAT DOES.
+     <== Four things it has to settle, none of which is currently known: does an
+     FL row carry a drawable polygon or only a point and a bounding box; how many
+     are in force worldwide at once (the TC feed runs one to five rows a day, and
+     floods could be an order of magnitude more); what one costs in bytes; and
+     whether an FL row carries enough to say WHERE without inventing anything.
+
+     ==> A 400, AN EMPTY LIST, OR ROWS WITH NO GEOMETRY ARE ALL REAL ANSWERS.
+     <== Any of them means the global half of this feature does not arrive by
+     this road, and \u00a756.19's other candidate — widening the CAP query \u2014
+     is what gets measured next. Under geometry/ so a busy global flood day
+     never crowds the 72-hour history. */
+  {
+    name: 'geometry/gdacs-floods-probe.json',
+    url:
+      'https://www.gdacs.org/gdacsapi/api/Events/geteventlist/SEARCH' +
+      '?eventlist=FL&alertlevel=Green;Orange;Red',
+    note:
+      'GDACS FLOOD EVENTS \u2014 A PROBE, NOT A SOURCE. \u00a756.19. The app asks ' +
+      'this same endpoint for `eventlist=TC` and has never asked it for ' +
+      'anything else. Read it for: the ROW COUNT (the cyclone feed is one to ' +
+      'five a day worldwide; if floods are hundreds, the global version of ' +
+      'this layer is a different product from the US one and that is Aaron\u2019s ' +
+      'call rather than an adapter\u2019s), whether `geometry` or a polygon URL ' +
+      'is present at all or only a point, and the BYTES. ==> IT IS A PROBE ' +
+      'BECAUSE NOTHING IN A SESSION CAN REACH gdacs.org. <== The claim that ' +
+      'GDACS publishes drawable flood shapes is an INFERENCE from an API this ' +
+      'project already knows, not a measurement, and nobody writes a line of ' +
+      'the global half until these bytes land here.',
+  },
   {
     name: 'jtwc.rss',
     url: 'https://www.metoc.navy.mil/jtwc/rss/jtwc.rss',

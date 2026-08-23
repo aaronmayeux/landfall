@@ -282,6 +282,32 @@ of the file out before it does anything else.
 nothing, which is how the reversal was found. Nobody has yet looked at a green
 polygon or a chip on this globe.
 
+**==> THE FEATURE IS NOT FINISHED WHILE IT DRAWS NOTHING OUTSIDE THE UNITED
+STATES, AND §56.19 IS THE ENTRY THAT SAYS SO. <==** Aaron's question on
+2026-08-23. The layer paints NWS products and NWS is a US agency, so a reader
+watching a typhoon turns the switch on and gets an empty globe. The switch's note
+says `US only`, which stops it reading as a fault and does not stop it being a
+hole.
+
+**THE PROBE IS IN THE RUNNER AND NOBODY HAS READ IT YET.** It lands on the
+`archive` branch as `geometry/gdacs-floods-probe.json` — GDACS's own SEARCH
+endpoint with
+`eventlist=FL` instead of the `eventlist=TC` every GDACS request this app makes
+has always carried. **That GDACS publishes drawable flood shapes is an INFERENCE
+from an API this project already knows, not a measurement**, and nothing gets
+written until the bytes land. Four questions in §56.19: polygon or only a point,
+how many worldwide at once, bytes, and whether there is enough to say WHERE
+without inventing anything.
+
+```
+git show origin/archive:latest/geometry/gdacs-floods-probe.json
+```
+
+**The other candidate is widening the CAP query, and it is gated on `NEXT UP`
+item 4** — `%Hurricane%` already pulls German thunderstorms, and a flood term is
+a broader word, not a narrower one. Read §56.19 before pricing it. **Neither is
+Slice C's work.**
+
 **THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
 three minutes, in that order — taps on the globe first, chevrons on the home
 dashboard second, the switch off-and-on third, a poll cycle fourth, and **only
