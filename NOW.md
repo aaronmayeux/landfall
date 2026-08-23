@@ -277,6 +277,20 @@ WORTH ANYTHING.** Added 2026-08-23:
   every run. Reaching the worker's console is a CDP attach and its own change;
   what is fixed is that a 0 can no longer read as "none happened".
 
+**AND ITS FIRST CI RUN FAILED IMMEDIATELY, WHICH IS THE SYSTEM WORKING.** Run
+#361: `SyntaxError: Unexpected identifier 'colorNulls'`. The browser-side probe
+in `perf-instrument.mjs` is built as a TEMPLATE LITERAL, and a comment added
+inside it contained backticks, which closed the string early. **The file was a
+syntax error and every gate in this repo passed it** — because `tools` is in
+`SKIP_DIRS` in `check-syntax.mjs`, so nothing in that directory had ever been
+parsed at all.
+
+`check-syntax.mjs` now parses every `tools/*.mjs` as a second, PARSE-ONLY pass
+(no import resolution — these files legitimately import playwright, which is not
+in this repo). 142 tools, milliseconds, and the mutation was verified: put the
+backtick back and it goes red. **The pre-push hook runs check-syntax, so this
+class of bug cannot reach a runner again.**
+
 **==> IT IS NON-BLOCKING AND UNARMED, AND SOMEBODY HAS TO WATCH IT RUN. <==**
 `continue-on-error: true`, budgets `null`. It was written in a sandbox that
 cannot execute it, and this repo's rule is that **a check nobody has seen pass

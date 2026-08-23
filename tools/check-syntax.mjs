@@ -182,4 +182,55 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`✓ all ${files.length} modules parse and every named import resolves`);
+/* ---------------------------------------------------------------------------
+ * AND THE TOOLS THEMSELVES.
+ *
+ * ==> `tools` IS IN `SKIP_DIRS` ABOVE, AND UNTIL 2026-08-23 THAT MEANT NOTHING
+ * IN HERE WAS PARSED AT ALL. <== It is skipped for a good reason — these files
+ * import playwright and node builtins, so the LINK half above cannot resolve
+ * them and would report every one as broken. The parse half has no such
+ * problem, and skipping the whole directory threw it away with the rest.
+ *
+ * What that cost: `perf-instrument.mjs` builds the browser-side probe as a
+ * TEMPLATE LITERAL, and a comment added inside it contained backticks. They
+ * closed the string early. The file was a syntax error, every gate in this repo
+ * passed, the pre-push hook passed, and it was found by CI failing on a runner
+ * — after the push. `node --check` catches it in milliseconds.
+ *
+ * ==> PARSE ONLY, DELIBERATELY. <== No import resolution: these files legally
+ * import things that are not in this repo. A gate that demanded playwright be
+ * installed would be a gate that only runs where somebody happened to install
+ * it, which is the mistake the header of this file already records about acorn.
+ * ------------------------------------------------------------------------- */
+
+const toolFiles = fs
+  .readdirSync(path.join(ROOT, 'tools'), { withFileTypes: true })
+  .filter((e) => e.isFile() && /\.mjs$/.test(e.name))
+  .map((e) => path.join(ROOT, 'tools', e.name));
+
+const toolFailures = [];
+for (const file of toolFiles) {
+  try {
+    execFileSync(process.execPath, ['--check', file], { stdio: 'pipe' });
+  } catch (e) {
+    const out = String(e.stderr || e.stdout || e.message);
+    const line = out.match(/:(\d+)\n/)?.[1] || null;
+    const message = out.split('\n').find((l) => /Error/.test(l)) || out.split('\n')[0];
+    toolFailures.push({ file: path.relative(ROOT, file), line, message: message.trim() });
+  }
+}
+
+if (toolFailures.length) {
+  console.error(`\n${toolFailures.length} tool(s) failed to parse:\n`);
+  for (const f of toolFailures) {
+    console.error(`  ${f.file}${f.line ? `:${f.line}` : ''}`);
+    console.error(`    ${f.message}\n`);
+  }
+  console.error('  A tool that does not parse is a gate that cannot run.\n');
+  process.exit(1);
+}
+
+console.log(
+  `✓ all ${files.length} modules parse and every named import resolves` +
+    `, and all ${toolFiles.length} tools parse`
+);

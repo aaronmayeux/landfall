@@ -37,7 +37,7 @@ window.__audit = {
   boot: {},
   frames: null,
   errors: [],
-  /* MAIN THREAD ONLY — see the note below. Renamed from `colorNulls` on
+  /* MAIN THREAD ONLY — see the note below. Renamed from the bare colorNulls on
    * 2026-08-23 so that no reader of a report can mistake it for the total. */
   colorNullsMainThread: 0,
   /* Stated as a fact about the instrument rather than left to be inferred from
@@ -57,10 +57,10 @@ window.__audit = {
  * wrong thread, and the number it produced was worse than no number, because a
  * blank counter reads as good news.
  *
- * It is not silently fixed here: reaching a worker's console needs a CDP
+ * It is not silently fixed here: reaching a worker console needs a CDP
  * attach, which is a real piece of work and belongs in its own change. What IS
  * fixed is the lie — the field is named for the thread it actually watches, and
- * `workerConsoleWatched` travels beside it as a permanent false so no report can
+ * workerConsoleWatched travels beside it as a permanent false so no report can
  * present this as a complete count again. */
 (function () {
   const realError = console.error.bind(console);
