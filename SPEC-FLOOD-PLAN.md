@@ -109,46 +109,33 @@ route, **is not possible.** The state IS published, in `geocode.UGC`
 
 ---
 
-### 56.3 The corridor replaces the cone
+### 56.3 The corridor replaces the cone — ==> SHIPPED 2026-08-22 <==
 
-**THE MATCH IS A DISTANCE FROM THE WHOLE TRACK.** For each alert, measure the
-shortest great-circle distance from its shape to the storm's densified track —
-**past and forecast, joined, in one line** — and match if it is under the
-corridor radius. Past track included because a storm that has already crossed a
-region is still flooding it; forecast track included because that is where it
-is going.
+**Phase 1 landed. This section is now as-built in `SPEC-UI.md` §48.21** under
+*The corridor*, *The antimeridian, and the bug the corridor deleted rather than
+solved*, and *`no_track` is not `none_matched`*. Read it there.
 
-**==> AND THIS DELETES THE ANTIMERIDIAN PROBLEM RATHER THAN SOLVING IT AGAIN.
-<==** §48.21's `extent()` measures longitude in two frames and picks the
-narrower, because a plain bounding box on Lala's real cone measured −180 to 180
-— the whole planet — and would have claimed every flood warning in the country.
-A great-circle distance has no frames and no seam. `extent()`,
-`extentsOverlap()` and `alertsInCone()` are all deleted, along with the test
-that asserted the wrong count.
+**WHAT IT ACTUALLY BUILT**, so a later phase does not go looking:
 
-**THE TOOLS ALREADY EXIST.** `greatCircleNm` and `densifyTrack` in `lib/geo.js`.
-Both `pastTrack` and `forecastTrack` are already carried for NHC and for GDACS
-storms, so this works on both feeds from the first push — the both-sources rule
-(§5) is satisfied by construction rather than by a second pass.
+- `lib/flood.js` — `trackChains()`, `trackSamples()`, `nearestNm()`,
+  `alertsNearTrack()`, `corridorSummary()`. The three bounding-box functions
+  that used to do the matching — the extent measurer, the overlap test and the
+  cone matcher — are deleted, along with the doc comment claiming an undrawable
+  alert still matches.
+- `RAIN.floodCorridorNm` — 300 nm, Aaron's starting value, unmeasured and
+  labelled as such.
+- `app/views.js` hands the two track FeatureCollections to the facade;
+  `ui/view-storm-detail.js` reads `layers.pastTrack.fc` and
+  `layers.forecastTrack.fc` where it used to read the cone.
+- `ui/rain-storm.js` names the radius in every sentence, in the reader's units.
+- `tools/test-flood.mjs` — rewritten against real bytes. Seven mutations
+  verified red.
+- `samples/flood/alerts-national.json` and `track-lala-cp2-{past,forecast}.geojson`
+  frozen off the archive, since its window is 72 hours and rolls.
 
-**THE RADIUS IS ONE CONSTANT, IN `config/constants.js`, AND IT IS A GLASS
-CALL.** Nothing in the sandbox can measure the right value; do not invent one
-and do not write a derivation that reads as though one was measured.
-
-**==> IT IS A FLAT DISTANCE AND IS DELIBERATELY NOT SCALED OFF THE WIND FIELD.
-<==** The tempting move is to reuse the storm's own 34 kt radii, the way
-`data/home-corridor.js` does for wind at the house. **Do not.** Flooding is
-driven by the rain shield, not the wind field, and a weakening storm inland has
-an enormous rain footprint and almost no wind field — which is precisely the
-case that floods people. Scaling by wind radii would shrink the search area
-exactly where the hazard is worst. One generous flat number, tuned on glass.
-
-**MATCH AGAINST THE ALERT'S SHAPE, NOT ITS CENTRE.** Nearest vertex, not
-nearest middle. Overstating the overlap slightly, and in one direction —
-toward including an alert just outside the corridor, never toward dropping one
-just inside — is the correct way to be wrong on a hazard surface. Same
-reasoning §48.19 uses to keep a partly-elapsed rainfall block rather than
-prorate it.
+**THE ONE THING PHASE 1 DID NOT DO.** Nothing has been seen on glass, and
+nothing can be until a US storm is near a flooding region. The radius is
+therefore still a guess, and every phase below inherits that.
 
 ---
 
@@ -385,18 +372,15 @@ rather than throwing and taking the whole layer engine down with it.
 Deleted code is deleted, not commented out, and orphaned imports go with it
 (§12).
 
-- `lib/flood.js` — `extent()`, `extentsOverlap()`, `alertsInCone()`. The
-  antimeridian machinery has no job once the match is a distance.
-- `tools/test-flood.mjs` — the cone cases, including the assertion that
-  encodes the shapeless-alert bug (`total: 1, drawable: 1` against a fixture
-  holding one warning and one watch).
-- **`lib/flood.js`'s doc comment claiming an undrawable alert still matches.**
-  The comment says the opposite of the code. **The code is right and the comment
-  is wrong** — keeping every shapeless watch for every storm would put an Ohio
-  watch under a Hawaii storm, worded as being inside that storm's cone, which is
-  a false statement about shapes. Once §56.4 gives watches real geometry the
-  whole special case disappears. Delete the comment; do not "fix" the code to
-  match it.
+- ~~`lib/flood.js` — the extent measurer, the overlap test, the cone matcher~~
+  — **done, Phase 1.** The antimeridian machinery had no job once the match
+  became a distance.
+- ~~`tools/test-flood.mjs` — the cone cases~~ — **done, Phase 1.** Including
+  the assertion that encoded the shapeless-alert bug.
+- ~~`lib/flood.js`'s doc comment claiming an undrawable alert still matches~~ —
+  **done, Phase 1.** The comment said the opposite of the code; the code was
+  right. Once §56.4 gives watches real geometry the special case disappears
+  entirely.
 - The house block in `ui/rain-storm.js`, its scope logic, and its CSS.
 - §51.6's `Coastal flooding` section, and `surge` from `ui/section-icon.js`.
 - `map/layers/flood.js`'s national-draw behaviour and the file header arguing
@@ -409,12 +393,15 @@ Deleted code is deleted, not commented out, and orphaned imports go with it
 **Each phase is sized for one session. Do not start two.** When a phase lands,
 delete it from this file and write what it built into the real spec.
 
-**PHASE 1 — THE CORRIDOR.** Everything hangs off it, so it goes first. Build the
-distance match over past + forecast track, put the radius in
-`config/constants.js`, and delete `extent()` / `extentsOverlap()` /
-`alertsInCone()` and their tests. Prove it against the archived alerts and a
-real storm track. **No UI changes.** Ends with the match correct and nothing on
-screen different.
+**PHASE 1 — THE CORRIDOR. ==> DONE, 2026-08-22. <==** See §56.3 above and
+`SPEC-UI.md` §48.21 for what it built.
+
+**IT DID CHANGE THE UI, WHICH THIS PLAN SAID IT WOULD NOT, AND THAT WAS RIGHT.**
+The drawer said *"in force inside this storm's forecast cone"*. Once the match
+stopped being a cone, leaving that string in place would have shipped a false
+sentence — so the copy followed the code. No new structure, no new sections. A
+later phase should read "no UI changes" as "no new UI", not as licence to leave
+a lie on screen.
 
 **PHASE 2 — THE FLOODING SECTION.** One section on both screens: alert rows on
 top, the modelled coastal figure as prose below. Merge in §51.6 and delete it.

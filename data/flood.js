@@ -32,10 +32,10 @@
  *   ok           it answered. `alerts` may legitimately be empty, which means
  *                no weather office in the United States currently has a flood
  *                product out — common, and true.
- * The `none_matched` half — the feed answered and nothing falls inside THIS
- * storm's cone — is decided per storm in `lib/flood.js`, not here, because the
- * feed being empty and this storm having nothing near it are different facts
- * and the panel words them differently.
+ * The `none_matched` half — the feed answered and nothing comes near THIS
+ * storm's track (§56.3) — is decided per storm in `lib/flood.js`, not here,
+ * because the feed being empty and this storm having nothing near it are
+ * different facts and the panel words them differently.
  *
  * No DOM. Imports config/, lib/ and data/relay.js.
  */

@@ -220,7 +220,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2254-2339 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3517-3539 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3576-3598 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -253,7 +253,7 @@ real home is the other row carrying the same section number.
 | `51.3` | &nbsp;&nbsp;Surge at the house — the home dashboard section | `SPEC-DATA.md` | 3056-3104 |
 | `51.4` | &nbsp;&nbsp;The coastal layer | `SPEC-DATA.md` | 3105-3155 |
 | `51.5` | &nbsp;&nbsp;The boundary with NHC — DELIBERATE, SETTLED, DO NOT CLOSE | `SPEC-DATA.md` | 3156-3194 |
-| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 3469-3516 |
+| `51.6` | &nbsp;&nbsp;Coastal flooding — the home drawer's section | `SPEC-UI.md` | 3528-3575 |
 | `51.7` | &nbsp;&nbsp;The reach — how far one town's number travels along the coast | `SPEC-DATA.md` | 3195-3242 |
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1965-2002 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2022-2054 |
@@ -263,28 +263,28 @@ real home is the other row carrying the same section number.
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
-| `56.3` | &nbsp;&nbsp;The corridor replaces the cone | `SPEC-FLOOD-PLAN.md` | 112-154 |
-| `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 155-186 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 187-236 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 237-259 |
-| `56.7` | &nbsp;&nbsp;One Flooding section, both kinds of water | `SPEC-FLOOD-PLAN.md` | 260-302 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gains one line | `SPEC-FLOOD-PLAN.md` | 303-334 |
-| `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 335-362 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-FLOOD-PLAN.md` | 363-382 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 383-406 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 407-439 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 440-455 |
+| `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
+| `56.4` | &nbsp;&nbsp;Watches need their zone shapes, and that unlocks everything | `SPEC-FLOOD-PLAN.md` | 142-173 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 174-223 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 224-246 |
+| `56.7` | &nbsp;&nbsp;One Flooding section, both kinds of water | `SPEC-FLOOD-PLAN.md` | 247-289 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gains one line | `SPEC-FLOOD-PLAN.md` | 290-321 |
+| `56.9` | &nbsp;&nbsp;Home data leaves the storm drawer, and gates on the corridor at home | `SPEC-FLOOD-PLAN.md` | 322-349 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-FLOOD-PLAN.md` | 350-369 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 370-390 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 391-426 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 427-442 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 194,712 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 23,044 | 14 |
+| `SPEC-FLOOD-PLAN.md` | 22,056 | 14 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,021 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 208,517 | 18 |
+| `SPEC-UI.md` | 212,281 | 18 |
 | `SPEC.md` | 173,542 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

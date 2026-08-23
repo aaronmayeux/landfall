@@ -1,22 +1,41 @@
 #!/usr/bin/env node
 /**
- * test-flood.mjs — §48.21's acceptance cases against real captured bytes.
+ * test-flood.mjs — §48.21 and §56.3's acceptance cases against real captured
+ * bytes.
  *
- * WHAT THIS IS FOR. This feature has three failures that all PARSE, none of
- * which throws, and every one of which produces a page that looks right:
+ * WHAT THIS IS FOR. This feature has failures that all PARSE, none of which
+ * throws, and every one of which produces a page that looks right:
  *
- *   1. A cone crossing the antimeridian measured as the whole planet, so every
- *      Central Pacific storm claims every flood warning in the country.
+ *   1. A match that claims far more than it should, silently. Until 2026-08-22
+ *      the test was a bounding-box overlap with the forecast cone, and a cone
+ *      crossing the antimeridian measured as the whole planet — so every
+ *      Central Pacific storm claimed every flood warning in the country.
  *   2. An expired warning surviving in a held payload and being DRAWN, which
  *      tells somebody they are in danger when they are not.
  *   3. A watch with no polygon vanishing off the globe with no count saying so,
  *      which is §5's silence with a map over it.
+ *   4. A match that claims too LITTLE, which is the new one. A cone is where
+ *      the CENTRE might go; the flooding is hundreds of miles away and days
+ *      later. §56.3 replaced the cone with a distance from the whole track,
+ *      past and forecast, and this file is the proof that the distance finds
+ *      the inland river flooding a cone was missing.
  *
- * None of the three has a shape. All three are asserted here against bytes NWS
- * and NHC actually served: `samples/rain/alerts-hilo-hi.json` for the alerts
- * (five real products, two with polygons and three without) and
- * `samples/flood/cone-lala-cp2.geojson` for the seam, which is Lala's real
- * published cone off the archive branch.
+ * None of the four has a shape. All four are asserted here against bytes NWS
+ * and NHC actually served:
+ *
+ *   samples/rain/alerts-hilo-hi.json          five real products, two with
+ *                                             polygons and three without
+ *   samples/flood/alerts-national.json        every US flood alert in force at
+ *                                             2026-08-22T22:29:35Z, off the
+ *                                             archive branch — 36 of them, 33
+ *                                             drawable
+ *   samples/flood/track-lala-cp2-*.geojson    Lala's real published past and
+ *                                             forecast tracks, the Central
+ *                                             Pacific storm whose cone broke
+ *                                             the old match
+ *   samples/ida-al092021/fstadv/…019.txt      NHC's own advisory-19 positions
+ *                                             for Ida, the inland-flooding
+ *                                             case §56.3 exists for
  *
  * Zero dependencies. Run: node tools/test-flood.mjs
  */
@@ -30,15 +49,18 @@ import path from 'node:path';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const {
-  inForce, extent, extentsOverlap, alertsInCone, coneSummary, isFloodFamily,
+  inForce, trackChains, trackSamples, nearestNm, alertsNearTrack, corridorSummary,
+  isFloodFamily,
 } = await import(path.join(ROOT, 'lib/flood.js'));
+const { greatCircleNm } = await import(path.join(ROOT, 'lib/geo.js'));
 const { projectFlood } = await import(path.join(ROOT, 'functions/api/nws/flood.js'));
+const { parseTcm } = await import(path.join(ROOT, 'tools/tcm-fixture.mjs'));
 
 let failures = 0;
-const ok = (label) => console.log(`  \u2713 ${label}`);
+const ok = (label) => console.log(`  ✓ ${label}`);
 const fail = (label, detail) => {
   failures++;
-  console.error(`  \u2717 ${label}${detail ? `\n      ${detail}` : ''}`);
+  console.error(`  ✗ ${label}${detail ? `\n      ${detail}` : ''}`);
 };
 const truthy = (label, v) => (v ? ok(label) : fail(label));
 const eq = (label, actual, expected) => {
@@ -51,12 +73,98 @@ const near = (label, actual, expected, tol = 0.001) =>
 
 const load = (rel) => JSON.parse(readFileSync(path.join(ROOT, rel), 'utf8'));
 
+/* ---------------------------------------------------------------------------
+ * FIXTURE HELPERS
+ * ------------------------------------------------------------------------- */
+
+/** A one-line FeatureCollection, the shape the geometry bundle's track slots
+ *  carry. Built here rather than committed, because a two-point line is not
+ *  data — it is a probe. */
+const lineFc = (coordinates) => ({
+  type: 'FeatureCollection',
+  features: [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } }],
+});
+
+/** A tiny square about a point, for the seam probe. */
+const polyAt = (lon, lat, d = 0.05) => ({
+  type: 'Polygon',
+  coordinates: [[[lon - d, lat - d], [lon + d, lat - d], [lon + d, lat + d],
+    [lon - d, lat + d], [lon - d, lat - d]]],
+});
+
+/** A shape's bounding-box centre, expressed as a degenerate one-point polygon
+ *  so `nearestNm` can measure it. ==> ONLY FOR THE MUTATION IN §5. <== §56.2
+ *  measured five of twenty-five bbox centres falling OUTSIDE their own polygon,
+ *  every one a river corridor. Nothing in the shipped path may use this. */
+const bboxCentreAsShape = (geometry) => {
+  const rings = geometry.type === 'Polygon' ? geometry.coordinates : geometry.coordinates.flat();
+  let w = Infinity, e = -Infinity, s = Infinity, n = -Infinity;
+  for (const ring of rings) {
+    for (const [lon, lat] of ring) {
+      if (lon < w) w = lon;
+      if (lon > e) e = lon;
+      if (lat < s) s = lat;
+      if (lat > n) n = lat;
+    }
+  }
+  const c = [(w + e) / 2, (s + n) / 2];
+  return { type: 'Polygon', coordinates: [[c, c, c, c]] };
+};
+
+/** `nearestNm` with no prefilter at all — every vertex against every sample.
+ *  The reference the optimised one is checked against. */
+const bruteNearestNm = (geometry, samples) => {
+  const rings = geometry.type === 'Polygon' ? geometry.coordinates : geometry.coordinates.flat();
+  let best = Infinity;
+  for (const s of samples) {
+    for (const ring of rings) {
+      for (const [lon, lat] of ring) {
+        const d = greatCircleNm(s.lon, s.lat, lon, lat);
+        if (d < best) best = d;
+      }
+    }
+  }
+  return best;
+};
+
+/* ---------------------------------------------------------------------------
+ * THE FIXTURES
+ * ------------------------------------------------------------------------- */
+
 const RAW = load('samples/rain/alerts-hilo-hi.json');
 const ROWS = projectFlood([RAW]).alerts;
 /** The moment those alerts were live, pinned off the capture itself rather
  *  than typed, so the suite cannot drift from its own fixture. */
 const LIVE = Date.parse(RAW.features[0].properties.sent);
+/** When the Hilo Flash Flood Warning ran out. Read off the bytes, used in three
+ *  places, so it is named once. */
+const FFW_ENDS = Date.parse(
+  RAW.features.find((f) => f.properties.event === 'Flash Flood Warning').properties.ends);
+
 const LALA_CONE = load('samples/flood/cone-lala-cp2.geojson').features[0].geometry;
+
+/** Every US flood alert in force in one real hour. §56.2 measured the shape of
+ *  this set; the volume is one snapshot on a day with no US landfall. */
+const NATIONAL = load('samples/flood/alerts-national.json').alerts;
+/** A moment they were all live, taken off the capture rather than typed. */
+const NATIONAL_LIVE = Date.parse(NATIONAL[0].onset);
+
+/** ==> LALA'S PAST TRACK IS FOURTEEN SEPARATE LineString FEATURES. <== Not one.
+ *  The mapserver publishes it in segments, which is why `trackChains` keeps
+ *  chains apart instead of flattening them. */
+const LALA_CHAINS = trackChains(
+  load('samples/flood/track-lala-cp2-past.geojson'),
+  load('samples/flood/track-lala-cp2-forecast.geojson'));
+const LALA_SAMPLES = trackSamples(LALA_CHAINS);
+
+/** Ida's advisory 19: her analysed position followed by NHC's six forecast
+ *  points, parsed out of the Forecast/Advisory rather than transcribed. */
+const IDA = parseTcm(
+  readFileSync(path.join(ROOT, 'samples/ida-al092021/fstadv/al092021.fstadv.019.txt'), 'utf8'),
+  { id: 'ida', sourceId: 'al092021' });
+const IDA_CHAINS = trackChains(lineFc(
+  [[IDA.storm.lon, IDA.storm.lat], ...IDA.forecast.map((f) => [f.lon, f.lat])]));
+const IDA_SAMPLES = trackSamples(IDA_CHAINS);
 
 /* ---------------------------------------------------------------------------
  * 1. THE RELAY PROJECTION
@@ -148,97 +256,154 @@ console.log('\nWhat is in force, at a moment somebody chose');
 }
 
 /* ---------------------------------------------------------------------------
- * 3. THE SEAM — the bug that would have claimed the whole country
+ * 3. THE SEAM — the bug the corridor DELETED rather than solved
  * ------------------------------------------------------------------------- */
-console.log('\nThe antimeridian');
+console.log('\nThe antimeridian, and why there is nothing left to get wrong');
 {
-  /* ==> THIS IS THE MOST IMPORTANT BLOCK IN THE FILE. <== Lala is a real
-   * Central Pacific storm and her real published cone has vertices either side
-   * of 180. A plain min/max bounding box measures it as -180..180 — the whole
-   * planet — so every flood warning in the United States falls inside it.
-   * Nothing throws. The sentence reads perfectly. */
-  const e = extent(LALA_CONE);
-  eq('her cone is measured as TWO longitude spans, not one', e.lon.length, 2);
-  near('the eastern span starts at 177.1E', e.lon[0][0], 177.1477, 0.01);
-  near('and the western one ends at 172.1W', e.lon[1][1], -172.1057, 0.01);
-  near('south edge', e.south, 30.2489, 0.01);
-  near('north edge', e.north, 41.0835, 0.01);
+  /* ==> THIS BLOCK IS THE RECORD OF A DELETED BUG AND IT IS WORTH ITS LINES.
+   * <== Lala is a real Central Pacific storm and her real published cone has
+   * vertices either side of 180. Until 2026-08-22 the match was a bounding-box
+   * overlap against that cone, and a plain min/max box measures it as
+   * -180..180 — the whole planet — so every flood warning in the United States
+   * fell inside it. Nothing threw. The sentence read perfectly. The fix at the
+   * time was `extent()`: 60 lines measuring longitude in two frames and picking
+   * the narrower.
+   *
+   * §56.3 deleted all of it. The match is now a great-circle distance, which
+   * has no frames and no seam, because `greatCircleNm` is built on
+   * `sin(dLon/2)²` and that is periodic in 360°. The two assertions below are
+   * the before and the after, on the same storm and the same alerts. */
+  const naiveSpan = (geom) => {
+    const rings = geom.type === 'Polygon' ? geom.coordinates : geom.coordinates.flat();
+    const lons = rings.flat().map((p) => p[0]);
+    return Math.max(...lons) - Math.min(...lons);
+  };
+  truthy('a plain box on her real cone still spans the planet',
+    naiveSpan(LALA_CONE) > 350);
 
-  /* THE WIDTH IS THE WHOLE POINT: about ten degrees, not three hundred and
-   * sixty. Computed from the spans rather than typed. */
-  const width = (180 - e.lon[0][0]) + (e.lon[1][1] + 180);
-  near('so the cone is about 10.7 degrees wide, not 360', width, 10.7466, 0.01);
+  /* AND THE CORRIDOR'S ANSWER ON THE SAME STORM, AGAINST 36 REAL ALERTS. */
+  eq('her real track matches none of the national alerts',
+    corridorSummary(NATIONAL, LALA_SAMPLES, NATIONAL_LIVE, 300).state, 'none_matched');
 
-  /* AND THE CONSEQUENCE, ASSERTED ON THE REAL ALERTS. Hawaii is nowhere near
-   * Lala's cone; before the fix every one of these matched. */
-  eq('no Hawaii flood alert falls inside a Central Pacific cone',
-    coneSummary(ROWS, LALA_CONE, LIVE).state, 'none_matched');
+  /* HOW WRONG THE BOX WAS, IN ONE NUMBER. Measured off these bytes: the
+   * nearest US flood alert to Lala's track is most of an ocean away. */
+  let nearest = Infinity;
+  for (const a of NATIONAL) {
+    if (!a.geometry) continue;
+    const d = nearestNm(a.geometry, LALA_SAMPLES);
+    if (d < nearest) nearest = d;
+  }
+  near('the nearest one is 1,966 nm from her track', nearest, 1966, 1);
+  console.log(`      (a box said all ${NATIONAL.filter((a) => a.geometry).length}; the corridor says none, at ${Math.round(nearest).toLocaleString()} nm)`);
 
-  /* A NON-CROSSING SHAPE IS STILL ONE SPAN. The fix must not turn every
-   * ordinary cone into a two-piece extent. */
-  const gulf = { type: 'Polygon', coordinates: [[[-95, 25], [-88, 25], [-88, 31], [-95, 31], [-95, 25]]] };
-  eq('an ordinary cone is one span', extent(gulf).lon.length, 1);
-  eq('and it is the plain box', extent(gulf).lon[0], [-95, -88]);
-
-  /* THE OVERLAP TEST HAS TO CROSS THE SEAM TOO. A box just east of 180 and a
-   * cone spanning it must meet. */
-  const eastOf180 = { type: 'Polygon', coordinates: [[[178, 32], [179, 32], [179, 34], [178, 34], [178, 32]]] };
-  truthy('a shape east of 180 meets a cone that crosses it',
-    extentsOverlap(extent(eastOf180), extent(LALA_CONE)));
-  const westOf180 = { type: 'Polygon', coordinates: [[[-178, 32], [-177, 32], [-177, 34], [-178, 34], [-178, 32]]] };
-  truthy('and so does one west of it',
-    extentsOverlap(extent(westOf180), extent(LALA_CONE)));
-  /* AND SOMETHING GENUINELY OUTSIDE STILL MISSES, or the test above passes on
-   * a function that returns true for everything. */
-  const florida = { type: 'Polygon', coordinates: [[[-82, 25], [-80, 25], [-80, 28], [-82, 28], [-82, 25]]] };
-  truthy('Florida does not meet a Central Pacific cone',
-    !extentsOverlap(extent(florida), extent(LALA_CONE)));
+  /* THE SEAM CANNOT COME BACK THROUGH AN UNWRAPPED LONGITUDE EITHER.
+   * `lib/trackline.js` unwraps longitudes before splining, so a track crossing
+   * 180 westward reaches this file carrying values past -180. Asserted rather
+   * than assumed, because it is the one way a distance test could still grow a
+   * frame. */
+  const at190 = trackSamples(trackChains(lineFc([[-190, 30], [-189, 30]])));
+  const atMinus170 = trackSamples(trackChains(lineFc([[170, 30], [171, 30]])));
+  const box = polyAt(170.5, 30);
+  near('an unwrapped -190 and a plain 170 are the same place to the corridor',
+    nearestNm(box, at190), nearestNm(box, atMinus170), 0.5);
 }
 
 /* ---------------------------------------------------------------------------
- * 4. MATCHING A STORM'S CONE
+ * 4. THE CORRIDOR — a real inland track against real alerts
  * ------------------------------------------------------------------------- */
-console.log('\nWhich alerts fall inside a cone');
+console.log('\nWhich alerts come near a track');
 {
-  /* A box drawn round the Big Island, which is where these alerts are. */
-  const overHawaii = {
-    type: 'Polygon',
-    coordinates: [[[-157, 18], [-154, 18], [-154, 21], [-157, 21], [-157, 18]]],
-  };
-  const s = coneSummary(ROWS, overHawaii, LIVE);
-  eq('a cone over Hawaii matches', s.state, 'ok');
+  /* ==> IDA IS HERE BECAUSE SHE IS THE CASE §56.3 IS ABOUT. <== A cone is
+   * where the CENTRE might go. Ida drowned New Jersey while her centre was
+   * over Pennsylvania, and the flooding that killed people was hundreds of
+   * miles from the middle of the storm. Her advisory 19 track — NHC's own
+   * published positions, off `samples/ida-al092021/` — runs from Mississippi
+   * to the New Jersey coast.
+   *
+   * ==> THE PAIRING IS CONSTRUCTED AND THIS COMMENT SAYS SO. <== These are
+   * 2021 track positions measured against 2026 flood alerts. Nothing here
+   * claims Ida caused any of them; the assertion is about geometry, which is
+   * all `alertsNearTrack` ever claims. Both halves are real published bytes
+   * and the distances between them are real distances. */
+  const s = corridorSummary(NATIONAL, IDA_SAMPLES, NATIONAL_LIVE, 300);
+  eq('a track up the Ohio valley matches', s.state, 'ok');
+  eq('25 of the 33 drawable alerts fall within 300 nm', s.total, 25);
+  eq('and every one of them can be drawn', s.drawable, 25);
 
-  /* ==> ONE, NOT TWO, AND THE HURRICANE WARNING IS WHY. <== It carries a
-   * polygon over the same island and it is not a flood product. The route asks
-   * upstream for three products by name so it should never arrive — but
-   * `isFloodFamily` is the belt, because NWS renames products and a Coastal
-   * Flood Advisory here would put a second answer beside §51's surge section. */
-  eq('exactly one flood alert, not the Hurricane Warning beside it', s.total, 1);
-  eq('and it is the Flash Flood Warning', s.alerts[0].event, 'Flash Flood Warning');
-  eq('drawable', s.drawable, 1);
-  eq('immediate', s.immediate, 1);
+  /* ==> THE WABASH CLUSTER IS THE WHOLE ARGUMENT FOR THE CORRIDOR. <== §56.2
+   * measured fifteen of twenty-five alerts sitting in one line along the
+   * Wabash valley in Indiana and Illinois. They are 170 to 300 nm from this
+   * track — far outside any forecast cone, and exactly the inland river
+   * flooding a cone-shaped search was missing. */
+  const wabash = s.alerts.filter((a) => /\b(IN|IL)\b/.test(a.areaDesc));
+  truthy('the Indiana and Illinois river warnings are in it', wabash.length >= 12);
+  truthy('and every one of them is further out than 150 nm',
+    wabash.every((a) => a.nearestNm > 150));
+
+  /* THE RADIUS IS DOING WORK IN BOTH DIRECTIONS, or the test above passes on
+   * a function that matches everything. Computed, not typed. */
+  const tight = corridorSummary(NATIONAL, IDA_SAMPLES, NATIONAL_LIVE, 200).total;
+  const wide = corridorSummary(NATIONAL, IDA_SAMPLES, NATIONAL_LIVE, 500).total;
+  truthy(`200 nm finds fewer and 500 nm finds more (${tight} < 25 < ${wide})`,
+    tight < 25 && wide > 25);
+
+  /* EVERY MATCH CARRIES HOW CLOSE IT ACTUALLY CAME, and it is inside the
+   * radius it was matched on. A row that can say a distance is a row that is
+   * not asserting a cause. */
+  truthy('each match carries its own distance, and it is under the radius',
+    s.alerts.every((a) => Number.isFinite(a.nearestNm) && a.nearestNm <= 300));
+  eq('and the summary carries the radius it used, for the sentence',
+    s.radiusNm, 300);
+
+  /* THE BELT. The Hilo capture has a Hurricane Warning with a polygon over the
+   * same island as its flood warning; the route asks upstream for three
+   * products by name so it should never arrive, but NWS renames products. */
+  const overHawaii = trackSamples(trackChains(lineFc([[-155.5, 19.4], [-155.0, 20.0]])));
+  const h = corridorSummary(ROWS, overHawaii, LIVE, 300);
+  eq('a track over Hawaii matches', h.state, 'ok');
+  eq('exactly one flood alert, not the Hurricane Warning beside it', h.total, 1);
+  eq('and it is the Flash Flood Warning', h.alerts[0].event, 'Flash Flood Warning');
+  eq('drawable', h.drawable, 1);
+  eq('immediate', h.immediate, 1);
 
   truthy('the belt itself agrees',
     isFloodFamily('Flash Flood Warning') && isFloodFamily('Flood Watch') &&
     !isFloodFamily('Hurricane Warning') && !isFloodFamily('High Surf Warning'));
 
-  /* ==> `no_cone` IS NOT `none_matched`, AND BOTH PRODUCE AN EMPTY LIST. <==
-   * This is the §5 distinction this feature is most likely to get wrong. A
-   * storm with no published cone has nothing to test against and the honest
-   * answer is that we cannot say; a storm whose cone WAS tested and contained
-   * nothing is a real all-clear. Rendering them the same is an all-clear built
-   * from an absence. */
-  eq('a storm with no cone cannot say', alertsInCone(ROWS, null).state, 'no_cone');
-  eq('a storm with a cone and nothing in it CAN say',
-    alertsInCone(ROWS, LALA_CONE).state, 'none_matched');
+  /* ==> `no_track` IS NOT `none_matched`, AND BOTH PRODUCE AN EMPTY LIST. <==
+   * The §5 distinction this feature is most likely to get wrong. A storm with
+   * no published track has nothing to measure against and the honest answer is
+   * that we cannot say; a storm whose track WAS measured and came near nothing
+   * is a real all-clear. Rendering them the same is an all-clear built from an
+   * absence. */
+  eq('a storm with no track cannot say', alertsNearTrack(ROWS, []).state, 'no_track');
+  eq('and neither can one whose track slots are empty',
+    alertsNearTrack(ROWS, trackSamples(trackChains(null, null))).state, 'no_track');
+  eq('a storm with a track and nothing near it CAN say',
+    alertsNearTrack(ROWS, trackSamples(trackChains(
+      lineFc([[-30, 40], [-25, 42]])))).state, 'none_matched');
 
-  /* AN EXPIRED ALERT DOES NOT MATCH A CONE EITHER. The expiry filter runs
+  /* ==> THE PAST TRACK IS NOT DECORATION, AND THIS IS THE MEASUREMENT THAT
+   * PROVES IT. <== §56.3 includes the past track because a storm that has
+   * already crossed a region is still flooding it — the water arrives after
+   * the wind leaves. Lala is the case, on her own real bytes: she came out of
+   * the East Pacific past Hawaii and is now up at 30–41N, so her FORECAST
+   * track is most of a thousand miles from the Hilo flash flood warning while
+   * her PAST track is twenty-two. A forecast-only match — which is
+   * approximately what a cone is — misses it entirely. */
+  const ffw = ROWS.find((a) => a.event === 'Flash Flood Warning');
+  const pastOnly = trackSamples(trackChains(load('samples/flood/track-lala-cp2-past.geojson')));
+  const fcstOnly = trackSamples(trackChains(load('samples/flood/track-lala-cp2-forecast.geojson')));
+  near('her past track passes 22 nm from the Hilo warning',
+    nearestNm(ffw.geometry, pastOnly), 21.9, 0.2);
+  near('her forecast track is 1,083 nm from it', nearestNm(ffw.geometry, fcstOnly), 1083.4, 0.5);
+  truthy('so a forecast-only match would drop it and the joined track keeps it',
+    nearestNm(ffw.geometry, fcstOnly) > 300 && nearestNm(ffw.geometry, LALA_SAMPLES) < 300);
+
+  /* AN EXPIRED ALERT DOES NOT MATCH A CORRIDOR EITHER. The expiry filter runs
    * before the geometry test, so a stale payload cannot paint a stale box. */
-  const ends = Date.parse(
-    RAW.features.find((f) => f.properties.event === 'Flash Flood Warning').properties.ends
-  );
-  eq('and an expired warning falls out before the cone is even asked',
-    coneSummary(ROWS, overHawaii, ends + 60_000).state, 'none_matched');
+  eq('an expired warning falls out before the distance is even measured',
+    corridorSummary(ROWS, overHawaii, FFW_ENDS + 60_000, 300).state, 'none_matched');
 }
 
 /* ---------------------------------------------------------------------------
@@ -246,55 +411,122 @@ console.log('\nWhich alerts fall inside a cone');
  * ------------------------------------------------------------------------- */
 console.log('\nMutations — each bug must change the answer');
 {
-  /* Bug 1: the seam, measured as a plain min/max box. THE ONE THIS FEATURE
-   * would have shipped. */
-  const naive = (geom) => {
-    const pts = [];
-    const rings = geom.type === 'Polygon' ? geom.coordinates : geom.coordinates.flat();
-    for (const r of rings) pts.push(...r);
-    const lons = pts.map((p) => p[0]);
-    return [Math.min(...lons), Math.max(...lons)];
+  /* Bug 1: measure the track at its published vertices and skip densifying.
+   * ==> THIS IS NOT THEORETICAL AND THE NUMBER IS BIG. <== Ida's advisory 19
+   * carries seven positions across five days, so the legs are hundreds of
+   * miles long and an alert beside the MIDDLE of a leg gets measured to its
+   * ends. Russell and Washington counties in Virginia sit 28 nm from her
+   * track and 84 nm from the nearest published point — a 56 nm overstatement,
+   * running toward DROPPING an alert that is inside the corridor, which is the
+   * one direction §56.3 says not to be wrong in. */
+  const russell = NATIONAL.find((a) => a.areaDesc.startsWith('Russell, VA'));
+  const sparse = IDA_CHAINS.flat();
+  const dense = nearestNm(russell.geometry, IDA_SAMPLES);
+  const undensified = nearestNm(russell.geometry, sparse);
+  near('densified, Russell County is 28 nm from the track', dense, 28.0, 0.2);
+  near('at the published points alone it reads as 84', undensified, 83.8, 0.2);
+  truthy('so skipping densification overstates it by more than 50 nm',
+    undensified - dense > 50);
+
+  /* Bug 2: match the alert's CENTRE instead of its nearest vertex. §56.3 says
+   * nearest vertex; the invariant is that a centre can only ever read as
+   * FURTHER, never nearer, so this mutation always loses alerts and never
+   * gains one. Asserted across every drawable alert rather than on a chosen
+   * example, and the largest gap is printed so a later session can see whether
+   * these polygons have grown. */
+  let worst = 0;
+  let violations = 0;
+  for (const a of NATIONAL) {
+    if (!a.geometry) continue;
+    const v = nearestNm(a.geometry, IDA_SAMPLES);
+    const c = nearestNm(bboxCentreAsShape(a.geometry), IDA_SAMPLES);
+    if (c < v - 1e-9) violations++;
+    if (c - v > worst) worst = c - v;
+  }
+  eq('a centre is never nearer than the nearest vertex, on any of them', violations, 0);
+  truthy(`and on these polygons it is up to ${worst.toFixed(1)} nm further`, worst > 5);
+
+  /* Bug 3: flatten the track's chains into one line before densifying.
+   *
+   * ==> AND THE HONEST VERSION OF THIS CASE IS THAT LALA DOES NOT PROVE IT.
+   * <== Her real past track off the archive is FOURTEEN LineString features
+   * plus a forecast one, so it looked like the fixture for this. Measured: her
+   * fifteen chains are CONTIGUOUS — consecutive pieces of one line — so
+   * flattening them and densifying through invents nothing at all. The
+   * furthest any sample sits from a published vertex is 78.7 nm either way,
+   * to the digit. An assertion dressed up as being about Lala would have
+   * passed on the mutation, which §12 calls worse than no test.
+   *
+   * So the guard is asserted on a probe that actually has a gap: two chains
+   * with an ocean between them, which is what a genuinely segmented feed
+   * produces. Flattening bridges it and puts samples in the middle of the
+   * Pacific. */
+  eq('Lala really is fifteen separate chains', LALA_CHAINS.length, 15);
+  const gapped = [[{ lon: -160, lat: 20 }, { lon: -159, lat: 20 }],
+    [{ lon: -140, lat: 20 }, { lon: -139, lat: 20 }]];
+  const kept = trackSamples(gapped);
+  const bridged = trackSamples([gapped.flat()]);
+  const strayNm = (set) => {
+    let worst = 0;
+    for (const s of set) {
+      let d = Infinity;
+      for (const v of gapped.flat()) {
+        const x = greatCircleNm(s.lon, s.lat, v.lon, v.lat);
+        if (x < d) d = x;
+      }
+      if (d > worst) worst = d;
+    }
+    return worst;
   };
-  const [w, e] = naive(LALA_CONE);
-  truthy('a plain min/max box on this cone spans the planet', e - w > 350);
-  truthy('and the seam-aware one does not',
-    extent(LALA_CONE).lon.every(([a, b]) => b - a < 180));
+  truthy('kept apart, no sample lands off the published points',
+    strayNm(kept) < 30);
+  truthy(`flattened, one lands ${Math.round(strayNm(bridged))} nm from anywhere the storm was`,
+    strayNm(bridged) > 250);
 
-  /* Bug 2: filter expiry only at fetch. Same bytes, past the expiry. */
-  const ends = Date.parse(
-    RAW.features.find((f) => f.properties.event === 'Flash Flood Warning').properties.ends
-  );
+  /* Bug 4: filter expiry only at fetch. Same bytes, past the expiry. */
   truthy('an expired warning cannot survive a held payload',
-    inForce(ROWS, LIVE).length !== inForce(ROWS, ends + 60_000).length);
+    inForce(ROWS, LIVE).length !== inForce(ROWS, FFW_ENDS + 60_000).length);
 
-  /* Bug 3: give a shapeless watch a shape. There is nothing to invent from —
+  /* Bug 5: give a shapeless watch a shape. There is nothing to invent from —
    * asserted as the absence it is, so a later "helpful" default has something
-   * to break. */
+   * to break. Phase 4 (§56.4) gives watches their PUBLISHED zone polygons,
+   * which is the opposite of inventing one. */
   const watch = ROWS.find((a) => a.event === 'Flood Watch');
   truthy('a watch is carried with no geometry and no substitute',
     watch.geometry === null && watch.drawable === false);
+  truthy('and it does not match a corridor it has no shape to be measured in',
+    !corridorSummary(ROWS, LALA_SAMPLES, LIVE, 20_000).alerts?.some(
+      (a) => a.event === 'Flood Watch'));
 
-  /* Bug 4: infer the tense from `urgency`. The captured watch proves it wrong
+  /* Bug 6: infer the tense from `urgency`. The captured watch proves it wrong
    * on its own bytes. */
-  const live = inForce(ROWS, LIVE);
-  const w2 = live.find((a) => a.event === 'Flood Watch');
+  const w2 = inForce(ROWS, LIVE).find((a) => a.event === 'Flood Watch');
   truthy('urgency Future would say not-yet-begun and the clock says otherwise',
     w2.urgency === 'Future' && w2.begun === true);
 
-  /* Bug 5: treat a missing cone as an empty cone. */
-  truthy('no cone and an empty cone are different answers',
-    alertsInCone(ROWS, null).state !== alertsInCone(ROWS, LALA_CONE).state);
+  /* Bug 7: treat a missing track as an empty one. */
+  truthy('no track and a track with nothing near it are different answers',
+    alertsNearTrack(ROWS, []).state !== alertsNearTrack(ROWS, LALA_SAMPLES).state);
 
-  /* Bug 6: drop the flood-family belt and let a Hurricane Warning through. */
-  const overHawaii = {
-    type: 'Polygon',
-    coordinates: [[[-157, 18], [-154, 18], [-154, 21], [-157, 21], [-157, 18]]],
-  };
-  const withBelt = coneSummary(ROWS, overHawaii, LIVE).total;
-  const withoutBelt = ROWS.filter((a) =>
-    a.geometry && extentsOverlap(extent(a.geometry), extent(overHawaii))).length;
+  /* Bug 8: drop the flood-family belt and let a Hurricane Warning through. */
+  const overHawaii = trackSamples(trackChains(lineFc([[-155.5, 19.4], [-155.0, 20.0]])));
+  const withBelt = corridorSummary(ROWS, overHawaii, LIVE, 300).total;
+  const withoutBelt = ROWS.filter(
+    (a) => a.geometry && nearestNm(a.geometry, overHawaii) <= 300).length;
   truthy('the belt is doing work — two shapes are over Hawaii and one is a flood',
     withoutBelt === 2 && withBelt === 1);
+
+  /* Bug 9: drop the latitude prefilter's correctness. It is an optimisation
+   * and an optimisation that changes an answer is a bug. Compared against a
+   * deliberately unfiltered measurement on every drawable alert. */
+  let mismatches = 0;
+  for (const a of NATIONAL) {
+    if (!a.geometry) continue;
+    const fast = nearestNm(a.geometry, IDA_SAMPLES);
+    const slow = bruteNearestNm(a.geometry, IDA_SAMPLES);
+    if (Math.abs(fast - slow) > 1e-9) mismatches++;
+  }
+  eq('the latitude prefilter never changes an answer', mismatches, 0);
 }
 
 console.log(

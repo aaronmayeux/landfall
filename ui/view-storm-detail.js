@@ -855,7 +855,7 @@ export function createStormDetailView({
    * ==> IT REFUSES ON A SILENCED OR ENDED STORM, LIKE EVERY OTHER SECTION.
    * <== `withheldNote` already replaces the whole Rainfall body in that case,
    * but this is asked from inside the controller too, and a block that measured
-   * a dead storm's cone against live warnings would be pairing today's hazard
+   * a dead storm's track against live warnings would be pairing today's hazard
    * with a forecast nobody is publishing any more.
    */
   function floodSummary(target) {
@@ -866,11 +866,22 @@ export function createStormDetailView({
     if (!slot || slot.state === 'loading') return { state: 'loading' };
     if (slot.state !== 'ok') return { state: 'unavailable' };
 
-    /* The cone as the map has it. `geo.bundle.layers.cone.fc` is the same
-     * FeatureCollection map/layers/cone.js draws. */
-    const fc = geo.state === 'ok' ? geo.bundle?.layers?.cone?.fc : null;
-    const geom = fc?.features?.[0]?.geometry || null;
-    return floodFacade.summarize(slot.alerts, geom, now());
+    /* ==> THE TRACK, PAST AND FORECAST, AS THE MAP HAS IT. <== §56.3, which
+     * replaced the cone here on 2026-08-22. These are the same
+     * FeatureCollections `map/layers/track-past.js` and its forecast sibling
+     * draw, so the shapes the reader can see are the shapes being measured.
+     *
+     * BOTH HALVES, AND A STORM WITH ONLY ONE STILL GETS AN ANSWER. A newly
+     * named system has no past track worth the name; an ended one has no
+     * forecast. `lib/flood.js` returns `no_track` only when NEITHER carries a
+     * line, which is the case where there is genuinely nothing to measure. */
+    const layers = geo.state === 'ok' ? geo.bundle?.layers : null;
+    return floodFacade.summarize(
+      layers?.pastTrack?.fc || null,
+      layers?.forecastTrack?.fc || null,
+      slot.alerts,
+      now(),
+    );
   }
 
   function homeHtml() {

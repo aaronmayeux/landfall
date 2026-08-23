@@ -64,7 +64,7 @@ import {
  * ui/ never imports data/ (§12), and it is the same two functions the home
  * dashboard composes, so one implementation answers both screens. */
 import { buildCorridor, reachesHome } from '../data/home-corridor.js';
-import { coneSummary } from '../lib/flood.js';
+import { corridorSummary, trackChains, trackSamples } from '../lib/flood.js';
 import { loadFloodAlerts, evictFlood } from '../data/flood.js';
 
 /* ==> THE FLOOD LIST AS THIS MODULE LAST SAW IT (§48.21). <== `data/flood.js`
@@ -709,11 +709,17 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      * reader did not ask for. So the block reports what the app already holds
      * and offers a Retry that is the only thing here allowed to go to the
      * network. `summarize` is `lib/flood.js` composed with nothing — ui/ never
-     * imports lib's data siblings, and this keeps the cone matching testable
-     * without a browser. */
+     * imports lib's data siblings, and this keeps the corridor matching
+     * testable without a browser. */
     flood: {
       value: () => floodSlot,
-      summarize: (alerts, cone, now) => coneSummary(alerts, cone, now),
+      /* ==> THE VIEW HANDS OVER THE TWO TRACK FeatureCollections AND THIS
+       * TURNS THEM INTO SAMPLES. <== §56.3. The split is deliberate: ui/ owns
+       * which slots of the geometry bundle are on screen, lib/ owns the
+       * geometry. Sampling in the view would have put `densifyTrack` in a file
+       * that renders HTML. */
+      summarize: (pastFc, forecastFc, alerts, now) =>
+        corridorSummary(alerts, trackSamples(trackChains(pastFc, forecastFc)), now),
       retry: () => {
         countRetry('flood');
         evictFlood();

@@ -77,6 +77,7 @@
 import { advisoryRainfall } from '../lib/advisory.js';
 import { houseRainScope, rainSummary } from '../lib/rainfall.js';
 import { formatClockDay } from '../lib/time.js';
+import { formatDistance } from '../lib/units.js';
 import { DOTS } from './loading-dots.js';
 import { floodAlertRows } from './rain-alerts.js';
 
@@ -158,7 +159,7 @@ export function createRainStorm({
   }
 
   /**
-   * Flood alerts in force inside this storm's forecast cone. §48.21.
+   * Flood alerts in force near this storm's track. §48.21, §56.3.
    *
    * ==> THE WORDING IS THE WHOLE SAFETY PROPERTY OF THIS BLOCK. <== An NWS
    * flood warning does not name a storm. It says *Flash Flood Warning, Hawaii
@@ -166,15 +167,22 @@ export function createRainStorm({
    * mentioned nowhere in the product. So every row here is this app asserting
    * a connection the source never made, which is exactly what §50.3 forbids
    * for the CAP list: **a geographic match is not a causal claim.** What is
-   * claimed is the weakest true thing — *inside the forecast cone* — and it is
-   * a statement about two shapes, verifiable from the shapes. It must never
-   * become "this storm's flooding", and a stalled front can flood a county
-   * while the hurricane goes out to sea.
+   * claimed is the weakest true thing — *within a stated distance of the
+   * track* — and it is a statement about two shapes and one number, verifiable
+   * from all three. It must never become "this storm's flooding", and a
+   * stalled front can flood a county while the hurricane goes out to sea.
    *
-   * ==> `no_cone` AND `none_matched` BOTH PRODUCE AN EMPTY LIST AND MUST NOT
-   * READ THE SAME. <== §5. A storm with no published cone has nothing to test
-   * against; a storm whose cone was tested and held nothing is a real
-   * all-clear. This is the distinction this feature is most likely to lose.
+   * ==> THE SENTENCE NAMES THE DISTANCE, AND THAT IS NOT DECORATION. <==
+   * §56.3. "Inside the forecast cone" at least sounded like somebody else's
+   * shape. A corridor is entirely ours, so the copy has to hand the reader the
+   * radius and let them judge it — an unnamed proximity is a claim wearing a
+   * measurement's clothes.
+   *
+   * ==> `no_track` AND `none_matched` BOTH PRODUCE AN EMPTY LIST AND MUST NOT
+   * READ THE SAME. <== §5. A storm with no published track has nothing to
+   * measure against; a storm whose track was measured and came near nothing is
+   * a real all-clear. This is the distinction this feature is most likely to
+   * lose.
    */
   function floodBlock(storm) {
     if (!flood?.summaryFor || !storm) return '';
@@ -196,18 +204,18 @@ export function createRainStorm({
         <button class="detail-retry" type="button" data-retry="flood">Retry</button></p>`);
     }
 
-    if (out.state === 'no_cone') {
-      /* ==> IT SAYS WHY, AND IT DOES NOT SAY “NONE”. <== No cone means nothing
-       * to test alerts against. Saying "no flood alerts nearby" here would be
-       * an all-clear derived from our own missing geometry. */
-      return wrap(`<p class="detail-soft">This storm has no published forecast
-        cone, so flood alerts can’t be matched to it.</p>`);
+    if (out.state === 'no_track') {
+      /* ==> IT SAYS WHY, AND IT DOES NOT SAY “NONE”. <== No track means nothing
+       * to measure alerts against. Saying "no flood alerts nearby" here would
+       * be an all-clear derived from our own missing geometry. */
+      return wrap(`<p class="detail-soft">This storm has no published track, so
+        flood alerts can’t be matched to it.</p>`);
     }
 
     if (out.state === 'none_matched') {
-      /* A REAL ANSWER: the cone was measured and nothing falls inside it. */
-      return wrap(`<p class="detail-soft">No flood alerts are in force inside
-        this storm’s forecast cone.</p>`);
+      /* A REAL ANSWER: the track was measured and nothing came near it. */
+      return wrap(`<p class="detail-soft">No flood alerts are in force within
+        ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.</p>`);
     }
 
     /* ==> THE COUNT OF ALERTS IS NOT THE COUNT OF SHAPES, AND BOTH GET SAID.
@@ -223,10 +231,10 @@ export function createRainStorm({
       : '';
 
     return wrap(`<p class="detail-rain-para"><strong>${n} ${noun}</strong> in force
-        inside this storm’s forecast cone.${drawNote}</p>
+        within ${formatDistance(out.radiusNm, units?.() ?? null)} of this storm’s track.${drawNote}</p>
       ${floodAlertRows(out.alerts)}
       <p class="detail-rain-note">Issued by the National Weather Service for the
-        areas named, not attributed to this storm — an alert inside the cone may
+        areas named, not attributed to this storm — an alert near the track may
         have another cause.</p>`);
   }
 

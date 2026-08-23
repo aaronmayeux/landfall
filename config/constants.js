@@ -2489,6 +2489,31 @@ export const RAIN = Object.freeze({
    *  question about a whole basin. Reused here it drew a rainfall total under
    *  every storm within about 1,725 miles. */
   houseFallbackNm: 300,
+
+  /** How near a flood alert's SHAPE has to come to a storm's track, NAUTICAL
+   *  MILES, for that alert to be listed under that storm. §56.3.
+   *
+   *  ==> THIS NUMBER HAS NOT BEEN MEASURED AND THIS COMMENT IS NOT GOING TO
+   *  PRETEND OTHERWISE. <== §56.13 is explicit that nothing in the sandbox can
+   *  find the right value: it depends on how far a rain shield reaches from a
+   *  centre over land, and this project has never had a US landfall on glass.
+   *  300 is a STARTING VALUE, chosen by Aaron on 2026-08-22, for him to move
+   *  once one happens. Anything written here that reads as a derivation would
+   *  be the fluent wrong number CLAUDE.md is about.
+   *
+   *  The one honest thing that can be said about the choice: it is the same
+   *  figure as `houseFallbackNm` above, so the app has ONE distance meaning
+   *  "near this storm" rather than two that drift apart — and §56.9 folds the
+   *  home gate onto this same test for exactly that reason.
+   *
+   *  ==> IT IS FLAT, AND DELIBERATELY NOT SCALED OFF THE WIND FIELD. <==
+   *  §56.3. The tempting move is to reuse the storm's own 34 kt radii the way
+   *  `data/home-corridor.js` does for wind at the house. Do not. Flooding is
+   *  driven by the rain shield, not the wind field, and a weakening storm
+   *  inland has an enormous rain footprint and almost no wind field — which is
+   *  precisely the case that floods people. Scaling by wind radii would shrink
+   *  the search area exactly where the hazard is worst. */
+  floodCorridorNm: 300,
 });
 
 /* ---------------------------------------------------------------------------

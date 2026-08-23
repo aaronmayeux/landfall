@@ -25,10 +25,15 @@
  * toggle is a global additive switch, the same kind `genesis` is, and it asks
  * "what flood alerts are in force" — a question with no storm in it and
  * therefore no causal claim to get wrong. The per-storm question — which of
- * these fall inside THIS storm's cone — is answered in the drawer, in words,
- * where §48.21's wording rule can be enforced on a sentence. Two surfaces, two
- * questions, and the one that cannot be worded carefully is the one that never
- * mentions a storm.
+ * these come near THIS storm's track (§56.3) — is answered in the drawer, in
+ * words, where §48.21's wording rule can be enforced on a sentence. Two
+ * surfaces, two questions, and the one that cannot be worded carefully is the
+ * one that never mentions a storm.
+ *
+ * ==> AND THE NATIONAL DRAW IS ON DEATH ROW, NOT ENDORSED. <== §56.1 records
+ * that this layer contradicts its own manifest entry: the toggle sits in the
+ * `Storm detail` group and the layer draws the whole country. §56.5 replaces
+ * it with a per-storm layer in Phase 5. Nothing here is worth tuning.
  *
  * ==> ONLY WHAT IS IN FORCE PAINTS. <== `lib/flood.js` `inForce()` filters by
  * each row's own expiry at RENDER, not only at fetch. The captured Hilo warning

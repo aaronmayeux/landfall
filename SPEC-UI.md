@@ -3329,13 +3329,21 @@ name is this app asserting a connection the source never made, which is exactly
 what §50.3 forbids for the CAP list: **a geographic match is not a causal
 claim.**
 
-What is claimed is therefore the weakest true thing: **this alert's area
-overlaps this storm's forecast cone.** A statement about two shapes, verifiable
-from the shapes, asserting nothing about cause. The UI is required to word it
-that way — *"in force inside this storm's forecast cone"*, never *"this storm's
-flooding"* — and the closing line says out loud that an alert inside the cone
-may have another cause. **A stalled front can flood a county while the hurricane
-goes out to sea, and the wording is the only defence.**
+What is claimed is therefore the weakest true thing: **this alert's shape comes
+within a stated distance of this storm's track.** A statement about two shapes
+and one number, verifiable from all three, asserting nothing about cause. The UI
+is required to word it that way — *"in force within 345 mi of this storm's
+track"*, never *"this storm's flooding"* — and the closing line says out loud
+that an alert near the track may have another cause. **A stalled front can flood
+a county while the hurricane goes out to sea, and the wording is the only
+defence.**
+
+**==> AND THE SENTENCE NAMES THE DISTANCE, WHICH IT DID NOT HAVE TO DO WHEN THE
+MATCH WAS A CONE. <==** "Inside the forecast cone" at least pointed at somebody
+else's published shape. A corridor is entirely ours, so the reader is handed the
+radius and left to judge it. An unnamed proximity is a claim wearing a
+measurement's clothes. It prints through `formatDistance` in the reader's own
+units, like every other length in the app.
 
 **THE MAP LAYER SIDESTEPS THE PROBLEM ENTIRELY BY NOT MENTIONING A STORM.** The
 toggle is a global additive switch, the kind `genesis` is, and it answers *what
@@ -3368,7 +3376,67 @@ sentence names the difference.
 nothing. That would be this app drawing a boundary NWS did not draw — the §5
 fabrication in its most literal form.
 
-#### The antimeridian, and the bug that was caught before it shipped
+#### The corridor — a distance from the whole track
+
+**Landed 2026-08-22, replacing a bounding-box overlap with the forecast cone.**
+For each alert, `lib/flood.js` measures the shortest great-circle distance from
+its shape to the storm's densified track — **past and forecast, both, each
+published line kept as its own chain** — and matches it if that distance is
+under `RAIN.floodCorridorNm`.
+
+**==> A CONE IS THE WRONG SHAPE AND THAT IS WHY IT WENT. <==** A cone is where
+the storm's CENTRE might go; it says nothing about where the weather is.
+Flooding happens hundreds of miles from a centre, inland, days after landfall,
+from a system that has stopped being a hurricane — Ida drowned New Jersey while
+her centre was over Pennsylvania. Measured on real bytes in `tools/test-flood.mjs`:
+against the 33 drawable US flood alerts in force at 2026-08-22T22:29:35Z, Ida's
+own advisory-19 track matches **25 within 300 nm**, and **the Indiana and
+Illinois river warnings in that set all sit further than 150 nm out** — outside
+any cone, and exactly the inland river flooding the old match was missing.
+
+**==> THE PAST TRACK IS HALF THE ANSWER, NOT A COURTESY. <==** A storm that has
+already crossed a region is still flooding it; the water arrives after the wind
+leaves. Lala proves it on her own published geometry: her **forecast** track is
+**1,083 nm** from the Hilo flash flood warning and her **past** track is
+**21.9 nm**. A forecast-only match — which is approximately what a cone is —
+drops it entirely.
+
+**THE RADIUS IS ONE CONSTANT AND IT HAS NOT BEEN MEASURED.** `RAIN.floodCorridorNm`,
+**300 nm**, a starting value Aaron chose on 2026-08-22 to move on glass. Nothing
+in the sandbox can find the right number: it depends on how far a rain shield
+reaches from a centre over land, and this project has never had a US landfall on
+glass. **It is deliberately flat and not scaled off the wind field** — a
+weakening storm inland has an enormous rain footprint and almost no wind field,
+which is precisely the case that floods people, so scaling by wind radii would
+shrink the search area exactly where the hazard is worst.
+
+**NEAREST VERTEX OF THE SHAPE, NOT ITS CENTRE**, and that is a choice about
+which way to be wrong. It overstates the overlap slightly and in **one
+direction** — toward including an alert just outside the corridor, never toward
+dropping one just inside. Measured across the archived set: a bounding-box
+centre reads up to **10.0 nm further** than the nearest vertex and never nearer.
+Same reasoning §48.19 uses to keep a partly-elapsed rainfall block rather than
+prorate it.
+
+**THE TRACK IS DENSIFIED AND THE ERROR IT REMOVES IS NOT SMALL.** `densifyTrack`
+at `TRACK_SUBDIVISIONS`, the same tool `data/home-corridor.js` uses. Ida's
+advisory 19 carries seven positions across five days, so an alert beside the
+middle of a leg gets measured to that leg's ends: Russell and Washington
+counties in Virginia sit **28 nm** from her track and **84 nm** from the nearest
+published point. A 56 nm overstatement, running toward dropping an alert that is
+inside the corridor.
+
+**EACH PUBLISHED LINE STAYS ITS OWN CHAIN.** Lala's real past track off the
+archive is **fourteen** LineString features plus a forecast one — the mapserver
+publishes it in segments. Flattening them and interpolating through would draw
+legs between segments the storm never travelled. Hers happen to be contiguous,
+so flattening costs nothing there; the guard is asserted on a probe with a real
+gap, where flattening puts a sample **536 nm** from anywhere the storm was. No
+connector is needed between past and forecast: `lib/trackline.js` cuts one
+smoothed curve into `slice(0, cut + 1)` and `slice(cut)`, so the two slots share
+the vertex at the cut and the chains already meet.
+
+#### The antimeridian, and the bug the corridor deleted rather than solved
 
 **==> A PLAIN BOUNDING BOX ON LALA'S REAL CONE MEASURED −180 TO 180 — THE WHOLE
 PLANET. <==** She is a Central Pacific storm at 30N 172W and her published ring
@@ -3377,37 +3445,28 @@ falls inside a box that wide, so **every Central Pacific storm would have
 claimed every flood warning in the country.** Nothing threw. Nothing on screen
 looked odd. The sentence read perfectly.
 
-`extent()` measures longitude in **both frames** — −180..180 and 0..360 — and
-takes whichever is narrower, returning one longitude span or two. Lala's cone
-comes out as 177.15E→180 and −180→172.11W: **10.75 degrees wide, computed, not
-typed.** A span wider than 180° is read as a crossing rather than as a genuinely
-hemispheric shape; no cone or county warning is ever that wide, and the failure
-directions are not symmetric — reading a crossing as global matches everything,
-while reading a wide box as a crossing matches slightly less.
+The fix at the time was `extent()`: sixty lines measuring longitude in both
+frames and taking whichever was narrower. **All of it is gone.** A great-circle
+distance has no frames and no seam — `greatCircleNm` is built on `sin(dLon/2)²`,
+which is periodic in 360°, so an unwrapped longitude of −190° and a plain 170°
+are the same place to it. That matters in practice and not only in theory:
+`lib/trackline.js` unwraps longitudes before splining, so tracks do arrive here
+carrying values past ±180.
 
-The fixture is `samples/flood/cone-lala-cp2.geojson`, her real cone off the
-archive branch. `lib/seam-stitch.js` is the drawing side of this same seam; this
-is the measuring side.
+**The before and the after are both asserted, on the same storm.** A plain box
+on her cone still spans over 350°; her real track matches **none** of the 33
+national alerts, the nearest of which is **1,966 nm** away.
+`samples/flood/cone-lala-cp2.geojson` is kept as the record of the deleted bug.
+`lib/seam-stitch.js` remains the drawing side of this same seam.
 
-#### An extent, not an intersection
-
-Matching bounding extents rather than true polygons is **a choice about which
-way to be wrong.** The cone is an uncertainty envelope that is already
-approximate and the alert is a box drawn by hand around a county, so a precise
-intersection answers a question nobody is asking. Extent matching overstates the
-overlap slightly and in **one direction** — toward including an alert just
-outside the cone, never toward dropping one just inside. On a hazard surface
-that is the direction to be wrong in, and it is the same reasoning §48.19 uses
-to keep a partly-elapsed rainfall block rather than prorate it.
-
-#### `no_cone` is not `none_matched`
+#### `no_track` is not `none_matched`
 
 Both produce an empty list and **this is the §5 distinction this feature is most
-likely to lose.** A storm with no published cone has nothing to test against and
-the honest answer is that we cannot say. A storm whose cone *was* tested and
-held nothing is a real all-clear. The drawer says *"this storm has no published
-forecast cone, so flood alerts can't be matched to it"* for the first and *"no
-flood alerts are in force inside this storm's forecast cone"* for the second.
+likely to lose.** A storm with no published track has nothing to measure against
+and the honest answer is that we cannot say. A storm whose track *was* measured
+and came near nothing is a real all-clear. The drawer says *"this storm has no
+published track, so flood alerts can't be matched to it"* for the first and *"no
+flood alerts are in force within 345 mi of this storm's track"* for the second.
 
 #### Nothing is held, and the reason is not the usual one
 

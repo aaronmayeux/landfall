@@ -217,18 +217,38 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. DO NOT TUNE IT, DO NOT LOOK AT IT ON
-GLASS. <==** Agreed with Aaron 2026-08-22. The cone is the wrong match shape,
-the map draws all of America from a toggle in the `Storm detail` group, and home
-data is in the storm drawer. **The plan is `SPEC-FLOOD-PLAN.md` §56 — five
-phases, one per session, in order, starting with the corridor.** Every number it
-needed was measured first and is written into §56.2. Read that file before
-touching anything flood-shaped; the glass questions that used to live here are
-moot.
+**==> §48.21 IS BEING REPLACED WHOLE. PHASE 1 OF FIVE IS IN. DO NOT TUNE THE
+REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron 2026-08-22:
+`SPEC-FLOOD-PLAN.md` §56, five phases, one per session, in order. Read that file
+before touching anything flood-shaped.
 
-**The one live gap it names:** the national volume is a single snapshot, 27
-alerts on a quiet day. Re-read `git show origin/archive:latest/relay-nws-flood.json`
-before tuning anything that depends on the count.
+**PHASE 1 — THE CORRIDOR — SHIPPED 2026-08-22.** The match is no longer an
+overlap with the forecast cone; it is a great-circle distance from the storm's
+whole densified track, past and forecast, under `RAIN.floodCorridorNm`. As-built
+in `SPEC-UI.md` §48.21. The three bounding-box functions that used to do the
+matching are gone, and the antimeridian problem is gone with them — a
+great-circle distance has no seam.
+
+**==> THE RADIUS IS 300 nm, IT IS A GUESS, AND IT IS AARON'S TO MOVE. <==**
+Nothing in the sandbox can measure it. Do not write a derivation for it and do
+not let a later session quietly convince itself the number was measured.
+
+**HELD FOR WEATHER: none of Phase 1 has been seen, and none of it can be.** Every
+assertion is offline against real bytes — 25 of the 33 archived US alerts match
+Ida's real advisory-19 track at 300 nm, and Lala matches none of them at 1,966
+nm — but not one pixel has been judged. It needs a US storm near a flooding
+region. Expect this line to stay here after every flood phase.
+
+**Two live gaps §56 names.** The national volume is one snapshot on a quiet day
+(36 alerts at 2026-08-22T22:29:35Z, now frozen at
+`samples/flood/alerts-national.json`). Re-read
+`git show origin/archive:latest/relay-nws-flood.json` before tuning anything that
+depends on the count — clustering thresholds in Phase 5 most of all. And
+`map/layers/flood.js` still draws the whole country from a `Storm detail`
+toggle; Phase 5 replaces it. Nothing about that layer is worth tuning.
+
+**The next phase is 2 — the Flooding section.** It is the one that gives
+keyboard users a path to an alert, so it must land before the map icons.
 
 **GLASS: THE RAINFALL PASS. FOUR THINGS CHANGED AND NONE HAS BEEN SEEN.**
 §48.18 and §48.19 are as-built in `SPEC-UI.md`; this is only what to look at.
