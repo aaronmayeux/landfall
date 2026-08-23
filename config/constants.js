@@ -2463,33 +2463,6 @@ export const RAIN = Object.freeze({
    *  section. Matched against the alert's `event` text, case-insensitively. */
   alertEventMatch: 'flood',
 
-  /** How near a storm has to come, NAUTICAL MILES, for the house block to draw
-   *  when NOBODY PUBLISHED A WIND FIELD TO MEASURE. §48.18.
-   *
-   *  ==> IT IS THE FALLBACK AND NOT THE GATE. <== The gate is
-   *  `data/home-corridor.js`: whether the storm's own published 34/50/64 kt
-   *  field actually crosses the house. That is a measurement and it is what
-   *  §48.18 asks for. This number only fires where that measurement cannot be
-   *  taken at all — geometry still in flight, a storm too weak to have
-   *  published radii, an ended storm rebuilt from a skeleton. Silence in those
-   *  cases would hide a real answer behind a missing one.
-   *
-   *  ==> 300, AND IT IS EDITORIAL, BUT IT IS ANCHORED. <== Measured off the
-   *  archive on 2026-08-22, the widest 34 kt field on the globe that hour was
-   *  220 nm (Lala's northeast quadrant) against 100 nm (Moke). 300 sits just
-   *  past the widest wind field this project has ever measured, which is the
-   *  honest posture when there is no wind field to measure: assume something
-   *  at least as large as the largest we have seen, and no larger. A rain
-   *  shield does reach past the wind field, so this errs tight rather than
-   *  wide — a figure printed under a storm that never touches the house is the
-   *  noise §48.18 exists to delete.
-   *
-   *  ==> IT REPLACES A BORROWED `APPROACH.relevanceNm` (1,500 nm). <== That
-   *  constant answers "is this storm in the reader's world at all", which is a
-   *  question about a whole basin. Reused here it drew a rainfall total under
-   *  every storm within about 1,725 miles. */
-  houseFallbackNm: 300,
-
   /** How near a flood alert's SHAPE has to come to a storm's track, NAUTICAL
    *  MILES, for that alert to be listed under that storm. §56.3.
    *
@@ -2501,10 +2474,14 @@ export const RAIN = Object.freeze({
    *  once one happens. Anything written here that reads as a derivation would
    *  be the fluent wrong number CLAUDE.md is about.
    *
-   *  The one honest thing that can be said about the choice: it is the same
-   *  figure as `houseFallbackNm` above, so the app has ONE distance meaning
-   *  "near this storm" rather than two that drift apart — and §56.9 folds the
-   *  home gate onto this same test for exactly that reason.
+   *  ==> IT IS THE ONLY RING LEFT, AND THAT IS THE HONEST THING TO SAY ABOUT
+   *  THE CHOICE. <== §56.9 folded the home gate onto this same test on
+   *  2026-08-22, and deleted the two constants that used to answer nearby
+   *  questions in nearby places: `RAIN.houseFallbackNm` (300 nm, the wind-field
+   *  fallback under the storm drawer's house block) and a borrowed
+   *  `APPROACH.relevanceNm` (1,500 nm, which decided whether flood warnings
+   *  appeared under a storm). Three distances all meaning some version of
+   *  "near this storm" is three numbers that drift; this is now the one.
    *
    *  ==> IT IS FLAT, AND DELIBERATELY NOT SCALED OFF THE WIND FIELD. <==
    *  §56.3. The tempting move is to reuse the storm's own 34 kt radii the way

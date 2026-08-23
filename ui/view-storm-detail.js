@@ -225,12 +225,12 @@ function disclaimerHtml(source) {
 
 /**
  * @param {object} opts
- * @param {object}      opts.home  injected: {get, distanceTo, closestApproach,
- *        windReach}. `windReach` (§48.18) answers whether a storm's published
- *        wind field actually crosses the house — `'reaches'`, `'misses'`, or
- *        null when nobody published one to measure. Optional: without it the
- *        Rainfall section's house block falls back to distance alone, which is
- *        what the older suites that build this view get.
+ * @param {object}      opts.home  injected: {get, distanceTo, closestApproach}.
+ *        ==> NOTHING ABOUT THE READER'S HOUSE IS RENDERED BY THE RAINFALL
+ *        SECTION ANY MORE (§56.9). <== `windReach` was its gate and is gone
+ *        with it. What is left here is read by the Home block and the closest
+ *        -approach lines, which are about where the storm passes rather than
+ *        about the weather at an address.
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js. ui/ never imports data/ (§12),
  *        and every formatter on this panel is handed the SAME answer so two
@@ -240,10 +240,6 @@ function disclaimerHtml(source) {
  *   national flood alert facade (§48.21). Optional: without it the Rainfall
  *   section's flood block is simply absent, which is what the older suites that
  *   build this view get.
- * @param {{loadRainfall:Function, retryRainfall:Function}} [opts.rain] the
- *   point-rainfall facade (§48.17), the same one the home dashboard is given.
- *   Optional: without it the Rainfall section's house block is simply absent,
- *   which is what the older suites that build this view get.
  * @param {() => number} [opts.now] the clock, injectable — the same convention
  *   `ui/view-home.js` follows, and for the same reason: a flood warning's
  *   expiry can otherwise only be tested during a flood warning.
@@ -265,7 +261,7 @@ function disclaimerHtml(source) {
  *   the reader had gone back and tapped it.
  */
 export function createStormDetailView({
-  home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, rain, units,
+  home, onRetryGeometry, loadAdvisory, loadGustKt, loadAlerts, envShips, units,
   flood: floodFacade = null, surge = null, siblings, onStep, now = () => Date.now(),
 }) {
   /* The Environment section (§47.8) is a self-contained controller in
@@ -276,32 +272,13 @@ export function createStormDetailView({
   /* Rainfall (§48.9) takes the same shape and for the same reason. It is handed
    * the SAME advisory facade the Advisory section uses, so both read one cached
    * record and can never show two different advisories for one storm. */
-  const rainH = createRainStorm({
-    loadAdvisory,
-    /* §48.17 — the house block. `rain` is the SAME facade `ui/view-home.js`
-     * hands `ui/rain-home.js`, so both surfaces read one cached record and one
-     * number. `rangeNm` is how the controller asks whether this storm is in
-     * the reader's world at all; it is a function because the forecast track
-     * lands after the first paint and the reader can move their pin with the
-     * drawer open. */
-    rain,
-    house: { get: () => home.get(), rangeNm: (s) => rangeToHome(s) },
-    /* ==> FLOOD ALERTS INSIDE THIS STORM'S CONE (§48.21). <== The view owns the
-     * geometry bundle, so it reads the cone off it and hands the controller a
-     * finished answer rather than a fetch. `flood` itself is the injected
-     * facade (ui/ never imports data/); the cone comes from `geo`, which is
-     * the same object the map draws from — so the sentence in the drawer and
-     * the polygons on the globe can never disagree about which cone was used. */
-    flood: floodFacade
-      ? { summaryFor: (s) => floodSummary(s) }
-      : null,
-    units,
-    /* The house block filters flood alerts by expiry (§48.6), and an expiry
-     * check against the real clock can only be tested during a real flood
-     * warning. Injected here so a suite can stand at the moment the one
-     * captured set of live alerts was issued. */
-    now,
-  });
+  /* ==> ONE DEPENDENCY, AND IT TOOK FIVE UNTIL 2026-08-22 (§56.9). <== `rain`,
+   * `house`, `flood`, `units` and `now` were the house block's, and the block
+   * is gone: a storm panel is about the storm, and a point forecast at the
+   * reader's address is true whichever storm they happened to tap. The
+   * `Flooding` section below owns the storm's flood facts now, and the home
+   * screen owns the house's. */
+  const rainH = createRainStorm({ loadAdvisory });
 
   /* Local agency alerts (§50.5), same shape again. It reads a GLOBAL list
    * rather than anything about this storm, which is why its facade takes no
@@ -830,56 +807,6 @@ export function createStormDetailView({
     return `<dl class="detail-vitals">${rows
       .map(([k, v, mark]) => `<dt>${k}</dt><dd>${mark || ''}${esc(v)}</dd>`)
       .join('')}</dl>`;
-  }
-
-  /**
-   * Whether this storm reaches home, and how near it comes. §48.18.
-   *
-   * ==> `reach` IS THE ANSWER AND THE DISTANCES ARE THE FALLBACK. <==
-   * `home.windReach` walks the storm's own published 34/50/64 kt fields against
-   * the house — the identical measurement `ui/chart-home.js` draws, off the
-   * identical bundle — and answers `reaches`, `misses` or null for "nobody
-   * published a field to walk". Only that last case falls through to distance,
-   * because only that last case is an absence rather than an answer.
-   *
-   * ==> THE SAME THREE FIGURES THE HOME SCREEN ALREADY USES, READ ONCE MORE
-   * RATHER THAN RECOMPUTED DIFFERENTLY. <== All of them come from the injected
-   * `home` facade, so the Rainfall section can never decide a storm reaches the
-   * house while the Home block three inches above it says it never comes near.
-   *
-   * `approachNm` and `reach` both stay null until the geometry bundle lands and
-   * null for a silenced or ended storm — a claim about a future nobody is
-   * publishing is exactly what `homeHtml` refuses to make, and this must refuse
-   * it too.
-   */
-  function rangeToHome(s) {
-    const target = s || storm;
-    if (!target) return { reach: null, distanceNm: null, approachNm: null };
-    const d = home.distanceTo(target);
-    let approachNm = null;
-    let reach = null;
-    if (!withheldNote() && geo.state === 'ok' && geo.bundle?.forecast?.length) {
-      const ca = home.closestApproach({ ...target, forecast: geo.bundle.forecast });
-      if (ca && Number.isFinite(ca.nm)) approachNm = ca.nm;
-    }
-    /* NOT GATED ON A FORECAST TRACK, unlike the line above. A storm whose
-     * forecast radii have stopped — which NHC does routinely late in a storm's
-     * life — can still have a PAST wind field that went over the house, and
-     * that is the storm most likely to have just done so. `reachesHome` reads
-     * both arms; asking it only when there is a forecast would throw the past
-     * one away. Still gated on the withheld note: an ended or silenced storm's
-     * whole section is replaced above this, so nothing here should be measuring. */
-    if (!withheldNote() && geo.state === 'ok' && home.windReach) {
-      reach = home.windReach({
-        storm: target,
-        forecast: geo.bundle?.forecast || [],
-        radii: geo.bundle?.forecastRadii || [],
-        past: geo.bundle?.past || [],
-        pastRadii: geo.bundle?.pastRadii || [],
-        now: now(),
-      });
-    }
-    return { reach, distanceNm: d && Number.isFinite(d.nm) ? d.nm : null, approachNm };
   }
 
   /**

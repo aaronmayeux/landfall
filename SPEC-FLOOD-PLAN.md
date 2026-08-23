@@ -35,8 +35,8 @@ design and wrote its justification into a file header instead of asking.
 block renders under storms that have nothing to do with the house, and the home
 dashboard's Rain section renders under whichever storm the stepper is showing —
 so cycling to a Japan typhoon leaves your rainfall figure sitting under its
-name, claiming a connection nobody made. That is §48.18's own failure, twice, on
-the two screens it was written to protect.
+name, claiming a connection nobody made. That is the storm drawer's own gate
+failing twice, on the two screens it was written to protect.
 
 ---
 
@@ -244,34 +244,6 @@ a gesture-only feature.**
 
 ---
 
-### 56.9 Home data leaves the storm drawer, and gates on the corridor at home
-
-**NOTHING ABOUT THE READER'S HOUSE APPEARS IN THE STORM DRAWER.** The house
-block goes — the rainfall total at home, the peak timing, the home flood rows.
-A storm panel is about the storm. What stays in its Rain section is NHC's own
-published rainfall range, which is about the storm.
-
-**THE HOME DASHBOARD GATES ITS HOME SECTIONS ON THE SAME CORRIDOR.** The
-dashboard has a stepper and you can cycle every storm on Earth through it. Its
-Rain section is a plain query at the reader's address with no storm in it, so
-cycling to a Japan typhoon leaves the rainfall figure sitting under that storm's
-name — **its position claiming a connection nobody made.** That is §48.18's
-failure on the other screen.
-
-**ONE TEST, USED TWICE.** The corridor that decides *which alerts belong to this
-storm* is the same question as *does this storm reach my house*. So: **if the
-house falls inside the shown storm's corridor, the home sections render. If it
-does not, they do not appear at all.** One radius, one meaning — and it replaces
-the two differently-sized rings §48.20 currently juggles.
-
-**ONE EXCEPTION, AND IT IS NOT A LOOPHOLE.** On a calm day with no storm near,
-the home screen must still show the reader their own rain forecast — that is the
-screen's entire job. So the home sections render when the storm on screen is in
-range **or when there is no storm on screen at all.** What they never do is
-render under a storm they have nothing to do with.
-
----
-
 ### 56.11 What gets deleted
 
 Deleted code is deleted, not commented out, and orphaned imports go with it
@@ -286,11 +258,13 @@ Deleted code is deleted, not commented out, and orphaned imports go with it
   **done, Phase 1.** The comment said the opposite of the code; the code was
   right. Once §56.4 gives watches real geometry the special case disappears
   entirely.
-- The house block in `ui/rain-storm.js`, its scope logic, and its CSS. **Phase
-  2 emptied §48.20's warnings-only tier** — its entire content was the flood
-  rows, which now have a section — and closed the fetch gate to the `full` tier
-  so nothing is requested for a state that draws nothing. The block itself, the
-  scope logic and the CSS are still Phase 3's.
+- ~~The house block in `ui/rain-storm.js`, its scope logic, and its CSS~~ —
+  **done, Phase 3.** The block, both scope predicates, the wind-field verdict
+  behind them, the composition in `app/views.js`, the house-fallback constant
+  and the hairline rule all went together — six exports, one constant, one CSS
+  rule. Half-removing it in Phase 2 would have left a predicate answering a
+  question with one live answer and one dead one; the whole chain went in one
+  pass instead. `SPEC-UI.md` §56.9 names each piece.
 - ~~The `Coastal flooding` section, and `surge` from `ui/section-icon.js`~~
   — **done, Phase 2.** Both deleted rather than deprecated. `ui/surge-home.js`
   is gone whole; its contents are the lower half of `ui/flooding-home.js`.
@@ -331,8 +305,8 @@ storm-surge rows, the modelled figure — and the house-anchored version stays o
 the screen that has a house on it.
 
 **IT ALSO TOOK ONE THING OUT OF PHASE 3, AND THAT WAS THIS CHANGE'S COST RATHER
-THAN VOLUNTEERING.** §48.20's warnings-only tier in the storm drawer's house
-block drew flood rows and nothing else. Leaving it would have shipped the same
+THAN VOLUNTEERING.** The warnings-only tier in the storm drawer's house block
+drew flood rows and nothing else. Leaving it would have shipped the same
 alert in two sections of one panel — the duplication the merge exists to delete.
 The tier returns empty and its fetch gate closed; the block, the scope logic and
 the CSS are still Phase 3's.
@@ -341,9 +315,52 @@ the CSS are still Phase 3's.
 renders BELOW the rainfall total, because the section order is Rain then
 Flooding. Within the section the rows still lead. **Judge on glass.**
 
-**PHASE 3 — HOME GATING.** Strip the house block out of the storm drawer. Gate
-the home dashboard's home sections on the corridor, with the no-storm-on-screen
-exception. Small, self-contained, no new data.
+**PHASE 3 — HOME GATING. ==> DONE, 2026-08-22. <==** As-built in `SPEC-UI.md`
+§56.9. **This file's own §56.9 is gone** — the section moved to the real spec
+under the same number, and two headings with one address is a collision
+`tools/spec-index.mjs` fails on.
+
+**WHAT IT ACTUALLY BUILT**, so a later phase does not go looking:
+
+- `lib/flood.js` — `stormSamples()` and `homeInCorridor()`; `nearestNm()` now
+  measures a `Point`, so one function answers for a county and for a house.
+- `ui/home-gate.js` — new, and the whole rule: `houseCorridor()` and
+  `houseSectionsShow()`, pure, imports `lib/` only. `ui/view-home.js` takes one
+  seam plus `wireHouseSections()`, which runs on the quiet path too.
+- `ui/rain-home.js` — `inner(home, head, { underStorm })`, and the attribution
+  clause that rides on it.
+- `ui/rain-storm.js` — the house block, its state machine, its retry and its
+  scope logic deleted. 484 lines to 196, five injected dependencies to one.
+- Deleted whole: both scope predicates, the wind-field verdict, its
+  composition, the range-to-home helper, the house-fallback constant, the
+  hairline CSS rule, and three sections of §48 with them. `SPEC-UI.md` §56.9
+  names each piece.
+- `tools/test-flood.mjs` — eighteen cases against Ida's advisory-19 positions
+  and Lala's archived track. Four mutations verified red.
+- `tools/test-home.mjs` — eleven cases on the view gate, including the
+  calm-day and source-outage exceptions. Three mutations verified red.
+
+**ONE THING THE PLAN DID NOT SAY AND THE AUDIT FOUND.** §56.9 promised the
+sections would render *when there is no storm on screen at all*, and that half
+did not exist: both were built only on the dashboard path, which needs a threat
+storm, so a genuinely calm day showed neither. Building the gate without it
+would have shipped a change that only ever subtracted. Aaron settled it on
+2026-08-22 — build both halves in this phase.
+
+**AND ONE THING IT TRADED.** The attribution sentence — *total rain from all
+causes, not this storm alone* — followed the figure to the home screen rather
+than being deleted with the block. The gate makes it need one MORE than before:
+a section that draws only for a storm measured to reach the house is a section
+whose presence asserts a connection.
+
+**IT WAS NOT AS SELF-CONTAINED AS THE PLAN SAID, AND THE COST WAS DELETION
+RATHER THAN INVENTION.** "Small, no new data" was right about the data and
+wrong about the blast radius: taking the house out of the storm drawer orphaned
+a chain of six exports and one constant reaching from `ui/` through `lib/` into
+`data/` and `config/`. Retiring them cleanly (§12) was most of the diff.
+
+**AND IT BUILT A HALF THE PLAN ASSUMED ALREADY EXISTED** — the sections on a
+calm day. See §56.9 above.
 
 **PHASE 4 — ZONE SHAPES FOR WATCHES.** Resolve and cache the zone polygons a
 watch names. Ends with watches drawable and matchable, and the watch/warning

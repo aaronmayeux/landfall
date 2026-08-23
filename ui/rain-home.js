@@ -60,7 +60,7 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
 
   const isCurrent = (home) => !!home && state.forKey === keyOf(home);
 
-  function body(home) {
+  function body(home, underStorm) {
     if (!home) return '';
     if (!isCurrent(home) || state.phase === 'idle' || state.phase === 'loading') {
       return `<p class="detail-soft">Checking the rainfall forecast${DOTS}</p>`;
@@ -158,8 +158,25 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
         ? `At your house — National Weather Service, nearest point ${esc(out.place)}.`
         : 'At your house, from the National Weather Service.';
 
+    /* ==> AND WHEN A STORM IS ON SCREEN, WHOSE RAIN IT IS NOT. <== §56.9. This
+     * section is gated on the storm's corridor reaching the house now, so its
+     * mere presence under that storm's name is the app stating a connection.
+     * The connection is real — the corridor was measured — but the NUMBER is
+     * not the storm's: a gridded QPF is all rain from all causes, and a
+     * stalled front can put four inches on a house while the hurricane goes
+     * out to sea. This sentence came off the storm drawer with the house block
+     * and is needed here for the same reason it was needed there.
+     *
+     * ==> IT IS A FLAG AND NOT A GUESS, BECAUSE ON A CALM DAY IT WOULD BE
+     * NONSENSE. <== The section renders with no storm on screen at all, which
+     * is the whole point of gating it on the house. "Not this storm alone"
+     * with no storm named anywhere is a sentence about nothing. */
+    const cause = underStorm
+      ? ' Total rain from all causes, not this storm alone.'
+      : '';
+
     return `${headline}${peak}
-      <p class="home-rain-note">${where}</p>`;
+      <p class="home-rain-note">${where}${cause}</p>`;
   }
 
   /** The INSIDE of the section — its heading and its contents — or '' when
@@ -170,9 +187,9 @@ export function createRainHome({ loadRainfall, retryRainfall, units, now = () =>
    *  not be the one that writes its own; and repainting just this section
    *  after the fetch lands means replacing exactly what this function
    *  produced, which is only true if the element itself is not part of it. */
-  function inner(home, sectionHead) {
+  function inner(home, sectionHead, { underStorm = false } = {}) {
     if (!home || !loadRainfall) return '';
-    return `${sectionHead}${body(home)}`;
+    return `${sectionHead}${body(home, underStorm)}`;
   }
 
   /** Dispatch the fetch if what we hold is not this home's. Idempotent, and

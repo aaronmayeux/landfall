@@ -3177,7 +3177,7 @@ button.drawer-identity:focus-visible {
   color: var(--text-primary);
 }
 
-/* THE ROW IS THREE STACKED FACTS NOW (§48.20): what it is and when, where it
+/* THE ROW IS THREE STACKED FACTS NOW (§56.7): what it is and when, where it
    applies, and how long is left. They stack rather than sitting on one line
    because the area is a semicolon list of up to thirteen named zones — the
    captured Flood Watch runs 307 bytes — and a list that long cannot share a
@@ -3229,28 +3229,6 @@ button.drawer-identity:focus-visible {
   font-variant-numeric: tabular-nums;
 }
 
-/* AT YOUR HOUSE (§48.17) — the point forecast, under NHC's area range.
-
-   ==> THE RULE IS THE WHOLE POINT OF THIS CLASS. <== §48.10's risk is a reader
-   seeing "8 to 12 inches across eastern Maui" and "about 3 in" in one section
-   and concluding the app is broken. Both are right and they answer different
-   questions, and the defence is that the reader can SEE they are two answers
-   rather than one contradicting itself. A hairline and a gap do that before
-   anybody reads a word of the explanation.
-
-   No rule when the block stands alone — a GDACS storm has no range above it,
-   so the line would be drawn under nothing. `:first-child` is true exactly
-   then, because the kicker inside is the section body's opening element. */
-.detail-rain-house {
-  margin-top: var(--space-base);
-  padding-top: var(--space-base);
-  border-top: 1px solid var(--glass-border);
-}
-.detail-rain-house:first-child {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
 
 /* ---------------------------------------------------------------------------
    FLOODING (SPEC §56.7) — one section, both kinds of water, BOTH SCREENS.
@@ -3298,9 +3276,8 @@ button.drawer-identity:focus-visible {
 /* ==> THE SEAM BETWEEN SOMEBODY ELSE'S ORDER AND OUR READING OF A MODEL. <==
    §56.7. An alert is an agency's statement with an expiry on it; a modelled
    height is our reading of a simulation. Given one look the model borrows the
-   authority of the order, so the two halves are separated the way
-   `.detail-rain-house` separates NHC's range from the grid's point: a hairline
-   and a gap, which a reader sees before reading a word of either.
+   authority of the order, so the two halves are separated by a hairline and a
+   gap, which a reader sees before reading a word of either.
 
    THE RULE ONLY WHEN THERE ARE ROWS ABOVE IT. The modifier is written by the
    controllers rather than derived from `:first-child`, because the rows above

@@ -31,12 +31,11 @@ const SAMPLES = path.join(ROOT, 'samples/rain');
 
 const {
   parseDuration, parseInterval, readSeries, windowTotalMm, windowBlocks,
-  peakBlock, formatRainTotal, floodAlerts, rainSummary, houseRainInRange,
-  futureBlocks, houseRainScope, remainingWords,
+  peakBlock, formatRainTotal, floodAlerts, rainSummary,
+  futureBlocks, remainingWords,
 } = await import(path.join(ROOT, 'lib/rainfall.js'));
-const { RAIN, APPROACH } = await import(path.join(ROOT, 'config/constants.js'));
-const { reachesHome } = await import(path.join(ROOT, 'data/home-corridor.js'));
-const { createRainStorm } = await import(path.join(ROOT, 'ui/rain-storm.js'));
+const { RAIN } = await import(path.join(ROOT, 'config/constants.js'));
+const { createRainHome } = await import(path.join(ROOT, 'ui/rain-home.js'));
 const { createFloodingHome } = await import(path.join(ROOT, 'ui/flooding-home.js'));
 const { projectOpenMeteo } =
   await import(path.join(ROOT, 'functions/api/rain/global.js'));
@@ -401,7 +400,7 @@ console.log('\nThe relay projection');
 
   const rawBytes = JSON.stringify(raw).length;
   const outBytes = JSON.stringify(body).length;
-  /* ==> THE RATIO MOVED WHEN §48.20 ADDED `areaDesc`, AND THE THRESHOLD MOVED
+  /* ==> THE RATIO MOVED WHEN `areaDesc` WAS ADDED, AND THE THRESHOLD MOVED
    * WITH IT DELIBERATELY. <== It was a twentieth. Carrying the zone list costs
    * a few hundred bytes per alert and buys the reader the answer to "is this
    * about me", which is the question a warning with no area attached forces
@@ -554,142 +553,7 @@ console.log('\nMutations — each bug must change the answer');
     readSeries({ values: null, uom: null }).state, 'not_covered');
 
   /* ------------------------------------------------------------------------
-   * §48.18 — WHEN THE HOUSE FIGURE BELONGS BESIDE A STORM.
-   *
-   * ==> THE FAILURE THIS GUARDS IS NOT A WRONG NUMBER. <== The house forecast
-   * is true for every storm on the globe, because it is about a PLACE. Print
-   * it under a typhoon 6,000 nm away and it is a correct figure in a position
-   * that implies a connection nobody claimed. There is no exception to catch
-   * and no shape to the failure, which is exactly why it needs a test.
-   *
-   * ==> AND THE GATE IS NO LONGER A DISTANCE. <== It borrowed
-   * `APPROACH.relevanceNm` — 1,500 nm, about a basin's width — which drew the
-   * figure under every storm within roughly 1,725 miles. What decides now is
-   * whether the storm's own published wind field crosses the house, measured
-   * by `data/home-corridor.js`. Distance survives only as the fallback for a
-   * storm nobody published a field for, at `RAIN.houseFallbackNm`.
-   *
-   * Thresholds are read from RAIN rather than typed, so a suite that passes
-   * cannot be one that agreed with a number somebody changed.
-   * ---------------------------------------------------------------------- */
-  const R = RAIN.houseFallbackNm;
-
-  /* --- the measurement wins, in both directions -------------------------- */
-  truthy('a storm whose wind field reaches the house is in range',
-    houseRainInRange({ reach: 'reaches', distanceNm: 900, approachNm: 900 }));
-  /* ==> THE CASE THE WHOLE CHANGE EXISTS FOR. <== A storm 40 nm offshore whose
-   * published field is MEASURED to stop short of the house. Distance would say
-   * yes twice over; the wind field says no, and the wind field is the answer.
-   * If this ever passes on distance, the gate has quietly reverted. */
-  truthy('a near storm measured to miss the house is NOT, however close it is',
-    !houseRainInRange({ reach: 'misses', distanceNm: 40, approachNm: 12 }));
-
-  /* --- the fallback, and only where nothing was measured ------------------ */
-  truthy('with no wind field published, a storm inside the fallback is in range',
-    houseRainInRange({ reach: null, distanceNm: 12 }));
-  truthy('and one on the far side of the planet is not',
-    !houseRainInRange({ reach: null, distanceNm: 6000 }));
-
-  /* THE BOUNDARY IS INCLUSIVE, and both sides of it are asserted — a gate
-   * tested only well inside its range passes for an off-by-one that swaps
-   * `<=` for `<`. */
-  truthy('exactly at the fallback counts as near', houseRainInRange({ distanceNm: R }));
-  truthy('one mile past it does not', !houseRainInRange({ distanceNm: R + 1 }));
-
-  /* ==> THE OLD THRESHOLD IS ASSERTED DEAD. <== 1,500 nm was the gate; a storm
-   * sitting there must now be out. Without this, restoring the borrow would
-   * pass every other case in this block. */
-  truthy('a storm at the OLD 1,500 nm threshold no longer earns the figure',
-    !houseRainInRange({ distanceNm: 1500 }));
-
-  /* A far storm whose forecast track closes inside the fallback. Gating on
-   * where it is at this moment would hide the figure for exactly the days it
-   * matters most. */
-  truthy('a far storm closing inside the fallback is in range',
-    houseRainInRange({ distanceNm: R + 900, approachNm: R - 100 }));
-  truthy('a far storm that stays far is not',
-    houseRainInRange({ distanceNm: R + 900, approachNm: R + 800 }) === false);
-
-  /* NO NUMBERS MEANS NO. The track has not landed yet and there is no
-   * distance either — an unknown must not be treated as near, or the block
-   * renders under every storm during the seconds before geometry arrives. */
-  truthy('nothing known is not in range', !houseRainInRange({}));
-  truthy('no argument at all is not in range', !houseRainInRange());
-  truthy('a non-finite distance is not in range',
-    !houseRainInRange({ distanceNm: NaN, approachNm: null }));
-
-  /* ------------------------------------------------------------------------
-   * §48.18 — READING THE CORRIDOR. `reachesHome` has THREE answers and the
-   * third one is the point: folding "measured, and it misses" together with
-   * "nobody published a field to measure" is the §5 failure aimed at the
-   * reader's own house.
-   * ---------------------------------------------------------------------- */
-  eq('no corridor at all is unknown, never a miss', reachesHome(null), null);
-  eq('a corridor that could not be built is unknown', reachesHome({ ok: false }), null);
-  eq('a forecast field crossing the house reaches',
-    reachesHome({ ok: true, forwardOk: true, worst: 64, begun: false, past: null }), 'reaches');
-  eq('a forecast field walked and missing is a real miss',
-    reachesHome({ ok: true, forwardOk: true, worst: null, begun: false, past: null }), 'misses');
-  /* ==> WIND THAT ALREADY BLEW IS WIND THAT REACHED. <== NHC stops issuing
-   * forecast radii late in a storm's life, so the storm with no forward field
-   * is the one most likely to have just gone over somebody. */
-  eq('a past field that went over the house reaches, with no forecast at all',
-    reachesHome({ ok: true, forwardOk: false, past: { worst: 34 } }), 'reaches');
-  /* ==> AND A PAST THAT MISSED SETTLES NOTHING ABOUT THE FUTURE. <== There is
-   * no forecast wind field on a past-only corridor, so "it has not reached you
-   * yet" is exactly as unknown as it was before. */
-  eq('a past-only corridor that missed is still unknown ahead',
-    reachesHome({ ok: true, forwardOk: false, past: { worst: null } }), null);
-  eq('a window that opened and closed before now still counts as reached',
-    reachesHome({ ok: true, forwardOk: true, worst: null, begun: true, past: null }), 'reaches');
-
-  /* ------------------------------------------------------------------------
-   * §48.20 — TWO TIERS, BECAUSE A FLOOD WARNING IS NOT THE STORM'S.
-   *
-   * ==> THE FIRST CUT OF §48.18 GATED THE WHOLE BLOCK ON THE WIND FIELD AND
-   * THAT DELETED THE WARNINGS TOO. <== A rainfall TOTAL under a storm that
-   * misses the house is noise — its position implies a connection nobody
-   * claimed. A flood WARNING under the same storm makes no claim about the
-   * storm at all: it is an agency's statement about the reader's own address,
-   * in force now, true whichever storm they happened to tap. And the storm
-   * drawer is routinely the only screen anybody opens during a hurricane.
-   * ---------------------------------------------------------------------- */
-  eq('a storm whose wind reaches the house earns the whole block',
-    houseRainScope({ reach: 'reaches', distanceNm: 60 }), 'full');
-  /* ==> THE CASE THIS TIER EXISTS FOR. <== Measured to miss, still in the
-   * reader's world: the warnings survive and the figure does not. */
-  eq('a storm measured to miss still earns the warnings',
-    houseRainScope({ reach: 'misses', distanceNm: 400 }), 'alerts');
-  /* AND THE FAR SIDE OF THE PLANET EARNS NOTHING, which is what stops a flood
-   * warning at home appearing under every cyclone on Earth. */
-  eq('a storm on the far side of the planet earns nothing',
-    houseRainScope({ reach: 'misses', distanceNm: 4000 }), 'none');
-
-  /* THE WARNINGS TIER IS `APPROACH.relevanceNm`, READ RATHER THAN TYPED — and
-   * this is the question that constant was written for. Both sides asserted,
-   * because a boundary tested on one side passes for a flipped comparison. */
-  eq('exactly at the relevance ring still earns the warnings',
-    houseRainScope({ reach: 'misses', distanceNm: APPROACH.relevanceNm }), 'alerts');
-  eq('one mile past it earns nothing',
-    houseRainScope({ reach: 'misses', distanceNm: APPROACH.relevanceNm + 1 }), 'none');
-
-  /* ==> THE TWO RINGS ARE DIFFERENT SIZES AND MUST STAY THAT WAY. <== If they
-   * ever collapse to one number, one of the two tiers has stopped existing and
-   * every case above still passes. */
-  truthy('the warnings ring is wider than the figure ring',
-    APPROACH.relevanceNm > RAIN.houseFallbackNm);
-
-  /* A storm closing on the house from outside both rings takes the tier its
-   * APPROACH earns, not the one its current distance would. */
-  eq('a far storm closing inside the figure ring earns the whole block',
-    houseRainScope({ distanceNm: 4000, approachNm: 100 }), 'full');
-  eq('and one closing only inside the relevance ring earns the warnings',
-    houseRainScope({ distanceNm: 4000, approachNm: 1000 }), 'alerts');
-
-  eq('no argument at all earns nothing', houseRainScope(), 'none');
-
-  /* ------------------------------------------------------------------------
-   * §48.20 — HOW LONG A WARNING HAS LEFT.
+   * §56.7 — HOW LONG A WARNING HAS LEFT.
    *
    * ==> MINUTES, AND THIS IS THE ONE FIGURE IN §48 WHERE THEY MATTER. <==
    * Hilo's Flash Flood Warning ran 52 minutes. `durationWords` rounds to whole
@@ -710,7 +574,7 @@ console.log('\nMutations — each bug must change the answer');
 }
 
 /* ==========================================================================
- * §48.17, §48.20, §56.7 — WHAT THE TWO SECTIONS ACTUALLY RENDER.
+ * §56.7, §56.9 — WHAT THE TWO SECTIONS ACTUALLY RENDER.
  *
  * ==> THESE EXIST BECAUSE THE HOUSE BLOCK SHIPPED WITH A REAL BUG THAT NOTHING
  * CAUGHT. <== It rendered a rainfall total for the house and DROPPED the flood
@@ -758,19 +622,23 @@ console.log('\nMutations — each bug must change the answer');
   const HOME = { lat: 19.72, lon: -155.08 };
   const flat = (h) => h.replace(/\s+/g, ' ');
 
-  /** Render the storm drawer's Rainfall section for a GDACS storm (no advisory
-   *  range above it) at a chosen moment. */
-  async function renderRain(payload, atMs, range = { reach: 'reaches', distanceNm: 200 }) {
-    const storm = { id: 'g1', source: 'gdacs', advisoryKey: null };
-    const c = createRainStorm({
-      loadAdvisory: async () => ({ state: 'unsupported' }),
-      rain: { loadRainfall: async () => ({ status: 'ok', payload }), retryRainfall: async () => ({}) },
-      house: { get: () => HOME, rangeNm: () => range },
+  /** Render the HOME dashboard's Rain section at a chosen moment.
+   *
+   *  ==> IT USED TO RENDER THE STORM DRAWER'S HOUSE BLOCK, AND THE MOVE IS
+   *  §56.9. <== The reader's own rainfall is off the storm panel entirely, so
+   *  the assertions below that are about the FIGURE — a lapsed series, the
+   *  peak sentence, the attribution clause — had to follow it to the surface
+   *  that still draws one. `ui/rain-home.js` had no suite of its own before
+   *  this; the house block was standing in for it. */
+  async function renderRain(payload, atMs, underStorm = true) {
+    const c = createRainHome({
+      loadRainfall: async () => ({ status: 'ok', payload }),
+      retryRainfall: async () => ({}),
       units: () => 'imperial',
       now: () => atMs,
     });
-    await c.ensure(storm, () => {});
-    return c.html(storm);
+    await c.ensure(HOME, () => {});
+    return c.inner(HOME, '<HEAD>', { underStorm });
   }
 
   /** Render the home dashboard's Flooding section at a chosen moment.
@@ -778,8 +646,8 @@ console.log('\nMutations — each bug must change the answer');
    *  ==> NO STORM BY DEFAULT, AND THAT IS THE POINT OF THE MOVE. <== The rows
    *  are an agency's statement about the reader's own address; nothing about
    *  them depends on which storm is on screen, or on there being one. The old
-   *  house block had to carry a two-tier scope rule to get that right (§48.20)
-   *  and this has no tiers to get wrong. */
+   *  house block had to carry a two-tier scope rule to get that right (§56.9
+   *  records it) and this has no tiers to get wrong. */
   async function renderFlood(payload, atMs, storm = null) {
     const c = createFloodingHome({
       rain: { loadRainfall: async () => ({ status: 'ok', payload }), retryRainfall: async () => ({}) },
@@ -874,7 +742,7 @@ console.log('\nMutations — each bug must change the answer');
   truthy('the rows carry no inline colour and no urgency class',
     !/rain-alert[^>]*style=/.test(live) && !/rain-alert--/.test(live));
 
-  /* ==> WHERE IT APPLIES, ON THE ROW (§48.20). <== A warning with no area
+  /* ==> WHERE IT APPLIES, ON THE ROW (§56.7). <== A warning with no area
    * attached asks the reader to assume it is about them, which on the flood
    * family is the one assumption worth not making. Both captured areas
    * asserted: the one-zone warning and the seventeen-zone watch. */
@@ -899,13 +767,14 @@ console.log('\nMutations — each bug must change the answer');
     live.includes('in force until') && live.includes('min left'));
 
   /* ========================================================================
-   * §48.20 → §56.7 — A STORM THAT MISSES THE HOUSE KEEPS THE WARNINGS,
+   * §56.7, §56.9 — A STORM THAT MISSES THE HOUSE KEEPS THE WARNINGS,
    * AND NOW IT CANNOT DO OTHERWISE.
    *
-   * ==> THE FIRST CUT OF §48.18 DELETED THEM ALONG WITH THE FIGURE. <== The
+   * ==> THE FIRST CUT OF THE OLD GATE DELETED THEM ALONG WITH THE FIGURE. <== The
    * total is the storm's to imply and the warning is not: it is an agency's
    * statement about the reader's own address, true whichever storm they
-   * tapped. §48.20 fixed that with a second scope tier inside the house block.
+   * tapped. That was fixed with a second scope tier inside the house block;
+   * §56.9 deleted the block, the tiers and the question together.
    *
    * ==> THE FIX IS STRUCTURAL NOW RATHER THAN CONDITIONAL, WHICH IS WHY THE
    * ASSERTIONS CHANGED SHAPE. <== The rows do not read the storm at all. So
@@ -921,25 +790,11 @@ console.log('\nMutations — each bug must change the answer');
     nearStorm.includes('Hawaii in Hawaii, HI') && nearStorm.includes('52 min left')
       && noStorm.includes('Hawaii in Hawaii, HI') && noStorm.includes('52 min left'));
 
-  /* ==> AND NOTHING THAT WOULD IMPLY THE STORM CAUSED IT. <== No total, no
-   * peak, no provenance line — those are the things whose POSITION under a
-   * storm's name makes a claim, which is the whole of §48.18. */
-  const missed = await renderRain(nws, LIVE, { reach: 'misses', distanceNm: 400 });
-  truthy('a measured miss prints no rainfall figure for the house',
-    !missed.includes('expected through') && !missed.includes('The heaviest'));
-  /* ==> AND IT NOW PRINTS NO HOUSE BLOCK AT ALL, WHICH IS NOT A LOSS. <==
-   * §48.20's warnings-only tier existed to carry the flood rows for exactly
-   * this case, and those rows are `Flooding`'s now. What is left for the tier
-   * to draw is nothing, so it draws nothing rather than a heading over an
-   * explanation of why there is no number. Nothing on screen makes a claim,
-   * which is the state §48.18 was reaching for. */
-  truthy('and no house heading is left standing over an empty explanation',
-    !missed.includes('At your house'));
-
-  /* ==> BUT A STORM THAT DOES REACH STILL GETS ITS FIGURE. <== Without this,
-   * the assertion above would pass on a house block that had simply stopped
-   * rendering. */
-  truthy('a storm that reaches the house still prints the total',
+  /* ==> THE RAINFALL FIGURE IS ON THE HOME SCREEN AND NOWHERE ELSE (§56.9).
+   * <== Whether a given storm earns it is the corridor's decision and is
+   * asserted in `tools/test-flood.mjs`; what this asserts is that when it IS
+   * drawn it is complete. */
+  truthy('the home Rain section prints the total and names the house',
     rainLive.includes('At your house') && rainLive.includes('expected through'));
 
   truthy('the heaviest block names when it starts',
@@ -953,7 +808,7 @@ console.log('\nMutations — each bug must change the answer');
   truthy('a wholly elapsed forecast says it ran out, and does not say "no rain"',
     lapsed.includes('has run out') && !lapsed.includes('No meaningful rain'));
   truthy('and it offers a Retry, because a fresh fetch is the fix',
-    lapsed.includes('data-retry="rain-house"'));
+    lapsed.includes('data-retry="rain"'));
   truthy('and it prints no total at all',
     !lapsed.includes('expected through'));
 
@@ -986,11 +841,28 @@ console.log('\nMutations — each bug must change the answer');
     flat(clear).includes('No flood alerts are in force for your address') &&
     !clear.includes('could not be checked') && !clear.includes('aren’t published'));
 
-  /* THE ATTRIBUTION SENTENCE, which stays with the rainfall total: a gridded
-   * total is all rain from all causes, and a figure under a storm's name reads
-   * as that storm's doing unless it says otherwise. */
+  /* ==> THE ATTRIBUTION SENTENCE, AND §56.9 IS WHY IT IS STILL NEEDED HERE.
+   * <== It used to live in the storm drawer, where a total under a storm's
+   * name obviously needed one. The gate makes the home screen's version need
+   * it MORE, not less: this section now draws only when the storm on screen is
+   * measured to reach the house, so its presence is itself a statement that
+   * the two are connected. A gridded total is all rain from all causes, and a
+   * stalled front can put four inches on a house while the hurricane goes out
+   * to sea. */
   truthy('the total is not attributed to the storm',
     rainLive.includes('not this') && rainLive.includes('storm alone'));
+
+  /* ==> AND ON A CALM DAY THE SENTENCE IS ABSENT, BECAUSE IT WOULD BE ABOUT
+   * NOTHING. <== §56.9's exception renders this section with no storm on
+   * screen at all. "Not this storm alone" with no storm named anywhere is a
+   * disclaimer of a claim nobody made. Both directions asserted: a version
+   * that always printed it and a version that never did would each pass one of
+   * these two lines. */
+  const calm = await renderRain(nws, LIVE, false);
+  truthy('with no storm on screen the disclaimer is not printed',
+    !calm.includes('storm alone'));
+  truthy('and the figure itself is unchanged by that',
+    calm.includes('expected through') && calm.includes('At your house'));
 }
 
 console.log(

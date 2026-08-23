@@ -1115,7 +1115,7 @@
 
 /* --- rain (§48.8) ---------------------------------------------------------
  *
- * THE WARNING ROWS MOVED OUT (§48.17). They are drawn by `ui/rain-alerts.js`
+ * THE WARNING ROWS MOVED OUT (§56.7). They are drawn by `ui/rain-alerts.js`
  * on BOTH this section and the storm drawer's house block now, so their rules
  * live in panels.css beside the other shared panel furniture. What is left
  * here is the forecast prose, which only this section draws.

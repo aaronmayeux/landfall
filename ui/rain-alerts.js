@@ -1,12 +1,12 @@
 /**
  * rain-alerts.js (ui) — flood warnings in force, as rows. SPEC §48.6, §48.16.
  *
- * ==> EXTRACTED BECAUSE IT IS NOW USED TWICE. <== §12's rule: any pattern used
- * twice gets pulled out BEFORE the second use. The home dashboard's Rain
- * section (§48.8) had this inline and the storm drawer's house block (§48.17)
- * needed exactly the same rows. Two copies of a warning row is two places for
- * "Immediate" to stop meaning "happening now", and the one that drifts is the
- * one nobody is looking at.
+ * ==> EXTRACTED BECAUSE IT IS USED TWICE. <== §12's rule: any pattern used
+ * twice gets pulled out BEFORE the second use. It is the `Flooding` section's
+ * row on both screens now (§56.7) — the home dashboard's and the storm
+ * drawer's. Two copies of a warning row is two places for "Immediate" to stop
+ * meaning "happening now", and the one that drifts is the one nobody is
+ * looking at.
  *
  * ==> A WARNING IS A DIFFERENT KIND OF THING FROM A TOTAL, AND LOOKS LIKE IT.
  * <== §48.6. A flood warning is a fact about NOW, published by somebody else,
@@ -49,7 +49,7 @@ const esc = (s) =>
  * force* in the sentence itself, which survives a stylesheet, a screen reader
  * and a colour-blind reader — none of which the red ever did on its own.
  *
- * ==> THE AREA IS THE LINE THAT WAS MISSING (§48.20). <== A warning with no
+ * ==> THE AREA IS THE LINE THAT WAS MISSING (§56.7). <== A warning with no
  * area attached asks the reader to assume it is about them. On the flood
  * family that is the one assumption worth not making: the captured Flood Watch
  * covers thirteen named zones and the Flash Flood Warning covers one. Printed

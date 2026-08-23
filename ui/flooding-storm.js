@@ -303,8 +303,8 @@ export function createFloodingStorm({ flood = null, cap = null, surge = null, un
     const model = modelHtml(storm);
     /* THE HAIRLINE ONLY WHEN BOTH HALVES ARE THERE. It exists so a reader can
      * SEE that an agency's order and our model reading are two answers rather
-     * than one continuing — the same seam `.detail-rain-house` draws for the
-     * same reason. Drawn under nothing it is a line across an empty section. */
+     * than one continuing. Drawn under nothing it is a line across an empty
+     * section. */
     const seam = rows && model ? ' flood-model--after-rows' : '';
     return `${rows}${model ? `<div class="flood-model${seam}">${model}</div>` : ''}`;
   }

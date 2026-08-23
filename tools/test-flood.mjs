@@ -50,9 +50,10 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 const {
   inForce, trackChains, trackSamples, nearestNm, alertsNearTrack, corridorSummary,
-  isFloodFamily,
+  isFloodFamily, stormSamples, homeInCorridor,
 } = await import(path.join(ROOT, 'lib/flood.js'));
 const { greatCircleNm } = await import(path.join(ROOT, 'lib/geo.js'));
+const { RAIN } = await import(path.join(ROOT, 'config/constants.js'));
 const { projectFlood } = await import(path.join(ROOT, 'functions/api/nws/flood.js'));
 const { parseTcm } = await import(path.join(ROOT, 'tools/tcm-fixture.mjs'));
 
@@ -156,6 +157,13 @@ const LALA_CHAINS = trackChains(
   load('samples/flood/track-lala-cp2-past.geojson'),
   load('samples/flood/track-lala-cp2-forecast.geojson'));
 const LALA_SAMPLES = trackSamples(LALA_CHAINS);
+/** Her two arms on their own, for §56.9's past-arm case. */
+const LALA_PAST_SAMPLES = trackSamples(
+  trackChains(load('samples/flood/track-lala-cp2-past.geojson')));
+const LALA_FCST_SAMPLES = trackSamples(
+  trackChains(load('samples/flood/track-lala-cp2-forecast.geojson')));
+/** A house, as `nearestNm` wants it. */
+const asPoint = (home) => ({ type: 'Point', coordinates: [home.lon, home.lat] });
 
 /** Ida's advisory 19: her analysed position followed by NHC's six forecast
  *  points, parsed out of the Forecast/Advisory rather than transcribed. */
@@ -192,7 +200,7 @@ console.log('\nThe relay projection');
    * nothing to draw" are different facts and only one is about the source. */
   eq('and says so rather than leaving it to be guessed', watch.drawable, false);
 
-  /* THE AREA SURVIVES, WHOLE (§48.20). The reader is hunting for their own
+  /* THE AREA SURVIVES, WHOLE (§56.7). The reader is hunting for their own
    * zone in that list; truncating is how you hide it from them. */
   truthy('the watch keeps every zone it covers',
     /Maui Windward West/.test(watch.areaDesc) && /Big Island North/.test(watch.areaDesc));
@@ -229,7 +237,7 @@ console.log('\nWhat is in force, at a moment somebody chose');
    * more use above one with eighteen hours. */
   truthy('immediate alerts sort first', live[0].immediate === true);
 
-  /* ==> THE TENSE COMES FROM THE CLOCK, NEVER FROM `urgency` (§48.20). <== The
+  /* ==> THE TENSE COMES FROM THE CLOCK, NEVER FROM `urgency` (§56.7). <== The
    * captured Flood Watch reads `urgency: Future` with an `onset` four hours in
    * the PAST, because the urgency is about when the HAZARD is expected and the
    * onset is about when the MESSAGE took effect. */
@@ -239,10 +247,10 @@ console.log('\nWhat is in force, at a moment somebody chose');
   eq('so it has BEGUN, whatever its urgency says', watch.begun, true);
 
   /* ==> THE ROWS MUST BE THE SHAPE `ui/rain-alerts.js` READS, AND THE FIRST
-   * BUILD WAS NOT. <== That builder is shared with the house block (§48.20)
-   * and reads `area` and `remaining`. The relay projects NWS's own field name
-   * `areaDesc` and carries no duration at all, so the first render of the
-   * drawer block printed the event and the expiry and silently dropped BOTH
+   * BUILD WAS NOT. <== That builder is the `Flooding` section's row on both
+   * screens (§56.7) and reads `area` and `remaining`. The relay projects NWS's
+   * own field name `areaDesc` and carries no duration at all, so the first
+   * render printed the event and the expiry and silently dropped BOTH
    * the affected area and the time left. Nothing threw; the row looked
    * finished. It was caught by rendering the block, not by a unit test of the
    * parser — which is exactly why this assertion exists at the seam rather
@@ -409,6 +417,137 @@ console.log('\nWhich alerts come near a track');
 /* ---------------------------------------------------------------------------
  * 5. MUTATIONS — each bug must change the answer
  * ------------------------------------------------------------------------- */
+/* ---------------------------------------------------------------------------
+ * 5. THE HOUSE IN THE CORRIDOR (§56.9)
+ *
+ * ==> ONE RADIUS, ASKED THE OTHER WAY ROUND. <== Everything above measures an
+ * ALERT against a track. This measures a HOUSE against the same track with the
+ * same function and the same constant, which is the whole of §56.9: the
+ * question "which alerts belong to this storm" and the question "does this
+ * storm reach my house" stopped being two questions on 2026-08-22.
+ *
+ * ==> AND IDA IS THE FIXTURE FOR A REASON. <== She is the storm §56.3 was
+ * written around: her centre was over Pennsylvania while New Jersey drowned.
+ * Every figure below is measured off NHC's own advisory-19 positions at run
+ * time, not transcribed.
+ * ------------------------------------------------------------------------- */
+console.log('\nThe house in the corridor');
+{
+  /* Real addresses, real coordinates. Newark is Ida's flooding; New Orleans is
+   * her landfall; Chicago is the near miss that decides whether the radius is
+   * doing anything; Honolulu is the other side of the planet. */
+  const NEWARK = { lat: 40.735, lon: -74.172 };
+  const NEW_ORLEANS = { lat: 29.95, lon: -90.07 };
+  const CHICAGO = { lat: 41.88, lon: -87.63 };
+  const HONOLULU = { lat: 21.31, lon: -157.86 };
+
+  const ida = (home, opts = {}) =>
+    homeInCorridor({ storm: IDA.storm, forecast: IDA.forecast, home, ...opts });
+
+  /* ==> A DISTANCE COMES BACK AT ALL, AND THIS IS ASSERTED FIRST FOR A REASON.
+   * <== It is the `Point` branch in `nearestNm` — the one line that lets a
+   * house be measured by the same function as a county. Without this case,
+   * deleting that branch fails the suite with a TypeError out of a template
+   * string three assertions later: red, but naming the wrong thing. */
+  const nmOf = (r) => (Number.isFinite(r.nm) ? r.nm.toFixed(0) : 'no answer');
+  truthy('a house is a shape this can measure',
+    Number.isFinite(ida(NEWARK).nm));
+  truthy('and so is a house measured against a bare position',
+    Number.isFinite(homeInCorridor({ storm: IDA.storm, home: NEWARK }).nm));
+
+  /* ==> THE CASE THE WHOLE FEATURE EXISTS FOR. <== Ida's centre at advisory 19
+   * is in Mississippi and Newark is 915 nm from it. Her forecast track runs to
+   * within 74. A gate on where the storm IS would have shown a New Jersey
+   * reader nothing on the day New Jersey flooded. */
+  const newark = ida(NEWARK);
+  truthy(`Newark is ${nmOf(newark)} nm from Ida's track and inside`,
+    newark.inside === true && newark.nm < 100);
+  const newarkNow = homeInCorridor({ storm: IDA.storm, home: NEWARK });
+  truthy(`and ${nmOf(newarkNow)} nm from where she actually is, which is outside`,
+    newarkNow.inside === false && newarkNow.nm > 900);
+
+  /* ==> WHICH IS THE ONE-DIRECTIONAL PROPERTY, ASSERTED. <== The samples always
+   * carry the storm's own position, and track samples are added to them, so
+   * the nearest distance can only fall as the geometry lands. A section can
+   * appear under the reader; one can never vanish from under their finger. */
+  truthy('adding the track can only lower the distance, never raise it',
+    newark.nm <= newarkNow.nm);
+
+  /* Landfall itself, and it needs no track at all — which is what makes the
+   * position-only answer worth having during the first paint. */
+  const nola = homeInCorridor({ storm: IDA.storm, home: NEW_ORLEANS });
+  truthy(`New Orleans is inside on the position alone, at ${nmOf(nola)} nm`,
+    nola.inside === true);
+
+  /* ==> AND THE RADIUS HAS TO BITE SOMEWHERE OR IT IS NOT A GATE. <== Chicago
+   * is 367 nm off Ida's track: a real American city, on the same continent, in
+   * the same week, and out. Without a case like this every assertion above
+   * would pass on a function that returned true. */
+  const chicago = ida(CHICAGO);
+  truthy(`Chicago is ${nmOf(chicago)} nm out and does NOT get the sections`,
+    chicago.inside === false);
+
+  const honolulu = ida(HONOLULU);
+  truthy(`and Honolulu, at ${nmOf(honolulu)} nm, is not close`,
+    honolulu.inside === false);
+
+  /* ==> THE PAST ARM COUNTS, AND LALA PROVES IT ON HER OWN BYTES. <== The water
+   * arrives after the wind leaves, so a storm that has already crossed a place
+   * is still flooding it. Her genesis point sits ON her observed track and
+   * 2,158 nm from her forecast one — so a gate reading only the forecast would
+   * call it a miss. */
+  const genesis = { lat: LALA_PAST_SAMPLES[0].lat, lon: LALA_PAST_SAMPLES[0].lon };
+  const pastOnly = nearestNm(asPoint(genesis), LALA_PAST_SAMPLES);
+  const fcstOnlyNm = nearestNm(asPoint(genesis), LALA_FCST_SAMPLES);
+  truthy(`her genesis point is ${pastOnly.toFixed(0)} nm from her past track and ` +
+    `${fcstOnlyNm.toFixed(0)} from her forecast`,
+    pastOnly < 1 && fcstOnlyNm > 2000);
+
+  /* Both halves handed in, as the view hands them in. */
+  const lalaHome = homeInCorridor({
+    /* Her published position IS the first vertex of her forecast line — read
+     * off the file rather than typed, for the reason CLAUDE.md gives. */
+    storm: LALA_FCST_SAMPLES[0],
+    past: LALA_PAST_SAMPLES, forecast: LALA_FCST_SAMPLES, home: genesis,
+  });
+  truthy('and with both arms handed in, the house is inside the corridor',
+    lalaHome.inside === true);
+
+  /* NOTHING TO ASK ABOUT IS NOT AN ANSWER, AND IT IS NOT §5's SILENCE EITHER —
+   * no home set is a question nobody asked, and the caller draws nothing for it
+   * whichever way this comes back. */
+  eq('no home is not inside anything', homeInCorridor({ storm: IDA.storm }).inside, false);
+  eq('and it reports no distance rather than a made-up one',
+    homeInCorridor({ storm: IDA.storm }).nm, null);
+  eq('no storm and no track measures nothing',
+    homeInCorridor({ home: NEWARK }).nm, null);
+
+  /* THE RADIUS TRAVELS ON THE ANSWER, so a sentence can name it without
+   * reaching for the constant a second time and getting a different one. */
+  eq('the radius comes back with the answer', ida(NEWARK).radiusNm, RAIN.floodCorridorNm);
+
+  /* ==> BOTH SIDES OF THE BOUNDARY, BECAUSE ONE SIDE PASSES FOR A FLIPPED
+   * COMPARISON. <== A synthetic pair rather than a city: the point of this case
+   * is the operator and the constant, not the geography.
+   *
+   * ==> AND THE EXACT-EQUALITY CASE IS NOT ASSERTED, ON PURPOSE. <== `<=`
+   * against `<` differ at precisely one distance, and no construction lands
+   * there — a degree of longitude at the equator is 60 nm only by convention,
+   * and against `greatCircleNm`'s own earth radius five degrees measures
+   * 300.20. A test that TYPED 300 and expected a hit would be asserting a
+   * rounding, not a rule. What is asserted instead is what a wrong operator
+   * would actually break: that the pair straddling the radius comes back on
+   * the two different sides of it. Both distances are measured, not assumed. */
+  const eq0 = (deg) => homeInCorridor({ storm: { lat: 0, lon: 0 }, home: { lat: 0, lon: deg } });
+  const justIn = eq0(4.98);
+  const justOut = eq0(5.02);
+  truthy(`the probes straddle the radius — ${justIn.nm.toFixed(1)} nm and ` +
+    `${justOut.nm.toFixed(1)} against ${RAIN.floodCorridorNm}`,
+    justIn.nm < RAIN.floodCorridorNm && justOut.nm > RAIN.floodCorridorNm);
+  eq('and the nearer one is inside', justIn.inside, true);
+  eq('while the further one is not', justOut.inside, false);
+}
+
 console.log('\nMutations — each bug must change the answer');
 {
   /* Bug 1: measure the track at its published vertices and skip densifying.

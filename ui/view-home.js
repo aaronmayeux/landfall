@@ -52,6 +52,7 @@ import { homeChart } from './chart-home.js';
 import { dotted } from './loading-dots.js';
 import { createRainHome } from './rain-home.js';
 import { createFloodingHome } from './flooding-home.js';
+import { houseSectionsShow } from './home-gate.js';
 import { WIND_LABEL, windColor, windDurationClause, windDurationPhrase } from '../lib/wind.js';
 import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
 /* The icon set lives in its own file now — the storm panel draws the same
@@ -301,6 +302,7 @@ export function createHomeDashboardView({
     if (!threat) {
       lastDash = null;
       el.innerHTML = quietHtml(lastState, home);
+      wireHouseSections(el, null, home);
       return void afterRender();
     }
 
@@ -343,15 +345,32 @@ export function createHomeDashboardView({
 
     lastDash = dash;
     el.innerHTML = dashboardHtml(dash, threat, home);
-    /* ==> THE SECTION IS ITS OWN GATE (§48.8). <== Rain is fetched here, on the
-     * dashboard path, and nowhere else: the quiet, loading, error and no-home
-     * states do not draw the section, so asking for a forecast on any of them
-     * would be a request for something nobody can see. */
+    wireHouseSections(el, threat?.storm, home);
+    afterRender();
+  }
+
+  /**
+   * Fetch and bind the two house sections, on whichever path just painted.
+   *
+   * ==> THE FETCH GATE IS THE RENDER GATE, AND THEY ARE THE SAME LINE OF CODE.
+   * <== `homeSectionsShow` decides both. A request dispatched for a state the
+   * renderer will not draw is bytes the reader pays for and never sees — and
+   * the two drifting apart is how a section ends up permanently stuck on
+   * "Checking…" because nobody ever asked.
+   *
+   * ==> IT RUNS ON THE QUIET PATH TOO, AND THAT IS NEW WITH §56.9. <== Until
+   * 2026-08-22 these sections were built only where a threat storm existed, so
+   * on a genuinely calm day the home screen showed the reader neither their
+   * own rain forecast nor any flood alert in force at their address. The gate
+   * this phase adds only ever subtracts; without this it would have made a
+   * quiet day emptier still, which is the opposite of the screen's job.
+   */
+  function wireHouseSections(el, storm, home) {
+    if (!el || !home || !homeSectionsShow()) return;
     rainH.ensure(home, renderRainBody);
     rainH.wire(el, home, renderRainBody);
-    floodH.ensure(threat?.storm, home, renderFloodBody);
-    floodH.wire(el, threat?.storm, home, renderFloodBody);
-    afterRender();
+    floodH.ensure(storm || null, home, renderFloodBody);
+    floodH.wire(el, storm || null, home, renderFloodBody);
   }
 
   /**
@@ -452,13 +471,28 @@ export function createHomeDashboardView({
    * refuses the word "clear", and offers the nearest thing anyone DID manage
    * to see rather than an empty screen. */
   function quietHtml(state, home) {
+    /* ==> THE HOUSE SECTIONS ON A DAY WITH NO STORM (§56.9). <== They are
+     * questions about an ADDRESS — how much rain is coming to it, what alerts
+     * are in force over it — and neither needs a cyclone to have an answer.
+     * They sit above the address block for the same reason they do on the
+     * dashboard: a flood warning in force is the most actionable thing on this
+     * screen and a warning at the bottom of a scroll is a warning nobody read.
+     *
+     * ==> AND THEY ARE MOST VALUABLE ON THE MIDDLE BRANCH. <== When NHC or
+     * GDACS has gone quiet the app cannot say whether a cyclone is coming, and
+     * NWS's flood alerts and the rainfall grid are unaffected and still
+     * answering. Withholding them there would take away the one thing that
+     * still works, on the day it matters. */
+    const houseSects = () => `${rainSectHtml()}${floodSectHtml(null)}`;
+
     const nhc = state.sources?.nhc?.status;
     const gdacs = state.sources?.gdacs?.status;
     const loading = nhc === 'loading' || gdacs === 'loading';
     const down = [nhc === 'unavailable' && 'NHC', gdacs === 'unavailable' && 'GDACS'].filter(Boolean);
 
     if (loading && !state.storms?.length) {
-      return loadingHtml('Checking the oceans for anything headed your way…') + homeRowHtml(home);
+      return loadingHtml('Checking the oceans for anything headed your way…')
+        + houseSects() + homeRowHtml(home);
     }
 
     if (down.length) {
@@ -478,6 +512,7 @@ export function createHomeDashboardView({
                  speak for the one that went quiet.</p>`
             : '<p class="detail-soft">Neither source answered, so nobody is watching for you right now.</p>'}
         </div>
+        ${houseSects()}
         ${homeRowHtml(home)}`;
     }
 
@@ -502,6 +537,7 @@ export function createHomeDashboardView({
         <p class="detail-soft">Both sources answered, so this is a real all-clear —
           it is what they said, not what we could not reach.</p>
       </div>
+      ${houseSects()}
       ${homeRowHtml(home)}`;
   }
 
@@ -755,6 +791,26 @@ export function createHomeDashboardView({
       </div>`;
   }
 
+  /** The geometry bundle for the storm on screen, or null while it is still in
+   *  flight. The SAME `ready` test `render()` uses — an empty array from a
+   *  fetch that has not landed must not be read as a track that was published
+   *  and is empty. */
+  function readyBundle() {
+    const threat = currentThreat();
+    if (!threat || geo.stormId !== threat.storm.id || geo.state !== 'ok') return null;
+    return geo.bundle || null;
+  }
+
+  /** ==> DO THE TWO HOUSE SECTIONS DRAW AT ALL RIGHT NOW? §56.9. <== The whole
+   *  rule is in `ui/home-gate.js`; this is the seam that hands it the three
+   *  things only this view knows. Read by the full render, both per-section
+   *  repaints and both fetch gates — one answer, so a fetch can never be
+   *  dispatched for a state the renderer will not draw. */
+  const homeSectionsShow = () => houseSectionsShow({
+    home: getHome(), storm: currentThreat()?.storm, bundle: readyBundle(),
+  });
+
+
   /** RAIN — how much is coming to the house (§48.8).
    *
    *  ==> IT IS ABOUT THE HOUSE, NOT ABOUT THE STORM, AND THE HEADING HAS TO
@@ -762,11 +818,17 @@ export function createHomeDashboardView({
    *  answer different questions and will disagree — the advisory quotes the
    *  heaviest band across an area, this is one grid cell. The controller's
    *  note names the point NWS is forecasting for, which is the only thing on
-   *  either surface that explains the difference. */
+   *  either surface that explains the difference.
+   *
+   *  ==> AND SINCE §56.9 IT DOES NOT DRAW UNDER A STORM THAT MISSES. <== The
+   *  gate is `homeSectionsShow`; `underStorm` tells the controller whether
+   *  there is a name above this figure for it to disclaim. */
   function rainSectHtml() {
     const home = getHome();
-    if (!home) return '';
-    return `<div class="home-sect home-rain">${rainH.inner(home, sectHead('rain', 'Rain'))}</div>`;
+    if (!home || !homeSectionsShow()) return '';
+    return `<div class="home-sect home-rain">${
+      rainH.inner(home, sectHead('rain', 'Rain'), { underStorm: !!currentThreat() })
+    }</div>`;
   }
 
   /** FLOODING — water already on the ground, and water modelled to arrive
@@ -776,13 +838,18 @@ export function createHomeDashboardView({
    *  only for a storm carrying a GDACS event id, so on a US storm the section
    *  vanished. Both halves of this one are questions about an ADDRESS, and the
    *  flood-alert half is answerable with no storm on screen at all — which is
-   *  the calm-day case this dashboard exists for. The controller decides; this
-   *  asks it rather than re-deriving the rule, so the wrapper can never render
-   *  around an empty section. */
+   *  the calm-day case this dashboard exists for. The controller decides
+   *  whether it has anything to say; this asks it rather than re-deriving the
+   *  rule, so the wrapper can never render around an empty section.
+   *
+   *  ==> TWO GATES AND THEY ASK DIFFERENT THINGS. <== `homeSectionsShow` is
+   *  §56.9's: is this section's subject — the house — connected to the storm
+   *  on screen at all. `floodH.applies` is the controller's: is there a source
+   *  wired to answer. Neither can stand in for the other. */
   function floodSectHtml(threat) {
     const home = getHome();
     const storm = threat?.storm;
-    if (!floodH.applies(storm, home)) return '';
+    if (!homeSectionsShow() || !floodH.applies(storm, home)) return '';
     return `<div class="home-sect home-flood">${floodH.inner(storm, home, sectHead('flood', 'Flooding'))}</div>`;
   }
 
@@ -793,7 +860,7 @@ export function createHomeDashboardView({
     const el = body()?.querySelector('.home-flood');
     const home = getHome();
     const storm = lastDash ? currentThreat()?.storm : null;
-    if (!el || !floodH.applies(storm, home)) return;
+    if (!el || !homeSectionsShow() || !floodH.applies(storm, home)) return;
     el.innerHTML = floodH.inner(storm, home, sectHead('flood', 'Flooding'));
     floodH.wire(el, storm, home, renderFloodBody);
   }
@@ -805,8 +872,8 @@ export function createHomeDashboardView({
   function renderRainBody() {
     const el = body()?.querySelector('.home-rain');
     const home = getHome();
-    if (!el || !home) return;
-    el.innerHTML = rainH.inner(home, sectHead('rain', 'Rain'));
+    if (!el || !home || !homeSectionsShow()) return;
+    el.innerHTML = rainH.inner(home, sectHead('rain', 'Rain'), { underStorm: !!currentThreat() });
     rainH.wire(el, home, renderRainBody);
   }
 

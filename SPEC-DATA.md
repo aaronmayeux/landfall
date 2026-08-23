@@ -2107,7 +2107,7 @@ throwing.
 
 `ENDPOINT.nwsAlerts` returns what is in force at a point as structured GeoJSON
 with `event`, `areaDesc`, `severity`, `urgency`, `headline`, `onset`, `expires`
-and `ends`. **`areaDesc` is the zone list the row prints — §48.20.**
+and `ends`. **`areaDesc` is the zone list the row prints — §56.7.**
 Same host, same relay, so it costs one route rather than a new source.
 
 Measured at Hilo during Lala: Flash Flood Warning (Severe/Immediate), Hurricane
@@ -2120,11 +2120,10 @@ home in the `In effect` section and must not be duplicated; High Surf and the
 local statement belong to neither. A warning in force is a fact about now and
 outranks any forecast total, so it renders **above** the number.
 
-**Both rainfall surfaces draw them** — the home dashboard's Rain section (§48.8)
-and the storm drawer's house block (§48.17) — from the one shared row builder
-`ui/rain-alerts.js`. **That is not a duplication**, and the check that settles it
-is worth writing down because §48.17 shipped once without them on exactly this
-reasoning: `Watches and warnings` carries only NHC's hurricane and
+**The `Flooding` section draws them, on both screens** (§56.7), from the one
+shared row builder `ui/rain-alerts.js`. **That is not a duplication**, and the
+check that settles it is worth writing down because the storm drawer shipped
+once without them on exactly this reasoning: `Watches and warnings` carries only NHC's hurricane and
 tropical-storm products on one side, and on the other (§50) asks CAP only for
 Cyclone, Typhoon, Hurricane, Tropical and Storm Surge. **Nothing else in the
 app renders a flood warning.** A surface that shows a rainfall total and omits them is not avoiding
@@ -2172,7 +2171,7 @@ is otherwise unreachable from a sandbox, and so is its upstream.
 a decision about which SECTION owns a fact, and it lives beside the sentence it
 governs (§48.6). What the relay drops is `description`, `instruction` and the
 polygon, which is the entire 55 KB; the five stripped alerts at Hilo come to
-**2.6 KB** — 1.4 KB before §48.20 added the zone list — so passing all of them
+**2.6 KB** — 1.4 KB before the zone list was added (§56.7) — so passing all of them
 still costs nothing and keeps this route dumb.
 
 **A failed alerts hop never fails the request** and comes back as `null`, which
@@ -2224,8 +2223,6 @@ hand-written fixture proves nothing about this API's real shapes.
 | The peak's share is of what is still coming | `grid-hilo-hi` | 30% of the whole series against 39% of the remainder; the old denominator carried the past |
 | A wholly elapsed forecast is `lapsed`, not dry | `grid-hilo-hi` | seven days on, the section says it has run out and offers Retry; it never says "no meaningful rain" |
 | A global payload is never `not_covered` (§48.16) | synthesised | `provider: 'open-meteo'` with no series reads `unreadable`; the same shape without it stays `not_covered` |
-| The wind field decides, not the distance (§48.18) | synthesised | `misses` at 40 nm is out; `reaches` at 900 nm is in; `null` falls back to `RAIN.houseFallbackNm` |
-| Unknown is never a miss | synthesised | no corridor, an unbuilt corridor and a past-only corridor that missed all read `null` |
 | Urgency is in the words now | `alerts-hilo-hi` | the `Immediate` row says *in force until*; the watch says only *until*; neither carries colour |
 
 **Every rule is shown to fail when broken.** Fourteen mutations reintroduce a

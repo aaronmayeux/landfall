@@ -57,13 +57,9 @@ import {
   distanceTo,
   closestApproach,
 } from '../data/home.js';
-/* ==> THE RAINFALL GATE'S MEASUREMENT (§48.18). <== The storm drawer decides
- * whether a house rainfall figure belongs beside a storm by asking whether that
- * storm's published wind field actually crosses the house — the same walk
- * `ui/view-home.js` already draws as the chart. It is composed HERE because
- * ui/ never imports data/ (§12), and it is the same two functions the home
- * dashboard composes, so one implementation answers both screens. */
-import { buildCorridor, reachesHome } from '../data/home-corridor.js';
+/* ==> THE CORRIDOR, WHICH ANSWERS TWO QUESTIONS WITH ONE MEASUREMENT (§56.9).
+ * <== Which flood alerts come near this storm's track, and — on the home
+ * dashboard, which composes it there — whether the reader's house does. */
 import { corridorSummary, trackChains, trackSamples } from '../lib/flood.js';
 import { loadFloodAlerts, evictFlood } from '../data/flood.js';
 
@@ -566,10 +562,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * deliberately the whole of it: a view awaits an answer and renders one of
    * four states. No fetching, no caching, no coverage branching up there.
    *
-   * ==> ONE OBJECT, HANDED TO BOTH SURFACES. <== The home dashboard's Rain
-   * section (§48.8) and the storm drawer's house block (§48.17) are both given
-   * THIS constant rather than two literals that happen to match. They already
-   * share one cached record in `data/rainfall.js`; sharing the facade too is
+   * ==> ONE OBJECT, HANDED TO BOTH SECTIONS ON THE HOME SCREEN. <== Rain
+   * (§48.8) and Flooding (§56.7) are both given THIS constant rather than two
+   * literals that happen to match. They already share one cached record in
+   * `data/rainfall.js`; sharing the facade too is
    * what stops a later edit — a counter, an eviction rule, a coverage
    * fallback — from landing on one caller and not the other, which is exactly
    * how two screens start showing two different totals for one house.
@@ -652,14 +648,6 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       get: getHome,
       distanceTo,
       closestApproach,
-      /* ==> DOES THIS STORM'S WIND ACTUALLY REACH THE HOUSE? (§48.18) <== The
-       * gate on the Rainfall section's house block. The view owns the geometry
-       * bundle and hands the pieces in; this only composes the two data/
-       * functions, so there is one corridor implementation behind both this
-       * answer and the home chart and they cannot disagree. Returns
-       * `'reaches'`, `'misses'`, or null when no wind field was published to
-       * walk — and null is NOT a no (see `lib/rainfall.js`). */
-      windReach: (args) => reachesHome(buildCorridor({ ...args, home: getHome() })),
     },
     units: unitSystem,
     /* THE STEPPER READS THE LIST'S ORDER, IT DOES NOT RECOMPUTE IT. Passed as
@@ -725,9 +713,6 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * the switch with the panel open updates it in place. */
       ribbonOn: () => toggleOn('environment'),
     },
-    /* The house block's forecast (§48.17). THE SAME OBJECT the dashboard's
-     * Rain section gets — see `rainFacade` above for why that matters. */
-    rain: rainFacade,
     /* ==> THE FLOOD FACADE (§48.21). <== `value()` is READ-ONLY and never
      * fetches: the map layer's toggle owns the fetch, and a drawer that kicked
      * one of its own would make opening a storm cost a national request the
@@ -1016,8 +1001,11 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     onFrameHome: ({ storm }) => frameHome(storm),
     /* Rainfall at the house (§48.8). The same facade shape every other
      * injected data path on this panel uses — ui/ never imports data/ (§12).
-     * ONE object, shared with the storm drawer's house block: see `rainFacade`
-     * above, which is where the counting rule and the allowlist note live. */
+     *
+     * ==> AND SINCE §56.9 THIS IS THE ONLY PANEL THAT TAKES IT. <== It used to
+     * be shared with the storm drawer's house block. The house is off that
+     * screen, so the reader's own rainfall is fetched by the screen with the
+     * reader's own address on it and nowhere else. */
     rain: rainFacade,
     /* Modelled coastal flooding (§56.7) — THE SAME OBJECT the storm drawer
      * takes. See `surgeFacade` above. */

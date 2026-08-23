@@ -217,10 +217,10 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1 AND 2 OF FIVE ARE IN. DO NOT TUNE
-THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron 2026-08-22:
-`SPEC-FLOOD-PLAN.md` §56, five phases, one per session, in order. Read that file
-before touching anything flood-shaped.
+**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1, 2 AND 3 OF SIX ARE IN. DO NOT
+TUNE THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron
+2026-08-22: `SPEC-FLOOD-PLAN.md` §56, one phase per session, in order. Read that
+file before touching anything flood-shaped.
 
 **PHASE 1 — THE CORRIDOR — SHIPPED 2026-08-22.** The match is no longer an
 overlap with the forecast cone; it is a great-circle distance from the storm's
@@ -255,9 +255,29 @@ depends on the count — clustering thresholds in Phase 5 most of all. And
 `map/layers/flood.js` still draws the whole country from a `Storm detail`
 toggle; Phase 5 replaces it. Nothing about that layer is worth tuning.
 
-**The next phase is 3 — home gating.** Strip the house block out of the storm
-drawer; gate the home dashboard's home sections on the corridor, with the
-no-storm-on-screen exception. Small, self-contained, no new data.
+**PHASE 3 — HOME GATING — SHIPPED 2026-08-22.** The house is off the storm
+drawer entirely, and the home dashboard's `Rain` and `Flooding` render only when
+the storm on screen is measured to reach the house — or when there is no storm
+on screen at all. One radius now means *near this storm* everywhere in the app.
+As-built in `SPEC-UI.md` §56.9.
+
+**IT WAS NOT SELF-CONTAINED, AND THE COST WAS DELETION.** Taking the house out
+of the storm drawer orphaned six exports and one constant reaching from `ui/`
+through `lib/` into `data/` and `config/` — both scope predicates, the
+three-word wind-field verdict, its composition in `app/views.js`, the
+range-to-home helper, the house-fallback distance, and a CSS rule. Retiring them
+cleanly was most of the diff, and three §48 sections went with them. Aaron
+approved the full chain rather than a half-removal.
+
+**AND ONE HALF OF §56.9 DID NOT EXIST TO BE GATED.** The plan said the sections
+render *when there is no storm on screen at all*; the audit found both were
+built only on the dashboard path, which needs a threat storm — so a genuinely
+calm day showed neither. Building the gate alone would have shipped a change
+that only ever subtracted. Both halves are in.
+
+**The next phase is 4 — zone shapes for watches.** Resolve and cache the zone
+polygons a watch names, so a shapeless watch becomes drawable AND matchable and
+the watch/warning special case disappears downstream.
 
 **AND THERE IS A PHASE 6 NOW — PAST RAINFALL, added 2026-08-22 after Phase 2
 shipped.** `SPEC-FLOOD-PLAN.md` §56.14. How much has already fallen at the
@@ -272,7 +292,7 @@ permanent for ALERTS and this is what can honestly sit beside it.
 Nobody writes a line of it until those are measured and written into that
 section. It depends only on Phase 2, so it CAN move ahead of 3, 4 or 5; if it
 does, say so out loud rather than quietly swapping them. **Phase 2
-already emptied §48.20's warnings-only tier and closed its fetch gate** — that
+already emptied the warnings-only tier and closed its fetch gate** — that
 was this change's own cost, not a head start: leaving the tier would have shown
 the same alert in two sections of one panel.
 
@@ -284,16 +304,15 @@ heading of its own instead of a footnote on a section about something else; what
 was sold is roughly one section's scroll height on a phone. **If it reads wrong,
 the fix is one line in `dashboardHtml` and one in `renderBody`.**
 
-**GLASS: THE RAINFALL PASS. FOUR THINGS CHANGED AND NONE HAS BEEN SEEN.**
-§48.18 and §48.19 are as-built in `SPEC-UI.md`; this is only what to look at.
+**GLASS: THE RAINFALL PASS. NONE OF IT HAS BEEN SEEN.**
+§48.19 and §56.9 are as-built in `SPEC-UI.md`; this is only what to look at.
 
-1. **The house block should now be GONE from most storms.** It used to draw
-   under anything within 1,500 nm. The gate is now whether the storm's own
-   published wind field crosses the house (`data/home-corridor.js`), with a
-   300 nm distance fallback only where no field was published. **Lala is the
-   storm to check it on** — open several storms and confirm the block appears
-   only where the home chart also shows wind reaching you. The two read the
-   same measurement now, so they agreeing is the test.
+1. **The house block is GONE from the storm drawer, on every storm** (§56.9).
+   Open any storm: `Rainfall` should now be NHC's paragraph and nothing else,
+   and on a GDACS storm one sentence saying it is not published for that basin.
+   **The thing to check is that nothing looks amputated** — a section that was
+   two blocks for a month is one now, and whether it reads as focused or as
+   half-loaded is a glass call.
 2. **The totals dropped and that is the fix, not a fault.** "About 11 inches"
    became "about 9" on the Hilo fixture because two blocks totalling 63.754 mm
    had already fallen when it was read. On the global source it is larger: 23%
@@ -308,20 +327,27 @@ the fix is one line in `dashboardHtml` and one in `renderBody`.**
    run out and offers Retry, rather than "no meaningful rain expected". Only
    reachable on a genuinely old last-good copy, so it may not be seeable.
 
-5. **A storm that misses your house now shows NO house block at all** — §48.20's
-   warnings-only tier drew flood rows and nothing else, and those rows are the
-   `Flooding` section's since Phase 2. The two rings collapsed back to one: the
-   house block needs the storm's wind to reach you, full stop. **The thing to
-   check is that the warnings did not go with it** — they should be in Flooding,
-   under their own heading, on every storm and on none.
-6. **The warning rows carry their affected area and how long is left.** *Hawaii
+5. **On HOME, `Rain` and `Flooding` now come and go with the stepper** (§56.9).
+   Step through storms on the home dashboard: both sections should be there for
+   a storm whose track passes within 300 nm of your house and **absent
+   entirely** for one that does not — no heading, no explanation, nothing.
+   **This is the one most likely to read as a bug rather than a rule.** A
+   section vanishing as you press a chevron is a strong signal; whether it reads
+   as *this storm has nothing to do with your house* or as *the app lost
+   something* is exactly the call nothing here can make. The fallback if it
+   reads wrong is a one-line placeholder saying why, which the gate deliberately
+   does not draw today.
+6. **And with NO storm on screen they should BOTH be there** — on a calm day,
+   and on a day a source is down. That half did not exist before this phase; a
+   quiet home screen showed neither. Check it with the globe empty.
+7. **The warning rows carry their affected area and how long is left.** *Hawaii
    in Hawaii, HI* under the name, *52 min left* under that. **The watch's area
    is seventeen zones and is printed whole on purpose** — the reader is hunting
    for their own zone and truncating hides it. On a phone that is a real block
    of text, and whether it reads as thorough or as a wall is a glass call. They
    are in `Flooding` now, not in Rain.
 
-7. **The `Flooding` section itself, on a calm day with a home set.** It renders
+8. **The `Flooding` section itself, on a calm day with a home set.** It renders
    with no storm on screen — that is the point of gating it on the house rather
    than the storm — and on a quiet day it says *no flood alerts are in force for
    your address* and nothing else. **Is that a useful line or a section of

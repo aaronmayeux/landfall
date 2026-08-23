@@ -1,27 +1,35 @@
 /**
  * rain-storm.js (ui) — the Rainfall section of the storm detail drawer.
- * SPEC §48.2, §48.9, §48.17.
+ * SPEC §48.2, §48.9.
  *
- * TWO BLOCKS, TWO SOURCES, TWO QUESTIONS, ONE SECTION.
+ * ONE BLOCK, ONE SOURCE, ONE QUESTION: what NHC says this storm will drop.
+ * The advisory's rainfall paragraph, rewrapped, in NHC's own words. A range
+ * across an AREA, for the storm the reader is looking at.
  *
- *   WHAT NHC SAYS   the advisory's rainfall paragraph, rewrapped, in NHC's own
- *                   words. A range across an AREA. NHC storms only.
- *   AT YOUR HOUSE   a gridded point forecast for the reader's home, from the
- *                   same record the home drawer's Rain section shows. A single
- *                   number for a POINT. Every storm, every basin.
+ * ==> THE READER'S HOUSE LEFT THIS FILE ON 2026-08-22 (§56.9). <== It used to
+ * carry a second block — a gridded point forecast at the reader's address,
+ * with its own fetch, its own state machine, its own retry and a two-tier
+ * scope gate deciding how much of it a given storm earned. All of it is gone,
+ * and none of it was deleted for being broken.
  *
- * ==> THE SECOND BLOCK IS WHY THIS SECTION IS WORTH OPENING OUTSIDE NHC'S
- * BASINS. <== Before §48.17 a GDACS storm's Rainfall section said "not
- * published for storms in this basin" and stopped — a section whose entire
- * content was an apology. The point forecast covers the planet, so the answer
- * to "how much rain am I getting" no longer depends on which agency happens to
- * be tracking the storm.
+ * It went because **a storm panel is about the storm.** The house figure is
+ * true for every cyclone on the globe — it is a forecast about a PLACE — so
+ * printing it under one storm's name puts a true number in a position that
+ * claims a connection nobody made. The spec spent a whole section carving out
+ * which parts of it survived which distance, and two rings of different sizes
+ * for one house was a distinction no reader was ever going to hold. The
+ * house's rain lives on the screen with the house on it.
+ *
+ * ==> WHICH ALSO RETIRES §48.10's ONE-SCREEN FIX, AND IT IS NO LOSS. <== That
+ * section's worry was real: NHC's range says 8 to 12 inches across eastern
+ * Maui, the grid at Kahului says 2.91, both are right, and a reader meeting
+ * them on two screens concludes the app is broken. The fix was to put them
+ * adjacent with a line between them explaining the difference. There is no
+ * disagreement to explain now, because there is only one number here.
  *
  * A SELF-CONTAINED CONTROLLER, because `ui/view-storm-detail.js` is past §12's
  * file ceiling and only takes seams now — a section row, an ensure, a wire and
- * a repaint. Everything with weight is here: the fetch state machine, the four
- * states, the retry, the HTML. Same shape as `ui/env-health.js`, deliberately,
- * because the next section to land should have an obvious thing to copy.
+ * a repaint. Same shape as `ui/env-health.js`, deliberately.
  *
  * ==> IT SHOWS THE PARAGRAPH AND IT NEVER REWRITES IT. <== §48.2. NHC's range
  * IS the forecast; a summary of it would be a second opinion nobody asked for,
@@ -37,55 +45,24 @@
  * who never opens it never paid; an open-by-default Rainfall section means one
  * advisory page per storm opened. Measured: 30,712 bytes for Lala. It is
  * cached per advisory key and shared with the Advisory section, so opening
- * that afterwards is free — but the first storm drawer of a session now costs
- * 30 KB it did not cost before. That is the price of §48.1's complaint, which
- * is that rainfall currently sits where nobody opens it.
- *
- * ==> THE HOUSE FIGURE IS THE HOME DRAWER'S OWN RECORD, NOT A SECOND FETCH.
- * <== `data/rainfall.js` holds exactly one answer, keyed by the rounded home
- * coordinates, and both surfaces read it. Fetching independently here would
- * have cost nothing in bytes and everything in trust: the two calls can land
- * either side of a grid update, and an app showing 2.9 in on one screen and
- * 3.2 in on another is an app the reader stops believing. One record, one
- * number, everywhere.
- *
- * ==> IT PUTS §48.10'S TWO DISAGREEING NUMBERS ON ONE SCREEN, DELIBERATELY.
- * <== That section calls the disagreement the one real design risk in §48: the
- * advisory says 8 to 12 inches across eastern Maui, the grid at Kahului says
- * 2.91, both are right, and a reader meeting them on two different screens
- * concludes the app is broken. Splitting them across screens never fixed that,
- * it only made it slower to notice. Here they are adjacent, each under a
- * heading naming what it is a forecast FOR, with one line between them saying
- * why they differ.
- *
- * ==> AND THE HOUSE FIGURE IS NOT ATTRIBUTED TO THE STORM. <== A gridded QPF is
- * all rain from all causes. Wording it as "this storm will bring" would be a
- * claim the source does not make and cannot support — a stalled front can put
- * four inches on a house while the hurricane on screen goes out to sea. The
- * note says so in one short sentence rather than leaving the position of the
- * block to imply it.
+ * that afterwards is free.
  *
  * ==> FLOOD ALERTS LEFT THIS SECTION ON 2026-08-22 (§56.7). <== They shipped
  * here on 2026-08-21 as a third block, and the reason they went is not that
  * they did not fit: it is that burying an agency's live order inside a section
  * about a rainfall forecast makes the urgent thing look like a footnote on the
  * other thing. They are `Flooding` now — `ui/flooding-storm.js`, directly
- * below this — beside the modelled coastal figure, because a reader deciding
- * whether to move a car does not care whether the water came off the sky or
- * off the sea. What is left here is a FORECAST, and only a forecast.
+ * below this. What is left here is a FORECAST, and only a forecast.
  *
  * ==> BOUND TO THE STORM IT BELONGS TO. <== `forId`/`forKey`, exactly the
  * advisory record's fix for a real on-glass bug: a record that infers "did the
  * storm change?" from call ordering shows the previous storm's words under the
- * next storm's name. The house block is bound the same way, to the home
- * coordinates rather than to the storm.
+ * next storm's name.
  *
  * Imports: lib/ and ui/ siblings, never data/ — the fetch arrives injected (§12).
  */
 
 import { advisoryRainfall } from '../lib/advisory.js';
-import { houseRainScope, rainSummary } from '../lib/rainfall.js';
-import { formatClockDay } from '../lib/time.js';
 import { DOTS } from './loading-dots.js';
 
 const esc = (s) =>
@@ -100,104 +77,39 @@ export const RAIN_SECTION = 'rainfall';
  * @param {(storm:object, opts?:object)=>Promise<object>} deps.loadAdvisory
  *   the SAME facade the Advisory section uses, so both read one cached record
  *   and can never show two different advisories for one storm.
- * @param {{ loadRainfall:Function, retryRainfall:Function }} [deps.rain]
- *   the SAME facade `ui/rain-home.js` is handed, for the reason in the header:
- *   one record, one number on both surfaces. Absent means the house block does
- *   not render at all — the older detail suites construct this view with the
- *   deps they needed at the time, and an unwired section that throws takes the
- *   whole drawer down during a hurricane.
- * @param {{ get:()=>object|null, rangeNm:(storm:object)=>({distanceNm:number|null,
- *   approachNm:number|null}) }} [deps.house] the home, and how near this storm
- *   comes to it. Asked fresh on every render rather than captured: the reader
- *   can move their pin with the drawer open, and the forecast track lands
- *   after the first paint.
- * @param {()=>string|null} [deps.units] the resolved unit system, so this
- *   figure and the home drawer's are never in two different systems.
- * @param {()=>number} [deps.now] the clock, injectable for the same reason
- *   `ui/view-home.js` injects one: this block filters flood alerts by their
- *   expiry, and an expiry check against `Date.now()` can only be tested during
- *   an actual flood warning. The one captured set of live alerts this project
- *   has is from August, so the suite has to be able to stand there.
+ *
+ * ==> ONE DEPENDENCY, AND IT USED TO BE FIVE. <== `rain`, `house`, `units` and
+ * `now` were all the house block's (§56.9). They are gone with it, and the
+ * fetch they carried is gone too: this panel no longer asks for a point
+ * forecast at the reader's address at all. A reader who never opens the home
+ * dashboard now pays nothing for it.
  */
-export function createRainStorm({
-  loadAdvisory, rain = null, house = null, units = null,
-  now = () => Date.now(),
-}) {
+export function createRainStorm({ loadAdvisory }) {
   let state = { phase: 'idle', rec: null, forId: null, forKey: null };
   let seq = 0;
-
-  /* The house block's own record and its own sequence number. SEPARATE from
-   * the advisory's above, because the two are about different things and
-   * arrive at different times — one is keyed by advisory, one by coordinates,
-   * and folding them into one state object would mean a new advisory
-   * discarding a perfectly good rainfall answer for a house that has not
-   * moved. */
-  let houseState = { phase: 'idle', result: null, forKey: null };
-  let houseSeq = 0;
 
   const isCurrent = (storm) =>
     !!storm && state.forId === storm.id && state.forKey === storm.advisoryKey;
 
-  /** Home identity, the coordinates and not the label — the same key
-   *  `ui/rain-home.js` uses, and for the same reason: a reader can rename a pin
-   *  without moving it, and move it without renaming it. */
-  const homeKeyOf = (home) =>
-    home && Number.isFinite(home.lat) ? `${home.lat},${home.lon}` : null;
-
-  /** How much of the house block this storm earns — `'full'`, `'alerts'` or
-   *  `'none'` (§48.20). ONE gate, asked by every function below, so the block
-   *  can never be fetched in a state where it would not be drawn.
-   *
-   *  ==> TWO TIERS, BECAUSE A FLOOD WARNING IS NOT THE STORM'S. <== The figure
-   *  needs the storm's weather to actually reach the house; the warning is an
-   *  agency's statement about the reader's own address and is true whichever
-   *  storm they tapped. See `houseRainScope`. */
-  function houseScope(storm) {
-    if (!rain?.loadRainfall || !house?.get || !storm) return 'none';
-    const home = house.get();
-    if (!home || !Number.isFinite(home.lat)) return 'none';
-    return houseRainScope(house.rangeNm?.(storm) || {});
-  }
-
-  /** The home this block is about, or null when this storm earns nothing.
-   *
-   *  ==> IT IS THE `full` TIER ALONE SINCE §56.7. <== It used to admit
-   *  `alerts` as well, because that tier drew flood warnings off this same
-   *  payload. Those rows are `Flooding`'s now, so the tier draws nothing —
-   *  and a fetch dispatched for a state the renderer will not draw is a
-   *  request the reader pays for and never sees. The gate `ensureHouse` asks
-   *  is the gate the renderer asks, which is what keeps those two honest. */
-  function houseTarget(storm) {
-    if (houseScope(storm) !== 'full') return null;
-    return house.get();
-  }
-
   /** The section body's inner HTML for the current state. Pure of the DOM. */
   function html(storm) {
-    if (!storm) return '';
-    /* ORDER IS LOAD-BEARING, in one narrow way: `advisoryBlock` sets
-     * `drewRange` for the block below it, which needs to know whether there is
-     * an area range on screen to compare against. Computed once, by whoever
-     * decided it, rather than asked again with the same input — two answers to
-     * one question is how they start disagreeing. */
-    const range = advisoryBlock(storm);
-    return `${range}${houseBlock(storm)}`;
+    return storm ? advisoryBlock(storm) : '';
   }
-
-  /** Whether `advisoryBlock` put an area range on screen in THIS render. Read
-   *  only by `houseBlock`, which runs immediately after it. */
-  let drewRange = false;
 
   /** What NHC says — a range across an area, in NHC's words. */
   function advisoryBlock(storm) {
-    drewRange = false;
     /* ==> A GDACS STORM IS ANSWERED WITHOUT A FETCH. <== NHC publishes the
      * rainfall paragraph; JTWC's warnings carry no equivalent labelled block.
      * The sentence is WORD FOR WORD §47.6's, so a reader who meets both
      * Environment and Rainfall outside NHC's basins learns one sentence rather
-     * than two. Since §48.17 it is no longer the whole section — the house
-     * block below it answers for every basin — so it now reads as one source
-     * declining rather than as the app having nothing. */
+     * than two.
+     *
+     * ==> AND IT IS THE WHOLE SECTION AGAIN SINCE §56.9. <== For a month a
+     * house block sat below this and answered for every basin, so
+     * this line read as one source declining rather than as the app having
+     * nothing. The house went back to the home screen, so on a GDACS storm
+     * this section is once again a single sentence — and the reader's own
+     * rainfall figure is one screen away rather than on this one. */
     if (storm.source !== 'nhc') {
       return `<div class="detail-soft">Not published for storms in this basin.</div>`;
     }
@@ -235,8 +147,6 @@ export function createRainStorm({
       return `<div class="detail-soft">This advisory has no rainfall section.</div>`;
     }
 
-    drewRange = true;
-
     /* NHC's own paragraphs, one element each. Rewrapped, because a teletype
      * product is hard-wrapped at ~68 columns and rendering those newlines gives
      * a ragged column on a phone (§48.2). */
@@ -248,154 +158,6 @@ export function createRainStorm({
   }
 
   /**
-   * At your house — a point forecast, from the home drawer's own record.
-   * §48.17.
-   *
-   * ==> IT RENDERS NOTHING AT ALL IN THREE CASES AND THAT IS NOT §5'S SILENCE.
-   * <== §5 governs a SOURCE that failed and must say so. These are three
-   * questions nobody asked: there is no home set, the feature is not wired into
-   * this view, or the storm is on the other side of the planet. A heading over
-   * an explanation of why a reader with no home pin has no house forecast is
-   * noise on the one screen where noise costs the most.
-   *
-   * Every state where a source WAS asked is written out below, loading and
-   * failure included.
-   */
-  function houseBlock(storm) {
-    const scope = houseScope(storm);
-    if (scope === 'none') return '';
-    const home = house.get();
-    if (!home) return '';
-
-    const head = `<div class="detail-rain-house">
-      <div class="detail-kicker">At your house</div>`;
-    const close = '</div>';
-    const wrap = (inner) => `${head}${inner}${close}`;
-
-    /* ==> THE WARNINGS-ONLY TIER IS EMPTY NOW, AND THAT IS NOT AN OVERSIGHT
-     * (§56.7). <== §48.20 built this tier for exactly one thing: a storm whose
-     * weather does not reach the house has no rainfall figure to print under
-     * its name, but a flood warning in force is still an agency's statement
-     * about the reader's own address and is true whichever storm they tapped.
-     * So the tier drew flood rows and nothing else.
-     *
-     * Those rows are `Flooding` now — a section of their own, on both screens
-     * — so the tier's entire content has moved and there is nothing left for
-     * it to draw. It returns before fetching rather than fetching and
-     * rendering nothing.
-     *
-     * ==> IT IS NOT DELETED HERE BECAUSE THE WHOLE HOUSE BLOCK IS GOING. <==
-     * §56.9 takes the reader's house out of the storm drawer entirely, tier
-     * and scope logic and CSS together, in the phase after this one. Half-
-     * removing it now would leave `houseRainScope` answering a question with
-     * two live answers and one dead one, which is a worse file to read than
-     * either the before or the after. */
-    if (scope === 'alerts') return '';
-
-    if (houseState.forKey !== homeKeyOf(home) ||
-        houseState.phase === 'idle' || houseState.phase === 'loading') {
-      return wrap(`<p class="detail-soft">Checking the forecast for your house${DOTS}</p>`);
-    }
-
-    const res = houseState.result || { status: 'unavailable' };
-
-    if (res.status === 'not_covered') {
-      /* Rare since the global model landed (§48.14) — it means BOTH sources
-       * declined for this point. A fact about the place, so no Retry: a button
-       * that cannot work is worse than none. */
-      return wrap(`<p class="detail-soft">No rainfall forecast for this location.</p>`);
-    }
-
-    if (res.status !== 'ok') {
-      /* THE BUTTON IS ITS OWN ELEMENT rather than a word inside the sentence,
-       * for the reason the home section gives: a 44px control (§10) set inline
-       * in a paragraph pushes its line apart and reads as a bad wrap.
-       *
-       * `data-retry="rain-house"` and not `rain` — `ui/view-storm-detail.js`
-       * binds every `.detail-retry` on the panel by class, and two buttons
-       * answering to one selector is how one of them silently stops working. */
-      return wrap(`<p class="detail-soft">The forecast for your house didn’t load.
-        <button class="detail-retry" type="button" data-retry="rain-house">Retry</button></p>`);
-    }
-
-    const out = rainSummary(res.payload, { system: units?.() ?? null, now: now() });
-
-    if (out.state === 'lapsed') {
-      /* ==> RAN OUT IS NOT DRY (§48.19). <== Every hour in the held payload has
-       * already passed, so there is nothing left to total. "No meaningful rain
-       * expected" here would be an all-clear built out of an absence, which is
-       * §5 with a storm's name over it. Retryable — a stale last-good copy is
-       * exactly what this looks like. */
-      return wrap(`<p class="detail-soft">This rainfall forecast has run out — every
-        hour in it has already passed.
-        <button class="detail-retry" type="button" data-retry="rain-house">Retry</button></p>`);
-    }
-
-    if (out.state !== 'ok') {
-      /* The payload arrived and could not be read — an unrecognised unit, or a
-       * series with nothing readable in it (§48.4). Ours, and NOT retryable:
-       * asking again returns the same bytes. */
-      return wrap(`<p class="detail-soft">The forecast for your house came back in a
-        form this app could not read.</p>`);
-    }
-
-    const through = out.throughWords ? ` through ${esc(out.throughWords)}` : '';
-
-    /* NEGLIGIBLE RAIN IS WORDS, NOT A NUMBER (§48.8). `0.01 in` reads as a
-     * malfunction; said plainly it reads as a forecast. */
-    const line = out.negligible
-      ? `<p class="detail-rain-para">No meaningful rain expected${through}.</p>`
-      : `<p class="detail-rain-para"><strong>About ${esc(out.totalText)}</strong>
-          expected${through}.</p>`;
-
-    /* The heaviest block, only when one dominates. On this screen it is the
-     * sentence that separates a flood from a wet week.
-     *
-     * ==> IT NAMES WHEN, AND IT SHIPPED WITHOUT THAT. <== The time was cut for
-     * brevity on a phone and that was the wrong half to cut: "three inches in
-     * six hours" is a fact, "three inches in six hours starting Saturday noon"
-     * is something a reader can act on. Same sentence the dashboard writes. */
-    const peak = out.peak
-      ? `<p class="detail-rain-para">The heaviest ${esc(out.peak.lengthWords)} bring about
-          ${esc(out.peak.text)}, from ${esc(formatClockDay(out.peak.startMs))}.</p>`
-      : '';
-
-    /* ==> WHOSE FORECAST, FOR WHAT POINT, AND FROM WHAT CAUSE. <== §48.12's
-     * provenance line, plus the sentence §48.17 adds: a gridded total is all
-     * rain from every cause, and a figure sitting under a storm's name will be
-     * read as that storm's doing unless it says otherwise. */
-    const where = out.provider?.name === 'open-meteo'
-      ? (Number.isFinite(out.provider.gridLat)
-        ? `Open-Meteo, nearest model point
-           ${out.provider.gridLat.toFixed(2)}, ${out.provider.gridLon.toFixed(2)}.`
-        : 'From Open-Meteo.')
-      : out.place
-        ? `National Weather Service, nearest point ${esc(out.place)}.`
-        : 'From the National Weather Service.';
-
-    /* ==> THE ONE LINE THAT DEFUSES §48.10, AND ONLY WHEN BOTH ARE ON SCREEN.
-     * <== Said under a GDACS storm, where there is no advisory range to
-     * compare against, it would explain a disagreement the reader cannot see.
-     * `advisoryRainfall` is not re-run for this — the block above has already
-     * decided, and asking the same question twice is how two answers drift. */
-    const compare = drewRange
-      ? `<p class="detail-rain-note">The figures above are for the heaviest band
-          across a whole area; this one is for a single point, so the two can
-          differ and both be right.</p>`
-      : '';
-
-    /* ==> THE WARNINGS THAT USED TO LEAD THIS BLOCK ARE IN `Flooding` NOW
-     * (§56.7). <== §48.6's ranking — a warning in force outranks any forecast
-     * — did not change and is not undone by the move: `Flooding` renders above
-     * the point the reader scrolls to for a total, and it renders under a
-     * heading instead of as a footnote on a section about something else. What
-     * is left here is a forecast, and only a forecast. */
-    return wrap(`${line}${peak}${compare}
-      <p class="detail-rain-note">${where} Total rain from all causes, not this
-        storm alone.</p>`);
-  }
-
-  /**
    * Dispatch the advisory fetch if what we hold is not this storm's.
    *
    * Cheap to call on every render — the guard makes it idempotent, and
@@ -403,7 +165,6 @@ export function createRainStorm({
    * seen storm instant.
    */
   async function ensure(storm, repaint) {
-    ensureHouse(storm, repaint);
     if (!storm || storm.source !== 'nhc' || !storm.advisoryKey) return;
     if (isCurrent(storm) && state.phase !== 'idle') return;
     const mySeq = ++seq;
@@ -414,38 +175,9 @@ export function createRainStorm({
     repaint?.();
   }
 
-  /**
-   * Dispatch the house forecast if what we hold is not this home's. §48.17.
-   *
-   * ==> IT COSTS A REQUEST THIS PANEL DID NOT MAKE BEFORE, AND ONLY ONE. <==
-   * `data/rainfall.js` holds one answer for `RAIN.clientTtlMs`, so a reader who
-   * has already opened the home dashboard pays nothing here, and a reader who
-   * opens six storm drawers in a row pays once. What is genuinely new is a
-   * reader who never opens the dashboard at all: for them this is one small
-   * JSON fetch per fifteen minutes, gated on a home being set AND the storm
-   * being near it, which is the narrowest gate this feature could have and
-   * still exist.
-   *
-   * The gate is `houseTarget`, the same one the renderer asks — so this can
-   * never fetch for a state the block would not draw.
-   */
-  async function ensureHouse(storm, repaint) {
-    const home = houseTarget(storm);
-    if (!home) return;
-    const key = homeKeyOf(home);
-    if (houseState.forKey === key && houseState.phase !== 'idle') return;
-    const mySeq = ++houseSeq;
-    houseState = { phase: 'loading', result: null, forKey: key };
-    const result = await rain.loadRainfall(home);
-    if (mySeq !== houseSeq) return; // the home moved mid-flight
-    houseState = { phase: 'done', result, forKey: key };
-    repaint?.();
-  }
-
   /** Bind the retry inside an already-rendered body. `data-retry` scopes the
    *  button so the geometry retry binding in the host view never collects it. */
   function wire(bodyEl, storm, repaint) {
-    wireHouse(bodyEl, storm, repaint);
     const btn = bodyEl?.querySelector?.('[data-retry="rainfall"]');
     if (!btn) return;
     btn.addEventListener('click', async () => {
@@ -456,26 +188,6 @@ export function createRainStorm({
       const rec = await loadAdvisory(storm, { retry: true });
       if (mySeq !== seq) return;
       state = { phase: 'done', rec, forId: storm.id, forKey: storm.advisoryKey };
-      repaint?.();
-    });
-  }
-
-  /** The house block's own Retry. It EVICTS before refetching — `retryRainfall`
-   *  is the facade that does — so a cached failure can never be the answer to a
-   *  press. Without that the button would look like it worked and change
-   *  nothing, which is the worst of both. */
-  function wireHouse(bodyEl, storm, repaint) {
-    const btn = bodyEl?.querySelector?.('[data-retry="rain-house"]');
-    if (!btn || !rain?.retryRainfall) return;
-    btn.addEventListener('click', async () => {
-      const home = houseTarget(storm);
-      if (!home) return;
-      const mySeq = ++houseSeq;
-      houseState = { phase: 'loading', result: null, forKey: homeKeyOf(home) };
-      repaint?.();
-      const result = await rain.retryRainfall(home);
-      if (mySeq !== houseSeq) return;
-      houseState = { phase: 'done', result, forKey: homeKeyOf(home) };
       repaint?.();
     });
   }

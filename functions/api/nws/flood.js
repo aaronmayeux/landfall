@@ -154,7 +154,7 @@ export function projectFlood(collections) {
          * and a list that shows it twice looks like two floods. */
         id: p.id || null,
         event: p.event || null,
-        /* WHERE IT APPLIES, WHOLE AND UNSHORTENED (§48.20). The reader is
+        /* WHERE IT APPLIES, WHOLE AND UNSHORTENED (§56.7). The reader is
          * hunting for their own zone in this list. */
         areaDesc: p.areaDesc || null,
         severity: p.severity || null,

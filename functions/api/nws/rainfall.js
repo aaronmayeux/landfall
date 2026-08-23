@@ -131,7 +131,7 @@ export const stripAlerts = (body) =>
     const p = f?.properties || {};
     return {
       event: p.event || null,
-      /* ==> WHERE IT APPLIES, IN THE AGENCY'S OWN WORDS (§48.20). <== The
+      /* ==> WHERE IT APPLIES, IN THE AGENCY'S OWN WORDS (§56.7). <== The
        * zone list NWS writes: `Hawaii in Hawaii, HI` on the Flash Flood
        * Warning, a thirteen-zone semicolon list on the Flood Watch. A warning
        * with no area attached asks the reader to assume it is about them,

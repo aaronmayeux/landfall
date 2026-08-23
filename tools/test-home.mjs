@@ -1332,6 +1332,85 @@ for (const [what, state] of [
   ok(/NHC/.test(html), 'and names the source that failed');
 }
 
+/* ==========================================================================
+ * §56.9 — THE HOUSE SECTIONS GATE ON THE CORRIDOR
+ *
+ * ==> THE BUG IS A POSITION, NOT A NUMBER, WHICH IS WHY IT NEEDS A TEST. <==
+ * Rain and Flooding are plain queries at the reader's address; nothing in
+ * either is wrong under a Japan typhoon. What is wrong is where they SIT — the
+ * stepper puts a storm's name above them, and a true figure under a name it
+ * has nothing to do with is the app claiming a connection nobody made. There
+ * is no exception to catch and no wrong digit to spot.
+ *
+ * The home in these suites is New Orleans and Bertha is in the Gulf; Peilou is
+ * in the west Pacific. Distances are measured here rather than assumed, so a
+ * fixture that moves cannot leave this passing for the wrong reason.
+ * ====================================================================== */
+{
+  const { homeInCorridor } = await import('../lib/flood.js');
+  const { RAIN } = await import('../config/constants.js');
+
+  setHome(HOME);
+  const near = homeInCorridor({ storm: STORM, forecast: CURVE, home: HOME });
+  const far = homeInCorridor({ storm: FAR_STORM, forecast: FAR_CURVE, home: HOME });
+  ok(near.inside === true && far.inside === false,
+     `the fixtures straddle the corridor — Bertha ${near.nm.toFixed(0)} nm, ` +
+     `Peilou ${far.nm.toFixed(0)}, against ${RAIN.floodCorridorNm}`);
+
+  /* IN RANGE: both sections draw. */
+  {
+    const { v, host } = mountView({ state: 'ok', bundle: { forecast: CURVE, forecastRadii: RADII }, error: null });
+    v.update({ storms: [STORM], sources: SRC_OK });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = host.read();
+    ok(/home-rain/.test(html), 'a storm whose corridor reaches the house draws Rain');
+    ok(/home-flood/.test(html), 'and draws Flooding');
+  }
+
+  /* OUT OF RANGE: neither draws, and the dashboard itself still does.
+   *
+   * ==> THE SECOND HALF IS THE HALF THAT MATTERS. <== Without it this passes
+   * on a view that failed to render anything at all, which is the shape a
+   * thrown exception takes on this screen. */
+  {
+    const { v, host } = mountView({ state: 'ok', bundle: { forecast: FAR_CURVE }, error: null });
+    v.update({ storms: [FAR_STORM], sources: SRC_OK });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = host.read();
+    ok(!/home-rain/.test(html), 'a storm on the far side of the planet draws no Rain section');
+    ok(!/home-flood/.test(html), 'and no Flooding section');
+    ok(/Peilou/.test(titleHtml(v)), 'while the storm itself is still on screen');
+  }
+
+  /* ==> AND THE EXCEPTION: NO STORM AT ALL STILL GETS THE HOUSE ITS OWN
+   * SECTIONS. <== On a calm day showing the reader their own forecast is this
+   * screen's entire job, and until §56.9 this screen showed them neither —
+   * both sections were built only where a threat storm existed. A gate that
+   * only ever subtracts would have made a quiet day emptier still. */
+  {
+    const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
+    v.update({ storms: [], sources: SRC_OK });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = host.read();
+    ok(/Nothing bearing down/.test(html), 'the all-clear is still the all-clear');
+    ok(/home-rain/.test(html), 'and the house still gets its Rain section');
+    ok(/home-flood/.test(html), 'and its Flooding section');
+  }
+
+  /* ==> INCLUDING ON THE DAY A SOURCE GOES QUIET, WHICH IS WHEN IT IS WORTH
+   * MOST. <== NHC being down says nothing about NWS's flood alerts or the
+   * rainfall grid. Withholding them here would take away the half that still
+   * works, on the day the other half stopped. */
+  {
+    const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
+    v.update({ storms: [], sources: { nhc: { status: 'unavailable' }, gdacs: { status: 'ok' } } });
+    await new Promise((r) => setTimeout(r, 0));
+    const html = host.read();
+    ok(!/All clear/.test(html), 'an outage is still not an all-clear');
+    ok(/home-rain/.test(html), 'and the house sections survive it');
+  }
+}
+
 /* --- still loading ------------------------------------------------------ */
 {
   const { v, host } = mountView({ state: 'ok', bundle: { forecast: [] }, error: null });
