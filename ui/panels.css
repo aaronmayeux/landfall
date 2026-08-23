@@ -3522,3 +3522,70 @@ button.drawer-identity:focus-visible {
 .flood-detail-source {
   margin: var(--space-base) 0 0;
 }
+
+/* ==> WHAT A WATCH IS AND WHAT A WARNING IS. <== Sits directly under the window
+   because it explains the heading above it. Body ink rather than the muted list
+   — it is an explanation the reader may genuinely need, not a footnote — but
+   set apart with a left rule so it does not read as another fact ABOUT this
+   alert, which it is not: it is true of every alert of that kind. */
+.flood-detail-means {
+  margin: var(--space-base) 0 0;
+  padding-left: var(--space-snug);
+  border-left: 2px solid var(--glass-border);
+  color: var(--text-primary);
+}
+
+/* ==> THE FORECASTER'S OWN WORDS, AND THE INSTRUCTION IS THE ONE THAT LEADS.
+   <== It is the actionable half and the reason the fetch exists, so it takes
+   body ink and full weight where the description sits quieter beneath it. */
+.flood-detail-instruction {
+  margin: 0 0 var(--space-snug);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+/* WHAT IS HAPPENING, underneath what to do about it. Muted and small: it is
+   meteorology, and the reader who needs it will read it. `pre-wrap` is NOT used
+   — the relay already undid NWS's teletype wrapping and the paragraphs are real
+   elements, so honouring the remaining newlines is a <br> in the markup rather
+   than a whitespace mode that would also preserve every stray indent. */
+.flood-detail-desc {
+  margin: 0 0 var(--space-snug);
+  font-size: var(--type-small);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ==> AN ALERT THAT IS NOT ON THE GLOBE SAYS SO. <== Amber, the same ink
+   `.area-stale` and `.list-held` use for "this is fine but you should know" —
+   not red, because nothing has failed: the agency published zones rather than a
+   box, and one of them did not resolve. */
+.flood-detail-nodraw {
+  margin: var(--space-base) 0 0;
+  font-size: var(--type-small);
+  color: var(--stale);
+}
+
+/* The way back to the map. Same furniture as `.retry` — both are a single
+   secondary action at the foot of a panel — with its own name because the two
+   will not always want the same margins. */
+.flood-detail-show {
+  display: block;
+  min-height: var(--touch-target);
+  margin: var(--space-base) 0 0;
+  padding: 0 var(--space-comfy);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+@media (hover: hover) { .flood-detail-show:hover { background: var(--hover); } }
+.flood-detail-show:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: calc(-1 * var(--focus-ring-width));
+}

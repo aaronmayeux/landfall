@@ -262,31 +262,31 @@ real home is the other row carrying the same section number.
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
 | `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 672-721 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert — ==> SHIPPED 2026-08-23, UNSEEN ON GLASS <== | `SPEC-FLOOD-PLAN.md` | 722-822 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert — ==> SHIPPED 2026-08-23, UNSEEN ON GLASS <== | `SPEC-FLOOD-PLAN.md` | 722-907 |
 | `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3636-3671 |
 | `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3814-3854 |
 | `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3895-3944 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4011-4084 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 823-854 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 855-998 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 999-1016 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 1017-1020 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 908-939 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 940-1083 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 1084-1101 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 1102-1105 |
 | `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
 | `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-424 |
 | `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 497-549 |
 | `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 584-671 |
-| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1187-1204 |
+| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1272-1289 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 72,242 | 16 |
+| `SPEC-FLOOD-PLAN.md` | 77,985 | 16 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 175,798 | 15 |
+| `SPEC.md` | 176,022 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

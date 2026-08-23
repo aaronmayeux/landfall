@@ -148,3 +148,45 @@ export const FLOOD_POINTER =
   '<div class="detail-cap-note">Flood alerts and coastal flooding are in the ' +
   '<strong>Flooding</strong> section below — they are not issued for a named ' +
   'storm, so they are not listed here.</div>';
+
+/* --------------------------------------------------------------------------
+ * THE DETAIL PANEL'S SENTENCES (§56.6)
+ * ----------------------------------------------------------------------- */
+
+/**
+ * What a watch is, and what a warning is, in NWS's own distinction.
+ *
+ * ==> IT IS ONE LINE AND IT IS THE MOST USEFUL LINE ON THE PANEL FOR SOME
+ * READERS. <== A Flood Watch and a Flash Flood Warning are BOTH `severity:
+ * Severe` (§48.6), so nothing in the payload separates them for somebody who
+ * does not already know the vocabulary — and plenty of people do not. The app
+ * already leans on the distinction everywhere: the chip is a darker green for a
+ * watch, the row says *in force* only for a warning, and a cluster counts as a
+ * warning if it holds even one. All of that assumes a reader who knows what the
+ * two words mean.
+ *
+ * ==> AND IT IS NWS'S OWN DEFINITION RATHER THAN A PARAPHRASE. <== "Conditions
+ * are favourable" and "is occurring or imminent" are the agency's own framing
+ * of watch versus warning, so this states a published distinction rather than
+ * inventing one. §50.3's rule about not asserting what a source did not say
+ * applies to prose as much as to a match.
+ *
+ * @param {boolean} watch
+ */
+export const watchOrWarningMeans = (watch) =>
+  watch
+    ? 'A watch means conditions are favourable for flooding. It has not started, and it may not.'
+    : 'A warning means flooding is happening now or is about to. Act on it.';
+
+/**
+ * ==> SAID WHEN AN ALERT HAS NO SHAPE, BECAUSE OTHERWISE THE READER LOOKS FOR
+ * SOMETHING THAT IS NOT THERE. <== §56.4 resolves a watch's forecast zones into
+ * real boundaries, so most watches DO end up drawable — but a zone whose
+ * boundary did not come back leaves an alert that is genuinely in force, listed
+ * in the drawer, and invisible on the globe. A panel that said nothing would
+ * leave a reader hunting the map for a shape this app cannot draw, and reading
+ * its absence as an all-clear. §5: never ship silence on a failure.
+ */
+export const FLOOD_NOT_DRAWN =
+  'This alert is in force, but the agency did not publish a boundary we could ' +
+  'draw, so it does not appear on the globe.';

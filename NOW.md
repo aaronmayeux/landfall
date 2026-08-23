@@ -355,6 +355,33 @@ Slice C's work.**
    Slice C touches no genesis file. A suite that hangs rather than failing is
    worse than a red one — it blocks whatever runs it and names nothing.
 
+**==> PHASE 5 IS CONFIRMED ON GLASS AND A SIXTH PASS WENT IN ON TOP OF IT.
+<==** 2026-08-23, Aaron on a phone: *"works and looks good"*, with one fault —
+a tapped cluster stayed painted for the whole flight and only broke apart on
+arrival. Fixed: the chip fades on the TAP, as an opacity write, restored on
+`moveend`, on a null zoom, and on every push. §56.6.
+
+**AND THE PANEL GAINED THE FIVE THINGS IT WAS THIN WITHOUT.** The forecaster's
+own `instruction` and `description`, fetched one alert at a time through a new
+`/api/nws/alert` route; the issuing office; one line saying what a watch is; a
+sentence when an alert has no drawable shape; and `Show on the globe`. **The
+instruction is the one that mattered** — until now this app could say when a
+flood warning expired and not what to do about it.
+
+**==> AND THAT NEW ROUTE IS THE ONLY ONE IN THE APP THAT BUILDS AN UPSTREAM URL
+FROM CLIENT INPUT. <==** The id must match NWS's CAP URN anchored at both ends
+or it is refused before any fetch. Unanchored, `https://evil.example/?ok=urn:oid:…`
+passes and the function fetches it with our User-Agent from inside Cloudflare's
+network. Seven refusal cases asserted, anchors mutation-verified. **If another
+route ever takes an identifier from a query string, read
+`functions/api/nws/alert.js` first.**
+
+**STILL UNSEEN ON GLASS: everything in this sixth pass.** The fade, the prose,
+the office, the watch line, the not-drawn line and the button. **Five minutes:
+tap a numbered cluster and watch it go; tap a single chip and read the panel;
+press Retry with the phone in airplane mode; press `Show on the globe` from a
+row on the home dashboard; and check a Flood Watch says what a watch is.**
+
 **THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
 three minutes, in that order — taps on the globe first, chevrons on the home
 dashboard second, the switch off-and-on third, a poll cycle fourth, and **only

@@ -108,8 +108,10 @@ import {
   STORM_GEO,
 } from '../../config/tokens.js';
 import { FLOOD, ZOOM } from '../../config/constants.js';
+import { DURATION } from '../../config/motion.js';
 import { isLight } from '../../config/theme.js';
-import { createPointCache, floodSources, trimPointCache } from '../../lib/flood-features.js';
+import { createPointCache, floodSources, pointForAlert, trimPointCache }
+  from '../../lib/flood-features.js';
 /* ==> THE CHIP IS A FILE OF ITS OWN NOW, AND SO IS `map/`'s ONLY EDGE INTO
  * `ui/`. <== This file crossed §12's 700-line ceiling on Slice B; SPEC.md's
  * inventory named the cut twice and it grew both times. Slice C took it first
@@ -233,6 +235,13 @@ function push(map) {
   /* AFTER the push and not before, so the cache is never emptied on the frame
    * that is about to read it. */
   trimPointCache(pointCache, FLOOD.pointCacheMax);
+
+  /* ==> A NEW SOURCE MEANS NEW CLUSTER IDS, SO A HELD ONE IS MEANINGLESS. <==
+   * MapLibre assigns cluster ids when it indexes, and a poll re-indexes. Left
+   * alone, a stale id would either match nothing (harmless) or match a
+   * DIFFERENT pile (a chip missing with nothing saying so). Cleared on every
+   * push, which is the only moment the ids can change. */
+  showFloodClusters(map);
 }
 
 registerLayer({
@@ -345,6 +354,16 @@ registerLayer({
           'text-ignore-placement': true,
         },
         paint: {
+          /* ==> A SHORT FADE RATHER THAN A CUT, AND IT IS THE ONLY TIMING IN
+           * THIS LAYER. <== A tapped cluster drops to opacity 0 the instant the
+           * tap is handled (see `hideFloodCluster`). A hard cut at that moment
+           * reads as a dropped frame; `DURATION.instant` (90ms) is the tier this
+           * app already uses for immediate feedback — a press state, a focus
+           * ring — which is exactly what this is. Opacity only
+           * — §10's rule about animating transform and opacity and nothing
+           * else. */
+          'icon-opacity-transition': { duration: DURATION.instant },
+          'text-opacity-transition': { duration: DURATION.instant },
           /* Per-chip, and `countInkExpr` carries the measured reason. */
           'text-color': countInkExpr(),
           'text-halo-color': countHaloExpr(),
@@ -465,6 +484,7 @@ export function rethemeFlood(map) {
 export function resetFloodLayer() {
   lastAlerts = [];
   visible = false;
+  hiddenCluster = null;
   pointCache.points.clear();
   pointCache.runs = 0;
 }
@@ -591,6 +611,84 @@ export function floodAlertById(id) {
  * @returns {Promise<number|null>} null when the source or the cluster is gone —
  *   a poll can land between the tap and the answer.
  */
+/**
+ * Where the chip for one alert sits, so the panel can fly to it.
+ *
+ * ==> THE SAME POINT THE CHIP WAS DRAWN AT, FROM THE SAME CACHE. <== A second
+ * way of answering "where is this alert" is a second answer that can disagree
+ * with the first, and the reader would land beside the mark rather than on it.
+ * A cache miss — the switch has been off all session, so nothing has been drawn
+ * — computes it and keeps it, exactly as a push would.
+ */
+export function floodAlertPoint(alert) {
+  if (!alert?.geometry) return null;
+  return pointForAlert(alert, pointCache);
+}
+
+/* ---------------------------------------------------------------------------
+ * THE TAPPED CLUSTER GETS OUT OF THE WAY (§56.6)
+ *
+ * ==> A CLUSTER STAYS PAINTED FOR THE WHOLE FLIGHT AND ONLY BREAKS APART ON
+ * ARRIVAL, AND THAT LOOKS BROKEN. <== Aaron on a phone, 2026-08-23. MapLibre
+ * recomputes which points merge when the ZOOM lands, so the chip reading "8"
+ * rides the camera all the way in and pops into eight chips at the end. The
+ * reader has pressed something and watched it not respond.
+ *
+ * ==> IT IS AN OPACITY WRITE AND NOTHING ELSE. <== No source rewrite, no
+ * filter change, no re-tiling — those are the expensive operations on this
+ * layer and every one of them would cost a frame at exactly the moment the
+ * camera starts moving. `setPaintProperty` on two opacity properties is a
+ * uniform update.
+ *
+ * ==> ONLY THE TAPPED CLUSTER FADES. <== Hiding the whole chip layer for the
+ * duration would flicker every other alert on screen, which is a worse fault
+ * than the one being fixed.
+ *
+ * ==> AND IT MUST COME BACK NO MATTER HOW THE FLIGHT ENDS. <== The reader can
+ * grab the globe mid-flight; the cluster can already be at max zoom and never
+ * split; the poll can replace the whole source underneath. If any of those left
+ * a chip hidden, this layer would have invented a way for a hazard marker to
+ * vanish silently, which is §5 with a map over it. `showFloodClusters` is
+ * called from `moveend` — which fires on an interrupted flight too — and again
+ * on every push.
+ * ------------------------------------------------------------------------ */
+
+/** The cluster currently faded out, or null. */
+let hiddenCluster = null;
+
+/** Opacity for the chip and its numeral: 0 for the tapped cluster, 1 for
+ *  everything else. A plain 1 when nothing is hidden, so the common case is a
+ *  constant rather than an expression MapLibre has to evaluate per feature. */
+const chipOpacityExpr = () =>
+  hiddenCluster == null
+    ? 1
+    : ['case', ['==', ['get', 'cluster_id'], hiddenCluster], 0, 1];
+
+function applyChipOpacity(map) {
+  if (!map.getLayer?.(CHIP)) return;
+  const expr = chipOpacityExpr();
+  map.setPaintProperty(CHIP, 'icon-opacity', expr);
+  map.setPaintProperty(CHIP, 'text-opacity', expr);
+}
+
+/**
+ * Fade the tapped cluster out. Called the instant the tap is handled, before
+ * the camera is asked to do anything.
+ */
+export function hideFloodCluster(map, clusterId) {
+  if (!Number.isFinite(clusterId)) return;
+  hiddenCluster = clusterId;
+  applyChipOpacity(map);
+}
+
+/** Put every chip back. Safe to call when nothing is hidden — the early return
+ *  means an idle `moveend` costs one comparison rather than two paint writes. */
+export function showFloodClusters(map) {
+  if (hiddenCluster == null) return;
+  hiddenCluster = null;
+  applyChipOpacity(map);
+}
+
 export function floodClusterZoom(map, clusterId) {
   const src = map.getSource?.(POINT_SOURCE);
   if (!src?.getClusterExpansionZoom) return Promise.resolve(null);

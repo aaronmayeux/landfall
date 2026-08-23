@@ -2663,6 +2663,22 @@ export const FLOOD = Object.freeze({
    *  reasons its way to the same number from the opposite direction — its
    *  patches are hundreds of miles across and it pads to catch the rim. */
   chipHitPadPx: 8,
+
+  /** Where the camera lands when the detail panel's `Show on the globe` is
+   *  pressed (§56.6).
+   *
+   *  ==> TIGHTER THAN `GENESIS.flyToZoom` AND WIDER THAN `GLOBE.flyToZoom`,
+   *  BECAUSE A FLOOD ALERT IS BETWEEN THE TWO THINGS THOSE FRAME. <== A storm
+   *  is a point and 5 frames it. A development region is 8–22° across and 3.2
+   *  frames it with its coastline. §56.2 measured these polygons at 0.060 to
+   *  0.440 degrees — a county, not a region and not a point. 7 puts a
+   *  county-scale shape across most of the screen with enough coast and enough
+   *  place names around it to answer "is this near me", which is the only
+   *  question somebody presses this button to ask.
+   *
+   *  Two levels past `ZOOM.floodFull`, so the polygon is at full opacity when
+   *  the camera arrives rather than still ramping in. */
+  showOnMapZoom: 7,
 });
 
 /* ---------------------------------------------------------------------------

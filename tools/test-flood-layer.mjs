@@ -41,7 +41,8 @@ const ok = (cond, label) => {
 const section = (s) => console.log(`\n  ${s}\n`);
 
 const { setFloodAlerts, resetFloodLayer, floodPointRuns, floodAtPoint, floodAlertById,
-        floodClusterZoom } = await import('../map/layers/flood.js');
+        floodClusterZoom, hideFloodCluster, showFloodClusters, floodAlertPoint } =
+  await import('../map/layers/flood.js');
 const { floodSources } = await import('../lib/flood-features.js');
 /* Only to prove the layer is NOT doing this. See the national-draw section. */
 const { alertsNearTrack, trackChains, trackSamples } = await import('../lib/flood.js');
@@ -441,6 +442,126 @@ section('§56.6 — splitting a cluster');
   const sourceless = { ...tapMap(), getSource: () => null };
   ok((await floodClusterZoom(sourceless, 42)) === null,
      'no source is null too — a tap between a restyle and the rebuild');
+}
+
+section('§56.6 — the tapped cluster gets out of the way');
+
+/* ==> A CLUSTER STAYS PAINTED FOR THE WHOLE FLIGHT AND ONLY BREAKS APART ON
+ * ARRIVAL. <== Aaron on a phone, 2026-08-23: MapLibre recomputes which points
+ * merge when the ZOOM lands, so the chip reading "8" rides the camera in and
+ * pops into eight chips at the end — the reader pressed something and watched
+ * it not respond.
+ *
+ * ==> IT IS AN OPACITY WRITE AND NOTHING ELSE, WHICH IS WHAT THESE ASSERT.
+ * <== A source rewrite or a filter change would cost a frame at exactly the
+ * moment the camera starts moving. */
+function paintMap() {
+  const calls = { paint: [], setData: 0 };
+  const src = {
+    setData() { calls.setData++; },
+    getClusterExpansionZoom: () => Promise.resolve(7),
+  };
+  return {
+    calls,
+    getSource: () => src,
+    getLayer: () => ({}),
+    hasImage: () => true,
+    addImage() {}, addSource() {}, addLayer() {},
+    setLayoutProperty() {},
+    setPaintProperty(layer, prop, value) { calls.paint.push({ layer, prop, value }); },
+    queryRenderedFeatures: () => [],
+  };
+}
+
+{
+  resetFloodLayer();
+  const m = paintMap();
+  hideFloodCluster(m, 42);
+
+  const props = m.calls.paint.map((c) => c.prop);
+  ok(props.includes('icon-opacity') && props.includes('text-opacity'),
+    'hiding a cluster writes the two opacity properties');
+  ok(m.calls.paint.every((c) => c.layer === 'flood-alert-chip'),
+    'and touches only the chip layer');
+
+  /* ==> NOT A SOURCE WRITE. <== MUTATION-VERIFIED: rewrite the source to drop
+   * the cluster instead and this goes red — which is the implementation that
+   * would cost a frame. */
+  ok(m.calls.setData === 0,
+    'and does NOT rewrite the source, which is the expensive way to do this');
+
+  /* ==> ONLY THE TAPPED CLUSTER FADES. <== Hiding the whole layer would
+   * flicker every other alert on screen — a worse fault than the one being
+   * fixed. The expression must therefore be a per-feature case, not a flat 0. */
+  const expr = m.calls.paint.find((c) => c.prop === 'icon-opacity').value;
+  ok(Array.isArray(expr) && expr[0] === 'case',
+    'the opacity is a per-feature expression, never a flat zero over the layer');
+  ok(JSON.stringify(expr).includes('42'),
+    'and it names the cluster that was actually tapped');
+}
+
+/* ==> AND IT MUST COME BACK HOWEVER THE FLIGHT ENDS. <== If any path left a
+ * chip hidden, this layer would have invented a way for a hazard marker to
+ * vanish silently, which is §5 with a map over it. */
+{
+  resetFloodLayer();
+  const m = paintMap();
+  hideFloodCluster(m, 42);
+  m.calls.paint.length = 0;
+  showFloodClusters(m);
+  const back = m.calls.paint.find((c) => c.prop === 'icon-opacity');
+  ok(back && back.value === 1, 'showing them again restores a flat opacity of 1');
+
+  /* An idle moveend — and there are many — costs one comparison, not two
+   * paint writes. MUTATION-VERIFIED: drop the early return and this goes red. */
+  m.calls.paint.length = 0;
+  showFloodClusters(m);
+  ok(m.calls.paint.length === 0,
+    'and calling it with nothing hidden writes nothing at all');
+}
+
+/* ==> A POLL RE-INDEXES THE SOURCE AND ASSIGNS NEW CLUSTER IDS, SO A HELD ONE
+ * IS MEANINGLESS. <== Left alone, a stale id either matches nothing (harmless)
+ * or matches a DIFFERENT pile — a chip missing with nothing saying so.
+ * MUTATION-VERIFIED: remove the `showFloodClusters` call from `push` and this
+ * goes red. */
+{
+  resetFloodLayer();
+  const m = paintMap();
+  const engine = createLayerEngine(m);
+  engine.attach();
+  engine.setToggle('floodAlerts', true);
+  hideFloodCluster(m, 42);
+  m.calls.paint.length = 0;
+
+  setFloodAlerts(m, ALERTS);   // a poll landing
+  const cleared = m.calls.paint.find((c) => c.prop === 'icon-opacity');
+  ok(cleared && cleared.value === 1,
+    'a poll clears the held cluster id rather than stranding a hidden chip');
+}
+
+section('§56.6 — Show on the globe flies to the chip, not near it');
+
+/* ==> THE SAME POINT THE CHIP WAS DRAWN AT, FROM THE SAME CACHE. <== A second
+ * way of answering "where is this alert" is a second answer that can disagree,
+ * and the reader lands beside the mark rather than on it. */
+{
+  resetFloodLayer();
+  const drawable = ALERTS.find((a) => a.geometry);
+  ok(!!drawable, 'the capture has a drawable alert to fly to');
+
+  const p = floodAlertPoint(drawable);
+  ok(p && Number.isFinite(p.lon) && Number.isFinite(p.lat),
+    'it answers a real coordinate');
+
+  const runsBefore = floodPointRuns();
+  const again = floodAlertPoint(drawable);
+  ok(again === p, 'and the second ask is the cached point, not a second search');
+  ok(floodPointRuns() === runsBefore, 'which costs no extra interior-point work');
+
+  const shapeless = ALERTS.find((a) => !a.geometry);
+  ok(!shapeless || floodAlertPoint(shapeless) === null,
+    'an alert with no shape has nowhere to fly to and says so');
 }
 
 /* --- report -------------------------------------------------------------- */

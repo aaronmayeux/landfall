@@ -766,21 +766,106 @@ travel so the reduce-motion contract lives in one place (§10). The layer answer
 what zoom splits a cluster — from MapLibre's worker, so the arithmetic is not
 run on the frame the finger lifted — and `app/views.js` flies.
 
-**THE DETAIL VIEW SHOWS WHAT THE RELAY ALREADY CARRIES** — event, the whole area
-list, when it began, when it ends, and how long is left.
+**THE PANEL SHOWS THE LIST'S FACTS PLUS THE ALERT'S OWN WORDS** — event, what a
+watch or a warning MEANS, the instruction, the description, the whole area list,
+when it began, when it ends, how long is left, who issued it, and whether the
+globe could draw it.
 
-**==> THIS SECTION USED TO SAY "AND THE ISSUING OFFICE" AND THAT WAS WRONG.
-<==** Checked 2026-08-23: `functions/api/nws/flood.js` projects id, event,
-areaDesc, severity, urgency, onset, expires, ends, geometry, drawable, zones and
-counties. **`senderName` is not among them.** The office is not in hand and the
-panel cannot print one. Adding it is one short string per alert and a separate,
-deliberate decision about the projection — **not something to slip into a map
-phase because it was named here by mistake.**
+**==> THE PROSE IS FETCHED ONE ALERT AT A TIME, AND THAT IS WHAT THE NOTE BELOW
+SAID TO DO. <==** `/api/nws/alert?id=…` serves ONE alert's `description` and
+`instruction`; `data/flood-alert.js` asks for it when the panel opens and never
+before, memoized per id. Measured on the archived national bytes: about 900
+bytes of description and 100–750 of instruction PER ALERT, against roughly 70
+for everything else the list carries — so widening the list would have put ~2 KB
+an alert on every phone on every poll for a field most readers never open.
+
+**==> THE INSTRUCTION IS THE HALF THIS APP WAS MISSING AND IT LEADS THE PANEL.
+<==** NWS writes the actionable sentence there — *This is a life threatening
+situation*, *monitor later forecasts and be prepared to take action*. Until
+§56.6 this app could say when a flood warning expired and not what to do about
+it, which is the wrong half of a hazard product to have. It is printed above the
+description because somebody who opened a hazard panel wants what to do before
+why.
+
+**NOT ONE WORD IS SUMMARISED, SHORTENED OR REPHRASED.** §5's rule carried into
+prose: a paraphrase of a hazard instruction is an instruction this app wrote.
+`unwrapNws` touches whitespace and nothing else — NWS wraps to ~66 columns for
+teletype, so a single newline is a WRAP and a blank line is a real paragraph,
+and rendered raw into a phone-width panel the text breaks mid-sentence and looks
+broken. Bullet lines keep their own breaks. `tools/test-flood-alert.mjs` asserts
+that every non-whitespace character survives in order, on both archived alerts.
+
+**AND THE ID IS VALIDATED BEFORE IT REACHES A URL.** This is the only route in
+the app that builds an upstream URL out of something the client sent. It must
+match NWS's own CAP URN shape anchored at both ends — `2.49.0.1.840.0` is the
+United States' OID branch — or the function refuses before any fetch. Unanchored,
+`https://evil.example/?ok=urn:oid:…` passes and the function fetches it with our
+User-Agent from inside Cloudflare's network. Seven refusal cases are asserted and
+the anchors are mutation-verified.
+
+**AN HOUR'S CACHE RATHER THAN THE LIST'S FIFTEEN MINUTES.** A CAP URN carries a
+content hash, so a corrected alert is issued under a NEW id: the prose behind one
+id is immutable. The fifteen-minute window exists because an alert can EXPIRE
+inside it, and whether it is still in force remains the list's question.
+
+**==> THE ISSUING OFFICE IS ON THE PANEL NOW, AND IT WAS THE DELIBERATE
+DECISION THIS PARAGRAPH ASKED FOR. <==** `functions/api/nws/flood.js` projects
+`senderName` — *NWS Grand Junction CO*, *NWS Honolulu HI*, about twenty bytes an
+alert measured on the archived bytes. It matters because a flood warning is a
+named forecaster's judgement about a specific valley, and printing who made it
+is the difference between a fact with an author and a number out of a machine.
+An alert without one falls back to naming the agency. **The HOME dashboard's
+rows carry no office**, because they come from the point-rainfall payload and
+that relay has a narrower projection; the fallback covers it.
 **Do not widen the relay projection to carry NWS's `description` and
 `instruction`.** That projection takes 34,369 stored bytes down to 2,607 and a
 suite asserts the ratio; putting the prose back blows it on every phone for a
 field most readers never open. If the detail reads thin on glass, fetch that one
 alert on demand — do not widen the list.
+
+**==> THE TAPPED CLUSTER FADES OUT ON THE TAP, NOT ON ARRIVAL. <==** Aaron on a
+phone, 2026-08-23: MapLibre recomputes which points merge only when the ZOOM
+lands, so a chip reading *8* rode the whole flight and popped into eight chips at
+the end — the reader pressed something and watched it not respond. It is an
+OPACITY write and nothing else: no source rewrite, no filter change, no
+re-tiling, because those are the expensive operations on this layer and every one
+would cost a frame at exactly the moment the camera starts moving.
+`DURATION.instant` (90 ms) — the tier this app already uses for a press state —
+so it reads as deliberate rather than as a dropped frame.
+
+**ONLY THE TAPPED CLUSTER FADES, AND IT COMES BACK HOWEVER THE FLIGHT ENDS.**
+Hiding the whole chip layer would flicker every other alert on screen, a worse
+fault than the one being fixed, so the opacity is a per-feature `case` on
+`cluster_id`. Three restore paths, and all three are needed: `moveend` (which
+fires on an INTERRUPTED flight too, so grabbing the globe mid-flight restores
+it), the null-zoom branch (a cluster already at max zoom that never splits), and
+`push()` (a poll re-indexes the source and assigns new cluster ids, so a held one
+would either match nothing or match a DIFFERENT pile). Without all three this
+would be a way for a hazard marker to vanish silently — §5 with a map over it.
+
+**==> `Show on the globe` FLIES TO THE CHIP'S OWN POINT. <==** Half the entrances
+to this panel do not come from the map: a row in the `Flooding` section opens it
+with the camera untouched, so a reader arriving that way is reading about
+somewhere they cannot see. The coordinate is `pointForAlert` out of the layer's
+own cache — the same interior point the chip was drawn at — because a second way
+of answering *where is this alert* is a second answer that can disagree, and the
+reader would land beside the mark rather than on it. Offered only when there IS a
+shape to fly to. `FLOOD.showOnMapZoom` is 7: §56.2 measured these polygons at
+0.060–0.440° — a county, not a region and not a point — and 7 is two levels past
+`ZOOM.floodFull`, so the shape is at full opacity when the camera arrives.
+
+**==> AND THE PANEL SAYS WHAT A WATCH IS. <==** A Flood Watch and a Flash Flood
+Warning are both `severity: Severe`, so nothing in the payload separates them for
+a reader who does not already own the vocabulary — and the whole app leans on the
+distinction: the chip's shade, the row saying *in force*, a cluster counting as a
+warning if it holds one. One line, in NWS's own framing rather than a paraphrase.
+
+**AN ALERT WITH NO SHAPE SAYS SO.** §56.4 resolves most watches to real
+boundaries, but a zone whose boundary did not come back leaves an alert genuinely
+in force, listed in the drawer, and invisible on the globe. Silence there reads as
+an all-clear. Only an explicit `drawable: false` prints it — the home dashboard's
+rows carry no such field, and *we do not know* must not print *this is not on the
+map*.
 
 **KEYBOARD IS NOT OPTIONAL AND THE MAP ALONE DOES NOT PROVIDE IT (§10).** An
 icon reachable only by tapping the globe does not exist for a keyboard user. The

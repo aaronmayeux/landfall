@@ -211,6 +211,16 @@ export function projectFlood(collections) {
          * and a list that shows it twice looks like two floods. */
         id: p.id || null,
         event: p.event || null,
+        /* ==> WHO ISSUED IT, AND IT IS ONE SHORT STRING RATHER THAN A CHANGE OF
+         * HEART ABOUT THIS PROJECTION. <== §56.6 used to promise the office and
+         * then record that it could not be shown, because this route did not
+         * carry it. Measured on the archived national bytes: `NWS Grand
+         * Junction CO`, `NWS Honolulu HI` — about twenty bytes an alert against
+         * the ~1,900 of `description` and `instruction` this route still drops.
+         * It matters because a flood warning is somebody's professional
+         * judgement about a specific valley, and naming them is the difference
+         * between a fact with an author and a number from a machine. */
+        senderName: p.senderName || null,
         /* WHERE IT APPLIES, WHOLE AND UNSHORTENED (§56.7). The reader is
          * hunting for their own zone in this list. */
         areaDesc: p.areaDesc || null,

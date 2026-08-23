@@ -1,0 +1,100 @@
+{
+ "properties": {
+  "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9ef2b2eecdb13a916e6e9e8d26e66fce471474e5.001.1",
+  "@type": "wx:Alert",
+  "id": "urn:oid:2.49.0.1.840.0.9ef2b2eecdb13a916e6e9e8d26e66fce471474e5.001.1",
+  "areaDesc": "Kona; Kohala; Big Island Interior; Big Island Summit; Big Island South; Big Island Southeast; Big Island East; Big Island North",
+  "geocode": {
+   "SAME": [
+    "015001"
+   ],
+   "UGC": [
+    "HIZ023",
+    "HIZ026",
+    "HIZ027",
+    "HIZ028",
+    "HIZ051",
+    "HIZ052",
+    "HIZ053",
+    "HIZ054"
+   ]
+  },
+  "affectedZones": [
+   "https://api.weather.gov/zones/forecast/HIZ023",
+   "https://api.weather.gov/zones/forecast/HIZ026",
+   "https://api.weather.gov/zones/forecast/HIZ027",
+   "https://api.weather.gov/zones/forecast/HIZ028",
+   "https://api.weather.gov/zones/forecast/HIZ051",
+   "https://api.weather.gov/zones/forecast/HIZ052",
+   "https://api.weather.gov/zones/forecast/HIZ053",
+   "https://api.weather.gov/zones/forecast/HIZ054"
+  ],
+  "references": [
+   {
+    "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ef4fdec6ea34232ae5f9ad35fb060435a2ba2865.001.1",
+    "identifier": "urn:oid:2.49.0.1.840.0.ef4fdec6ea34232ae5f9ad35fb060435a2ba2865.001.1",
+    "sender": "w-nws.webmaster@noaa.gov",
+    "sent": "2026-08-22T15:39:00-10:00"
+   }
+  ],
+  "sent": "2026-08-23T03:15:00-10:00",
+  "effective": "2026-08-23T03:15:00-10:00",
+  "onset": "2026-08-23T03:15:00-10:00",
+  "expires": "2026-08-23T18:00:00-10:00",
+  "ends": "2026-08-24T18:00:00-10:00",
+  "status": "Actual",
+  "messageType": "Update",
+  "category": "Met",
+  "severity": "Severe",
+  "certainty": "Possible",
+  "urgency": "Future",
+  "event": "Flood Watch",
+  "sender": "w-nws.webmaster@noaa.gov",
+  "senderName": "NWS Honolulu HI",
+  "headline": "Flood Watch issued August 23 at 3:15AM HST until August 24 at 6:00PM HST by NWS Honolulu HI",
+  "description": "Moisture on the northern periphery of Tropical Storm Moke will bring\nareas of heavy rain to portions of the Big Island through Monday\nafternoon.\n\n* WHAT...Flash flooding caused by excessive rainfall is possible for\nwindward and southeast Big Island.\n\n* WHERE...The Big Island.\n\n* WHEN...Through Monday afternoon.\n\n* IMPACTS...Flood prone roads and other low lying areas may be closed\ndue to elevated runoff and overflowing streams. Urban areas may\nreceive more significant flooding and property damage due to rapid\nrunoff.\n\n* ADDITIONAL DETAILS...\n- Tropical Storm Moke is forecast to bring periods of heavy rain to\nthe Big Island through Monday afternoon. Rainfall totals of 5 to\n10 inches, locally up to 15 inches, are possible over the\nwindward and southeast slopes of the Big Island. It will not take\na significant amount of rain to cause flash flooding due to\nsaturated grounds from recent heavy rain.",
+  "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+  "response": "Prepare",
+  "note": null,
+  "parameters": {
+   "AWIPSidentifier": [
+    "FFAHFO"
+   ],
+   "WMOidentifier": [
+    "WGHW60 PHFO 231315"
+   ],
+   "NWSheadline": [
+    "FLOOD WATCH REMAINS IN EFFECT THROUGH MONDAY AFTERNOON"
+   ],
+   "BLOCKCHANNEL": [
+    "EAS",
+    "NWEM",
+    "CMAS"
+   ],
+   "EAS-ORG": [
+    "WXR"
+   ],
+   "VTEC": [
+    "/O.CON.PHFO.FA.A.0010.000000T0000Z-260825T0400Z/"
+   ],
+   "eventEndingTime": [
+    "2026-08-24T18:00:00-10:00"
+   ],
+   "expiredReferences": [
+    "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f0fc8dafcb931ae040b1b9fe756dc334aca7034a.001.1,2026-08-21T14:45:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.dcce0eecb5019c6dadd7dc3e92890c67aeba378c.001.1,2026-08-22T03:06:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9591faf9323f0aa55680e3ef0f6b20a8d8571437.001.1,2026-08-21T03:29:00-10:00"
+   ]
+  },
+  "scope": "Public",
+  "code": "IPAWSv1.0",
+  "language": "en-US",
+  "web": "http://www.weather.gov",
+  "eventCode": {
+   "SAME": [
+    "FFA"
+   ],
+   "NationalWeatherService": [
+    "FAA"
+   ]
+  }
+ }
+}

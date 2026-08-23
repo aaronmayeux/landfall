@@ -37,8 +37,10 @@
 import { flyToStorm, flyToPoint, recenter } from '../map/globe.js';
 import { homeFrame } from '../map/home-frame.js';
 import { setGenesisSelection } from '../map/layers/genesis.js';
-import { floodAlertById, floodClusterZoom } from '../map/layers/flood.js';
-import { GENESIS } from '../config/constants.js';
+import { floodAlertById, floodAlertPoint, floodClusterZoom, hideFloodCluster,
+  showFloodClusters } from '../map/layers/flood.js';
+import { loadFloodAlertText } from '../data/flood-alert.js';
+import { FLOOD, GENESIS } from '../config/constants.js';
 import { createHomeMarker } from '../map/marker-home.js';
 import { createProvisionalPin } from '../map/pin-provisional.js';
 import { waterAt } from '../map/water-at.js';
@@ -560,7 +562,31 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
 
   const areaDetailView = createAreaDetailView();
 
-  const floodDetailView = createFloodDetailView();
+  const floodDetailView = createFloodDetailView({
+    /* ==> THE PROSE FACADE. <== ui/ never imports data/ (§12), and this is the
+     * whole of it: the view awaits an answer and renders one of four states.
+     * No fetching, no memo, no retry policy up there — `data/flood-alert.js`
+     * owns all three, including the rule that a FAILURE is not memoized so the
+     * Retry button has something to do. */
+    text: {
+      load: (id) => loadFloodAlertText(id),
+      retry: (id) => loadFloodAlertText(id, { retry: true }),
+    },
+    /* ==> A WAY BACK TO THE MAP, BECAUSE HALF THE ENTRANCES DO NOT COME FROM
+     * IT. <== A row in the `Flooding` section opens this panel with the camera
+     * untouched, so a reader arriving that way is reading about somewhere they
+     * cannot see. The alert carries no coordinate of its own — the panel is
+     * handed normalized FACTS, not geometry — so the interior point is looked
+     * up in the layer, which is the same point the chip was drawn at. Flying
+     * anywhere else would land the reader beside the mark rather than on it. */
+    onShowOnMap: (a) => {
+      const full = floodAlertById(a?.id);
+      const p = full && floodAlertPoint(full);
+      if (!p) return;
+      idle.interrupt();
+      flyToPoint(map, p, { zoom: FLOOD.showOnMapZoom, offset: openPanelOffset() });
+    },
+  });
 
   /* --- tapping a flood alert (§56.6) ---------------------------------------
    *
@@ -613,14 +639,35 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
 
     if (hit.kind === 'cluster') {
       idle.interrupt();
+
+      /* ==> THE TAPPED CHIP GETS OUT OF THE WAY FIRST, BEFORE ANYTHING ELSE
+       * HAPPENS. <== Judged on a phone: MapLibre only recomputes which points
+       * merge when the ZOOM lands, so the chip reading "8" rode the whole
+       * flight and popped into eight chips on arrival — the reader pressed
+       * something and watched it not respond. This is the synchronous first
+       * line of the handler for that reason: it fades on the tap, not on the
+       * answer coming back from the worker. */
+      hideFloodCluster(map, hit.clusterId);
+
+      /* ==> AND IT COMES BACK HOWEVER THE FLIGHT ENDS. <== `moveend` fires on
+       * an interrupted flight as well as a completed one, so grabbing the globe
+       * mid-flight restores it; a cluster already at max zoom that never splits
+       * restores it; and the layer clears its own held id on every push, so a
+       * poll re-indexing the source cannot strand one either. Without all
+       * three this would be a way for a hazard marker to vanish silently. */
+      map.once('moveend', () => showFloodClusters(map));
+
       /* ==> THE ZOOM COMES BACK FROM A WORKER, SO THIS IS ASYNC AND THE
        * CAMERA MOVE IS THE CONTINUATION. <== The cluster index lives off the
        * main thread; asking it costs no arithmetic on the frame the finger
        * lifted. A null answer — the source or the cluster gone, which a poll
        * landing mid-tap can do — moves nothing rather than flying somewhere
-       * arbitrary. */
+       * arbitrary, and puts the chip back rather than leaving a hole. */
       floodClusterZoom(map, hit.clusterId).then((zoom) => {
-        if (!Number.isFinite(zoom)) return;
+        if (!Number.isFinite(zoom)) {
+          showFloodClusters(map);
+          return;
+        }
         flyToPoint(map, { lon: hit.lon, lat: hit.lat }, {
           zoom,
           /* Only when a panel is actually over the map. Splitting a cluster
