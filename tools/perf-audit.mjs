@@ -155,7 +155,8 @@ async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
       lcp: Math.round(window.__audit.lcp),
       boot: window.__audit.boot,
       longTasks: window.__audit.longTasks,
-      colorNulls: window.__audit.colorNulls,
+      colorNullsMainThread: window.__audit.colorNullsMainThread,
+      workerConsoleWatched: window.__audit.workerConsoleWatched,
       colorSamples: window.__audit.errors.slice(0, 5),
       swControlled: !!navigator.serviceWorker.controller,
       /* Did the map actually build? A hidden or throttled tab can finish
@@ -180,7 +181,8 @@ async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
     bootMarks: raw.boot,
     longTaskCount: raw.longTasks.length,
     blockedMs: Math.round(blocked),
-    colorNulls: raw.colorNulls,
+    colorNullsMainThread: raw.colorNullsMainThread,
+    workerConsoleWatched: raw.workerConsoleWatched,
     colorSamples: raw.colorSamples,
     ...summarise(raw.res, { gapMs: AUDIT.WAVE_GAP_MS }),
     data: serialDepth(raw.res),
@@ -278,7 +280,11 @@ function report(results, radar) {
     L.push(line('data serial depth', `${r.data.depth} round trips`));
     L.push(line('API requests', `${r.apiCount}  (${r.apiKB} KB)`));
     L.push(line('blocked on main thread', `${r.blockedMs} ms across ${r.longTaskCount} long tasks`));
-    L.push(line('colour-null errors', r.colorNulls));
+    /* ==> IT SAYS WHAT IT CANNOT SEE, EVERY TIME, NOT ONLY WHEN IT IS ZERO.
+     * <== A count printed without its blind spot was read as "fixed" once
+     * already. */
+    L.push(line('colour-null errors', `${r.colorNullsMainThread} on the main thread`
+      + (r.workerConsoleWatched ? '' : '  — MapLibre\'s WORKER is not watched, so a 0 here is NOT a 0')));
     L.push(line('total transfer', `${r.transferKB} KB over ${r.totalRequests} requests`));
     L.push(line('storms tracked', r.storms));
     L.push('');

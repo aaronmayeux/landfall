@@ -285,3 +285,31 @@ jobs:
       # seen pass does not get to block a deploy.
       - name: headless-check
         run: node tools/headless-check.mjs
+
+      # ==> THE INTERACTION MEASUREMENT, AND IT IS NON-BLOCKING ON PURPOSE. <==
+      #
+      # Added 2026-08-23 after flood Phase 5 was built, pushed, patched twice
+      # and reverted whole in one day. It was correct and it was slow, and the
+      # reason nobody knew before the push is that this repo had no way to
+      # measure an interaction: perf-audit measures BOOT, and every other gate
+      # here tests CORRECTNESS. The one number that mattered — what tapping a
+      # storm costs — was never taken by anything.
+      #
+      # It drives `?replay=ida`, which reads samples off disk, so the storm is
+      # identical on every run and two numbers a month apart are comparable.
+      # It needs the basemap and a real chromium, which is why it can only live
+      # in this job and never in a sandbox session.
+      #
+      # `continue-on-error` for the reason the block above records about
+      # headless-check: A CHECK NOBODY HAS SEEN PASS DOES NOT GET TO BLOCK A
+      # DEPLOY. It was written in a sandbox that cannot execute it, so its first
+      # runs here are the first time anyone has watched it work at all.
+      #
+      # ==> TO PROMOTE IT: watch it print stable numbers over a few runs, fill
+      # tools/perf-budgets.json from them, record the baseline in NOW.md, then
+      # delete this line and add --check. <== Until the budgets are filled the
+      # step measures and reports and cannot fail, and it says so in its own
+      # output rather than showing a green tick that means nothing.
+      - name: perf-select (report only)
+        continue-on-error: true
+        run: node tools/perf-select.mjs --check

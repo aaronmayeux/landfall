@@ -13,7 +13,15 @@
     "and a budget nothing can fail is decoration.",
     "",
     "`armUnderBudget` is `warm-sw` deliberately: 1,991 of 2,036 D1 sessions are",
-    "service-worker controlled, so that is the path worth defending."
+    "service-worker controlled, so that is the path worth defending.",
+    "",
+    "==> `colorNulls` WAS RENAMED TO `colorNullsMainThread` ON 2026-08-23, AND",
+    "THE BUDGET OF 0 IS NOW KNOWN TO BE UNENFORCEABLE. <== The errors come from",
+    "MapLibre's worker, which has its own console that this instrument cannot",
+    "reach, so the counter can read 0 while the app emits them the whole time —",
+    "which is exactly what happened and was recorded as a pass. The row is kept",
+    "rather than deleted so the blind spot stays visible in every report; it is",
+    "not a check that can currently fail, and it must not be read as one."
   ],
   "armUnderBudget": "warm-sw",
   "max": {
@@ -23,7 +31,7 @@
     "dataSerialDepth": 6,
     "blockedMs": 1200,
     "transferKB": 900,
-    "colorNulls": 0,
+    "colorNullsMainThread": 0,
     "radarTilesOnPan": 120
   }
 }

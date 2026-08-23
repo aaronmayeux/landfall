@@ -344,10 +344,60 @@ drawer being painted* on the current `main`, and write the number into `NOW.md`.
 **Until that exists, every perf argument on this phase — including one arguing
 that a slice is fine — is somebody's impression.**
 
-**AND THE GATE THAT WOULD HAVE STOPPED THE FIRST ATTEMPT DOES NOT EXIST.** Every
-check in this repo tests correctness. CI has a chromium — it is where
-`boot-smoke` and `home-setup-check` run — so a check that boots the app, selects
-a storm and fails over a budget is buildable there and belongs beside them.
+**AND THE GATE THAT WOULD HAVE STOPPED THE FIRST ATTEMPT NOW EXISTS, UNARMED.**
+`tools/perf-select.mjs` runs in CI's `browser` job. It drives `?replay=ida` —
+samples off disk, so the storm is identical every run and two numbers a month
+apart are comparable — taps a storm row six times, discards the first, and
+reports the **worst single main-thread block** during a selection. That is the
+number that corresponds to *it feels sticky*; an average would hide the one
+dropped frame that is actually felt, and the wall clock to the panel appearing
+can look fine while the thread stays jammed behind it.
+
+**==> IT IS NON-BLOCKING AND ITS BUDGETS ARE `null`, AND BOTH ARE DELIBERATE.
+<==** `tools/perf-budgets.json` ships empty because a budget nobody measured is
+a number somebody invented. And the check itself was written in a sandbox that
+cannot execute it — this repo's own rule is that **a check nobody has seen pass
+does not get to block a deploy** (`headless-check` was promoted exactly that
+way). Watch it print stable numbers over a few runs, fill the budgets from them,
+record the baseline in `NOW.md`, then drop `continue-on-error` from the workflow.
+**Until that happens it is an instrument, not a gate, and it says so in its own
+output.**
+
+**THE OTHER HALF OF FIXING THE INSTRUMENT WAS ADMITTING WHAT IT CANNOT SEE.**
+`perf-instrument.mjs`'s colour-null counter is renamed `colorNullsMainThread`
+and carries `workerConsoleWatched: false` beside it, and the report prints the
+blind spot every time rather than only when the count is zero. Reaching
+MapLibre's worker console needs a CDP attach and is its own change — what is
+fixed here is that a 0 can no longer be read as "none happened", which is how
+that number got recorded as progress once already.
+
+#### The phone pass, per slice — three minutes, and it is the only real gate
+
+**Aaron is the glass and no tooling substitutes.** After each slice deploys, on
+a real phone, on cell data, with the VPN off:
+
+1. **Tap four storms in a row on the globe.** Does the drawer arrive under your
+   finger, or after it? This is the exact motion that exposed the first attempt.
+2. **Step through storms on the home dashboard with the chevrons.** Same
+   question. This path was as bad as the globe and is easy to forget.
+3. **Turn the `Flood alerts` switch on and off twice**, then repeat 1. The layer
+   is off by default, so the off case is what most readers get and it must cost
+   nothing — that was fault 1 in §56.15.
+4. **Open a storm, leave it open for a poll cycle** (a few minutes) and tap
+   another. A re-push of an unchanged bundle used to redo the whole match; this
+   is where that would come back.
+5. **Only then look at whether it is any good.** Colour, size, whether a warning
+   still reads as more urgent than a watch fifty times its area.
+
+**If any of 1–4 feels worse than the slice before it, the slice is reverted, not
+patched.** That is the rule the first attempt broke: two patches were shipped
+against a symptom nobody could measure, and both were wrong.
+
+**==> AND IF THE MEASUREMENT AND THE PHONE DISAGREE, THE PHONE IS RIGHT. <==**
+It happened on 2026-08-23 — Aaron reported no improvement while the numbers said
+the fix could not have failed — and the session shipped another guess instead of
+stopping. `CLAUDE.md` carries this rule now because it has to survive a change
+of session config.
 
 ---
 

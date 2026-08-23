@@ -1,0 +1,28 @@
+{
+  "_README": [
+    "Budgets for tools/perf-select.mjs. EVERY VALUE STARTS null AND THAT IS",
+    "DELIBERATE: a budget nobody measured is a number somebody invented, and",
+    "CLAUDE.md forbids exactly that. While a value is null the gate MEASURES and",
+    "REPORTS and cannot fail.",
+    "",
+    "TO FILL THEM: run `node tools/perf-select.mjs` on the CI runner (it needs a",
+    "real chromium and the basemap, so it cannot run in the sandbox), read the",
+    "numbers it prints, and set each budget somewhere above the observed value —",
+    "far enough that ordinary runner variance does not trip it, close enough that",
+    "a real regression does. Then record the observed baseline in NOW.md so a",
+    "later session can tell 'this got worse' from 'this was always like that'.",
+    "",
+    "WHAT EACH ONE IS:",
+    "  worstTaskMs   the longest single main-thread block during one storm",
+    "                selection. This is the number that maps to 'it feels",
+    "                sticky' — one 200 ms task is a visible hitch, and an",
+    "                average would hide it.",
+    "  blockedMs     total main-thread block across the whole selection window.",
+    "  toDetailMs    wall clock from the tap to the detail panel being on screen.",
+    "                Reported for context; it can look fine while the thread is",
+    "                jammed straight after, which is why it is not the headline."
+  ],
+  "worstTaskMs": null,
+  "blockedMs": null,
+  "toDetailMs": null
+}

@@ -263,11 +263,27 @@ The short version, because it is the kind of mistake that repeats:
   session stops.** That disagreement happened after the first patch and was
   ignored.
 
-**AND THERE IS NO BASELINE AND NO PERF GATE.** `tools/perf-instrument.mjs` is
-broken (see BUG 2 above — it watches the wrong thread), every check in this repo
-tests correctness, and CI has a chromium that nothing times anything on. **Fixing
-the instrument and recording one honest tap-to-paint number on `main` is the
-first thing, ahead of any flood work.**
+**THE TOOLS FOR THE RETRY ARE IN, AND ONE OF THEM NEEDS A HUMAN BEFORE IT IS
+WORTH ANYTHING.** Added 2026-08-23:
+
+- **`tools/perf-select.mjs`** — the interaction measurement this repo never had.
+  Drives `?replay=ida` (samples off disk, so the storm is identical every run),
+  taps a storm row six times, discards the first, and reports the **worst single
+  main-thread block** per selection. Runs in CI's `browser` job.
+- **`tools/perf-budgets.json`** — ships with every value `null`, because a
+  budget nobody measured is a number somebody invented.
+- **The colour-null counter no longer lies.** `colorNullsMainThread` with
+  `workerConsoleWatched: false` beside it, and the report prints the blind spot
+  every run. Reaching the worker's console is a CDP attach and its own change;
+  what is fixed is that a 0 can no longer read as "none happened".
+
+**==> IT IS NON-BLOCKING AND UNARMED, AND SOMEBODY HAS TO WATCH IT RUN. <==**
+`continue-on-error: true`, budgets `null`. It was written in a sandbox that
+cannot execute it, and this repo's rule is that **a check nobody has seen pass
+does not get to block a deploy**. **NEXT ACTION: watch `perf-select` print
+stable numbers over a few CI runs, fill the budgets, paste the baseline line it
+prints into this file, then drop `continue-on-error`.** Until then there is
+still no baseline — only a tool that can take one.
 
 **PHASE 1 — THE CORRIDOR — SHIPPED 2026-08-22.** The match is no longer an
 overlap with the forecast cone; it is a great-circle distance from the storm's

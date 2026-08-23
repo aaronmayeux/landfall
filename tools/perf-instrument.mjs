@@ -37,21 +37,38 @@ window.__audit = {
   boot: {},
   frames: null,
   errors: [],
-  colorNulls: 0,
+  /* MAIN THREAD ONLY — see the note below. Renamed from `colorNulls` on
+   * 2026-08-23 so that no reader of a report can mistake it for the total. */
+  colorNullsMainThread: 0,
+  /* Stated as a fact about the instrument rather than left to be inferred from
+   * a suspiciously round number. */
+  workerConsoleWatched: false,
 };
 
-/* ==> THE COLOUR-NULL COUNTER. <== MapLibre reports an unparseable colour by
- * calling console.error, not by throwing, so the only way to count it is to
- * watch the console. NOW.md item 0d has carried "dozens of times per load, and
- * which property is NOT known" for a while precisely because nobody counted it
- * from inside the page. This makes it a number. */
+/* ==> THE COLOUR-NULL COUNTER, AND ==> A ZERO FROM IT IS NOT A ZERO. <==
+ *
+ * MapLibre reports an unparseable colour by calling console.error rather than
+ * by throwing, so counting it means watching a console. This patches the one on
+ * the MAIN page — and the known source is MapLibre's WORKER, which has its own
+ * global scope and its own console that nothing here can reach.
+ *
+ * NOW.md recorded a run where this read 0 and the errors were happening the
+ * whole time. That was taken as progress. It was an instrument pointed at the
+ * wrong thread, and the number it produced was worse than no number, because a
+ * blank counter reads as good news.
+ *
+ * It is not silently fixed here: reaching a worker's console needs a CDP
+ * attach, which is a real piece of work and belongs in its own change. What IS
+ * fixed is the lie — the field is named for the thread it actually watches, and
+ * `workerConsoleWatched` travels beside it as a permanent false so no report can
+ * present this as a complete count again. */
 (function () {
   const realError = console.error.bind(console);
   console.error = function (...args) {
     try {
       const msg = args.map((a) => (typeof a === 'string' ? a : (a && a.message) || '')).join(' ');
       if (msg.indexOf('Could not parse color') !== -1) {
-        window.__audit.colorNulls++;
+        window.__audit.colorNullsMainThread++;
         if (window.__audit.errors.length < 40) window.__audit.errors.push(msg.slice(0, 200));
       }
     } catch (e) {}
