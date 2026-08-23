@@ -256,9 +256,29 @@ The short version, because it is the kind of mistake that repeats:
 were judged on a phone against Moke with the map switch off — eight resolved Big
 Island zones, and it felt good. **Nothing from that pass is outstanding.**
 
-**==> SLICE A IS BUILT AND PUSHED, AND NOT ONE PIXEL OF IT HAS BEEN SEEN. <==**
-2026-08-23. The layer is per-storm now — polygons only, no chips, no clustering,
-no tapping. The national draw is deleted. As-built in `SPEC-UI.md` §48.21.
+**==> SLICES A AND B ARE BUILT AND PUSHED, AND NOT ONE PIXEL OF EITHER HAS BEEN
+SEEN. <==** 2026-08-23. **Slice A** made the layer per-storm — polygons only,
+national draw deleted. **Slice B** added the chips: a clustered point source, a
+true interior point per alert, four rounded-square images across two themes, and
+the cluster count with per-chip ink. Both as-built in `SPEC-UI.md` §48.21.
+**Tapping is still not built** — that is Slice C.
+
+**SLICE B TOUCHED NOTHING SLICE A SHIPPED, SO THEY ARE STILL SEPARATELY
+REVERTABLE.** The zoom ramp, the corridor memo and the visibility gate are
+unchanged, deliberately: changing any of them in the same push would have made
+the two impossible to tell apart on a phone.
+
+**WHAT SLICE B DID ABOUT COST.** The interior-point search is the one piece of
+arithmetic here big enough to be felt alone — about 8 ms for a single
+1,970-vertex forecast zone, about 16 ms for the 33 national warning polygons,
+measured in the sandbox and therefore **a floor for a phone, never a measurement
+of one**. The first attempt ran all of it on every push. It is cached per alert
+id now, and the cache outlives the selection, so stepping between storms whose
+corridors overlap pays once per shared alert instead of once per storm.
+
+**`map/layers/flood.js` IS 724 LINES AND HAS A ROW IN SPEC.md's §12 INVENTORY.**
+The cut is named: the chip images and the five paint expressions are pure and
+lift out clean. **Slice C does that split before it does anything else.**
 
 **THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
 three minutes, in that order — taps on the globe first, chevrons on the home

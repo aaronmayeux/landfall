@@ -3325,6 +3325,89 @@ most hours no weather office in the country has a flood product out — and a
 genuine failure never reaches the warm loop, because the route returns a non-ok
 status rather than an empty list.
 
+#### The chip — what makes an alert findable when the polygon is three pixels
+
+**Landed 2026-08-23 as Slice B (`SPEC-FLOOD-PLAN.md` §56.5).** The polygon is
+the honest answer to *which county* and is the whole point up close; below
+`ZOOM.floodFadeIn` it is a green speck. The chip is what carries the layer at
+that distance — a scatter of counted marks is the honest read of *eleven alerts,
+most of them here*, a picture the polygons genuinely cannot draw at six pixels
+across.
+
+**IT IS A ROUNDED SQUARE AND IT MUST NEVER BECOME A CIRCLE.** `GENESIS_GEO`'s
+rule, inherited: a storm in this app IS a filled dot with a spiral and a halo,
+and that equation is the whole legibility of the globe. Genesis obeys it by
+having no point marker at all; a flood alert cannot do that, so it obeys the
+rule the other way — separated by SHAPE, not by hue, which still holds for a
+reader who cannot tell the green from the orange.
+
+**TWO SOURCES, BECAUSE MAPLIBRE CLUSTERS `Point` GEOMETRY ONLY.** The chips
+cannot ride the polygon source. Both are built by one walk over one alert list
+in `lib/flood-features.js`, so there is never a second list to keep in step —
+every way two sources can drift looks fine on screen. A shape with no chip is
+invisible exactly where the chip is the only marker; a chip with no shape claims
+a hazard whose extent this app cannot draw.
+
+**THE POINT IS A TRUE INTERIOR POINT, NOT A BOUNDING-BOX CENTRE.** Measured on
+the frozen national capture plus the two archived zone boundaries — 35 shapes —
+the bbox centre falls **outside its own polygon six times**, every one a river
+corridor, which is exactly the shape being clustered. `lib/interior-point.js`
+runs the pole-of-inaccessibility search MapLibre uses for its own polygon
+labels, and **returns nothing rather than guessing**: a shape it refuses keeps
+its polygon and loses its marker, counted as `iconless`, never handed an
+invented point.
+
+**CLUSTERING REPLACES COLLISION, AND NOTHING IS EVER DROPPED.** With
+`icon-allow-overlap: false`, MapLibre silently dropped icons it could not place —
+measured at 11 drawn for 14 alerts with the reader sitting right on top of the
+pile at z7, so it does not resolve by zooming in. Overlap is allowed and
+`FLOOD.clusterRadiusPx` (44 px, the touch target) merges what a fingertip could
+not separate anyway. **A cluster reads as a WARNING if it holds even one**, via
+`clusterProperties`; a pile that looked like a watch while hiding a warning
+would be this layer understating a hazard.
+
+**THE COUNT'S INK IS PER CHIP AND THAT IS A MEASUREMENT.** One ink across all
+four chips fails WCAG AA on a reachable case. `tools/test-flood-features.mjs`
+recomputes the whole contrast table rather than quoting it, so a hue change
+cannot quietly drop one under 4.5.
+
+**FOUR IMAGES, BOTH THEMES PRE-UPLOADED.** A theme flip is a layout-property
+write, never an `addImage` — a texture upload on the frame the reader is looking
+at is what `map/layers/genesis.js` learnt to avoid.
+
+#### The interior point is computed once per alert, ever
+
+**==> THIS IS THE ONE PIECE OF ARITHMETIC BIG ENOUGH TO BE FELT ON ITS OWN. <==**
+The search costs about 8 ms on a single 1,970-vertex forecast zone and about
+16 ms across the 33 national warning polygons, measured in the sandbox — a
+**floor** for a phone, never a measurement of one. The first attempt at this
+phase ran the whole set on **every push**: every selection, every poll, every
+theme change.
+
+**The answer is cached against the alert's `id`.** An NWS CAP identifier is a
+URN carrying a content hash, and a corrected or extended alert is issued under a
+NEW id rather than mutating an old one — so an id is a permanent handle on one
+shape. Keying on the geometry OBJECT would miss every poll, because a fresh
+fetch parses fresh objects out of identical bytes: the same trap `SPEC-FLOOD-
+PLAN.md` §56.15 records for the corridor memo.
+
+**The cache outlives the selection, and that is the whole win.** Where a chip
+goes is a fact about the alert, not about which storm is on screen, so stepping
+between four storms whose corridors overlap pays for each shared alert once
+rather than four times. That is the exact motion §56.16's phone pass opens with.
+**A refusal is cached too** — `interiorPoint` returning nothing is an answer
+about that shape and will not change, and without it the one case that cannot be
+made cheap would be re-searched forever.
+
+**It is bounded by `FLOOD.pointCacheMax` and clears wholesale rather than
+evicting.** An LRU needs an access order maintained on every hit, which is work
+on the path the cache exists to keep free.
+
+**==> AND `tools/test-flood-features.mjs` COUNTS THE SEARCHES, NOT THE CHIPS.
+<==** The obvious assertion about a cache — that two walks give the same
+markers — passes with the cache deleted, because recomputing gives the same
+answer. §12's rule is that a test agreeing with the bug is worse than no test.
+
 #### Matching is cheap, and the verdict is still exact
 
 The corridor match measures every alert's shape against the storm's whole

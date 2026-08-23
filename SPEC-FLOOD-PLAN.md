@@ -338,14 +338,46 @@ first fault, and it is the one most likely to be the expensive one — it is whe
 county-scale geometry starts being pushed into a source on every selection.
 **Judge on glass before anything else is written.**
 
-**SLICE B — THE CHIPS.** Interior points, the clustered point source, the four
-chip images, the count and its per-chip ink. Adds a second source and a symbol
-layer. **Judge on glass.**
+**==> SLICE B SHIPPED 2026-08-23 AND HAS NOT BEEN JUDGED ON GLASS EITHER. <==**
+Interior points, the clustered point source, the four chip images, the count and
+its per-chip ink. As-built in `SPEC-UI.md` §48.21. **Tapping is NOT in it** —
+the detail panel, the cluster split and the rows becoming buttons are Slice C.
+
+**WHAT IT DID ABOUT COST, AND IT IS THE ONLY NEW STRUCTURAL FINDING IN THIS
+PHASE.** The interior-point search is the one piece of arithmetic in this
+feature big enough to be felt on its own: about 8 ms for a single 1,970-vertex
+forecast zone, about 16 ms across the 33 national warning polygons, measured in
+the sandbox on the archived bytes. **That is a FLOOR for a phone and never a
+measurement of one.** The first attempt ran the whole set on every push. It is
+cached per alert id now — an NWS CAP id carries a content hash and a corrected
+alert gets a new one, so the id is a permanent handle on one shape — and the
+cache OUTLIVES the selection, so stepping between storms whose corridors overlap
+pays once per shared alert rather than once per storm.
+
+**AND SLICE B DELIBERATELY TOUCHED NOTHING SLICE A SHIPPED.** The polygon zoom
+ramp, the corridor memo and the visibility gate are unchanged. Changing any of
+them here would have made the two pushes impossible to tell apart on a phone,
+which is the failure this whole slice plan exists to prevent. **The two slices
+are still separately revertable.**
+
+**ONE ASSERTION CAUGHT ITS OWN AUTHOR.** The contrast section of
+`tools/test-flood-features.mjs` was written claiming one ink everywhere fails on
+the dark-theme watch chip. Recomputed rather than quoted, it fails on **three of
+the four**. The layer's header names the case that forced the split; the suite
+names the whole cost of undoing it.
 
 **SLICE C — TAPPING.** The detail panel, the click dispatch, the cluster split,
 and the alert rows becoming buttons. Mostly DOM and mostly cheap, and it is last
 because §56.6's keyboard path is meaningless until there is something to open.
 **Judge on glass.**
+
+**==> AND IT DOES THE FILE SPLIT FIRST. <==** `map/layers/flood.js` crossed
+§12's 700-line ceiling on Slice B (724) and has a row in SPEC.md's inventory
+naming the cut: `chipImage`, `ensureChipImages` and the five paint expressions
+are pure functions with no module state, so they lift out with no behaviour
+change and nothing new to thread. It was not done in the push that crossed the
+line because folding a behaviour-neutral split into the same commit as new
+behaviour is what made the first attempt unbisectable.
 
 #### Before Slice A, and this is a gate rather than a suggestion
 

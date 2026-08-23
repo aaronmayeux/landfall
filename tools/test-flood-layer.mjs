@@ -32,27 +32,42 @@ const ok = (cond, label) => {
 };
 const section = (s) => console.log(`\n  ${s}\n`);
 
-const { setFloodAlerts, floodFeatures, resetFloodLayer, floodMatchRuns } =
+const { setFloodAlerts, resetFloodLayer, floodMatchRuns, floodPointRuns } =
   await import('../map/layers/flood.js');
+const { floodSources } = await import('../lib/flood-features.js');
 const { createLayerEngine } = await import('../map/layers/registry.js');
 
 /* --- the stub map ---------------------------------------------------------
  * Counts what the layer asks the map to do. Every other layer definition in
  * the registry is imported by map/layers/index.js, which this file
  * deliberately does NOT import — only flood.js registers itself here, so the
- * counts describe this layer and nothing else. */
+ * counts describe this layer and nothing else.
+ *
+ * ==> IT KNOWS ABOUT BOTH SOURCES NOW (SLICE B). <== `setData` is the total
+ * across the two, which is what the "does the off case cost anything" questions
+ * below are asking; `shapes` and `points` are counted apart, because the way
+ * two sources fail is by drifting from each other. */
 function stubMap() {
-  const calls = { setData: 0, layout: 0, lastFeatures: null };
-  const src = {
+  const calls = { setData: 0, layout: 0, lastFeatures: null, shapes: null, points: null };
+  const mk = (slot) => ({
     setData(fc) {
       calls.setData++;
-      calls.lastFeatures = fc?.features?.length ?? null;
+      const n = fc?.features?.length ?? null;
+      calls[slot] = n;
+      /* `lastFeatures` means the SHAPES, as it did before Slice B, so every
+       * assertion written against it still means what it meant. */
+      if (slot === 'shapes') calls.lastFeatures = n;
     },
-  };
+  });
+  const shapeSrc = mk('shapes');
+  const pointSrc = mk('points');
   return {
     calls,
-    getSource: (id) => (id === 'flood-alerts' ? src : null),
+    getSource: (id) =>
+      id === 'flood-alerts' ? shapeSrc : id === 'flood-alert-points' ? pointSrc : null,
     getLayer: () => ({}),
+    hasImage: () => true,
+    addImage() {},
     addSource() {},
     addLayer() {},
     setPaintProperty() {},
@@ -118,9 +133,15 @@ const bundle = bundleOverAlerts();
 for (let i = 0; i < 5; i++) engine.setBundle(STORM, bundle);
 
 ok(map.calls.setData === 0,
-   'five selections with the switch off write to the source zero times');
+   'five selections with the switch off write to EITHER source zero times');
 ok(floodMatchRuns() === 0,
    'and the corridor match never ran at all — this is the cost, not the setData');
+/* ==> SLICE B'S ADDITION, AND IT IS THE EXPENSIVE ONE. <== The interior-point
+ * search costs about 8 ms on a single 1,970-vertex forecast zone in this
+ * sandbox — a FLOOR for a phone, never a measurement of one. A reader who never
+ * finds the switch must not pay a millisecond of it. */
+ok(floodPointRuns() === 0,
+   'and not one interior point was searched for — the chip work is behind the same gate');
 
 engine.clearSelection();
 ok(map.calls.setData === 0,
@@ -140,10 +161,21 @@ engine.setBundle(STORM, bundle);
 map.calls.setData = 0;
 
 engine.setToggle('floodAlerts', true);
-ok(map.calls.setData === 1,
-   'flipping it on pushes once, with no new selection and no new fetch');
+ok(map.calls.setData === 2,
+   'flipping it on pushes both sources once, with no new selection and no new fetch');
 ok(map.calls.lastFeatures > 0,
    `and it pushes real shapes — ${map.calls.lastFeatures} features`);
+/* ==> THE TWO SOURCES MUST NEVER DRIFT, AND EVERY WAY THEY CAN LOOKS FINE ON
+ * SCREEN. <== A shape with no chip over it is invisible below
+ * `ZOOM.floodFadeIn`, which is exactly where the chip is the only thing
+ * carrying the layer; a chip with no shape under it claims a hazard whose
+ * extent this app cannot draw. They are equal here because every alert in the
+ * frozen capture produced an interior point — `iconless` is 0 on these bytes,
+ * asserted in tools/test-flood-features.mjs. */
+ok(map.calls.points === map.calls.shapes,
+   `and a chip for every shape — ${map.calls.points} of ${map.calls.shapes}`);
+ok(floodPointRuns() === map.calls.points,
+   'and one search per chip, not one per push');
 
 /* ==========================================================================
  * FAULT 2 — AN UNCHANGED SELECTION MUST NOT REDO THE MATCH
@@ -156,11 +188,16 @@ section('an unchanged bundle is matched once (§56.15 fault 2)');
  *
  * This is measured through the feature count rather than a spy: a hit and a
  * miss both push, so the observable difference is whether the SAME array comes
- * back. `floodFeatures` is deterministic over one list, so identity of the
- * matched array is the honest probe. */
+ * back. `floodSources` is deterministic over one list, so identity of the
+ * matched array is the honest probe.
+ *
+ * The probe watches the SHAPE source only — the point source carries the same
+ * alerts by construction, and mixing them here would make `seen` alternate
+ * between two collections and every index arithmetic below wrong. */
 const seen = [];
 const probeMap = stubMap();
-probeMap.getSource = () => ({ setData(fc) { seen.push(fc); } });
+probeMap.getSource = (id) =>
+  id === 'flood-alerts' ? { setData(fc) { seen.push(fc); } } : { setData() {} };
 
 resetFloodLayer();
 engine = createLayerEngine(probeMap);
@@ -224,13 +261,43 @@ const withStorm = map.calls.lastFeatures;
 engine.clearSelection();
 ok(map.calls.lastFeatures === 0,
    'closing the selection clears the shapes off the globe');
+/* ==> AND THE CHIPS WITH THEM. <== Emptying only the polygons would leave a
+ * scatter of counted marks over a globe with no storm selected — the layer's
+ * own answer to "which alerts belong to this storm" outliving the storm. */
+ok(map.calls.points === 0,
+   'and the chips go with them, so no marker outlives the selection');
 ok(withStorm > 0 && withStorm < ALERTS.length,
    `and a storm draws a SUBSET, not the nation — ${withStorm} of ${ALERTS.length}`);
 
-/* ==> THE NATIONAL DRAW IS GONE AND THIS IS THE ASSERTION THAT HOLDS IT GONE.
- * <== §56.1: the toggle lives in the `Storm detail` group, and a layer painting
- * every county in the country from that group was the contradiction this phase
- * exists to resolve. */
+/* ==========================================================================
+ * THE POINT CACHE OUTLIVES THE SELECTION, WHICH IS THE WHOLE POINT OF IT
+ * ========================================================================== */
+section('stepping between storms does not re-search a shared alert (Slice B)');
+
+/* ==> THIS IS THE MOTION THAT EXPOSED THE FIRST ATTEMPT. <== §56.16's phone
+ * pass step 1 is four storms tapped in a row. Two storms whose corridors
+ * overlap share alerts, and an interior point is a fact about the ALERT — it
+ * cannot change because a different storm is selected. Re-deriving it per
+ * selection is the shape of cost that gets felt as stickiness. */
+resetFloodLayer();
+map = stubMap();
+engine = createLayerEngine(map);
+engine.attach();
+setFloodAlerts(map, ALERTS);
+engine.setToggle('floodAlerts', true);
+
+engine.setBundle(STORM, bundle);
+const searchesAfterFirst = floodPointRuns();
+ok(searchesAfterFirst > 0, `the first storm searches for its chips — ${searchesAfterFirst}`);
+
+const OTHER = { id: 'test-2', source: 'nhc', advisoryKey: 'test-2-1' };
+engine.setBundle(OTHER, bundleOverAlerts(4));
+ok(floodPointRuns() === searchesAfterFirst,
+   'a second storm over the same alerts searches zero further times');
+
+engine.setBundle(STORM, bundleOverAlerts(8));
+ok(floodPointRuns() === searchesAfterFirst,
+   'and stepping back searches zero further times again');
 
 /* ==========================================================================
  * EXPIRY IS APPLIED AT RENDER, NOT ONLY AT FETCH
@@ -242,12 +309,22 @@ ok(withExpiry.length > 0, `the capture carries expiry times — ${withExpiry.len
 
 const past = Date.parse(withExpiry[0].expires) - 1000;
 const future = Date.parse(withExpiry[0].expires) + 86_400_000;
-const drawnEarly = floodFeatures(withExpiry, past).features.length;
-const drawnLate = floodFeatures(withExpiry, future).features.length;
-ok(drawnLate < drawnEarly,
-   `expiry is honoured at render — ${drawnEarly} drawn before, ${drawnLate} a day later`);
-ok(drawnLate === 0 || drawnLate < withExpiry.length,
+const early = floodSources(withExpiry, past);
+const late = floodSources(withExpiry, future);
+ok(late.shapes.features.length < early.shapes.features.length,
+   `expiry is honoured at render — ${early.shapes.features.length} drawn before, ${late.shapes.features.length} a day later`);
+ok(late.shapes.features.length === 0 || late.shapes.features.length < withExpiry.length,
    'and nothing that has run out survives into the feature set');
+/* ==> THE CHIPS EXPIRE WITH THE SHAPES. <== A marker sitting over a county
+ * whose warning ran out an hour ago is the same lie as the polygon, and it is
+ * the more visible one because it draws at every zoom. */
+ok(late.points.features.length === late.shapes.features.length,
+   'and the chips shrink with them, alert for alert');
+
+/* ==> THE NATIONAL DRAW IS GONE AND THIS IS THE ASSERTION THAT HOLDS IT GONE.
+ * <== §56.1: the toggle lives in the `Storm detail` group, and a layer painting
+ * every county in the country from that group was the contradiction this phase
+ * exists to resolve. */
 
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {

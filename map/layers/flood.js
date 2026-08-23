@@ -80,9 +80,18 @@
  * **THE CLOCK IS DELIBERATELY NOT IN THAT KEY.** What is memoized is the
  * GEOMETRIC match — which alerts come near this track — and that answer does
  * not change as the minutes pass. Expiry is applied at render, every push, by
- * `floodFeatures`. Putting the clock in the key would miss on every tick and
+ * `floodSources`. Putting the clock in the key would miss on every tick and
  * memoize nothing; leaving expiry out of the render would draw a warning that
  * had run out.
+ *
+ * **FAULT 3 — SLICE B ADDS THE ONE PIECE OF ARITHMETIC BIG ENOUGH TO BE FELT
+ * ON ITS OWN, SO IT IS CACHED BEFORE IT IS EVER PAID TWICE.** The chip needs a
+ * point guaranteed to sit INSIDE its own polygon, and that search costs about
+ * 8 ms on a single 1,970-vertex forecast zone in this sandbox — which is a
+ * FLOOR for a phone, never a measurement of one. The first attempt ran the
+ * whole set on every push. Here the answer is cached per alert id and the
+ * expiry filter runs over the cached answers, so a re-push costs a Map lookup
+ * per alert. See `lib/flood-features.js` for why the id is a safe key.
  *
  * ==> NO NUMBER IN THIS COMMENT CLAIMS THIS IS FAST. <== Nothing in the sandbox
  * can measure it: the basemap host is blocked, so MapLibre never finishes
@@ -90,20 +99,39 @@
  * argument about work not done, not a measurement, and the measurement comes
  * off CI or off Aaron's phone (`CLAUDE.md`).
  *
- * Imports: config/, lib/, and map/ siblings. No DOM beyond the map.
+ * ==> WHAT SLICE B DELIBERATELY DOES NOT TOUCH. <== The polygon zoom ramp, the
+ * corridor memo and the visibility gate all shipped in Slice A and Slice A has
+ * not been judged on glass. Changing any of them here would make the two pushes
+ * impossible to tell apart on a phone, which is the exact failure §56.15
+ * records. Tapping — the detail panel, the cluster split, the rows becoming
+ * buttons — is Slice C and is not here either.
+ *
+ * Imports: config/, lib/, and map/ siblings. No DOM beyond the map and the one
+ * canvas the chip images are drawn on.
  */
 
-import { FLOOD_COLOR, FLOOD_COLOR_LIGHT, OPACITY, STORM_GEO } from '../../config/tokens.js';
-import { ZOOM } from '../../config/constants.js';
+import {
+  DARK,
+  FLOOD_COLOR,
+  FLOOD_COLOR_LIGHT,
+  FLOOD_GEO,
+  LIGHT,
+  OPACITY,
+  STORM_GEO,
+} from '../../config/tokens.js';
+import { FLOOD, ZOOM } from '../../config/constants.js';
 import { isLight } from '../../config/theme.js';
-import { alertsNearTrack, inForce, trackChains, trackSamples } from '../../lib/flood.js';
+import { alertsNearTrack, trackChains, trackSamples } from '../../lib/flood.js';
+import { createPointCache, floodSources, trimPointCache } from '../../lib/flood-features.js';
 import { registerLayer } from './registry.js';
 
 const SOURCE = 'flood-alerts';
+const POINT_SOURCE = 'flood-alert-points';
 const FILL = 'flood-alert-fill';
 const LINE = 'flood-alert-line';
+const CHIP = 'flood-alert-chip';
 
-export const FLOOD_LAYER_IDS = Object.freeze([FILL, LINE]);
+export const FLOOD_LAYER_IDS = Object.freeze([FILL, LINE, CHIP]);
 
 const EMPTY = Object.freeze({ type: 'FeatureCollection', features: [] });
 
@@ -130,6 +158,17 @@ let visible = false;
 let memoBundle = null;
 let memoAlerts = null;
 let memoMatched = null;
+
+/* --- the interior-point cache (Slice B) -------------------------------------
+ *
+ * A SECOND cache with a different key and a different lifetime, and the two are
+ * not merged on purpose. The memo above answers "which alerts are near THIS
+ * storm" and dies when the storm changes. This one answers "where inside its
+ * own polygon does this alert's chip go", which is a fact about the alert and
+ * about nothing else — so it survives every selection, and stepping between
+ * four storms pays for each shared alert once rather than four times.
+ * -------------------------------------------------------------------------- */
+const pointCache = createPointCache();
 
 /** How many times the corridor match has actually RUN — incremented only on a
  *  memo miss.
@@ -225,32 +264,163 @@ const rampTo = (peak) => [
   ZOOM.floodFull, peak,
 ];
 
-/**
- * The matched alerts, in force at `nowMs`, as GeoJSON features.
+/* ---------------------------------------------------------------------------
+ * THE CHIP (Slice B)
  *
- * ==> AN ALERT WITH NO GEOMETRY IS SKIPPED, NEVER DEFAULTED. <== Giving one a
- * shape — a zone centroid, a circle, anything — would be this app drawing a
- * boundary NWS did not draw, which is the §5 fabrication in its most literal
- * form. `alertsNearTrack` has already counted these as `unplaceable` so the
- * drawer can say they exist.
- */
-export function floodFeatures(alerts, nowMs) {
-  const out = [];
+ * ==> IT IS A ROUNDED SQUARE AND IT MUST NEVER BECOME A CIRCLE. <== The rule is
+ * `GENESIS_GEO`'s, stated there and inherited here: a storm in this app IS a
+ * filled dot with a spiral and a halo, and that equation is the whole
+ * legibility of the globe. Genesis obeys it by having no point marker at all. A
+ * flood alert cannot do that — a mark at a point is the only thing that
+ * survives §56.2's pixel table at planet distance, where the polygon is under
+ * twelve pixels — so it obeys the rule the other way, by not being round. A
+ * reader who has learnt "round means a storm" is never asked to unlearn it, and
+ * the distinction still holds for somebody who cannot tell the green from the
+ * orange.
+ *
+ * FOUR IMAGES: warning and watch, times two themes, pre-added under stable
+ * names. Pre-adding both themes means a theme flip is a layout-property write
+ * and never an `addImage` — a texture upload on the frame the reader is looking
+ * at is the thing `map/layers/genesis.js` learnt to avoid.
+ * ------------------------------------------------------------------------- */
 
-  for (const a of inForce(alerts, nowMs)) {
-    if (!a.geometry) continue;
-    out.push({
-      type: 'Feature',
-      geometry: a.geometry,
-      properties: {
-        _id: a.id || null,
-        _event: a.event || null,
-        _watch: /watch/i.test(a.event || ''),
-      },
-    });
-  }
-  return { type: 'FeatureCollection', features: out };
+const chipName = (watch, light) =>
+  `flood-chip-${watch ? 'watch' : 'warning'}-${light ? 'light' : 'dark'}`;
+
+/**
+ * One chip, drawn at 2x.
+ *
+ * ==> NO DOM, NO CHIP, AND THAT IS A DEGRADE RATHER THAN A FAILURE. <== The
+ * headless suites drive the layer engine with a stub map and no `document` at
+ * all. `map/layers/genesis.js` records what happens when a layer throws in
+ * `ensure`: the WHOLE engine goes down, every storm layer with it. Returning
+ * null costs the chips and nothing else — the polygons are ordinary paint and
+ * still draw, so an alert is still a green shape on the map. That is the right
+ * trade for a texture upload that cannot happen.
+ */
+function chipImage(fill, stroke) {
+  if (typeof document === 'undefined' || !document.createElement) return null;
+
+  const scale = 2;
+  const size = FLOOD_GEO.chipSizePx * scale;
+  const r = FLOOD_GEO.chipRadiusPx * scale;
+  const w = FLOOD_GEO.chipStrokeWidth * scale;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext?.('2d');
+  if (!ctx) return null;
+
+  ctx.clearRect(0, 0, size, size);
+  /* Inset by half the stroke so the border is drawn INSIDE the tile. A stroke
+   * centred on the path spills half its width past the edge and the canvas
+   * clips it, which shows up as a chip with two crisp sides and two soft ones. */
+  const a = w / 2;
+  const b = size - w / 2;
+
+  ctx.beginPath();
+  ctx.moveTo(a + r, a);
+  ctx.lineTo(b - r, a);
+  ctx.quadraticCurveTo(b, a, b, a + r);
+  ctx.lineTo(b, b - r);
+  ctx.quadraticCurveTo(b, b, b - r, b);
+  ctx.lineTo(a + r, b);
+  ctx.quadraticCurveTo(a, b, a, b - r);
+  ctx.lineTo(a, a + r);
+  ctx.quadraticCurveTo(a, a, a + r, a);
+  ctx.closePath();
+
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = w;
+  ctx.strokeStyle = stroke;
+  ctx.stroke();
+
+  return { data: ctx.getImageData(0, 0, size, size), pixelRatio: scale };
 }
+
+/** Add all four chips if they are not already there. Idempotent: `ensure` may
+ *  run more than once and `hasImage` is the cheap guard. */
+function ensureChipImages(map) {
+  for (const light of [false, true]) {
+    const colors = light ? FLOOD_COLOR_LIGHT : FLOOD_COLOR;
+    /* THE OUTLINE INK IS THE THEME'S LABEL HALO, WHICH IS THE INK THIS APP
+     * ALREADY USES FOR "SEPARATE THIS MARK FROM THE MAP UNDER IT" — dark in the
+     * dark theme, near-white in the light one. Borrowing it rather than minting
+     * a fifth hex means the chip tracks any future change to how marks are
+     * separated from the basemap.
+     *
+     * ==> BOTH PALETTES ARE READ BY NAME, NOT THROUGH `palette()`. <== That
+     * function answers for the ACTIVE theme only, and this loop is building the
+     * images for BOTH so a theme flip never has to upload a texture. */
+    const stroke = (light ? LIGHT : DARK).geo.labelHalo;
+    for (const watch of [false, true]) {
+      const name = chipName(watch, light);
+      if (map.hasImage?.(name)) continue;
+      const img = chipImage(watch ? colors.WATCH : colors.WARNING, stroke);
+      if (img) map.addImage(name, img.data, { pixelRatio: img.pixelRatio });
+    }
+  }
+}
+
+/**
+ * Is this feature a WARNING rather than a watch? One expression, read by the
+ * chip image, the count's ink and the count's halo, so the three can never
+ * disagree about which thing is on screen.
+ *
+ * ==> A CLUSTER IS A WARNING IF IT HOLDS EVEN ONE. <== The more urgent member
+ * is what the reader has to know is in there; a cluster that looked like a
+ * watch while hiding a warning would be this layer understating a hazard.
+ */
+const isWarningExpr = () => [
+  'case',
+  ['has', 'point_count'],
+  ['>', ['get', 'warnings'], 0],
+  ['!', ['get', '_watch']],
+];
+
+/** Which chip image a feature wants, for the active theme. */
+const chipExpr = () => {
+  const light = isLight();
+  return ['case', isWarningExpr(), chipName(false, light), chipName(true, light)];
+};
+
+/**
+ * The cluster count's ink, and it is NOT one colour.
+ *
+ * ==> ONE INK FOR ALL FOUR CHIPS FAILS WCAG AA ON EXACTLY ONE OF THEM, AND THAT
+ * ONE IS REACHABLE. <== Computed rather than eyeballed — contrast ratios for
+ * the theme's dark ink (#0B1420) and light ink (#F6F6F4) against each of the
+ * four chip fills:
+ *
+ *   dark theme  / warning #3FBF6F   dark 7.83   light 2.18
+ *   dark theme  / watch   #2A7A4A   dark 3.51   light 4.87
+ *   light theme / warning #1E7A45   dark 3.46   light 4.94
+ *   light theme / watch   #14532E   dark 2.03   light 8.41
+ *
+ * The first draft used the theme's label halo everywhere, which is the dark ink
+ * on the dark theme — 3.51 on a watch cluster, under AA's 4.5 for text this
+ * size, and a watch-only cluster is an ordinary thing to have on screen.
+ * Picking per chip clears 4.5 on all four. §10, and
+ * `tools/test-flood-features.mjs` recomputes the whole table so a hue change
+ * cannot quietly drop one under the line.
+ */
+const countInkExpr = () => {
+  const light = isLight();
+  /* Only the dark theme's BRIGHT warning green wants the dark ink; the other
+   * three greens are dark enough that the light ink wins. */
+  const onWarning = light ? LIGHT.geo.labelHalo : DARK.geo.labelHalo;
+  const onWatch = LIGHT.geo.labelHalo;
+  return ['case', isWarningExpr(), onWarning, onWatch];
+};
+
+/** The count's halo is the chip it is sitting on, so the glyph edge stays clean
+ *  where it crosses the chip's own border. */
+const countHaloExpr = () => {
+  const C = isLight() ? FLOOD_COLOR_LIGHT : FLOOD_COLOR;
+  return ['case', isWarningExpr(), C.WARNING, C.WATCH];
+};
 
 /**
  * Put the current answer on the map.
@@ -265,11 +435,27 @@ function push(map) {
   if (!visible) return;
   const src = map.getSource(SOURCE);
   if (!src) return;
+  const pts = map.getSource(POINT_SOURCE);
+
   if (!heldStorm || !heldBundle) {
     src.setData(EMPTY);
+    pts?.setData(EMPTY);
     return;
   }
-  src.setData(floodFeatures(matchedAlerts(), Date.now()));
+
+  /* ==> ONE WALK, TWO SOURCES, AND THE EMPTY CASE ABOVE CLEARS BOTH. <== §56.5.
+   * Two sources fed from two places is the split that drifts, and every way it
+   * can drift looks fine on screen: a shape with no chip over it is invisible
+   * below `ZOOM.floodFadeIn`, which is exactly where the chip is the only thing
+   * carrying the layer, and a chip with no shape under it is a marker claiming a
+   * hazard whose extent this app cannot draw. */
+  const built = floodSources(matchedAlerts(), Date.now(), pointCache);
+  src.setData(built.shapes);
+  pts?.setData(built.points);
+
+  /* AFTER the push and not before, so the cache is never emptied on the frame
+   * that is about to read it. */
+  trimPointCache(pointCache, FLOOD.pointCacheMax);
 }
 
 registerLayer({
@@ -286,7 +472,28 @@ registerLayer({
   ensure(map, beforeId) {
     if (map.getSource(SOURCE)) return;
 
+    ensureChipImages(map);
+
     map.addSource(SOURCE, { type: 'geojson', data: EMPTY });
+
+    /* ==> CLUSTERING IS A SOURCE OPTION, WHICH IS WHY THIS CANNOT SHARE THE ONE
+     * ABOVE. <== MapLibre clusters `Point` geometry only, so the chips cannot
+     * ride the polygon source the way a plain symbol layer could.
+     *
+     * `clusterProperties` is how a cluster knows what is inside it: MapLibre
+     * drops every feature property on merge unless it is told to accumulate one.
+     * `warnings` counts the non-watches, so the chip expression can ask whether
+     * the pile holds anything happening now. */
+    map.addSource(POINT_SOURCE, {
+      type: 'geojson',
+      data: EMPTY,
+      cluster: true,
+      clusterRadius: FLOOD.clusterRadiusPx,
+      clusterMaxZoom: FLOOD.clusterMaxZoom,
+      clusterProperties: {
+        warnings: ['+', ['case', ['get', '_watch'], 0, 1]],
+      },
+    });
 
     map.addLayer(
       {
@@ -327,6 +534,49 @@ registerLayer({
       beforeId
     );
 
+    map.addLayer(
+      {
+        id: CHIP,
+        type: 'symbol',
+        source: POINT_SOURCE,
+        /* ==> NO ZOOM GATE, AND THAT IS THE WHOLE JOB. <== The polygons ramp in
+         * from `ZOOM.floodFadeIn` because below it they are specks. The chip is
+         * what answers at that distance — a scatter of counted marks is the
+         * honest read of "eleven alerts, most of them here", a picture the
+         * polygons genuinely cannot draw at six pixels across. */
+        layout: {
+          'icon-image': chipExpr(),
+          /* ==> OVERLAP ALLOWED, AND §56.2 IS THE LINE THAT BOUGHT IT. <== With
+           * collision on, MapLibre silently drops the icons it cannot place —
+           * measured at 11 drawn for 14 alerts with the reader sitting right on
+           * top of the pile at z7, so it does not resolve by zooming in.
+           * Clustering has already merged everything genuinely too close to tap
+           * apart, so anything still on screen is a distinct place and must
+           * draw. A hazard mark dropped with nothing saying so is §5's silence
+           * with a map over it. */
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
+          'text-field': [
+            'case',
+            ['has', 'point_count'],
+            ['get', 'point_count_abbreviated'],
+            '',
+          ],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': FLOOD_GEO.countSize,
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        },
+        paint: {
+          /* Per-chip, and `countInkExpr` carries the measured reason. */
+          'text-color': countInkExpr(),
+          'text-halo-color': countHaloExpr(),
+          'text-halo-width': FLOOD_GEO.countHaloWidth,
+        },
+      },
+      beforeId
+    );
+
     /* The switch may already be on when the style reloads — a theme change
      * tears every layer down and rebuilds it, and a layer that came back
      * visible-by-default would flash on for a reader who had turned it off. */
@@ -357,6 +607,12 @@ registerLayer({
     forgetMemo();
     if (!visible) return;
     map.getSource(SOURCE)?.setData(EMPTY);
+    /* ==> AND THE CHIPS WITH THEM. <== Emptying only the polygons would leave a
+     * scatter of counted marks over a globe with no storm selected — the layer's
+     * OWN answer to "which alerts belong to this storm" surviving the storm
+     * going away. The point cache is NOT cleared: it holds where a chip goes,
+     * which is a fact about the alert and stays true across selections. */
+    map.getSource(POINT_SOURCE)?.setData(EMPTY);
   },
 
   /* NO `updateAmbient`, AND IT IS LOAD-BEARING. The engine's ambient merge
@@ -416,16 +672,27 @@ export function setFloodAlerts(map, alerts) {
 }
 
 /**
- * Recolour after a theme change. TWO PAINT WRITES, NOT A FEATURE REBUILD.
+ * Recolour after a theme change. PAINT AND LAYOUT WRITES, NOT A FEATURE
+ * REBUILD.
  *
  * See `colorExpr` for why this layer does not join `main.js`'s re-push list —
  * that list is explicitly capped at three, and this is what the cap was telling
  * the next layer to do instead.
+ *
+ * ==> THE CHIP SWAPS TO AN IMAGE THAT IS ALREADY UPLOADED. <== All four were
+ * added at `ensure`, so this is a name change on an existing texture rather
+ * than an `addImage` on the frame the reader is looking at. That is the whole
+ * reason both themes are built up front.
  */
 export function rethemeFlood(map) {
   const expr = colorExpr();
   if (map.getLayer(FILL)) map.setPaintProperty(FILL, 'fill-color', expr);
   if (map.getLayer(LINE)) map.setPaintProperty(LINE, 'line-color', expr);
+  if (map.getLayer(CHIP)) {
+    map.setLayoutProperty(CHIP, 'icon-image', chipExpr());
+    map.setPaintProperty(CHIP, 'text-color', countInkExpr());
+    map.setPaintProperty(CHIP, 'text-halo-color', countHaloExpr());
+  }
 }
 
 /** Test seam — the module holds selection state across calls. */
@@ -436,10 +703,22 @@ export function resetFloodLayer() {
   visible = false;
   matchRuns = 0;
   forgetMemo();
+  pointCache.points.clear();
+  pointCache.runs = 0;
 }
 
 /** Test seam — how many times the corridor match has actually run. See
  *  `matchRuns`. Nothing in the app reads this. */
 export function floodMatchRuns() {
   return matchRuns;
+}
+
+/** Test seam — how many interior-point searches have actually run.
+ *
+ *  ==> SAME REASON AS `floodMatchRuns`, AND A SHARPER ONE. <== The obvious
+ *  assertion about a cache — that two pushes put the same chips on the map —
+ *  passes with the cache deleted, because recomputing gives the same answer.
+ *  This counts the WORK. Nothing in the app reads it. */
+export function floodPointRuns() {
+  return pointCache.runs;
 }
