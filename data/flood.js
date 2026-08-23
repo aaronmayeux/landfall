@@ -7,10 +7,18 @@
  * set a storm's panel filters is the set the map layer draws. A per-storm
  * fetch would be the same bytes over and over, returning overlapping subsets.
  *
- * ==> IT IS GATED ON THE LAYER SWITCH AND ON NOTHING ELSE. <== Nothing calls
- * this until either the Flood alerts toggle goes on or a storm drawer asks for
- * its count. There is no warm loop and no poll: a reader who never turns the
- * layer on and never opens a storm near home pays nothing for this feature.
+ * ==> IT IS NO LONGER GATED ON THE LAYER SWITCH (§56.17). <== This header used
+ * to say the fetch happened when "either the Flood alerts toggle goes on or a
+ * storm drawer asks for its count". The second half was never true — the
+ * drawer's facade is read-only by design — and that stale half-sentence is most
+ * of why nobody noticed the `Flooding` section saying *Checking flood alerts…*
+ * forever for everyone who never found the map switch.
+ *
+ * §56.7 put `Flooding` on both screens permanently, so the list is what that
+ * section costs: one national request per client TTL, shared by the map and
+ * both screens. What the switch still gates is DRAWING — pushing county-scale
+ * geometry into a MapLibre source is the expensive half, and nobody who left
+ * the layer off pays it.
  *
  * ==> NOT PLUMBED THROUGH THE STORM SOURCE TABLE. <== `data/lifecycle.js`
  * treats a source answering without a storm in it as evidence that storm has

@@ -132,6 +132,25 @@ export const LIST_FEEDS = [
    * not only in the one that happened to fetch recently. */
   { path: 'nhc/outlook/atlantic', route: '/api/nhc/outlook?basin=atlantic' },
   { path: 'nhc/outlook/epacific', route: '/api/nhc/outlook?basin=epacific' },
+
+  /* ==> THE NATIONAL FLOOD LIST, WARMED BECAUSE §56.17 MADE IT A READER-FACING
+   * FETCH. <== It was absent from this list for as long as it was gated behind
+   * a map switch almost nobody flipped: whoever turned the layer on waited for
+   * the relay to go to NWS, and that was one person being patient. The
+   * `Flooding` section now renders on both screens for everybody, so the first
+   * ask on a cold edge is a reader opening a storm — and waiting on a round
+   * trip to weather.gov is exactly what this loop exists to prevent.
+   *
+   * ==> NO `store` GATE, AND THE EMPTY ANSWER IS THE REASON. <== Genesis above
+   * refuses to cache an empty area list because "no areas" there is more often
+   * a failed parse than a quiet ocean. Flood is the opposite: most hours no
+   * weather office in the country has a flood product out, so an empty list is
+   * the ordinary truthful answer and holding it is correct. A genuine failure
+   * never reaches here — `functions/api/nws/flood.js` returns a non-ok status
+   * rather than an empty list, and `data/flood.js` keeps no last-good copy at
+   * all, because an expired flood warning on a map tells somebody they are in
+   * danger when they are not. */
+  { path: 'nws/flood', route: '/api/nws/flood' },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape

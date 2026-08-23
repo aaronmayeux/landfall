@@ -546,6 +546,19 @@ function boot() {
    *  that has to honour it. The words go up through the layer status row. */
   function ensureFlood() {
     loadFloodAlerts().then((slot) => {
+      /* ==> THE SLOT GOES UP WHETHER OR NOT THE MAP LAYER IS ON (§56.17). <==
+       * It used to be fetched only for the globe, so the `Flooding` section —
+       * which §56.7 put on BOTH screens permanently — read a slot nothing ever
+       * filled and printed "Checking flood alerts…" forever. A section that
+       * renders every time but can only get data through an unrelated map
+       * switch is broken by construction, and the sentence it printed was §5's
+       * worst: a claim that a request is in flight when none is.
+       *
+       * ==> THE MAP PUSH STAYS GATED, AND THAT IS THE WHOLE COST ARGUMENT.
+       * <== The list is small JSON the section needs anyway. Pushing it into a
+       * MapLibre source is county-scale geometry crossing into the worker to
+       * be tiled and parsed, which is real work for a layer nobody switched
+       * on. Turning the switch on re-enters this function and pushes then. */
       /* The words go up FIRST and unconditionally — the row is the only place
        * an outage can be said out loud, and returning early on a failure below
        * would leave it saying whatever it said last. */
@@ -557,7 +570,7 @@ function boot() {
        * NOT in scope here — writing to it directly is what took the whole
        * layer-apply path down; see `setFloodSlot` there. */
       views.setFloodSlot(slot);
-      if (slot.state !== 'ok' || !styleReady) return;
+      if (slot.state !== 'ok' || !styleReady || !toggleOn('floodAlerts')) return;
       setFloodAlerts(map, slot.alerts);
     });
   }
@@ -582,14 +595,19 @@ function boot() {
     for (const t of LAYER_TOGGLES) {
       if (t.engineKey) engine.setToggle(t.engineKey, toggleOn(t.key));
     }
-    /* Flood alerts fetch before they can draw, exactly as population does.
-     * Visibility is pushed by the engine loop above so switching OFF works
-     * with no data present; the fetch is kicked only when on (§48.21). */
-    if (toggleOn('floodAlerts')) ensureFlood();
-    /* ==> AND THE ROW IS CLEARED WHEN THE SWITCH GOES OFF. <== Without this the
-     * last sentence it printed — including an outage — survives the layer being
-     * turned off and reappears under a row nobody has asked anything of. */
-    else views.setFloodSlot(null);
+    /* ==> UNCONDITIONAL NOW, AND THE `else` THAT USED TO BLANK IT IS GONE
+     * (§56.17). <== Visibility is pushed by the engine loop above, so
+     * switching the layer OFF still works with no data present. What changed
+     * is that the FETCH is no longer the switch's to gate: the `Flooding`
+     * section renders on both screens every time, so the list is simply what
+     * that section costs. The layer status row is still cleared correctly on
+     * the way through — `setFloodSlot` passes the switch's real state to
+     * `layerStatus.setFloodAlerts`, which drops the row whenever it is off, so
+     * an outage sentence cannot survive under a switch nobody has touched.
+     *
+     * Calling this on every layer change is free: `loadFloodAlerts` holds one
+     * answer per client TTL and folds concurrent callers into one request. */
+    ensureFlood();
     /* ==> GENESIS IS THE ONE LAYER THAT DRAWS IN BOTH ENGINES, SO ITS TOGGLE
      *     HAS TO REACH BOTH. <== The loop above only speaks to MapLibre layer
      * ids; the planet-band glyphs live in the 3D globe. Without this line,
@@ -1170,6 +1188,16 @@ function boot() {
 
     refreshCage();
   });
+
+  /* ==> THE FLOOD LIST IS ASKED FOR HERE TOO, OUTSIDE THE MAP'S CONTROL
+   * (§56.17). <== `applyLayerState()` also calls this, but it returns early
+   * until the style is installed — so a basemap outage would leave the
+   * `Flooding` section on both screens sitting at "Checking flood alerts…"
+   * with nothing coming, which is the exact sentence §56.17 exists to delete.
+   * §5's rule is that one source going down must never blind another, and the
+   * flood relay has nothing to do with the tile host. Duplicate calls cost
+   * nothing: `loadFloodAlerts` holds one answer per client TTL. */
+  ensureFlood();
 
   startPolling();
 

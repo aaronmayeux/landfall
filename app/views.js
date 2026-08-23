@@ -713,12 +713,20 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
        * the switch with the panel open updates it in place. */
       ribbonOn: () => toggleOn('environment'),
     },
-    /* ==> THE FLOOD FACADE (§48.21). <== `value()` is READ-ONLY and never
-     * fetches: the map layer's toggle owns the fetch, and a drawer that kicked
-     * one of its own would make opening a storm cost a national request the
-     * reader did not ask for. So the block reports what the app already holds
-     * and offers a Retry that is the only thing here allowed to go to the
-     * network. `summarize` is `lib/flood.js` composed with nothing — ui/ never
+    /* ==> THE FLOOD FACADE (§48.21, §56.17). <== `value()` is still READ-ONLY
+     * and still never fetches — but that is now a statement about WHERE the
+     * request lives, not about whether one happens. `main.js` asks for the
+     * list unconditionally, so the slot this reads is filled for every reader
+     * on every screen. It used to be filled only when the map switch was on,
+     * which left this returning null forever and the section printing
+     * "Checking flood alerts…" over a request that was never made.
+     *
+     * The read-only shape is kept deliberately: a drawer that kicked its own
+     * fetch would be a second caller racing the first across a cache boundary,
+     * and two surfaces disagreeing about how many alerts are in force is the
+     * failure §48.21 is most concerned with. Retry stays the one thing here
+     * allowed to go to the network. `summarize` is `lib/flood.js` composed
+     * with nothing — ui/ never
      * imports lib's data siblings, and this keeps the corridor matching
      * testable without a browser. */
     flood: {

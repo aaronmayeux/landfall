@@ -124,24 +124,6 @@ exactly like this. **WAITING ON AARON:** open `/api/jtwc/storms` on a device tha
 shows the bug and read `fetchedAt` and the fix `at`. Nothing in the sandbox can
 reach the live app. Do not write a fix before that.
 
-**==> THE `Flooding` SECTION SAYS *Checking flood alerts…* FOREVER, AND NOTHING
-IS BEING CHECKED. <==** Aaron found it 2026-08-23. With the `Flood alerts` map
-switch off — the default — no request is ever made and the section sits on that
-sentence permanently. It is shipped §48.21 behaviour, it is not Phase 5's, and
-it survived the revert.
-
-The relay is fine: `/api/nws/flood` exists and serves the projected list. **The
-device never asks.** `ensureFlood()` in `main.js` runs only when the map toggle
-is on, and the drawer's facade is deliberately read-only. The gate made sense
-when flood was only a map layer; §56.7 then put `Flooding` on both screens
-permanently, and a section that renders every time but can only get data via an
-unrelated switch is broken by construction.
-
-**WAITING ON AARON — three ways out, in `SPEC-FLOOD-PLAN.md` §56.17.** Andy
-recommends the first: let the section fetch, like every other section does.
-**Also found: flood is NOT on the cron warm list** (`worker/src/sources.js`), so
-the first ask on a cold edge pays a round trip to NWS.
-
 **`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.**
 `functions/api/nhc/` has no `surge.js`. Every NHC surge request is a 404 today,
 and `lib/surge-locations.js` already says so in a comment. Building it needs a
@@ -262,6 +244,60 @@ The short version, because it is the kind of mistake that repeats:
 - **When the measurement and the glass disagree, the glass is right and the
   session stops.** That disagreement happened after the first patch and was
   ignored.
+
+**==> THE PREREQUISITE IS DONE AND IT CAME WITH A FINDING THAT NEARLY REPEATED
+THE WHOLE MISTAKE. <==** Shipped 2026-08-23, `SPEC-FLOOD-PLAN.md` §56.18 and
+§56.17, as-built in `SPEC-UI.md` §48.21.
+
+Letting the `Flooding` section fetch — the plan's own recommendation — would have
+put the corridor match on every storm open for every reader. **That match cost
+800 ms of pure arithmetic for one US storm**, measured in `node`, which is faster
+than a phone. Building the prerequisite as written would have recreated the
+Phase 5 lag in a new place wearing the plan's blessing.
+
+Two causes, neither of which was the number of alerts: **the only prefilter was
+latitude**, and Hawaii shares latitudes with the Gulf, so a Hawaii zone against
+an Atlantic storm was rejected by nothing; and **NWS draws zone outlines at 65
+metres per point** against a 300 nm corridor. Now: a bounding-box lower bound,
+a thinned outline at 1 nm, and the full outline only where a shape sits close
+enough to the corridor edge to change the verdict.
+
+| list | before | after |
+| --- | --- | --- |
+| 33 real warning polygons | 4.6 ms | 3.0 ms |
+| + 23 watch zones far away | 800 ms | 2.4 ms |
+| + 23 watch zones on the track | 235 ms | 15 ms |
+
+**The verdict is exact at every radius; only the reported distance moves, by at
+most 1 nm, and only upward.**
+
+**==> AND ITS GUARDING TEST PASSED WITH A DELIBERATE 2% INFLATION IN THE BOUND.
+<==** That is the mutation that silently drops live flood warnings off a storm.
+`tools/test-flood-fast.mjs` was testing the CONSEQUENCE through a probe grid too
+coarse to land in the band where the bug bites. `boxLowerNm` is exported now and
+the inequality is asserted head-on, with a second assertion whose only job is to
+prove the first has teeth. Both mutants verified red, then green.
+
+**WHAT WAS DELIBERATELY NOT BUILT: the per-storm memo the plan called for.** A
+repaint costs 3 ms on a real list, 15 ms worst case. The memo would buy
+milliseconds against an expiry-invalidation problem on a hazard surface. If the
+phone disagrees it is a small addition — §56.18 says where to start.
+
+**`lib/flood.js` CROSSED §12's CEILING AND WAS CUT.** The measurement is
+`lib/shape-distance.js` now: it answers *how near does this shape come to this
+track* and knows nothing about floods. Flood imports distance; distance imports
+nothing of flood's.
+
+**GLASS, AND IT IS THE ONLY GATE THAT COUNTS.** Open a storm with the
+`Flood alerts` switch OFF — the default. `Flooding` should now show a real answer
+instead of *Checking flood alerts…* forever. Then tap four storms in a row on the
+globe and step through them on the home dashboard: **that is the motion that
+exposed the first attempt.** Nothing in the sandbox can measure it —
+`perf-select` needs the basemap and the tile host is outside the wall, verified
+this session.
+
+**SLICE A IS NEXT AND WAS DELIBERATELY NOT STARTED.** §56.16's three slices are
+unchanged. Do not start it before the above has been felt on a phone.
 
 **THE TOOLS FOR THE RETRY ARE IN, AND ONE OF THEM NEEDS A HUMAN BEFORE IT IS
 WORTH ANYTHING.** Added 2026-08-23:

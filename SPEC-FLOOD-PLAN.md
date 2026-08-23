@@ -401,13 +401,33 @@ of session config.
 
 ---
 
-### 56.17 The `Flooding` section says it is checking, and it never is
+### 56.17 The `Flooding` section says it is checking, and it never is — ==> FIXED 2026-08-23 <==
 
-**==> THIS IS SHIPPED BEHAVIOUR ON `main` TODAY, IT IS NOT PHASE 5's, AND IT
-SURVIVED THE REVERT. <==** Aaron found it on 2026-08-23. Open any storm with the
+**==> OPTION 1 WAS BUILT: THE LIST IS FETCHED FOR EVERY READER, AND ONLY THE
+DRAWING IS STILL GATED ON THE MAP SWITCH. <==** As-built in `SPEC-UI.md` §48.21.
+`main.js` calls `ensureFlood()` unconditionally from `applyLayerState()` **and**
+once at boot outside the map's control, so a basemap outage cannot strand the
+section — §5's rule that one source going down must not blind another, and the
+flood relay has nothing to do with the tile host. The map push kept its gate:
+the list is small JSON the section needs anyway, while pushing county-scale
+geometry into a MapLibre source is the expensive half and nobody who left the
+layer off pays it. `/api/nws/flood` is on the cron warm list now
+(`worker/src/sources.js`), so the first ask on a cold edge comes off the edge.
+
+**The stale half-sentence went with it.** `data/flood.js`'s header claimed the
+fetch fired when "a storm drawer asks for its count", which was never true and is
+most of why nobody noticed. `app/views.js`'s facade comment said the read-only
+shape existed to avoid a fetch; it is kept now for a different and still-good
+reason — two callers racing across a cache boundary would let two surfaces
+disagree about how many alerts are in force.
+
+**What follows is the account of the fault, kept because §56.5's map puts more
+weight on this same path.**
+
+Aaron found it on 2026-08-23. Open any storm with the
 `Flood alerts` map switch off — which is the default — and the `Flooding`
-section reads *Checking flood alerts…* **forever**. No request was ever made and
-none ever will be.
+section read *Checking flood alerts…* **forever**. No request was ever made and
+none ever would be.
 
 The chain, verified rather than inferred:
 
@@ -445,21 +465,11 @@ made `Flooding` a permanent section on **both** screens. A section that renders
 every time a storm is opened, but whose data arrives only if the reader happens
 to flip an unrelated map switch, is broken by construction.
 
-**Three ways out. Aaron's call, and it has not been made:**
-
-1. **The section fetches, like every other section does.** One national request
-   per client TTL, shared by the map and both screens. The original objection —
-   opening a storm should not cost a national download — was written when
-   nothing else needed the data; the section is now always on screen, so that
-   download is simply what the section costs. **Andy's recommendation.**
-2. **Say the true thing instead** — *not checked yet*, with a control that
-   checks. Honest, and it makes the reader press a button for something the app
-   could have done.
-3. **Do not render the section without the layer on.** Cheapest, and it quietly
-   removes a section §56.7 deliberately put on both screens.
-
-Whichever wins, the stale sentence in `data/flood.js`'s header is deleted with
-it (§12: documentation matches reality or it is worse than nothing).
+**Three ways out were written down; option 1 was taken.** The other two are
+recorded so nobody re-derives them: *say "not checked yet" with a button*, which
+makes the reader press a control for something the app could have done; and *do
+not render the section without the layer on*, which quietly removes a section
+§56.7 deliberately put on both screens.
 
 **==> AND FLOOD IS NOT ON THE CRON WARM LIST. <==** Checked 2026-08-23:
 `worker/src/sources.js` warms NHC storms, JTWC storms, GDACS events, TCGP
@@ -475,6 +485,86 @@ and it is the difference between the `Flooding` section working for everybody an
 working only for people who found a switch. **Do it before Slice A** — Phase 5
 puts more weight on this same data path, and building on a section that has never
 had data is how a fault gets attributed to the wrong change.
+
+---
+
+### 56.18 Making the corridor match cheap — ==> SHIPPED 2026-08-23 <==
+
+**==> §56.17 WOULD HAVE HANDED EVERY READER AN 800 ms BLOCK, AND THE PLAN DID
+NOT SEE IT COMING. <==** Letting the `Flooding` section fetch means the corridor
+match runs on every storm open for everybody instead of for the few who found the
+map switch. Before this pass that match cost **800 ms of pure arithmetic** for one
+US storm — measured in `node`, which is faster than a phone. Building §56.17 as
+written would have recreated the Phase 5 lag in a new place, wearing the plan's
+own recommendation.
+
+**THE MEASUREMENTS.** Ida's real track (363 densified samples) against the frozen
+national capture plus Phase 4's resolved watch zones:
+
+| what is in the list | before | after |
+| --- | --- | --- |
+| 33 real warning polygons | 4.6 ms | 3.0 ms |
+| + 23 watch zones far from the track | **800 ms** | **2.4 ms** |
+| + 23 watch zones lying ON the track | **235 ms** | **15 ms** |
+
+**TWO CAUSES, AND NEITHER WAS THE NUMBER OF ALERTS.**
+
+1. **==> THE ONLY PREFILTER WAS LATITUDE. <==** A Hawaii coastal zone sits at
+   19.0–19.7 and Ida's track spans 16.5–48.8, so the gate rejected **nothing**
+   and all 1,970 of that zone's points were measured against all 363 samples —
+   for a shape 4,000 miles away. Latitude was chosen because it has no
+   antimeridian seam; the fix is to add longitude and *decline* on the seam
+   rather than pick a frame, which is what got the old `extent()` deleted.
+2. **==> NWS DRAWS ZONE BOUNDARIES AT 65 METRES PER POINT. <==** Against a
+   corridor 300 **nautical miles** wide. The precision is real and irrelevant to
+   this question.
+
+**THREE STAGES, IN `lib/flood.js`.**
+
+- **The boxes.** `boxLowerNm` is a haversine with the smallest lat/lon gaps the
+  two bounding boxes admit and the cosine at the highest latitude either
+  reaches, so it can only come out *smaller* than the true distance. One
+  comparison kills every shape in another part of the country.
+- **The thinned outline.** `RAIN.floodCoarseTolNm` = 1 nm; HIZ023 goes from 1,970
+  points to 109. A thinned outline can only report a shape as **further** than it
+  is, so it can only keep an alert that is just outside — never drop one that is
+  just inside, which is the direction §56.3 demands.
+- **The full outline**, reached only when a shape lands within the tolerance of
+  the corridor edge, where the thinning could actually change the verdict. A zone
+  lying across the track is hundreds of miles inside and never gets here.
+
+**==> THE INCLUDE/EXCLUDE VERDICT IS EXACT AT EVERY RADIUS. ONLY THE REPORTED
+DISTANCE MOVES, BY AT MOST 1 nm, AND ONLY UPWARD. <==**
+
+**THE THINNING IS PAID ONCE PER FETCH, NOT ONCE PER REPAINT.** A `WeakMap` keyed
+on the geometry object itself — `inForce`'s spread copies the reference, so the
+same object arrives on every render — and weak so a replaced list is not held
+alive by this cache.
+
+**==> WHAT THE GUARDING TEST TAUGHT, AND IT IS THE §12 LESSON AGAIN. <==**
+`tools/test-flood-fast.mjs` walks a real zone boundary across the corridor edge in
+0.05 nm steps at five radii — 1,575 include/exclude decisions — and probes 620
+shapes spread over the globe. **Its first version passed with a deliberate 2%
+inflation in `boxLowerNm`**, which is the mutation that drops live warnings off a
+storm. It tested the *consequence* (did anything real get dropped) through a probe
+grid too coarse to land in the narrow band where a slightly-too-large bound
+actually bites. `boxLowerNm` is exported now and the **inequality is asserted
+head-on**: the bound is never larger than the distance it bounds. Both mutants —
+the inflated bound, and removing the exact fallback at the corridor edge — were
+verified to turn the suite red.
+
+**A SECOND ASSERTION EXISTS ONLY TO GIVE THE FIRST ONE TEETH:** a bound that is
+always far below the truth satisfies the inequality and rejects nothing, so the
+suite also requires the bound to come within 50 nm of the true distance at least
+once. It gets to 0.2 nm.
+
+**WHAT WAS DELIBERATELY NOT BUILT: a memo of the whole answer per storm.** The
+plan called for one. With the `WeakMap` in, a repaint costs 3 ms on a real
+national list and 15 ms in the worst constructed case, so the memo would buy a
+few milliseconds in exchange for an expiry-invalidation problem on a hazard
+surface — where the failure mode is showing a flood warning that has run out.
+Not worth it. If the phone disagrees, it is a small addition and this is where to
+start.
 
 ---
 

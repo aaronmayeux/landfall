@@ -145,8 +145,11 @@ const kv = fakeKv();
    *   what the layer says now, and when it last said anything at all
    * + 2 text outlooks, one per basin, which are what ARBITRATE the genesis
    *   layer when it goes empty (§45.9)
-   * + 2 SHIPS runs, one per NHC storm, which color the cone (§47) */
-  ok('first cycle: 18 entries written', summary.written === 18,
+   * + 2 SHIPS runs, one per NHC storm, which color the cone (§47)
+   * + 1 national NWS flood list, added with §56.17 — the `Flooding` section
+   *   renders on both screens for every reader now, so the first ask on a cold
+   *   edge must not be a round trip to weather.gov */
+  ok('first cycle: 19 entries written', summary.written === 19,
     `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);
 
@@ -180,6 +183,12 @@ const kv = fakeKv();
     'v1:nhc/genesis/areas/last-good',
     'v1:nhc/outlook/atlantic',
     'v1:nhc/outlook/epacific',
+    /* ==> WARMED WITH NO `store` GATE, UNLIKE GENESIS ABOVE. <== An empty flood
+     * list is the ordinary truthful answer — most hours no weather office in
+     * the country has a flood product out — so holding it is correct. Genesis
+     * refuses an empty answer because there "no areas" is more often a failed
+     * parse than a quiet ocean. */
+    'v1:nws/flood',
     /* TWO KEYS FROM ONE DECK ID, and the pair is the assertion. The guidance
      * body and the analysed-history body come off the same upstream file and
      * must never share a key — a storm's past served as guidance would draw
@@ -233,7 +242,7 @@ const kv = fakeKv();
 
   ok('second cycle: zero CONTENT writes on unchanged bodies', summary.written === 0,
     `written=${summary.written} — "how much weather happened" depends on this`);
-  ok('second cycle: everything reported restamped', summary.restamped === 18,
+  ok('second cycle: everything reported restamped', summary.restamped === 19,
     `restamped=${summary.restamped}`);
 
   ok('an UNCHANGED body still moves the stamp',
@@ -242,7 +251,7 @@ const kv = fakeKv();
     ),
     'a calm ocean is not an outage — if this holds still, the client cries wolf');
 
-  console.log('  ✓ second cycle: 0 content writes, 18 restamped, every stamp moved');
+  console.log('  ✓ second cycle: 0 content writes, 19 restamped, every stamp moved');
 }
 
 /* --- 4. A CHANGED BODY IS REPORTED AS A WRITE, NOT A RE-STAMP. ----------- */
@@ -263,10 +272,10 @@ const kv = fakeKv();
   /* The hash is what separates the two, and that split is the only thing
    * write-if-changed still buys now that every key is put regardless. Without
    * it the cycle summary stops answering "how much weather happened". */
-  ok('the other seventeen are restamped, not written', summary.restamped === 17,
+  ok('the other eighteen are restamped, not written', summary.restamped === 18,
     `restamped=${summary.restamped}`);
 
-  console.log('  ✓ changed content: 1 write, 17 restamped — the split still reads');
+  console.log('  ✓ changed content: 1 write, 18 restamped — the split still reads');
 }
 
 /* --- 4a. A HELD OUTLOOK IS NOT WARMED, AND THAT ABSENCE IS THE CLOCK. -----
@@ -320,7 +329,7 @@ const kv = fakeKv();
   ok('a withheld write is not a failure', summary.failed === 0);
   ok('and not a skip — a skip is an empty body, this is a full one we chose not to store',
     summary.skipped === 0, `skipped=${summary.skipped}`);
-  ok('the rest of the cycle is untouched', summary.restamped === 16,
+  ok('the rest of the cycle is untouched', summary.restamped === 17,
     `restamped=${summary.restamped}`);
 
   /* AND A GENUINE ALL-CLEAR MUST STILL REACH THE STORE. Zero areas, no held

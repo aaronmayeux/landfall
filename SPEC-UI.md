@@ -3261,6 +3261,50 @@ source republishes: the captured Hilo Flash Flood Warning expired **52 minutes**
 after it was issued. Expiry is filtered **again at render**, off each row's own
 `ends`/`expires`, exactly as §48.6 does for the house rows.
 
+#### Who asks for it, and who pays for drawing it
+
+**==> THE LIST IS FETCHED FOR EVERY READER; ONLY THE DRAWING IS GATED ON THE MAP
+SWITCH. <==** `main.js` calls `ensureFlood()` unconditionally, and once more at
+boot outside the map's control so a basemap outage cannot strand a section that
+has nothing to do with the tile host (§5). The `Flooding` section renders on both
+screens every time (§56.7), so the list is simply what that section costs: one
+national request per client TTL, shared by the map and both screens.
+
+**What the `Flood alerts` switch still gates is pushing the geometry into
+MapLibre** — county-scale shapes crossing into the worker to be tiled is the
+expensive half, and nobody who left the layer off pays it. Turning the switch on
+re-enters the same function and pushes then.
+
+It was the other way round until 2026-08-23, and the result was the `Flooding`
+section reading *Checking flood alerts…* forever for everyone who never found the
+switch — a claim that a request was in flight when none was, printed by the
+feature written to prevent exactly that. `SPEC-FLOOD-PLAN.md` §56.17.
+
+**The drawer's facade is still read-only and still never fetches.** That is now a
+statement about where the request lives rather than about whether one happens: two
+callers racing across a cache boundary would let the map and the panel disagree
+about how many alerts are in force. Retry is the one thing in the facade allowed
+to go to the network.
+
+**`/api/nws/flood` is on the cron warm list** (`worker/src/sources.js`), so the
+first ask on a cold edge is served from the edge rather than from a round trip to
+weather.gov. No `store` gate: an empty list is the ordinary truthful answer here —
+most hours no weather office in the country has a flood product out — and a
+genuine failure never reaches the warm loop, because the route returns a non-ok
+status rather than an empty list.
+
+#### Matching is cheap, and the verdict is still exact
+
+The corridor match measures every alert's shape against the storm's whole
+densified track, which cost **800 ms of arithmetic** for one US storm until
+2026-08-23. Three stages now: a bounding-box lower bound that rejects a shape in
+one comparison, a thinned outline accurate to `RAIN.floodCoarseTolNm`, and the
+full outline only where a shape lands close enough to the corridor edge for the
+thinning to change the answer. **The include/exclude verdict is identical to
+measuring every point NWS drew at every radius; only the reported distance moves,
+by at most 1 nm, and only upward.** The measurements, the error argument and the
+mutation record are in `SPEC-FLOOD-PLAN.md` §56.18.
+
 #### The route
 
 `functions/api/nws/flood.js` asks the upstream for **three products by name** —
