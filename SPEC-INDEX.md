@@ -217,7 +217,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2251-2336 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3878-3900 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 3910-3932 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -261,31 +261,31 @@ real home is the other row carrying the same section number.
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
 | `56.3` | &nbsp;&nbsp;The corridor replaces the cone — ==> SHIPPED 2026-08-22 <== | `SPEC-FLOOD-PLAN.md` | 112-141 |
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
-| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 586-635 |
-| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 636-666 |
-| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3473-3508 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3651-3691 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3732-3781 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3848-3877 |
-| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 667-698 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 699-842 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 843-860 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 861-864 |
+| `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 597-646 |
+| `56.6` | &nbsp;&nbsp;Tapping an alert | `SPEC-FLOOD-PLAN.md` | 647-677 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3505-3540 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3683-3723 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3764-3813 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 3880-3909 |
+| `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 678-709 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 710-853 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 854-871 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 872-875 |
 | `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
-| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-338 |
-| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 411-463 |
-| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 498-585 |
+| `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-349 |
+| `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 422-474 |
+| `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 509-596 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 195,022 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 56,531 | 15 |
+| `SPEC-FLOOD-PLAN.md` | 57,275 | 15 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 85,160 | 21 |
-| `SPEC-UI.md` | 230,731 | 18 |
-| `SPEC.md` | 174,972 | 15 |
+| `SPEC-UI.md` | 232,601 | 18 |
+| `SPEC.md` | 175,168 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

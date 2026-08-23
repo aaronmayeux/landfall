@@ -320,6 +320,17 @@ rewritten status row. When it was slow there was nothing to bisect, and the
 session guessed twice rather than knowing once. **Each slice below is a separate
 push Aaron can feel on a phone and revert on its own.**
 
+**==> SLICE A SHIPPED 2026-08-23 AND HAS NOT BEEN JUDGED ON GLASS. <==** Both
+structural faults below are designed out rather than patched afterwards — the
+match and the source write sit behind the layer's own `visible` gate,
+`setVisible` pushes on turn-on, and the memo is keyed on the bundle and the
+alert list by identity. `tools/test-flood-layer.mjs` counts the WORK rather than
+its result, because a feature count is identical with the memo deleted. The
+visibility gate is doubled (`update()` and `push()`), so a single-line mutation
+leaves the suite green and only removing both turns it red — recorded in the
+suite so nobody mistakes that for blindness. **The phone pass below is still the
+only real gate and it has not been run.**
+
 **SLICE A — THE LAYER GOES PER-STORM. POLYGONS ONLY.** No chips, no clustering,
 no interior points, no new panel. Delete the national draw, gate the work on
 visibility, add the zoom ramp. This is the smallest change that closes §56.1's

@@ -217,8 +217,8 @@ gate goes blind to it.
 been looked at. See the flood entry below.
 
 
-**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1, 2, 3 AND 4 OF SIX ARE IN. DO
-NOT TUNE THE REST, DO NOT LOOK AT IT ON GLASS. <==** Plan agreed with Aaron
+**==> §48.21 IS BEING REPLACED WHOLE. PHASES 1-4 AND PHASE 5 SLICE A ARE IN.
+SLICES B AND C ARE NOT. <==** Plan agreed with Aaron
 2026-08-22: `SPEC-FLOOD-PLAN.md` §56, one phase per session, in order. Read that
 file before touching anything flood-shaped.
 
@@ -256,11 +256,37 @@ The short version, because it is the kind of mistake that repeats:
 were judged on a phone against Moke with the map switch off — eight resolved Big
 Island zones, and it felt good. **Nothing from that pass is outstanding.**
 
-**==> SLICE A IS THE NEXT WAVE AND IT HAS NOT BEEN STARTED. <==** §56.16's three
-slices are unchanged: the layer goes per-storm, polygons only, no chips and no
-clustering, judged on glass before anything else is written. **Read §56.15 and
-§56.16 before touching it** — the first attempt at Phase 5 was reverted whole and
-those two sections are why.
+**==> SLICE A IS BUILT AND PUSHED, AND NOT ONE PIXEL OF IT HAS BEEN SEEN. <==**
+2026-08-23. The layer is per-storm now — polygons only, no chips, no clustering,
+no tapping. The national draw is deleted. As-built in `SPEC-UI.md` §48.21.
+
+**THE PHONE PASS IN §56.16 IS THE GATE AND IT HAS NOT BEEN RUN.** Five steps,
+three minutes, in that order — taps on the globe first, chevrons on the home
+dashboard second, the switch off-and-on third, a poll cycle fourth, and **only
+then** whether it looks any good. **If any of the first four feels worse than
+today's build, the rule is revert, not patch.** That is the rule the first
+attempt broke.
+
+**WHAT WAS DONE ABOUT THE LAG, AND WHAT WAS NOT.** Both structural faults §56.15
+named are designed out rather than patched on afterwards: the corridor match and
+the source write sit behind the layer's own `visible` gate, so a reader who never
+finds the switch pays nothing on a selection; `setVisible` pushes on turn-on so
+the control is not dead until the next poll; and the match is memoized **keyed on
+the bundle and the alert list by identity**, never on the samples derived from
+them, which is the trap that made the first memo never hit.
+`tools/test-flood-layer.mjs` counts the work rather than its result — a feature
+count is identical with the memo deleted — and every rule in it was
+mutation-verified.
+
+**==> AND NONE OF THAT IS A MEASUREMENT. <==** It is an argument about work not
+done. Nothing in the sandbox can time this; the basemap is blocked, so
+`perf-select` hard-fails by design. **The numbers come off CI or off the phone,
+and if they disagree with the phone, the phone is right.**
+
+**STILL NO BASELINE, AND IT IS ONE CI RUN AWAY NOW.** The push before this one
+(`5fc3eae`) touched only the selection path, so its `perf-select` run is the
+closest thing to a clean before-number this repo will get. **Read it, then read
+this push's, then fill `tools/perf-budgets.json` and drop `continue-on-error`.**
 
 **THE TOOLS FOR THE RETRY ARE IN, AND ONE OF THEM NEEDS A HUMAN BEFORE IT IS
 WORTH ANYTHING.** Added 2026-08-23:

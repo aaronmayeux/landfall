@@ -430,6 +430,17 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
    * only the live one would leave the other's last sentence sitting in the
    * status object after its switch was flipped off.
    */
+  /** The flood layer's status row. Its own function because TWO things move it
+   *  now — the fetch resolving and the selection changing — and a row written
+   *  in two places with two argument lists is how the two drift apart. */
+  function refreshFloodRow() {
+    layerStatus.setFloodAlerts({
+      on: toggleOn('floodAlerts'),
+      slot: floodSlot,
+      selected: !!pipeline.selected(),
+    });
+  }
+
   function refreshLayerStatus() {
     const selected = pipeline.selected();
     const all = storms();
@@ -439,6 +450,14 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       storms: all,
       deckFor: getAdeck,
     });
+    /* ==> THE FLOOD ROW RECOMPUTES ON SELECTION NOW, AND BEFORE SLICE A IT DID
+     * NOT NEED TO. <== It used to be written only when the fetch resolved,
+     * because the layer drew the whole country and the answer did not depend on
+     * which storm was open. The layer is per-storm now (§56.5), so "no storm
+     * selected" is one of its states and selection is exactly when that
+     * changes. Left out, the row would go on claiming alerts were drawn over a
+     * globe that had just been cleared. */
+    refreshFloodRow();
     layerStatus.refreshEnvironment({
       on: toggleOn('environment'),
       selected,
@@ -1117,7 +1136,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
      */
     setFloodSlot: (slot) => {
       floodSlot = slot || null;
-      layerStatus.setFloodAlerts({ on: toggleOn('floodAlerts'), slot });
+      refreshFloodRow();
     },
   };
 }

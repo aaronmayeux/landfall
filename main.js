@@ -570,7 +570,15 @@ function boot() {
        * NOT in scope here — writing to it directly is what took the whole
        * layer-apply path down; see `setFloodSlot` there. */
       views.setFloodSlot(slot);
-      if (slot.state !== 'ok' || !styleReady || !toggleOn('floodAlerts')) return;
+      /* ==> THE SWITCH IS NO LONGER CHECKED HERE, BECAUSE THE GATE MOVED INTO
+       * THE LAYER (§56.5, Slice A). <== Handing the list over is one
+       * assignment; the expensive half — matching it against this storm's track
+       * and writing county-scale geometry into a MapLibre source — sits behind
+       * the layer's own `visible` gate and is not paid by anyone who left the
+       * row off. What this buys is that the list is already in hand the moment
+       * somebody flips the switch, so `setVisible` can draw immediately instead
+       * of leaving a dead control until the next poll. */
+      if (slot.state !== 'ok' || !styleReady) return;
       setFloodAlerts(map, slot.alerts);
     });
   }

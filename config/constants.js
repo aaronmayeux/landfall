@@ -626,6 +626,23 @@ export const ZOOM = Object.freeze({
    *  anything gated here must be gated together. */
   ambientGeometry: 4,
 
+  /** THE FLOOD POLYGON RAMP (SPEC-FLOOD-PLAN §56.5). A county-scale alert
+   *  shape is under about twelve pixels below z6 — §56.2 measured the median
+   *  warning polygon at 0.270° wide — and at that size it reads as dirt on the
+   *  screen rather than as a place. So it fades in across one zoom level
+   *  instead of appearing at a threshold, which is the same reasoning the
+   *  crossfade above rests on: a hard pop reads as a rendering fault.
+   *
+   *  ==> AN OPACITY RAMP AND NOT A VISIBILITY FLIP, SO THE COST IS PAID ONCE.
+   *  <== The features are in the source either way; what changes is what
+   *  MapLibre paints. Swapping `visibility` on the zoom would mean re-tiling
+   *  the source every time a reader crossed the line.
+   *
+   *  Both are movable on glass and neither has been judged — nothing has ever
+   *  drawn a flood polygon on this globe. */
+  floodFadeIn: 6,     // first visible here
+  floodFull: 7,       // full strength by here
+
   /** MapLibre resting zoom — where recenter() returns the camera, and the
    *  planet-band framing the dive lands near. (The old introStart retired with
    *  the MapLibre opening sequence; the 3D arrival uses camera distance, §2.) */

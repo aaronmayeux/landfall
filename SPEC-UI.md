@@ -3124,15 +3124,39 @@ radius and left to judge it. An unnamed proximity is a claim wearing a
 measurement's clothes. It prints through `formatDistance` in the reader's own
 units, like every other length in the app.
 
-**THE MAP LAYER SIDESTEPS THE PROBLEM ENTIRELY BY NOT MENTIONING A STORM.** The
-toggle is a global additive switch, the kind `genesis` is, and it answers *what
-flood alerts are in force* — a question with no storm in it and therefore no
-causal claim to get wrong. The per-storm question is answered in the drawer, in
-words, where the rule can be enforced on a sentence. **Two surfaces, two
-questions, and the one that cannot be worded carefully is the one that never
-names a storm.**
+**==> THE MAP LAYER USED TO SIDESTEP THIS BY DRAWING THE WHOLE COUNTRY, AND
+SLICE A ENDED THAT. <==** This paragraph said the toggle was a global additive
+switch answering *what flood alerts are in force* — a question with no storm in
+it and therefore no causal claim to get wrong. It is now per-storm
+(`SPEC-FLOOD-PLAN.md` §56.5): it draws the alerts whose shapes fall inside the
+selected storm's corridor, the same set the drawer counts, and nothing when no
+storm is selected.
 
-#### Warnings draw, watches do not, and that is the source's doing
+**That trades the sidestep for a risk this plan cannot word away, knowingly.**
+Green shapes drawn only inside one storm's corridor tell the reader *this storm
+did this*, in pictures, where there is no sentence to hedge with. **Aaron made
+that call on 2026-08-22.** The mitigations are structural rather than verbal:
+the layer draws only while that storm is selected, so the drawer's wording —
+which does carry the hedge — is on screen at the same moment as the shapes; and
+the shapes are the same set the sentence counts, so the two surfaces cannot
+disagree about what is being claimed.
+
+**What it buys is that the toggle finally means what the manifest always said.**
+The row sits in the `Storm detail` group, and a layer painting every county in
+the United States from that group was the contradiction §56.1 opened this
+rebuild to resolve.
+
+**WITH NO STORM SELECTED IT DRAWS NOTHING AND THE STATUS ROW SAYS WHY.** A
+switch that appears to do nothing is its own bug, and it is the §5 silence in
+its smallest form — a truthfully empty map with no account of itself. The row
+reads *Select a storm — this layer draws the alerts near its track*, and it sits
+ABOVE the outage and empty-list states deliberately: whether the national list
+loaded is not yet the reader's problem, and leading with an outage sentence
+would send somebody to a Retry that could not change what they see. The row is
+recomputed on selection as well as on the fetch, because selection is exactly
+when this state changes.
+
+#### What carries a shape, and what has to be resolved one
 
 Measured on real NWS bytes (`samples/rain/alerts-hilo-hi.json`):
 
@@ -3145,11 +3169,19 @@ Measured on real NWS bytes (`samples/rain/alerts-hilo-hi.json`):
 | Tropical Cyclone Local Statement | **null** | 43 |
 
 A warning is issued for a box a forecaster drew; a watch is issued for a list of
-forecast zones and its shape is seventeen more requests away. So both reach the
-drawer's list and only warnings reach the globe — and **the count says so.** A
-layer drawing eleven of nineteen under a sentence claiming nineteen is §5's
-silence with a map over it, so `total` and `drawable` both travel and the
-sentence names the difference.
+forecast zones and arrives with no shape of its own.
+
+**==> THE HEADING ABOVE IS HISTORY NOW, AND PHASE 4 IS WHY. <==** Those zone
+boundaries are resolved and joined onto the alert in `data/flood.js` (§56.4), so
+a watch reaching the globe has real geometry and **watches draw.** What still
+cannot be drawn is the residue: a watch whose boundaries did not come back, or
+one that named no zones at all. It is counted as `unplaceable` and said in
+words, never handed a shape.
+
+**The count still travels for the same reason it always did.** A layer drawing
+eleven of nineteen under a sentence claiming nineteen is §5's silence with a map
+over it, so `total` and `drawable` both travel and the sentence names the
+difference.
 
 **A SHAPELESS WATCH IS NEVER GIVEN A SHAPE.** No zone centroid, no circle,
 nothing. That would be this app drawing a boundary NWS did not draw — the §5
