@@ -18,16 +18,16 @@
     "sha256": "e11726c25f85034f3da24dbe4001a88b45a2525626b59bfa452987aa8ede3892"
   },
   "btk/2026/bcp012026.dat": {
-    "etag": "\"5fa9-659cfb7a0fd3c\"",
-    "lastModified": "Mon, 24 Aug 2026 19:08:54 GMT",
-    "bytes": 24489,
-    "sha256": "938b4c5d77d4acdf4eaacb3acd5d139dc7a3a7836b6cc192561e6f444f5dff7a"
+    "etag": "\"5feb-659d0fdf0e168\"",
+    "lastModified": "Mon, 24 Aug 2026 20:40:08 GMT",
+    "bytes": 24555,
+    "sha256": "bb4995a07fc405320d538fff21eb24647c9742161fd295f55d275d31dc791619"
   },
   "btk/2026/bcp022026.dat": {
-    "etag": "\"1637-659cfde40aafe\"",
-    "lastModified": "Mon, 24 Aug 2026 19:19:42 GMT",
+    "etag": "\"1637-659d0da4235cf\"",
+    "lastModified": "Mon, 24 Aug 2026 20:30:10 GMT",
     "bytes": 5687,
-    "sha256": "18d387f825957fbc7f90609b6e677a65602d8bf8a5e56cd60a71a9670b147189"
+    "sha256": "7b8c59aeb91db24a79ee828202aba11869107db23777e19e39c02dc42a87c906"
   },
   "btk/2026/bep012026.dat": {
     "etag": "\"1a4c-653b4cdc0480e\"",
@@ -78,9 +78,15 @@
     "sha256": "68cc16fa914d55f8aa3cab3eed4ce644cfa5c2d87d7f70b3b25a07acb0f84c2f"
   },
   "btk/2026/bep092026.dat": {
-    "etag": "\"e9f-659cf7231a296\"",
-    "lastModified": "Mon, 24 Aug 2026 18:49:29 GMT",
+    "etag": "\"e9f-659d0da77055b\"",
+    "lastModified": "Mon, 24 Aug 2026 20:30:13 GMT",
     "bytes": 3743,
-    "sha256": "b16bff31c24092680c9aecf674939b1d16b39c037bc03885304ed8c7de5dbbdf"
+    "sha256": "726370c33ece8e0d41ec0aa443277804d6b4e9cef354c37a2cd8deb83b746828"
+  },
+  "btk/2026/bep102026.dat": {
+    "etag": "\"1127-659d0e33c33b4\"",
+    "lastModified": "Mon, 24 Aug 2026 20:32:40 GMT",
+    "bytes": 4391,
+    "sha256": "f397a9df1d59d85cada9aa94eb8c56f0883735edf5fd8b6ba514b7957fa0b97a"
   }
 }
