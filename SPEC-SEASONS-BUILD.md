@@ -147,10 +147,18 @@ file two seasons out of date. **Pick by the last season in the filename.**
 Measured across all fourteen of the 2026 b-decks. §57.30 step 2 warned these
 two formats lay their wind radii out differently; this is how.
 
+**==> THREE FIELD POSITIONS IN THIS SECTION WERE OFF BY ONE AND ARE CORRECTED
+BELOW. <==** Re-measured 2026-08-24 with a numbered dump of a real row. The
+old text put the wind threshold at field 11 and the storm name at field 27; the
+file puts the **status** at 11, the **threshold** at 12, the **quadrant code**
+at 13 and the **name** at 28 (one-based). A parser built to the old text reads
+a storm's status as its wind threshold. `SEASONS.atcf` in `config/constants.js`
+now holds every index, zero-based, and is the only place they live.
+
 **==> ONE LINE PER WIND THRESHOLD, SO SEVERAL LINES SHARE A TIMESTAMP. <==**
 HURDAT2 puts 34, 50 and 64 kt on one row as twelve numbers. ATCF puts each
 threshold on **its own line, repeating the position, wind and pressure**, with
-the threshold in field 11 and the quadrant in field 12. Lala, Fausto and
+the threshold in field 12 and the quadrant code in field 13. Lala, Fausto and
 Genevieve each carry three lines per time at their peak; Bertha and Elida two;
 the weak storms one.
 
@@ -164,7 +172,7 @@ one line per time, which looks identical to a format that does not do this at
 all. The probe's first run read one 40 kt storm and could not answer the
 question; it took reading all fourteen.
 
-**==> THE STORM'S NAME IS NOT A PROPERTY OF THE FILE. <==** Field 27 changes
+**==> THE STORM'S NAME IS NOT A PROPERTY OF THE FILE. <==** Field 28 changes
 DOWN the file as the system is reclassified — **all fourteen files carry more
 than one name.** Cristobal's rows read `GENESIS006`, then `INVEST`, then
 `CRISTOBAL`. Arthur's read `GENESIS001 → INVEST → ONE → ARTHUR`. Reading the
@@ -177,6 +185,13 @@ is positional; the tail is a run of `key, value` pairs — `genesis-num, 006`,
 **Read the head by position and the tail by pairs.** A parser that indexes to
 the end breaks on the first storm that spawns an invest.
 
+**==> AND THE BOUNDARY IS FIELD 35, WHICH THE OLD TEXT DID NOT SAY. <==**
+Fields 1–35 are ALL positional, not just the first 28 — 29 is depth, 30 the
+seas threshold, 31 the seas quadrant code and 32–35 the four seas radii. The
+pairs start at 36. Measured: Lala's rows are 36 fields with the last empty;
+Bertha's are 38 and her extra two are exactly one pair, `genesis-num, 004`.
+`SEASONS.atcf.positionalFields` is that boundary.
+
 **Every basin NHC covers is in one directory** — `al`, `ep` and `cp` — and the
 whole current season is 14 files of a few KB each. §57.13's filter is real and
 does work: 18 files on the day measured, 4 of them invests, 14 real storms. No
@@ -187,6 +202,14 @@ test systems that day, which does not mean never.
 `L` landfall · `G` genesis · `I` a peak in both wind and pressure · `P` minimum
 central pressure · `C` closest approach to a coast without landfall · `R` rapid
 intensity change · `W` maximum sustained wind.
+
+**==> THE REAL FILE CARRIES NINE CODES, NOT SEVEN. <==** Counted across both
+whole files 2026-08-24. Atlantic: `L` 1175 · `I` 33 · `R` 11 · `P` 10 ·
+**`T` 9** · **`S` 8** · `C` 5 · `W` 4 · `G` 1. E/C Pacific: `L` 139 · `I` 7 ·
+**`T` 5** · **`S` 3**. `T` and `S` are absent from the list above and are in
+the data. **So the parser carries whatever is in the column, unvalidated** —
+a closed list would silently drop the tenth code NOAA adds, and `lib/hurdat.js`
+does not have one.
 
 **NOAA has already marked the moments that matter.** The season clock does not
 have to guess where a storm's story turns, and the detail panel does not have
@@ -206,26 +229,62 @@ This table is the source for that copy.
 | Subtropical classification | **1968** | Not distinguished |
 | Wind to nearest 5 kt | **1886** | Nearest 10 kt |
 
+**==> EVERY ROW IN THIS TABLE IS A GENERALITY AND NOT ONE OF THEM IS A RULE.
+<==** Measured 2026-08-24. **AL011852 carries a radius of maximum wind of 10 nm
+on its landfall row — in 1852, 169 years before the stated cliff.** Hugo,
+AL111989, carries three. Both were found by a rule-based search of the whole
+file rather than by inspection, which is the only way this kind of thing turns
+up.
+
+**So nothing in the parser gates on a year, ever.** Every missing value is
+decided by reading the sentinel on that row. This table is for WORDING — an
+honest line explaining why a figure is usually absent in an era — and it must
+never become a condition in code. A year gate would have thrown away real
+published data on three of the storms already in `samples/seasons/`.
+
 Two more that are not date cliffs but are missing data all the same:
 
-- **The non-developing depressions of 1967 have no assigned intensity** (`-99`).
-  They are in the file with no wind speed at all.
+- **A `-99` wind means no intensity was ever assigned**, which is a different
+  absence from `-999`. §57.6 attributed this to the non-developing depressions
+  of 1967; **the first one actually in the file is AL021971**, and it sits on
+  ONE row of a storm whose other four carry a real wind. A parser that nulls a
+  whole storm on one such row loses real data.
 - **Pre-satellite undercount.** Before roughly 1966 storms are simply missing —
   nobody saw them. A quiet-looking 1935 season page is not evidence of a quiet
   season, and must carry a line saying so.
 
-### 57.7 The landfall gap, 1971–1990
+### 57.7 The landfall gap — 1971–1982, not 1971–1990
 
-**Continental US landfalls are marked for 1851–1970 and 1991 onward.
-International landfalls only for 1951–1970 and 1991 onward.**
+**==> COUNTED, NOT INFERRED, 2026-08-24. <==** This section used to say the
+hole ran to 1990 and cited Hugo, Gloria, Alicia and Elena as its casualties.
+**Hugo is not a casualty: his Sullivan's Island landfall is marked in the
+current file, 120 kt and 934 mb at 0400Z on 22 September 1989.** That was
+found by a test assertion written to the old text going red. `L` markers were
+then counted per year across both whole files rather than argued from one
+storm.
 
-So there is a twenty-year hole in US landfall marks — Hugo, Gloria, Alicia,
-Elena — in an app called Landfall.
+| period | Atlantic `L` markers | years with any | E/C Pacific | years with any |
+|---|---|---|---|---|
+| 1951–1970 | 203 | 20 of 20 | 1 | 1 of 20 |
+| **1971–1990** | **42** | **8 of 20** | **6** | **2 of 20** |
+| 1991–2010 | 277 | 20 of 20 | 61 | 18 of 20 |
 
-**Decision: we compute those landfalls ourselves** by crossing the track
-against a coastline, and label them as ours rather than NOAA's. A mark the app
-derived and a mark NOAA published must be distinguishable in the data even if
-they draw identically, so a later session can tell them apart.
+**The hole is real, total, and shorter than claimed.** Atlantic: 1971 through
+1982, twelve consecutive years with ZERO markers, then 1983 onward populated —
+which is why Hugo '89 and Gloria '85 are fine and **Alicia '83 and Elena '85
+need re-checking against the file rather than against this section.** E/C
+Pacific: 1971 through 1988. NOAA has evidently backfilled part of the range
+since whatever document the old claim came from.
+
+**Decision unchanged, scope halved: we compute the missing landfalls ourselves**
+by crossing the track against a coastline, and label them as ours rather than
+NOAA's. Twelve Atlantic years, not twenty. A mark the app derived and a mark
+NOAA published must be distinguishable in the data even if they draw
+identically — `lib/season-facts.js` stamps every published mark `source:
+'noaa'` from the first day so nothing has to be retrofitted.
+
+**Do not re-derive this from the old table.** Re-run the count when NOAA
+publishes a new revision; `tools/seasons-fixtures.mjs` does it in one job.
 
 ### 57.8 What HURDAT2 does not contain, at all
 
@@ -576,9 +635,27 @@ Selecting **Near home** reveals a radius slider:
 - **==> MEASURE AGAINST THE LINE, NOT THE POINTS. <==** A storm moving 20 mph
   covers 120 miles between six-hourly records, so a fast mover can hop clean
   over the circle without a single recorded position landing inside it.
-  `lib/shape-distance.js` already has line-to-point distance. Without this the
-  feature quietly lies about fast storms, which is the worst kind of bug: it
-  looks like it works.
+
+  **==> `lib/shape-distance.js` DOES NOT HAVE LINE-TO-POINT DISTANCE, AND THIS
+  SECTION USED TO SAY IT DID. <==** It measures point-to-nearest-VERTEX and
+  says so in its own comment — an accepted approximation there, because NWS
+  zone outlines are drawn at 65 metres per point against a corridor hundreds
+  of miles wide. A track has a point every six hours. The two are not the same
+  problem. `lib/near-home.js` owns the real segment measurement, in 3D unit
+  vectors so the antimeridian cannot reach it.
+
+  **==> AND THE SIZE OF THE ERROR IS SMALLER THAN THIS SECTION IMPLIED, WHILE
+  THE CONSEQUENCE IS WORSE. <==** Measured across the 2005 and 2021 Atlantic
+  seasons against six coastal cities: the two methods differ by **2 to 25
+  nautical miles**, not hundreds, because the nearest record is usually already
+  near the nearest point. What matters is not the size of the gap, it is
+  whether the gap moves a storm ACROSS the radius the reader chose. **It does,
+  in 4 of 54 city-and-radius combinations — and one of them is Katrina at 30
+  miles from New Orleans.** 24.4 nm measured against the line, 30.1 nm measured
+  at the records: the single most famous storm-and-city pair in the Atlantic
+  record, present in the reader's list one way and missing the other, with
+  nothing on screen to say anything went wrong. `tools/test-near-home.mjs`
+  asserts exactly that, both ways.
 - Once this exists, the same answer belongs on the Home dashboard as a standing
   line — *"31 storms have passed within 100 miles since 1851. The last was
   2021."* That is the hook, and it is free.
@@ -860,20 +937,45 @@ step or the mockup becomes a paint chip for a colour nobody can buy.
 
 ---
 
-**STEP 2 — THE PARSER AND THE INDEXER. No UI.**
-Read HURDAT2 and ATCF into one normalised internal shape, and produce the
-per-season records and the near-home index that §57.35 requires. **One module,
-imported by both the Node runner and the browser Worker** — two parsers drifting
-apart is a bug this project has already paid for. Handle every cliff in
-§57.6, the `-999` and `-99` sentinels, §57.13's storm numbers, and the two
-formats' different radii layouts.
-**Tests must be verified by breaking them** — reintroduce each bug and confirm
-the test goes red. A test that passes on the same wrong assumption as the bug is
-worse than no test.
-**Done when:** a real season parses out of real bytes and the derived figures in
-§57.15 match a hand-check against a storm we know — Ida is the obvious one,
-since NOAA's own format document uses her as its worked example and we hold her
-full advisory capture.
+**STEP 2 — THE PARSER AND THE INDEXER. ==> DONE 2026-08-24. <==**
+`lib/hurdat.js`, `lib/season-facts.js`, `lib/near-home.js` and the `SEASONS`
+block in `config/constants.js`. No UI, nothing on the boot path — none of the
+four is imported by anything that ships today.
+
+**WHAT IT IS lives in those files' own headers and in §57.4, §57.4a, §57.5,
+§57.6, §57.7, §57.15 and §57.19**, several of which this step CORRECTED. Read
+those, not this.
+
+**==> THE STEP 0 SAMPLE WAS 1851–1859 AND THAT IS A DECADE WITH NO MODERN
+FEATURE IN IT. <==** No names, no wind radii, no pressure, no record
+identifiers. The probe saved the first 96 KB of each file, which was right for
+answering "what shape is this" and useless for testing a parser.
+`tools/seasons-fixtures.mjs` and its workflow download the WHOLE files on a
+runner and cut storms at storm boundaries; `samples/seasons/` holds 368 KB of
+them and `HOW-THESE-WERE-CUT.md` says which storm proves what. **Four of the
+eleven were found by RULE rather than by hand** — the first `-99`, the first
+east longitude, the first `R` marker, the first real RMW — and two of those
+four are what corrected §57.6.
+
+**THE HAND-CHECK IS A TRUE CROSS-SOURCE ONE.** Every Ida figure asserted in
+`tools/test-season-facts.mjs` is stated in `samples/ida-al092021/
+tcr-AL092021_Ida.txt`, NOAA's own Tropical Cyclone Report — a different
+document from the database being parsed, written by different people for a
+different purpose. Peak 130 kt, landfall 130 kt and 931 mb, minimum 929 mb,
+Cuba landfall 2325Z, ended extratropical, ACE 10.58. All agree.
+
+**176 assertions across three suites, and NINE mutations were run to prove they
+bite** — the ATCF merge, the b-deck name, the dateline unwrap, a year gate on
+RMW, `-999` read as a number, ATCF coordinates read as whole degrees, the
+segment measurement removed, the segment treated as an infinite line, and the
+seam handled in degrees. **Two of the nine stayed GREEN on the first pass and
+that is the finding**: Ida cannot show a status filter working, because she
+goes extratropical below hurricane force, so removing it changed none of her
+numbers. Those two assertions were rewritten against a synthetic storm built to
+be the shape no fixture has.
+
+**STILL OPEN AND IT IS THE ONLY THING:** none of this has drawn a pixel. The
+first surface is step 4's shell.
 
 ---
 
@@ -1053,15 +1155,20 @@ already near its limit.
 
 ```
 seasons/            entry, shell, mode state, deep links
-lib/hurdat.js       HURDAT2 + ATCF parsing into one shape
-lib/season-facts.js the derived figures in §57.15
-lib/near-home.js    line-to-point distance against a track
+lib/hurdat.js       HURDAT2 + ATCF parsing into one shape        BUILT (step 2)
+lib/season-facts.js the derived figures in §57.15                BUILT (step 2)
+lib/near-home.js    line-to-point distance against a track       BUILT (step 2)
 data/seasons.js     fetch, cache, offline
 map/layers/season-*.js   track, landfall marks, swath, ghosts
 ui/view-seasons*.js      shelf, board, roster, detail
-config/tokens.js         + the SEPIA palette
-config/constants.js      + a SEASONS block
+config/tokens.js         + the SEPIA palette                     BUILT (step 1)
+config/constants.js      + a SEASONS block                       BUILT (step 2)
 ```
+
+**Also built, and they are TOOLS rather than app code — nothing imports them:**
+`tools/seasons-fixtures.mjs` with its workflow (cut real storms out of the full
+NOAA files on a runner), and `tools/test-hurdat.mjs`,
+`tools/test-season-facts.mjs`, `tools/test-near-home.mjs`.
 
 ## 57.33 What this costs — nothing, and the three limits that keep it that way
 

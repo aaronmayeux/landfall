@@ -174,12 +174,39 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> SEASONS: STEPS 0 AND 1 ARE DONE. STEP 2 IS THE NEXT ONE. <==**
+**==> SEASONS: STEPS 0, 1 AND 2 ARE DONE. STEP 3 IS THE NEXT ONE. <==**
 `SPEC-SEASONS-BUILD.md` §57 — fifteen steps in §57.30, sized for one session
 each. Read §57.1 and §57.30 before touching anything; do not reopen a numbered
 decision without new evidence.
 
-**STEP 1 LANDED AND HAS NOT BEEN SEEN.** The sepia palette, the forced mode and
+**STEP 2 LANDED AND THERE IS NOTHING FOR AARON TO LOOK AT.** The parser, the
+derived facts and the near-home index are in `lib/hurdat.js`,
+`lib/season-facts.js` and `lib/near-home.js`; what they ARE is in §57.30 step 2
+and the sections it cites. **Nothing imports them yet**, so no pixel changed
+and there is no phone test to do — the first surface is step 4's shell. That is
+deliberate and it is the exception to this project's usual rule, not a lapse.
+
+**==> IT CORRECTED FOUR SPEC SECTIONS, ALL FOUND BY REAL BYTES DISAGREEING
+WITH REMEMBERED ONES. <==** Read the sections, not this list — but know they
+moved: **§57.4a** had three ATCF field positions off by one (the status column
+was documented as the wind threshold). **§57.5** listed seven record
+identifiers; the file carries nine. **§57.6**'s cliffs are generalities, not
+rules — an 1852 storm carries a radius of maximum wind, 169 years before the
+stated cliff, so nothing in the parser gates on a year. **§57.7**'s landfall
+hole is **1971–1982, not 1971–1990**; Hugo '89 is marked and the hole is
+twelve Atlantic years, counted per year across the whole file. The work to
+compute those landfalls ourselves still stands at half the scope.
+
+**AND §57.19 WAS OVERSTATING ITS OWN CASE.** It said `lib/shape-distance.js`
+already had line-to-point distance; it does not, it measures to the nearest
+VERTEX and says so in its own comment. It also implied the points-only answer
+is wrong by a lot. Measured, the two differ by 2 to 25 nautical miles — but
+the gap moves a storm across the reader's chosen radius in 4 of 54 city-and-
+radius combinations, **and one of them is Katrina at 30 miles from New
+Orleans**. The size was wrong; the reason to do it was right, and worse than
+stated.
+
+**STEP 1 STILL HAS NOT BEEN SEEN, AND STEP 2 DID NOT CHANGE THAT.** The sepia palette, the forced mode and
 the round-trip guarantee are in `SPEC-MAP.md` §9 — read that, not this. A2 was
 never built; §57.31 item 1 records why. **Nothing calls `forceMode()` yet**, so
 there is no globe wearing it: `mockups/seasons-themes.html` mirrors the shipped
