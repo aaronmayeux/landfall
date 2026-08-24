@@ -281,29 +281,12 @@ GLOBE HAS HAD ANYTHING ON IT. <==** `SPEC-SEASONS-BUILD.md` §57.18a is the
 as-built account — read that, not this. Steps 0 through 4 are done and
 confirmed. **Step 5b is next: the season in progress, and the ghosts.**
 
-**GLASS — this is a real ten minutes of looking, and it needs no weather.**
-Open the archive from either door.
+**AARON'S VERDICT, 2026-08-24: IT WORKS ON GLASS.** The done-condition is met —
+ticking a storm puts it on the globe and unticking takes it off, by tap and by
+keyboard. **Nothing from 5a is left for him to look at.**
 
-1. **The picker and the roster.** Try **2005**, then **1935**, then **2025**.
-   2005 should read as a monster season without you reading a number —
-   31 storms, the dots running hot down the list, and *"Every name on the list
-   was used."* 1935 should carry the undercount line saying its counts are a
-   floor. **The question is whether the shape of a season is visible without
-   reading**, which is the whole of §57.18.
-2. **Ticking a storm draws it; unticking removes it.** By thumb, and with a
-   keyboard if you have one to hand — Tab to a row, Space to tick.
-3. **==> AND THIS IS THE ONE THAT HAS BEEN WAITING SINCE STEP 1. <==** Tick a
-   **Cat 2** storm whose track crosses a coast — §57.20 measured the sepia
-   coastline at 38° and the Cat 2 dot at 39°, one degree apart, and knowingly
-   shipped it because a paint chip could not settle it. **There are real tracks
-   on a real coast now.** Does the storm win against the ground, or does it
-   disappear into it? 2005's ARLENE, CINDY or STAN are Cat 1–2 US landfalls.
-4. **The bar's sentence is a button.** Close the board and press
-   `Past storms · 2005 · Atlantic` — it should come back with your ticks intact.
-5. **Leaving.** Every archive track must come off, and today's storms come back.
-
-**NO GHOSTS ARE VISIBLE IN THIS PUSH AND THAT IS EXPECTED.** They exist only
-for the season in progress, which arrives in 5b.
+**ONE QUESTION IS STILL OPEN AND IT IS A DECISION RATHER THAN A CHECK** — the
+sepia coastline against a Cat 2 dot, below.
 
 **WHAT STEPS 3b AND 4 BUILT LIVES IN `SPEC-DATA.md` §58, `SPEC-OPS.md` §18.8
 AND §57.16a.** Read those, not this. Both were verified by Aaron on a phone on
@@ -362,9 +345,16 @@ readers ahead of them.
 EXPECTED. <==** §57.20 measured the sepia coastline at 38° against the Cat 2
 dot at 39°. It was logged as unanswerable before step 6 because step 4's globe
 was empty — but step 5a draws real tracks in real Saffir-Simpson colours, so
-there is something to judge it against now. It is glass item 3 above. **Do not
-close it off `mockups/seasons-themes.html`** — that is a paint chip, the
-comparison §57.31 item 1 already rejected.
+there is something to judge it against now, and 5a is confirmed working
+without it having been answered.
+
+**THE ASK IS ONE LOOK:** tick a Cat 1–2 storm whose track crosses a coast —
+2005's **ARLENE**, **CINDY** or **STAN** are US landfalls at that strength.
+Does the storm win against the ground, or sink into it? If it sinks, the lever
+is the COASTLINE's chroma rather than the dot: §6 fixes the category colours
+and they are not negotiable. **Do not close it off
+`mockups/seasons-themes.html`** — that is a paint chip, the comparison §57.31
+item 1 already rejected.
 
 **AND THE SPEC INDEX HAS NEVER CARRIED A LETTERED SUBSECTION.** §57.4a, §57.16a
 and the new §57.18a are all absent from `SPEC-INDEX.md`, so a session told to
