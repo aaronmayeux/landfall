@@ -297,6 +297,43 @@ behind a download gate, a Worker and IndexedDB. Measured on the real bytes.
 there was no history in the repo at all and a board would have had nothing to
 draw. Started by pushing the `seasons-hurdat` branch.
 
+**==> THE SERVICE WORKER WAS ABOUT TO OVERRIDE THE `immutable` HEADER. FIXED
+2026-08-24, BEFORE STEP 5 FETCHES ANYTHING. <==** `sw.js` routes every
+same-origin GET, and `/seasons/data/` was on none of its lists — so it fell into
+`networkFirst()`, which fetches `cache: 'no-cache'` and would have forced a
+revalidation round trip on files `_headers` declares immutable for a year, then
+stored a copy of each. It is now cache-first alongside `/vendor/`, which also
+means the archive works offline. **The precache list was checked first and is
+clean** — three entries, no history, so nobody downloads 22 MB at install.
+
+`.txt` went into `typeMatchesUrl()` in the same commit and that is not a tidy-up:
+cache-first turns a transient 404 into a permanent one, and a season file
+replaced by Cloudflare's `index.html` fallback throws no MIME error — the
+archive would just look empty. `tools/test-sw-routing.mjs` is new, runs the real
+`sw.js` in a VM, and was verified by breaking each of the four rules in turn.
+**A NEW CACHE-FIRST PATH NEEDS A SAMPLE FILENAME IN THAT SUITE**; it fails on
+purpose until one is added.
+
+**==> AND THE DEEP LINK'S YEAR CHECK HAD BEEN INERT SINCE STEP 4. FIXED
+2026-08-24. <==** `seasons/deep-link.js` read `SEASONS.firstSeason`,
+`seasonLinkFutureYears` and `deepLinkMaxStorms`; **none of the three was ever
+added to the constants block.** `year < undefined` is false and `year >
+undefined` is false, so every comparison passed and the range check did
+nothing — `?season=1066` was accepted, resolved to a season with no storms, and
+opened the archive on an empty globe saying nothing. A year outside the record
+and a quiet season looked identical, which is the one distinction §57.20's
+words exist to make. The three constants are now in, measured (`AL011851` is
+the first header row of the Atlantic file, so the floor is 1851) and each was
+verified by removing it again and watching the suite go red.
+
+**THE SPEC WAS RIGHT AND THE CODE WAS WRONG**, which is the rarer direction:
+§57.20 described this validation correctly all along, so nothing there needed
+changing. **`check-syntax.mjs` CANNOT CATCH THIS CLASS OF BUG** — it proves an
+import resolves, and `SEASONS` imported fine; it was the PROPERTIES that were
+absent. Only `tools/test-archive-mode.mjs` named it, and it had been red on
+main since step 4 shipped. Worth a look at whether other constants blocks have
+readers ahead of them.
+
 **STEP 5 DELETES A SENTENCE RATHER THAN EDITING IT.** The bar currently reads
 *"The year picker is not built yet — there is nothing to draw."* The moment
 there is a picker there is something true to say instead, and a leftover

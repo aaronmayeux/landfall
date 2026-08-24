@@ -6569,4 +6569,48 @@ export const SEASONS = Object.freeze({
    *  `lib/adeck.js`), and the two are computed once at parse time rather than
    *  by every consumer. Distances and facts read `lon`; drawing reads `lonU`. */
   carryUnwrappedLongitude: true,
+
+  /* --- The shareable link (§57.20) ----------------------------------------- */
+
+  /**
+   * ==> THESE THREE WERE READ BY `seasons/deep-link.js` BEFORE THEY EXISTED.
+   * <== Step 4 shipped the link parser and step 2 shipped this block, and the
+   * three names the parser needs never landed in it. Nothing caught that:
+   * `check-syntax.mjs` proves an IMPORT resolves, and `SEASONS` imported fine
+   * — it was the PROPERTIES that were absent, which is a runtime undefined,
+   * not a broken module.
+   *
+   * The symptom was silent and was exactly §5's shape. `year < undefined` is
+   * false and `year > undefined` is false, so EVERY comparison passed and the
+   * range check was inert: `?season=1066` was accepted, resolved to a season
+   * with no storms in it, and opened the archive on an empty globe with
+   * nothing said. A year outside the record and a genuinely quiet season
+   * looked identical, which is the one distinction the words exist to make.
+   * `tools/test-archive-mode.mjs` had been red on main since step 4 and is
+   * what named it.
+   */
+
+  /** The first season in the record, from the files themselves rather than
+   *  recollection: `AL011851` is the first header row of the Atlantic file and
+   *  `seasons/index.json` agrees. THE ATLANTIC IS THE FLOOR FOR THE WHOLE
+   *  FEATURE, not each basin's own start — the Pacific record only opens in
+   *  1949, and a link to 1900 is a real year with real Atlantic storms that
+   *  happens to have no Pacific half. Rejecting it would be wrong; the empty
+   *  basin is the roster's problem to describe, not the link's. */
+  firstSeason: 1851,
+
+  /** How far past the current year a link may point. ONE, and the reason is
+   *  timezones rather than generosity: a link made at 23:00 on 31 December in
+   *  New York is opened on 1 January in London, and `nowYear` is whatever the
+   *  READER's clock says. Without the extra year that link is "out of range"
+   *  to the person it was sent to and fine to the person who sent it, which is
+   *  unexplainable. Two would start accepting seasons that cannot exist. */
+  seasonLinkFutureYears: 1,
+
+  /** The most storm slugs one link may carry. A season's roster tops out near
+   *  30 (2005 reached AL31), so 24 is generous for "here are the ones I mean"
+   *  while still bounding what a hand-built or hostile URL can ask the globe
+   *  to draw at once. The list is capped, not rejected — a link with 500 slugs
+   *  in it still opens on its season. */
+  deepLinkMaxStorms: 24,
 });
