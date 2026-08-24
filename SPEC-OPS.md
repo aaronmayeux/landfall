@@ -1000,8 +1000,24 @@ wiring only), plus the apple-\* metas and a black-translucent status bar in
 OLD copy first on every load, which on a push-then-check-the-phone loop
 guarantees "pushed the fix, phone still shows the bug" on every single deploy.
 Network-first costs nothing while online and falls back to cache offline. SWR's
-spirit survives only where it is safe: `/vendor/` is cache-first because a
-version-pinned local file cannot mean something new (17.3).
+spirit survives only where it is safe: `/vendor/` and `/seasons/data/` are
+cache-first because a version-pinned local file cannot mean something new
+(17.3). The season files carry NOAA's revision stamp in the filename, so they
+qualify on identical grounds (§58.4) — and without that entry they fell into
+network-first, which fetches `cache: 'no-cache'` and would have forced a
+revalidation round trip on files `_headers` had just declared immutable for a
+year. **The worker silently overriding the header is the failure shape to watch
+for whenever a path is added to either file and not the other.**
+
+**EVERY CACHE-FIRST PATH MUST HAVE ITS FILE EXTENSION IN `typeMatchesUrl()`.**
+Cache-first is what turns a transient 404 into a permanent one — Cloudflare
+Pages answers a missing file with `index.html` at 200, and a path that never
+asks twice will serve that page forever. `txt` was added alongside
+`/seasons/data/`; a season file poisoned this way is worse than the vendor case
+that prompted the guard, because there is no MIME error, just a parser finding
+no storms and an archive that looks EMPTY rather than broken. Asserted by
+`tools/test-sw-routing.mjs`, which runs the real `sw.js` in a VM and fails when
+a cache-first path has no guarded sample.
 
 **DATA IS NEVER TOUCHED BY THE WORKER.** `/api/`, NOAA, GDACS, OpenFreeMap tiles
 and fonts all pass straight through. Freshness, staleness banding and §5's state
@@ -1012,7 +1028,11 @@ cannot silently grow unbounded cache quota.
 **NO PRECACHED FILE LIST.** With no build step a hand-maintained module list WILL
 go stale. The runtime cache captures what the app actually loads, so offline
 works from the first controlled load — install, open once, offline works. The
-precache floor is `./` plus the manifest plus one icon. SW constants live at the
+precache floor is `./` plus the manifest plus one icon. **NOTHING UNDER
+`seasons/data/` MAY EVER JOIN IT** — that is 22 MB of history, and precaching
+it would charge every visitor the archive's full download at install time for a
+feature most sessions never open. It is cache-first, which is the opposite
+bargain: paid once, by the people who actually enter the archive. SW constants live at the
 top of `sw.js`, not `config/constants.js`: a worker cannot import the app's
 modules. Contained, documented Tuning deviation.
 

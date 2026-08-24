@@ -113,17 +113,17 @@ real home is the other row carrying the same section number.
 | `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 853-913 |
 | `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 914-979 |
 | `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 980-991 |
-| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 992-1043 |
-| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1095-1133 |
-| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1154-1164 |
-| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1165-1175 |
-| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1176-1197 |
-| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1198-1400 |
-| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1401-1407 |
-| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1408-1419 |
-| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1420-1473 |
-| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1474-1549 |
-| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1550-1661 |
+| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 992-1063 |
+| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1115-1153 |
+| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1174-1184 |
+| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1185-1195 |
+| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1196-1217 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1218-1420 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1421-1427 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1428-1439 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1440-1493 |
+| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1494-1569 |
+| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1570-1681 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -209,7 +209,7 @@ real home is the other row carrying the same section number.
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2982-3021 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2220-2274 |
 | `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 3022-3046 |
-| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1134-1153 |
+| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1154-1173 |
 | `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2361-2397 |
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2398-2430 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2431-2481 |
@@ -318,17 +318,17 @@ real home is the other row carrying the same section number.
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3331 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3332-3354 |
 | `58.3` | &nbsp;&nbsp;What is warmed, and the one thing deliberately left cold | `SPEC-DATA.md` | 3355-3384 |
-| `58.4` | &nbsp;&nbsp;Caching — immutable files, one mutable pointer | `SPEC-DATA.md` | 3385-3402 |
+| `58.4` | &nbsp;&nbsp;Caching — immutable files, one mutable pointer | `SPEC-DATA.md` | 3385-3418 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 204,416 | 60 |
+| `SPEC-DATA.md` | 205,421 | 60 |
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 101,754 | 23 |
+| `SPEC-OPS.md` | 103,196 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 91,922 | 36 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 179,708 | 15 |

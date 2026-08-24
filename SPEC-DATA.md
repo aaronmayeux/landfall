@@ -3399,3 +3399,19 @@ correction. `SPEC-OPS.md` §18.8 carries the full account.
 **Nothing here may live under `data/`.** That path is already `no-cache` in
 `_headers` because it holds JS modules, which is the exact opposite of what
 these files want.
+
+**==> `_headers` IS ONLY HALF OF IT. THE SERVICE WORKER GETS A VOTE. <==**
+`sw.js` intercepts every same-origin GET, and anything not on its bypass or
+cache-first lists goes through `networkFirst()`, which fetches with
+`cache: 'no-cache'` — a forced revalidation on every load. So for as long as
+`/seasons/data/` was absent from `IMMUTABLE_PATHS`, the worker was quietly
+undoing the `immutable` header above. It is now cache-first there, matching
+`_headers`, which also means the archive works offline. **A caching decision
+about a path is not made until it is made in BOTH files.**
+
+Two things follow, both load-bearing: the `.txt` extension had to be added to
+`typeMatchesUrl()` in the same change, because cache-first turns a transient
+404 into a permanent one (`SPEC-OPS.md` §17.11); and **nothing under
+`seasons/data/` may enter the worker's precache list**, which would charge
+every visitor 22 MB at install for a feature most sessions never open.
+`tools/test-sw-routing.mjs` asserts all three.

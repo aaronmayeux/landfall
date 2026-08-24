@@ -22,6 +22,12 @@
  * and lying". `/tiles/` is excluded for a different reason: it is the dormant
  * R2 tile proxy (§3), and runtime-caching tiles is unbounded quota growth.
  *
+ * `/seasons/data/` IS NOT AN EXCEPTION TO THAT RULE — IT IS A DIFFERENT KIND
+ * OF THING. Those files are NOAA's settled history: 1851 through last season,
+ * with the revision stamp in the filename. There is no such thing as a stale
+ * copy of a file that can never change, so none of the freshness reasoning
+ * above applies. It is cache-first for the same reason `/vendor/` is (§58.4).
+ *
  * WHY NO PRECACHED FILE LIST: no build step means any hand-maintained module
  * list WILL go stale (the same argument SPEC makes about documentation). The
  * runtime cache captures every file the app actually loads, on the first load
@@ -68,8 +74,26 @@ const BYPASS_PATHS = ['/api/', '/tiles/'];
  * refetches; no invalidation needed.
  *
  * NO CROSS-ORIGIN HOST IS CACHE-FIRST ANY MORE. openfreemap, NOAA and GDACS
- * were never eligible and still are not. */
-const IMMUTABLE_PATHS = ['/vendor/'];
+ * were never eligible and still are not.
+ *
+ * `/seasons/data/` EARNS THE SAME TREATMENT FOR THE SAME REASON. Those are
+ * NOAA's HURDAT2 files and their filenames carry both the last season and
+ * NOAA's revision stamp — `hurdat2-atlantic-2025-02272026.txt` — so one of
+ * these URLs can never mean something new either. `_headers` already serves
+ * them `immutable` for a year; without this entry they fell into
+ * networkFirst(), which fetches with `cache: 'no-cache'` and would have forced
+ * a revalidation round trip on every load of a file the HTTP layer had just
+ * been told to keep forever. THE WORKER WAS ABOUT TO OVERRIDE THE HEADER. It
+ * also means the archive works offline, which is the whole point of holding
+ * 22 MB of history on our own origin rather than proxying NOAA.
+ *
+ * ==> THE `.txt` IN typeMatchesUrl() BELOW IS PART OF THIS ENTRY, NOT A
+ * SEPARATE TIDY-UP. <== Cache-first is what turns a transient 404 into a
+ * permanent one, and that guard is the only thing standing between a
+ * momentarily-missing season file and an HTML fallback page served as history
+ * forever. Adding a path here without adding its file extension there is a
+ * loaded gun. */
+const IMMUTABLE_PATHS = ['/vendor/', '/seasons/data/'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -128,11 +152,21 @@ self.addEventListener('fetch', (event) => {
  *
  * The rule: an HTML response for a .js or .css request is a fallback page,
  * never the asset. Refuse to cache it and refuse to serve it.
+ *
+ * ==> `.txt` IS IN THE LIST BECAUSE `/seasons/data/` IS NOW CACHE-FIRST. <==
+ * The season files are the only plain-text assets the app fetches, and they
+ * are the exact shape this guard was written for: a large file, requested
+ * rarely, on a path that never asks twice. Cloudflare Pages answers a missing
+ * one with `index.html` at 200, so without `txt` here a browser that opened
+ * the archive during a bad deploy would hold an HTML page as the 1851-2025
+ * Atlantic record and never look again — and unlike the vendor case there is
+ * no MIME error to make it obvious, just a parser finding no storms and the
+ * archive looking empty rather than broken.
  */
 function typeMatchesUrl(res, url) {
   const type = (res.headers.get('Content-Type') || '').toLowerCase();
   if (!type.includes('text/html')) return true;
-  return !/\.(js|css|mjs|json|png|webmanifest)$/i.test(new URL(url).pathname);
+  return !/\.(js|css|mjs|json|txt|png|webmanifest)$/i.test(new URL(url).pathname);
 }
 
 /* Version-pinned vendor files: a URL that can never mean something new is safe
