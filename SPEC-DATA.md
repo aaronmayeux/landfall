@@ -3324,6 +3324,12 @@ Earth that no storm has happened this year. It falls through to last-good
 instead (§5). **Zero REAL storms out of a non-empty listing is different and is
 served**: in January that is simply true.
 
+**THE READER OF THIS ROUTE IS `data/seasons-live.js`**, and it is a separate
+module from `data/seasons.js` on purpose — the two roads to a season share a
+shape at the board's door and nothing else. §57.18b is the as-built account.
+**It carries `years` through untouched and takes the newest as "now"**, so no
+clock anywhere in the client decides which season is in progress.
+
 **`provisional: true` IS ON THE WIRE BECAUSE §57.11 REQUIRES THE APP TO SAY
 WHICH RECORD IT IS SHOWING.** These are working best tracks. `seasons/index.json`
 carries `provisional: false` for the reviewed HURDAT2 files, in the same field,
@@ -3347,6 +3353,10 @@ removed in turn and the suite confirmed red.
 storm number. Invest numbers 90-99 are reused several times within one season,
 so serving `al922026` would hand a reader a file that means three different
 systems on three different days with nothing saying which.
+
+**FETCHED FOUR AT A TIME BY THE CLIENT** (`SEASONS.liveFetchConcurrency`).
+These are not warmed, so several reach upstream, and fifteen parallel requests
+on a phone is fifteen slow requests rather than one fast one. §57.18b.
 
 **A 404 IS AN ANSWER AND IS NEVER CACHED.** A storm that has not formed yet has
 no file, and that stays true only until it suddenly does not. A remembered "no

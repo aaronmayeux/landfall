@@ -6485,6 +6485,35 @@ export const SEASONS = Object.freeze({
    *  to read here — §57.30 step 13 owns the rest of the world. */
   nhcBasins: Object.freeze(['AL', 'EP', 'CP']),
 
+  /* --- The season in progress (§57.30 step 5b, §58) ----------------------- */
+
+  /**
+   * ==> WHICH ATCF BASIN TOKENS BELONG TO WHICH ARCHIVE BASIN, AND THE
+   * CENTRAL PACIFIC IS THE WHOLE REASON THIS EXISTS. <== `seasons/index.json`
+   * keys the settled record on `atlantic` and `epacific`; the live b-decks are
+   * filed under `AL`, `EP` and `CP`. The mapping is NOAA'S OWN and was
+   * measured in this repo's files rather than assumed: `epacific-2024`
+   * contains CP012024, and `epacific-2025` contains CP012025 and CP022025. The
+   * reviewed record keeps one file for both, so anything else here would make
+   * the season in progress disagree with the 77 years behind it — and would
+   * drop Lala and Moke off the board with nothing said.
+   *
+   * A basin absent from this table has no live half at all, which is the
+   * honest state for the rest of the world until step 13.
+   */
+  liveBasins: Object.freeze({
+    atlantic: Object.freeze(['AL']),
+    epacific: Object.freeze(['EP', 'CP']),
+  }),
+
+  /** How many b-decks to fetch at once when a reader opens the current
+   *  season. FOUR, and the ceiling is the READER'S phone rather than NOAA's
+   *  server: fifteen parallel requests on a cell connection is fifteen slow
+   *  requests, not one fast one, and these are not warmed (§58.3) so several
+   *  of them reach upstream. Four keeps the last storm's wait to roughly four
+   *  round trips on a fifteen-storm season. */
+  liveFetchConcurrency: 4,
+
   /* --- Derived facts (§57.15) --------------------------------------------- */
 
   /** A storm counts as NAMED for a season total when it reached at least this,
