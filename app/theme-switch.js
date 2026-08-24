@@ -29,7 +29,7 @@
  */
 
 import { FONT, SIZE, SPACE, WIND_BAND_COLOR } from '../config/tokens.js';
-import { palette, resolveMode, setThemeMode, themeMode } from '../config/theme.js';
+import { isLight, palette, resolveMode, setThemeMode, themeMode } from '../config/theme.js';
 import { themeState } from '../map/theme-state.js';
 import { rethemePopulation } from '../map/population.js';
 import { settingValue } from '../data/settings-prefs.js';
@@ -162,7 +162,15 @@ export function applyTokens() {
   r.setProperty('--space-comfy', SPACE.comfy);
 
   document.documentElement.dataset.theme = themeMode();
-  document.documentElement.style.colorScheme = themeMode();
+
+  /* ==> `color-scheme` TAKES 'dark' OR 'light' AND NOTHING ELSE. <== It is a
+   * CSS keyword, not a name of ours, and a browser handed 'sepia' does not
+   * throw — it DROPS the declaration and silently keeps whatever was set
+   * before, which on a light-mode device means dark panels wearing an
+   * operating-system-white scrollbar. Sepia is a dark-ground palette, so it
+   * asks the browser for dark furniture. Same question `isLight()` answers,
+   * asked of the browser instead of of us. */
+  document.documentElement.style.colorScheme = isLight() ? 'light' : 'dark';
 
   /* The browser UI around the app — the iOS status bar area and the Android
    * address bar — takes its color from this meta. Left on the dark ocean it

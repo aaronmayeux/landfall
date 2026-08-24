@@ -2339,6 +2339,58 @@ interface for free, since every panel is already written against them), call
 `index.html` carries a pre-paint inline script, pinned in the CSP by hash, so a
 light-mode device never flashes the dark globe on a cold load.
 
+**THERE ARE THREE PALETTES AND ONLY TWO OF THEM ARE A SETTING.** `DARK` and
+`LIGHT` are what a stored preference resolves to. `SEPIA` is the archive
+palette — Seasons wears it and nothing else does — and it is reached only
+through `forceMode()`, never through `setThemeMode()`, which refuses it. A view
+that owns the whole screen forces on the way in and calls `releaseMode()` on
+the way out.
+
+**The user's own preference survives that round trip untouched, and the whole
+mechanism exists for that one guarantee.** `config/theme.js` cannot reach
+`data/settings-prefs.js` and forcing does not write to it; `forceMode`
+remembers what was live and `releaseMode` puts it back. A settings write made
+*while* a mode is forced is remembered rather than applied — without that,
+changing any unrelated setting inside Seasons would drop the archive globe back
+to the live palette mid-session, because `createThemeSwitch`'s `apply()` runs on
+every setting change and not just a theme one. The failure this prevents is
+somebody visiting the archive once and being stuck in sepia on the live globe,
+which is the sort only discovered by the person it happened to.
+`tools/test-sepia.mjs` drives the round trip from both starting themes.
+
+**`isLight()` stays false in sepia**, and that is correct rather than
+convenient: every caller is asking whether the ground is pale, not which of two
+themes is live. `color-scheme` is the one place the name cannot be passed
+through — it is a CSS keyword taking `dark` or `light`, and a browser handed
+`sepia` silently drops the declaration and keeps whatever was set before, so
+`app/theme-switch.js` asks `isLight()` there too.
+
+**`SEPIA` spreads `DARK` rather than restating it**, because sepia is DARK's
+lighting model at a different temperature and a full copy's unchanged half
+would drift. The cost is that a colour added to `DARK` is inherited in cyan,
+silently, on a globe nobody is currently looking at — so `tools/test-sepia.mjs`
+fails the build on any DARK colour SEPIA has not overridden. Adding a themed
+colour is two edits and the second is not optional. Status colours (`error`,
+`ok`, `stale`, the install CTA) are exempt by name and with a reason: a brown
+error message is a bug wearing a theme.
+
+**Its land is set by luminance, not by eye.** The mockup Aaron chose the theme
+from drew land at `#3A2A15`; measured against the fixed severity ramp the
+GENERIC dot came out at 2.61:1 over it, under the 3:1 findability floor, and
+the halo lever is closed — pure black only reaches 1.52:1 against a mid-brown,
+because brown carries far more of WCAG's green weighting than a navy does.
+There is no halo dark enough. The three land tokens now match `DARK`'s own
+luminances in the sepia hue. `tools/contrast-check.mjs` runs all three palettes.
+
+**One measured collision is knowingly shipped.** `coastGlow` sits one degree of
+hue from `CATEGORY_COLOR.CAT2` (§57.20). Aaron's call, 2026-08-24: the coast is
+a hairline and a Cat 2 is a lit disc with a halo, so form separates them where
+hue does not, and the answer is a look at a real storm crossing a real
+coastline rather than a second paint chip. **If it does collide, the fix is
+chroma and not hue** — drain the saturation from `mesh`, `coastGlow` and
+`graticuleMajor` and leave the warmth in the chrome. Rotating the hue would
+trade the collision for a palette that is no longer sepia.
+
 ### 9.3 Theming the map without rebuilding it
 
 **Every themed color MapLibre draws is a `["to-color", ["global-state", key]]`

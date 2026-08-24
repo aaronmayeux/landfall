@@ -1522,6 +1522,199 @@ export const LIGHT = Object.freeze({
 });
 
 /* ---------------------------------------------------------------------------
+ * SEPIA — THE ARCHIVE PALETTE. Seasons wears this; nothing else ever does.
+ *
+ * `SPEC-SEASONS-BUILD.md` §57.1 decision 5, §57.20. Aaron chose it on glass:
+ * it reads as an old historical record, which is the whole feeling the feature
+ * is after.
+ *
+ * ==> IT IS A MODE THE VIEW FORCES, NEVER A SETTING. <== It is not in
+ * `data/settings-prefs.js` and never will be. `config/theme.js` exposes
+ * `forceMode`/`releaseMode` for it, and the user's own dark/light/auto
+ * preference is untouched throughout — otherwise somebody visits the archive
+ * once and is stuck in sepia on the live globe forever.
+ *
+ * ---------------------------------------------------------------------------
+ * WHY IT SPREADS `DARK` INSTEAD OF BEING A THIRD FULL COPY.
+ *
+ * `LIGHT` is a full independent copy because it is a different lighting model —
+ * near-white land, mid-grey sea, ink that runs the other way. Sepia is not
+ * that. It is the DARK model with the temperature moved: same near-black
+ * ground, same bright line over it, same ink-on-night hierarchy. Restating
+ * DARK's eighty-five values to change their hue would be six hundred lines of
+ * duplication, and the half that never changed would drift.
+ *
+ * ==> AND THE OBVIOUS RISK OF A SPREAD IS GUARDED. <== A colour added to DARK
+ * tomorrow would be INHERITED here in cyan and nobody would notice until it
+ * appeared on the archive globe. `tools/test-sepia.mjs` fails the build on any
+ * DARK key holding a colour that SEPIA has not overridden. Adding a themed
+ * colour is therefore two edits, and the second one is not optional.
+ *
+ * ---------------------------------------------------------------------------
+ * WHAT DELIBERATELY DOES NOT MOVE, AND WHY.
+ *
+ * 1. **The Saffir-Simpson ramp and the watch/warning colours.** They are not
+ *    in any palette — they are their own exports above, fixed by §6. A Cat 3
+ *    dot reads the same on the archive globe as on the live one. That is the
+ *    constant the ground is judged against, not the other way round.
+ *
+ * 2. **`error`, `ok`, `stale`, and the install CTA.** Status colours mean
+ *    something. A brown error message is a bug wearing a theme. They are
+ *    inherited from DARK on purpose and the test above knows to allow it —
+ *    see `SEMANTIC` in `tools/test-sepia.mjs`.
+ *
+ * 3. **`glassShadow`.** A shadow is an absence of light, not a colour.
+ *
+ * ---------------------------------------------------------------------------
+ * THE ONE MEASURED COLLISION, AND WHY IT SHIPPED ANYWAY (§57.20).
+ *
+ * `coastGlow` at #C79A4E is hue 38. `CATEGORY_COLOR.CAT2` is hue 39. **One
+ * degree apart** — the same colour separated only by brightness. For scale,
+ * DARK's cage was rotated 191 -> 175 precisely because sitting SIXTEEN degrees
+ * off a category colour was too tight.
+ *
+ * ==> AARON'S CALL, 2026-08-24: SHIP IT AND JUDGE IT ON GLASS. <== The hue
+ * measurement is real but it compares two things that are not drawn alike —
+ * the coast is a hairline, a Cat 2 is a lit disc with a halo, and form
+ * separates them where hue does not. A faded low-chroma variant was drafted
+ * and NOT built, because the answer is a look at a real Cat 2 crossing a real
+ * coastline, not a second paint chip.
+ *
+ * **If it does collide on glass, the fix is chroma and not hue** — drain the
+ * saturation out of `mesh`, `coastGlow` and `graticuleMajor` and leave the
+ * warmth in the chrome, where no category colour is ever drawn. Real old
+ * charts are faded, so that direction strengthens the feeling rather than
+ * costing it. Do not rotate the hue; that trades the collision for a palette
+ * that is no longer sepia.
+ * ------------------------------------------------------------------------- */
+
+export const SEPIA = Object.freeze({
+  ...DARK,
+
+  /* --- globe body: ink on old paper, not gold leaf ----------------------- */
+  ocean:          '#1C1409', // the parchment's shadow, not a night sky
+  oceanDeep:      '#120D06', // toward the limb, for depth
+
+  /* ==> THE LAND LADDER IS SET BY LUMINANCE, NOT BY EYE, AND THE MOCKUP'S
+   *     VALUES DID NOT SURVIVE THE CONTRAST GATE. <==
+   *
+   * `mockups/seasons-themes.html` drew land at #3A2A15. Measured against the
+   * fixed severity ramp, the GENERIC storm dot — the muted red a storm wears
+   * when its category cannot be read — came out at 2.61:1 over it, under the
+   * 3:1 findability floor, and the halo lever is CLOSED: pure black only
+   * reaches 1.52:1 against a mid-brown, because a brown carries far more of
+   * WCAG's green weighting than a navy does. There is no halo dark enough.
+   *
+   * So the land sits at DARK's own luminance instead. DARK's land measures
+   * 0.0146 and gives GENERIC 3.08:1; these three match that ladder to three
+   * decimal places in the sepia hue, which is the whole idea of this palette —
+   * DARK's lighting model at a different temperature. On a paint chip they
+   * look a shade deeper than the mockup. Against a storm they behave. */
+  land:           '#2A1E0C', // luminance 0.0145 — DARK's land is 0.0146
+  landHigh:       '#382913', // relief at close zoom. 0.0247 to DARK's 0.0241
+  landFaint:      '#241A0A', // continents at the planet band: barely above the
+                             // ocean, so the mesh reads as the hero — the same
+                             // rule DARK follows, in the other temperature
+
+  /* The cage, the coastline stack, and the reference grid. These three are the
+   * colour of the app BY AREA, which is why they carry the sepia identity and
+   * why §57.20's collision note is about them. */
+  mesh:           '#7A5A2E',
+  coastGlow:      '#C79A4E', // the bright top line of the coastline stack
+  coastGlowSoft:  '#6E5227', // the wide dim blurred underlay
+  graticuleMajor: '#8A6B3A', // equator and the two tropics
+
+  /* POPULATION IS NOT DRAWN IN SEASONS (§57.1 decision 9) — today's population
+   * under a 1900 track is a claim about what WOULD happen, not what did. These
+   * exist anyway because a palette with holes in it is a palette that throws,
+   * and they keep DARK's rule that the top of the ramp IS `coastGlow`. */
+  populationLow:  '#5E4622',
+  populationMid:  '#9A7539',
+  populationHigh: '#C79A4E', // IDENTICAL to coastGlow, as in DARK
+
+  /* --- chrome ------------------------------------------------------------ */
+  segActive:      '#5A4425',
+  segActiveEdge:  '#8A6B3A',
+  switchOn:       '#D8B26A',
+
+  node:           '#D8B26A', // a lit node, brighter than the cage it sits in
+
+  stormPlanetDot: '#A29689',
+  stormEnded:     '#EAE1D2',
+  land3d:         '#3F2E17',
+  coast3d:        '#A0937F',
+  meshMuted:      '#7C7263',
+  nodeMuted:      '#A29689',
+
+  /* --- sky and space ------------------------------------------------------
+   * The limb glow goes warm with everything else. A cyan atmosphere around a
+   * parchment planet reads as a rendering fault rather than as a choice. */
+  skyHigh:        '#100B05',
+  skyLow:         '#33240F',
+  atmosphere:     '#B08A4E',
+  atmosphereDeep: '#EEDCBE',
+  starfield:      '#C0AC8C',
+  space:          '#0B0805',
+  spaceNear:      '#2C1F0F',
+  spaceFar:       '#060402',
+
+  /* --- glass -------------------------------------------------------------
+   * THE ALPHAS ARE DARK'S, EXACTLY. Only the tint moved. Those numbers are
+   * tuned against a real backdrop-blur over a real globe, and a mockup's
+   * flatter, heavier values would ship a panel that looks right on a paint
+   * chip and muddy in the app. */
+  glass:          'rgba(28, 20, 9, 0.30)',
+  glassRaised:    'rgba(46, 33, 16, 0.44)',
+  glassBorder:    'rgba(199, 154, 78, 0.16)',
+
+  /* --- ink --------------------------------------------------------------- */
+  textPrimary:    '#F3E7D2',
+  textSecondary:  '#C9B692',
+  textMuted:      '#9C8A69',
+  textInverse:    '#1A1206',
+
+  adminState:     '#4A3A22',
+  adminCountry:   '#63502F',
+  textCountry:    '#8E7E63',
+  textPlace:      '#9C8C6E',
+
+  scrollThumb:      'rgba(199, 154, 78, 0.26)',
+  scrollThumbHover: 'rgba(199, 154, 78, 0.46)',
+  hover:            'rgba(199, 154, 78, 0.12)',
+  dim:              'rgba(243, 231, 210, 0.38)',
+
+  /* THE FOCUS RING IS BRIGHTER THAN THE ACCENT, DELIBERATELY. Keyboard focus
+   * and ordinary selection have to stay tellable apart when both are true, and
+   * `coastGlow` is already doing the accent's job all over the chrome. */
+  focusRing:      '#E8C67E',
+
+  /* --- map geometry ------------------------------------------------------ */
+  geo: Object.freeze({
+    ...DARK.geo,
+    /* Warm white rather than pure white. #FFFFFF over parchment is the one
+     * value that would read as a hole punched in the paper. */
+    coneFill:          '#FBF2E2',
+    coneLine:          '#FBF2E2',
+    trackForecast:     '#F3E7D2',
+    trackPast:         '#8A7A62',
+    pointStroke:       '#1A1206',
+    pointCodeColor:    '#1A1206',
+    pointStrokeFirst:  '#FBF2E2',
+    labelColor:        '#DED2BC',
+    labelHalo:         '#1A1206',
+    endedMark:         '#1A1206',
+    stormLabelHalo:    '#1C1409',
+    stormLabelColor:   '#FAF4E8',
+    glyphHalo:         '#1C1409',
+    /* The environment ribbon is not in the Seasons layer list (§57.26) and
+     * HURDAT2 carries nothing to build one from (§57.8). This ramp exists so
+     * that turning it on could never paint a violet stripe across a sepia
+     * globe — same "no holes in the palette" rule as population above. */
+    envRamp: Object.freeze(['#1C1409', '#1C1409', '#6B4A1E', '#D8B77A', '#F6EDDC']),
+  }),
+});
+
+/* ---------------------------------------------------------------------------
  * TYPE
  *
  * System stack only — no webfont, no network request, no layout shift on a

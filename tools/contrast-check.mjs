@@ -37,7 +37,7 @@
  * ------------------------------------------------------------------------- */
 
 import {
-  DARK, LIGHT,
+  DARK, LIGHT, SEPIA,
   CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR,
   WATCH_WARNING_COLOR, WIND_BAND_COLOR, SURGE_RAMP,
   MODEL_COLOR, MODEL_COLOR_LIGHT, STORM_GEO,
@@ -420,7 +420,7 @@ function rampSeparation() {
 const fmt = (n) => n.toFixed(2).padStart(6);
 let failures = 0;
 
-for (const [themeName, P] of [['DARK', DARK], ['LIGHT', LIGHT]]) {
+for (const [themeName, P] of [['DARK', DARK], ['LIGHT', LIGHT], ['SEPIA', SEPIA]]) {
   console.log(`\n=== ${themeName} ${'='.repeat(60 - themeName.length)}`);
 
   console.log('\n  REQUIRED');

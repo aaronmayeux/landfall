@@ -44,10 +44,22 @@
     --edge:rgba(120,190,225,.16); --accent:#4FD1E8;
     --track:rgba(232,241,248,.55);
   }
-  /* ---- A · SEPIA (archive / parchment) ---- */
+  /* ---- A · SEPIA (archive / parchment) ----
+     ==> THESE VALUES NOW MIRROR `SEPIA` IN config/tokens.js, WHICH SHIPPED.
+     Keep them in step. A mockup that shows a palette the app does not have is
+     worse than no mockup — it is a paint chip for a colour nobody can buy.
+
+     THE LAND IS DARKER HERE THAN IT WAS WHEN AARON PICKED THIS THEME, and the
+     reason is measurable rather than aesthetic. At the original #3A2A15 the
+     GENERIC storm dot — the muted red a storm wears when its category cannot
+     be read — came out at 2.61:1 over land, under the 3:1 findability floor,
+     and no halo could rescue it: pure black only reaches 1.52:1 against a
+     mid-brown, because brown carries far more of WCAG's green weighting than
+     a navy does. The land now sits at DARK's own luminance in the sepia hue.
+     tools/contrast-check.mjs gates it. */
   [data-theme="sepia"]{
-    --ocean:#1C1409; --ocean-deep:#120D06; --land:#38291552; --land:#3A2A15;
-    --land-edge:#4B3720; --mesh:#7A5A2E; --coast:#C79A4E; --grat:#8A6B3A;
+    --ocean:#1C1409; --ocean-deep:#120D06; --land:#2A1E0C;
+    --land-edge:#382913; --mesh:#7A5A2E; --coast:#C79A4E; --grat:#8A6B3A;
     --ink:#F3E7D2; --ink-2:#C9B692; --ink-3:#9C8A69;
     --glass:rgba(28,20,9,.76); --glass-2:rgba(46,33,16,.66);
     --edge:rgba(199,154,78,.22); --accent:#C79A4E;

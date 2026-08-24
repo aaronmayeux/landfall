@@ -585,15 +585,28 @@ No app change. One GitHub Actions job, because a session cannot reach NOAA.
 
 ---
 
-**STEP 1 — THE PALETTE.**
-Build **A2 · Sepia (faded)** in the mockup alongside A. Aaron picks on glass.
-Then the winner goes into `config/tokens.js` as a third palette and
-`config/theme.js` learns a forced mode that does not touch the stored
-preference.
-**Aaron looks at:** A against A2, on a phone, on the globe screen.
-**Done when:** the palette is in tokens, `tools/contrast-check.mjs` passes, and
-switching in and out of the forced mode leaves the user's own theme setting
-untouched.
+**STEP 1 — THE PALETTE. ==> LANDED 2026-08-24. NOT YET SEEN ON GLASS. <==**
+Built, gated and pushed. **What it IS lives in `SPEC-MAP.md` §9** — the third
+palette, the forced mode, the round-trip guarantee, the luminance-set land and
+the knowingly-shipped hue collision. Read that, not this.
+
+**A2 WAS NOT BUILT.** Aaron's call: the coastline is a hairline and the
+collision §57.20 measured compares two things that are not drawn alike, so the
+answer is a real Cat 2 crossing a real coast rather than a second paint chip.
+§57.31 item 1 is closed.
+
+**WHAT IS STILL OPEN HERE IS THE LOOKING, AND THERE IS NOTHING TO LOOK AT YET.**
+Sepia is reachable only through `forceMode()`, and nothing calls it — the first
+surface that does is step 4's shell. `mockups/seasons-themes.html` mirrors the
+shipped values and is the only place to see it before then; keep the two in
+step or the mockup becomes a paint chip for a colour nobody can buy.
+
+**Two things for Aaron when there is a globe wearing it:**
+1. **The coastline against a Cat 2 dot.** The one measured collision.
+2. **Land against ocean, which came out flatter than dark's** — 1.12:1 where
+   dark is 1.20:1. The coastline is what separates them and it clears the ocean
+   at 7:1, so this may be nothing. If the landmasses read as mush, the lever is
+   the ocean rather than the land: the land is pinned by the contrast gate.
 
 ---
 
@@ -741,7 +754,11 @@ picker has proven to be the weak link.
 
 ## 57.31 Open — not decided, do not assume
 
-1. **A2 versus A.** Step 1. Aaron decides on glass.
+1. ~~**A2 versus A.**~~ **CLOSED 2026-08-24.** A2 was never built. Aaron's
+   call: the measured collision compares a hairline to a lit disc, so the
+   answer is a real storm on a real coast, not a second paint chip. Sepia
+   shipped as chosen, with its land darkened to clear the contrast gate.
+   `SPEC-MAP.md` §9.
 2. **Which storms are Tier 2.** Step 11. Aaron decides.
 3. **IBTrACS is unverified.** Size, format and quirks are all assumed. Step 0
    probes it. Nothing about the rest of the world should be promised until then.
