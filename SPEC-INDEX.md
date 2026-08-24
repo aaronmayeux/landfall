@@ -123,7 +123,7 @@ real home is the other row carrying the same section number.
 | `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1408-1419 |
 | `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1420-1473 |
 | `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1474-1549 |
-| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1550-1622 |
+| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1550-1661 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -302,18 +302,18 @@ real home is the other row carrying the same section number.
 | `57.21` | &nbsp;&nbsp;Telling four storms apart on one globe | `SPEC-SEASONS-BUILD.md` | 800-815 |
 | `57.22` | &nbsp;&nbsp;The storm detail panel | `SPEC-SEASONS-BUILD.md` | 816-828 |
 | `57.23` | &nbsp;&nbsp;The season clock | `SPEC-SEASONS-BUILD.md` | 829-850 |
-| `57.24` | &nbsp;&nbsp;The download gate | `SPEC-SEASONS-BUILD.md` | 851-890 |
-| `57.25` | &nbsp;&nbsp;What ports from the live app, and what does not | `SPEC-SEASONS-BUILD.md` | 891-920 |
-| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 921-941 |
-| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 942-951 |
-| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 952-957 |
-| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 958-969 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 970-1324 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1325-1350 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1351-1372 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1373-1436 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 1437-1502 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 1503-1650 |
+| `57.24` | &nbsp;&nbsp;The download gate | `SPEC-SEASONS-BUILD.md` | 851-906 |
+| `57.25` | &nbsp;&nbsp;What ports from the live app, and what does not | `SPEC-SEASONS-BUILD.md` | 907-936 |
+| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 937-957 |
+| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 958-967 |
+| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 968-973 |
+| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 974-985 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 986-1340 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1341-1366 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1367-1388 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1389-1452 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 1453-1518 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 1519-1702 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3331 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3332-3354 |
@@ -328,8 +328,8 @@ real home is the other row carrying the same section number.
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 99,433 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 89,121 | 36 |
+| `SPEC-OPS.md` | 101,754 | 23 |
+| `SPEC-SEASONS-BUILD.md` | 91,922 | 36 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 179,708 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

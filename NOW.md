@@ -285,6 +285,18 @@ not reopen a numbered decision without new evidence.
 AND §57.16a.** Read those, not this. Both were verified by Aaron on a phone on
 2026-08-24 and neither has anything left for him to look at.
 
+**==> BROWSING A YEAR NO LONGER GOES THROUGH STEP 8'S MACHINERY. <==** Aaron's
+call 2026-08-24. The runner now cuts each HURDAT2 basin into **one file per
+season** (`tools/seasons-slice.mjs`, §57.35 FIX 12, `SPEC-OPS.md` §18.8), so
+opening 2005 is **14 KB over the wire and 14 ms of parsing** instead of 6.75 MB
+behind a download gate, a Worker and IndexedDB. Measured on the real bytes.
+**The whole-basin file stays** — offline (step 8) and near-home-since-1851
+(step 9) both need every season at once.
+
+**AND `seasons/data/` WAS EMPTY UNTIL THIS.** The monthly job had never run, so
+there was no history in the repo at all and a board would have had nothing to
+draw. Started by pushing the `seasons-hurdat` branch.
+
 **STEP 5 DELETES A SENTENCE RATHER THAN EDITING IT.** The bar currently reads
 *"The year picker is not built yet — there is nothing to draw."* The moment
 there is a picker there is something true to say instead, and a leftover

@@ -1619,3 +1619,42 @@ to make: February's file lands on its own, `index.json` gains the new season,
 and the app prefers a season present in the index over the live route. **The
 only manual step left is squashing `seasons-live`** (§57.34 rule 1), which is
 already a button on the `seasons-mirror` workflow. The spec has been corrected.
+
+**==> AND IT CUTS EACH BASIN INTO ONE FILE PER SEASON. <==** `tools/seasons-slice.mjs`,
+added 2026-08-24, §57.35 FIX 12.
+
+    seasons/data/atlantic-<season>-<revision>.txt
+    seasons/data/epacific-<season>-<revision>.txt
+
+Same bytes, same directory, same `immutable` header, same revision stamp for
+the same reason. **Measured on the real 2005 Atlantic season: 119 KB, 14 KB
+over the wire, and 14 ms to parse in node.** So opening one year costs a
+fourteen-kilobyte fetch and no stored state at all, where the whole basin is
+6.75 MB and needs a Worker, a progress bar and IndexedDB to be affordable.
+
+**Five rules, and the first two are the ones with teeth.**
+
+1. **Every cut is proved against the whole file before any of them is written.**
+   `verifySlices` parses the source, parses every cut, and compares the storms
+   **field by field** — not by id, because a re-encoding fault leaves the ids
+   identical and the track wrong. A basin that fails is a failed run and
+   nothing is written or removed. **A lost storm has no symptom**: a year
+   holding 30 storms instead of 31 looks exactly like a quieter year.
+2. **The cut is verbatim and filters nothing.** Invests and test numbers
+   (§57.13) go into the slice exactly as NOAA wrote them; `lib/hurdat.js` drops
+   them at read time on both roads. One rule, one file.
+3. **It reconciles rather than reacts**, so it runs whether or not the basin
+   file moved. The whole file is `unchanged` in eleven months out of twelve, and
+   a slicer that only ran on a fresh download would produce nothing in any of
+   them.
+4. **One revision on disk, never two** (§57.34 rule 3). A new stamp rewrites
+   every season and sweeps every cut carrying the old one, in the same commit.
+5. **The app composes no filename.** `index.json` carries `dir` and, per basin,
+   a `seasons` map from year to filename. A naming rule written down in two
+   places is a rule that will disagree with itself.
+
+**The whole-basin file is NOT replaced by this and must not be deleted.** Step 9
+answers "how many storms have passed within 100 miles since 1851", which is
+every season at once, and step 8's offline download is a basin rather than a
+year. The cut removes the whole file from the ORDINARY path, which is what was
+blocking a season board from existing before that machinery does.

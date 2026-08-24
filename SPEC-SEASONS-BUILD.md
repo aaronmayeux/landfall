@@ -872,11 +872,27 @@ storms exactly as it does to a basin, including the Settings entry. A reader who
 opens a dozen storms has a dozen downloads, and a store without an expiry rule is
 a store that will not get one.
 
-**The phone takes the whole file and parses it locally**, rather than the server
-slicing seasons on request. It is a one-time cost, it makes Seasons the only
-part of this app that genuinely works with no signal, and a progress bar for
-30 KB is theatre. A season you have never visited working on a plane is the
-payoff.
+**==> AND THE ORDINARY CASE DOES NOT GO THROUGH THIS GATE AT ALL. <==** Aaron's
+call 2026-08-24, and it corrects what this section used to say. The old text
+read *"the phone takes the whole file and parses it locally, rather than the
+server slicing seasons on request"* — the reasoning being that a progress bar
+for 30 KB is theatre. That is still true and it is an argument against the
+progress bar, not against the slicing.
+
+**The runner cuts each basin into one file per season** (§57.35 FIX 12,
+`SPEC-OPS.md` §18.8). Opening 2005 fetches **14 KB over the wire and parses in
+milliseconds**, with nothing downloaded, nothing stored and nothing to consent
+to. Measured on the real bytes, not estimated.
+
+**The phone still takes the whole file when it has a reason to**, and there are
+two: a basin the reader wants to work with **no signal**, and step 9's
+*"31 storms have passed within 100 miles since 1851"*, which is every season at
+once and cannot be answered a year at a time. Both are genuine reasons to spend
+somebody's megabytes, and both are things they asked for.
+
+The practical effect is that the gate stops standing between a reader and the
+feature. **Nobody pays anything to look around.** They pay when they ask for
+the ocean in their pocket.
 
 The screen: the app's own mark (`#mark-spiral`, `--mark-plate: transparent`)
 turning on the `#boot-mark` animation — 2.4s, eased so it surges rather than
@@ -1532,6 +1548,13 @@ data and touches no parser at all.
 The download screen therefore has **two phases, and must say so**: *Downloading*
 then *Indexing*. Both are real work and the second is not instant.
 
+**==> ALL OF WHICH IS STILL TRUE, AND FIX 12 BELOW MEANS THE ORDINARY READER
+NEVER REACHES IT. <==** Everything above applies to somebody downloading a
+whole basin. Browsing a year goes through a per-season file instead — 14 KB,
+milliseconds, no Worker and no store. The Worker pass is what step 8 builds for
+the two cases that genuinely need the whole thing, rather than the toll gate on
+the way in.
+
 **FAULT 2 — THE NEAR-HOME SLIDER WOULD SCAN THE WHOLE ARCHIVE.**
 
 §57.19 measures against the line between points, not the points. Correct — and
@@ -1638,6 +1661,35 @@ the answer, rather than something we have to diff for.
 `hurdat2-atlantic-2025.txt` never changes; next February's file has a different
 name. So it is cached permanently and the rename is the cache bust. A `_headers`
 block for the data path, matching how `/vendor/*` is already handled.
+
+**FIX 12 — THE RUNNER CUTS THE FILE INTO SEASONS, SO BROWSING COSTS NOTHING.**
+
+Added 2026-08-24, Aaron's call, and it is the reason step 5 could be built
+before step 8. `tools/seasons-slice.mjs`, `SPEC-OPS.md` §18.8.
+
+Everything above solves "the phone holds 6.75 MB well". Nothing above asked
+whether the phone needs 6.75 MB to show one year. **It does not**, and the file
+is trivially separable — HURDAT2 is chronological and a storm's header carries
+its own year.
+
+Measured on the real 2005 Atlantic bytes:
+
+| | Whole basin | One season |
+|---|---|---|
+| Fetched to open 2005 | 6.75 MB (≈1.4 MB gzipped) | **119 KB (14 KB gzipped)** |
+| Parse | seconds, needs a Worker | **14 ms in node** |
+| Needs | download gate, progress, IndexedDB | **nothing** |
+
+So FAULT 1's Worker, FAULT 2's precomputed index, FAULT 5's progress units and
+FIX 8's eviction state all stop being prerequisites for looking at a year. They
+remain exactly what step 8 and step 9 need for the whole-basin download, which
+is not deleted — offline and near-home-since-1851 both genuinely want it.
+
+**The cut is verified against the whole file before any of it is written**, and
+that gate is the important half of this fix rather than the slicing. A slice
+that loses the last storm of a season produces a page that is merely quieter
+than it should be, with nothing on screen saying so — the §5 failure this
+feature is most exposed to, since the whole subject is absence.
 
 **WHAT THE AUDIT CONFIRMED WAS ALREADY RIGHT**
 

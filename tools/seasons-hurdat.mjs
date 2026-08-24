@@ -65,6 +65,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { parseHurdat2 } from '../lib/hurdat.js';
+import { syncSlices } from './seasons-slice.mjs';
 
 /* ---------------------------------------------------------------------------
  * WHERE THE DATA COMES FROM
@@ -283,6 +284,11 @@ export function buildIndex(entries, { generatedAt }) {
   return {
     generatedAt,
     source: HURDAT_INDEX,
+    /* Where every file named in here lives. The app joins this to a name from
+     * `basins[…].seasons` and composes nothing itself — a filename rule
+     * written down in two places is a rule that will disagree with itself the
+     * first time either end changes. */
+    dir: `/${OUT_DIR}`,
     /* §57.11 — HURDAT2 is the REVIEWED database. The app must be able to say
      * which of the two records it is showing, and it cannot say it if the
      * shape does not carry it. `/api/seasons/live` says `provisional: true`. */
@@ -427,6 +433,43 @@ async function run(root, reportDir) {
     slot.bytes = Buffer.byteLength(text);
     entries[basin.key] = describe(basin, pick, outName, text);
     lines.push(`**${basin.label}: stored \`${outName}\`** — ${verdict.storms} storms, ${(slot.bytes / 1e6).toFixed(2)} MB, zero faults.`);
+  }
+
+  /* ==> CUT EVERY BASIN INTO SEASONS, WHATEVER HAPPENED ABOVE. <== §57.35 FIX
+   * 12. This runs against whatever file is CURRENT — freshly stored, unchanged
+   * for a year, or the older one we kept when a download failed — because the
+   * slices have to describe the file that is actually there. Reconciling
+   * rather than reacting also means the first run after this feature was added
+   * fills in a directory whose basin file has not moved in months.
+   *
+   * A basin that cannot be cut is a hard failure and writes nothing, exactly
+   * like a refused download: half a history is worse than last month's. */
+  for (const basin of BASINS) {
+    const entry = entries[basin.key];
+    if (!entry || !entry.revision) continue;
+    const name = String(entry.file).split('/').pop();
+    const path = join(root, OUT_DIR, name);
+    if (!existsSync(path)) continue;
+
+    const sync = syncSlices(join(root, OUT_DIR), basin.key, entry.revision, readFileSync(path, 'utf8'));
+    const slot = report.basins[basin.key] || (report.basins[basin.key] = {});
+
+    if (!sync.ok) {
+      slot.slices = 'refused';
+      slot.sliceReason = sync.reason;
+      hardFailure = true;
+      lines.push(`**${basin.label}: the per-season cut was REFUSED** — ${sync.reason}. No season file was written or removed.`);
+      continue;
+    }
+
+    entry.seasons = sync.seasons;
+    slot.slices = Object.keys(sync.seasons).length;
+    if (sync.written || sync.removed) {
+      changed = true;
+      lines.push(`${basin.label}: ${slot.slices} season files — ${sync.written} written, ${sync.removed} removed.`);
+    } else {
+      lines.push(`${basin.label}: ${slot.slices} season files, unchanged.`);
+    }
   }
 
   /* The index is rewritten every run from what is actually on disk, so it can
