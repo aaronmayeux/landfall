@@ -1,0 +1,70 @@
+# seasons-probe.yml — step 0 of §57.30. Measure NOAA's own files.
+#
+# WHY IT TRIGGERS ON PUSH RATHER THAN ON A SCHEDULE
+# This is a decision aid, not a standing feed. It runs when the branch moves and
+# not otherwise. It triggers on PUSH specifically because a fine-grained PAT can
+# push but cannot dispatch a workflow (measured: HTTP 403 on the dispatches
+# endpoint), so push is the only route a cloud session has to start a runner.
+# Same reasoning as rain-probe.yml, and the same shape.
+#
+# HOW TO READ THE RESULT (works from a phone)
+#   git fetch origin seasons-probe-results
+#   git show origin/seasons-probe-results:findings.md
+#
+# START WITH findings.md. It is written to be pasted into
+# SPEC-SEASONS-BUILD.md §57.31, replacing the assumptions there. manifest.json
+# holds every response header; raw/ holds the exact bytes.
+#
+# DATA, NOT CODE. One orphan commit, force-pushed, never merged into main.
+# Every file in main ships to every visitor and none of this belongs there.
+# A dozen chosen files land in samples/ as fixtures BY HAND, later, once we
+# know which ones are worth keeping.
+
+name: seasons-probe
+
+on:
+  push:
+    branches: [seasons-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    # Three of NOAA's servers, paced deliberately, plus a HEAD per IBTrACS
+    # file. Generous because a slow upstream is not a reason to throw away a
+    # run that is most of the way done.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: run the probe
+        run: node tools/seasons-probe.mjs /tmp/seasons
+
+      - name: publish to the seasons-probe-results branch
+        run: |
+          set -euo pipefail
+          cd /tmp/seasons
+          git init -q -b seasons-probe-results
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A
+          git commit -q -m "seasons probe $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            seasons-probe-results
+
+      # The findings land in the run summary as well as on the branch, so the
+      # answer is readable from the Actions tab on a phone without a git fetch.
+      - name: summary
+        run: cat /tmp/seasons/findings.md >> "$GITHUB_STEP_SUMMARY"
