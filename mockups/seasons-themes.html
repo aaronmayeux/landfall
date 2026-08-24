@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Seasons — theme mockups</title>
+<!--
+  seasons-themes.html — A MOCKUP. Not application code. Nothing here imports
+  from the app and nothing in the app imports from here.
+
+  It exists to answer ONE question on glass: which ground palette does the
+  Seasons archive globe wear, given that the Saffir-Simpson ramp is fixed and
+  every dot on screen must keep its exact live colour.
+
+  The four ground palettes are the candidates. The category colours are copied
+  verbatim from config/tokens.js CATEGORY_COLOR and must stay that way — the
+  whole point is to judge the ground AGAINST the unchangeable dots.
+
+  Storm track, roster and season figures are ILLUSTRATIVE. This is a paint
+  chip, not a data view.
+-->
+<style>
+  :root{
+    /* Saffir-Simpson — VERBATIM from config/tokens.js. Do not touch. */
+    --td:#5BA8E0; --ts:#3ECC7A; --c1:#FFE14D; --c2:#FFB52E;
+    --c3:#FF7A33; --c4:#FF4D6D; --c5:#E05BE0;
+    --bar-h:112px;
+  }
+
+  /* ---- LIVE (today's dark theme, verbatim from tokens.js DARK) ---- */
+  [data-theme="live"]{
+    --ocean:#070D18; --ocean-deep:#04080F; --land:#132132; --land-edge:#1A2C42;
+    --mesh:#1E7D76; --coast:#4FD1E8; --grat:#5A8FC0;
+    --ink:#E8F1F8; --ink-2:#9DB3C7; --ink-3:#7089A5;
+    --glass:rgba(10,20,34,.72); --glass-2:rgba(16,30,48,.62);
+    --edge:rgba(120,190,225,.16); --accent:#4FD1E8;
+    --track:rgba(232,241,248,.55);
+  }
+  /* ---- A · SEPIA (archive / parchment) ---- */
+  [data-theme="sepia"]{
+    --ocean:#1C1409; --ocean-deep:#120D06; --land:#38291552; --land:#3A2A15;
+    --land-edge:#4B3720; --mesh:#7A5A2E; --coast:#C79A4E; --grat:#8A6B3A;
+    --ink:#F3E7D2; --ink-2:#C9B692; --ink-3:#9C8A69;
+    --glass:rgba(28,20,9,.76); --glass-2:rgba(46,33,16,.66);
+    --edge:rgba(199,154,78,.22); --accent:#C79A4E;
+    --track:rgba(243,231,210,.5);
+  }
+  /* ---- B · BLUEPRINT (technical drawing) ---- */
+  [data-theme="blueprint"]{
+    --ocean:#070C22; --ocean-deep:#040614; --land:#101A44; --land-edge:#1B2A63;
+    --mesh:#2F5FA8; --coast:#5B8FE0; --grat:#3E63A8;
+    --ink:#D6E4FF; --ink-2:#93A9D6; --ink-3:#6F84AE;
+    --glass:rgba(7,12,34,.76); --glass-2:rgba(16,26,68,.64);
+    --edge:rgba(91,143,224,.20); --accent:#5B8FE0;
+    --track:rgba(214,228,255,.5);
+  }
+  /* ---- C · MONOCHROME GROUND (stage) ---- */
+  [data-theme="mono"]{
+    --ocean:#141618; --ocean-deep:#0B0C0D; --land:#26292C; --land-edge:#33383C;
+    --mesh:#3E464C; --coast:#7C878F; --grat:#4E575E;
+    --ink:#ECEEF0; --ink-2:#A7AEB4; --ink-3:#7C838A;
+    --glass:rgba(20,22,24,.76); --glass-2:rgba(38,41,44,.66);
+    --edge:rgba(124,135,143,.22); --accent:#9AA4AC;
+    --track:rgba(236,238,240,.5);
+  }
+
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overscroll-behavior:none}
+  body{
+    background:var(--ocean-deep); color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    transition:background .35s ease,color .35s ease;
+  }
+  .stage{position:fixed;inset:0 0 var(--bar-h) 0;overflow:hidden}
+  .screen{position:absolute;inset:0;display:none}
+  .screen.on{display:block}
+
+  /* ---------- globe ---------- */
+  #globe{width:100%;height:100%;display:block;touch-action:none}
+
+  .badge{
+    position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;
+    display:flex;align-items:center;gap:8px;z-index:3;
+    padding:6px 10px;border-radius:999px;
+    background:var(--glass);border:1px solid var(--edge);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .badge b{
+    font:700 10px/1 system-ui;letter-spacing:.16em;
+    color:var(--accent);
+  }
+  .badge span{font-size:12px;color:var(--ink-2)}
+
+  .legend{
+    position:absolute;left:12px;right:12px;bottom:12px;z-index:3;
+    padding:10px 12px;border-radius:14px;
+    background:var(--glass);border:1px solid var(--edge);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  }
+  .legend .row{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .chip{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink-2)}
+  .chip i{width:11px;height:11px;border-radius:50%;display:block;
+    box-shadow:0 0 6px currentColor}
+  .legend p{margin:8px 0 0;font-size:11px;color:var(--ink-3);line-height:1.4}
+
+  /* ---------- roster ---------- */
+  .sheet{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    background:var(--glass);backdrop-filter:blur(16px);
+    -webkit-backdrop-filter:blur(16px);
+  }
+  .sheet header{
+    padding:calc(12px + env(safe-area-inset-top)) 16px 10px;
+    border-bottom:1px solid var(--edge)
+  }
+  .eyebrow{font:700 10px/1 system-ui;letter-spacing:.16em;color:var(--accent);
+    text-transform:uppercase}
+  .sheet h1{margin:6px 0 2px;font-size:22px;font-weight:640;letter-spacing:-.01em}
+  .sheet .sub{font-size:12px;color:var(--ink-2)}
+
+  .scorecard{display:flex;gap:14px;margin-top:10px}
+  .scorecard div{font-size:11px;color:var(--ink-3)}
+  .scorecard b{display:block;font-size:17px;color:var(--ink);font-weight:640}
+
+  .filters{display:flex;gap:6px;padding:10px 16px 0;overflow-x:auto;
+    scrollbar-width:none}
+  .filters::-webkit-scrollbar{display:none}
+  .f{
+    flex:0 0 auto;min-height:34px;padding:0 12px;border-radius:999px;
+    border:1px solid var(--edge);background:transparent;color:var(--ink-2);
+    font:500 12px system-ui;cursor:pointer;white-space:nowrap;
+  }
+  .f[aria-pressed="true"]{background:var(--glass-2);color:var(--ink);
+    border-color:var(--accent)}
+  .f:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  .radius{padding:12px 16px 4px;display:none}
+  .radius.on{display:block}
+  .radius .lbl{display:flex;justify-content:space-between;font-size:12px;
+    color:var(--ink-2);margin-bottom:2px}
+  .radius .lbl b{color:var(--ink);font-weight:640}
+  .radius input{width:100%;height:44px;accent-color:var(--accent)}
+  .radius .hint{font-size:11px;color:var(--ink-3);margin:-6px 0 0}
+
+  .list{flex:1;overflow-y:auto;padding:6px 8px calc(16px + env(safe-area-inset-bottom))}
+  .item{
+    display:flex;align-items:center;gap:11px;width:100%;
+    min-height:56px;padding:8px 8px;border-radius:12px;
+    background:transparent;border:0;color:inherit;text-align:left;cursor:pointer;
+  }
+  .item:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .box{
+    flex:0 0 auto;width:22px;height:22px;border-radius:6px;
+    border:1.5px solid var(--ink-3);display:grid;place-items:center;
+    font-size:13px;color:var(--ocean);
+  }
+  .item[data-on="1"] .box{background:var(--accent);border-color:var(--accent)}
+  .dot{flex:0 0 auto;width:13px;height:13px;border-radius:50%;
+    box-shadow:0 0 8px currentColor}
+  .nm{flex:1;min-width:0}
+  .nm .n{font-size:15px;font-weight:560;letter-spacing:-.005em}
+  .nm .d{font-size:11.5px;color:var(--ink-3);display:flex;gap:7px;flex-wrap:wrap}
+  .tag{font:600 9.5px/1.6 system-ui;letter-spacing:.08em;padding:0 5px;
+    border-radius:4px;border:1px solid var(--edge);color:var(--ink-2)}
+  .tag.retired{color:var(--c4);border-color:var(--c4)}
+  .tag.landfall{color:var(--accent);border-color:var(--accent)}
+  .item.ghost{opacity:.34;cursor:default}
+  .item.ghost .box{border-style:dashed}
+  .divider{padding:14px 16px 6px;font-size:11px;color:var(--ink-3);
+    letter-spacing:.04em}
+
+  /* ---------- download ---------- */
+  .dl{position:absolute;inset:0;display:grid;place-items:center;padding:24px}
+  .dl .card{max-width:340px;width:100%;text-align:center}
+  .spin{width:112px;height:112px;margin:0 auto 22px;display:block;
+    animation:spin 2.4s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @media (prefers-reduced-motion:reduce){.spin{animation-duration:9s}}
+  .dl h2{margin:0 0 6px;font-size:20px;font-weight:640;letter-spacing:-.01em}
+  .dl p{margin:0 0 18px;font-size:13px;color:var(--ink-2);line-height:1.5}
+  .bar{height:6px;border-radius:999px;background:var(--glass-2);
+    border:1px solid var(--edge);overflow:hidden}
+  .bar i{display:block;height:100%;width:42%;border-radius:999px;
+    background:var(--accent);transition:width .3s ease}
+  .dl .meta{display:flex;justify-content:space-between;margin-top:8px;
+    font-size:11.5px;color:var(--ink-3)}
+  .btn{
+    margin-top:20px;width:100%;min-height:48px;border-radius:12px;
+    border:1px solid var(--accent);background:var(--glass-2);color:var(--ink);
+    font:600 15px system-ui;cursor:pointer;
+  }
+  .btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .fine{margin-top:14px;font-size:11px;color:var(--ink-3);line-height:1.5}
+
+  /* ---------- bottom bar ---------- */
+  .bar-wrap{
+    position:fixed;left:0;right:0;bottom:0;z-index:9;height:var(--bar-h);
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    background:var(--glass);border-top:1px solid var(--edge);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    display:flex;flex-direction:column;gap:7px;
+  }
+  .seg{display:flex;gap:5px}
+  .seg button{
+    flex:1;min-height:40px;border-radius:9px;border:1px solid var(--edge);
+    background:transparent;color:var(--ink-2);font:600 12px system-ui;
+    cursor:pointer;padding:0 4px;
+  }
+  .seg button[aria-pressed="true"]{background:var(--glass-2);color:var(--ink);
+    border-color:var(--accent)}
+  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .seg.small button{min-height:34px;font-size:11px;font-weight:500}
+</style>
+
+<div class="stage">
+  <!-- ===================== GLOBE ===================== -->
+  <section class="screen on" id="s-globe">
+    <svg id="globe" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"
+         role="img" aria-label="Archive globe with one hurricane track"></svg>
+
+    <div class="badge"><b>SEASONS</b><span>2005 · Atlantic · archive</span></div>
+
+    <div class="legend">
+      <div class="row">
+        <span class="chip" style="color:var(--td)"><i></i>TD</span>
+        <span class="chip" style="color:var(--ts)"><i></i>TS</span>
+        <span class="chip" style="color:var(--c1)"><i></i>1</span>
+        <span class="chip" style="color:var(--c2)"><i></i>2</span>
+        <span class="chip" style="color:var(--c3)"><i></i>3</span>
+        <span class="chip" style="color:var(--c4)"><i></i>4</span>
+        <span class="chip" style="color:var(--c5)"><i></i>5</span>
+      </div>
+      <p>Every Saffir-Simpson colour is on screen, unchanged from the live app.
+         The ring marks landfall. Judge the ground against the dots.</p>
+    </div>
+  </section>
+
+  <!-- ===================== ROSTER ===================== -->
+  <section class="screen" id="s-roster">
+    <div class="sheet">
+      <header>
+        <div class="eyebrow">Seasons</div>
+        <h1>2026 · Atlantic</h1>
+        <div class="sub">Names are used in order, so this list is the season.</div>
+        <div class="scorecard">
+          <div><b>6</b>named</div>
+          <div><b>3</b>hurricanes</div>
+          <div><b>1</b>major</div>
+          <div><b>2</b>US landfalls</div>
+        </div>
+      </header>
+
+      <div class="filters" role="group" aria-label="Filter storms">
+        <button class="f" aria-pressed="true">All</button>
+        <button class="f" aria-pressed="false">Majors</button>
+        <button class="f" aria-pressed="false">Landfalls</button>
+        <button class="f" id="f-home" aria-pressed="false">Near home</button>
+      </div>
+
+      <div class="radius" id="radius">
+        <div class="lbl"><span>Within</span><b id="rv">120 mi</b></div>
+        <input type="range" min="10" max="500" step="10" value="120" id="rr"
+               aria-label="Distance from home">
+        <p class="hint">Of home · Prairieville, LA. 2 of 6 storms this season
+           passed inside this circle.</p>
+      </div>
+
+      <div class="list">
+        <button class="item" data-on="1">
+          <span class="box">✓</span>
+          <span class="dot" style="color:var(--c2);background:var(--c2)"></span>
+          <span class="nm"><span class="n">Arthur</span>
+            <span class="d">Jun 14–19 · Cat 2 peak</span></span>
+        </button>
+        <button class="item" data-on="1">
+          <span class="box">✓</span>
+          <span class="dot" style="color:var(--ts);background:var(--ts)"></span>
+          <span class="nm"><span class="n">Bertha</span>
+            <span class="d">Jul 2–5 · Tropical storm</span></span>
+        </button>
+        <button class="item" data-on="0">
+          <span class="box"></span>
+          <span class="dot" style="color:var(--c4);background:var(--c4)"></span>
+          <span class="nm"><span class="n">Cristobal</span>
+            <span class="d">Aug 1–11 · Cat 4 peak
+              <span class="tag landfall">LANDFALL ×2</span></span></span>
+        </button>
+        <button class="item" data-on="1">
+          <span class="box">✓</span>
+          <span class="dot" style="color:var(--c1);background:var(--c1)"></span>
+          <span class="nm"><span class="n">Dolly</span>
+            <span class="d">Aug 9–14 · Cat 1 peak</span></span>
+        </button>
+        <button class="item" data-on="0">
+          <span class="box"></span>
+          <span class="dot" style="color:var(--td);background:var(--td)"></span>
+          <span class="nm"><span class="n">Edouard</span>
+            <span class="d">Aug 15–16 · Depression only</span></span>
+        </button>
+        <button class="item" data-on="0">
+          <span class="box"></span>
+          <span class="dot" style="color:var(--c5);background:var(--c5)"></span>
+          <span class="nm"><span class="n">Fay</span>
+            <span class="d">Aug 18– · Cat 5 peak
+              <span class="tag">ACTIVE</span></span></span>
+        </button>
+
+        <div class="divider">Not used yet</div>
+        <div class="item ghost"><span class="box"></span>
+          <span class="dot" style="background:transparent;box-shadow:none;
+            border:1.5px dashed var(--ink-3)"></span>
+          <span class="nm"><span class="n">Gonzalo</span></span></div>
+        <div class="item ghost"><span class="box"></span>
+          <span class="dot" style="background:transparent;box-shadow:none;
+            border:1.5px dashed var(--ink-3)"></span>
+          <span class="nm"><span class="n">Hanna</span></span></div>
+        <div class="item ghost"><span class="box"></span>
+          <span class="dot" style="background:transparent;box-shadow:none;
+            border:1.5px dashed var(--ink-3)"></span>
+          <span class="nm"><span class="n">Isaias</span></span></div>
+
+        <div class="divider">Also this season</div>
+        <button class="item" data-on="0">
+          <span class="box"></span>
+          <span class="dot" style="color:var(--td);background:var(--td)"></span>
+          <span class="nm"><span class="n">Two unnamed depressions</span>
+            <span class="d">Never reached storm strength</span></span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== DOWNLOAD ===================== -->
+  <section class="screen" id="s-dl">
+    <div class="dl">
+      <div class="card">
+        <svg class="spin" viewBox="0 0 100 100" aria-hidden="true">
+          <g fill="none" stroke-linecap="round">
+            <path d="M50 50 C 50 26, 68 12, 86 16 C 74 22, 66 34, 62 50"
+                  stroke="var(--accent)" stroke-width="7" opacity=".95"/>
+            <path d="M50 50 C 50 74, 32 88, 14 84 C 26 78, 34 66, 38 50"
+                  stroke="var(--accent)" stroke-width="7" opacity=".95"/>
+            <circle cx="50" cy="50" r="6.5" fill="var(--ink)" stroke="none"/>
+            <circle cx="50" cy="50" r="30" stroke="var(--edge)" stroke-width="1.5"/>
+          </g>
+        </svg>
+        <h2>Getting the record</h2>
+        <p>Downloading NOAA best-track data. This happens once. After it lands,
+           Seasons works with no signal at all.</p>
+        <div class="bar"><i id="fill"></i></div>
+        <div class="meta"><span id="pct">42%</span><span>2.9 of 6.8 MB</span></div>
+        <button class="btn">Cancel</button>
+        <p class="fine">Atlantic 1851–2025 · East &amp; Central Pacific 1949–2025 ·
+           rest of world from IBTrACS. Stored on this device. Removable in Settings.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="bar-wrap">
+  <div class="seg" role="group" aria-label="Theme">
+    <button data-t="live" aria-pressed="true">Live</button>
+    <button data-t="sepia" aria-pressed="false">A · Sepia</button>
+    <button data-t="blueprint" aria-pressed="false">B · Blueprint</button>
+    <button data-t="mono" aria-pressed="false">C · Mono</button>
+  </div>
+  <div class="seg small" role="group" aria-label="Screen">
+    <button data-s="s-globe" aria-pressed="true">Globe</button>
+    <button data-s="s-roster" aria-pressed="false">Season board</button>
+    <button data-s="s-dl" aria-pressed="false">Download</button>
+  </div>
+</div>
+
+<script>
+/* ---------------------------------------------------------------- theme --- */
+const root = document.documentElement;
+root.dataset.theme = 'live';
+document.querySelectorAll('[data-t]').forEach((b) => {
+  b.onclick = () => {
+    root.dataset.theme = b.dataset.t;
+    document.querySelectorAll('[data-t]').forEach((o) =>
+      o.setAttribute('aria-pressed', String(o === b)));
+    draw();
+  };
+});
+document.querySelectorAll('[data-s]').forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll('.screen').forEach((s) =>
+      s.classList.toggle('on', s.id === b.dataset.s));
+    document.querySelectorAll('[data-s]').forEach((o) =>
+      o.setAttribute('aria-pressed', String(o === b)));
+  };
+});
+
+/* --------------------------------------------------------- roster demo --- */
+document.querySelectorAll('.item[data-on]').forEach((el) => {
+  el.onclick = () => {
+    const on = el.dataset.on === '1';
+    el.dataset.on = on ? '0' : '1';
+    el.querySelector('.box').textContent = on ? '' : '✓';
+  };
+});
+const fHome = document.getElementById('f-home');
+fHome.onclick = () => {
+  const on = fHome.getAttribute('aria-pressed') === 'true';
+  fHome.setAttribute('aria-pressed', String(!on));
+  document.getElementById('radius').classList.toggle('on', !on);
+};
+const rr = document.getElementById('rr');
+rr.oninput = () => { document.getElementById('rv').textContent = rr.value + ' mi'; };
+
+/* ------------------------------------------------------ download demo --- */
+let p = 42;
+setInterval(() => {
+  p = p >= 100 ? 6 : p + 1;
+  document.getElementById('fill').style.width = p + '%';
+  document.getElementById('pct').textContent = p + '%';
+}, 220);
+
+/* --------------------------------------------------------------- globe ---
+ * Plain orthographic projection. Centre of the visible face is CLON/CLAT;
+ * anything on the far side is dropped. Coastlines are coarse by design —
+ * this is a paint chip, not a map.                                          */
+const R = 178, CX = 200, CY = 200, CLON = -68, CLAT = 24;
+const rad = Math.PI / 180;
+
+function proj(lon, lat) {
+  const p1 = lat * rad, l = (lon - CLON) * rad, p0 = CLAT * rad;
+  const cosc = Math.sin(p0) * Math.sin(p1) + Math.cos(p0) * Math.cos(p1) * Math.cos(l);
+  if (cosc < 0) return null;                       // far side
+  return [CX + R * Math.cos(p1) * Math.sin(l),
+          CY - R * (Math.cos(p0) * Math.sin(p1) - Math.sin(p0) * Math.cos(p1) * Math.cos(l))];
+}
+function path(pts, close) {
+  let d = '', pen = false;
+  for (const [lon, lat] of pts) {
+    const q = proj(lon, lat);
+    if (!q) { pen = false; continue; }
+    d += (pen ? 'L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ' ';
+    pen = true;
+  }
+  return d ? d + (close ? 'Z' : '') : '';
+}
+
+/* Land. Coast points are real-ish; the inland closures are not and do not
+   need to be — they are off the visible face or under other land. */
+const NA = [[-88.6,15.9],[-88.2,17.5],[-87.8,18.5],[-87.0,20.2],[-87.5,21.5],
+  [-89.0,21.6],[-90.3,21.1],[-90.5,19.9],[-92.0,18.6],[-94.4,18.2],[-96.1,19.2],
+  [-97.4,21.5],[-97.7,24.0],[-97.4,26.0],[-97.2,27.5],[-96.4,28.4],[-94.8,29.3],
+  [-93.3,29.7],[-91.2,29.2],[-89.4,29.0],[-88.0,30.2],[-86.5,30.4],[-84.9,29.7],
+  [-83.7,29.2],[-82.7,27.9],[-82.0,26.5],[-81.1,25.1],[-80.1,26.1],[-80.6,28.1],
+  [-81.4,30.3],[-81.3,31.1],[-79.9,32.8],[-77.9,34.0],[-75.5,35.2],[-76.3,37.0],
+  [-74.0,39.5],[-71.0,41.3],[-70.0,42.0],[-67.0,44.5],[-64.0,45.5],[-60.0,46.5],
+  [-55.5,49.5],[-60.0,52.0],[-70.0,53.0],[-85.0,52.0],[-100.0,50.0],[-110.0,40.0],
+  [-107.0,30.0],[-99.0,22.0],[-94.0,17.0],[-91.0,15.0]];
+const SA = [[-77.5,8.0],[-75.5,9.5],[-71.5,12.4],[-68.0,10.6],[-64.0,10.6],
+  [-61.5,10.7],[-59.0,8.4],[-52.0,4.5],[-50.0,0.5],[-58.0,-6.0],[-70.0,-4.0],
+  [-78.0,0.0],[-79.0,7.0]];
+const CUBA = [[-84.9,21.9],[-82.5,23.2],[-80.5,23.1],[-78.5,22.4],[-77.0,21.2],
+  [-75.6,20.8],[-74.1,20.2],[-75.1,19.9],[-77.3,19.9],[-79.5,21.0],[-82.0,22.4]];
+const HISP = [[-73.9,19.9],[-71.7,19.9],[-69.9,19.3],[-68.4,18.6],[-70.0,18.2],
+  [-71.6,18.4],[-73.5,18.2],[-74.4,18.6]];
+const PR = [[-67.2,18.5],[-65.6,18.4],[-65.7,17.9],[-67.2,17.9]];
+const JAM = [[-78.4,18.5],[-76.2,18.4],[-76.3,17.8],[-78.3,18.0]];
+
+/* One storm. Every category is present, and it comes ashore. */
+const TRACK = [
+  [-45.0,13.0,'td'],[-47.5,13.5,'ts'],[-50.0,14.0,'ts'],[-52.5,14.5,'ts'],
+  [-55.0,15.0,'c1'],[-57.5,15.6,'c1'],[-60.0,16.2,'c2'],[-62.5,16.9,'c2'],
+  [-65.0,17.6,'c3'],[-67.5,18.3,'c3'],[-70.0,19.1,'c4'],[-72.5,19.9,'c4'],
+  [-75.0,20.7,'c5'],[-77.5,21.5,'c5'],[-80.0,22.4,'c4'],[-82.5,23.3,'c3'],
+  [-85.0,24.6,'c3'],[-86.5,26.1,'c4'],[-88.0,27.6,'c5'],[-89.4,29.0,'c4','L'],
+  [-90.5,30.6,'c1'],[-91.0,32.2,'ts'],[-90.4,34.2,'td'],
+];
+
+function css(v){ return getComputedStyle(root).getPropertyValue(v).trim(); }
+
+function draw() {
+  const g = [];
+  const ocean = css('--ocean'), deep = css('--ocean-deep');
+
+  g.push(`<defs>
+    <radialGradient id="sea" cx="38%" cy="32%" r="78%">
+      <stop offset="0%" stop-color="${ocean}"/>
+      <stop offset="72%" stop-color="${ocean}"/>
+      <stop offset="100%" stop-color="${deep}"/>
+    </radialGradient>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.4"/>
+    </filter>
+    <filter id="rim" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5"/>
+    </filter>
+  </defs>`);
+
+  /* limb glow + sea */
+  g.push(`<circle cx="${CX}" cy="${CY}" r="${R + 3}" fill="none"
+     stroke="${css('--coast')}" stroke-width="4" opacity=".16" filter="url(#rim)"/>`);
+  g.push(`<circle cx="${CX}" cy="${CY}" r="${R}" fill="url(#sea)"/>`);
+
+  /* graticule — equator + tropics + a few meridians */
+  const grat = [];
+  for (const lat of [0, 23.4, -23.4]) {
+    const row = [];
+    for (let lon = -180; lon <= 180; lon += 2) row.push([lon, lat]);
+    grat.push(path(row));
+  }
+  for (let lon = -120; lon <= 0; lon += 20) {
+    const col = [];
+    for (let lat = -80; lat <= 80; lat += 2) col.push([lon, lat]);
+    grat.push(path(col));
+  }
+  g.push(`<g stroke="${css('--grat')}" fill="none" stroke-width=".7" opacity=".38">
+    ${grat.map((d) => `<path d="${d}"/>`).join('')}</g>`);
+
+  /* the archive mesh — a coarse cage, the thing that says "not live" */
+  const mesh = [];
+  for (let lat = -60; lat <= 60; lat += 10) {
+    const row = [];
+    for (let lon = -180; lon <= 180; lon += 3) row.push([lon, lat]);
+    mesh.push(path(row));
+  }
+  for (let lon = -180; lon <= 180; lon += 10) {
+    const col = [];
+    for (let lat = -70; lat <= 70; lat += 3) col.push([lon, lat]);
+    mesh.push(path(col));
+  }
+  g.push(`<g stroke="${css('--mesh')}" fill="none" stroke-width=".55" opacity=".55">
+    ${mesh.map((d) => `<path d="${d}"/>`).join('')}</g>`);
+
+  /* land */
+  const land = css('--land'), coast = css('--coast');
+  const shapes = [NA, SA, CUBA, HISP, PR, JAM];
+  g.push(`<g fill="${land}" stroke="none">
+    ${shapes.map((s) => `<path d="${path(s, true)}"/>`).join('')}</g>`);
+  g.push(`<g fill="none" stroke="${coast}" stroke-width="1.1" opacity=".30"
+     filter="url(#soft)">
+    ${shapes.map((s) => `<path d="${path(s, true)}"/>`).join('')}</g>`);
+  g.push(`<g fill="none" stroke="${coast}" stroke-width=".8" opacity=".85">
+    ${shapes.map((s) => `<path d="${path(s, true)}"/>`).join('')}</g>`);
+
+  /* the track line, then the dots on top */
+  g.push(`<path d="${path(TRACK.map((p) => [p[0], p[1]]))}" fill="none"
+     stroke="${css('--track')}" stroke-width="1.6" stroke-dasharray="1 4"
+     stroke-linecap="round"/>`);
+
+  const dots = [];
+  for (const [lon, lat, cat, mark] of TRACK) {
+    const q = proj(lon, lat);
+    if (!q) continue;
+    const c = css('--' + cat);
+    dots.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="7"
+       fill="${c}" opacity=".22" filter="url(#soft)"/>`);
+    dots.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="3.6"
+       fill="${c}" stroke="${deep}" stroke-width=".8"/>`);
+    if (mark === 'L') {
+      dots.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="9"
+         fill="none" stroke="${css('--ink')}" stroke-width="1.6" opacity=".9"/>`);
+      dots.push(`<circle cx="${q[0].toFixed(1)}" cy="${q[1].toFixed(1)}" r="12.5"
+         fill="none" stroke="${css('--ink')}" stroke-width=".7" opacity=".45"/>`);
+    }
+  }
+  g.push(dots.join(''));
+
+  /* name label, set in the theme ink like every other map label */
+  const head = proj(-88.0, 27.6);
+  if (head) {
+    g.push(`<text x="${(head[0] + 13).toFixed(1)}" y="${(head[1] - 8).toFixed(1)}"
+       fill="${css('--ink')}" font-size="11" font-weight="600"
+       font-family="system-ui" letter-spacing=".02em"
+       stroke="${deep}" stroke-width="2.6" paint-order="stroke">KATRINA · 2005</text>`);
+  }
+
+  document.getElementById('globe').innerHTML = g.join('');
+}
+draw();
+</script>
