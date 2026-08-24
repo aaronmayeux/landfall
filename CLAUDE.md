@@ -124,8 +124,34 @@ off the `archive` branch before writing a line of parser.** Invented fixtures
 inherit the wrong assumptions and the tests then pass on them.
 
 **Run the affected suites while working; run the FULL chain once, before the
-push.** `test-lifecycle.mjs` alone is 65 seconds. Running all 38 after every
-edit buys nothing the pre-push run does not.
+push.** Running all 117 after every edit buys nothing the pre-push run does not.
+
+**==> RUN THE FULL CHAIN WITH `node tools/run-suites.mjs`, NOT WITH A SHELL
+LOOP. <==** It runs them in parallel, so the whole suite costs about as long as
+its slowest member instead of eleven minutes, and it prints every suite's
+duration whether it passed or not.
+
+**THE REASON IT EXISTS IS A SESSION THAT REPORTED A GREEN TEST AS BROKEN**
+(2026-08-24). The obvious loop — `for f in tools/test-*.mjs; do timeout 120
+node "$f"; done` — kills `test-genesis.mjs`, which takes **195 seconds**, and
+the session then told Aaron its own change had caused it. Nothing was broken.
+`test-lifecycle.mjs` at 65 seconds had carried a warning in this file for weeks
+and the same mistake happened anyway, so the fix is a runner rather than
+another sentence.
+
+**A KILLED SUITE IS NOT A FAILING SUITE AND THE RUNNER SAYS SO IN THOSE WORDS.**
+It is an unanswered question — the same distinction §5 makes about a source
+that errored versus a sky that is genuinely clear. Both still fail the exit
+code, because an unanswered question must not read as a pass, but never believe
+anything about a timed-out suite until it has been run on its own.
+
+**IF YOU DO REACH FOR A LOOP ANYWAY, DO NOT PUT A GUESSED NUMBER IN IT.** Three
+suites are slow on purpose, measured on a cloud sandbox 2026-08-24:
+`test-genesis.mjs` **195s**, `test-flood-fast.mjs` **68s**, `test-lifecycle.mjs`
+**65s**. Every other suite finishes in under four seconds, so the full 117 in
+parallel costs a little over three minutes — bounded by genesis alone. CI uses
+no per-test timeout at all; the job has a 20-minute budget and that is the only
+ceiling.
 
 **Neither of these tiers is an excuse to skip a gate that fires.** A tier-1
 change that turns `doc-check` red has stopped being tier 1 — that is the gate
