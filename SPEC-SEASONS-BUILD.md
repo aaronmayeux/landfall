@@ -979,21 +979,56 @@ first surface is step 4's shell.
 
 ---
 
-**STEP 3 — STORAGE AND SERVING.**
-Two independent paths, neither depending on the other:
-- The runner mirrors b-decks and our own JTWC-basin capture into an **appending
-  branch** — provenance, readable from a session with plain git, free, no
-  builds fired.
-- The existing cron Worker pulls the same into **KV**, served by a route. The
-  app reads a route, not GitHub.
-- **Start the rest-of-world capture in this step**, ahead of the UI. Every day
-  without it is permanently lost.
+**STEP 3 — STORAGE AND SERVING. ==> SPLIT IN TWO, AND ONLY 3a HAS LANDED. <==**
+
+It was written as one step and it is two. Capture and serving share no code and
+neither blocks the other, so doing both in one pass would be the single
+unbisectable commit `CLAUDE.md` exists to forbid. **One half is also urgent in a
+way the other is not:** every hour without the rest-of-world capture is
+permanently gone, while serving can wait a week and lose nothing.
+
+---
+
+**STEP 3a — THE CAPTURE. ==> DONE 2026-08-24. <==**
+`tools/seasons-mirror.mjs`, `.github/workflows/seasons-mirror.yml`, the
+`seasons-live` branch, and `tools/test-seasons-mirror.mjs`.
+
+**WHAT IT IS lives in `SPEC-OPS.md` §18.7.** Read that, not this. The one-line
+version: hourly, NHC's b-decks verbatim plus one JSON line per JTWC warning,
+appended to a branch a session reads with plain git, committing only when a byte
+actually moved and committing anyway when a source starts failing.
+
+**==> NOTHING IN THE APP CHANGED, SO THERE IS NO PHONE TEST HERE. <==** Same
+exception step 2 took and for the same reason: no module on the boot path
+imports any of it. The first surface is still step 4's shell.
+
+**THE JTWC HALF GOES THROUGH OUR OWN RELAY, NOT THE NAVY.** The relay already
+turns the warning text into positions and it is the parse the app itself trusts,
+so the stored track cannot disagree with what a reader saw on the day. It also
+means the capture inherits every fix the relay ever gets.
+
+**ONE QUESTION IS OPEN AND WAS NOT GUESSED AT.** Whether JTWC publishes live
+ATCF b-decks during a season the way NHC does. If it does, the rest-of-world
+capture gets a better source than our own relay output. Nothing in the sandbox
+can find out and nothing here assumes an answer — it is a small addition to the
+next probe run.
+
+---
+
+**STEP 3b — THE SERVING. NOT STARTED.**
+- HURDAT2 committed to the repo by a runner, one file per basin, **replaced and
+  never accumulated** (§57.34 rule 3), with the year in the filename and an
+  immutable `_headers` block (§57.35 FIX 11). **It cannot live under `data/`** —
+  that path is already `no-cache` in `_headers` because it holds JS modules.
+- The existing cron Worker pulls the current season into **KV**, served by a
+  route with predictable key names. The app reads a route, not GitHub.
+  **==> NEVER `list()`** (§57.33 limit 1). Keys carry a ~400-day TTL so cleanup
+  is the default rather than an action (§57.34 rule 2).
 - Season graduation: when NOAA publishes the reviewed file, **one commit**
-  promotes that year into the repo as a static file and KV stops carrying it.
-- **Every retention rule in §57.34 is built in this step, not added later.**
-  A store without an expiry rule is a store that will not get one.
-**Done when:** a session can read a stored season with plain git, and the route
-returns the same season to a browser.
+  promotes that year into the repo as a static file, KV stops carrying it, and
+  `seasons-live` is squashed (§57.34 rule 1 — the button already exists).
+**Done when:** the route returns the same season to a browser that a session can
+read with plain git.
 
 ---
 

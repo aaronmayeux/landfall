@@ -174,10 +174,35 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> SEASONS: STEPS 0, 1 AND 2 ARE DONE. STEP 3 IS THE NEXT ONE. <==**
-`SPEC-SEASONS-BUILD.md` §57 — fifteen steps in §57.30, sized for one session
+**==> SEASONS: STEPS 0, 1, 2 AND 3a ARE DONE. STEP 3b IS THE NEXT ONE. <==**
+`SPEC-SEASONS-BUILD.md` §57 — the steps are in §57.30, sized for one session
 each. Read §57.1 and §57.30 before touching anything; do not reopen a numbered
 decision without new evidence.
+
+**STEP 3 WAS TWO STEPS WEARING ONE NUMBER AND §57.30 NOW SAYS SO.** Capture and
+serving share no code, and one of them is a race the other is not — every hour
+without the rest-of-world capture is permanently gone. **3a is the capture and
+it has landed:** `tools/seasons-mirror.mjs` and the `seasons-live` branch, with
+what it IS described in `SPEC-OPS.md` §18.7. **3b is the serving** — HURDAT2 into
+the repo, the current season into KV, a route in front of both — and nothing of
+it is built.
+
+**NOTHING FOR AARON TO LOOK AT ON 3a, AND THAT IS THE THIRD TIME RUNNING.** No
+module on the boot path imports any of it, so no pixel changed. The first
+Seasons surface is still step 4's shell.
+
+**ONE THING TO WATCH RATHER THAN A TASK.** `seasons-live` is a push to a
+non-production branch every hour it captures something, and a Pages project can
+be configured to build previews for those — §57.33 limit 2 caps builds at 500 a
+month. The evidence says ours does not: `archive` has been force-pushed hourly
+for weeks against the same cap. **That is evidence, not proof.** If the build
+count starts climbing, the fix is the Pages project's branch-control setting.
+
+**AND ONE QUESTION LEFT DELIBERATELY UNANSWERED.** Whether JTWC publishes live
+ATCF b-decks during a season the way NHC does. If it does, the rest-of-world
+capture gets a better source than our own relay output. Nothing in the sandbox
+can reach either host to find out, so nothing was assumed — it is a small
+addition to the next probe run.
 
 **STEP 2 LANDED AND THERE IS NOTHING FOR AARON TO LOOK AT.** The parser, the
 derived facts and the near-home index are in `lib/hurdat.js`,

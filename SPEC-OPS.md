@@ -1470,3 +1470,65 @@ busiest day, and those are the new arrivals worth seeing.
 moved must not cost the other nine, and a failure lands in the manifest as
 `unavailable` with the reason rather than writing an empty file — an empty
 result reads as "no traffic", which is the conflation §5 exists to prevent.
+
+### 18.7 The seasons mirror — THE HOURS THAT ARE NOT COMING BACK
+
+`tools/seasons-mirror.mjs`, hourly, onto the **`seasons-live`** branch.
+`SPEC-SEASONS-BUILD.md` §57.3 and §57.30 step 3 are what it is for; this
+section is how it behaves.
+
+    git fetch origin seasons-live
+    git show origin/seasons-live:manifest.json
+    git show origin/seasons-live:btk/2026/bal022026.dat
+    git show origin/seasons-live:jtwc/2026/wp1726.jsonl
+
+**==> IT IS THE OPPOSITE SHAPE FROM `archive` AND THAT IS THE WHOLE POINT.
+<==** §18.3's branch answers *what is the feed serving right now*: one orphan
+commit force-pushed every hour, a rolling 72-hour window, no history, and it
+therefore cannot grow. Correct for debugging, useless for a season — three days
+is not a hurricane season. This one answers *what did the season do*, which
+only history can answer, so it **appends real commits and is never force-pushed
+except at graduation**.
+
+**What it stores, and the two halves are not equally urgent.**
+
+| path | source | at risk? |
+|---|---|---|
+| `btk/<year>/b*.dat` | NHC's ATCF b-decks, verbatim | **No.** NOAA republishes the whole thing as HURDAT2 every February |
+| `jtwc/<year>/<product>.jsonl` | our own `/api/jtwc/storms`, one JSON line per warning | **Yes.** JTWC deletes its products when a storm ends and its season archives lag badly |
+
+Only the second half is a race. It is captured through **our own relay rather
+than the Navy directly**, so the stored track cannot disagree with what a reader
+saw on the day — one parser, one answer.
+
+**FOUR RULES IT KEEPS, EACH OF WHICH IS A BUG IF BROKEN.**
+
+1. **§57.13's filter is imported, never restated.** `isRealStorm` from
+   `lib/hurdat.js`. Storm numbers 90–99 are invests whose numbers are reused
+   several times inside one season, so an unfiltered mirror files three
+   different systems under one name and each overwrites the last. 80–89 are
+   internal test systems. The branch's manifest names every file dropped and
+   why, because an unexplained rejection is one nobody can check.
+2. **Conditional GET.** Every b-deck is requested with the stored ETag and
+   Last-Modified, so an unchanged file answers `304` with no body. Good manners
+   toward a public service, and it hands us rule 3 for free. A `200` is still
+   compared by content — not every server sends validators, and some send a new
+   one for identical bytes.
+3. **A run that changed nothing commits nothing.** Off season that is zero
+   commits a day. The decision is made inside the script, because only it knows
+   whether bytes moved or the server merely answered again.
+4. **==> BUT SILENCE IS NOT A STATUS. <==** The manifest is compared ignoring
+   its timestamp **and nothing else**, so a source flipping from `ok` to
+   `unavailable` is itself a change and forces a commit that says so. Compare it
+   whole and the branch takes a commit an hour forever; do not compare it at all
+   and an outage at 3am is invisible until somebody happens to look. The commit
+   subject names what moved, because `git log` is the only interface this branch
+   will ever have.
+
+**Retention: squashed to one commit at graduation** — §57.34 rule 1, run as
+`workflow_dispatch` with `squash` set. It is a button rather than a schedule
+because the graduation it follows is a decision.
+
+**`tools/test-seasons-mirror.mjs`** covers the four rules above against the real
+relay payload in `samples/seasons/jtwc-storms-2026-08-24.json`, and each
+assertion was verified by reintroducing the bug it guards.

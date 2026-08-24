@@ -170,6 +170,17 @@ volunteering, that is the change's actual cost.
   NHC / GDACS / JTWC bytes a session reads with `git show origin/archive:…`, since
   the sandbox cannot reach those hosts). **Infrastructure, not clutter: never
   delete it and never merge it.**
+- **`seasons-live`** — the current season, captured hourly and **APPENDED**, not
+  force-pushed. `SPEC-OPS.md` §18.7. It exists because JTWC deletes its own
+  products when a storm ends, so the west Pacific, Indian Ocean and southern
+  hemisphere are lost daily without it. **Never delete it, never merge it, and
+  never force-push it except through the workflow's own squash button** — that
+  is §57.34 rule 1 and it belongs at a season's graduation, not to a session
+  tidying up.
 
 Any other branch — a stray `claude/…`, an old `*-wip` — is leftover litter and is
-safe to delete once its work is on `main`.
+safe to delete once its work is on `main`. **Results branches are litter too and
+are force-pushed by design** (`seasons-probe-results`, `rain-probe-results`), as
+are the branches that exist only to start a runner (`seasons-probe`,
+`seasons-fixtures`, `seasons-mirror`) — a fine-grained token cannot dispatch a
+workflow, so pushing a branch is the only lever a session has.

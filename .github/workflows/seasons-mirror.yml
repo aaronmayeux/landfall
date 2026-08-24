@@ -1,0 +1,166 @@
+# seasons-mirror.yml — capture the current season before it is lost.
+# SPEC-SEASONS-BUILD.md §57.3, §57.30 step 3, §57.34 rule 1.
+#
+# WHY THIS IS A SEPARATE JOB FROM archive.yml
+# `archive` answers "what is the feed serving RIGHT NOW". It force-pushes one
+# orphan commit an hour and keeps a rolling 72-hour window, so it has no history
+# and cannot grow. That is the right shape for debugging and the wrong shape for
+# a season: three days is not a hurricane season.
+#
+# This one answers "what did the season DO", which only history can answer, so
+# it keeps real commits on an APPENDING branch. The two do not overlap and
+# neither can replace the other.
+#
+# THE HALF THAT IS URGENT
+# NHC republishes the Atlantic and Pacific record every February as HURDAT2, so
+# nothing there is at risk. JTWC does not. Its products vanish from the live
+# directory when a storm ends and its season archives lag badly, so every hour
+# this job does not run is an hour of the west Pacific, Indian Ocean and
+# southern hemisphere that no later step can recover. §57.30 puts the capture in
+# step 3, ahead of any UI, for exactly this reason.
+#
+# HOW TO READ THE RESULT (works from a phone, on github.com, or with plain git)
+#   git fetch origin seasons-live
+#   git show origin/seasons-live:manifest.json
+#   git show origin/seasons-live:btk/2026/bal022026.dat
+#
+# DATA, NOT CODE. Nothing is ever merged from `seasons-live` into `main`.
+#
+# ==> ON PAGES BUILDS, WHICH ARE CAPPED AT 500 A MONTH (§57.33 LIMIT 2). <==
+# This pushes to a non-production branch, and a Pages project CAN be configured
+# to build previews for those. The existing evidence says ours does not: the
+# `archive` branch has been force-pushed every hour for weeks against the same
+# cap with no trouble. That is evidence rather than proof — if the build count
+# starts climbing, the fix is the Pages project's branch-control setting, not
+# this file.
+
+name: seasons-mirror
+
+on:
+  schedule:
+    # Top of every hour. NHC advisories land at 03/09/15/21Z with intermediates
+    # between, and JTWC warns six-hourly, so hourly catches every one without
+    # guessing at anybody's schedule. It commits only when something moved, so
+    # an hour with no weather in it costs nothing at all.
+    - cron: '20 * * * *'
+  # A fine-grained PAT can push but CANNOT dispatch a workflow (measured: HTTP
+  # 403 on the dispatches endpoint), so pushing this branch is the only way a
+  # cloud session can start a runner. Same lever seasons-probe and rain-probe
+  # use, and it is why they exist as branches at all.
+  push:
+    branches: [seasons-mirror]
+  workflow_dispatch:
+    inputs:
+      squash:
+        description: 'Squash seasons-live to one commit (§57.34 rule 1 — do this at graduation, not casually)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-mirror
+  # NEVER cancel in progress. A cancelled run can leave the branch half pushed,
+  # and the whole point is that a captured hour is not lost.
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.squash != true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: check out main (for the mirror script)
+        uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # NOT a shallow fetch. Pushing from a shallow clone is a fight nobody
+      # needs, and the branch is text — it stays small for a very long time, and
+      # §57.34 rule 1 squashes it once a year anyway.
+      - name: check out seasons-live, or start it
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/live && mkdir -p /tmp/live
+          cd /tmp/live
+          git init -q -b seasons-live
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          if git fetch -q origin seasons-live 2>/dev/null; then
+            git reset -q --hard FETCH_HEAD
+            echo "carried forward seasons-live at $(git rev-parse --short HEAD)"
+          else
+            echo "no seasons-live branch yet — this run creates it"
+          fi
+
+      - name: mirror
+        run: node tools/seasons-mirror.mjs /tmp/live /tmp/report
+
+      # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== §57.33. The decision is
+      # made inside the script, not here, because only it knows whether the
+      # bytes changed or the server merely answered again. An hourly commit
+      # regardless of change would grow the repo forever and carry no
+      # information — and it would bury the commits that DO mean something.
+      - name: commit and push, if anything changed
+        run: |
+          set -euo pipefail
+          DECISION="$(cat /tmp/report/decision.txt)"
+          echo "decision: $DECISION"
+          if [ "$DECISION" != "commit" ]; then
+            echo "nothing moved this hour — no commit"
+            exit 0
+          fi
+          cd /tmp/live
+          git add -A
+          if git diff --cached --quiet; then
+            echo "the script asked to commit but git sees no change — not committing"
+            exit 0
+          fi
+          git commit -q -F /tmp/report/commit-message.txt
+          git push -q origin seasons-live
+          echo "pushed $(git rev-parse --short HEAD)"
+
+      - name: summary
+        if: always()
+        run: cat /tmp/report/summary.md >> "$GITHUB_STEP_SUMMARY" || echo 'the mirror wrote no report' >> "$GITHUB_STEP_SUMMARY"
+
+  # ==> RETENTION. §57.34 RULE 1, AND IT IS DELIBERATELY A BUTTON. <==
+  # Once a season has graduated to a settled static file, this branch's
+  # hour-by-hour provenance has expired — the point of a live capture's history
+  # is only interesting while the capture is live. Squashing to one commit is
+  # the same trick `archive` uses for the same reason, once a year instead of
+  # once an hour.
+  #
+  # It is manual because it is destructive and because the graduation it follows
+  # is a decision, not a schedule. Nothing calls it automatically.
+  squash:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.squash == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: squash seasons-live to a single commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/live && mkdir -p /tmp/live
+          cd /tmp/live
+          git init -q -b seasons-live
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git fetch -q origin seasons-live
+          git reset -q --hard FETCH_HEAD
+          BEFORE="$(git rev-list --count HEAD)"
+          git checkout -q --orphan squashed
+          git add -A
+          git commit -q -m "seasons-live: squashed $BEFORE commits at graduation (§57.34 rule 1)"
+          git branch -q -M seasons-live
+          git push -q --force origin seasons-live
+          echo "squashed $BEFORE commits into one" >> "$GITHUB_STEP_SUMMARY"
