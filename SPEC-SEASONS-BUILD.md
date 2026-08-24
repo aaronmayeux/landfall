@@ -127,6 +127,59 @@ intensity peaks:
 **Category is not in the file.** We derive it from wind, the same way the live
 app does. One category function, both worlds.
 
+**==> MEASURED ON REAL BYTES 2026-08-24 AND IT HOLDS. <==** `tools/seasons-probe.mjs`,
+results on the `seasons-probe-results` branch. Every data row is **exactly 21
+comma-separated fields** in both basins, header rows are 4, and `-999` is the
+only sentinel present in the sample (10,681 of them in the Atlantic file alone,
+which is what a century of missing wind radii looks like). Atlantic is 6.75 MB
+covering 1851–2025; E/C Pacific 3.89 MB covering 1949–2025.
+
+**Take the file from the directory, never by name.** NOAA leaves every past
+revision in place — 41 files in `/data/hurdat/` on the day this was measured,
+going back to a 2018 vintage — and the newest is not the last one
+alphabetically. The probe's first run proved that the expensive way by reading a
+file two seasons out of date. **Pick by the last season in the filename.**
+
+### 57.4a What an ATCF b-deck record contains — AND IT IS NOT HURDAT2
+
+Measured across all fourteen of the 2026 b-decks. §57.30 step 2 warned these
+two formats lay their wind radii out differently; this is how.
+
+**==> ONE LINE PER WIND THRESHOLD, SO SEVERAL LINES SHARE A TIMESTAMP. <==**
+HURDAT2 puts 34, 50 and 64 kt on one row as twelve numbers. ATCF puts each
+threshold on **its own line, repeating the position, wind and pressure**, with
+the threshold in field 11 and the quadrant in field 12. Lala, Fausto and
+Genevieve each carry three lines per time at their peak; Bertha and Elida two;
+the weak storms one.
+
+**A parser keyed on timestamp must MERGE, not overwrite.** Overwriting silently
+keeps whichever threshold happened to come last and throws the rest away — a
+Cat 4's wind field reduced to its 64 kt core, or to its 34 kt envelope,
+depending on line order. Nothing errors.
+
+**And a weak storm cannot show you this.** Every storm below 50 kt has exactly
+one line per time, which looks identical to a format that does not do this at
+all. The probe's first run read one 40 kt storm and could not answer the
+question; it took reading all fourteen.
+
+**==> THE STORM'S NAME IS NOT A PROPERTY OF THE FILE. <==** Field 27 changes
+DOWN the file as the system is reclassified — **all fourteen files carry more
+than one name.** Cristobal's rows read `GENESIS006`, then `INVEST`, then
+`CRISTOBAL`. Arthur's read `GENESIS001 → INVEST → ONE → ARTHUR`. Reading the
+name off the first row, which is the obvious thing to do, labels a storm with
+an internal genesis counter. **Take the LAST row's name.**
+
+**The field count is not fixed: 28 to 44 across the fourteen files.** The head
+is positional; the tail is a run of `key, value` pairs — `genesis-num, 006`,
+`SPAWNINVEST, al762026 to al932026`, `TRANSITIONED, alA32026 to al032026`.
+**Read the head by position and the tail by pairs.** A parser that indexes to
+the end breaks on the first storm that spawns an invest.
+
+**Every basin NHC covers is in one directory** — `al`, `ep` and `cp` — and the
+whole current season is 14 files of a few KB each. §57.13's filter is real and
+does work: 18 files on the day measured, 4 of them invests, 14 real storms. No
+test systems that day, which does not mean never.
+
 ### 57.5 The record identifiers are the story's turning points
 
 `L` landfall · `G` genesis · `I` a peak in both wind and pressure · `P` minimum
@@ -195,8 +248,34 @@ forecast wind radii, watch and warning lines), plus final best track, wind
 swath, and the post-season report.
 
 **Which storms get Tier 2 is a decision Aaron makes, and it has its own step.**
-See step 11 in §57.30. It cannot be decided before step 0 measures how far back
-NHC's advisory archive actually goes.
+See step 11 in §57.30.
+
+**==> THE ELIGIBILITY CLIFFS ARE NOW MEASURED, AND THEY ARE THREE DIFFERENT
+CLIFFS. <==** 2026-08-24, `tools/seasons-probe.mjs`. This is the table step 11
+picks from.
+
+| What | Reaches back to | What is above the cliff |
+|---|---|---|
+| **ATCF b-decks** — the track | **1958**, at least; every probed year had files | Everything. 33 files in 1958, 199 in 2005 |
+| **Text advisories** — what was said at the time | **1998**. 1997 and every year before is a 404 | The written bulletin. **But NOAA's own note says advisories before 1999 are largely SCANNED IMAGES of printed bulletins** — present, not machine-readable |
+| **GIS** — cone, forecast track, watch/warning geometry | **2008** | The only era where a Tier 2 storm can show the cone that was actually drawn |
+
+**So there are three grades of storm, not two, and the middle one is the trap.**
+
+- **2008 onward** — the full Tier 2 as §57.9 describes it. Sandy '12 qualifies.
+- **1998–2007** — text advisories exist, **geometry does not.** Katrina '05 is
+  in this band. A scrubber can show what NHC *said* on each advisory and cannot
+  show the cone. That is a real and interesting thing to build, but it is not
+  the same feature, and promising a cone here would be promising a drawing we
+  would have to invent. §57.10's `existed but not captured` is the wrong
+  wording for it too — these warnings existed and *cannot* be captured as
+  shapes, because they were never published as shapes.
+- **Before 1998** — track only. **Andrew '92 cannot be a Tier 2 storm at all**,
+  which kills one of the three obvious shelf candidates before step 11 opens.
+
+**Do not average these three into one sentence on screen.** A 1998 hurricane
+with no cone and a 1898 hurricane with no cone are the §57.10 hazard restated,
+and this table is what tells them apart.
 
 ### 57.10 Watches and warnings — the three states
 
@@ -566,7 +645,25 @@ the expensive way.
 
 ---
 
-**STEP 0 — MEASURE. Gates everything.**
+**STEP 0 — MEASURE. ==> DONE 2026-08-24. <==**
+`tools/seasons-probe.mjs`, run twice on an Actions runner. Findings are folded
+into §57.3, §57.4, §57.4a, §57.9 and §57.33 above, replacing the assumptions.
+Raw bytes and the full report live on the `seasons-probe-results` branch:
+`git show origin/seasons-probe-results:findings.md`.
+
+**==> ITS FIRST RUN ANSWERED TWO OF FOUR QUESTIONS WRONGLY, AND BOTH FAULTS
+WERE IN THE PROBE. <==** Worth reading before trusting any probe nobody has
+audited. It HEADed a PHP script and reported a GIS archive reaching 1958 — a
+script answers 200 for a year that never happened. It cut a text sample at a
+byte boundary, mid-line, and reported a fixed-width file as variable-width,
+which would have produced a variable-width parser for HURDAT2. And it chose its
+HURDAT2 file by sorting the directory, landing on one two seasons stale. **A
+green probe is not a correct probe.**
+
+**Do not re-run it to answer these questions again.** Re-run it when the season
+turns over, or when a Southern Hemisphere storm is needed. What follows is the
+original brief, kept because it names what was asked:
+
 No app change. One GitHub Actions job, because a session cannot reach NOAA.
 - Fetch a live b-deck and an archived one. **Confirm the line layout against
   real bytes.** It is ATCF, not HURDAT2, and the wind-radii rows are laid out
@@ -760,10 +857,16 @@ picker has proven to be the weak link.
    shipped as chosen, with its land darkened to clear the contrast gate.
    `SPEC-MAP.md` §9.
 2. **Which storms are Tier 2.** Step 11. Aaron decides.
-3. **IBTrACS is unverified.** Size, format and quirks are all assumed. Step 0
-   probes it. Nothing about the rest of the world should be promised until then.
-4. **The b-deck line layout is assumed, not read.** Step 0.
-5. **How far back NHC's advisory archive reaches** is unknown. Step 0.
+3. ~~**IBTrACS is unverified.**~~ **CLOSED 2026-08-24.** Measured: CSV is 316 MB
+   and splitting by basin does not clear the cap; NetCDF fits but needs a binary
+   reader. Neither raw form ships. The runner precomputes. §57.33.
+4. ~~**The b-deck line layout is assumed, not read.**~~ **CLOSED 2026-08-24.**
+   Read across all fourteen current b-decks. §57.4a — one line per wind
+   threshold, a variable key/value tail, and a name that changes down the file.
+5. ~~**How far back NHC's advisory archive reaches.**~~ **CLOSED 2026-08-24.**
+   Three different cliffs: b-decks 1958, text 1998, GIS 2008. §57.9. **This
+   rules Andrew '92 out of Tier 2 and puts Katrina '05 in a middle band with
+   words but no geometry** — both are step 11's problem now, not an unknown.
 6. **Season clock speed** — a day a second is a starting number, not a decision.
    Aaron tunes it on glass at step 10, and it lives in the motion constants.
 7. **Whether the Wall of Years ever gets built.**
@@ -820,11 +923,30 @@ what is only a data change. KV writes fire no build.
 Ida alone is 269 files, so ten Tier 2 storms would add roughly 2,700 and put the
 total near 3,600 — comfortably under the file cap.
 
-**==> BUT IBTrACS MAY EXCEED THE 25 MiB PER-FILE CAP. <==** The global file is
-considerably larger than HURDAT2's 6.8 MB. If it is over 25 MiB it cannot be a
-static asset at all and must be split by basin or era, or moved to R2. **Step 0
-measures its size specifically**, and the rest-of-world design is not settled
-until it has.
+**==> IBTrACS MEASURED 2026-08-24, AND THE SPREADSHEET FORM IS OUT. <==**
+
+| Form | Whole world | Biggest basin | Verdict |
+|---|---|---|---|
+| CSV | **315.75 MB** | West Pacific **108.87 MB** | 8 of 11 files over the cap. **Splitting by basin does not save it** — only South Atlantic (55 KB) and the 3-year file (9.5 MB) clear 25 MiB |
+| NetCDF | **22.27 MB** | West Pacific 8.55 MB | Every file clears the cap |
+
+**NetCDF fits and is still the wrong answer.** It is a binary scientific format
+with no zero-dependency browser reader, and shipping one would break the no-build-step
+rule for a file the user never looks at. The CSV's own shape says why neither
+raw form belongs on a phone: **174 columns**, because it carries twelve
+different agencies' opinions of the same storm — Tokyo, CMA, Hong Kong, KMA,
+New Delhi, Réunion, BOM, Nadi, Wellington and three historical datasets, each
+with its own lat, lon, wind and pressure. The app draws maybe eight of them.
+
+**THE RESOLUTION IS THE ONE §57.35 ALREADY MANDATES: PARSE ONCE, PRECOMPUTE.**
+The Actions runner has open internet and no size cap, so it swallows the 316 MB
+file, reduces each season to the fields we actually draw, and commits that. **The
+user never receives IBTrACS — they receive our summary of it**, at a size in the
+same class as a HURDAT2 season. The 25 MiB cap stops being a constraint because
+nothing near it is ever served.
+
+**This changes step 13's shape and nothing else.** The rest-of-world design is
+now settled enough to build: no R2, no splitting scheme, no binary reader.
 
 **The appending branch only commits when a file actually changes.** Off-season
 that is zero commits a day. An hourly commit regardless of change would grow the

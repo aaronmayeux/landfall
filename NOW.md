@@ -185,13 +185,21 @@ never built; §57.31 item 1 records why. **Nothing calls `forceMode()` yet**, so
 there is no globe wearing it: `mockups/seasons-themes.html` mirrors the shipped
 values and is the only place to look before step 4's shell. Keep the two in step.
 
-**STEP 0's FINDINGS ARE IN §57.3–57.6 AND §57.33, MEASURED ON REAL BYTES.**
-The probe lives at `tools/seasons-probe.mjs` and the results branch is
-`seasons-probe-results` — `git show origin/seasons-probe-results:findings.md`.
-**Its first run answered two of four questions wrongly and the faults were in
-the probe**, which is the reason to distrust a green probe you have not read:
-it HEADed a PHP script and reported a GIS archive reaching 1958, and it cut a
-sample mid-line and reported a fixed-width file as variable-width.
+**STEP 0 IS DONE AND ITS FINDINGS ARE IN §57.4, §57.4a, §57.9 AND §57.33** —
+measured on real bytes, replacing the assumptions. Read those, not this. The
+probe is `tools/seasons-probe.mjs`; raw bytes are on `seasons-probe-results`.
+**Its first run answered two of four questions wrongly and both faults were in
+the probe** — §57.30 step 0 records how, and it is the reason to distrust a
+green probe nobody has audited.
+
+**TWO FINDINGS REACH FORWARD AND ARE WORTH KNOWING NOW.** ATCF puts **one line
+per wind threshold**, so up to three lines share a timestamp and a parser keyed
+on time must MERGE rather than overwrite — silently keeping one threshold and
+discarding the rest is the failure, and no storm under 50 kt can show it. And
+**the archive has three cliffs, not one**: b-decks 1958, text advisories 1998,
+GIS geometry 2008. That rules **Andrew '92 out of Tier 2 entirely** and puts
+**Katrina '05 in a middle band with words but no cone** — step 11's problem,
+but it changes what step 11 can be offered.
 
 **==> §48.21 SHIPPED BROKEN AND THE FIX IS PUSHED. THREE BUGS, ONE PUSH, AND
 NONE OF THEM WAS CAUGHT BY ANY EXISTING GATE. <==** Aaron's report was *"no
