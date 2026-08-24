@@ -111,6 +111,29 @@ const byBasename = new Set(sourceFiles.map((f) => path.basename(f)));
 for (const v of fs.readdirSync('vendor')) byBasename.add(v);
 for (const f of fs.readdirSync('.')) if (/\.md$/.test(f)) byBasename.add(f);
 
+/* ==> SAMPLES ARE NAMED BY NAME AND THE GATE COULD NOT SEE THEM. <== `samples`
+ * is deliberately absent from `SRC_DIRS`, and rightly: those files are captured
+ * bytes rather than source, and folding them into `HAY` would let a fixture
+ * that happens to contain a word vouch for a symbol the code no longer exports
+ * — the gate would go quiet on exactly the drift it exists to catch.
+ *
+ * But the spec cites fixtures constantly and BY PATH, because a suite is only
+ * checkable if a reader can find what it runs against. Before this, every one
+ * of those citations was invisible to the check: a renamed or deleted fixture
+ * left a dead reference in the spec and nothing went red. So the names go into
+ * `byBasename` ONLY, which answers "does this file exist" and feeds nothing
+ * else. Found while adding §56.14's captures, which failed here while sitting
+ * on disk. */
+const walkNames = (d) => {
+  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    if (e.name.startsWith('.')) continue;
+    const p = path.join(d, e.name);
+    if (e.isDirectory()) walkNames(p);
+    else byBasename.add(e.name);
+  }
+};
+if (fs.existsSync('samples')) walkNames('samples');
+
 const pathRe = /`([A-Za-z0-9_./\-[\]]+\.(?:js|mjs|json|html|md|css|sh|toml|webmanifest|py|geojson))`/g;
 
 /* A sentence spans lines. "was deleted with the three-globe cut" can sit one
