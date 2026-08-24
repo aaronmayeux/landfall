@@ -218,6 +218,42 @@ async function cutFile(label, file, wantedIds, wholeSeasons) {
   const tally = (m) => [...m.entries()].sort((a, b) => b[1] - a[1])
     .map(([k, v]) => `\`${k}\` ${v}`).join(' · ');
 
+  /* ==> §57.7 SAYS THERE IS A TWENTY-YEAR HOLE IN LANDFALL MARKS, 1971-1990,
+   * AND HUGO 1989 CONTRADICTS IT. <== His Sullivan's Island landfall is marked
+   * in the file this job just downloaded. One storm is not a measurement, so
+   * this counts `L` markers by year across the WHOLE file. If the claimed hole
+   * is empty, §57.7's decision to compute those landfalls ourselves is work
+   * that does not need doing. If it is only thin, the decision stands. */
+  const lfByYear = new Map();
+  for (const s of storms) {
+    const y = yearOf(s);
+    if (!Number.isFinite(y)) continue;
+    const n = s.rows.filter((r) => fieldAt(r, 2) === 'L').length;
+    lfByYear.set(y, (lfByYear.get(y) || 0) + n);
+  }
+  const decade = (from, to) => {
+    let n = 0;
+    let yearsWith = 0;
+    for (let y = from; y <= to; y++) {
+      const c = lfByYear.get(y) || 0;
+      n += c;
+      if (c) yearsWith++;
+    }
+    return { n, yearsWith, years: to - from + 1 };
+  };
+  say('\n**==> THE §57.7 LANDFALL GAP, COUNTED <==**\n');
+  say('| period | `L` markers | years with at least one | years |');
+  say('|---|---|---|---|');
+  for (const [label, d] of [
+    ['1951-1970 (spec says present)', decade(1951, 1970)],
+    ['**1971-1990 (spec says MISSING)**', decade(1971, 1990)],
+    ['1991-2010 (spec says present)', decade(1991, 2010)],
+  ]) {
+    say(`| ${label} | ${d.n} | ${d.yearsWith} | ${d.years} |`);
+  }
+  const empty = [...Array(20)].map((_, i) => 1971 + i).filter((y) => !lfByYear.get(y));
+  say(`\nEmpty years inside the claimed hole: ${empty.length ? empty.join(', ') : '**none**'}\n`);
+
   say('\n**Named storms cut**\n');
   say('| id | name | rows | why |');
   say('|---|---|---|---|');
