@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 297 numbered headings.
+Covering 11 files, 301 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -283,6 +283,7 @@ real home is the other row carrying the same section number.
 | `57.2` | &nbsp;&nbsp;What this feature must not break | `SPEC-SEASONS-BUILD.md` | 53-83 |
 | `57.3` | &nbsp;&nbsp;There are two histories, and they arrive by different roads | `SPEC-SEASONS-BUILD.md` | 86-110 |
 | `57.4` | &nbsp;&nbsp;What a HURDAT2 record contains | `SPEC-SEASONS-BUILD.md` | 111-145 |
+| `57.4a` | &nbsp;&nbsp;What an ATCF b-deck record contains — AND IT IS NOT HURDAT2 | `SPEC-SEASONS-BUILD.md` | 146-200 |
 | `57.5` | &nbsp;&nbsp;The record identifiers are the story's turning points | `SPEC-SEASONS-BUILD.md` | 201-218 |
 | `57.6` | &nbsp;&nbsp;The availability cliffs | `SPEC-SEASONS-BUILD.md` | 219-256 |
 | `57.7` | &nbsp;&nbsp;The landfall gap — 1971–1982, not 1971–1990 | `SPEC-SEASONS-BUILD.md` | 257-289 |
@@ -295,8 +296,11 @@ real home is the other row carrying the same section number.
 | `57.14` | &nbsp;&nbsp;Unnamed storms | `SPEC-SEASONS-BUILD.md` | 420-455 |
 | `57.15` | &nbsp;&nbsp;Derived facts — computed, never fetched | `SPEC-SEASONS-BUILD.md` | 456-471 |
 | `57.16` | &nbsp;&nbsp;Getting in, and getting out | `SPEC-SEASONS-BUILD.md` | 474-502 |
+| `57.16a` | &nbsp;&nbsp;Getting in and out, as built | `SPEC-SEASONS-BUILD.md` | 503-611 |
 | `57.17` | &nbsp;&nbsp;The shelf — and it is NOT the Tier 2 list | `SPEC-SEASONS-BUILD.md` | 612-628 |
+| `57.17a` | &nbsp;&nbsp;What a Tier 2 storm actually costs — MEASURED | `SPEC-SEASONS-BUILD.md` | 669-707 |
 | `57.18` | &nbsp;&nbsp;The season board | `SPEC-SEASONS-BUILD.md` | 732-754 |
+| `57.18a` | &nbsp;&nbsp;The season board, as built | `SPEC-SEASONS-BUILD.md` | 755-826 |
 | `57.19` | &nbsp;&nbsp;Filters, and the near-home slider | `SPEC-SEASONS-BUILD.md` | 903-945 |
 | `57.20` | &nbsp;&nbsp;The theme — sepia, and the collision it has to survive | `SPEC-SEASONS-BUILD.md` | 946-981 |
 | `57.21` | &nbsp;&nbsp;Telling four storms apart on one globe | `SPEC-SEASONS-BUILD.md` | 982-997 |
@@ -329,7 +333,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 103,196 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 104,352 | 36 |
+| `SPEC-SEASONS-BUILD.md` | 104,352 | 40 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 179,708 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

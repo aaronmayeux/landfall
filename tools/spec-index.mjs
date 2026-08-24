@@ -39,10 +39,20 @@ const isSpecFile = (name) =>
 
 /* ## 17. Public operation      -> 17
    ### 17.7 The origin collapse -> 17.7
+   ### 57.18a The board as built -> 57.18a
    #### 6.1.2 Whatever          -> 6.1.2
    The trailing period after a top-level number is inconsistent in the wild,
-   so it is tolerated either way. */
-const HEADING = /^(#{1,6})\s+(\d+(?:\.\d+)*)\.?\s+(\S.*?)\s*$/;
+   so it is tolerated either way.
+
+   ==> THE TRAILING LETTER WAS MISSING AND THE INDEX HAS NEVER CARRIED ONE.
+   <== §57.4a, §57.16a, §57.18a and §57.18b are all real addresses cited from
+   code comments, and every one of them was absent from `SPEC-INDEX.md` — so a
+   session told to look one up found nothing and read the whole 200 KB file
+   instead, which is the exact cost this tool exists to avoid. A lettered
+   subsection is this project's established way of saying "the as-built
+   account of the section above" without renumbering anything, and the index
+   has to be able to address it. */
+const HEADING = /^(#{1,6})\s+(\d+(?:\.\d+)*[a-z]?)\.?\s+(\S.*?)\s*$/;
 
 /* A signpost is a heading whose whole body says "this moved" or "this is
    retired". It holds the address open but is not where the content lives.
