@@ -187,9 +187,20 @@ what it IS described in `SPEC-OPS.md` §18.7. **3b is the serving** — HURDAT2 
 the repo, the current season into KV, a route in front of both — and nothing of
 it is built.
 
-**NOTHING FOR AARON TO LOOK AT ON 3a, AND THAT IS THE THIRD TIME RUNNING.** No
-module on the boot path imports any of it, so no pixel changed. The first
-Seasons surface is still step 4's shell.
+**==> IT HAS RUN ON A REAL RUNNER AND THE BRANCH EXISTS. <==** 2026-08-24
+15:34Z, first commit `b7c2c44`. **18 files listed, 14 stored, 4 invests dropped
+by name in the manifest** — which matches the step-0 probe's independent count
+of the same directory to the file. Six JTWC warnings captured, no faults.
+
+**AND THE CAPTURE ROUND-TRIPS THROUGH THE APP'S OWN PARSER.** `parseBdeck` reads
+the stored `bcp012026.dat` back as LALA, 59 points, peak 115 kt, zero faults,
+with all three wind thresholds merged onto every point. The probe measured that
+file separately as 59 distinct times and a 115 kt peak. **Two independent
+measurements, same answer** — which is the only reason to believe either.
+
+**NOTHING FOR AARON TO LOOK AT, AND THAT IS THE THIRD TIME RUNNING.** No module
+on the boot path imports any of it, so no pixel changed. The first Seasons
+surface is still step 4's shell.
 
 **ONE THING TO WATCH RATHER THAN A TASK.** `seasons-live` is a push to a
 non-production branch every hour it captures something, and a Pages project can
