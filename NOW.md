@@ -276,17 +276,41 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEP 5a IS BUILT AND DEPLOYED. IT IS THE FIRST TIME THE ARCHIVE
-GLOBE HAS HAD ANYTHING ON IT. <==** `SPEC-SEASONS-BUILD.md` §57.18a is the
-as-built account — read that, not this. Steps 0 through 4 are done and
-confirmed. **Step 5b is next: the season in progress, and the ghosts.**
+**==> SEASONS: STEP 5 IS BUILT IN FULL. THE ARCHIVE NOW REACHES THE SEASON
+STILL RUNNING. <==** `SPEC-SEASONS-BUILD.md` §57.18a (settled years) and
+§57.18b (the season in progress) are the as-built accounts — read those, not
+this. Steps 0 through 5 are done; **5a was confirmed on glass 2026-08-24 and
+has nothing left to look at.** Step 6 — the globe layers — is next.
 
-**AARON'S VERDICT, 2026-08-24: IT WORKS ON GLASS.** The done-condition is met —
-ticking a storm puts it on the globe and unticking takes it off, by tap and by
-keyboard. **Nothing from 5a is left for him to look at.**
+**GLASS, AND IT IS ONE SCREEN: OPEN THE ARCHIVE AND IT LANDS ON 2026.**
+Everything below is on that screen. The comparison is a settled year — flip to
+2005 with the picker and back.
 
-**ONE QUESTION IS STILL OPEN AND IT IS A DECISION RATHER THAN A CHECK** — the
-sepia coastline against a Cat 2 dot, below.
+1. **Does it read as unfinished rather than as a thin year?** The unused names
+   are the whole point of the roster being chronological, and this is the first
+   time any have been on screen. Do the ghost rows read as *names not spent
+   yet*, or just as greyed-out clutter under the real ones?
+2. **The landfall dash.** The scorecard shows `—` where a settled year shows a
+   number, because the working record carries no landfall marks (§57.18b).
+   Does the dash plus the sentence under it read as *nobody has marked these
+   yet*, or as something broken? It is the sharpest wording call in the step:
+   the alternative was `0`, in an app called Landfall.
+3. **The provisional line.** *"These are working numbers for a season still
+   running…"* — precision or clutter, sitting under six confident-looking
+   figures.
+4. **The Landfalls filter is gone on 2026 and back on 2005.** Does a filter
+   appearing and disappearing between years read as deliberate?
+5. **Lala and Moke are on the East Pacific side**, filed the way NOAA files
+   them. Worth one tap to confirm they are there at all.
+
+**AND ONE THING TO WATCH RATHER THAN JUDGE:** opening the Pacific side of 2026
+pulls twelve small files, four at a time. If that feels slow on cell data,
+`SEASONS.liveFetchConcurrency` is the dial.
+
+**A STORM WHOSE FILE WILL NOT LOAD ALSO LOSES ITS NAME**, so it turns up in the
+unused list — the board says so in the same sentence that counts it. Disclosed
+rather than fixed: the season index carries ids, not names, so nothing here can
+know the name of a storm whose file never arrived.
 
 **WHAT STEPS 3b AND 4 BUILT LIVES IN `SPEC-DATA.md` §58, `SPEC-OPS.md` §18.8
 AND §57.16a.** Read those, not this. Both were verified by Aaron on a phone on
@@ -341,26 +365,12 @@ absent. Only `tools/test-archive-mode.mjs` named it, and it had been red on
 main since step 4 shipped. Worth a look at whether other constants blocks have
 readers ahead of them.
 
-**==> THE STEP 1 COLOUR COLLISION IS NOW JUDGEABLE, A STEP EARLIER THAN
-EXPECTED. <==** §57.20 measured the sepia coastline at 38° against the Cat 2
-dot at 39°. It was logged as unanswerable before step 6 because step 4's globe
-was empty — but step 5a draws real tracks in real Saffir-Simpson colours, so
-there is something to judge it against now, and 5a is confirmed working
-without it having been answered.
-
-**THE ASK IS ONE LOOK:** tick a Cat 1–2 storm whose track crosses a coast —
-2005's **ARLENE**, **CINDY** or **STAN** are US landfalls at that strength.
-Does the storm win against the ground, or sink into it? If it sinks, the lever
-is the COASTLINE's chroma rather than the dot: §6 fixes the category colours
-and they are not negotiable. **Do not close it off
-`mockups/seasons-themes.html`** — that is a paint chip, the comparison §57.31
-item 1 already rejected.
-
-**AND THE SPEC INDEX HAS NEVER CARRIED A LETTERED SUBSECTION.** §57.4a, §57.16a
-and the new §57.18a are all absent from `SPEC-INDEX.md`, so a session told to
-"look up §57.18a" finds nothing and reads the whole file instead. Pre-existing,
-found while writing §57.18a, and small — `tools/spec-index.mjs` matches a
-numeric heading pattern that stops at the digits.
+**THE STEP 1 COLOUR COLLISION IS ANSWERED. AARON, 2026-08-24: THE SEPIA LOOKS
+FINE.** §57.20 measured the coastline at 38° against the Cat 2 dot at 39° and
+the question was whether a storm would sink into the ground. Judged against
+step 5a's real tracks on the real globe, it does not. **Do not reopen it
+without new evidence, and do not reopen it off `mockups/seasons-themes.html`**
+— that is a paint chip, and §57.31 item 1 already rejected the comparison.
 
 **A NEW FILE UNDER `seasons/` NEEDS A LINE IN `_headers` BY HAND**, and nothing
 catches the omission. That directory holds both NOAA's immutable history and

@@ -33,6 +33,7 @@
  * path: `ui/view-seasons-board.js`, `data/seasons.js`, `lib/season-facts.js`
  * and `lib/season-names.js` are all reached through this module's own dynamic
  * import and never ship to a visitor who does not open the archive.
+ * `data/seasons-live.js` joined them at step 5b for the same reason.
  *
  * ==> AND THE GLOBE IS STILL SOMEBODY ELSE'S. <== `archiveGlobe` arrives
  * injected, exactly as `liveGlobe` does, so `seasons/` never imports `map/`.
@@ -45,6 +46,7 @@
 import { forceMode, MODE, releaseMode } from '../config/theme.js';
 import { isArchive, setArchive } from '../lib/archive-mode.js';
 import * as seasonsData from '../data/seasons.js';
+import * as seasonsLive from '../data/seasons-live.js';
 import { createSeasonsBoardView } from '../ui/view-seasons-board.js';
 import { createSeasonsBar } from './bar.js';
 import * as deepLink from './deep-link.js';
@@ -236,6 +238,13 @@ function ensureBoard({ bar, drawer, linkReason }) {
 
   boardView = createSeasonsBoardView({
     seasons: seasonsData,
+    /* ==> THE SECOND ROAD, AND IT IS INJECTED SEPARATELY ON PURPOSE. <==
+     * §57.30 step 5b. `data/seasons.js` reads a settled year out of a static
+     * file in this repo; `data/seasons-live.js` reads the season still
+     * running off two KV-backed routes. Handing the board one merged facade
+     * would hide which of the two a failure came from, and those two failures
+     * want different sentences (§5). */
+    live: seasonsLive,
 
     /* The globe redraws from the WHOLE ticked set on every change, so there is
      * no add path and no remove path to drift apart. */

@@ -30,6 +30,22 @@
  * drew both as a blank roster would be telling a reader a quiet year happened
  * when the truth is we do not know.
  *
+ * ==> THERE ARE TWO ROADS TO A SEASON AND THIS VIEW IS WHERE THEY MEET. <==
+ * §57.30 step 5b. A settled year is one static file in this repo; the year
+ * currently running is two KV-backed routes and a different parser
+ * (`data/seasons-live.js`, §58). Both arrive as injected facades and both hand
+ * back the same shape, so everything below the load branch is one path — but
+ * the branch itself is real and the reader is told which record they are
+ * looking at, because §57.11 requires it.
+ *
+ * ==> AND THE SEASON IN PROGRESS SHOWS NO LANDFALL FIGURE AT ALL. <== Measured
+ * on the real 2026 b-decks: the working best track carries no landfall marker,
+ * because NOAA writes those into the reviewed record it publishes the
+ * following spring. `Landfalls: 0` on a screen would read as "nothing reached
+ * land this year", which is a claim the data cannot support, so the cell is a
+ * dash and the note says why (`ui/seasons-board-markup.js`). Computing our own
+ * is decided (§57.7) and is not this step.
+ *
  * WHAT IS NOT HERE, ON PURPOSE: landfall marks, name labels along the tracks,
  * focus-and-dim and the wind field are step 6; the detail panel is step 7; the
  * near-home slider is step 9 and is why §57.19's fourth filter is absent from
@@ -40,57 +56,28 @@
  */
 
 import { SEASONS } from '../config/constants.js';
-import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { stormFacts, seasonFacts } from '../lib/season-facts.js';
 import { rosterFor } from '../lib/season-names.js';
-import { dotted } from './loading-dots.js';
-
-const esc = (s) =>
-  String(s).replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-/**
- * The three filters. §57.19 drops "None" — it was a button that did nothing
- * useful — and holds "Near home" back to step 9, which owns the radius slider
- * and the precomputed distances it filters on.
- */
-const FILTERS = Object.freeze([
-  { id: 'all', label: 'All' },
-  { id: 'majors', label: 'Majors' },
-  { id: 'landfalls', label: 'Landfalls' },
-]);
-
-/** Month and day, no year — the year is the whole screen's subject and
- *  repeating it on thirty rows is noise. UTC because the records are. */
-const MD = new Intl.DateTimeFormat('en-US', {
-  month: 'short', day: 'numeric', timeZone: 'UTC',
-});
-
-function dateRange(facts) {
-  if (!Number.isFinite(facts?.firstTime)) return '';
-  const a = MD.format(new Date(facts.firstTime));
-  const b = MD.format(new Date(facts.lastTime));
-  return a === b ? a : `${a} – ${b}`;
-}
-
-/** How a storm is called on a row. §57.14: an unnamed storm displays as its
- *  number, never as a blank and never as the spelled-out number NOAA wrote in
- *  the name column (`lib/hurdat.js` folds those into unnamed). */
-function displayName(storm) {
-  return storm?.name || `Storm ${storm?.number ?? '?'}`;
-}
+import {
+  emptyRosterHtml, esc, filtersFor, filtersHtml, ghostsHtml, indexFailedHtml,
+  pickerHtml, rowHtml, scoreHtml, seasonFailedHtml, waitingHtml,
+} from './seasons-board-markup.js';
 
 /**
  * @param {object} opts
- * @param {object} opts.seasons  injected fetch facade — `loadIndex`,
- *   `loadSeason`, `seasonsIn`, `basinsIn`, `basinLabel`. `ui/` never imports
- *   `data/` (§12), the same shape every other panel in this app takes.
+ * @param {object} opts.seasons  injected fetch facade for SETTLED years —
+ *   `loadIndex`, `loadSeason`, `seasonsIn`, `basinsIn`, `basinLabel`. `ui/`
+ *   never imports `data/` (§12), the same shape every other panel takes.
+ * @param {object} opts.live  injected facade for the season in progress —
+ *   `loadLiveIndex`, `loadLiveSeason`, `clearLiveCache`. Separate rather than
+ *   folded in, because the two read completely different sources and a single
+ *   facade would hide which one a failure came from.
  * @param {(selected:Array<{storm:object,facts:object}>) => void} opts.onSelection
  *   ticked storms changed — the globe redraws from the whole set.
  * @param {(where:{basin:string,year:number,label:string}|null) => void} opts.onWhere
  *   the bar's sentence. Called whenever the year or basin settles.
  */
-export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
+export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) {
   let host = null;
   let bodyEl = null;
 
@@ -108,6 +95,18 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
   let basin = null;
   let year = null;
 
+  /** The season in progress, or null when the live routes could not be
+   *  reached. Held whole rather than as a bare year, because the board also
+   *  needs its storm list and its staleness. */
+  let liveIndex = null;
+  /** Why the live routes could not be reached, for the sentence that says so.
+   *  Empty when they were. */
+  let liveReason = '';
+  /** A second attempt at the live index is in the air. Its own flag rather
+   *  than reusing `seasonState`, because the season on screen is fine and
+   *  must not blink while this happens. */
+  let liveRetrying = false;
+
   /** `loading` | `ok` | `unavailable`, for the season currently chosen. */
   let seasonState = 'loading';
   let seasonReason = '';
@@ -115,6 +114,11 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
   let entries = [];
   let score = null;
   let roster = null;
+  /** True while the chosen year is the one still running. */
+  let provisional = false;
+  /** Storms the live index listed that would not load. Zero on a settled
+   *  year, which cannot have any — its storms come in one file. */
+  let unreadable = 0;
 
   let filter = 'all';
   /** Storm ids the reader has ticked. Survives a filter change on purpose —
@@ -124,6 +128,44 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
   /** Bumped on every season load, so a slow fetch that lands after the reader
    *  has moved on cannot paint the wrong year over the right one. */
   let loadToken = 0;
+
+  /* --- which years exist --------------------------------------------------
+   * The settled index answers for every year NOAA has reviewed; the live one
+   * adds at most one more on top. Both are asked here rather than in the
+   * markup, so the picker and the load path can never disagree about which
+   * years are choosable.
+   * ---------------------------------------------------------------------- */
+
+  /** The season in progress, or null. Read off the b-deck FILENAMES by the
+   *  route, never off the reader's clock (§58.1). */
+  function liveYear() {
+    return liveIndex?.year ?? null;
+  }
+
+  /** Does this basin have a live half at all? `SEASONS.liveBasins` answers,
+   *  and a basin missing from it has none — the honest state for the rest of
+   *  the world until step 13. */
+  function basinHasLive(b) {
+    return Boolean(SEASONS.liveBasins[b]);
+  }
+
+  /** Every year this basin offers, newest first. The live season sits at the
+   *  top when there is one, and only when the settled record has not already
+   *  caught up to it — in the spring both roads briefly know the same year and
+   *  the reviewed one wins, because it is the better record of the two. */
+  function yearsFor(b) {
+    const settled = seasons.seasonsIn(index, b);
+    const ly = liveYear();
+    if (ly == null || !basinHasLive(b) || settled.includes(ly)) return settled;
+    return [ly, ...settled];
+  }
+
+  /** Is this the year still running? The one place that question is answered,
+   *  because it decides the road, the filters, the stamp and the ghosts. */
+  function isLive(b, y) {
+    return liveYear() != null && Number(y) === liveYear() && basinHasLive(b)
+      && !seasons.seasonsIn(index, b).includes(Number(y));
+  }
 
   /* --- selection ---------------------------------------------------------- */
 
@@ -138,44 +180,96 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
   /* --- loading ------------------------------------------------------------ */
 
   async function loadIndexOnce() {
-    const res = await seasons.loadIndex();
-    if (res.status !== 'ok') {
+    /* ==> BOTH INDEXES ARE ASKED FOR AT ONCE AND ONLY ONE OF THEM IS ALLOWED
+     * TO STOP THE SCREEN. <== The settled index is a static file in this repo
+     * and without it there are no years at all; the live one is two network
+     * hops to NOAA and its failure costs exactly one year off the top of the
+     * list. Awaiting them in sequence would have made a slow live route delay
+     * an archive that does not need it. */
+    const [settled, liveRes] = await Promise.all([
+      seasons.loadIndex(),
+      live.loadLiveIndex(),
+    ]);
+
+    /* ==> A LIVE INDEX THAT FAILED IS NULL, AND THE BOARD SAYS SO WHERE IT
+     * MATTERS. <== §5. Silently dropping 2026 off the picker would leave a
+     * reader unable to tell "the current season is unreachable" from "there
+     * is no current season", and those are different facts. The sentence is
+     * on the roster rather than the picker, because a missing OPTION is not a
+     * place a reader looks for an explanation. */
+    liveIndex = liveRes?.status === 'ok' ? liveRes : null;
+    liveReason = liveRes?.status === 'ok' ? '' : (liveRes?.reason || '');
+
+    if (settled.status !== 'ok') {
       indexState = 'unavailable';
-      indexReason = res.reason || '';
+      indexReason = settled.reason || '';
       render();
       return;
     }
-    index = res.index;
+    index = settled.index;
     indexState = 'ok';
 
-    /* Default to the newest year of the first basin the index lists. The
-     * newest is the one a reader is most likely to want and the only one they
-     * can compare against their own memory. */
+    /* Default to the first basin the index lists. */
     const first = seasons.basinsIn(index)[0] || null;
     if (basin == null) basin = first;
 
-    /* ==> A REQUESTED YEAR THE ARCHIVE DOES NOT HOLD IS DROPPED, NOT DRAWN.
+    /* ==> AND THE DEFAULT YEAR IS THE SEASON IN PROGRESS. <== Aaron's call,
+     * 2026-08-24. It is the newest year and the one a reader most likely came
+     * for, and on the Atlantic it is three small files — cheaper than the
+     * 14 KB a busy settled season costs. `yearsFor` already puts it first, so
+     * this is the same "newest year" rule step 5a shipped rather than a second
+     * one.
+     *
+     * ==> A REQUESTED YEAR THE ARCHIVE DOES NOT HOLD IS DROPPED, NOT DRAWN.
      * <== `setSeason` may have been handed a year before this ran. It is a
      * number the link parser accepted, which is not the same as a season this
      * basin has — the Pacific record only opens in 1949, so `?season=1900`
      * is a real Atlantic year with no Pacific half. Falling back to the newest
      * is right; silently loading a file that is not there would spend the
      * reader's one attempt on a 404. */
-    const years = seasons.seasonsIn(index, basin);
+    const years = yearsFor(basin);
     if (year == null || !years.includes(year)) year = years[0] ?? null;
 
     render();
     loadSeasonNow();
   }
 
+  /**
+   * Ask for the season in progress again, and nothing else.
+   *
+   * ==> IT DOES NOT TOUCH THE SEASON ON SCREEN. <== The reader is looking at a
+   * settled year that loaded perfectly; reloading it to recover a different
+   * failure would blank a working roster to fix something else. All this can
+   * change is whether one more option appears in the picker, so all it
+   * re-renders is the board around the same year.
+   */
+  async function retryLive() {
+    if (liveRetrying) return;
+    liveRetrying = true;
+    render();
+
+    const res = await live.loadLiveIndex();
+    liveRetrying = false;
+    liveIndex = res?.status === 'ok' ? res : null;
+    liveReason = res?.status === 'ok' ? '' : (res?.reason || '');
+    render();
+  }
+
   async function loadSeasonNow() {
     if (indexState !== 'ok' || basin == null || year == null) return;
 
     const token = ++loadToken;
+    const wasLive = isLive(basin, year);
     seasonState = 'loading';
     entries = [];
     score = null;
     roster = null;
+    unreadable = 0;
+    provisional = wasLive;
+    /* The filter travels with the season and one of them may not exist on the
+     * next. Falling back to `all` rather than refusing the year: the reader
+     * asked for the season, not for the filter. */
+    if (!filtersFor(provisional).some((f) => f.id === filter)) filter = 'all';
     /* The globe empties the moment the year changes, before the new one
      * arrives. Leaving 2005's tracks up while 1935 loads would put a year on
      * the bar that the globe is not showing. */
@@ -184,7 +278,12 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
     announceWhere();
     render();
 
-    const res = await seasons.loadSeason(index, basin, year);
+    /* ==> THE BRANCH, AND IT IS THE ONLY ONE. <== Everything after this reads
+     * one shape, so a rule about rosters or filters or selection cannot end up
+     * written twice with a difference in it. */
+    const res = wasLive
+      ? await live.loadLiveSeason(liveIndex, basin, year)
+      : await seasons.loadSeason(index, basin, year);
     if (token !== loadToken) return; /* the reader moved on */
 
     if (res.status !== 'ok') {
@@ -197,16 +296,21 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
     entries = res.storms.map((storm) => ({ storm, facts: stormFacts(storm) }))
       .filter((e) => e.facts);
     score = seasonFacts(res.storms, { year, basin });
+    unreadable = res.unreadable || 0;
+
     /* ==> THE FOURTH ARGUMENT IS THE GHOSTS-ARE-THIS-SEASON-ONLY RULE, AND IT
-     * IS READ HERE RATHER THAN INSIDE THE MODULE. <== `lib/season-names.js` is
-     * clock-free by design so the suite can pin any year it likes; the clock
-     * belongs at the edge, which is here. UTC because every date in this app is
-     * UTC, and calendar year is the right question: NHC names an off-season
-     * storm from the list for the calendar year it forms in. */
+     * IS THE LIVE INDEX RATHER THAN THE CLOCK. <== `lib/season-names.js` is
+     * clock-free by design so the suite can pin any year it likes. Step 5a
+     * read `new Date().getUTCFullYear()` here because there was nothing better
+     * to read; there is now. NHC seeds the new year's b-deck directory when it
+     * seeds it, so on 1 January a reader's phone says 2027 and the season in
+     * progress is still 2026 — and ghosts belong to the season, not to the
+     * calendar. Null when there is no live season, which is fail-closed:
+     * no ghosts rather than the wrong ones. */
     roster = rosterFor(
       basin, year,
       entries.map((e) => e.storm.name).filter(Boolean),
-      new Date().getUTCFullYear()
+      liveYear()
     );
     seasonState = 'ok';
     render();
@@ -227,89 +331,6 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
    * snapping to the top every time a checkbox moves.
    * ---------------------------------------------------------------------- */
 
-  function pickerHtml() {
-    const basins = seasons.basinsIn(index);
-    const years = seasons.seasonsIn(index, basin);
-    const i = years.indexOf(year);
-
-    const basinSegs = basins.map((b) => `
-      <button class="seg" type="button" role="radio" data-basin="${esc(b)}"
-              aria-checked="${String(b === basin)}">
-        ${esc(seasons.basinLabel(index, b))}
-      </button>`).join('');
-
-    /* A native <select> for 175 years, and that is a considered choice rather
-     * than a shrug. It is one control that already works by thumb, by mouse
-     * and by keyboard, it gets the OS's own scroll-and-type behaviour free,
-     * and on a phone it opens the platform picker — which beats anything a
-     * list of 175 rows in a 60vh sheet could do. §57.29's Wall of Years is the
-     * richer alternative and is explicitly last, and only if this proves to be
-     * the weak link. */
-    const options = years.map((y) => `
-      <option value="${y}" ${y === year ? 'selected' : ''}>${y}</option>`).join('');
-
-    /* Older is DOWN the list, so "previous year" is the next index along.
-     * Disabled at the ends rather than hidden — a control that vanishes reads
-     * as a bug (§7). */
-    const older = years[i + 1];
-    const newer = years[i - 1];
-
-    return `
-      <div class="seasons-picker">
-        <div class="seg-group" role="radiogroup" aria-label="Basin">${basinSegs}</div>
-        <div class="seasons-year">
-          <button class="seasons-step" type="button" data-step="older"
-                  aria-label="Previous season"
-                  ${older == null ? 'disabled aria-disabled="true"' : ''}>−</button>
-          <select class="seasons-select" aria-label="Season">${options}</select>
-          <button class="seasons-step" type="button" data-step="newer"
-                  aria-label="Next season"
-                  ${newer == null ? 'disabled aria-disabled="true"' : ''}>+</button>
-        </div>
-      </div>`;
-  }
-
-  function scoreHtml() {
-    if (!score) return '';
-
-    const cells = [
-      ['Storms', score.storms],
-      ['Named', score.named],
-      ['Hurricanes', score.hurricanes],
-      ['Majors', score.majors],
-      ['ACE', Number.isFinite(score.ace) ? score.ace.toFixed(1) : '—'],
-      ['Landfalls', score.landfalls],
-    ].map(([k, v]) => `
-      <div class="seasons-stat">
-        <span class="seasons-stat-n">${esc(v)}</span>
-        <span class="seasons-stat-k">${esc(k)}</span>
-      </div>`).join('');
-
-    /* ==> THE UNDERCOUNT LINE IS NOT A FOOTNOTE. <== Before the satellite era
-     * nobody saw the storms that stayed at sea, so a quiet-looking 1935 is not
-     * evidence of a quiet season. Printing six confident numbers with nothing
-     * beside them would be the app making a claim the record cannot support. */
-    const note = score.undercountLikely
-      ? `<p class="seasons-note">Before ${SEASONS.satelliteEraFrom}, storms that stayed out
-         at sea were often never seen. These counts are a floor, not a total.</p>`
-      : '';
-
-    /* Names all spent — the loudest thing a season can say about its own shape,
-     * and for a settled year it is the whole of what ghosts would have said. */
-    const spent = roster?.reachedEnd
-      ? `<p class="seasons-note">Every name on the list was used.</p>`
-      : '';
-
-    return `<div class="seasons-score">${cells}</div>${note}${spent}`;
-  }
-
-  function filtersHtml() {
-    const segs = FILTERS.map((f) => `
-      <button class="seg" type="button" role="radio" data-filter="${esc(f.id)}"
-              aria-checked="${String(f.id === filter)}">${esc(f.label)}</button>`).join('');
-    return `<div class="seg-group" role="radiogroup" aria-label="Filter">${segs}</div>`;
-  }
-
   function visibleEntries() {
     if (filter === 'majors') {
       return entries.filter((e) => Number.isFinite(e.facts.peakWindKt)
@@ -319,139 +340,107 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
     return entries;
   }
 
-  function rowHtml(entry) {
-    const { storm, facts } = entry;
-    const color = categoryColor(facts.peakCategory ?? null, 'tropical', null);
-    const strength = categoryShortLabel(facts.peakCategory ?? null, 'tropical', null);
-    const on = ticked.has(storm.id);
-
-    /* The landfall mark. §57.21 calls these the most confident thing on the
-     * archive globe and the reason the app is called Landfall — so the roster
-     * names it in words for a screen reader rather than leaving a glyph to
-     * carry meaning on its own (§13). */
-    const lf = facts.landfalls.length
-      ? `<span class="seasons-lf" aria-hidden="true">▲</span>`
-      : '';
-    const lfLabel = facts.landfalls.length
-      ? `, made ${facts.landfalls.length === 1 ? 'landfall' : `${facts.landfalls.length} landfalls`}`
-      : '';
-
-    return `
-      <li class="seasons-row">
-        <label class="seasons-check">
-          <input type="checkbox" data-storm="${esc(storm.id)}" ${on ? 'checked' : ''}
-                 aria-label="${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
-          <span class="seasons-dot" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
-          <span class="seasons-name">${esc(displayName(storm))}</span>
-          <span class="seasons-when">${esc(dateRange(facts))}</span>
-          ${lf}
-        </label>
-      </li>`;
-  }
-
   /**
-   * The unused names, for the season still running.
+   * The current season could not be reached.
    *
-   * ==> AND THE OFF-LIST CASE IS SAID OUT LOUD RATHER THAN SWALLOWED. <== A
-   * storm carrying a name that is not on the roster means either the season
-   * ran past its list onto the WMO supplemental one — real, and what replaced
-   * the Greek alphabet in 2021 — or the list in this repo is wrong. Both need
-   * a reader to know, and a roster that quietly hid the second would look
-   * perfect while lying (§5).
+   * ==> IT IS SAID ON EVERY SETTLED YEAR, NOT ONLY WHERE 2026 WOULD HAVE SAT.
+   * <== There is no row to hang it on: the year is simply absent from the
+   * picker, and an absent option explains nothing. A reader who came to see
+   * what is happening now needs to know the road is down rather than conclude
+   * the archive stops at last year.
    */
-  function ghostsHtml() {
-    if (!roster || filter !== 'all') return '';
-
-    const off = roster.offList.length
-      ? `<p class="seasons-note">${esc(roster.offList.join(', '))} ${
-        roster.offList.length === 1 ? 'is' : 'are'} not on this year's list —
-        the season has gone past it, or the list here is out of date.</p>`
-      : '';
-
-    if (!roster.ghosts.length) return off;
-
-    const rows = roster.ghosts.map((n) => `
-      <li class="seasons-row seasons-row-ghost">
-        <span class="seasons-ghost-name">${esc(n)}</span>
-      </li>`).join('');
-
-    return `
-      ${off}
-      <p class="seasons-note" id="seasons-ghosts-note">${roster.ghosts.length}
-        ${roster.ghosts.length === 1 ? 'name is' : 'names are'} still unused this season.</p>
-      <ul class="seasons-roster" aria-labelledby="seasons-ghosts-note">${rows}</ul>`;
+  function liveDownHtml() {
+    if (!basinHasLive(basin)) return '';
+    if (liveRetrying) return waitingHtml('Looking for the season still running…');
+    if (!liveReason) return '';
+    /* ==> AND IT GETS A BUTTON, BECAUSE THIS ONE CAN ACTUALLY SUCCEED. <== §5
+     * asks every error state for a recovery action, and the distinction the
+     * rest of this view draws is whether pressing it could ever work: a year
+     * the archive does not hold gets no Retry, a road that was down for a
+     * moment does. `data/seasons-live.js` drops a failed fetch out of its own
+     * map, so this is a real second attempt rather than a replay. */
+    return `<p class="seasons-note seasons-bad">The season still running could not
+      be reached, so it is not in the list above. The settled years are all here.</p>
+      <button class="seasons-retry" type="button" data-retry="live">Try again</button>`;
   }
 
   function rosterHtml() {
     if (seasonState === 'loading') {
-      /* ==> THE TRAILING ELLIPSIS HAS TO MOVE. <== `ui/loading-dots.js`: a
-       * static `…` on glass is indistinguishable from a sentence that has
-       * finished and trailed off, so a reader cannot tell a live fetch from a
-       * screen that has quietly given up. Every waiting sentence in this app
-       * goes through the same helper, and `tools/test-loading-dots.mjs` is
-       * what caught this one sitting outside it. */
-      return `<p class="seasons-note" role="status">${dotted('Reading the record…')}</p>`;
+      return waitingHtml(provisional ? 'Reading this season…' : 'Reading the record…');
     }
 
     if (seasonState === 'unavailable') {
-      /* Two different failures, two different sentences. A year the index does
-       * not carry is not a network problem and offering Retry for it would be
-       * a button that can never work. */
-      const missing = seasonReason === 'not_in_index';
-      return `
-        <p class="seasons-note seasons-bad" role="status">
-          ${missing
-            ? `The archive does not hold ${esc(year)} for this basin.`
-            : `That season could not be loaded. It may be a connection problem.`}
-        </p>
-        ${missing ? '' : '<button class="seasons-retry" type="button">Try again</button>'}`;
+      return seasonFailedHtml({ year, reason: seasonReason });
     }
 
     const rows = visibleEntries();
 
+    /* ==> GHOSTS ARE A WHOLE-SEASON FACT AND A NARROWED LIST IS NOT THE PLACE
+     * FOR THEM. <== Step 5a's rule, kept deliberately across the markup split:
+     * "eighteen names are still unused" is about the season, and printing it
+     * under a Majors list would put an unfiltered claim at the foot of a
+     * filtered one. `null` rather than a flag — the markup is told what to
+     * draw, never what the state is (§57.18a). */
+    const ghosts = filter === 'all' ? roster : null;
+
     if (!rows.length) {
-      /* ==> AN EMPTY ROSTER IS A REAL ANSWER HERE, AND IT HAS TWO CAUSES. <==
-       * Either the record says the year was quiet — the Atlantic recorded two
-       * storms in 1914 — or the reader's own filter matched nothing. They are
-       * different facts and a reader who cannot tell them apart will think the
-       * archive is broken. */
-      const filtered = entries.length > 0;
       return `
-        <p class="seasons-note">
-          ${filtered
-            ? `No storms in ${esc(year)} match that filter.`
-            : `The record has no storms for ${esc(year)} in this basin.`}
-        </p>
-        ${ghostsHtml()}`;
+        ${emptyRosterHtml({ year, filtered: entries.length > 0, provisional })}
+        ${ghostsHtml(ghosts)}`;
     }
 
+    const list = rows
+      .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
+      .join('');
+
     return `
-      <ul class="seasons-roster">${rows.map(rowHtml).join('')}</ul>
-      ${ghostsHtml()}`;
+      <ul class="seasons-roster">${list}</ul>
+      ${ghostsHtml(ghosts)}`;
   }
 
   function render() {
     if (!bodyEl) return;
 
     if (indexState === 'loading') {
-      bodyEl.innerHTML =
-        `<p class="seasons-note" role="status">${dotted('Opening the archive…')}</p>`;
+      bodyEl.innerHTML = waitingHtml('Opening the archive…');
       return;
     }
 
     if (indexState === 'unavailable') {
-      bodyEl.innerHTML = `
-        <p class="seasons-note seasons-bad" role="status">
-          The archive index could not be loaded, so there are no years to choose from.
-        </p>
-        <button class="seasons-retry" type="button">Try again</button>`;
+      bodyEl.innerHTML = indexFailedHtml();
       return;
     }
 
+    /* ==> EACH PIECE IS BUILT BEFORE THE TEMPLATE, NOT INSIDE IT. <== Partly
+     * readability, and partly because `tools/css-orphan-check.mjs` scans
+     * template literals for the classes this app emits — a method call sitting
+     * inside one reads as a class name to it, and it reported `.basinsIn` and
+     * `.basinLabel` as dead CSS. A checker that can be confused by formatting
+     * is one whose next real finding gets waved through as noise. */
+    const picker = pickerHtml({
+      basins: seasons.basinsIn(index),
+      labelFor: (b) => seasons.basinLabel(index, b),
+      basin,
+      years: yearsFor(basin),
+      year,
+      liveYear: liveYear(),
+    });
+
+    const scorecard = scoreHtml({
+      score,
+      roster,
+      provisional,
+      unreadable,
+      stale: Boolean(provisional && liveIndex?.stale),
+    });
+
+    const filters = filtersHtml({ filters: filtersFor(provisional), filter });
+
     bodyEl.innerHTML = `
-      ${pickerHtml()}
-      ${scoreHtml()}
-      ${filtersHtml()}
+      ${picker}
+      ${liveDownHtml()}
+      ${scorecard}
+      ${filters}
       ${rosterHtml()}`;
   }
 
@@ -470,8 +459,10 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
       basin = next;
       /* Hold the year across a basin change when the other basin has it. The
        * Pacific record opens in 1949, so 1900 has no Pacific half — falling
-       * back to that basin's newest year is better than refusing the switch. */
-      const years = seasons.seasonsIn(index, basin);
+       * back to that basin's newest year is better than refusing the switch.
+       * `yearsFor` rather than the settled list, so switching basins inside
+       * the season in progress stays inside it. */
+      const years = yearsFor(basin);
       if (!years.includes(year)) year = years[0] ?? null;
       loadSeasonNow();
       return;
@@ -479,7 +470,7 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
 
     const step = e.target.closest('[data-step]');
     if (step) {
-      const years = seasons.seasonsIn(index, basin);
+      const years = yearsFor(basin);
       const i = years.indexOf(year);
       const next = step.dataset.step === 'older' ? years[i + 1] : years[i - 1];
       if (next == null) return;
@@ -501,6 +492,14 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
     }
 
     if (e.target.closest('.seasons-retry')) {
+      /* Checked FIRST, because it is the narrower case. This button sits on a
+       * board whose settled index loaded fine and whose season is on screen,
+       * so both branches below would have run and neither would have asked
+       * for the thing that actually failed. */
+      if (e.target.closest('[data-retry="live"]')) {
+        retryLive();
+        return;
+      }
       if (indexState === 'unavailable') {
         indexState = 'loading';
         render();

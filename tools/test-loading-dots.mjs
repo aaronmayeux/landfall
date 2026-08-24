@@ -89,7 +89,15 @@ ok(jsMs === cssMs, `the two agree (motion.js ${jsMs}, index.html ${cssMs})`);
 /* Comments talk ABOUT these strings constantly, so lines that are comment
  * continuations or contain no quote at all are skipped. What is left is
  * user-facing copy. */
-const HELPERS = /dotted\(|dotsEl\(|setDottedText\(|DOTS|endsWith\('…'\)/;
+/* `waitingHtml(` is `ui/seasons-board-markup.js`'s one-line front door onto
+ * `dotted()` — the season board hands it a sentence and gets the animated
+ * version back. It was added when the board's markup was split out (§57.18b):
+ * the view kept the sentences and the markup file kept the import, so the view
+ * had ellipses and no helper in sight and this check called it a stray. It was
+ * right to. The wrapper counts because it IS the route, not because naming it
+ * here makes the warning go away — the day something types a bare `…` and
+ * calls nothing, this must still bite. */
+const HELPERS = /dotted\(|dotsEl\(|setDottedText\(|waitingHtml\(|DOTS|endsWith\('…'\)/;
 const stray = [];
 
 for (const file of readdirSync(join(ROOT, 'ui')).filter((f) => f.endsWith('.js'))) {

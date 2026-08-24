@@ -900,6 +900,118 @@ and East Pacific 1–9 are AMANDA through ISELLE, in order.
 that is what makes it a ghost. **Do not build a scraper**, same reasoning as
 §57.17's retired names.
 
+### 57.18b The season in progress, as built
+
+Step 5b, 2026-08-24. `data/seasons-live.js`, `ui/seasons-board-markup.js`, and
+the second road through `ui/view-seasons-board.js`. §57.18a above is step 5a;
+this is the half that reads the year currently happening.
+
+**==> IT IS A SECOND ROAD, NOT A SECOND SCREEN. <==** A settled year is one
+static file in this repo; the running year is `/api/seasons/live`, one ATCF
+b-deck per storm through `/api/seasons/storm`, and a different parser (§58).
+There is exactly ONE branch in the view — the line that picks which facade to
+ask — and everything after it reads one shape, so a rule about rosters, filters
+or selection cannot end up written twice with a difference in it.
+
+**THE BOARD OPENS ON IT.** Aaron's call. It is the newest year and the one a
+reader most likely came for, and on the Atlantic it is three small files — less
+than the 14 KB a busy settled season costs. `yearsFor` puts it at the head of
+the list, so this is step 5a's "newest year" rule rather than a second one. The
+option says `2026 — this season`, because a bare year beside `2025` would read
+as one more year NOAA has reviewed.
+
+**==> WHICH YEAR IS "IN PROGRESS" COMES OFF THE FILENAMES, NEVER OFF THE
+READER'S CLOCK. <==** §58.1's rule, carried through the client. NHC seeds the
+new year's b-deck directory when it seeds it, so on 1 January a phone says 2027
+and the season in progress is still 2026. Step 5a read
+`new Date().getUTCFullYear()` for the ghost gate because there was nothing
+better to read; there is now, and **there is no clock anywhere on this path.**
+`rosterFor`'s fourth argument is the live year, and it is null when there is no
+live season — fail-closed, no ghosts rather than the wrong ones.
+
+**GHOSTS FINALLY HAVE A YEAR TO APPEAR ON**, which is the visible half of this
+step. They stay off a NARROWED roster: "eighteen names are still unused" is a
+whole-season fact and printing it at the foot of a Majors list puts an
+unfiltered claim under a filtered one.
+
+#### The landfall figure is a dash, and that is measured
+
+**==> THE WORKING BEST TRACK CARRIES NO LANDFALL MARKER. <==** A landfall mark
+is NOAA's `L` record identifier, which lives in HURDAT2 and in no ATCF b-deck.
+Counted over all fifteen 2026 b-decks in `samples/seasons-live/` — 601 rows —
+the parser finds zero, on storms that plainly reached land.
+
+So the scorecard shows **a dash rather than a zero**, and the Landfalls filter
+is not offered. In an app called Landfall, `0` on that cell reads as *nothing
+reached land this year*; both are six characters on a phone and only one of
+them is true. A filter that can only ever come back empty is the same mistake
+as a Retry button on a year the archive does not hold (§57.18a). The filter
+returns on any settled year, and the suite asserts that too — a control removed
+for one season and never restored is the same bug wearing the other face.
+
+**==> AND THE TRAP IS THAT AN `L` IS SITTING RIGHT THERE. <==** ATCF column 23
+is the SUBREGION letter. Over those same 601 rows it takes exactly three values
+and they are the three basins: `L` on all 55 Atlantic rows, `C` on all 144
+Central Pacific ones, `E` on all 402 East Pacific ones. Anyone reaching for it
+would ship a feature marking every Atlantic record as a landfall and no Pacific
+one. `tools/test-seasons-live.mjs` asserts no b-deck point is ever read as a
+landfall, so a future parser change cannot quietly start believing it.
+
+#### The Central Pacific rides with the East Pacific
+
+`SEASONS.liveBasins` maps `atlantic → AL` and `epacific → EP, CP`, and the
+mapping is **NOAA's own filing, measured in this repo's files**:
+`epacific-2024` holds CP012024, `epacific-2025` holds CP012025 and CP022025.
+Anything else would make the season in progress disagree with the 77 settled
+years behind it, and **Lala and Moke would fall off the board with nothing on
+screen saying a storm was missing.** Both suites name them rather than counting
+rows, because a count passes perfectly when CP is dropped.
+
+#### Three states, and the gaps are counted
+
+- **A basin with no storms yet is `ok`** — *"No storms have formed yet in 2026
+  in this basin"*. In June that is simply true, and it is a different sentence
+  from a settled year's *"The record has no storms for 1914"*.
+- **Storms that would not load are counted out loud.** The index says fifteen
+  and twelve arrive: a season quietly three storms short reads as complete.
+  **And the second clause of that sentence is not a flourish** — a storm's NAME
+  is inside the file that would not load, so its name also turns up in the
+  unused list below. Nothing can fix that (the index carries ids, not names),
+  so it is disclosed. Left unsaid, the ghost list would be quietly wrong on
+  exactly the day something is already wrong.
+- **Every storm failing is an OUTAGE, never a quiet season.** The road is down,
+  not the record.
+- **A stored copy says so** — it is a correct list of what it knew about and
+  cannot promise nothing has formed since.
+- **The live index being unreachable is not "there is no current season".** The
+  year is simply absent from the picker, and an absent option explains nothing,
+  so the sentence goes on the board — **with a button**, because unlike a year
+  the archive does not hold, this is a failure a second attempt can fix. It
+  asks only for the live index and leaves the settled year on screen untouched.
+
+#### Politeness, and the reader's phone
+
+Per-storm tracks are **not warmed** (§58.3) and are fetched
+`SEASONS.liveFetchConcurrency` at a time — four. The ceiling is the reader's
+phone as much as NOAA's server: fifteen parallel requests on a cell connection
+is fifteen slow requests, not one fast one. The suite asserts both that the cap
+holds and that it is actually REACHED, so a future change that serialises the
+whole thing fails rather than passing quietly.
+
+#### Two structural notes
+
+**The board's markup moved to `ui/seasons-board-markup.js`.** The view was 584
+lines and this step would have carried it past §12's ceiling. The cut is state
+versus markup: the view owns what is true, that file owns what it looks like,
+and every function in it is pure — told what to draw, never what the state is.
+That is what stops a rule ending up written once in the state machine and once
+in a template.
+
+**`tools/spec-index.mjs` now indexes lettered subsections.** Its heading pattern
+stopped at the digits, so §57.4a, §57.16a, §57.18a and this section were all
+absent from `SPEC-INDEX.md` — a session told to look one up found nothing and
+read the whole file, which is the cost the index exists to avoid.
+
 ### 57.19 Filters, and the near-home slider
 
 **All · Majors · Landfalls · Near home.** "None" is gone; it was a button that
@@ -1407,11 +1519,13 @@ by the contrast gate.
 
 ---
 
-**STEP 5 — THE SEASON BOARD. ==> BUILT, AND SPLIT IN TWO. <==**
-`data/seasons.js`, `ui/view-seasons-board.js`, `map/layers/season-tracks.js`,
+**STEP 5 — THE SEASON BOARD. ==> BOTH HALVES BUILT. <==**
+`data/seasons.js`, `data/seasons-live.js`, `ui/view-seasons-board.js`,
+`ui/seasons-board-markup.js`, `map/layers/season-tracks.js`,
 `lib/season-names.js`, and the board's block in `seasons/seasons.css`.
 
-**WHAT IT IS lives in §57.18a below.** Read that, not this.
+**WHAT IT IS lives in §57.18a (5a) and §57.18b (5b) below.** Read those, not
+this.
 
 **==> IT IS TWO PUSHES BECAUSE THE TWO HALVES READ DIFFERENT SOURCES. <==** A
 settled year is a static file in this repo; the year currently running is two
@@ -1422,7 +1536,9 @@ a ghost.
 - **5a — SETTLED SEASONS.** 1851 to the last reviewed year, both NHC basins.
   Picker, scorecard, filters, roster, tracks.
 - **5b — THE SEASON IN PROGRESS.** `/api/seasons/live`, one b-deck per storm,
-  and the ghost roster. **Ghosts exist only here** — see §57.18a.
+  and the ghost roster. **Ghosts exist only here** — see §57.18a. **Done
+  2026-08-24; §57.18b is the as-built account**, including the landfall dash
+  and why the Central Pacific rides with the East Pacific.
 
 **AARON'S CALL, 2026-08-24: GHOSTS ARE THE CURRENT YEAR ONLY.** §57.18 wanted
 them on every season. That needs a per-year name list for 175 years, which no
@@ -1437,6 +1553,9 @@ account, including every gate the job refuses on.
 
 **Aaron looks at (5a):** 2005 against 1935 and 2025. The shape of a season
 should be visible without reading.
+**Aaron looks at (5b):** 2026 on both basins. Does the season in progress read
+as unfinished rather than as a thin year — the ghosts, the provisional line,
+the landfall dash.
 **Done when:** ticking storms puts them on the globe and unticking removes
 them, by tap and by keyboard.
 

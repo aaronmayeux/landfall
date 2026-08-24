@@ -19,7 +19,7 @@
  * Zero dependencies, plain node.
  */
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -82,9 +82,20 @@ class El {
   }
 
   matches(sel) {
+    /* `[data-step]` and `[data-retry="live"]` both. ==> THE VALUE FORM WAS
+     * MISSING AND IT FAILED SILENTLY. <== `matches` returning false is what a
+     * non-matching element does, so a selector this stand-in could not read
+     * looked exactly like a button nobody pressed, and the suite reported the
+     * view as broken. Anything added here must be readable, or the next
+     * unreadable selector tells the same lie. */
     if (sel.startsWith('[') && sel.endsWith(']')) {
-      const key = sel.slice(1, -1).replace(/^data-/, '').replace(/-(\w)/g, (_, c) => c.toUpperCase());
-      return this.dataset[key] !== undefined;
+      const inner = sel.slice(1, -1);
+      const eq = inner.indexOf('=');
+      const attr = eq === -1 ? inner : inner.slice(0, eq);
+      const want = eq === -1 ? null : inner.slice(eq + 1).replace(/^["']|["']$/g, '');
+      const key = attr.replace(/^data-/, '').replace(/-(\w)/g, (_, c) => c.toUpperCase());
+      const got = this.dataset[key];
+      return want == null ? got !== undefined : got === want;
     }
     if (sel.startsWith('.')) return (this.attrs.class || '').split(/\s+/).includes(sel.slice(1));
     if (sel.startsWith('#')) return this.attrs.id === sel.slice(1);
@@ -138,11 +149,14 @@ globalThis.document = {
  * ------------------------------------------------------------------------ */
 
 const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
-const { parseHurdat2 } = await import('../lib/hurdat.js');
+const { parseHurdat2, parseBdeck } = await import('../lib/hurdat.js');
+const { liveStormsIn } = await import('../data/seasons-live.js');
 const { createSeasonsBoardView } = await import('../ui/view-seasons-board.js');
 
-/** How many times the stub was asked for a season, so a suite can prove the
- *  board is not re-fetching a year it already has on screen. */
+/** How many times a stub was asked for a season, EITHER ROAD. Counting only
+ *  the settled one would have gone quiet the moment the board started opening
+ *  on the season in progress, and the assertion it guards — that a bad deep
+ *  link costs one fetch rather than two — would have passed on nothing. */
 let seasonLoads = 0;
 let failNextSeason = null;
 
@@ -167,12 +181,97 @@ const seasons = {
   },
 };
 
+/* ---------------------------------------------------------------------------
+ * THE SECOND ROAD — §57.30 step 5b.
+ *
+ * ==> STUBBED AT THE FACADE, BUILT FROM THE REAL B-DECKS. <== The same shape
+ * `data/seasons.js` is stubbed in above, for the same reason: there is no
+ * network here. What is NOT invented is anything behind it — the storms come
+ * out of `parseBdeck` reading `samples/seasons-live/`, and the basin mapping
+ * is the shipped `liveStormsIn` rather than a second copy of the rule. A
+ * hand-written 2026 would have passed while getting the Central Pacific wrong,
+ * which is the one thing that mapping exists to get right.
+ * ------------------------------------------------------------------------ */
+
+const LIVE_DIR = join(ROOT, 'samples', 'seasons-live');
+const LIVE_STORMS = readdirSync(LIVE_DIR)
+  .filter((f) => /^b[a-z]{2}\d{6}\.dat$/i.test(f))
+  .map((f) => {
+    const id = f.replace(/^b|\.dat$/gi, '').toLowerCase();
+    return {
+      id,
+      basin: id.slice(0, 2).toUpperCase(),
+      number: Number(id.slice(2, 4)),
+      year: Number(id.slice(4, 8)),
+      file: f,
+    };
+  });
+
+/** The live index is down, with this reason. Null when it is up. */
+let liveIndexFails = null;
+/** The answer came out of a stored copy. */
+let liveStale = false;
+/** Storm ids whose track will not load, so `unreadable` is a real count
+ *  rather than a number the suite hands the view. */
+const liveBroken = new Set();
+/** Which year the b-deck directory says the season in progress is. Its own
+ *  switch because the whole point of §58.1 is that this number comes off the
+ *  FILENAMES rather than off the reader's clock, and a suite that only ever
+ *  drives the year it happens to be running in cannot tell the two apart. */
+let liveYearIs = 2026;
+
+const live = {
+  loadLiveIndex: async () => (liveIndexFails
+    ? { status: 'unavailable', reason: liveIndexFails }
+    : {
+      status: 'ok',
+      year: liveYearIs,
+      years: [liveYearIs],
+      storms: LIVE_STORMS.map(({ file, ...s }) => ({ ...s, year: liveYearIs })),
+      stale: liveStale,
+      fetchedAt: '2026-08-24T21:00:00.000Z',
+    }),
+
+  loadLiveSeason: async (liveIndex, basin, year) => {
+    seasonLoads++;
+    const wanted = liveStormsIn(liveIndex, basin, year);
+    const storms = [];
+    let unreadable = 0;
+    for (const s of wanted) {
+      if (liveBroken.has(s.id)) { unreadable++; continue; }
+      const file = LIVE_STORMS.find((x) => x.id === s.id)?.file;
+      if (!file) { unreadable++; continue; }
+      const { storm } = parseBdeck(readFileSync(join(LIVE_DIR, file), 'utf8'), { id: s.id });
+      if (storm) storms.push(storm); else unreadable++;
+    }
+    if (wanted.length && !storms.length) {
+      return {
+        status: 'unavailable',
+        reason: `none of the ${wanted.length} storms this season could be read`,
+        year,
+        basin,
+      };
+    }
+    storms.sort((a, b) => (a.points[0]?.time ?? 0) - (b.points[0]?.time ?? 0));
+    return { status: 'ok', storms, faults: [], unreadable, year, basin, provisional: true };
+  },
+};
+
+/** Put every live switch back, so one case cannot leak into the next. */
+function freshLive() {
+  liveIndexFails = null;
+  liveStale = false;
+  liveYearIs = 2026;
+  liveBroken.clear();
+}
+
 /** Build a mounted board and wait for the index and first season to land. */
 async function board({ year = null } = {}) {
   const drawn = [];
   const where = [];
   const view = createSeasonsBoardView({
     seasons,
+    live,
     onSelection: (sel) => drawn.push(sel.map((e) => e.storm.id)),
     onWhere: (w) => where.push(w),
   });
@@ -389,6 +488,213 @@ const text = (body) => body.innerHTML;
     where.some((w) => w && w.year !== 1066));
   eq('and only one season was fetched, not a doomed one first',
     seasonLoads - before, 1);
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. THE SEASON IN PROGRESS — §57.30 step 5b.
+ *
+ * The board opens on it, says it is not the reviewed record, and shows the
+ * names it has not spent. This is the whole of what 5b adds that a reader can
+ * see, so it is asserted as one screen rather than as four properties.
+ * ------------------------------------------------------------------------ */
+{
+  freshLive();
+  const { body, where } = await board();
+
+  eq('the board opens on the season in progress', where.at(-1)?.year, 2026);
+  ok('the picker says which option is that season',
+    /2026 — this season/.test(text(body)));
+  ok('the Atlantic side of it has storms', rows(body).length > 0);
+  ok('ARTHUR is on the roster', /ARTHUR/.test(text(body)));
+
+  /* §57.11 — the app has to be able to say WHICH record it is showing. */
+  ok('it says these are working numbers, not the reviewed record',
+    /working numbers for a season still/.test(text(body)));
+
+  /* ==> GHOSTS, AT LAST. <== §57.18a. The whole reason the roster is
+   * chronological is that how far down the alphabet it reaches is how far the
+   * season got, and only a season still running has an unspent tail. */
+  ok('the unused names are on screen',
+    body.querySelectorAll('.seasons-row-ghost').length > 0);
+  ok('DOLLY has not been used this season', /DOLLY/.test(text(body)));
+  ok('and it says how many are left', /still unused this season/.test(text(body)));
+
+  /* ==> GHOSTS ARE A WHOLE-SEASON FACT AND STAY OFF A NARROWED LIST. <== Step
+   * 5a's rule. "Eighteen names are still unused" is about the season; printed
+   * at the foot of a Majors list it is an unfiltered claim under a filtered
+   * one, and the reader has no way to know which of the two it belongs to. */
+  const majors = body.querySelectorAll('[data-filter]').find((b) => b.dataset.filter === 'majors');
+  body.fire('click', majors);
+  eq('a narrowed roster shows no ghost rows',
+    body.querySelectorAll('.seasons-row-ghost').length, 0);
+  ok('and says nothing about names remaining', !/still unused this season/.test(text(body)));
+}
+
+{
+  /* ==> WHICH SEASON IS "IN PROGRESS" COMES OFF THE RECORD, NEVER OFF THE
+   * READER'S CLOCK. <== §58.1. NHC seeds the new year's b-deck directory when
+   * it seeds it, so on 1 January a phone says 2027 and the season in progress
+   * is still 2026 — and ghosts belong to the season rather than to the
+   * calendar. The real case cannot be driven here without moving the clock, so
+   * this drives its mirror image: the directory names a year the reader's
+   * calendar has not reached. Either way a clock in this path fails, and there
+   * is no clock in this path. */
+  freshLive();
+  liveYearIs = 2027;
+  const { body, where } = await board();
+
+  eq('the board opens on the year the record names', where.at(-1)?.year, 2027);
+  ok('and its unused names are that year\'s',
+    body.querySelectorAll('.seasons-row-ghost').length > 0);
+  /* 2027's Atlantic list opens ANA, BILL, CLAUDETTE — nothing like 2026's. A
+   * roster keyed on the wrong year would show the wrong alphabet, not none. */
+  ok('which is 2027\'s list, not 2026\'s',
+    /seasons-ghost-name">ANA</.test(text(body))
+    && !/seasons-ghost-name">DOLLY</.test(text(body)));
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. ==> LANDFALLS: A DASH, NOT A ZERO, AND NO FILTER. <==
+ *
+ * The working best track carries no landfall marker — that is NOAA's `L`
+ * record identifier and it lives only in the reviewed HURDAT2 file. `0` on
+ * that cell would read as "nothing reached land this year" in an app called
+ * Landfall, and a filter that can only ever come back empty is a control that
+ * cannot succeed.
+ * ------------------------------------------------------------------------ */
+{
+  freshLive();
+  const { body } = await board();
+
+  const filters = body.querySelectorAll('[data-filter]').map((b) => b.dataset.filter);
+  eq('the season in progress offers no landfalls filter', filters, ['all', 'majors']);
+  ok('the landfall count is a dash rather than a zero',
+    /<span class="seasons-stat-n">—<\/span>\s*<span class="seasons-stat-k">Landfalls/.test(text(body)));
+  ok('and it says where the marks come from instead',
+    /Landfall marks\s+come with that reviewed record/.test(text(body)));
+  ok('no row claims a landfall', !/made landfall/.test(text(body)));
+}
+
+{
+  /* ==> AND THE FILTER COMES BACK ON A SETTLED YEAR. <== A control removed for
+   * one season and never restored is the same bug wearing the opposite face. */
+  freshLive();
+  const { body } = await board();
+  const select = body.querySelector('.seasons-select');
+  select.value = '2005';
+  body.fire('change', select);
+  await settle();
+
+  const filters = body.querySelectorAll('[data-filter]').map((b) => b.dataset.filter);
+  eq('a settled year offers all three again', filters, ['all', 'majors', 'landfalls']);
+  ok('and its landfall count is a real number',
+    /<span class="seasons-stat-n">\d+<\/span>\s*<span class="seasons-stat-k">Landfalls/.test(text(body)));
+}
+
+/* ---------------------------------------------------------------------------
+ * 12. THE CENTRAL PACIFIC RIDES WITH THE EAST PACIFIC.
+ *
+ * ==> IT IS NOAA'S OWN FILING, AND GETTING IT WRONG IS SILENT. <== The
+ * reviewed record puts CP storms in the East Pacific file; if the live half
+ * did not, Lala and Moke would simply not be on the board and nothing on
+ * screen would say a storm was missing.
+ * ------------------------------------------------------------------------ */
+{
+  freshLive();
+  const { body } = await board();
+  const pacific = body.querySelectorAll('[data-basin]')
+    .find((b) => b.dataset.basin === 'epacific');
+  body.fire('click', pacific);
+  await settle();
+
+  const ids = rows(body).map((r) => r.dataset.storm);
+  ok('the East Pacific side of the season has storms', ids.length > 0);
+  ok('and every one of them is an EP or a CP storm',
+    ids.every((id) => /^(ep|cp)/i.test(id)));
+
+  /* ==> NAMED, NOT COUNTED, AND IN THE CASE THE ROWS ACTUALLY CARRY. <==
+   * Asserting only that every id starts EP or CP passes perfectly when CP is
+   * dropped — the rows just quietly stop being there. Lala and Moke are the
+   * only Central Pacific storms in the record this year, so they are the whole
+   * test. The ids are UPPERCASE on a row: `lib/hurdat.js` normalises them that
+   * way, while the route's own ids are lowercase, and a lowercase comparison
+   * here would have been a check that could never fail. */
+  ok('LALA is on the board', ids.includes('CP012026') && /LALA/.test(text(body)));
+  ok('MOKE is on the board', ids.includes('CP022026') && /MOKE/.test(text(body)));
+}
+
+/* ---------------------------------------------------------------------------
+ * 13. §5 ON THE SECOND ROAD — three states, and the gaps are counted.
+ * ------------------------------------------------------------------------ */
+{
+  /* ==> A STORM THAT WOULD NOT LOAD IS COUNTED OUT LOUD. <== The index said
+   * three and two arrived: a season quietly one storm short looks exactly like
+   * a season that had two, and the roster is what the reader believes. */
+  freshLive();
+  liveBroken.add('al012026');
+  const { body } = await board();
+  ok('a storm that would not load is counted', /could\s+not be read/.test(text(body)));
+  ok('and the ones that did load are still shown', rows(body).length > 0);
+  ok('the missing one is off the roster',
+    !rows(body).some((r) => r.dataset.storm === 'AL012026'));
+
+  /* ==> ITS NAME IS NOW IN THE UNUSED LIST, AND THAT IS DISCLOSED. <== The
+   * name lives inside the file that would not load, so the roster genuinely
+   * cannot tell ARTHUR was spent. Nothing can fix that; leaving it unsaid
+   * would make the ghost list quietly wrong on the one day something is
+   * already wrong. */
+  ok('ARTHUR has fallen into the unused names',
+    /seasons-ghost-name">ARTHUR</.test(text(body)));
+  ok('and the board says that is what happened',
+    /may show as unused below/.test(text(body)));
+}
+
+{
+  /* Every storm failing is an OUTAGE, never a quiet season. */
+  freshLive();
+  for (const s of LIVE_STORMS) liveBroken.add(s.id);
+  const { body } = await board();
+  ok('a season where nothing loaded says it failed',
+    /could not be loaded/.test(text(body)));
+  ok('and never claims the season was quiet',
+    !/No storms have formed yet/.test(text(body)));
+}
+
+{
+  /* A stored copy is a correct list of what it knew about, and cannot promise
+   * nothing has formed since. Said rather than hidden. */
+  freshLive();
+  liveStale = true;
+  const { body } = await board();
+  ok('a stored copy says so', /came from a stored copy/.test(text(body)));
+}
+
+{
+  /* ==> THE LIVE INDEX BEING DOWN IS NOT "THERE IS NO CURRENT SEASON". <==
+   * The year is simply absent from the picker, and an absent option explains
+   * nothing — so the sentence goes on the board, with a button, because this
+   * is a failure a second attempt can actually fix. */
+  freshLive();
+  liveIndexFails = 'the current season answered 502';
+  const { body, where } = await board();
+
+  ok('the board still opens on a settled year', where.at(-1)?.year === 2025);
+  ok('and says the season still running could not be reached',
+    /could not\s+be reached/.test(text(body)));
+  ok('with a way to try again', /data-retry="live"/.test(text(body)));
+  ok('2026 is not in the picker', !/2026/.test(text(body)));
+
+  /* The recovery actually recovers, and it does not disturb the year on
+   * screen while doing it. */
+  liveIndexFails = null;
+  const retry = body.querySelectorAll('[data-retry]')[0];
+  body.fire('click', retry);
+  await settle();
+  await settle();
+
+  ok('retrying puts the season in progress back in the picker',
+    /2026 — this season/.test(text(body)));
+  ok('and the year on screen did not change', where.at(-1)?.year === 2025);
 }
 
 /* ------------------------------------------------------------------------ */
