@@ -176,7 +176,7 @@ control for both — she should look unchanged.
 
 **SEASONS — MEASURE NHC's OWN ARCHIVE BEFORE BUILDING ANY OF IT.** One Actions
 job, no app change, and it turns three assumptions into facts. Planned but not
-started; the spec (`SPEC-SEASONS-PLAN.md`) gates the build on it.
+started; the spec (`SPEC-SEASONS-BUILD.md` §57.30 step 0) gates the build on it.
 
 1. **Read a real b-deck.** `ftp.nhc.noaa.gov/atcf/btk/` — the operational best
    track NOAA publishes DURING the season, one small file per storm, and the
