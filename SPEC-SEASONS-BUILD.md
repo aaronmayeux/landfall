@@ -1013,7 +1013,8 @@ No app change. One GitHub Actions job, because a session cannot reach NOAA.
 
 ---
 
-**STEP 1 — THE PALETTE. ==> LANDED 2026-08-24. NOT YET SEEN ON GLASS. <==**
+**STEP 1 — THE PALETTE. ==> LANDED 2026-08-24. SEEN ON GLASS THROUGH STEP 4'S
+EMPTY GLOBE, EXCEPT FOR THE ONE MEASURED COLLISION. <==**
 Built, gated and pushed. **What it IS lives in `SPEC-MAP.md` §9** — the third
 palette, the forced mode, the round-trip guarantee, the luminance-set land and
 the knowingly-shipped hue collision. Read that, not this.
@@ -1023,18 +1024,17 @@ collision §57.20 measured compares two things that are not drawn alike, so the
 answer is a real Cat 2 crossing a real coast rather than a second paint chip.
 §57.31 item 1 is closed.
 
-**WHAT IS STILL OPEN HERE IS THE LOOKING, AND THERE IS NOTHING TO LOOK AT YET.**
-Sepia is reachable only through `forceMode()`, and nothing calls it — the first
-surface that does is step 4's shell. `mockups/seasons-themes.html` mirrors the
-shipped values and is the only place to see it before then; keep the two in
-step or the mockup becomes a paint chip for a colour nobody can buy.
+**STEP 4 PUT A GLOBE ON SCREEN WEARING IT AND AARON CONFIRMED IT** — sepia
+reads as an archive rather than as a broken theme, and **land against ocean is
+fine at 1.12:1** where dark is 1.20:1. That was the open question with a number
+attached to it and it is answered.
 
-**Two things for Aaron when there is a globe wearing it:**
-1. **The coastline against a Cat 2 dot.** The one measured collision.
-2. **Land against ocean, which came out flatter than dark's** — 1.12:1 where
-   dark is 1.20:1. The coastline is what separates them and it clears the ocean
-   at 7:1, so this may be nothing. If the landmasses read as mush, the lever is
-   the ocean rather than the land: the land is pinned by the contrast gate.
+**==> WHAT IS STILL OPEN IS THE ONE §57.20 ACTUALLY MEASURED: THE COASTLINE
+AGAINST A CAT 2 DOT. <==** Step 4's globe is empty, so there was no dot to
+judge it against. **It cannot be closed before step 6 draws real tracks**, and
+it must not be closed by looking at `mockups/seasons-themes.html` — that page
+mirrors the shipped values and is a paint chip, which is exactly the comparison
+§57.31 item 1 rejected. Keep the mockup in step with the tokens anyway.
 
 ---
 
@@ -1164,8 +1164,8 @@ the 4 invests it dropped, matching `seasons-live`'s manifest exactly.
 
 ---
 
-**STEP 4 — THE SHELL AND THE EMPTY GLOBE. ==> BUILT 2026-08-24, NOT YET SEEN
-ON GLASS. <==**
+**STEP 4 — THE SHELL AND THE EMPTY GLOBE. ==> DONE 2026-08-24, CONFIRMED ON A
+PHONE. <==**
 `lib/archive-mode.js`, `seasons/index.js`, `seasons/bar.js`,
 `seasons/deep-link.js`, `seasons/seasons.css`, `ui/seasons-door.js`, and
 `tools/test-archive-mode.mjs`.
@@ -1195,12 +1195,17 @@ mutation was run.
 the two that matter: deleting the storage wall, and putting the repaint back
 inside `apply()`.
 
-**Aaron looks at:** entering from both doors, the globe with nothing on it,
-leaving, and confirming his live theme came back — including a theme changed
-from Settings **while the archive is open**, which is the one path with a trap
-in it.
-**Done when:** you can get in and out on a phone, and a session in Seasons has
-written nothing into live storage.
+**AARON'S VERDICT, 2026-08-24: both doors, the empty sepia globe, leaving, and
+a theme changed from Settings while inside — all correct on glass.** The
+done-condition is met.
+
+**==> ONE THING THIS DID NOT SETTLE, AND IT IS THE ONE §57.20 MEASURED. <==**
+The sepia coastline against a Cat 2 dot has still not been seen, because there
+were no storms on the globe to see it against. That question is step 6's, not
+this one's. What step 4 DID settle is the other half — land against ocean came
+out flatter in sepia than in dark (1.12:1 against 1.20:1) and reads fine. If
+that ever changes, the lever is the ocean rather than the land, which is pinned
+by the contrast gate.
 
 ---
 
