@@ -190,28 +190,68 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEPS 0, 1, 2, 3a AND 3b ARE DONE. STEP 4 IS THE NEXT ONE. <==**
+**==> SEASONS: STEPS 0 THROUGH 4 ARE BUILT. STEP 5 IS THE NEXT ONE. <==**
 `SPEC-SEASONS-BUILD.md` §57 — the steps are in §57.30, sized for one session
 each. Read §57.1 and §57.30 before touching anything; do not reopen a numbered
 decision without new evidence.
 
-**STEP 3b LANDED AND WHAT IT IS LIVES IN `SPEC-DATA.md` §58 AND `SPEC-OPS.md`
-§18.8.** Read those, not this. The one-line version: settled seasons are static
-files in `seasons/data/` refreshed by a monthly runner, the season in progress
-is two routes backed by KV, and the split between them is decided by Pages'
-500-builds-a-month cap.
+**STEP 3b IS CONFIRMED AND CLOSED.** Aaron read `/api/seasons/live` on a phone
+2026-08-24: 14 storms, the 4 dropped invests named, matching `seasons-live`'s
+manifest. What it IS lives in `SPEC-DATA.md` §58 and `SPEC-OPS.md` §18.8.
 
-**==> THE ONE THING FOR AARON, AND IT IS A URL RATHER THAN A SCREEN. <==**
-After this deploys, open **`landfall.getgravitate.app/api/seasons/live`** on a
-phone. It should list **14 storms and name the 4 invests it dropped**, matching
-`git show origin/seasons-live:manifest.json` exactly. That agreement is the
-whole done-condition of the step, and nothing in the sandbox can check it —
-NOAA and our own live site are both behind the network wall.
+**STEP 4 LANDED AND WHAT IT IS LIVES IN §57.16a.** Read that, not this. The
+one-line version: two doors called **Past storms**, a sepia globe with nothing
+on it, a bar along the bottom with the way out on it, `?season=` deep links,
+and a wall stopping history writing into live storage.
 
-**STILL NOTHING ON GLASS, AND THAT IS FOUR STEPS RUNNING.** No module on the
-boot path imports any of it, so no pixel changed. The first Seasons surface is
-still step 4's shell. Deliberate, and the exception to this project's usual
-rule rather than a lapse.
+**==> THE ONE THING FOR AARON, AND IT IS FOUR MINUTES ON A PHONE. <==** This is
+the first Seasons step with pixels in it, after four with none.
+
+1. **In from both doors** — the bottom of the storms list, and the bottom of
+   the home dashboard. Same row, same words, both should feel like a row rather
+   than a button somebody added.
+2. **The empty globe.** Sepia, nothing on it, and the bar saying why. Does
+   sepia read as an old record or as a broken theme? §57.20's one measured
+   collision — the coastline against a Cat 2 dot — cannot be judged here,
+   because there are no storms; what CAN be judged is land against ocean, which
+   came out flatter than dark's (1.12:1 against 1.20:1). **If the landmasses
+   read as mush, the lever is the ocean, not the land** — the land is pinned by
+   the contrast gate.
+3. **Out again**, and check your own theme came back.
+4. **==> THE ONE WITH A TRAP IN IT: open Settings WHILE in the archive, change
+   the theme, then leave. <==** The theme you picked inside should be the one
+   you get back. Settings is deliberately still reachable in there; Storms,
+   Home and Layers are deliberately not.
+
+**IF ANY OF IT FEELS WRONG, THE RULE IS REVERT, NOT PATCH** — this landed as
+one push because none of it is separable (a door with nothing behind it is not
+a slice), so a bad verdict is `git revert` and a rethink.
+
+**==> IT FOUND A THEME BUG THAT WAS NOT ITS OWN, AND THE FIX IS IN. <==** Every
+repaint in `app/theme-switch.js` sat inside `apply()`, which only runs on a
+SETTINGS change. `forceMode` cannot go through that path — a forced mode has to
+outrank the stored preference — so entering the archive would have moved
+`palette()` and repainted nothing: a dark globe wearing a sepia palette, with
+the Layers panel's swatches correctly sepia beside it. **It fails silently and
+it looks like a Seasons bug.** The repaint is a `subscribeThemeChange`
+subscriber now, so every route to a palette change takes one path. §57.30 step
+4. **This is a change to a path every visitor is on** — if the theme switch
+misbehaves at all this week, look here first.
+
+**A NEW FILE UNDER `seasons/` NEEDS A LINE IN `_headers` BY HAND**, and nothing
+catches the omission. The directory holds both NOAA's immutable history and
+application code, so the code files are listed one by one — §57.16a says why a
+wildcard was not used.
+
+**ELEVEN MUTATIONS WERE RUN AGAINST `tools/test-archive-mode.mjs` AND ALL
+ELEVEN TURNED IT RED**, including deleting the storage wall and reintroducing
+the theme bug above. 64 assertions.
+
+**AND ONE QUESTION LEFT DELIBERATELY UNANSWERED.** Whether JTWC publishes live
+ATCF b-decks during a season the way NHC does. If it does, the rest-of-world
+capture gets a better source than our own relay output. Nothing in the sandbox
+can reach either host to find out, so nothing was assumed — it is a small
+addition to the next probe run.
 
 **==> TWO SPEC SECTIONS WERE WRONG AND REAL BYTES SAID SO. <==**
 

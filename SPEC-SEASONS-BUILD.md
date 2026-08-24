@@ -48,6 +48,7 @@ Everything here was decided in the planning session. The reason is with it.
 | 14 | **All sixteen suggestions from the planning session are in scope** | They are distributed through §57.10–57.29 rather than listed as a block |
 | 15 | **The shelf is every RETIRED NAME plus the famous unnamed storms** — and it is NOT the Tier 2 list | Aaron's call 2026-08-24. Retirement is the WMO's own definition of "bad enough to remember", so the shelf stops being our taste. A shelf entry points at track data we already hold; Tier 2 costs megabytes. §57.17 |
 | 16 | **The forecast stays in Tier 2 in full, and each Tier 2 storm is its own download** | Aaron's call 2026-08-24. Forecast against reality is the reason the feature exists. Per-storm download means nobody pays for a storm they do not open, so size stopped being a reason to cut anything. §57.17a, §57.24 |
+| 17 | **The SCREEN says "Past storms". The feature is still called Seasons everywhere else** | Aaron's call 2026-08-24, and it narrows decision 1 rather than reversing it. Seasons is the right name for the organising unit in a spec; "Past storms" is what a row on a phone has to say to be pressed. The directory, this file and the `?season=` parameter keep the old name. §57.16a |
 
 ### 57.2 What this feature must not break
 
@@ -473,6 +474,106 @@ are never in doubt about which globe you are standing on.
 **Deep links.** `?season=2005` and `?season=2005&storms=katrina,rita,wilma`.
 Shareable, and it means a specific state can be opened on a phone in one tap
 instead of re-ticking six boxes.
+
+---
+
+### 57.16a Getting in and out, as built
+
+Step 4, 2026-08-24. This section describes what IS; §57.16 above is the design
+it was built to.
+
+**==> THE READER NEVER SEES THE WORD "SEASONS". <==** Aaron's call
+2026-08-24, overriding §57.1 decision 1 for the SCREEN only. Both door rows and
+the bar say **Past storms**; the feature, this file, the directory and the
+`?season=` parameter all keep the name Seasons. Two names for one thing on a
+phone is the failure that call avoided, and the on-screen string is written
+down in exactly two places — `DOOR_LABEL` in `ui/seasons-door.js` and
+`ARCHIVE_LABEL` in `seasons/bar.js`.
+
+**THE ONLY THINGS ON THE BOOT PATH ARE THE FLAG, THE TWO ROWS, AND ONE
+FUNCTION.** `lib/archive-mode.js` imports nothing; `ui/seasons-door.js` imports
+nothing; `main.js` holds an `enterSeasons` that does `await import(...)`.
+Everything else — the bar, the deep link, the palette forcing, the exit — is
+fetched the first time somebody presses a door (§57.35 fault 4).
+
+**A FAILED IMPORT SAYS SO.** The module arrives over the network on first
+press, so a reader on a bad connection can press a door and get nothing at all
+— which is the silence §5 forbids, and it is a failure shape a dynamic import
+introduces rather than one that existed before. Both call sites put a real
+sentence on the status strip.
+
+**WHAT ENTERING IS, IN ORDER.** The wall, then the live app, then the palette,
+then the bar. Leaving runs all four backwards, and the order is not cosmetic: a
+repaint landing while the globe is still empty is one frame of the right
+colours with nothing on them, and a repaint landing after the storms are back
+is one frame of the WRONG colours with storms on them.
+
+1. **`lib/archive-mode.js` goes up.** One flag, and `data/lifecycle.js` reads
+   it before it writes — see §57.2.
+2. **The live globe empties.** `main.js` owns a `liveGlobe` facade with `hide`
+   and `show`; the archive is handed it rather than importing `map/` or
+   `data/` itself. Storm dots, watched areas (both the MapLibre patches and the
+   3D rings), imagery, the 3D cage and the flood polygons. The poll keeps
+   running behind it — stopping it would mean leaving into a stale app — but
+   five gates stop it repainting any of them, and `show()` re-pushes from
+   `lastFullState`, so **leaving lands on the current weather, not on the
+   weather from the moment of entry.**
+3. **`forceMode(MODE.SEPIA)`.** `releaseMode` restores whatever was live
+   including a settings change made while inside.
+4. **The bar mounts** and `data-seasons="on"` goes on `<html>`.
+
+**==> NOTHING IS "CLEARED" BY PUSHING AN EMPTY ARRAY, AND THAT IS §5 ARRIVING
+FROM AN ODD DIRECTION. <==** An empty push to the watched-area layer is exactly
+what a genuine all-clear looks like. `hide()` owns the emptying deliberately
+and once; the gates only decline to undo it.
+
+**THREE CLUSTER BUTTONS ARE HIDDEN WHILE THE ARCHIVE IS OPEN.** Storms, Home
+and Layers each open a live-app drawer over an empty sepia globe: a list naming
+storms that are not drawn, a dashboard describing a house against a storm that
+is not there, and toggles for layers with no data behind them. `display: none`
+rather than a fade, so they leave the tab order too (§13). **Recenter and
+Settings stay** — the camera is the same camera, and Settings has an explicit
+answer for being used from in here: `setThemeMode` keeps the new preference as
+the RESTORE target instead of applying it, so a theme picked inside the archive
+is the theme you get back on the way out.
+
+**THE BAR CARRIES AN HONEST LINE ABOUT AN EMPTY GLOBE.** *"The year picker is
+not built yet — there is nothing to draw."* An unexplained empty globe reads as
+a broken app, which is §57.1 rule 11 and §5 saying the same thing. **Step 5
+deletes that sentence rather than editing it** — a leftover apology beside a
+working feature is worse than the silence it replaced.
+
+**A DEEP LINK IS VALIDATED, NOT PARSED.** `seasons/deep-link.js` answers with a
+value the rest of Seasons can use unchecked, or with null and a reason.
+`?season=1066` is a **malformed link, not an empty season** — the globe under
+it is empty either way, so only the words can tell a typo from a quiet year,
+and the bar says which. The year floor is `SEASONS.firstSeason`; the ceiling is
+one year past the current one, because a link made on 31 December in one
+timezone is opened on 1 January in another. `?storms=` is lowercased, trimmed,
+deduped, slug-validated and capped at `SEASONS.deepLinkMaxStorms`.
+
+**THE URL IS WRITTEN WITH `replaceState`, NEVER `pushState`**, so the phone's
+own Back gesture does not walk the reader through every year they looked at.
+**Other parameters survive a round trip** — `?replay=ida` is the one that
+matters: entering the archive from a replay page and coming back out lands on
+the replay, not on the live app.
+
+**A FAILED ENTRY LEAVES.** Every step inside entry is wrapped, and a throw
+anywhere in it goes out through the same door a button press would. A reader
+looking at a sepia globe with no storms and no bar has no way back short of a
+reload, which is the one failure in this mode worth spending code on.
+
+**FOCUS IS A CONTRACT AT BOTH ENDS (§13).** Entering closes the drawer, which
+would drop focus onto the document body, so it lands on the Leave button.
+Leaving puts it back on the door row that opened it.
+
+**`seasons/` IS THE ONE DIRECTORY HOLDING BOTH KINDS OF THING** — NOAA's
+immutable history under `seasons/data/`, and application code beside it. The
+`_headers` file therefore names the code files **one by one**: `/seasons/*`
+would overlap the immutable rule, and Cloudflare's own documentation does not
+state that a wildcard may carry a `.js` suffix, so a `/seasons/*.js` rule that
+silently matched nothing would ship modules with no cache instruction at all.
+**A new file under `seasons/` needs a line in `_headers` by hand.**
 
 ### 57.17 The shelf — and it is NOT the Tier 2 list
 
@@ -1063,13 +1164,41 @@ the 4 invests it dropped, matching `seasons-live`'s manifest exactly.
 
 ---
 
-**STEP 4 — THE SHELL AND THE EMPTY GLOBE.**
-**Seasons is dynamically imported here** (§57.35 fault 4) — nothing but the two
-doors may touch the boot path. Both doors from §57.16, the exit bar, the forced
-palette, the archive globe with
-no storms on it, deep-link handling, and **the storage scoping from §57.2**.
+**STEP 4 — THE SHELL AND THE EMPTY GLOBE. ==> BUILT 2026-08-24, NOT YET SEEN
+ON GLASS. <==**
+`lib/archive-mode.js`, `seasons/index.js`, `seasons/bar.js`,
+`seasons/deep-link.js`, `seasons/seasons.css`, `ui/seasons-door.js`, and
+`tools/test-archive-mode.mjs`.
+
+**WHAT IT IS lives in §57.16a below.** Read that, not this.
+
+**==> IT IS THE FIRST STEP WITH PIXELS IN IT, AND THAT ENDS FOUR STEPS OF
+NOTHING TO LOOK AT. <==** Steps 1, 2, 3a and 3b each landed with no module on
+the boot path importing any of them. This one puts two rows on two screens and
+a whole globe behind them.
+
+**==> IT FOUND A BUG IN THE THEME SYSTEM THAT WAS NOT ITS OWN. <==** Every
+repaint in `app/theme-switch.js` — the chrome variables, the 3D globe's
+materials, and the twenty-eight basemap colours — sat inside `apply()`, behind
+`if (!setThemeMode(...)) return;`. `forceMode` does not go through
+`setThemeMode` and cannot: a forced mode has to outrank the stored preference,
+which is the whole reason §57.20's palette is forced rather than selected. So
+entering here would have moved `palette()` and repainted **nothing** — a dark
+globe wearing a sepia palette, with the Layers panel's model swatches (the only
+`subscribeThemeChange` subscriber that existed) correctly turning sepia beside
+it. **It fails silently and it looks like a Seasons bug.** The repaint is a
+theme subscriber now, so a settings flip, an OS flip, entering and LEAVING all
+take one path. `tools/test-archive-mode.mjs` section 7 asserts it and the
+mutation was run.
+
+**ELEVEN MUTATIONS WERE RUN AND ALL ELEVEN TURNED THE SUITE RED**, including
+the two that matter: deleting the storage wall, and putting the repaint back
+inside `apply()`.
+
 **Aaron looks at:** entering from both doors, the globe with nothing on it,
-leaving, and confirming his live theme came back.
+leaving, and confirming his live theme came back — including a theme changed
+from Settings **while the archive is open**, which is the one path with a trap
+in it.
 **Done when:** you can get in and out on a phone, and a session in Seasons has
 written nothing into live storage.
 
