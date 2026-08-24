@@ -171,3 +171,89 @@ export async function loadRainfall(home, { now = Date.now() } = {}) {
   entry = { key, at: now, result };
   return result;
 }
+
+/* ---------------------------------------------------------------------------
+ * THE PAST HALF — §56.14
+ *
+ * ==> IT IS A SECOND MEMO RATHER THAN A SECOND FIELD, AND THE REASON IS THE
+ * AMERICAN HOUSE. <== `loadRainfall` above answers from NWS wherever NWS
+ * answers, and an NWS grid has no elapsed series at all —
+ * `quantitativePrecipitation` is a forecast product and there is no matching
+ * observed one. So on a US house the forecast comes from NWS and the past has
+ * to come from somewhere else, while outside the US the SAME payload carries
+ * both. One store holding two different things depending on where the reader
+ * lives is how a section ends up showing one house's rain under another's
+ * address.
+ *
+ * ==> AND OUTSIDE THE US IT COSTS NO NETWORK AT ALL. <== The first thing this
+ * does is look at the answer `loadRainfall` already holds: if that came from
+ * the global model it carries the past hours already, and it is returned
+ * unchanged. A second fetch of the same URL would be a duplicate request for
+ * bytes already in memory, against a daily quota nothing can measure (§48.14).
+ *
+ * ==> THE SEAM IS INVISIBLE TO THE READER AND THAT IS DELIBERATE (§56.14).
+ * <== On an American house the forecast half is NWS and the past half is
+ * Open-Meteo. One source for what fell, everywhere on Earth, is more
+ * consistent than a past figure that exists in some countries and not others.
+ * It is stated in the provenance line rather than hidden.
+ * ------------------------------------------------------------------------ */
+
+/** ONE ENTRY, same shape and same reasoning as `entry` above. */
+let pastEntry = null; // { key, at, result }
+
+/** Drop the held past answer. The Flooding section's Retry is the only
+ *  caller. */
+export function evictPastRainfall() {
+  pastEntry = null;
+}
+
+/** Test seam, for `resetRainfall`'s reason. */
+export const resetPastRainfall = evictPastRainfall;
+
+/**
+ * The past-rainfall answer for a home, cache-first and cache-filling.
+ *
+ * ==> IT NEVER FALLS BACK AND IT NEVER SUBSTITUTES. <== There is exactly one
+ * source of a past series for this app, so an `unavailable` here is final
+ * until somebody presses Retry. That is the honest shape: the alternative
+ * would be inventing a past from the forecast half, which is the same series
+ * read backwards and would be a figure nobody published.
+ *
+ * ==> THE HOLD MATCHES THE FORECAST'S, AND IT IS GENEROUS FOR THIS FIGURE.
+ * <== `RAIN.clientTtlMs` is fifteen minutes and it is set by flood warnings
+ * expiring, not by any number moving. Rain that has already fallen moves less
+ * than anything else this app fetches — the window slides an hour at a time —
+ * so reusing that constant is comfortably conservative rather than tight, and
+ * it is one number instead of two that drift.
+ */
+export async function loadPastRainfall(home, { now = Date.now() } = {}) {
+  if (!home) return fail('no home');
+  const key = keyOf(home.lat, home.lon);
+
+  /* ==> THE ANSWER MAY ALREADY BE IN THE OTHER MEMO. <== Outside NWS coverage
+   * `loadRainfall` returned a global-model payload, and since §56.14 that
+   * payload carries `RAIN.pastDays` of elapsed hours in the same series. Same
+   * house, same fetch, same bytes. */
+  if (
+    entry &&
+    entry.key === key &&
+    entry.result?.status === 'ok' &&
+    entry.result.payload?.provider === 'open-meteo' &&
+    now - entry.at < RAIN.clientTtlMs
+  ) {
+    return entry.result;
+  }
+
+  if (
+    pastEntry &&
+    pastEntry.key === key &&
+    pastEntry.result.status !== 'unavailable' &&
+    now - pastEntry.at < RAIN.clientTtlMs
+  ) {
+    return pastEntry.result;
+  }
+
+  const result = await ask('/rain/global', home);
+  pastEntry = { key, at: now, result };
+  return result;
+}

@@ -64,6 +64,31 @@ const WIRE_DECIMALS = 2;
  *  in bytes by every reader and shown to none of them. */
 const FORECAST_DAYS = 5;
 
+/** Mirrors `RAIN.pastDays` (3). How far back the series reaches, in the only
+ *  unit this API takes.
+ *
+ *  ==> WHAT IT IS FOR, AND WHY THE RAIN SECTION NEVER SEES IT. <== §56.14.
+ *  Rain already on the ground is the biggest single input to whether the next
+ *  inch floods anybody, and it is the ONLY flood-relevant figure this project
+ *  has found that covers the whole planet. It renders in the `Flooding`
+ *  section, never in `Rain` — that section says *expected*, and §48.19 already
+ *  clips the elapsed half out of it. Adding these hours changes nothing there
+ *  because `futureBlocks()` throws them away before any total is summed.
+ *
+ *  ==> MEASURED ON THE ARCHIVE RUNNER, NOT ASSUMED FROM THE DOCUMENTATION.
+ *  <== `openmeteo-rain-past-days-probe.json` against
+ *  `openmeteo-rain-outside-nws.json`, same point and same hour, `past_days=2`
+ *  the only difference: 72 hourly values became 120 — exactly 48 prepended,
+ *  in the SAME `hourly.precipitation` array, with no second array, no new key,
+ *  no duplicate timestamp, no gap and no null. +1,086 bytes.
+ *
+ *  ==> THE BOUNDARY BETWEEN PAST AND FUTURE IS NOT MARKED ANYWHERE IN THE
+ *  BODY. <== That is a measurement too, and it is the one that shapes the
+ *  client: it has to be found against the clock. `lib/rainfall.js` already
+ *  splits this series at `now` for the forecast half, so the past half is the
+ *  mirror of a function that exists rather than a new parser. */
+const PAST_DAYS = 3;
+
 /* --------------------------------------------------------------------------
  * CACHE
  *
@@ -184,7 +209,8 @@ export function projectOpenMeteo({ body, place = null, fetchedAt = null }) {
 async function pull(lat, lon, fetchedAt) {
   const url =
     `${FORECAST}?latitude=${lat}&longitude=${lon}` +
-    `&hourly=precipitation&forecast_days=${FORECAST_DAYS}&timezone=UTC`;
+    `&hourly=precipitation&past_days=${PAST_DAYS}` +
+    `&forecast_days=${FORECAST_DAYS}&timezone=UTC`;
 
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), UPSTREAM_TIMEOUT_MS);

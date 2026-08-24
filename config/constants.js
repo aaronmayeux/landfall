@@ -2459,6 +2459,37 @@ export const RAIN = Object.freeze({
    *  and the label has to say Thursday rather than claim five days). */
   windowHours: 120,
 
+  /** How far BACK the Flooding section's past-rainfall sentence looks. §56.14.
+   *
+   *  ==> IT IS A PLACEHOLDER AARON MOVES ON GLASS, AND THIS COMMENT IS NOT
+   *  GOING TO PRETEND OTHERWISE. <== §56.14 says in as many words that 48 is
+   *  the number in the proposed wording and not a measurement. Too short and
+   *  the figure misses the front that soaked the ground before the storm
+   *  arrived; too long and it stops being about this weather and becomes a
+   *  climate statistic. Nothing in the sandbox can find the right value — it
+   *  needs rain actually falling at a house somebody is looking at.
+   *
+   *  ==> IT IS COUNTED BACK FROM `now`, NEVER FROM THE START OF THE SERIES.
+   *  <== The measured reason, and the whole design of `pastBlocks`: Open-Meteo
+   *  prepends `past_days` whole UTC days and then continues into a forecast
+   *  half that ALSO begins at 00:00 UTC today — so at 01:48Z roughly two hours
+   *  of the "forecast" have already happened. Anchoring on where the prepended
+   *  block ends would silently drop those hours from the past total and
+   *  double-count nothing, which reads as a plausible smaller number. */
+  pastHours: 48,
+
+  /** Mirrors `pastHours` in the only unit Open-Meteo's API takes: whole days.
+   *
+   *  ==> IT IS DELIBERATELY ONE DAY MORE THAN `pastHours` ROUNDS TO. <== The
+   *  series is prepended in whole UTC days, so `past_days=2` at 01:48Z reaches
+   *  back only 49h 48m — barely past the window — while at 23:00Z it reaches
+   *  71h. Asking for the tighter number would leave the window short for most
+   *  of the UTC day and the sentence would quietly shrink. Measured on the
+   *  archive runner's own capture: 72 hours became 120, exactly 48 prepended,
+   *  in the SAME `hourly.precipitation` array. The extra day costs about 543
+   *  bytes and buys a window that is always complete. */
+  pastDays: 3,
+
   /** Under this, the section says so in words instead of printing a figure.
    *
    *  2.5 mm is a tenth of an inch, which is the bottom rung NWS itself uses on
