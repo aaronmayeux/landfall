@@ -219,3 +219,230 @@ html[data-seasons="on"] #btn-layers {
   height: 18px;
   color: var(--text-muted);
 }
+
+/* ---------------------------------------------------------------------------
+ * THE SEASON BOARD. §57.18, §57.30 step 5.
+ *
+ * ==> IT REUSES `.seg-group`, `.seg` AND `.drawer-body` FROM panels.css RATHER
+ * THAN RESTATING THEM. <== The board is a view inside the one drawer, so the
+ * basin and filter controls are the SAME segmented control the Layers panel
+ * uses — same height, same focus ring, same disabled treatment. Only what is
+ * genuinely new to this screen is below.
+ *
+ * NOT ONE HARDCODED COLOUR AND NOT ONE RAW PIXEL LITERAL, same rule as the bar
+ * above. The one exception is `--swatch`, which every row sets inline from a
+ * Saffir-Simpson token — those colours are fixed by §6 and are deliberately not
+ * themeable, so they come from the storm rather than from the palette. It is the
+ * same custom property name `.row-swatch` in the live storm list already uses.
+ * ------------------------------------------------------------------------- */
+
+.seasons-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-snug);
+  margin-bottom: var(--space-base);
+}
+
+.seasons-year {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+}
+
+/* Both step buttons and the select clear the touch minimum on their own, so
+   the row works by thumb without the sheet growing a special case (§13). */
+.seasons-step {
+  min-width: var(--touch-target);
+  height: var(--touch-target);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  color: var(--text-primary);
+  font-size: var(--type-title);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.seasons-step:disabled { opacity: 0.5; cursor: default; }
+
+.seasons-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: var(--touch-target);
+  padding: 0 var(--space-snug);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-title);
+  text-align: center;
+}
+
+.seasons-step:focus-visible,
+.seasons-select:focus-visible,
+.seasons-retry:focus-visible,
+.seasons-check input:focus-visible + .seasons-dot {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* --- the scorecard ------------------------------------------------------- */
+
+.seasons-score {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-snug);
+  margin-bottom: var(--space-base);
+}
+
+.seasons-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-tight) var(--space-tight);
+  border-radius: var(--radius);
+  background: var(--glass);
+}
+
+.seasons-stat-n {
+  font-size: var(--type-title);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.seasons-stat-k {
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+/* --- notes -------------------------------------------------------------- */
+
+.seasons-note {
+  margin: var(--space-snug) 0;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
+
+.seasons-bad { color: var(--text-primary); }
+
+.seasons-retry {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* --- the roster ---------------------------------------------------------- */
+
+.seasons-roster {
+  list-style: none;
+  margin: var(--space-snug) 0 0;
+  padding: 0;
+}
+
+.seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
+
+/* The whole row is the label, so the tap target is the row rather than the
+   checkbox — a 44px box in a 320px row is a target most thumbs miss (§13). */
+.seasons-check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--touch-target);
+  cursor: pointer;
+}
+
+/* The native box carries the state, the keyboard behaviour and the screen
+   reader's announcement; it is moved out of sight rather than removed, because
+   `display: none` would take it out of the tab order entirely (§13). */
+.seasons-check input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ==> THE DOT IS THE CHECKBOX AND THE CATEGORY AT ONCE. <== Unticked it is an
+   outline in the storm's own Saffir-Simpson colour; ticked it fills. So the
+   roster shows peak strength whether or not a storm is on the globe, and one
+   glance down the list is the shape of the season §57.18 asks for. */
+.seasons-dot {
+  flex: 0 0 auto;
+  width: var(--space-base);
+  height: var(--space-base);
+  border-radius: 50%;
+  border: 2px solid var(--swatch, var(--text-secondary));
+  background: transparent;
+}
+
+.seasons-check input:checked + .seasons-dot { background: var(--swatch, var(--text-secondary)); }
+
+.seasons-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seasons-when {
+  flex: 0 0 auto;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.seasons-lf {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: var(--type-small);
+}
+
+/* --- the ghosts ---------------------------------------------------------- */
+
+/* A name this season has not reached. Dimmed rather than greyed to a fixed
+   value, so it stays legible in sepia, dark and light alike — and it carries
+   no dot, because there is no storm to grade. */
+.seasons-row-ghost { opacity: 0.55; }
+
+.seasons-ghost-name {
+  display: flex;
+  align-items: center;
+  min-height: var(--touch-target);
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --- the bar's own button ------------------------------------------------ */
+
+/* The sentence naming the year is the way back to the board. No new chrome,
+   and it is a real button so it is tabbable and works by keyboard (§13). */
+.seasons-bar-open {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--touch-target);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.seasons-bar-open:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}

@@ -63,6 +63,13 @@ import {
   GENESIS_HIT_LAYERS,
 } from './map/layers/genesis.js';
 import { setFloodAlerts, rethemeFlood, floodAtPoint, FLOOD_LAYER_IDS } from './map/layers/flood.js';
+/* ==> ON THE BOOT PATH, AND THAT IS THE ONE EXCEPTION IN THIS FEATURE. <==
+ * Everything else in Seasons is behind a dynamic import (§57.35 fault 4). This
+ * is not, because the layer has to be added while the style is installing —
+ * the same `style.load` window every other layer takes — and a source added
+ * later cannot be slotted beneath the storm markers. It is one small module
+ * with no state, and it draws nothing until the archive hands it storms. */
+import { ensureSeasonTracks, setSeasonTracks, clearSeasonTracks } from './map/layers/season-tracks.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -719,6 +726,11 @@ function boot() {
      * an honest way to say the oceans are still being checked. */
     boot.done();
     engine.attach();
+    /* AFTER `engine.attach()`, so the archive's tracks sit beneath everything
+     * the engine added and beneath the storm dots — step 6 puts landfall marks
+     * and name labels on top of them, and a layer added later cannot get back
+     * underneath. It draws nothing until somebody opens the archive. */
+    ensureSeasonTracks(map, map.getLayer('storm-dot-planet') ? 'storm-dot-planet' : undefined);
     applyLayerState();
 
     /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
@@ -1303,6 +1315,28 @@ function boot() {
    * whole time the archive is open — so leaving lands on the CURRENT weather,
    * not on the weather from the moment of entry.
    */
+  /**
+   * The archive's own geometry. Same injection shape and same reason as
+   * `liveGlobe` below: `seasons/` never imports `map/` (§12), so this file
+   * owns HOW a track is drawn and the archive owns WHEN.
+   *
+   * ==> THE SOURCE IS ADDED AT `style.load`, NOT ON FIRST ENTRY. <== MapLibre
+   * inserts a layer relative to one already in the style, and by the time
+   * somebody presses a door the marker anchor is buried under everything the
+   * engine added. Adding it with the rest is what keeps the archive's tracks
+   * BENEATH the storm dots that step 6 will put on top of them.
+   */
+  const archiveGlobe = {
+    setTracks(selected) {
+      if (!styleReady) return;
+      setSeasonTracks(map, selected);
+    },
+    clearTracks() {
+      if (!styleReady) return;
+      clearSeasonTracks(map);
+    },
+  };
+
   const liveGlobe = {
     hide() {
       markers?.update([]);
@@ -1354,6 +1388,7 @@ function boot() {
       .then(({ openSeasons }) => {
         openSeasons({
           liveGlobe,
+          archiveGlobe,
           drawer,
           recenterAndClear,
           fromUrl: false,
@@ -1378,7 +1413,7 @@ function boot() {
   if (new URLSearchParams(location.search).has('season')) {
     import('./seasons/index.js')
       .then(({ openSeasons }) => {
-        openSeasons({ liveGlobe, drawer, recenterAndClear, fromUrl: true });
+        openSeasons({ liveGlobe, archiveGlobe, drawer, recenterAndClear, fromUrl: true });
       })
       .catch((e) => {
         console.error('[landfall] Past storms did not load:', e);

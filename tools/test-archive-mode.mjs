@@ -59,6 +59,19 @@ function fakeEl(tag) {
     parent: null,
     focused: 0,
     listeners: {},
+    /* Real enough for `add` and `contains`, which is all `seasons/bar.js`
+     * uses. It writes through to `className` deliberately: every assertion in
+     * this suite reads that string, and a classList that kept its own private
+     * set would let the two drift — the element would report one set of
+     * classes to the app and another to the test. */
+    classList: {
+      add(...names) {
+        const cur = el.className ? el.className.split(/\s+/) : [];
+        for (const n of names) if (!cur.includes(n)) cur.push(n);
+        el.className = cur.join(' ');
+      },
+      contains(n) { return el.className.split(/\s+/).includes(n); },
+    },
     setAttribute(k, v) { this.attrs[k] = String(v); },
     getAttribute(k) { return this.attrs[k] ?? null; },
     removeAttribute(k) { delete this.attrs[k]; },
@@ -266,10 +279,27 @@ function harness() {
       hide: () => calls.push('hide'),
       show: () => calls.push('show'),
     },
-    drawer: { close: () => calls.push('drawer.close'), isOpen: () => false },
+    /* ==> THE BOARD IS A VIEW IN THE ONE DRAWER (§16), SO THE DRAWER IS NOW
+     * OPENED RATHER THAN CLOSED ON ENTRY. <== Step 4 closed it, because there
+     * was nothing to put in it. `register` is recorded so the suite can prove
+     * it happens exactly once across many entries — called twice it leaves an
+     * orphaned host and a live listener bound to it. */
+    drawer: {
+      register: (def) => { calls.push(`drawer.register:${def.id}`); registered.push(def); },
+      go: (id) => calls.push(`drawer.go:${id}`),
+      close: () => calls.push('drawer.close'),
+      isOpen: () => false,
+    },
+    archiveGlobe: {
+      setTracks: (sel) => calls.push(`tracks:${sel.length}`),
+      clearTracks: () => calls.push('tracks.clear'),
+    },
     recenterAndClear: () => calls.push('recenter'),
   };
 }
+
+/** Every view definition the archive registered, across every entry. */
+const registered = [];
 
 theme.setThemeMode(theme.MODE.DARK);
 const h = harness();
@@ -280,17 +310,43 @@ eq(archive.isArchive(), true, 'the flag is up');
 eq(theme.forcedMode(), theme.MODE.SEPIA, 'the palette is forced to sepia');
 eq(theme.isLight(), false, 'and sepia is still a dark-ground palette');
 ok(h.calls.includes('hide'), 'the live globe was emptied');
-ok(h.calls.includes('drawer.close'), 'the live drawer was closed');
-ok(h.calls.includes('recenter'), 'and the selection was dropped');
+ok(h.calls.includes('drawer.go:seasons-board'),
+  '==> THE BOARD OPENS ON ENTRY. <== §57.30 step 5. The archive globe is no '
+  + 'longer empty, so the drawer is navigated rather than closed');
+ok(h.calls.includes('recenter'), 'and the live selection was dropped');
+ok(h.calls.filter((c) => c.startsWith('drawer.register')).length === 1,
+  'the board is registered exactly once');
 eq(docEl.getAttribute('data-seasons'), 'on', 'the chrome knows to move up off the bar');
 ok(body.children.some((c) => c.id === 'seasons-bar'), 'the bar is on screen');
 
 const bar = body.children.find((c) => c.id === 'seasons-bar');
 const leaveBtn = bar.children.find((c) => c.className === 'seasons-leave');
-ok(leaveBtn && leaveBtn.focused > 0,
-  '==> FOCUS LANDS ON THE WAY OUT (§13), not on the document body');
-ok(/not built yet/.test(bar.find('seasons-bar-detail')?.textContent || ''),
-  '==> AN EMPTY GLOBE SAYS WHY IT IS EMPTY. An unexplained one reads as broken (§5)');
+ok(!!leaveBtn, 'the way out is on screen and is a real button');
+
+/* ==> FOCUS IS THE DRAWER'S JOB NOW, AND THAT IS THE POINT OF PUTTING THE
+ * BOARD INSIDE IT (§13). <== Step 4 focused the Leave button by hand, because
+ * closing the drawer would otherwise have dropped focus onto the document body
+ * with nothing on screen to explain where the reader was. The drawer opens on
+ * entry now and lands focus on the board's own `focus()` — the year picker,
+ * which is what a reader came here to use. Focusing Leave as well would be two
+ * things fighting for the caret. */
+ok(!leaveBtn.focused,
+  'entry no longer grabs focus by hand — the drawer owns it');
+
+/* ==> THE APOLOGY IS GONE, AND ITS SLOT NOW CARRIES A FACT. <== §57.16a said
+ * step 5 DELETES that sentence rather than editing it: a leftover "not built
+ * yet" beside a working year picker is worse than the silence it replaced. */
+const detail = bar.find('seasons-bar-detail')?.textContent || '';
+ok(!/not built yet/.test(detail),
+  '==> THE \'NOT BUILT YET\' SENTENCE IS DELETED, NOT EDITED (§57.16a)');
+
+/* And the sentence is a BUTTON now, because closing the board over an archive
+ * globe would otherwise leave no way back to the year picker — the storms,
+ * home and layers buttons are all hidden in here (§57.16a). */
+const where = bar.children.find((c) => (c.className || '').includes('seasons-bar-open'));
+ok(!!where, '==> THE BAR\'S SENTENCE IS THE WAY BACK TO THE BOARD <==');
+ok(where.tagName === 'BUTTON',
+  'and it is a real button, so it is tabbable and answers Enter (§13)');
 
 /* Pressing a door while already in is somebody pressing what they are looking
  * at. It must not build a second bar. */
@@ -310,6 +366,16 @@ eq(theme.forcedMode(), null, 'nothing is forced any more');
 eq(theme.themeMode(), theme.MODE.LIGHT,
   '==> AND IT RESTORED THE PREFERENCE SET WHILE INSIDE, not the one from entry');
 ok(h.calls.includes('show'), 'the live globe came back');
+
+/* ==> THE ARCHIVE'S OWN TRACKS COME OFF, AND THEY COME OFF FIRST. <== §57.30
+ * step 5. Leaving with 1935 still drawn puts a historical season over today's
+ * storms — one frame of two worlds at once, and it is the frame a reader sees
+ * on the way OUT, where there is nothing left to explain it. */
+ok(h.calls.includes('tracks.clear'),
+  '==> THE ARCHIVE GLOBE IS EMPTIED ON THE WAY OUT <==');
+ok(h.calls.indexOf('tracks.clear') < h.calls.indexOf('show'),
+  'and before the live storms come back, never after');
+
 eq(docEl.getAttribute('data-seasons'), null, 'the chrome attribute is gone');
 ok(!body.children.some((c) => c.id === 'seasons-bar'), 'and so is the bar');
 ok(opener.focused > 0, 'focus went back to the row that opened it (§13)');
@@ -318,6 +384,21 @@ ok(opener.focused > 0, 'focus went back to the row that opened it (§13)');
  * One that threw on the second call would strand somebody in sepia. */
 handle.leave();
 eq(archive.isArchive(), false, 'leaving twice is safe');
+
+/* ==> RE-ENTERING MUST NOT REGISTER A SECOND BOARD. <== `drawer.register`
+ * appends a host element and stores it under the view's id; called twice it
+ * leaves an orphaned host in the DOM with a live listener bound to it, and the
+ * reader sees the older one. The archive is entered and left freely, so this
+ * is an ordinary path rather than an edge case — and a mutation removing the
+ * guard passed the whole suite until this existed. */
+const second = harness();
+const handle2 = openSeasons(second);
+eq(second.calls.filter((c) => c.startsWith('drawer.register')).length, 0,
+  '==> A SECOND ENTRY REGISTERS NOTHING — the board is built once per load <==');
+ok(second.calls.includes('drawer.go:seasons-board'),
+  'but it is still navigated to, so the reader lands on the board again');
+eq(registered.length, 1, 'exactly one board view has ever been built');
+handle2.leave();
 
 /* =========================================================================
  * 6. A FAILED ENTRY LEAVES

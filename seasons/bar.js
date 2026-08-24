@@ -4,12 +4,15 @@
  * §57.16. Same shape and same job as the replay scrubber's bar: you are never
  * in doubt about which world is on screen, and the way out is always visible.
  *
- * ==> IT ALSO CARRIES THE HONEST LINE ABOUT AN EMPTY GLOBE, AND THAT IS NOT
- * DECORATION. <== Right now the archive globe has nothing on it, because the
- * year picker is the next step. An unexplained empty globe is the silence §5
- * forbids — it looks exactly like a feature that is broken, and §57.1 rule 11
- * says absent UI is explained, never silently missing. So the bar says what is
- * not built yet, in words, and step 5 replaces that sentence with a year.
+ * ==> IT NAMES THE SEASON, AND THAT SENTENCE IS ALSO A DOOR. <== `2005 ·
+ * Atlantic` beside the mode, and pressing it reopens the board. Closing the
+ * board leaves an archive globe whose only chrome is this bar — the storms,
+ * home and layers buttons are all hidden in here (§57.16a) — so the bar is
+ * the one place the way back can live without adding new furniture.
+ *
+ * It still carries a real reason when a deep link named a year outside the
+ * record: an empty globe with nothing said about it is the silence §5 forbids,
+ * and only words can tell a typo from a genuinely quiet season.
  *
  * THE LEAVE BUTTON IS A REAL BUTTON, TABBABLE, AT THE TOUCH MINIMUM. Leaving
  * is the one action in this whole mode that must never be gesture-only: a
@@ -34,10 +37,11 @@ export const ARCHIVE_LABEL = 'Past storms';
  *
  * @param {object} opts
  * @param {() => void} opts.onLeave  pressed, or activated by keyboard.
+ * @param {() => void} [opts.onOpenBoard]  the reader wants the board back.
  * @returns {{el:HTMLElement, mount:()=>void, unmount:()=>void,
  *            focusLeave:()=>void, setDetail:(text:string)=>void}}
  */
-export function createSeasonsBar({ onLeave }) {
+export function createSeasonsBar({ onLeave, onOpenBoard }) {
   const el = document.createElement('div');
   el.id = 'seasons-bar';
   /* A landmark rather than a status: it is a place with a control in it, and
@@ -47,8 +51,28 @@ export function createSeasonsBar({ onLeave }) {
   el.setAttribute('role', 'region');
   el.setAttribute('aria-label', ARCHIVE_LABEL);
 
-  const where = document.createElement('p');
+  /* ==> THE SENTENCE NAMING THE YEAR IS ALSO THE WAY BACK TO THE BOARD. <==
+   * §57.30 step 5. Closing the board leaves an archive globe with nothing on
+   * screen but this bar — and the three cluster buttons are hidden in here
+   * (§57.16a), so without this there is no way back to the year picker short
+   * of leaving and re-entering. Reusing the text rather than adding a third
+   * control keeps the bar at two buttons: where you are, and out.
+   *
+   * A real <button>, so it is tabbable and answers Enter and Space with no
+   * key handling of our own — tap, click and keyboard on one path (§13). */
+  const where = document.createElement(onOpenBoard ? 'button' : 'p');
   where.className = 'seasons-bar-where';
+  if (onOpenBoard) {
+    /* `classList.add` with a plain literal rather than folding the name into a
+     * ternary on `className`. `tools/markup-scan.mjs` reads both forms but only
+     * when the class name is a literal it can see — a conditional expression
+     * hides it, and `selector-contract-check.mjs` then reports every check that
+     * queries this class as pointing at nothing the app emits. It caught this
+     * one. Same reason `class="..."` containing `${` is skipped whole. */
+    where.classList.add('seasons-bar-open');
+    where.type = 'button';
+    where.addEventListener('click', () => onOpenBoard());
+  }
 
   const mark = document.createElement('span');
   mark.className = 'seasons-bar-mark';
@@ -97,7 +121,9 @@ export function createSeasonsBar({ onLeave }) {
       }
     },
 
-    /** The sentence beside the name. Step 5 puts a year and a basin here. */
+    /** The sentence beside the name — `2005 · Atlantic` once a season is
+     *  chosen, or a real reason when a link named a year the record does not
+     *  have. Never a leftover apology about something not being built. */
     setDetail(text) {
       detail.textContent = text || '';
       detail.hidden = !text;
