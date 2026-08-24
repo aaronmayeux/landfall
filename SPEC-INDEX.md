@@ -268,21 +268,21 @@ real home is the other row carrying the same section number.
 | `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3895-3944 |
 | `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4011-4084 |
 | `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 914-945 |
-| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 946-1089 |
-| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 1090-1107 |
-| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 1108-1111 |
+| `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 946-1111 |
+| `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 1112-1129 |
+| `56.14` | &nbsp;&nbsp;Past rainfall — the global figure this feature is missing | `SPEC-FLOOD-PLAN.md` | 1130-1133 |
 | `56.15` | &nbsp;&nbsp;The first attempt at Phase 5, and why it was reverted | `SPEC-FLOOD-PLAN.md` | 231-239 |
 | `56.16` | &nbsp;&nbsp;How Phase 5 gets built the second time | `SPEC-FLOOD-PLAN.md` | 314-430 |
 | `56.17` | &nbsp;&nbsp;The `Flooding` section says it is checking, and it never is — ==> FIXED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 503-555 |
 | `56.18` | &nbsp;&nbsp;Making the corridor match cheap — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 590-677 |
-| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1278-1295 |
+| `56.19` | &nbsp;&nbsp;The map draws nothing outside the United States, and what could change that | `SPEC-FLOOD-PLAN.md` | 1335-1352 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
 | `SPEC-DATA.md` | 196,662 | 55 |
-| `SPEC-FLOOD-PLAN.md` | 78,316 | 16 |
+| `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 90,430 | 21 |

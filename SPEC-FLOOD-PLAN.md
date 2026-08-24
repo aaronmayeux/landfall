@@ -1072,18 +1072,40 @@ layer engine's `update()` hook is paid by every reader on every selection whethe
 the layer is on or not; and this phase ships in three pushes so that the next
 time something is slow, there is something to bisect.
 
-**PHASE 6 — PAST RAINFALL, THE GLOBAL FIGURE.** How much has already fallen at
-the reader's address, in a window we choose rather than one the source hands us.
-**See §56.14 for the whole of it** — the source, the wording, the two rules, and
-the five things the archive runner has to measure before a line is written.
+**PHASE 6 — PAST RAINFALL, THE GLOBAL FIGURE. ==> BUILT AND PUSHED 2026-08-23.
+NOT YET SEEN ON GLASS. <==** §56.14 has the measurements, the two rules and the
+two things it cost that the plan did not predict. What shipped:
 
-**==> IT IS LAST BY DEPENDENCY, NOT BY IMPORTANCE. <==** It needs the `Flooding`
-section to exist, which is Phase 2, and nothing else — so it could in principle
-move ahead of 3, 4 or 5. **It is here because it is the only phase gated on a
-measurement nobody has taken**, and because 3, 4 and 5 finish a feature that is
-half-built while this one starts a new one. If the runner probe comes back clean
-and a US storm still has not arrived to judge Phase 5 on, reordering is
-reasonable — say so out loud rather than quietly swapping them.
+- `functions/api/rain/global.js` — `PAST_DAYS`, one query parameter.
+- `lib/rainfall.js` — `pastBlocks` (the exact complement of `futureBlocks`),
+  `pastWindowBlocks` (anchored on the clock at both ends, which is how it
+  differs from `windowBlocks`), and `pastSummary`.
+- `data/rainfall.js` — `loadPastRainfall` / `evictPastRainfall`, a second memo,
+  free of network outside NWS coverage.
+- `ui/flooding-home.js` — the sentence, its own state machine and its own
+  Retry. `ui/flood-words.js` — `PAST_RAIN_PROVENANCE`, `pastWindowWords`.
+- `tools/test-rain-past.mjs` — against the runner's own bytes, seven mutations
+  verified red. `tools/test-relay-mirrors.mjs` — three new assertions.
+
+**==> ITS FIRST TEST SUITE PASSED WITH THE CENTRAL BUG REINTRODUCED, WHICH IS
+THE FAILURE §12 CALLS WORSE THAN NO TEST, AND THE LESSON IS SHAPED. <==** The
+suite asserted the past window's FAR edge four different ways and never once
+its NEAR edge, so anchoring the window on the start of the data instead of on
+the clock — the one thing this feature can get wrong invisibly — ran all-green.
+**A window check needs BOTH edges pinned**, and the assertion that closes it is
+that the bounded window and the unbounded past agree about where the recent end
+is: two functions, two filters, agreement only possible if both read the clock.
+
+**==> AND ONE FAILURE MODE NO SUITE OF THIS FEATURE'S OWN CAN EVER CATCH. <==**
+Delete `past_days` from the route's URL and the app keeps working perfectly —
+200s, an untouched forecast, every suite green — while the section reports *no
+estimate available* on every house on Earth. Nothing throws. `test-rain-past`
+is blind to it by construction, because its fixture is frozen with the past
+hours already in it. `tools/test-relay-mirrors.mjs` asserts the constant is not
+merely declared but actually spent on the URL, verified by removing it.
+
+**WHAT IS LEFT:** the two coverage probes under §56.14 question 4, and glass —
+which needs rain actually falling at Aaron's address.
 
 ---
 
@@ -1224,42 +1246,77 @@ those two rendering the same. Reuse `RAIN.negligibleMm`'s judgement — a modell
 0.2 mm printed as `0.01 in` reads as a malfunction, said plainly it reads as a
 forecast (§48.8).
 
-#### What must be MEASURED before a line of this is written
+#### What was MEASURED before a line of this was written
 
-**==> THE PROBE IS IN THE RUNNER AS OF 2026-08-22, AND FOUR OF THE FIVE FALL
-OUT OF IT. <==** A past-days entry in `tools/archive-fetch.mjs` asks the same
-point for the same variable as the capture above, with `past_days=2` added and
-nothing else changed, **so the two diff cleanly and the delta is the answer:**
+**==> THE PROBE RAN, THE BYTES LANDED, AND FOUR OF THE FIVE ARE ANSWERED. <==**
+`openmeteo-rain-past-days-probe.json` against `openmeteo-rain-outside-nws.json`
+on the `archive` branch — the same point, the same hour, the same runner pass,
+with `past_days=2` the only difference between the two requests. Both are
+frozen into `samples/rain/` (`openmeteo-manila-past-days.json` and
+`openmeteo-manila-no-past.json`) because that branch's window is 72 hours and
+rolls, and `tools/test-rain-past.mjs` runs against them.
 
-```
-git fetch origin archive
-git show origin/archive:latest/openmeteo-rain-past-days-probe.json
-git show origin/archive:latest/openmeteo-rain-outside-nws.json
-```
- Question 5 —
-the free tier's quota — has no runtime answer and never will: §48.14 records
-there is no `x-ratelimit-*` header of any kind, so it comes off Open-Meteo's
-documentation or not at all.
+**1. `past_days` DOES WHAT THE DOCUMENTATION SAYS.** 72 hourly values became
+**120** — exactly 48 prepended — **in the same `hourly.precipitation` array**.
+No second array, no new key, no gap, no null, and no duplicate timestamp. The
+warning not to assume the array is simply longer was the right warning and the
+answer is that it is. +1,086 bytes, about 20% under the estimate in the table
+above.
 
-**Nothing below can be answered from the sandbox** — `api.open-meteo.com` is
-outside the wall (`SPEC-OPS.md` §18). These go to the archive runner, which has
-open internet, and the answers get written here before any code:
+**2. THE BOUNDARY BETWEEN PAST AND FUTURE IS NOT MARKED ANYWHERE IN THE BODY,
+AND THIS IS THE MEASUREMENT THAT SHAPED THE CLIENT.** It has to be found
+against the clock — and the forecast half does **not** begin at `now`, it
+begins at **00:00 UTC of the current day**, so at the moment of capture roughly
+two hours of "forecast" had already elapsed. A past window anchored anywhere
+except the clock silently drops those hours and returns a smaller, entirely
+plausible number.
 
-1. **Does `past_days` return what the docs say, at a point with real rain?** Its
-   behaviour, its ceiling and whether the past hours arrive in the same
-   `hourly.precipitation` array or a separate one. **Do not assume the array is
-   simply longer.**
-2. **Where is the join?** Whether the boundary between past and forecast hours is
-   marked at all, or has to be found against the clock — and whether the hour
-   containing `now` is counted once or twice.
-3. **Does it change the response size or the latency enough to matter on a
-   phone?** The table above is arithmetic on one archived capture, not a
-   measurement of the real call.
-4. **What does it report over the ocean and over sparse land?** The forecast half
-   covers the planet; nothing has confirmed the past half does.
-5. **Does the free tier's quota treat it as one call or as more?** §48.14 records
-   that there is **no `x-ratelimit-*` header of any kind**, so this can only be
-   answered by asking Open-Meteo's documentation, never at runtime.
+**So the window is anchored on `now` at BOTH ends**, which is the one way it
+differs from `windowBlocks`. `pastBlocks` is written as the exact complement of
+`futureBlocks` — `endMs <= now` against `endMs > now` — so every block lands in
+one half or the other, never both, and the hour containing this moment stays
+with the FUTURE, unprorated, exactly as §48.19 keeps it.
+
+**3. THE COST IS NEGLIGIBLE AND THE FORECAST HALF IS PROVABLY UNCHANGED.**
+`futureBlocks` throws the new hours away before any forecast figure is summed,
+so the `Rain` section shows the same total and the same *through* label off the
+longer series as off the shorter one. Asserted on both captures at one pinned
+clock rather than argued.
+
+**4. OVER OCEAN AND SPARSE LAND — STILL OPEN, AND TWO PROBES ARE IN THE RUNNER
+AS OF 2026-08-23.** They land on the `archive` branch as
+`openmeteo-rain-past-ocean` (mid-South-Pacific) and `openmeteo-rain-past-desert`
+(central Sahara) — **not in this repo**, so read them with
+`git show origin/archive:latest/…`. Both questions were measured at Manila only
+— tropical, coastal, on land, with real rain falling — which is a good point to
+measure a SHAPE against and a bad one to conclude COVERAGE from.
+§48.16 leans on the forecast half being global; **nothing has confirmed the
+past half covers the same ground**, and a reanalysis is a different product
+from a forecast. **The Sahara is the sharper of the two**: it is land, so it
+cannot be declined for being sea, and it is genuinely dry — the one place on
+Earth where a real `dry` and a `no data` are hardest to tell apart, which is
+§5 exactly.
+
+**5. THE QUOTA STILL HAS NO RUNTIME ANSWER AND NEVER WILL.** §48.14: there is
+no `x-ratelimit-*` header of any kind. It comes off Open-Meteo's documentation
+or not at all.
+
+#### What it turned out to cost that the plan did not predict
+
+**AN AMERICAN HOUSE NEEDS A SECOND FETCH, AND THE PLAN READ AS THOUGH IT DID
+NOT.** `loadRainfall` answers from NWS wherever NWS answers, and an NWS grid
+has no elapsed series — so on a US house the forecast comes from NWS and the
+past has to come from the global route separately. `data/rainfall.js` gained
+`loadPastRainfall`, a second memo. **Outside NWS coverage it costs no network
+at all**: the first thing it does is look at the answer `loadRainfall` already
+holds, and if that came from the global model it carries the past hours
+already.
+
+**AND THE COVERED WINDOW HAD TO BE CAPPED.** The window keeps a block
+straddling its far edge — splitting invents a rate — so the oldest hourly block
+begins up to 59 minutes before the window and `coveredHours` reported **49** for
+a 48-hour window. Capped at `hours` now, one-directionally: never more than
+asked, always less when the data does not reach back that far (§48.11).
 
 #### Open, and Aaron's to settle
 
@@ -1300,26 +1357,43 @@ been measured.
 all carry it. **GDACS also tracks floods as their own event type on the same
 API**, which this project already has working plumbing, caching and a relay for.
 
-**==> THAT LAST SENTENCE IS AN INFERENCE AND NOT A MEASUREMENT. <==** Nothing in
-a session can reach `gdacs.org`, and the hourly archive has only ever captured
-the cyclone list. **A probe is in the runner as of 2026-08-23** — `geometry/gdacs-floods-probe.json`
-on the `archive` branch, the same SEARCH endpoint with `eventlist=FL`
-(`git show origin/archive:latest/geometry/gdacs-floods-probe.json`).
-Four things it has to settle, none of which is currently known:
+**==> THE PROBE HAS NOW BEEN READ, 2026-08-23, AND IT LARGELY CLOSES THIS ROAD.
+<==** `git show origin/archive:latest/geometry/gdacs-floods-probe.json` — 130 KB,
+100 rows, ~1.3 KB each. Four answers:
 
-1. **Does an FL row carry a drawable polygon**, or only a point and a bounding
-   box? A point is not nothing — but it is a different visual object from the
-   county shapes this layer draws, and mixing them silently would be this app
-   presenting two kinds of claim in one colour.
-2. **How many are in force worldwide at once?** The cyclone feed measures one to
-   five rows across a full day. Floods could be an order of magnitude more, and
-   the volume decides whether this is the same layer or a different product.
-3. **What does one cost in bytes?**
-4. **Is there enough to say WHERE without inventing anything?** §5's rule holds
-   at full strength here: a shape this app drew is a boundary nobody published.
+1. **NO DRAWABLE POLYGON. 100 of 100 rows are a single `Point`**, `Class`
+   `Point_Centroid`, `polygonlabel` `Centroid`, with the bounding box collapsed
+   onto that same point. Not one shape in the whole feed.
+2. **THE COUNT CANNOT BE READ OFF THIS FEED, BECAUSE IT RETURNED EXACTLY 100
+   AND 100 IS THE CAP.** The same hard ceiling that lost Noul on 2026-07-26
+   (`geteventlist` is capped at 100 features shared across every hazard type).
+   Of the 100 returned, **only 10 carry `iscurrent: true`** — the rest have
+   expired, some months ago.
+3. **~1.3 KB per row.** Cheap, and the only one of the four that is encouraging.
+4. **NOT ENOUGH TO SAY WHERE.** One centroid and a country name. `severity` is
+   **0.0 on all 100 rows** with `severitytext` reading `Magnitude 0`, and 98 of
+   100 are `alertlevel: Green`.
 
-**A 400, an empty list, or rows with no geometry are all real answers** and all
-of them mean the global half does not arrive by this road.
+**AND THE SHAPE OF THE EVENTS IS WRONG FOR THIS APP, WHICH MATTERS MORE THAN
+THE MISSING GEOMETRY.** Every row is `source: GLOFAS` — a river model. The ten
+live ones run **1 to 95 days**: a flood in India open since 23 June, one in the
+United States since 19 May. That is a basin running high for a season. It is
+not *this typhoon put water on the ground here yesterday*, and painting it in
+the same colour as a live NWS Flash Flood Warning would be one section making
+two completely different claims — §5, and the thing §48.21 already refuses.
+
+**ONE THREAD IS NOT YET CUT, AND IT IS CHEAP.** Every FL row carries its own
+`url.geometry` pointing at `polygons/getgeometry?eventtype=FL&eventid=…` —
+**the same endpoint, and the same route, this app already fetches cyclone
+shapes from**. `functions/api/gdacs/geometry.js` validates host and path only,
+so it would accept a flood URL today with no change. Nobody has pulled one.
+Until somebody does, "GDACS publishes no drawable flood geometry" is true of
+the LIST and an inference about the per-event call.
+
+**==> BUT EVEN A YES THERE DOES NOT REOPEN THIS ON ITS OWN. <==** A polygon
+around a three-month river state is still not a claim this app can put beside a
+storm, so the geometry question and the fitness question are separate and the
+second one is the one that decides.
 
 #### Candidate 2 — widening the CAP query. Real, and messier.
 

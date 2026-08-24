@@ -226,14 +226,29 @@ file's own rule: an item that lands leaves, and the spec describes what is.**
 
 **FOUR THINGS ARE STILL OPEN, AND ONLY FOUR.**
 
-1. **==> THE LAYER DRAWS NOTHING OUTSIDE THE UNITED STATES. <==** NWS is a US
-   agency, so a reader watching a typhoon turns the switch on and gets an empty
-   globe. The switch says `US only`, which stops it reading as a fault and does
-   not stop it being a hole. **The GDACS flood probe is in the runner and nobody
-   has read it yet** — `git show origin/archive:latest/geometry/gdacs-floods-probe.json`.
-   That GDACS publishes drawable flood shapes is an INFERENCE from an API this
-   project already knows, not a measurement. Four questions in §56.19, and
-   nothing gets written until the bytes land.
+1. **==> THE LAYER DRAWS NOTHING OUTSIDE THE UNITED STATES, AND THE GDACS ROAD
+   IS ALL BUT CLOSED. <==** NWS is a US agency, so a reader watching a typhoon
+   turns the switch on and gets an empty globe. The switch says `US only`,
+   which stops it reading as a fault and does not stop it being a hole.
+
+   **THE PROBE HAS BEEN READ — 2026-08-23, and §56.19 carries the numbers.**
+   130 KB, 100 rows, and the answer is no: **100 of 100 are a single point**,
+   not a polygon. `severity` is 0 on every row. The row count is **exactly the
+   100-row cap** that lost Noul in July, so the volume question cannot even be
+   asked of this feed, and only 10 of the 100 are current. Worse than the
+   missing geometry: every row is a **GLOFAS river state running 1 to 95 days**
+   — a basin high for a season, not water this storm put on the ground.
+
+   **ONE CHEAP THREAD IS UNCUT:** each row carries a `url.geometry` on the same
+   `polygons/getgeometry` endpoint this app already fetches cyclone shapes
+   from, and `functions/api/gdacs/geometry.js` would accept it unchanged.
+   Nobody has pulled one. **But a polygon around a three-month river state is
+   still not a claim this app can put beside a storm**, so even a yes there
+   does not reopen it alone.
+
+   **THE LIKELY END STATE IS WORDING, NOT SHAPES**, and §56.19 already says an
+   empty globe with an honest note beats a drawn guess. A fuller sentence on
+   that switch than `US only` is the cheapest real improvement here.
 
 2. **STILL NO PERF BASELINE, AND IT IS ONE CI RUN AWAY.** `tools/perf-select.mjs`
    exists and runs in CI's `browser` job, `continue-on-error: true` with every
@@ -512,6 +527,42 @@ the fixture with it.** The 72-hour window rolls, so check rather than assume.
 weather arrives.** Do not tell Aaron these are ten minutes of looking — they are
 not. Each names its condition first, then the question; the as-built description
 is in the spec section cited.
+
+**RAIN ALREADY ON THE GROUND AT THE HOUSE — needs rain at Aaron's address.**
+`SPEC-FLOOD-PLAN.md` §56.14. Phase 6 shipped 2026-08-23 and **no reader has
+seen the sentence.** The `Flooding` section now says *"About 3.1 in of rain is
+estimated to have fallen at your address in the last 48 hours"*, between the
+alert rows and the modelled coastal figure — what IS happening, then what HAS,
+then what MIGHT.
+
+Four things to judge when weather arrives, and the first is the only one that
+is not cosmetic:
+
+1. **Does it read as an estimate or as a measurement?** The line under it says
+   estimated by a global model, not measured at a nearby gauge. §56.14 names
+   this as the single most likely thing in the feature to get wrong, **because
+   a wrong version carries the identical number** and nothing on the page
+   invites a second look.
+2. **Is 48 hours the right window?** `RAIN.pastHours` is a placeholder, not a
+   measurement — one line to move. Too short and it misses the front that
+   soaked the ground before the storm; too long and it stops being about this
+   weather.
+3. **Does it earn its line on a calm day?** It renders with no storm on screen,
+   like the rows, because it is a fact about a place rather than about a storm.
+   That may be useful or may be clutter on the screen's quietest state.
+4. **On an American house, two numbers on one screen now have two different
+   authors** — the forecast from NWS, this from Open-Meteo, because NWS
+   publishes no matching observed series. Deliberate, and disclosed rather than
+   hidden. Does the disclosure read as precision or as confusion?
+
+**THE TWO COVERAGE PROBES ARE NOT A GLASS CALL AND SHOULD BE READ FIRST.**
+`git show origin/archive:latest/openmeteo-rain-past-ocean.json` and
+`…-past-desert.json`. Everything about `past_days` was measured at Manila —
+tropical, coastal, on land, raining. **Nothing has confirmed the past half of
+this model covers ocean or sparse land the way the forecast half does.** The
+Sahara is the sharper of the two: land, so it cannot be declined for being sea,
+and genuinely dry, which makes it the hardest place on Earth to tell a real
+`dry` from a `no data`. That distinction is §5.
 
 **A GDACS STORM WHOSE COUNTRY IS ATTRIBUTED, WITH AN ALERT IN FORCE** —
 `SPEC-DATA.md` §50.3, §50.11, §50.12. **THIS WAS NOT WAITING FOR WEATHER. IT
