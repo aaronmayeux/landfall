@@ -404,13 +404,41 @@ ok(missing.length === 0, `every referenced custom property resolves (${refs.size
     + `not: ${wrong.join('; ')}`
   );
 
-  /* And the token has to exist in both themes, or half the app has no hover
-   * at all and nothing throws. */
-  const tokens = fs.readFileSync('config/tokens.js', 'utf8');
+  /* And the token has to exist in EVERY palette, or one theme has no hover at
+   * all and nothing throws.
+   *
+   * ==> THIS USED TO ASSERT THE COUNT WAS EXACTLY TWO, AND SEASONS §57.30 STEP
+   * 1 TURNED IT RED BY DOING THE RIGHT THING. <== It added SEPIA as a third
+   * palette, correctly declaring `hover` along with everything else — so a
+   * suite counting to two failed on a file that was fine. A hardcoded count is
+   * a test that goes off every time the app grows, which trains people to
+   * ignore it.
+   *
+   * So the palettes are DISCOVERED rather than named: every exported object
+   * carrying a `focusRing` is one, because a palette is exactly the thing that
+   * has to answer "where is the keyboard". The next palette is covered the day
+   * it is written, and nobody has to remember this line exists.
+   *
+   * ==> AND HERE IS WHAT IT CANNOT CATCH, MEASURED RATHER THAN ASSUMED. <==
+   * Deleting SEPIA's `hover` leaves this GREEN, because `SEPIA` opens with
+   * `...DARK` and simply inherits it. That is not a hole — a palette built by
+   * spreading another cannot lose a token, so there is nothing there to catch.
+   * The palettes at risk are the ones written from scratch, and `LIGHT` is the
+   * only one today. Verified by deleting `hover` from `LIGHT` and from `DARK`
+   * in turn: both go red and both name the palette. If a future palette spreads
+   * nothing, it joins the set this actually protects. */
+  const tokens = await import('../config/tokens.js');
+  const palettes = Object.entries(tokens).filter(
+    ([, v]) => v && typeof v === 'object' && !Array.isArray(v) && 'focusRing' in v
+  );
+  ok(palettes.length >= 2, `at least two palettes were found, got ${palettes.length}`);
+  const noHover = palettes
+    .filter(([, v]) => !/^rgba/.test(String(v.hover || '')))
+    .map(([k]) => k);
   ok(
-    (tokens.match(/^\s*hover:\s*'rgba/gm) || []).length === 2,
-    'both palettes declare a `hover` color — an undeclared one resolves to '
-    + 'nothing and the row simply stops responding to the pointer'
+    noHover.length === 0,
+    'every palette declares a `hover` color — an undeclared one resolves to '
+    + `nothing and the row simply stops responding to the pointer: ${noHover.join(', ')}`
   );
 }
 
