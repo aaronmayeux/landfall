@@ -577,7 +577,9 @@ No app change. One GitHub Actions job, because a session cannot reach NOAA.
   assumptions in §57.4 hold on the real file.
 - **Find how far back NHC's advisory archive goes**, text and GIS separately.
   This answer decides step 11.
-- Probe IBTrACS: what it is, how big, what shape.
+- Probe IBTrACS: what it is, what shape, and **how big — measured against
+  the 25 MiB Pages per-file cap (§57.33 limit 3)**. If it is over, the
+  rest-of-world storage design changes.
 - Land the bytes in `samples/` so later steps test against real data.
 **Done when:** the findings are written into this file, replacing assumptions.
 
@@ -748,3 +750,48 @@ ui/view-seasons*.js      shelf, board, roster, detail
 config/tokens.js         + the SEPIA palette
 config/constants.js      + a SEASONS block
 ```
+
+## 57.33 What this costs — nothing, and the three limits that keep it that way
+
+**Aaron's constraint: this feature must not cost money.** It does not, but only
+because of decisions made below. A different storage choice would.
+
+Verified against Cloudflare's published free-tier limits, August 2026.
+
+| What | Where it lives | Why it is free |
+|---|---|---|
+| HURDAT2, both basins | committed to the repo, served as a static asset | requests to static assets are free and unlimited, and Cloudflare does not bill bandwidth at all |
+| Tier 2 storms | same | same |
+| Current season | **Workers KV**, behind a route | see limit 2 |
+| Our JTWC-basin capture | appending branch + KV | public repo: free Actions, free clones, free storage |
+
+**LIMIT 1 — KV WRITES, LISTS AND DELETES: 1,000 A DAY EACH.** Reads are 100,000
+and storage is 1 GB, so reads and storage are not the constraint; writes are.
+Our shape is one write per storm per hour — five active storms is 120 a day,
+about a tenth of the budget.
+
+**==> NEVER CALL `list()`. <==** List operations share that same 1,000/day cap,
+and a route that lists keys per request burns it fast. **Keys get predictable
+names and are fetched directly.** This is the single easiest way to turn this
+feature into a bill.
+
+**LIMIT 2 — PAGES BUILDS: 500 A MONTH (~16 A DAY).** This is the actual reason
+the current season lives in KV rather than in the repo. Committing storm updates
+to `main` fires a build each time — a dozen a day during an active season, which
+collides with Aaron's own pushes and churns the service worker for every user on
+what is only a data change. KV writes fire no build.
+
+**LIMIT 3 — PAGES CAPS FILES AT 20,000 PER SITE AND 25 MiB EACH.** Measured
+2026-08-24: the repo tracks 867 files, 32 MB total, largest single file 2.3 MB.
+Ida alone is 269 files, so ten Tier 2 storms would add roughly 2,700 and put the
+total near 3,600 — comfortably under the file cap.
+
+**==> BUT IBTrACS MAY EXCEED THE 25 MiB PER-FILE CAP. <==** The global file is
+considerably larger than HURDAT2's 6.8 MB. If it is over 25 MiB it cannot be a
+static asset at all and must be split by basin or era, or moved to R2. **Step 0
+measures its size specifically**, and the rest-of-world design is not settled
+until it has.
+
+**The appending branch only commits when a file actually changes.** Off-season
+that is zero commits a day. An hourly commit regardless of change would grow the
+repo forever for no information.

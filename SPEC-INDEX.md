@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 287 numbered headings.
+Covering 11 files, 288 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -306,9 +306,10 @@ real home is the other row carrying the same section number.
 | `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 532-541 |
 | `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 542-547 |
 | `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 548-559 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 560-722 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 723-734 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 735-751 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 560-724 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 725-736 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 737-753 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 754-798 |
 
 ## Files
 
@@ -319,7 +320,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 90,430 | 21 |
-| `SPEC-SEASONS-BUILD.md` | 36,246 | 33 |
+| `SPEC-SEASONS-BUILD.md` | 38,846 | 34 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 176,022 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
