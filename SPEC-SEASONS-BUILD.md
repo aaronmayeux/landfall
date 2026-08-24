@@ -622,6 +622,8 @@ Two independent paths, neither depending on the other:
   without it is permanently lost.
 - Season graduation: when NOAA publishes the reviewed file, **one commit**
   promotes that year into the repo as a static file and KV stops carrying it.
+- **Every retention rule in §57.34 is built in this step, not added later.**
+  A store without an expiry rule is a store that will not get one.
 **Done when:** a session can read a stored season with plain git, and the route
 returns the same season to a browser.
 
@@ -666,10 +668,13 @@ stamp.
 
 **STEP 8 — THE DOWNLOAD GATE AND OFFLINE.**
 §57.24, plus service-worker caching so a downloaded basin survives with no
-signal. Includes the failure state.
+signal. Includes the failure state, the Settings entry from §57.34 rule 5, and
+**§57.34 rule 6 — the data cache must NOT be versioned with the app**, or every
+deploy silently deletes the user's download.
 **Aaron looks at:** the download on a phone, then **aeroplane mode**, then
-opening a season he has never visited.
-**Done when:** it works with the radio off.
+opening a season he has never visited. Then a push to `main`, then aeroplane
+mode again — the download must still be there.
+**Done when:** it works with the radio off, and it survives a deploy.
 
 ---
 
@@ -795,3 +800,69 @@ until it has.
 **The appending branch only commits when a file actually changes.** Off-season
 that is zero commits a day. An hourly commit regardless of change would grow the
 repo forever for no information.
+
+## 57.34 Retention — nothing in this feature grows without a bound
+
+**Aaron's constraint, and it is a separate one from cost:** no store here may
+grow forever. Every place Seasons writes needs a rule for when it stops.
+Six places do. Two of them are easy to miss.
+
+**1. THE APPENDING BRANCH — SQUASHED AT GRADUATION.**
+It commits only when a file actually changes, so the off-season costs nothing.
+But during a season it accumulates, and **once a year has graduated to a settled
+static file the branch's whole purpose has expired** — the hour-by-hour
+provenance of a live capture is only interesting while the capture is live.
+**At graduation, squash to a single commit.** Same trick the `archive` branch
+uses for the same reason, once a year instead of once an hour.
+
+**2. KV — AT MOST TWO SEASONS, PLUS A TTL BACKSTOP.**
+Graduation deletes the keys for the year it promoted. Roughly ninety storms
+worldwide a year, deleted once a year, against a 1,000-a-day delete cap — a
+rounding error.
+
+**And every key carries a generous TTL anyway (~400 days).** Not because we
+expect to need it, but because it makes cleanup the DEFAULT rather than an
+action: if the graduation job ever breaks silently, the store shrinks on its own
+instead of growing forever while nobody notices. A retention rule that depends
+on a job running is not a retention rule.
+
+**3. THE REPO — ONE NOAA FILE PER BASIN, REPLACED, NEVER ACCUMULATED.**
+NOAA republishes one cumulative file each February. `hurdat2-1851-2024.txt` does
+not sit beside `hurdat2-1851-2025.txt`; the old one is deleted in the same
+commit that adds the new one. Deleted is deleted (§12).
+
+**The working tree therefore stays flat, but git history does not.** Each swap
+adds a blob. The new file is mostly an append to the old one, so delta
+compression should keep the real cost near the diff rather than near 6.8 MB —
+**but that is a prediction, not a measurement. Measure the repo before and after
+the first February swap** and revisit here if it is worse than expected. Today
+the whole repo is 32 MB, so there is a great deal of runway before this matters.
+
+**4. TIER 2 CAPTURES ARE PERMANENT — DECIDE FIRST, COMMIT SECOND.**
+Ida is 7.7 MB and 269 files. **Committing a Tier 2 storm is a permanent repo
+cost even if it is later deleted**, because git keeps it. This is a second,
+independent reason step 11 (§57.30) is a decision session that happens BEFORE
+any capture: the shelf is short by design, and each addition is a door that does
+not close.
+
+**5. ON DEVICE — A SETTINGS ENTRY WITH A REAL SIZE AND A REAL DELETE.**
+*"Seasons data — 10.8 MB — Remove."* Actual bytes, not a guess. The download
+screen already promises this is removable; that promise has to be somewhere the
+user can find it later.
+
+**6. ==> THE SEASONS DATA CACHE MUST NOT BE VERSIONED WITH THE APP. <==**
+The easiest catastrophic mistake in this whole feature.
+
+The service worker versions its caches and purges old ones on activate, which is
+correct for application code. **If the downloaded seasons data lives in a cache
+named the same way, every single deploy silently deletes the user's 11 MB
+download** — and they discover it the next time they open Seasons on a plane,
+which is exactly the moment the feature was built for.
+
+The seasons data cache carries its own unversioned name, is excluded from the
+purge sweep, and survives app updates. It is cleared by exactly two things: the
+Settings action in rule 5, and the user clearing site data.
+
+**7. Seasons writes nothing into live stores.** §57.2. It is listed again here
+because the ended-storm store is the one place in this app that already grew a
+record it should not have, and it grew it from a replay.
