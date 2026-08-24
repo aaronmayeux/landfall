@@ -174,6 +174,27 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**SEASONS — MEASURE NHC's OWN ARCHIVE BEFORE BUILDING ANY OF IT.** One Actions
+job, no app change, and it turns three assumptions into facts. Planned but not
+started; the spec (`SPEC-SEASONS-PLAN.md`) gates the build on it.
+
+1. **Read a real b-deck.** `ftp.nhc.noaa.gov/atcf/btk/` — the operational best
+   track NOAA publishes DURING the season, one small file per storm, and the
+   thing HURDAT2 is later built from. Confirm the line layout against real
+   bytes; it is ATCF, not HURDAT2, and the wind-radii rows are laid out
+   differently. Do not design against a remembered format.
+2. **List what is in the 2026 directory today**, and filter it: storm numbers
+   01–30 are real, 90–99 are invests whose numbers get REUSED within a season,
+   80–89 are internal test systems that must always be ignored.
+3. **Find how far back NHC's advisory archive actually goes**, text and GIS
+   separately. That answer decides which storms are eligible for the Tier 2
+   shelf, and nothing should be promised for the shelf before it is known.
+
+**Why it matters:** the `archive` branch is a rolling 72-hour window with no
+history, so this season is NOT recoverable from our own archive — but every
+2026 b-deck is still sitting on NOAA's server, so nothing is actually lost yet.
+The basins NHC does not cover are a different story and ARE being lost daily.
+
 **==> §48.21 SHIPPED BROKEN AND THE FIX IS PUSHED. THREE BUGS, ONE PUSH, AND
 NONE OF THEM WAS CAUGHT BY ANY EXISTING GATE. <==** Aaron's report was *"no
 layer toggle, nothing different, and the environment ribbon no longer works"* —
