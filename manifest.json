@@ -1,0 +1,53 @@
+{
+  "probedAt": "2026-08-24T21:20:11.136Z",
+  "requests": [
+    {
+      "name": "aboutnames.shtml",
+      "url": "https://www.nhc.noaa.gov/aboutnames.shtml",
+      "ok": true,
+      "http": 200,
+      "finalUrl": "https://www.nhc.noaa.gov/aboutnames.shtml",
+      "ms": 254,
+      "bytes": 31633,
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "max-age=60",
+        "connection": "keep-alive",
+        "content-type": "text/html; charset=UTF-8",
+        "date": "Mon, 24 Aug 2026 21:20:11 GMT",
+        "expires": "Mon, 24 Aug 2026 21:21:11 GMT",
+        "server": "Apache/2.4.37 (Red Hat Enterprise Linux)",
+        "strict-transport-security": "max-age=31536000",
+        "transfer-encoding": "chunked",
+        "via": "1.1 ad2604250e9eed83c372fadb62dfeaca.cloudfront.net (CloudFront)",
+        "x-amz-cf-id": "fiRCSxa5RI0amsIiUZokr0qZNQ-9dmu-aX2y_X9vKBje4IcM53lkig==",
+        "x-amz-cf-pop": "IAD61-P1",
+        "x-cache": "Miss from cloudfront"
+      }
+    },
+    {
+      "name": "aboutnames-text.shtml",
+      "url": "https://www.nhc.noaa.gov/aboutnames.shtml?text",
+      "ok": true,
+      "http": 200,
+      "finalUrl": "https://www.nhc.noaa.gov/aboutnames.shtml?text",
+      "ms": 56,
+      "bytes": 14483,
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "max-age=60",
+        "connection": "keep-alive",
+        "content-type": "text/html; charset=UTF-8",
+        "date": "Mon, 24 Aug 2026 21:20:11 GMT",
+        "expires": "Mon, 24 Aug 2026 21:21:11 GMT",
+        "server": "Apache/2.4.37 (Red Hat Enterprise Linux)",
+        "strict-transport-security": "max-age=31536000",
+        "transfer-encoding": "chunked",
+        "via": "1.1 ad2604250e9eed83c372fadb62dfeaca.cloudfront.net (CloudFront)",
+        "x-amz-cf-id": "GY-Ds5lrX6ck6SR9hEI1P9mZKQQcag9mIYLBlSp26nWxcKe-MEQMTA==",
+        "x-amz-cf-pop": "IAD61-P1",
+        "x-cache": "Miss from cloudfront"
+      }
+    }
+  ]
+}
