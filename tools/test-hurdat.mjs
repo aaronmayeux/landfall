@@ -247,6 +247,54 @@ section('unnamed storms, and a header that is a placeholder rather than a name')
 }
 
 /* ------------------------------------------------------------------------- */
+section('==> A SPELLED-OUT NUMBER IS NOT A NAME EITHER <==');
+{
+  /* MEASURED, NOT ASSUMED: 71 storms across the two basins are "named" TEN,
+   * NINETEEN or TWENTY-TWO, in 22 distinct forms including BOTH `TWENTY-ONE`
+   * and `TWENTYONE`. They are unnamed storms wearing their number in words.
+   *
+   * ==> AND 2005 IS THE SEASON THAT PROVES IT MATTERS. <== It carries both
+   * spellings of the same idea — NOAA wrote its tenth system as `TEN` and its
+   * twenty-first as `UNNAMED` — so before this rule the roster showed `TEN`
+   * beside `Storm 21` for two storms of identical standing, and one of them
+   * looked like a name somebody chose. */
+  const al2005 = parseHurdat2(season('al-2005')).storms;
+  const byNumber = new Map(al2005.map((s) => [s.number, s]));
+
+  for (const n of [10, 19, 21, 23]) {
+    ok(byNumber.get(n)?.name === null,
+      `AL${String(n).padStart(2, '0')}2005 never earned a name and must come back as null. `
+      + `Got ${JSON.stringify(byNumber.get(n)?.name)}`);
+  }
+
+  ok(byNumber.get(12)?.name === 'KATRINA',
+    'and a real name in the same season is untouched');
+  ok(byNumber.get(26)?.name === 'ALPHA',
+    'including the Greek letters, which are names and not numbers');
+
+  /* ==> THE BOUNDARY CASES, BECAUSE A GREEDY RULE HERE EATS REAL NAMES. <==
+   * No storm name in either basin's roster is a number word, but a rule that
+   * matched loosely would swallow one the day NHC adds a name that merely
+   * STARTS with one. These are the shapes that must survive. */
+  const survives = ['NINA', 'TENNILLE', 'SIXTO', 'ONEIDA', 'IONE'];
+  for (const name of survives) {
+    const s = one(`AL012000,${name.padStart(19)},      1,\n`
+      + '20000101, 0000,  , TS, 10.0N,  50.0W,  40, 1000,'
+      + ' 0,0,0,0, 0,0,0,0, 0,0,0,0, 20\n').s;
+    ok(s.name === name, `${name} is a name, not a number. Got ${JSON.stringify(s.name)}`);
+  }
+
+  /* The ATCF operational form. `parseBdeck` shares this rule, and a live East
+   * Pacific depression is `ONE-E` before it is anything else. */
+  for (const label of ['ONE', 'TWENTY-ONE', 'TWENTYONE', 'ONE-E', 'THIRTY']) {
+    const s = one(`AL012000,${label.padStart(19)},      1,\n`
+      + '20000101, 0000,  , TD, 10.0N,  50.0W,  25, 1005,'
+      + ' 0,0,0,0, 0,0,0,0, 0,0,0,0, 20\n').s;
+    ok(s.name === null, `${label} is a storm number in words. Got ${JSON.stringify(s.name)}`);
+  }
+}
+
+/* ------------------------------------------------------------------------- */
 section('a whole season, and the header row count is checked rather than trusted');
 {
   const r = parseHurdat2(season('al-2005'));
