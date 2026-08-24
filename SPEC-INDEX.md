@@ -122,7 +122,7 @@ real home is the other row carrying the same section number.
 | `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1401-1407 |
 | `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1408-1419 |
 | `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1420-1473 |
-| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1474-1535 |
+| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1474-1549 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -322,7 +322,7 @@ real home is the other row carrying the same section number.
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 267,669 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 93,951 | 22 |
+| `SPEC-OPS.md` | 94,885 | 22 |
 | `SPEC-SEASONS-BUILD.md` | 79,246 | 36 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 177,040 | 15 |

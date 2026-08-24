@@ -21,10 +21,14 @@
  *   3. DEDUPLICATION. The same warning is served for six hours, so an hourly
  *      job sees it six times. Verified red by appending unconditionally, which
  *      turns one storm into six copies of itself.
- *   4. THE MANIFEST'S TIMESTAMP STRIP. Compare the manifest whole and the
- *      branch takes a commit an hour forever; do not compare it at all and a
- *      source that starts failing is invisible. Verified red both ways —
- *      by comparing whole, and by returning false unconditionally.
+ *   4. ACTIVITY IS NOT HEALTH. ==> THIS ONE SHIPPED AND THE RUNNER CAUGHT IT.
+ *      <== The first version compared the whole manifest minus its timestamp,
+ *      which sounds right: the per-file detail reads `stored 6551 bytes` on the
+ *      run that fetched a file and `unchanged (304)` on the next, so EVERY real
+ *      change produced a second, empty commit — with a subject claiming to be a
+ *      first run. Measured on `seasons-live` as `b7c2c44` then `f34d4a5`, and
+ *      the two manifests below are those, cut down. Verified red by comparing
+ *      the manifests whole, and by returning false unconditionally.
  *
  * THE JTWC FIXTURE IS REAL. `samples/seasons/jtwc-storms-2026-08-24.json` is
  * the exact body our own relay served at 14:50Z on 2026-08-24, taken off the
@@ -49,7 +53,7 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const {
   bdeckFiles, bdeckPath, hrefs, parseProduct,
-  jtwcRecord, mergeJsonl, manifestChanged, stableJson,
+  jtwcRecord, mergeJsonl, healthChanged, commitMessage, stableJson,
 } = await import('./seasons-mirror.mjs');
 
 /* The directory as NHC actually serves it: an Apache index. The step-0 probe
@@ -206,41 +210,94 @@ section('the same warning, seen six times');
 /* ------------------------------------------------------------------------- */
 section('when a run is worth a commit');
 {
-  const base = {
-    runAt: '2026-08-24T15:00:00.000Z',
-    sources: { btk: { status: 'ok', stored: 0, unchanged: 14 }, jtwc: { status: 'ok', linesAdded: 0 } },
+  /* ==> THESE TWO ARE THE REAL MANIFESTS THE RUNNER WROTE, NOT INVENTED ONES.
+   * <== `b7c2c44` at 15:34Z and `f34d4a5` at 15:37Z on 2026-08-24, cut down to
+   * the fields that decide this. The first run fetched fourteen b-decks; the
+   * second, four minutes later, got fourteen 304s and added no JTWC lines —
+   * so NOTHING moved, and it committed anyway, with a subject that claimed to
+   * be a first run. Both faults are asserted below. */
+  const firstRun = {
+    runAt: '2026-08-24T15:34:05.204Z',
+    sources: {
+      btk: {
+        status: 'ok', listed: 18, eligible: 14, stored: 14, unchanged: 0, failed: 0,
+        skipped: ['bal952026.dat — invest — number is reused within a season'],
+        files: { 'btk/2026/bal012026.dat': 'stored 2879 bytes' },
+      },
+      jtwc: { status: 'ok', storms: 6, linesAdded: 6, faults: [], files: { 'jtwc/2026/wp1726.jsonl': '+1' } },
+    },
   };
-  const anHourLater = { ...base, runAt: '2026-08-24T16:00:00.000Z' };
-
-  /* ==> SILENT BUG 4, FIRST HALF. <== */
-  ok(!manifestChanged(base, anHourLater),
-    'a run where nothing happened is not a commit, however new the clock is');
-
-  /* ==> SILENT BUG 4, SECOND HALF. §5: silence is not a status. <== */
-  const nhcDown = {
-    runAt: '2026-08-24T16:00:00.000Z',
-    sources: { btk: { status: 'unavailable', reason: 'HTTP 503' }, jtwc: { status: 'ok', linesAdded: 0 } },
+  const steadyState = {
+    runAt: '2026-08-24T15:37:44.380Z',
+    sources: {
+      btk: {
+        status: 'ok', listed: 18, eligible: 14, stored: 0, unchanged: 14, failed: 0,
+        skipped: ['bal952026.dat — invest — number is reused within a season'],
+        files: { 'btk/2026/bal012026.dat': 'unchanged (304)' },
+      },
+      jtwc: { status: 'ok', storms: 6, linesAdded: 0, faults: [], files: { 'jtwc/2026/wp1726.jsonl': 'already held' } },
+    },
   };
-  ok(manifestChanged(base, nhcDown),
+
+  /* ==> SILENT BUG 4, AND IT SHIPPED. <== Activity is not health. `stored` and
+     `unchanged` swapping places is what HAPPENED, not what is TRUE — and if
+     anything really was stored, the data itself changed and `dataMoved` forces
+     the commit without this function's help. Comparing them here meant every
+     genuine change produced a second, empty commit. */
+  ok(!healthChanged(firstRun, steadyState),
+    'fetching the same fourteen files again is not a commit — activity is not health');
+
+  const later = { ...steadyState, runAt: '2026-08-24T16:37:00.000Z' };
+  ok(!healthChanged(steadyState, later), 'and a quiet hour later is still not a commit');
+
+  /* ==> THE OTHER HALF. §5: silence is not a status. <== */
+  const nhcDown = JSON.parse(JSON.stringify(steadyState));
+  nhcDown.sources.btk = { status: 'unavailable', reason: 'HTTP 503', listed: 0, eligible: 0, failed: 0, skipped: [], files: {} };
+  ok(healthChanged(steadyState, nhcDown),
     'a source that started failing IS a commit — an outage must not read as a quiet hour');
 
-  const stored = {
-    runAt: '2026-08-24T16:00:00.000Z',
-    sources: { btk: { status: 'ok', stored: 2, unchanged: 12 }, jtwc: { status: 'ok', linesAdded: 0 } },
-  };
-  ok(manifestChanged(base, stored), 'new bytes are a commit');
-  ok(manifestChanged(null, base), 'the very first run is a commit');
+  const oneFailed = JSON.parse(JSON.stringify(steadyState));
+  oneFailed.sources.btk.failed = 1;
+  ok(healthChanged(steadyState, oneFailed), 'one file failing is a commit');
+
+  const newInvest = JSON.parse(JSON.stringify(steadyState));
+  newInvest.sources.btk.listed = 19;
+  newInvest.sources.btk.skipped.push('bep932026.dat — invest — number is reused within a season');
+  ok(healthChanged(steadyState, newInvest), 'the directory gaining a file is a commit');
+
+  const fault = JSON.parse(JSON.stringify(steadyState));
+  fault.sources.jtwc.faults = ['storm 20W has no readable product id'];
+  ok(healthChanged(steadyState, fault), 'a JTWC fault is a commit');
+
+  ok(healthChanged(null, firstRun), 'the very first run is a commit');
 
   /* Key order must not decide this. A manifest rebuilt from scratch every run
      can carry the same facts in a different order, and a naive string compare
      would call that a change every single time. */
   const reordered = {
-    sources: { jtwc: { linesAdded: 0, status: 'ok' }, btk: { unchanged: 14, stored: 0, status: 'ok' } },
     runAt: '2026-08-24T17:00:00.000Z',
+    sources: {
+      jtwc: { ...steadyState.sources.jtwc },
+      btk: { failed: 0, eligible: 14, listed: 18, status: 'ok', skipped: [...steadyState.sources.btk.skipped], stored: 0, unchanged: 14, files: {} },
+    },
   };
-  ok(!manifestChanged(base, reordered), 'key order is not a change');
+  ok(!healthChanged(steadyState, reordered), 'key order is not a change');
   ok(stableJson({ b: 1, a: 2 }) === stableJson({ a: 2, b: 1 }), 'stableJson sorts keys');
   ok(stableJson([{ b: 1, a: 2 }]) === '[{"a":2,"b":1}]', 'and sorts inside arrays');
+
+  /* ==> AND THE SUBJECT LINE, WHICH WAS THE SECOND FAULT IN THE SAME COMMIT.
+     <== `git log` is the only interface this branch has, so a subject that says
+     something untrue is worse than a dull one. */
+  ok(commitMessage(firstRun, { firstRun: true }).includes('14 b-decks'),
+    'a run that stored files says so');
+  ok(commitMessage(firstRun, { firstRun: true }).includes('6 JTWC warnings'),
+    'and says how many warnings');
+  ok(commitMessage(nhcDown, { firstRun: false }).includes('NHC unavailable'),
+    'an outage names itself in the subject');
+  ok(!commitMessage(steadyState, { firstRun: false }).includes('first run'),
+    'a later commit does NOT claim to be the first run');
+  ok(commitMessage(steadyState, { firstRun: true }).includes('first run'),
+    'and a genuine first run still says so');
 }
 
 /* ------------------------------------------------------------------------- */

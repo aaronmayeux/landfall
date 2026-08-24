@@ -245,23 +245,53 @@ export function mergeJsonl(existingText, incoming) {
 }
 
 /**
- * Did anything about the last run's OUTCOME change, ignoring only the clock?
+ * Did anything about the last run's HEALTH change?
  *
- * ==> THIS IS THE §5 GUARD, AND THE `runAt` STRIP IS THE WHOLE OF IT. <== If
- * the manifest were compared whole, every run would differ and the branch would
- * take a commit an hour forever. If it were not compared at all, a source that
- * started failing at 3am would be invisible until somebody happened to look —
- * the archive branch's own manifest exists because that silence cost real time.
- * Stripping the timestamp and nothing else means: nothing happened, no commit;
- * something broke, a commit that says so.
+ * ==> THIS IS THE §5 GUARD, AND GETTING ITS SCOPE WRONG COST A SPURIOUS COMMIT
+ * ON THE FIRST REAL RUN. <== The first version stripped `runAt` and compared
+ * everything else, which sounds right and is not: the per-file detail says
+ * `stored 6551 bytes` on the run that fetched a file and `unchanged (304)` on
+ * the next one. So EVERY genuine change produced TWO commits — one carrying the
+ * data and an empty follow-up saying the same file had gone quiet again.
+ * Measured on the runner 2026-08-24, `b7c2c44` then `f34d4a5`.
+ *
+ * The distinction the first version missed: **activity is not health.** Bytes
+ * stored, files unchanged, lines added and the per-file map are what HAPPENED,
+ * and if any of them is non-zero the data itself already changed, so the commit
+ * is forced by `dataMoved` and does not need this function's help. What this
+ * function is for is the opposite case — nothing happened, and that is either
+ * a quiet hour or an outage, and those two must not read the same.
+ *
+ * So it compares only what would still be true if the run were repeated:
+ * every source's status and reason, how many files the directory listed, which
+ * ones the filter dropped, how many failed, how many storms are being warned
+ * on, and any faults. A source flipping from `ok` to `unavailable` is a commit.
+ * A directory gaining an invest is a commit. Fetching the same fourteen files
+ * again is not.
  */
-export function manifestChanged(prev, next) {
-  const strip = (m) => {
-    if (!m || typeof m !== 'object') return null;
-    const { runAt, ...rest } = m;
-    return stableJson(rest);
+export function healthChanged(prev, next) {
+  const health = (m) => {
+    if (!m || typeof m !== 'object' || !m.sources) return null;
+    const b = m.sources.btk || {};
+    const j = m.sources.jtwc || {};
+    return stableJson({
+      btk: {
+        status: b.status ?? null,
+        reason: b.reason ?? null,
+        listed: b.listed ?? null,
+        eligible: b.eligible ?? null,
+        failed: b.failed ?? null,
+        skipped: b.skipped ?? [],
+      },
+      jtwc: {
+        status: j.status ?? null,
+        reason: j.reason ?? null,
+        storms: j.storms ?? null,
+        faults: j.faults ?? [],
+      },
+    });
   };
-  return strip(prev) !== strip(next);
+  return health(prev) !== health(next);
 }
 
 /** JSON with object keys in a fixed order, so two equal things compare equal.
@@ -472,7 +502,7 @@ async function mirrorJtwc(root) {
  * commits nobody can navigate. Saying WHAT MOVED turns the log into the change
  * history of the season, which is the thing the branch exists to be.
  */
-export function commitMessage(manifest) {
+export function commitMessage(manifest, { firstRun = false } = {}) {
   const b = manifest.sources.btk;
   const j = manifest.sources.jtwc;
   const bits = [];
@@ -480,7 +510,16 @@ export function commitMessage(manifest) {
   if (j.linesAdded) bits.push(`${j.linesAdded} JTWC warning${j.linesAdded === 1 ? '' : 's'}`);
   if (b.status !== 'ok') bits.push(`NHC ${b.status}`);
   if (j.status !== 'ok') bits.push(`JTWC ${j.status}`);
-  const what = bits.length ? bits.join(', ') : 'first run';
+
+  /* ==> THE FALLBACK USED TO SAY "first run" AND IT WAS A LIE ON THE SECOND
+   * COMMIT THIS BRANCH EVER TOOK. <== Nothing stored, nothing added, both
+   * sources healthy — so every branch above was skipped and the message
+   * announced a first run on a branch that already had one. A commit whose
+   * subject is false is worse than a commit with a dull subject, because
+   * `git log` is the only interface this branch has. */
+  const what = bits.length
+    ? bits.join(', ')
+    : (firstRun ? 'first run' : 'no new data — the directory or a source status changed');
   return `seasons-live: ${what} — ${manifest.runAt.slice(0, 16)}Z`;
 }
 
@@ -543,8 +582,9 @@ async function main() {
   try { previous = JSON.parse(readIf(join(root, 'manifest.json')) || 'null'); } catch { previous = null; }
 
   const dataMoved = btk.wrote || jtwc.wrote;
-  const outcomeMoved = manifestChanged(previous, manifest);
-  const decision = dataMoved || outcomeMoved ? 'commit' : 'skip';
+  const firstRun = previous === null;
+  const healthMoved = healthChanged(previous, manifest);
+  const decision = dataMoved || healthMoved ? 'commit' : 'skip';
 
   if (decision === 'commit') {
     writeIfDifferent(root, 'state.json', `${JSON.stringify(state, null, 2)}\n`);
@@ -553,12 +593,12 @@ async function main() {
   }
 
   writeFileSync(join(reportDir, 'decision.txt'), decision);
-  writeFileSync(join(reportDir, 'commit-message.txt'), commitMessage(manifest));
+  writeFileSync(join(reportDir, 'commit-message.txt'), commitMessage(manifest, { firstRun }));
   writeFileSync(join(reportDir, 'summary.md'), `${summary(manifest, decision)}\n`);
   writeFileSync(join(reportDir, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
 
   console.log(summary(manifest, decision));
-  console.log(`\ndecision: ${decision} (data moved: ${dataMoved}, outcome moved: ${outcomeMoved})`);
+  console.log(`\ndecision: ${decision} (data moved: ${dataMoved}, health moved: ${healthMoved})`);
 }
 
 const README = `# seasons-live — the current season, captured hourly

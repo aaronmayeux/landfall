@@ -1517,13 +1517,27 @@ saw on the day — one parser, one answer.
 3. **A run that changed nothing commits nothing.** Off season that is zero
    commits a day. The decision is made inside the script, because only it knows
    whether bytes moved or the server merely answered again.
-4. **==> BUT SILENCE IS NOT A STATUS. <==** The manifest is compared ignoring
-   its timestamp **and nothing else**, so a source flipping from `ok` to
-   `unavailable` is itself a change and forces a commit that says so. Compare it
-   whole and the branch takes a commit an hour forever; do not compare it at all
-   and an outage at 3am is invisible until somebody happens to look. The commit
-   subject names what moved, because `git log` is the only interface this branch
-   will ever have.
+4. **==> BUT SILENCE IS NOT A STATUS, AND THE LINE BETWEEN THEM IS HEALTH
+   VERSUS ACTIVITY. <==** The manifest is compared on **status, reason, how
+   many files the directory listed, which the filter dropped, how many failed,
+   how many storms are warned on, and any faults** — never on bytes stored,
+   files unchanged, lines added, or the per-file map. A source flipping from
+   `ok` to `unavailable` is a commit that says so. A directory gaining an
+   invest is a commit. Fetching the same fourteen files again is not.
+
+   **That scope was got wrong once and the runner caught it inside four
+   minutes.** The first version compared everything except the timestamp, which
+   sounds right — but the per-file detail reads `stored 6551 bytes` on the run
+   that fetched a file and `unchanged (304)` on the next, so **every genuine
+   change produced a second, empty commit**, carrying a subject line that
+   claimed to be a first run. `seasons-live` `b7c2c44` then `f34d4a5`,
+   2026-08-24. Activity already forces a commit through the bytes themselves;
+   this comparison exists only for the case where nothing happened, and the
+   whole question is whether that was a quiet hour or an outage.
+
+   The commit subject names what moved, because `git log` is the only interface
+   this branch will ever have — and for the same reason it does not claim to be
+   a first run unless there was no previous manifest at all.
 
 **Retention: squashed to one commit at graduation** — §57.34 rule 1, run as
 `workflow_dispatch` with `squash` set. It is a button rather than a schedule

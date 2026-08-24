@@ -187,10 +187,23 @@ what it IS described in `SPEC-OPS.md` §18.7. **3b is the serving** — HURDAT2 
 the repo, the current season into KV, a route in front of both — and nothing of
 it is built.
 
-**==> IT HAS RUN ON A REAL RUNNER AND THE BRANCH EXISTS. <==** 2026-08-24
-15:34Z, first commit `b7c2c44`. **18 files listed, 14 stored, 4 invests dropped
-by name in the manifest** — which matches the step-0 probe's independent count
-of the same directory to the file. Six JTWC warnings captured, no faults.
+**==> IT HAS RUN ON A REAL RUNNER, THE BRANCH EXISTS, AND THE SECOND RUN FOUND
+A BUG THE SANDBOX COULD NOT. <==** 2026-08-24. **18 files listed, 14 stored, 4
+invests dropped by name in the manifest** — matching the step-0 probe's
+independent count of the same directory to the file. Six JTWC warnings, no
+faults. Conditional GET confirmed working: the second run got fourteen `304`s.
+
+**AND IT COMMITTED ANYWAY, WHICH IT MUST NOT.** The per-file detail flips from
+`stored 6551 bytes` to `unchanged (304)`, and the first version compared the
+whole manifest minus its timestamp — so **every real change produced a second,
+empty commit**, with a subject claiming to be a first run. Both faults fixed and
+described in `SPEC-OPS.md` §18.7 rule 4; the rule is now health versus activity.
+**The two real manifests are the test's fixtures**, and the shipped logic
+reintroduced turns the suite red.
+
+**THE SANDBOX COULD NOT HAVE FOUND IT.** Both hosts are blocked here, so every
+local run had both sources failing identically and the transition from `stored`
+to `unchanged` never happened. It took one runner and four minutes.
 
 **AND THE CAPTURE ROUND-TRIPS THROUGH THE APP'S OWN PARSER.** `parseBdeck` reads
 the stored `bcp012026.dat` back as LALA, 59 points, peak 115 kt, zero faults,
