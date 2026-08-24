@@ -2052,6 +2052,19 @@ general span assertion is what keeps it unreachable.
 `tools/test-windswath-dateline.mjs` checks it as a rule rather than as a number
 this fixture happens to produce. The next basin to reach the seam trips it too.
 
+**AND ALL THREE THRESHOLDS ARE ASSERTED, NOT JUST THE ONE THAT WRAPPED.** Only
+the 34 kt band crossed ±180 on the day this was found, and that is an accident
+of the advisory rather than anything structural: NHC stopped publishing Lala's
+50 kt radii after tau 36 and published no 64 kt at all, so orange and red simply
+END before the seam. A suite that only ever saw green cross would pass just as
+happily against a repair that covered one threshold and missed two. The branch
+is applied ONCE to the timeline, above the per-threshold loop, so all three
+sweep the same corrected spine — but that is the argument, and the suite carries
+the measurement: Lala's own 50 kt quadrant numbers are carried onto the taus
+that cross the seam and a 64 kt rose is built at half those radii, so all three
+run the full forecast. **With the branch removed all three wrap — 360.13°,
+359.50° and 358.48°. With it, none does.**
+
 `samples/lala-cp012026-dateline/` is the 2026-08-24T17:37Z archive run verbatim
 — forecast points, forecast radii, current field. The past tier is deliberately
 absent: a megabyte, and the fault reproduces without it. **Do not normalize

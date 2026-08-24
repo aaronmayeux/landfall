@@ -107,6 +107,18 @@ door.
    the no-op control: none of them is near ±180, so any visible change on them
    is a regression, not the fix.
 
+**ORANGE AND RED ARE FIXED TOO, AND THAT IS MEASURED RATHER THAN REASONED.**
+Aaron asked 2026-08-24. Only the green 34 kt band wrapped, which is an accident
+of the advisory — NHC stopped publishing Lala's 50 kt radii after tau 36 and
+published no 64 kt at all, so orange and red END before the seam rather than
+being handled differently. The branch is applied once to the timeline above the
+per-threshold loop, so all three sweep the same corrected spine. Proven by
+carrying Lala's own 50 kt numbers onto the taus that cross ±180 and building a
+64 kt rose at half those radii: **with the branch removed all three wrap —
+360.13°, 359.50°, 358.48°; with it, none does.** Asserted per threshold in
+`tools/test-windswath-dateline.mjs` so a future repair cannot cover one and miss
+two.
+
 **The prime meridian was checked at the same time and is clean** — 0° is not a
 branch cut, so no wrap arithmetic runs there at all. All five longitude
 normalizers in the repo are the identity across it, `basinFromPosition` returns

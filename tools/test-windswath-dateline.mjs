@@ -199,6 +199,71 @@ section('a past fix coincident with the storm is dropped across the seam');
 }
 
 /* ---------------------------------------------------------------------------
+ * ALL THREE THRESHOLDS, NOT JUST THE ONE THAT REACHED THE SEAM TODAY
+ *
+ * ==> THE FIXTURE CAN ONLY WRAP ONE BAND, AND THAT IS AN ACCIDENT OF THE
+ * ADVISORY. <== NHC stopped publishing Lala's 50 kt radii after tau 36 and
+ * published no 64 kt at all, so orange and red simply END before ±180 — they
+ * are not handled differently, they just never got there. A suite that only
+ * ever saw the green band cross would pass just as happily against a fix that
+ * covered one threshold and missed two.
+ *
+ * The branch is applied ONCE to the timeline, above the per-threshold loop, so
+ * all three sweep the same corrected spine. That is the structural argument.
+ * Below is the measurement, which is what actually settles it: Lala's own 50 kt
+ * quadrant numbers are carried onto the taus that cross the seam, and a 64 kt
+ * rose is built at half those radii, so all three thresholds run the full
+ * forecast. Measured 2026-08-24 with the branch removed, every one of them
+ * wraps — 360.13°, 359.50°, 358.48°. With it, none does.
+ *
+ * SYNTHETIC RADII, REAL CENTRES AND REAL GEOMETRY EVERYWHERE ELSE. The question
+ * here is whether the seam repair reaches all three thresholds, which is about
+ * the code path and not about what NHC happened to forecast. Nothing about the
+ * numbers themselves is asserted.
+ * ------------------------------------------------------------------------- */
+section('orange and red cross the seam as cleanly as green');
+{
+  const raw = feats('windSwath.geojson');
+  const src = raw.find((f) => Number(f.properties.radii) === 50);
+  ok(!!src, 'the fixture must carry a real 50 kt rose to take the numbers from');
+  const { ne, se, sw, nw } = src.properties;
+
+  /* Geometry omitted on purpose: the ring solver (§7.13) declines and the
+   * published forecast centre is used, which is the ordinary path whenever a
+   * rose will not solve. */
+  const rose = (radii, tau, k) => ({
+    type: 'Feature',
+    properties: { radii, tau, ne: ne * k, se: se * k, sw: sw * k, nw: nw * k },
+    geometry: null,
+  });
+
+  const extra = [];
+  for (const tau of [48, 60, 72, 96, 120]) extra.push(rose(50, tau, 1));
+  for (const tau of [0, 12, 24, 36, 48, 60, 72, 96, 120]) extra.push(rose(64, tau, 0.5));
+
+  const out = buildFullTrack({
+    currentField: feats('windCurrent.geojson'),
+    forecastRadii: [...raw, ...extra],
+    forecastPoints: forecastPoints(),
+    currentPos: { ...POS },
+  }, WIND_SWEEP);
+
+  for (const t of [34, 50, 64]) {
+    const bands = out.filter((f) => Number(f.properties.radii) === t);
+    ok(bands.length > 0, `the ${t} kt threshold must draw at least one band`);
+    for (const f of bands) {
+      ok(lonSpan(f) < 180,
+        `the ${t} kt band spans ${lonSpan(f).toFixed(2)}° of longitude — the seam`
+        + ' repair must reach every threshold, not only the one that happened to'
+        + ' cross on the day it was written');
+    }
+    ok(bands.some((f) => f.geometry.coordinates[0].some(([lon]) => lon < -180)),
+      `the ${t} kt band must actually run past -180 here, or this case is not`
+      + ' testing the seam at all');
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * THE BANDS
  * ------------------------------------------------------------------------- */
 section('no band wraps the planet');
