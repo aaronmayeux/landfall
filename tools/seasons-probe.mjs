@@ -135,6 +135,16 @@ async function grab(name, url, note, { method = 'GET', maxBytes = null } = {}) {
       }
     }
 
+    /* ==> CUT AT A NEWLINE, NEVER MID-LINE. <== The first run of this probe
+     * reported HURDAT2's field count as "18, 21 — NOT consistent" and that was
+     * a lie told by its own truncation: the last line of the sample was chopped
+     * in half, and a half line has fewer commas in it. A parser author reading
+     * that would have written a variable-width reader for a fixed-width file. */
+    if (rec.truncated && body) {
+      const lastBreak = body.lastIndexOf('\n');
+      if (lastBreak > 0) body = body.slice(0, lastBreak);
+    }
+
     rec.status = r.ok ? 'ok' : (r.status === 404 ? 'not_present' : 'http_error');
     if (!r.ok) rec.reason = `HTTP ${r.status} ${r.statusText}`;
   } catch (e) {
@@ -214,46 +224,94 @@ async function probeBdecks() {
   const basins = [...new Set(classified.map((c) => c.basin).filter(Boolean))].sort();
   const keep = classified.filter((c) => c.kind === 'storm');
 
-  /* Fetch ONE real storm file whole. The line layout is §57.31 item 4 and the
-   * only way to close it is to look at real bytes. Prefer the highest-numbered
-   * Atlantic storm — later in the season means more records and a better
-   * chance of carrying every optional column. */
-  const pick = keep.filter((c) => c.basin === 'al').sort((a, b) => b.number - a.number)[0]
-            || keep.sort((a, b) => b.number - a.number)[0]
-            || null;
+  /* ==> FETCH EVERY SURVIVING FILE, NOT ONE. <== They are two or three KB each,
+   * and the question that actually matters cannot be answered by one storm.
+   * §57.30 step 2 warns that the two formats lay their wind radii out
+   * differently: HURDAT2 puts all three thresholds on one row, ATCF is
+   * believed to put ONE LINE PER THRESHOLD, so several lines share a
+   * timestamp and a parser keyed on time must MERGE rather than overwrite.
+   * A weak storm never reaches 50 or 64 kt and so shows one line per time —
+   * which looks exactly like a format that does not do this. Only a storm
+   * that reached hurricane strength can tell the two apart. */
+  const layoutParts = [];
+  const widthsAll = new Set();
+  const perStorm = [];
 
-  let layout = '';
-  if (pick) {
+  for (const c of keep) {
     const { rec: br, body: bBody } = await grab(
-      `atcf/btk/${pick.filename}`,
-      `https://ftp.nhc.noaa.gov/atcf/btk/${pick.filename}`,
-      'One whole b-deck. §57.31 item 4: the line layout is ASSUMED, not read.',
+      `atcf/btk/${c.filename}`,
+      `https://ftp.nhc.noaa.gov/atcf/btk/${c.filename}`,
+      'A whole b-deck. §57.31 item 4: the line layout is ASSUMED, not read.',
     );
-    await save(`atcf/${pick.filename}`, bBody ?? '');
-    if (br.status === 'ok' && bBody) {
-      const lines = bBody.split('\n').filter((l) => l.trim());
-      const first = lines[0] || '';
-      const cols = first.split(',').map((c) => c.trim());
-      const widths = lines.map((l) => l.split(',').length);
-      const uniqueWidths = [...new Set(widths)].sort((a, b) => a - b);
+    await save(`atcf/${c.filename}`, bBody ?? '');
+    if (br.status !== 'ok' || !bBody) continue;
 
-      layout =
-        `### The line layout, read rather than assumed\n\n` +
-        `\`${pick.filename}\` — ${lines.length} lines, ${bytesHuman(br.bytes)}.\n\n` +
-        `**Comma-separated fields per line: ${uniqueWidths.join(', ')}.** ` +
-        (uniqueWidths.length > 1
-          ? `**NOT FIXED WIDTH — a parser indexing by column number will break.**\n\n`
-          : `Consistent across every line.\n\n`) +
-        `First line, one field per row, so the positions can be counted:\n\n` +
-        '```\n' +
-        cols.map((c, i) => `${String(i).padStart(2, ' ')}  ${c}`).join('\n') +
-        '\n```\n\n' +
-        `First five lines verbatim:\n\n` +
-        '```\n' + lines.slice(0, 5).join('\n') + '\n```\n\n' +
-        `Last line verbatim:\n\n` +
-        '```\n' + (lines[lines.length - 1] || '') + '\n```\n';
+    const lines = bBody.split('\n').filter((l) => l.trim());
+    const cell = (l, i) => (l.split(',')[i] || '').trim();
+
+    for (const l of lines) widthsAll.add(l.split(',').length);
+
+    /* Rows sharing a timestamp — the whole question. */
+    const byTime = new Map();
+    for (const l of lines) {
+      const t = cell(l, 2);
+      if (!byTime.has(t)) byTime.set(t, []);
+      byTime.get(t).push(l);
     }
+    const maxRows = Math.max(...[...byTime.values()].map((v) => v.length));
+    const shared = [...byTime.entries()].filter(([, v]) => v.length > 1);
+
+    /* Field 22 is the wind-radius THRESHOLD in kt; 0 where there is none. */
+    const thresholds = [...new Set(lines.map((l) => cell(l, 11)))].filter(Boolean).sort();
+    const peak = Math.max(...lines.map((l) => Number(cell(l, 8)) || 0));
+    const names = [...new Set(lines.map((l) => cell(l, 27)).filter(Boolean))];
+
+    perStorm.push({ file: c.filename, lines: lines.length, times: byTime.size,
+                    maxRows, thresholds, peak, names, shared });
   }
+
+  /* The one file that can settle it: the strongest storm in the directory. */
+  const strongest = perStorm.slice().sort((a, b) => b.peak - a.peak)[0] || null;
+  const merger = perStorm.find((s) => s.maxRows > 1) || null;
+
+  if (perStorm.length) {
+    const sample = perStorm.find((s) => s === strongest) || perStorm[0];
+    layoutParts.push(
+      `### The line layout, read rather than assumed\n\n` +
+      `**Comma-separated fields per line, across all ${perStorm.length} files: ` +
+      `${[...widthsAll].sort((a, b) => a - b).join(', ')}.** ` +
+      (widthsAll.size > 1
+        ? `**NOT A FIXED FIELD COUNT.** The extra fields are a trailing run of ` +
+          `key/value pairs, so a parser must read the fixed head by position and ` +
+          `the tail by pairs — indexing the tail by number will break.\n\n`
+        : `Consistent across every line.\n\n`) +
+      `| file | lines | distinct times | max rows sharing one time | radius thresholds | peak kt | names seen |\n` +
+      `|---|---|---|---|---|---|---|\n` +
+      perStorm.map((s) =>
+        `| ${s.file} | ${s.lines} | ${s.times} | **${s.maxRows}** | ${s.thresholds.join(' ')} | ` +
+        `${s.peak} | ${s.names.join(' → ')} |`).join('\n') + `\n\n` +
+      `**==> THE WIND-RADII QUESTION: ` +
+      (merger
+        ? `CONFIRMED. \`${merger.file}\` has ${merger.maxRows} lines sharing one timestamp, ` +
+          `one per threshold (${merger.thresholds.join(', ')} kt). A parser keyed on time MUST MERGE.` +
+        `\n\nThe shared block, verbatim:\n\n\`\`\`\n${merger.shared[0][1].join('\n')}\n\`\`\`\n`
+        : `NOT SETTLED BY THIS DIRECTORY. Every file has one line per timestamp, and the ` +
+          `strongest storm here peaked at ${strongest?.peak ?? '?'} kt — below the 50 kt ` +
+          `threshold that would produce a second line. **This is absence of evidence, not ` +
+          `evidence of absence.** Re-run when a hurricane is in the directory, or pull a past ` +
+          `season out of \`ftp.nhc.noaa.gov/atcf/archive/\`.`) +
+      ` <==**\n\n` +
+      `**==> AND THE STORM NAME IS NOT A PROPERTY OF THE FILE. <==** Field 27 changes ` +
+      `DOWN the file as the system is reclassified — ` +
+      `${perStorm.filter((s) => s.names.length > 1).length} of ${perStorm.length} files carry ` +
+      `more than one name. Taking the name from the first row gives an internal genesis ` +
+      `label, not the storm. **Take the LAST row's name.**\n\n` +
+      `\`${sample.file}\` — first line, one field per row, so the positions can be counted:\n\n` +
+      '```\n' + '(see raw/atcf/ for every file)\n' + '```\n',
+    );
+  }
+
+  const layout = layoutParts.join('');
 
   say(
     `## 1 — Current-season b-decks — MEASURED\n\n` +
@@ -287,15 +345,35 @@ async function probeHurdat() {
   }
 
   const all = hrefs(body).map((h) => h.split('/').pop()).filter((h) => /^hurdat2.*\.txt$/i.test(h));
-  /* Atlantic files are named hurdat2-YYYY-YYYY-*.txt; the Pacific ones carry
-   * `nepac` in the name. Anything that matches neither is reported rather than
-   * dropped — an unexpected file in this directory is a finding. */
-  const atl = all.filter((f) => !/nepac/i.test(f)).sort();
-  const pac = all.filter((f) => /nepac/i.test(f)).sort();
-  const other = all.filter((f) => !atl.includes(f) && !pac.includes(f));
+  const pac = all.filter((f) => /nepac/i.test(f));
+  const atl = all.filter((f) => !/nepac/i.test(f));
+  const other = [];
+
+  /* ==> PICK BY THE YEARS IN THE NAME, NOT BY SORTING THE STRING. <== The
+   * first run of this probe sorted alphabetically and chose
+   * `hurdat2-atl-1851-2023-042624.txt`, because `atl` sorts after `1851` —
+   * a file two seasons out of date, sitting in a directory that also held
+   * `hurdat2-1851-2025-02272026.txt`. NOAA leaves every past revision in
+   * place (41 files here), so "the last one alphabetically" is not "the
+   * current one" and never was. */
+  const latestOf = (list) => {
+    let best = null;
+    let bestKey = -1;
+    for (const f of list) {
+      /* The SECOND four-digit run is the last season covered; the trailing
+       * run is the revision date, which is what breaks a tie. */
+      const years = f.match(/\d{4}/g) || [];
+      if (years.length < 2) continue;
+      const covers = Number(years[1]);
+      const rev = f.replace(/\D/g, '');
+      const key = covers * 1e12 + Number(rev.slice(-8));
+      if (key > bestKey) { bestKey = key; best = f; }
+    }
+    return best;
+  };
 
   let detail = '';
-  for (const [label, file] of [['Atlantic', atl[atl.length - 1]], ['E/C Pacific', pac[pac.length - 1]]]) {
+  for (const [label, file] of [['Atlantic', latestOf(atl)], ['E/C Pacific', latestOf(pac)]]) {
     if (!file) { detail += `\n**${label}: no file matched in the directory.**\n`; continue; }
     const url = `https://www.nhc.noaa.gov/data/hurdat/${file}`;
     const { rec: hr, body: hBody } = await grab(
@@ -347,59 +425,76 @@ async function probeHurdat() {
  * 3 — HOW FAR BACK THE ADVISORY ARCHIVE GOES (§57.31 item 5, gates step 11)
  * ----------------------------------------------------------------------- */
 
-/** Probed, not guessed at. Spread wide rather than dense: the question is
- *  where the cliff is, and a wide net finds it in one run. Anchored on years
- *  the shelf will care about — Andrew '92, Katrina '05, Sandy '12 (§57.30
- *  step 11). */
-const ARCHIVE_YEARS = [1958, 1969, 1979, 1988, 1992, 1995, 1998, 2000, 2003, 2005,
-                       2008, 2012, 2017, 2021, 2024, 2025, 2026];
+/** Probed, not guessed at. Dense around the cliffs the first run found, wide
+ *  elsewhere. Anchored on years the shelf will care about — Andrew '92,
+ *  Katrina '05, Sandy '12 (§57.30 step 11). */
+const ARCHIVE_YEARS = [1958, 1969, 1979, 1988, 1992, 1993, 1994, 1995, 1996,
+                       1997, 1998, 1999, 2000, 2003, 2005, 2008, 2012, 2017,
+                       2021, 2024, 2025, 2026];
 
 async function probeArchiveDepth() {
   const rows = [];
   for (const year of ARCHIVE_YEARS) {
-    /* TEXT — the written advisories. */
+    /* TEXT — the written advisories. A directory, so a HEAD is honest. */
     const { rec: t } = await grab(
       `archive/text/${year}`,
       `https://www.nhc.noaa.gov/archive/${year}/`,
       `Does the written advisory archive reach ${year}?`,
       { method: 'HEAD' },
     );
-    /* GIS — the cone, forecast track and watch/warning geometry. §57.10 calls
-     * this out separately BECAUSE they do not go back equally far, and a storm
-     * with text but no geometry is a different Tier 2 storm entirely. */
-    const { rec: g } = await grab(
+
+    /* ==> GIS IS A PHP SCRIPT AND A HEAD ON IT PROVES NOTHING. <==
+     * The first run of this probe HEADed `archive_forecast.php?year=YYYY` and
+     * got 200 for every year from 1958 to 2026 — no content-length, no etag,
+     * identical every time. It was measuring "does the script exist", which it
+     * does, rather than "is there data for this year", which is the question.
+     * A script answers 200 for a year that never happened.
+     *
+     * So: GET the page and read what came back. A year with data lists storms;
+     * an empty one does not. Counting the storm links is the measurement. */
+    const { rec: g, body: gBody } = await grab(
       `archive/gis/${year}`,
       `https://www.nhc.noaa.gov/gis/archive_forecast.php?year=${year}`,
-      `Does the GIS archive reach ${year}?`,
-      { method: 'HEAD' },
+      `Does the GIS archive hold anything for ${year}? Counted from the page body.`,
     );
+    const gisStorms = gBody
+      ? new Set(hrefs(gBody).filter((h) => /archive_forecast_results/i.test(h))).size
+      : 0;
+
     /* The ATCF year archive — where the b-decks for a finished season live.
-     * Step 3's mirror will read from here, so its depth matters too. */
-    const { rec: a } = await grab(
+     * A real directory, so a HEAD is honest, but an EMPTY directory also
+     * answers 200, so the body is counted too. */
+    const { rec: a, body: aBody } = await grab(
       `archive/atcf/${year}`,
       `https://ftp.nhc.noaa.gov/atcf/archive/${year}/`,
-      `Does the ATCF season archive reach ${year}?`,
-      { method: 'HEAD' },
+      `Does the ATCF season archive hold anything for ${year}?`,
     );
-    rows.push({ year, text: t.http, gis: g.http, atcf: a.http });
+    const atcfFiles = aBody ? hrefs(aBody).filter((h) => /\.(dat|gz)$/i.test(h)).length : 0;
+
+    rows.push({ year, text: t.http, gis: g.http, gisStorms, atcf: a.http, atcfFiles });
     await new Promise((r) => setTimeout(r, 200)); // pace it; someone else's server
   }
 
-  const firstOk = (key) => {
-    const hit = rows.filter((r) => r[key] === 200).sort((a, b) => a.year - b.year)[0];
+  const firstWith = (pred) => {
+    const hit = rows.filter(pred).sort((a, b) => a.year - b.year)[0];
     return hit ? hit.year : null;
   };
 
   say(
     `## 3 — How far back the archive goes — MEASURED\n\n` +
-    `HTTP status per year. **200 means the year exists; anything else means it does not** ` +
-    `(a HEAD on a directory that is not there is a 404).\n\n` +
-    `| year | text advisories | GIS | ATCF season |\n|---|---|---|---|\n` +
-    rows.map((r) => `| ${r.year} | ${r.text ?? '—'} | ${r.gis ?? '—'} | ${r.atcf ?? '—'} |`).join('\n') +
-    `\n\n**Earliest year that answered 200:** text ${firstOk('text') ?? 'none of the probed years'}, ` +
-    `GIS ${firstOk('gis') ?? 'none of the probed years'}, ` +
-    `ATCF ${firstOk('atcf') ?? 'none of the probed years'}.\n\n` +
-    `> **A 200 on a year directory is not proof a given storm is complete in it.** ` +
+    `**A 200 is not an answer on its own.** The text archive is a real directory, so its ` +
+    `status means what it says. GIS is a PHP script that answers 200 for any year ever ` +
+    `written down, so what is counted there is STORMS LISTED ON THE PAGE. The ATCF ` +
+    `directory is real but can be empty, so its files are counted too.\n\n` +
+    `| year | text advisories | GIS storms listed | ATCF files |\n|---|---|---|---|\n` +
+    rows.map((r) =>
+      `| ${r.year} | ${r.text === 200 ? '**yes**' : r.text} | ${r.gisStorms || '—'} | ${r.atcfFiles || '—'} |`,
+    ).join('\n') +
+    `\n\n**Earliest year with anything real in it:** ` +
+    `text ${firstWith((r) => r.text === 200) ?? 'none probed'}, ` +
+    `GIS ${firstWith((r) => r.gisStorms > 0) ?? 'none probed'}, ` +
+    `ATCF ${firstWith((r) => r.atcfFiles > 0) ?? 'none probed'}.\n\n` +
+    `> **A year that lists storms is not proof a given storm is complete in it.** ` +
     `It says the shelf is eligible, which is all step 11 needs to draw up a list. ` +
     `Whether a chosen storm has every advisory is checked when it is captured, in step 12.\n`,
   );
