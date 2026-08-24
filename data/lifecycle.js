@@ -98,6 +98,7 @@
 import { ENDED, STORAGE_KEY } from '../config/constants.js';
 import { isNhcFinalAdvisory } from '../lib/advisory.js';
 import { becameWhat, endedExpired } from '../lib/lifecycle.js';
+import { isArchive } from '../lib/archive-mode.js';
 import { scopedKey } from '../lib/replay-mode.js';
 import { isSilent, silenceAge } from '../lib/silence.js';
 import { timeMsOf, windKtOf, categoryIndexOf, normalizePastPoints } from '../lib/track-point.js';
@@ -205,6 +206,23 @@ function load() {
 }
 
 function save() {
+  /* ==> HISTORY DOES NOT WRITE HERE. EVER. (§57.2.) <==
+   *
+   * This is the exact store that put Hurricane Ida on the live globe as a grey
+   * ended storm days after a 2021 replay: it saved her correctly and had no
+   * idea the storm was five years old. Seasons opens the same door on 175
+   * years of them.
+   *
+   * A GUARD RATHER THAN A SCOPED KEY, and the difference matters. Replay gets
+   * `scopedKey` because the mode is decided by the URL before this module
+   * loads, so the map is keyed archive-side from its first read. Seasons is
+   * entered mid-session — the map in memory was loaded from the LIVE key, so
+   * scoping the writes would fork a store that was never forked on the way in
+   * and quietly drop whatever the live app had learned that session.
+   *
+   * Refusing costs nothing. Every write this skips is a fact about a live
+   * storm that the next poll after leaving writes again. */
+  if (isArchive()) return;
   try {
     localStorage.setItem(
       KEY,
