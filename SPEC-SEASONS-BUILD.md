@@ -896,7 +896,7 @@ IndexedDB --(one season, ~30 KB)--> the globe
 
 Everything below is a rule that shape has to keep.
 
-### FAULT 1 — PARSING ON EVERY OPEN. The worst of them.
+**FAULT 1 — PARSING ON EVERY OPEN. The worst of them.**
 
 The draft cached the raw text in the service worker. That means **6.8 MB is
 re-parsed every single time Seasons opens** — roughly 55,000 lines split, comma-
@@ -911,7 +911,7 @@ data and touches no parser at all.
 The download screen therefore has **two phases, and must say so**: *Downloading*
 then *Indexing*. Both are real work and the second is not instant.
 
-### FAULT 2 — THE NEAR-HOME SLIDER WOULD SCAN THE WHOLE ARCHIVE.
+**FAULT 2 — THE NEAR-HOME SLIDER WOULD SCAN THE WHOLE ARCHIVE.**
 
 §57.19 measures against the line between points, not the points. Correct — and
 across 175 years that is roughly 2,000 storms and 80,000 segments. **Doing that
@@ -925,7 +925,7 @@ then filters about 2,000 precomputed numbers, which is instant and stays instant
 - **Home moving invalidates it** — recompute once, in the Worker, on home change.
 - This is also what makes the Home dashboard's standing line free.
 
-### FAULT 3 — THE SEASON CLOCK WOULD RE-FEED MAPLIBRE EVERY FRAME.
+**FAULT 3 — THE SEASON CLOCK WOULD RE-FEED MAPLIBRE EVERY FRAME.**
 
 Calling `setData` sixty times a second hands the map worker a fresh parse and
 re-index each time. Frame rate will not survive it.
@@ -941,7 +941,7 @@ re-index each time. Frame rate will not survive it.
 - **Step 10 measures this on a real phone before the clock is called done.** If
   the numbers say no, the fallback is fewer steps, not a smaller feature.
 
-### FAULT 4 — SEASONS WOULD HAVE LOADED FOR PEOPLE WHO NEVER OPEN IT.
+**FAULT 4 — SEASONS WOULD HAVE LOADED FOR PEOPLE WHO NEVER OPEN IT.**
 
 Every import in every file ships to every visitor (§12, no build step). The app
 already carries 179 modules and Windows spends 317 ms on libraries alone.
@@ -952,7 +952,7 @@ feature most sessions never touch.
 to ES modules, no build step, no tooling. The two doors in §57.16 are the only
 things about Seasons on the boot path.
 
-### FAULT 5 — THE PROGRESS BAR WOULD HAVE RUN PAST 100%.
+**FAULT 5 — THE PROGRESS BAR WOULD HAVE RUN PAST 100%.**
 
 Cloudflare compresses text automatically, so 6.8 MB of HURDAT2 arrives as
 roughly a fifth of that. **`Content-Length` reports COMPRESSED bytes while a
@@ -964,7 +964,7 @@ quotes what is actually transferred, not the uncompressed file size — telling
 someone 6.8 MB when 1.4 MB moves is a small lie in a place that is asking for
 their patience.
 
-### FIX 6 — THE PHONE NEVER TALKS TO NOAA.
+**FIX 6 — THE PHONE NEVER TALKS TO NOAA.**
 
 The runner fetches from NOAA once a year and **commits the file to the repo**.
 The phone requests it from our own origin as a static asset. That single decision
@@ -977,7 +977,7 @@ are free and unlimited.
 (`Cache-Control` around 15 minutes) so the Function runs on a miss rather than
 on a request. Six-hourly data does not need a live query.
 
-### FIX 7 — NEVER HOLD THE WHOLE ARCHIVE IN MEMORY.
+**FIX 7 — NEVER HOLD THE WHOLE ARCHIVE IN MEMORY.**
 
 175 years parsed into JS objects is tens of megabytes of heap, on a device that
 will kill the tab for less. **One season in memory at a time**, read from
@@ -985,7 +985,7 @@ IndexedDB on entry and dropped on leave. The near-home index (FAULT 2) is the
 one small thing allowed to stay resident, because it is a couple of thousand
 numbers.
 
-### FIX 8 — iOS EVICTS STORAGE, AND THE APP MUST NOT LIE ABOUT IT.
+**FIX 8 — iOS EVICTS STORAGE, AND THE APP MUST NOT LIE ABOUT IT.**
 
 Safari clears site storage for sites not visited in about a week. Installing to
 the home screen helps and `navigator.storage.persist()` helps, and neither is a
@@ -996,14 +996,14 @@ Not an empty archive, not a spinner — a plain line saying the download was
 cleared by the device, and the button to fetch it again. An archive that quietly
 looks empty is exactly the silence §5 forbids.
 
-### FIX 9 — THE SERVICE WORKER MUST NOT PRECACHE THE DATA.
+**FIX 9 — THE SERVICE WORKER MUST NOT PRECACHE THE DATA.**
 
 If it lands in the install-time precache list, **every visitor downloads
 megabytes they never asked for** and the whole point of §57.24's gate is gone.
 The data is fetched on request and cached on demand, in the unversioned cache
 from §57.34 rule 6.
 
-### FIX 10 — CONDITIONAL REQUESTS TO NOAA, WHICH ALSO GIVE US CHANGE DETECTION.
+**FIX 10 — CONDITIONAL REQUESTS TO NOAA, WHICH ALSO GIVE US CHANGE DETECTION.**
 
 The runner polls b-decks hourly during a season. Send `If-Modified-Since` /
 `If-None-Match` and unchanged files come back `304` with no body.
@@ -1012,13 +1012,13 @@ This is good manners toward a public service we depend on, and **it hands us
 §57.34's "commit only when a file actually changes" rule for free** — a 304 is
 the answer, rather than something we have to diff for.
 
-### FIX 11 — IMMUTABLE CACHING, WITH THE YEAR IN THE FILENAME.
+**FIX 11 — IMMUTABLE CACHING, WITH THE YEAR IN THE FILENAME.**
 
 `hurdat2-atlantic-2025.txt` never changes; next February's file has a different
 name. So it is cached permanently and the rename is the cache bust. A `_headers`
 block for the data path, matching how `/vendor/*` is already handled.
 
-### WHAT THE AUDIT CONFIRMED WAS ALREADY RIGHT
+**WHAT THE AUDIT CONFIRMED WAS ALREADY RIGHT**
 
 - Static assets for settled years, KV only for the season in motion (§57.33).
 - The download gated behind an explicit ask (§57.24).

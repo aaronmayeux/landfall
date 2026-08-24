@@ -311,7 +311,7 @@ real home is the other row carrying the same section number.
 | `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 754-770 |
 | `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 771-815 |
 | `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 816-881 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 882-898 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 882-1029 |
 
 ## Files
 
