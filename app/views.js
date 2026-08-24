@@ -98,7 +98,9 @@ import { evictTcgpIndex } from '../data/tcgp-index.js';
 import { getShips, evictShips, loadShips } from '../data/ships.js';
 import { getGeometry } from '../data/cache.js';
 import { fetchAdvisory, fetchNhcGustKt } from '../data/advisory.js';
-import { loadRainfall, evictRainfall } from '../data/rainfall.js';
+import {
+  loadRainfall, evictRainfall, loadPastRainfall, evictPastRainfall,
+} from '../data/rainfall.js';
 /* ==> THE ONE PLACE A FLOOD ALERT IS SHAPED FOR THE PANEL. <== §56.6's two
  * entrances — a chip on the globe and a row in the section — hand over two
  * different objects, and this is what makes them one. */
@@ -741,6 +743,17 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
       countRetry('rain');
       evictRainfall();
       return loadRainfall(home);
+    },
+    /* ==> THE PAST HALF (§56.14), AND IT ANSWERS TO THE SAME COUNTER NAME.
+     * <== It is the same house asked about the same weather from the same
+     * relay; a second column would learn nothing and `lib/usage.js` ACTIONS
+     * names are D1 columns, so adding one is an `ALTER TABLE`. Both retries
+     * counting as `rain` is the existing precedent two lines up. */
+    loadPastRainfall: (home) => loadPastRainfall(home),
+    retryPastRainfall: (home) => {
+      countRetry('rain');
+      evictPastRainfall();
+      return loadPastRainfall(home);
     },
   };
 

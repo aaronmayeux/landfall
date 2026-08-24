@@ -52,12 +52,15 @@
  * Imports: lib/ and ui/ siblings. Never data/ — the fetches are injected (§12).
  */
 
-import { rainSummary } from '../lib/rainfall.js';
+import { rainSummary, pastSummary } from '../lib/rainfall.js';
 import { surgeAtHome, gdacsEventIdOf } from '../lib/surge-locations.js';
 import { DOTS } from './loading-dots.js';
 import { floodAlertRows, wireFloodAlertRows } from './rain-alerts.js';
 import { spreadWords } from './flooding-storm.js';
-import { MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE } from './flood-words.js';
+import {
+  MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE,
+  PAST_RAIN_PROVENANCE, pastWindowWords,
+} from './flood-words.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) =>
@@ -99,6 +102,12 @@ export function createFloodingHome({
   let surgeState = { phase: 'idle', result: null, forKey: null };
   let surgeSeq = 0;
 
+  /** Rain already on the ground (§56.14). Keyed by the HOUSE alone — it is a
+   *  fact about a place and a clock, with no storm in it, and it renders on a
+   *  calm day for the same reason the rows do. */
+  let pastState = { phase: 'idle', result: null, forKey: null };
+  let pastSeq = 0;
+
   /** Home identity: the coordinates, not the label — a reader can rename a pin
    *  without moving it, and move it without renaming it. */
   const homeKey = (home) =>
@@ -110,6 +119,7 @@ export function createFloodingHome({
   };
 
   const rainCurrent = (home) => !!homeKey(home) && rainState.forKey === homeKey(home);
+  const pastCurrent = (home) => !!homeKey(home) && pastState.forKey === homeKey(home);
   const surgeCurrent = (storm, home) =>
     !!surgeKey(storm, home) && surgeState.forKey === surgeKey(storm, home);
 
@@ -192,6 +202,82 @@ export function createFloodingHome({
      * is a real and useful fact, so it is stated. */
     return `<p class="flood-line">No flood alerts are in force for your
       address.</p>`;
+  }
+
+  /* -------------------------------------------------------------------------
+   * WHAT HAS ALREADY FALLEN — §56.14
+   *
+   * ==> THE ONLY THING IN THIS SECTION THAT WORKS EVERYWHERE ON EARTH. <== The
+   * rows stop at the American border and the modelled figure declines NHC's
+   * basins, so on a Japan typhoon both halves are empty by coverage and this
+   * is the section's one real, local, present-tense fact.
+   *
+   * ==> IT SITS ABOVE THE MODELLED FIGURE AND BELOW THE ROWS, AND THAT ORDER
+   * IS §48.6's. <== A warning in force is what IS happening; this is what HAS
+   * happened; the modelled figure is what MIGHT. A flood warning with "about
+   * three inches fell here in the last two days" under it is a warning that
+   * explains itself.
+   * ---------------------------------------------------------------------- */
+
+  function pastHtml(home) {
+    if (!home || !rain?.loadPastRainfall) return '';
+
+    if (!pastCurrent(home) || pastState.phase === 'idle' || pastState.phase === 'loading') {
+      return `<p class="detail-soft">Checking rain already fallen${DOTS}</p>`;
+    }
+
+    const res = pastState.result || { status: 'unavailable' };
+
+    /* ==> A FAILED FETCH AND A DRY TWO DAYS MUST NOT RENDER THE SAME, AND THIS
+     * IS THE LINE THAT GUARANTEES IT (§56.14's second rule, §5). <== Nothing
+     * having fallen is safe to state plainly and is stated below. Not knowing
+     * is a different fact with a button on it. The two are separated HERE,
+     * before any arithmetic runs, because `pastSummary` is only ever handed a
+     * payload a source actually produced. */
+    if (res.status === 'unavailable') {
+      return `<p class="detail-soft">Rain already fallen couldn’t be checked.</p>
+        <button class="home-flood-retry" type="button" data-retry="flood-past">Retry</button>`;
+    }
+
+    /* `not_covered` cannot happen on the global model by construction (§48.16)
+     * and there is no second source to try, so it is read the same way an
+     * unreadable body is: we have no figure, and no button will change it. */
+    if (res.status !== 'ok') {
+      return `<p class="flood-note">No estimate of rain already fallen is
+        available for this location.</p>`;
+    }
+
+    const out = pastSummary(res.payload, { system: units?.() ?? null, now: now() });
+
+    /* ==> `unsupported` IS A FACT ABOUT THE SOURCE AND SHOULD BE UNREACHABLE
+     * HERE. <== `loadPastRainfall` always asks the global route, so a payload
+     * arriving from anywhere else means the facade changed under this file.
+     * Said rather than dropped: a silently missing sentence is exactly what §5
+     * forbids, and it would be indistinguishable from a dry week. */
+    if (out.state === 'unsupported' || out.state === 'lapsed') {
+      return `<p class="flood-note">No estimate of rain already fallen is
+        available for this location.</p>`;
+    }
+
+    if (out.state !== 'ok' && out.state !== 'dry') {
+      return `<p class="detail-soft">The estimate of rain already fallen came back
+        in a form this app could not read.</p>`;
+    }
+
+    /* THE HOURS ACTUALLY COVERED, never the window asked for (§48.11). */
+    const when = pastWindowWords(out.coveredHours ?? out.hours) || 'recent hours';
+
+    /* ==> NEGLIGIBLE IS WORDS, NOT A FIGURE. <== The identical judgement
+     * `RAIN.negligibleMm` already records for the forecast total: a modelled
+     * 0.2 mm printed as "0.01 in" under somebody's house reads as a
+     * malfunction, and said plainly it reads as a fact. */
+    const line = out.state === 'dry'
+      ? `<p class="flood-line">Little or no rain has fallen at your address in
+          ${esc(when)}.</p>`
+      : `<p class="flood-line"><strong>About ${esc(out.totalText)}</strong> of rain
+          is estimated to have fallen at your address in ${esc(when)}.</p>`;
+
+    return `${line}<p class="flood-note">${esc(PAST_RAIN_PROVENANCE)}</p>`;
   }
 
   /* -------------------------------------------------------------------------
@@ -295,7 +381,8 @@ export function createFloodingHome({
    *  ==> THE HOUSE IS THE WHOLE GATE. <== Both halves are questions about an
    *  address; with no pin set there is no question to put, and §5 does not
    *  require announcing that. */
-  const applies = (storm, home) => !!(home && (rain?.loadRainfall || surge?.loadSurge));
+  const applies = (storm, home) =>
+    !!(home && (rain?.loadRainfall || rain?.loadPastRainfall || surge?.loadSurge));
 
   /** The INSIDE of the section — its heading and its contents.
    *
@@ -307,12 +394,17 @@ export function createFloodingHome({
   function inner(storm, home, sectionHead) {
     if (!applies(storm, home)) return '';
     const rows = rowsHtml(home);
+    /* WHAT IS HAPPENING, then WHAT HAS HAPPENED, then WHAT MIGHT — §48.6's
+     * ranking extended by one (§56.14). */
+    const past = pastHtml(home);
     const model = modelHtml(storm, home);
     /* THE HAIRLINE ONLY WHEN BOTH HALVES ARE THERE — see the storm panel's
      * copy of this line. Drawn under nothing it is a rule across an empty
-     * section. */
-    const seam = rows && model ? ' flood-model--after-rows' : '';
-    return `${sectionHead}${rows}${model ? `<div class="flood-model${seam}">${model}</div>` : ''}`;
+     * section. The past block counts as rows for this purpose: it is the same
+     * kind of content, about this address, above the modelled figure. */
+    const above = rows || past;
+    const seam = above && model ? ' flood-model--after-rows' : '';
+    return `${sectionHead}${rows}${past}${model ? `<div class="flood-model${seam}">${model}</div>` : ''}`;
   }
 
   /* -------------------------------------------------------------------------
@@ -325,7 +417,19 @@ export function createFloodingHome({
    *  hour, and every other surface reads the same two memos. */
   async function ensure(storm, home, repaint) {
     ensureRain(home, repaint);
+    ensurePast(home, repaint);
     ensureSurge(storm, home, repaint);
+  }
+
+  async function ensurePast(home, repaint) {
+    if (!home || !rain?.loadPastRainfall) return;
+    if (pastCurrent(home) && pastState.phase !== 'idle') return;
+    const mySeq = ++pastSeq;
+    pastState = { phase: 'loading', result: null, forKey: homeKey(home) };
+    const result = await rain.loadPastRainfall(home);
+    if (mySeq !== pastSeq) return; // the home moved mid-flight
+    pastState = { phase: 'done', result, forKey: homeKey(home) };
+    repaint?.();
   }
 
   async function ensureRain(home, repaint) {
@@ -370,6 +474,20 @@ export function createFloodingHome({
         const result = await rain.retryRainfall(home);
         if (mySeq !== rainSeq) return;
         rainState = { phase: 'done', result, forKey: homeKey(home) };
+        repaint?.();
+      });
+    }
+
+    const pastBtn = scope?.querySelector?.('[data-retry="flood-past"]');
+    if (pastBtn && rain?.retryPastRainfall) {
+      pastBtn.addEventListener('click', async () => {
+        if (!home) return;
+        const mySeq = ++pastSeq;
+        pastState = { phase: 'loading', result: null, forKey: homeKey(home) };
+        repaint?.();
+        const result = await rain.retryPastRainfall(home);
+        if (mySeq !== pastSeq) return;
+        pastState = { phase: 'done', result, forKey: homeKey(home) };
         repaint?.();
       });
     }

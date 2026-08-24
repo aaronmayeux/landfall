@@ -190,3 +190,50 @@ export const watchOrWarningMeans = (watch) =>
 export const FLOOD_NOT_DRAWN =
   'This alert is in force, but the agency did not publish a boundary we could ' +
   'draw, so it does not appear on the globe.';
+
+/**
+ * WHERE THE PAST-RAINFALL FIGURE CAME FROM. §56.14.
+ *
+ * ==> IT IS A MODEL, NOT A RAIN GAUGE, AND THIS SENTENCE IS THE ONLY THING
+ * STOPPING THE FIGURE OVERCLAIMING. <== §56.14 names this as the single most
+ * likely thing in the feature to get wrong, and the reason is that a wrong
+ * version looks identical: Open-Meteo's past hours are model and reanalysis
+ * output, not a reading from an instrument near the reader's house, and "3.1
+ * in fell" and "about 3.1 in is estimated to have fallen" carry the same
+ * number with completely different warrants behind them. A reader deciding
+ * whether the ground is already saturated is entitled to know which one they
+ * are looking at.
+ *
+ * ==> AND IT NAMES THE PROVIDER FOR A SECOND REASON: THE SEAM. <== On an
+ * American house the FORECAST half of this screen comes from the National
+ * Weather Service and this figure does not — NWS publishes no matching
+ * observed series (§56.14), so the past comes from one source at every point
+ * on Earth. That is deliberate and more consistent than a figure that exists
+ * in some countries and not others, but it means two numbers on one screen
+ * have two different authors. Saying so is cheaper than a reader discovering
+ * it by finding they disagree.
+ */
+export const PAST_RAIN_PROVENANCE =
+  'Estimated by Open-Meteo’s global model, not measured at a nearby gauge.';
+
+/**
+ * The past-rainfall window in words. §56.14.
+ *
+ * ==> IT NAMES THE HOURS ACTUALLY COVERED, NEVER THE WINDOW ASKED FOR. <== The
+ * same rule §48.11 applies at the forward end, and it bites here for a
+ * measured reason: Open-Meteo prepends WHOLE UTC DAYS, so how far back the
+ * series really reaches swings through the UTC day. A last-good payload can
+ * also age until only part of the window is left. Saying "the last 48 hours"
+ * over thirty hours of data is a claim about a period nobody has numbers for.
+ *
+ * ==> ROUNDED TO WHOLE DAYS ONLY WHEN IT IS ONE. <== "the last 2 days" and
+ * "the last 48 hours" are the same fact, and the second is what a forecast
+ * office says. Below a day the hours are the whole figure.
+ */
+export const pastWindowWords = (hours) => {
+  const h = Math.round(Number(hours) || 0);
+  if (h <= 0) return null;
+  if (h === 1) return 'the last hour';
+  if (h === 24) return 'the last 24 hours';
+  return `the last ${h} hours`;
+};
