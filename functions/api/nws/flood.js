@@ -52,6 +52,7 @@
  * so, exactly as the sibling routes do.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
 import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 const ALERTS = 'https://api.weather.gov/alerts/active';
@@ -149,6 +150,31 @@ const splitUgc = (codes) => {
  * §50.5 gives for the CAP list, which also refuses to hold.
  * ----------------------------------------------------------------------- */
 const FRESH_SECONDS = 15 * 60;
+
+/**
+ * The KV path the cron Worker warms this route under (SPEC §17 Pass B).
+ * Must match `worker/src/sources.js` — tools/test-kv-keys.mjs asserts it.
+ *
+ * ==> THIS ROUTE WAS WARMED FOR WEEKS AND READ NONE OF IT. <== It was added to
+ * `LIST_FEEDS` when §56.17 made the Flooding section render for everybody, so
+ * the cron fetched it and wrote it every five minutes — and this file never
+ * imported `kvRead` at all. Every byte was stored and read by nothing. The
+ * route still worked, falling through to its colo cache and to weather.gov, so
+ * there was no symptom and the warm loop reported perfect health. Found
+ * 2026-08-24 by the completeness check in `tools/test-kv-keys.mjs`.
+ *
+ * ==> AND IT READS KV AT ONE LEVEL ONLY. THERE IS NO `KV_STALE` HERE AND
+ * THERE MUST NOT BE. <== Every other KV-backed route in this app falls back to
+ * a warmed copy judged too old, because a stale forecast beats a blank section.
+ * This route already refuses that for its own colo cache — the note above says
+ * why, and it is the whole reason there is no last-good slot: an expired flood
+ * warning is not a stale reading of a live fact, it is a shape on a map telling
+ * somebody they are in danger when they are not. **A KV copy nine hours old is
+ * that same expired warning arriving by a different road.** Adding the fallback
+ * "for consistency with the other routes" would reintroduce, globally, exactly
+ * what this file deleted locally.
+ */
+const KV_PATH = 'nws/flood';
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
 
@@ -289,12 +315,32 @@ export async function onRequestGet(context) {
   const cache = caches.default;
   const key = new Request('https://landfall-relay.internal/nws/flood');
 
-  const hit = await cache.match(key);
+  /* SPEC §17 Pass B — colo cache, then the globally warmed KV copy, then
+   * upstream. The cron Worker skips the first two, or it would store what it
+   * already stored and weather.gov would never be contacted again. */
+  const warming = isWarmRequest(context.request, context.env);
+
+  const hit = warming ? null : await cache.match(key);
   if (hit) {
     return json(await hit.json(), 200, {
       'X-Landfall-Fetched-At': hit.headers.get('X-Landfall-Fetched-At') || '',
       [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
     });
+  }
+
+  /* FRESH ONLY. See KV_PATH above: there is no stale tier on this route by
+   * design, and a warmed copy past its window is declined here exactly as the
+   * colo copy would be. */
+  const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = {
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    };
+    context.waitUntil(cache.put(key, new Response(warm.body, {
+      headers: { ...jsonHeaders(headers), 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+    })));
+    return new Response(warm.body, { headers: jsonHeaders(headers) });
   }
 
   try {

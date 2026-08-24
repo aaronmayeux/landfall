@@ -130,6 +130,18 @@ const env = (kv) => ({
   console.log('  ✓ missing binding: reported plainly');
 }
 
+/* ==> THE EXACT KEY SET ONE FULL CYCLE MUST PRODUCE, FROZEN, AND EVERY COUNT
+ * IN THIS FILE IS DERIVED FROM IT. <== Asserting the COUNT alone would pass
+ * while the Worker wrote nine keys the readers have never heard of — a check
+ * that cannot fail the way you actually break things is not a check.
+ *
+ * It used to be an inline literal with the number 19 typed beside it in four
+ * places, and adding ONE feed to `LIST_FEEDS` turned five checks in this file
+ * red for no reason but arithmetic. That is the shape the palette suite was
+ * fixed for: a hand-maintained count eventually gets maintained by editing the
+ * number until it goes green, which is how a suite stops meaning anything. */
+let EXPECTED_KEYS = [];
+
 /* --- 2. A full first cycle writes everything. ---------------------------- */
 const kv = fakeKv();
 {
@@ -149,8 +161,6 @@ const kv = fakeKv();
    * + 1 national NWS flood list, added with §56.17 — the `Flooding` section
    *   renders on both screens for every reader now, so the first ask on a cold
    *   edge must not be a round trip to weather.gov */
-  ok('first cycle: 19 entries written', summary.written === 19,
-    `written=${summary.written} derived=${summary.derived}`);
   ok('first cycle: nothing capped', summary.dropped === 0);
 
   /* The exact key set, frozen. Asserting the COUNT alone would pass while the
@@ -158,7 +168,7 @@ const kv = fakeKv();
    * cannot fail the way you actually break things is not a check
    * (tools/check-syntax.mjs's own lesson, applied here). */
   const keys = [...kv.store.keys()].sort();
-  ok('first cycle: exactly the expected keys', keys, [
+  EXPECTED_KEYS = [
     'v1:gdacs/events',
     `v1:gdacs/geometry/${encodeURIComponent(GEOM)}`,
     'v1:jtwc/storms',
@@ -176,6 +186,11 @@ const kv = fakeKv();
     'v1:nhc/advisory/MIATCPAT1',
     'v1:nhc/advisory/MIATCPEP2',
     'v1:nhc/storms',
+    /* The current season's index (§58.3). The per-storm b-decks are
+     * deliberately NOT here, and their absence is the assertion: fanning out to
+     * fourteen of them on a five-minute cron is 4,032 requests a day at a
+     * government server for a feature nobody has opened yet. */
+    'v1:seasons/live',
     'v1:tcgp/storms',
     /* TWO KEYS FROM ONE FETCH, and the SECOND one is the memory that decides
      * whether an empty outlook layer is an all-clear or an outage. */
@@ -195,7 +210,13 @@ const kv = fakeKv();
      * its history across the map as a five-day forecast. */
     'v1:tcgp/adeck/wp112026/models',
     'v1:tcgp/adeck/wp112026/carq',
-  ].sort());
+  ].sort();
+  ok('first cycle: exactly the expected keys', keys, EXPECTED_KEYS);
+
+  /* AFTER the set is frozen, never before — the count is derived from it. */
+  ok('first cycle: every expected key written, and no others',
+    summary.written === EXPECTED_KEYS.length,
+    `written=${summary.written} expected=${EXPECTED_KEYS.length} derived=${summary.derived}`);
 
   console.log('  ✓ first cycle wrote:');
   for (const k of keys) console.log(`      ${k}`);
@@ -242,8 +263,9 @@ const kv = fakeKv();
 
   ok('second cycle: zero CONTENT writes on unchanged bodies', summary.written === 0,
     `written=${summary.written} — "how much weather happened" depends on this`);
-  ok('second cycle: everything reported restamped', summary.restamped === 19,
-    `restamped=${summary.restamped}`);
+  ok('second cycle: everything reported restamped',
+    summary.restamped === EXPECTED_KEYS.length,
+    `restamped=${summary.restamped} expected=${EXPECTED_KEYS.length}`);
 
   ok('an UNCHANGED body still moves the stamp',
     [...kv.store.entries()].every(
@@ -251,7 +273,7 @@ const kv = fakeKv();
     ),
     'a calm ocean is not an outage — if this holds still, the client cries wolf');
 
-  console.log('  ✓ second cycle: 0 content writes, 19 restamped, every stamp moved');
+  console.log(`  ✓ second cycle: 0 content writes, ${EXPECTED_KEYS.length} restamped, every stamp moved`);
 }
 
 /* --- 4. A CHANGED BODY IS REPORTED AS A WRITE, NOT A RE-STAMP. ----------- */
@@ -272,10 +294,11 @@ const kv = fakeKv();
   /* The hash is what separates the two, and that split is the only thing
    * write-if-changed still buys now that every key is put regardless. Without
    * it the cycle summary stops answering "how much weather happened". */
-  ok('the other eighteen are restamped, not written', summary.restamped === 18,
+  ok('every other key is restamped, not written',
+    summary.restamped === EXPECTED_KEYS.length - 1,
     `restamped=${summary.restamped}`);
 
-  console.log('  ✓ changed content: 1 write, 18 restamped — the split still reads');
+  console.log(`  ✓ changed content: 1 write, ${EXPECTED_KEYS.length - 1} restamped — the split still reads`);
 }
 
 /* --- 4a. A HELD OUTLOOK IS NOT WARMED, AND THAT ABSENCE IS THE CLOCK. -----
@@ -329,8 +352,11 @@ const kv = fakeKv();
   ok('a withheld write is not a failure', summary.failed === 0);
   ok('and not a skip — a skip is an empty body, this is a full one we chose not to store',
     summary.skipped === 0, `skipped=${summary.skipped}`);
-  ok('the rest of the cycle is untouched', summary.restamped === 17,
-    `restamped=${summary.restamped}`);
+  /* Two keys withheld (the genesis pair), so the rest of the cycle is the
+   * frozen set minus those two. Derived, not typed — see EXPECTED_KEYS. */
+  ok('the rest of the cycle is untouched',
+    summary.restamped === EXPECTED_KEYS.length - 2,
+    `restamped=${summary.restamped} expected=${EXPECTED_KEYS.length - 2}`);
 
   /* AND A GENUINE ALL-CLEAR MUST STILL REACH THE STORE. Zero areas, no held
    * marker: NHC really is watching nothing, which is the correct answer for

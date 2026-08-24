@@ -151,6 +151,31 @@ export const LIST_FEEDS = [
    * all, because an expired flood warning on a map tells somebody they are in
    * danger when they are not. */
   { path: 'nws/flood', route: '/api/nws/flood' },
+
+  /* ==> THE CURRENT SEASON'S INDEX — WHICH STORMS 2026 HAS SO FAR.
+   * SPEC-SEASONS-BUILD.md §57.30 step 3b, SPEC-DATA.md §58. <==
+   *
+   * Seasons draws settled years out of two static files in the repo. The year
+   * currently happening is in neither of them, so `/api/seasons/live` walks
+   * NHC's b-deck directory instead. Warmed because it is the ONE request every
+   * reader of the feature makes, and because a cold miss is a round trip to
+   * ftp.nhc.noaa.gov before the year picker can even list its storms.
+   *
+   * ==> AND THE PER-STORM TRACKS ARE DELIBERATELY NOT WARMED. <== There is no
+   * `seasonsDerived` beside `nhcDerived` and `jtwcDerived` below, and its
+   * absence is a decision rather than an unfinished list. Fanning out to
+   * fourteen b-decks on a five-minute cron is 4,032 requests a day at a public
+   * government server for a feature nobody has opened yet — impolite, and it
+   * buys nothing the per-colo cache does not already buy. Seasons is opt-in and
+   * downloads once (§57.24), so per-storm fetches are rare and bursty rather
+   * than constant. `functions/api/seasons/storm.js` carries the same note.
+   *
+   * NO `store` GATE. An index listing zero real storms is the ordinary truthful
+   * answer in January. A genuine failure never reaches here — the route returns
+   * a non-ok status rather than an empty list, and it refuses to serve a
+   * directory listing that contained no `.dat` files at all, which is what a
+   * redirect or an error page looks like. */
+  { path: 'seasons/live', route: '/api/seasons/live' },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape

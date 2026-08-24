@@ -204,7 +204,61 @@ const READER_KEYS = [
   ['functions/api/jtwc/warning.js', 'jtwc/warning/'],
   ['functions/api/nhc/genesis.js', 'nhc/genesis/'],
   ['functions/api/nhc/outlook.js', 'nhc/outlook/'],
+  ['functions/api/seasons/live.js', 'seasons/live'],
+  ['functions/api/tcgp/storms.js', 'tcgp/storms'],
+  ['functions/api/nws/flood.js', 'nws/flood'],
 ];
+
+/* ---------------------------------------------------------------------------
+ * 3a. EVERY WARMED FEED MUST HAVE SOMETHING THAT READS IT BACK.
+ *
+ * ==> THIS CHECK IS NEW AND IT EXISTS BECAUSE ITS ABSENCE LET A CHANGE THROUGH.
+ * <== `seasons/live` was added to `LIST_FEEDS` and this whole suite stayed
+ * green without the reader entry above it, because the list below was
+ * hand-maintained and nothing compared it against the writer's own list.
+ *
+ * A warmed key nothing reads is the worst shape a mistake can take here: it
+ * costs a KV write and an origin fetch every five minutes, forever, and every
+ * dashboard reports a perfectly healthy warm loop. There is no symptom. The
+ * inverse — a reader whose key the writer never fills — is already caught by
+ * the comparison above, which is why only this direction was missing.
+ *
+ * Prefix matching rather than equality, because the parameterised feeds warm
+ * `nhc/genesis/areas` against a reader that keys on `nhc/genesis/`.
+ * ------------------------------------------------------------------------- */
+/**
+ * ==> ITS FIRST RUN FOUND TWO REAL ORPHANS AND BOTH ARE NOW FIXED. <==
+ *
+ * `tcgp/storms` and `nws/flood` were both in `LIST_FEEDS` and NEITHER ROUTE
+ * IMPORTED `kvRead` AT ALL. They had been warmed every five minutes — ~576
+ * origin fetches and KV writes a day between them — and every byte was read by
+ * nothing. Both routes worked the whole time, falling through to their own colo
+ * cache and to upstream exactly as they did before Pass B, which is precisely
+ * why nobody noticed: there was no symptom, and the warm loop reported perfect
+ * health over a store nothing consulted.
+ *
+ * Both are wired now and both appear in READER_KEYS above, so this asserts
+ * ZERO orphans rather than a list of known ones. **`nws/flood` reads KV at the
+ * fresh tier only** — that route refuses to hold a stale answer at all, because
+ * an expired flood warning is a shape on a map telling somebody they are in
+ * danger when they are not, and a warmed copy nine hours old is that same
+ * expired warning arriving by a different road. Its header carries the full
+ * argument; do not "finish" it by adding a KV_STALE tier.
+ */
+{
+  const claimed = READER_KEYS.map(([, k]) => k);
+  const warmedPaths = [];
+  for (const feed of LIST_FEEDS) {
+    warmedPaths.push(feed.path);
+    if (feed.lastGood && feed.lastGood.path) warmedPaths.push(feed.lastGood.path);
+  }
+  const orphans = warmedPaths.filter(
+    (p) => !claimed.some((c) => p === c || p.startsWith(c))
+  );
+  check(
+    `every warmed feed has a reader (${warmedPaths.length} warmed): ${orphans.join(', ') || 'none orphaned'}`,
+    orphans, []);
+}
 
 for (const [file, expected] of READER_KEYS) {
   const src = read(file);

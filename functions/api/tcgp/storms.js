@@ -49,10 +49,25 @@
  * bundle, so the basin list is mirrored from `lib/adeck.js`'s TCGP_BASINS.
  */
 
+import { kvRead, isWarmRequest } from '../_kv-cache.js';
 import { CACHE_PATH, CACHE_PATH_HEADER } from '../_cache-path.js';
 
 const HOST = 'https://verif.rap.ucar.edu';
 const INDEX = `${HOST}/jntweb/hurricanes-beta/realtime/current/index.php`;
+
+/** The KV path the cron Worker warms this route under (SPEC §17 Pass B).
+ *  Must match `worker/src/sources.js` — tools/test-kv-keys.mjs asserts it.
+ *
+ *  ==> THIS ROUTE WAS WARMED FOR WEEKS AND READ NONE OF IT. <== It was added to
+ *  `LIST_FEEDS` because two per-storm jobs fan out of it, so the cron fetched
+ *  it and wrote it on every five-minute cycle — and this file never imported
+ *  `kvRead` at all. Every byte was stored and read by nothing: the route still
+ *  worked, falling through to its own colo cache and to UCAR exactly as it did
+ *  before Pass B, so there was no symptom and the warm loop reported perfect
+ *  health. Found 2026-08-24 by the completeness check in
+ *  `tools/test-kv-keys.mjs`, which now asserts that every warmed feed has a
+ *  reader — the one direction that suite was not checking. */
+const KV_PATH = 'tcgp/storms';
 
 /** Be identifiable in UCAR's logs, same as every other relay. */
 const USER_AGENT = 'Landfall/1.0 (+https://landfall.getgravitate.app)';
@@ -140,13 +155,19 @@ export async function onRequestGet(context) {
   const freshKey = new Request('https://landfall-relay.internal/tcgp/storms/fresh');
   const lastGoodKey = new Request('https://landfall-relay.internal/tcgp/storms/last-good');
 
+  /* SPEC §17 Pass B — colo cache, then the globally warmed KV copy, then
+   * upstream. The cron Worker skips the first two, or it would store what it
+   * already stored and UCAR would never be contacted again
+   * (functions/api/_kv-cache.js). */
+  const warming = isWarmRequest(context.request, context.env);
+
   /* THE HIT IS REBUILT, NEVER HANDED BACK AS STORED. The slot copies below are
    * written with `Cache-Control: s-maxage=...` because that is how
    * `caches.default` is told how long to keep them; returning one verbatim
    * published that instruction to the public internet, and Cloudflare's own
    * edge honoured it. Measured live on the storm list, 2026-08-07.
    * `SPEC-OPS.md` §17.7. */
-  const hit = await cache.match(freshKey);
+  const hit = warming ? null : await cache.match(freshKey);
   if (hit) {
     return new Response(await hit.text(), {
       headers: baseHeaders({
@@ -154,6 +175,22 @@ export async function onRequestGet(context) {
         [CACHE_PATH_HEADER]: CACHE_PATH.FRESH,
       }),
     });
+  }
+
+  /* L2 — the globally warmed copy. One fetch to UCAR per interval worldwide
+   * instead of one per datacentre (§17 Pass B). */
+  const warm = warming ? null : await kvRead(context.env, KV_PATH, FRESH_SECONDS);
+  if (warm && warm.fresh) {
+    const headers = baseHeaders({
+      'X-Landfall-Fetched-At': warm.fetchedAt || '',
+      [CACHE_PATH_HEADER]: CACHE_PATH.KV,
+    });
+    context.waitUntil(
+      cache.put(freshKey, new Response(warm.body, {
+        headers: { ...headers, 'Cache-Control': `s-maxage=${FRESH_SECONDS}` },
+      }))
+    );
+    return new Response(warm.body, { headers });
   }
 
   try {
@@ -190,7 +227,7 @@ export async function onRequestGet(context) {
     ]));
     return json(body, 200, { ...stamp, [CACHE_PATH_HEADER]: CACHE_PATH.UPSTREAM });
   } catch (e) {
-    const stale = await cache.match(lastGoodKey);
+    const stale = warming ? null : await cache.match(lastGoodKey);
     if (stale) {
       const prev = await stale.json();
       return json({ ...prev, state: 'ok', stale: true }, 200, {
@@ -198,6 +235,21 @@ export async function onRequestGet(context) {
         'X-Landfall-Stale': 'true',
         [CACHE_PATH_HEADER]: CACHE_PATH.LAST_GOOD,
       });
+    }
+    /* The warmed copy judged too old, served anyway rather than showing
+     * nothing (§5). Names and ids do not change, so a day-old list still names
+     * storms correctly — the same reasoning STALE_SECONDS is generous for. */
+    const kvStale = warming ? null : await kvRead(context.env, KV_PATH, STALE_SECONDS);
+    if (kvStale) {
+      let prev = null;
+      try { prev = JSON.parse(kvStale.body); } catch { /* fall through below */ }
+      if (prev) {
+        return json({ ...prev, state: 'ok', stale: true }, 200, {
+          'X-Landfall-Fetched-At': kvStale.fetchedAt || '',
+          'X-Landfall-Stale': 'true',
+          [CACHE_PATH_HEADER]: CACHE_PATH.KV_STALE,
+        });
+      }
     }
     /* No cached copy and upstream down. `unavailable` with an EMPTY list, and
      * the caller is required to branch on the state — an empty list read as
