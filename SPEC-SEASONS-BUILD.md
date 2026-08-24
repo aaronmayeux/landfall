@@ -1015,20 +1015,51 @@ next probe run.
 
 ---
 
-**STEP 3b — THE SERVING. NOT STARTED.**
-- HURDAT2 committed to the repo by a runner, one file per basin, **replaced and
-  never accumulated** (§57.34 rule 3), with the year in the filename and an
-  immutable `_headers` block (§57.35 FIX 11). **It cannot live under `data/`** —
-  that path is already `no-cache` in `_headers` because it holds JS modules.
-- The existing cron Worker pulls the current season into **KV**, served by a
-  route with predictable key names. The app reads a route, not GitHub.
-  **==> NEVER `list()`** (§57.33 limit 1). Keys carry a ~400-day TTL so cleanup
-  is the default rather than an action (§57.34 rule 2).
-- Season graduation: when NOAA publishes the reviewed file, **one commit**
-  promotes that year into the repo as a static file, KV stops carrying it, and
-  `seasons-live` is squashed (§57.34 rule 1 — the button already exists).
-**Done when:** the route returns the same season to a browser that a session can
-read with plain git.
+**STEP 3b — THE SERVING. ==> DONE 2026-08-24. <==**
+`functions/api/seasons/live.js`, `functions/api/seasons/storm.js`,
+`functions/api/seasons/_ids.js`, `tools/seasons-hurdat.mjs`,
+`.github/workflows/seasons-hurdat.yml`, the `seasons/` directory and its
+`_headers` block.
+
+**WHAT IT IS lives in `SPEC-DATA.md` §58 and `SPEC-OPS.md` §18.8.** Read those,
+not this. The one-line version: settled seasons are static files in the repo
+refreshed by a monthly runner, the season in progress is two routes backed by
+KV, and the split between them is decided by Pages' 500-builds-a-month cap.
+
+**==> IT CORRECTED TWO SECTIONS OF THIS FILE. <==**
+
+- **§57.35 FIX 11 was not sufficient.** It says the SEASON in the filename is
+  the cache bust. NOAA revises seasons it has already published — the real
+  directory carries **five revisions of the 2022 Atlantic file**, in two
+  different date widths — so season-only naming points all five at one
+  `immutable` URL and a browser holding April's copy never sees May's
+  correction. The revision stamp is now in the filename too.
+- **Graduation is automatic for the NHC basins, and this step said it was
+  manual.** It described "one commit" promoting a year into the repo. Once the
+  monthly refresh exists there is no such commit: February's file lands on its
+  own and `index.json` gains the season. The only manual step left is squashing
+  `seasons-live` (§57.34 rule 1), which is already a button.
+
+**AND §57.34 RULE 2'S ~400-DAY TTL IS NOT WHAT SHIPPED, BECAUSE THE EXISTING
+STORE ALREADY DOES BETTER.** The rule was written for a design where a season
+was written once and read for a year. Serving through the ordinary warm loop
+means every key is re-stamped every five minutes while something still warms
+it, so `worker/src/kv.js`'s existing 48-hour TTL clears a graduated year within
+two days instead of within four hundred. **Retention that depends on nothing
+running is stronger than retention that depends on a yearly job**, which is the
+rule's own stated reason for existing.
+
+**==> A TEST PASSED WITH THE CODE BROKEN AND THAT IS THE FINDING. <==** Seven
+mutations were run against the file picker and six turned the suite red. The
+seventh — deleting the rule that an unreadable revision stamp is DROPPED rather
+than ranked zero — stayed green. Ranking it zero looks harmless (it just loses
+every tie) and on the day NOAA changes the stamp format it silently ranks the
+NEWEST season below every older one with nothing in the report saying so. The
+assertion is in and the mutation re-run against it.
+
+**STILL NOTHING ON GLASS.** No module on the boot path imports any of it. The
+one thing for Aaron is a URL: `/api/seasons/live` should list 14 storms and name
+the 4 invests it dropped, matching `seasons-live`'s manifest exactly.
 
 ---
 

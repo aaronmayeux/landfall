@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 291 numbered headings.
+Covering 11 files, 297 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -123,6 +123,7 @@ real home is the other row carrying the same section number.
 | `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1408-1419 |
 | `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1420-1473 |
 | `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1474-1549 |
+| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1550-1622 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -307,23 +308,28 @@ real home is the other row carrying the same section number.
 | `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 841-850 |
 | `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 851-856 |
 | `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 857-868 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 869-1159 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1160-1185 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1186-1207 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1208-1271 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 1272-1337 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 1338-1485 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 869-1190 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1191-1216 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1217-1238 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1239-1302 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 1303-1368 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 1369-1516 |
+| `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
+| `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3331 |
+| `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3332-3354 |
+| `58.3` | &nbsp;&nbsp;What is warmed, and the one thing deliberately left cold | `SPEC-DATA.md` | 3355-3384 |
+| `58.4` | &nbsp;&nbsp;Caching — immutable files, one mutable pointer | `SPEC-DATA.md` | 3385-3402 |
 
 ## Files
 
 | File | Bytes | Numbered sections |
 |---|---|---|
-| `SPEC-DATA.md` | 196,662 | 55 |
+| `SPEC-DATA.md` | 204,416 | 60 |
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 267,669 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 94,885 | 22 |
-| `SPEC-SEASONS-BUILD.md` | 79,246 | 36 |
+| `SPEC-OPS.md` | 99,433 | 23 |
+| `SPEC-SEASONS-BUILD.md` | 81,059 | 36 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 177,040 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

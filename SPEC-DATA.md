@@ -3270,3 +3270,132 @@ them is longer than the line between them. That errs toward fragments rather
 than toward over-claiming, which is the safe direction — but it means the
 painted result can be patchier than the table above predicts.
 
+
+## 58. Seasons — how the historical record reaches the app
+
+`SPEC-SEASONS-BUILD.md` §57 is what the feature IS. This section is how its
+data gets to a browser. Three surfaces, and the split between them is decided
+by one number: **Cloudflare Pages builds are capped at 500 a month** (§57.33
+limit 2), and every commit to `main` spends one.
+
+| What | Where it lives | Who fills it |
+|---|---|---|
+| Settled seasons | `seasons/data/*.txt`, static assets in this repo | `tools/seasons-hurdat.mjs`, monthly (`SPEC-OPS.md` §18.8) |
+| Which file to fetch | `seasons/index.json`, static, revalidating | the same job, same commit |
+| The season in progress | `/api/seasons/live` + `/api/seasons/storm`, KV behind a route | the cron Worker (§17 Pass B) |
+
+**==> THE CURRENT SEASON IS NOT IN THE REPO, AND THAT IS THE BUILD CAP TALKING.
+<==** It would be simpler to commit b-decks beside the HURDAT2 files. During an
+active season that is a dozen commits a day, each firing a Pages build, each
+churning the service worker for every user on what is only a data change. KV
+writes fire no build. This is the same reasoning §18.7's capture branch follows
+and it is why that branch is not `main`.
+
+### 58.1 `/api/seasons/live` — which storms this year has so far
+
+Walks NHC's ATCF b-deck directory, applies §57.13's storm-number filter, and
+reports **both what it kept and what it dropped**. Warmed into KV by the cron.
+
+    { status, years, source: 'atcf', provisional: true, listed, storms[], skipped[] }
+
+**==> IT MUST AGREE WITH THE MIRROR, FILE FOR FILE. <==** `tools/seasons-mirror.mjs`
+walks the same directory every hour and stores from it onto `seasons-live`. A
+reader comparing this route against `git show origin/seasons-live:manifest.json`
+must see one season, not two. Both apply the same rule; the mirror imports it
+from `lib/hurdat.js` and the route carries a forced second copy in
+`functions/api/seasons/_ids.js`, because a Pages Function cannot import the app
+(§3). **`tools/test-seasons-ids.mjs` holds the two together** over every basin
+token and every storm number 00-99, and asserts the route's answer against the
+mirror's own recorded manifest: 18 listed, 14 storms, 4 invests dropped by name.
+
+**THE TWO COPIES ARE DELIBERATELY NOT IDENTICAL, AND THE SUITE FOUND THAT
+RATHER THAN ASSUMING IT.** `lib/hurdat.js` TRIMS before matching, which is
+right — it reads a padded field out of a CSV row. The route does not, which is
+also right — it reads a URL parameter, where whitespace is something a caller
+put there on purpose. **So the invariant is one-directional: the route may be
+stricter than the parser and must never be looser.** Written as equality it
+failed on exactly two inputs, and both were the route being correct.
+
+**A LISTING WITH NO `.dat` FILES IN IT IS A FAILURE, NOT AN EMPTY SEASON.** NHC's
+index has never been empty — the previous season's files stay until the new one
+is seeded — so zero means the page we got was not the page we asked for: a
+redirect, an error page, a restyle. Caching that would tell every reader on
+Earth that no storm has happened this year. It falls through to last-good
+instead (§5). **Zero REAL storms out of a non-empty listing is different and is
+served**: in January that is simply true.
+
+**`provisional: true` IS ON THE WIRE BECAUSE §57.11 REQUIRES THE APP TO SAY
+WHICH RECORD IT IS SHOWING.** These are working best tracks. `seasons/index.json`
+carries `provisional: false` for the reviewed HURDAT2 files, in the same field,
+so one reader answers the question for both roads.
+
+### 58.2 `/api/seasons/storm?id=al012026` — one storm's track, verbatim
+
+NHC's b-deck bytes, unaltered. **Nothing is parsed server-side on purpose**:
+`lib/hurdat.js` reads it in the browser, and a second ATCF reader on the other
+side of a deploy boundary is the drift this project has already paid for once.
+
+**==> THIS IS THE SECOND ROUTE IN THE APP THAT BUILDS AN UPSTREAM URL OUT OF
+CLIENT INPUT. <==** `functions/api/nws/alert.js` is the first. The id must match
+**anchored at both ends** or it is refused before any fetch happens —
+unanchored, `https://evil.example/?ok=al012026` passes a `.test()` and the
+function fetches it from inside Cloudflare's network under our User-Agent. Nine
+refusal cases are asserted and **the anchors are mutation-verified**: each was
+removed in turn and the suite confirmed red.
+
+**The filter is part of the guard, not a courtesy.** An id must also be a real
+storm number. Invest numbers 90-99 are reused several times within one season,
+so serving `al922026` would hand a reader a file that means three different
+systems on three different days with nothing saying which.
+
+**A 404 IS AN ANSWER AND IS NEVER CACHED.** A storm that has not formed yet has
+no file, and that stays true only until it suddenly does not. A remembered "no
+such storm" would outlive the storm's own genesis.
+
+### 58.3 What is warmed, and the one thing deliberately left cold
+
+**The season INDEX is warmed. The per-storm tracks are not.** There is no
+`seasonsDerived` beside `nhcDerived` and `jtwcDerived` in `worker/src/sources.js`,
+and its absence is a decision rather than an unfinished list.
+
+Fanning out to fourteen b-decks on a five-minute cron is **4,032 requests a day
+at a public government server** for a feature nobody has opened yet. It is
+impolite, and it buys nothing the per-colo cache does not already buy: Seasons
+is opt-in and downloads once (§57.24), so per-storm fetches are rare and bursty
+rather than constant. **If Seasons ever becomes something people open cold, this
+is the dial** — the route is written to take a KV tier without restructuring.
+
+**==> AND EVERY WARMED FEED NOW HAS TO HAVE A READER. <==** `tools/test-kv-keys.mjs`
+asserts it in both directions, and **its first run found two orphans**:
+`tcgp/storms` and `nws/flood` were being warmed every five minutes and neither
+route imported `kvRead` at all. ~576 origin fetches and KV writes a day between
+them, every byte read by nothing. Both routes worked the whole time — falling
+through to their colo cache and to upstream exactly as they did before Pass B —
+which is precisely why nobody noticed: there was no symptom, and the warm loop
+reported perfect health over a store nothing consulted. **Both are wired now.**
+
+**`nws/flood` READS KV AT THE FRESH TIER ONLY, AND MUST NOT BE "FINISHED".**
+Every other KV-backed route falls back to a warmed copy judged too old, because
+a stale forecast beats a blank section. That route already refuses to hold a
+stale answer in its own colo cache, for the reason §50.5 gives: an expired flood
+warning is not a stale reading of a live fact, it is a shape on a map telling
+somebody they are in danger when they are not. **A KV copy nine hours old is
+that same expired warning arriving by a different road.**
+
+### 58.4 Caching — immutable files, one mutable pointer
+
+`seasons/data/*` is served `immutable` for a year. `seasons/index.json` is
+`no-cache`. The two paths do not overlap, deliberately: `_headers` is validated
+by nothing, so a precedence question between two matching rules is the last
+thing that file should contain.
+
+**==> THE REVISION STAMP IS IN THE FILENAME AND §57.35 FIX 11 DID NOT ASK FOR
+IT. <==** FIX 11 said the season is the cache bust. NOAA revises seasons it has
+already published — **five revisions of the 2022 Atlantic file** sit in the real
+directory — so under season-only naming every one would write to the same
+immutable URL and a browser holding April's copy would never see May's
+correction. `SPEC-OPS.md` §18.8 carries the full account.
+
+**Nothing here may live under `data/`.** That path is already `no-cache` in
+`_headers` because it holds JS modules, which is the exact opposite of what
+these files want.

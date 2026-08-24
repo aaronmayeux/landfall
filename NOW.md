@@ -174,46 +174,63 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> SEASONS: STEPS 0, 1, 2 AND 3a ARE DONE. STEP 3b IS THE NEXT ONE. <==**
+**==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
+`tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither
+route imported `kvRead` at all — **~576 origin fetches and KV writes a day
+between them, every byte read by nothing.** Both routes worked the whole time,
+falling through to their colo cache and to upstream exactly as they did before
+Pass B, which is why there was no symptom: the warm loop reported perfect health
+over a store nothing consulted.
+
+**FOUND BY A CHECK WRITTEN FOR SOMETHING ELSE.** `tools/test-kv-keys.mjs` proved
+that every reader's key is filled by the writer; it never proved the reverse, and
+that is the direction with no symptom. It now asserts zero orphans. **`nws/flood`
+reads KV at the fresh tier only and must not be "finished"** — that route
+refuses a stale answer on purpose, and a warmed copy nine hours old is an expired
+flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
+
+
+**==> SEASONS: STEPS 0, 1, 2, 3a AND 3b ARE DONE. STEP 4 IS THE NEXT ONE. <==**
 `SPEC-SEASONS-BUILD.md` §57 — the steps are in §57.30, sized for one session
 each. Read §57.1 and §57.30 before touching anything; do not reopen a numbered
 decision without new evidence.
 
-**STEP 3 WAS TWO STEPS WEARING ONE NUMBER AND §57.30 NOW SAYS SO.** Capture and
-serving share no code, and one of them is a race the other is not — every hour
-without the rest-of-world capture is permanently gone. **3a is the capture and
-it has landed:** `tools/seasons-mirror.mjs` and the `seasons-live` branch, with
-what it IS described in `SPEC-OPS.md` §18.7. **3b is the serving** — HURDAT2 into
-the repo, the current season into KV, a route in front of both — and nothing of
-it is built.
+**STEP 3b LANDED AND WHAT IT IS LIVES IN `SPEC-DATA.md` §58 AND `SPEC-OPS.md`
+§18.8.** Read those, not this. The one-line version: settled seasons are static
+files in `seasons/data/` refreshed by a monthly runner, the season in progress
+is two routes backed by KV, and the split between them is decided by Pages'
+500-builds-a-month cap.
 
-**==> IT HAS RUN ON A REAL RUNNER, THE BRANCH EXISTS, AND THE SECOND RUN FOUND
-A BUG THE SANDBOX COULD NOT. <==** 2026-08-24. **18 files listed, 14 stored, 4
-invests dropped by name in the manifest** — matching the step-0 probe's
-independent count of the same directory to the file. Six JTWC warnings, no
-faults. Conditional GET confirmed working: the second run got fourteen `304`s.
+**==> THE ONE THING FOR AARON, AND IT IS A URL RATHER THAN A SCREEN. <==**
+After this deploys, open **`landfall.getgravitate.app/api/seasons/live`** on a
+phone. It should list **14 storms and name the 4 invests it dropped**, matching
+`git show origin/seasons-live:manifest.json` exactly. That agreement is the
+whole done-condition of the step, and nothing in the sandbox can check it —
+NOAA and our own live site are both behind the network wall.
 
-**AND IT COMMITTED ANYWAY, WHICH IT MUST NOT.** The per-file detail flips from
-`stored 6551 bytes` to `unchanged (304)`, and the first version compared the
-whole manifest minus its timestamp — so **every real change produced a second,
-empty commit**, with a subject claiming to be a first run. Both faults fixed and
-described in `SPEC-OPS.md` §18.7 rule 4; the rule is now health versus activity.
-**The two real manifests are the test's fixtures**, and the shipped logic
-reintroduced turns the suite red.
+**STILL NOTHING ON GLASS, AND THAT IS FOUR STEPS RUNNING.** No module on the
+boot path imports any of it, so no pixel changed. The first Seasons surface is
+still step 4's shell. Deliberate, and the exception to this project's usual
+rule rather than a lapse.
 
-**THE SANDBOX COULD NOT HAVE FOUND IT.** Both hosts are blocked here, so every
-local run had both sources failing identically and the transition from `stored`
-to `unchanged` never happened. It took one runner and four minutes.
+**==> TWO SPEC SECTIONS WERE WRONG AND REAL BYTES SAID SO. <==**
 
-**AND THE CAPTURE ROUND-TRIPS THROUGH THE APP'S OWN PARSER.** `parseBdeck` reads
-the stored `bcp012026.dat` back as LALA, 59 points, peak 115 kt, zero faults,
-with all three wind thresholds merged onto every point. The probe measured that
-file separately as 59 distinct times and a 115 kt peak. **Two independent
-measurements, same answer** — which is the only reason to believe either.
+- **§57.35 FIX 11 said the SEASON in the filename is the cache bust.** It is
+  not sufficient: NOAA revises seasons it has already published, and the real
+  directory carries **five revisions of the 2022 Atlantic file** in two
+  different date widths. Season-only naming points all five at one `immutable`
+  URL, so a browser holding April's copy never sees May's correction. The
+  revision stamp is now in the filename too.
+- **§57.30 step 3b said graduation is "one commit" somebody makes by hand.**
+  Once the monthly refresh exists there is no such commit: February's file
+  lands on its own and `index.json` gains the season. The only manual step left
+  is squashing `seasons-live`, which is already a button.
 
-**NOTHING FOR AARON TO LOOK AT, AND THAT IS THE THIRD TIME RUNNING.** No module
-on the boot path imports any of it, so no pixel changed. The first Seasons
-surface is still step 4's shell.
+**AND ONE TEST OF MINE PASSED WITH THE CODE BROKEN.** Seven mutations were run
+against `tools/seasons-hurdat.mjs` and six turned it red. The seventh — deleting
+the rule that an unreadable revision stamp is DROPPED rather than ranked zero —
+stayed green, which is the failure §12 calls worse than no test. The missing
+assertion is in, and the mutation was re-run to confirm it now bites.
 
 **ONE THING TO WATCH RATHER THAN A TASK.** `seasons-live` is a push to a
 non-production branch every hour it captures something, and a Pages project can

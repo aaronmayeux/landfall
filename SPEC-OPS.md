@@ -1546,3 +1546,76 @@ because the graduation it follows is a decision.
 **`tools/test-seasons-mirror.mjs`** covers the four rules above against the real
 relay payload in `samples/seasons/jtwc-storms-2026-08-24.json`, and each
 assertion was verified by reintroducing the bug it guards.
+
+### 18.8 The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR
+
+`tools/seasons-hurdat.mjs`, `.github/workflows/seasons-hurdat.yml`, monthly.
+It is the other half of §18.7: that one captures the season while it happens,
+this one takes NOAA's reviewed version once they publish it.
+
+    seasons/data/hurdat2-atlantic-<season>-<revision>.txt
+    seasons/data/hurdat2-epacific-<season>-<revision>.txt
+    seasons/index.json
+
+**It is the only scheduled job in this repo that commits to `main`**, and that
+is why it runs monthly rather than hourly. A push to `main` fires a Cloudflare
+Pages build against a 500-a-month cap (§57.33 limit 2); a dozen commits a year
+is invisible against it, and the same job on an hourly schedule would eat it.
+That ceiling is the whole reason the CURRENT season lives in KV behind a route
+(§58) instead of in the repo beside these files.
+
+**==> PICKING THE FILE IS THE HARD PART, AND SORTING THE DIRECTORY IS WRONG.
+<==** NOAA leaves every past revision in place — 41 files on the day this was
+measured, back to a 2018 vintage — and the newest is not the last one
+alphabetically. `hurdat2-atl-1851-2023-042624.txt` sorts after
+`hurdat2-1851-2025-02272026.txt` because `a` sorts after `1`, and that one
+character is the entire step-0 probe bug. The rule is: match the canonical
+shape only, rank by **last season**, break ties on **revision date**. The real
+listing is kept at `samples/seasons/listings/hurdat-directory-2026-08-24.html`
+and `tools/test-seasons-hurdat.mjs` asserts the trap is still in it, so the
+picker is proved against the thing that caught somebody rather than against a
+fixture that agrees with it.
+
+**==> THE REVISION STAMP IS IN THE OUTPUT FILENAME, AND §57.35 FIX 11 DID NOT
+ASK FOR IT. <==** FIX 11 says the SEASON in the filename is the cache bust.
+That holds until NOAA revises a season it has already published, which it does:
+the real directory carries **five revisions of the 2022 Atlantic file**, in two
+different date widths. Under season-only naming every one of them writes to the
+same URL — served `immutable` by `_headers` — so a browser that fetched the
+April revision would keep it forever and never see the May correction. FIX 11
+has been corrected rather than worked around.
+
+**FOUR RULES IT KEEPS, EACH OF WHICH IS A BUG IF BROKEN.**
+
+1. **Nothing is committed that parses worse than what it replaces.** The
+   downloaded file must parse with **zero faults** through `lib/hurdat.js` — the
+   same parser the app ships — and carry **at least as many storms** as the file
+   already in the repo. HURDAT2 only ever grows; a reanalysis changes a storm's
+   numbers, it does not delete a hurricane from history. A truncated download
+   trips the row-count check the format itself provides, which is why this is
+   the test rather than a byte-size comparison: the file grows every year, so
+   there is no size that means complete.
+2. **A refusal is a FAILED run, not a quiet skip.** Either NOAA published
+   something broken or our parser stopped understanding their format, and both
+   are worse than a month with no update. The file already in the repo is left
+   exactly as it is.
+3. **One file per basin, replaced, never accumulated** (§57.34 rule 3). The
+   delete and the write happen in the same run and therefore the same commit.
+4. **A naming change is reported, never absorbed.** Anything in that directory
+   whose name mentions hurdat and matches no pattern is listed in the run
+   summary. Without it, a rename on NOAA's side would make this job find nothing
+   and report a cheerful "nothing changed" every month forever.
+
+**`seasons/index.json` IS THE ONE MUTABLE FILE IN THE FEATURE.** It names which
+HURDAT2 file to fetch, so February's swap is a data commit rather than a code
+change and a deploy. It is compared **without its timestamp** before being
+rewritten, or every run would produce an empty commit — the exact fault §18.7
+rule 4 shipped and a runner caught inside four minutes.
+
+**==> GRADUATION IS THEREFORE AUTOMATIC FOR THE NHC BASINS, AND §57.30 STEP 3b
+SAID IT WOULD BE MANUAL. <==** The step described graduation as "one commit
+promotes that year into the repo". Once this job exists there is no such commit
+to make: February's file lands on its own, `index.json` gains the new season,
+and the app prefers a season present in the index over the live route. **The
+only manual step left is squashing `seasons-live`** (§57.34 rule 1), which is
+already a button on the `seasons-mirror` workflow. The spec has been corrected.
