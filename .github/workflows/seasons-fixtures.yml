@@ -1,0 +1,64 @@
+# seasons-fixtures.yml — cut real HURDAT2 storms for §57.30 step 2 to test on.
+#
+# WHY THIS IS SEPARATE FROM seasons-probe.yml
+# The probe is a finished, audited artifact whose results are cited all through
+# §57. Editing it to do a second job would make its findings harder to trust.
+# This one has a single job: download the full files and cut storms out.
+#
+# WHY IT TRIGGERS ON PUSH TO A BRANCH
+# A fine-grained PAT can push but cannot dispatch a workflow (measured: HTTP 403
+# on the dispatches endpoint), so pushing a branch is the only way a cloud
+# session can start a runner. Same shape as seasons-probe.yml and rain-probe.yml.
+#
+# HOW TO READ THE RESULT (works from a phone)
+#   git fetch origin seasons-fixtures-results
+#   git show origin/seasons-fixtures-results:findings.md
+#
+# DATA, NOT CODE. One orphan commit, force-pushed, never merged into main.
+# Chosen files land in samples/seasons/ by hand.
+
+name: seasons-fixtures
+
+on:
+  push:
+    branches: [seasons-fixtures]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-fixtures
+  cancel-in-progress: true
+
+jobs:
+  cut:
+    runs-on: ubuntu-latest
+    # Two multi-megabyte files off a government server, paced. Generous
+    # because a slow upstream is not a reason to throw away a finished run.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: cut the fixtures
+        run: node tools/seasons-fixtures.mjs /tmp/seasons-fixtures
+
+      - name: publish to the seasons-fixtures-results branch
+        run: |
+          set -euo pipefail
+          cd /tmp/seasons-fixtures
+          git init -q -b seasons-fixtures-results
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A
+          git commit -q -m "seasons fixtures $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            seasons-fixtures-results
+
+      - name: summary
+        run: cat /tmp/seasons-fixtures/findings.md >> "$GITHUB_STEP_SUMMARY"
