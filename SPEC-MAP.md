@@ -1285,25 +1285,64 @@ rebuild** instead of being turned away at the door. Its longitudes run past
 the track and is what makes it one shape instead of two on opposite rims of the
 map.
 
-**ONLY THE CONE IS STITCHED TODAY, AND THAT IS SCOPE RATHER THAN A FINDING.**
-Every layer on the MapServer arrives wrapped the same way, so the wind swath,
-the current wind field and a watch/warning chord are all cuttable by the same
-meridian. None of Lala's were when this was written — all of them sat well east
-of it — so there were no bytes to build against, and §5's rule about not
-guessing at payload shapes applies to a repair as much as to a parse. The stitch
-is written to take any geometry, so the day one of them arrives cut it is a call
-site, not a design.
+**ONLY THE CONE WAS STITCHED FOR FOUR DAYS, AND THAT WAS SCOPE RATHER THAN A
+FINDING — IT IS EVERY LAYER NOW.** When this was written, every layer on the
+MapServer arrived wrapped the same way, so the wind swath, the current wind
+field and a watch/warning chord were all cuttable by the same meridian. None of
+Lala's were — all of them sat well east of it — so there were no bytes to build
+against, and §5's rule about not guessing at payload shapes applies to a repair
+as much as to a parse. The stitch was written to take any geometry, so the day
+one of them arrived cut it would be a call site, not a design.
 
-**THAT DAY CAME, AND IT CAME THROUGH A DIFFERENT DOOR THAN THIS SECTION
-EXPECTED.** 2026-08-24: Lala tracked northwest onto the seam and her forecast
-points ran −179.40 through +179.20. What broke was NOT a cut polygon needing the
-stitch — the wind swath the app draws is BUILT here rather than published, from
-quadrant numbers and centres, and it broke at the flattening step instead: raw
+**THAT DAY CAME ON 2026-08-24, THROUGH TWO DOORS AT ONCE.**
+
+The first was not a cut at all. The wind swath the app draws is BUILT here
+rather than published, and it broke at the flattening step instead: raw
 longitude subtraction swept the corridor 316° around the planet. **§7.12 fault
-3** is the fix and it is the branch discipline above, not the stitch. The
-prediction in this paragraph was right about the seam and wrong about which
-mechanism would meet it, which is worth keeping rather than tidying away: the
-next layer to reach ±180 could go either way, and both repairs now exist.
+3** is that fix and it is branch discipline, not the stitch.
+
+The second is the one this section predicted. Measured on the same archive run:
+Lala's cone arrives as a `MultiPolygon` and so do **two of her forecast wind
+rings** — 34 kt at tau 72 (212 points spanning −180.00 to −177.53, plus 65
+spanning 179.35 to 180.00) and again at tau 96. **The stitch was wired to the
+cone alone, so those rings were repaired by nobody.** It cost nothing yet only
+because the forecast radii are consumed as numbers by the envelope builder
+rather than drawn.
+
+**THE CURRENT WIND FIELD IS THE ONE THAT WOULD HAVE SHOWN.** It is drawn RAW —
+`map/layers/wind-field.js` reads the `windCurrent` slot straight, and nothing
+replaces that slot the way the envelope builder replaces `windSwath`. Cut and
+unrepaired it draws exactly the two faults recorded above for the cone: a fill
+split into two blobs on opposite rims of the map, and an outline stroking both
+artificial seam edges as real edges of the wind field. Lala's is still whole
+only because at 175.3°W it has not reached ±180 yet.
+
+**So the repair is wired at the DOOR, not at four call sites.**
+`data/nhc-mapserver.js` `stitchSeams()` runs over every fetched layer, wrapping
+the sentinel scrub, so a layer added later inherits the repair instead of
+rediscovering the fault. That is what `lib/seam-stitch.js`'s own header argued
+for from the day it was written: nothing in `lib/` owned the question *did this
+polygon arrive whole?*, and answering it once is the point of the file.
+
+**MEASURED SAFE ON THE PATH THAT ALREADY WORKED.** The forecast radii feed the
+envelope builder, which solves each ring's own centre out of its geometry
+(§7.13). Stitching them first leaves the built corridor **bit-for-bit
+identical** — both bands, every vertex to six decimal places — so this is not a
+behaviour change on anything that was already right.
+
+`lib/cone-smooth.js` **keeps its own stitch call** and that is deliberate rather
+than a leftover: it is a pure library that must not assume its caller repaired
+the shape, and running the stitch on an already-stitched Polygon returns it
+unchanged for the cost of one type check.
+
+`tools/test-seam-layers.mjs` asserts the repair against the real cut wind rings
+in `samples/lala-cp012026-dateline/` — **area against the two halves added
+together**, because a repair that dropped a stretch of outline or tied a bow at
+the join would still close and still look plausible in a coordinate dump. It
+also **reads `data/nhc-mapserver.js` and asserts the call is on the fetch path**.
+That last one is blunt and it is the right instrument: a helper that nobody
+calls is precisely the state this fix corrected, and every other assertion in
+the suite passed happily throughout the four days it was in.
 
 **AND THE SAME SEAM TOOK THE RIBBON A SECOND WAY, THROUGH A GATE RATHER THAN
 THROUGH ARITHMETIC.** Fixed 2026-08-20. `lib/cone-smooth.js` put ONE test in

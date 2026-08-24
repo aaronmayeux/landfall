@@ -107,6 +107,34 @@ door.
    the no-op control: none of them is near ±180, so any visible change on them
    is a regression, not the fix.
 
+**==> AND THE SECOND SEAM FAULT IS WIRED SHUT BEFORE IT SHOWS. <==** Different
+mechanism, same meridian. NHC CUTS any shape crossing ±180 into two halves, each
+carrying a fake straight edge down the seam. `lib/seam-stitch.js` has undone that
+since 2026-08-20 — **but it was wired to the cone alone**, and it repaired
+nothing else for four days. On the 17:37Z run, two of Lala's forecast wind rings
+already arrive cut and nobody was repairing them. It cost nothing yet only
+because those are consumed as numbers rather than drawn.
+
+**The current wind field is the one that would have shown**, and it is drawn raw
+— nothing replaces that slot. Cut, it draws as two blobs on opposite rims of the
+map with the fake edges stroked as real wind-field edges. Lala's is still whole
+only because at 175.3°W she has not reached the line. She will.
+
+Wired at the DOOR now (`data/nhc-mapserver.js stitchSeams()`), over every fetched
+layer, so a layer added later inherits the repair. Measured safe on the path that
+already worked: stitching the forecast radii first leaves the built corridor
+bit-for-bit identical, both bands, every vertex to six decimal places.
+`tools/test-seam-layers.mjs`, 88 assertions against the real cut rings, area
+checked against the two halves added together. It also reads the shipped module
+and asserts the call is on the fetch path — blunt, and the right instrument: a
+helper nobody calls is exactly the state this corrected.
+
+**NOTHING NEW TO CHECK ON GLASS FOR THIS ONE UNTIL LALA CROSSES.** When she does,
+her Current wind bands should read as one shape across the line — no hard
+straight edge down the middle, no second blob on the far rim. If that appears,
+the stitch declined the shape and the console will not say so; grab the bytes off
+the archive rather than guessing.
+
 **ORANGE AND RED ARE FIXED TOO, AND THAT IS MEASURED RATHER THAN REASONED.**
 Aaron asked 2026-08-24. Only the green 34 kt band wrapped, which is an accident
 of the advisory — NHC stopped publishing Lala's 50 kt radii after tau 36 and

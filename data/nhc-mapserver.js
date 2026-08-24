@@ -68,6 +68,7 @@ import { parseNhcValidtime, parseSynopticStamp } from '../lib/time.js';
 import { categoryFromKt } from '../lib/category.js';
 import { buildFullTrack } from '../lib/windswath.js';
 import { normalizePastPoints } from '../lib/track-point.js';
+import { stitchDatelineSplit } from '../lib/seam-stitch.js';
 
 /** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
  *  the relay validates before it reaches a WHERE clause. */
@@ -153,6 +154,61 @@ function annotateForecastTimes(fc, stormId, stormName) {
      * Bertha"), so it is put here rather than inferred downstream. */
     p._stormName = stormName || null;
   }
+}
+
+/**
+ * Undo the source's antimeridian cut on every feature that carries one.
+ *
+ * ==> THE QUESTION "DID THIS POLYGON ARRIVE WHOLE?" IS ANSWERED ONCE, AT THE
+ * DOOR. <== `lib/seam-stitch.js` exists because nothing in `lib/` owned that
+ * question and every consumer downstream assumed the answer was yes — each
+ * going wrong differently when it was not. It was wired to the cone alone on
+ * 2026-08-20 because the cone was the only layer anyone had cut bytes for, and
+ * SPEC-MAP.md §7.9 recorded honestly that every other MapServer layer was
+ * reachable by the same meridian and would be "a call site, not a design".
+ *
+ * ==> THE BYTES ARRIVED. <== Measured on the 2026-08-24T17:37Z archive run,
+ * Lala CP012026 at 33.4°N 175.3°W: her cone arrives as a `MultiPolygon` and so
+ * do two of her forecast wind rings — 34 kt at tau 72 (212 points spanning
+ * −180.00 to −177.53, plus 65 spanning 179.35 to 180.00) and at tau 96. Her
+ * CURRENT wind field is still two clean polygons only because at 176°W it has
+ * not reached the seam yet. It will.
+ *
+ * ==> AND THE CURRENT FIELD IS THE ONE THAT WOULD HAVE SHOWN. <== It is drawn
+ * RAW — `map/layers/wind-field.js` reads the `windCurrent` slot straight, and
+ * that slot is never replaced the way `windSwath` is by the envelope builder.
+ * Cut and unrepaired it draws exactly the two faults §7.9 records for the
+ * cone: a fill split into two blobs on opposite rims of the map, and an
+ * outline that strokes both artificial seam edges as if they were real edges
+ * of the wind field.
+ *
+ * ==> DOING IT HERE RATHER THAN AT FOUR CALL SITES IS THE WHOLE POINT. <== One
+ * door, so a layer added later inherits the repair instead of rediscovering
+ * the fault. The stitch never throws and never returns something worse than
+ * its input (§5): anything that is not a clean two-part cut is handed straight
+ * back, so a source that changes shape degrades to exactly today's behaviour.
+ *
+ * MEASURED SAFE ON THE PATH THAT ALREADY WORKED. The forecast radii feed the
+ * swath envelope builder, which solves each ring's own centre out of its
+ * geometry (§7.13). Stitching them first leaves the built corridor
+ * BIT-FOR-BIT identical — checked on Lala's bytes 2026-08-24, both bands, every
+ * vertex to six decimal places — so this is not a behaviour change on anything
+ * that was already right.
+ *
+ * `lib/cone-smooth.js` KEEPS ITS OWN CALL and that is deliberate, not a
+ * leftover. It is a pure library that must not assume its caller stitched
+ * first, and running the stitch on an already-stitched Polygon returns it
+ * unchanged — the second call costs one type check.
+ */
+function stitchSeams(fc) {
+  return {
+    ...fc,
+    features: (fc.features || []).map((f) => (
+      f.geometry?.type === 'MultiPolygon'
+        ? { ...f, geometry: stitchDatelineSplit(f.geometry) }
+        : f
+    )),
+  };
 }
 
 /** Map every 9999-valued numeric property to null, in place on a copy. */
@@ -480,7 +536,7 @@ export async function fetchStormGeometry(storm) {
       }
       try {
         const fc = await queryLayer(layerId, bin);
-        const clean = scrubSentinels(fc);
+        const clean = stitchSeams(scrubSentinels(fc));
         if (key === 'forecastPoints') annotateForecastTimes(clean, storm.id, storm.name);
         layers[key] = {
           status: clean.features.length ? 'ok' : 'none',
