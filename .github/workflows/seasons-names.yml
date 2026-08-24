@@ -1,0 +1,115 @@
+# seasons-names.yml — keep the storm name rosters current with nobody typing one.
+# SPEC-SEASONS-BUILD.md §57.12, §57.18a, §57.34 rule 7.
+#
+# WHY THIS EXISTS AT ALL
+# The rosters used to be two hand-typed lists covering one year, which meant a
+# ghost roster that silently emptied every 1st of January until somebody
+# transcribed a PDF. Aaron's call, 2026-08-24: that is not acceptable for a
+# thing meant to run unattended.
+#
+# WHY A SCRAPE IS SAFE HERE AND WOULD NOT BE AT RUNTIME
+# Measured on real bytes: NHC's names page publishes SIX YEARS AHEAD with the
+# year written in each column header. So one good read covers six seasons —
+# if this job breaks tomorrow and stays broken, the app is still right until
+# 2032. And the output is a file committed to the repo, not a fetch a phone
+# makes: a restyled page turns THIS JOB red, it cannot empty a roster on a
+# screen. That inverted failure shape is the whole reason the decision to
+# hand-maintain was reversed.
+#
+# WHY MONTHLY
+# The WMO retires names at a meeting in spring and NHC updates the page some
+# time after. Monthly is twelve cheap runs a year that catch it within weeks;
+# yearly would miss it by up to eleven months. Almost every run finds the page
+# saying exactly what the repo already holds and commits nothing at all.
+#
+# ==> IT COMMITS TO `main`, WHICH IS WHY IT COMMITS SO RARELY. <== A push to
+# main fires a Cloudflare Pages build, capped at 500 a month (§57.33 limit 2).
+# The decision is made inside the script, which compares the DATA and ignores
+# the generated timestamp — otherwise this would fire a build and churn the
+# service worker for every reader, monthly, on no news.
+#
+# ==> AND IT CAN REFUSE. <== Any fault — a column headed something that is not
+# a year, a list of the wrong length, initials out of order, a spent name that
+# disagrees with NOAA's own b-decks — and the script writes nothing and exits
+# non-zero, so this job FAILS. That is deliberate and it is the loud direction.
+# A month with no update beats a month with the wrong names, and the last good
+# file stays exactly where it is.
+
+name: seasons-names
+
+on:
+  schedule:
+    # 05:10 UTC on the 5th. Off the hour and clear of seasons-hurdat on the 3rd,
+    # so the two never race for the same push to main.
+    - cron: '10 5 5 * *'
+  # A fine-grained PAT can push but CANNOT dispatch a workflow (measured: HTTP
+  # 403 on the dispatches endpoint), so pushing this branch is the only way a
+  # cloud session can start a runner. Same lever seasons-hurdat and the probes
+  # use, and it is why they exist as branches at all.
+  push:
+    branches: [seasons-names]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-names
+  cancel-in-progress: false
+
+jobs:
+  names:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: fetch, judge, and write
+        id: run
+        run: node tools/seasons-names.mjs . /tmp/names-report
+
+      # ==> THE SUITES RUN AGAINST THE FILE THIS JOB JUST WROTE. <== The script's
+      # own gates are about the PAGE; these are about the repo the change lands
+      # in — the current-season gate, the shape of the table, and the b-deck
+      # check as the app's own modules see it. A file that cannot pass them must
+      # not reach main, whatever the script thought.
+      - name: prove the new file against the suites
+        if: steps.run.outcome == 'success'
+        run: |
+          set -euo pipefail
+          node tools/check-syntax.mjs
+          node tools/test-season-names.mjs
+          node tools/test-seasons-names-parse.mjs
+          node tools/test-seasons-names-job.mjs
+
+      # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== The decision is made
+      # inside the script, not here, because only it knows whether the names
+      # changed or NOAA merely served the same page again.
+      - name: commit and push, if anything changed
+        if: always() && steps.run.outcome == 'success'
+        run: |
+          set -euo pipefail
+          DECISION="$(cat /tmp/names-report/decision.txt 2>/dev/null || echo skip)"
+          echo "decision: $DECISION"
+          if [ "$DECISION" != "commit" ]; then
+            echo "nothing moved — no commit"
+            exit 0
+          fi
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A lib/season-names-data.js
+          if git diff --cached --quiet; then
+            echo "the script asked to commit but git sees no change — not committing"
+            exit 0
+          fi
+          git commit -q -F /tmp/names-report/commit-message.txt
+          git push -q origin HEAD:main
+          echo "pushed $(git rev-parse --short HEAD)"
+
+      - name: summary
+        if: always()
+        run: cat /tmp/names-report/summary.md >> "$GITHUB_STEP_SUMMARY" || echo 'the job wrote no report' >> "$GITHUB_STEP_SUMMARY"
