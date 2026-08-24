@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 289 numbered headings.
+Covering 11 files, 290 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -306,11 +306,12 @@ real home is the other row carrying the same section number.
 | `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 532-541 |
 | `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 542-547 |
 | `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 548-559 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 560-729 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 730-741 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 742-758 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 759-803 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 804-869 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 560-741 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 742-753 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 754-770 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 771-815 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 816-881 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 882-898 |
 
 ## Files
 
@@ -321,7 +322,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 264,284 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 90,430 | 21 |
-| `SPEC-SEASONS-BUILD.md` | 42,985 | 35 |
+| `SPEC-SEASONS-BUILD.md` | 51,122 | 36 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 176,022 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

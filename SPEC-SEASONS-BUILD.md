@@ -597,8 +597,11 @@ untouched.
 
 ---
 
-**STEP 2 — THE PARSER. No UI.**
-Read HURDAT2 and ATCF into one normalised internal shape. Handle every cliff in
+**STEP 2 — THE PARSER AND THE INDEXER. No UI.**
+Read HURDAT2 and ATCF into one normalised internal shape, and produce the
+per-season records and the near-home index that §57.35 requires. **One module,
+imported by both the Node runner and the browser Worker** — two parsers drifting
+apart is a bug this project has already paid for. Handle every cliff in
 §57.6, the `-999` and `-99` sentinels, §57.13's storm numbers, and the two
 formats' different radii layouts.
 **Tests must be verified by breaking them** — reintroduce each bug and confirm
@@ -630,7 +633,9 @@ returns the same season to a browser.
 ---
 
 **STEP 4 — THE SHELL AND THE EMPTY GLOBE.**
-Both doors from §57.16, the exit bar, the forced palette, the archive globe with
+**Seasons is dynamically imported here** (§57.35 fault 4) — nothing but the two
+doors may touch the boot path. Both doors from §57.16, the exit bar, the forced
+palette, the archive globe with
 no storms on it, deep-link handling, and **the storage scoping from §57.2**.
 **Aaron looks at:** entering from both doors, the globe with nothing on it,
 leaving, and confirming his live theme came back.
@@ -666,7 +671,10 @@ stamp.
 
 ---
 
-**STEP 8 — THE DOWNLOAD GATE AND OFFLINE.**
+**STEP 8 — THE DOWNLOAD GATE, THE INDEX PASS, AND OFFLINE.**
+**This step owns most of §57.35.** Worker-based parse-once, IndexedDB per season,
+two-phase progress in consistent units, `navigator.storage.persist()`, the
+eviction state, and the service worker NOT precaching the data.
 §57.24, plus service-worker caching so a downloaded basin survives with no
 signal. Includes the failure state, the Settings entry from §57.34 rule 5, and
 **§57.34 rule 6 — the data cache must NOT be versioned with the app**, or every
@@ -679,7 +687,8 @@ mode again — the download must still be there.
 ---
 
 **STEP 9 — NEAR HOME.**
-§57.19, including the line-not-points measurement. Plus the standing line on the
+§57.19's line-not-points measurement, computed at index time per §57.35 fault 2 —
+**the slider filters precomputed numbers and never scans geometry.** Plus the standing line on the
 Home dashboard.
 **Done when:** a deliberately fast-moving storm that skips over the circle is
 still caught — verified by a test that fails without the line measurement.
@@ -688,6 +697,9 @@ still caught — verified by a test that fails without the line measurement.
 
 **STEP 10 — THE SEASON CLOCK.**
 §57.23. Redraw in place, ghost trails, reduced motion, keyboard.
+**Measure before tuning** (§57.35 fault 3): discrete steps, split sources, curves
+cached per storm. If the numbers say no, the fallback is fewer steps per second,
+not a smaller feature.
 **Aaron looks at:** 2005 played end to end on a phone. Frame rate, battery, and
 whether it is worth watching.
 **Done when:** it holds frame rate on a real phone for a full season.
@@ -866,3 +878,151 @@ Settings action in rule 5, and the user clearing site data.
 **7. Seasons writes nothing into live stores.** §57.2. It is listed again here
 because the ended-storm store is the one place in this app that already grew a
 record it should not have, and it grew it from a replay.
+
+## 57.35 The pipeline, audited — parse once, precompute, never block
+
+**Audited 2026-08-24 against three lenses: performance, front-end, cost.** The
+first draft of this plan said "download the file, cache it, parse it." That is
+three separate performance faults in one sentence. What follows replaces it.
+
+**THE SHAPE, END TO END**
+
+```
+NOAA  --(runner, yearly, conditional GET)-->  repo, static asset
+repo  --(one request, gzipped, our origin)-->  phone
+phone --(ONE parse, in a Worker, at download time)--> IndexedDB, per season
+IndexedDB --(one season, ~30 KB)--> the globe
+```
+
+Everything below is a rule that shape has to keep.
+
+### FAULT 1 — PARSING ON EVERY OPEN. The worst of them.
+
+The draft cached the raw text in the service worker. That means **6.8 MB is
+re-parsed every single time Seasons opens** — roughly 55,000 lines split, comma-
+split and number-parsed, on the main thread, in front of a globe that is trying
+to hold frame rate. On a mid-range Android that is seconds of freeze, every time.
+
+**Parse exactly once, at download time, in a Web Worker** (a plain ES module
+worker — no build step needed). Write **per-season records into IndexedDB** and
+**discard the raw text**. Opening 2005 then reads about 30 KB of already-parsed
+data and touches no parser at all.
+
+The download screen therefore has **two phases, and must say so**: *Downloading*
+then *Indexing*. Both are real work and the second is not instant.
+
+### FAULT 2 — THE NEAR-HOME SLIDER WOULD SCAN THE WHOLE ARCHIVE.
+
+§57.19 measures against the line between points, not the points. Correct — and
+across 175 years that is roughly 2,000 storms and 80,000 segments. **Doing that
+on a slider drag freezes the app on every pixel.**
+
+**Precompute at index time.** During the same Worker pass as FAULT 1, store per
+storm: **minimum distance to home, and the strength at that point.** The slider
+then filters about 2,000 precomputed numbers, which is instant and stays instant.
+
+- Bounding-box reject before precise distance, or the index pass is slow too.
+- **Home moving invalidates it** — recompute once, in the Worker, on home change.
+- This is also what makes the Home dashboard's standing line free.
+
+### FAULT 3 — THE SEASON CLOCK WOULD RE-FEED MAPLIBRE EVERY FRAME.
+
+Calling `setData` sixty times a second hands the map worker a fresh parse and
+re-index each time. Frame rate will not survive it.
+
+- **The clock advances in discrete steps, not per frame.** Six-hourly data does
+  not need sixty updates a second; something around 8–12 steps a second reads as
+  smooth and costs a fifth as much.
+- **Split the sources.** The accumulated trail is a large source that grows in
+  chunks; the moving heads are a tiny separate source. Never rewrite the big one
+  to move a dot.
+- **Smooth and simplify once per storm, cached.** Running Catmull-Rom over 1,100
+  points per frame is not affordable; the curve does not change.
+- **Step 10 measures this on a real phone before the clock is called done.** If
+  the numbers say no, the fallback is fewer steps, not a smaller feature.
+
+### FAULT 4 — SEASONS WOULD HAVE LOADED FOR PEOPLE WHO NEVER OPEN IT.
+
+Every import in every file ships to every visitor (§12, no build step). The app
+already carries 179 modules and Windows spends 317 ms on libraries alone.
+Statically importing ten Seasons modules taxes every boot, forever, for a
+feature most sessions never touch.
+
+**Seasons is dynamically imported on first entry** — `await import(...)`, native
+to ES modules, no build step, no tooling. The two doors in §57.16 are the only
+things about Seasons on the boot path.
+
+### FAULT 5 — THE PROGRESS BAR WOULD HAVE RUN PAST 100%.
+
+Cloudflare compresses text automatically, so 6.8 MB of HURDAT2 arrives as
+roughly a fifth of that. **`Content-Length` reports COMPRESSED bytes while a
+streaming reader yields DECOMPRESSED bytes.** Divide one by the other and the
+bar sails past 400%.
+
+**Progress is computed in one unit or the other, never mixed.** And the screen
+quotes what is actually transferred, not the uncompressed file size — telling
+someone 6.8 MB when 1.4 MB moves is a small lie in a place that is asking for
+their patience.
+
+### FIX 6 — THE PHONE NEVER TALKS TO NOAA.
+
+The runner fetches from NOAA once a year and **commits the file to the repo**.
+The phone requests it from our own origin as a static asset. That single decision
+removes four problems at once: no CORS question, no NOAA outage taking Seasons
+down, **no Pages Function in the path** — so no Workers quota, no 10 ms CPU
+ceiling, no streaming a multi-megabyte body through a Worker — and static assets
+are free and unlimited.
+
+**Only the current season needs a Function**, and it is edge-cached hard
+(`Cache-Control` around 15 minutes) so the Function runs on a miss rather than
+on a request. Six-hourly data does not need a live query.
+
+### FIX 7 — NEVER HOLD THE WHOLE ARCHIVE IN MEMORY.
+
+175 years parsed into JS objects is tens of megabytes of heap, on a device that
+will kill the tab for less. **One season in memory at a time**, read from
+IndexedDB on entry and dropped on leave. The near-home index (FAULT 2) is the
+one small thing allowed to stay resident, because it is a couple of thousand
+numbers.
+
+### FIX 8 — iOS EVICTS STORAGE, AND THE APP MUST NOT LIE ABOUT IT.
+
+Safari clears site storage for sites not visited in about a week. Installing to
+the home screen helps and `navigator.storage.persist()` helps, and neither is a
+guarantee.
+
+**Request persistence, and handle the data being gone as a first-class state.**
+Not an empty archive, not a spinner — a plain line saying the download was
+cleared by the device, and the button to fetch it again. An archive that quietly
+looks empty is exactly the silence §5 forbids.
+
+### FIX 9 — THE SERVICE WORKER MUST NOT PRECACHE THE DATA.
+
+If it lands in the install-time precache list, **every visitor downloads
+megabytes they never asked for** and the whole point of §57.24's gate is gone.
+The data is fetched on request and cached on demand, in the unversioned cache
+from §57.34 rule 6.
+
+### FIX 10 — CONDITIONAL REQUESTS TO NOAA, WHICH ALSO GIVE US CHANGE DETECTION.
+
+The runner polls b-decks hourly during a season. Send `If-Modified-Since` /
+`If-None-Match` and unchanged files come back `304` with no body.
+
+This is good manners toward a public service we depend on, and **it hands us
+§57.34's "commit only when a file actually changes" rule for free** — a 304 is
+the answer, rather than something we have to diff for.
+
+### FIX 11 — IMMUTABLE CACHING, WITH THE YEAR IN THE FILENAME.
+
+`hurdat2-atlantic-2025.txt` never changes; next February's file has a different
+name. So it is cached permanently and the rename is the cache bust. A `_headers`
+block for the data path, matching how `/vendor/*` is already handled.
+
+### WHAT THE AUDIT CONFIRMED WAS ALREADY RIGHT
+
+- Static assets for settled years, KV only for the season in motion (§57.33).
+- The download gated behind an explicit ask (§57.24).
+- **One parser, shared.** `lib/hurdat.js` is a plain ES module, so the Node
+  runner and the browser Worker import the same file. Two parsers drifting apart
+  is a bug this project has already paid for elsewhere.
+- The retention rules (§57.34).
