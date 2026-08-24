@@ -47,6 +47,13 @@
 <link href="./ui/panels.css" rel="stylesheet">
 <link href="./ui/home.css" rel="stylesheet">
 <link href="./ui/nudge.css" rel="stylesheet">
+<!-- The archive bar and the two doors into it (§57.16). A stylesheet rather
+     than rules bolted onto panels.css: Seasons is its own concern and its own
+     directory, and the bar's job is to sit ON TOP of the live chrome, which is
+     a rule about the live app that reads better written from outside it. It is
+     ~2 KB and the doors are on every boot, so it is a plain link rather than
+     something loaded with the feature. -->
+<link href="./seasons/seasons.css" rel="stylesheet">
 
 <style>
 /* ---------------------------------------------------------------------------

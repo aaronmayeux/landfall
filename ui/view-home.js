@@ -59,6 +59,7 @@ import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
  * shapes for the same ideas, and a set owned by one of its two callers is a
  * set that drifts. See ui/section-icon.js. */
 import { iconSvg } from './section-icon.js';
+import { createSeasonsDoor } from './seasons-door.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -90,6 +91,10 @@ const esc = (t) =>
 export function createHomeDashboardView({
   units, onEditHome, onOpenStorm, onFocusStorm, onFrameHome,
   warmGeometry, rain, surge, now = () => Date.now(),
+  /* The second door into the archive (§57.16). One line here and one in
+     `mount` — the row itself is `ui/seasons-door.js`, shared with the storm
+     list, because this file is the largest in the app and over §12's ceiling. */
+  onOpenSeasons = null,
   /* Open one flood alert's detail panel (§56.6). Forwarded straight to the
    * Flooding controller — this file owns the seam, never the behaviour. */
   onOpenFloodAlert = null,
@@ -207,6 +212,14 @@ export function createHomeDashboardView({
     host.innerHTML = '<div class="drawer-body home-dash"></div>';
     stepper = buildStepper();
     host.prepend(stepper.el);
+    /* ==> PINNED BELOW THE SCROLLER, THE SAME WAY THE STEPPER IS PINNED ABOVE
+     * IT. <== `render()` rewrites `.home-dash`, so anything inside the body is
+     * gone on the next poll; a sibling survives. It is also the honest place
+     * for it — §57.16 calls this the BETTER door because Home already answers
+     * "what does this mean for my house", and the archive answers the same
+     * question in the past tense. Right now it opens the plain archive; step 9
+     * is what makes it open with the near-home filter already applied. */
+    if (onOpenSeasons) host.appendChild(createSeasonsDoor({ from: 'home', onOpen: onOpenSeasons }));
     host.addEventListener('click', onClick);
     render();
   }

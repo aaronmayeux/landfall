@@ -43,6 +43,10 @@ import { createBoot } from './ui/boot.js';
 import { watchKeyboardInset } from './ui/keyboard.js';
 import { createFirstRun } from './ui/first-run.js';
 import { clusterAction } from './ui/drawer.js';
+/* THE FLAG ONLY. `lib/archive-mode.js` imports nothing and is a few dozen
+ * lines; the archive ITSELF is behind a dynamic import below (§57.35 fault 4)
+ * and no part of `seasons/` is on the boot path. */
+import { isArchive } from './lib/archive-mode.js';
 import {
   isInstalled,
   canPromptInstall,
@@ -413,6 +417,10 @@ function boot() {
     imagery: () => imagery,
     warmDecks: warmDecksIfOn,
     warmShips: warmShipsIfOn,
+    /* Both archive doors land here. A function DECLARATION below, so it is
+     * initialised whatever order this file is written in — the same rule
+     * `warmDecksIfOn` follows. */
+    onOpenSeasons: enterSeasons,
   });
   const { drawer, stormsView, detailView, areaDetailView, layersView, homeMarker } = views;
   const { homeDashView } = views;
@@ -579,7 +587,12 @@ function boot() {
        * row off. What this buys is that the list is already in hand the moment
        * somebody flips the switch, so `setVisible` can draw immediately instead
        * of leaving a dead control until the next poll. */
-      if (slot.state !== 'ok' || !styleReady) return;
+      /* ==> AND NOT ONTO THE ARCHIVE GLOBE. <== This is a promise chain, so it
+       * can land seconds after it was started — including after somebody
+       * pressed a door. `liveGlobe.show()` re-enters this function on the way
+       * out, and the answer is still in `loadFloodAlerts`'s cache, so nothing
+       * is lost by declining here. */
+      if (slot.state !== 'ok' || !styleReady || isArchive()) return;
       setFloodAlerts(map, slot.alerts);
     });
   }
@@ -945,6 +958,12 @@ function boot() {
    * and desaturate — never flatten to a fake all-clear (SPEC §5).
    */
   function refreshCage() {
+    /* ==> NOT WHILE THE ARCHIVE IS OPEN. <== The cage is the live storms'
+     * ridge, and a poll landing behind the sepia globe would push it back onto
+     * a world that is supposed to have nothing on it. `liveGlobe.show()`
+     * calls this again on the way out, off `lastFullState`, which is still
+     * being kept current the whole time. */
+    if (isArchive()) return;
     const state = lastFullState;
     if (!state) return;
     const overall = overallStatus(state);
@@ -1054,7 +1073,25 @@ function boot() {
   subscribe((state) => {
     lastStorms = state.storms;
     lastFullState = state;
-    if (markers) markers.update(state.storms);
+
+    /* ==> THE ARCHIVE GATE, AND IT IS ON THE GLOBE PUSHES ONLY. <== Polling
+     * carries on behind the archive — stopping it would mean leaving into a
+     * stale app and waiting a whole cycle for it to catch up — and the panels
+     * and the telemetry below carry on with it, so a source outage that starts
+     * while somebody is reading 2005 is still counted and still on the status
+     * strip when they come back.
+     *
+     * What must NOT happen is the poll painting live storms onto a globe that
+     * is supposed to have nothing on it. `liveGlobe.show()` re-pushes all four
+     * of these from `lastFullState` on the way out.
+     *
+     * ==> AND NOTHING HERE IS "CLEARED" BY PUSHING AN EMPTY ARRAY. <== An
+     * empty push to the watched-area layer is exactly what a genuine all-clear
+     * looks like, so `liveGlobe.hide()` owns the emptying and this only
+     * declines to undo it. */
+    const live = !isArchive();
+
+    if (markers && live) markers.update(state.storms);
 
     /* ==> THE WATCH LIST GOES TO THE GLOBE HERE, AND ONLY WHEN THE ANSWER IS
      *     A REAL ONE. <== (§45.)
@@ -1069,7 +1106,7 @@ function boot() {
      *
      * Guarded on `styleReady` for the same reason every other push here is:
      * the source does not exist until the layer engine has attached. */
-    if (styleReady && state.genesis?.status !== 'unavailable') {
+    if (live && styleReady && state.genesis?.status !== 'unavailable') {
       setGenesisAreas(map, state.genesis?.areas || []);
     }
 
@@ -1085,7 +1122,7 @@ function boot() {
      * style loads. Same `unavailable` rule though — an outage holds the last
      * marks rather than clearing them, because a cleared globe is what
      * `none_matched` looks like. */
-    if (state.genesis?.status !== 'unavailable') {
+    if (live && state.genesis?.status !== 'unavailable') {
       g3d.watchMarks.setAreas(state.genesis?.areas || []);
     }
     /* ==> ENDED STORMS GET NO IMAGERY. <==
@@ -1100,7 +1137,7 @@ function boot() {
      * has said it is finished.
      *
      * It also stops paying for tiles on a storm nobody is tracking. */
-    if (imagery) imagery.update(state.storms.filter((s) => !isEnded(s)));
+    if (imagery && live) imagery.update(state.storms.filter((s) => !isEnded(s)));
 
     /* ==> THE TWO MILESTONES THAT SPLIT THE BLAME. <==
      * `data` is the first moment ANY source left `loading`, whatever it
@@ -1111,7 +1148,11 @@ function boot() {
      * globe -> data is the network and upstream. data -> storms is ours.
      * Without both, a slow load is one number nobody can act on. */
     if (anySourceResolved(state.sources)) perfMark('data');
-    if (markers && state.storms?.length) perfMark('storms');
+    /* `live` here too: the mark means "the first frame with a storm actually on
+     * screen", and a deep link into the archive puts the app past this line
+     * with an empty globe. Marking it there would put a fast, meaningless
+     * number into the boot staircase. */
+    if (markers && live && state.storms?.length) perfMark('storms');
     stormsView.update(state);
     /* The home dashboard re-picks its threat storm on every poll — the one
      * bearing down can change between advisories, and the whole screen is
@@ -1233,6 +1274,117 @@ function boot() {
    * flood relay has nothing to do with the tile host. Duplicate calls cost
    * nothing: `loadFloodAlerts` holds one answer per client TTL. */
   ensureFlood();
+
+  /* =========================================================================
+   * PAST STORMS — the archive globe (§57.16, §57.30 step 4).
+   *
+   * ==> ONLY THREE THINGS ABOUT IT ARE ON THE BOOT PATH: the flag, the two
+   * door rows, and the function below. <== Everything else — the bar, the deep
+   * link, the palette forcing, the exit — is behind `await import(...)` and is
+   * fetched the first time somebody presses a door (§57.35 fault 4). Every
+   * import in every file ships to every visitor, and taxing every boot forever
+   * for a feature most sessions never open is the cost that audit exists to
+   * stop.
+   * ====================================================================== */
+
+  /**
+   * What the archive needs the LIVE app to do, and nothing more.
+   *
+   * ==> INJECTED RATHER THAN IMPORTED, SO `seasons/` NEVER REACHES INTO `map/`
+   * OR `data/`. <== The storm dots, the watched areas, the imagery and the 3D
+   * cage are all owned here; the archive only knows they should be off. That
+   * keeps the import direction one-way (§12) and — the part that matters more
+   * — it means the list of things the archive hides is written down in exactly
+   * one place. A layer added to the globe next month that nobody adds here
+   * shows up ON the archive globe, which is a bug you can SEE, rather than
+   * hiding somewhere in a module that imported the wrong thing.
+   *
+   * `show()` re-pushes from `lastFullState`, which the poll keeps current the
+   * whole time the archive is open — so leaving lands on the CURRENT weather,
+   * not on the weather from the moment of entry.
+   */
+  const liveGlobe = {
+    hide() {
+      markers?.update([]);
+      /* Guarded on `styleReady` for the same reason every other push to this
+       * layer is: the source does not exist until the style has installed. */
+      if (styleReady) setGenesisAreas(map, []);
+      g3d.watchMarks.setAreas([]);
+      imagery?.update([]);
+      /* The cage flattens rather than holding its last shape. It is the one
+       * surface here that is a HEIGHT rather than a mark, and a ridge left
+       * standing over an empty sepia globe reads as a rendering fault. */
+      g3d.heightfield.setStormPoints('ok', []);
+      /* Flood polygons are US ground truth about this week's water. Nothing
+       * about them belongs over 1935. */
+      if (styleReady) setFloodAlerts(map, []);
+    },
+    show() {
+      const state = lastFullState;
+      markers?.update(lastStorms || []);
+      if (state && styleReady && state.genesis?.status !== 'unavailable') {
+        setGenesisAreas(map, state.genesis?.areas || []);
+      }
+      if (state && state.genesis?.status !== 'unavailable') {
+        g3d.watchMarks.setAreas(state.genesis?.areas || []);
+      }
+      if (state) imagery?.update(state.storms.filter((st) => !isEnded(st)));
+      refreshCage();
+      /* The flood layer refills itself from its own cache — `ensureFlood` holds
+       * one answer per TTL, so this is a re-push and not a fetch. */
+      ensureFlood();
+    },
+  };
+
+  /**
+   * Open the archive. Both door rows call this; so does a `?season=` link.
+   *
+   * A FUNCTION DECLARATION, so it is initialised whatever order this file is
+   * written in — `createViews` above is handed it by name, hundreds of lines
+   * earlier. The same rule `warmDecksIfOn` follows.
+   *
+   * ==> A FAILED IMPORT SAYS SO. <== The module is fetched over the network on
+   * first press, so a reader on a bad connection can press a door and get
+   * nothing at all. That is the silence §5 forbids, and it is the exact shape
+   * of failure a dynamic import introduces — so the catch puts a real sentence
+   * on the status strip rather than a console line nobody sees.
+   */
+  function enterSeasons(fromEl) {
+    import('./seasons/index.js')
+      .then(({ openSeasons }) => {
+        openSeasons({
+          liveGlobe,
+          drawer,
+          recenterAndClear,
+          fromUrl: false,
+          returnFocusTo: fromEl || null,
+        });
+      })
+      .catch((e) => {
+        console.error('[landfall] Past storms did not load:', e);
+        setStatus('Past storms did not load. Check your connection and try again.', TONE.ERROR);
+      });
+  }
+
+  /* ==> A `?season=` LINK OPENS STRAIGHT INTO IT. <== §57.16. The check is a
+   * presence test rather than a parse, deliberately: `seasons/deep-link.js`
+   * does the validating and it must not be on the boot path either, so the
+   * cheapest possible question is asked here and the module decides what the
+   * answer means — including whether the year is one the record actually has.
+   *
+   * AFTER `startPolling` below would be wrong: the first poll would paint the
+   * live globe and the archive would then empty it, which is a visible flash
+   * of the wrong world on the one load that asked for the other one. */
+  if (new URLSearchParams(location.search).has('season')) {
+    import('./seasons/index.js')
+      .then(({ openSeasons }) => {
+        openSeasons({ liveGlobe, drawer, recenterAndClear, fromUrl: true });
+      })
+      .catch((e) => {
+        console.error('[landfall] Past storms did not load:', e);
+        setStatus('That link points at Past storms, which did not load.', TONE.ERROR);
+      });
+  }
 
   startPolling();
 

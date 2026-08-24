@@ -108,6 +108,7 @@ import { isEnded, stormSwatch, endedRowStamp, ENDED_SHORT } from '../lib/lifecyc
 import { GENESIS } from '../config/constants.js';
 import { genesisColor, formatPercent, isStaleArea } from '../lib/genesis.js';
 import { headingArrow, headingSpoken } from './heading-arrow.js';
+import { createSeasonsDoor } from './seasons-door.js';
 /* ==> THE SECTION IS PART OF THE `genesis` LAYER, NOT A LIST THAT HAPPENS TO
  * SIT NEAR IT. <== Turning the layer off cleared the patches from the globe and
  * left the rows in the drawer, which is the toggle doing half its job. A
@@ -140,7 +141,9 @@ import { dotted, dotsEl } from './loading-dots.js';
  * @param {() => string|null} opts.units  the resolved unit system, injected
  *        from the settings store by main.js.
  */
-export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, motion, units }) {
+export function createStormsView({
+  pill, onSelect, onSelectArea, onRetry, home, motion, units, onOpenSeasons,
+}) {
   /** Asked fresh on every render — the user can change units while this list
    *  is on screen. */
   const sys = () => units?.() ?? null;
@@ -171,6 +174,18 @@ export function createStormsView({ pill, onSelect, onSelectArea, onRetry, home, 
     `;
     body = host.querySelector('#storm-list');
     watchEl = host.querySelector('#watch-list');
+
+    /* ==> THE DOOR INTO THE ARCHIVE, AND IT IS A SIBLING OF THE SCROLLER
+     * RATHER THAN THE LAST ROW IN IT. <== §57.16 calls it a PERMANENT row.
+     * Inside the scroller it would be the last thing under fifteen storms and
+     * a watch list — hardest to reach in exactly the week somebody wants to
+     * look up the last one like this. Pinned below the scroller it is always
+     * there, and it survives every `body.innerHTML =` rebuild for free.
+     *
+     * Built in `ui/seasons-door.js` because the home dashboard shows the same
+     * row, and this file and that one are the two least able to afford a
+     * second copy of anything. */
+    if (onOpenSeasons) host.appendChild(createSeasonsDoor({ from: 'storms', onOpen: onOpenSeasons }));
   }
 
   /* Escape is NOT handled here. It is a global contract owned by attachEscape()

@@ -158,6 +158,33 @@
 /seasons/index.json
   Cache-Control: no-cache
 
+# ===> THE ARCHIVE'S CODE, LISTED FILE BY FILE, AND THE UGLINESS IS THE POINT.
+# `seasons/` is the one directory in this repo that holds BOTH kinds of thing:
+# `seasons/data/*` is NOAA's history, immutable forever (above), and these four
+# are ordinary application code that must revalidate like every other module.
+#
+# SO IT CANNOT BE `/seasons/*`. That would overlap the immutable rule above,
+# and this file — which nothing validates and which fails silently — is the
+# worst possible place to be relying on a precedence rule between two matching
+# patterns. `/seasons/*.js` would avoid the overlap, but Cloudflare's own
+# _headers documentation does not state that a wildcard may carry a suffix, and
+# a rule that silently matches nothing is exactly the "no header at all" case
+# the block above was written to fix.
+#
+# ==> A NEW FILE UNDER `seasons/` NEEDS A LINE HERE. Nothing catches the
+# omission, and the symptom is a module that silently goes stale. <==
+/seasons/index.js
+  Cache-Control: no-cache
+
+/seasons/bar.js
+  Cache-Control: no-cache
+
+/seasons/deep-link.js
+  Cache-Control: no-cache
+
+/seasons/seasons.css
+  Cache-Control: no-cache
+
 # The service worker must never be served stale — a cached sw.js is how a bad
 # worker outlives the fix for it.
 /sw.js

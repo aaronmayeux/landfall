@@ -322,7 +322,19 @@ export function runRecenter({ count, drawer, pipeline, refreshLayerStatus, idle,
  * @param {Function} deps.warmDecks   warm every eligible storm's model deck
  * @param {Function} deps.warmShips   warm every eligible storm's SHIPS run
  */
-export function createViews({ map, idle, pipeline, storms, fullState, imagery, warmDecks, warmShips }) {
+export function createViews({
+  map, idle, pipeline, storms, fullState, imagery, warmDecks, warmShips,
+  /* ==> THE ONE SEASONS SEAM, AND IT IS A CALLBACK RATHER THAN AN IMPORT. <==
+   * §57.35 fault 4: Seasons is dynamically imported on first entry and nothing
+   * about it may reach the boot path. An `import` here — even an unused one —
+   * would put the whole feature into every visitor's module graph forever. So
+   * this file knows only that a row was pressed and who pressed it; main.js
+   * owns the `await import(...)`.
+   *
+   * It is handed the BUTTON, so the archive can put focus back on it when the
+   * reader leaves (§13). */
+  onOpenSeasons = null,
+}) {
   /* Views read home and layer state through injected façades rather than
    * importing data/ themselves — ui/ must not depend on data/ directly
    * (SPEC §12, one-directional imports). This file owns the wiring. */
@@ -777,6 +789,7 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     home: homeApi,
     motion: motionApi,
     units: unitSystem,
+    onOpenSeasons,
   });
 
   /* `activeLayerLabels` lived here and is GONE (2026-07-25). It fed the storm
@@ -1191,6 +1204,10 @@ export function createViews({ map, idle, pipeline, storms, fullState, imagery, w
     /* Modelled coastal flooding (§56.7) — THE SAME OBJECT the storm drawer
      * takes. See `surgeFacade` above. */
     surge: surgeFacade,
+    /* The second door into the archive (§57.16). Same callback the storm list
+     * gets — one entry path, so the two doors cannot start behaving
+     * differently. */
+    onOpenSeasons,
   });
 
   /* ==> AFTER `homeDashView` EXISTS, AND THAT IS NOT A STYLE POINT. <== This

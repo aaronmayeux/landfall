@@ -39,7 +39,12 @@ import { fileURLToPath } from 'node:url';
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 
-const SHEETS = ['ui/panels.css', 'ui/home.css', 'ui/nudge.css'];
+/* ==> A NEW STYLESHEET HAS TO BE ADDED HERE BY HAND, AND NOTHING CATCHES THE
+ * OMISSION. <== The list is explicit rather than a directory walk so that
+ * bringing a sheet under the gate is a deliberate, visible act — but the cost
+ * is that a sheet nobody adds is a sheet this tool reports clean without
+ * having read. `seasons/seasons.css` (§57.16) is the first one outside `ui/`. */
+const SHEETS = ['ui/panels.css', 'ui/home.css', 'ui/nudge.css', 'seasons/seasons.css'];
 
 /**
  * The few places a raw size is the RIGHT answer. Each one is here because the
