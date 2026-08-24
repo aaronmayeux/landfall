@@ -174,6 +174,23 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**==> SEASONS IS FULLY SPEC'D AND NOTHING IS BUILT. <==** `SPEC-SEASONS-BUILD.md`
+§57 — the historical globe, planned end to end over one session with Aaron.
+Fifteen steps in **§57.30, sized for one session each.** Read §57.1 (the settled
+decisions) and §57.30 before touching anything; do not reopen a numbered
+decision without new evidence.
+
+**Two steps can start today and neither depends on the other:**
+
+- **STEP 1 — THE PALETTE.** The shortest one, and it is what Aaron is waiting on.
+  Sepia is chosen, but §57.20 records a MEASURED collision: the sepia coastline
+  sits **one degree of hue** from the Cat 2 dot. Build `A2 · Sepia (faded)` in
+  `mockups/seasons-themes.html` alongside A — low chroma on the globe, warmth
+  kept in the chrome — and Aaron picks on glass. **That mockup is a mockup, not
+  app code.** Note its own lesson: `_headers` blocks inline `<script>`, so a
+  mockup's script goes in its own file or the page renders unstyled.
+- **STEP 0 — MEASURE.** Below. Gates every step from 2 onward.
+
 **SEASONS — MEASURE NHC's OWN ARCHIVE BEFORE BUILDING ANY OF IT.** One Actions
 job, no app change, and it turns three assumptions into facts. Planned but not
 started; the spec (`SPEC-SEASONS-BUILD.md` §57.30 step 0) gates the build on it.
