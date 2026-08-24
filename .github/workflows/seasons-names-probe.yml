@@ -1,0 +1,57 @@
+# seasons-names-probe.yml — measure NHC's names page before parsing it.
+#
+# Triggers on PUSH because a fine-grained PAT can push but cannot dispatch a
+# workflow (measured: HTTP 403), so pushing this branch is the only way a cloud
+# session can start a runner. Same lever seasons-probe and rain-probe use.
+#
+# HOW TO READ THE RESULT (works from a phone)
+#   git fetch origin seasons-names-probe-results
+#   git show origin/seasons-names-probe-results:findings.md
+#
+# DATA, NOT CODE. One orphan commit, force-pushed, never merged into main.
+
+name: seasons-names-probe
+
+on:
+  push:
+    branches: [seasons-names-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-names-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: run the probe
+        run: node tools/seasons-names-probe.mjs /tmp/names
+
+      - name: publish to the seasons-names-probe-results branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd /tmp/names
+          git init -q -b seasons-names-probe-results
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git"
+          git add -A
+          git commit -q -m "seasons-names-probe: NHC aboutnames.shtml as it is right now"
+          git push -q --force origin seasons-names-probe-results
+
+      - name: summary
+        if: always()
+        run: cat /tmp/names/findings.md >> "$GITHUB_STEP_SUMMARY" || echo 'no findings written' >> "$GITHUB_STEP_SUMMARY"
