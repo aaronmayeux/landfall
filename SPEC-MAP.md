@@ -1288,10 +1288,22 @@ map.
 **ONLY THE CONE IS STITCHED TODAY, AND THAT IS SCOPE RATHER THAN A FINDING.**
 Every layer on the MapServer arrives wrapped the same way, so the wind swath,
 the current wind field and a watch/warning chord are all cuttable by the same
-meridian. None of Lala's were — all of them sit well east of it — so there are
-no bytes to build against, and §5's rule about not guessing at payload shapes
-applies to a repair as much as to a parse. The stitch is written to take any
-geometry, so the day one of them arrives cut it is a call site, not a design.
+meridian. None of Lala's were when this was written — all of them sat well east
+of it — so there were no bytes to build against, and §5's rule about not
+guessing at payload shapes applies to a repair as much as to a parse. The stitch
+is written to take any geometry, so the day one of them arrives cut it is a call
+site, not a design.
+
+**THAT DAY CAME, AND IT CAME THROUGH A DIFFERENT DOOR THAN THIS SECTION
+EXPECTED.** 2026-08-24: Lala tracked northwest onto the seam and her forecast
+points ran −179.40 through +179.20. What broke was NOT a cut polygon needing the
+stitch — the wind swath the app draws is BUILT here rather than published, from
+quadrant numbers and centres, and it broke at the flattening step instead: raw
+longitude subtraction swept the corridor 316° around the planet. **§7.12 fault
+3** is the fix and it is the branch discipline above, not the stitch. The
+prediction in this paragraph was right about the seam and wrong about which
+mechanism would meet it, which is worth keeping rather than tidying away: the
+next layer to reach ±180 could go either way, and both repairs now exist.
 
 **AND THE SAME SEAM TOOK THE RIBBON A SECOND WAY, THROUGH A GATE RATHER THAN
 THROUGH ARITHMETIC.** Fixed 2026-08-20. `lib/cone-smooth.js` put ONE test in
@@ -1945,6 +1957,106 @@ smoothness over accuracy) plus §5's run-break rule, which refuses to sweep a
 threshold across a time NHC published no ring for. Moke's lower figure is the
 run-break rule doing its job. Neither is a bug; both are recorded so the numbers
 are not rediscovered as one.
+
+#### Fault 3 — the corridor was swept the long way round the world
+
+Found 2026-08-24, and it is a THIRD cause under a third symptom, not a return of
+either fault above. **Aaron on glass: the 34 kt band ran clean off both edges of
+the screen and made a green ring around the globe.**
+
+`buildFullTrack` flattens the whole timeline onto a plane by subtracting each
+position's longitude from the first one's, at a fixed cosine scale. Every
+position it is handed is wrapped into (−180, 180] — the source publishes them
+that way and `solveCentre` deliberately wraps its own answer back (§7.13). That
+is harmless until the storm reaches the seam, at which point two positions a
+hundred miles apart on the water sit at opposite ends of the number line and the
+subtraction reads them as most of a planet apart.
+
+**Measured off `origin/archive:latest/geometry/` on 2026-08-24.** Lala CP012026
+at 33.4°N 175.3°W tracking 320°: her nine forecast points run **−179.40 through
++179.20**, her past track back to −137.30. The far end of the forecast measured
+316° from the start of the past instead of 43°. The built bands:
+
+| threshold | longitude span, before | after |
+|---|---|---|
+| 34 kt | **359.75°** | 38.03° |
+| 50 kt | 30.71° | 30.71° |
+| 64 kt | 2.32° / 7.63° | unchanged |
+
+The 50 and 64 kt bands never reach the seam, which is why only one band wrapped
+and the fault read on glass as one rogue layer rather than as a broken storm.
+
+**THIS IS THE CASE §7.9 SAID HAD NO BYTES YET.** That section fixed the cone at
+the antimeridian on 2026-08-20 and recorded the scope honestly: every MapServer
+layer arrives wrapped the same way, none of Lala's wind bands were cut, so there
+was nothing real to build against and §5 forbids guessing at a payload shape.
+Lala has since walked west onto the seam. The bytes exist now and the fix is a
+call site, exactly as that section predicted.
+
+**The fix is `lib/cone-sweep.js`'s, arriving at a different door.** The timeline
+is put on ONE continuous branch of longitude before the frame is built —
+`onOneBranch`, chaining shortest steps from the first entry. Order along travel
+is the precondition and it holds by construction; consecutive storm positions
+are hours apart and never approach 180° of separation.
+
+**The output is left UNWRAPPED, running past ±180**, which is `lib/trackline.js`'s
+convention for the track and `lib/cone-sweep.js`'s for the cone, and is what
+makes MapLibre draw one shape across the seam rather than two on opposite rims.
+
+**The same seam had a second, quieter door.** The test that drops a past fix
+coinciding with the current position (§4, so the tier seam carries no
+zero-length segment) subtracted raw longitudes. 179.98 against −179.99 is two
+thousandths of a degree on the water and 359.97 on the number line, so on the
+seam the duplicate survived. It goes through the same shortest-step helper now.
+Measured: with the duplicate kept, the resampled corridor ring differs — so this
+is asserted end-to-end rather than argued.
+
+#### And the same polygon feeds the headcount, which had no symptom at all
+
+`lib/population-count.js` boxes each ring and treats any ring wider than 180° as
+a wrapped one, shifting it into an unwrapped world. Handed the 359°-wide band it
+did exactly that and produced a shape covering most of the planet — so **People
+in the path (§54) was reporting a meaningless figure for Lala, silently**, while
+the map at least showed something obviously wrong.
+
+Fixing only the drawing would have left that lying. The corrected envelope runs
+past ±180, is continuous, and spans only 38° — so the span test does NOT flag
+it, its box is [−181.2, −143.2], and every town near +179 would fall outside and
+never be counted. **An undercount with no symptom is worse than the wrap.**
+Longitudes are folded back into (−180, 180] on the way in, before the box is
+taken; a seam-straddling ring then measures ~358° wide and goes down the shift
+path that was already there. One step at the door rather than a second dateline
+mechanism beside the first. The fold leaves anything already in range untouched,
+including exactly +180 — a modulo would move +180 to −180, and NHC publishes
+vertices at exactly ±180 by the thousand, because that is where it cuts a shape.
+
+#### The prime meridian is not the same problem, and was checked
+
+Asked directly, 2026-08-24. **Longitude 0 is not a branch cut** — −2 to +2 is a
+four-degree step and no wrap arithmetic is involved. All five longitude
+normalizers in the repo (`lib/genesis.js`, `lib/basin.js`, `lib/imagery.js`,
+`map/home-frame.js`, `lib/shape-distance.js`) were run against −2, −0.5, −0.0001,
+0, +0.0001, +0.5, +2 and both ±180 and are the identity on every one.
+`basinFromPosition` returns `atlantic` continuously across 0. Asserted in
+`tools/test-windswath-dateline.mjs` so it stays that way.
+
+One latent fault near 0 is real and recorded rather than fixed: the headcount's
+"wider than 180° means wrapped" rule would tear a shape that genuinely spans
+200° across the prime meridian, turning [−100, +100] into [+100, +260]. No wind
+swath is remotely that wide — a five-day corridor is tens of degrees — and the
+only thing that ever tripped it was the wrapped band above. The new suite's
+general span assertion is what keeps it unreachable.
+
+**THE SPAN ASSERTION IS GENERAL AND DELIBERATELY SO.** A built band wider than
+180° of longitude is a bug for every storm in every basin, forever, so
+`tools/test-windswath-dateline.mjs` checks it as a rule rather than as a number
+this fixture happens to produce. The next basin to reach the seam trips it too.
+
+`samples/lala-cp012026-dateline/` is the 2026-08-24T17:37Z archive run verbatim
+— forecast points, forecast radii, current field. The past tier is deliberately
+absent: a megabyte, and the fault reproduces without it. **Do not normalize
+these coordinates onto one branch.** The point of the fixture is that they are
+not on one, and normalizing them stops it testing anything.
 
 ### 7.13 A wind ring is placed at its own centre
 

@@ -69,6 +69,52 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> LALA'S WIND SWATH WRAPPED THE PLANET. FIXED, NOT YET SEEN ON GLASS. <==**
+Aaron reported it 2026-08-24: the 34 kt band ran off both edges of the screen
+and made a green ring around the globe. **Not a regression and nothing to do
+with the seasons work** — it is the case `SPEC-MAP.md` §7.9 named as unreachable
+for want of bytes, and Lala supplied the bytes by tracking northwest onto ±180.
+Her nine forecast points now run −179.40 through +179.20.
+
+The corridor is flattened onto a plane by raw longitude subtraction from the
+first timeline entry. Across the seam that read the far end of the forecast as
+316° away instead of 43°, so the sweep went the long way round the world. The
+built 34 kt band measured **359.75° of longitude wide**; it is 38.03° now.
+`SPEC-MAP.md` §7.12 fault 3 is the whole account,
+`tools/test-windswath-dateline.mjs` (33 assertions, three mutations verified) is
+the gate, `samples/lala-cp012026-dateline/` is the real archived bytes.
+
+**The half with no symptom went with it.** The same polygon feeds `People in the
+path` (§54), and the headcount's own dateline machinery treated a 359°-wide ring
+as a wrapped one and shifted it into a shape covering most of the planet —
+**Lala's figure has been meaningless, silently, for as long as she has been on
+the seam.** The corrected envelope runs past ±180 by design (one shape across
+the seam, `lib/trackline.js`'s convention), which the headcount could not read
+either, so `lib/population-count.js` folds longitudes back into range at the
+door.
+
+**GLASS, and Lala is the only storm that can show it:**
+
+1. **The 34 kt band stops being a ring.** It should read as one continuous
+   corridor running northwest past the date line and ending near 40°N 177°E —
+   one shape crossing the seam, not two shapes on opposite rims of the map, and
+   nothing running off the far edge. Worth a two-finger rotate to follow it
+   across.
+2. **`People in the path` on Lala.** It should now be a small number or none —
+   she is over open ocean west of Hawaii. Anything in the millions means the
+   fold is not reaching the count.
+3. **Every other storm unchanged.** Iselle, Moke, Narra, Saudel, Atsani are all
+   the no-op control: none of them is near ±180, so any visible change on them
+   is a regression, not the fix.
+
+**The prime meridian was checked at the same time and is clean** — 0° is not a
+branch cut, so no wrap arithmetic runs there at all. All five longitude
+normalizers in the repo are the identity across it, `basinFromPosition` returns
+`atlantic` continuously through 0, and both facts are now asserted. One latent
+fault is recorded rather than fixed: the headcount's "wider than 180° means
+wrapped" rule would tear a shape genuinely spanning 200° across 0. No corridor
+is remotely that wide and the new general span assertion keeps it that way.
+
 **==> THE DECISION: MOKE'S FORECAST GEOMETRY IS A DAY OLD AND NHC IS NOT FIXING
 IT. <==** Measured on the 14:28Z archive, not inferred. Her cone, forecast track
 and forecast points are still **advisory 4, filed 2026-08-21 09:13Z** — nearly
