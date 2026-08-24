@@ -46,6 +46,8 @@ Everything here was decided in the planning session. The reason is with it.
 | 12 | **The Seasons layer list is opt-in, not a filtered copy of the live one** | An opt-out list rots: the next live layer that forgets to exclude itself ships a broken toggle |
 | 13 | **Map modules are shared; only the menu is rebuilt** | Reuse the machinery, rebuild the menu |
 | 14 | **All sixteen suggestions from the planning session are in scope** | They are distributed through §57.10–57.29 rather than listed as a block |
+| 15 | **The shelf is every RETIRED NAME plus the famous unnamed storms** — and it is NOT the Tier 2 list | Aaron's call 2026-08-24. Retirement is the WMO's own definition of "bad enough to remember", so the shelf stops being our taste. A shelf entry points at track data we already hold; Tier 2 costs megabytes. §57.17 |
+| 16 | **The forecast stays in Tier 2 in full, and each Tier 2 storm is its own download** | Aaron's call 2026-08-24. Forecast against reality is the reason the feature exists. Per-storm download means nobody pays for a storm they do not open, so size stopped being a reason to cut anything. §57.17a, §57.24 |
 
 ### 57.2 What this feature must not break
 
@@ -245,7 +247,30 @@ Tier 2 does not scale and should not. It is the director's cut shelf.
 **`samples/ida-al092021/` is the model** — 19 forecast advisories, 29 public
 advisories, per-advisory GIS (forecast track, cone, points, initial and
 forecast wind radii, watch and warning lines), plus final best track, wind
-swath, and the post-season report.
+swath, and the post-season report. **§57.17a measures what that actually costs
+and settles what gets trimmed** — short version: the coordinate precision, and
+nothing else.
+
+**==> BEING ON THE SHELF AND BEING TIER 2 ARE DIFFERENT THINGS. <==** §57.17.
+The shelf is every retired name plus the famous unnamed storms, and it points at
+track data that exists for every storm since 1851. Tier 2 is a handful of storms
+whose whole night was captured. **Andrew '92 is the case that proves the split:
+he is a headline shelf storm and can never be Tier 2**, because the text
+advisory archive stops at 1998 and the GIS archive at 2008.
+
+**What Andrew DOES have is unusually good for Tier 1**, and the detail panel
+should not read as a page full of holes: the full six-hourly best track with
+pressure on every record (guaranteed from 1979), **NOAA's own landfall marks**
+— he clears the 1971–1990 marking gap by two years, so his Florida crossing is
+NOAA's flag rather than our computation, in an app called Landfall — the Cat 4
+to Cat 5 re-analysis a decade after the fact, every derived fact in §57.15, and
+NHC's written report. **What he has none of is a wind field of any kind**, since
+radii start in 2004, so no swath and no footprint: a bright hand-marked line
+with real numbers on it, and no storm-night scrubber, ever.
+
+*Unverified and worth checking when step 2 has a parser:* how densely the §57.5
+record identifiers are populated in 1992. The season clock leans on them, the
+format has carried them since the beginning, and nobody has read Andrew's rows.
 
 **Which storms get Tier 2 is a decision Aaron makes, and it has its own step.**
 See step 11 in §57.30.
@@ -340,8 +365,10 @@ are too. They belong on the globe.
 - In a roster, they collect at the bottom: *"Two unnamed depressions."*
 - In a list, they display as `Storm 4, 1935`.
 - **A small hand-maintained alias list** covers the famous ones — the Labor Day
-  hurricane of 1935, the Galveston hurricane of 1900. Those aliases are also
-  exactly what belongs on the shelf (§57.16).
+  hurricane of 1935, the Galveston hurricane of 1900. **This list is half the
+  shelf** (§57.17): a storm that was never named can never have its name
+  retired, so the retired-names rule cannot reach these and the alias list is
+  what does.
 
 ### 57.15 Derived facts — computed, never fetched
 
@@ -388,17 +415,125 @@ are never in doubt about which globe you are standing on.
 Shareable, and it means a specific state can be opened on a phone in one tap
 instead of re-ticking six boxes.
 
-### 57.17 The shelf
+### 57.17 The shelf — and it is NOT the Tier 2 list
 
-A short curated list — around twelve storms — newest first, year in
-parentheses. Katrina (2005), Andrew (1992), Camille (1969).
+**==> THESE ARE TWO DIFFERENT DECISIONS AND THE PLAN USED TO CONFLATE THEM.
+<==** Aaron, 2026-08-24. The confusion was expensive in one specific way: it
+made "Andrew in the director's cut" look impossible, when in fact **Andrew
+belongs on the shelf and simply cannot have advisories, because they do not
+exist** (§57.9's cliff table).
 
-It is the front door because it is what people actually open the feature for.
-It is **not** the only navigation, because a hand-maintained list can never
-answer "what happened in 1998" and is the kind of thing that stops being
-maintained in March.
+- **THE SHELF is curation.** Which storms are worth putting in front of
+  somebody. It points at TRACK data, which exists for every storm since 1851,
+  so a shelf entry costs a row in a list and nothing else.
+- **TIER 2 is capture.** Which storms get the whole night — every advisory, the
+  cone, the watch and warning lines. It costs megabytes and is bounded by what
+  NOAA published, not by what is interesting.
 
-The shelf overlaps §57.14's alias list. A famous unnamed storm belongs in both.
+**A storm can be on the shelf without being Tier 2. Most will be.**
+
+#### The shelf rule: every retired name, plus the famous unnamed
+
+**Aaron's call, 2026-08-24.** A name is retired when a storm was bad enough that
+the WMO agrees never to use it again. That is as close to an external definition
+of "storms worth remembering" as exists.
+
+Why it is the right rule rather than a hand-picked twelve:
+
+- **It is not our editorial judgment.** The list is the WMO's, arrived at by the
+  people who name the storms, and it is the same list a reader would already
+  have in their head.
+- **It maintains itself in spirit** — one or two names a year, decided each
+  spring, and the answer to "should this storm be on the shelf" is never a
+  taste argument.
+- **A hand-picked twelve is exactly the thing that stops being maintained in
+  March.** §57.17 said so about the old rule and was right about it.
+
+**Two holes the rule does not cover, and both are already accounted for:**
+
+1. **The famous storms that were never named cannot be retired.** Galveston
+   1900, the Labor Day hurricane of 1935. §57.14's alias list covers these, and
+   **the alias list and the retired names together ARE the shelf.** That was
+   already the plan; the retired names just replaced the hand-picked dozen.
+2. **Not every basin retires names, and those that do use different
+   committees.** §57.12's rule again, wearing a different hat: a West Pacific
+   shelf built on retirement alone will look thin, and that is a fact about the
+   world rather than a gap to paper over.
+
+**==> THE LIST IS HAND-MAINTAINED AND THAT IS A COST, NOT A FOOTNOTE. <==** NHC
+publishes retired names as a WEB PAGE, not as a data file — nothing about it is
+machine-readable, and nobody has confirmed otherwise. So this is roughly 120
+rows somebody types once and adds to each spring. Cheap, and it is a file with
+an owner. **Do not build a scraper for it**; a page NOAA restyles once would
+silently empty the shelf.
+
+**The shelf is ordered newest first, with the year in parentheses.** It is the
+front door because it is what people open the feature for, and it is **not** the
+only navigation, because a curated list can never answer "what happened in
+1998".
+
+### 57.17a What a Tier 2 storm actually costs — MEASURED
+
+Off `samples/ida-al092021/`, 2026-08-24. **7.7 MB, 269 files**, and it is
+lopsided in a way that decides every trimming question.
+
+| What | Size | Share |
+|---|---|---|
+| Forecast wind radii | **3.07 MB** | 40% |
+| The cone (`5day_pgn`) | **1.52 MB** | 20% |
+| Best-track geometry | 0.54 MB | 7% |
+| Observed wind radii | 0.62 MB | 8% |
+| Forecast points | 0.17 MB | 2% |
+| Watch and warning lines | 0.08 MB | 1% |
+| Forecast track line | 0.01 MB | ~0 |
+| **Every advisory NHC wrote — 48 documents** | **0.34 MB** | 4% |
+| Post-season report and reference tables | ~0.10 MB | 1% |
+
+**==> THE WORDS ARE ALMOST FREE. THE SHAPES ARE THE ENTIRE COST. <==** Every
+bulletin issued over Ida's life is a third of a megabyte. Two geometry files
+account for 4.6 MB of the 7.7. Any conversation about trimming Tier 2 that
+starts with the text is aimed at 4% of the problem.
+
+**THE FORECAST STAYS, IN FULL. Aaron's call, 2026-08-24**, and it is the
+feature's whole point: watching what NHC predicted against what the storm
+actually did. That is carried by the cone, the forecast track and the forecast
+points — 1.7 MB, and never a candidate for cutting.
+
+**The forecast wind RADII stay too**, though they are a different thing and were
+the only real candidate. Fifteen polygons per advisory — five time steps × three
+thresholds — and on a globe they stack into overlapping blobs rather than a line
+you can compare against reality. They survive because **size stopped being the
+constraint** (below), and because a layer that turns out to be mush is one toggle
+away from off, whereas bytes we never captured are gone.
+
+*If it ever does need a dial:* the 34 kt threshold alone is **1.10 MB** of the
+3.07, and it is the one that answers "was I inside the forecast" — the 50 and 64
+kt shapes sit underneath it. **Decide that on glass**, after seeing four days of
+forecast footprints stacked on one screen, and not before.
+
+#### Two changes that make the whole question go away
+
+**1. TRIM THE COORDINATE PRECISION ON CAPTURE. Free, and it applies to every
+storm forever.** These are raw NOAA exports carrying full float precision.
+Measured over all 216 GeoJSON files: 6.02 MB as captured, **4.94 MB at four
+decimal places** (~11 m), 4.49 MB at three (~110 m). A cone's edge is not
+meaningful to eleven metres. **Four decimals, and nothing on screen changes** —
+Ida lands at roughly 5.4 MB.
+
+**2. ==> EACH TIER 2 STORM IS ITS OWN DOWNLOAD. <==** This is the change that
+matters, and it is why nothing had to be cut. §57.24's gate was written for a
+basin — one button, one bundle. **A Tier 2 storm is fetched when the reader opens
+that storm, and not before.** Nobody pays for Andrew unless they open Andrew, so
+a storm's size stops being a curation question and becomes a per-storm wait.
+
+The remaining cost is the REPOSITORY, and it is affordable: ten storms at ~5.4 MB
+is 54 MB on top of today's 32 MB, and ~2,700 files against Pages' 20,000-file cap
+(§57.33 limit 3). **The file cap is the one to watch as the list grows, not the
+byte total** — Ida alone is 269 files.
+
+**Everything in §57.34's retention rules applies to a per-storm download too.** A
+reader who opens twelve storms has twelve downloads on their device, and that
+store needs the same eviction rule and the same Settings entry as a basin does.
 
 ### 57.18 The season board
 
@@ -540,6 +675,24 @@ a day a second a full season runs roughly three minutes.
 Nothing downloads until asked. Per basin, on demand — tap Atlantic, get the
 Atlantic file; tap West Pacific later, get that then. Nobody pays for oceans
 they never open.
+
+**==> AND A TIER 2 STORM IS ITS OWN DOWNLOAD, SEPARATE FROM ITS BASIN. <==**
+Aaron's call, 2026-08-24 (§57.17a). A basin is tens of KB a season; one Tier 2
+storm is ~5.4 MB on its own — a hundred times the weight of the season it sits
+in. Bundling it with the basin would make downloading the Atlantic mean
+downloading every director's cut in it.
+
+So a storm's size stops being a curation question and becomes a per-storm wait,
+which is **the reason nothing in §57.17a had to be trimmed except the coordinate
+precision.** The forecast — cone, track, points, and the wind radii with them —
+survives in full because nobody pays for a storm they do not open.
+
+It needs the same three states everything else here does: a button that says
+what it will cost, real progress while it runs, and a failure that says what
+failed. **And the same retention rule** — §57.34 applies to a shelf of downloaded
+storms exactly as it does to a basin, including the Settings entry. A reader who
+opens a dozen storms has a dozen downloads, and a store without an expiry rule is
+a store that will not get one.
 
 **The phone takes the whole file and parses it locally**, rather than the server
 slicing seasons on request. It is a one-time cost, it makes Seasons the only
@@ -817,19 +970,37 @@ whether it is worth watching.
 ---
 
 **STEP 11 — CHOOSE THE TIER 2 STORMS. A decision session, not a build.**
-Aaron picks which storms get the full advisory treatment. Cannot happen before
-step 0, because step 0 establishes which storms are even *eligible* — a storm
-whose advisory archive does not exist cannot be promised.
-Bring to this session: the eligibility findings, the byte cost per storm (Ida is
-7.7 MB), and a proposed shortlist with reasons. Andrew '92, Katrina '05 and
-Sandy '12 are the obvious probes. **The shelf in §57.17 and the alias list in
-§57.14 are decided here too** — they overlap heavily.
-**Done when:** a named list exists in this file with a reason beside each entry.
+Aaron picks which storms get the full advisory treatment.
+
+**==> THE SHELF IS NO LONGER PART OF THIS DECISION. <==** It was, and §57.17
+split it out on 2026-08-24: the shelf is every retired name plus §57.14's alias
+list, which is a rule rather than a session. **What is left here is only the
+handful of storms whose whole night gets captured.**
+
+**Step 0 has run and it narrowed the field before this session opens** (§57.9):
+
+- **Andrew '92 is OUT and cannot be argued back in.** Text advisories stop at
+  1998. He is a headline SHELF storm with an unusually good Tier 1 page.
+- **Katrina '05 is in the middle band** — every word NHC wrote, and no cone,
+  because GIS geometry stops at 2008. Buildable and genuinely interesting, but
+  it is **not the same feature** as a Sandy, and offering it as one would be
+  promising a drawing we would have to invent.
+- **2008 onward is the only era that gets the full thing.** Sandy '12 qualifies.
+
+Bring to this session: §57.9's cliff table, §57.17a's real per-storm cost (Ida
+is 7.7 MB as captured, ~5.4 MB after the precision trim), and a shortlist with
+a reason beside each. **Watch the FILE count as much as the byte total** — Ida
+alone is 269 files against Pages' 20,000 cap.
+**Done when:** a named list exists in this file with a reason beside each entry,
+and each entry says which of the three grades it is.
 
 ---
 
 **STEP 12 — TIER 2 CAPTURE AND THE ADVISORY SCRUBBER.**
-Capture the chosen storms the way Ida was captured. Wire the per-advisory
+Capture the chosen storms the way Ida was captured, with §57.17a's two changes
+built in from the first storm rather than retrofitted: **coordinates trimmed to
+four decimal places on capture**, and **each storm downloaded on its own** when
+the reader opens it rather than bundled with a basin. Wire the per-advisory
 scrubber, cone, and watch/warning lines — reusing the existing replay machinery
 where it fits.
 **Done when:** one chosen storm scrubs advisory by advisory on a phone.
@@ -856,7 +1027,11 @@ picker has proven to be the weak link.
    answer is a real storm on a real coast, not a second paint chip. Sepia
    shipped as chosen, with its land darkened to clear the contrast gate.
    `SPEC-MAP.md` §9.
-2. **Which storms are Tier 2.** Step 11. Aaron decides.
+2. **Which storms are Tier 2.** Step 11. Aaron decides, and step 0 already
+   narrowed the field: Andrew '92 is ineligible, Katrina '05 is words-without-
+   geometry, 2008 onward is the only full-treatment era (§57.9).
+   **The SHELF is no longer part of this** — §57.17 settled it as a rule: every
+   retired name, plus §57.14's alias list for the famous unnamed.
 3. ~~**IBTrACS is unverified.**~~ **CLOSED 2026-08-24.** Measured: CSV is 316 MB
    and splitting by basin does not clear the cap; NetCDF fits but needs a binary
    reader. Neither raw form ships. The runner precomputes. §57.33.

@@ -192,6 +192,22 @@ probe is `tools/seasons-probe.mjs`; raw bytes are on `seasons-probe-results`.
 the probe** — §57.30 step 0 records how, and it is the reason to distrust a
 green probe nobody has audited.
 
+**THE SHELF AND TIER 2 ARE NOW TWO DIFFERENT DECISIONS (§57.17, §57.17a).**
+Aaron, 2026-08-24. The shelf is **every retired name plus §57.14's alias list**
+— a rule, not a curation session — and it points at track data we already hold
+for every storm since 1851. Tier 2 is the handful whose whole night is captured.
+**Andrew '92 is the case that proves the split:** a headline shelf storm that
+can never be Tier 2, because text advisories stop at 1998. The retired-names
+list is HAND-MAINTAINED, ~120 rows, +1-2 a year — NHC publishes it as a web
+page and **a scraper is explicitly rejected**, because a restyle would silently
+empty the shelf.
+
+**NOTHING IN TIER 2 GETS TRIMMED EXCEPT COORDINATE PRECISION.** Measured off
+Ida: 7.7 MB, and the words are 4% of it — every advisory NHC wrote is 0.34 MB
+against 6.8 MB of shapes. The forecast stays in full because it is the reason
+the feature exists. What made that affordable is **each Tier 2 storm being its
+own download** rather than riding along with its basin (§57.24).
+
 **TWO FINDINGS REACH FORWARD AND ARE WORTH KNOWING NOW.** ATCF puts **one line
 per wind threshold**, so up to three lines share a timestamp and a parser keyed
 on time must MERGE rather than overwrite — silently keeping one threshold and
