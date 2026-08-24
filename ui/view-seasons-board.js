@@ -15,11 +15,13 @@
  * season got. Nobody should ever "tidy" this by sorting it by strength.
  *
  * ==> GHOSTS ARE THE CURRENT YEAR ONLY, AND THEIR ABSENCE IS SILENT. <==
- * Aaron's call, 2026-08-24. `lib/season-names.js` holds this year's two
- * rosters and nothing else, so a settled year has no ghost rows and says
- * nothing about names remaining. That is the honest shape: for a finished
- * season the names it used already answer "how far did it get", and 2005
- * running into the Greek alphabet says it louder than blank rows would.
+ * Aaron's call, 2026-08-24, reaffirmed when the rosters stopped being typed by
+ * hand. `lib/season-names-data.js` now carries six years ahead and accumulates
+ * past ones, so the rule is enforced by the year this view hands to
+ * `rosterFor` — not by the data being thin. A settled year has no ghost rows
+ * and says nothing about names remaining. That is the honest shape: for a
+ * finished season the names it used already answer "how far did it get", and
+ * 2005 running past its list says it louder than blank rows would.
  *
  * ==> A SEASON WITH NO STORMS AND A SEASON WE COULD NOT REACH GET DIFFERENT
  * SENTENCES. <== §5, and it is the whole reason this view has three states
@@ -195,7 +197,17 @@ export function createSeasonsBoardView({ seasons, onSelection, onWhere }) {
     entries = res.storms.map((storm) => ({ storm, facts: stormFacts(storm) }))
       .filter((e) => e.facts);
     score = seasonFacts(res.storms, { year, basin });
-    roster = rosterFor(basin, year, entries.map((e) => e.storm.name).filter(Boolean));
+    /* ==> THE FOURTH ARGUMENT IS THE GHOSTS-ARE-THIS-SEASON-ONLY RULE, AND IT
+     * IS READ HERE RATHER THAN INSIDE THE MODULE. <== `lib/season-names.js` is
+     * clock-free by design so the suite can pin any year it likes; the clock
+     * belongs at the edge, which is here. UTC because every date in this app is
+     * UTC, and calendar year is the right question: NHC names an off-season
+     * storm from the list for the calendar year it forms in. */
+    roster = rosterFor(
+      basin, year,
+      entries.map((e) => e.storm.name).filter(Boolean),
+      new Date().getUTCFullYear()
+    );
     seasonState = 'ok';
     render();
   }

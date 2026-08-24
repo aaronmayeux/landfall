@@ -828,9 +828,17 @@ and does not stop being true when a season loads.
 
 **Aaron's call, 2026-08-24**, overriding §57.18 for settled seasons.
 
-`lib/season-names.js` holds **two lists** — this year's Atlantic and East
-Pacific rosters — and nothing else. A settled year therefore has no ghost rows
-and says nothing about names remaining.
+`lib/season-names.js` **shows** one year's lists — the running season's Atlantic
+and East Pacific rosters — and nothing else. A settled year therefore has no
+ghost rows and says nothing about names remaining.
+
+**==> THE MODULE IS NOW THE GATE, BECAUSE THE DATA UNDERNEATH IT IS NOT. <==**
+`lib/season-names-data.js` is GENERATED and carries six years ahead, so the
+one-year rule can no longer be enforced by simply not holding the other years.
+`rosterFor` takes the current year as a fourth argument and is **fail-closed**:
+a caller that does not say what year it is gets no roster at all. Forgetting it
+costs a reader some ghost rows; defaulting it would eventually print last
+season's names beside this season's storms.
 
 **WHY THAT IS NOT A LOSS.** For a finished season the names it used already
 answer "how far did it get", and the board says the loud half in words: *"Every
@@ -842,9 +850,30 @@ contains.
 **==> AN UNKNOWN YEAR SHOWS NO GHOSTS RATHER THAN THE WRONG ONES. <==** The
 lists rotate every six years with retired names swapped out, so 2026's list is
 not 2027's. `namesFor` is keyed on the year explicitly and answers null for
-anything it was not told about. **When the season turns over and nobody has
-added the new list, the ghost rows disappear.** That is §5's honest silence;
-printing last year's names against this year's storms would be a confident lie.
+anything it was not told about — 1935 has no list here and never will. Printing
+one year's names against another year's storms would be a confident lie, and
+that is the failure this shape makes impossible.
+
+**==> AND THE YEAR NO LONGER TURNS OVER BY HAND. <==** Aaron's call,
+2026-08-24, replacing the earlier "hand-maintained is a deliberate cost" note.
+`tools/seasons-names.mjs` reads NHC's own names page monthly and writes
+`lib/season-names-data.js`. **That page publishes a column per year, six years
+ahead, with the year in the header** — so there is no rotation to compute, no
+anchor year to get wrong, no retirement table to maintain, and a name the WMO
+retires in spring arrives on its own. `samples/nhc-names/` holds the real bytes
+the parser was written against.
+
+**THE FAILURE DIRECTION IS THE SAFE ONE, WHICH IS WHY THE OLD SCRAPER OBJECTION
+NO LONGER HOLDS.** The lists are HELD in the repo, not fetched by a browser. If
+NOAA restyles the page the parse fails, the job goes red, and the last good file
+is untouched — and because one good read covers six seasons, the app stays
+correct for years while that is noticed. The job refuses to write on any of:
+a year header that is not four digits and consecutive, an Atlantic column that
+is not exactly 21 names on A–W skipping Q/U/X/Y/Z, an East Pacific column that
+is not exactly 24 on A–Z skipping Q/U, a duplicate or non-alphabetic name, a
+result holding fewer years than the file it would replace, or — the one that
+catches a shifted column — **a head-of-list disagreement with the names this
+season has actually spent**, read from the `seasons-live` b-decks.
 
 **A USED NAME THAT IS NOT ON THE ROSTER IS SAID OUT LOUD.** It means either the
 season ran past its list onto the WMO supplemental one — real, and what
@@ -1397,10 +1426,14 @@ a ghost.
 
 **AARON'S CALL, 2026-08-24: GHOSTS ARE THE CURRENT YEAR ONLY.** §57.18 wanted
 them on every season. That needs a per-year name list for 175 years, which no
-file NOAA publishes contains and which nobody is going to hand-maintain. The
-current year needs TWO lists, replaced each spring. §57.18a records what a
-settled year says instead, and it says it from the storms rather than from a
-list nobody typed.
+file NOAA publishes contains. §57.18a records what a settled year says instead,
+and it says it from the storms rather than from a list nobody typed.
+
+**AND THE CURRENT YEAR'S TWO LISTS ARE NOT TYPED EITHER — SAME DAY, SECOND
+CALL.** `tools/seasons-names.mjs` generates them monthly from NHC's names page,
+which carries six years ahead with the year in each header. Nothing about this
+feature is waiting on somebody remembering it each spring. §57.18a is the
+account, including every gate the job refuses on.
 
 **Aaron looks at (5a):** 2005 against 1935 and 2025. The shape of a season
 should be visible without reading.
