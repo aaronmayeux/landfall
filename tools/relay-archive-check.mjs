@@ -136,6 +136,15 @@ const EXCUSED = new Map([
       'is the one thing ci.yml says never to let happen.',
   ],
   [
+    '/seasons/storm',
+    'Needs a storm id, and unlike the per-storm NHC routes there is no fixed ' +
+      'one to pick: the season in progress changes which ids exist, and an id ' +
+      'hard-coded here would archive a 404 for most of the year. Derivable in ' +
+      'phase two from relay-seasons-live.json, which IS archived and carries ' +
+      'the id list, exactly as the GDACS geometry URLs are derived from the ' +
+      'event list. Not done.',
+  ],
+  [
     '/geocode',
     'Needs a search string. Nothing about a geocoder answer decays in a way ' +
       'an hourly snapshot would capture.',

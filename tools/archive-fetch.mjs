@@ -498,6 +498,23 @@ const SOURCES = [
       'the 72-hour history.',
   },
   {
+    name: 'relay-seasons-live.json',
+    url: 'https://landfall.getgravitate.app/api/seasons/live',
+    note:
+      '==> THE SEASON IN PROGRESS, AS THE APP WILL BE HANDED IT. <== ' +
+      'SPEC-DATA.md \u00a758, SPEC-SEASONS-BUILD.md \u00a757.30 step 3b. It shipped ' +
+      'neither archived nor excused and left tools/relay-archive-check.mjs ' +
+      'red on main, which is the same lapse \u00a748.21 made with /nws/alert and ' +
+      'the reason that route\u2019s excuse says what it says. ' +
+      '==> AND THE `seasons-live` BRANCH DOES NOT SATISFY THIS. <== That ' +
+      'branch holds NHC\u2019s b-decks verbatim \u2014 what NOAA published. This is ' +
+      'what a phone was handed after \u00a757.13\u2019s filter ran, which is the only ' +
+      'thing a bug report is ever about, and it is where the invest-dropping ' +
+      'rule can be watched actually working. Small: fourteen storm ids and ' +
+      'four skip reasons, a couple of KB. Also the one place the ' +
+      'X-Landfall-Cache header on this route can be seen at all.',
+  },
+  {
     name: 'relay-nws-flood.json',
     url: 'https://landfall.getgravitate.app/api/nws/flood',
     note:
