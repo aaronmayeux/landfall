@@ -422,8 +422,31 @@ Mirror the directory blindly and we ship test storms, plus an invest numbered
 Pre-1950 storms are all `UNNAMED`, and non-developing depressions before 2003
 are too. They belong on the globe.
 
-- In a roster, they collect at the bottom: *"Two unnamed depressions."*
+- In a roster, they display as `Storm 4` in the season's own chronological
+  order. **They do NOT collect at the bottom** — the order is the season, and
+  moving them would break the one thing the roster is for (§57.18).
 - In a list, they display as `Storm 4, 1935`.
+
+**==> AND A SPELLED-OUT NUMBER IS AN UNNAMED STORM, WHICH THIS SECTION USED TO
+MISS. <== MEASURED 2026-08-24:** 71 storms across the two HURDAT2 basins carry
+`TEN`, `NINETEEN` or `TWENTY-TWO` in the name column, in 22 distinct forms
+including **both** `TWENTY-ONE` and `TWENTYONE`. They are storms that never
+earned a name, wearing their number in words — exactly what `UNNAMED` means.
+
+**2005 is the season that proves it matters:** NOAA wrote its tenth system as
+`TEN` and its twenty-first as `UNNAMED`, so before this rule the roster showed
+`TEN` beside `Storm 21` for two storms of identical standing, and one of them
+looked like a name a person had chosen. `lib/hurdat.js` folds both into
+`name: null` and the display form above covers all of them.
+
+**IT ALSO PROTECTS THE GHOST ROSTER.** A storm called `TEN` counted as a used
+name would be checked against a list it can never appear on and reported as
+off-list — real noise in the one signal built to detect a real fault (§57.18a).
+
+**ONE DISAGREEMENT IS NOAA'S OWN AND WE FOLLOW THE ID.** `AL232005` carries the
+name `TWENTY-TWO` — post-season reanalysis inserted a storm and renumbered
+without rewriting the label. The app shows `Storm 23`, because the identifier
+is the authority and the name column here is not a name at all.
 - **A small hand-maintained alias list** covers the famous ones — the Labor Day
   hurricane of 1935, the Galveston hurricane of 1900. **This list is half the
   shelf** (§57.17): a storm that was never named can never have its name
@@ -527,6 +550,11 @@ FROM AN ODD DIRECTION. <==** An empty push to the watched-area layer is exactly
 what a genuine all-clear looks like. `hide()` owns the emptying deliberately
 and once; the gates only decline to undo it.
 
+**THE DRAWER IS NAVIGATED, NOT CLOSED.** Step 4 closed it because there was
+nothing to put in it; the board is a view inside it now, so entering runs
+`drawer.go('seasons-board')` and focus lands on the year picker rather than
+being placed on the Leave button by hand (§57.18a).
+
 **THREE CLUSTER BUTTONS ARE HIDDEN WHILE THE ARCHIVE IS OPEN.** Storms, Home
 and Layers each open a live-app drawer over an empty sepia globe: a list naming
 storms that are not drawn, a dashboard describing a house against a storm that
@@ -537,11 +565,17 @@ answer for being used from in here: `setThemeMode` keeps the new preference as
 the RESTORE target instead of applying it, so a theme picked inside the archive
 is the theme you get back on the way out.
 
-**THE BAR CARRIES AN HONEST LINE ABOUT AN EMPTY GLOBE.** *"The year picker is
-not built yet — there is nothing to draw."* An unexplained empty globe reads as
-a broken app, which is §57.1 rule 11 and §5 saying the same thing. **Step 5
-deletes that sentence rather than editing it** — a leftover apology beside a
-working feature is worse than the silence it replaced.
+**THE BAR NAMES THE SEASON, AND THAT SENTENCE IS A BUTTON.** *"Past storms ·
+2005 · Atlantic"*, and pressing it reopens the board. Step 4's *"The year
+picker is not built yet"* is **deleted**, as this section required. The bar is
+also the only place the way back to the board can live: the storms, home and
+layers buttons are all hidden while the archive is open, so a closed board over
+an archive globe would otherwise have no door. §57.18a.
+
+**A DEEP LINK'S REASON OUTRANKS THE SEASON.** `?season=1066` now falls through
+to a year that exists, so without words the reader is looking at a working
+archive that is quietly not the year they were sent — worse than the old empty
+globe, not better. The bar keeps saying the link was wrong.
 
 **A DEEP LINK IS VALIDATED, NOT PARSED.** `seasons/deep-link.js` answers with a
 value the rest of Seasons can use unchecked, or with null and a reason.
@@ -717,6 +751,125 @@ maintain.
 storms. The year travels with the name everywhere, including in shared links.
 
 Above the roster, the season scorecard from §57.15.
+
+### 57.18a The season board, as built
+
+Step 5a, 2026-08-24. This section describes what IS; §57.18 above is the design
+it was built to.
+
+**==> IT IS A VIEW INSIDE THE ONE DRAWER, NOT A SECOND PANEL. <==** §16. The
+archive gets `ui/view-seasons-board.js` registered under the id
+`seasons-board`, and entering runs `drawer.go('seasons-board')` where step 4
+ran `drawer.close()`. A sheet of its own would have meant a second focus trap,
+a second scroll container, a second set of sheet-or-rail breakpoints and a
+second Escape rule — four chances to drift out of step with every other screen
+in this app. **It is registered from `seasons/index.js` on first entry**, once
+per page load, so none of it is on the boot path (§57.35 fault 4).
+
+**THE ONE THING THAT IS ON THE BOOT PATH IS THE TRACK LAYER**, and it has to
+be. `map/layers/season-tracks.js` adds its source in the `style.load` window
+with everything else, because MapLibre inserts a layer relative to one already
+in the style — added on first entry instead, it could not get beneath the storm
+dots that step 6 draws on top of it. It is one small module holding no state
+and drawing nothing until the archive hands it storms.
+
+**IT DOES NOT GO THROUGH `map/layers/registry.js`, AND THAT IS A DECISION.**
+The layer engine is built around a live feed: a bundle per warmed storm, a
+selected storm excluded from the ambient set, a `forget` hook for storms that
+leave. A 1935 season has none of those — it is a fixed set of finished tracks
+that arrive at once and never change. **Step 6 is where that question is
+actually answered**, because focus-and-dim is the first archive behaviour that
+genuinely resembles selection.
+
+**THE ROSTER IS CHRONOLOGICAL AND THE ORDER IS THE POINT** (§57.18). Each row
+is a checkbox whose **dot is both the tick and the category**: an outline in
+the storm's Saffir-Simpson colour when off, filled when on. So peak strength
+reads down the list whether or not a storm is on the globe, in one column
+rather than two. The whole row is the label, so the target is the row.
+
+**==> A FILTER NARROWS THE LIST AND NEVER UN-CHOOSES A STORM. <==** Switching
+to Majors with a tropical storm ticked leaves it ticked and leaves it drawn.
+The roster is what the reader believes and the globe is what they see, and the
+two disagreeing is the worst outcome on this screen. `tools/test-seasons-board.mjs`
+asserts it and the mutation was run.
+
+**CHANGING YEAR EMPTIES THE GLOBE BEFORE THE NEW SEASON ARRIVES.** Otherwise
+the bar names a year the globe is not showing for as long as the fetch takes.
+
+**THE THREE STATES ARE THREE SENTENCES, AND THE THIRD IS THE ONE §5 IS ABOUT.**
+A season the record says was quiet (the Atlantic recorded two storms in 1914),
+a season we could not reach, and a year the archive does not hold are three
+different facts. The first blames the record, the second offers Retry, and the
+third does **not** — retrying a year that is not in the index can never work,
+and a button that cannot succeed is worse than none. A list emptied by the
+reader's own filter blames the filter.
+
+**A YEAR IS RESOLVED THROUGH `index.json`, NEVER BY BUILDING A FILENAME.** NOAA
+revises seasons it has already published and a revision lands as a NEW filename
+the index starts pointing at (§57.35 FIX 11). A built name would work for
+eleven months and then 404 the whole archive.
+
+**THE PICKER IS A NATIVE `<select>` PLUS TWO STEP BUTTONS.** One control that
+already works by thumb, mouse and keyboard, with the OS's own scroll-and-type
+behaviour free, and on a phone it opens the platform picker — which beats
+anything 175 rows in a 60vh sheet could do. §57.29's Wall of Years stays last,
+and only if this proves to be the weak link.
+
+**THE BAR'S SENTENCE IS NOW A BUTTON.** `Past storms · 2005 · Atlantic`, and
+pressing it reopens the board. Closing the board over an archive globe would
+otherwise leave no way back to the year picker, because the storms, home and
+layers buttons are all hidden in here (§57.16a). Two controls in the bar: where
+you are, and out. **The "year picker is not built yet" sentence is deleted**,
+as §57.16a required — but a deep link naming a year outside the record still
+overrides the season and keeps saying so, because that fact is about the LINK
+and does not stop being true when a season loads.
+
+#### Ghosts are the current year only, and their absence is silent
+
+**Aaron's call, 2026-08-24**, overriding §57.18 for settled seasons.
+
+`lib/season-names.js` holds **two lists** — this year's Atlantic and East
+Pacific rosters — and nothing else. A settled year therefore has no ghost rows
+and says nothing about names remaining.
+
+**WHY THAT IS NOT A LOSS.** For a finished season the names it used already
+answer "how far did it get", and the board says the loud half in words: *"Every
+name on the list was used."* 2005 running into the Greek alphabet is that
+sentence, and it is derived from the storms rather than from a list nobody
+typed. The alternative was a per-year roster for 175 years, which no NOAA file
+contains.
+
+**==> AN UNKNOWN YEAR SHOWS NO GHOSTS RATHER THAN THE WRONG ONES. <==** The
+lists rotate every six years with retired names swapped out, so 2026's list is
+not 2027's. `namesFor` is keyed on the year explicitly and answers null for
+anything it was not told about. **When the season turns over and nobody has
+added the new list, the ghost rows disappear.** That is §5's honest silence;
+printing last year's names against this year's storms would be a confident lie.
+
+**A USED NAME THAT IS NOT ON THE ROSTER IS SAID OUT LOUD.** It means either the
+season ran past its list onto the WMO supplemental one — real, and what
+replaced the Greek alphabet in 2021 — or the list in this repo is wrong. Hiding
+the second would make a broken roster look perfect.
+
+**GHOSTS ARE COMPUTED BY MEMBERSHIP, NOT BY COUNTING FORWARD** from the last
+name used. NHC occasionally skips a name, and an index would quietly delete
+that ghost. Membership cannot make that mistake and costs nothing at 24 names.
+
+**==> CENTRAL PACIFIC GETS NO ROSTER, AND THAT IS MEASURED. <==** §57.12 said
+CPHC runs continuous lists rather than annual ones; the archive's own files
+confirm it — **HONE (2024), IONA and KELI (2025), LALA and MOKE (2026)**, one
+alphabet across three seasons. "The 2026 Central Pacific names" is a question
+with no answer, so a roster there would invent a structure the basin lacks.
+
+**THE LISTS ARE HAND-MAINTAINED AND VERIFIED AGAINST OUR OWN BYTES.** They were
+transcribed from NHC's pronunciation PDFs, then checked against the real ATCF
+b-decks on `seasons-live`: Atlantic positions 1–3 are ARTHUR, BERTHA, CRISTOBAL
+and East Pacific 1–9 are AMANDA through ISELLE, in order.
+`tools/test-season-names.mjs` re-runs that check position by position against
+`samples/seasons-live/`, so a mistyped name in the used range fails the suite.
+**It cannot check the unused tail** — nothing can, until a storm spends it, and
+that is what makes it a ghost. **Do not build a scraper**, same reasoning as
+§57.17's retired names.
 
 ### 57.19 Filters, and the near-home slider
 
@@ -1225,13 +1378,34 @@ by the contrast gate.
 
 ---
 
-**STEP 5 — THE SEASON BOARD.**
-Year picker, roster with ghosted names, scorecard, the All / Majors / Landfalls
-filters. Static tracks on the globe for whatever is ticked. One basin.
-**Aaron looks at:** 2005 (no ghosts — they ran out of names) against 2026 (mostly
-ghosts). The shape of a season should be visible without reading.
-**Done when:** ticking storms puts them on the globe and untucking removes them,
-by tap and by keyboard.
+**STEP 5 — THE SEASON BOARD. ==> BUILT, AND SPLIT IN TWO. <==**
+`data/seasons.js`, `ui/view-seasons-board.js`, `map/layers/season-tracks.js`,
+`lib/season-names.js`, and the board's block in `seasons/seasons.css`.
+
+**WHAT IT IS lives in §57.18a below.** Read that, not this.
+
+**==> IT IS TWO PUSHES BECAUSE THE TWO HALVES READ DIFFERENT SOURCES. <==** A
+settled year is a static file in this repo; the year currently running is two
+KV-backed routes and a different parser (§58). Doing both in one pass would be
+the unbisectable commit `CLAUDE.md` forbids, and only the second half can show
+a ghost.
+
+- **5a — SETTLED SEASONS.** 1851 to the last reviewed year, both NHC basins.
+  Picker, scorecard, filters, roster, tracks.
+- **5b — THE SEASON IN PROGRESS.** `/api/seasons/live`, one b-deck per storm,
+  and the ghost roster. **Ghosts exist only here** — see §57.18a.
+
+**AARON'S CALL, 2026-08-24: GHOSTS ARE THE CURRENT YEAR ONLY.** §57.18 wanted
+them on every season. That needs a per-year name list for 175 years, which no
+file NOAA publishes contains and which nobody is going to hand-maintain. The
+current year needs TWO lists, replaced each spring. §57.18a records what a
+settled year says instead, and it says it from the storms rather than from a
+list nobody typed.
+
+**Aaron looks at (5a):** 2005 against 1935 and 2025. The shape of a season
+should be visible without reading.
+**Done when:** ticking storms puts them on the globe and unticking removes
+them, by tap and by keyboard.
 
 ---
 
