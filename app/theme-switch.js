@@ -29,7 +29,9 @@
  */
 
 import { FONT, SIZE, SPACE, WIND_BAND_COLOR } from '../config/tokens.js';
-import { isLight, palette, resolveMode, setThemeMode, themeMode } from '../config/theme.js';
+import {
+  isLight, palette, resolveMode, setThemeMode, subscribeThemeChange, themeMode,
+} from '../config/theme.js';
 import { themeState } from '../map/theme-state.js';
 import { rethemePopulation } from '../map/population.js';
 import { settingValue } from '../data/settings-prefs.js';
@@ -197,9 +199,28 @@ export function applyTokens() {
  *   property. main.js owns the pipeline; this file only knows when.
  */
 export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) {
-  function apply() {
-    if (!setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches))) return;
-
+  /**
+   * ==> THE REPAINT IS A SUBSCRIBER NOW, AND IT HAD TO BECOME ONE. <==
+   *
+   * Every line below used to sit inside `apply()`, behind
+   * `if (!setThemeMode(...)) return;`. That worked for exactly as long as a
+   * settings change was the only way the palette could move.
+   *
+   * Seasons forces sepia with `config/theme.js`'s `forceMode`, which does NOT
+   * go through `setThemeMode` — it cannot, because a forced mode has to
+   * outrank the stored preference. So `palette()` changed and nothing on
+   * screen did: the chrome, the 3D globe and the basemap all kept the live
+   * colours, and the only subscriber that existed (the Layers panel's model
+   * swatches) repainted correctly, which would have read as one panel going
+   * mad rather than as a theme that never landed.
+   *
+   * Hanging it off `subscribeThemeChange` gives every route to a palette
+   * change — a settings flip, an OS flip, entering Seasons, LEAVING Seasons —
+   * exactly one repaint path. `apply()` below is then only the RESOLUTION
+   * half, and a no-op resolution announces nothing, so this still does not run
+   * when the mode has not actually moved.
+   */
+  function repaint() {
     applyTokens();
     g3d.retheme();
 
@@ -271,6 +292,24 @@ export function createThemeSwitch({ map, g3d, prefersLight, onRepushGuidance }) 
      * in one place. If it ever grows past three, the mechanism is wrong. */
     rethemePopulation(map);
     onRepushGuidance?.();
+  }
+
+  /* REGISTERED HERE RATHER THAN IN main.js, beside the code it repaints. The
+   * other subscriber (the Layers panel's swatches) is registered later, and
+   * insertion order is the order they fire — chrome and map first, then the
+   * panel, which is the order a reader perceives anyway. */
+  subscribeThemeChange(repaint);
+
+  /**
+   * Resolve the stored preference against the OS and hand it to the store.
+   * The repaint happens through the subscription above.
+   *
+   * Returns nothing and swallows nothing: `setThemeMode` answers false both
+   * when the mode has not moved AND when Seasons has a mode forced, and in
+   * both cases doing nothing is the whole correct behaviour.
+   */
+  function apply() {
+    setThemeMode(resolveMode(settingValue('theme'), !!prefersLight?.matches));
   }
 
   /* Follow the OS while the app is open, but ONLY for someone who chose to
