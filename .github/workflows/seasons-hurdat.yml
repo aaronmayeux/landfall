@@ -1,0 +1,97 @@
+# seasons-hurdat.yml — bring the settled record into the repo.
+# SPEC-OPS.md §18.8, SPEC-SEASONS-BUILD.md §57.30 step 3b, §57.34 rule 3.
+#
+# WHY THIS IS MONTHLY AND NOT HOURLY
+# NOAA republishes HURDAT2 once a year, in late February. Almost every run of
+# this job will find the file it already has and do nothing — which costs one
+# directory listing and no download at all, because the script compares the
+# filename before it spends 7 MB of somebody else's bandwidth.
+#
+# Monthly rather than yearly because "once a year" is NOAA's habit, not their
+# promise: the real directory carries FIVE revisions of the 2022 Atlantic season
+# published across two months. A yearly job would miss a correction by up to
+# eleven months. Twelve runs a year against Actions' free minutes is nothing.
+#
+# ==> THIS IS THE ONLY JOB IN THE REPO THAT COMMITS TO `main`, AND THAT IS WHY
+# IT COMMITS SO RARELY. <== A push to main fires a Cloudflare Pages build, and
+# those are capped at 500 a month (§57.33 limit 2). A dozen a year is invisible
+# against that cap; the same job on an hourly schedule would eat it. That
+# ceiling is the whole reason the CURRENT season lives in KV behind a route
+# instead of in the repo beside these files.
+#
+# ==> AND IT CAN REFUSE. <== If the downloaded file parses with any fault, or
+# carries fewer storms than the one it would replace, nothing is written and
+# this job FAILS. That is deliberate and it is the loud direction: either NOAA
+# published something broken or our parser stopped understanding their format,
+# and both are worse than a month with no update. A silent replacement would
+# put an HTML error page where 175 seasons used to be and nobody would notice
+# until they opened Seasons.
+
+name: seasons-hurdat
+
+on:
+  schedule:
+    # 04:40 UTC on the 3rd of each month. Off the hour and off the 1st, so it
+    # does not queue behind everybody else's midnight cron.
+    - cron: '40 4 3 * *'
+  # A fine-grained PAT can push but CANNOT dispatch a workflow (measured: HTTP
+  # 403 on the dispatches endpoint), so pushing this branch is the only way a
+  # cloud session can start a runner. Same lever seasons-mirror and the probes
+  # use, and it is why they exist as branches at all.
+  push:
+    branches: [seasons-hurdat]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-hurdat
+  cancel-in-progress: false
+
+jobs:
+  hurdat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      # The guard uses the app's OWN parser, so a file that passes here is a
+      # file the browser can read. One parser, both worlds (§57.35).
+      - name: fetch, judge, and write
+        id: run
+        run: node tools/seasons-hurdat.mjs . /tmp/hurdat-report
+
+      # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== The decision is made
+      # inside the script, not here, because only it knows whether the file
+      # changed or NOAA merely listed the same name again. A monthly commit
+      # regardless of change would fire a Pages build and churn the service
+      # worker for every user on no new information at all.
+      - name: commit and push, if anything changed
+        if: always() && steps.run.outcome != 'cancelled'
+        run: |
+          set -euo pipefail
+          DECISION="$(cat /tmp/hurdat-report/decision.txt 2>/dev/null || echo skip)"
+          echo "decision: $DECISION"
+          if [ "$DECISION" != "commit" ]; then
+            echo "nothing moved — no commit"
+            exit 0
+          fi
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A seasons
+          if git diff --cached --quiet; then
+            echo "the script asked to commit but git sees no change — not committing"
+            exit 0
+          fi
+          git commit -q -F /tmp/hurdat-report/commit-message.txt
+          git push -q origin HEAD:main
+          echo "pushed $(git rev-parse --short HEAD)"
+
+      - name: summary
+        if: always()
+        run: cat /tmp/hurdat-report/summary.md >> "$GITHUB_STEP_SUMMARY" || echo 'the job wrote no report' >> "$GITHUB_STEP_SUMMARY"

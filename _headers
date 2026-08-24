@@ -130,6 +130,34 @@
 /vendor/*
   Cache-Control: public, max-age=31536000, immutable
 
+# ===> THE SETTLED HISTORY. SAME REASONING AS /vendor/* ABOVE. <===
+# `seasons/data/` holds NOAA's HURDAT2 files — 6.8 MB Atlantic, 3.9 MB Pacific
+# — and their filenames carry BOTH the last season and NOAA's revision stamp:
+# `hurdat2-atlantic-2025-02272026.txt`. So the URL can never mean something new
+# and the browser may keep it forever. §57.35 FIX 11, SPEC-OPS.md §18.8.
+#
+# ===> THE REVISION IS IN THE NAME AND FIX 11 DID NOT ASK FOR IT. <===
+# FIX 11 said the SEASON is the cache bust. That is right until NOAA revises a
+# season it has already published, which it does — the real directory carries
+# five revisions of the 2022 Atlantic file. Under season-only naming every one
+# of them would write to this same immutable URL, and a browser that fetched
+# the April revision would keep it forever and never see the May correction.
+#
+# LISTED AS `/seasons/data/*` RATHER THAN `/seasons/*` ON PURPOSE. The index
+# next door must stay revalidating, and two rules whose paths overlap is a
+# question about precedence that this file — which nothing validates — is the
+# worst possible place to have. The two paths do not overlap.
+/seasons/data/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The one MUTABLE file in the whole feature, and its whole job is to be mutable.
+# It names which HURDAT2 file to fetch, so next February's swap is a data commit
+# rather than a code change and a deploy. A stale copy here points the app at a
+# file that has just been deleted, which is a 404 on the entire history — so it
+# revalidates with everything else.
+/seasons/index.json
+  Cache-Control: no-cache
+
 # The service worker must never be served stale — a cached sw.js is how a bad
 # worker outlives the fix for it.
 /sw.js
