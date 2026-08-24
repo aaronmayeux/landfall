@@ -543,6 +543,68 @@ const SOURCES = [
       'REOPENABLE ON EVIDENCE. <== Kept separate from the warnings above so ' +
       'the two counts never have to be untangled from one file.',
   },
+  /* ==> §56.14's QUESTION 4, AND IT IS THE ONE THE PAST-RAINFALL FEATURE
+     SHIPPED WITHOUT AN ANSWER TO. <== Everything else that section asked was
+     settled by the `past_days` probe below, on ONE point: Manila, tropical,
+     coastal, on land, with real rain falling. That is a good point to measure
+     a shape against and a bad one to conclude coverage from.
+
+     The forecast half covers the planet — §48.16 leans on that in as many
+     words, and `readSeries` treats a missing series from this provider as a
+     shape WE could not read rather than as a fact about somebody's house,
+     precisely because a global model cannot report a place as uncovered.
+     ==> NOTHING HAS CONFIRMED THE PAST HALF COVERS THE SAME GROUND. <== A
+     reanalysis is a different product from a forecast and may well have a
+     different footprint.
+
+     TWO POINTS, BECAUSE THEY FAIL DIFFERENTLY. Mid-Pacific is open ocean far
+     from any land model and from any gauge that ever fed one. The Sahara is
+     land, so it cannot be declined for being sea, but it is sparse in every
+     way a model can be sparse and it is genuinely dry — which makes it the
+     one point on Earth where a `dry` answer and a `no data` answer are
+     hardest to tell apart, and where getting them confused is exactly §5.
+
+     ==> A NULL IN THE SERIES IS THE ANSWER WORTH LOOKING FOR. <== The client
+     already DROPS a null rather than summing it as zero (`projectOpenMeteo`
+     says so and §48.19 explains why), so a sparse series degrades into a
+     shorter window rather than a smaller total — but that path has never once
+     executed, because no capture has ever contained a null. If either of
+     these does, `lib/rainfall.js` `pastSummary` reporting `coveredHours` is
+     what keeps the sentence honest, and THAT is the thing to go and check. */
+  {
+    name: 'openmeteo-rain-past-ocean.json',
+    url:
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=-15.0&longitude=-145.0' +
+      '&hourly=precipitation&past_days=3&forecast_days=5&timezone=UTC',
+    note:
+      'PAST RAINFALL OVER OPEN OCEAN — §56.14 question 4. Mid-South-Pacific, ' +
+      'about as far from land as a coordinate gets. Read it for: whether the ' +
+      'past hours arrive AT ALL, whether any of them are null, and whether ' +
+      'the count matches the land capture exactly. ==> A SHORTER PAST SERIES ' +
+      'HERE THAN AT MANILA WOULD MEAN THE PAST HALF IS NOT GLOBAL, WHICH IS ' +
+      'A DIFFERENT CLAIM FROM THE ONE §48.16 MAKES ABOUT THE FORECAST HALF. ' +
+      '<== The reader never has a house here, so this is not about a real ' +
+      'address — it is about whether the sentence can be trusted at the edge ' +
+      'of the model rather than only in the middle of it.',
+  },
+  {
+    name: 'openmeteo-rain-past-desert.json',
+    url:
+      'https://api.open-meteo.com/v1/forecast' +
+      '?latitude=23.4&longitude=12.5' +
+      '&hourly=precipitation&past_days=3&forecast_days=5&timezone=UTC',
+    note:
+      'PAST RAINFALL OVER SPARSE LAND — §56.14 question 4, the other half. ' +
+      'Central Sahara. It is LAND, so it cannot be declined for being sea, ' +
+      'and it is genuinely dry — which makes it the hardest place on Earth to ' +
+      'tell a real `dry` from a `no data`, and §5 says those must never read ' +
+      'the same. Read it for: nulls, and whether an all-zero series comes ' +
+      'back as zeroes or as absence. ==> IF IT IS ZEROES, `pastSummary` ' +
+      'REPORTS `dry` AND THE SENTENCE IS TRUE. <== If it is nulls or a short ' +
+      'series, the honest output is a shorter covered window, and that path ' +
+      'has never executed against real bytes.',
+  },
   {
     name: 'openmeteo-rain-outside-nws.json',
     url:
