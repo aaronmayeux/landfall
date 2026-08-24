@@ -79,7 +79,7 @@ const GROUPS = [
    'each of these owns a spec section and a piece of the drawer',
    ['OUTLOOK', 'GENESIS', 'SURGE', 'GDACS_SURGE', 'CAP', 'RAIN', 'FLOOD', 'ENDED', 'IMAGERY', 'ENV_RIBBON',
     'ENV_HEALTH', 'MODEL_GROUP', 'MODEL_FAMILY', 'MODEL_TRACKS', 'ADVISORY_TEXT',
-    'POPULATION']],
+    'POPULATION', 'SEASONS']],
 
   ['HOME',
    'the house on the map and the dashboard that reads from it',
