@@ -321,6 +321,35 @@ check('all three NWS routes send the same contact in their User-Agent',
 check('and it is actually there to read',
   userAgents.every((u) => u && u.includes('@')), true);
 
+/* ==> THE GLOBAL RAIN ROUTE'S PAST WINDOW — §56.14, AND IT IS THE ONLY THING
+ * STANDING BETWEEN THE FEATURE AND SILENT DEATH. <== `past_days` is one query
+ * parameter. Removed, the route keeps working perfectly: it answers 200, the
+ * forecast half is untouched, every existing suite stays green, and the
+ * Flooding section quietly reports `lapsed` — "no estimate available for this
+ * location" — on every house on Earth. Nothing throws and nothing goes red.
+ * `tools/test-rain-past.mjs` cannot catch it either, by construction: that
+ * suite runs against a FROZEN capture which still has its past hours in it
+ * whatever the live route asks for.
+ *
+ * So it is checked HERE, twice: that the mirrored constant still matches
+ * `RAIN.pastDays`, and that it actually reaches the upstream URL. The second
+ * assertion is the one that matters — a constant declared and never used is
+ * exactly what this failure looks like. */
+const globalRainSrc = read('functions/api/rain/global.js');
+
+check('functions/api/rain/global.js PAST_DAYS mirrors RAIN.pastDays',
+  numberConst(globalRainSrc, 'PAST_DAYS'), RAIN.pastDays);
+
+check('and PAST_DAYS is actually spent on the upstream URL',
+  /past_days=\$\{PAST_DAYS\}/.test(globalRainSrc), true);
+
+/* The window the client trims to must be reachable inside the days the route
+ * asks for, or the sentence silently shortens for part of every UTC day. The
+ * series is prepended in WHOLE UTC days, so the days asked for have to exceed
+ * the hours used — not merely round to them. */
+check('RAIN.pastDays over-asks so RAIN.pastHours is always complete',
+  RAIN.pastDays * 24 > RAIN.pastHours, true);
+
 /* ---------------------------------------------------------------------------
  * 5. THE PARSERS THEMSELVES — a check that reads nothing reports nothing.
  *
@@ -331,6 +360,7 @@ check('and it is actually there to read',
  * ------------------------------------------------------------------------- */
 
 const found = {
+  'rain/global PAST_DAYS': numberConst(globalRainSrc, 'PAST_DAYS'),
   'nhc KEEP_TECHS': setLiteral(read('functions/api/nhc/adeck.js'), 'KEEP_TECHS'),
   'tcgp KEEP_TECHS': setLiteral(read('functions/api/tcgp/adeck.js'), 'KEEP_TECHS'),
   'BIRDS table': Object.keys(relayBirds).length ? relayBirds : null,
