@@ -69,6 +69,14 @@ const PACE_MS = 350;
  *  is an old entry pointing at a file that moved. */
 const HEAD_SAMPLE = 40;
 
+/** ==> HOW MANY PER-SEASON PAGES TO FOLLOW. <== The index is a grid of
+ *  season-and-basin pages, roughly 35 years by 3 basins. Following all of them
+ *  at the pace above is ~40 seconds of requests, which is fine — but the cap
+ *  exists so a restructured index that suddenly links a thousand pages cannot
+ *  turn a decision aid into a crawl of NOAA's site. When the cap bites, the
+ *  findings say so and call the coverage a FLOOR rather than a total. */
+const MAX_SEASON_PAGES = 120;
+
 const OUT = process.argv[2] || '/tmp/tcr';
 const RAW = join(OUT, 'raw');
 
@@ -254,11 +262,19 @@ async function main() {
   say('');
 
   const candidates = [
-    ['tcr-dir', 'https://www.nhc.noaa.gov/data/tcr/', 'the report directory itself'],
     ['tcr-index', 'https://www.nhc.noaa.gov/data/tcr/index.php', "NHC's own report index page"],
-    ['tcr-xml', 'https://www.nhc.noaa.gov/data/tcr/TCR_StormReportsIndex.xml',
-      'a machine-readable index, IF one exists — asked for by name because an '
-      + 'index is the one thing a directory listing cannot reveal'],
+    /* ==> THE XML IS AT THE SITE ROOT, AND THE FIRST RUN OF THIS PROBE LOOKED
+     * IN THE WRONG PLACE. <== It asked for `/data/tcr/TCR_StormReportsIndex.xml`
+     * — the one URL in this file that was GUESSED rather than read — and got a
+     * clean 404, which findings.md duly reported as "no machine-readable index".
+     * The index page's own markup links it at `/TCR_StormReportsIndex.xml`.
+     *
+     * That is the fault this file's header warns about, committed by this file,
+     * and it is worth leaving written down: **a guessed URL's 404 is
+     * indistinguishable from an absence**, and the only reason it was caught is
+     * that the probe saved the raw bytes for a human to read afterwards. */
+    ['tcr-xml', 'https://www.nhc.noaa.gov/TCR_StormReportsIndex.xml',
+      'the machine-readable index, at the path the index page itself links'],
   ];
 
   const pages = new Map();
@@ -275,10 +291,47 @@ async function main() {
     await sleep(PACE_MS);
   }
   say('');
-  say('> A 404 here is an answer, not a failure. The XML in particular is asked');
-  say('> for by name **on purpose** — it is the one thing that cannot be');
-  say('> discovered by listing a directory, and if it exists it is a far better');
-  say('> source than scraping a page NHC may restyle at any time.');
+  say('> If the XML resolves it is a far better source than scraping a page NHC');
+  say('> may restyle at any time. **The first run of this probe reported it');
+  say('> missing and was wrong** — it guessed the path. The index page links it');
+  say('> at the site root, and that is where it is asked for now.');
+  say('');
+
+  /* ---- The index is per season AND per basin, which the first run missed too.
+   * The top-level page carries no report links at all — only navigation and a
+   * grid of `index.php?season=YYYY&basin=xxx`. Following those is the only way
+   * to see what is actually published. */
+  const seasonLinks = new Set();
+  for (const [name, body] of pages) {
+    const base = candidates.find((c) => c[0] === name)[1];
+    for (const u of hrefs(body, base)) {
+      if (/index\.php\?season=\d{4}&basin=[a-z]+/i.test(u)) seasonLinks.add(u);
+    }
+  }
+  say(`The top-level page carries **no report links at all** — it is navigation`);
+  say(`plus a grid of **${seasonLinks.size}** per-season, per-basin pages. Those`);
+  say('are where the reports live, so the probe follows them.');
+  say('');
+
+  /* Newest first: coverage questions are answered fastest from the end where
+   * reports certainly exist, and if the pace budget runs out mid-sweep the
+   * partial answer is still the useful half. */
+  const ordered = [...seasonLinks].sort().reverse();
+  let followed = 0;
+  for (const u of ordered) {
+    if (followed >= MAX_SEASON_PAGES) break;
+    const key = `season-${u.split('?')[1].replace(/[^a-z0-9]+/gi, '-')}`;
+    const { body } = await grab(key, u, 'one season and basin of reports', { maxBytes: SAMPLE_BYTES });
+    if (body != null) {
+      pages.set(key, body);
+      await save(`${key}.txt`, body);
+    }
+    followed++;
+    await sleep(PACE_MS);
+  }
+  say(`Followed **${followed}** of them${followed < ordered.length
+    ? ` (capped at ${MAX_SEASON_PAGES}; ${ordered.length - followed} not visited, so`
+      + ' the coverage figures below are a FLOOR rather than a total)' : ''}.`);
   say('');
 
   /* ---- Q2: what is actually linked, and what is the filename pattern? ----- */
@@ -288,7 +341,11 @@ async function main() {
 
   const all = new Map(); // url -> identity
   for (const [name, body] of pages) {
-    const base = candidates.find((c) => c[0] === name)[1];
+    /* Season pages are keyed by their query string, not by a candidate name, so
+     * the base falls back to the index page they were all reached from — same
+     * origin and same directory, which is all `new URL` needs. */
+    const base = candidates.find((c) => c[0] === name)?.[1]
+      || 'https://www.nhc.noaa.gov/data/tcr/index.php';
     for (const u of hrefs(body, base)) {
       if (!/\.(pdf|shtml?|html?)$/i.test(u)) continue;
       if (!/nhc\.noaa\.gov/i.test(u)) continue;
