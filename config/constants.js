@@ -6779,6 +6779,29 @@ export const SEASONS = Object.freeze({
     epacific: Object.freeze({ lon: -125, lat: 17 }),
   }),
 
+  /**
+   * ==> HOW FAR IN THE CAMERA GOES WHEN A STORM'S PANEL IS OPENED, AND IT
+   * FRAMES THE START OF THE TRACK RATHER THAN THE WHOLE OF IT. <== Aaron's
+   * call on glass, 2026-08-25, and it reversed the design that was written
+   * first. Fitting the entire track sounded right — a finished storm is a
+   * curve, not a point, and Katrina is a two-thousand-mile arc — but the zoom
+   * that fits that arc is roughly `ZOOM.basin`, which is a long way out for a
+   * panel about one storm, and it framed mostly open water.
+   *
+   * The START fix is the one with a claim to the camera. It is where the
+   * record opens, it is where §57.21a already puts the white direction ring
+   * and the name, and it is where §57.21c's glyph sits — so the thing the
+   * reader is flown to is the thing that is marked.
+   *
+   * ==> IT STARTS AT `GLOBE.flyToZoom`'S VALUE ON PURPOSE, AND IT IS A
+   * SEPARATE DIAL ON PURPOSE. <== 5 is what the live app uses to frame a
+   * selected storm, and framing one point is the same question here. It is
+   * its own constant because the two are allowed to diverge: an archive track
+   * runs away from its start fix and a live storm does not, so this is the
+   * number to move if the opening frame wants more of the curve in it.
+   */
+  stormZoom: 5,
+
   /* --- The archive's ridge (§57.21c) --------------------------------------- */
 
   /**

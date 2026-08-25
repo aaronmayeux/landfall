@@ -14,18 +14,17 @@
  * is precisely what that rule forbids. `main.js` keeps the wiring; this owns
  * the arithmetic.
  *
- * ==> AND IT TAKES A DRAWER BOX RATHER THAN READING THE DOM. <== The same
- * shape `map/home-frame.js` takes and for the same reason: the caller measures
- * once per flight (`getBoundingClientRect` is a layout read) and this file
- * stays testable without a browser.
+ * ==> AND IT TAKES AN OFFSET RATHER THAN READING THE DOM. <== The same shape
+ * every other flight in the app takes and for the same reason: the caller
+ * measures the drawer once per flight (`offsetWidth` is a layout read) and
+ * this file stays testable without a browser.
  *
- * Imports config/, lib/ and two map/ siblings. `seasons/` never reaches in
- * here — main.js injects these through the `archiveGlobe` facade (§12).
+ * Imports config/ and one map/ sibling. `seasons/` never reaches in here —
+ * main.js injects these through the `archiveGlobe` facade (§12).
  */
 
 import { SEASONS, ZOOM } from '../config/constants.js';
 import { flyToPoint } from './globe.js';
-import { visibleStrip, fitPair } from './home-frame.js';
 
 /**
  * Where the globe should be pointing when the archive opens.
@@ -85,61 +84,56 @@ export function flyToArchiveEntry(map, { from, basin, home, offset }) {
 /**
  * Frame one archive storm in the globe left visible above the drawer.
  *
- * ==> A FINISHED STORM IS A CURVE, NOT A POINT, SO THIS FITS ITS WHOLE TRACK.
- * <== `flyToStorm` centres on a live storm's current position at a fixed zoom
- * because a live storm IS a position. Katrina is a two-thousand-mile arc from
- * the Bahamas to Ohio, and centring her at the same zoom on any single fix
- * frames a patch of ocean with most of her off the screen. The reader tapped
- * the row to look at the storm; the storm is the line.
+ * ==> IT FLIES TO THE FIRST FIX, NOT TO THE WHOLE TRACK. <== Aaron on glass,
+ * 2026-08-25, and it reversed what was built first. Fitting the entire track
+ * reasoned well on paper — a finished storm is a curve and centring Katrina on
+ * any single fix leaves most of her off screen — but the zoom that fits a
+ * two-thousand-mile arc is about `ZOOM.basin`, and what that actually put on
+ * screen was a panel about one storm over a lot of empty ocean. Close on the
+ * start reads better, and the start is the fix that is already marked: §57.21a
+ * puts the white direction ring and the name there, and §57.21c puts the glyph
+ * there. The reader is flown to the thing with a mark on it.
  *
- * ==> IT REUSES `fitPair` RATHER THAN REDERIVING THE ARITHMETIC. <==
- * `map/home-frame.js` already solves "what zoom puts two points inside a box,
- * and where is the middle" — including the antimeridian unwrap and the
- * Mercator-errs-wide argument. Handing it the track's two bounding corners is
- * the same question with different points in it. A second copy of that
- * arithmetic is a second place for the seam to be got wrong.
+ * ==> AND THAT DELETED THE SEAM ARITHMETIC RATHER THAN SOLVING IT. <== The
+ * whole-track version took bounds off `lonU`, the unwrapped longitude, because
+ * a min/max over raw values on a dateline-crossing storm reports a track
+ * spanning the planet. There is no span here, so there is nothing to unwrap —
+ * and the seam now bites the OTHER way round, which is why the point below is
+ * read off `lon` and not `lonU`. See the note on it.
  *
  * @param {object} map
- * @param {Array<{lon:number, lat:number}>} points  the storm's recorded fixes
+ * @param {Array<{lon:number, lat:number}>} points  the storm's recorded fixes,
+ *   in the order the record has them — the FIRST is the one framed
  * @param {object} opts
- * @param {{width:number, height:number}} opts.viewport
- * @param {{width:number, height:number, wide:boolean}} opts.drawerBox
  * @param {[number,number]} [opts.offset]  where the centre lands on screen
  * @returns {boolean}  false when there was nothing to frame
  */
-export function flyToArchiveStorm(map, points, { viewport, drawerBox, offset }) {
-  const pts = (points || []).filter(
+export function flyToArchiveStorm(map, points, { offset } = {}) {
+  const first = (points || []).find(
     (p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lon)
   );
-  if (!pts.length) return false;
+  if (!first) return false;
 
-  /* ==> BOUNDS OFF `lonU`, THE UNWRAPPED LONGITUDE. <== This is the one place
-   * in the archive's camera work where the seam bites. A storm running from
-   * 179.2°W to 179.9°E publishes two longitudes 0.9° apart whose numbers differ
-   * by 359.1, so a min/max over the raw values reports a track spanning the
-   * whole planet and `fitPair` dutifully zooms out to the space floor to fit
-   * it. `lib/hurdat.js` carries `lonU` on every point for exactly this, and
-   * `season-tracks.js` draws it for the same reason. Falling back to `lon` when
-   * a point somehow lacks it keeps a malformed record framable rather than
-   * unopenable. */
-  const lons = pts.map((p) => (Number.isFinite(p.lonU) ? p.lonU : p.lon));
-  const lats = pts.map((p) => p.lat);
-
-  const strip = visibleStrip(viewport, drawerBox);
-  const fit = fitPair({
-    home: { lon: Math.min(...lons), lat: Math.min(...lats) },
-    storm: { lon: Math.max(...lons), lat: Math.max(...lats) },
-    strip,
+  /* ==> `lon`, THE PUBLISHED LONGITUDE, AND NEVER `lonU`. <== This is the one
+   * seam decision left in the archive's camera and it is the reverse of the
+   * one the whole-track fit had to make. `lonU` is unwrapped so that a track
+   * crossing ±180 draws as one continuous line rather than jumping the map, so
+   * a storm's later fixes can carry values like 185 or -190 — and `lib/hurdat.js`
+   * unwraps relative to the FIRST fix, which means a start fix at 179.4°E can
+   * itself be handed to the camera as a number outside ±180 in a record that
+   * was unwrapped the other way.
+   *
+   * MapLibre takes a centre longitude literally and flies the short way to the
+   * number it is given, so an out-of-range value sends the camera the long way
+   * round the planet — a several-second flight across the wrong hemisphere to
+   * arrive at a point it was already next to. The published value is always in
+   * range and always names the right place, and there is no line being drawn
+   * here for an unwrap to keep continuous. `tools/test-season-frame.mjs` drives
+   * Della (CP011957), the repo's seam fixture, and the mutation is swapping
+   * this one property. */
+  flyToPoint(map, { lon: first.lon, lat: first.lat }, {
+    zoom: SEASONS.stormZoom,
+    offset,
   });
-
-  /* ==> CLAMPED AT BOTH ENDS. <== A one-fix storm — real, and common before
-   * 1900 — has zero extent on both axes, so `fitPair` divides by zero on both
-   * and answers `Infinity`. Without a ceiling that is a flight to the maximum
-   * zoom the style has, arriving at a single dot over featureless water. The
-   * floor matters less often and is the same idea: a storm that genuinely
-   * crossed half the planet should not push the camera below the band where
-   * its own name is allowed to draw. */
-  const zoom = Math.max(ZOOM.basin, Math.min(ZOOM.max, fit.zoom));
-  flyToPoint(map, fit.center, { zoom, offset });
   return true;
 }

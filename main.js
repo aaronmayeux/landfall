@@ -31,7 +31,7 @@ import { getHome } from './data/home.js';
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
-import { createViews, recenterTarget } from './app/views.js';
+import { createViews, panelOffsetFor, recenterTarget } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -1446,6 +1446,53 @@ function boot() {
       clearSeasonTracks(map);
       clearSeasonPoints(map);
       clearSeasonSwath(map);
+      /* ==> AND THE RIDGE COMES DOWN WITH THEM. §57.21c. <== `setTracks` put
+       * it up and this is its mirror. Without it, leaving the archive keeps
+       * 1935's mountains standing until `liveGlobe.show()`'s `refreshCage()`
+       * lands — and that is a frame of the wrong world on the way out, which
+       * is exactly what the ordering in `seasons/index.js`'s `leave()` is
+       * arranged to avoid everywhere else.
+       *
+       * NOT GUARDED ON `styleReady` in its own right — the guard above covers
+       * the whole method — but note it does not need one: the 3D engine owns
+       * its own buffers and exists from boot. */
+      g3d.heightfield.setStormPoints('ok', []);
+    },
+
+    /**
+     * Point the camera at the archive on the way in. §57.21c, item 5.
+     *
+     * ==> THE MEASUREMENTS ARE TAKEN HERE, AT CALL TIME, AND NOT IN
+     * `map/season-frame.js`. <== That file is pure arithmetic and testable
+     * without a browser; this is the composition root and it is the only side
+     * of the wall that is allowed to touch the DOM. `seasons/` calls it and
+     * never learns that a drawer has a height (§12).
+     *
+     * `idle.interrupt()` first, or the resting globe's per-frame `setCenter`
+     * stomps the flight — the same reason `frameHome` in `app/views.js` does
+     * it, and the archive's globe is idling by definition because nobody has
+     * touched it yet.
+     */
+    flyToEntry({ from, basin }) {
+      idle.interrupt();
+      return flyToArchiveEntry(map, {
+        from,
+        basin,
+        home: getHome(),
+        offset: archiveOffset(),
+      });
+    },
+
+    /**
+     * Frame one storm above the sheet. §57.21c, item 4.
+     *
+     * Takes POINTS rather than a storm or an id: `seasons/` owns the roster
+     * and `map/` owns the camera, and a list of coordinates is the smallest
+     * thing that crosses between them.
+     */
+    flyToStorm(points) {
+      idle.interrupt();
+      return flyToArchiveStorm(map, points, { offset: archiveOffset() });
     },
   };
 
@@ -1472,6 +1519,30 @@ function boot() {
     if (!lastFullState) return null;
     return reportingStormIds(lastStorms || []);
   };
+
+  /**
+   * Where a flight's centre should land while the archive's sheet is up.
+   * §57.21c.
+   *
+   * ==> THE SAME MEASUREMENT EVERY OTHER FLIGHT IN THE APP MAKES, THROUGH THE
+   * SAME FUNCTION. <== `panelOffsetFor` is `app/views.js`'s, and the reason to
+   * borrow it rather than write a second one is that the archive's board is
+   * the same drawer element as every other panel — a second copy of this
+   * arithmetic would drift the day the breakpoint moves and the symptom would
+   * be the archive alone framing storms behind its own sheet.
+   *
+   * ==> MEASURED AT CALL TIME, NOT HELD. <== `offsetHeight` ignores the slide
+   * transform, so it is stable mid-animation; and both callers open or have
+   * already opened the drawer, so "where will the sheet be" is the right
+   * question. The board's height changes with the year (that is push 2's
+   * item 1), so a cached number would be wrong the moment somebody stepped
+   * the year.
+   */
+  const archiveOffset = () =>
+    panelOffsetFor({
+      ...drawer.box(),
+      wide: window.matchMedia('(min-width: 720px)').matches,
+    });
 
   const liveGlobe = {
     hide() {
@@ -1572,6 +1643,16 @@ function boot() {
    * on the status strip rather than a console line nobody sees.
    */
   function enterSeasons(fromEl) {
+    /* ==> WHICH DOOR WAS PRESSED, READ OFF THE ELEMENT ITSELF. §57.21c item 5.
+     * <== §57.16 already stamps `data-door` on the two rows — the one under
+     * the live storm list and the one at the foot of the home dashboard — and
+     * this is the first thing to read it. The archive's camera opens on the
+     * BASIN from the storm list and on HOME from the dashboard, because those
+     * two readers were looking at different things a moment ago.
+     *
+     * Optional chaining the whole way down: a deep link passes no element at
+     * all, and `undefined` is a case `map/season-frame.js` already answers. */
+    const from = fromEl?.dataset?.door || null;
     import('./seasons/index.js')
       .then((mod) => {
         seasonsMod = mod;
@@ -1581,6 +1662,7 @@ function boot() {
           drawer,
           recenterAndClear,
           liveRunningIds,
+          from,
           fromUrl: false,
           returnFocusTo: fromEl || null,
         });
