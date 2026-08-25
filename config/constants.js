@@ -6642,4 +6642,29 @@ export const SEASONS = Object.freeze({
    *  to draw at once. The list is capped, not rejected — a link with 500 slugs
    *  in it still opens on its season. */
   deepLinkMaxStorms: 24,
+
+  /** ==> THE FIRST SEASON HURDAT2 RECORDS A WIND FIELD FOR, AND IT DECIDES
+   *  WHICH SENTENCE IS SAID — NEVER WHETHER A FOOTPRINT IS BUILT. <==
+   *
+   *  §57.25 rule 2: a thing that COULD have existed and does not for this
+   *  storm is shown with the reason, and *"Wind field size wasn't recorded
+   *  before 2004"* is a sentence that teaches the reader something true about
+   *  the record. This is the year in it.
+   *
+   *  ==> IT IS NOT A GATE, AND §57.6 IS THE REASON THAT DISTINCTION IS
+   *  WRITTEN DOWN. <== Nothing in `lib/hurdat.js` asks what year it is —
+   *  every missing value is decided by reading the sentinel on the row,
+   *  because AL011852 carries a radius of maximum wind 169 years before that
+   *  cliff. `lib/season-windswath.js` follows the same rule: a storm has a
+   *  footprint if its rows carry radii, whatever the year. This number only
+   *  chooses the WORDING when `season-facts.js` has already established there
+   *  is nothing to draw — an era sentence before 2004, a bare one after, so
+   *  the app never claims an era rule it has not checked.
+   *
+   *  MEASURED 2026-08-24 across both mirrored basins, every season 1851-2025:
+   *  zero storms before 2004 carry any radii; from 2004 on it is every storm
+   *  in every year in both basins. AL012004 ALEX and EP012004 AGATHA are the
+   *  first. 826 of 3,266 storms have a wind field — three quarters of the
+   *  archive gets the sentence instead of a shape. */
+  windFieldFirstSeason: 2004,
 });
