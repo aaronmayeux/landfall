@@ -1616,6 +1616,103 @@ an absence.** It was caught only because the probe saves raw bytes for a human
 to read afterwards — which is the argument for that habit, stated by the one
 time it paid.
 
+### 57.22b The panel as built, and the three bugs it shipped with the first time
+
+**This is the as-built account of step 7. §57.22 is the design; read this for
+what the code does.** `ui/view-season-detail.js` assembles it,
+`ui/season-detail-markup.js` writes every sentence in it, `data/season-reports.js`
+answers the one question that needs a fetch.
+
+**==> IT SHIPPED ONCE, ON 2026-08-25, AND WAS REVERTED WHOLE THE SAME DAY.
+<==** Aaron on glass: *"every tap target in the seasons drawer is fucked up —
+pretty much anywhere I touch closes the drawer or does something I don't
+intend."* The cause was never found. Two things were under suspicion, the
+roster row's markup and the split that moved the year logic to its own file,
+and **both were rebuilt from scratch afterwards for §57.21b and confirmed on
+glass** — which cleared them and is the evidence this rebuild stands on. The
+chevron below is the narrowest remaining suspect, and it is now measured in a
+browser rather than argued about.
+
+**==> THREE BUGS WERE FOUND IN THE REVERTED CODE WHILE REBUILDING IT, AND NOT
+ONE OF THEM HAD EVER BEEN SEEN. <==** Step 7 was reverted before anybody opened
+the panel, so all three were sitting in a commit that had already been pushed
+and deployed. They are worth listing together because they are the same shape:
+**the panel agreeing with itself while disagreeing with something outside it.**
+Nothing threw, nothing logged, and each one reads correctly in review.
+
+1. **The drawer's title contract, backwards.** The view exported `title(arg)`
+   as a function. `ui/drawer.js` reads `def.titleFor ? def.titleFor(arg) :
+   def.title` and appends the answer only if it is a string or a node — a
+   function satisfies neither arm, so the panel would have opened with an
+   **empty header**. `title` is a plain string now and `titleFor` is the
+   function. `backLabelFor` is there too, for the day something pushes on top
+   of this panel.
+2. **The first stop was not focusable.** `focus()` returns the panel's `<h1>`,
+   and the drawer does `v.def.focus?.() || backBtn` — a truthy heading beats
+   the fallback, and `.focus()` on a heading with no `tabindex` is a silent
+   no-op. A keyboard reader pressing the chevron would have been left focused
+   on a button the drawer had just hidden, which is §13's own rule broken with
+   nothing to say it had happened. The heading carries `tabindex="-1"`.
+3. **==> OPENING A STORM WOULD HAVE DRAWN A PANEL OVER AN EMPTY GLOBE, AND
+   THIS IS THE WORST OF THE THREE. <==** The panel's `onOpen` was routed
+   straight at the board's `setFocus`, which **refuses an id nobody has
+   ticked** — deliberately, so the globe never ghosts every track for a
+   highlight nobody can see (§57.21a). So opening an unticked storm did
+   nothing at all to the map: Katrina's full panel over a globe with no
+   Katrina on it. **That is the panel-and-map disagreement this whole view is
+   careful about, arriving through the door built to prevent it.**
+
+**THE FIX FOR 3 IS `showStorm`, AND IT IS NOT §57.21a's COUPLING COMING BACK.**
+That rule says **ticking must not select**. This is the other direction — the
+globe shows what the panel is about — and it runs on the panel's `onEnter`,
+so there is **one path** whether the reader arrived by the chevron, by Back, or
+by a deep link. It ticks the storm if it is not already drawn, **patches that
+one row rather than re-rendering the roster** (the reader is about to come Back
+to that list and it must still be where they left it), then focuses. A storm
+the season does not hold is refused rather than half-applied.
+
+**THE WAY IN IS A CHEVRON ON EVERY ROSTER ROW.** A real `<button>`, so Tab
+reaches it after the checkbox on each row and Enter opens — §13's third input
+path obtained as a side effect of using the right element. **It sits OUTSIDE
+the row's `<label>`, and that is load-bearing rather than tidy:** nested
+inside, every press would also toggle the checkbox it was nested in, because
+that is a label's whole job, so opening a storm would silently draw or undraw
+its track on the way past. `tools/test-seasons-board.mjs` asserts the nesting
+directly rather than trusting a comment.
+
+**AND ITS HIT BOX IS MEASURED IN A BROWSER, WHICH IS NEW.**
+`tools/seasons-row-check.mjs` did not exist when this markup first shipped. It
+now asserts, at 390px and 720px, that every chevron is at least
+`--touch-target` on **both** axes (the glyph is 8px; the thing a thumb lands on
+is 44), that **no chevron overlaps the label beside it** — a shared pixel
+column is two actions fighting over one thumb and the loser is silent — and
+that none of them wraps onto the next line or hangs off the end of the row.
+Eleven mutations were run across the step and all eleven bite.
+
+**THE PANEL IS PUSHED, NEVER `go`.** It sits on top of the board, so Back is
+one press and lands on the roster with its scroll position and its ticks
+intact. `go` would throw that history away and leave Back walking out of the
+archive entirely.
+
+**COLLAPSE STATE IS DELIBERATELY NOT KEPT.** The live panel remembers which
+sections a reader folded, because a live storm is one thing they return to over
+days. An archive storm is opened, read and left.
+
+**THE REPORT INDEX IS DROPPED ON THE WAY OUT OF THE ARCHIVE.** ~100 KB held for
+the session, and a session can outlive a deploy — a reader who leaves, sits for
+an hour and comes back should not answer *"does this storm have a report"* out
+of a copy the server has since replaced. `_headers` marks it `no-cache` so the
+second fetch is honest.
+
+**AND THE WAITING LINE'S DOTS ARE APPLIED AFTER THE ESCAPE, INSIDE
+`absenceHtml`.** The reverted code called `absenceHtml(dotted('Checking…'))`,
+which handed `<span class="dots">` to `esc()` — the panel would have drawn
+**visible angle brackets**. Doing it inside means no call site can get the
+order wrong. `tools/test-loading-dots.mjs` pins the shape, because its own
+stray-ellipsis scan is file-level and cannot see an ordering fault: **that
+suite had been red on `main` for the whole time step 7 was reverted**, on this
+exact line.
+
 ### 57.23 The season clock
 
 **Static tracks are the default.** You tick storms, you see complete paths,
@@ -2232,6 +2329,20 @@ settled on glass**: the track stays readable through the wash.
 **STEP 7 — THE DETAIL PANEL.**
 §57.22. All derived facts, the honesty line, the tier badge, the provisional
 stamp.
+**§57.22b is the as-built account. Read that, not this.**
+
+**==> IT SHIPPED, WAS REVERTED WHOLE THE SAME DAY, AND WAS REBUILT. <==**
+§57.22b carries the whole story: the tap fault glass reported, the two suspects
+that were cleared by §57.21b's rebuild, and the three bugs found in the
+reverted code that nobody had ever seen because the panel was never opened.
+
+**The tier badge and the way into the advisory scrubber are NOT built**, and
+that is not an omission. Tier 2 does not exist yet — step 11 chooses the storms
+and step 12 captures them — so a badge would be a control with one state and a
+link to nothing. It lands with step 12.
+
+**Aaron looks at:** one storm's figures, hand-checked against NOAA's own page.
+Then the taps, deliberately: tick a row, press its chevron, press Back.
 **Done when:** every figure has been hand-checked against one storm.
 
 ---

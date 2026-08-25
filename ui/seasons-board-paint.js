@@ -93,6 +93,29 @@ export function paintFocus(bodyEl, focusedId, entry) {
 }
 
 /**
+ * Tick or untick ONE row that is already on screen. §57.22b.
+ *
+ * ==> IT EXISTS SO OPENING A STORM CAN DRAW IT WITHOUT REBUILDING THE ROSTER.
+ * <== Opening an unticked storm has to put its track on the globe, or the
+ * panel describes Katrina over a globe with no Katrina on it. Doing that with
+ * `render()` would throw away the reader's scroll position in the list they
+ * are about to come Back to — the same reason every other change in this file
+ * is a patch.
+ *
+ * A missing row is not an error: the reader may have narrowed the filter past
+ * this storm, and the tick is still true, it simply has nothing to draw on.
+ *
+ * @param {Element} bodyEl  the board's scroller
+ * @param {string} id       the storm
+ * @param {boolean} on      ticked or not
+ */
+export function paintTick(bodyEl, id, on) {
+  if (!bodyEl || !id) return;
+  const box = bodyEl.querySelector(`[data-storm="${id}"]`);
+  if (box) box.checked = Boolean(on);
+}
+
+/**
  * The master checkbox's three states. §57.21b item 4.
  *
  * ==> IT HAS TO BE SET IN CODE BECAUSE `indeterminate` IS A PROPERTY AND NOT

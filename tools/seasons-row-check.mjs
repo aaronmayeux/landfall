@@ -94,6 +94,65 @@ try {
         over.length === 0);
     }
 
+    /* ==> THE CHEVRON'S HIT BOX, MEASURED, BECAUSE THIS MARKUP HAS FORM.
+     * §57.22b, §13. <== Step 7 added a per-row `<button>`, glass reported
+     * every tap target in this drawer misbehaving, and the whole step was
+     * reverted with the cause never found. The row was rebuilt and cleared on
+     * glass, so the chevron is now the narrowest remaining suspect — and this
+     * tool did not exist when it first shipped. Three things a suite cannot
+     * see and only geometry can.
+     *
+     * The GLYPH is 8px; the thing a thumb lands on must be 44. */
+    const chev = await page.$$eval('.seasons-row', (rows) => rows.map((r) => {
+      const btn = r.querySelector('.seasons-open');
+      const label = r.querySelector('.seasons-check');
+      if (!btn || !label) return null;
+      const b = btn.getBoundingClientRect();
+      const l = label.getBoundingClientRect();
+      const row = r.getBoundingClientRect();
+      return {
+        w: b.width,
+        h: b.height,
+        /* Positive means a gap; negative means the two press targets share
+         * pixels, and a thumb on the overlap gets whichever the browser hands
+         * it. That is exactly what "does something I don't intend" looks
+         * like. */
+        gap: b.left - l.right,
+        /* The button must not hang off the end of its own row. */
+        spill: b.right - row.right,
+        inRow: b.top >= row.top - 0.5 && b.bottom <= row.bottom + 0.5,
+      };
+    }).filter(Boolean));
+
+    ok(`${label}: every row has a chevron`, chev.length > 3);
+
+    const touch = await page.evaluate(() => parseFloat(
+      getComputedStyle(document.documentElement).getPropertyValue('--touch-target')
+    ));
+    ok(`${label}: --touch-target resolves to a real number (${touch})`,
+      Number.isFinite(touch) && touch >= 44);
+
+    const smallest = Math.min(...chev.map((c) => Math.min(c.w, c.h)));
+    ok(`${label}: every chevron meets the touch minimum on both axes `
+      + `(smallest side ${smallest.toFixed(1)}px, floor ${touch})`,
+    smallest >= touch - 0.5);
+
+    /* ==> IT MUST NOT OVERLAP THE LABEL BESIDE IT. <== The label ticks the
+     * storm and the chevron opens it; a shared pixel column is two actions
+     * fighting over one thumb, and the loser is silent. */
+    const worstGap = Math.min(...chev.map((c) => c.gap));
+    ok(`${label}: no chevron overlaps the row's label (closest ${worstGap.toFixed(1)}px)`,
+      worstGap >= 0);
+
+    /* ==> AND IT MUST NOT WRAP ONTO THE NEXT LINE. <== Without the row's flex
+     * rule the button drops under the name on a narrow phone, which puts a
+     * 44px target in the middle of the text below it. */
+    ok(`${label}: every chevron sits on its own row's line, not the next one`,
+      chev.every((c) => c.inRow));
+    const worstSpill = Math.max(...chev.map((c) => c.spill));
+    ok(`${label}: nothing hangs off the end of the row (${worstSpill.toFixed(1)}px)`,
+      worstSpill <= 0.5);
+
     /* The row bleeds past the scroller's padding to the drawer's own edge. */
     const bleed = await page.$$eval('.seasons-row', (rows) => {
       const host = document.querySelector('.drawer-body');

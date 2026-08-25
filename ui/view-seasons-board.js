@@ -75,7 +75,7 @@ import {
   entriesMatching, filtersFor, filtersHtml, indexFailedHtml, liveDownHtml,
   pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
 } from './seasons-board-markup.js';
-import { paintCheckAll, paintFocus } from './seasons-board-paint.js';
+import { paintCheckAll, paintFocus, paintTick } from './seasons-board-paint.js';
 
 
 /**
@@ -94,8 +94,14 @@ import { paintCheckAll, paintFocus } from './seasons-board-paint.js';
  *   `onSelection` because it is a repaint and that is a rebuild (§57.21).
  * @param {(where:{basin:string,year:number,label:string}|null) => void} opts.onWhere
  *   the bar's sentence. Called whenever the year or basin settles.
+ * @param {(id:string) => void} [opts.onOpenStorm]
+ *   a row's chevron was pressed. §57.22b. The board does not open the panel
+ *   itself — it does not know the drawer exists — it says which storm and
+ *   `seasons/index.js` pushes the view.
  */
-export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, onWhere }) {
+export function createSeasonsBoardView({
+  seasons, live, onSelection, onFocus, onWhere, onOpenStorm,
+}) {
   let host = null;
   let bodyEl = null;
 
@@ -569,6 +575,22 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       return;
     }
 
+    /* ==> A ROW'S CHEVRON OPENS THAT STORM'S PANEL. §57.22b. <== It does NOT
+     * tick the storm here, and it does not focus it here either. Both happen,
+     * but they happen on the way IN to the panel (`showStorm`, called from the
+     * panel's own `onEnter`), so there is exactly one path that makes the
+     * globe agree with the panel and it runs whether the reader arrived by
+     * this chevron, by Back, or by a deep link.
+     *
+     * ==> OPENING A STORM DOES NOT REQUIRE HAVING TICKED IT. <== The chevron
+     * is about reading the storm's facts, and those exist whether or not its
+     * track is on the globe. */
+    const openBtn = e.target.closest('[data-open]');
+    if (openBtn) {
+      onOpenStorm?.(openBtn.dataset.open);
+      return;
+    }
+
     if (e.target.closest('.seasons-retry')) {
       /* Checked FIRST, because it is the narrower case. This button sits on a
        * board whose settled index loaded fine and whose season is on screen,
@@ -753,6 +775,51 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
      */
     setFocus(id) {
       setFocus(id);
+    },
+
+    /**
+     * The storm detail panel opened on this storm — make the globe agree.
+     * §57.22b.
+     *
+     * ==> `setFocus` REFUSES AN ID NOBODY HAS TICKED, AND THAT REFUSAL IS BUG
+     * THREE. <== The first version of step 7 routed the panel's `onOpen`
+     * straight at `setFocus`, which for an unticked storm resolves to null and
+     * does nothing. The reader would have got a panel full of Katrina's
+     * figures over a globe with no Katrina on it — the panel and the map
+     * disagreeing, which is the one failure this whole view is careful about,
+     * arriving through the door built to prevent it.
+     *
+     * So opening TICKS FIRST. That is not §57.21a's coupling coming back:
+     * that rule says ticking must not select, and this is the other direction
+     * — the globe shows what the panel is about. The reader can untick it
+     * again the moment they are back on the roster.
+     *
+     * ==> THE ROW IS PATCHED, NOT RE-RENDERED. <== The reader is about to come
+     * Back to this list and it must still be where they left it.
+     */
+    showStorm(id) {
+      if (!id || !entries.some((e) => e.storm.id === id)) return;
+      if (!ticked.has(id)) {
+        ticked.add(id);
+        paintTick(bodyEl, id, true);
+        paintCheckAllNow();
+        pushSelection();
+      }
+      setFocus(id);
+    },
+
+    /**
+     * The season this board currently holds, for the detail panel.
+     *
+     * ==> A FUNCTION THE PANEL CALLS, NOT AN ARRAY IT KEEPS. <== The board
+     * reloads `entries` on every year change, so a captured array would leave
+     * the panel describing last year's storm under this year's heading. The
+     * live copy is returned rather than a clone because the panel only reads
+     * it — cloning a season on every render to defend against a mutation
+     * nobody makes would cost more than it protects.
+     */
+    currentEntries() {
+      return entries;
     },
 
     /** Leaving the archive entirely — drop the globe's tracks and forget the

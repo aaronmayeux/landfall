@@ -31,6 +31,12 @@ import { SEASONS } from '../config/constants.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { formatWind, formatPressure } from '../lib/units.js';
+/* Every "…" in this app pulses through one helper, so a waiting line reads as
+ * thinking rather than as a full stop that lost its way.
+ * `tools/test-loading-dots.mjs` fails the build on a stray one — it caught this
+ * file's report line, and stayed red on `main` for the whole time step 7 was
+ * reverted. */
+import { dotted } from './loading-dots.js';
 
 export const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -130,11 +136,23 @@ export function rowsHtml(rows) {
     .join('')}</dl>`;
 }
 
-/** A §57.25 rule 2 sentence — the record is silent and here is why. Styled as
- *  a note rather than as an error, because it is neither a failure nor a
- *  warning: it is a fact about 1851. */
+/**
+ * A §57.25 rule 2 sentence — the record is silent and here is why. Styled as
+ * a note rather than as an error, because it is neither a failure nor a
+ * warning: it is a fact about 1851.
+ *
+ * ==> THE DOTS ARE APPLIED HERE, AFTER THE ESCAPE, AND THAT ORDER IS THE
+ * WHOLE POINT. <== The first version of this panel called
+ * `absenceHtml(dotted('Checking…'))`, which handed a `<span class="dots">` to
+ * `esc()` — so the waiting line would have rendered with visible angle
+ * brackets on screen. It was never seen, because step 7 was reverted before
+ * anybody opened the panel. Doing it in here means no call site can get the
+ * order wrong, and `loading-dots.js`'s own rule makes it safe: escaping never
+ * produces a `…`, and a trailing `…` in this app means "still working" and
+ * nothing else.
+ */
 export function absenceHtml(text) {
-  return text ? `<p class="detail-note">${esc(text)}</p>` : '';
+  return text ? `<p class="detail-note">${dotted(esc(text))}</p>` : '';
 }
 
 /* ---------------------------------------------------------------------------
@@ -179,7 +197,7 @@ export function headHtml({ storm, facts, provisional }) {
 
   return `
     <header class="season-detail-head">
-      <h1 class="season-detail-name">
+      <h1 class="season-detail-name" tabindex="-1">
         <span class="season-detail-dot" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
         ${esc(name)}
       </h1>
@@ -223,7 +241,16 @@ export function lifeHtml(facts) {
   /* ==> ZERO HOURS AT HURRICANE STRENGTH IS OMITTED, NOT SHOWN AS ZERO. <==
    * A tropical storm that never became a hurricane is not "0 days at hurricane
    * strength" — that phrasing invites the reader to wonder what went wrong.
-   * It simply never was one, and the peak figure above already says so. */
+   * It simply never was one, and the peak figure above already says so.
+   *
+   * ==> AND THESE TWO GUARDS ARE BELT-AND-BRACES RATHER THAN THE MECHANISM.
+   * <== Written down because a mutation run on 2026-08-25 proved it: removing
+   * them changes nothing, because `spanWords` answers null for zero and
+   * `rowsHtml` already drops any row whose value is null. The rule is enforced
+   * once, in `rowsHtml`, for every row on this panel. These stay as the
+   * clearer statement of intent at the call site — but nobody should believe
+   * they are load-bearing, and a comment implying they were would be worse
+   * than no comment. */
   const hur = spanWords(facts.hoursAtHurricane);
   const maj = spanWords(facts.hoursAtMajor);
   if (hur) rows.push(['At hurricane strength', hur]);
@@ -288,9 +315,10 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
   }).join('');
 
   /* ==> THE STRENGTH SHOWN IS THE STRENGTH AT THE COAST, NOT THE PEAK, AND
-   * THAT IS THE SAME CALL THE LANDFALL PIN MAKES. <== `map/layers/season-points.js`
-   * colours a pin by what actually arrived rather than by what the storm once
-   * was, because Katrina peaked at Cat 5 over water and came ashore at Cat 3.
+   * THAT IS THE SAME CALL THE GLOBE MAKES. <== `map/layers/season-points.js`
+   * colours a fix by what was actually there rather than by what the storm
+   * once was, because Katrina peaked at Cat 5 over water and came ashore at
+   * Cat 3.
    * The panel and the globe must agree, or one of them is lying. */
   return `<ul class="season-landfalls">${items}</ul>`;
 }
@@ -303,7 +331,19 @@ export function changeHtml(facts, system, { windowHours }) {
    * SHOWN. <== `season-facts` reports the best window it found, and for a
    * storm that only ever weakened that is a loss. Labelling a loss
    * "intensification" would be wrong, and showing it as zero would imply a
-   * measurement rather than an absence. */
+   * measurement rather than an absence.
+   *
+   * ==> NO STORM IN THE SETTLED RECORD CAN REACH THIS BRANCH, AND IT STAYS
+   * ANYWAY. <== Measured 2026-08-25 across all 3,266 mirrored storms: **zero**
+   * have a best 24-hour window that is a loss, because a storm's first record
+   * is near its weakest and almost anything after it is a gain. So this is not
+   * dead code kept out of caution — it guards **the season still running**,
+   * which arrives from ATCF b-decks rather than HURDAT2 (§57.11) and is not
+   * what that measurement covers. A storm caught mid-decay by an operational
+   * feed is exactly the shape that produces it.
+   *
+   * `tools/test-season-detail.mjs` drives it directly, because there is no
+   * real example to find. */
   if (f && Number.isFinite(f.gainKt) && f.gainKt > 0) {
     rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${spanWords(f.hours)}`]);
     rows.push(['Began', utcStamp(f.fromTime)]);

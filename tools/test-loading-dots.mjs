@@ -139,6 +139,17 @@ ok(
   'and the layer rows\u2019 own loading note',
 );
 
+/* ==> THE ARCHIVE PANEL, AND HERE THE ORDER IS THE ASSERTION. <== §57.22b.
+ * `esc(dotted(text))` runs the escape over markup this file just wrote and
+ * draws visible angle brackets on screen. Step 7's first version did exactly
+ * that; it was reverted before anybody opened the panel, so nothing ever saw
+ * it. The stray scan above cannot catch it — the file uses a helper either
+ * way — so the shape is pinned here. */
+ok(
+  /dotted\(esc\(text\)\)/.test(read('ui/season-detail-markup.js')),
+  'the archive panel escapes FIRST and animates second, never the reverse',
+);
+
 /* ------------------------------------------------------------------------- */
 console.log('');
 for (const f of failures) console.log(`  ✗ ${f}`);

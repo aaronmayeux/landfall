@@ -424,6 +424,24 @@ html[data-seasons="on"] #btn-layers {
   padding-inline: var(--drawer-body-pad);
 }
 
+/* ==> A FLEX LINE, BECAUSE THE ROW HOLDS A CONTROL BESIDE ITS LABEL. §57.22b.
+   <== The label takes the space and the chevron that opens the storm's panel
+   sits at the end. Without this the button wraps under the name on a narrow
+   phone, which puts a 44px target in the middle of the next row's text.
+
+   The master box is deliberately NOT in this rule. It has no chevron — there
+   is no panel about "all of 2005" — and giving it one would be a control that
+   looks like the forty below it and does something else. */
+.seasons-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+/* `min-width: 0` so a long unbroken name ellipses inside the label rather than
+   pushing the chevron off the end of the row. */
+.seasons-row .seasons-check { flex: 1 1 auto; min-width: 0; }
+
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
 /* ==> THE ROW MATCHING THE BRIGHT TRACK ON THE GLOBE. §57.21 item 2. <==
@@ -805,4 +823,57 @@ html[data-seasons="on"] #btn-layers {
 
 @media (hover: hover) {
   .season-report-link:hover { color: var(--accent); }
+}
+
+/* --- the way into one storm's panel — §57.22, §57.22b, §13 ---------------- */
+
+/* ==> THE ROW CARRIES TWO ACTIONS, SO IT CARRIES TWO CONTROLS. <== The label
+   ticks the storm; this opens its panel. They had to be separable — a reader
+   comparing four 2005 storms ticks four of them, and none of those taps should
+   take them off the roster and into a panel.
+
+   A real <button>, so Tab reaches it after the checkbox on every row and Enter
+   opens. That is §13's third input path, obtained as a side effect of using
+   the right element rather than as a special case.
+
+   ==> FULL HEIGHT AND FULL WIDTH OF THE TOUCH MINIMUM, MEASURED RATHER THAN
+   ASSUMED. <== `tools/seasons-row-check.mjs` asserts the rendered box is at
+   least `--touch-target` on both axes and does not overlap the label beside
+   it. The chevron GLYPH is 8px; the thing a thumb lands on is 44. */
+.seasons-open {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  min-height: var(--touch-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.seasons-open:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
+@media (hover: hover) {
+  .seasons-open:hover { color: var(--text-primary); }
+}
+
+/* Two borders and a rotation rather than a shipped icon: it inherits the
+   button's colour, so it goes sepia with everything else the moment the
+   palette is forced, with no second place to remember. Same construction as
+   the report link's outward arrow, pointed a different way — one says "opens
+   here", the other says "leaves the app". */
+.seasons-open-chevron {
+  width: 8px;
+  height: 8px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+  margin-left: -2px;
 }

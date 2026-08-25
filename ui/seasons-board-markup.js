@@ -299,6 +299,29 @@ export function filtersHtml({ filters, filter }) {
  * ==> THE WHOLE ROW IS STILL THE TICK TARGET. <== Aaron's call. A 44px box
  * inside a 320px row is a target most thumbs miss, so the row stays a
  * `<label>` and must stay one.
+ *
+ * ==> AND IT NOW CARRIES A SECOND CONTROL: THE CHEVRON THAT OPENS THE STORM'S
+ * PANEL. §57.22, §57.22b. <== The two actions had to be separable — a reader
+ * comparing four 2005 storms on the globe ticks four of them, and none of
+ * those taps should take them off the roster and into a panel.
+ *
+ * ==> THIS IS THE EXACT MARKUP THAT WAS UNDER SUSPICION FOR A DAY. <== Step 7
+ * added it, glass reported every tap target in this drawer misbehaving, and
+ * the whole step was reverted with the cause unknown. The row was then rebuilt
+ * from scratch for §57.21b and confirmed on glass — which cleared the row and
+ * is the evidence this is being built on. If taps misbehave again, the chevron
+ * is now the narrowest remaining suspect and `tools/seasons-row-check.mjs`
+ * measures its box.
+ *
+ * A real `<button>` rather than a tap zone, so the keyboard gets it for free —
+ * Tab reaches the checkbox and then the chevron on every row, in reading
+ * order, and Enter opens. That is §13's third input path, obtained as a side
+ * effect of using the right element rather than as a special case.
+ *
+ * ==> IT SITS OUTSIDE THE `<label>`, AND THAT IS LOAD-BEARING RATHER THAN
+ * TIDY. <== Nested inside, every press of it would ALSO toggle the checkbox it
+ * was nested in, because that is a label's whole job — so opening a storm
+ * would silently draw or undraw its track on the way past.
  */
 export function rowHtml({ storm, facts, on }) {
   const color = categoryColor(facts.peakCategory ?? null, 'tropical', null);
@@ -333,6 +356,10 @@ export function rowHtml({ storm, facts, on }) {
             </span>
           </span>
         </label>
+        <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
+                aria-label="Open ${esc(displayName(storm))}">
+          <span class="seasons-open-chevron" aria-hidden="true"></span>
+        </button>
       </li>`;
 }
 

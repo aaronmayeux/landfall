@@ -276,44 +276,66 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> STEP 7 WAS BUILT, SHIPPED, AND REVERTED THE SAME DAY. GLASS SAID THE
-SEASONS DRAWER WAS UNUSABLE. <==** Aaron, 2026-08-25: *"every tap target in the
-seasons drawer is fucked up — pretty much anywhere I touch closes the drawer or
-does something I don't intend."* Reverted whole rather than patched, per §12's
-rule, back to the 6b state he had already confirmed.
+**==> STEP 7 IS BACK. THE STORM DETAIL PANEL IS SHIPPED AND HAS NOT BEEN SEEN
+ON GLASS. <==** It was built, reverted whole the same day for a tap fault
+nobody could reproduce, and is now rebuilt. **`SPEC-SEASONS-BUILD.md` §57.22b
+is the as-built account and carries the whole story — read that, not this.**
 
-**==> DO NOT REBUILD STEP 7 UNTIL THIS IS DIAGNOSED. THE CAUSE IS NOT KNOWN.
-<==** Four things were checked in the sandbox and all four came back clean:
-the roster row hit-tests correctly at 390×844 (label 324 px, chevron 44 px, no
-overlap), `seasons/seasons.css` has no unbalanced brace, `data-seasons="on"` is set at
-tap time, and a synthetic tap outside the drawer did not close it.
+**WHAT CLEARED IT TO BE REBUILT:** the two suspects were the roster row's
+markup and the years split, and §57.21b rebuilt both from scratch and you
+confirmed them on glass. That leaves the per-row chevron as the narrowest
+remaining suspect, and `tools/seasons-row-check.mjs` — which did not exist the
+first time — now measures its box in a real browser.
 
-**THAT LAST RESULT IS WORTHLESS AND THE NEXT SESSION MUST NOT TRUST IT.** The
-sandbox cannot load the basemap, so MapLibre may not be firing `click` at all —
-the check was run in the one environment that cannot have the bug. **This is
-the `styleLoaded: false` trap this file already names elsewhere, arriving at a
-new door.**
+**==> THREE BUGS WERE FOUND IN THE REVERTED CODE AND NONE HAD EVER BEEN SEEN,
+BECAUSE THE PANEL WAS REVERTED BEFORE ANYBODY OPENED IT. <==** All three are in
+§57.22b. The one worth knowing here is the third: the panel's `onOpen` was
+routed at `setFocus`, which **refuses a storm nobody has ticked** — so opening
+an unticked storm would have drawn Katrina's full panel over a globe with no
+Katrina on it. `showStorm` ticks first now, patches the one row rather than
+rebuilding the roster, then focuses. **Eleven mutations were run across this
+step and all eleven bite.**
 
-**THE ONE REAL FINDING, UNEXPLAINED:** at 390×844 the drawer body is **424 px
-of an 844 px screen**, and the roster's first row starts at y=678. More than
-half of what a thumb lands on is not drawer at all — it is globe. Whether that
-is the cause or a long-standing fact about this drawer was not established.
+**GLASS, AND THE FIRST TWO ARE THE ONES MOST LIKELY TO COME BACK WRONG:**
 
-**THE PRIME SUSPECTS ARE THE TWO COMMITS THAT TOUCHED THE ROW**, `c381b46` and
-`2b2dc55`: the roster row gained a second child (a `<button>` chevron beside
-the `<label>`), and the board's year and filter logic moved out to a new file of its own.
-Both are in `git log` and can be read rather than re-derived.
+1. **DO THE TAPS BEHAVE.** This is the third data point on that fault and the
+   only one with the chevron in it. Deliberately: tick a row, untick it, press
+   a chevron, press Back, press the master box, press a filter. **If taps go
+   wrong here the chevron is convicted** and the fix is to delete it and reach
+   the panel another way. If they are fine, the fault is dead and this closes.
+2. **THE FIGURES, HAND-CHECKED AGAINST ONE STORM.** That is §57.22's whole
+   done-condition. Open Katrina (2005) beside NOAA's own page: peak winds and
+   when, lowest pressure, lifespan, hours at hurricane and major strength, ACE,
+   every landfall, the fastest strengthening window. **Her header should say
+   Cat 5 and her landfall row Cat 3** — that is the strength at the coast, and
+   it is the same call the globe's dots make.
+3. **The honesty line.** Under the storm's name, above everything it qualifies,
+   and it cannot be folded away. On a 2026 storm it should say the OPPOSITE —
+   operational figures that will change — rather than "finalised after the
+   season".
+4. **An 1851 storm.** Nothing on that panel should be a dash or a zero. Every
+   absence is a sentence about the record: no wind speed was recorded, no
+   pressure survives, wind field size was not recorded before 2004, NOAA did
+   not begin writing reports until 1958.
+5. **The report link.** Katrina has one; most storms do not, and that is the
+   ordinary answer rather than an error. It is the only thing in Seasons that
+   leaves the app and the only thing styled to look like it does.
+6. **Keyboard pass, mouse untouched.** Tab reaches each row's checkbox and then
+   its chevron, in reading order. Enter on the chevron opens. Focus should land
+   on the storm's name inside the panel, not vanish.
 
-**THE ONE QUESTION THAT WOULD SPLIT IT:** tapping a storm's NAME in the list
-should tick its box and brighten its track. If that closes the drawer instead,
-the row markup is the fault. If it ticks correctly and something else misfires,
-the fault is elsewhere and the row is innocent.
+**WHAT IS DELIBERATELY NOT BUILT:** the tier badge and the way into the
+advisory scrubber. Tier 2 does not exist until steps 11 and 12, so a badge
+would be a control with one state and a link to nothing. §57.30 step 7 says so.
 
-**WHAT SURVIVED THE REVERT AND SHOULD NOT BE REBUILT.** `seasons/reports.json`
-(1,524 storms back to 1958), `tools/tcr-index.mjs` and its monthly job,
-`tools/tcr-probe.mjs`, and §57.22a's measurements. **None of it is UI and none
-of it ever touched the drawer.** A future step 7 has its report lookup already
-solved and already deployed.
+**==> AND THE BOARD'S LOADING CUT IS NOW OVERDUE RATHER THAN PENDING. <==**
+`SPEC.md` §12 said it was the next thing to happen to `ui/view-seasons-board.js`
+**before any feature**, and this feature went in ahead of it anyway. That was a
+call, not an oversight, and the row records the reasoning: a 200-line state
+refactor riding in the same push as a feature that was reverted once for an
+unreproducible fault would make a break either. **The file went in at 769 and
+came back at 836.** The cut is unchanged and should be its own push with no
+behaviour change in it — **after step 7 has been judged on glass, not before.**
 
 **==> SEASONS UI POLISH, PUSH 1 OF 2: THE GLOBE. SHIPPED, NOT YET SEEN ON
 GLASS. <==** Aaron's list, 2026-08-25. Checking a storm and selecting one are
@@ -409,12 +431,14 @@ nothing with the roster's own. It was not taken here because this pass changed
 eight behaviours at once. **It is the next thing that happens to that file,
 before any feature.**
 
-**AND ONE RED SUITE ON MAIN IS NOT FROM THIS PASS.**
-`tools/test-loading-dots.mjs` has been failing on `ui/season-detail-markup.js`
-since step 7 was reverted — the file survived the revert and nothing imports
-it. Either it gets its waiting sentence routed through `ui/loading-dots.js`, or
-it is dead code and §12's retire-cleanly rule says delete it. Confirmed
-pre-existing by stashing this pass and re-running.
+**AND THE ONE RED SUITE ON MAIN IS GREEN AGAIN.**
+`tools/test-loading-dots.mjs` had been failing on `ui/season-detail-markup.js`
+for the whole time step 7 was reverted — the file survived the revert and
+nothing imported it, so its waiting sentence ended in a bare ellipsis. Step 7's
+rebuild routes it through `ui/loading-dots.js` and the suite gained an
+assertion on the ORDER (§57.22b): its own stray scan is file-level and cannot
+tell `dotted(esc(x))` from `esc(dotted(x))`, and the second draws visible angle
+brackets on screen.
 
 **THREE VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an

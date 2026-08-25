@@ -323,8 +323,19 @@ ok(h.calls.includes('drawer.go:seasons-board'),
   '==> THE BOARD OPENS ON ENTRY. <== §57.30 step 5. The archive globe is no '
   + 'longer empty, so the drawer is navigated rather than closed');
 ok(h.calls.includes('recenter'), 'and the live selection was dropped');
-ok(h.calls.filter((c) => c.startsWith('drawer.register')).length === 1,
-  'the board is registered exactly once');
+/* ==> TWO VIEWS ARE REGISTERED, AND THE SECOND ONE IS STEP 7's PANEL.
+ * §57.22b. <== A view the drawer does not know is a `push` that silently does
+ * nothing — which is the exact fault this assertion caught the board having.
+ * Registering both in the same breath means there is one place to forget
+ * rather than two, and this counts both so that stays true. */
+const registeredHere = h.calls.filter((c) => c.startsWith('drawer.register'));
+eq(registeredHere.length, 2,
+  'the archive registers exactly its two views, once each');
+ok(registeredHere.includes('drawer.register:seasons-board'),
+  'the board, which is what `drawer.go` navigates to');
+ok(registeredHere.includes('drawer.register:season-detail'),
+  '==> AND THE STORM PANEL, OR ITS CHEVRON PUSHES AT AN ID THE DRAWER DOES '
+  + 'NOT KNOW AND NOTHING HAPPENS <==');
 eq(docEl.getAttribute('data-seasons'), 'on', 'the chrome knows to move up off the bar');
 ok(body.children.some((c) => c.id === 'seasons-bar'), 'the bar is on screen');
 
@@ -426,7 +437,9 @@ eq(second.calls.filter((c) => c.startsWith('drawer.register')).length, 0,
   '==> A SECOND ENTRY REGISTERS NOTHING — the board is built once per load <==');
 ok(second.calls.includes('drawer.go:seasons-board'),
   'but it is still navigated to, so the reader lands on the board again');
-eq(registered.length, 1, 'exactly one board view has ever been built');
+eq(registered.length, 2, 'exactly two views have ever been built across both entries');
+eq(registered.filter((d) => d.id === 'season-detail').length, 1,
+  'and only one of them is the storm panel');
 handle2.leave();
 
 /* =========================================================================

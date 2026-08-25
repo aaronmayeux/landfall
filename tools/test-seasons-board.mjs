@@ -169,19 +169,21 @@ async function board({ year = null } = {}) {
   const drawn = [];
   const where = [];
   const focus = [];
+  const opened = [];
   const view = createSeasonsBoardView({
     seasons,
     live,
     onSelection: (sel) => drawn.push(sel.map((e) => e.storm.id)),
     onFocus: (id) => focus.push(id),
     onWhere: (w) => where.push(w),
+    onOpenStorm: (id) => opened.push(id),
   });
   if (year != null) view.setSeason(year);
   const host = new El('div');
   view.mount(host);
   await settle();
   const body = host.querySelector('#seasons-board-body');
-  return { view, host, body, drawn, where, focus };
+  return { view, host, body, drawn, where, focus, opened };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -912,6 +914,69 @@ const text = (body) => body.innerHTML;
   eq('no further than it has to be — a row already on screen must not be '
     + 'yanked out from under a thumb on a repaint',
   row?.scrolledIntoView?.block, 'nearest');
+}
+
+/* ---------------------------------------------------------------------------
+ * THE CHEVRON, AND THE STORM PANEL'S WAY BACK TO THE GLOBE. §57.22b.
+ *
+ * ==> THIS IS THE MARKUP THAT WAS UNDER SUSPICION FOR A DAY. <== Step 7 added
+ * a per-row `<button>`, glass reported every tap target in the drawer
+ * misbehaving, and the whole step was reverted with the cause unknown. The row
+ * was then rebuilt from scratch and confirmed on glass, which cleared it. What
+ * this suite can prove is the part a browser is not needed for: that the
+ * chevron does its own job and NOT the label's.
+ * ------------------------------------------------------------------------ */
+{
+  const { view, body, opened, focus, drawn } = await board({ year: 2005 });
+  const first = rows(body)[0];
+  const id = first.dataset.storm;
+  const chevron = body.querySelector(`[data-open="${id}"]`);
+
+  ok('every row carries a chevron that opens the storm', chevron !== null);
+  ok('and it is a real button, so Tab reaches it and Enter presses it (§13)',
+    String(chevron?.tagName || '').toLowerCase() === 'button');
+  ok('named for a screen reader, because a bare chevron is a control called '
+    + 'nothing', /^Open /.test(chevron?.getAttribute('aria-label') || ''));
+
+  /* ==> IT SITS OUTSIDE THE `<label>`, AND THAT IS THE ASSERTION. <== Nested
+   * inside, every press would ALSO toggle the checkbox it was nested in,
+   * because that is a label's whole job — so opening a storm would silently
+   * draw or undraw its track on the way past. The markup cannot say this in a
+   * comment and be believed; this says it. */
+  ok('==> AND IT IS NOT INSIDE THE ROW\'S LABEL. <== Nested there, opening a '
+    + 'storm would silently tick or untick it on the way past',
+  chevron?.closest?.('label') == null);
+
+  const before = drawn.length;
+  body.fire('click', chevron);
+  eq('pressing it asks the caller to open that storm', opened.at(-1), id);
+  eq('and the board itself does not tick anything on the press — the panel '
+    + 'owns that, so there is one path rather than two', drawn.length, before);
+
+  /* ==> `showStorm` IS WHAT MAKES THE GLOBE AGREE, AND `setFocus` ALONE
+   * CANNOT. <== `setFocus` refuses an id nobody has ticked, on purpose. The
+   * first version of step 7 routed the panel's `onOpen` straight at it, so
+   * opening an unticked storm would have drawn a panel full of Katrina's
+   * figures over a globe with no Katrina on it. */
+  eq('nothing is drawn yet', drawn.at(-1) ?? [], []);
+  view.showStorm(id);
+  ok('==> OPENING AN UNTICKED STORM DRAWS IT. <== A panel about a storm the '
+    + 'globe is not showing is the panel and the map disagreeing',
+  (drawn.at(-1) || []).includes(id));
+  eq('and focuses it, so it is the bright one', focus.at(-1), id);
+  eq('the row\'s own box is ticked to match, so Back lands on a roster that '
+    + 'agrees with the globe', body.querySelector(`[data-storm="${id}"]`).checked, true);
+
+  /* Opening a storm that is ALREADY ticked must not re-push a season's worth
+   * of geometry — focus is a repaint and a tick is a rebuild (§57.21). */
+  const settled = drawn.length;
+  view.showStorm(id);
+  eq('opening it again pushes no new geometry', drawn.length, settled);
+
+  /* A storm this season does not hold is refused rather than half-applied. */
+  view.showStorm('AL011851');
+  eq('a storm the season does not hold changes nothing', drawn.length, settled);
+  eq('and does not steal the focus', focus.at(-1), id);
 }
 
 /* ------------------------------------------------------------------------ */
