@@ -68,12 +68,6 @@
 import { SEASONS } from '../config/constants.js';
 import { stormFacts, seasonFacts } from '../lib/season-facts.js';
 import { rosterFor } from '../lib/season-names.js';
-/* ==> THE YEAR AND FILTER QUESTIONS MOVED OUT ON STEP 7, WHICH IS THE THIRD
- * TIME THIS FILE CROSSED §12'S CEILING IN THREE PASSES. <== They were reading
- * module variables, which is what made them look like state; they are not —
- * "does this basin have a season in progress" is a question about two objects.
- * `ui/seasons-years.js` says so at length. This file keeps the state and asks. */
-import * as years from './seasons-years.js';
 import {
   esc, filtersFor, filtersHtml, footprintNoteHtml, indexFailedHtml,
   liveDownHtml, pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
@@ -96,7 +90,7 @@ import {
  * @param {(where:{basin:string,year:number,label:string}|null) => void} opts.onWhere
  *   the bar's sentence. Called whenever the year or basin settles.
  */
-export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, onWhere, onOpenStorm }) {
+export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, onWhere }) {
   let host = null;
   let bodyEl = null;
 
@@ -169,6 +163,35 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
 
   /** The season in progress, or null. Read off the b-deck FILENAMES by the
    *  route, never off the reader's clock (§58.1). */
+  function liveYear() {
+    return liveIndex?.year ?? null;
+  }
+
+  /** Does this basin have a live half at all? `SEASONS.liveBasins` answers,
+   *  and a basin missing from it has none — the honest state for the rest of
+   *  the world until step 13. */
+  function basinHasLive(b) {
+    return Boolean(SEASONS.liveBasins[b]);
+  }
+
+  /** Every year this basin offers, newest first. The live season sits at the
+   *  top when there is one, and only when the settled record has not already
+   *  caught up to it — in the spring both roads briefly know the same year and
+   *  the reviewed one wins, because it is the better record of the two. */
+  function yearsFor(b) {
+    const settled = seasons.seasonsIn(index, b);
+    const ly = liveYear();
+    if (ly == null || !basinHasLive(b) || settled.includes(ly)) return settled;
+    return [ly, ...settled];
+  }
+
+  /** Is this the year still running? The one place that question is answered,
+   *  because it decides the road, the filters, the stamp and the ghosts. */
+  function isLive(b, y) {
+    return liveYear() != null && Number(y) === liveYear() && basinHasLive(b)
+      && !seasons.seasonsIn(index, b).includes(Number(y));
+  }
+
   /* --- selection ---------------------------------------------------------- */
 
   function selectedEntries() {
@@ -293,8 +316,8 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
      * is a real Atlantic year with no Pacific half. Falling back to the newest
      * is right; silently loading a file that is not there would spend the
      * reader's one attempt on a 404. */
-    const list = years.yearsFor(seasons, index, liveIndex, basin);
-    if (year == null || !list.includes(year)) year = list[0] ?? null;
+    const years = yearsFor(basin);
+    if (year == null || !years.includes(year)) year = years[0] ?? null;
 
     render();
     loadSeasonNow();
@@ -325,7 +348,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     if (indexState !== 'ok' || basin == null || year == null) return;
 
     const token = ++loadToken;
-    const wasLive = years.isLive(seasons, index, liveIndex, basin, year);
+    const wasLive = isLive(basin, year);
     seasonState = 'loading';
     entries = [];
     score = null;
@@ -380,7 +403,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     roster = rosterFor(
       basin, year,
       entries.map((e) => e.storm.name).filter(Boolean),
-      years.liveYear(liveIndex)
+      liveYear()
     );
     seasonState = 'ok';
     render();
@@ -401,6 +424,15 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
    * snapping to the top every time a checkbox moves.
    * ---------------------------------------------------------------------- */
 
+  function visibleEntries() {
+    if (filter === 'majors') {
+      return entries.filter((e) => Number.isFinite(e.facts.peakWindKt)
+        && e.facts.peakWindKt >= SEASONS.majorKt);
+    }
+    if (filter === 'landfalls') return entries.filter((e) => e.facts.landfalls.length > 0);
+    return entries;
+  }
+
   function rosterHtml() {
     /* ==> TOLD WHAT TO DRAW, NEVER WHAT THE STATE IS. <== This function is
      * now four lines because the markup went to `seasons-board-markup.js`
@@ -419,7 +451,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       reason: seasonReason,
       year,
       provisional,
-      rows: years.visibleEntries(entries, filter),
+      rows: visibleEntries(),
       anyEntries: entries.length > 0,
       ticked,
       ghosts: filter === 'all' ? roster : null,
@@ -449,9 +481,9 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       basins: seasons.basinsIn(index),
       labelFor: (b) => seasons.basinLabel(index, b),
       basin,
-      years: years.yearsFor(seasons, index, liveIndex, basin),
+      years: yearsFor(basin),
       year,
-      liveYear: years.liveYear(liveIndex),
+      liveYear: liveYear(),
     });
 
     const scorecard = scoreHtml({
@@ -464,18 +496,10 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
 
     const filters = filtersHtml({ filters: filtersFor(provisional), filter });
 
-    /* ==> HOISTED OUT OF THE TEMPLATE LITERAL BECAUSE `tools/css-orphan-check.mjs`
-     * READS `years.basinHasLive` AS A CSS CLASS. <== A blunt text scan is the
-     * right instrument — its own header says so, and the alternative is being
-     * clever enough to miss a real unstyled class — so the fix belongs here
-     * rather than in an exemption list. It reads better as a named value
-     * anyway. */
-    const hasLive = years.basinHasLive(basin);
-
     bodyEl.innerHTML = `
       ${picker}
       ${liveDownHtml({
-        hasLive,
+        hasLive: basinHasLive(basin),
         retrying: liveRetrying,
         reason: liveReason,
       })}
@@ -511,17 +535,17 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
        * back to that basin's newest year is better than refusing the switch.
        * `yearsFor` rather than the settled list, so switching basins inside
        * the season in progress stays inside it. */
-      const list = years.yearsFor(seasons, index, liveIndex, basin);
-      if (!list.includes(year)) year = list[0] ?? null;
+      const years = yearsFor(basin);
+      if (!years.includes(year)) year = years[0] ?? null;
       loadSeasonNow();
       return;
     }
 
     const step = e.target.closest('[data-step]');
     if (step) {
-      const list = years.yearsFor(seasons, index, liveIndex, basin);
-      const i = list.indexOf(year);
-      const next = step.dataset.step === 'older' ? list[i + 1] : list[i - 1];
+      const years = yearsFor(basin);
+      const i = years.indexOf(year);
+      const next = step.dataset.step === 'older' ? years[i + 1] : years[i - 1];
       if (next == null) return;
       year = next;
       loadSeasonNow();
@@ -537,18 +561,6 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
        * ticked storm vanishing off the globe because a filter moved would be
        * the panel and the map disagreeing about what is selected. */
       render();
-      return;
-    }
-
-    const openBtn = e.target.closest('[data-open]');
-    if (openBtn) {
-      /* ==> OPENING A STORM DOES NOT REQUIRE HAVING TICKED IT. <== The chevron
-       * is about reading the storm's facts, and those exist whether or not its
-       * track is on the globe. `onOpenStorm` focuses it as a side effect
-       * (see `seasons/index.js`), which is honest: if the reader is now looking
-       * at a panel about Katrina, Katrina is what the globe should be
-       * showing. */
-      onOpenStorm?.(openBtn.dataset.open);
       return;
     }
 
@@ -665,20 +677,6 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
      */
     setFocus(id) {
       setFocus(id);
-    },
-
-    /**
-     * The season this board currently holds, for the detail panel.
-     *
-     * ==> A FUNCTION THE PANEL CALLS, NOT AN ARRAY IT KEEPS. <== The board
-     * reloads `entries` on every year change, so a captured array would leave
-     * the panel describing last year's storm under this year's heading. The
-     * live copy is returned rather than a clone because the panel only reads
-     * it — cloning a season on every render to defend against a mutation
-     * nobody makes would cost more than it protects.
-     */
-    currentEntries() {
-      return entries;
     },
 
     /** Leaving the archive entirely — drop the globe's tracks and forget the

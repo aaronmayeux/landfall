@@ -6699,22 +6699,4 @@ export const SEASONS = Object.freeze({
    *  first. 826 of 3,266 storms have a wind field — three quarters of the
    *  archive gets the sentence instead of a shape. */
   windFieldFirstSeason: 2004,
-
-  /** ==> THE FIRST YEAR NOAA WROTE A REPORT ON A STORM, AND IT ONLY EVER
-   *  PICKS A SENTENCE. <== §57.22a.
-   *
-   *  Same rule as `windFieldFirstSeason` above and worth restating because the
-   *  temptation is identical: this NEVER decides whether to look a report up.
-   *  `seasons/reports.json` is the only thing that answers that, storm by
-   *  storm. This chooses between *"NOAA did not begin writing these until
-   *  1958"* — a fact about the record that teaches the reader something — and
-   *  *"NOAA did not write one about this storm"*, which is what a 1994 gap
-   *  means.
-   *
-   *  MEASURED 2026-08-25 by `tools/tcr-index.mjs` against NOAA's own two
-   *  indexes: 1,524 of 3,266 storms have one, the earliest is 1958, and
-   *  coverage is partial even in modern seasons — 2005 has 31 against 48
-   *  storms. So "no report for this one" is the ORDINARY answer, not an error,
-   *  and §57.25 rule 2 rather than §5's failure states is what applies. */
-  reportsFirstSeason: 1958,
 });

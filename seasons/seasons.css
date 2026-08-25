@@ -346,17 +346,6 @@ html[data-seasons="on"] #btn-layers {
   padding: 0;
 }
 
-/* ==> A FLEX LINE, BECAUSE THE ROW HOLDS A CONTROL BESIDE ITS LABEL. <== The
-   label takes the space and the chevron that opens the storm's panel sits at
-   the end. Without this the button wraps under the name on a narrow phone. */
-.seasons-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-tight);
-}
-
-.seasons-row .seasons-check { flex: 1 1 auto; min-width: 0; }
-
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
 /* ==> THE ROW MATCHING THE BRIGHT TRACK ON THE GLOBE. §57.21 item 2. <==
@@ -645,52 +634,4 @@ html[data-seasons="on"] #btn-layers {
 
 @media (hover: hover) {
   .season-report-link:hover { color: var(--accent); }
-}
-
-/* --- the way into one storm's panel — §57.22, §13 ------------------------- */
-
-/* ==> THE ROW CARRIES TWO ACTIONS, SO IT CARRIES TWO CONTROLS. <== The label
-   ticks the storm and focuses it; this opens its panel. They had to be
-   separable — a reader comparing four 2005 storms ticks four of them, and none
-   of those taps should take them off the roster and into a panel.
-
-   A real <button>, so Tab reaches it after the checkbox on every row and Enter
-   opens. That is §13's third input path, obtained as a side effect of using
-   the right element rather than as a special case. */
-.seasons-open {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--touch-target);
-  min-height: var(--touch-target);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.seasons-open:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: -2px;
-  border-radius: var(--radius);
-}
-
-@media (hover: hover) {
-  .seasons-open:hover { color: var(--text-primary); }
-}
-
-/* Two borders and a rotation rather than a shipped icon: it inherits the
-   button's colour, so it goes sepia with everything else the moment the
-   palette is forced, with no second place to remember. Same construction as
-   the report link's outward arrow, pointed a different way — one says "opens
-   here", the other says "leaves the app". */
-.seasons-open-chevron {
-  width: 8px;
-  height: 8px;
-  border-top: 2px solid currentColor;
-  border-right: 2px solid currentColor;
-  transform: rotate(45deg);
-  margin-left: -2px;
 }
