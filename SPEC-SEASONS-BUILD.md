@@ -1455,15 +1455,56 @@ media query would hand that rail one-line rows it cannot fit and truncate every
 name in it. It also keeps this off any device branch (§13) — a narrow window on
 a desktop gets two lines because it is narrow, not because of what it is.
 
-**THE ARCHIVE'S SHEET OPENS TALLER THAN THE APP'S.** 75vh against 60, scoped to
-this view rather than to the archive. Measured at 390x844 the seasons body was
-424px of an 844px screen with the first roster row starting at y=678 — more
-than half of what a thumb lands on was globe, on the one screen in this app
-whose whole content is a list, and the picker, scorecard and filters above it
-are fixed furniture. It is the SAME `min()` expression the 60vh rule uses so
-the two cannot disagree about the keyboard inset. **A future archive view that
-is three lines long should not inherit it**, which is why it is keyed on
-`data-view`.
+**THE ARCHIVE'S SHEET IS A FIXED HEIGHT, TALLER THAN THE APP'S.** `66vh`
+against the dashboard's 60, scoped to this view rather than to the archive —
+**a future archive view that is three lines long should not inherit it**, which
+is why it is keyed on `data-view`. The number lives once, in
+`--seasons-sheet-h`; everything else in the rule derives from it.
+
+**IT SHIPPED AS `max-height` ALONE AND THAT WAS THE FAULT.** A ceiling is not a
+size: a season with four storms was shorter than one with twenty-eight, so
+stepping the year resized the sheet and the `+`/`−` buttons walked up and down
+the screen — on the one control in this view a reader presses repeatedly. Aaron
+on glass, 2026-08-25. `height` is declared alongside `max-height` now, both
+reading the SAME `min(var(--seasons-sheet-h), calc(100dvh - keyboard - comfy))`
+expression so the two can never disagree about the keyboard inset, and each
+declared twice — plain `vh` first — so a browser without `dvh` keeps a height
+rather than dropping the declaration and falling back to content. The roster's
+scroller absorbs the variation instead of the sheet doing it. It is the shape
+`ui/panels.css` already uses on the home dashboard, for the same reason.
+
+**AND IT STEADIES THE CAMERA, WHICH IS THE LARGER WIN.** `main.js`'s
+`archiveOffset()` measures this drawer at call time to decide where a flight
+centres (§57.21c), so a height that depended on the open year meant the same
+storm framed differently depending on where the reader came from. A constant
+height makes that offset a constant.
+
+**WHERE 66vh CAME FROM.** Aaron's number is "about four storm names", and the
+furniture above the roster is not a fixed height, so no `vh` figure yields
+exactly four rows on every year — this one is measured rather than reasoned to.
+`tools/seasons-height-measure.mjs` mounts the real board through the real
+drawer against the real 2005 file and reports, at 390x844: **379.0px of
+furniture** (a 60px drawer header, a 94px basin-and-year picker, a 94px
+scorecard, 42px of filters, 89px of gaps and padding) over a **44.9px row
+pitch**, so four names need **558.4px — 66.2vh**. The previous 75vh showed 5.7.
+**Re-run that tool after anything changes the furniture**; §57.30 step 9 adds a
+filter and a near-home slider to this same view and both land above the roster.
+
+**THE COST, ACCEPTED RATHER THAN OVERLOOKED:** a quiet year with two storms now
+leaves empty sheet below its roster where it used to shrink to fit. That is the
+trade the dashboard already made — a moving control is felt far more than a
+short list with room under it.
+
+**`tools/seasons-height-check.mjs` IS THE GATE, AND IT IS A COMPARISON BECAUSE
+THE BUG WAS ONE.** It opens the busiest Atlantic season (2005, 31 storms) and
+the quietest (1914, 1) and asserts the sheet and the year stepper are within a
+pixel in both — measuring one year cannot see this fault at all. It asks the
+browser because `tools/css-orphan-check.mjs` was green the whole time the sheet
+was resizing: a stylesheet scan proves a rule is present, never that it wins.
+**One mutation survived the layout assertions and is recorded rather than
+smoothed over:** deleting the plain-`vh` fallback changes nothing in chromium,
+which supports `dvh`, so that pair is asserted against the stylesheet TEXT
+instead — which proves it is still there and cannot prove it works.
 
 **CHANGING A FILTER CLEARS THE CHECKS, AND THIS REVERSES A DOCUMENTED
 DECISION.** Aaron's call. `onClick` argued that a filter narrows what the

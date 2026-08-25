@@ -355,6 +355,15 @@ if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [
     printf '130 board assertions passed. Only geometry says it. Push refused.\n'
     fail=1
   fi
+  printf 'pre-push: checking the archive sheet holds one height...\n'
+  if ! bash tools/with-server.sh node tools/seasons-height-check.mjs; then
+    printf '\nThe archive sheet resizes with the year, so the year stepper walks up\n'
+    printf 'and down the screen and has to be hunted for after every press. That is\n'
+    printf '`max-height` without `height` — a ceiling, not a size. Only layout says\n'
+    printf 'it: a stylesheet scan proves the rule is present, never that it wins.\n'
+    printf 'Push refused.\n'
+    fail=1
+  fi
   printf 'pre-push: checking the home setup panel in a browser...\n'
   if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
     printf '\nThe three ways to set a home must READ as peers — one shared style,\n'

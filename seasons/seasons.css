@@ -147,21 +147,56 @@ html[data-seasons="on"] #btn-layers {
     bottom: var(--seasons-bar-h);
   }
 
-  /* ==> THE ARCHIVE'S SHEET OPENS TALLER THAN THE APP'S. §57.21b item 3. <==
-     Measured at 390x844 the seasons body was 424px of an 844px screen with the
-     first roster row starting at y=678 — more than half of what a thumb lands
-     on was globe, on the one screen in this app whose whole content is a list.
-     The picker, the scorecard and the filters are fixed furniture above it, so
-     every pixel the sheet does not have comes off the storms.
+  /* ==> THE ARCHIVE'S SHEET IS A FIXED HEIGHT, NOT A CONTENT HEIGHT.
+     §57.21b item 3, corrected by push 2 item 1. <==
 
-     ==> IT IS SCOPED TO THIS VIEW, NOT TO THE ARCHIVE. <== A future archive
-     view that is three lines long should not be 75% of a screen. And it is the
-     SAME `min()` shape the 60vh rule uses so the two cannot disagree about the
-     keyboard: a sheet lifted by a keyboard it does not subtract runs off the
-     top of the screen and takes its own header with it. */
+     ==> THE ONE LINE TO CHANGE IS `--seasons-sheet-h` BELOW. <== Everything
+     else here is derived from it, deliberately, so the number lives once.
+
+     THE FAULT IT FIXES. `max-height` alone is a CEILING, and a year with four
+     storms is shorter than a year with twenty-eight — so stepping the year
+     resized the sheet, and the `+`/`−` buttons moved with it. On the one
+     control a reader presses repeatedly, every press moved the target. Aaron
+     on glass 2026-08-25. It is the same fault `ui/panels.css` fixed on the
+     home dashboard, and it takes the same shape: `height` as well as
+     `max-height`, both reading the SAME `min()` expression, so the two can
+     never disagree about the keyboard. The roster's own scroller absorbs the
+     variation instead of the sheet doing it.
+
+     ==> AND IT STEADIES THE CAMERA, WHICH IS THE LARGER WIN. <== The same
+     argument `ui/panels.css` makes about the dashboard applies here and is not
+     a repetition of it: `main.js`'s `archiveOffset()` measures this drawer at
+     call time to decide where a flight should centre, so a sheet whose height
+     depends on which year is open means the same storm frames differently
+     depending on where the reader came from. A constant height makes that
+     offset a constant too.
+
+     WHERE 66vh CAME FROM, AND IT IS A GLASS DIAL RATHER THAN A LAW. Aaron's
+     number is "about four storm names". The furniture above the roster is not
+     a fixed height, so no `vh` figure yields exactly four rows on every year —
+     but this one is measured rather than guessed. At 390x844 against real 2005
+     data, `tools/seasons-height-measure.mjs` reports 379.0px of furniture
+     (a 60px drawer header, a 94px picker, a 94px scorecard, 42px of filters
+     and 89px of gaps and padding) over a 44.9px row pitch, so four names need
+     558.4px, which is 66.2vh. The old 75vh showed 5.7. Re-run that tool after
+     anything changes the furniture — step 9 adds a filter and a near-home
+     slider to this same view, and both land above the roster.
+
+     THE COST, ACCEPTED RATHER THAN OVERLOOKED: a quiet year with two storms
+     now leaves empty sheet below its roster where it used to shrink. That is
+     the trade the dashboard already made — a reader notices a moving control
+     far more than a short list with room under it. */
   html[data-seasons="on"] #drawer[data-view="seasons-board"] {
-    max-height: 75vh;
-    max-height: min(75vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
+    --seasons-sheet-h: 66vh;
+
+    max-height: var(--seasons-sheet-h);
+    max-height: min(var(--seasons-sheet-h),
+                    calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
+    /* Two declarations for each, not one: a browser without `dvh` keeps the
+       plain `vh` rather than dropping the property altogether. */
+    height: var(--seasons-sheet-h);
+    height: min(var(--seasons-sheet-h),
+                calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
   }
 }
 

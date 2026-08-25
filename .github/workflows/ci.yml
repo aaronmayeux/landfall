@@ -269,6 +269,14 @@ jobs:
       - name: seasons-row-check
         run: node tools/seasons-row-check.mjs
 
+      # The archive sheet must not resize when the year changes. `max-height` is
+      # a ceiling, so a season with four storms was shorter than one with
+      # twenty-eight and the year stepper moved under the reader's thumb on
+      # every press. A stylesheet scan proves the `height` rule is present; only
+      # layout proves it wins, and css-orphan-check was green the whole time.
+      - name: seasons-height-check
+        run: node tools/seasons-height-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check

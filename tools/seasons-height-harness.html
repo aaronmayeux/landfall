@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" data-theme="sepia" data-seasons="on">
+<head>
+<meta charset="utf-8">
+<title>seasons drawer height — measurement harness</title>
+<!--
+  ==> IT MOUNTS THE REAL BOARD, NOT A MOCK-UP OF ONE. <== The question it
+  answers is "how tall is the furniture above the roster", and the furniture is
+  the picker, the live-down sentence, the scorecard and the filters — four
+  pieces whose heights come from the shipped markup, the shipped stylesheets
+  and the shipped tokens. A fixture would answer for the fixture.
+
+  It can do that with no network because `data/seasons.js` reads
+  `/seasons/index.json` and `/seasons/data/*.txt`, which are FILES IN THIS REPO
+  and are served by `tools/with-server.sh` like everything else. Only
+  `/api/seasons/live` is remote, and its failure is a real state the board
+  already handles in words — see the note in the script.
+-->
+<link rel="stylesheet" href="/ui/panels.css">
+<link rel="stylesheet" href="/seasons/seasons.css">
+<style>
+  /* The sheet's real box at phone width, so `75vh` means what it means in the
+     app. Everything about WHICH rules apply comes from the shipped
+     stylesheets; this only supplies the frame the drawer is normally in. */
+  html, body { margin: 0; height: 100%; background: #1C1409; }
+  #drawer {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+</style>
+</head>
+<body>
+<div id="drawer" data-view="seasons-board" data-open="true"></div>
+<script type="module" src="/tools/seasons-height-harness.js"></script>
+</body>
+</html>

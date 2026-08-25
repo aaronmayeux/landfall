@@ -350,46 +350,40 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> SEASONS UI POLISH, PUSH 2: THE DRAWER. NOTHING BUILT. <==** Aaron's list,
-2026-08-25, items 6 and 7 of seven. **It is written here rather than in the
-branch's handoff file because that file is deleted the moment push 1 lands** —
-which would have taken these two with it. Push 1 has now landed on `main`; see
-`IN FLIGHT` for what it left to judge.
+**==> SEASONS UI POLISH, PUSH 2: THE DRAWER. ITEM 1 IS DONE, ITEM 2 IS NOT.
+<==** Aaron's list, 2026-08-25, items 6 and 7 of seven.
 
-1. **THE SHEET CHANGES HEIGHT WHEN THE YEAR CHANGES, AND THE YEAR STEPPER WALKS
-   WITH IT.** Aaron on glass: toggling between years with different storm counts
-   resizes the drawer, so the `+`/`−` buttons move and have to be hunted for
-   after every single press — on the one control a reader uses repeatedly.
+**Item 1 — the sheet resizing with the year — is fixed and on `main`.**
+`height` is declared beside `max-height` now, both off one custom property, and
+the value is `66vh` because that is what four storm names measured at on a
+390x844 screen against the real 2005 file. `SPEC-SEASONS-BUILD.md` §57.21b is
+the as-built account; `tools/seasons-height-check.mjs` is the gate and
+`tools/seasons-height-measure.mjs` prints the arithmetic behind the number.
 
-   The cause is one word. `seasons/seasons.css` sets **`max-height: 75vh`** on
-   `#drawer[data-view="seasons-board"]`, which is a CEILING: a year with four
-   storms is shorter than a year with twenty-eight. The fix is the shape
-   `ui/panels.css` already uses on the home dashboard for exactly this reason —
-   set **`height` as well as `max-height`, with the SAME
-   `min(75vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)))`
-   expression**, so the two can never disagree about the keyboard. The roster
-   scroller then absorbs the variation instead of the sheet doing it.
+**THE ONE LINE TO CHANGE IS `--seasons-sheet-h` in `seasons/seasons.css`.** It
+is a glass dial — 66vh is four names, 75vh was 5.7, and each name is worth
+about 5.3vh. Everything else in that rule derives from it, so nothing else
+needs touching.
 
-   **FOUR STORM NAMES IS AARON'S NUMBER AND IT IS A GLASS DIAL, NOT A COMPUTABLE
-   ONE.** The furniture above the roster — picker, live-down sentence,
-   scorecard, filters — is not a fixed height, so no vh figure yields exactly
-   four rows on every year. Ship a starting value, say which line changes it,
-   and let him land it.
+**GLASS, and it is two presses:** step the year between a busy season and a
+quiet one and confirm the `+`/`−` buttons do not move. Then judge whether four
+names is the right number, remembering the trade — a two-storm year now leaves
+empty sheet under its roster rather than shrinking to fit.
 
-2. **TAPPING THE OPEN SPACE ABOVE THE DRAWER SHOULD MINIMISE IT — AND PAN AND
-   ZOOM MUST STILL WORK WITH THE DRAWER OPEN.** Both halves, and the second is
-   the hard one: **a tap and the start of a drag are the same event.** A
-   pointerdown/pointerup pair that moved less than a small threshold and lasted
-   less than a short time is a tap; anything else belongs to the map and must
-   reach it untouched. Both numbers are constants, defined before the logic.
+**ITEM 2 IS THE ONE STILL STANDING. TAPPING THE OPEN SPACE ABOVE THE DRAWER
+SHOULD MINIMISE IT — AND PAN AND ZOOM MUST STILL WORK WITH THE DRAWER OPEN.** Both halves, and the second is
+the hard one: **a tap and the start of a drag are the same event.** A
+pointerdown/pointerup pair that moved less than a small threshold and lasted
+less than a short time is a tap; anything else belongs to the map and must
+reach it untouched. Both numbers are constants, defined before the logic.
 
-   `map/chrome-avoid.js` already measures the drawer's real box, so "above the
-   drawer" is answerable without a hardcoded 60vh anywhere. It must NOT fire
-   inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
+`map/chrome-avoid.js` already measures the drawer's real box, so "above the
+drawer" is answerable without a hardcoded 60vh anywhere. It must NOT fire
+inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
 
-   **AND IT NEEDS ALL THREE INPUT PATHS BEFORE IT IS DONE (§13).** Escape
-   already minimises through the drawer's own contract; check it still does. A
-   gesture-only dismissal is a bug, not a limitation.
+**AND IT NEEDS ALL THREE INPUT PATHS BEFORE IT IS DONE (§13).** Escape
+already minimises through the drawer's own contract; check it still does. A
+gesture-only dismissal is a bug, not a limitation.
 
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
