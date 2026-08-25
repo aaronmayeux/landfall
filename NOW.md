@@ -276,60 +276,27 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEP 6b IS BUILT AND NOTHING IN IT HAS BEEN SEEN ON A PHONE.
-<==** The wind footprint — the ground that ever saw 34, 50 or 64 knot wind over
-a storm's whole life — plus the sentence for the three quarters of the archive
-that has no wind field. `SPEC-SEASONS-BUILD.md` §57.26a is the as-built
-account; read that, not this.
+**==> SEASONS: STEPS 6a AND 6b ARE BOTH DONE AND CONFIRMED ON GLASS. <==**
+Aaron, 2026-08-24 and 2026-08-25. The tracks, the names, the landfall marks,
+focus and dim, and the wind footprint with its honest sentence — **all
+correct, nothing left to look at.** `SPEC-SEASONS-BUILD.md` §57.21a and
+§57.26a are the as-built accounts. **Step 7 — the detail panel — is next.**
 
-**GLASS, and it is three looks:**
-
-1. **A modern storm with a footprint.** Open 2005, tick Katrina, **tap her
-   track**. Three nested corridors should appear beneath the line — widest
-   green, then orange, then the red core — and the track and the landfall pins
-   should stay clearly readable on top of the wash. `ARCHIVE_GEO.swathFillOpacity`
-   at 0.14 is the dial if it reads as fog on sepia.
-2. **A 19th-century storm without one.** Open 1851 or any pre-2004 year, tick a
-   storm, tap it. **No shape, and a line in the roster saying *"Wind field size
-   wasn't recorded before 2004, so there is no wind footprint for …"***. That
-   sentence is the whole done-condition — does it teach something true about
-   the record, or read as a missing feature?
-3. **==> THE DISCOVERABILITY COST, WHICH IS THE ONE REAL RISK IN THE DESIGN.
-   <==** With nothing focused, NOTHING draws — that is the bound that keeps
-   four ticked storms from becoming twelve compounding translucent shapes.
-   A reader who never taps a track never sees a footprint at all. **If that
-   reads as broken rather than as restraint, the fix is the roster saying so,
-   NOT drawing all of them** — the whole-season build is ~300 ms and ~34,500
-   vertices against one storm's 12 ms and ~1,600.
-
-**FOUR THINGS WERE MEASURED AND ARE NOT GLASS CALLS.** Read §57.26a for the
-numbers; the short version is that NOAA's landfall rows carry `-999` rather
-than zero and would have snapped Katrina's footprint into three pieces at the
-three moments the app is named after; NOAA's own published swath is 100%
-axis-aligned staircase and unusable; our corridors agree with the agency's to
-within half a degree on Ida; and thirteen archive storms cross the date line
-carrying a wind field, with Ioke 2006 as the fixture.
-
-**AND THE FIRST VERSION OF THE SUITE PASSED WITH THE SEAM FIX REMOVED**, which
-is the failure §12 calls worse than no test — Katrina and Ida are both
-mid-Atlantic and cannot show it. Ioke is in now and the mutation bites at 356°.
-Twelve mutations were run across the pass and **two survived**: the seam one,
-and the threshold-colour drop guard, which nothing else reached. Both are
-covered and re-verified. A third finding came out of a survivor rather than a
-failure — a comment in `lib/season-windswath.js` claimed a distinction that did
-nothing, and now says so.
-
-**==> STEP 6a IS DONE AND CONFIRMED ON GLASS. <==** Aaron,
-2026-08-24: four 2005 storms at once, the names, the landfall marks, focus and
-dim, and the tick-is-the-focus trade — **all correct, nothing left to look
-at.** `SPEC-SEASONS-BUILD.md` §57.21a is the as-built account.
-
-**THREE CALLS SETTLED ON GLASS THAT DAY. DO NOT REOPEN THEM WITHOUT NEW
+**FOUR VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
 erasure. `nameRepeatPx` at 220 keeps a name attached to its line while
-panning. And **ticking a storm focusing it** — with only the last of four
-bright and `Show all evenly` as the way back — was judged a fair trade for not
+panning. `swathFillOpacity` at 0.14 leaves the track readable through the
+wash. And **ticking a storm focusing it** — with only the last of four bright
+and `Show all evenly` as the way back — was judged a fair trade for not
 putting a second control on every roster row.
+
+**AND THE FOOTPRINT'S DISCOVERABILITY COST WAS ACCEPTED RATHER THAN
+OVERLOOKED.** With nothing focused, nothing draws — the bound that keeps four
+ticked storms from becoming twelve compounding translucent shapes. It was
+flagged as the one real risk in the design before glass and judged fine.
+**If a later pass wants to draw them all, the numbers to argue with are in
+§57.26a**: ~300 ms and ~34,500 vertices for a season against 12 ms and ~1,600
+for one storm.
 
 **AND THE HOME MARKER STAYING UNTAPPABLE INSIDE THE ARCHIVE IS SETTLED TOO.**
 It was flagged as a behaviour change made without asking and accepted. The tap
@@ -346,8 +313,10 @@ again rather than be surprised. **`main.js` is 1,659 and the `warmable layer`
 helper has been "the next cut" for five passes running**; §12's row says so
 plainly and the next pass that opens that file should take it.
 
-**TWENTY-ONE MUTATIONS WERE RUN ACROSS THE THREE SUITES AND ONE SURVIVED**,
-which is the failure §12 calls worse than no test. `test-seasons-board.mjs`'s
+**THIRTY-THREE MUTATIONS HAVE NOW BEEN RUN ACROSS THE SEASONS SUITES AND THREE
+SURVIVED**, which is the failure §12 calls worse than no test. Step 6b's two
+are in §57.26a — the seam, and the threshold-colour drop guard. Step 6a's was
+`test-seasons-board.mjs`'s
 filter case ticked whatever happened to be at the top of 2005 and then
 narrowed to Majors, so it took the branch where the storm had been filtered
 off the list and asserted nothing — with the focus repaint deleted it stayed

@@ -1821,9 +1821,10 @@ about the record, or read as a missing feature?
 **Done when:** a storm from before 2004 says why it has no wind field, on
 glass.
 
-**AWAITING GLASS.** Everything below it was measured — Katrina's landfall rows,
-Ida against NOAA's own published swath, Ioke across the date line, the 12 ms
-build cost — but nothing here has been seen on a phone.
+**AARON'S VERDICT, 2026-08-25: it works.** The footprint under a modern
+storm's track, the sentence on a 19th-century one, and the tap-to-see-it bound
+— all correct. The done-condition is met. **`swathFillOpacity` at 0.14 is now
+settled on glass**: the track stays readable through the wash.
 
 ---
 
