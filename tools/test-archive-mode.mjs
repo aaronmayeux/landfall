@@ -271,8 +271,14 @@ eq(openedFrom, doorStorms,
  * ====================================================================== */
 section('entering and leaving, and everything undone in reverse');
 
+/** Whether the stubbed drawer is currently open. Module-level because
+ *  `harness()` is called several times and the bar's toggle has to see the
+ *  state the last navigation left. */
+let drawerOpen = false;
+
 function harness() {
   const calls = [];
+  drawerOpen = false;
   return {
     calls,
     liveGlobe: {
@@ -284,11 +290,14 @@ function harness() {
      * was nothing to put in it. `register` is recorded so the suite can prove
      * it happens exactly once across many entries — called twice it leaves an
      * orphaned host and a live listener bound to it. */
+    /* `isOpen` is a real flag rather than a constant `false`, because the
+     * bar's sentence TOGGLES the board (§57.21b) and a stub that always says
+     * shut can only ever exercise one half of that. */
     drawer: {
       register: (def) => { calls.push(`drawer.register:${def.id}`); registered.push(def); },
-      go: (id) => calls.push(`drawer.go:${id}`),
-      close: () => calls.push('drawer.close'),
-      isOpen: () => false,
+      go: (id) => { calls.push(`drawer.go:${id}`); drawerOpen = true; },
+      close: () => { calls.push('drawer.close'); drawerOpen = false; },
+      isOpen: () => drawerOpen,
     },
     archiveGlobe: {
       setTracks: (sel) => calls.push(`tracks:${sel.length}`),
@@ -347,6 +356,26 @@ const where = bar.children.find((c) => (c.className || '').includes('seasons-bar
 ok(!!where, '==> THE BAR\'S SENTENCE IS THE WAY BACK TO THE BOARD <==');
 ok(where.tagName === 'BUTTON',
   'and it is a real button, so it is tabbable and answers Enter (§13)');
+
+/* ==> AND IT TOGGLES. <== §57.21b, Aaron on glass 2026-08-25. It only ever
+ * opened, which made it a one-way door: press it with the board already up and
+ * nothing happened, so the only way to clear the globe again was to find the
+ * chevron at the far edge of the header. The bar is the one thing always on
+ * screen in the archive, so it carries both halves of one action. */
+{
+  const before = h.calls.length;
+  ok(drawerOpen, 'the board is open after entry');
+  where.click();
+  ok(h.calls.slice(before).includes('drawer.close'),
+    '==> PRESSING THE BAR WITH THE BOARD OPEN CLOSES IT <==');
+  ok(!drawerOpen, 'and the drawer knows it is shut');
+
+  const mid = h.calls.length;
+  where.click();
+  ok(h.calls.slice(mid).includes('drawer.go:seasons-board'),
+    'and pressing it again brings the board back — the same control, both ways');
+  ok(drawerOpen, 'which reopens it');
+}
 
 /* Pressing a door while already in is somebody pressing what they are looking
  * at. It must not build a second bar. */

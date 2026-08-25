@@ -106,10 +106,20 @@ export function openSeasons({
 
   const bar = createSeasonsBar({
     onLeave: () => leave(),
-    /* The bar's own sentence is the way back to the board once it has been
-     * closed. `go` rather than `push`: there is nothing else in the archive's
-     * history to go back to, and a stack of one is what Back should find. */
-    onOpenBoard: () => safely(() => drawer?.go?.('seasons-board')),
+    /* ==> THE BAR'S OWN SENTENCE TOGGLES THE BOARD. <== Aaron on glass,
+     * 2026-08-25. It only ever opened, which made it a one-way door: press it
+     * with the board already up and nothing happened, so the only way to get
+     * the globe clear again was to find the chevron in the drawer's header.
+     * The bar is the thing that is ALWAYS on screen in here, so it is the
+     * right place for both halves of one action.
+     *
+     * `go` rather than `push` on the way in: there is nothing else in the
+     * archive's history to go back to, and a stack of one is what Back should
+     * find. */
+    onOpenBoard: () => safely(() => {
+      if (drawer?.isOpen?.()) drawer.close();
+      else drawer?.go?.('seasons-board');
+    }),
   });
 
   /* ==> A LINK NAMING A YEAR OUTSIDE THE RECORD IS NOT AN EMPTY SEASON. <==
