@@ -69,6 +69,32 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> THERE IS HALF-BUILT WORK ON A BRANCH. READ `HANDOFF-SEASONS-GLOBE.md` ON
+`seasons-globe-polish` BEFORE STARTING ANY SEASONS WORK. <==** 2026-08-25, commit
+`bf41f4a`. It is push 1 of 2 of Aaron's seasons polish list and it is **two
+thirds done**: the archive's 3D ridge and its glyphs, its camera, and the rule
+that keeps a still-running storm on the roster and off the sepia globe. **The
+root cause it exists to fix is the part NOT built** — `liveGlobe.hide()` never
+drops the layer engine's ambient geometry, and the poll's `ambientBundle` calls
+are not gated on `isArchive()`, so live cones and tracks sit on the archive
+globe in any year and would return within one poll even if entry cleared them.
+
+**IT IS OFF `main` DELIBERATELY AND MUST NOT BE MERGED UNTIL THAT IS DONE.**
+Merging it early ships an archive globe that draws a ridge over live storms it
+was supposed to have removed.
+
+**THE HANDOFF FILE IS THE PLAN, NOT THIS ENTRY.** It carries Aaron's seven items
+verbatim, what each decision was and why, what is left in order, the tests that
+still need mutation-checking, and three questions waiting on glass. It is
+deleted by the commit that lands the pass — a handoff note that outlives its
+handoff is a stale fact nobody deletes.
+
+**AND THE LESSON IS WORTH MORE THAN THE BRANCH.** Three quarters of that pass
+was designed and written with nothing on GitHub to show for it, because the
+sandbox is throwaway and a plan living only in a chat window dies with it.
+Aaron caught it. **Anything that will not finish in one session gets pushed to a
+branch with its reasoning before the session ends**, not summarised in a reply.
+
 **==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
 STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
 rather than marked skipped**: the step is a recorded deletion with its reason
@@ -283,6 +309,48 @@ control for both — she should look unchanged.
 
 
 ## NEXT UP
+
+**==> SEASONS UI POLISH, PUSH 2: THE DRAWER. NOTHING BUILT. <==** Aaron's list,
+2026-08-25, items 6 and 7 of seven. **It is written here rather than in the
+branch's handoff file because that file is deleted the moment push 1 lands** —
+which would have taken these two with it. Push 1 is the globe and is on
+`seasons-globe-polish`; see `IN FLIGHT`.
+
+1. **THE SHEET CHANGES HEIGHT WHEN THE YEAR CHANGES, AND THE YEAR STEPPER WALKS
+   WITH IT.** Aaron on glass: toggling between years with different storm counts
+   resizes the drawer, so the `+`/`−` buttons move and have to be hunted for
+   after every single press — on the one control a reader uses repeatedly.
+
+   The cause is one word. `seasons/seasons.css` sets **`max-height: 75vh`** on
+   `#drawer[data-view="seasons-board"]`, which is a CEILING: a year with four
+   storms is shorter than a year with twenty-eight. The fix is the shape
+   `ui/panels.css` already uses on the home dashboard for exactly this reason —
+   set **`height` as well as `max-height`, with the SAME
+   `min(75vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)))`
+   expression**, so the two can never disagree about the keyboard. The roster
+   scroller then absorbs the variation instead of the sheet doing it.
+
+   **FOUR STORM NAMES IS AARON'S NUMBER AND IT IS A GLASS DIAL, NOT A COMPUTABLE
+   ONE.** The furniture above the roster — picker, live-down sentence,
+   scorecard, filters — is not a fixed height, so no vh figure yields exactly
+   four rows on every year. Ship a starting value, say which line changes it,
+   and let him land it.
+
+2. **TAPPING THE OPEN SPACE ABOVE THE DRAWER SHOULD MINIMISE IT — AND PAN AND
+   ZOOM MUST STILL WORK WITH THE DRAWER OPEN.** Both halves, and the second is
+   the hard one: **a tap and the start of a drag are the same event.** A
+   pointerdown/pointerup pair that moved less than a small threshold and lasted
+   less than a short time is a tap; anything else belongs to the map and must
+   reach it untouched. Both numbers are constants, defined before the logic.
+
+   `map/chrome-avoid.js` already measures the drawer's real box, so "above the
+   drawer" is answerable without a hardcoded 60vh anywhere. It must NOT fire
+   inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
+
+   **AND IT NEEDS ALL THREE INPUT PATHS BEFORE IT IS DONE (§13).** Escape
+   already minimises through the drawer's own contract; check it still does. A
+   gesture-only dismissal is a bug, not a limitation.
+
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither
