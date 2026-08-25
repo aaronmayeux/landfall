@@ -492,3 +492,104 @@ html[data-seasons="on"] #btn-layers {
   outline-offset: 2px;
   border-radius: var(--radius);
 }
+
+/* ==========================================================================
+   THE STORM DETAIL PANEL — §57.22, §57.22a, step 7.
+
+   It lives in this stylesheet rather than in ui/panels.css because it ships
+   only to a reader who opens the archive: seasons.css is loaded on first
+   entry alongside seasons/index.js, and none of it taxes a boot that never
+   goes near 1851. The panel deliberately REUSES `.detail-section` and
+   `.detail-vitals` from panels.css — same shell, same chevrons, same pair
+   layout as the live storm panel (§57.22) — so only what is genuinely new to
+   the archive is defined here.
+   ========================================================================== */
+
+.season-detail-head {
+  padding: var(--space-base) var(--drawer-inset) var(--space-snug);
+}
+
+.season-detail-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  margin: 0;
+  font-size: var(--type-title);
+  color: var(--text-primary);
+}
+
+/* The same swatch the roster row wears, so a storm is the same colour in the
+   list and in its own panel. Filled rather than outlined — the roster's is an
+   unchecked/checked control and this is not a control at all. */
+.season-detail-dot {
+  flex: 0 0 auto;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--swatch, var(--text-secondary));
+}
+
+.season-detail-strength {
+  margin: var(--space-tight) 0 0;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+/* ==> THE HONESTY LINE IS THE ONE PIECE OF TEXT ON THIS PANEL THAT IS NOT
+   ALLOWED TO RECEDE. <== §57.22. Every other note here is secondary colour
+   because it is a caveat about one figure; this one qualifies the ENTIRE
+   panel, and a reader who skims past it can mistake cleaned-up hindsight for
+   what forecasters knew on the night. The rule beside it does the work a
+   heavier weight would, without shouting. */
+.season-honesty {
+  margin-top: var(--space-snug);
+  padding-left: var(--space-snug);
+  border-left: 2px solid var(--glass-border);
+  color: var(--text-primary);
+}
+
+/* --- landfalls ----------------------------------------------------------- */
+
+.season-landfalls {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A landfall is two facts — when and where, then how hard — and they are two
+   lines rather than one so neither wraps into the other on a phone. */
+.season-landfall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  padding: var(--space-snug) 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.season-landfall:last-child { border-bottom: 0; }
+
+.season-landfall-when {
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+
+.season-landfall-what {
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+/* ==> A §57.25 RULE 2 SENTENCE — THE RECORD IS SILENT AND HERE IS WHY. <==
+   Three quarters of this archive is missing something, so these are not an
+   edge case: on a 19th-century storm they are most of the panel.
+
+   Styled as a note rather than as an error, deliberately. It is neither a
+   failure nor a warning — "wind field size wasn't recorded before 2004" is a
+   true fact about the record, and dressing it in amber would tell the reader
+   something is wrong when nothing is. Secondary colour and body size: present,
+   readable, subordinate to the figures it sits among. */
+.detail-note {
+  margin: var(--space-snug) 0 0;
+  font-size: var(--type-small);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}

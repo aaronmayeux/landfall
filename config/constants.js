@@ -6546,6 +6546,38 @@ export const SEASONS = Object.freeze({
    *  it lines up with four six-hourly records. */
   intensificationWindowHours: 24,
 
+  /** ==> THE THRESHOLD THAT TURNS A NUMBER INTO A FACT THE READER CAN PLACE.
+   *  <== 30 knots in 24 hours is the National Hurricane Center's own
+   *  definition of rapid intensification, and it is the phrase a reader will
+   *  have heard on the news. The panel states the gain either way; this is
+   *  what lets it add "that meets what forecasters call rapid
+   *  intensification" rather than leaving the reader to know the convention.
+   *
+   *  IT IS A LABEL, NEVER A FILTER. Nothing is hidden for falling under it —
+   *  a 25 kt gain in a day is still the fastest this storm ever strengthened
+   *  and is still shown. */
+  rapidIntensificationKt: 30,
+
+  /** ==> THE TWELVE YEARS WHERE AN EMPTY LANDFALL LIST MEANS "NOBODY WROTE IT
+   *  DOWN" RATHER THAN "IT STAYED AT SEA". <== §57.7.
+   *
+   *  This is the one absence in the archive that LOOKS LIKE A FACT. Everywhere
+   *  else an empty landfall list is real information — the storm went out to
+   *  sea. Across these years NOAA simply did not mark US landfalls in the best
+   *  track, so a storm that plainly came ashore in Texas shows none, and the
+   *  panel would appear to state something false. It gets its own sentence.
+   *
+   *  MEASURED 2026-08-25 over every mirrored Atlantic season: 1971 through
+   *  1982 inclusive carry ZERO `L` records, twelve consecutive years. **The
+   *  spec said 1971-1990 until step 2 measured it** — Hugo '89 is marked, so
+   *  the hole is twelve years and not twenty. 1922 also carries zero and is
+   *  NOT part of this: it is a single isolated year outside the run, which is
+   *  what a genuinely quiet season looks like rather than a gap in the
+   *  marking. Widening this range to swallow it would silence a true "no
+   *  landfall" answer for one year to tidy up a boundary. */
+  landfallMarkerHoleFrom: 1971,
+  landfallMarkerHoleTo: 1982,
+
   /** ==> BEFORE THIS, STORMS ARE SIMPLY MISSING FROM THE RECORD. <== Nobody
    *  saw the ones that stayed at sea. A quiet-looking 1935 season page is not
    *  evidence of a quiet season, and the board has to say so — which is a
