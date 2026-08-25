@@ -254,6 +254,21 @@ jobs:
       - name: home-setup-check
         run: node tools/home-setup-check.mjs
 
+      # ==> PIXELS A THIRD TIME, AND THIS ONE SHIPPED WRONG BEFORE THE CHECK
+      # EXISTED. <== The season roster's badge column was built from `auto`
+      # grid tracks, which are sized per ROW — and every row in that list is
+      # its own grid. So a row reading `Jul 4 – Jul 7` gave its date column
+      # 68px and one reading `Sep 17 – Sep 28` gave it 101px, sliding the badge
+      # 33px sideways between one line and the next. The markup was identical,
+      # every class was defined, the type was on the scale, and 130 board
+      # assertions passed. Aaron found it on glass.
+      #
+      # The tracks are fixed now, sized from measured strings plus headroom,
+      # and a track a few pixels short does not ellipse — it widens, and the
+      # jaggedness comes straight back. This is the only thing that notices.
+      - name: seasons-row-check
+        run: node tools/seasons-row-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check

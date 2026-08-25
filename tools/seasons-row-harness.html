@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="sepia">
+<head>
+<meta charset="utf-8">
+<title>seasons roster row — geometry harness</title>
+<!--
+  ==> NO FIXTURE TOKENS AND NO FIXTURE MARKUP. <== `tools/drawer-head-harness.html`
+  copied its token values and drifted from the app for two commits under a
+  comment asking it not to. This page loads the SHIPPED stylesheets, calls
+  `applyTokens()` from the shipped module, and builds its rows with the shipped
+  `rowHtml`. If any of the three changes, this moves with it.
+-->
+<link rel="stylesheet" href="/ui/panels.css">
+<link rel="stylesheet" href="/seasons/seasons.css">
+<style>
+  /* The two boxes the row lives inside, and nothing else. The board's own
+     picker, scorecard and filters are not geometry this check is about. */
+  html, body { margin: 0; background: #1C1409; }
+  #drawer { width: 100%; }
+</style>
+</head>
+<body>
+<div id="drawer"><div class="drawer-body" id="body"></div></div>
+<script type="module" src="/tools/seasons-row-harness.js"></script>
+</body>
+</html>

@@ -346,6 +346,15 @@ if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [
     printf 'symptom was the Environment ribbon going dark. Push refused.\n'
     fail=1
   fi
+  printf 'pre-push: checking the season roster'"'"'s columns line up...\n'
+  if ! bash tools/with-server.sh node tools/seasons-row-check.mjs; then
+    printf '\nThe roster row'"'"'s badge column is jagged. `auto` grid tracks are sized\n'
+    printf 'per ROW and every row is its own grid, so a short date range and a long\n'
+    printf 'one put the badge in two different places. That shipped once; the markup\n'
+    printf 'was identical, every class was defined, the type was on the scale, and\n'
+    printf '130 board assertions passed. Only geometry says it. Push refused.\n'
+    fail=1
+  fi
   printf 'pre-push: checking the home setup panel in a browser...\n'
   if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
     printf '\nThe three ways to set a home must READ as peers — one shared style,\n'
@@ -354,13 +363,13 @@ if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [
     fail=1
   fi
 else
-  printf 'pre-push: SKIPPING home-setup-check (no chromium here). CI still runs it.\n'
+  printf 'pre-push: SKIPPING the browser checks (no chromium here). CI still runs them.\n'
 fi
 
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + boot-smoke + home-setup)"
+ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + boot-smoke + seasons-row + home-setup)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""
