@@ -31,6 +31,10 @@ import { SEASONS } from '../config/constants.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { formatWind, formatPressure } from '../lib/units.js';
+/* Every "…" in this app pulses through one helper, so a waiting line reads as
+ * thinking rather than as a full stop that lost its way. `tools/test-loading-dots.mjs`
+ * fails the build on a stray one — it caught this file's report line. */
+import { dotted } from './loading-dots.js';
 
 export const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) =>
@@ -223,7 +227,16 @@ export function lifeHtml(facts) {
   /* ==> ZERO HOURS AT HURRICANE STRENGTH IS OMITTED, NOT SHOWN AS ZERO. <==
    * A tropical storm that never became a hurricane is not "0 days at hurricane
    * strength" — that phrasing invites the reader to wonder what went wrong.
-   * It simply never was one, and the peak figure above already says so. */
+   * It simply never was one, and the peak figure above already says so.
+   *
+   * ==> AND THESE TWO GUARDS ARE BELT-AND-BRACES RATHER THAN THE MECHANISM.
+   * <== Written down because a mutation run on 2026-08-25 proved it: removing
+   * them changes nothing, because `spanWords` answers null for zero and
+   * `rowsHtml` already drops any row whose value is null. The rule is enforced
+   * once, in `rowsHtml`, for every row on this panel. These stay as the
+   * clearer statement of intent at the call site — but nobody should believe
+   * they are load-bearing, and a comment implying they were would be worse
+   * than no comment. */
   const hur = spanWords(facts.hoursAtHurricane);
   const maj = spanWords(facts.hoursAtMajor);
   if (hur) rows.push(['At hurricane strength', hur]);
@@ -303,7 +316,19 @@ export function changeHtml(facts, system, { windowHours }) {
    * SHOWN. <== `season-facts` reports the best window it found, and for a
    * storm that only ever weakened that is a loss. Labelling a loss
    * "intensification" would be wrong, and showing it as zero would imply a
-   * measurement rather than an absence. */
+   * measurement rather than an absence.
+   *
+   * ==> NO STORM IN THE SETTLED RECORD CAN REACH THIS BRANCH, AND IT STAYS
+   * ANYWAY. <== Measured 2026-08-25 across all 3,266 mirrored storms: **zero**
+   * have a best 24-hour window that is a loss, because a storm's first record
+   * is near its weakest and almost anything after it is a gain. So this is not
+   * dead code kept out of caution — it guards **the season still running**,
+   * which arrives from ATCF b-decks rather than HURDAT2 (§57.11) and is not
+   * what that measurement covers. A storm caught mid-decay by an operational
+   * feed is exactly the shape that produces it.
+   *
+   * `tools/test-season-detail.mjs` drives it directly, because there is no
+   * real example to find. */
   if (f && Number.isFinite(f.gainKt) && f.gainKt > 0) {
     rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${spanWords(f.hours)}`]);
     rows.push(['Began', utcStamp(f.fromTime)]);
@@ -369,7 +394,7 @@ export function windFieldHtml(facts, { firstSeason }) {
  */
 export function reportHtml(report, year, firstYear) {
   if (!report || report.state === 'loading') {
-    return absenceHtml('Checking whether NOAA wrote a report on this storm…');
+    return absenceHtml(dotted('Checking whether NOAA wrote a report on this storm…'));
   }
 
   if (report.state === 'unknown') {

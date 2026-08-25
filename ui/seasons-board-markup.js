@@ -245,6 +245,22 @@ export function filtersHtml({ filters, filter }) {
  * strength reads down the list whether or not a storm is on the globe, in one
  * column rather than two. The whole row is the label, so the target is the row.
  */
+/**
+ * ==> THE ROW CARRIES TWO ACTIONS AND THEY ARE TWO CONTROLS, NOT ONE. <==
+ * §13, §57.22. The label ticks the storm (and focuses it — §57.21a); the
+ * chevron opens its panel. They had to be separable: a reader comparing four
+ * 2005 storms on the globe ticks four of them and wants none of those taps to
+ * take them off the roster and into a panel.
+ *
+ * A real `<button>` rather than a tap zone, so the keyboard gets it for free —
+ * Tab reaches the checkbox and then the chevron on every row, in reading
+ * order, and Enter opens. That is the third input path §13 asks for, and
+ * getting it as a side effect of using the right element is the whole reason
+ * to use the right element.
+ *
+ * It sits OUTSIDE the `<label>` deliberately. Inside, every press of it would
+ * also toggle the checkbox it is nested in, which is the label's whole job.
+ */
 export function rowHtml({ storm, facts, on }) {
   const color = categoryColor(facts.peakCategory ?? null, 'tropical', null);
   const strength = categoryShortLabel(facts.peakCategory ?? null, 'tropical', null);
@@ -272,6 +288,10 @@ export function rowHtml({ storm, facts, on }) {
           <span class="seasons-when">${esc(dateRange(facts))}</span>
           ${lf}
         </label>
+        <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
+                aria-label="Open ${esc(displayName(storm))}">
+          <span class="seasons-open-chevron" aria-hidden="true"></span>
+        </button>
       </li>`;
 }
 

@@ -48,6 +48,10 @@ import { isArchive, setArchive } from '../lib/archive-mode.js';
 import * as seasonsData from '../data/seasons.js';
 import * as seasonsLive from '../data/seasons-live.js';
 import { createSeasonsBoardView } from '../ui/view-seasons-board.js';
+import { createSeasonDetailView } from '../ui/view-season-detail.js';
+import { reportFor, forgetReports } from '../data/season-reports.js';
+import { resolveSystem } from '../lib/units.js';
+import { settingValue } from '../data/settings-prefs.js';
 import { createSeasonsBar } from './bar.js';
 import * as deepLink from './deep-link.js';
 
@@ -57,6 +61,11 @@ import * as deepLink from './deep-link.js';
  *  drawer, whose `register` is deliberately dumb and would happily add a
  *  second host for the same id. */
 let boardView = null;
+
+/** The storm detail panel (§57.22, step 7). Registered beside the board and
+ *  for the same reason: once per page load, guarded on module state rather
+ *  than on anything the drawer could tell us. */
+let detailView = null;
 
 /** The CURRENT session's archive globe. The board is registered once and lives
  *  for the page, while the injected globe arrives per entry — so the board
@@ -152,6 +161,13 @@ export function openSeasons({
      * sees on the way out rather than on the way in. */
     safely(() => archiveGlobe?.clearTracks?.());
     safely(() => boardView?.reset?.());
+    /* ==> THE REPORT INDEX IS DROPPED ON THE WAY OUT. <== It is ~100 KB held
+     * for the session, and a session can outlive a deploy — a reader who
+     * leaves the archive, sits for an hour and comes back should not be
+     * answering "does this storm have a report" out of a copy the server has
+     * since replaced. Cheap to re-fetch, and `_headers` marks it `no-cache`
+     * precisely so the second fetch is honest. */
+    safely(() => forgetReports());
     currentArchiveGlobe = null;
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
@@ -282,6 +298,13 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * feature. */
     onFocus: (id) => safely(() => currentArchiveGlobe?.setFocus?.(id)),
 
+    /* ==> A ROW'S CHEVRON OPENS THE STORM'S PANEL. <== `push` rather than
+     * `go`: the panel sits ON TOP of the board, so Back is one press and lands
+     * the reader on the roster they came from with their scroll position and
+     * their ticks intact. `go` would throw that history away and leave Back
+     * walking out of the archive entirely. */
+    onOpenStorm: (id) => safely(() => drawer?.push?.('season-detail', id)),
+
     /* ==> A BAD LINK'S REASON OUTRANKS THE YEAR. <== A reader who arrived on
      * `?season=1066` needs to know the link was wrong, and that stays true
      * after the board falls back to a season that does exist. Saying
@@ -300,6 +323,33 @@ function ensureBoard({ bar, drawer, linkReason }) {
    * caught it — the entry path ran clean and the board would never have been
    * on screen. */
   drawer?.register?.(boardView);
+
+  /* ==> THE DETAIL PANEL IS REGISTERED AT THE SAME MOMENT, NOT ON FIRST OPEN.
+   * <== A view the drawer does not know is a `push` that silently does
+   * nothing, which is the exact fault the comment above records the board
+   * having. Registering both together means there is one place to forget, not
+   * two. It is still a dynamic import away from the boot path — this whole
+   * file is (§57.35 fault 4) — so a reader who never opens the archive never
+   * downloads it.
+   *
+   * ==> IT IS HANDED A FUNCTION, NOT THE STORMS. <== The board reloads its
+   * entries on every year change, and a captured array would leave the panel
+   * describing last year's storm under this year's heading. */
+  detailView = createSeasonDetailView({
+    entries: () => boardView?.currentEntries?.() || [],
+    loadReport: reportFor,
+    /* ==> RESOLVED AT CALL TIME, NOT CAPTURED. <== `app/views.js` does exactly
+     * this and the reason is the same: a stored preference of `auto` has to go
+     * on following the device, and a reader who changes units in Settings and
+     * comes back must see the new ones without the archive being re-entered. */
+    units: () => resolveSystem(settingValue('units')),
+    /* Opening a storm focuses it on the globe. §57.21a's rule — the roster and
+     * the map must never disagree about which storm is the subject — extended
+     * one screen further: a panel about Katrina over a globe with Rita bright
+     * is the same lie in a new place. */
+    onOpen: (id) => safely(() => boardView?.setFocus?.(id)),
+  });
+  drawer?.register?.(detailView);
 
   return boardView;
 }
