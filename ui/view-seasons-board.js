@@ -60,6 +60,7 @@
  */
 
 import { stormDisplayName } from '../lib/season-names.js';
+import { isStillRunning } from '../lib/season-facts.js';
 import { basinHasLive } from '../lib/season-years.js';
 import { createSeasonsBoardLoading } from './seasons-board-loading.js';
 import {
@@ -168,8 +169,45 @@ export function createSeasonsBoardView({
    * that end in `Now` are the bindings that hand it this board's state.
    * ---------------------------------------------------------------------- */
 
+  /**
+   * The storms in this season that are still happening. §57.21c.
+   *
+   * ==> RECOMPUTED PER READ RATHER THAN HELD, BECAUSE IT GOES STALE ON ITS OWN.
+   * <== `isStillRunning` is an answer about the clock, not about the file: a
+   * storm that was running when the season loaded is finished twelve hours
+   * later without anything on this screen changing. Every caller here runs at
+   * paint time or at tap time, so asking then is asking at the only moment the
+   * answer is worth anything — and it costs one subtraction per row.
+   *
+   * A settled year returns an empty set on the first comparison inside the
+   * predicate, so the ordinary case pays almost nothing.
+   */
+  function activeIds() {
+    const provisional = loading.state().provisional;
+    const out = new Set();
+    if (!provisional) return out;
+    for (const e of loading.entries()) {
+      if (isStillRunning(e.facts, { provisional })) out.add(e.storm.id);
+    }
+    return out;
+  }
+
+  /**
+   * What the globe draws: the ticked storms, minus any that are still running.
+   *
+   * ==> THE FILTER IS HERE AND NOT ONLY ON THE CHECKBOX, AND THAT IS NOT BELT
+   * AND BRACES. <== The box being disabled stops a reader ticking a running
+   * storm; it does nothing about one that was ticked while it was finished, or
+   * about `showStorm`, which ticks on the panel's behalf. And the storm can
+   * change state under a tick that is already set — the archive can be open for
+   * an hour. This is the single place that decides what reaches the sepia
+   * globe, so there is one rule rather than three that have to agree.
+   */
   function selectedEntries() {
-    return loading.entries().filter((e) => ticked.has(e.storm.id));
+    const active = activeIds();
+    return loading.entries().filter(
+      (e) => ticked.has(e.storm.id) && !active.has(e.storm.id)
+    );
   }
 
   function pushSelection() {
@@ -192,8 +230,14 @@ export function createSeasonsBoardView({
   function setFocus(id) {
     /* An id nobody has ticked is refused rather than honoured. The globe only
      * draws ticked storms, so focusing one that is not there would ghost every
-     * visible track for a highlight nobody can see. */
-    const next = id && ticked.has(id) ? id : null;
+     * visible track for a highlight nobody can see.
+     *
+     * ==> AND "TICKED" IS NOT QUITE THE TEST. THE TEST IS "DRAWN". <== §57.21c
+     * takes a running storm off the archive globe whatever its tick says, so
+     * the refusal has to ask the same question `selectedEntries` does or Enter
+     * on such a row would ghost the whole year for an invisible highlight. */
+    const drawn = id && selectedEntries().some((e) => e.storm.id === id);
+    const next = drawn ? id : null;
     if (next === focused) return;
     focused = next;
     paintFocusNow();
@@ -214,7 +258,12 @@ export function createSeasonsBoardView({
   /** The master box counts the FILTERED list against the ticks, which is the
    *  spreadsheet's rule — under Majors it speaks for the majors. */
   function paintCheckAllNow() {
-    const shown = entriesMatching(loading.entries(), filter);
+    /* DRAWABLE rows, matching `seasonRosterHtml`. A running storm's box is
+     * disabled, so counting it here would leave the master box permanently
+     * short of full — see the note beside `drawable` in the markup. */
+    const active = activeIds();
+    const shown = entriesMatching(loading.entries(), filter)
+      .filter((x) => !active.has(x.storm.id));
     paintCheckAll(bodyEl, shown.length,
       shown.reduce((n, x) => n + (ticked.has(x.storm.id) ? 1 : 0), 0));
   }
@@ -339,6 +388,9 @@ export function createSeasonsBoardView({
       anyEntries: entries.length > 0,
       ticked,
       ghosts: filter === 'all' ? s.roster : null,
+      /* §57.21c. The row uses it for the disabled box and the `– active` date;
+       * the master box uses it to count only what can be drawn. */
+      activeIds: activeIds(),
     });
   }
 
@@ -598,7 +650,12 @@ export function createSeasonsBoardView({
      * refuses an id nobody has ticked, so a focus left standing would ghost
      * every remaining track in favour of a storm that is not on the globe. */
     if (e.target.closest('[data-check-all]')) {
-      const shown = entriesMatching(loading.entries(), filter);
+      /* The same drawable list the box is counting, so pressing it can actually
+       * reach "full". Ticking a running storm here would be a tick the globe
+       * declines, which is a control that appears to do nothing. §57.21c. */
+      const active = activeIds();
+      const shown = entriesMatching(loading.entries(), filter)
+        .filter((x) => !active.has(x.storm.id));
       const full = shown.length > 0 && shown.every((x) => ticked.has(x.storm.id));
       for (const x of shown) {
         if (full) ticked.delete(x.storm.id); else ticked.add(x.storm.id);
@@ -725,6 +782,14 @@ export function createSeasonsBoardView({
      */
     showStorm(id) {
       if (!id || !loading.entries().some((e) => e.storm.id === id)) return;
+      /* ==> A RUNNING STORM OPENS ITS PANEL AND DOES NOT TOUCH THE GLOBE.
+       * §57.21c. <== The panel is a page of figures about a storm on the
+       * roster and it stays reachable. What must not happen is the tick and
+       * the focus: the tick is refused by `selectedEntries` anyway, and the
+       * focus would then ghost every visible track in favour of a storm that
+       * is deliberately not on this globe — the panel and the map disagreeing,
+       * which is the failure this view is careful about everywhere else. */
+      if (activeIds().has(id)) return;
       if (!ticked.has(id)) {
         ticked.add(id);
         paintTick(bodyEl, id, true);

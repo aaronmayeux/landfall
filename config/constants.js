@@ -6721,6 +6721,95 @@ export const SEASONS = Object.freeze({
    *  archive gets the sentence instead of a shape. */
   windFieldFirstSeason: 2004,
 
+  /* --- The season still running, on the roster (§57.21c) ------------------ */
+
+  /**
+   * ==> HOW RECENT A STORM'S LAST FIX HAS TO BE FOR THE ROSTER TO CALL IT
+   * RUNNING. <== §57.21c.
+   *
+   * A b-deck does not carry a "this storm is over" flag. NHC simply stops
+   * appending rows, and the file sits there looking exactly as it did while the
+   * storm was alive — so the only signal available is how long ago the last row
+   * was written.
+   *
+   * TWELVE HOURS IS TWO MISSED CYCLES, AND THE CADENCE IS THE REASON. NHC
+   * writes a best-track row every six hours, so a storm that is genuinely
+   * running has a fix inside six. Twelve absorbs one skipped or slow cycle
+   * without ever reaching back far enough to call a storm that dissipated
+   * yesterday "active".
+   *
+   * ==> IT IS ONLY ASKED ON THE SEASON IN PROGRESS. <== A settled year cannot
+   * have a running storm however recent its rows look, so `provisional` gates
+   * this before the arithmetic runs. Nothing in a reviewed file can trip it.
+   *
+   * ==> AND ERRING LATE IS THE SAFE DIRECTION HERE, WHICH IS THE OPPOSITE OF
+   * THE USUAL. <== Calling a finished storm "active" for a few extra hours
+   * leaves it off the archive globe, where it costs the reader one track they
+   * could have drawn. Calling a running storm finished puts a LIVE system on
+   * the sepia globe, which is the thing §57.21c exists to stop.
+   */
+  activeWithinHours: 12,
+
+  /* --- Where the archive's camera goes (§57.21c) --------------------------- */
+
+  /**
+   * ==> WHERE THE GLOBE OPENS WHEN THE ARCHIVE IS ENTERED FROM THE STORM LIST.
+   * <== §57.21c. The reader came from a list of live storms and asked for
+   * history; they are looking for the ocean the storms are in, not for their
+   * own house. The home door is the other case and keeps home (§57.16 already
+   * gives the two doors different `data-door` values for exactly this).
+   *
+   * ==> THESE ARE CAMERA REST POSITIONS, NOT CLAIMS ABOUT WHERE A BASIN IS.
+   * <== Nothing is drawn from them and no figure is derived from them, so they
+   * are a UI constant rather than data — the one place in this feature where a
+   * hand-chosen coordinate is legitimate. They are the middle of the water each
+   * record covers, read off the basins' own storm tracks:
+   *
+   *   - Atlantic runs roughly 100°W to 10°W and 5°N to 50°N.
+   *   - The east Pacific file carries the CENTRAL Pacific too (`liveBasins`
+   *     above records why), so it runs past 160°W rather than stopping at 140.
+   *
+   * `ZOOM.basin` rather than a number: at that floor storm names appear and the
+   * whole basin is still in frame, which is the view this is trying to be.
+   * A basin absent from this table falls back to home, which is what the app
+   * does everywhere else it has nowhere better to point.
+   */
+  basinView: Object.freeze({
+    atlantic: Object.freeze({ lon: -55, lat: 25 }),
+    epacific: Object.freeze({ lon: -125, lat: 17 }),
+  }),
+
+  /* --- The archive's ridge (§57.21c) --------------------------------------- */
+
+  /**
+   * ==> THE WHOLE-SET CEILING ON ARCHIVE RIDGE POINTS, AND IT EXISTS BECAUSE
+   * THE ARCHIVE CAN TICK A WHOLE SEASON. <== `MESH_TRACK.maxPointsPerStorm`
+   * bounds ONE storm and is sized for the live globe, which draws at most
+   * fifteen. A reader who presses the master box on 2005 draws twenty-eight
+   * storms of roughly fifty six-hourly fixes each — about 1,400 points, which
+   * is already the live globe's busiest hour, and 2005 is not the ceiling of
+   * what the record holds.
+   *
+   * Every point is tested against every one of the cage's 1,440 nodes on a
+   * recompute (`map/heightfield.js` `influenceAt`), so this number IS the work
+   * a tick does. 1,600 sits just above the live globe's own peak, which is the
+   * budget already proven on a phone.
+   *
+   * ==> IT IS SPENT EVENLY AND SPENT BY THINNING, NEVER BY DROPPING STORMS.
+   * <== Each ticked storm gets an equal share and `thin` drops alternate fixes
+   * to reach it, so a ridge over a busy season is COARSER rather than shorter
+   * and no storm silently loses its mountain. A season ticked whole is exactly
+   * the case where a missing storm would be impossible to notice.
+   */
+  meshMaxPointsTotal: 1600,
+
+  /** The floor under that share. Below three fixes a storm's ridge stops being
+   *  a ridge and becomes a single bump in the wrong place, so a season busy
+   *  enough to push the share under this spends more than the ceiling rather
+   *  than drawing something misleading. The overrun is bounded by the roster:
+   *  the largest season in the record is under fifty storms. */
+  meshMinPointsPerStorm: 3,
+
   /** ==> THE FIRST YEAR NOAA WROTE A REPORT ON A STORM, AND IT ONLY EVER
    *  PICKS A SENTENCE. <== §57.22a.
    *

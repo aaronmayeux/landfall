@@ -79,6 +79,12 @@ import {
 import {
   ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
 } from './map/layers/season-swath.js';
+/* The archive's ridge and its camera. Both are pure — one turns a ticked
+ * season into cage points, the other into a flight — and both are reached only
+ * through the `archiveGlobe` facade below, because `seasons/` never imports
+ * `map/` (§12). §57.21c. */
+import { buildSeasonMeshPoints } from './map/season-mesh.js';
+import { flyToArchiveEntry, flyToArchiveStorm } from './map/season-frame.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -1380,6 +1386,24 @@ function boot() {
        * something is focused (§57.26a). Handed the same list for the same
        * reason as the marks — one call the board cannot forget to make. */
       setSeasonSwathSet(map, selected);
+      /* ==> AND THE 3D CAGE, WHICH IS THE ONE PIECE OF THIS THAT IS NOT
+       * MAPLIBRE. §57.21c. <== The archive globe was flat until now: entering
+       * calls `liveGlobe.hide()`, which flattens the ridge on purpose, and
+       * nothing ever put anything back. So a ticked season had tracks, dots
+       * and names at close zoom and NOTHING at all out at the space floor,
+       * where the cage and its glyphs are the whole globe.
+       *
+       * NOT GUARDED ON `styleReady`, unlike the three calls above. The 3D
+       * engine exists from boot and owns its own buffers; it is the MapLibre
+       * sources that do not exist until the style installs. Same split the
+       * poll's own watched-area pushes make.
+       *
+       * `'ok'` rather than a state read from anywhere: this is not a feed. The
+       * storms are in memory, parsed out of a file that already arrived, so
+       * there is no outage for the cage to desaturate over. Whether the season
+       * could be read at all is the roster's question and it answers it in
+       * words. */
+      g3d.heightfield.setStormPoints('ok', buildSeasonMeshPoints(selected));
     },
     /** Which storm the reader has opened in full detail; null puts them all
      *  back evenly. §57.21 item 2. */

@@ -87,8 +87,16 @@ const HOUR_MS = 3600 * 1000;
  *
  * The FIRST and LAST entries always survive, so the ridge still reaches the
  * ends of its window.
+ *
+ * ==> EXPORTED FOR `map/season-mesh.js`, WHICH IS THE ARCHIVE'S RIDGE. <== That
+ * file builds the same `{dir, sev, color, head}` list out of finished HURDAT2
+ * tracks rather than live bundles, and it has the same problem: a whole ticked
+ * season overruns its point budget and has to be coarsened rather than clipped.
+ * One implementation, because two would differ the first time either is tuned
+ * and the difference would show as one globe's ridge reaching further than the
+ * other's for the same storm.
  */
-function thin(list, max) {
+export function thin(list, max) {
   if (!Array.isArray(list) || list.length <= max || max < 2) {
     return list.length > max ? list.slice(0, max) : list;
   }
