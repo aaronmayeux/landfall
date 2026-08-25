@@ -69,49 +69,89 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> THE ARCHIVE GLOBE: LIVE STORMS OFF IT, A RIDGE ON IT, A CAMERA. SHIPPED,
-NOT YET SEEN ON GLASS. <==** Aaron's list of seven, 2026-08-25, items 1-5.
-Items 6 and 7 are push 2 and are under `NEXT UP`. **Not to be confused with the
-`PUSH 1 OF 2: THE GLOBE` entry further down**, which is step 6a's tracks and
-dots and has already been confirmed on glass; this is the 3D cage, the camera
-and the live-storm removal, which are the parts that were never built. `SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read
-that, not this. Five things changed and each has a way to judge it.
+**==> THE ARCHIVE GLOBE WENT TO GLASS 2026-08-25 AND CAME BACK WITH ONE
+FAULT. <==** §57.21c shipped items 1-5 of Aaron's list of seven.
+`SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read that, not this.
+**Aaron's verdict: "some things landed, some didn't."** What is confirmed, what
+is broken and what is new are below, and the second one is the one to start on.
 
-1. **LIVE STORMS ARE OFF THE SEPIA GLOBE, AND THIS IS THE ONE THAT MATTERS.**
-   Open Past storms from either door and look at the globe before touching
-   anything: **no cones, no tracks, no wind fields, no model lines.** Then
-   WAIT THROUGH A POLL — a minute or two — and look again. The old bug put them
-   back every cycle, so a globe that is clean on entry and dirty a minute later
-   is the half that was never fixed rather than a new fault. Then leave, and
-   check the live globe comes back whole: every cone and track where it was.
+**==> STORMS THAT ARE STILL RUNNING ARE STILL BEING DRAWN ON THE ARCHIVE
+GLOBE. <==** Aaron on glass, 2026-08-25. This is the thing the whole pass
+existed to fix and it is not fixed.
 
-2. **A STORM THAT IS STILL RUNNING SHOWS AS `active` AND WILL NOT DRAW.** Open
-   2026. Any storm NHC is still writing advisories on reads `Aug 20 – active`
-   where the dates go, and its checkbox is there but greyed out. Press the
-   master box: everything else ticks, that one does not. **The rule is the live
-   globe's own** — a storm greyed out on the live globe is drawable here — so
-   the check is that the two agree. A storm in colour on the live globe must not
-   be drawn in the archive, and one greyed there must be.
+**==> DO NOT WRITE A LINE OF CODE BEFORE ANSWERING THIS, BECAUSE IT IS TWO
+DIFFERENT BUGS IN TWO DIFFERENT FILES AND THE SYMPTOM IS THE SAME. <==**
+"Active storms showing on the map" can be either:
 
-3. **THE GLOBE FLIES SOMEWHERE ON THE WAY IN, AND THE TWO DOORS GO TO DIFFERENT
-   PLACES.** From the storm list, it should land on the BASIN of the season that
-   opens. From the home dashboard, on YOUR HOUSE. That is the whole of item 5
-   and it is one press each to check.
+  **(a) LIVE geometry bleeding through** — a live storm's cone, past track,
+  wind field or model guidance, drawn in the LIVE palette over the sepia
+  globe. That is `main.js`: `liveGlobe.hide()`'s `engine.ambientPrune(new
+  Set())`, `show()`'s `repushAmbient()`, and the two `isArchive()` gates in
+  `subscribe`. It would also mean the poll is repainting, so the tell is
+  **whether the globe is clean on entry and dirty a minute later**.
 
-4. **OPENING A STORM FLIES TO THE START OF ITS TRACK.** Tap a row's chevron: the
-   camera should land close on the first fix — the one with the white ring and
-   the name on it — sitting in the globe above the sheet rather than behind it.
-   **This is the answer you gave rather than the one that was built first**;
-   fitting the whole track framed a lot of open water. If it is too close or too
-   far, `SEASONS.stormZoom` is the one line, currently 5.
+  **(b) The ARCHIVE'S OWN sepia track for a storm the roster calls `active`** —
+  a season track, drawn in the archive's own ink, for a storm that should have
+  been withheld. That is `ui/view-seasons-board.js` `activeIds()` /
+  `selectedEntries()` and the `liveRunningIds` injection down through
+  `seasons/index.js` from `main.js`. It would be there from the first frame and
+  would not change across a poll.
 
-5. **THE ARCHIVE HAS A RIDGE AT THE SPACE FLOOR NOW.** Tick some storms and
-   zoom all the way out. Every ticked storm should raise mountains the height of
-   its wind, with one hurricane glyph at the START of each track in the track's
-   peak colour. Two things to judge: whether one glyph per storm reads as a
-   count of storms rather than clutter, and whether a fully-ticked busy season
-   is legible or a mess. **A pre-1886 storm lies flat on purpose** — no wind was
-   ever recorded — so a flat track with a glyph is correct, not a fault.
+**THE FASTEST WAY TO TELL THEM APART:** open 2026 and look at the ROSTER. If a
+running storm's row says `– active` with a greyed-out checkbox, the roster half
+works and the fault is (a). If the row looks like every other row, the
+`liveRunningIds` chain is broken and the fault is (b) — and the most likely
+break in that chain is the injection, not the rule, because the rule is
+mutation-tested and the injection is not.
+
+**AND THE ID JOIN IS THE FIRST THING TO SUSPECT IN CASE (b).** It was proven on
+archived bytes — `/api/seasons/live` lists `ep092026`, NHC's CurrentStorms
+carries `"id": "ep092026"`, and the roster's parsed id is `EP092026`, joined
+lowercased. **What was never proven is that the live feed reaches the archive
+at all at runtime.** `main.js`'s `liveRunningIds()` returns `null` when
+`lastFullState` is falsy, and `null` means "cannot ask", which falls back to
+the twelve-hour b-deck age test — and a fixture-age fallback in August 2026
+marks nothing active. **A silent `null` would look exactly like this bug.** Put
+one `console.log` on the value the board actually receives before theorising.
+
+**WHAT IS NOT BROKEN AND MUST NOT BE "FIXED":** tapping the open space above
+the drawer does not minimise it. **That is push 2 item 2 and was never built** —
+it is under `NEXT UP`, deliberately out of scope for push 1. Aaron reported it
+on 2026-08-25 as part of the same glass pass; it is expected behaviour today.
+
+**STILL NOT JUDGED, because the fault above got in the way:** whether the two
+doors fly to different places (basin from the storm list, home from the
+dashboard), whether opening a storm frames its start fix at a comfortable
+distance (`SEASONS.stormZoom`, currently 5, is the dial), and whether the ridge
+and its one-glyph-per-storm read as a count of storms or as clutter at the
+space floor.
+
+**==> AND ONE NEW THING AARON WANTS: TAPPING A HURRICANE GLYPH ON THE GLOBE
+SHOULD OPEN THAT STORM. <==** 2026-08-25. Pan and zoom to it and open the
+detail drawer — the same thing tapping the roster row's chevron does now.
+
+**Most of the machinery is already there and pointing the right way.** A tap on
+an archive TRACK already works: `main.js`'s tap handler has an archive branch,
+it goes to the board rather than straight to the globe (the board owns focus),
+and `seasons/index.js`'s `onOpenStorm` already pushes `season-detail` AND flies
+the camera. So this is a new hit-test, not a new interaction.
+
+**THE HARD PART IS THE HIT-TEST AND IT IS NOT MAPLIBRE'S.** The glyphs live on
+the Three.js heightfield (`map/heightfield.js`, fed by `map/season-mesh.js`),
+not in a MapLibre source — so `map.queryRenderedFeatures` cannot see them and
+`stormAtPoint` does not know about them. It needs a ray cast against the cage,
+or the cheaper answer: project each glyph's `dir` vector to screen and take the
+nearest within `SIZE.touchTarget`. **The second is probably right** — there are
+at most a few dozen glyphs, they are already in memory, and it avoids putting
+picking geometry into the render path.
+
+**THREE THINGS TO GET RIGHT, ALL OF THEM §13:** the glyph is only on screen at
+the space floor, so the tap must not fight the track hit-test that owns closer
+zooms; a tap on empty ocean must still clear (that is the archive's only way to
+deselect); and **it needs a keyboard path, because a gesture-only way to open a
+storm is a bug rather than a limitation** — Tab through glyphs, or lean on the
+roster which already has one.
+
 
 **==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
 STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
