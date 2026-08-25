@@ -1,0 +1,75 @@
+# tcr-probe.yml — measure NHC's written-report archive before step 7 links to it.
+#
+# WHY IT TRIGGERS ON PUSH RATHER THAN ON A SCHEDULE
+# This is a decision aid, not a standing feed. It runs when the branch moves and
+# not otherwise. It triggers on PUSH specifically because a fine-grained PAT can
+# push but cannot dispatch a workflow (measured: HTTP 403 on the dispatches
+# endpoint), so push is the only route a cloud session has to start a runner.
+# Same reasoning and same shape as seasons-probe.yml.
+#
+# HOW TO READ THE RESULT (works from a phone)
+#   Actions -> tcr-probe -> the run -> the summary is the whole findings file.
+# Or:
+#   git fetch origin tcr-probe-results
+#   git show origin/tcr-probe-results:findings.md
+#
+# START WITH findings.md. It answers whether §57.22's "a link to NHC's written
+# report where one exists" can be built at all, and at what cost.
+# manifest.json holds every response header; raw/ holds the exact bytes.
+#
+# DATA, NOT CODE. One orphan commit, force-pushed, never merged into main.
+# Every file in main ships to every visitor and none of this belongs there.
+#
+# IT NEEDS THE REPO CHECKED OUT AND THAT IS NOT INCIDENTAL: coverage is only
+# meaningful as a fraction, and the denominator is our own mirrored HURDAT2 in
+# seasons/data/. A probe that guessed how many storms there were could agree
+# with itself and still be wrong.
+
+name: tcr-probe
+
+on:
+  push:
+    branches: [tcr-probe]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tcr-probe
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    # One NOAA server, paced at 350 ms, plus up to 40 HEAD requests for the
+    # coverage sample. Generous because a slow upstream is not a reason to throw
+    # away a run that is most of the way done.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: run the probe
+        run: node tools/tcr-probe.mjs /tmp/tcr
+
+      - name: publish to the tcr-probe-results branch
+        run: |
+          set -euo pipefail
+          cd /tmp/tcr
+          git init -q -b tcr-probe-results
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A
+          git commit -q -m "tcr probe $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -q --force \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            tcr-probe-results
+
+      # The findings land in the run summary as well as on the branch, so the
+      # answer is readable from the Actions tab on a phone without a git fetch.
+      - name: summary
+        run: cat /tmp/tcr/findings.md >> "$GITHUB_STEP_SUMMARY"
