@@ -296,6 +296,32 @@ html[data-seasons="on"] #btn-layers {
   text-align: center;
 }
 
+/* ==> THE OPEN LIST OF 175 YEARS, PAINTED OUT OF THE PALETTE. <== Aaron on
+   glass, 2026-08-25: on desktop it opened as a white sheet with a system-blue
+   selected row, over a sepia globe.
+
+   ==> AND `--ocean` RATHER THAN `--glass-raised`, WHICH IS THE WHOLE POINT.
+   <== Every other surface in this app is glass over the globe and is therefore
+   translucent. This one is not ours to composite — the browser draws it as an
+   opaque menu ABOVE the page, and an rgba background handed to it is what made
+   the browser fall back to its own light colours in the first place. `--ocean`
+   is the palette's own opaque ground, which in sepia is the parchment's
+   shadow.
+
+   ==> WHAT THIS CANNOT REACH, SAID PLAINLY RATHER THAN LEFT TO BE DISCOVERED.
+   <== Safari and iOS ignore `option` styling completely and render the
+   platform's own wheel; that sheet is already DARK, because `color-scheme` is
+   published as `dark` for the sepia palette (`app/theme-switch.js`), but it
+   will never be sepia. Making it sepia means replacing the native `<select>`
+   with a custom listbox, which §57.18a rejected on purpose: one control that
+   already works by thumb, by mouse and by keyboard, with the OS's own
+   scroll-and-type behaviour free, beats anything a list of 175 rows in a 60vh
+   sheet could do. A palette is not worth that trade. */
+.seasons-select option {
+  background-color: var(--ocean);
+  color: var(--text-primary);
+}
+
 /* The native box is out of sight but still the thing that takes focus, so the
    ring is drawn on the box beside it. Never `outline: none` without a
    replacement (§10). */
@@ -379,14 +405,20 @@ html[data-seasons="on"] #btn-layers {
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
 /* ==> THE ROW MATCHING THE BRIGHT TRACK ON THE GLOBE. §57.21 item 2. <==
-   A left bar and a lift, not a colour: the row already carries the storm's
-   Saffir-Simpson dot, and tinting the row would put a second colour beside a
-   fixed one that means strength (§6). The bar is drawn in the focus-ring
-   amber, which is the archive's accent and reads as "this one" without
-   claiming to be a category. */
+   A LIFT, and nothing else. Tinting the row would put a second colour beside
+   the storm's own Saffir-Simpson dot, which is a fixed colour meaning strength
+   (§6), so the row is raised rather than coloured.
+
+   ==> IT CARRIED A LEFT BAR IN THE FOCUS-RING AMBER AND THAT IS GONE. <==
+   Aaron on glass, 2026-08-25. The bar was drawn at the row's left edge, which
+   is exactly where the tick box sits, so the two shared a two-pixel column and
+   the bar read as part of the checkbox rather than as a separate signal. The
+   argument for it was that the lift alone might be too quiet; on glass it is
+   not, and a second mark competing with the control beside it costs more than
+   the emphasis was worth. If the lift ever does read as too quiet, the lever
+   is `--hover`, not a mark in the checkbox's column. */
 .seasons-row-focus {
   background: var(--hover);
-  box-shadow: inset 2px 0 0 0 var(--focus-ring);
 }
 
 /* Why the focused storm has no wind footprint (§57.26a). The slot is always in
@@ -452,30 +484,35 @@ html[data-seasons="on"] #btn-layers {
 
 /* --- one row ------------------------------------------------------------- */
 
-/* Two lines by default: name and strength above, landfall and dates below.
-   `min-width: 0` is load-bearing in a flex child — without it a long unbroken
-   name blows the row out instead of ellipsing. */
+/* ==> THE ROW IS A GRID SO THE BADGE CAN BE A COLUMN. <== Aaron on glass,
+   2026-08-25: right-aligned beside the dates it read as glued to them —
+   `CAT 4  ▲ Jul 4 – Jul 18` is one run of small text, and the strength is the
+   thing the eye is scanning for. A flex row cannot fix that, because the
+   badge's position then depends on how long the name is. Three named columns
+   can.
+
+   Narrow: name and badge on the first line, the dates under both.
+   Wide: all three across, with the badge between them.
+
+   `min-width: 0` on the whole block is load-bearing inside a flex child —
+   without it a long unbroken name blows the row out instead of ellipsing. */
 .seasons-row-text {
   flex: 1 1 auto;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-tight);
-}
-
-/* Line 1. The badge is right-aligned and never compresses: this is the column
-   the eye runs down, and a badge that shifts left on a long name destroys it. */
-.seasons-row-head {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "name  badge"
+    "meta  meta";
   align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-snug);
-  min-width: 0;
+  gap: var(--space-tight) var(--space-snug);
 }
 
-/* Line 2. The landfall mark sits to the LEFT of the dates — §57.21a took the
-   pin off the globe, so this row is the only place a landfall now surfaces. */
+/* Line 2 in the narrow layout. The landfall mark sits to the LEFT of the dates
+   — §57.21a took the pin off the globe, so this row is the only place a
+   landfall now surfaces. */
 .seasons-row-meta {
+  grid-area: meta;
   display: flex;
   align-items: baseline;
   gap: var(--space-tight);
@@ -484,15 +521,27 @@ html[data-seasons="on"] #btn-layers {
 
 /* ELLIPSIS RATHER THAN A WRAP, and only because the row has a fixed shape to
    keep. The live storm list wraps instead, on the argument that a truncated
-   name cannot be identified — but that list has one column and this one has a
-   badge holding a column beside it. An archive name is a single word. */
+   name cannot be identified — but that list has one column and this one has
+   two more beside it. An archive name is a single word. */
 .seasons-name {
-  flex: 1 1 auto;
+  grid-area: name;
   min-width: 0;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ==> A FLOOR RATHER THAN A FIXED WIDTH, IN `ch` RATHER THAN PIXELS. <== The
+   column has to be wide enough that `TS` and `CAT 5` start at the same place
+   down the list, and `ch` ties that to the type rather than to a number that
+   goes stale the next time the badge is resized. It is the widest label the
+   scale produces plus its tracking. Left-aligned inside the floor, because a
+   column the eye runs down is a column with one left edge. */
+.seasons-row-text .row-badge {
+  grid-area: badge;
+  min-width: 6ch;
+  text-align: left;
 }
 
 .seasons-when {
@@ -513,15 +562,14 @@ html[data-seasons="on"] #btn-layers {
    own type — not a device, not a breakpoint anything else in the app uses. On
    a phone the roster is ~330px and stays two-line; on a desktop rail it is
    ~300px and also stays two-line, which is the case the viewport would have
-   got wrong. The wide window and the tablet get one. */
+   got wrong. The wide window and the tablet get one, and the three columns are
+   the same three columns either way. */
 @container roster (min-width: 400px) {
   .seasons-row-text {
-    flex-direction: row;
-    align-items: baseline;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas: "name badge meta";
     gap: var(--space-base);
   }
-  .seasons-row-head { flex: 1 1 auto; }
-  .seasons-row-meta { flex: 0 0 auto; }
 }
 
 /* --- the ghosts ---------------------------------------------------------- */

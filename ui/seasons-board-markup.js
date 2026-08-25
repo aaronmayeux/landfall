@@ -325,10 +325,8 @@ export function rowHtml({ storm, facts, on }) {
           <span class="check-box" aria-hidden="true"></span>
           <span class="row-swatch" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
           <span class="seasons-row-text">
-            <span class="seasons-row-head">
-              <span class="seasons-name">${esc(displayName(storm))}</span>
-              <span class="row-badge">${esc(strength)}</span>
-            </span>
+            <span class="seasons-name">${esc(displayName(storm))}</span>
+            <span class="row-badge">${esc(strength)}</span>
             <span class="seasons-row-meta">
               ${lf}
               <span class="seasons-when">${esc(dateRange(facts))}</span>
