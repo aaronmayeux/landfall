@@ -1,0 +1,10 @@
+<HTML><HEAD>
+<TITLE>Access Denied</TITLE>
+</HEAD><BODY>
+<H1>Access Denied</H1>
+ 
+You don't have permission to access "http&#58;&#47;&#47;www&#46;nrl&#46;navy&#46;mil&#47;Our&#45;Work&#47;Field&#45;Sites&#47;NRL&#45;Monterey&#45;California&#47;" on this server.<P>
+Reference&#32;&#35;18&#46;860c0317&#46;1787621938&#46;b2de3b6a
+<P>https&#58;&#47;&#47;errors&#46;edgesuite&#46;net&#47;18&#46;860c0317&#46;1787621938&#46;b2de3b6a</P>
+</BODY>
+</HTML>
