@@ -118,6 +118,11 @@ const liveBroken = new Set();
  *  FILENAMES rather than off the reader's clock, and a suite that only ever
  *  drives the year it happens to be running in cannot tell the two apart. */
 let liveYearIs = 2026;
+/** ==> WHAT THE LIVE APP IS STILL DRAWING IN COLOUR. §57.21c. <== `null` is
+ *  the live feed having NEVER answered, which is a different fact from a feed
+ *  that answered with no storms — see the fallback cases below. Lowercased
+ *  ATCF ids, the shape `lib/lifecycle.js`'s `reportingStormIds` returns. */
+let liveRunning = null;
 
 const live = {
   loadLiveIndex: async () => (liveIndexFails
@@ -161,6 +166,7 @@ function freshLive() {
   liveIndexFails = null;
   liveStale = false;
   liveYearIs = 2026;
+  liveRunning = null;
   liveBroken.clear();
 }
 
@@ -177,6 +183,7 @@ async function board({ year = null } = {}) {
     onFocus: (id) => focus.push(id),
     onWhere: (w) => where.push(w),
     onOpenStorm: (id) => opened.push(id),
+    liveRunningIds: () => liveRunning,
   });
   if (year != null) view.setSeason(year);
 
@@ -1080,6 +1087,185 @@ const text = (body) => body.innerHTML;
   ok('and never the string the drawer would have handed it',
     opened.every((x) => x !== 'true'));
 }
+
+/* ---------------------------------------------------------------------------
+ * A STORM THAT IS STILL HAPPENING STAYS ON THE ROSTER AND OFF THE GLOBE.
+ * §57.21c, Aaron's item 1.
+ *
+ * ==> THE RULE IS THE LIVE APP'S, NOT A CLOCK'S. <== `liveRunningIds` is
+ * injected by main.js and built on the same `noCurrentReading` that greys a
+ * storm dot on the live globe. Here it is a switch, because what this suite
+ * owns is what the BOARD does with the answer — that main.js computes the
+ * answer correctly is `tools/test-lifecycle.mjs`'s job.
+ * ------------------------------------------------------------------------ */
+
+{
+  freshLive();
+  /* ==> A REAL 2026 FIXTURE, AND AN ATLANTIC ONE BECAUSE THAT IS THE BASIN THE
+   * BOARD OPENS ON. <== Bertha, AL022026, out of `samples/seasons-live/`.
+   *
+   * The set is LOWERCASE and the roster's id is UPPERCASE (`AL022026`), which
+   * is not an accident of this fixture — `/api/seasons/live` keys off NOAA's
+   * b-deck filenames and the parser upper-cases what it emits. The join has to
+   * survive that, so driving it with a matching case would prove nothing. */
+  liveRunning = new Set(['al022026']);
+  const { body, drawn, view, focus } = await board({ year: 2026 });
+
+  const running = rows(body).find((r) => r.dataset.storm === 'AL022026');
+  ok('a still-running storm is STILL ON THE ROSTER \u2014 it is not hidden', !!running);
+
+  if (running) {
+    const box = body.querySelectorAll('input[type="checkbox"]')
+      .find((b) => b.dataset.storm === 'AL022026');
+    ok('  its checkbox is present but DISABLED', !!box && box.attrs.disabled != null);
+    /* ==> PRESENT, NOT ABSENT, AND THAT WAS A DELIBERATE CALL. <== A row
+     * silently missing a control every other row has reads as a rendering
+     * fault rather than as a rule, so the box stays and the reason rides in
+     * its label. */
+    ok('  and the reason is in the label, not left to be guessed',
+      /active|still|running/i.test(box?.attrs['aria-label'] || ''));
+  }
+
+  ok('the date cell keeps the START date beside the word',
+    /\u2013\s*active|- active/i.test(text(body)));
+
+  /* ==> AND THE HALF THAT MATTERS: IT NEVER REACHES THE GLOBE. <== */
+  const master = body.querySelector('[data-check-all]');
+  if (master) {
+    body.fire('change', master);
+    await settle();
+    const sel = drawn.at(-1) || [];
+    ok('ticking EVERYTHING draws the rest of the season', sel.length > 0);
+    ok('  and still never draws the running storm', !sel.includes('AL022026'));
+
+    /* ==> AND ITS BOX MUST NOT COME BACK TICKED. <== The globe declining a
+     * storm is only half the rule; a checkbox showing ticked over a globe
+     * that is not drawing it is the roster and the map disagreeing, which is
+     * the one failure this view is careful about everywhere. Deleting the
+     * master box's own filter SURVIVED a test that only watched `drawn`,
+     * because `selectedEntries` catches it downstream — the visible symptom
+     * is here, on the row. */
+    const after = body.querySelectorAll('input[type="checkbox"]')
+      .find((b) => b.dataset.storm === 'AL022026');
+    ok('  and its checkbox does not come back ticked either', !after?.checked);
+  }
+
+  /* ==> AND THE MASTER BOX COUNTS ONLY WHAT CAN BE DRAWN. <== Counting the
+   * running storm in the total would make a fully-ticked list read as partial
+   * forever: the bar could never fill and pressing the box could never show a
+   * tick, which is a control whose state is unreachable. Asserted on the
+   * rendered count rather than on behaviour, because that is where it shows. */
+  const shownCount = body.querySelector('[data-check-all]')?.attrs['aria-label'] || '';
+  const total = rows(body).length;
+  ok(`the master box speaks for ${total - 1} drawable rows, not all ${total}`,
+    new RegExp(`\\b${total - 1}\\b`).test(shownCount)
+    && !new RegExp(`\\b${total}\\b`).test(shownCount));
+
+  /* `showStorm` is the panel's way in and it ticks on the storm's behalf, so
+   * it is a second door onto the globe that the disabled box does not close.
+   *
+   * ==> ASSERTED ON THE FOCUS, NOT ON WHAT IS DRAWN. <== The first version of
+   * this checked `drawn`, and deleting showStorm's guard SURVIVED it —
+   * `selectedEntries` drops the storm on the way out regardless, so the globe
+   * looked right whether the guard existed or not. The guard's real job is
+   * stopping the FOCUS, which would ghost every visible track in favour of a
+   * storm that is deliberately not on this globe. */
+  const focusBefore = focus.at(-1) ?? null;
+  view.showStorm('AL022026');
+  await settle();
+  ok('opening its panel does not tick it onto the globe',
+    !(drawn.at(-1) || []).includes('AL022026'));
+  eq('  and does not focus it, which would ghost everything else for nothing',
+    focus.at(-1) ?? null, focusBefore);
+  /* ==> THE ASSERTION THAT ACTUALLY CATCHES IT. <== `selectedEntries` and
+   * `setFocus` both refuse a running storm on their own, so removing
+   * showStorm's guard changes nothing about the globe and a test watching
+   * `drawn` or `focus` stays green. What it DOES change is `ticked` — the row
+   * paints a tick for a storm the globe is declining, and the reader believes
+   * the checkbox. */
+  const boxAfterShow = body.querySelectorAll('input[type="checkbox"]')
+    .find((b) => b.dataset.storm === 'AL022026');
+  ok('  and above all does not tick its box behind the reader\u2019s back',
+    !boxAfterShow?.checked);
+}
+
+{
+  /* ==> A STORM CAN GO FROM FINISHED TO RUNNING UNDER A TICK THAT IS ALREADY
+   * SET, AND THAT IS WHY THE FILTER IS IN `selectedEntries` AND NOT ONLY ON
+   * THE CHECKBOX. <== The archive can be open for an hour. The disabled box
+   * stops a reader ticking a running storm; it does nothing about one ticked
+   * while it was finished.
+   *
+   * The first version of this suite could not see that at all: every path it
+   * drove went through the master box, which filters running storms out before
+   * ticking, so deleting the guard in `selectedEntries` left it green. */
+  freshLive();
+  liveRunning = new Set();
+  const { body, drawn } = await board({ year: 2026 });
+
+  const box = body.querySelectorAll('input[type="checkbox"]')
+    .find((b) => b.dataset.storm === 'AL022026');
+  box.checked = true;
+  body.fire('change', box);
+  await settle();
+  ok('a finished storm ticks onto the globe', (drawn.at(-1) || []).includes('AL022026'));
+
+  /* NHC files another advisory on it. Nothing about the record changed and
+   * nothing on screen was touched — only what the live app is publishing. */
+  liveRunning = new Set(['al022026']);
+  const other = body.querySelectorAll('input[type="checkbox"]')
+    .find((b) => b.dataset.storm === 'AL012026');
+  other.checked = true;
+  body.fire('change', other);
+  await settle();
+  ok('  and the moment it starts running again it leaves the globe',
+    !(drawn.at(-1) || []).includes('AL022026'));
+  ok('  while the storm ticked beside it is unaffected',
+    (drawn.at(-1) || []).includes('AL012026'));
+}
+
+{
+  /* ==> THE STORM FINISHES AND THE SAME ROW BECOMES DRAWABLE. <== The whole
+   * point of tying this to the live app rather than to a clock: nothing about
+   * the record changed, only what NHC is still publishing. */
+  freshLive();
+  liveRunning = new Set();
+  const { body, drawn } = await board({ year: 2026 });
+  const box = body.querySelectorAll('input[type="checkbox"]')
+    .find((b) => b.dataset.storm === 'AL022026');
+  ok('with nothing running, that same storm\u2019s box is enabled',
+    !!box && box.attrs.disabled == null);
+  if (box) {
+    /* The stand-in does not flip `checked` for us — the browser does that, and
+     * the view reads it — so the suite sets it the way every other tick case
+     * here does. */
+    box.checked = true;
+    body.fire('change', box);
+    await settle();
+    ok('  and it draws', (drawn.at(-1) || []).includes('AL022026'));
+  }
+  ok('and no row says "active" any more', !/\u2013\s*active/i.test(text(body)));
+}
+
+{
+  /* ==> AN EMPTY SET AND A NULL ARE OPPOSITE FACTS. §5. <== Empty means the
+   * feed answered and nothing is running. Null means it has never answered —
+   * a deep link landing before the first poll — and the honest reading of
+   * "we cannot ask" is not "everything has finished". The board falls back to
+   * the b-deck age test, which is the only case that test still serves.
+   *
+   * The fixtures are archived bytes from August 2026 and this suite runs
+   * whenever it runs, so the fallback marks nothing active by now. What is
+   * asserted is that the board did not CRASH and did not throw the season
+   * away — the distinction itself is asserted in test-lifecycle.mjs, where
+   * the answer is computed. */
+  freshLive();
+  liveRunning = null;
+  const { body } = await board({ year: 2026 });
+  ok('a live feed that has never answered still renders a roster',
+    rows(body).length > 0);
+}
+
 
 /* ------------------------------------------------------------------------ */
 

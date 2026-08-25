@@ -86,7 +86,7 @@ globalThis.fetch = async (url) => {
 const { ENDED, SILENCE } = await import('../config/constants.js');
 const {
   isEnded, endedExpired, endedNote, endedSectionNote, becameWhat, agencyName,
-  ENDED_SHORT,
+  noCurrentReading, reportingStormIds, ENDED_SHORT,
 } = await import('../lib/lifecycle.js');
 const { isNhcFinalAdvisory, isJtwcFinalWarning } = await import('../lib/advisory.js');
 const { isFinalWarning } = await import('../functions/api/jtwc/storms.js');
@@ -1057,6 +1057,91 @@ section('a stale last-known record does not become a fresh ending');
     'while an hour-old one still ends normally — the sweep is not a mute button'
   );
 }
+
+/* ===========================================================================
+ * WHICH STORMS THE ARCHIVE IS ALLOWED TO DRAW AS HISTORY. §57.21c.
+ *
+ * ==> THIS IS THE LIVE GLOBE'S GREYING RULE, ASKED OF A LIST. <== Aaron's
+ * call, 2026-08-25: a storm greyed out on the live globe is finished as far
+ * as the sepia globe is concerned. So the archive does not run its own clock
+ * over the b-deck — it reads this, and everything it depends on is already
+ * tested above.
+ *
+ * ==> THE IDS ARE REAL AND THE CASING IS THE POINT. <== `ep092026` is Iselle
+ * as `/api/seasons/live` lists her off NOAA's b-deck filenames; NHC's own
+ * CurrentStorms carries the same string; the parser upper-cases what it emits
+ * and `data/nhc.js` namespaces its copy as `nhc:ep092026`. Measured off
+ * `origin/archive:latest/`, not assumed.
+ * ======================================================================== */
+section('the archive asks the live globe which storms are still running');
+
+{
+  const running = nhcStorm({ id: 'nhc:ep092026', sourceId: 'ep092026', name: 'Iselle' });
+  const finished = nhcStorm({
+    id: 'nhc:al022026', sourceId: 'al022026', name: 'Bertha',
+    ended: { by: 'nhc', at: FRESH, how: 'declared' },
+  });
+  const quiet = nhcStorm({
+    id: 'nhc:al032026', sourceId: 'al032026', name: 'Cristobal',
+    observedAt: new Date(Date.now() - (SILENCE.after + 6 * HOUR)).toISOString(),
+  });
+
+  const ids = reportingStormIds([running, finished, quiet]);
+
+  ok(ids.has('ep092026'), 'a storm still being analysed is still running');
+  ok(!ids.has('al022026'), 'one whose agency filed a final advisory is not');
+  ok(!ids.has('al032026'), 'and neither is one that has gone quiet past SILENCE.after');
+
+  /* ==> THE TWO REASONS ARE DIFFERENT FACTS AND THE ARCHIVE MUST NOT CARE. <==
+   * `ended` is a stored fact and `silent` is recomputed from a timestamp; the
+   * live globe greys both, so this must drop both. Asserted through
+   * `noCurrentReading` as well, so the day somebody splits them the failure
+   * names which half moved. */
+  ok(noCurrentReading(finished) && noCurrentReading(quiet),
+    'both are greyed on the live globe, which is the rule this borrows');
+  ok(!noCurrentReading(running), 'and the running one is not');
+
+  ok(ids.size === 1, `exactly one of the three is running (got ${ids.size})`);
+}
+
+{
+  /* ==> LOWERCASED, BECAUSE THE TWO SIDES OF THE JOIN ARE CASED DIFFERENTLY
+   * AND BOTH ARE RIGHT. <== NHC's KMZ filenames carry `EP092026`; the b-deck
+   * directory carries `ep092026`. A comparison that depended on which would
+   * mark every storm finished on whichever side changed. */
+  const shouty = nhcStorm({ id: 'nhc:EP092026', sourceId: 'EP092026' });
+  ok(reportingStormIds([shouty]).has('ep092026'),
+    'an upper-cased source id still answers to its lower-cased ATCF id');
+}
+
+{
+  /* ==> A GDACS STORM CANNOT COLLIDE, WHICH IS WHY THERE IS NO SOURCE FILTER.
+   * <== Its `sourceId` is a numeric event id. It is reported here — it is a
+   * live storm — and it simply never matches an archive roster keyed on ATCF
+   * ids, which is the right answer for a basin the provisional roster does
+   * not cover rather than a case to special-case. */
+  const gd = gdacsStorm();
+  const ids = reportingStormIds([gd]);
+  ok(ids.has('1021234'), 'a GDACS storm is reported under its event id');
+  ok(![...ids].some((id) => /^[a-z]{2}\d{6}$/.test(id)),
+    'and nothing it contributes could ever be mistaken for an ATCF id');
+}
+
+{
+  /* ==> AN EMPTY LIST IS A REAL ANSWER AND MUST NOT THROW. <== A quiet day is
+   * the ordinary case: the feed answered and nothing is running, so every
+   * storm in the provisional season draws as history. That is different from
+   * the feed never answering, and THAT distinction is main.js's to make —
+   * it hands `null` rather than calling this at all. */
+  ok(reportingStormIds([]).size === 0, 'no live storms is an empty set, not an error');
+  ok(reportingStormIds(null).size === 0, 'and neither null nor undefined throws');
+
+  /* A storm with no source id contributes nothing rather than an empty-string
+   * key, which would match an archive entry whose id failed to parse. */
+  ok(reportingStormIds([nhcStorm({ sourceId: '' })]).size === 0,
+    'a storm with no source id is skipped rather than keyed on empty');
+}
+
 
 /* ------------------------------------------------------------------------- */
 if (failures.length) {

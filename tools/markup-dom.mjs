@@ -152,7 +152,18 @@ export class El {
       const attr = eq === -1 ? inner : inner.slice(0, eq);
       const want = eq === -1 ? null : inner.slice(eq + 1).replace(/^["']|["']$/g, '');
       const key = attr.replace(/^data-/, '').replace(/-(\w)/g, (_, c) => c.toUpperCase());
-      const got = this.dataset[key];
+      /* ==> IT READS `attrs` AS WELL AS `dataset`, AND THAT IS THE THIRD TIME
+       * THIS STAND-IN HAS TOLD THE SAME LIE. <== It only ever consulted
+       * `dataset`, so `[type="checkbox"]` — an ordinary attribute, not a data
+       * one — matched nothing in the document and `querySelectorAll` came back
+       * empty. Which is indistinguishable from a view that never rendered a
+       * checkbox, and that is precisely how §57.21c's disabled-box assertions
+       * first failed against a view that was doing the right thing.
+       *
+       * `dataset` is tried first so `[data-storm]` keeps working through the
+       * camel-cased key; `attrs` is the fallback and covers the bare-attribute
+       * form (`[disabled]`), which the tag scanner stores as an empty string. */
+      const got = this.dataset[key] !== undefined ? this.dataset[key] : this.attrs[attr];
       return want == null ? got !== undefined : got === want;
     }
     if (sel.startsWith('.')) return (this.attrs.class || '').split(/\s+/).includes(sel.slice(1));
