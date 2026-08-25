@@ -2486,22 +2486,55 @@ button.drawer-identity:focus-visible {
   line-height: 1.35;
 }
 
-/* The tick. Drawn, not a glyph — a checkmark character renders differently on
- * every platform and at 10px the differences are the whole shape. */
-.model-check {
+/* ==> THE TICK, AND IT IS SHARED. <== Drawn, not a glyph — a checkmark
+ * character renders differently on every platform and at 10px the differences
+ * are the whole shape.
+ *
+ * ==> IT WAS `.model-check` AND IT BELONGED TO THE LAYERS PANEL ALONE UNTIL
+ * THE SEASON ROSTER NEEDED A REAL CHECKBOX. <== §12: a pattern used twice gets
+ * extracted before the second use. The alternative was six lines and a
+ * clip-path polygon copied into `seasons/seasons.css`, where the second copy
+ * would look identical on the day it was written and drift the first time
+ * either box was retuned.
+ *
+ * ==> AND THE ON-STATE HAS TWO DRIVERS, WHICH IS WHY THAT SELECTOR IS A PAIR.
+ * <== Layers rows are `<button role="checkbox">` and carry their state in
+ * `aria-checked`; a season row is a `<label>` wrapping a real
+ * `<input type="checkbox">` and carries it in `:checked`. Both are correct for
+ * what they are — Layers has no form to submit and needs a disabled state on
+ * the last remaining model, the roster wants the native box's own keyboard and
+ * screen-reader behaviour on a forty-row list. One appearance, two ways of
+ * being switched on.
+ *
+ * ==> THE SEASONS HALF LIVES HERE RATHER THAN IN `seasons/seasons.css`, AND
+ * THAT IS THE POINT. <== A grouped selector is the only shape that makes the
+ * two states impossible to retune apart. */
+.check-box {
   flex: 0 0 auto;
   width: 14px;
   height: 14px;
   border: 1px solid var(--glass-border);
   border-radius: 3px;
+  align-self: center;
 }
-.model-check { align-self: center; }
 
-.model-row[aria-checked="true"] .model-check {
+.model-row[aria-checked="true"] .check-box,
+.seasons-check input:checked + .check-box,
+.seasons-check input:indeterminate + .check-box {
   border-color: var(--focus-ring);
   background: var(--focus-ring);
   /* A tick cut out of the filled box: two borders on a rotated square. */
   clip-path: polygon(14% 44%, 0 58%, 36% 100%, 100% 22%, 86% 8%, 36% 72%);
+}
+
+/* ==> SOME BUT NOT ALL, AND IT HAS TO BE A DIFFERENT SHAPE RATHER THAN A
+ * DIFFERENT COLOUR. <== The master box above the roster is three-state, the
+ * way a spreadsheet's filter header is: none, some, all. Colour is spoken for
+ * — the focus-ring amber already means "this one" everywhere in the archive —
+ * so the middle state is drawn as a bar instead of a tick. A reader who has
+ * used a spreadsheet has already learned what it means. */
+.seasons-check input:indeterminate + .check-box {
+  clip-path: polygon(18% 40%, 82% 40%, 82% 60%, 18% 60%);
 }
 
 /* The last remaining model cannot be switched off — a layer switched on with
