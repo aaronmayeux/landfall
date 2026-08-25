@@ -33,6 +33,40 @@
 export const ARCHIVE_LABEL = 'Past storms';
 
 /**
+ * The sentence beside the name. §57.21b item 8.
+ *
+ * ==> THE BAR IS WHERE SELECTION GETS DISCOVERED, WHICH IS WHY THE MIDDLE
+ * STATE CARRIES A HINT. <== §57.21a made selecting a deliberate act — tap a
+ * track, or press Enter on a ticked row — and NOTHING on screen says a track
+ * is tappable. A reader who never learns that never sees a single storm's
+ * dots, which is most of what step 6 built.
+ *
+ * ==> AND ZERO GETS ITS OWN WORDS, OR THE BAR IS A TITLE BAR AGAIN. <== A bar
+ * reading `2005 · Atlantic` over an empty globe states a fact the reader can
+ * already see and answers nothing. `tick a storm to draw it` is the one thing
+ * they need to know at that moment, and it is the state every visit starts in.
+ *
+ * ==> THE OPEN STORM'S NAME REPLACES THE COUNT RATHER THAN JOINING IT. <==
+ * `2005 · Atlantic · 4 shown · Katrina` is four facts on a line that is one
+ * line tall on a 390px phone. Once a storm is open it is the subject, and the
+ * count is answerable by looking at the globe.
+ *
+ * PURE, and exported so a suite can drive it without a DOM.
+ *
+ * @param {object|null} where  `{ label, shown, openName }` from the board, or
+ *   null before a season has settled.
+ * @returns {string} the sentence, or '' when there is nothing true to say yet.
+ */
+export function barDetail(where) {
+  if (!where?.label) return '';
+  if (where.openName) return `${where.label} · ${where.openName}`;
+  if (where.shown > 0) {
+    return `${where.label} · ${where.shown} shown · tap a track for detail`;
+  }
+  return `${where.label} · tick a storm to draw it`;
+}
+
+/**
  * Build the bar. Not mounted — the caller decides when it goes on screen.
  *
  * @param {object} opts

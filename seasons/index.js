@@ -48,7 +48,7 @@ import { isArchive, setArchive } from '../lib/archive-mode.js';
 import * as seasonsData from '../data/seasons.js';
 import * as seasonsLive from '../data/seasons-live.js';
 import { createSeasonsBoardView } from '../ui/view-seasons-board.js';
-import { createSeasonsBar } from './bar.js';
+import { barDetail, createSeasonsBar } from './bar.js';
 import * as deepLink from './deep-link.js';
 
 /** Registered once per page load. A dynamic import is cached, so a second
@@ -289,7 +289,12 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * message the words exist to carry (§5). */
     onWhere: (where) => safely(() => {
       if (linkReason === 'malformed' || linkReason === 'out-of-range') return;
-      bar.setDetail(where ? where.label : '');
+      /* ==> THE BOARD REPORTS FACTS AND THE BAR OWNS THE WORDS. §57.21b item
+       * 8. <== `barDetail` is a pure function in `seasons/bar.js`, so the
+       * sentence lives beside the element that shows it and can be driven by
+       * a suite without a DOM. This file stays what it was: the place that
+       * decides WHO needs to know, never what they are told. */
+      bar.setDetail(barDetail(where));
     }),
   });
 
