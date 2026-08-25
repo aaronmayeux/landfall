@@ -1266,7 +1266,12 @@ function boot() {
      * unconditionally at the end of this emit. */
     const ended = state.storms.filter((s) => isEnded(s));
     const warmable = state.storms.filter((s) => !isEnded(s));
-    if (styleReady) {
+    /* ==> `live` HERE TOO, AND THIS IS THE PUSH THAT UNDID THE ARCHIVE EVERY
+     * CYCLE. §57.21c. <== `liveGlobe.hide()` prunes the ambient bundles on the
+     * way in; this loop put a finished storm's track straight back on the next
+     * poll, so even a correct entry lasted at most one cycle. The storms keep
+     * arriving and `lastFullState` keeps them — what stops is the PAINTING. */
+    if (styleReady && live) {
       for (const s of ended) {
         const b = endedBundle(s.id);
         if (b && !b.error) engine.ambientBundle(s, pipeline.forMap(s, b));
@@ -1300,6 +1305,23 @@ function boot() {
        * call and this guard turns a loud exception into missing cones, which
        * is worse. */
       if (!styleReady) return;
+      /* ==> AND THE ARCHIVE GATE, WHICH IS ASKED HERE RATHER THAN READ OFF
+       * `live` ABOVE. §57.21c. <== This callback fires when a bundle lands,
+       * which can be minutes after the emit that started the warm — long
+       * enough for somebody to have pressed a door in between. `live` is the
+       * answer from the moment the fetch STARTED, and using it would paint a
+       * cone onto a sepia globe on the strength of a question asked before the
+       * reader was even in there. `isArchive()` is the answer now.
+       *
+       * ==> THE FETCH IS NOT GATED, ONLY THE PAINT. <== Warming carries on
+       * behind the archive on purpose, so `liveGlobe.show()` has a full cache
+       * to repush from and leaving lands on current weather rather than on a
+       * globe that has to fill itself in over the next poll.
+       *
+       * `refreshCage()` below goes with it: it rebuilds the LIVE cage from
+       * `lastStorms`, which in here would flatten the season's ridge and put
+       * this week's mountains up in its place. */
+      if (isArchive()) return;
       /* Decorated on the way in, so a storm whose deck warmed FIRST does not
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
@@ -1442,6 +1464,27 @@ function boot() {
       /* Flood polygons are US ground truth about this week's water. Nothing
        * about them belongs over 1935. */
       if (styleReady) setFloodAlerts(map, []);
+      /* ==> AND THE AMBIENT GEOMETRY, WHICH IS THE HALF THIS FUNCTION MISSED
+       * FOR AS LONG AS THE ARCHIVE HAS EXISTED. §57.21c. <==
+       *
+       * Everything above is a MARK: a dot, a patch, a picture, a height. The
+       * ambient bundles are the LINES — every live storm's past track, its
+       * cone, its wind field and its model guidance — and they belong to the
+       * layer engine rather than to any of the handles above, so emptying all
+       * five left them drawn. The result was 2005's sepia roster underneath
+       * this week's cones, in any year the reader opened.
+       *
+       * `ambientPrune(new Set())` rather than a push of empty collections: it
+       * drops every bundle AND runs each layer's `forget` hook, which is what
+       * clears the coastal band caches that would otherwise hold their last
+       * shapes. An empty push would leave those behind.
+       *
+       * SAFE TO DO ON THE WAY IN BECAUSE `show()` HAS A REAL WAY BACK. The
+       * bundles live in the geometry cache and the ended-storm registry, not
+       * in the engine, so `repushAmbient()` rebuilds them from memory without
+       * a fetch — and it is the same restore path `style.load` already uses,
+       * which is a road known to work rather than one written for this. */
+      engine.ambientPrune(new Set());
     },
     show() {
       const state = lastFullState;
@@ -1457,6 +1500,12 @@ function boot() {
       /* The flood layer refills itself from its own cache — `ensureFlood` holds
        * one answer per TTL, so this is a re-push and not a fetch. */
       ensureFlood();
+      /* ==> AND THE LINES COME BACK. <== The mirror of the prune in `hide()`.
+       * Reads the geometry cache and the ended-storm registry, both of which
+       * the poll has kept current the whole time the archive was open — so a
+       * reader who spent twenty minutes in 1935 leaves onto this afternoon's
+       * cones rather than onto the ones that were up when they went in. */
+      pipeline.repushAmbient();
     },
   };
 
