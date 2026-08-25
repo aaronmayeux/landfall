@@ -69,31 +69,49 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> THERE IS HALF-BUILT WORK ON A BRANCH. READ `HANDOFF-SEASONS-GLOBE.md` ON
-`seasons-globe-polish` BEFORE STARTING ANY SEASONS WORK. <==** 2026-08-25, commit
-`bf41f4a`. It is push 1 of 2 of Aaron's seasons polish list and it is **two
-thirds done**: the archive's 3D ridge and its glyphs, its camera, and the rule
-that keeps a still-running storm on the roster and off the sepia globe. **The
-root cause it exists to fix is the part NOT built** — `liveGlobe.hide()` never
-drops the layer engine's ambient geometry, and the poll's `ambientBundle` calls
-are not gated on `isArchive()`, so live cones and tracks sit on the archive
-globe in any year and would return within one poll even if entry cleared them.
+**==> THE ARCHIVE GLOBE: LIVE STORMS OFF IT, A RIDGE ON IT, A CAMERA. SHIPPED,
+NOT YET SEEN ON GLASS. <==** Aaron's list of seven, 2026-08-25, items 1-5.
+Items 6 and 7 are push 2 and are under `NEXT UP`. **Not to be confused with the
+`PUSH 1 OF 2: THE GLOBE` entry further down**, which is step 6a's tracks and
+dots and has already been confirmed on glass; this is the 3D cage, the camera
+and the live-storm removal, which are the parts that were never built. `SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read
+that, not this. Five things changed and each has a way to judge it.
 
-**IT IS OFF `main` DELIBERATELY AND MUST NOT BE MERGED UNTIL THAT IS DONE.**
-Merging it early ships an archive globe that draws a ridge over live storms it
-was supposed to have removed.
+1. **LIVE STORMS ARE OFF THE SEPIA GLOBE, AND THIS IS THE ONE THAT MATTERS.**
+   Open Past storms from either door and look at the globe before touching
+   anything: **no cones, no tracks, no wind fields, no model lines.** Then
+   WAIT THROUGH A POLL — a minute or two — and look again. The old bug put them
+   back every cycle, so a globe that is clean on entry and dirty a minute later
+   is the half that was never fixed rather than a new fault. Then leave, and
+   check the live globe comes back whole: every cone and track where it was.
 
-**THE HANDOFF FILE IS THE PLAN, NOT THIS ENTRY.** It carries Aaron's seven items
-verbatim, what each decision was and why, what is left in order, the tests that
-still need mutation-checking, and three questions waiting on glass. It is
-deleted by the commit that lands the pass — a handoff note that outlives its
-handoff is a stale fact nobody deletes.
+2. **A STORM THAT IS STILL RUNNING SHOWS AS `active` AND WILL NOT DRAW.** Open
+   2026. Any storm NHC is still writing advisories on reads `Aug 20 – active`
+   where the dates go, and its checkbox is there but greyed out. Press the
+   master box: everything else ticks, that one does not. **The rule is the live
+   globe's own** — a storm greyed out on the live globe is drawable here — so
+   the check is that the two agree. A storm in colour on the live globe must not
+   be drawn in the archive, and one greyed there must be.
 
-**AND THE LESSON IS WORTH MORE THAN THE BRANCH.** Three quarters of that pass
-was designed and written with nothing on GitHub to show for it, because the
-sandbox is throwaway and a plan living only in a chat window dies with it.
-Aaron caught it. **Anything that will not finish in one session gets pushed to a
-branch with its reasoning before the session ends**, not summarised in a reply.
+3. **THE GLOBE FLIES SOMEWHERE ON THE WAY IN, AND THE TWO DOORS GO TO DIFFERENT
+   PLACES.** From the storm list, it should land on the BASIN of the season that
+   opens. From the home dashboard, on YOUR HOUSE. That is the whole of item 5
+   and it is one press each to check.
+
+4. **OPENING A STORM FLIES TO THE START OF ITS TRACK.** Tap a row's chevron: the
+   camera should land close on the first fix — the one with the white ring and
+   the name on it — sitting in the globe above the sheet rather than behind it.
+   **This is the answer you gave rather than the one that was built first**;
+   fitting the whole track framed a lot of open water. If it is too close or too
+   far, `SEASONS.stormZoom` is the one line, currently 5.
+
+5. **THE ARCHIVE HAS A RIDGE AT THE SPACE FLOOR NOW.** Tick some storms and
+   zoom all the way out. Every ticked storm should raise mountains the height of
+   its wind, with one hurricane glyph at the START of each track in the track's
+   peak colour. Two things to judge: whether one glyph per storm reads as a
+   count of storms rather than clutter, and whether a fully-ticked busy season
+   is legible or a mess. **A pre-1886 storm lies flat on purpose** — no wind was
+   ever recorded — so a flat track with a glyph is correct, not a fault.
 
 **==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
 STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
@@ -313,8 +331,8 @@ control for both — she should look unchanged.
 **==> SEASONS UI POLISH, PUSH 2: THE DRAWER. NOTHING BUILT. <==** Aaron's list,
 2026-08-25, items 6 and 7 of seven. **It is written here rather than in the
 branch's handoff file because that file is deleted the moment push 1 lands** —
-which would have taken these two with it. Push 1 is the globe and is on
-`seasons-globe-polish`; see `IN FLIGHT`.
+which would have taken these two with it. Push 1 has now landed on `main`; see
+`IN FLIGHT` for what it left to judge.
 
 1. **THE SHEET CHANGES HEIGHT WHEN THE YEAR CHANGES, AND THE YEAR STEPPER WALKS
    WITH IT.** Aaron on glass: toggling between years with different storm counts

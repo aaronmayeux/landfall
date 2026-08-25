@@ -50,6 +50,11 @@ export const esc = (s) =>
  * succeed is the same mistake as a Retry button on a year the archive does not
  * hold (§57.18a).
  */
+/** The default for `activeIds`. A frozen module-level Set rather than `new Set()`
+ *  in the parameter list: that would allocate one per render, and this is called
+ *  on every repaint of a list that can run to forty rows. Never written to. */
+const EMPTY_SET = new Set();
+
 const FILTER_ALL = Object.freeze({ id: 'all', label: 'All' });
 const FILTER_MAJORS = Object.freeze({ id: 'majors', label: 'Majors' });
 const FILTER_LANDFALLS = Object.freeze({ id: 'landfalls', label: 'Landfalls' });
@@ -95,9 +100,24 @@ const MD = new Intl.DateTimeFormat('en-US', {
   month: 'short', day: 'numeric', timeZone: 'UTC',
 });
 
-export function dateRange(facts) {
-  if (!Number.isFinite(facts?.firstTime)) return '';
+/**
+ * @param {object|null} facts   from `stormFacts`
+ * @param {boolean} [active]    the storm is still happening (§57.21c)
+ *
+ * ==> A RUNNING STORM HAS NO END DATE, SO THE CELL SAYS SO INSTEAD OF PRINTING
+ * ONE. <== The last row in a live b-deck is where the storm was six hours ago,
+ * not where it stopped. Formatting it as the second half of a range would put a
+ * finished date on a storm that is still out there — the same claim the archive
+ * refuses to make by leaving it off the globe, made again in eight characters.
+ *
+ * The START date stays. It is a real fact, it is the thing the chronological
+ * roster is ordered by, and dropping it would cost the reader the one date this
+ * row can honestly give them.
+ */
+export function dateRange(facts, active = false) {
+  if (!Number.isFinite(facts?.firstTime)) return active ? 'active' : '';
   const a = MD.format(new Date(facts.firstTime));
+  if (active) return `${a} – active`;
   const b = MD.format(new Date(facts.lastTime));
   return a === b ? a : `${a} – ${b}`;
 }
@@ -334,9 +354,28 @@ export function filtersHtml({ filters, filter }) {
  * was nested in, because that is a label's whole job — so opening a storm
  * would silently draw or undraw its track on the way past.
  */
-export function rowHtml({ storm, facts, on }) {
+export function rowHtml({ storm, facts, on, active = false }) {
   const color = categoryColor(facts.peakCategory ?? null, 'tropical', null);
   const strength = categoryShortLabel(facts.peakCategory ?? null, 'tropical', null);
+
+  /* ==> A STORM THAT IS STILL HAPPENING IS LISTED AND CANNOT BE DRAWN. <==
+   * §57.21c, Aaron's call 2026-08-25. It stays on the roster because leaving it
+   * off would make the season in progress look shorter than it is — the one
+   * screen whose whole job is "what has this year done so far". What it may not
+   * do is go on the sepia globe: it has a cone, a wind field and a warning map
+   * on the LIVE globe, and half a best track drawn in archive ink beside 1935
+   * is the app telling a reader a storm is over that nobody has declared over.
+   *
+   * ==> THE BOX IS DISABLED RATHER THAN ABSENT, AND THAT IS §5 AND §13 BOTH.
+   * <== A row that silently has no checkbox where every other row has one reads
+   * as a rendering fault, and it is a control that vanishes rather than
+   * explains (§7). Disabled, it keeps the column aligned, keeps its place in
+   * the tab order's logic, and carries the reason in the label a screen reader
+   * hears. `aria-disabled` rides alongside `disabled` because the two are read
+   * by different assistive stacks. */
+  const drawLabel = active
+    ? `${displayName(storm)} is still happening — it is on the live globe, not this one`
+    : `Draw ${displayName(storm)} on the globe`;
 
   /* The landfall mark. §57.21a took the pin off the globe, so this row is now
    * the ONLY place a landfall surfaces — which is why it moved to the left of
@@ -352,10 +391,11 @@ export function rowHtml({ storm, facts, on }) {
     : '';
 
   return `
-      <li class="seasons-row" data-row="${esc(storm.id)}">
+      <li class="seasons-row" data-row="${esc(storm.id)}" ${active ? 'data-active="true"' : ''}>
         <label class="seasons-check">
           <input type="checkbox" data-storm="${esc(storm.id)}" ${on ? 'checked' : ''}
-                 aria-label="Draw ${esc(displayName(storm))} on the globe">
+                 ${active ? 'disabled aria-disabled="true"' : ''}
+                 aria-label="${esc(drawLabel)}">
           <span class="check-box" aria-hidden="true"></span>
         </label>
         <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
@@ -366,7 +406,7 @@ export function rowHtml({ storm, facts, on }) {
             <span class="row-badge">${esc(strength)}</span>
             <span class="seasons-row-meta">
               ${lf}
-              <span class="seasons-when">${esc(dateRange(facts))}</span>
+              <span class="seasons-when">${esc(dateRange(facts, active))}</span>
             </span>
           </span>
           <span class="seasons-open-chevron" aria-hidden="true"></span>
@@ -502,6 +542,7 @@ export function footprintSlotHtml() {
  */
 export function seasonRosterHtml({
   state, reason, year, provisional, rows, anyEntries, ticked, ghosts,
+  activeIds = EMPTY_SET,
 }) {
   if (state === 'loading') {
     return waitingHtml(provisional ? 'Reading this season…' : 'Reading the record…');
@@ -515,8 +556,20 @@ export function seasonRosterHtml({
   }
 
   const list = rows
-    .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
+    .map((e) => rowHtml({
+      storm: e.storm,
+      facts: e.facts,
+      on: ticked.has(e.storm.id),
+      active: activeIds.has(e.storm.id),
+    }))
     .join('');
+
+  /* ==> THE MASTER BOX SPEAKS FOR THE ROWS THAT CAN ACTUALLY BE DRAWN. <==
+   * §57.21c. A running storm's box is disabled, so counting it in the total
+   * would make a fully-ticked list read as partial forever — the bar would
+   * never fill, and pressing the box would never show a tick. That is a control
+   * whose state is unreachable, which is worse than one that is simply wrong. */
+  const drawable = rows.filter((e) => !activeIds.has(e.storm.id));
 
   /* ==> THE MASTER BOX SITS ABOVE THE LIST, NOT INSIDE IT. <== It is not a
    * storm, and a `<li>` in a roster of storms is what a screen reader would
@@ -524,7 +577,7 @@ export function seasonRosterHtml({
    * FILTERED list and `ticked` is the whole season, so the tally below counts
    * the intersection rather than the set. Ticking three majors and switching
    * to All must not show a full box. */
-  const on = rows.reduce((n, e) => n + (ticked.has(e.storm.id) ? 1 : 0), 0);
+  const on = drawable.reduce((n, e) => n + (ticked.has(e.storm.id) ? 1 : 0), 0);
 
   /* ==> `Show all evenly` USED TO SIT HERE AND IS GONE. <== It existed to undo
    * the coupling where ticking a storm also selected it, and that coupling was
@@ -534,7 +587,7 @@ export function seasonRosterHtml({
    * did on purpose is one control too many. */
   return `
       ${footprintSlotHtml()}
-      ${checkAllHtml({ shown: rows.length, on })}
+      ${checkAllHtml({ shown: drawable.length, on })}
       <ul class="seasons-roster">${list}</ul>
       ${ghostsHtml(ghosts)}`;
 }

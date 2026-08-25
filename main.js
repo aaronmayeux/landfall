@@ -31,7 +31,7 @@ import { getHome } from './data/home.js';
  * from anywhere, and nothing imports FROM it except this file (§12). */
 import { applyTokens, createThemeSwitch } from './app/theme-switch.js';
 import { createBundlePipeline } from './app/bundle-pipeline.js';
-import { createViews, recenterTarget } from './app/views.js';
+import { createViews, panelOffsetFor, recenterTarget } from './app/views.js';
 import { anySourceResolved, createSourceReporter } from './app/source-status.js';
 import { createViewControl } from './map/view-control.js';
 import { setAdminVisible } from './map/style.js';
@@ -79,6 +79,12 @@ import {
 import {
   ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
 } from './map/layers/season-swath.js';
+/* The archive's ridge and its camera. Both are pure — one turns a ticked
+ * season into cage points, the other into a flight — and both are reached only
+ * through the `archiveGlobe` facade below, because `seasons/` never imports
+ * `map/` (§12). §57.21c. */
+import { buildSeasonMeshPoints } from './map/season-mesh.js';
+import { flyToArchiveEntry, flyToArchiveStorm } from './map/season-frame.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -87,7 +93,7 @@ import { getGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks } from './data/adeck.js';
 import { warmShips } from './data/ships.js';
-import { isEnded } from './lib/lifecycle.js';
+import { isEnded, reportingStormIds } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
 import { backfillEndedTracks } from './data/ended-track.js';
 import { IMAGERY } from './config/constants.js';
@@ -1260,7 +1266,12 @@ function boot() {
      * unconditionally at the end of this emit. */
     const ended = state.storms.filter((s) => isEnded(s));
     const warmable = state.storms.filter((s) => !isEnded(s));
-    if (styleReady) {
+    /* ==> `live` HERE TOO, AND THIS IS THE PUSH THAT UNDID THE ARCHIVE EVERY
+     * CYCLE. §57.21c. <== `liveGlobe.hide()` prunes the ambient bundles on the
+     * way in; this loop put a finished storm's track straight back on the next
+     * poll, so even a correct entry lasted at most one cycle. The storms keep
+     * arriving and `lastFullState` keeps them — what stops is the PAINTING. */
+    if (styleReady && live) {
       for (const s of ended) {
         const b = endedBundle(s.id);
         if (b && !b.error) engine.ambientBundle(s, pipeline.forMap(s, b));
@@ -1294,6 +1305,23 @@ function boot() {
        * call and this guard turns a loud exception into missing cones, which
        * is worse. */
       if (!styleReady) return;
+      /* ==> AND THE ARCHIVE GATE, WHICH IS ASKED HERE RATHER THAN READ OFF
+       * `live` ABOVE. §57.21c. <== This callback fires when a bundle lands,
+       * which can be minutes after the emit that started the warm — long
+       * enough for somebody to have pressed a door in between. `live` is the
+       * answer from the moment the fetch STARTED, and using it would paint a
+       * cone onto a sepia globe on the strength of a question asked before the
+       * reader was even in there. `isArchive()` is the answer now.
+       *
+       * ==> THE FETCH IS NOT GATED, ONLY THE PAINT. <== Warming carries on
+       * behind the archive on purpose, so `liveGlobe.show()` has a full cache
+       * to repush from and leaving lands on current weather rather than on a
+       * globe that has to fill itself in over the next poll.
+       *
+       * `refreshCage()` below goes with it: it rebuilds the LIVE cage from
+       * `lastStorms`, which in here would flatten the season's ridge and put
+       * this week's mountains up in its place. */
+      if (isArchive()) return;
       /* Decorated on the way in, so a storm whose deck warmed FIRST does not
        * have its guidance wiped when its geometry lands afterwards. The two
        * warm loops run independently and either can finish first. */
@@ -1380,6 +1408,24 @@ function boot() {
        * something is focused (§57.26a). Handed the same list for the same
        * reason as the marks — one call the board cannot forget to make. */
       setSeasonSwathSet(map, selected);
+      /* ==> AND THE 3D CAGE, WHICH IS THE ONE PIECE OF THIS THAT IS NOT
+       * MAPLIBRE. §57.21c. <== The archive globe was flat until now: entering
+       * calls `liveGlobe.hide()`, which flattens the ridge on purpose, and
+       * nothing ever put anything back. So a ticked season had tracks, dots
+       * and names at close zoom and NOTHING at all out at the space floor,
+       * where the cage and its glyphs are the whole globe.
+       *
+       * NOT GUARDED ON `styleReady`, unlike the three calls above. The 3D
+       * engine exists from boot and owns its own buffers; it is the MapLibre
+       * sources that do not exist until the style installs. Same split the
+       * poll's own watched-area pushes make.
+       *
+       * `'ok'` rather than a state read from anywhere: this is not a feed. The
+       * storms are in memory, parsed out of a file that already arrived, so
+       * there is no outage for the cage to desaturate over. Whether the season
+       * could be read at all is the roster's question and it answers it in
+       * words. */
+      g3d.heightfield.setStormPoints('ok', buildSeasonMeshPoints(selected));
     },
     /** Which storm the reader has opened in full detail; null puts them all
      *  back evenly. §57.21 item 2. */
@@ -1400,8 +1446,103 @@ function boot() {
       clearSeasonTracks(map);
       clearSeasonPoints(map);
       clearSeasonSwath(map);
+      /* ==> AND THE RIDGE COMES DOWN WITH THEM. §57.21c. <== `setTracks` put
+       * it up and this is its mirror. Without it, leaving the archive keeps
+       * 1935's mountains standing until `liveGlobe.show()`'s `refreshCage()`
+       * lands — and that is a frame of the wrong world on the way out, which
+       * is exactly what the ordering in `seasons/index.js`'s `leave()` is
+       * arranged to avoid everywhere else.
+       *
+       * NOT GUARDED ON `styleReady` in its own right — the guard above covers
+       * the whole method — but note it does not need one: the 3D engine owns
+       * its own buffers and exists from boot. */
+      g3d.heightfield.setStormPoints('ok', []);
+    },
+
+    /**
+     * Point the camera at the archive on the way in. §57.21c, item 5.
+     *
+     * ==> THE MEASUREMENTS ARE TAKEN HERE, AT CALL TIME, AND NOT IN
+     * `map/season-frame.js`. <== That file is pure arithmetic and testable
+     * without a browser; this is the composition root and it is the only side
+     * of the wall that is allowed to touch the DOM. `seasons/` calls it and
+     * never learns that a drawer has a height (§12).
+     *
+     * `idle.interrupt()` first, or the resting globe's per-frame `setCenter`
+     * stomps the flight — the same reason `frameHome` in `app/views.js` does
+     * it, and the archive's globe is idling by definition because nobody has
+     * touched it yet.
+     */
+    flyToEntry({ from, basin }) {
+      idle.interrupt();
+      return flyToArchiveEntry(map, {
+        from,
+        basin,
+        home: getHome(),
+        offset: archiveOffset(),
+      });
+    },
+
+    /**
+     * Frame one storm above the sheet. §57.21c, item 4.
+     *
+     * Takes POINTS rather than a storm or an id: `seasons/` owns the roster
+     * and `map/` owns the camera, and a list of coordinates is the smallest
+     * thing that crosses between them.
+     */
+    flyToStorm(points) {
+      idle.interrupt();
+      return flyToArchiveStorm(map, points, { offset: archiveOffset() });
     },
   };
+
+  /**
+   * Which storms the live app is still drawing in colour, for the archive.
+   * §57.21c.
+   *
+   * ==> IT IS THE LIVE GLOBE'S OWN GREYING RULE, NOT A SECOND OPINION. <==
+   * Aaron's call, 2026-08-25. `reportingStormIds` is built on the same
+   * `noCurrentReading` that turns a storm dot grey out there — ended, or
+   * silent past §5's threshold — so the archive takes that verdict rather than
+   * running its own clock over the b-deck. A reader who watched Iselle go grey
+   * on the live globe opens 2026 and finds her drawn as history, because those
+   * are the same fact.
+   *
+   * ==> NULL RATHER THAN AN EMPTY SET WHEN THE FEED HAS NEVER ANSWERED. <==
+   * §5. A deep link into `?season=2026` runs this before the first poll has
+   * landed, and "no storms" and "we have not been told" are the same empty
+   * list with opposite meanings. The board falls back to the b-deck age test
+   * on null; handing it an empty set instead would say, confidently and
+   * wrongly, that every storm this year has finished.
+   */
+  const liveRunningIds = () => {
+    if (!lastFullState) return null;
+    return reportingStormIds(lastStorms || []);
+  };
+
+  /**
+   * Where a flight's centre should land while the archive's sheet is up.
+   * §57.21c.
+   *
+   * ==> THE SAME MEASUREMENT EVERY OTHER FLIGHT IN THE APP MAKES, THROUGH THE
+   * SAME FUNCTION. <== `panelOffsetFor` is `app/views.js`'s, and the reason to
+   * borrow it rather than write a second one is that the archive's board is
+   * the same drawer element as every other panel — a second copy of this
+   * arithmetic would drift the day the breakpoint moves and the symptom would
+   * be the archive alone framing storms behind its own sheet.
+   *
+   * ==> MEASURED AT CALL TIME, NOT HELD. <== `offsetHeight` ignores the slide
+   * transform, so it is stable mid-animation; and both callers open or have
+   * already opened the drawer, so "where will the sheet be" is the right
+   * question. The board's height changes with the year (that is push 2's
+   * item 1), so a cached number would be wrong the moment somebody stepped
+   * the year.
+   */
+  const archiveOffset = () =>
+    panelOffsetFor({
+      ...drawer.box(),
+      wide: window.matchMedia('(min-width: 720px)').matches,
+    });
 
   const liveGlobe = {
     hide() {
@@ -1418,6 +1559,27 @@ function boot() {
       /* Flood polygons are US ground truth about this week's water. Nothing
        * about them belongs over 1935. */
       if (styleReady) setFloodAlerts(map, []);
+      /* ==> AND THE AMBIENT GEOMETRY, WHICH IS THE HALF THIS FUNCTION MISSED
+       * FOR AS LONG AS THE ARCHIVE HAS EXISTED. §57.21c. <==
+       *
+       * Everything above is a MARK: a dot, a patch, a picture, a height. The
+       * ambient bundles are the LINES — every live storm's past track, its
+       * cone, its wind field and its model guidance — and they belong to the
+       * layer engine rather than to any of the handles above, so emptying all
+       * five left them drawn. The result was 2005's sepia roster underneath
+       * this week's cones, in any year the reader opened.
+       *
+       * `ambientPrune(new Set())` rather than a push of empty collections: it
+       * drops every bundle AND runs each layer's `forget` hook, which is what
+       * clears the coastal band caches that would otherwise hold their last
+       * shapes. An empty push would leave those behind.
+       *
+       * SAFE TO DO ON THE WAY IN BECAUSE `show()` HAS A REAL WAY BACK. The
+       * bundles live in the geometry cache and the ended-storm registry, not
+       * in the engine, so `repushAmbient()` rebuilds them from memory without
+       * a fetch — and it is the same restore path `style.load` already uses,
+       * which is a road known to work rather than one written for this. */
+      engine.ambientPrune(new Set());
     },
     show() {
       const state = lastFullState;
@@ -1433,6 +1595,12 @@ function boot() {
       /* The flood layer refills itself from its own cache — `ensureFlood` holds
        * one answer per TTL, so this is a re-push and not a fetch. */
       ensureFlood();
+      /* ==> AND THE LINES COME BACK. <== The mirror of the prune in `hide()`.
+       * Reads the geometry cache and the ended-storm registry, both of which
+       * the poll has kept current the whole time the archive was open — so a
+       * reader who spent twenty minutes in 1935 leaves onto this afternoon's
+       * cones rather than onto the ones that were up when they went in. */
+      pipeline.repushAmbient();
     },
   };
 
@@ -1475,6 +1643,16 @@ function boot() {
    * on the status strip rather than a console line nobody sees.
    */
   function enterSeasons(fromEl) {
+    /* ==> WHICH DOOR WAS PRESSED, READ OFF THE ELEMENT ITSELF. §57.21c item 5.
+     * <== §57.16 already stamps `data-door` on the two rows — the one under
+     * the live storm list and the one at the foot of the home dashboard — and
+     * this is the first thing to read it. The archive's camera opens on the
+     * BASIN from the storm list and on HOME from the dashboard, because those
+     * two readers were looking at different things a moment ago.
+     *
+     * Optional chaining the whole way down: a deep link passes no element at
+     * all, and `undefined` is a case `map/season-frame.js` already answers. */
+    const from = fromEl?.dataset?.door || null;
     import('./seasons/index.js')
       .then((mod) => {
         seasonsMod = mod;
@@ -1483,6 +1661,8 @@ function boot() {
           archiveGlobe,
           drawer,
           recenterAndClear,
+          liveRunningIds,
+          from,
           fromUrl: false,
           returnFocusTo: fromEl || null,
         });
@@ -1506,7 +1686,9 @@ function boot() {
     import('./seasons/index.js')
       .then((mod) => {
         seasonsMod = mod;
-        mod.openSeasons({ liveGlobe, archiveGlobe, drawer, recenterAndClear, fromUrl: true });
+        mod.openSeasons({
+          liveGlobe, archiveGlobe, drawer, recenterAndClear, liveRunningIds, fromUrl: true,
+        });
       })
       .catch((e) => {
         console.error('[landfall] Past storms did not load:', e);

@@ -536,11 +536,21 @@ is one frame of the WRONG colours with storms on them.
 2. **The live globe empties.** `main.js` owns a `liveGlobe` facade with `hide`
    and `show`; the archive is handed it rather than importing `map/` or
    `data/` itself. Storm dots, watched areas (both the MapLibre patches and the
-   3D rings), imagery, the 3D cage and the flood polygons. The poll keeps
-   running behind it — stopping it would mean leaving into a stale app — but
-   five gates stop it repainting any of them, and `show()` re-pushes from
-   `lastFullState`, so **leaving lands on the current weather, not on the
-   weather from the moment of entry.**
+   3D rings), imagery, the 3D cage, the flood polygons **and the layer engine's
+   ambient geometry — every live storm's past track, cone, wind field and model
+   guidance** (§57.21c). The poll keeps running behind it — stopping it would
+   mean leaving into a stale app — but **six** gates stop it repainting any of
+   them, and `show()` re-pushes from `lastFullState`, so **leaving lands on the
+   current weather, not on the weather from the moment of entry.**
+
+   **THE AMBIENT HALF WAS MISSING UNTIL 2026-08-25 AND IT IS THE ONE WORTH
+   NAMING.** Everything else in that list is a MARK the facade holds a handle
+   to; the ambient bundles belong to the layer engine, so emptying all five
+   left them drawn and the sepia globe carried this week's cones over whatever
+   year was open. `hide()` calls `engine.ambientPrune(new Set())`, which drops
+   the bundles and runs each layer's `forget` hook so the coastal band caches
+   go with them; `show()` rebuilds through `pipeline.repushAmbient()`, reading
+   the geometry cache and the ended-storm registry rather than the network.
 3. **`forceMode(MODE.SEPIA)`.** `releaseMode` restores whatever was live
    including a settings change made while inside.
 4. **The bar mounts** and `data-seasons="on"` goes on `<html>`.
@@ -1330,6 +1340,12 @@ otherwise accumulate every curve of every storm ever ticked.
 They are a different data question — HURDAT2 only records wind radii from
 2004, so most of the archive gets §57.25's honest line rather than a shape.
 
+**AND THE 3D CAGE IS NOT HERE EITHER — SEE §57.21c.** Everything above is
+MapLibre, which is invisible at the space floor where the globe opens. The
+archive draws a ridge and a glyph out there now, on the same heightfield the
+live globe uses, and the camera work that decides where the reader is looking
+when they arrive is in that section too.
+
 ### 57.21b The drawer and the bar, as built
 
 Push 2 of the UI polish, 2026-08-25. `ui/seasons-board-markup.js` (the rebuilt
@@ -1554,6 +1570,187 @@ glass reported every tap target in this drawer misbehaving. That cause is still
 unknown. This push rewrote the row completely — if taps misbehave again, the
 row is a real suspect rather than a guess; if they do not, step 7's fault is
 somewhere else and the chevron can be built.
+
+### 57.21c The archive's globe: live storms off it, a ridge on it, and a camera
+
+Push 1 of two, 2026-08-25. Aaron's list of seven; items 6 and 7 are the drawer
+and are push 2. `map/season-mesh.js` (the ridge), `map/season-frame.js` (the
+camera), `lib/lifecycle.js` (`reportingStormIds`), `main.js` (the two facades
+and the wiring), `seasons/index.js` (when each flight happens),
+`ui/view-seasons-board.js` and `ui/seasons-board-markup.js` (the roster half).
+Numbers live in `SEASONS` — `basinView`, `stormZoom`, `meshMaxPointsTotal`,
+`meshMinPointsPerStorm`, `activeWithinHours`.
+
+**==> LIVE STORMS DO NOT APPEAR ON THE SEPIA GLOBE, AND THE HALF THAT WAS
+ACTUALLY BROKEN WAS THE GEOMETRY. <==** `liveGlobe.hide()` emptied five
+surfaces and left a sixth: the layer engine's ambient bundles, which are every
+live storm's past track, cone, wind field and model guidance. Those belong to
+the engine rather than to any handle the facade holds, so the sepia globe
+carried this week's cones over whatever year was open — in 1935, in 2005,
+anywhere. §57.16's account of entry now names all six.
+
+**And the poll put them back every cycle.** In `subscribe`, `markers`,
+`genesis`, the 3D watch marks and `imagery` were gated on `!isArchive()`; the
+ended-storm push and the `warmGeometry` callback were not. Both are gated now,
+and **the callback re-asks rather than reading the captured flag** — it fires
+when a bundle lands, minutes after the emit that started the warm, which is
+long enough for somebody to have pressed a door in between. `refreshCage()`
+rides inside that callback and would flatten the season's ridge to put this
+week's mountains up, so the whole body bails.
+
+**The fetching is not gated, only the painting.** Warming carries on behind the
+archive on purpose, so `show()` has a full cache to repush from and leaving
+lands on current weather rather than filling itself in over the next poll.
+
+**==> A STORM THAT IS STILL HAPPENING STAYS ON THE ROSTER AND OFF THE GLOBE,
+AND THE LIVE APP DECIDES WHICH. <==** Aaron's call, 2026-08-25, and it replaced
+a twelve-hour age test on the last b-deck row. The live globe already greys a
+storm out when nobody publishes a wind for it — `noCurrentReading`, which is
+`ended` or `silent` — and that is the verdict a reader has watched happen.
+`reportingStormIds` in `lib/lifecycle.js` asks it of a list; the archive takes
+the answer rather than running a second clock. An independent rule could only
+agree by coincidence, and the day the two disagreed a storm would be grey on
+one globe and drawn as settled history on the other.
+
+**It lives in `lifecycle.js` and not in `season-facts.js` because of the boot
+path.** `lib/season-facts.js` is reached only through the archive's dynamic
+import and never ships to a reader who does not open Past storms (§57.35 fault
+4). `main.js` is the caller, so putting ten lines there would have put its
+other three hundred on every boot forever.
+
+**The join is the ATCF id, lowercased, and it is measured rather than assumed.**
+`/api/seasons/live` lists `ep092026` off NOAA's b-deck filenames; NHC's own
+CurrentStorms carries `"id": "ep092026"` for the same storm; the parser
+upper-cases what it emits and `data/nhc.js` namespaces its copy as
+`nhc:ep092026`. Both sides read off `origin/archive:latest/`. A GDACS storm's
+`sourceId` is a numeric event id, so it cannot collide with an ATCF id and
+needs no filtering — it simply never matches, which is the right answer for a
+basin the provisional roster does not cover.
+
+**`null` AND AN EMPTY SET ARE OPPOSITE FACTS (§5).** Empty means the feed
+answered and nothing is running. `null` means it has never answered — a
+`?season=` deep link landing before the first poll — and "we cannot ask" is not
+"everything has finished". `main.js` returns `null` in that case and the board
+falls back to the b-deck age test, which is the only thing
+`SEASONS.activeWithinHours` still serves.
+
+**What the roster does with it.** The date cell reads `Aug 20 – active`; the
+start date stays because it is a real fact and it is what the chronological
+roster is ordered by. The checkbox is **disabled, not absent** — a row silently
+missing a control every other row has reads as a rendering fault — and the
+reason rides in the `aria-label`. The master box counts only DRAWABLE rows, or
+its bar could never fill and pressing it could never show a tick.
+`selectedEntries()` is the single place that decides what reaches the globe and
+it drops running storms there, **not only on the checkbox**: a storm can change
+state under a tick that is already set, because the archive can be open for an
+hour.
+
+**It does not repaint itself.** The archive does not subscribe to the live
+poll, so a storm that finishes while the board is on screen moves from
+`– active` to drawable on the next thing that renders. Accepted rather than
+overlooked: wiring the poll in would mean the live app reaching into a world it
+is deliberately walled out of (§57.2), and the window is minutes on a surface
+nobody is watching for that transition.
+
+**==> THE RIDGE AND ITS GLYPHS. <==** `map/season-mesh.js`, its own file rather
+than a branch inside `map/storm-mesh.js`: that file is built end to end around
+a LIVE storm — a head bead at the current fix, a window measured from `now`, a
+cap on unmeasured forecast beads, bundles arriving asynchronously — and an
+archive storm has none of those. `thin` is EXPORTED from `storm-mesh.js` rather
+than copied, because two copies would differ the first time either was tuned
+and the difference would show as one globe's ridge reaching further than the
+other's for the same storm.
+
+- **The glyph is on the FIRST fix, in the TRACK's peak colour.** An archive
+  storm is not anywhere, so the only fix with a claim to the mark is where the
+  record opens — which is also where §57.21a puts the white direction ring and
+  the name. The colour is a deliberate inconsistency: every BEAD is the
+  category at that moment, the GLYPH is peak, because it caps the LINE and a
+  first-six-hours hue would be blue on every storm that ever lived.
+- **Height is the wind at each fix**, through the same `sevFromKt` the live
+  globe uses, so a Cat 3 raises the same mountain in 1935 as today.
+- **A storm with no recorded wind gets its glyph and lies flat.** Pre-1886 rows
+  carry no intensity. Height is the loudest channel on this globe (§9) and must
+  not shout a number nobody wrote down.
+- **`meshMaxPointsTotal` (1,600) is shared EVENLY**, floored by
+  `meshMinPointsPerStorm` (3) and capped by `MESH_TRACK.maxPointsPerStorm`.
+  Every point is tested against all 1,440 cage nodes on a recompute. Spending
+  it evenly means a busy season is COARSER, never missing storms — the one case
+  where a dropped storm would be impossible to notice.
+- **It reads `lon`, not `lonU`.** These are independent directions on a sphere,
+  never joined into a line, so the published value is the right one.
+
+`setTracks` pushes it and `clearTracks` flattens it. Neither is guarded on
+`styleReady` for the 3D call: the engine exists from boot and owns its own
+buffers, unlike the MapLibre sources. The state is `'ok'` unconditionally —
+this is not a feed, the storms are already parsed and in memory, so there is no
+outage for the cage to desaturate over.
+
+**==> THE CAMERA. <==** `map/season-frame.js`, its own file because `main.js`
+is over 1,700 lines and §12's row on it has said "take the next cut" for five
+passes. It takes an offset and a door rather than reading the DOM; `main.js`
+measures the drawer at call time through `app/views.js`'s own `panelOffsetFor`,
+borrowed rather than rewritten because the archive's board is the same drawer
+element as every other panel.
+
+- **Entering goes to the BASIN from the storm-list door and to HOME from the
+  home-dashboard door.** §57.16 has stamped `data-door` on both rows since step
+  4 and this is the first thing to read it. A reader who pressed `Past storms`
+  under the live storm list was looking at this year's ocean; swinging to their
+  house is a non-sequitur. A basin with no rest position falls back to home
+  rather than leaving the camera wherever the live app left it — after a
+  selection that is a close zoom on a storm that has just been erased.
+- **The flight rides on `onWhere`**, which is the first moment the basin is
+  known; flying at `openSeasons` time would fly before the index has been read.
+  A once-per-session flag guards it, because `onWhere` also fires on every
+  tick, every filter and every focus. It sits outside the bad-link guard: a
+  reader sent a broken `?season=` still gets a camera pointed somewhere
+  sensible while the bar tells them the link was wrong.
+- **Opening a storm frames its FIRST FIX at `SEASONS.stormZoom`.** Aaron on
+  glass, and it reversed the design written first. Fitting the whole track
+  reasoned well — a finished storm is a curve, and Katrina centred on one fix
+  leaves most of her off screen — but the zoom that fits a two-thousand-mile
+  arc is about `ZOOM.basin`, which framed a panel about one storm over a lot of
+  open water. The start fix is the one already marked. `stormZoom` starts at
+  `GLOBE.flyToZoom`'s value and is a separate dial on purpose.
+- **A still-running storm gets no flight.** `showStorm` already refuses to tick
+  or focus one, and a flight ending on empty ocean beside a full panel of
+  figures is the same disagreement in a new place.
+
+**==> THE SEAM ARITHMETIC WAS DELETED, NOT MOVED, AND THE TEST THAT WOULD HAVE
+GUARDED IT WAS DELETED TOO. <==** The whole-track fit took bounds off `lonU`
+because a min/max over raw longitudes on a dateline-crossing storm reports a
+planet-wide span. There is no span left to measure. The plan for this pass
+called for a Della (CP011957) seam case with "swap `lon` for `lonU`" as the
+mutation — **that mutation cannot bite**: `lib/hurdat.js` anchors its unwrap at
+the first fix (`points[0].lonU = points[0].lon`), so on the point this camera
+frames the two properties are equal by construction. §12 calls a test that
+passes on the same wrong assumption as the bug worse than no test, so
+`tools/test-season-frame.mjs` asserts the ANCHOR instead — the fact the flight
+is safe because of. `lon` is still the property used, because `find` falls
+through to a later fix when the first is unusable and a later `lonU` genuinely
+can sit outside ±180.
+
+**THE GATES.** `tools/test-season-frame.mjs` (the camera and the ridge, on the
+real 2005 file and the real Della record), `tools/test-seasons-board.mjs` (the
+roster half), `tools/test-lifecycle.mjs` (`reportingStormIds`). Twenty-six
+mutations were run and seven survived; all seven were the test's fault and are
+recorded in the commits. Three are worth knowing about: the ridge's ceiling
+**cannot be exercised by the record at all** — the whole of 2005 is 935 fixes
+against a 1,600 ceiling, so deleting `thin()` left it green and the case is
+synthetic and sized at forty storms, because `thin` halves and both 53 and 96
+land a 200-fix storm on exactly 50. And two roster guards
+(`selectedEntries`' filter, `showStorm`'s early return) are invisible in what
+is DRAWN because a downstream guard catches them either way — the observable
+symptom is the CHECKBOX, which paints a tick for a storm the globe is
+declining, and that is where they are asserted.
+
+**AND THE STAND-IN DOM COULD NOT READ AN ORDINARY ATTRIBUTE SELECTOR.**
+`tools/markup-dom.mjs` matched `[…]` against the dataset only, so
+`[type="checkbox"]` found nothing — indistinguishable from a view that never
+rendered one. It falls back to real attributes now. That file has told this
+class of lie three times; anything it cannot read gets made readable rather
+than worked around in the view.
 
 ### 57.22 The storm detail panel
 
