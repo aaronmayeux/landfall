@@ -189,6 +189,8 @@ export function createDrawer({ root }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
              stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
+      <!-- The glyph and the label above are replaced by a minimise chevron for
+           a view that sets "minimises". See renderChrome. -->
     </header>
     <div class="drawer-views" id="drawer-views"></div>
   `;
@@ -285,6 +287,29 @@ export function createDrawer({ root }) {
     const eyebrow = canGoBack ? null : def.eyebrow?.() || null;
     eyebrowEl.hidden = !eyebrow;
     eyebrowEl.textContent = eyebrow || '';
+
+    /* ==> ONE VIEW MAY ASK FOR A MINIMISE CHEVRON INSTEAD OF THE X, AND ONLY
+     * ONE DOES. §57.21b item 8. <== The archive is a MODE, not a panel you are
+     * done with: closing its board leaves a sepia globe you are still standing
+     * on, with the bar as the way back in. An X on that reads as "leave", and
+     * a reader who presses it expecting to leave and finds themselves still in
+     * 2005 has been told the wrong thing by the icon.
+     *
+     * ==> IT IS A PER-VIEW OVERRIDE RATHER THAN A NEW HEADER, BECAUSE THE
+     * HEADER IS SHARED. <== `ui/drawer.js` draws the chrome for every screen in
+     * this app, so the naive edit here changes the storms list, the detail
+     * panel, Layers and Settings as well. `minimises` is opt-in and no other
+     * view sets it.
+     *
+     * The BUTTON does not change — same element, same handler, same tab stop.
+     * Only the glyph and the word a screen reader hears. */
+    const minimise = Boolean(def.minimises);
+    closeBtn.setAttribute('aria-label', minimise ? 'Minimise' : 'Close');
+    closeBtn.innerHTML = minimise
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`
+      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+              stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
   }
 
   /** Show one view's host, hide the rest. `hidden` (not opacity) so the
