@@ -276,55 +276,30 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEP 6a IS BUILT. THE ARCHIVE GLOBE CAN NOW TELL FOUR STORMS
-APART. <==** `SPEC-SEASONS-BUILD.md` **§57.21a is the as-built account — read
-that, not this.** Steps 0 through 6a are done. Step 5's screens were confirmed
-on glass 2026-08-24 and have nothing left to look at. **Step 6b — the wind
-field and the wind swath — is next.**
+**==> SEASONS: STEP 6a IS DONE AND CONFIRMED ON GLASS. <==** Aaron,
+2026-08-24: four 2005 storms at once, the names, the landfall marks, focus and
+dim, and the tick-is-the-focus trade — **all correct, nothing left to look
+at.** `SPEC-SEASONS-BUILD.md` §57.21a is the as-built account. **Step 6b — the
+wind field and the wind swath — is next.**
 
-**GLASS, AND IT IS ONE SCREEN: OPEN 2005 ATLANTIC AND TICK FOUR STORMS.**
-Katrina, Rita, Wilma and one more. Everything below is on that screen.
+**THREE CALLS SETTLED ON GLASS THAT DAY. DO NOT REOPEN THEM WITHOUT NEW
+EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
+erasure. `nameRepeatPx` at 220 keeps a name attached to its line while
+panning. And **ticking a storm focusing it** — with only the last of four
+bright and `Show all evenly` as the way back — was judged a fair trade for not
+putting a second control on every roster row.
 
-1. **Can you tell them apart?** This is the whole question §57.21 exists to
-   answer. Colour cannot separate them — they are all off the same fixed
-   Saffir-Simpson ramp — so the names along the tracks are doing that work
-   alone until you tap something. Do the names read as *attached to* their
-   lines, or as text lying over the globe?
-2. **Do the landfall marks read as the most confident thing on screen?** They
-   are meant to. NOAA marked those records by hand; nothing else the archive
-   draws is that specific. If the track lines look more certain than the pins,
-   the pins are wrong.
-3. **Does focus feel like focus or like a mis-tap?** Tap a track. It stays
-   full strength, everything else drops to a ghost, and every other NAME
-   disappears entirely. Tap open water to put them all back. **The ghost value
-   is the first dial** — `ARCHIVE_GEO.dimmedOpacity`, currently 0.2.
-4. **Ticking a storm also focuses it, and that is the design rather than a
-   side effect.** Tick four in a row and only the last is bright. `Show all
-   evenly` appears above the roster to undo it. Is that a reasonable trade for
-   not putting a second control on every row, or does it fight you?
-5. **A landfall pin is NOT the storm's peak colour.** Katrina's Louisiana pin
-   is Cat 3 orange under a Cat 5 magenta track. That is correct and it is the
-   one thing on this screen most likely to look like a bug.
-
-**AND TWO THINGS TO WATCH RATHER THAN JUDGE.** A season with thirty tracks
-ticked at planet distance draws no names at all (floor is `ZOOM.basin`, same
-as the live globe) — if that reads as broken rather than as a ladder, the
-floor is the dial. And **the home marker is not tappable inside the archive**:
-the tap handler answers for the archive and returns, because falling through
-would close the drawer, which is the only way back out. Deliberate, recorded
-in §57.21a, and reversible if it annoys you.
-
-**A ONE-RECORD STORM NOW DRAWS A DOT INSTEAD OF NOTHING.** Single sightings
-from passing ships are real and common before 1880, and until this they were
-ticked and silently dropped — `season-tracks.js` cannot make a line from one
-point. Worth one tick on an 1850s storm to see it. No ring, so it can never be
-read as a landfall.
+**AND THE HOME MARKER STAYING UNTAPPABLE INSIDE THE ARCHIVE IS SETTLED TOO.**
+It was flagged as a behaviour change made without asking and accepted. The tap
+handler answers for the archive and returns, because falling through would
+close the drawer, which is the only way back out. §57.21a records it.
 
 **THE §12 CEILING WAS CROSSED AND THE CUT WAS TAKEN RATHER THAN DOCUMENTED.**
 `ui/view-seasons-board.js` hit 705 lines, so `liveDownHtml` moved to
 `ui/seasons-board-markup.js` — it was always a markup function living outside
-the markup file. 686 now. `main.js` is 1,639 and the `warmable layer` helper
-has been "the next cut" for four passes; §12's row says so plainly.
+the markup file. 686 now. **`main.js` is 1,639 and the `warmable layer` helper
+has been "the next cut" for four passes running**; §12's row says so plainly
+and the next pass that opens that file should take it.
 
 **TWENTY-ONE MUTATIONS WERE RUN ACROSS THE THREE SUITES AND ONE SURVIVED**,
 which is the failure §12 calls worse than no test. `test-seasons-board.mjs`'s

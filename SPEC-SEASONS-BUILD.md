@@ -1668,10 +1668,15 @@ different source — HURDAT2 records wind radii only from 2004, so most of the
 archive gets §57.25's honest line rather than a shape — and folding them in
 would have made an unbisectable commit for no gain.
 
-**Aaron looks at:** four storms at once in 2005. Can he tell them apart? Does
-focus/dim feel right? Do the landfall marks read as the most confident thing
-on screen?
-**Done when:** confirmed on glass with at least four simultaneous storms.
+**AARON'S VERDICT, 2026-08-24: it all works.** Four 2005 storms at once — the
+names, the landfall marks, focus and dim, and the tick-is-the-focus trade with
+`Show all evenly` as the way back. The done-condition is met.
+
+**THREE VALUES ARE NOW SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
+EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
+erasure; `nameRepeatPx` at 220 keeps a name attached to its line while
+panning; and only the last of four ticked storms being bright was judged a
+fair trade for not putting a second control on every roster row.
 
 ---
 
