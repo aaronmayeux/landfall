@@ -325,6 +325,12 @@ Landfall pins are gone. Tracks are smoothed with the app's own curve.
 
 **WHAT TO JUDGE, AND ONE OF THESE IS EXPECTED TO COME BACK WRONG:**
 
+0. **CONFIRMED ON GLASS 2026-08-25**, with one change asked for and made: the
+   selected storm's name came off its line and onto its first dot, placed by
+   the live globe's own `name-placement.js`. Items 1-5 below were the open
+   questions and Aaron answered them by accepting the pass; they are kept only
+   because the name change has NOT been seen yet and lands on top of them.
+
 1. **The selected line is QUIETER, not louder** — neutral ink, same width,
    with the emphasis carried by everything else ghosting and the dots
    appearing. That is the live globe's grammar and it is the opposite of the
@@ -340,13 +346,16 @@ Landfall pins are gone. Tracks are smoothed with the app's own curve.
 5. **Enter on a ticked row opens that storm; Enter again closes it.** The
    keyboard path. Worth one pass with the mouse untouched.
 
-**PUSH 2 IS THE DRAWER AND THE BAR AND IS NOT BUILT.** Roster row rebuilt
-(checkbox, solid app-standard dot, name, strength badge, landfall mark left of
-the dates), two lines when the drawer is narrow and one when it is wide,
-check-all and uncheck-all, changing a filter clearing the checks, selecting
-from the globe scrolling its row into view, a taller drawer, the home door
-moving into the scroll, and the X becoming a minimise chevron with the bar
-reading as an info bar.
+**==> PUSH 2 IS THE DRAWER AND THE BAR. IT IS FULLY SPECIFIED AND NOT BUILT:
+`SPEC-SEASONS-BUILD.md` §57.21b, eight numbered items, sized for one session.
+<==** A session picking it up reads §57.21a FIRST — the check-versus-select
+split is the shape the roster row sits on — then §57.21b, then starts. Nothing
+of it is half-built and no code has been written.
+
+**TWO OF THE EIGHT REVERSE OR RISK SOMETHING AND SHOULD NOT BE SKIM-READ.**
+Item 5 reverses a decision `ui/view-seasons-board.js` argues for in a comment,
+so the comment goes with it. Item 8 touches the SHARED drawer header, and only
+Seasons may get the chevron — every other drawer keeps its X.
 
 **THREE VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an

@@ -232,7 +232,7 @@ export function ensureSeasonTracks(map, beforeId) {
         'symbol-placement': 'line',
         'symbol-spacing': ARCHIVE_GEO.nameRepeatPx,
         'text-transform': 'uppercase',
-        'text-letter-spacing': 0.08,
+        'text-letter-spacing': ARCHIVE_GEO.nameTrackingEm,
         /* Left at MapLibre's defaults — overlap NOT allowed, placement NOT
          * ignored — so its collision engine hides a name rather than stacking
          * two. That is the behaviour being bought here. The live globe sets
@@ -272,18 +272,24 @@ function lineColor(id) {
 /**
  * What the NAMES draw at, which is not what the tracks draw at.
  *
- * ==> WITH A STORM FOCUSED, EVERY OTHER NAME GOES TO ZERO RATHER THAN TO THE
- * GHOST VALUE. <== This looks like an inconsistency and it is the opposite.
- * Text is not geometry: a dimmed line is a legible ghost, a dimmed word is
- * illegible AND still occupies its space in MapLibre's collision index — so
- * the faded names would go on winning placement fights against the one name
- * the reader actually asked for, and the focused storm could end up as the
- * only unlabelled track on screen. Taking them out entirely means the focused
- * name always places, and it reads as the right thing too: focus means "just
- * this one".
+ * ==> WITH A STORM SELECTED, EVERY NAME ON THIS LAYER GOES TO ZERO — INCLUDING
+ * THE SELECTED STORM'S OWN. <== Two different reasons stacked on one number.
+ *
+ * The OTHER names go dark because text is not geometry: a dimmed line is a
+ * legible ghost, a dimmed word is illegible AND still occupies its space in
+ * MapLibre's collision index, so the faded names would go on winning placement
+ * fights against the one name the reader actually asked for.
+ *
+ * The SELECTED storm's name goes dark because it is drawn somewhere else —
+ * `season-points.js` puts it beside the storm's first dot, placed in screen
+ * space against the track it must not cross (Aaron's call, 2026-08-25). Drawn
+ * in both places it would be the same word twice on one storm.
+ *
+ * So this is `0` rather than an expression the moment anything is selected,
+ * which is also cheaper: nothing for MapLibre to evaluate per feature.
  */
 function nameOpacity(id) {
-  return focusOpacity(id, ARCHIVE_GEO.focusedOpacity, 0);
+  return id ? 0 : ARCHIVE_GEO.focusedOpacity;
 }
 
 /**

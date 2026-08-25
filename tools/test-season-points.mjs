@@ -47,6 +47,7 @@ const eq = (what, got, want) => ok(
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
+const { stormDisplayName } = await import('../lib/season-names.js');
 const { CATEGORY_COLOR, ARCHIVE_GEO, STORM_GEO } = await import('../config/tokens.js');
 const {
   ensureSeasonPoints, setSeasonPoints, clearSeasonPoints, setSeasonPointFocus, __internals,
@@ -56,8 +57,11 @@ function fakeMap() {
   const sources = new Map();
   const layers = [];
   const paint = new Map();
+  const events = [];
   return {
     added: layers,
+    events,
+    on(type) { events.push(type); },
     getSource: (id) => sources.get(id) || null,
     getLayer: (id) => layers.find((l) => l.id === id) || null,
     addSource(id, def) { sources.set(id, { def, data: def.data, setData(d) { this.data = d; } }); },
@@ -86,19 +90,22 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
 {
   const map = fakeMap();
   ensureSeasonPoints(map, 'season-track-name');
-  eq('three layers are added — the one-record dot, the fixes, and their codes',
-    map.added.map((l) => l.id),
-    ['season-point-one', 'season-point-fix', 'season-point-code']);
-  eq('==> THE CODE GOES IN LAST, SO IT IS ON TOP OF ITS OWN DOT. <== MapLibre '
-    + 'inserts beneath the anchor, so insertion order is bottom-up and a code '
-    + 'drawn under its circle is invisible', map.added[2].id, 'season-point-code');
-  eq('all three anchor under the name layer, so a fix sits ON its track rather '
-    + 'than under it', map.added.map((l) => l.beforeId),
-  ['season-track-name', 'season-track-name', 'season-track-name']);
+  eq('four layers are added — the one-record dot, the fixes, their codes and '
+    + 'the selected storm\'s name',
+  map.added.map((l) => l.id),
+  ['season-point-one', 'season-point-fix', 'season-point-code', 'season-point-name']);
+  eq('==> THE CODE GOES IN ABOVE ITS OWN DOT. <== MapLibre inserts beneath the '
+    + 'anchor, so insertion order is bottom-up and a code drawn under its '
+    + 'circle is invisible', map.added[2].id, 'season-point-code');
+  eq('and the NAME goes in last of all, so it is above every dot on the globe',
+    map.added[3].id, 'season-point-name');
+  eq('all four anchor under the track-name layer, so a fix sits ON its track '
+    + 'rather than under it', map.added.map((l) => l.beforeId),
+  ['season-track-name', 'season-track-name', 'season-track-name', 'season-track-name']);
   eq('it starts empty rather than undefined', map.data().features, []);
 
   ensureSeasonPoints(map, 'season-track-name');
-  eq('attaching twice adds nothing', map.added.length, 3);
+  eq('attaching twice adds nothing', map.added.length, 4);
 
   /* The layers share a source and are told apart by a filter. If a filter ever
    * goes missing, every one-record storm grows a code it has not earned and
@@ -198,8 +205,115 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
 }
 
 /* ---------------------------------------------------------------------------
- * 3. A COLOUR ALWAYS RESOLVES — including in a century with no wind readings.
+ * 2b. ==> THE SELECTED STORM'S NAME SITS ON ITS FIRST DOT. <==
+ *
+ * Aaron's call, 2026-08-25. Unselected tracks still set their names ALONG the
+ * line; a selected one no longer can, because the line is now a chain of forty
+ * dots and a name lying along it reads as running through them.
  * ------------------------------------------------------------------------ */
+{
+  const katrina = seasonOf('atlantic', 2005).find((s) => s.name === 'KATRINA');
+  const map = fakeMap();
+  ensureSeasonPoints(map);
+  /* ==> THE SELECTION IS MODULE STATE AND THE BLOCK ABOVE LEFT KATRINA IN IT.
+   * <== A fresh stand-in map does not give a fresh layer module. Cleared
+   * explicitly, or this block's first assertion measures the block above it. */
+  setSeasonPointFocus(map, null);
+  setSeasonPoints(map, [entry(katrina)]);
+
+  eq('==> TICKED BUT NOT OPENED, THERE IS NO NAME HERE AT ALL. <== It is still '
+    + 'set along the track by MapLibre, which is the right tool for a bare '
+    + 'curve', map.data().features.filter((f) => f.properties._name).length, 0);
+
+  setSeasonPointFocus(map, katrina.id);
+  const named = map.data().features.filter((f) => f.properties._name);
+  eq('opened, exactly one feature carries the name', named.length, 1);
+  ok('and it is the EARLIEST fix, not an arbitrary one — the name marks where '
+    + 'the storm began', named[0].properties._first === true);
+  eq('the name is the one the roster shows, so a track and its row can never '
+    + 'disagree', named[0].properties._name, stormDisplayName(katrina));
+
+  /* ==> THE LAYER IS FILTERED TO THAT ONE FEATURE. <== Without the filter the
+   * name would draw on every fix — forty copies of the word along the track,
+   * which is worse than the along-the-line placement it replaced. */
+  eq('the name layer draws only the earliest fix',
+    map.layer('season-point-name').filter,
+    ['all', ['==', ['get', 'kind'], 'fix'], ['get', '_first']]);
+
+  /* ==> WITH NO CAMERA THERE IS NO SCREEN SPACE, SO THE NAME FALLS BACK RATHER
+   * THAN VANISHING. <== A stand-in map has no `project`, and neither does a
+   * style that has not installed. §5: the failure has to stay visible, and the
+   * visible thing here is the storm's identity. */
+  eq('with nothing to project against it falls back to below the dot',
+    named[0].properties._nameAnchor, 'top');
+  ok('with a real offset rather than an undefined one',
+    Array.isArray(named[0].properties._nameOffset)
+    && named[0].properties._nameOffset.every(Number.isFinite));
+
+  /* ==> GIVEN A CAMERA, IT PLACES. <== The projection is faked as a plain
+   * scale — enough for `placeName` to run its collision search over a real
+   * track shape, which is what is being exercised. */
+  const projected = fakeMap();
+  projected.project = ([lon, lat]) => ({ x: (lon + 180) * 20, y: (90 - lat) * 20 });
+  ensureSeasonPoints(projected);
+  setSeasonPoints(projected, [entry(katrina)]);
+  setSeasonPointFocus(projected, katrina.id);
+  const placed = projected.data().features.find((f) => f.properties._name);
+  ok('the anchor is one of the two the placement search offers, and never a '
+    + 'diagonal — anything off the vertical was judged on glass to read as '
+    + 'knocked askew rather than placed',
+  ['top', 'bottom'].includes(placed.properties._nameAnchor));
+  ok('the offset is a real pair of ems',
+    placed.properties._nameOffset.every(Number.isFinite));
+  ok('==> AND IT IS PUSHED AWAY FROM THE DOT RATHER THAN LEFT ON IT. <== A '
+    + 'zero offset means the name is drawn through the dot it labels',
+  Math.abs(placed.properties._nameOffset[1]) > 0);
+
+  /* ==> AND THE SEARCH ACTUALLY DRIVES THE ANCHOR, WHICH KATRINA ALONE CANNOT
+   * PROVE. <== Below the dot is both the search's FIRST choice and its
+   * fallback, so a storm that happens to place below passes whether the
+   * placement ran or not — a mutation that computed the placement and then
+   * never applied the anchor survived this block until this case existed.
+   *
+   * This track runs due SOUTH from its first fix, which under the projection
+   * above is straight DOWN the screen — so the space below the first dot is
+   * full of its own line and the search has to take the other spot. */
+  const southward = {
+    id: 'AL991999',
+    points: Array.from({ length: 6 }, (_, k) => ({
+      time: k * 21600000,
+      lat: 40 - k * 2,
+      lon: -60,
+      lonU: -60,
+      windKt: 60,
+      status: 'TS',
+    })),
+  };
+  const down = fakeMap();
+  down.project = ([lon, lat]) => ({ x: (lon + 180) * 20, y: (90 - lat) * 20 });
+  ensureSeasonPoints(down);
+  setSeasonPoints(down, [entry(southward)]);
+  setSeasonPointFocus(down, southward.id);
+  const pushedDown = down.data().features.find((f) => f.properties._name);
+  eq('a track running down the screen pushes its name ABOVE the first dot',
+    pushedDown.properties._nameAnchor, 'bottom');
+  ok('and the offset travels the same way the anchor says it does — an anchor '
+    + 'and an offset disagreeing is a name drawn across its own track',
+  pushedDown.properties._nameOffset[1] < 0);
+
+  /* ==> `text-variable-anchor` MUST STAY ABSENT. <== Setting it makes MapLibre
+   * choose the anchor itself and silently ignore ours, which on glass looks
+   * exactly like the placement search failing. `map/markers.js` learned this
+   * on the live globe. */
+  eq('MapLibre is not allowed to pick the anchor itself',
+    projected.layer('season-point-name').layout['text-variable-anchor'], undefined);
+
+  /* The camera invalidates screen-space placement, so there has to be a
+   * listener. Bound in `ensure`, which runs once for the life of the page. */
+  ok('the layer listens for the camera settling',
+    projected.events.includes('moveend'));
+}
+
 {
   const al1851 = seasonOf('atlantic', 1851);
   const map = fakeMap();

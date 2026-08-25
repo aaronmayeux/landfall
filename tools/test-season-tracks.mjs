@@ -154,14 +154,16 @@ const seasonOf = (basin, year) => {
     ['case', ['==', ['get', 'id'], katrina.id],
       ARCHIVE_GEO.focusedOpacity, ARCHIVE_GEO.dimmedOpacity]);
 
-  /* ==> AND THE OTHER NAMES GO TO ZERO, NOT TO THE GHOST VALUE. <== A dimmed
-   * word is illegible AND still holds its place in MapLibre's collision index,
-   * so the faded names would go on winning placement fights against the one
-   * name the reader asked for. If this ever becomes `dimmedOpacity`, the
-   * focused storm can end up the only unlabelled track on screen. */
-  eq('every other NAME is taken out entirely rather than dimmed',
-    map.paintOf('season-track-name', 'text-opacity'),
-    ['case', ['==', ['get', 'id'], katrina.id], ARCHIVE_GEO.focusedOpacity, 0]);
+  /* ==> WITH A STORM SELECTED, EVERY NAME ON THIS LAYER GOES DARK — INCLUDING
+   * THE SELECTED STORM'S OWN, WHICH IS THE PART THAT LOOKS WRONG AND IS NOT.
+   * <== The others go because a dimmed word is illegible AND still holds its
+   * place in MapLibre's collision index, so faded names would go on winning
+   * placement fights against the one the reader asked for. The selected
+   * storm's goes because it is drawn SOMEWHERE ELSE: `season-points.js` puts
+   * it beside the first dot, placed in screen space. Drawn in both places it
+   * would be the same word twice on one storm. */
+  eq('every name on the line layer is taken out while something is selected',
+    map.paintOf('season-track-name', 'text-opacity'), 0);
 
   setSeasonTrackFocus(map, null);
   eq('==> NO FOCUS IS A PLAIN NUMBER, NOT AN EXPRESSION THAT ALWAYS ANSWERS '

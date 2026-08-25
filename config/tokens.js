@@ -2749,6 +2749,26 @@ export const ARCHIVE_GEO = Object.freeze({
    *  view, far enough that a track is not a chain of its own name. */
   nameRepeatPx: 220,
 
+  /** ==> HOW FAR THE NAME SITS FROM THE FIRST DOT'S EDGE, WHEN A STORM IS
+   *  SELECTED. <== A selected storm's name comes off its line and hangs beside
+   *  its earliest fix instead (`map/layers/season-points.js`), because a name
+   *  set along a chain of forty dots reads as running through them.
+   *
+   *  It is `SIZE.stormLabelGapPx`'s job on the live globe and deliberately not
+   *  that value: the archive's name is one point smaller (`nameSize` above), so
+   *  a gap tuned for 14 px type reads slightly loose under 13 px type. Its own
+   *  number rather than an arithmetic relation, because the two are tuned on
+   *  different globes and tying them means a live tweak silently moves this. */
+  nameGapPx: 7,
+
+  /** The tracking on that name, in ems, and it MUST match the letter-spacing
+   *  the along-the-line name is set with — the two are the same word in the
+   *  same face and a reader switching between them would see it change shape.
+   *  It is a token rather than a literal because `nameGapPx` above and the
+   *  width estimate in `season-points.js` are both measured against text set
+   *  at this tracking; a change here moves the placement too. */
+  nameTrackingEm: 0.08,
+
   /** ==> THE WIND FOOTPRINT (§57.26, §57.27, step 6b), AND IT IS DELIBERATELY
    *  QUIETER THAN THE LIVE ONE. <==
    *

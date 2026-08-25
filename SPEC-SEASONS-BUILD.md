@@ -1123,8 +1123,45 @@ rest drop to a ghost, the selected storm's line changes ink, and it gains a
 Saffir-Simpson dot at every position NOAA published. This split is the whole
 shape of the interaction and everything below follows from it.
 
-**THE NAME IS SET ALONG THE TRACK BY MAPLIBRE, AND §57.21's POINTER AT
-`name-placement.js` WAS WRONG.** That module solves a different problem —
+**THE SELECTED STORM'S NAME COMES OFF ITS LINE AND ONTO ITS FIRST DOT.**
+Aaron's call, 2026-08-25. A name set along a chain of forty dots reads as
+running through them. It is placed by `map/layers/name-placement.js` — the live
+globe's own module, with its two-spot above-or-below search and its collision
+test against the drawn track and the dots — and drawn by
+`map/layers/season-points.js` on the earliest fix only.
+
+**AND THAT REVERSES THE PARAGRAPH BELOW RATHER THAN IGNORING IT.** The argument
+against `name-placement.js` rested on a precondition: an archive track has no
+position dot to hang a name off. **It has one now** — this pass put a dot at
+every recorded position of the selected storm — so the module became the right
+tool the moment the dots appeared. The argument is still correct for every
+UNSELECTED track, which is why those still set their names along the line.
+
+**SO WHILE ANYTHING IS SELECTED, EVERY NAME ON THE LINE LAYER GOES TO ZERO,
+INCLUDING THE SELECTED STORM'S OWN.** Two reasons stacked on one number: the
+others go dark because a dimmed word is illegible AND still holds its place in
+MapLibre's collision index, so faded names would go on winning placement fights
+against the one the reader asked for; the selected storm's goes dark because it
+is being drawn somewhere else, and drawn in both places it would be the same
+word twice on one storm.
+
+**PLACEMENT IS SCREEN-SPACE, SO IT IS RECOMPUTED ON `moveend`, DEBOUNCED** with
+the live globe's own `LABEL_PLACEMENT.recomputeDebounceMs`. It is far cheaper
+here than on the live globe: at most one storm's points, and only while
+something is selected. With nothing selected the pass returns on its first
+comparison. `text-anchor` and `text-offset` are both read per feature —
+**`text-variable-anchor` must stay absent**, because setting it makes MapLibre
+choose the anchor itself and silently ignore ours, which on glass looks exactly
+like the placement search failing (`map/markers.js` learned that first).
+
+**BELOW THE DOT IS BOTH THE SEARCH'S FIRST CHOICE AND ITS FALLBACK, WHICH MAKES
+IT A TRAP TO TEST.** A storm that happens to place below passes whether the
+placement ran at all — a mutation that computed the placement and then never
+applied the anchor survived until `tools/test-season-points.mjs` gained a track
+running straight down the screen, which forces the search onto its other spot.
+
+**THE NAME IS SET ALONG THE TRACK BY MAPLIBRE FOR EVERY UNSELECTED STORM, AND
+§57.21's POINTER AT `name-placement.js` WAS WRONG FOR THAT CASE.** That module solves a different problem —
 where a name sits BESIDE a moving storm's dot, chosen in screen space against
 forecast geometry it must not cross. An archive track has no dot, no forecast
 and no current moment; it is a finished curve, and MapLibre sets text along a
@@ -1287,6 +1324,93 @@ otherwise accumulate every curve of every storm ever ticked.
 **WHAT IS NOT HERE:** the wind field and the wind swath, which are step 6b.
 They are a different data question — HURDAT2 only records wind radii from
 2004, so most of the archive gets §57.25's honest line rather than a shape.
+
+### 57.21b The drawer and the bar — push 2, SPECIFIED AND NOT BUILT
+
+**==> THIS SECTION IS A PLAN, NOT AN AS-BUILT ACCOUNT. NOTHING BELOW EXISTS.
+<==** Aaron's UI list of 2026-08-25 was split in two. Push 1 was the globe and
+is described in §57.21a. This is the other half. When it lands, this section is
+rewritten as as-built and this warning is deleted.
+
+**IT IS SIZED FOR ONE SESSION AND THE PHONE TEST IS THE END OF IT.** A fresh
+session should read §57.21a first — the check-versus-select split is the shape
+everything here sits on, and getting it wrong makes the roster row wrong.
+
+**1. THE ROSTER ROW, REBUILT.** Left to right: a real checkbox, then a solid
+category dot, then the name, then the peak-strength badge, then the landfall
+mark and the dates.
+
+- **The dot stops being the checkbox.** It becomes `.row-swatch` — the same
+  12px solid dot with its faint glow that every other drawer in this app uses.
+  Today it is a hollow ring that fills when ticked, which was only ever a way
+  to make one element carry two meanings. Once there is a real checkbox beside
+  it, the ring has no job.
+- **Strength is the storm list's own badge**, right-aligned, from
+  `categoryShortLabel` — `Cat 3`, `TS`, `TD`. Same function, same class as
+  `ui/view-storms.js`.
+- **The landfall mark moves to the LEFT of the dates.** It stays a list-only
+  signal; §57.21a removed the pin from the globe, so this row is now the only
+  place a landfall surfaces.
+- **THE WHOLE ROW STAYS THE TICK TARGET.** Aaron's call. A 44px checkbox inside
+  a 320px row is a target most thumbs miss, which is why the row is a `<label>`
+  today and must stay one.
+
+**2. TWO LINES WHEN NARROW, ONE WHEN WIDE — MEASURED OFF THE DRAWER, NOT THE
+SCREEN.** A container query, not a viewport media query. The drawer is a bottom
+sheet on a phone and a side rail on desktop, and that rail can be narrower than
+the window suggests; measuring the window would give the rail one-line rows it
+cannot fit. It also keeps this off any device branch (§13).
+
+**3. THE DRAWER SHOULD OPEN TALLER.** Measured at 390×844 the seasons drawer
+body is **424 px of an 844 px screen, with the first roster row starting at
+y=678** — more than half of what a thumb lands on is globe rather than drawer.
+That measurement is from the step 7 investigation and was never explained. Two
+lines per row make it sharper: 2005 has 28 storms and seven would be visible.
+**This is also the one item here that might bear on the step 7 tap-target
+fault**, which is still undiagnosed — see item 8.
+
+**4. CHECK ALL AND UNCHECK ALL, at the top of the roster.** With §57.21a's
+split, checking all of 2005 is 28 tracks with no dots and no dimming, which is
+the cheap case by design. It was the expensive case under the old coupling.
+
+**5. CHANGING A FILTER CLEARS THE CHECKS.** This REVERSES a documented
+decision: `onClick` currently argues that a filter narrows what the roster shows
+and must not un-choose a storm the reader deliberately ticked. Aaron overruled
+it 2026-08-25. **The clearing must be visible** — the globe empties in the same
+frame — because a silent wipe is indistinguishable from a bug.
+
+**6. SELECTING FROM THE GLOBE LIGHTS AND SCROLLS TO ITS ROW.** Tapping a track
+already marks the row (`paintFocus`); it does not bring it into view. With a
+28-row roster the marked row is usually off-screen, so the panel and the map
+look like they disagree.
+
+**7. THE HOME DOOR MOVES INTO THE SCROLL.** It is currently pinned below the
+scroller as a sibling, because `render()` rewrites the body on every poll and
+anything inside would be wiped. The fix is to rebuild it at the end of each
+render rather than to pin it. `ui/seasons-door.js` is shared with the storm
+list and only the home door moves.
+
+**8. THE X BECOMES A MINIMISE CHEVRON, AND THE BAR BECOMES AN INFO BAR.** The
+drawer should feel persistent rather than closable: closed, it currently reads
+as a title bar. The close button lives in the SHARED drawer header
+(`ui/drawer.js`), so this needs a per-view override — only Seasons gets the
+chevron, not every drawer in the app. The bar then says something useful:
+`Past storms · 2005 Atlantic · 3 shown`, and names the storm once one is
+selected.
+
+**AND THE BAR IS WHERE SELECTION GETS DISCOVERED.** §57.21a made selecting a
+deliberate act — tap a track, or Enter on a ticked row — and nothing tells the
+reader tracks are tappable. With nothing selected the bar should carry the hint
+(`tap a track for detail`); with something selected it names it. Zero selected
+needs its own words too, or the bar is the title bar again.
+
+**THE ROW CHEVRON IS STILL NOT BUILT, DELIBERATELY.** A per-row chevron opening
+the detail panel is the more discoverable way to select and it is the exact
+markup step 7 added before glass reported every tap target in this drawer
+misbehaving. That cause is **still unknown** (NOW.md holds the four checks that
+came back clean and the one that was worthless). This push rewrites the row
+completely, so if taps misbehave again that is the second data point and the row
+becomes a real suspect rather than a guess.
 
 ### 57.22 The storm detail panel
 
