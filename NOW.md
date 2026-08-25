@@ -69,6 +69,32 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> THERE IS HALF-BUILT WORK ON A BRANCH. READ `HANDOFF-SEASONS-GLOBE.md` ON
+`seasons-globe-polish` BEFORE STARTING ANY SEASONS WORK. <==** 2026-08-25, commit
+`bf41f4a`. It is push 1 of 2 of Aaron's seasons polish list and it is **two
+thirds done**: the archive's 3D ridge and its glyphs, its camera, and the rule
+that keeps a still-running storm on the roster and off the sepia globe. **The
+root cause it exists to fix is the part NOT built** — `liveGlobe.hide()` never
+drops the layer engine's ambient geometry, and the poll's `ambientBundle` calls
+are not gated on `isArchive()`, so live cones and tracks sit on the archive
+globe in any year and would return within one poll even if entry cleared them.
+
+**IT IS OFF `main` DELIBERATELY AND MUST NOT BE MERGED UNTIL THAT IS DONE.**
+Merging it early ships an archive globe that draws a ridge over live storms it
+was supposed to have removed.
+
+**THE HANDOFF FILE IS THE PLAN, NOT THIS ENTRY.** It carries Aaron's seven items
+verbatim, what each decision was and why, what is left in order, the tests that
+still need mutation-checking, and three questions waiting on glass. It is
+deleted by the commit that lands the pass — a handoff note that outlives its
+handoff is a stale fact nobody deletes.
+
+**AND THE LESSON IS WORTH MORE THAN THE BRANCH.** Three quarters of that pass
+was designed and written with nothing on GitHub to show for it, because the
+sandbox is throwaway and a plan living only in a chat window dies with it.
+Aaron caught it. **Anything that will not finish in one session gets pushed to a
+branch with its reasoning before the session ends**, not summarised in a reply.
+
 **==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
 STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
 rather than marked skipped**: the step is a recorded deletion with its reason
