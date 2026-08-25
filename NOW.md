@@ -346,16 +346,60 @@ Landfall pins are gone. Tracks are smoothed with the app's own curve.
 5. **Enter on a ticked row opens that storm; Enter again closes it.** The
    keyboard path. Worth one pass with the mouse untouched.
 
-**==> PUSH 2 IS THE DRAWER AND THE BAR. IT IS FULLY SPECIFIED AND NOT BUILT:
-`SPEC-SEASONS-BUILD.md` §57.21b, eight numbered items, sized for one session.
-<==** A session picking it up reads §57.21a FIRST — the check-versus-select
-split is the shape the roster row sits on — then §57.21b, then starts. Nothing
-of it is half-built and no code has been written.
+**==> SEASONS UI POLISH, PUSH 2: THE DRAWER AND THE BAR. SHIPPED, NOT YET SEEN
+ON GLASS. <==** All eight items of §57.21b, which is now the as-built account —
+read that, not this. The roster row is a real checkbox, a solid category dot,
+the name, a strength badge, the landfall mark and the dates; a spreadsheet-style
+master box sits above it; changing a filter clears the checks; the sheet opens
+at 75vh; the header's X is a minimise chevron; and the bar names what is drawn
+and what is open.
 
-**TWO OF THE EIGHT REVERSE OR RISK SOMETHING AND SHOULD NOT BE SKIM-READ.**
-Item 5 reverses a decision `ui/view-seasons-board.js` argues for in a comment,
-so the comment goes with it. Item 8 touches the SHARED drawer header, and only
-Seasons may get the chevron — every other drawer keeps its X.
+**WHAT TO JUDGE, AND THE FIRST TWO ARE THE ONES MOST LIKELY TO COME BACK
+WRONG:**
+
+1. **DO THE TAPS BEHAVE.** This push REWROTE the roster row completely, which
+   is the same thing step 7 did before glass reported every tap target in this
+   drawer misbehaving — a cause still unknown. **If taps go wrong again, that
+   is the second data point and the row becomes a real suspect rather than a
+   guess.** If they are fine, step 7's fault is somewhere else and the per-row
+   chevron can finally be built. Worth testing deliberately rather than
+   noticing in passing: tick a row, untick it, press the master box, press a
+   filter.
+2. **75vh.** A dial, not an answer. It was 424px of an 844px screen; it should
+   now be roughly 630. If it eats too much globe the number is one line in
+   `seasons/seasons.css`.
+3. **The bar's middle sentence at 390px.** `2005 · Atlantic · 3 shown · tap a
+   track for detail` is long and is allowed to wrap to a second line rather
+   than ellipsing. If it reads as clutter, the hint is the part to cut.
+4. **One line or two.** The container query breaks at 400px of ROSTER width, not
+   window width. A phone should be two lines; a wide desktop window one. **The
+   desktop side rail is ~300px and should stay two lines** — that is the case a
+   viewport query would have got wrong, and the one worth checking.
+5. **The master box's bar state.** Tick one storm of 2005: the box above should
+   show a horizontal bar, not a tick and not empty. Tick them all: a tick.
+6. **The chevron.** Only Seasons gets it. Every other drawer — storms, detail,
+   layers, settings, home — must still show an X.
+7. **The home door.** It is inside the scroll now rather than pinned under it,
+   so it is at the very bottom of the dashboard and the dashboard is a row
+   taller.
+8. **Keyboard pass, mouse untouched.** Space ticks a row, Space on the master
+   box fills or clears the list, Enter on a ticked row opens that storm.
+
+**THE §12 CEILING WAS CROSSED AGAIN AND THE CUT WAS TAKEN AGAIN.** The board
+went in at 833 and came back at 769: `ui/seasons-board-paint.js` took the three
+functions that change rows already on screen. **769 is still 69 over and the
+file now has a row in §12's table** naming the next cut precisely — the LOADING
+block, roughly 170 lines, which owns every piece of fetch state and shares
+nothing with the roster's own. It was not taken here because this pass changed
+eight behaviours at once. **It is the next thing that happens to that file,
+before any feature.**
+
+**AND ONE RED SUITE ON MAIN IS NOT FROM THIS PASS.**
+`tools/test-loading-dots.mjs` has been failing on `ui/season-detail-markup.js`
+since step 7 was reverted — the file survived the revert and nothing imports
+it. Either it gets its waiting sentence routed through `ui/loading-dots.js`, or
+it is dead code and §12's retire-cleanly rule says delete it. Confirmed
+pre-existing by stashing this pass and re-running.
 
 **THREE VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an

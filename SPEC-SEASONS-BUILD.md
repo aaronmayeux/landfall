@@ -1325,92 +1325,144 @@ otherwise accumulate every curve of every storm ever ticked.
 They are a different data question — HURDAT2 only records wind radii from
 2004, so most of the archive gets §57.25's honest line rather than a shape.
 
-### 57.21b The drawer and the bar — push 2, SPECIFIED AND NOT BUILT
+### 57.21b The drawer and the bar, as built
 
-**==> THIS SECTION IS A PLAN, NOT AN AS-BUILT ACCOUNT. NOTHING BELOW EXISTS.
-<==** Aaron's UI list of 2026-08-25 was split in two. Push 1 was the globe and
-is described in §57.21a. This is the other half. When it lands, this section is
-rewritten as as-built and this warning is deleted.
+Push 2 of the UI polish, 2026-08-25. `ui/seasons-board-markup.js` (the rebuilt
+row and the master box), `ui/seasons-board-paint.js` (the three things that
+change rows already on screen), `ui/view-seasons-board.js` (the state behind
+them), `seasons/bar.js` (`barDetail`), `seasons/seasons.css` (the container
+query and the taller sheet), `ui/drawer.js` (the per-view minimise chevron),
+`ui/panels.css` (`.check-box`, now shared with the Layers panel) and
+`ui/view-home.js` (the door). §57.21a is the other half and describes the
+globe; the check-versus-select split it records is the shape everything here
+sits on.
 
-**IT IS SIZED FOR ONE SESSION AND THE PHONE TEST IS THE END OF IT.** A fresh
-session should read §57.21a first — the check-versus-select split is the shape
-everything here sits on, and getting it wrong makes the roster row wrong.
+**THE ROSTER ROW IS A REAL CHECKBOX, A SOLID DOT, THE NAME, THE STRENGTH BADGE,
+THE LANDFALL MARK AND THE DATES.** Left to right, in that order. The dot
+stopped being the checkbox: it was a hollow ring that filled when ticked, one
+element carrying two meanings, which was only ever a way to avoid putting a
+second control on a forty-row list. It is `.row-swatch` now — the same 12px
+solid dot with its faint glow every other list in this app uses. The badge is
+`.row-badge` from `categoryShortLabel`, the storm list's own, in neutral ink
+because the swatch is already the hue (§6).
 
-**1. THE ROSTER ROW, REBUILT.** Left to right: a real checkbox, then a solid
-category dot, then the name, then the peak-strength badge, then the landfall
-mark and the dates.
+**THE TICK BOX IS THE APP'S OWN AND IS NOW SHARED.** `.check-box` in
+`ui/panels.css` was `.model-check` and belonged to the Layers panel alone; §12
+asks for extraction before the second use, and the alternative was a clip-path
+polygon copied into `seasons/seasons.css` that would look identical on the day
+it was written and drift the first time either box was retuned. **The on-state
+selector is a PAIR** because the two have different drivers: a Layers row is a
+`<button role="checkbox">` carrying `aria-checked`, a roster row is a `<label>`
+wrapping a real `<input>` carrying `:checked`. Both are correct for what they
+are, and one appearance answers to both. A platform checkbox was not used: it
+is a different shape and a different blue on every device the app runs on.
 
-- **The dot stops being the checkbox.** It becomes `.row-swatch` — the same
-  12px solid dot with its faint glow that every other drawer in this app uses.
-  Today it is a hollow ring that fills when ticked, which was only ever a way
-  to make one element carry two meanings. Once there is a real checkbox beside
-  it, the ring has no job.
-- **Strength is the storm list's own badge**, right-aligned, from
-  `categoryShortLabel` — `Cat 3`, `TS`, `TD`. Same function, same class as
-  `ui/view-storms.js`.
-- **The landfall mark moves to the LEFT of the dates.** It stays a list-only
-  signal; §57.21a removed the pin from the globe, so this row is now the only
-  place a landfall surfaces.
-- **THE WHOLE ROW STAYS THE TICK TARGET.** Aaron's call. A 44px checkbox inside
-  a 320px row is a target most thumbs miss, which is why the row is a `<label>`
-  today and must stay one.
+**THE MASTER BOX IS THE SPREADSHEET'S THREE-STATE FILTER HEADER.** Aaron's
+call: it should be a checkbox like all the other checkboxes and behave the way
+a spreadsheet's does. Empty when none are ticked, a BAR when some are, a tick
+when all are; pressing it fills the list, pressing it full clears the list.
+That is one control answering both questions rather than two buttons, and a
+reader who has met a spreadsheet already knows what the bar means.
 
-**2. TWO LINES WHEN NARROW, ONE WHEN WIDE — MEASURED OFF THE DRAWER, NOT THE
-SCREEN.** A container query, not a viewport media query. The drawer is a bottom
-sheet on a phone and a side rail on desktop, and that rail can be narrower than
-the window suggests; measuring the window would give the rail one-line rows it
-cannot fit. It also keeps this off any device branch (§13).
+**IT WORKS ON THE FILTERED LIST, WHICH IS ALSO THE SPREADSHEET'S RULE.** Under
+Majors it ticks the majors. Reaching past the filter would put storms on the
+globe the roster is not showing — the panel and the map disagreeing.
 
-**3. THE DRAWER SHOULD OPEN TALLER.** Measured at 390×844 the seasons drawer
-body is **424 px of an 844 px screen, with the first roster row starting at
-y=678** — more than half of what a thumb lands on is globe rather than drawer.
-That measurement is from the step 7 investigation and was never explained. Two
-lines per row make it sharper: 2005 has 28 storms and seven would be visible.
-**This is also the one item here that might bear on the step 7 tap-target
-fault**, which is still undiagnosed — see item 8.
+**THE MIDDLE STATE CANNOT BE WRITTEN IN MARKUP AT ALL.** `indeterminate` is a
+property, not an attribute, so every path that changes what is ticked comes
+back through `paintCheckAll`: a rebuild, a single tick, a press of the master
+box itself. A rebuild alone is not enough — the roster returns with `checked`
+restored from the markup and the middle state silently lost, which on glass is
+an EMPTY box over a globe with tracks on it. `aria-checked="mixed"` is in the
+markup as well, because it IS an attribute and the markup can count; the two
+are kept in step by both being derived from the same tally rather than from
+each other.
 
-**4. CHECK ALL AND UNCHECK ALL, at the top of the roster.** With §57.21a's
-split, checking all of 2005 is 28 tracks with no dots and no dimming, which is
-the cheap case by design. It was the expensive case under the old coupling.
+**TWO LINES WHEN THE DRAWER IS NARROW, ONE WHEN IT IS WIDE, MEASURED OFF THE
+DRAWER.** A container query on `.seasons-roster`, breaking at 400px of its own
+width. The window is the wrong thing to measure: the drawer is a bottom sheet
+the full width of a phone and a ~340px side rail on desktop, so a viewport
+media query would hand that rail one-line rows it cannot fit and truncate every
+name in it. It also keeps this off any device branch (§13) — a narrow window on
+a desktop gets two lines because it is narrow, not because of what it is.
 
-**5. CHANGING A FILTER CLEARS THE CHECKS.** This REVERSES a documented
-decision: `onClick` currently argues that a filter narrows what the roster shows
-and must not un-choose a storm the reader deliberately ticked. Aaron overruled
-it 2026-08-25. **The clearing must be visible** — the globe empties in the same
-frame — because a silent wipe is indistinguishable from a bug.
+**THE ARCHIVE'S SHEET OPENS TALLER THAN THE APP'S.** 75vh against 60, scoped to
+this view rather than to the archive. Measured at 390x844 the seasons body was
+424px of an 844px screen with the first roster row starting at y=678 — more
+than half of what a thumb lands on was globe, on the one screen in this app
+whose whole content is a list, and the picker, scorecard and filters above it
+are fixed furniture. It is the SAME `min()` expression the 60vh rule uses so
+the two cannot disagree about the keyboard inset. **A future archive view that
+is three lines long should not inherit it**, which is why it is keyed on
+`data-view`.
 
-**6. SELECTING FROM THE GLOBE LIGHTS AND SCROLLS TO ITS ROW.** Tapping a track
-already marks the row (`paintFocus`); it does not bring it into view. With a
-28-row roster the marked row is usually off-screen, so the panel and the map
-look like they disagree.
+**CHANGING A FILTER CLEARS THE CHECKS, AND THIS REVERSES A DOCUMENTED
+DECISION.** Aaron's call. `onClick` argued that a filter narrows what the
+roster SHOWS and must not un-choose a storm the reader deliberately ticked;
+that comment is gone, and so is the assertion in `tools/test-seasons-board.mjs`
+that guarded it. What the old rule produced was a globe carrying tracks the
+list in front of you does not contain — switch to Majors and three tropical
+storms stay drawn with no row to point at. That is the same panel-and-map
+disagreement the rule was written to prevent, arriving from the other side.
+**The clearing is visible**: the globe empties in the same beat, because a wipe
+that waited for the next poll would look exactly like the tracks failing to
+draw (§5).
 
-**7. THE HOME DOOR MOVES INTO THE SCROLL.** It is currently pinned below the
-scroller as a sibling, because `render()` rewrites the body on every poll and
-anything inside would be wiped. The fix is to rebuild it at the end of each
-render rather than to pin it. `ui/seasons-door.js` is shared with the storm
-list and only the home door moves.
+**SELECTING FROM THE GLOBE SCROLLS THE ROSTER TO THAT ROW.** `block: 'nearest'`
+and reduced-motion honoured. A tap on a track already marked the row and did
+not bring it into view; with a 28-row roster the marked row is usually
+off-screen, so the globe lit a storm up and the panel looked like nothing had
+happened. `nearest` is what makes the same call safe from a repaint — a row
+already on screen is not moved at all, so the list is never yanked out from
+under a reader's thumb.
 
-**8. THE X BECOMES A MINIMISE CHEVRON, AND THE BAR BECOMES AN INFO BAR.** The
-drawer should feel persistent rather than closable: closed, it currently reads
-as a title bar. The close button lives in the SHARED drawer header
-(`ui/drawer.js`), so this needs a per-view override — only Seasons gets the
-chevron, not every drawer in the app. The bar then says something useful:
-`Past storms · 2005 Atlantic · 3 shown`, and names the storm once one is
-selected.
+**THE HOME DOOR MOVED INTO THE SCROLL.** It was pinned below the scroller as a
+sibling for a mechanical reason rather than a design one: `render()` rewrites
+the body on every poll, so anything inside it is gone on the next tick. The
+cost was a permanent bar taking a row of height from every home screen forever,
+including the ones where the reader is trying to read a storm. **The fix is to
+re-attach the same NODE, not to rebuild it** — the element is built once in
+`mount` and survives the `innerHTML` wipe detached, so its click listener comes
+back with it. It is appended from `afterRender()` rather than inside each of
+the five render paths, which is what keeps it on all of them.
 
-**AND THE BAR IS WHERE SELECTION GETS DISCOVERED.** §57.21a made selecting a
-deliberate act — tap a track, or Enter on a ticked row — and nothing tells the
-reader tracks are tappable. With nothing selected the bar should carry the hint
-(`tap a track for detail`); with something selected it names it. Zero selected
-needs its own words too, or the bar is the title bar again.
+**THE HEADER'S X IS A MINIMISE CHEVRON, FOR THIS VIEW AND NO OTHER.** The
+archive is a MODE, not a panel you are done with: closing its board leaves a
+sepia globe you are still standing on, with the bar as the way back in. An X on
+that reads as "leave", and a reader who presses it expecting to leave and finds
+themselves still in 2005 has been told the wrong thing by the icon. The close
+button lives in the SHARED drawer header, so this is an opt-in `minimises` flag
+on the view definition — the BUTTON does not change, only its glyph and the
+word a screen reader hears. No other view sets it.
 
-**THE ROW CHEVRON IS STILL NOT BUILT, DELIBERATELY.** A per-row chevron opening
-the detail panel is the more discoverable way to select and it is the exact
-markup step 7 added before glass reported every tap target in this drawer
-misbehaving. That cause is **still unknown** (NOW.md holds the four checks that
-came back clean and the one that was worthless). This push rewrites the row
-completely, so if taps misbehave again that is the second data point and the row
-becomes a real suspect rather than a guess.
+**AND THE BAR IS WHERE SELECTION GETS DISCOVERED.** `seasons/bar.js` exports
+`barDetail`, a pure function, and it has three states:
+
+- nothing drawn — `2005 · Atlantic · tick a storm to draw it`
+- drawn, none open — `2005 · Atlantic · 3 shown · tap a track for detail`
+- one open — `2005 · Atlantic · KATRINA`
+
+§57.21a made opening a storm a deliberate act and nothing anywhere on screen
+said a track could be tapped, so a reader could miss the per-fix dots entirely.
+**Zero needs its own words or the bar is a title bar again** — `2005 ·
+Atlantic` over an empty globe states a fact the reader can already see. **The
+name replaces the count rather than joining it**: four facts do not fit one
+line on a 390px phone, and once a storm is open it IS the subject.
+
+**THE BOARD REPORTS FACTS AND THE BAR OWNS THE WORDS.** `onWhere` carries
+`{ label, shown, openName }` and fires on four paths — the season settling, a
+tick, a selection, and re-entry. A bar that updated only on a year change would
+say `3 shown` over a globe with none on it the moment anybody unticked
+something. A bad `?season=` link still overrides all three states, because that
+reason is about the LINK and does not stop being true when a season loads.
+
+**THE ROW CHEVRON IS STILL NOT BUILT, AND THIS PASS IS THE SECOND DATA POINT
+THAT WOULD CONVICT THE ROW.** A per-row chevron opening the detail panel is the
+more discoverable way to select and it is the exact markup step 7 added before
+glass reported every tap target in this drawer misbehaving. That cause is still
+unknown. This push rewrote the row completely — if taps misbehave again, the
+row is a real suspect rather than a guess; if they do not, step 7's fault is
+somewhere else and the chevron can be built.
 
 ### 57.22 The storm detail panel
 
