@@ -98,7 +98,16 @@ import { warmShips } from './data/ships.js';
 import { isEnded, reportingStormIds } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
 import { backfillEndedTracks } from './data/ended-track.js';
-import { IMAGERY } from './config/constants.js';
+import { IMAGERY, TAP } from './config/constants.js';
+import { SIZE } from './config/tokens.js';
+/* ==> THE FURNITURE'S REAL BOXES, FOR THE ARCHIVE'S "TAP OUTSIDE THE SHEET"
+ * RULE. §57.21d. <== The same measurement the home marker dodges chrome with;
+ * borrowed rather than rewritten, because a second copy of it would drift the
+ * day the drawer changed shape and the symptom would be one surface dismissing
+ * itself at the wrong moment. */
+import {
+  measureChrome, occludedByChrome, TAP_BLOCKING_SELECTORS,
+} from './map/chrome-avoid.js';
 import { settingValue, subscribeSettings } from './data/settings-prefs.js';
 import { buildMeshPoints } from './map/storm-mesh.js';
 import { startPolling, subscribe, refresh, overallStatus } from './data/store.js';
@@ -834,6 +843,71 @@ function boot() {
    * selecting a storm twice.
    * ---------------------------------------------------------------------- */
 
+  /* ==> HOW LONG THE LAST PRESS ON THE GLOBE LASTED. §57.21d. <==
+   *
+   * MapLibre already refuses to fire `click` once the pointer has MOVED
+   * `TAP.movePx` or more between down and up — that is `clickTolerance`, and
+   * it is passed from `config/constants.js` in `map/globe.js`. So everything
+   * hanging off `map.on('click')` gets movement discrimination outright and
+   * the app needs exactly one movement threshold rather than two that have to
+   * agree.
+   *
+   * WHAT MAPLIBRE DOES NOT GATE ON IS TIME. A press held still for a second —
+   * a drag the globe declined to follow, or a thumb resting on the glass while
+   * its owner reads the sheet — arrives as an ordinary click. That must not
+   * minimise the sheet somebody was trying to pan the globe behind.
+   *
+   * ON THE CANVAS CONTAINER, WHICH IS WHAT MAKES IT HONEST. A press on the
+   * drawer or the archive's bar never touches this element, so the clock only
+   * ever measures presses on the globe itself.
+   *
+   * POINTER EVENTS, NOT `touchstart` PLUS `mousedown` (§13). One path for a
+   * finger, a mouse and a stylus, and no device sniffing. Multi-touch simply
+   * re-stamps the clock per pointer, which costs nothing: a pinch moves, so
+   * MapLibre has already declined to call it a click. */
+  let pressStartedAt = 0;
+  map.getCanvasContainer().addEventListener(
+    'pointerdown',
+    () => { pressStartedAt = performance.now(); },
+    { passive: true }
+  );
+
+  /**
+   * A tap landed on the archive's globe and resolved to nothing. §57.21d.
+   *
+   * ==> THE SHEET COMES DOWN, AND ONLY IF THIS WAS ACTUALLY A TAP. <== See the
+   * clock above for why duration is asked and movement is not.
+   *
+   * ==> "OUTSIDE THE DRAWER" IS MEASURED, NEVER A HEIGHT. <==
+   * `map/chrome-avoid.js` reads the furniture's real boxes off the DOM, which
+   * is what lets one rule cover both shapes the drawer takes: docked to the
+   * bottom on a phone, so outside it means above it; docked left on a wide
+   * screen, so outside it means beside it. A hardcoded height would have been
+   * wrong on the second one and wrong again the moment `--seasons-sheet-h`
+   * moved (§57.21b).
+   *
+   * ==> PADDED BY HALF A TOUCH TARGET, AND THE SLOP IS THE POINT. <== A thumb
+   * aimed at the drawer's own top edge lands a few pixels above it, and
+   * minimising the sheet is the destructive answer to that. Inside the slop
+   * strip the tap does nothing at all, which is the right failure: a press
+   * that achieves nothing costs one more press, and a press that dismisses the
+   * sheet somebody was reaching into costs them the sheet.
+   *
+   * THE MEASUREMENT IS TAKEN HERE RATHER THAN HELD. It is one
+   * `getBoundingClientRect` pass on a handful of elements, on a tap — not in a
+   * frame loop — and the boxes move whenever the year steps or the window
+   * turns, so a cached copy would be wrong exactly when it mattered.
+   */
+  function minimiseArchiveSheet(e) {
+    if (!drawer.isOpen()) return;
+    if (performance.now() - pressStartedAt > TAP.maxMs) return;
+    const slop = parseInt(SIZE.touchTarget, 10) / 2;
+    if (occludedByChrome(e.point.x, e.point.y, measureChrome(slop, TAP_BLOCKING_SELECTORS))) {
+      return;
+    }
+    drawer.close();
+  }
+
   /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
    * hit box lives in stormAtPoint; cursor feedback rides layer hover.
    * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
@@ -871,10 +945,17 @@ function boot() {
         return;
       }
 
-      /* Empty water clears the focus, so "show them all evenly" is reachable
-       * by thumb without hunting for a control; the roster's own row is the
-       * keyboard path (§13). */
-      focusSeasonStormNow(null);
+      /* ==> EMPTY WATER MINIMISES THE SHEET AND DOES NOTHING ELSE. <== Aaron's
+       * call, 2026-08-25, answering the question §57.21c left open. It used to
+       * CLEAR THE FOCUS here, and that is gone rather than kept alongside — one
+       * gesture with two visible outcomes is the shape readers report as a
+       * glitch.
+       *
+       * ==> THE COST IS REAL AND WAS ACCEPTED. <== Un-focusing is now only
+       * reachable from the roster, by tapping the focused storm's row again.
+       * With the sheet minimised that is two presses — the bar to bring the
+       * board back, then the row — where it used to be one tap on open ocean. */
+      minimiseArchiveSheet(e);
       return;
     }
 

@@ -1845,8 +1845,9 @@ than worked around in the view.
 Push 2 of two, 2026-08-25. Items 2 and 7 of Aaron's list of seven, built as one
 piece because they are two answers to one question. `map/season-mesh.js` (the
 glyph list and the hit-test), `seasons/index.js` (the way in), `main.js` (the
-ordered branch). Numbers live in `SEASONS` — `glyphTapMaxPhase` and
-`glyphFacingMin`.
+ordered branch, the press clock and the minimise), `map/chrome-avoid.js`
+(`TAP_BLOCKING_SELECTORS`), `map/globe.js` (the movement threshold). Numbers
+live in `SEASONS` — `glyphTapMaxPhase`, `glyphFacingMin` — and in `TAP`.
 
 **==> THERE IS ONE ORDERED LIST AND IT IS WRITTEN ONCE. <==** `main.js`'s
 `map.on('click')` archive branch, top to bottom: **glyph**, then **track**,
@@ -1922,9 +1923,64 @@ still-running storm before the globe ever sees it, so it has no track, no ridge
 and no glyph to tap. The refusal inside `openStormNow` stays anyway, because it
 is the chevron's path too.
 
-**THE THIRD BRANCH IS UNCHANGED IN THIS PASS.** A tap on empty water still
-clears the focus, exactly as it did before. What it should do instead is the
-second half of this section and lands next.
+**==> A TAP ON EMPTY WATER MINIMISES THE SHEET AND DOES NOTHING ELSE. <==**
+Aaron's call, 2026-08-25, answering the question §57.21c left open. It used to
+CLEAR THE FOCUS, and that is **gone rather than kept alongside** — one gesture
+with two visible outcomes is the shape readers report as a glitch.
+
+**THE COST IS REAL AND WAS ACCEPTED RATHER THAN OVERLOOKED.** Un-focusing is
+now only reachable from the roster, by tapping the focused storm's row again.
+With the sheet minimised that is two presses — the bar to bring the board back,
+then the row — where it used to be one tap on open ocean.
+
+**==> A TAP AND THE START OF A DRAG ARE THE SAME EVENT, AND MAPLIBRE ALREADY
+ANSWERS HALF OF IT. <==** `map.on('click')` does not fire when the pointer moved
+`clickTolerance` pixels or more between down and up — measured in
+`vendor/maplibre-gl-5.6.0.js`, whose click handler is exactly that one test. So
+hanging the minimise off the event the archive branch already uses buys the
+movement discrimination outright. `TAP.movePx` is now passed to the map
+explicitly rather than left on MapLibre's undocumented default, so the number
+lives where §12 says every behavioural number lives. **A second movement
+threshold was deliberately NOT written:** two numbers that have to agree are
+two numbers that eventually will not, and this one governs storm selection and
+the flood chips as well as the archive.
+
+**WHAT MAPLIBRE DOES NOT GATE ON IS TIME**, so a press held still for a second —
+a drag the globe declined to follow, or a thumb resting on the glass — arrives
+as an ordinary click. `TAP.maxMs` is enforced here: a `pointerdown` on the map's
+canvas container stamps the clock and the minimise reads it. **On the canvas
+container specifically**, so a press on the drawer or the bar never touches it
+and the clock only ever measures presses on the globe.
+
+**==> "OUTSIDE THE DRAWER" IS MEASURED, NEVER A HEIGHT. <==**
+`map/chrome-avoid.js` already reads the furniture's real boxes off the DOM, and
+`TAP_BLOCKING_SELECTORS` is the list this asks about. One rect-based rule covers
+both shapes the sheet takes: on a phone it docks to the bottom, so outside it
+means above it; on a wide screen it docks left, so outside it means beside it.
+**A hardcoded height would have been wrong on the second one**, and wrong again
+the moment `--seasons-sheet-h` moved (§57.21b).
+
+**THE RECTS ARE PADDED BY HALF A TOUCH TARGET AND THE SLOP IS THE POINT.** A
+thumb aimed at the drawer's own top edge lands a few pixels above it, and
+minimising the sheet is the destructive answer to that miss. Inside the slop
+strip the tap does nothing at all — a press that achieves nothing costs one more
+press, and a press that dismisses the sheet somebody was reaching into costs
+them the sheet.
+
+**IT CANNOT FIRE INSIDE THE ARCHIVE'S BAR**, which is belt and braces rather than
+a fix: `#seasons-bar` and `#drawer` are SIBLINGS of `#globe`, not children, so a
+press on either never reaches MapLibre's listener and never becomes a map click
+at all. The list exists so that the day somebody nests a panel inside the map
+container, the archive does not start dismissing its own sheet. **`#seasons-bar`
+is the one id `index.html` does not carry** — `seasons/bar.js` creates it at
+runtime, because the archive's furniture must not be on the boot path — so
+`tools/test-chrome-avoid.mjs` checks the contract against that file instead of
+excusing it.
+
+**ESCAPE STILL MINIMISES AND NOTHING WAS BUILT FOR IT.** `attachEscape` in
+`map/globe.js` is one global contract: an open panel absorbs the first Escape,
+and for a view that sets `minimises` the drawer's `close()` IS the minimise
+(§57.21b). Asserted rather than assumed, so it cannot quietly go.
 
 **THE KEYBOARD PATH FOR OPENING A STORM ALREADY EXISTED AND IS NOT DUPLICATED.**
 §13 says a gesture-only way to open a storm is a bug; Enter on a ticked roster
@@ -1933,14 +1989,29 @@ mean a focus ring on a Three.js sprite — real machinery for a road already
 paved, and a second way to reach one destination is a second thing to keep in
 step. The existing path is asserted in the suite so it cannot quietly go.
 
-**THE GATE.** `tools/test-season-glyph-tap.mjs` — the hit-test, the facing
+**THE GATES.** `tools/test-season-glyph-tap.mjs` — the hit-test, the facing
 refusal, the zoom handover, nearest-wins, and the wiring read out of `main.js`
 and `seasons/index.js` as text, because everything behavioural passes just as
-happily against a hit-test nothing calls. **Fourteen mutations were run and one
-survived**: the first version of the ordering assertion matched
-`seasonGlyphAtPoint` inside the comment that explains the branch, so commenting
-the call out left the suite green. Both halves now match an actual invocation
-with its actual arguments.
+happily against a hit-test nothing calls. `tools/test-archive-tap.mjs` — the
+minimise, driving the real `measureChrome` and `occludedByChrome` against a
+stand-in DOM at phone and desktop shapes, then reading the shipped branch to
+prove it asks the same questions in the same order.
+`tools/test-chrome-avoid.mjs` gained the runtime-emitted id case.
+
+**TWENTY-EIGHT MUTATIONS WERE RUN AND ONE SURVIVED.** The first version of the
+glyph suite's ordering assertion did `indexOf('seasonGlyphAtPoint')`, which
+matched the word inside the comment that EXPLAINS the branch — so commenting
+the call out left the suite green, which is the failure §12 calls worse than no
+test. Both halves now match an actual invocation with its actual arguments, and
+the mutation was re-run and bites.
+
+**AND ONE ASSERTION FAILED AGAINST CORRECT CODE, WHICH IS THE SAME LESSON FROM
+THE OTHER SIDE.** The tap suite's ordering check searched the whole of `main.js`
+for `minimiseArchiveSheet(e)` and found the FUNCTION DEFINITION, which sits
+above the click handler — so it compared a definition against a call and went
+red on a working branch. It cuts the archive branch out of the file first now,
+between `if (isArchive()) {` and the home marker test that follows it, and reads
+only that.
 
 ### 57.22 The storm detail panel
 

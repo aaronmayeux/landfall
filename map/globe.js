@@ -8,7 +8,7 @@
  * Imports: config/ and map/ only.
  */
 
-import { GLOBE, ZOOM, DIVE } from '../config/constants.js';
+import { GLOBE, ZOOM, DIVE, TAP } from '../config/constants.js';
 import { DURATION, REDUCED, prefersReducedMotion } from '../config/motion.js';
 import { buildStyle } from './style.js';
 import { addGraticule } from './graticule.js';
@@ -80,6 +80,16 @@ export function createGlobe(container, { center = GLOBE.fallbackCenter } = {}) {
     maxPixelRatio: 2,
     /** Do not fetch tiles the camera is about to leave. */
     fadeDuration: DURATION.base,
+    /** ==> HOW FAR A POINTER MAY TRAVEL AND STILL BE A TAP, AND IT IS THE ONE
+     *  MOVEMENT THRESHOLD IN THE APP. <== §57.21d. MapLibre refuses to fire
+     *  `click` once the pointer has moved this far between down and up, so
+     *  everything hanging off `map.on('click')` — storm selection, the flood
+     *  chips, the archive's whole tap arbitration — inherits it. Passing it
+     *  explicitly changes nothing today (`TAP.movePx` IS MapLibre's default)
+     *  and moves the number into `config/constants.js` where §12 says every
+     *  behavioural number lives. Writing a second one of our own on top would
+     *  be two thresholds that have to agree and eventually would not. */
+    clickTolerance: TAP.movePx,
   });
 
   /* Attribution is OURS (map/attribution.js), not MapLibre's — see that

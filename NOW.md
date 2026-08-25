@@ -329,24 +329,42 @@ quiet one and confirm the `+`/`−` buttons do not move. Then judge whether four
 names is the right number, remembering the trade — a two-storm year now leaves
 empty sheet under its roster rather than shrinking to fit.
 
-**==> THE GLYPH TAP IS BUILT. §57.21d IS THE AS-BUILT ACCOUNT — READ THAT, NOT
-THIS. <==** Tapping a hurricane glyph at the space floor opens that storm:
-panel, pan and zoom, the same function the roster row's chevron runs. The
-arbitration is one ordered list in `main.js`'s archive branch — glyph, then
-track, then empty water — and the glyph and the track are disjoint by zoom so
-they cannot argue.
+**==> SEASONS UI POLISH, PUSH 2 IS DONE. §57.21d IS THE AS-BUILT ACCOUNT —
+READ THAT, NOT THIS. <==** Both halves shipped together: the glyph tap and the
+tap-outside-minimises. Nothing about this pass is unbuilt.
 
-**THE THIRD BRANCH IS THE HALF THAT IS LEFT.** Empty water still clears the
-focus today. Aaron's answer to the open question was **(b): minimise only**,
-and that lands next.
+**What it is, in one paragraph.** `main.js`'s archive tap branch is now one
+ordered list — glyph, then track, then empty water. A tap on a hurricane glyph
+at the space floor opens that storm (panel, pan and zoom) through the same
+function the roster row's chevron runs. A tap on a track still focuses it. A tap
+on open globe outside the sheet minimises the sheet, and — Aaron's answer to the
+open question, (b) — does nothing else.
 
-**GLASS, AND IT IS ONE GESTURE:** at the space floor, with a season ticked, tap
-a hurricane glyph. It should fly to that storm and open its panel — identical
-to pressing the row's chevron. Then zoom in past the glyph's fade and tap the
-same storm's track: still opens it, by the other road. Two things worth
-watching: whether the reach feels right on a busy season like 2005, where first
-fixes cluster, and whether the handover between the two hit-tests is invisible
-or has a dead band in it.
+**GLASS, AND IT IS FOUR THINGS, ALL AT ONCE ON A PHONE.** Tick a season, stay at
+the space floor.
+
+1. **Tap a hurricane glyph.** It should fly to that storm and open its panel,
+   identical to pressing the row's chevron. Then zoom in past the glyph's fade
+   and tap the same storm's TRACK: still opens it, by the other road. The
+   handover between the two should be invisible — if there is a dead band where
+   neither answers, `SEASONS.glyphTapMaxPhase` is the dial.
+2. **Tap open globe above the sheet.** The sheet should come down. Then try it
+   just above the sheet's top edge — a few pixels — where it should do NOTHING,
+   because that is the slop strip protecting a thumb that missed the drawer.
+3. **==> PAN AND ZOOM WITH THE SHEET OPEN, WHICH IS THE ONE MOST LIKELY TO COME
+   BACK WRONG. <==** Drag the globe, pinch it, two-finger rotate it — all with
+   the board up. None of it should minimise the sheet. If a slow drag that
+   barely moves dismisses it, the movement threshold is being read from the
+   wrong place; if a long press does, `TAP.maxMs` is the dial.
+4. **Escape, with the mouse untouched.** Still minimises. Nothing was built for
+   it — it rides the drawer's own contract — so this is a check that the pass
+   did not break something it never touched.
+
+**AND ONE THING THAT IS EXPECTED TO FEEL DIFFERENT RATHER THAN BROKEN.**
+Un-focusing a storm by tapping open ocean is GONE. It is the roster's job now:
+tap the focused storm's row again. With the sheet minimised that is two presses
+— the bar, then the row — where it used to be one. That was the trade in
+option (b) and it was named before it was built.
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither

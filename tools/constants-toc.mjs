@@ -87,7 +87,7 @@ const GROUPS = [
 
   ['THE INTERFACE ITSELF',
    'what the app remembers, and how it answers a finger or a key',
-   ['STORAGE_KEY', 'FIRST_RUN', 'KEYBOARD', 'SLIDER']],
+   ['STORAGE_KEY', 'FIRST_RUN', 'KEYBOARD', 'SLIDER', 'TAP']],
 
   ['WATCHING OURSELVES',
    'frame budget and the anonymous numbers that say whether it held',

@@ -36,7 +36,10 @@ import path from 'node:path';
 const ROOT = path.resolve(import.meta.dirname, '..');
 process.chdir(ROOT);
 
-const { avoidChrome, occludedByChrome, CHROME_SELECTORS, OCCLUDING_SELECTORS } =
+const {
+  avoidChrome, occludedByChrome,
+  CHROME_SELECTORS, OCCLUDING_SELECTORS, TAP_BLOCKING_SELECTORS,
+} =
   await import('../map/chrome-avoid.js');
 
 let failures = 0;
@@ -91,6 +94,45 @@ check(
   OCCLUDING_SELECTORS.some((s) => s.startsWith('#drawer')),
   'nothing in OCCLUDING_SELECTORS targets #drawer'
 );
+
+/* --------------------------------------------------------------------------
+ * THE TAP-BLOCKING SET, AND THE ONE ID THAT LIVES IN A DIFFERENT FILE.
+ * §57.21d. The archive minimises its sheet on a tap that lands outside the
+ * furniture, and this is the list it measures. Two of its three ids are in
+ * index.html and were checked in the loop above; `#seasons-bar` is created at
+ * runtime by seasons/bar.js, because the archive's furniture must not be on
+ * the boot path. The selector is still a contract, just with a different file
+ * — so it is checked against that file rather than excused.
+ * ------------------------------------------------------------------------ */
+
+const barJs = fs.readFileSync('seasons/bar.js', 'utf8');
+
+check(
+  'the archive bar is in the tap-blocking set',
+  TAP_BLOCKING_SELECTORS.includes('#seasons-bar'),
+  'a tap could be answered through the one control that is the way out'
+);
+check(
+  'and seasons/bar.js is the file that emits that id',
+  /\.id\s*=\s*'seasons-bar'/.test(barJs),
+  'nothing sets id="seasons-bar" — the selector matches nothing and fails silently'
+);
+check(
+  'the open drawer blocks a tap',
+  TAP_BLOCKING_SELECTORS.some((s) => s.startsWith('#drawer')),
+  'nothing in TAP_BLOCKING_SELECTORS targets #drawer — the sheet would dismiss on a tap inside itself'
+);
+/* Every id in the tap set that index.html DOES carry still has to be real.
+ * The runtime-emitted one is named above and skipped here rather than
+ * silently exempted by a looser rule. */
+for (const id of idsIn(TAP_BLOCKING_SELECTORS)) {
+  if (id === 'seasons-bar') continue;
+  check(
+    `#${id} exists in index.html (tap-blocking set)`,
+    markup.includes(`id="${id}"`),
+    'no element in index.html carries this id'
+  );
+}
 
 /* The occluding set must stay a SUBSET of the avoidance set. The attribution
  * button is something an overlay must not cover but must not be banished by;

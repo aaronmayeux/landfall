@@ -61,6 +61,36 @@ export const OCCLUDING_SELECTORS = [
   '#drawer[data-open="true"]',
 ];
 
+/* ==> EVERYTHING A TAP ON THE MAP MUST NOT BE ANSWERED THROUGH. <== §57.21d.
+ *
+ * The archive minimises its sheet when a tap lands on the globe rather than on
+ * the furniture, and "on the furniture" is MEASURED here rather than compared
+ * against a height — which is what lets one rule cover both shapes the drawer
+ * takes. On a phone it is docked to the bottom, so outside it means above it;
+ * on a wide screen it is docked left, so outside it means beside it. A
+ * hardcoded height would have been wrong on the second one, and wrong again
+ * the moment `--seasons-sheet-h` moved.
+ *
+ * ==> IT IS BELT AND BRACES RATHER THAN A FIX, AND SAYING SO IS THE POINT.
+ * <== `#drawer` and `#seasons-bar` are SIBLINGS of `#globe`, not children, so
+ * a press on either never reaches MapLibre's own listener and never becomes a
+ * map click at all. That is a property of `index.html`'s structure, and
+ * nothing in this file or in the tap handler would notice it changing. The
+ * list exists so that the day somebody nests a panel inside the map container,
+ * the archive does not start dismissing its own sheet.
+ *
+ * ==> `#seasons-bar` IS THE ONE ID `index.html` DOES NOT CARRY. <== It is
+ * created at runtime by `seasons/bar.js`, because the archive's furniture is
+ * loaded with the archive and must not be on the boot path. The selector
+ * contract still holds — it is just a contract with a different file, and
+ * `tools/test-chrome-avoid.mjs` checks it against that one.
+ */
+export const TAP_BLOCKING_SELECTORS = [
+  '#controls',
+  '#drawer[data-open="true"]',
+  '#seasons-bar',
+];
+
 /**
  * Is this element actually on screen, or merely laid out?
  *
