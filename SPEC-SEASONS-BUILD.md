@@ -1343,13 +1343,42 @@ THE LANDFALL MARK AND THE DATES.** Left to right, in that order.
 **AND THE THREE TEXT PARTS ARE A GRID, NOT A FLEX ROW, SO THE BADGE IS A REAL
 COLUMN.** Aaron on glass: right-aligned beside the dates it read as glued to
 them — `CAT 4  ▲ Jul 4 – Jul 18` is one run of small text, and strength is what
-the eye is scanning for. A flex row cannot fix that, because the badge's
-position then depends on how long the name is. Three named areas can: narrow
-puts the name and badge on one line with the dates beneath both, wide puts all
-three across, and it is the same three columns either way. The badge carries a
-`min-width` in `ch` rather than pixels — wide enough that `TS` and `CAT 5`
-start at the same place down the list, tied to the type rather than to a number
-that goes stale the next time the badge is resized. The dot
+the eye is scanning for. Three named areas: narrow puts the name and badge on
+one line with the dates beneath both, wide puts all three across, and it is the
+same three columns either way. The badge is CENTRED in its track, because `TS`
+and `CAT 5` left-aligned share a left edge and nothing else.
+
+**THE TWO RIGHT-HAND TRACKS ARE FIXED, AND THE FIRST ATTEMPT WAS NOT.** A grid
+whose tracks are `auto` sizes them per ROW, and every row here is its own grid —
+so `Jul 4 – Jul 7` gave its date column 68px and `Sep 17 – Sep 28` gave it
+101px, sliding the badge 33px sideways between one line and the next. The dates
+still ended flush right, so the badge was the only visibly wrong thing, and it
+was jagged the whole way down. **This shipped**, with identical markup, every
+class defined, the type on the scale and 130 board assertions green. Aaron
+found it on glass.
+
+**THE TRACK WIDTHS ARE MEASURED IN A BROWSER AND ARE MULTIPLES OF
+`--type-small`.** `tools/seasons-row-check.mjs` renders these rows against this
+stylesheet and reports the geometry: the widest badge needs 44px, the widest
+date range plus a landfall mark needs 119. A `ch` track would have resolved
+against the ROW's font size while everything being measured is set at
+`--type-small`, so the two could drift apart silently; tying the track to the
+size of the text inside it means a move on the type scale carries the columns
+with it. **The multipliers carry ~15% headroom on purpose** — these were
+measured in one browser on one platform and the app runs on several, and a
+track a few pixels short does not ellipse, it widens and puts the jaggedness
+straight back.
+
+**THE ROWS RUN TO THE DRAWER'S OWN EDGE, NOT THE SCROLLER'S.** Aaron on glass:
+the open storm's highlight stopped short on both sides and read as a floating
+box rather than as the row being lit. `--drawer-body-pad` is smaller than
+`--drawer-inset` precisely so a full-bleed press target can run wider than the
+text inside it (index.html); the storm list spends that allowance by laying a
+row out at the scroller's width and pushing its TEXT in, and this list bleeds
+past it and puts the same amount back as padding, so nothing inside the row
+moves. **The master box is in that rule too** — it carries the line that reads
+as the roster's heading, and bleeding the rows without it would leave one short
+line above a column of long ones. The dot
 stopped being the checkbox: it was a hollow ring that filled when ticked, one
 element carrying two meanings, which was only ever a way to avoid putting a
 second control on a forty-row list. It is `.row-swatch` now — the same 12px

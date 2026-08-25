@@ -402,6 +402,28 @@ html[data-seasons="on"] #btn-layers {
   container-name: roster;
 }
 
+/* ==> THE ROWS RUN TO THE DRAWER'S OWN EDGE, NOT THE SCROLLER'S. <== Aaron on
+   glass, 2026-08-25: the open storm's highlight stopped short on both sides
+   and read as a floating box rather than as the row being lit.
+
+   `--drawer-body-pad` is the scroller's own padding and is deliberately
+   smaller than `--drawer-inset` (index.html) precisely so a full-bleed press
+   target can run wider than the text inside it. The storm list spends that
+   allowance the other way round — it lays a row out at the scroller's width
+   and pushes its TEXT in. This list bleeds past it instead, then puts the same
+   amount back as padding, so nothing inside the row moves and only the
+   background and the separator get wider.
+
+   ==> THE SEPARATORS COME WITH IT, AND THAT IS WHY THE MASTER BOX IS IN THIS
+   RULE. <== It carries the line that reads as the roster's heading. Bleeding
+   the rows and not it would leave one short line above a column of long ones,
+   which is the ragged edge this was meant to remove. */
+.seasons-row,
+.seasons-check-all {
+  margin-inline: calc(-1 * var(--drawer-body-pad));
+  padding-inline: var(--drawer-body-pad);
+}
+
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
 /* ==> THE ROW MATCHING THE BRIGHT TRACK ON THE GLOBE. §57.21 item 2. <==
@@ -488,19 +510,49 @@ html[data-seasons="on"] #btn-layers {
    2026-08-25: right-aligned beside the dates it read as glued to them —
    `CAT 4  ▲ Jul 4 – Jul 18` is one run of small text, and the strength is the
    thing the eye is scanning for. A flex row cannot fix that, because the
-   badge's position then depends on how long the name is. Three named columns
-   can.
+   badge's position then depends on how long the name is.
+
+   ==> AND THE TWO RIGHT TRACKS ARE FIXED, WHICH IS THE SECOND HALF OF THE FIX
+   AND THE PART THAT WAS MISSING. <== `auto` tracks are sized per ROW, and each
+   row here is its own grid — so a row reading `Jul 4 – Jul 7` gave its date
+   column 68px and one reading `Sep 17 – Sep 28` gave it 101px, which pushed
+   the badge 33px sideways between one line and the next. The dates still ended
+   flush right, so the only visibly wrong thing was the badge, and it looked
+   jagged all the way down the list.
+
+   ==> THE NUMBERS ARE MEASURED IN A BROWSER, AND THE FIRST SET WAS WRONG.
+   <== `tools/seasons-row-check.mjs` renders these rows against this stylesheet
+   and reports the geometry. Arithmetic off the type scale said the widest
+   badge, `CAT 5`, needed 44px; rendered, it needs 51 — letter-spacing after
+   the last glyph and the font's own side bearings are not in the arithmetic.
+   The widest date range is `May 28 – May 30` at 105px, plus the landfall mark
+   at 10px and its gap, so the meta column needs 119.
+
+   ==> AND THEY ARE MULTIPLES OF `--type-small` RATHER THAN OF THE GRID'S OWN
+   `ch`. <== A `ch` track resolves against the CONTAINER's font size, which is
+   the row's, while the things being measured are all set at `--type-small`.
+   Tying the track to the size of the text inside it means a move on the type
+   scale carries the columns with it; tying it to `ch` meant the two could
+   drift apart silently, and a track a few pixels short does not ellipse — it
+   widens, and the jaggedness comes straight back. The multipliers carry ~15%
+   headroom on purpose, because these were measured in one browser on one
+   platform and the app runs on several: SF on iOS is not the same metric.
 
    Narrow: name and badge on the first line, the dates under both.
-   Wide: all three across, with the badge between them.
+   Wide: all three across, same three columns.
 
    `min-width: 0` on the whole block is load-bearing inside a flex child —
    without it a long unbroken name blows the row out instead of ellipsing. */
+.seasons-roster {
+  --badge-col: calc(var(--type-small) * 4.7);
+  --meta-col: calc(var(--type-small) * 10.6);
+}
+
 .seasons-row-text {
   flex: 1 1 auto;
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) var(--badge-col);
   grid-template-areas:
     "name  badge"
     "meta  meta";
@@ -508,13 +560,15 @@ html[data-seasons="on"] #btn-layers {
   gap: var(--space-tight) var(--space-snug);
 }
 
-/* Line 2 in the narrow layout. The landfall mark sits to the LEFT of the dates
-   — §57.21a took the pin off the globe, so this row is the only place a
-   landfall now surfaces. */
+/* Line 2 in the narrow layout, the third column in the wide one. The landfall
+   mark sits to the LEFT of the dates — §57.21a took the pin off the globe, so
+   this row is the only place a landfall now surfaces. Pushed to the end of its
+   track so the dates end flush down the list whatever month they name. */
 .seasons-row-meta {
   grid-area: meta;
   display: flex;
   align-items: baseline;
+  justify-content: flex-end;
   gap: var(--space-tight);
   min-width: 0;
 }
@@ -532,16 +586,13 @@ html[data-seasons="on"] #btn-layers {
   white-space: nowrap;
 }
 
-/* ==> A FLOOR RATHER THAN A FIXED WIDTH, IN `ch` RATHER THAN PIXELS. <== The
-   column has to be wide enough that `TS` and `CAT 5` start at the same place
-   down the list, and `ch` ties that to the type rather than to a number that
-   goes stale the next time the badge is resized. It is the widest label the
-   scale produces plus its tracking. Left-aligned inside the floor, because a
-   column the eye runs down is a column with one left edge. */
+/* CENTRED IN ITS TRACK. Aaron's call. Left-aligned, `TS` and `CAT 5` share a
+   left edge and nothing else, so the column reads as ragged on its right;
+   centred, a two-character badge and a five-character one both sit on the same
+   axis, which is what a column of labels of different lengths wants. */
 .seasons-row-text .row-badge {
   grid-area: badge;
-  min-width: 6ch;
-  text-align: left;
+  text-align: center;
 }
 
 .seasons-when {
@@ -566,7 +617,7 @@ html[data-seasons="on"] #btn-layers {
    the same three columns either way. */
 @container roster (min-width: 400px) {
   .seasons-row-text {
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) var(--badge-col) var(--meta-col);
     grid-template-areas: "name badge meta";
     gap: var(--space-base);
   }
