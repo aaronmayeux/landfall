@@ -347,6 +347,59 @@ export function windFieldHtml(facts, { firstSeason }) {
     : 'No wind field was recorded for this storm, so there is no footprint to draw.');
 }
 
+/**
+ * NHC's written report on this storm, or why there is none. §57.22, §57.22a.
+ *
+ * ==> THREE STATES AND THEY SAY THREE DIFFERENT THINGS. <== §5. The one worth
+ * spelling out is the difference between the second and the third: *no report
+ * was written* is a fact about the record, and *we could not check* is a fact
+ * about this moment. Saying the first when the second is true would state
+ * something false about a storm whose report exists — the all-clear-during-an-
+ * outage bug, at the size of one link.
+ *
+ * ==> AND THE ABSENCE IS THE COMMON CASE, NOT THE EDGE ONE. <== NOAA wrote
+ * these for roughly a sixth of the storms in the record and none at all before
+ * 1958, so on most of the archive this row IS the report section. §57.25 rule
+ * 2: it names the era rather than shrugging, because *"NOAA did not write these
+ * before 1958"* teaches something true and *"no report"* teaches nothing.
+ *
+ * @param {object} report  the answer from `data/season-reports.js`
+ * @param {number} year    the storm's year, for the era sentence
+ * @param {number} firstYear  the earliest year any report exists for
+ */
+export function reportHtml(report, year, firstYear) {
+  if (!report || report.state === 'loading') {
+    return absenceHtml('Checking whether NOAA wrote a report on this storm…');
+  }
+
+  if (report.state === 'unknown') {
+    /* ==> IT GETS A RETRY, BECAUSE THIS ONE CAN ACTUALLY SUCCEED. <== §5 asks
+     * every error state for a recovery action, and the distinction this panel
+     * draws is whether pressing it could ever work. A storm from 1851 gets no
+     * button; a lookup that failed on a train does. */
+    return `<p class="detail-note">The list of NOAA reports could not be
+        reached, so this storm may or may not have one.</p>
+        <button class="seasons-retry" type="button" data-retry="report">Try again</button>`;
+  }
+
+  if (report.state === 'has') {
+    return `<p class="detail-note">NOAA published a written report on this
+        storm — the full account, with the meteorology and the damage.</p>
+        <a class="season-report-link" href="${esc(report.url)}"
+           target="_blank" rel="noopener noreferrer">
+          Read NOAA's report<span class="season-report-ext" aria-hidden="true"></span>
+          <span class="visually-hidden"> (opens on nhc.noaa.gov in a new tab)</span>
+        </a>`;
+  }
+
+  const beforeEra = Number.isFinite(year) && Number.isFinite(firstYear) && year < firstYear;
+  return absenceHtml(beforeEra
+    ? `NOAA did not begin writing these reports until ${firstYear}, so there is `
+      + 'none for this storm.'
+    : 'NOAA did not write a report on this storm. They are written for the '
+      + 'storms that mattered most, not for every one.');
+}
+
 /* ---------------------------------------------------------------------------
  * THE STATES THAT ARE NOT A STORM
  * ------------------------------------------------------------------------ */

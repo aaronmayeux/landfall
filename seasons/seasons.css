@@ -593,3 +593,45 @@ html[data-seasons="on"] #btn-layers {
   line-height: 1.4;
   color: var(--text-secondary);
 }
+
+/* --- the link out to NOAA's written report — §57.22, §57.22a -------------- */
+
+/* ==> IT IS THE ONLY THING IN THIS WHOLE FEATURE THAT LEAVES THE APP, SO IT
+   HAS TO LOOK LIKE IT DOES. <== Everything else the archive draws is ours; this
+   hands the reader to nhc.noaa.gov and a new tab. A link that looked like the
+   rest of the panel would be a surprise, and on a phone a surprise new tab
+   reads as the app having lost your place. The arrow says "out", the screen
+   reader is told the same thing in words. */
+.season-report-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-tight);
+  min-height: var(--touch-target);
+  margin-top: var(--space-snug);
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.season-report-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius);
+}
+
+/* The outward arrow, drawn in CSS rather than shipped as an icon: it is two
+   borders and a rotation, and it inherits the link's colour for free — so it
+   goes sepia with everything else the moment the palette is forced, with no
+   second place to remember. */
+.season-report-ext {
+  width: 7px;
+  height: 7px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+@media (hover: hover) {
+  .season-report-link:hover { color: var(--accent); }
+}

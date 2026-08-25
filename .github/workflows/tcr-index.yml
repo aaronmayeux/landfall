@@ -1,0 +1,95 @@
+# tcr-index.yml — keep the storm-to-report lookup current.
+# SPEC-SEASONS-BUILD.md §57.22, §57.22a, §57.30 step 7.
+#
+# WHY A FILE IN THE REPO AND NOT A URL BUILT AT READ TIME
+# §57.22a measured it: 510 of 534 report filenames follow AL122005_Katrina.pdf,
+# and the 24 that do not break in two systematic ways — a storm that crossed
+# basins carries BOTH ids, and an unnamed storm is written with its number
+# spelled out where we hold UNNAMED. A link that is right most of the time is
+# the silent failure this whole exercise exists to prevent.
+#
+# WHY MONTHLY
+# NOAA writes these reports months to years after the storm — Ida's landed
+# well over a year later — so there is no hurry and no schedule to chase. The
+# script compares against the file already in the repo and asks for no commit
+# when nothing moved, so most runs cost a few page reads and write nothing.
+#
+# ==> IT COMMITS TO `main`, WHICH FIRES A CLOUDFLARE PAGES BUILD. <== Those are
+# capped at 500 a month (§57.33 limit 2). A handful a year is invisible against
+# that; the same job hourly would eat it. Same reasoning as seasons-hurdat.yml,
+# and it is why the commit is conditional rather than unconditional.
+#
+# ==> AND IT CAN REFUSE. <== Fewer entries than the file on disk, or sampled
+# links that do not resolve, and nothing is written and the job FAILS. Either
+# NOAA restructured their pages or our reader stopped understanding them, and
+# both are worse than a month with no update. A silent replacement would empty
+# every report link with no symptom until somebody opened a storm.
+
+name: tcr-index
+
+on:
+  schedule:
+    # 05:20 UTC on the 4th. Off the hour, and a day after seasons-hurdat so the
+    # two never race for the same commit on main.
+    - cron: '20 5 4 * *'
+  # A fine-grained PAT can push but CANNOT dispatch a workflow (measured: HTTP
+  # 403 on the dispatches endpoint), so pushing this branch is the only way a
+  # cloud session can start a runner.
+  push:
+    branches: [tcr-index]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tcr-index
+  cancel-in-progress: false
+
+jobs:
+  index:
+    runs-on: ubuntu-latest
+    # ~37 season pages plus one XML plus 50 verification HEADs, paced at 300 ms.
+    # Generous because a slow upstream is not a reason to throw away a run that
+    # is most of the way done.
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: build the index
+        id: run
+        run: node tools/tcr-index.mjs . /tmp/tcr-index
+
+      # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== The decision is made
+      # inside the script, because only it knows whether the reports changed or
+      # NOAA merely served the same pages again. `generatedAt` is excluded from
+      # that comparison on purpose — a timestamp that moves every month would
+      # make every run look like a change.
+      - name: commit and push, if anything changed
+        if: always() && steps.run.outcome == 'success'
+        run: |
+          set -euo pipefail
+          DECISION="$(cat /tmp/tcr-index/decision.txt 2>/dev/null || echo skip)"
+          echo "decision: $DECISION"
+          if [ "$DECISION" != "commit" ]; then
+            echo "nothing moved — no commit"
+            exit 0
+          fi
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A seasons/reports.json
+          if git diff --cached --quiet; then
+            echo "the script asked to commit but git sees no change — not committing"
+            exit 0
+          fi
+          git commit -q -F /tmp/tcr-index/commit-message.txt
+          git push -q origin HEAD:main
+          echo "pushed $(git rev-parse --short HEAD)"
+
+      - name: summary
+        if: always()
+        run: cat /tmp/tcr-index/summary.md >> "$GITHUB_STEP_SUMMARY" || echo 'the job wrote no report' >> "$GITHUB_STEP_SUMMARY"
