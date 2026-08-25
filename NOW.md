@@ -370,21 +370,44 @@ quiet one and confirm the `+`/`−` buttons do not move. Then judge whether four
 names is the right number, remembering the trade — a two-storm year now leaves
 empty sheet under its roster rather than shrinking to fit.
 
-**ITEM 2 IS THE ONE STILL STANDING. TAPPING THE OPEN SPACE ABOVE THE DRAWER
-SHOULD MINIMISE IT — AND PAN AND ZOOM MUST STILL WORK WITH THE DRAWER OPEN.** Both halves, and the second is
-the hard one: **a tap and the start of a drag are the same event.** A
-pointerdown/pointerup pair that moved less than a small threshold and lasted
-less than a short time is a tap; anything else belongs to the map and must
-reach it untouched. Both numbers are constants, defined before the logic.
+**==> ITEM 2 AND THE GLYPH TAP ARE ONE PIECE OF WORK, NOT TWO, AND THE ORDER
+MATTERS. <==** Found 2026-08-25 while scoping item 2; nothing has been built.
 
-`map/chrome-avoid.js` already measures the drawer's real box, so "above the
-drawer" is answerable without a hardcoded 60vh anywhere. It must NOT fire
-inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
+Both are answers to the same question — **what does a tap on the archive's
+globe mean** — and `main.js`'s `map.on('click')` archive branch is the one
+place that decides. It has two answers today: a tap that resolves to a track
+focuses it, a tap that resolves to nothing clears the focus. Item 2 wants a
+third (minimise the sheet) on exactly the branch that currently means
+"nothing", and the glyph tap wants to move cases OUT of that branch.
 
-**AND IT NEEDS ALL THREE INPUT PATHS BEFORE IT IS DONE (§13).** Escape
-already minimises through the drawer's own contract; check it still does. A
-gesture-only dismissal is a bug, not a limitation.
+**SO BUILDING ITEM 2 FIRST MEANS SHIPPING A BUG ON PURPOSE.** With no glyph
+hit-test in place, a tap on a hurricane glyph resolves to nothing — so it would
+minimise the drawer instead of opening the storm, on the one gesture Aaron
+asked for the glyph tap to serve. Then the glyph work would take it back out.
+**Do the hit-test first, then hang the minimise off the branch that is left.**
 
+**AND THE ARBITRATION IS THEN ONE ORDERED LIST, WRITTEN ONCE:** glyph (space
+floor only), then track (closer zooms), then empty water — which clears the
+focus AND minimises the sheet. `map/chrome-avoid.js` already measures the
+drawer's real box, so "above the drawer" needs no hardcoded height; it must not
+fire inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
+
+**THE HARD HALF IS UNCHANGED AND IS NOT THE HIT-TEST.** A tap and the start of
+a drag are the same event: a pointerdown/pointerup pair that moved less than a
+small threshold and lasted less than a short time is a tap, and anything else
+belongs to the map and must reach it untouched, or pan and zoom stop working
+with the drawer open. Both numbers are constants, defined before the logic.
+
+**ALL THREE INPUT PATHS BEFORE EITHER IS DONE (§13).** Escape already minimises
+through the drawer's own contract — check it still does. Tab through glyphs, or
+lean on the roster, which already has a keyboard path. A gesture-only way to
+open a storm or dismiss a sheet is a bug rather than a limitation.
+
+**ONE OPEN QUESTION FOR AARON, AND IT IS THE ONLY THING BLOCKING THE BUILD.**
+Should a tap on empty water do BOTH things — clear the focus and minimise the
+sheet — or should minimising be the whole of it, leaving the roster's own
+control as the way to un-focus? Doing both is one gesture with two visible
+outcomes, which is usually a thing readers report as a glitch.
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither
