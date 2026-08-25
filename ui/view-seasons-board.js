@@ -67,15 +67,16 @@
  */
 
 import { stormFacts, seasonFacts } from '../lib/season-facts.js';
-import { rosterFor } from '../lib/season-names.js';
+import { rosterFor, stormDisplayName } from '../lib/season-names.js';
 import {
   basinHasLive, isLiveSeason, liveYearOf, yearsFor as yearsForBasin,
 } from '../lib/season-years.js';
 import {
-  esc, entriesMatching, filtersFor, filtersHtml, footprintNoteHtml,
-  indexFailedHtml, liveDownHtml, pickerHtml, scoreHtml, seasonRosterHtml,
-  waitingHtml,
+  entriesMatching, filtersFor, filtersHtml, indexFailedHtml, liveDownHtml,
+  pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
 } from './seasons-board-markup.js';
+import { paintCheckAll, paintFocus } from './seasons-board-paint.js';
+
 
 /**
  * @param {object} opts
@@ -177,7 +178,18 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
   const yearsFor = (b) => yearsForBasin(yearDeps(), b);
   const isLive = (b, y) => isLiveSeason(yearDeps(), b, y);
 
-  /* --- selection ---------------------------------------------------------- */
+  /* --- selection -----------------------------------------------------------
+   * §57.21 item 2. Three entry points — Enter on a row, a tap on the globe,
+   * and clearing — and all three go through `setFocus`, so the roster and the
+   * map can never disagree about which storm is open.
+   *
+   * ==> WHAT THIS SECTION DECIDES, AND WHAT IT DOES NOT. <== It owns what is
+   * TRUE: which storm is open, which are ticked, who needs telling. Turning
+   * that into changes on rows that are already on screen is
+   * `ui/seasons-board-paint.js`, which took the cut when this file crossed
+   * §12's ceiling for the fourth seasons pass running. The two functions below
+   * that end in `Now` are the bindings that hand it this board's state.
+   * ---------------------------------------------------------------------- */
 
   function selectedEntries() {
     return entries.filter((e) => ticked.has(e.storm.id));
@@ -185,13 +197,10 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
 
   function pushSelection() {
     onSelection?.(selectedEntries());
+    /* The bar carries the count of what is drawn, so every push is also an
+     * announcement. §57.21b item 8. */
+    announceWhere();
   }
-
-  /* --- selection -----------------------------------------------------------
-   * §57.21 item 2. Three entry points — Enter on a row, a tap on the globe,
-   * and clearing — and all three go through `setFocus`, so the roster and the
-   * map can never disagree about which storm is open.
-   * ---------------------------------------------------------------------- */
 
   /**
    * Move the highlight, tell the globe, and repaint the rows.
@@ -210,41 +219,26 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     const next = id && ticked.has(id) ? id : null;
     if (next === focused) return;
     focused = next;
-    paintFocus();
+    paintFocusNow();
     onFocus?.(focused);
+    /* The bar names the open storm, so it has to hear about this. §57.21b
+     * item 8. */
+    announceWhere();
   }
 
-  function paintFocus() {
-    if (!bodyEl) return;
+  /** The open storm, out of the WHOLE season rather than the filtered rows —
+   *  a storm can stay open while a filter narrows past it and the footprint
+   *  sentence must not vanish while its track is still bright. */
+  function paintFocusNow() {
+    paintFocus(bodyEl, focused, focused ? entries.find((x) => x.storm.id === focused) : null);
+  }
 
-    for (const row of bodyEl.querySelectorAll('.seasons-row[data-row]')) {
-      const on = focused != null && row.dataset.row === focused;
-      row.classList.toggle('seasons-row-focus', on);
-      /* `aria-current` rather than `aria-selected`: nothing here is a listbox,
-       * and this is the ordinary meaning — the one item in a set the reader is
-       * currently on. Removed rather than set to "false", which some screen
-       * readers announce. */
-      if (on) row.setAttribute('aria-current', 'true');
-      else row.removeAttribute('aria-current');
-    }
-
-    /* ==> AND WHY THE FOCUSED STORM HAS NO WIND FOOTPRINT, WHERE THAT IS THE
-     * CASE. <== §57.25 rule 2, §57.26a. Three quarters of the archive has no
-     * wind field, so for most of what a reader opens this sentence IS step
-     * 6b — the footprint layer draws the focused storm and nothing else, so
-     * the presence and the absence are both discovered by the same tap.
-     *
-     * Written into a slot that is always in the markup: selection moves on
-     * every tap on the globe, and rebuilding the roster here would cost the
-     * reader their scroll position and their focus ring. `entries`
-     * rather than the filtered rows, because a storm can stay focused while
-     * the filter narrows past it (`onChange` documents that case) and the
-     * sentence must not vanish while its track is still bright. */
-    const slot = bodyEl.querySelector('.seasons-footprint');
-    if (slot) {
-      const e = focused ? entries.find((x) => x.storm.id === focused) : null;
-      slot.innerHTML = footprintNoteHtml(e);
-    }
+  /** The master box counts the FILTERED list against the ticks, which is the
+   *  spreadsheet's rule — under Majors it speaks for the majors. */
+  function paintCheckAllNow() {
+    const shown = entriesMatching(entries, filter);
+    paintCheckAll(bodyEl, shown.length,
+      shown.reduce((n, x) => n + (ticked.has(x.storm.id) ? 1 : 0), 0));
   }
 
   /* --- loading ------------------------------------------------------------ */
@@ -390,12 +384,34 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     render();
   }
 
+  /**
+   * What the bar says. §57.21b item 8.
+   *
+   * ==> IT CARRIES THREE FACTS NOW, NOT ONE, AND THE BAR TURNS THEM INTO A
+   * SENTENCE. <== The year and basin were enough while the bar was only a
+   * label; it is an info bar now, and the two things a reader cannot see from
+   * the globe alone are how many storms are drawn and which one they have
+   * open. The wording lives in `seasons/bar.js` — this function reports facts
+   * and never a phrase, so there is one place to change what the bar says.
+   *
+   * ==> AND IT IS CALLED FROM FOUR PLACES RATHER THAN ONE. <== The season
+   * settling, a tick, a selection, and re-entry. A bar that updated only on a
+   * year change would say `3 shown` over a globe with none on it the moment
+   * anybody unticked something.
+   */
   function announceWhere() {
-    onWhere?.(
-      indexState === 'ok' && basin && year
-        ? { basin, year, label: `${year} · ${seasons.basinLabel(index, basin)}` }
-        : null
-    );
+    if (!(indexState === 'ok' && basin && year)) {
+      onWhere?.(null);
+      return;
+    }
+    const open = focused ? entries.find((e) => e.storm.id === focused) : null;
+    onWhere?.({
+      basin,
+      year,
+      label: `${year} · ${seasons.basinLabel(index, basin)}`,
+      shown: selectedEntries().length,
+      openName: open ? stormDisplayName(open.storm) : '',
+    });
   }
 
   /* --- markup -------------------------------------------------------------
@@ -486,7 +502,9 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
      * without this her row comes back unmarked while the globe still has her
      * bright — the panel and the map disagreeing, which is the one thing this
      * view is careful about everywhere else. */
-    paintFocus();
+    paintFocusNow();
+    /* Same reason, and the one state `innerHTML` genuinely cannot carry. */
+    paintCheckAllNow();
   }
 
   /* --- input --------------------------------------------------------------
@@ -528,10 +546,25 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     if (filterBtn) {
       if (filterBtn.dataset.filter === filter) return;
       filter = filterBtn.dataset.filter;
-      /* The globe is NOT touched. A filter narrows what the roster shows; it
-       * does not un-choose a storm the reader deliberately ticked, and a
-       * ticked storm vanishing off the globe because a filter moved would be
-       * the panel and the map disagreeing about what is selected. */
+      /* ==> AND THE GLOBE EMPTIES WITH IT. <== Aaron's call, 2026-08-25, and it
+       * REVERSES what this comment used to argue. The old rule was that a
+       * filter narrows what the roster SHOWS and must not un-choose a storm
+       * the reader deliberately ticked. What that produced on glass was a
+       * globe carrying storms the list in front of you does not contain —
+       * switch to Majors and three tropical storms stay drawn with no row to
+       * point at, which is the same panel-and-map disagreement the old rule
+       * was written to prevent, arriving from the other side.
+       *
+       * ==> THE CLEARING HAS TO BE VISIBLE, WHICH IS WHY IT IS A PUSH AND NOT
+       * A QUIET RESET. <== The globe empties in the same frame the roster
+       * changes. A silent wipe that took effect on the next poll would be
+       * indistinguishable from the tracks having failed to draw.
+       *
+       * The selection goes first: `setFocus` refuses an id nobody has ticked,
+       * so with the set already cleared it can only resolve to null. */
+      ticked.clear();
+      setFocus(null);
+      pushSelection();
       render();
       return;
     }
@@ -598,10 +631,47 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       return;
     }
 
+    /* ==> THE MASTER BOX, AND IT ANSWERS BEFORE THE PER-STORM ONE. §57.21b
+     * item 4. <== It carries no `data-storm`, so the order is not strictly
+     * load-bearing — but it is the narrower case and reading it first is what
+     * stops a future rename quietly falling through into the storm branch.
+     *
+     * ==> IT WORKS ON THE FILTERED LIST, WHICH IS THE SPREADSHEET'S RULE. <==
+     * Under Majors it ticks the majors and nothing else. Reaching past the
+     * filter would put storms on the globe the roster is not showing.
+     *
+     * ==> FULL MEANS CLEAR, ANYTHING ELSE MEANS FILL. <== The native box's own
+     * `checked` cannot be trusted here: the browser flips it on click, and
+     * from the indeterminate state it flips it to `true`, which happens to
+     * agree with us. Recomputing from the roster is what makes the three
+     * states behave the same way from every direction.
+     *
+     * ==> AND UNTICKING EVERYTHING TAKES THE SELECTION WITH IT. <== `setFocus`
+     * refuses an id nobody has ticked, so a focus left standing would ghost
+     * every remaining track in favour of a storm that is not on the globe. */
+    if (e.target.closest('[data-check-all]')) {
+      const shown = entriesMatching(entries, filter);
+      const full = shown.length > 0 && shown.every((x) => ticked.has(x.storm.id));
+      for (const x of shown) {
+        if (full) ticked.delete(x.storm.id); else ticked.add(x.storm.id);
+      }
+      if (focused && !ticked.has(focused)) setFocus(null);
+      pushSelection();
+      /* A rebuild rather than a patch, and this is the one tick path that
+       * earns it: every row's box has just changed, so there is nothing to
+       * preserve that a patch would be preserving. */
+      render();
+      return;
+    }
+
     const box = e.target.closest('[data-storm]');
     if (box) {
       const id = box.dataset.storm;
       if (box.checked) ticked.add(id); else ticked.delete(id);
+      /* The master box above has three states and one of them has just
+       * changed. Patched rather than rebuilt — the reader's thumb is on a row
+       * in the list this would replace. */
+      paintCheckAllNow();
       /* No re-render. The checkbox has already drawn itself and rebuilding the
        * list under a thumb mid-tap is how a roster loses its scroll position
        * and its focus ring at once. */
@@ -625,6 +695,13 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
   return {
     id: 'seasons-board',
     title: 'Past storms',
+
+    /* ==> THE HEADER'S X IS A MINIMISE CHEVRON HERE, AND NOWHERE ELSE. §57.21b
+     * item 8. <== Closing this board does not leave the archive — the globe
+     * stays sepia and the bar stays on screen as the way back in. An X says
+     * "done with this", which is not what the button does. The flag is read by
+     * `ui/drawer.js`; every other view leaves it unset and keeps its X. */
+    minimises: true,
 
     mount(el) {
       host = el;

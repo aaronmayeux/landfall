@@ -41,6 +41,13 @@ export class El {
     this.attrs = {};
     this.dataset = {};
     this.checked = false;
+    /* ==> THE MASTER BOX'S THIRD STATE, AND IT DEFAULTS TO FALSE RATHER THAN
+     * UNDEFINED. <== §57.21b item 4. `indeterminate` is a property and not an
+     * attribute, so it cannot arrive through `parseHtml` — the view sets it
+     * after every render. Left undefined here, a suite asserting "not the
+     * middle state" would be asserting against a value the app never wrote,
+     * which passes whether or not the app is doing its job. */
+    this.indeterminate = false;
     this.value = '';
     this._html = '';
     this._listeners = new Map();
@@ -78,6 +85,16 @@ export class El {
         if (on) this.add(c); else this.remove(c);
       },
     };
+  }
+
+  /* ==> ADDED FOR §57.21b ITEM 6, AND IT RECORDS RATHER THAN PRETENDS. <== A
+   * tap on a track marks the row AND scrolls to it, because with a 28-row
+   * roster the marked row is usually off-screen. There is no layout in here to
+   * scroll, so the call is remembered instead — a stand-in that silently
+   * absorbed it would let a mutation deleting the scroll pass green, which is
+   * the failure §12 calls worse than no test. */
+  scrollIntoView(opts) {
+    this.scrolledIntoView = opts || {};
   }
 
   setAttribute(name, value) { this.attrs[name] = String(value); }

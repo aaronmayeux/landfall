@@ -270,20 +270,46 @@ export function filtersHtml({ filters, filter }) {
 }
 
 /**
- * One storm. The checkbox's dot is BOTH the tick and the category, so peak
- * strength reads down the list whether or not a storm is on the globe, in one
- * column rather than two. The whole row is the label, so the target is the row.
+ * One storm. §57.21b item 1.
+ *
+ * ==> LEFT TO RIGHT: A REAL CHECKBOX, THE CATEGORY DOT, THE NAME, THE STRENGTH
+ * BADGE, THE LANDFALL MARK, THE DATES. <== Aaron's list, 2026-08-25.
+ *
+ * ==> THE DOT STOPPED BEING THE CHECKBOX. <== It was a hollow ring in the
+ * storm's Saffir-Simpson colour that filled when ticked — one element carrying
+ * two meanings, which was only ever a way to avoid putting a second control on
+ * a forty-row list. With a real tick box beside it the ring has no job, so the
+ * dot is now `.row-swatch`: the same 12px solid dot with its faint glow that
+ * every other list in this app uses, from one rule rather than two that look
+ * alike.
+ *
+ * ==> AND THE BOX IS THE APP'S OWN, NOT A NATIVE ONE. <== The `<input>` is
+ * real and does all the work — state, keyboard, screen reader — and is moved
+ * out of sight; `.check-box` beside it is the drawn tick the Layers panel
+ * already uses. A platform checkbox would be a different shape and a different
+ * blue on every device the app runs on, which is the one thing a fixed visual
+ * contract (§10) exists to prevent.
+ *
+ * ==> STRENGTH IS THE STORM LIST'S OWN BADGE, FROM THE SAME FUNCTION AND THE
+ * SAME CLASS. <== `.row-badge` in neutral ink, right-aligned. Colour and text
+ * do not double up: the swatch is already the hue, so tinting the word would
+ * say the same thing twice (§6) — and Cat 1's yellow cannot reach AA at badge
+ * size on a light background anyway.
+ *
+ * ==> THE WHOLE ROW IS STILL THE TICK TARGET. <== Aaron's call. A 44px box
+ * inside a 320px row is a target most thumbs miss, so the row stays a
+ * `<label>` and must stay one.
  */
 export function rowHtml({ storm, facts, on }) {
   const color = categoryColor(facts.peakCategory ?? null, 'tropical', null);
   const strength = categoryShortLabel(facts.peakCategory ?? null, 'tropical', null);
 
-  /* The landfall mark. §57.21 calls these the most confident thing on the
-   * archive globe and the reason the app is called Landfall — so the roster
-   * names it in words for a screen reader rather than leaving a glyph to
-   * carry meaning on its own (§13). A provisional season simply has none,
-   * which is the absence `scoreHtml` explains rather than one to explain
-   * again on every row. */
+  /* The landfall mark. §57.21a took the pin off the globe, so this row is now
+   * the ONLY place a landfall surfaces — which is why it moved to the left of
+   * the dates rather than trailing them. It names itself in words for a screen
+   * reader rather than leaving a glyph to carry meaning on its own (§13). A
+   * provisional season simply has none, which is the absence `scoreHtml`
+   * explains rather than one to explain again on every row. */
   const lf = facts.landfalls.length
     ? '<span class="seasons-lf" aria-hidden="true">▲</span>'
     : '';
@@ -296,12 +322,64 @@ export function rowHtml({ storm, facts, on }) {
         <label class="seasons-check">
           <input type="checkbox" data-storm="${esc(storm.id)}" ${on ? 'checked' : ''}
                  aria-label="${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
-          <span class="seasons-dot" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
-          <span class="seasons-name">${esc(displayName(storm))}</span>
-          <span class="seasons-when">${esc(dateRange(facts))}</span>
-          ${lf}
+          <span class="check-box" aria-hidden="true"></span>
+          <span class="row-swatch" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
+          <span class="seasons-row-text">
+            <span class="seasons-row-head">
+              <span class="seasons-name">${esc(displayName(storm))}</span>
+              <span class="row-badge">${esc(strength)}</span>
+            </span>
+            <span class="seasons-row-meta">
+              ${lf}
+              <span class="seasons-when">${esc(dateRange(facts))}</span>
+            </span>
+          </span>
         </label>
       </li>`;
+}
+
+/**
+ * The master checkbox above the roster. §57.21b item 4.
+ *
+ * ==> IT IS THE SPREADSHEET'S THREE-STATE FILTER HEADER, NOT TWO BUTTONS. <==
+ * Aaron's call, 2026-08-25: it should be a checkbox like all the other
+ * checkboxes and behave the way a spreadsheet's does. None ticked, it is
+ * empty; some ticked, a bar; all ticked, a tick. Pressing it when it is not
+ * full ticks everything on the list, and pressing it when it is full clears
+ * them. That is one control that can answer "put the whole year up" and "clear
+ * it" without either being a separate button, and every reader who has met a
+ * spreadsheet already knows what the bar means.
+ *
+ * ==> "EVERYTHING ON THE LIST" MEANS THE FILTERED LIST, WHICH IS ALSO THE
+ * SPREADSHEET'S RULE. <== Under Majors it ticks the majors. A master box that
+ * reached past the filter would put storms on the globe that the roster is not
+ * showing — the panel and the map disagreeing, which is the failure this whole
+ * view is careful about.
+ *
+ * ==> AND WITH §57.21a's SPLIT THIS IS THE CHEAP CASE. <== Ticking all of 2005
+ * is 28 tracks with no dots and no dimming. It was the expensive case under the
+ * old coupling, where the last storm ticked would have ghosted the other 27.
+ *
+ * The indeterminate state cannot be expressed in markup — it is a property, not
+ * an attribute — so the view sets it after every render. `aria-checked="mixed"`
+ * is what carries it to a screen reader, and it is written here because the
+ * markup knows the count.
+ *
+ * @param {number} shown   rows currently on the list
+ * @param {number} on      how many of them are ticked
+ */
+export function checkAllHtml({ shown, on }) {
+  const all = shown > 0 && on === shown;
+  const some = on > 0 && on < shown;
+  const label = shown === 1 ? 'The one storm shown' : `All ${shown} storms shown`;
+  return `
+      <label class="seasons-check seasons-check-all">
+        <input type="checkbox" data-check-all ${all ? 'checked' : ''}
+               aria-checked="${some ? 'mixed' : String(all)}"
+               aria-label="${esc(label)}">
+        <span class="check-box" aria-hidden="true"></span>
+        <span class="seasons-name">${esc(label)}</span>
+      </label>`;
 }
 
 /**
@@ -404,6 +482,14 @@ export function seasonRosterHtml({
     .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
     .join('');
 
+  /* ==> THE MASTER BOX SITS ABOVE THE LIST, NOT INSIDE IT. <== It is not a
+   * storm, and a `<li>` in a roster of storms is what a screen reader would
+   * call it. It also has to survive being counted: `rows.length` is the
+   * FILTERED list and `ticked` is the whole season, so the tally below counts
+   * the intersection rather than the set. Ticking three majors and switching
+   * to All must not show a full box. */
+  const on = rows.reduce((n, e) => n + (ticked.has(e.storm.id) ? 1 : 0), 0);
+
   /* ==> `Show all evenly` USED TO SIT HERE AND IS GONE. <== It existed to undo
    * the coupling where ticking a storm also selected it, and that coupling was
    * removed on 2026-08-25 (see `ui/view-seasons-board.js`). Selecting is now a
@@ -412,6 +498,7 @@ export function seasonRosterHtml({
    * did on purpose is one control too many. */
   return `
       ${footprintSlotHtml()}
+      ${checkAllHtml({ shown: rows.length, on })}
       <ul class="seasons-roster">${list}</ul>
       ${ghostsHtml(ghosts)}`;
 }

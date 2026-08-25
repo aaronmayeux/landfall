@@ -146,6 +146,23 @@ html[data-seasons="on"] #btn-layers {
   html[data-seasons="on"] #drawer {
     bottom: var(--seasons-bar-h);
   }
+
+  /* ==> THE ARCHIVE'S SHEET OPENS TALLER THAN THE APP'S. §57.21b item 3. <==
+     Measured at 390x844 the seasons body was 424px of an 844px screen with the
+     first roster row starting at y=678 — more than half of what a thumb lands
+     on was globe, on the one screen in this app whose whole content is a list.
+     The picker, the scorecard and the filters are fixed furniture above it, so
+     every pixel the sheet does not have comes off the storms.
+
+     ==> IT IS SCOPED TO THIS VIEW, NOT TO THE ARCHIVE. <== A future archive
+     view that is three lines long should not be 75% of a screen. And it is the
+     SAME `min()` shape the 60vh rule uses so the two cannot disagree about the
+     keyboard: a sheet lifted by a keyboard it does not subtract runs off the
+     top of the screen and takes its own header with it. */
+  html[data-seasons="on"] #drawer[data-view="seasons-board"] {
+    max-height: 75vh;
+    max-height: min(75vh, calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
+  }
 }
 
 /* Wide: the drawer is a left rail, and its bottom already rides the keyboard
@@ -279,10 +296,13 @@ html[data-seasons="on"] #btn-layers {
   text-align: center;
 }
 
+/* The native box is out of sight but still the thing that takes focus, so the
+   ring is drawn on the box beside it. Never `outline: none` without a
+   replacement (§10). */
 .seasons-step:focus-visible,
 .seasons-select:focus-visible,
 .seasons-retry:focus-visible,
-.seasons-check input:focus-visible + .seasons-dot {
+.seasons-check input:focus-visible + .check-box {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
@@ -340,10 +360,20 @@ html[data-seasons="on"] #btn-layers {
 
 /* --- the roster ---------------------------------------------------------- */
 
+/* ==> THE ROSTER IS THE CONTAINER, AND THE ROWS ASK IT — NOT THE WINDOW — HOW
+   MUCH ROOM THEY HAVE. §57.21b item 2. <== The drawer is a bottom sheet the
+   full width of a phone and a ~340px side rail on desktop, so the window is
+   the wrong thing to measure: a viewport media query would hand that rail
+   one-line rows it cannot fit and truncate every name in it. A container query
+   asks the box the rows are actually in. It also keeps this off any device
+   branch (§13) — a narrow window on a desktop gets two lines because it is
+   narrow, not because of what it is. */
 .seasons-roster {
   list-style: none;
   margin: var(--space-snug) 0 0;
   padding: 0;
+  container-type: inline-size;
+  container-name: roster;
 }
 
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
@@ -386,7 +416,9 @@ html[data-seasons="on"] #btn-layers {
 
 /* The native box carries the state, the keyboard behaviour and the screen
    reader's announcement; it is moved out of sight rather than removed, because
-   `display: none` would take it out of the tab order entirely (§13). */
+   `display: none` would take it out of the tab order entirely (§13). What the
+   reader SEES is `.check-box` beside it — the app's own drawn tick, shared
+   with the Layers panel (panels.css). */
 .seasons-check input {
   position: absolute;
   width: 1px;
@@ -395,21 +427,65 @@ html[data-seasons="on"] #btn-layers {
   pointer-events: none;
 }
 
-/* ==> THE DOT IS THE CHECKBOX AND THE CATEGORY AT ONCE. <== Unticked it is an
-   outline in the storm's own Saffir-Simpson colour; ticked it fills. So the
-   roster shows peak strength whether or not a storm is on the globe, and one
-   glance down the list is the shape of the season §57.18 asks for. */
-.seasons-dot {
-  flex: 0 0 auto;
-  width: var(--space-base);
-  height: var(--space-base);
-  border-radius: 50%;
-  border: 2px solid var(--swatch, var(--text-secondary));
-  background: transparent;
+/* `.row-swatch` carries `margin-top: 5px` to pin itself to the NAME's line in
+   the live storm list, whose swatch sits beside a two-line block. Here the
+   whole leading cluster — box, dot — is centred on the row instead, because
+   the box next to it is centred and two leading marks a few pixels apart on
+   different baselines reads as a mistake. Same correction `.detail-ww` makes. */
+.seasons-check .row-swatch { margin-top: 0; }
+
+/* --- the master box ------------------------------------------------------ */
+
+/* ==> THE SPREADSHEET'S FILTER HEADER. §57.21b item 4. <== It is a row like
+   the storms below it and deliberately reads as one: same box, same height,
+   same target. What sets it apart is the rule under it, which is the same
+   line the roster uses between rows — so it looks like a heading for the list
+   rather than the first item in it. */
+.seasons-check-all {
+  border-bottom: 1px solid var(--glass-border);
 }
 
-.seasons-check input:checked + .seasons-dot { background: var(--swatch, var(--text-secondary)); }
+.seasons-check-all .seasons-name {
+  color: var(--text-secondary);
+  font-size: var(--type-small);
+}
 
+/* --- one row ------------------------------------------------------------- */
+
+/* Two lines by default: name and strength above, landfall and dates below.
+   `min-width: 0` is load-bearing in a flex child — without it a long unbroken
+   name blows the row out instead of ellipsing. */
+.seasons-row-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+}
+
+/* Line 1. The badge is right-aligned and never compresses: this is the column
+   the eye runs down, and a badge that shifts left on a long name destroys it. */
+.seasons-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  min-width: 0;
+}
+
+/* Line 2. The landfall mark sits to the LEFT of the dates — §57.21a took the
+   pin off the globe, so this row is the only place a landfall now surfaces. */
+.seasons-row-meta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-tight);
+  min-width: 0;
+}
+
+/* ELLIPSIS RATHER THAN A WRAP, and only because the row has a fixed shape to
+   keep. The live storm list wraps instead, on the argument that a truncated
+   name cannot be identified — but that list has one column and this one has a
+   badge holding a column beside it. An archive name is a single word. */
 .seasons-name {
   flex: 1 1 auto;
   min-width: 0;
@@ -430,6 +506,22 @@ html[data-seasons="on"] #btn-layers {
   flex: 0 0 auto;
   color: var(--text-secondary);
   font-size: var(--type-small);
+}
+
+/* ==> WIDE ENOUGH FOR ONE LINE, SO ONE LINE. <== The number is where a name,
+   a badge and a date range stop fighting each other measured in this drawer's
+   own type — not a device, not a breakpoint anything else in the app uses. On
+   a phone the roster is ~330px and stays two-line; on a desktop rail it is
+   ~300px and also stays two-line, which is the case the viewport would have
+   got wrong. The wide window and the tablet get one. */
+@container roster (min-width: 400px) {
+  .seasons-row-text {
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--space-base);
+  }
+  .seasons-row-head { flex: 1 1 auto; }
+  .seasons-row-meta { flex: 0 0 auto; }
 }
 
 /* --- the ghosts ---------------------------------------------------------- */

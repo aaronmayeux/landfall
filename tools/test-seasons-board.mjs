@@ -265,12 +265,18 @@ const text = (body) => body.innerHTML;
 }
 
 /* ---------------------------------------------------------------------------
- * 5. ==> A FILTER MUST NOT UN-CHOOSE A STORM. <==
+ * 5. ==> A FILTER NARROWS THE LIST, AND CLEARS THE GLOBE WITH IT. <==
  *
- * The bug this is written to stop: the reader ticks a storm, switches to
- * Majors, and the globe silently loses it because the row left the list. The
- * roster is what the reader believes and the globe is what they see, and the
- * two disagreeing is the worst outcome on this screen.
+ * §57.21b item 5, Aaron's call 2026-08-25, and it REVERSES what this case
+ * asserted until then. The old rule kept a ticked storm across a filter change
+ * on the argument that a filter narrows what the roster SHOWS and must not
+ * un-choose anything. What it produced was a globe drawing storms the list in
+ * front of you does not contain. The case that the rule was written to stop —
+ * the roster and the globe disagreeing — is now prevented from the other side:
+ * they are emptied together.
+ *
+ * What this case still guards on its own is the NARROWING, which did not
+ * change.
  * ------------------------------------------------------------------------ */
 {
   const { body, drawn } = await board({ year: 2005 });
@@ -282,11 +288,12 @@ const text = (body) => body.innerHTML;
   const after = drawn[drawn.length - 1];
   eq('one storm is on the globe', after.length, 1);
 
-  const pushes = drawn.length;
   const majors = body.querySelectorAll('[data-filter]').find((b) => b.dataset.filter === 'majors');
   body.fire('click', majors);
 
-  eq('switching filter does not touch the globe', drawn.length, pushes);
+  eq('==> AND THE GLOBE IS EMPTIED IN THE SAME BEAT. <== A wipe that waited '
+    + 'for the next poll would look exactly like the tracks failing to draw',
+  drawn[drawn.length - 1], []);
   ok('the roster is now shorter', rows(body).length < 31);
   ok('and every remaining row is a major',
     rows(body).every((r) => /Cat [345]/.test(r.attrs['aria-label'] || '')));
@@ -294,7 +301,9 @@ const text = (body) => body.innerHTML;
   const all = body.querySelectorAll('[data-filter]').find((b) => b.dataset.filter === 'all');
   body.fire('click', all);
   const back = rows(body).find((r) => r.dataset.storm === weak.dataset.storm);
-  ok('and the ticked storm is still ticked when it comes back', back?.checked === true);
+  ok('the storm is back on the widened list', back !== undefined);
+  ok('and it is NOT ticked — a filter change is a clear, not a hide',
+    back?.checked !== true);
 }
 
 /* ---------------------------------------------------------------------------
@@ -745,56 +754,164 @@ const text = (body) => body.innerHTML;
 }
 
 /* ---------------------------------------------------------------------------
- * FOCUS SURVIVES A REBUILD OF THE ROWS.
+ * A FILTER CHANGE CLEARS THE CHECKS, AND THE GLOBE EMPTIES WITH THEM.
  *
- * ==> THE CASE THAT SHOWS IT IS A FILTER CHANGE. <== A filter deliberately
- * does NOT un-choose a storm — the globe keeps drawing it — but it rebuilds
- * the roster's markup wholesale, and the row carrying the focus class is
- * thrown away with it. Without a repaint after render, the reader focuses a
- * storm, switches to Majors, and the list comes back unmarked while the globe
- * still has that track bright: the panel and the map disagreeing.
+ * ==> THIS REVERSES WHAT THIS SUITE ASSERTED UNTIL 2026-08-25. <== §57.21b
+ * item 5, Aaron's call. The old rule was that a filter narrows what the roster
+ * SHOWS and must not un-choose a storm the reader deliberately ticked. What
+ * that produced was a globe carrying tracks the list in front of you does not
+ * contain — switch to Majors and three tropical storms stay drawn with no row
+ * to point at, which is the panel and the map disagreeing, arriving from the
+ * other side of the rule written to prevent it.
+ *
+ * The clearing has to be VISIBLE: `onSelection` fires with an empty set in the
+ * same beat, because a wipe that waited for the next poll would look exactly
+ * like the tracks having failed to draw (§5).
  * ------------------------------------------------------------------------ */
 {
-  const { body, focus } = await board({ year: 2005 });
+  const { body, drawn, focus } = await board({ year: 2005 });
 
-  /* ==> THE FOCUSED STORM IS CHOSEN FROM THE NARROWED LIST, NOT THE FULL ONE,
-   * AND THAT IS THE WHOLE POINT OF THE ORDER HERE. <== The first version of
-   * this case ticked whatever happened to be at the top of 2005 and then
-   * switched to Majors, which put it down a branch where the storm had been
-   * filtered off the list and there was no row to mark — so it asserted
-   * nothing and stayed green with the repaint deleted. Narrowing FIRST means
-   * the storm is a major by construction and is guaranteed to still be on
-   * screen after the rebuild. */
   const filterBtn = (id) => body.querySelectorAll('[data-filter]')
     .find((n) => n.dataset.filter === id);
 
-  const majors = filterBtn('majors');
-  ok('the Majors filter is on a settled year', majors !== undefined);
-  body.fire('click', majors);
+  const first = rows(body)[0];
+  first.checked = true;
+  body.fire('change', first);
+  const id = first.dataset.storm;
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('a storm is ticked and open before the filter moves', focus.at(-1), id);
+  eq('and the globe has it', drawn.at(-1), [id]);
 
-  const box = rows(body)[0];
-  ok('2005 has majors to narrow to', box !== undefined);
-  const id = box.dataset.storm;
-  box.checked = true;
-  body.fire('change', box);
-  body.fire('keydown', box, { key: 'Enter' });
-  eq('it is open in full detail', focus.at(-1), id);
-  eq('and its row is marked', body.querySelectorAll('.seasons-row-focus').length, 1);
+  body.fire('click', filterBtn('majors'));
 
-  /* Widen again. The filter does NOT un-choose the storm — the globe keeps
-   * drawing it — but every node in the roster is replaced. */
+  eq('==> CHANGING A FILTER CLEARS THE CHECKS. <== A globe drawing storms the '
+    + 'roster is not showing is the panel and the map disagreeing',
+  drawn.at(-1), []);
+  eq('the selection goes with them, because a focus nobody has ticked would '
+    + 'ghost every remaining track for a storm that is not on the globe',
+  focus.at(-1), null);
+  eq('and no row comes back marked',
+    body.querySelectorAll('.seasons-row-focus').length, 0);
+  ok('nothing on the narrowed list is ticked either',
+    rows(body).every((n) => n.checked !== true));
+
   body.fire('click', filterBtn('all'));
+  eq('widening again does not bring the old ticks back — a filter change is '
+    + 'a clear, not a hide', drawn.at(-1), []);
+}
 
-  ok('the storm is still on the widened list',
-    body.querySelectorAll('[data-row]').some((n) => n.dataset.row === id));
-  eq('==> AFTER A REBUILD THE FOCUSED ROW IS STILL MARKED. <== `render()` '
+/* ---------------------------------------------------------------------------
+ * THE MASTER CHECKBOX, AND FOCUS SURVIVING A REBUILD OF THE ROWS.
+ *
+ * ==> TWO THINGS IN ONE CASE BECAUSE THE MASTER BOX IS NOW THE ONLY REBUILD
+ * THAT KEEPS A SELECTION. <== A filter change used to be how this suite proved
+ * `render()` re-applies the focus class, and as of the case above it clears the
+ * focus instead. Ticking everything from the master box rebuilds the roster
+ * wholesale AND leaves the open storm ticked, so it is the trigger that still
+ * exercises the repaint. Without it the reader opens a storm, presses the
+ * master box, and the list comes back unmarked while the globe still has that
+ * track bright.
+ *
+ * ==> AND THE MASTER BOX WORKS ON THE FILTERED LIST, WHICH IS THE
+ * SPREADSHEET'S RULE. <== §57.21b item 4. Reaching past the filter would put
+ * storms on the globe the roster is not showing.
+ * ------------------------------------------------------------------------ */
+{
+  const { view, body, drawn, focus } = await board({ year: 2005 });
+
+  const master = () => body.querySelector('[data-check-all]');
+  const filterBtn = (id) => body.querySelectorAll('[data-filter]')
+    .find((n) => n.dataset.filter === id);
+
+  ok('the roster carries a master box', master() !== null);
+  eq('empty to start, because nothing is ticked', master().checked, false);
+  eq('and not the middle state either', master().indeterminate, false);
+
+  const first = rows(body)[0];
+  first.checked = true;
+  body.fire('change', first);
+  const id = first.dataset.storm;
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('one storm is open', focus.at(-1), id);
+  eq('==> SOME BUT NOT ALL PUTS THE MASTER BOX IN THE MIDDLE STATE. <== '
+    + 'A spreadsheet says so with a bar and a reader already knows what it '
+    + 'means; an empty box would say nothing is drawn, which is false',
+  master().indeterminate, true);
+  eq('and it says so to a screen reader too', master().getAttribute('aria-checked'), 'mixed');
+
+  const all = rows(body).length;
+  body.fire('change', master());
+
+  eq('pressing it ticks every storm on the list', drawn.at(-1).length, all);
+  eq('the box is now full', master().checked, true);
+  eq('and no longer mixed', master().indeterminate, false);
+  eq('==> AFTER A REBUILD THE OPEN STORM IS STILL MARKED. <== `render()` '
     + 'replaces every node, so the class has to be re-applied or the roster '
     + 'silently stops agreeing with the globe',
   body.querySelectorAll('.seasons-row-focus').length, 1);
   eq('and on the right storm',
-    body.querySelectorAll('.seasons-row-focus')[0].dataset.row, id);
-  eq('the globe was never told anything changed, because nothing did',
+    body.querySelectorAll('.seasons-row-focus')[0]?.dataset?.row, id);
+  eq('the globe was never told the selection changed, because it did not',
     focus.at(-1), id);
+
+  body.fire('change', master());
+  eq('pressing a full box clears the list', drawn.at(-1), []);
+  eq('and the selection goes with it, because it is no longer ticked',
+    focus.at(-1), null);
+
+  /* Narrow, then fill. The count has to be the NARROWED one. */
+  body.fire('click', filterBtn('majors'));
+  const majors = rows(body).length;
+  ok('2005 has fewer majors than storms', majors < all);
+  body.fire('change', master());
+  eq('the master box ticks what is SHOWN, not the whole season',
+    drawn.at(-1).length, majors);
+  /* ==> AND THE MIDDLE STATE SURVIVES A REBUILD, WHICH IS THE HALF THE MARKUP
+   * CANNOT CARRY. <== `checked` is an attribute and comes back with the
+   * roster; `indeterminate` is a property and does not. Re-entering the board
+   * from the bar is the real path — the reader closes it, the globe still has
+   * their storms on it, and they open it again. Without the repaint the master
+   * box comes back EMPTY over a globe with tracks on it. */
+  body.fire('change', master());
+  const one = rows(body)[0];
+  one.checked = true;
+  body.fire('change', one);
+  view.onEnter();
+  eq('after a rebuild the master box is still in the middle state',
+    master().indeterminate, true);
+  eq('and still says so to a screen reader',
+    master().getAttribute('aria-checked'), 'mixed');
+}
+
+/* ---------------------------------------------------------------------------
+ * A TAP ON A TRACK SCROLLS THE ROSTER TO THAT STORM'S ROW.
+ *
+ * ==> §57.21b ITEM 6, AND THE FAILURE IT FIXES IS SILENT. <== Tapping a track
+ * already marked the row; it did not bring it into view, and with a 28-row
+ * roster the marked row is usually off-screen — so the globe lit a storm up
+ * and the panel looked like nothing had happened.
+ * ------------------------------------------------------------------------ */
+{
+  const { view, body } = await board({ year: 2005 });
+
+  /* A storm well down the list, so the case is a real scroll rather than one
+   * that would have been on screen anyway. */
+  const list = rows(body);
+  const target = list[list.length - 1];
+  target.checked = true;
+  body.fire('change', target);
+  const id = target.dataset.storm;
+
+  view.setFocus(id);
+
+  const row = body.querySelectorAll('.seasons-row-focus')[0];
+  ok('the row is marked', row !== undefined);
+  ok('==> AND IT WAS BROUGHT INTO VIEW. <== A marked row the reader cannot '
+    + 'see is the panel and the map disagreeing',
+  row?.scrolledIntoView !== undefined);
+  eq('no further than it has to be — a row already on screen must not be '
+    + 'yanked out from under a thumb on a repaint',
+  row?.scrolledIntoView?.block, 'nearest');
 }
 
 /* ------------------------------------------------------------------------ */
