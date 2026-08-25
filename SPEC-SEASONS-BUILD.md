@@ -2384,8 +2384,13 @@ and step 12 captures them — so a badge would be a control with one state and a
 link to nothing. It lands with step 12.
 
 **Aaron looks at:** one storm's figures, hand-checked against NOAA's own page.
-Then the taps, deliberately: tick a row, press its chevron, press Back.
+Then the taps, deliberately.
 **Done when:** every figure has been hand-checked against one storm.
+
+**AARON'S VERDICT, 2026-08-25: it works great.** The done-condition is met.
+**And the tap fault that killed the first attempt is solved** — it was the
+board's click handler matching `#drawer`'s own `data-open`, one line, and
+neither of the two things reverted for it was the cause. §57.22b.
 
 ---
 

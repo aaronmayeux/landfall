@@ -276,83 +276,15 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> STEP 7 IS BACK. THE STORM DETAIL PANEL IS SHIPPED AND HAS NOT BEEN SEEN
-ON GLASS. <==** It was built, reverted whole the same day for a tap fault
-nobody could reproduce, and is now rebuilt. **`SPEC-SEASONS-BUILD.md` §57.22b
-is the as-built account and carries the whole story — read that, not this.**
-
-**WHAT CLEARED IT TO BE REBUILT:** the two suspects were the roster row's
-markup and the years split, and §57.21b rebuilt both from scratch and you
-confirmed them on glass. That leaves the per-row chevron as the narrowest
-remaining suspect, and `tools/seasons-row-check.mjs` — which did not exist the
-first time — now measures its box in a real browser.
-
-**==> THREE BUGS WERE FOUND IN THE REVERTED CODE AND NONE HAD EVER BEEN SEEN,
-BECAUSE THE PANEL WAS REVERTED BEFORE ANYBODY OPENED IT. <==** All three are in
-§57.22b. The one worth knowing here is the third: the panel's `onOpen` was
-routed at `setFocus`, which **refuses a storm nobody has ticked** — so opening
-an unticked storm would have drawn Katrina's full panel over a globe with no
-Katrina on it. `showStorm` ticks first now, patches the one row rather than
-rebuilding the roster, then focuses. **Eleven mutations were run across this
-step and all eleven bite.**
-
-**==> AND THE TAP FAULT IS SOLVED. IT WAS ONE LINE AND IT WAS NEVER THE ROW.
-<==** Aaron found it on glass immediately: tapping a row pushed a panel reading
-*"That storm is not in this season."* The handler read
-`closest('[data-open]')` and **`#drawer` itself carries `data-open`** — so
-every unclaimed click in this drawer walked up past the roster, matched the
-sheet, and asked to open a storm called `true`. **That is the 2026-08-25 report
-reproduced.** The roster row and the years split were both suspected, both
-reverted, and both innocent. Scoped to `.seasons-open` now, and the suite mounts
-the board inside the drawer's real chrome — it never had a parent before, so
-`closest` had nowhere to walk and this was invisible by construction.
-
-**AND THE ROW IS THE DOOR NOW**, which reverses §57.21b item 1 at Aaron's
-request: the swatch, name, badge, dates and chevron are one button; the tick box
-is a 44px label beside it. Nothing is lost by tapping the wrong one, because
-`showStorm` ticks a storm on the way into its panel.
-
-**GLASS, AND THE FIRST TWO ARE THE ONES MOST LIKELY TO COME BACK WRONG:**
-
-1. **DO THE TAPS BEHAVE NOW.** Deliberately: tap a row's name, tap its dates,
-   tap the tick box on its own, press Back, press the master box, press a
-   filter, tap inert space in the drawer. **Tapping the box should draw the
-   track and open nothing; tapping anywhere else on the row should open the
-   panel.** If anything still misfires, say what you touched and what happened
-   — the cause above is proven but it may not have been the only one.
-2. **THE FIGURES, HAND-CHECKED AGAINST ONE STORM.** That is §57.22's whole
-   done-condition. Open Katrina (2005) beside NOAA's own page: peak winds and
-   when, lowest pressure, lifespan, hours at hurricane and major strength, ACE,
-   every landfall, the fastest strengthening window. **Her header should say
-   Cat 5 and her landfall row Cat 3** — that is the strength at the coast, and
-   it is the same call the globe's dots make.
-3. **The honesty line.** Under the storm's name, above everything it qualifies,
-   and it cannot be folded away. On a 2026 storm it should say the OPPOSITE —
-   operational figures that will change — rather than "finalised after the
-   season".
-4. **An 1851 storm.** Nothing on that panel should be a dash or a zero. Every
-   absence is a sentence about the record: no wind speed was recorded, no
-   pressure survives, wind field size was not recorded before 2004, NOAA did
-   not begin writing reports until 1958.
-5. **The report link.** Katrina has one; most storms do not, and that is the
-   ordinary answer rather than an error. It is the only thing in Seasons that
-   leaves the app and the only thing styled to look like it does.
-6. **Keyboard pass, mouse untouched.** Tab reaches each row's checkbox and then
-   its chevron, in reading order. Enter on the chevron opens. Focus should land
-   on the storm's name inside the panel, not vanish.
-
-**WHAT IS DELIBERATELY NOT BUILT:** the tier badge and the way into the
-advisory scrubber. Tier 2 does not exist until steps 11 and 12, so a badge
-would be a control with one state and a link to nothing. §57.30 step 7 says so.
-
-**==> AND THE BOARD'S LOADING CUT IS NOW OVERDUE RATHER THAN PENDING. <==**
-`SPEC.md` §12 said it was the next thing to happen to `ui/view-seasons-board.js`
-**before any feature**, and this feature went in ahead of it anyway. That was a
-call, not an oversight, and the row records the reasoning: a 200-line state
-refactor riding in the same push as a feature that was reverted once for an
-unreproducible fault would make a break either. **The file went in at 769 and
-came back at 836.** The cut is unchanged and should be its own push with no
-behaviour change in it — **after step 7 has been judged on glass, not before.**
+**==> THE BOARD'S LOADING CUT IS NOW DUE. IT IS THE NEXT THING THAT HAPPENS TO
+`ui/view-seasons-board.js`, BEFORE ANY FEATURE. <==** `SPEC.md` §12 has said so
+since §57.21b, and step 7 went in ahead of it on a deliberate call — a 200-line
+state refactor riding in the same push as a feature that had been reverted once
+for an unreproducible fault would have made a break either. **Step 7 has now
+been judged on glass, so that reason has expired.** The file went in at 769 and
+came back at 859. The cut is `loadIndexOnce`, `retryLive`, `loadSeasonNow` and
+the fetch state they own — §12's row names it precisely. **No behaviour change
+in that push**, so a break can only be the move.
 
 **==> SEASONS UI POLISH, PUSH 1 OF 2: THE GLOBE. SHIPPED, NOT YET SEEN ON
 GLASS. <==** Aaron's list, 2026-08-25. Checking a storm and selecting one are
