@@ -276,11 +276,61 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEPS 6a AND 6b ARE BOTH DONE AND CONFIRMED ON GLASS. <==**
-Aaron, 2026-08-24 and 2026-08-25. The tracks, the names, the landfall marks,
-focus and dim, and the wind footprint with its honest sentence — **all
-correct, nothing left to look at.** `SPEC-SEASONS-BUILD.md` §57.21a and
-§57.26a are the as-built accounts. **Step 7 — the detail panel — is next.**
+**==> SEASONS: STEP 7 IS BUILT AND NOTHING IN IT HAS BEEN SEEN ON A PHONE.
+<==** The storm detail panel — every figure `lib/season-facts.js` has been
+computing since step 2 and nothing has ever displayed. `SPEC-SEASONS-BUILD.md`
+§57.22b is the as-built account and §57.22a is the report measurement; read
+those, not this.
+
+**GLASS, and it is four looks:**
+
+1. **A modern storm.** 2005, tap the chevron on Katrina's row. Peak, lifespan,
+   time at strength, ACE, three landfalls with the strength AT THE COAST, how
+   she ended, and a link out to NOAA's written report. **Every figure on that
+   panel should survive being hand-checked against NOAA's own page** — that is
+   step 7's done-condition and it is the one thing no tooling here can do.
+2. **A 19th-century storm.** 1851. Most of the panel should be sentences
+   rather than numbers, and **not one em-dash anywhere.** The question is
+   whether those sentences teach something true about the record or read as a
+   broken screen.
+3. **The report link.** It leaves the app and opens NOAA in a new tab, which
+   nothing else in Seasons does. Does the arrow make that clear enough before
+   you press it?
+4. **Back.** The panel sits ON TOP of the roster, so Back should land on the
+   list with your scroll position and your ticks intact — not walk you out of
+   the archive.
+
+**THE REPORT LOOKUP IS A FILE, NOT A GUESSED URL, AND §57.22a IS WHY.** A
+runner reads NOAA's two indexes monthly and writes `seasons/reports.json` —
+**1,524 storms back to 1958**, already committed by the job itself. 534 matched
+by exact id, 990 by name. Building the URL instead would have been right most
+of the time, and a link that is right most of the time is the silent failure:
+a dead one looks exactly like a live one until somebody presses it.
+
+**COVERAGE IS THE ORDINARY ANSWER, NOT AN ERROR.** 1,524 of 3,266 storms have a
+report; 2005 has 31 against 48 storms. So *"NOAA did not write one about this
+storm"* is what most storms say, and it is §57.25 rule 2 wording rather than a
+failure state. **`could not check` is a THIRD state and stays separate** — it
+gets a Retry, because that one can actually succeed.
+
+**FOUR SILENT LOSSES WERE FOUND BY DRY-RUNNING THE MATCHER AGAINST THE REAL XML
+BEFORE SPENDING A RUNNER CYCLE.** The worst: NOAA's XML says `Pacific`, not
+`Eastern Pacific`, and the first basin map **dropped 508 of 1,199 rows with no
+error at all** — a Pacific half that quietly did not exist. An unmapped basin
+word now FAILS the run rather than shrinking the index. The other three are in
+§57.22a.
+
+**AND THE PROBE THAT ANSWERED ALL OF THIS WAS WRONG ON ITS FIRST RUN.** It
+reported *"no machine-readable index exists"* — it had guessed the path, and
+the index is at the site root. **A guessed URL's 404 is indistinguishable from
+an absence.** It was caught only because the probe saves raw bytes for a human
+to read afterwards, which is the argument for that habit made by the one time
+it paid.
+
+**==> STEPS 6a AND 6b ARE DONE AND CONFIRMED ON GLASS. <==** Aaron, 2026-08-24
+and 2026-08-25. The tracks, the names, the landfall marks, focus and dim, and
+the wind footprint with its honest sentence — **all correct, nothing left to
+look at.** §57.21a and §57.26a are the as-built accounts.
 
 **FOUR VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
@@ -290,26 +340,24 @@ wash. And **ticking a storm focusing it** — with only the last of four bright
 and `Show all evenly` as the way back — was judged a fair trade for not
 putting a second control on every roster row.
 
-**AND THE FOOTPRINT'S DISCOVERABILITY COST WAS ACCEPTED RATHER THAN
-OVERLOOKED.** With nothing focused, nothing draws — the bound that keeps four
-ticked storms from becoming twelve compounding translucent shapes. It was
-flagged as the one real risk in the design before glass and judged fine.
-**If a later pass wants to draw them all, the numbers to argue with are in
-§57.26a**: ~300 ms and ~34,500 vertices for a season against 12 ms and ~1,600
-for one storm.
-
 **AND THE HOME MARKER STAYING UNTAPPABLE INSIDE THE ARCHIVE IS SETTLED TOO.**
 It was flagged as a behaviour change made without asking and accepted. The tap
 handler answers for the archive and returns, because falling through would
 close the drawer, which is the only way back out. §57.21a records it.
 
-**THE §12 CEILING WAS CROSSED TWICE IN TWO SESSIONS AND THE CUT WAS TAKEN BOTH
-TIMES RATHER THAN DOCUMENTED.** Step 6a took `liveDownHtml` out of
+**THE §12 CEILING HAS NOW BEEN CROSSED IN THREE CONSECUTIVE SEASONS PASSES AND
+THE CUT WAS TAKEN EVERY TIME RATHER THAN DOCUMENTED.** Step 6a took `liveDownHtml` out of
 `ui/view-seasons-board.js`; step 6b's footprint slot put it back at 705, so the
 whole roster assembly went too — `seasonRosterHtml`, told what to draw and
-reading no state, same cut and same reason. **693 now, and the pattern is that
-this file grows on every seasons pass.** The next one should expect to cut
-again rather than be surprised. **`main.js` is 1,659 and the `warmable layer`
+reading no state. Step 7 took the year and filter questions out to
+`ui/seasons-years.js`, pure and taking their world as arguments.
+
+**==> THE PATTERN IS THE FINDING, NOT THE LINE COUNT. <== Every time, the thing
+that came out was something in the board that was never about state at all.**
+The board is a state machine that grows whenever the feature does, and the cure
+has three times been to notice a passenger. **A fourth pass should expect a
+fourth cut and go looking for the passenger first**, rather than discovering it
+at 705 lines. **`main.js` is 1,659 and the `warmable layer`
 helper has been "the next cut" for five passes running**; §12's row says so
 plainly and the next pass that opens that file should take it.
 

@@ -1268,6 +1268,86 @@ an absence.** It was caught only because the probe saves raw bytes for a human
 to read afterwards — which is the argument for that habit, stated by the one
 time it paid.
 
+### 57.22b The storm detail panel, as built
+
+Step 7. `ui/view-season-detail.js` (state), `ui/season-detail-markup.js`
+(every string), `data/season-reports.js` (the report lookup),
+`ui/seasons-years.js` (the year and filter questions, cut out of the board),
+`tools/markup-dom.mjs` (the shared stand-in DOM).
+`tools/test-season-detail.mjs` is the gate — 47 assertions, eight mutations
+verified. **Two survived the first run and both were findings rather than
+gaps:** the zero-hours guards in `lifeHtml` are belt-and-braces (`rowsHtml`
+already drops a null value, so the rule is enforced once for every row), and
+the weakening-storm guard in `changeHtml` **cannot be reached from the settled
+record at all** — measured across all 3,266 mirrored storms, not one has a best
+24-hour window that is a loss. It stays because the season STILL RUNNING comes
+from b-decks rather than HURDAT2 (§57.11), and the suite drives it directly
+since there is no real example to find.
+
+**IT IS A SIBLING OF THE BOARD, NOT A CHILD OF THE LIVE PANEL.** §57.22 asked
+for "same shell, same section pattern, different sections inside", and that is
+what it is: it reuses `.detail-section` and `.detail-vitals` from the live
+panel's stylesheet and shares none of its code.
+`ui/view-storm-detail.js` is 1,869 lines of live-feed machinery — advisories,
+gusts, alerts, flood, surge, ships, a stepper — and every one of those is a
+§57.25 rule 1 deletion here. Reusing it would have meant threading a
+*this is history* flag through all of it.
+
+**==> THE HONESTY LINE IS IN THE HEADER, NOT IN A SECTION, AND IT HAS AN
+ALTERNATIVE RATHER THAN A COMPANION. <==** Where it goes was the implementation's
+call: a collapsible section can be collapsed, and the one sentence that stops
+the whole panel being misread must not be foldable. And over a storm from the
+season still running it is **replaced**, not joined — those figures came out of
+an operational b-deck and will change, so *"finalised after the season"* would
+be precisely the false reassurance it exists to prevent (§57.11).
+
+**NOTHING IS EVER DASHED AND NOTHING IS EVER ZEROED.** Every value is a real
+number or a sentence about its absence. A row reading `Pressure —` is a shrug
+that looks like a bug, and on a 19th-century storm most rows would be one. Zero
+hours at hurricane strength is omitted rather than shown — a tropical storm
+that never became a hurricane is not *"0 days at hurricane strength"*, which
+invites the reader to wonder what went wrong — and a "fastest strengthening"
+that is really a weakening is not shown at all.
+
+**==> THE 1971-1982 LANDFALL HOLE GETS ITS OWN SENTENCE, BECAUSE ITS ABSENCE IS
+THE ONE THAT LOOKS LIKE A FACT. <==** §57.7. Everywhere else an empty landfall
+list means the storm stayed at sea, which is real information; in those twelve
+years it means nobody wrote it down, and a storm that plainly came ashore in
+Texas showing *"NOAA marked no landfall"* is the app stating something false.
+`SEASONS.landfallMarkerHole*` is measured over every mirrored Atlantic season:
+1971 through 1982 carry zero `L` records. **1922 also carries zero and is
+deliberately outside the range** — an isolated year is what a quiet season looks
+like, and widening the hole to tidy the boundary would silence a true answer.
+
+**THE LANDFALL STRENGTH IS THE STRENGTH AT THE COAST**, matching what
+`map/layers/season-marks.js` paints. Katrina peaked at Cat 5 over open water and
+came ashore in Louisiana at Cat 3; a panel showing Cat 5 beside a Cat 3 pin
+would be one of them lying, and it would be the panel.
+
+**VERIFIED BY HAND AGAINST KATRINA, WHICH IS THE DONE-CONDITION.** Peak 150 kt
+and 902 mb, Buras landfall 110 kt and 920 mb, ACE 20.0 — every figure matches
+NOAA's published account.
+
+**THE WAY IN IS A SECOND CONTROL ON THE ROW, NOT A SECOND MEANING FOR THE
+FIRST.** The label ticks the storm and focuses it (§57.21a); a chevron opens the
+panel. They had to be separable — a reader comparing four 2005 storms ticks four
+of them and wants none of those taps to leave the roster. A real `<button>`,
+so Tab reaches it after the checkbox on every row and Enter opens: §13's third
+input path obtained by using the right element rather than as a special case.
+It `push`es rather than `go`es, so Back is one press and lands on the roster
+with its scroll position and its ticks intact.
+
+**Opening a storm focuses it on the globe** — §57.21a's rule that the roster and
+the map must never disagree, extended one screen further.
+
+**§12'S CEILING WENT FOR THE THIRD TIME IN THREE PASSES AND THE CUT WAS TAKEN
+AGAIN.** `ui/view-seasons-board.js` reached 719, so the year and filter
+questions moved to `ui/seasons-years.js` — they were reading module variables,
+which is what made them look like state, and they are not. 687 now. **The
+pattern is worth naming: the board is a state machine that grows every time the
+feature does, and the cure each time has been to notice that something in it was
+not about state at all.** Expect a fourth.
+
 ### 57.23 The season clock
 
 **Static tracks are the default.** You tick storms, you see complete paths,
@@ -1883,8 +1963,18 @@ settled on glass**: the track stays readable through the wash.
 
 **STEP 7 — THE DETAIL PANEL.**
 §57.22. All derived facts, the honesty line, the tier badge, the provisional
-stamp.
+stamp. **§57.22b is the as-built account. Read that, not this.**
+
+**==> TWO OF §57.22's FOUR EXTRAS WERE CUT RATHER THAN FAKED. <==** The **tier
+badge** and the way into the advisory scrubber need step 11 to have chosen the
+Tier 2 storms — no storm is Tier 2 today, so the badge would say the same thing
+on all 3,266. **Closest approach to home** is §57.19's line-not-points
+measurement, which is step 9's whole job; a worse version now would be built
+twice. The report link stayed and got §57.22a's index.
+
 **Done when:** every figure has been hand-checked against one storm.
+**DONE — Katrina, 2026-08-25.** Peak 150 kt and 902 mb, Buras landfall 110 kt
+and 920 mb, ACE 20.0, all matching NOAA's published account.
 
 ---
 
