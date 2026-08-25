@@ -93,7 +93,7 @@ import { getGeometry } from './data/cache.js';
 import { warmGeometry } from './data/warm.js';
 import { warmModelTracks } from './data/adeck.js';
 import { warmShips } from './data/ships.js';
-import { isEnded } from './lib/lifecycle.js';
+import { isEnded, reportingStormIds } from './lib/lifecycle.js';
 import { endedBundle } from './data/lifecycle.js';
 import { backfillEndedTracks } from './data/ended-track.js';
 import { IMAGERY } from './config/constants.js';
@@ -1449,6 +1449,30 @@ function boot() {
     },
   };
 
+  /**
+   * Which storms the live app is still drawing in colour, for the archive.
+   * §57.21c.
+   *
+   * ==> IT IS THE LIVE GLOBE'S OWN GREYING RULE, NOT A SECOND OPINION. <==
+   * Aaron's call, 2026-08-25. `reportingStormIds` is built on the same
+   * `noCurrentReading` that turns a storm dot grey out there — ended, or
+   * silent past §5's threshold — so the archive takes that verdict rather than
+   * running its own clock over the b-deck. A reader who watched Iselle go grey
+   * on the live globe opens 2026 and finds her drawn as history, because those
+   * are the same fact.
+   *
+   * ==> NULL RATHER THAN AN EMPTY SET WHEN THE FEED HAS NEVER ANSWERED. <==
+   * §5. A deep link into `?season=2026` runs this before the first poll has
+   * landed, and "no storms" and "we have not been told" are the same empty
+   * list with opposite meanings. The board falls back to the b-deck age test
+   * on null; handing it an empty set instead would say, confidently and
+   * wrongly, that every storm this year has finished.
+   */
+  const liveRunningIds = () => {
+    if (!lastFullState) return null;
+    return reportingStormIds(lastStorms || []);
+  };
+
   const liveGlobe = {
     hide() {
       markers?.update([]);
@@ -1556,6 +1580,7 @@ function boot() {
           archiveGlobe,
           drawer,
           recenterAndClear,
+          liveRunningIds,
           fromUrl: false,
           returnFocusTo: fromEl || null,
         });
@@ -1579,7 +1604,9 @@ function boot() {
     import('./seasons/index.js')
       .then((mod) => {
         seasonsMod = mod;
-        mod.openSeasons({ liveGlobe, archiveGlobe, drawer, recenterAndClear, fromUrl: true });
+        mod.openSeasons({
+          liveGlobe, archiveGlobe, drawer, recenterAndClear, liveRunningIds, fromUrl: true,
+        });
       })
       .catch((e) => {
         console.error('[landfall] Past storms did not load:', e);

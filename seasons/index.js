@@ -73,6 +73,13 @@ let detailView = null;
  *  which would draw a second visit's tracks into a dead facade. */
 let currentArchiveGlobe = null;
 
+/** The CURRENT session's way of asking the live app what is still running
+ *  (§57.21c). Same shape and same reason as `currentArchiveGlobe` above: the
+ *  board is registered once and lives for the page, while the injection
+ *  arrives per entry — so the board must reach it through this rather than
+ *  closing over the first one it ever saw. */
+let currentLiveRunningIds = null;
+
 /** The one live session, or null. Module state, and the module is a singleton
  *  because a dynamic import is cached — a second `import()` returns this same
  *  namespace, which is what makes double entry detectable rather than a race. */
@@ -105,6 +112,8 @@ export function openSeasons({
   archiveGlobe,
   drawer,
   recenterAndClear,
+  liveRunningIds = null,
+  from = null,
   fromUrl = false,
   returnFocusTo = null,
 } = {}) {
@@ -179,6 +188,7 @@ export function openSeasons({
      * precisely so the second fetch is honest. */
     safely(() => forgetReports());
     currentArchiveGlobe = null;
+    currentLiveRunningIds = null;
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
     safely(() => bar.unmount());
@@ -216,6 +226,7 @@ export function openSeasons({
     bar.mount();
 
     currentArchiveGlobe = archiveGlobe || null;
+    currentLiveRunningIds = liveRunningIds || null;
     ensureBoard({ bar, drawer, linkReason }).setSeason(state.season);
     /* `go` rather than `push`: entering the archive is a fresh start, and a
      * history stack reaching back into the live app is a Back button that
@@ -329,6 +340,15 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * and their ticks intact. `go` would throw that history away and leave
      * Back walking out of the archive entirely. */
     onOpenStorm: (id) => safely(() => drawer?.push?.('season-detail', id)),
+
+    /* ==> THE ONE QUESTION THE ARCHIVE HAS TO ASK THE LIVE APP. §57.21c. <==
+     * Which storms are still happening, so the roster can say `– active` and
+     * the globe can leave them off. It is main.js's answer because main.js
+     * holds the live storm list, and it arrives as a function so the board can
+     * ask at paint time rather than holding a copy that goes stale while
+     * somebody reads. Null when the feed has never resolved, which the board
+     * treats as "cannot ask" rather than "nothing is running". */
+    liveRunningIds: () => currentLiveRunningIds?.() ?? null,
   });
 
   /* ==> AND IT HAS TO BE HANDED TO THE DRAWER, WHICH IS THE STEP THAT WAS

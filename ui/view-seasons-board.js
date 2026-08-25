@@ -90,9 +90,16 @@ import { paintCheckAll, paintFocus, paintTick } from './seasons-board-paint.js';
  *   a row's chevron was pressed. §57.22b. The board does not open the panel
  *   itself — it does not know the drawer exists — it says which storm and
  *   `seasons/index.js` pushes the view.
+ * @param {() => (Set<string>|null)} [opts.liveRunningIds]
+ *   which storms the LIVE app is still drawing in colour, as lowercased ATCF
+ *   ids — or null when the live feed has never answered. §57.21c. Injected as
+ *   a FUNCTION rather than a set, because it is a fact about right now and the
+ *   board asks at paint time; injected at all rather than imported, because
+ *   `ui/` never reaches into `data/` (§12) and the live storm list is
+ *   main.js's.
  */
 export function createSeasonsBoardView({
-  seasons, live, onSelection, onFocus, onWhere, onOpenStorm,
+  seasons, live, onSelection, onFocus, onWhere, onOpenStorm, liveRunningIds,
 }) {
   let host = null;
   let bodyEl = null;
@@ -173,11 +180,20 @@ export function createSeasonsBoardView({
    * The storms in this season that are still happening. §57.21c.
    *
    * ==> RECOMPUTED PER READ RATHER THAN HELD, BECAUSE IT GOES STALE ON ITS OWN.
-   * <== `isStillRunning` is an answer about the clock, not about the file: a
-   * storm that was running when the season loaded is finished twelve hours
-   * later without anything on this screen changing. Every caller here runs at
-   * paint time or at tap time, so asking then is asking at the only moment the
-   * answer is worth anything — and it costs one subtraction per row.
+   * <== This is an answer about the live feed and the clock, not about the
+   * file: a storm that was running when the season loaded can have its final
+   * advisory filed while somebody is still looking at the roster, and nothing
+   * on this screen would change. Every caller here runs at paint time or at
+   * tap time, so asking then is asking at the only moment the answer is worth
+   * anything — and it costs one set lookup per row.
+   *
+   * ==> WHAT IT DOES NOT DO IS REPAINT ITSELF. <== The archive does not
+   * subscribe to the live poll, so a storm that finishes while the board is on
+   * screen moves from `– active` to drawable on the next thing that renders —
+   * a year change, a filter, a tick. Accepted rather than overlooked: wiring
+   * the poll into the archive to repaint a date cell would mean the live app
+   * reaching into a world it is deliberately walled out of (§57.2), and the
+   * window is minutes on a surface nobody is watching for that transition.
    *
    * A settled year returns an empty set on the first comparison inside the
    * predicate, so the ordinary case pays almost nothing.
@@ -186,6 +202,31 @@ export function createSeasonsBoardView({
     const provisional = loading.state().provisional;
     const out = new Set();
     if (!provisional) return out;
+
+    /* ==> THE LIVE APP IS ASKED FIRST, BECAUSE IT IS THE ONE ALREADY SHOWING
+     * THE READER AN ANSWER. §57.21c. <== A storm greyed out on the live globe
+     * is finished as far as this globe is concerned; anything still in colour
+     * is still happening and stays off the sepia record. One predicate, both
+     * worlds, the same way `categoryFromKt` grades a Cat 3 in 1935 and today.
+     *
+     * `liveRunning` is a lowercased ATCF id set; the roster's ids are the same
+     * strings out of the b-deck filename. */
+    const liveRunning = liveRunningIds?.() ?? null;
+    if (liveRunning) {
+      for (const e of loading.entries()) {
+        if (liveRunning.has(String(e.storm.id).toLowerCase())) out.add(e.storm.id);
+      }
+      return out;
+    }
+
+    /* ==> AND THE FALLBACK IS FOR ONE CASE ONLY: THE LIVE FEED HAS NEVER
+     * ANSWERED. <== Not "answered with no storms" — that is a real answer and
+     * it means nothing is running. This is a deep link straight into the
+     * archive, or a first poll still in flight, or every source down. The
+     * honest reading of "we cannot ask" is not "everything is finished", which
+     * would draw a storm currently out there as settled history with nothing
+     * on screen saying so (§5). The age of the last b-deck row is a worse
+     * answer than the live app's and a much better one than silence. */
     for (const e of loading.entries()) {
       if (isStillRunning(e.facts, { provisional })) out.add(e.storm.id);
     }
