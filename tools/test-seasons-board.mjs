@@ -63,6 +63,34 @@ class El {
     this._listeners.get(type).push(fn);
   }
 
+  /* ==> ADDED FOR STEP 6'S FOCUS, WHICH PATCHES ROWS INSTEAD OF RE-RENDERING.
+   * <== The view deliberately does NOT rebuild the roster when focus moves —
+   * that would cost the reader their scroll position and their focus ring on
+   * the feature's most frequent interaction — so it reaches for `classList`
+   * and `setAttribute` on the rows that already exist. Without these the
+   * assertions below would be testing a stand-in that silently does nothing,
+   * which is exactly the failure the note on `matches` above describes. */
+  get classList() {
+    const el = this;
+    const read = () => (el.attrs.class || '').split(/\s+/).filter(Boolean);
+    const write = (list) => { el.attrs.class = list.join(' '); };
+    return {
+      contains: (c) => read().includes(c),
+      add(c) { const l = read(); if (!l.includes(c)) { l.push(c); write(l); } },
+      remove(c) { write(read().filter((x) => x !== c)); },
+      toggle(c, on) {
+        if (on === undefined) on = !read().includes(c);
+        if (on) this.add(c); else this.remove(c);
+      },
+    };
+  }
+
+  setAttribute(name, value) { this.attrs[name] = String(value); }
+
+  removeAttribute(name) { delete this.attrs[name]; }
+
+  getAttribute(name) { return this.attrs[name] ?? null; }
+
   /** Bubble to the delegated listener on the scroller, the way a real event
    *  does — the view binds on the body and reads `e.target.closest(...)`. */
   fire(type, target) {
@@ -82,6 +110,16 @@ class El {
   }
 
   matches(sel) {
+    /* ==> A COMPOUND SELECTOR IS SPLIT AND EVERY PART MUST MATCH. <== Added
+     * with step 6's focus, and for the reason the note below already gives:
+     * `.seasons-row[data-row]` fell through to the tag-name comparison and
+     * returned false for every element in the document, so the view looked
+     * like it had simply never marked a row. The stand-in has now told this
+     * lie twice; anything it cannot read must be made readable rather than
+     * worked around in the view. */
+    const parts = sel.match(/(?:\[[^\]]*\]|[.#]?[\w-]+)/g) || [sel];
+    if (parts.length > 1) return parts.every((p) => this.matches(p));
+
     /* `[data-step]` and `[data-retry="live"]` both. ==> THE VALUE FORM WAS
      * MISSING AND IT FAILED SILENTLY. <== `matches` returning false is what a
      * non-matching element does, so a selector this stand-in could not read
@@ -269,10 +307,12 @@ function freshLive() {
 async function board({ year = null } = {}) {
   const drawn = [];
   const where = [];
+  const focus = [];
   const view = createSeasonsBoardView({
     seasons,
     live,
     onSelection: (sel) => drawn.push(sel.map((e) => e.storm.id)),
+    onFocus: (id) => focus.push(id),
     onWhere: (w) => where.push(w),
   });
   if (year != null) view.setSeason(year);
@@ -280,7 +320,7 @@ async function board({ year = null } = {}) {
   view.mount(host);
   await settle();
   const body = host.querySelector('#seasons-board-body');
-  return { view, host, body, drawn, where };
+  return { view, host, body, drawn, where, focus };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -695,6 +735,171 @@ const text = (body) => body.innerHTML;
   ok('retrying puts the season in progress back in the picker',
     /2026 — this season/.test(text(body)));
   ok('and the year on screen did not change', where.at(-1)?.year === 2025);
+}
+
+/* ---------------------------------------------------------------------------
+ * ==> FOCUS AND DIM. §57.21 ITEM 2, §57.30 STEP 6. <==
+ *
+ * The board OWNS which storm is bright. Everything here is about the roster
+ * and the globe never being allowed to disagree about that — the same rule the
+ * whole-set tick contract exists to keep, applied to the second thing a reader
+ * can change.
+ * ------------------------------------------------------------------------ */
+{
+  const { view, body, focus, drawn } = await board({ year: 2005 });
+  const boxes = rows(body);
+  const first = boxes[0];
+  const second = boxes[1];
+
+  /* ==> TICKING A STORM ALSO FOCUSES IT, AND THAT IS THE WHOLE INTERACTION
+   * DESIGN. <== No second control per row: the checkbox was already 44px and
+   * already keyboard-reachable, so tap, click and Enter are one path (§13). */
+  first.checked = true;
+  body.fire('change', first);
+  eq('ticking a storm focuses it', focus.at(-1), first.dataset.storm);
+
+  /* ORDER MATTERS AND IT IS NOT COSMETIC. The globe has to hold the storm's
+   * geometry BEFORE it is told to brighten it, or the focus lands on a track
+   * that is not drawn yet and the first frame is a season of ghosts. */
+  ok('and the globe was given the geometry before it was told to brighten it',
+    drawn.at(-1).includes(first.dataset.storm));
+
+  const focusedRow = () => body.querySelectorAll('.seasons-row-focus');
+  eq('exactly one row is marked', focusedRow().length, 1);
+  eq('and it is that storm\'s row', focusedRow()[0].dataset.row, first.dataset.storm);
+  eq('screen readers are told which one, in the ordinary way',
+    focusedRow()[0].getAttribute('aria-current'), 'true');
+
+  /* ==> THE WAY BACK APPEARS ONLY WHILE IT MEANS SOMETHING. <== `hidden`
+   * rather than absent, so toggling it never rebuilds the roster — and hidden
+   * takes it out of the tab order too, so it is not a stop on the way down a
+   * forty-row list while there is nothing to undo. */
+  const showAll = body.querySelector('.seasons-showall');
+  ok('the way back out of focus exists', showAll !== null);
+  eq('and it is showing now that something is focused', showAll.hidden, false);
+
+  /* Focus MOVES rather than accumulating. */
+  second.checked = true;
+  body.fire('change', second);
+  eq('ticking a second storm moves the focus to it', focus.at(-1), second.dataset.storm);
+  eq('and still exactly one row is marked', focusedRow().length, 1);
+  eq('the first row let go of it', focusedRow()[0].dataset.row, second.dataset.storm);
+
+  /* Unticking the FOCUSED storm puts everything back evenly; unticking any
+   * other storm must not touch the focus at all. */
+  first.checked = false;
+  body.fire('change', first);
+  eq('unticking a storm that was not focused leaves the focus alone',
+    focus.at(-1), second.dataset.storm);
+
+  second.checked = false;
+  body.fire('change', second);
+  eq('==> UNTICKING THE FOCUSED STORM PUTS THEM ALL BACK EVENLY. <== A focus '
+    + 'left on a storm that is no longer drawn would ghost every visible track '
+    + 'in favour of one nobody can see', focus.at(-1), null);
+  eq('no row is marked', focusedRow().length, 0);
+  eq('and the way back hides itself again', showAll.hidden, true);
+}
+
+/* ---------------------------------------------------------------------------
+ * FOCUS: THE OTHER THREE DOORS — the globe, the button, and a year change.
+ * ------------------------------------------------------------------------ */
+{
+  const { view, body, focus } = await board({ year: 2005 });
+  const boxes = rows(body);
+  const id = boxes[0].dataset.storm;
+
+  /* ==> A TAP ON THE GLOBE COMES IN HERE, NOT STRAIGHT TO THE MAP. <== The
+   * roster has to agree with what is bright, so `seasons/index.js` routes the
+   * tap through the view rather than calling the globe directly. */
+  boxes[0].checked = true;
+  body.fire('change', boxes[0]);
+  view.setFocus(null);
+  eq('a tap on open water clears the focus', focus.at(-1), null);
+
+  view.setFocus(id);
+  eq('and a tap on a drawn track focuses it', focus.at(-1), id);
+  eq('the roster follows the globe, not just the other way round',
+    body.querySelectorAll('.seasons-row-focus').length, 1);
+
+  /* ==> A FOCUS NOBODY HAS TICKED IS REFUSED, NOT HONOURED. <== The globe only
+   * draws ticked storms. Lighting an unticked one would dim every visible
+   * track for a highlight that is not on screen — which reads as the archive
+   * breaking rather than as emphasis. */
+  view.setFocus('AL991899');
+  eq('an id nobody has ticked clears rather than lights an invisible storm',
+    focus.at(-1), null);
+
+  /* THE KEYBOARD'S WAY OUT. Tapping ocean is unreachable without a pointer, so
+   * the button carries the same action for Tab and Enter (§13). */
+  view.setFocus(id);
+  body.fire('click', body.querySelector('.seasons-showall'));
+  eq('the Show all button clears the focus', focus.at(-1), null);
+
+  /* A year change wipes the ticks, and the focus has to go with them: ids do
+   * not repeat across seasons, so one left standing would ghost every track in
+   * the new year in favour of a storm that is not in it. */
+  view.setFocus(id);
+  const select = body.querySelector('.seasons-select');
+  select.value = '1935';
+  body.fire('change', select);
+  await settle();
+  await settle();
+  eq('changing the year drops the focus with the ticks', focus.at(-1), null);
+  eq('and nothing in the new season is marked',
+    body.querySelectorAll('.seasons-row-focus').length, 0);
+}
+
+/* ---------------------------------------------------------------------------
+ * FOCUS SURVIVES A REBUILD OF THE ROWS.
+ *
+ * ==> THE CASE THAT SHOWS IT IS A FILTER CHANGE. <== A filter deliberately
+ * does NOT un-choose a storm — the globe keeps drawing it — but it rebuilds
+ * the roster's markup wholesale, and the row carrying the focus class is
+ * thrown away with it. Without a repaint after render, the reader focuses a
+ * storm, switches to Majors, and the list comes back unmarked while the globe
+ * still has that track bright: the panel and the map disagreeing.
+ * ------------------------------------------------------------------------ */
+{
+  const { body, focus } = await board({ year: 2005 });
+
+  /* ==> THE FOCUSED STORM IS CHOSEN FROM THE NARROWED LIST, NOT THE FULL ONE,
+   * AND THAT IS THE WHOLE POINT OF THE ORDER HERE. <== The first version of
+   * this case ticked whatever happened to be at the top of 2005 and then
+   * switched to Majors, which put it down a branch where the storm had been
+   * filtered off the list and there was no row to mark — so it asserted
+   * nothing and stayed green with the repaint deleted. Narrowing FIRST means
+   * the storm is a major by construction and is guaranteed to still be on
+   * screen after the rebuild. */
+  const filterBtn = (id) => body.querySelectorAll('[data-filter]')
+    .find((n) => n.dataset.filter === id);
+
+  const majors = filterBtn('majors');
+  ok('the Majors filter is on a settled year', majors !== undefined);
+  body.fire('click', majors);
+
+  const box = rows(body)[0];
+  ok('2005 has majors to narrow to', box !== undefined);
+  const id = box.dataset.storm;
+  box.checked = true;
+  body.fire('change', box);
+  eq('it is focused', focus.at(-1), id);
+  eq('and its row is marked', body.querySelectorAll('.seasons-row-focus').length, 1);
+
+  /* Widen again. The filter does NOT un-choose the storm — the globe keeps
+   * drawing it — but every node in the roster is replaced. */
+  body.fire('click', filterBtn('all'));
+
+  ok('the storm is still on the widened list',
+    body.querySelectorAll('[data-row]').some((n) => n.dataset.row === id));
+  eq('==> AFTER A REBUILD THE FOCUSED ROW IS STILL MARKED. <== `render()` '
+    + 'replaces every node, so the class has to be re-applied or the roster '
+    + 'silently stops agreeing with the globe',
+  body.querySelectorAll('.seasons-row-focus').length, 1);
+  eq('and on the right storm',
+    body.querySelectorAll('.seasons-row-focus')[0].dataset.row, id);
+  eq('the globe was never told anything changed, because nothing did',
+    focus.at(-1), id);
 }
 
 /* ------------------------------------------------------------------------ */

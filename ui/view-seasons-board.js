@@ -46,10 +46,20 @@
  * dash and the note says why (`ui/seasons-board-markup.js`). Computing our own
  * is decided (§57.7) and is not this step.
  *
- * WHAT IS NOT HERE, ON PURPOSE: landfall marks, name labels along the tracks,
- * focus-and-dim and the wind field are step 6; the detail panel is step 7; the
- * near-home slider is step 9 and is why §57.19's fourth filter is absent from
- * the three below rather than present and dead.
+ * ==> TICKING A STORM ALSO FOCUSES IT, AND THAT IS THE WHOLE OF STEP 6'S
+ * INTERACTION DESIGN. <== §57.21 item 2. Focus needed to work by thumb, by
+ * mouse and by keyboard on the day it shipped (§13), and the alternative — a
+ * second control on every roster row — is clutter on a phone for a list that
+ * can run to forty rows. Reusing the tick means the keyboard path is the
+ * checkbox that was already there, and the touch path is the row that was
+ * already 44px. The cost is real and worth naming: tick four storms in a row
+ * and only the last is bright, when the reader may have wanted all four even.
+ * `Show all evenly` is the way back, and it appears only while something is
+ * focused, so it costs nothing the rest of the time.
+ *
+ * WHAT IS NOT HERE, ON PURPOSE: the wind field is step 6b; the detail panel is
+ * step 7; the near-home slider is step 9 and is why §57.19's fourth filter is
+ * absent from the three below rather than present and dead.
  *
  * Imports config/, lib/ and its own siblings. Never data/ or map/ — the fetch
  * and the globe both arrive as injected facades (§12).
@@ -60,7 +70,8 @@ import { stormFacts, seasonFacts } from '../lib/season-facts.js';
 import { rosterFor } from '../lib/season-names.js';
 import {
   emptyRosterHtml, esc, filtersFor, filtersHtml, ghostsHtml, indexFailedHtml,
-  pickerHtml, rowHtml, scoreHtml, seasonFailedHtml, waitingHtml,
+  liveDownHtml, pickerHtml, rowHtml, scoreHtml, seasonFailedHtml, showAllHtml,
+  waitingHtml,
 } from './seasons-board-markup.js';
 
 /**
@@ -74,10 +85,13 @@ import {
  *   facade would hide which one a failure came from.
  * @param {(selected:Array<{storm:object,facts:object}>) => void} opts.onSelection
  *   ticked storms changed — the globe redraws from the whole set.
+ * @param {(id:string|null) => void} opts.onFocus
+ *   which storm is bright, or null for all of them evenly. Separate from
+ *   `onSelection` because it is a repaint and that is a rebuild (§57.21).
  * @param {(where:{basin:string,year:number,label:string}|null) => void} opts.onWhere
  *   the bar's sentence. Called whenever the year or basin settles.
  */
-export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) {
+export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, onWhere }) {
   let host = null;
   let bodyEl = null;
 
@@ -124,6 +138,18 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
   /** Storm ids the reader has ticked. Survives a filter change on purpose —
    *  switching to Majors and back must not silently wipe the globe. */
   const ticked = new Set();
+
+  /** The one storm drawn at full strength, or null for all of them evenly.
+   *  §57.21 item 2.
+   *
+   *  ==> IT IS ALWAYS A STORM THAT IS ALSO TICKED, AND NOTHING ENFORCES THAT
+   *  BUT THE PATHS BELOW. <== A focused storm that is not on the globe would
+   *  dim every visible track in favour of one nobody can see, which reads as
+   *  the archive breaking. There are exactly three ways focus is set —
+   *  ticking, a tap on a drawn track, and clearing — and none of them can
+   *  produce an unticked focus. A fourth would have to keep that promise
+   *  itself. */
+  let focused = null;
 
   /** Bumped on every season load, so a slow fetch that lands after the reader
    *  has moved on cannot paint the wrong year over the right one. */
@@ -175,6 +201,52 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
 
   function pushSelection() {
     onSelection?.(selectedEntries());
+  }
+
+  /* --- focus ---------------------------------------------------------------
+   * §57.21 item 2. Three entry points — a tick, a tap on the globe, and the
+   * `Show all evenly` button — and all three go through `setFocus` so the
+   * roster and the map can never disagree about which storm is bright.
+   * ---------------------------------------------------------------------- */
+
+  /**
+   * Move the highlight, tell the globe, and repaint the rows.
+   *
+   * ==> THE ROWS ARE PATCHED, NOT RE-RENDERED. <== `render()` rebuilds the
+   * whole roster, which loses the scroll position and the keyboard focus ring
+   * — the same reason ticking a checkbox does not re-render (see `onChange`).
+   * Focus moves on every tap on the globe, so a wholesale rebuild here would
+   * be the most disruptive thing in the feature attached to its most frequent
+   * interaction. The `Show all evenly` button is the one piece of markup that
+   * appears and disappears with focus, so it is toggled by hand alongside.
+   */
+  function setFocus(id) {
+    /* An id nobody has ticked is refused rather than honoured. The globe only
+     * draws ticked storms, so focusing one that is not there would ghost every
+     * visible track for a highlight nobody can see. */
+    const next = id && ticked.has(id) ? id : null;
+    if (next === focused) return;
+    focused = next;
+    paintFocus();
+    onFocus?.(focused);
+  }
+
+  function paintFocus() {
+    if (!bodyEl) return;
+
+    for (const row of bodyEl.querySelectorAll('.seasons-row[data-row]')) {
+      const on = focused != null && row.dataset.row === focused;
+      row.classList.toggle('seasons-row-focus', on);
+      /* `aria-current` rather than `aria-selected`: nothing here is a listbox,
+       * and this is the ordinary meaning — the one item in a set the reader is
+       * currently on. Removed rather than set to "false", which some screen
+       * readers announce. */
+      if (on) row.setAttribute('aria-current', 'true');
+      else row.removeAttribute('aria-current');
+    }
+
+    const btn = bodyEl.querySelector('.seasons-showall');
+    if (btn) btn.hidden = focused == null;
   }
 
   /* --- loading ------------------------------------------------------------ */
@@ -275,6 +347,10 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
      * the bar that the globe is not showing. */
     ticked.clear();
     pushSelection();
+    /* And the focus goes with them. It is an id from the old season, and ids
+     * do not repeat across years — so left standing it would ghost every track
+     * in the new one in favour of a storm that is not in it. */
+    setFocus(null);
     announceWhere();
     render();
 
@@ -340,30 +416,6 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
     return entries;
   }
 
-  /**
-   * The current season could not be reached.
-   *
-   * ==> IT IS SAID ON EVERY SETTLED YEAR, NOT ONLY WHERE 2026 WOULD HAVE SAT.
-   * <== There is no row to hang it on: the year is simply absent from the
-   * picker, and an absent option explains nothing. A reader who came to see
-   * what is happening now needs to know the road is down rather than conclude
-   * the archive stops at last year.
-   */
-  function liveDownHtml() {
-    if (!basinHasLive(basin)) return '';
-    if (liveRetrying) return waitingHtml('Looking for the season still running…');
-    if (!liveReason) return '';
-    /* ==> AND IT GETS A BUTTON, BECAUSE THIS ONE CAN ACTUALLY SUCCEED. <== §5
-     * asks every error state for a recovery action, and the distinction the
-     * rest of this view draws is whether pressing it could ever work: a year
-     * the archive does not hold gets no Retry, a road that was down for a
-     * moment does. `data/seasons-live.js` drops a failed fetch out of its own
-     * map, so this is a real second attempt rather than a replay. */
-    return `<p class="seasons-note seasons-bad">The season still running could not
-      be reached, so it is not in the list above. The settled years are all here.</p>
-      <button class="seasons-retry" type="button" data-retry="live">Try again</button>`;
-  }
-
   function rosterHtml() {
     if (seasonState === 'loading') {
       return waitingHtml(provisional ? 'Reading this season…' : 'Reading the record…');
@@ -394,6 +446,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
       .join('');
 
     return `
+      ${showAllHtml()}
       <ul class="seasons-roster">${list}</ul>
       ${ghostsHtml(ghosts)}`;
   }
@@ -438,10 +491,23 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
 
     bodyEl.innerHTML = `
       ${picker}
-      ${liveDownHtml()}
+      ${liveDownHtml({
+        hasLive: basinHasLive(basin),
+        retrying: liveRetrying,
+        reason: liveReason,
+      })}
       ${scorecard}
       ${filters}
       ${rosterHtml()}`;
+
+    /* ==> THE FOCUS IS RE-APPLIED AFTER EVERY REBUILD, BECAUSE THE ROWS ARE
+     * NEW NODES. <== `innerHTML` throws away the elements carrying the focus
+     * class and puts fresh ones in their place. A filter change is the case
+     * that shows it: the reader focuses Katrina, switches to Majors, and
+     * without this her row comes back unmarked while the globe still has her
+     * bright — the panel and the map disagreeing, which is the one thing this
+     * view is careful about everywhere else. */
+    paintFocus();
   }
 
   /* --- input --------------------------------------------------------------
@@ -491,6 +557,18 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
       return;
     }
 
+    if (e.target.closest('.seasons-showall')) {
+      /* ==> THE KEYBOARD'S WAY OUT OF FOCUS, AND THE THUMB'S SECOND ONE. <==
+       * §13: every action needs all three input paths. Tapping open water on
+       * the globe clears focus, which is fine for a thumb and unreachable
+       * without a pointer — so a real <button> in the roster carries the same
+       * action for Tab and Enter. It sits in the tab order beside the storm
+       * it is undoing, and it is hidden rather than absent so that toggling it
+       * never rebuilds the list. */
+      setFocus(null);
+      return;
+    }
+
     if (e.target.closest('.seasons-retry')) {
       /* Checked FIRST, because it is the narrower case. This button sits on a
        * board whose settled index loaded fine and whose season is on screen,
@@ -528,6 +606,14 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
        * list under a thumb mid-tap is how a roster loses its scroll position
        * and its focus ring at once. */
       pushSelection();
+      /* ==> THE TICK IS ALSO THE FOCUS, AND UNTICKING THE FOCUSED STORM PUTS
+       * EVERYTHING BACK EVENLY. <== §57.21 item 2, and the whole argument for
+       * not adding a second control per row is at the top of this file. The
+       * order matters: the globe must have the new storm's geometry before it
+       * is told to brighten it, or the focus lands on a track that is not
+       * drawn yet and the first frame is a season of ghosts. */
+      if (box.checked) setFocus(id);
+      else if (focused === id) setFocus(null);
     }
   }
 
@@ -573,10 +659,27 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onWhere }) 
       if (Number.isFinite(y)) year = y;
     },
 
+    /**
+     * A tap on the globe chose a storm, or chose open water.
+     *
+     * The globe's way in, routed through `seasons/index.js`. It is the same
+     * `setFocus` the tick uses, so there is one path and the roster cannot
+     * end up disagreeing with the map about which storm is bright — including
+     * the refusal: a tap that somehow resolves to an unticked storm clears
+     * the focus rather than lighting something invisible.
+     */
+    setFocus(id) {
+      setFocus(id);
+    },
+
     /** Leaving the archive entirely — drop the globe's tracks and forget the
      *  ticks, so a second visit does not open with a stale selection. */
     reset() {
       ticked.clear();
+      /* AFTER the clear and BEFORE the push, because `setFocus` refuses an id
+       * nobody has ticked — with the set already empty it can only resolve to
+       * null, which is the state a fresh visit has to start in. */
+      setFocus(null);
       pushSelection();
     },
   };

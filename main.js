@@ -69,7 +69,13 @@ import { setFloodAlerts, rethemeFlood, floodAtPoint, FLOOD_LAYER_IDS } from './m
  * the same `style.load` window every other layer takes — and a source added
  * later cannot be slotted beneath the storm markers. It is one small module
  * with no state, and it draws nothing until the archive hands it storms. */
-import { ensureSeasonTracks, setSeasonTracks, clearSeasonTracks } from './map/layers/season-tracks.js';
+import {
+  ensureSeasonTracks, setSeasonTracks, clearSeasonTracks,
+  setSeasonTrackFocus, seasonStormAtPoint,
+} from './map/layers/season-tracks.js';
+import {
+  ensureSeasonMarks, setSeasonMarks, clearSeasonMarks, setSeasonMarkFocus,
+} from './map/layers/season-marks.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -730,7 +736,15 @@ function boot() {
      * the engine added and beneath the storm dots — step 6 puts landfall marks
      * and name labels on top of them, and a layer added later cannot get back
      * underneath. It draws nothing until somebody opens the archive. */
-    ensureSeasonTracks(map, map.getLayer('storm-dot-planet') ? 'storm-dot-planet' : undefined);
+    const archiveAnchor = map.getLayer('storm-dot-planet') ? 'storm-dot-planet' : undefined;
+    ensureSeasonTracks(map, archiveAnchor);
+    /* ==> THE MARKS GO IN UNDER THE NAMES, NOT UNDER THE STORM DOTS. <== The
+     * archive's own stack, bottom to top, is track line → landfall marks →
+     * name labels, and MapLibre only understands "insert directly beneath
+     * layer X". Anchoring the marks to the name layer is what keeps a landfall
+     * pin ON its track rather than under it, while leaving the name — the
+     * thing that identifies which storm this is — on top of everything. */
+    ensureSeasonMarks(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
     applyLayerState();
 
     /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
@@ -795,6 +809,22 @@ function boot() {
    * Tapping empty ocean CLOSES the drawer (§16) — the camera and the
    * drawn geometry hold. */
   map.on('click', (e) => {
+    /* ==> THE ARCHIVE ANSWERS FIRST AND RETURNS EITHER WAY. <== Inside
+     * Seasons the globe is a different world: there are no live storm dots,
+     * no watched areas and no flood chips on it, and every branch below this
+     * one is about a layer the archive deliberately hides. Falling through
+     * would mean a tap on empty parchment running three `queryRenderedFeatures`
+     * calls looking for things that are not there, and — worse — closing the
+     * drawer, which in the archive is the reader's only way back out.
+     *
+     * A tap on a track focuses it. A tap on open water clears the focus, so
+     * "show them all evenly" is reachable by thumb without hunting for a
+     * control; the roster's own button is the keyboard path (§13). */
+    if (isArchive()) {
+      focusSeasonStormNow(seasonStormAtPoint(map, e.point));
+      return;
+    }
+
     /* HOME IS ASKED FIRST. The glyph takes no pointer events so that a drag
      * starting on it still spins the globe (map/marker-home.js), which means
      * its taps arrive here instead. Ahead of the storm test because the house
@@ -1330,10 +1360,24 @@ function boot() {
     setTracks(selected) {
       if (!styleReady) return;
       setSeasonTracks(map, selected);
+      /* ==> ONE CALL FROM THE ARCHIVE'S POINT OF VIEW, TWO SOURCES UNDERNEATH,
+       * AND THAT SPLIT STAYS ON THIS SIDE OF THE INJECTION. <== The board
+       * knows one thing: which storms are ticked. Handing it a `setMarks` of
+       * its own would mean a second call it could forget to make, and a globe
+       * showing tracks with no landfall pins is a silent wrong answer rather
+       * than a visible one. */
+      setSeasonMarks(map, selected);
+    },
+    /** Which storm is bright; null puts them all back evenly. §57.21 item 2. */
+    setFocus(id) {
+      if (!styleReady) return;
+      setSeasonTrackFocus(map, id);
+      setSeasonMarkFocus(map, id);
     },
     clearTracks() {
       if (!styleReady) return;
       clearSeasonTracks(map);
+      clearSeasonMarks(map);
     },
   };
 
@@ -1371,6 +1415,31 @@ function boot() {
   };
 
   /**
+   * The loaded Seasons module, once a door has been pressed.
+   *
+   * ==> A STASHED REFERENCE RATHER THAN A SECOND `import()`, BECAUSE THE
+   * CALLER IS A TAP HANDLER. <== Repeating the dynamic import inside the click
+   * path would make focusing a track an async operation with a network hop in
+   * the failure case, on a module that is by definition already loaded — you
+   * cannot tap an archive track without having opened the archive. Null until
+   * then, and the one caller below simply does nothing while it is.
+   */
+  let seasonsMod = null;
+
+  /**
+   * A tap on the globe chose a storm — or chose open water, which clears.
+   *
+   * ==> IT GOES TO THE BOARD, NOT STRAIGHT TO THE GLOBE. <== Painting the
+   * focus here would light a track while the roster went on looking exactly
+   * as it did, and the roster is the thing the reader believes about what is
+   * selected (`map/layers/season-tracks.js` makes the same argument about
+   * ticking). The board owns focus; it tells the globe. One direction.
+   */
+  function focusSeasonStormNow(id) {
+    seasonsMod?.focusSeasonStorm?.(id ?? null);
+  }
+
+  /**
    * Open the archive. Both door rows call this; so does a `?season=` link.
    *
    * A FUNCTION DECLARATION, so it is initialised whatever order this file is
@@ -1385,8 +1454,9 @@ function boot() {
    */
   function enterSeasons(fromEl) {
     import('./seasons/index.js')
-      .then(({ openSeasons }) => {
-        openSeasons({
+      .then((mod) => {
+        seasonsMod = mod;
+        mod.openSeasons({
           liveGlobe,
           archiveGlobe,
           drawer,
@@ -1412,8 +1482,9 @@ function boot() {
    * of the wrong world on the one load that asked for the other one. */
   if (new URLSearchParams(location.search).has('season')) {
     import('./seasons/index.js')
-      .then(({ openSeasons }) => {
-        openSeasons({ liveGlobe, archiveGlobe, drawer, recenterAndClear, fromUrl: true });
+      .then((mod) => {
+        seasonsMod = mod;
+        mod.openSeasons({ liveGlobe, archiveGlobe, drawer, recenterAndClear, fromUrl: true });
       })
       .catch((e) => {
         console.error('[landfall] Past storms did not load:', e);

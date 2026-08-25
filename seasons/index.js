@@ -221,6 +221,28 @@ export function leaveSeasons() {
 }
 
 /**
+ * A tap on the globe chose a storm, or chose open water. §57.21 item 2.
+ *
+ * ==> THE WAY IN FOR THE ONE THING THE ARCHIVE CANNOT OWN: THE MAP. <== The
+ * globe belongs to `main.js` and is injected down as `archiveGlobe`, so a tap
+ * on it arrives there and has to come back up. It lands on the BOARD rather
+ * than on the globe, because the board holds the focus and the roster has to
+ * agree with the map about which storm is bright — a track lighting up while
+ * the list looks unchanged is the panel and the map disagreeing, which is the
+ * failure `onSelection`'s whole-set contract exists to prevent for ticks.
+ *
+ * Guarded on the session rather than on the board: the view is registered once
+ * and outlives every visit, so a stray call after leaving would otherwise
+ * focus a storm on a globe nobody is looking at.
+ *
+ * @param {string|null} id  a storm id, or null for "all of them evenly"
+ */
+export function focusSeasonStorm(id) {
+  if (!seasonsOpen()) return;
+  safely(() => boardView?.setFocus?.(id ?? null));
+}
+
+/**
  * Register the board once, and wire the two things it talks to.
  *
  * ==> IT IS REGISTERED, NEVER RE-REGISTERED. <== `drawer.register` appends a
@@ -249,6 +271,16 @@ function ensureBoard({ bar, drawer, linkReason }) {
     /* The globe redraws from the WHOLE ticked set on every change, so there is
      * no add path and no remove path to drift apart. */
     onSelection: (selected) => safely(() => currentArchiveGlobe?.setTracks?.(selected)),
+
+    /* ==> FOCUS IS A SECOND CALLBACK RATHER THAN A FIELD ON THE FIRST, AND
+     * THAT IS ABOUT COST. <== §57.21 item 2. Ticking changes the DATA on the
+     * globe — a re-push and a re-tile. Focusing changes one paint property on
+     * layers whose data is untouched. Folding focus into `onSelection` would
+     * have meant every tap on a track re-pushing a season's worth of geometry
+     * to say one storm got brighter, which is the difference between a repaint
+     * and a rebuild on the interaction §57.21 calls the most important in the
+     * feature. */
+    onFocus: (id) => safely(() => currentArchiveGlobe?.setFocus?.(id)),
 
     /* ==> A BAD LINK'S REASON OUTRANKS THE YEAR. <== A reader who arrived on
      * `?season=1066` needs to know the link was wrong, and that stays true

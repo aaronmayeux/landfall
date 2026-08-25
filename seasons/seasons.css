@@ -348,6 +348,37 @@ html[data-seasons="on"] #btn-layers {
 
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
+/* ==> THE ROW MATCHING THE BRIGHT TRACK ON THE GLOBE. §57.21 item 2. <==
+   A left bar and a lift, not a colour: the row already carries the storm's
+   Saffir-Simpson dot, and tinting the row would put a second colour beside a
+   fixed one that means strength (§6). The bar is drawn in the focus-ring
+   amber, which is the archive's accent and reads as "this one" without
+   claiming to be a category. */
+.seasons-row-focus {
+  background: var(--hover);
+  box-shadow: inset 2px 0 0 0 var(--focus-ring);
+}
+
+/* The way back to all-of-them-evenly, for a keyboard and for a thumb that
+   missed the ocean. Hidden until something is focused — `hidden` takes it out
+   of the tab order too, so it is not a stop on the way down the roster while
+   it means nothing. */
+.seasons-showall {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-target);
+  margin-top: var(--space-snug);
+  padding: 0 var(--space-base);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.seasons-showall[hidden] { display: none; }
+
 /* The whole row is the label, so the tap target is the row rather than the
    checkbox — a 44px box in a 320px row is a target most thumbs miss (§13). */
 .seasons-check {
