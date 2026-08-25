@@ -69,71 +69,30 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> THE ARCHIVE GLOBE WENT TO GLASS 2026-08-25, CAME BACK WITH ONE FAULT,
-AND THE FAULT IS FIXED. <==** §57.21c shipped items 1-5 of Aaron's list of
-seven. `SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read that,
-not this. What is left for Aaron is one look at the globe, below.
+**==> THE ARCHIVE GLOBE AND ITS DRAWER ARE CONFIRMED ON GLASS 2026-08-25.
+AARON: "ALL WORKS GREAT." NOTHING HERE IS WAITING ON HIM. <==** Push 1 (§57.21c
+— the globe) and push 2 item 1 (§57.21b — the sheet's height) are both landed,
+both seen, both accepted. Read those two spec sections, not this.
 
-**==> THE LIVE-GEOMETRY BLEED IS FIXED AND IS ON `main`. <==** The cause was
-neither of the two this file predicted. The roster's active rule was fine and
-its injection chain was wired correctly end to end — verified against today's
-real bytes off `archive`, where `reportingStormIds` returns exactly the three
-storms NHC is publishing and the roster's ids join to them. **What was wrong
-was that `forceMode(MODE.SEPIA)` repaints the palette, the palette repaint
-re-pushes every live storm's geometry, and it runs one line after
-`liveGlobe.hide()` empties it.** Three more roads did the same thing later.
-The refusal is one predicate at the layer engine's door now;
-`SPEC-SEASONS-BUILD.md` §57.21c is the as-built account and
+**The one fault glass found is fixed and the fix is confirmed.** Live storms no
+longer draw on the sepia globe. The cause was neither of the two this file
+predicted: the roster's active rule and its whole injection chain were correct,
+and what was wrong is that `forceMode(MODE.SEPIA)` repaints the palette, the
+palette repaint re-pushes every live storm's geometry, and it runs one line
+after `liveGlobe.hide()` empties it. Three more roads did the same thing later.
+The refusal is one predicate at the layer engine's door;
 `tools/test-archive-paint.mjs` is the gate.
 
-**STILL TO JUDGE ON GLASS, and this is the whole of it:** open Past storms and
-confirm the sepia globe is clean — on entry AND a minute later, with **Model
-tracks** and **Environment** switched on, since two of the four roads only
-fire when those are. Then the three from push 1 that the fault got in the way
-of: whether the two doors fly to different places (basin from the storm list,
-home from the dashboard), whether opening a storm frames its start fix at a
-comfortable distance (`SEASONS.stormZoom`, currently 5, is the dial), and
-whether the ridge and its one-glyph-per-storm read as a count of storms or as
-clutter at the space floor.
+**Three values are settled by acceptance and should not be reopened without new
+evidence:** the two doors flying to different places (basin from the storm
+list, home from the dashboard), `SEASONS.stormZoom` at 5 for framing a storm's
+first fix, and the ridge's one-glyph-per-storm at the space floor.
+`--seasons-sheet-h` at `66vh` is the fourth — four storm names, measured.
 
 **WHAT IS NOT BROKEN AND MUST NOT BE "FIXED":** tapping the open space above
 the drawer does not minimise it. **That is push 2 item 2 and was never built** —
 it is under `NEXT UP`, deliberately out of scope for push 1. Aaron reported it
 on 2026-08-25 as part of the same glass pass; it is expected behaviour today.
-
-**STILL NOT JUDGED, because the fault above got in the way:** whether the two
-doors fly to different places (basin from the storm list, home from the
-dashboard), whether opening a storm frames its start fix at a comfortable
-distance (`SEASONS.stormZoom`, currently 5, is the dial), and whether the ridge
-and its one-glyph-per-storm read as a count of storms or as clutter at the
-space floor.
-
-**==> AND ONE NEW THING AARON WANTS: TAPPING A HURRICANE GLYPH ON THE GLOBE
-SHOULD OPEN THAT STORM. <==** 2026-08-25. Pan and zoom to it and open the
-detail drawer — the same thing tapping the roster row's chevron does now.
-
-**Most of the machinery is already there and pointing the right way.** A tap on
-an archive TRACK already works: `main.js`'s tap handler has an archive branch,
-it goes to the board rather than straight to the globe (the board owns focus),
-and `seasons/index.js`'s `onOpenStorm` already pushes `season-detail` AND flies
-the camera. So this is a new hit-test, not a new interaction.
-
-**THE HARD PART IS THE HIT-TEST AND IT IS NOT MAPLIBRE'S.** The glyphs live on
-the Three.js heightfield (`map/heightfield.js`, fed by `map/season-mesh.js`),
-not in a MapLibre source — so `map.queryRenderedFeatures` cannot see them and
-`stormAtPoint` does not know about them. It needs a ray cast against the cage,
-or the cheaper answer: project each glyph's `dir` vector to screen and take the
-nearest within `SIZE.touchTarget`. **The second is probably right** — there are
-at most a few dozen glyphs, they are already in memory, and it avoids putting
-picking geometry into the render path.
-
-**THREE THINGS TO GET RIGHT, ALL OF THEM §13:** the glyph is only on screen at
-the space floor, so the tap must not fight the track hit-test that owns closer
-zooms; a tap on empty ocean must still clear (that is the archive's only way to
-deselect); and **it needs a keyboard path, because a gesture-only way to open a
-storm is a bug rather than a limitation** — Tab through glyphs, or lean on the
-roster which already has one.
-
 
 **==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
 STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
@@ -391,6 +350,32 @@ floor only), then track (closer zooms), then empty water — which clears the
 focus AND minimises the sheet. `map/chrome-avoid.js` already measures the
 drawer's real box, so "above the drawer" needs no hardcoded height; it must not
 fire inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
+
+**==> AND ONE NEW THING AARON WANTS: TAPPING A HURRICANE GLYPH ON THE GLOBE
+SHOULD OPEN THAT STORM. <==** 2026-08-25. Pan and zoom to it and open the
+detail drawer — the same thing tapping the roster row's chevron does now.
+
+**Most of the machinery is already there and pointing the right way.** A tap on
+an archive TRACK already works: `main.js`'s tap handler has an archive branch,
+it goes to the board rather than straight to the globe (the board owns focus),
+and `seasons/index.js`'s `onOpenStorm` already pushes `season-detail` AND flies
+the camera. So this is a new hit-test, not a new interaction.
+
+**THE HARD PART IS THE HIT-TEST AND IT IS NOT MAPLIBRE'S.** The glyphs live on
+the Three.js heightfield (`map/heightfield.js`, fed by `map/season-mesh.js`),
+not in a MapLibre source — so `map.queryRenderedFeatures` cannot see them and
+`stormAtPoint` does not know about them. It needs a ray cast against the cage,
+or the cheaper answer: project each glyph's `dir` vector to screen and take the
+nearest within `SIZE.touchTarget`. **The second is probably right** — there are
+at most a few dozen glyphs, they are already in memory, and it avoids putting
+picking geometry into the render path.
+
+**THREE THINGS TO GET RIGHT, ALL OF THEM §13:** the glyph is only on screen at
+the space floor, so the tap must not fight the track hit-test that owns closer
+zooms; a tap on empty ocean must still clear (that is the archive's only way to
+deselect); and **it needs a keyboard path, because a gesture-only way to open a
+storm is a bug rather than a limitation** — Tab through glyphs, or lean on the
+roster which already has one.
 
 **THE HARD HALF IS UNCHANGED AND IS NOT THE HIT-TEST.** A tap and the start of
 a drag are the same event: a pointerdown/pointerup pair that moved less than a
