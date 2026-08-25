@@ -314,8 +314,29 @@ ok(h.calls.includes('drawer.go:seasons-board'),
   '==> THE BOARD OPENS ON ENTRY. <== §57.30 step 5. The archive globe is no '
   + 'longer empty, so the drawer is navigated rather than closed');
 ok(h.calls.includes('recenter'), 'and the live selection was dropped');
-ok(h.calls.filter((c) => c.startsWith('drawer.register')).length === 1,
-  'the board is registered exactly once');
+/* ==> COUNTED PER VIEW ID, NOT IN TOTAL. <== This read `=== 1` until step 7
+ * added the storm detail panel beside the board, and the total went to two —
+ * which is correct and made the assertion fail. The guard's real teeth were
+ * never about the total: `drawer.register` appends a host element and stores
+ * it under the view's id, so calling it twice for the SAME id leaves an
+ * orphaned host in the DOM and a live listener bound to it. The archive can be
+ * entered and left many times in one page load, so that is a real risk and
+ * this is what catches it. */
+{
+  const perId = {};
+  for (const c of h.calls) {
+    if (!c.startsWith('drawer.register:')) continue;
+    const id = c.slice('drawer.register:'.length);
+    perId[id] = (perId[id] || 0) + 1;
+  }
+  ok(Object.values(perId).every((n) => n === 1),
+    `no view is registered twice (${JSON.stringify(perId)})`);
+  ok(perId['seasons-board'] === 1, 'the board is registered, exactly once');
+  ok(perId['season-detail'] === 1,
+    '==> AND SO IS THE STORM PANEL. <== §57.22. A view the drawer does not '
+    + 'know is a `push` that silently does nothing, which is the fault this '
+    + "file already caught the board having");
+}
 eq(docEl.getAttribute('data-seasons'), 'on', 'the chrome knows to move up off the bar');
 ok(body.children.some((c) => c.id === 'seasons-bar'), 'the bar is on screen');
 
@@ -397,7 +418,16 @@ eq(second.calls.filter((c) => c.startsWith('drawer.register')).length, 0,
   '==> A SECOND ENTRY REGISTERS NOTHING — the board is built once per load <==');
 ok(second.calls.includes('drawer.go:seasons-board'),
   'but it is still navigated to, so the reader lands on the board again');
-eq(registered.length, 1, 'exactly one board view has ever been built');
+/* ==> ONE OF EACH, ACROSS EVERY ENTRY IN THE WHOLE PAGE LOAD. <== Step 7 made
+ * this two views rather than one, so it is asserted by id: the count that
+ * matters is that no id appears twice, not that the total is any particular
+ * number. A second copy of either would mean an orphaned host and a live
+ * listener bound to a dead element. */
+{
+  const ids = registered.map((v) => v.id).sort();
+  same(ids, ['season-detail', 'seasons-board'],
+    'exactly one board and one storm panel have ever been built, across both entries');
+}
 handle2.leave();
 
 /* =========================================================================
