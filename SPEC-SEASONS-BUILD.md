@@ -1338,7 +1338,18 @@ globe; the check-versus-select split it records is the shape everything here
 sits on.
 
 **THE ROSTER ROW IS A REAL CHECKBOX, A SOLID DOT, THE NAME, THE STRENGTH BADGE,
-THE LANDFALL MARK AND THE DATES.** Left to right, in that order. The dot
+THE LANDFALL MARK AND THE DATES.** Left to right, in that order.
+
+**AND THE THREE TEXT PARTS ARE A GRID, NOT A FLEX ROW, SO THE BADGE IS A REAL
+COLUMN.** Aaron on glass: right-aligned beside the dates it read as glued to
+them — `CAT 4  ▲ Jul 4 – Jul 18` is one run of small text, and strength is what
+the eye is scanning for. A flex row cannot fix that, because the badge's
+position then depends on how long the name is. Three named areas can: narrow
+puts the name and badge on one line with the dates beneath both, wide puts all
+three across, and it is the same three columns either way. The badge carries a
+`min-width` in `ch` rather than pixels — wide enough that `TS` and `CAT 5`
+start at the same place down the list, tied to the type rather than to a number
+that goes stale the next time the badge is resized. The dot
 stopped being the checkbox: it was a hollow ring that filled when ticked, one
 element carrying two meanings, which was only ever a way to avoid putting a
 second control on a forty-row list. It is `.row-swatch` now — the same 12px
@@ -1356,6 +1367,14 @@ selector is a PAIR** because the two have different drivers: a Layers row is a
 wrapping a real `<input>` carrying `:checked`. Both are correct for what they
 are, and one appearance answers to both. A platform checkbox was not used: it
 is a different shape and a different blue on every device the app runs on.
+
+**THE OPEN STORM'S ROW IS A LIFT AND NOTHING ELSE.** It carried a left bar in
+the focus-ring amber as well, and that is gone — Aaron on glass. The bar was
+drawn at the row's left edge, which is exactly where the tick box sits, so the
+two shared a two-pixel column and the bar read as part of the checkbox rather
+than as a separate signal. The argument for it was that the lift alone might be
+too quiet; on glass it is not. **If it ever does read as too quiet the lever is
+`--hover`, not a mark in the checkbox's column.**
 
 **THE MASTER BOX IS THE SPREADSHEET'S THREE-STATE FILTER HEADER.** Aaron's
 call: it should be a checkbox like all the other checkboxes and behave the way
@@ -1434,6 +1453,44 @@ themselves still in 2005 has been told the wrong thing by the icon. The close
 button lives in the SHARED drawer header, so this is an opt-in `minimises` flag
 on the view definition — the BUTTON does not change, only its glyph and the
 word a screen reader hears. No other view sets it.
+
+**THE BAR'S SENTENCE TOGGLES THE BOARD, AND THE WHOLE HEADER DISMISSES IT.**
+Both are Aaron's calls on glass. The bar only ever opened, which made it a
+one-way door: press it with the board already up and nothing happened, so the
+only way to clear the globe again was to find the chevron at the far edge of
+the header. The bar is the one thing always on screen in the archive, so it
+carries both halves of one action. **And the header itself is a press target**
+— on this board it is a bare title and a chevron, so it reads as a bar you
+should be able to press anywhere, and the chevron is a small target in the
+corner a thumb reaches for least.
+
+**THE HEADER RULE IS GATED ON `minimises` FOR THE SAME REASON THE CHEVRON IS,
+AND IT IS THE MORE DANGEROUS OF THE TWO.** Every other header in this app has a
+second job: the storm panel's title slot holds an identity block the dashboard
+binds a click to — pressing the storm's NAME opens that storm — and any pushed
+view's header holds a Back button whose whole purpose is going up rather than
+out. A blanket rule would have made half the app's headers do two things at
+once, with the destructive one winning. A press that lands on a real button is
+left to that button, so Back and the chevron are never answered twice.
+`#drawer` carries `data-minimises` so the header can also LOOK pressable where
+it is — a surface that dismisses on a tap and offers no cursor or hover for it
+is a hidden gesture (§13), and one that looks pressable and is not is worse.
+
+**THE YEAR LIST IS PAINTED OUT OF THE PALETTE WHERE THE BROWSER ALLOWS IT, AND
+NOT WHERE IT DOES NOT.** On desktop it opened as a white sheet with a
+system-blue selected row over a sepia globe; `option` now takes `--ocean` and
+`--text-primary`. **`--ocean` rather than `--glass-raised`, and that is the
+whole point** — every other surface in this app is glass over the globe and is
+therefore translucent, but this one the browser draws as an opaque menu ABOVE
+the page, and handing it an rgba background is what made it fall back to its
+own light colours. **Safari and iOS ignore `option` styling entirely** and
+render the platform's own wheel. That sheet is already dark, because
+`color-scheme` is published as `dark` for the sepia palette
+(`app/theme-switch.js`), but it will never be sepia. Making it sepia means
+replacing the native `<select>` with a custom listbox, which §57.18a rejected
+on purpose: one control that already works by thumb, by mouse and by keyboard,
+with the OS's own scroll-and-type behaviour free. A palette is not worth that
+trade.
 
 **AND THE BAR IS WHERE SELECTION GETS DISCOVERED.** `seasons/bar.js` exports
 `barDetail`, a pure function, and it has three states:

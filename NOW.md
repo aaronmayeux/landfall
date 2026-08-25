@@ -354,6 +354,21 @@ master box sits above it; changing a filter clears the checks; the sheet opens
 at 75vh; the header's X is a minimise chevron; and the bar names what is drawn
 and what is open.
 
+**==> CONFIRMED ON GLASS 2026-08-25, WITH FIVE CHANGES ASKED FOR AND MADE.
+<==** Aaron: "looks good and works well." The five: the year list is painted
+out of the palette on desktop, the focused row's left bar is gone, the strength
+badge is its own column, the bar toggles the board, and the whole drawer header
+dismisses. All five are in §57.21b as-built. **The list below is what was open
+BEFORE those five and is kept because they land on top of it.**
+
+**WHAT IS LEFT TO SEE, AND ONE ANSWER IS ALREADY IN:**
+
+0. **THE TAPS BEHAVE.** Item 1 below was the open question and glass answered
+   it: the rewritten row works. **So step 7's tap-target fault is NOT the row
+   markup**, which is the first real finding about it since it was reverted —
+   and the per-row chevron §57.21b holds back can now be built, because the
+   shape it was avoiding has been cleared.
+
 **WHAT TO JUDGE, AND THE FIRST TWO ARE THE ONES MOST LIKELY TO COME BACK
 WRONG:**
 
