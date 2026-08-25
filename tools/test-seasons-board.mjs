@@ -179,16 +179,49 @@ async function board({ year = null } = {}) {
     onOpenStorm: (id) => opened.push(id),
   });
   if (year != null) view.setSeason(year);
+
+  /* ==> THE BOARD IS MOUNTED INSIDE THE DRAWER'S OWN CHROME, AND THAT IS THE
+   * WHOLE POINT OF THIS SCAFFOLD. §57.22b. <== It used to be a bare `div` with
+   * no parent, so `e.target.closest(...)` could never walk past the board's
+   * body — and the fault that killed step 7 lived precisely up there.
+   * `#drawer` carries `data-open="true"`, so `closest('[data-open]')` from any
+   * unhandled click in the roster matched THE SHEET and the board asked to
+   * open a storm called `true`. **A suite that mounts a view in isolation
+   * cannot see a selector escaping its view**, which is why the real
+   * attributes `ui/drawer.js` publishes are reproduced here rather than
+   * approximated. */
+  const drawer = new El('aside');
+  drawer.attrs.id = 'drawer';
+  drawer.dataset.open = 'true';
+  drawer.dataset.view = 'seasons-board';
+  drawer.dataset.minimises = 'true';
+  const views = new El('div');
+  views.parent = drawer;
+  drawer.children.push(views);
   const host = new El('div');
+  host.dataset.view = 'seasons-board';
+  host.dataset.active = 'true';
+  host.parent = views;
+  views.children.push(host);
+
   view.mount(host);
   await settle();
   const body = host.querySelector('#seasons-board-body');
-  return { view, host, body, drawn, where, focus, opened };
+  return { view, host, drawer, body, drawn, where, focus, opened };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
 
 const rows = (body) => body.querySelectorAll('[data-storm]');
+
+/* ==> THE STRENGTH AND THE LANDFALL MOVED OFF THE CHECKBOX AND ONTO THE ROW'S
+ * OPEN BUTTON. §57.22b. <== The box now says only *"Draw KATRINA on the
+ * globe"*, because that is the only thing it does; the button that opens the
+ * storm carries what the storm IS. These cases are about which storms a filter
+ * leaves on the list, so they read the button. */
+const rowLabel = (body, r) =>
+  body.querySelectorAll('.seasons-open')
+    .find((b) => b.dataset.open === r.dataset.storm)?.attrs['aria-label'] || '';
 const text = (body) => body.innerHTML;
 
 /* ---------------------------------------------------------------------------
@@ -283,7 +316,7 @@ const text = (body) => body.innerHTML;
 {
   const { body, drawn } = await board({ year: 2005 });
 
-  const weak = rows(body).find((r) => r.attrs['aria-label']?.includes('TS'));
+  const weak = rows(body).find((r) => rowLabel(body, r).includes('TS'));
   ok('2005 has a tropical storm to tick', !!weak);
   weak.checked = true;
   body.fire('change', weak);
@@ -298,7 +331,7 @@ const text = (body) => body.innerHTML;
   drawn[drawn.length - 1], []);
   ok('the roster is now shorter', rows(body).length < 31);
   ok('and every remaining row is a major',
-    rows(body).every((r) => /Cat [345]/.test(r.attrs['aria-label'] || '')));
+    rows(body).every((r) => /Cat [345]/.test(rowLabel(body, r))));
 
   const all = body.querySelectorAll('[data-filter]').find((b) => b.dataset.filter === 'all');
   body.fire('click', all);
@@ -318,7 +351,7 @@ const text = (body) => body.innerHTML;
   const shown = rows(body);
   ok('the landfalls filter keeps some storms', shown.length > 0);
   ok('and every one of them made landfall',
-    shown.every((r) => /landfall/.test(r.attrs['aria-label'] || '')));
+    shown.every((r) => /landfall/.test(rowLabel(body, r))));
 }
 
 /* ---------------------------------------------------------------------------
@@ -932,11 +965,22 @@ const text = (body) => body.innerHTML;
   const id = first.dataset.storm;
   const chevron = body.querySelector(`[data-open="${id}"]`);
 
-  ok('every row carries a chevron that opens the storm', chevron !== null);
+  ok('every row carries a button that opens the storm', chevron !== null);
   ok('and it is a real button, so Tab reaches it and Enter presses it (§13)',
     String(chevron?.tagName || '').toLowerCase() === 'button');
   ok('named for a screen reader, because a bare chevron is a control called '
     + 'nothing', /^Open /.test(chevron?.getAttribute('aria-label') || ''));
+
+  /* ==> THE ROW IS THE DOOR, NOT JUST THE CHEVRON. <== Aaron on glass,
+   * 2026-08-25. The name, the badge and the dates are all inside the button,
+   * so a tap anywhere across the row opens the storm — the chevron is the
+   * glyph on the end of it rather than a control of its own. */
+  ok('the storm\u2019s NAME is inside that button, so tapping the row opens it',
+    chevron?.querySelectorAll?.('.seasons-name').length === 1);
+  ok('and so are the dates, so there is no inert strip in the middle of a row',
+    chevron?.querySelectorAll?.('.seasons-when').length === 1);
+  eq('there is exactly ONE open control per row, not a row and a chevron both',
+    body.querySelectorAll('.seasons-open').length, rows(body).length);
 
   /* ==> IT SITS OUTSIDE THE `<label>`, AND THAT IS THE ASSERTION. <== Nested
    * inside, every press would ALSO toggle the checkbox it was nested in,
@@ -946,6 +990,13 @@ const text = (body) => body.innerHTML;
   ok('==> AND IT IS NOT INSIDE THE ROW\'S LABEL. <== Nested there, opening a '
     + 'storm would silently tick or untick it on the way past',
   chevron?.closest?.('label') == null);
+
+  /* ==> AND THE TICK BOX IS STILL ITS OWN CONTROL. <== A reader comparing four
+   * storms on the globe must be able to draw one without a panel opening. */
+  const box = body.querySelector(`[data-storm="${id}"]`);
+  ok('the checkbox is not inside the open button', box?.closest?.('.seasons-open') == null);
+  ok('and it says only what it does \u2014 draw the storm', 
+    /^Draw /.test(box?.getAttribute('aria-label') || ''));
 
   const before = drawn.length;
   body.fire('click', chevron);
@@ -977,6 +1028,57 @@ const text = (body) => body.innerHTML;
   view.showStorm('AL011851');
   eq('a storm the season does not hold changes nothing', drawn.length, settled);
   eq('and does not steal the focus', focus.at(-1), id);
+}
+
+/* ---------------------------------------------------------------------------
+ * ==> THE FAULT THAT KILLED STEP 7, REPRODUCED AND THEN FIXED. §57.22b. <==
+ *
+ * Aaron on glass, 2026-08-25: *"pretty much anywhere I touch closes the drawer
+ * or does something I don't intend."* The cause was `closest('[data-open]')`
+ * in the board's click handler. **`#drawer` carries `data-open="true"`** —
+ * `ui/drawer.js` publishes the sheet's open state there — and the board's
+ * body is inside it, so any click no earlier branch claimed walked up past the
+ * roster, matched THE SHEET, and the board asked to open a storm called
+ * `true`. The panel then said *"That storm is not in this season."*
+ *
+ * **NOTHING COULD HAVE CAUGHT THIS BEFORE, BECAUSE THE SUITE MOUNTED THE BOARD
+ * IN A BARE `div` WITH NO PARENT.** `closest` had nowhere to walk. The harness
+ * now reproduces the drawer's real chrome above the view, which is the only
+ * shape in which a selector escaping its own view is visible at all.
+ * ------------------------------------------------------------------------ */
+{
+  const { body, drawer, opened, drawn, focus } = await board({ year: 2005 });
+
+  eq('the harness really does put the sheet above the board, or this proves '
+    + 'nothing', drawer.dataset.open, 'true');
+  ok('and the board\u2019s body really is inside it',
+    body.closest('#drawer') === drawer);
+
+  /* Inert text: the roster's own heading area, which is not a control and must
+   * not behave like one. */
+  const inert = body.querySelector('.seasons-roster') || body;
+  body.fire('click', inert);
+  eq('==> A TAP ON INERT ROSTER SPACE OPENS NOTHING. <== It used to resolve to '
+    + 'the DRAWER\u2019S OWN data-open and ask for a storm called "true"',
+  opened.length, 0);
+  eq('and draws nothing', drawn.at(-1) ?? [], []);
+  eq('and focuses nothing', focus.at(-1) ?? null, null);
+
+  /* The scorecard: real markup, no handler of its own, well inside the sheet. */
+  const score = body.querySelector('.seasons-score');
+  if (score) {
+    body.fire('click', score);
+    eq('nor does a tap on the scorecard', opened.length, 0);
+  }
+
+  /* ==> AND THE ONE THING THAT MUST STILL WORK. <== A scoped selector that
+   * matched nothing would pass every assertion above and break the feature. */
+  const btn = body.querySelectorAll('.seasons-open')[0];
+  body.fire('click', btn);
+  eq('but a tap on a row still opens that row\u2019s storm',
+    opened.at(-1), btn.dataset.open);
+  ok('and never the string the drawer would have handed it',
+    opened.every((x) => x !== 'true'));
 }
 
 /* ------------------------------------------------------------------------ */

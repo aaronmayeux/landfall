@@ -575,17 +575,40 @@ export function createSeasonsBoardView({
       return;
     }
 
-    /* ==> A ROW'S CHEVRON OPENS THAT STORM'S PANEL. §57.22b. <== It does NOT
-     * tick the storm here, and it does not focus it here either. Both happen,
-     * but they happen on the way IN to the panel (`showStorm`, called from the
-     * panel's own `onEnter`), so there is exactly one path that makes the
-     * globe agree with the panel and it runs whether the reader arrived by
-     * this chevron, by Back, or by a deep link.
+    /* ==> A TAP ANYWHERE ON THE ROW OPENS THAT STORM'S PANEL. §57.22b. <==
+     * Aaron on glass, 2026-08-25. The row used to be a `<label>` that ticked
+     * and the chevron alone opened; he wants the row to open. So the swatch,
+     * the text and the chevron are now ONE button and the tick box is a 44px
+     * label beside it.
      *
-     * ==> OPENING A STORM DOES NOT REQUIRE HAVING TICKED IT. <== The chevron
-     * is about reading the storm's facts, and those exist whether or not its
-     * track is on the globe. */
-    const openBtn = e.target.closest('[data-open]');
+     * It does NOT tick or focus here. Both happen, but on the way IN to the
+     * panel (`showStorm`, called from the panel's own `onEnter`), so there is
+     * exactly one path that makes the globe agree with the panel and it runs
+     * whether the reader arrived by this row, by Back, or by a deep link.
+     *
+     * ==> AND THE SELECTOR IS SCOPED TO A CLASS, WHICH IS THE FIX FOR THE
+     * FAULT THAT KILLED STEP 7 THE FIRST TIME. <== It read
+     * `closest('[data-open]')`. **`#drawer` itself carries `data-open`** —
+     * `ui/drawer.js` publishes the sheet's open state there and
+     * `ui/panels.css` styles off it — and this board's body is INSIDE
+     * `#drawer`. So every click anywhere in this drawer that no earlier branch
+     * claimed walked up past the roster and matched THE SHEET, handing this
+     * line `dataset.open === "true"`. The board then asked to open a storm
+     * called `true` and the panel answered *"That storm is not in this
+     * season."*
+     *
+     * That is Aaron's report of 2026-08-25 — *"pretty much anywhere I touch
+     * closes the drawer or does something I don't intend"* — reproduced, and
+     * the first cause for it anybody has been able to point at. The roster row
+     * and the years split were both suspected for a day and both were
+     * innocent.
+     *
+     * **A BARE ATTRIBUTE SELECTOR IN A DELEGATED HANDLER IS A QUERY AGAINST
+     * EVERY ANCESTOR UP TO THE DOCUMENT**, and this view has six more of them.
+     * `tools/test-seasons-board.mjs` drives a click on inert roster text with
+     * the real drawer chrome above it, which is the only shape that catches
+     * this class of fault. */
+    const openBtn = e.target.closest('.seasons-open');
     if (openBtn) {
       onOpenStorm?.(openBtn.dataset.open);
       return;

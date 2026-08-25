@@ -296,14 +296,25 @@ export function filtersHtml({ filters, filter }) {
  * say the same thing twice (§6) — and Cat 1's yellow cannot reach AA at badge
  * size on a light background anyway.
  *
- * ==> THE WHOLE ROW IS STILL THE TICK TARGET. <== Aaron's call. A 44px box
- * inside a 320px row is a target most thumbs miss, so the row stays a
- * `<label>` and must stay one.
+ * ==> THE WHOLE ROW IS THE **OPEN** TARGET NOW, NOT THE TICK TARGET, AND THAT
+ * REVERSES §57.21b ITEM 1. <== Aaron on glass, 2026-08-25: *"tapping anywhere
+ * on the row should open the storm detail."* The row was a `<label>` whose
+ * every pixel ticked, with a chevron at the end that opened; the argument was
+ * that a 44px box inside a 320px row is a target most thumbs miss. It still
+ * is — which is why the swatch, the text and the chevron are now ONE button
+ * spanning everything the box does not, rather than the tap zone shrinking.
  *
- * ==> AND IT NOW CARRIES A SECOND CONTROL: THE CHEVRON THAT OPENS THE STORM'S
- * PANEL. §57.22, §57.22b. <== The two actions had to be separable — a reader
- * comparing four 2005 storms on the globe ticks four of them, and none of
- * those taps should take them off the roster and into a panel.
+ * ==> AND OPENING STILL DRAWS THE STORM, SO NOTHING IS LOST BY TAPPING THE
+ * WRONG ONE. <== `showStorm` ticks a storm on the way into its panel, so the
+ * row tap is a superset of what the label used to do. The box remains for the
+ * reader comparing four storms on the globe who does not want a panel each
+ * time.
+ *
+ * ==> THE CHEVRON IS NOW A GLYPH INSIDE THAT BUTTON RATHER THAN A BUTTON OF
+ * ITS OWN. §57.22b. <== It was its own 44px control at the end of the row.
+ * With the whole row opening, a second button doing the same thing would be
+ * two tab stops and two press targets for one action — so it is decoration
+ * on the one that already exists, and says which way the row goes.
  *
  * ==> THIS IS THE EXACT MARKUP THAT WAS UNDER SUSPICION FOR A DAY. <== Step 7
  * added it, glass reported every tap target in this drawer misbehaving, and
@@ -344,8 +355,11 @@ export function rowHtml({ storm, facts, on }) {
       <li class="seasons-row" data-row="${esc(storm.id)}">
         <label class="seasons-check">
           <input type="checkbox" data-storm="${esc(storm.id)}" ${on ? 'checked' : ''}
-                 aria-label="${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
+                 aria-label="Draw ${esc(displayName(storm))} on the globe">
           <span class="check-box" aria-hidden="true"></span>
+        </label>
+        <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
+                aria-label="Open ${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
           <span class="row-swatch" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
           <span class="seasons-row-text">
             <span class="seasons-name">${esc(displayName(storm))}</span>
@@ -355,9 +369,6 @@ export function rowHtml({ storm, facts, on }) {
               <span class="seasons-when">${esc(dateRange(facts))}</span>
             </span>
           </span>
-        </label>
-        <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
-                aria-label="Open ${esc(displayName(storm))}">
           <span class="seasons-open-chevron" aria-hidden="true"></span>
         </button>
       </li>`;

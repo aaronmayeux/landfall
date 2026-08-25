@@ -1671,23 +1671,65 @@ one row rather than re-rendering the roster** (the reader is about to come Back
 to that list and it must still be where they left it), then focuses. A storm
 the season does not hold is refused rather than half-applied.
 
-**THE WAY IN IS A CHEVRON ON EVERY ROSTER ROW.** A real `<button>`, so Tab
-reaches it after the checkbox on each row and Enter opens — §13's third input
-path obtained as a side effect of using the right element. **It sits OUTSIDE
-the row's `<label>`, and that is load-bearing rather than tidy:** nested
-inside, every press would also toggle the checkbox it was nested in, because
-that is a label's whole job, so opening a storm would silently draw or undraw
-its track on the way past. `tools/test-seasons-board.mjs` asserts the nesting
-directly rather than trusting a comment.
+**==> AND THE FOURTH BUG IS THE ONE THAT KILLED STEP 7 THE FIRST TIME. FOUND
+ON GLASS, 2026-08-25, AND IT IS ONE LINE. <==** Aaron tapped a roster row and
+got a pushed panel reading *"That storm is not in this season."* The board's
+click handler read `closest('[data-open]')`.
 
-**AND ITS HIT BOX IS MEASURED IN A BROWSER, WHICH IS NEW.**
+**`#drawer` ITSELF CARRIES `data-open`.** `ui/drawer.js` publishes the sheet's
+open state there and `ui/panels.css` styles off it, and the board's body is
+inside `#drawer` — so every click anywhere in this drawer that no earlier
+branch claimed walked up past the roster and **matched the sheet**, handing the
+line `dataset.open === "true"`. The board then asked to open a storm called
+`true`.
+
+That is Aaron's original report — *"pretty much anywhere I touch closes the
+drawer or does something I don't intend"* — reproduced, and **the first cause
+anybody has been able to point at.** The roster row's markup and the years
+split were both suspected for a day, both were reverted, and both were
+innocent.
+
+**A BARE ATTRIBUTE SELECTOR IN A DELEGATED HANDLER IS A QUERY AGAINST EVERY
+ANCESTOR UP TO THE DOCUMENT.** The selector is scoped to `.seasons-open` now.
+The other six in this view were audited against what `ui/drawer.js` publishes
+(`data-view`, `data-active`, `data-minimises`) and none collides today.
+
+**==> NOTHING COULD HAVE CAUGHT IT, BECAUSE THE SUITE MOUNTED THE BOARD IN A
+BARE `div` WITH NO PARENT. <==** `closest` had nowhere to walk, so a selector
+escaping its own view was invisible by construction. `tools/test-seasons-board.mjs`
+now builds the drawer's real chrome above the view and drives a click on inert
+roster space, asserting that nothing opens, nothing draws and nothing focuses.
+That is the only shape in which this class of fault is visible at all.
+
+**THE WAY IN IS THE WHOLE ROW, AND THAT REVERSES §57.21b ITEM 1.** Aaron on
+glass, same session: *"tapping anywhere on the row should open the storm
+detail."* The row was a `<label>` whose every pixel ticked, with a chevron at
+the end that opened. Now the swatch, the name, the badge, the dates and the
+chevron are **one `<button>`** and the `<label>` is a 44px tick box beside it.
+The chevron is a glyph on the end of that button rather than a control of its
+own — two buttons for one action would be two tab stops and two press targets.
+
+**NOTHING IS LOST BY TAPPING THE WRONG ONE**, which is what makes the reversal
+safe: `showStorm` ticks a storm on the way into its panel, so a row tap is a
+superset of what the label used to do. The box stays for the reader comparing
+four storms on the globe who does not want a panel each time.
+
+**THE BUTTON SITS OUTSIDE THE `<label>`, AND THAT IS LOAD-BEARING RATHER THAN
+TIDY:** nested inside, every press would also toggle the checkbox it was nested
+in, because that is a label's whole job, so opening a storm would silently draw
+or undraw its track on the way past. The suite asserts the nesting in both
+directions rather than trusting a comment.
+
+**AND BOTH TARGETS ARE MEASURED IN A BROWSER, WHICH IS NEW.**
 `tools/seasons-row-check.mjs` did not exist when this markup first shipped. It
-now asserts, at 390px and 720px, that every chevron is at least
-`--touch-target` on **both** axes (the glyph is 8px; the thing a thumb lands on
-is 44), that **no chevron overlaps the label beside it** — a shared pixel
-column is two actions fighting over one thumb and the loser is silent — and
-that none of them wraps onto the next line or hangs off the end of the row.
-Eleven mutations were run across the step and all eleven bite.
+now asserts, at 390px and 720px, that the open button is at least
+`--touch-target` on both axes and **that the tick box still is too** — that is
+the one that shrank, and a rule capping only the button would let the label
+collapse to the 18px tick inside it with nobody noticing until a thumb missed.
+It also asserts the two do not overlap (a shared pixel column is two actions
+fighting over one thumb, and the loser is silent), that neither wraps onto the
+next line, and that nothing hangs off the end of the row. **Fourteen mutations
+were run across the step and all fourteen bite.**
 
 **THE PANEL IS PUSHED, NEVER `go`.** It sits on top of the board, so Back is
 one press and lands on the roster with its scroll position and its ticks

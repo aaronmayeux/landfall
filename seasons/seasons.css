@@ -438,9 +438,20 @@ html[data-seasons="on"] #btn-layers {
   gap: var(--space-tight);
 }
 
-/* `min-width: 0` so a long unbroken name ellipses inside the label rather than
-   pushing the chevron off the end of the row. */
-.seasons-row .seasons-check { flex: 1 1 auto; min-width: 0; }
+/* ==> THE LABEL IS NOW JUST THE BOX. §57.22b. <== It used to be the whole row
+   and the whole tap target; the row opens the storm now, so what is left here
+   is the tick, at the touch minimum and no wider. `flex: 0 0 auto` rather than
+   a width, so the box keeps its own padding and the button beside it takes
+   every remaining pixel.
+
+   Scoped to `.seasons-row`, because the MASTER box above the roster is also a
+   `.seasons-check` and it is still a full-width label with its own text — it
+   has no panel to open, so there is nothing to take the row from it. */
+.seasons-row .seasons-check {
+  flex: 0 0 auto;
+  min-width: var(--touch-target);
+  justify-content: center;
+}
 
 .seasons-row + .seasons-row { border-top: 1px solid var(--glass-border); }
 
@@ -504,6 +515,7 @@ html[data-seasons="on"] #btn-layers {
    whole leading cluster — box, dot — is centred on the row instead, because
    the box next to it is centred and two leading marks a few pixels apart on
    different baselines reads as a mistake. Same correction `.detail-ww` makes. */
+.seasons-open .row-swatch,
 .seasons-check .row-swatch { margin-top: 0; }
 
 /* --- the master box ------------------------------------------------------ */
@@ -827,29 +839,35 @@ html[data-seasons="on"] #btn-layers {
 
 /* --- the way into one storm's panel — §57.22, §57.22b, §13 ---------------- */
 
-/* ==> THE ROW CARRIES TWO ACTIONS, SO IT CARRIES TWO CONTROLS. <== The label
-   ticks the storm; this opens its panel. They had to be separable — a reader
-   comparing four 2005 storms ticks four of them, and none of those taps should
-   take them off the roster and into a panel.
+/* ==> THE ROW IS THE DOOR. <== Aaron on glass, 2026-08-25: tapping anywhere on
+   the row should open the storm. So this button takes everything the tick box
+   does not — the swatch, the name, the badge, the dates and the chevron —
+   and the label beside it keeps the tick.
 
    A real <button>, so Tab reaches it after the checkbox on every row and Enter
    opens. That is §13's third input path, obtained as a side effect of using
    the right element rather than as a special case.
 
-   ==> FULL HEIGHT AND FULL WIDTH OF THE TOUCH MINIMUM, MEASURED RATHER THAN
-   ASSUMED. <== `tools/seasons-row-check.mjs` asserts the rendered box is at
-   least `--touch-target` on both axes and does not overlap the label beside
-   it. The chevron GLYPH is 8px; the thing a thumb lands on is 44. */
+   ==> ITS BOX IS MEASURED RATHER THAN ASSUMED. <==
+   `tools/seasons-row-check.mjs` asserts the rendered button is at least
+   `--touch-target` tall, runs to the row's own edge, does not overlap the
+   label beside it and does not wrap onto the next line. */
 .seasons-open {
-  flex: 0 0 auto;
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: var(--touch-target);
+  gap: var(--space-snug);
   min-height: var(--touch-target);
   padding: 0;
   border: 0;
   background: none;
+  /* `font: inherit` and `text-align: left`, or the browser's own button
+     defaults centre the name and shrink it to the platform's control size —
+     which would be a different font on every device this app runs on, and a
+     fixed visual contract (§10) exists to prevent exactly that. */
+  font: inherit;
+  text-align: left;
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -870,10 +888,14 @@ html[data-seasons="on"] #btn-layers {
    the report link's outward arrow, pointed a different way — one says "opens
    here", the other says "leaves the app". */
 .seasons-open-chevron {
+  flex: 0 0 auto;
   width: 8px;
   height: 8px;
   border-top: 2px solid currentColor;
   border-right: 2px solid currentColor;
   transform: rotate(45deg);
-  margin-left: -2px;
+  /* It sits where a 44px button used to, so it keeps that much room around it
+     even though it is no longer a target of its own — a glyph hard against
+     the row's edge reads as clipped. */
+  margin-inline: auto var(--space-tight);
 }

@@ -296,13 +296,30 @@ Katrina on it. `showStorm` ticks first now, patches the one row rather than
 rebuilding the roster, then focuses. **Eleven mutations were run across this
 step and all eleven bite.**
 
+**==> AND THE TAP FAULT IS SOLVED. IT WAS ONE LINE AND IT WAS NEVER THE ROW.
+<==** Aaron found it on glass immediately: tapping a row pushed a panel reading
+*"That storm is not in this season."* The handler read
+`closest('[data-open]')` and **`#drawer` itself carries `data-open`** — so
+every unclaimed click in this drawer walked up past the roster, matched the
+sheet, and asked to open a storm called `true`. **That is the 2026-08-25 report
+reproduced.** The roster row and the years split were both suspected, both
+reverted, and both innocent. Scoped to `.seasons-open` now, and the suite mounts
+the board inside the drawer's real chrome — it never had a parent before, so
+`closest` had nowhere to walk and this was invisible by construction.
+
+**AND THE ROW IS THE DOOR NOW**, which reverses §57.21b item 1 at Aaron's
+request: the swatch, name, badge, dates and chevron are one button; the tick box
+is a 44px label beside it. Nothing is lost by tapping the wrong one, because
+`showStorm` ticks a storm on the way into its panel.
+
 **GLASS, AND THE FIRST TWO ARE THE ONES MOST LIKELY TO COME BACK WRONG:**
 
-1. **DO THE TAPS BEHAVE.** This is the third data point on that fault and the
-   only one with the chevron in it. Deliberately: tick a row, untick it, press
-   a chevron, press Back, press the master box, press a filter. **If taps go
-   wrong here the chevron is convicted** and the fix is to delete it and reach
-   the panel another way. If they are fine, the fault is dead and this closes.
+1. **DO THE TAPS BEHAVE NOW.** Deliberately: tap a row's name, tap its dates,
+   tap the tick box on its own, press Back, press the master box, press a
+   filter, tap inert space in the drawer. **Tapping the box should draw the
+   track and open nothing; tapping anywhere else on the row should open the
+   panel.** If anything still misfires, say what you touched and what happened
+   — the cause above is proven but it may not have been the only one.
 2. **THE FIGURES, HAND-CHECKED AGAINST ONE STORM.** That is §57.22's whole
    done-condition. Open Katrina (2005) beside NOAA's own page: peak winds and
    when, lowest pressure, lifespan, hours at hurricane and major strength, ACE,

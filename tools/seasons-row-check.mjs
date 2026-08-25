@@ -133,9 +133,22 @@ try {
       Number.isFinite(touch) && touch >= 44);
 
     const smallest = Math.min(...chev.map((c) => Math.min(c.w, c.h)));
-    ok(`${label}: every chevron meets the touch minimum on both axes `
+    ok(`${label}: every open button meets the touch minimum on both axes `
       + `(smallest side ${smallest.toFixed(1)}px, floor ${touch})`,
     smallest >= touch - 0.5);
+
+    /* ==> AND SO DOES THE TICK BOX, WHICH IS THE ONE THAT SHRANK. §57.22b.
+     * <== The label used to be the whole row and is now just the box; a rule
+     * that only capped the button would let it collapse to the 18px tick
+     * inside it and nobody would notice until a thumb missed. */
+    const boxes = await page.$$eval('.seasons-row .seasons-check', (els) => els.map((el) => {
+      const r = el.getBoundingClientRect();
+      return Math.min(r.width, r.height);
+    }));
+    ok(`${label}: every row has a tick box`, boxes.length > 3);
+    ok(`${label}: and each one still meets the touch minimum `
+      + `(smallest ${Math.min(...boxes).toFixed(1)}px, floor ${touch})`,
+    Math.min(...boxes) >= touch - 0.5);
 
     /* ==> IT MUST NOT OVERLAP THE LABEL BESIDE IT. <== The label ticks the
      * storm and the chevron opens it; a shared pixel column is two actions
