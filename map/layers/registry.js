@@ -70,7 +70,17 @@ export function registerLayer(def) {
  *  so the anchor still keeps overlays below selection and labels. */
 const MARKER_ANCHOR = 'storm-dot-planet';
 
-export function createLayerEngine(map) {
+/**
+ * @param {object} map
+ * @param {{painting?: () => boolean}} [opts]
+ *   `painting` answers "is the live world the one on screen right now". It is
+ *   INJECTED rather than imported because this file imports nothing (see the
+ *   header and the note inside `ambientPrune`), and because the engine has no
+ *   business knowing that a historical-archive mode exists — it only needs to
+ *   be told that somebody else owns the globe at the moment. Defaults to
+ *   always-painting, so every existing caller and every suite is unaffected.
+ */
+export function createLayerEngine(map, { painting = () => true } = {}) {
   let attached = false;
   const ambient = new Map(); // stormId -> geometry bundle
   let selectedId = null;
@@ -136,12 +146,54 @@ export function createLayerEngine(map) {
      *  feed, and the store would look correct while the map stayed empty. */
     ambientBundle(storm, bundle) {
       attach();
+      /* ==> THE ONE REFUSAL, AND IT IS HERE BECAUSE FOUR CALL SITES COULD NOT
+       * BE KEPT IN AGREEMENT. §57.21c. <==
+       *
+       * Push 1 gated the poll's `warmGeometry` callback on the archive flag
+       * and believed that was the last road in. It was one of five. The four
+       * it missed all reach this method and all fire while somebody is
+       * reading 1935:
+       *
+       *   - `onRepushGuidance` in main.js, which `app/theme-switch.js` calls
+       *     on EVERY palette change — including `forceMode(MODE.SEPIA)`, one
+       *     line after `liveGlobe.hide()` pruned everything. That is the one
+       *     Aaron saw: deterministic, first frame, no layer switched on.
+       *   - the `subscribeLayers` callback, on any toggle inside the archive.
+       *   - `onDeckLanded`, when a model deck lands.
+       *   - `onShipsLanded`, when a SHIPS run lands.
+       *
+       * Each of those is correct on its own terms; the rule they all have to
+       * obey is not theirs to know. So the rule lives at the door instead,
+       * and a road added next month inherits it rather than having to
+       * remember it.
+       *
+       * ==> `attach()` STAYS ABOVE THE REFUSAL. <== It creates the sources
+       * and inserts the layers relative to `MARKER_ANCHOR`, and doing that
+       * late — on the way OUT of the archive — would put this engine's layers
+       * in a different place in the stack than a boot that never entered it.
+       * Attaching with no data draws nothing and costs nothing.
+       *
+       * ==> AND THE BUNDLE IS DROPPED, NOT HELD FOR LATER. <== `app/
+       * bundle-pipeline.js` owns the geometry cache; `repushAmbient()` on the
+       * way out rebuilds every one of these from memory with no fetch, which
+       * is the same road `liveGlobe.show()` already takes. Storing them here
+       * as well would be a second copy of the truth that could disagree. */
+      if (!painting()) return;
       ambient.set(storm.id, bundle);
       recomputeAmbient();
     },
 
     /** Drop ambient geometry for storms no longer in the feed — a dissolved
-     *  storm's cone must not linger as confident ambient detail. */
+     *  storm's cone must not linger as confident ambient detail.
+     *
+     *  ==> DELIBERATELY NOT GATED ON `painting()`, AND THAT IS LOAD-BEARING
+     *  RATHER THAN AN OVERSIGHT. <== The gate above stops geometry ARRIVING;
+     *  this is how it LEAVES. `liveGlobe.hide()` calls this with an empty set
+     *  to empty the globe on the way into the archive — and by then the flag
+     *  has already flipped, so a gate here would refuse the very call that
+     *  does the clearing and leave every live cone painted. The same goes for
+     *  `clearSelection` below. Refusing to draw and refusing to erase are
+     *  opposite acts and only one of them belongs behind this flag. */
     ambientPrune(liveIds) {
       let changed = false;
       for (const id of [...ambient.keys()]) {
@@ -171,6 +223,14 @@ export function createLayerEngine(map) {
     /** The SELECTED storm's bundle — full set, any zoom. */
     setBundle(storm, bundle) {
       attach();
+      /* Same refusal, same reason. `pipeline.repushSelected()` sits directly
+       * beside `repushAmbient()` at three of the four call sites above, so
+       * gating one and not the other would leave the whole of one live
+       * storm's geometry — the tapped one, in its brightest ink — on the
+       * sepia globe. The archive clears the selection on entry, so in
+       * practice this fires with nothing selected; it is gated anyway,
+       * because "in practice" is what the missed sites all had in common. */
+      if (!painting()) return;
       selectedId = storm.id;
       for (const d of defs) d.update(map, storm, bundle);
       recomputeAmbient(); // selected storm leaves the ambient collections

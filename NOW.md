@@ -69,50 +69,32 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> THE ARCHIVE GLOBE WENT TO GLASS 2026-08-25 AND CAME BACK WITH ONE
-FAULT. <==** §57.21c shipped items 1-5 of Aaron's list of seven.
-`SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read that, not this.
-**Aaron's verdict: "some things landed, some didn't."** What is confirmed, what
-is broken and what is new are below, and the second one is the one to start on.
+**==> THE ARCHIVE GLOBE WENT TO GLASS 2026-08-25, CAME BACK WITH ONE FAULT,
+AND THE FAULT IS FIXED. <==** §57.21c shipped items 1-5 of Aaron's list of
+seven. `SPEC-SEASONS-BUILD.md` §57.21c is the as-built account — read that,
+not this. What is left for Aaron is one look at the globe, below.
 
-**==> STORMS THAT ARE STILL RUNNING ARE STILL BEING DRAWN ON THE ARCHIVE
-GLOBE. <==** Aaron on glass, 2026-08-25. This is the thing the whole pass
-existed to fix and it is not fixed.
+**==> THE LIVE-GEOMETRY BLEED IS FIXED AND IS ON `main`. <==** The cause was
+neither of the two this file predicted. The roster's active rule was fine and
+its injection chain was wired correctly end to end — verified against today's
+real bytes off `archive`, where `reportingStormIds` returns exactly the three
+storms NHC is publishing and the roster's ids join to them. **What was wrong
+was that `forceMode(MODE.SEPIA)` repaints the palette, the palette repaint
+re-pushes every live storm's geometry, and it runs one line after
+`liveGlobe.hide()` empties it.** Three more roads did the same thing later.
+The refusal is one predicate at the layer engine's door now;
+`SPEC-SEASONS-BUILD.md` §57.21c is the as-built account and
+`tools/test-archive-paint.mjs` is the gate.
 
-**==> DO NOT WRITE A LINE OF CODE BEFORE ANSWERING THIS, BECAUSE IT IS TWO
-DIFFERENT BUGS IN TWO DIFFERENT FILES AND THE SYMPTOM IS THE SAME. <==**
-"Active storms showing on the map" can be either:
-
-  **(a) LIVE geometry bleeding through** — a live storm's cone, past track,
-  wind field or model guidance, drawn in the LIVE palette over the sepia
-  globe. That is `main.js`: `liveGlobe.hide()`'s `engine.ambientPrune(new
-  Set())`, `show()`'s `repushAmbient()`, and the two `isArchive()` gates in
-  `subscribe`. It would also mean the poll is repainting, so the tell is
-  **whether the globe is clean on entry and dirty a minute later**.
-
-  **(b) The ARCHIVE'S OWN sepia track for a storm the roster calls `active`** —
-  a season track, drawn in the archive's own ink, for a storm that should have
-  been withheld. That is `ui/view-seasons-board.js` `activeIds()` /
-  `selectedEntries()` and the `liveRunningIds` injection down through
-  `seasons/index.js` from `main.js`. It would be there from the first frame and
-  would not change across a poll.
-
-**THE FASTEST WAY TO TELL THEM APART:** open 2026 and look at the ROSTER. If a
-running storm's row says `– active` with a greyed-out checkbox, the roster half
-works and the fault is (a). If the row looks like every other row, the
-`liveRunningIds` chain is broken and the fault is (b) — and the most likely
-break in that chain is the injection, not the rule, because the rule is
-mutation-tested and the injection is not.
-
-**AND THE ID JOIN IS THE FIRST THING TO SUSPECT IN CASE (b).** It was proven on
-archived bytes — `/api/seasons/live` lists `ep092026`, NHC's CurrentStorms
-carries `"id": "ep092026"`, and the roster's parsed id is `EP092026`, joined
-lowercased. **What was never proven is that the live feed reaches the archive
-at all at runtime.** `main.js`'s `liveRunningIds()` returns `null` when
-`lastFullState` is falsy, and `null` means "cannot ask", which falls back to
-the twelve-hour b-deck age test — and a fixture-age fallback in August 2026
-marks nothing active. **A silent `null` would look exactly like this bug.** Put
-one `console.log` on the value the board actually receives before theorising.
+**STILL TO JUDGE ON GLASS, and this is the whole of it:** open Past storms and
+confirm the sepia globe is clean — on entry AND a minute later, with **Model
+tracks** and **Environment** switched on, since two of the four roads only
+fire when those are. Then the three from push 1 that the fault got in the way
+of: whether the two doors fly to different places (basin from the storm list,
+home from the dashboard), whether opening a storm frames its start fix at a
+comfortable distance (`SEASONS.stormZoom`, currently 5, is the dial), and
+whether the ridge and its one-glyph-per-storm read as a count of storms or as
+clutter at the space floor.
 
 **WHAT IS NOT BROKEN AND MUST NOT BE "FIXED":** tapping the open space above
 the drawer does not minimise it. **That is push 2 item 2 and was never built** —

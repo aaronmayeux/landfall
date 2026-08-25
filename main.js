@@ -293,7 +293,20 @@ function boot() {
 
   /* --- Phase 4: selection = fly + detail panel + per-storm geometry -------- */
 
-  const engine = createLayerEngine(map);
+  /* ==> THE ARCHIVE FLAG GOES IN AT CONSTRUCTION, NOT AT EACH PUSH. §57.21c.
+   * <== Every road that puts a LIVE storm's track, cone, wind field or model
+   * guidance onto the globe ends at `engine.ambientBundle` or
+   * `engine.setBundle`, and there are five of them in this file. Push 1 gated
+   * one and the other four went on repainting this week's weather over
+   * whatever year the reader had open — the loudest being the palette
+   * repaint, which fires the moment the archive forces sepia.
+   *
+   * A predicate rather than an import, because `map/layers/registry.js`
+   * imports nothing on purpose. It asks the question fresh on every call:
+   * these pushes are asynchronous and a captured answer would be the state of
+   * the world at the moment a fetch STARTED, which is the exact mistake the
+   * `warmGeometry` callback already documents further down. */
+  const engine = createLayerEngine(map, { painting: () => !isArchive() });
   let styleReady = false; // engine may only touch the style after style.load
   /* Declared HERE, not at the store subscription below: `createViews` below
    * registers the home subscription, which data/home.js fires IMMEDIATELY at

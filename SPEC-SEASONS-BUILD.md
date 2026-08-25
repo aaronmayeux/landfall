@@ -1589,6 +1589,53 @@ the engine rather than to any handle the facade holds, so the sepia globe
 carried this week's cones over whatever year was open — in 1935, in 2005,
 anywhere. §57.16's account of entry now names all six.
 
+**==> AND EMPTYING THE ENGINE ON THE WAY IN WAS NECESSARY AND NOT SUFFICIENT.
+THE REFUSAL IS AT THE ENGINE'S DOOR. <==** Aaron on glass, 2026-08-25: the
+cones were still there. Gating the poll's `warmGeometry` callback covered one
+of five roads into `engine.ambientBundle` / `engine.setBundle`, and the four
+it missed all fire while somebody is reading a historical year:
+
+- **`onRepushGuidance` in `main.js`, which is the one a reader actually saw.**
+  `app/theme-switch.js`'s `repaint()` calls it on EVERY palette change, and
+  `openSeasons` runs `forceMode(MODE.SEPIA)` **one line after**
+  `liveGlobe.hide()`. So the prune emptied the engine and the sepia repaint
+  refilled it from `app/bundle-pipeline.js`'s cache in the same tick —
+  deterministic, on the first frame, with no layer switched on and nothing to
+  do with the poll. Model guidance colours live on each FEATURE rather than in
+  a paint property, so a theme flip genuinely has to re-push them (§9); the
+  push is correct and its timing against the archive was not.
+- **the `subscribeLayers` callback**, on any toggle pressed inside the archive.
+- **`onDeckLanded`**, when a model deck lands.
+- **`onShipsLanded`**, when a SHIPS run lands.
+
+**`createLayerEngine(map, { painting })` takes the predicate and refuses in
+`ambientBundle` and `setBundle`.** `main.js` passes `() => !isArchive()`. It is
+INJECTED rather than imported because that file imports nothing on purpose, and
+it is asked FRESH on every push rather than captured, for the reason the
+`warmGeometry` callback already records: these arrive minutes after the emit
+that started them.
+
+**`ambientPrune` and `clearSelection` are deliberately NOT behind the gate**,
+and that is load-bearing rather than an oversight. The flag is already up by
+the time `liveGlobe.hide()` runs, so gating the prune would refuse the very
+call that does the clearing and leave every live cone painted. Refusing to draw
+and refusing to erase are opposite acts.
+
+**Nothing is held back for later.** A refused bundle is dropped, not queued:
+the geometry cache in `app/bundle-pipeline.js` keeps it the whole time, and
+`repushAmbient()` on the way out rebuilds it with no fetch — the road
+`liveGlobe.show()` already took. `leave()` drops the wall first, so both the
+palette repaint and `show()` land normally.
+
+**THE GATE IS ONE PLACE BECAUSE FIVE CALL SITES COULD NOT BE KEPT IN
+AGREEMENT.** Each of the four was correct on its own terms; the rule they all
+had to obey was not theirs to know. `tools/test-archive-paint.mjs` drives all
+four roads through the real engine and then **reads `main.js` and asserts the
+gate is wired**, because everything behavioural passes just as happily against
+an engine nobody hands a predicate to — which is exactly how push 1 shipped
+green. Five mutations, all verified to bite, including gating the prune and
+capturing a stale answer.
+
 **And the poll put them back every cycle.** In `subscribe`, `markers`,
 `genesis`, the 3D watch marks and `imagery` were gated on `!isArchive()`; the
 ended-storm push and the `warmGeometry` callback were not. Both are gated now,
