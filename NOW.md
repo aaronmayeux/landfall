@@ -69,6 +69,30 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> SEASONS STEP 8 IS DELETED. THE DOWNLOAD GATE, IndexedDB, THE EVICTION
+STATE AND OFFLINE ARE NOT COMING. <==** Aaron's call, 2026-08-25. **Cut properly
+rather than marked skipped**: the step is a recorded deletion with its reason
+beside it (`SPEC-SEASONS-BUILD.md` §57.30), the number stays as a permanent
+address, and §57.24, §57.34 rules 5 and 6, §57.17a and §57.35 were all gone
+through so no machinery is left standing that points at a step that is not
+coming. **Nothing renumbers. Step 9 is still step 9.**
+
+Half of it was already obsolete — FIX 12's per-season slicing made opening a
+year 14 KB, so the gate had nothing to gate. The other half is a straight
+choice: not building it deletes six failure modes rather than deferring them.
+
+**WHAT SURVIVED, AND EACH FOR A REASON THAT WAS NEVER OFFLINE:** the whole-basin
+file and a one-time Worker pass over it (step 9, and step 9 now has to SIZE that
+pass itself — the one real cost of this deletion); a per-storm cost gate for
+Tier 2 at ~5.4 MB (step 12); the service worker not precaching the data (a
+boot-time tax on every visitor); and cache-first for `/seasons/data/` with
+`tools/test-sw-routing.mjs`, which is about loading fast ONLINE and was never
+touched.
+
+**NO CODE CHANGED.** Documentation only, plus three comment corrections where
+`sw.js`, `SPEC-DATA.md` and `data/seasons.js` were claiming offline as their
+reason for a rule that is still correct for a different one.
+
 **==> LALA'S WIND SWATH WRAPPED THE PLANET. FIXED, NOT YET SEEN ON GLASS. <==**
 Aaron reported it 2026-08-24: the 34 kt band ran off both edges of the screen
 and made a green ring around the globe. **Not a regression and nothing to do
@@ -276,15 +300,17 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> THE BOARD'S LOADING CUT IS NOW DUE. IT IS THE NEXT THING THAT HAPPENS TO
-`ui/view-seasons-board.js`, BEFORE ANY FEATURE. <==** `SPEC.md` §12 has said so
-since §57.21b, and step 7 went in ahead of it on a deliberate call — a 200-line
-state refactor riding in the same push as a feature that had been reverted once
-for an unreproducible fault would have made a break either. **Step 7 has now
-been judged on glass, so that reason has expired.** The file went in at 769 and
-came back at 859. The cut is `loadIndexOnce`, `retryLive`, `loadSeasonNow` and
-the fetch state they own — §12's row names it precisely. **No behaviour change
-in that push**, so a break can only be the move.
+**==> THE BOARD'S LOADING CUT IS TAKEN. `SPEC.md` §12 HAS THE AS-BUILT ROW.
+<==** 2026-08-25. `ui/seasons-board-loading.js` holds every index, every season
+and every failure reason; the view keeps what the reader CHOSE. No behaviour
+change in the push, deliberately, so a break can only be the move — and the
+suite was mutation-checked rather than trusted for going green.
+
+**IT DID NOT CLEAR THE CEILING AND THAT IS THE FINDING WORTH KEEPING.** §12
+predicted "near 600" when the file was 769; step 7 and its tap fix put 90 lines
+back first, so the same cut landed **859 → 762, still 62 over.** A named cut
+deferred past a feature does not stay the same size. **Step 9 adds a filter and
+a near-home slider to this same view and must do an inventory before it lands.**
 
 **==> SEASONS UI POLISH, PUSH 1 OF 2: THE GLOBE. SHIPPED, NOT YET SEEN ON
 GLASS. <==** Aaron's list, 2026-08-25. Checking a storm and selecting one are
@@ -451,8 +477,9 @@ call 2026-08-24. The runner now cuts each HURDAT2 basin into **one file per
 season** (`tools/seasons-slice.mjs`, §57.35 FIX 12, `SPEC-OPS.md` §18.8), so
 opening 2005 is **14 KB over the wire and 14 ms of parsing** instead of 6.75 MB
 behind a download gate, a Worker and IndexedDB. Measured on the real bytes.
-**The whole-basin file stays** — offline (step 8) and near-home-since-1851
-(step 9) both need every season at once.
+**The whole-basin file stays** — near-home-since-1851 (step 9) needs every
+season at once, and since 2026-08-25 it is that file's ONLY reader: step 8 was
+the other one and is deleted.
 
 **AND `seasons/data/` WAS EMPTY UNTIL THIS.** The monthly job had never run, so
 there was no history in the repo at all and a board would have had nothing to
@@ -463,8 +490,9 @@ draw. Started by pushing the `seasons-hurdat` branch.
 same-origin GET, and `/seasons/data/` was on none of its lists — so it fell into
 `networkFirst()`, which fetches `cache: 'no-cache'` and would have forced a
 revalidation round trip on files `_headers` declares immutable for a year, then
-stored a copy of each. It is now cache-first alongside `/vendor/`, which also
-means the archive works offline. **The precache list was checked first and is
+stored a copy of each. It is now cache-first alongside `/vendor/`, which is a
+SPEED decision and not an offline one — Seasons' offline step was deleted on
+2026-08-25. **The precache list was checked first and is
 clean** — three entries, no history, so nobody downloads 22 MB at install.
 
 `.txt` went into `typeMatchesUrl()` in the same commit and that is not a tidy-up:

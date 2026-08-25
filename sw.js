@@ -83,9 +83,17 @@ const BYPASS_PATHS = ['/api/', '/tiles/'];
  * them `immutable` for a year; without this entry they fell into
  * networkFirst(), which fetches with `cache: 'no-cache'` and would have forced
  * a revalidation round trip on every load of a file the HTTP layer had just
- * been told to keep forever. THE WORKER WAS ABOUT TO OVERRIDE THE HEADER. It
- * also means the archive works offline, which is the whole point of holding
- * 22 MB of history on our own origin rather than proxying NOAA.
+ * been told to keep forever. THE WORKER WAS ABOUT TO OVERRIDE THE HEADER.
+ *
+ * ==> THIS ENTRY IS ABOUT SPEED ONLINE, NOT ABOUT OFFLINE, AND THE DIFFERENCE
+ * STOPPED BEING ACADEMIC ON 2026-08-25. <== Seasons' offline step was deleted
+ * outright (SPEC-SEASONS-BUILD.md §57.30 step 8), so nothing here is protecting
+ * a download and nothing promises the reader a plane seat. Whatever years they
+ * have visited stay cached until the next deploy purges this cache with the
+ * rest; the cost of that is a 14 KB refetch, which is why it is fine to leave
+ * this in the VERSIONED cache (§57.34 rule 6). The reason 22 MB of history
+ * lives on our own origin rather than being proxied is §57.35 FIX 6 — the phone
+ * never talks to NOAA — and that is unchanged.
  *
  * ==> THE `.txt` IN typeMatchesUrl() BELOW IS PART OF THIS ENTRY, NOT A
  * SEPARATE TIDY-UP. <== Cache-first is what turns a transient 404 into a

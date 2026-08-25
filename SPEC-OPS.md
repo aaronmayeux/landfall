@@ -1650,7 +1650,7 @@ Same bytes, same directory, same `immutable` header, same revision stamp for
 the same reason. **Measured on the real 2005 Atlantic season: 119 KB, 14 KB
 over the wire, and 14 ms to parse in node.** So opening one year costs a
 fourteen-kilobyte fetch and no stored state at all, where the whole basin is
-6.75 MB and needs a Worker, a progress bar and IndexedDB to be affordable.
+6.75 MB and needs a Worker and a progress bar to be affordable.
 
 **Five rules, and the first two are the ones with teeth.**
 
@@ -1675,6 +1675,8 @@ fourteen-kilobyte fetch and no stored state at all, where the whole basin is
 
 **The whole-basin file is NOT replaced by this and must not be deleted.** Step 9
 answers "how many storms have passed within 100 miles since 1851", which is
-every season at once, and step 8's offline download is a basin rather than a
-year. The cut removes the whole file from the ORDINARY path, which is what was
-blocking a season board from existing before that machinery does.
+every season at once. **It is now the ONLY reader of the whole file** — step 8's
+offline download was the other one and was deleted on 2026-08-25
+(`SPEC-SEASONS-BUILD.md` §57.30). The cut removes the whole file from the
+ORDINARY path, which is what was blocking a season board from existing before
+that machinery does.

@@ -725,9 +725,14 @@ is 54 MB on top of today's 32 MB, and ~2,700 files against Pages' 20,000-file ca
 (§57.33 limit 3). **The file cap is the one to watch as the list grows, not the
 byte total** — Ida alone is 269 files.
 
-**Everything in §57.34's retention rules applies to a per-storm download too.** A
-reader who opens twelve storms has twelve downloads on their device, and that
-store needs the same eviction rule and the same Settings entry as a basin does.
+**==> AND THERE IS NO PER-STORM STORE TO RETAIN. <==** Rewritten 2026-08-25.
+This used to say that §57.34's retention rules applied to a per-storm download
+too — twelve storms opened means twelve downloads on the device, needing the same
+eviction rule and Settings entry as a basin. **Step 8's deletion (§57.30) took
+the device store away**, so a Tier 2 storm is fetched, drawn, and left to the
+browser's own cache on the browser's own terms. What survives is the COST gate
+(§57.24): 5.4 MB is worth announcing before it moves, whether or not any of it is
+kept. §57.34 rules 5 and 6 record the same change from the other end.
 
 ### 57.18 The season board
 
@@ -1779,58 +1784,58 @@ a day a second a full season runs roughly three minutes.
 
 ### 57.24 The download gate
 
-Nothing downloads until asked. Per basin, on demand — tap Atlantic, get the
-Atlantic file; tap West Pacific later, get that then. Nobody pays for oceans
-they never open.
+**==> THERE IS NO LONGER A GATE ON THE WAY IN, AND THAT IS THE HEADLINE OF THIS
+SECTION. <==** Rewritten 2026-08-25 when step 8 was deleted (§57.30). What this
+section used to describe — tap Atlantic, get the Atlantic file, hold it on the
+device — does not exist and is not going to.
 
-**==> AND A TIER 2 STORM IS ITS OWN DOWNLOAD, SEPARATE FROM ITS BASIN. <==**
-Aaron's call, 2026-08-24 (§57.17a). A basin is tens of KB a season; one Tier 2
-storm is ~5.4 MB on its own — a hundred times the weight of the season it sits
-in. Bundling it with the basin would make downloading the Atlantic mean
-downloading every director's cut in it.
+**Nobody pays anything to look around.** The runner cuts each basin into one
+file per season (§57.35 FIX 12, `SPEC-OPS.md` §18.8). Opening 2005 fetches
+**14 KB over the wire and parses in milliseconds**, with nothing downloaded,
+nothing stored and nothing to consent to. Measured on the real bytes, not
+estimated.
+
+**Two things still move enough bytes to be worth announcing, and both are
+asked for by name.**
+
+**1. ==> A TIER 2 STORM IS ITS OWN FETCH, SEPARATE FROM ITS BASIN. <==**
+Aaron's call, 2026-08-24 (§57.17a), and it survives the deletion of the basin
+download because its reason was never storage. A basin is tens of KB a season;
+one Tier 2 storm is **~5.4 MB on its own** — a hundred times the weight of the
+season it sits in. Bundling it with the basin would have meant downloading the
+Atlantic meant downloading every director's cut in it.
 
 So a storm's size stops being a curation question and becomes a per-storm wait,
 which is **the reason nothing in §57.17a had to be trimmed except the coordinate
 precision.** The forecast — cone, track, points, and the wind radii with them —
 survives in full because nobody pays for a storm they do not open.
 
-It needs the same three states everything else here does: a button that says
-what it will cost, real progress while it runs, and a failure that says what
-failed. **And the same retention rule** — §57.34 applies to a shelf of downloaded
-storms exactly as it does to a basin, including the Settings entry. A reader who
-opens a dozen storms has a dozen downloads, and a store without an expiry rule is
-a store that will not get one.
+**2. The whole-basin file, for step 9.** *"31 storms have passed within 100
+miles since 1851"* is every season at once and cannot be answered a year at a
+time. That is a real reason to spend somebody's megabytes, and it is something
+they asked for by dragging the slider.
 
-**==> AND THE ORDINARY CASE DOES NOT GO THROUGH THIS GATE AT ALL. <==** Aaron's
-call 2026-08-24, and it corrects what this section used to say. The old text
-read *"the phone takes the whole file and parses it locally, rather than the
-server slicing seasons on request"* — the reasoning being that a progress bar
-for 30 KB is theatre. That is still true and it is an argument against the
-progress bar, not against the slicing.
+**Both need the same three states everything else here does** (§5): a button
+that says what it will cost, real progress while it runs, and a failure that
+says what failed. **Five megabytes over a phone's data plan earns a progress bar
+whether or not a byte of it is kept.**
 
-**The runner cuts each basin into one file per season** (§57.35 FIX 12,
-`SPEC-OPS.md` §18.8). Opening 2005 fetches **14 KB over the wire and parses in
-milliseconds**, with nothing downloaded, nothing stored and nothing to consent
-to. Measured on the real bytes, not estimated.
-
-**The phone still takes the whole file when it has a reason to**, and there are
-two: a basin the reader wants to work with **no signal**, and step 9's
-*"31 storms have passed within 100 miles since 1851"*, which is every season at
-once and cannot be answered a year at a time. Both are genuine reasons to spend
-somebody's megabytes, and both are things they asked for.
-
-The practical effect is that the gate stops standing between a reader and the
-feature. **Nobody pays anything to look around.** They pay when they ask for
-the ocean in their pocket.
+**==> AND NEITHER OF THEM PROMISES THE READER A STORE. <==** The old version of
+this section ended by telling them where the download lived and that it was
+removable in Settings. That promise went with step 8 and the sentence goes with
+it — the browser's own cache holds what it holds, on its own terms, and an app
+that offers to delete something it does not manage is lying in a small way about
+a large thing.
 
 The screen: the app's own mark (`#mark-spiral`, `--mark-plate: transparent`)
 turning on the `#boot-mark` animation — 2.4s, eased so it surges rather than
 tracking at constant rate, counter-clockwise to match the spiral drawn for real
 storms, with the reduced-motion breathe. Below it a progress bar that
-**animates `scaleX`, never `width`**. Below that: what is being fetched, how
-big, where it is stored, and that it is removable in Settings.
+**animates `scaleX`, never `width`**. Below that: what is being fetched and how
+big. **Progress is computed in one unit or the other and never mixed** — see
+§57.35 FAULT 5, which is the bug that screen is most likely to ship with.
 
-**A download that fails says so and offers a retry.** A stuck progress bar is
+**A fetch that fails says so and offers a retry.** A stuck progress bar is
 silence with a costume on.
 
 ### 57.25 What ports from the live app, and what does not
@@ -2394,18 +2399,53 @@ neither of the two things reverted for it was the cause. §57.22b.
 
 ---
 
-**STEP 8 — THE DOWNLOAD GATE, THE INDEX PASS, AND OFFLINE.**
-**This step owns most of §57.35.** Worker-based parse-once, IndexedDB per season,
-two-phase progress in consistent units, `navigator.storage.persist()`, the
-eviction state, and the service worker NOT precaching the data.
-§57.24, plus service-worker caching so a downloaded basin survives with no
-signal. Includes the failure state, the Settings entry from §57.34 rule 5, and
-**§57.34 rule 6 — the data cache must NOT be versioned with the app**, or every
-deploy silently deletes the user's download.
-**Aaron looks at:** the download on a phone, then **aeroplane mode**, then
-opening a season he has never visited. Then a push to `main`, then aeroplane
-mode again — the download must still be there.
-**Done when:** it works with the radio off, and it survives a deploy.
+**STEP 8 — ==> DELETED 2026-08-25. NOT SKIPPED, NOT DEFERRED. <==**
+
+**It was the download gate, the whole-basin index pass, IndexedDB, the eviction
+state and offline.** Aaron's call: *he does not need Seasons offline.*
+
+**The number stays as a permanent address and nothing renumbers.** Step 9 is
+still step 9. Code comments and other sections cite these numbers, so a step is
+deleted in place with its reason beside it rather than closing the gap (§12).
+
+**Two reasons, and the first one had already half-killed it.**
+
+**1. FIX 12 took the gate's job away** (§57.35, `tools/seasons-slice.mjs`). The
+runner cuts each basin into one file per season, so opening 2005 is **14 KB over
+the wire and 14 ms of parsing** — nothing downloaded, nothing stored, nothing to
+consent to. A gate exists to stand between a reader and a cost. There is no cost
+left on the ordinary path, so most of this step was already gating an empty room.
+
+**2. Offline was never asked for.** It is a real feature and it is somebody
+else's. What it buys — the archive in a plane seat — is worth an IndexedDB
+store, an eviction state, a persistence request, a two-phase progress screen, a
+Settings entry and an unversioned cache rule, and every one of those is a
+surface that can go silently wrong in the §5 way this whole feature is most
+exposed to: an archive that quietly looks empty. **Not building it deletes six
+failure modes rather than deferring them.**
+
+**WHAT DID NOT DIE WITH IT, because each earns its place for a reason that was
+never offline:**
+
+- **The whole-basin file, and the one-time Worker pass over it.** Step 9 answers
+  *"how many storms have passed within 100 miles since 1851"*, which is every
+  season at once and cannot be answered a year at a time. **That pass is now
+  step 9's to build and step 9's to size**, and it no longer arrives ready-made
+  from a step before it — the one real cost of this deletion, written down here
+  rather than discovered at step 9. §57.35 FAULT 1 and FAULT 2.
+- **A per-storm cost gate for Tier 2** (§57.24, step 12). One storm is ~5.4 MB.
+  That is worth telling somebody about before it moves, whether or not a byte of
+  it is ever stored.
+- **The service worker not precaching the data** (§57.35 FIX 9). That was never
+  about offline — precaching 22 MB taxes every visitor at install time.
+- **Cache-first for `/seasons/data/`** and `tools/test-sw-routing.mjs`. Those
+  make the archive load fast and correctly ONLINE, against files `_headers`
+  already declares immutable. Untouched by this.
+
+**§57.24, §57.34 rules 5 and 6, and §57.35 were gone through in the same pass**
+and everything in them that existed only to serve this step is deleted or
+rewritten there, rather than left standing as machinery pointing at a step that
+is not coming.
 
 ---
 
@@ -2516,7 +2556,7 @@ seasons/            entry, shell, mode state, deep links
 lib/hurdat.js       HURDAT2 + ATCF parsing into one shape        BUILT (step 2)
 lib/season-facts.js the derived figures in §57.15                BUILT (step 2)
 lib/near-home.js    line-to-point distance against a track       BUILT (step 2)
-data/seasons.js     fetch, cache, offline
+data/seasons.js     fetch and cache — NOT offline, see §57.30 step 8
 map/layers/season-*.js   track, landfall marks, swath, ghosts
 ui/view-seasons*.js      shelf, board, roster, detail
 config/tokens.js         + the SEPIA palette                     BUILT (step 1)
@@ -2596,7 +2636,10 @@ repo forever for no information.
 
 **Aaron's constraint, and it is a separate one from cost:** no store here may
 grow forever. Every place Seasons writes needs a rule for when it stops.
-Six places do. Two of them are easy to miss.
+**Four places do, and it used to be six** — rules 5 and 6 were about a store on
+the reader's device, and step 8's deletion (§57.30) means there is no longer one
+of those. Both are recorded below rather than removed, because a deleted rule
+that looks like an oversight invites somebody to re-derive it.
 
 **1. THE APPENDING BRANCH — SQUASHED AT GRADUATION.**
 It commits only when a file actually changes, so the off-season costs nothing.
@@ -2636,23 +2679,46 @@ independent reason step 11 (§57.30) is a decision session that happens BEFORE
 any capture: the shelf is short by design, and each addition is a door that does
 not close.
 
-**5. ON DEVICE — A SETTINGS ENTRY WITH A REAL SIZE AND A REAL DELETE.**
-*"Seasons data — 10.8 MB — Remove."* Actual bytes, not a guess. The download
-screen already promises this is removable; that promise has to be somewhere the
-user can find it later.
+**5. ==> ON DEVICE — DELETED 2026-08-25, BECAUSE THERE IS NO STORE. <==**
+It read *"Seasons data — 10.8 MB — Remove"*, actual bytes, not a guess. It
+existed for exactly one reason: step 8's download screen promised the download
+was removable, and a promise has to be somewhere the user can find it later.
 
-**6. ==> THE SEASONS DATA CACHE MUST NOT BE VERSIONED WITH THE APP. <==**
-The easiest catastrophic mistake in this whole feature.
+**Step 8 is deleted and so is the promise** (§57.24). Seasons now writes nothing
+to the device that it manages. What the browser's own cache holds, it holds on
+its own terms, and offering a Remove button for storage we do not own would be
+a control that cannot keep its word.
 
-The service worker versions its caches and purges old ones on activate, which is
-correct for application code. **If the downloaded seasons data lives in a cache
-named the same way, every single deploy silently deletes the user's 11 MB
-download** — and they discover it the next time they open Seasons on a plane,
-which is exactly the moment the feature was built for.
+**What would bring it back:** anything in this feature that writes a store we
+manage and can measure. Step 9's precomputed near-home numbers are the nearest
+candidate and do not qualify — a couple of thousand numbers is a few KB, and a
+Settings row quoting it would be noise.
 
-The seasons data cache carries its own unversioned name, is excluded from the
-purge sweep, and survives app updates. It is cleared by exactly two things: the
-Settings action in rule 5, and the user clearing site data.
+**6. ==> THE SEASONS DATA CACHE — REWRITTEN 2026-08-25, AND IT IS NOW A TRAP
+RATHER THAN A RULE. <==**
+
+It used to read: the seasons data cache must not be versioned with the app,
+because the service worker purges old caches on activate, so **every deploy would
+silently delete the user's 11 MB download** — and they would discover it the next
+time they opened Seasons on a plane, which is exactly the moment the feature was
+built for. It was called the easiest catastrophic mistake in this whole feature.
+
+**There is no 11 MB download any more** (§57.30 step 8), so there is no
+catastrophe and nothing to protect. As built, `/seasons/data/` sits in the
+ordinary versioned cache and a deploy costs a reader **a 14 KB refetch per year
+they revisit**, which nobody minds and nobody notices.
+
+**The trap is still real for the first thing that is big enough**, and that is
+step 12's Tier 2 storms at ~5.4 MB each. If one of those ever becomes cache-first
+in the versioned cache, every deploy re-fetches it. **The rule for that day: a
+Seasons artefact large enough that re-fetching it hurts gets its own unversioned
+cache name and is excluded from the purge sweep.** Nothing today qualifies.
+
+**Cache-first for `/seasons/data/` is not this rule and is not affected by it.**
+That entry exists because the filenames carry NOAA's revision stamp and
+`_headers` already serves them `immutable` — without it the worker would force a
+revalidation round trip on a file the HTTP layer had just been told to keep.
+`sw.js` says so at the entry, and `tools/test-sw-routing.mjs` holds it.
 
 **7. Seasons writes nothing into live stores.** §57.2. It is listed again here
 because the ended-storm store is the one place in this app that already grew a
@@ -2666,14 +2732,26 @@ three separate performance faults in one sentence. What follows replaces it.
 
 **THE SHAPE, END TO END**
 
+**==> AND THE ORDINARY SHAPE CHANGED TWICE SINCE THIS WAS WRITTEN. <==** FIX 12
+cut the file into seasons on the runner, and step 8's deletion (§57.30) took the
+device store away entirely. So there are two shapes now, and the first one is
+what almost every reader gets:
+
 ```
-NOAA  --(runner, yearly, conditional GET)-->  repo, static asset
-repo  --(one request, gzipped, our origin)-->  phone
-phone --(ONE parse, in a Worker, at download time)--> IndexedDB, per season
-IndexedDB --(one season, ~30 KB)--> the globe
+THE ORDINARY PATH — browsing a year
+NOAA  --(runner, yearly, conditional GET)-->  repo, whole basin
+basin --(runner, sliced per season)-->        repo, one file per year
+repo  --(one request, 14 KB gzipped)-->       the globe, parsed in 14 ms
 ```
 
-Everything below is a rule that shape has to keep.
+```
+THE WHOLE-BASIN PATH — step 9 only, and nothing else reaches it
+repo  --(one request, ~1.4 MB gzipped)-->     phone
+phone --(ONE parse, in a Worker)-->           ~2,000 near-home numbers, resident
+```
+
+Everything below is a rule one of those two shapes has to keep, and each fault
+now says which.
 
 **FAULT 1 — PARSING ON EVERY OPEN. The worst of them.**
 
@@ -2690,12 +2768,23 @@ data and touches no parser at all.
 The download screen therefore has **two phases, and must say so**: *Downloading*
 then *Indexing*. Both are real work and the second is not instant.
 
-**==> ALL OF WHICH IS STILL TRUE, AND FIX 12 BELOW MEANS THE ORDINARY READER
-NEVER REACHES IT. <==** Everything above applies to somebody downloading a
-whole basin. Browsing a year goes through a per-season file instead — 14 KB,
-milliseconds, no Worker and no store. The Worker pass is what step 8 builds for
-the two cases that genuinely need the whole thing, rather than the toll gate on
-the way in.
+**==> ALL OF WHICH IS STILL TRUE, AND ALMOST NOBODY REACHES IT. <==** Everything
+above applies to a pass over a WHOLE BASIN. Browsing a year goes through a
+per-season file instead — 14 KB, milliseconds, no Worker and no store (FIX 12).
+
+**==> AND `IndexedDB, PER SEASON` IS DELETED. <==** 2026-08-25, with step 8
+(§57.30). A per-season record in a store was worth building when the alternative
+was re-parsing 6.8 MB; against a 14 KB file that parses in 14 ms it is a store
+with an eviction problem, a versioning problem and an is-it-still-there problem,
+in exchange for nothing measurable.
+
+**What survives is the Worker pass itself, and it belongs to step 9 now.** One
+walk over the whole basin, off the main thread, producing the near-home numbers
+in FAULT 2 — a couple of thousand of them, held in memory (FIX 7), recomputed
+when home moves. **The two phases and the honest naming survive with it**:
+*Downloading* then *Indexing*, because the second is real work and is not
+instant. Step 9 sizes that pass; it no longer arrives ready-made from a step
+before it.
 
 **FAULT 2 — THE NEAR-HOME SLIDER WOULD SCAN THE WHOLE ARCHIVE.**
 
@@ -2703,9 +2792,11 @@ the way in.
 across 175 years that is roughly 2,000 storms and 80,000 segments. **Doing that
 on a slider drag freezes the app on every pixel.**
 
-**Precompute at index time.** During the same Worker pass as FAULT 1, store per
+**Precompute at index time.** During the same Worker pass as FAULT 1, hold per
 storm: **minimum distance to home, and the strength at that point.** The slider
 then filters about 2,000 precomputed numbers, which is instant and stays instant.
+**This whole fault is step 9's and is untouched by step 8's deletion** — nothing
+in it was ever about offline.
 
 - Bounding-box reject before precise distance, or the index pass is slow too.
 - **Home moving invalidates it** — recompute once, in the Worker, on home change.
@@ -2750,6 +2841,11 @@ quotes what is actually transferred, not the uncompressed file size — telling
 someone 6.8 MB when 1.4 MB moves is a small lie in a place that is asking for
 their patience.
 
+**Kept after step 8's deletion, for a reason that was never offline:** two things
+still show a progress bar over a compressed body — step 9's whole-basin fetch and
+step 12's ~5.4 MB Tier 2 storm (§57.24) — and both would sail past 400% the same
+way.
+
 **FIX 6 — THE PHONE NEVER TALKS TO NOAA.**
 
 The runner fetches from NOAA once a year and **commits the file to the repo**.
@@ -2766,28 +2862,44 @@ on a request. Six-hourly data does not need a live query.
 **FIX 7 — NEVER HOLD THE WHOLE ARCHIVE IN MEMORY.**
 
 175 years parsed into JS objects is tens of megabytes of heap, on a device that
-will kill the tab for less. **One season in memory at a time**, read from
-IndexedDB on entry and dropped on leave. The near-home index (FAULT 2) is the
-one small thing allowed to stay resident, because it is a couple of thousand
-numbers.
+will kill the tab for less. **One season in memory at a time**, fetched on entry
+and dropped on leave — which is what `ui/seasons-board-loading.js` does today,
+replacing `entries` wholesale on every year change. The near-home index (FAULT 2)
+is the one small thing allowed to stay resident, because it is a couple of
+thousand numbers. **Unchanged by step 8's deletion; the source is a 14 KB file
+rather than an IndexedDB read, and the rule is the same either way.**
 
-**FIX 8 — iOS EVICTS STORAGE, AND THE APP MUST NOT LIE ABOUT IT.**
+**FIX 8 — ==> DELETED 2026-08-25 WITH STEP 8, MINUS ONE SENTENCE. <==**
 
-Safari clears site storage for sites not visited in about a week. Installing to
-the home screen helps and `navigator.storage.persist()` helps, and neither is a
-guarantee.
+It read: Safari clears site storage for sites not visited in about a week,
+`navigator.storage.persist()` helps and does not guarantee, so **request
+persistence and handle the data being gone as a first-class state** — a plain
+line saying the download was cleared by the device and a button to fetch it
+again, because an archive that quietly looks empty is exactly the silence §5
+forbids.
 
-**Request persistence, and handle the data being gone as a first-class state.**
-Not an empty archive, not a spinner — a plain line saying the download was
-cleared by the device, and the button to fetch it again. An archive that quietly
-looks empty is exactly the silence §5 forbids.
+**Every word of that was about a download that no longer exists** (§57.30 step
+8). There is nothing on the device to be evicted, so there is nothing to lie
+about: a cleared cache costs a 14 KB refetch that the reader never sees.
+
+**The one sentence that survives, because it is a §5 rule rather than a storage
+rule:** if step 9 ever holds its precomputed near-home numbers anywhere and they
+are not there, that means **recompute quietly**, never *an archive with no
+storms in it*. Absence is this feature's whole subject and it is the one thing
+it must never accidentally state.
 
 **FIX 9 — THE SERVICE WORKER MUST NOT PRECACHE THE DATA.**
 
 If it lands in the install-time precache list, **every visitor downloads
-megabytes they never asked for** and the whole point of §57.24's gate is gone.
-The data is fetched on request and cached on demand, in the unversioned cache
-from §57.34 rule 6.
+megabytes they never asked for** — a boot-time tax on every session, including
+the overwhelming majority that never open Seasons at all. The data is fetched on
+request and cached on demand.
+
+**This one is untouched by step 8's deletion and the reason is worth stating,
+because the rest of this section lost its offline half:** FIX 9 was never about
+offline. It is about what the app costs somebody who is not using this feature,
+which is the same argument as FAULT 4. `sw.js`'s precache list is three entries
+and `tools/test-sw-routing.mjs` holds it.
 
 **FIX 10 — CONDITIONAL REQUESTS TO NOAA, WHICH ALSO GIVE US CHANGE DETECTION.**
 
@@ -2822,10 +2934,15 @@ Measured on the real 2005 Atlantic bytes:
 | Parse | seconds, needs a Worker | **14 ms in node** |
 | Needs | download gate, progress, IndexedDB | **nothing** |
 
-So FAULT 1's Worker, FAULT 2's precomputed index, FAULT 5's progress units and
-FIX 8's eviction state all stop being prerequisites for looking at a year. They
-remain exactly what step 8 and step 9 need for the whole-basin download, which
-is not deleted — offline and near-home-since-1851 both genuinely want it.
+So FAULT 1's Worker, FAULT 2's precomputed index and FAULT 5's progress units all
+stop being prerequisites for looking at a year.
+
+**==> AND ON 2026-08-25 THAT ARGUMENT FINISHED WHAT IT STARTED. <==** This
+paragraph used to end *"they remain exactly what step 8 and step 9 need for the
+whole-basin download."* Step 8 is deleted (§57.30) and **step 9 is the only
+caller left.** The whole-basin file is not deleted and must not be — near-home-
+since-1851 is every season at once — but everything above it now belongs to one
+step rather than two, and FIX 8's eviction state went entirely.
 
 **The cut is verified against the whole file before any of it is written**, and
 that gate is the important half of this fix rather than the slicing. A slice

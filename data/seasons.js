@@ -5,8 +5,9 @@
  * monthly runner cuts each HURDAT2 basin into one file per year (§57.35 FIX 12,
  * `SPEC-OPS.md` §18.8), so opening 2005 costs 13.5 KB over the wire — measured,
  * gzipped, against the 119 KB the file is on disk — and about 14 ms of parsing.
- * The whole-basin file still exists for step 8's offline download and step 9's
- * since-1851 index; nothing on THIS path ever touches it.
+ * The whole-basin file still exists for step 9's since-1851 index, which is now
+ * its only reader — step 8's offline download was the other one and was deleted
+ * on 2026-08-25 (§57.30). Nothing on THIS path ever touches it.
  *
  * ==> EVERY FILENAME CARRIES NOAA'S REVISION STAMP, SO NOTHING HERE BUSTS A
  * CACHE. <== `atlantic-2005-02272026.txt` is immutable for a year by `_headers`
@@ -27,9 +28,10 @@
  *
  * CACHED IN MEMORY FOR THE SESSION, and deliberately not beyond it. A reader
  * flipping between 2004 and 2005 should pay once; a reader who closes the tab
- * should not have this competing for the same storage step 8 is going to ask
- * for properly. The browser's own HTTP cache does the durable half already,
- * because every one of these URLs is immutable.
+ * gets the durable half from the browser's own HTTP cache, because every one of
+ * these URLs is immutable. **Seasons keeps no store of its own on the device and
+ * is not going to** — §57.30 step 8 was deleted on 2026-08-25 and §57.34 rules 5
+ * and 6 went with it.
  *
  * Imports config/ and lib/. No DOM, no map.
  */

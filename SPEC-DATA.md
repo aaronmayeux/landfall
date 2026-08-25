@@ -3416,8 +3416,14 @@ cache-first lists goes through `networkFirst()`, which fetches with
 `cache: 'no-cache'` — a forced revalidation on every load. So for as long as
 `/seasons/data/` was absent from `IMMUTABLE_PATHS`, the worker was quietly
 undoing the `immutable` header above. It is now cache-first there, matching
-`_headers`, which also means the archive works offline. **A caching decision
-about a path is not made until it is made in BOTH files.**
+`_headers`. **A caching decision about a path is not made until it is made in
+BOTH files.**
+
+**==> AND THIS IS A SPEED DECISION, NOT AN OFFLINE ONE. <==** Corrected
+2026-08-25. It used to end *"which also means the archive works offline"*, which
+was true and is now a misleading reason to point at: Seasons' offline step was
+deleted (`SPEC-SEASONS-BUILD.md` §57.30 step 8). What this entry buys is a saved
+revalidation round trip on a file the HTTP layer was already told to keep.
 
 Two things follow, both load-bearing: the `.txt` extension had to be added to
 `typeMatchesUrl()` in the same change, because cache-first turns a transient

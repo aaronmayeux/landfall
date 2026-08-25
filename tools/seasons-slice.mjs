@@ -3,17 +3,22 @@
  * SPEC-SEASONS-BUILD.md §57.24, §57.35 FIX 12. SPEC-OPS.md §18.8.
  *
  * ==> WHY THIS EXISTS. <== §57.35 FAULT 1 is right that re-parsing 6.75 MB on
- * every open is unaffordable, and the fix it prescribes — download the whole
- * basin, parse it once in a Worker, keep it in IndexedDB — is a large piece of
- * machinery that belongs to step 8. Cutting the file into seasons on the RUNNER
- * makes the whole question disappear for the ordinary case: opening 2005 fetches
- * 119 KB (14 KB over the wire, measured on the real bytes) and parses in
- * single-digit milliseconds, on any thread, with nothing stored.
+ * every open is unaffordable, and the fix it prescribed — download the whole
+ * basin, parse it once in a Worker, keep it in IndexedDB — was a large piece of
+ * machinery. Cutting the file into seasons on the RUNNER makes the whole
+ * question disappear for the ordinary case: opening 2005 fetches 119 KB (14 KB
+ * over the wire, measured on the real bytes) and parses in single-digit
+ * milliseconds, on any thread, with nothing stored.
  *
- * The whole-basin download is NOT deleted by this. It is still what step 9's
- * "how many storms have passed within 100 miles since 1851" needs, and it is
- * still what makes a basin work with no signal. It stops being the only road
- * in, which is the part that was blocking a board from existing at all.
+ * ==> AND IT ENDED UP TAKING THAT MACHINERY WITH IT. <== 2026-08-25: step 8 —
+ * the download gate, IndexedDB, the eviction state and offline — was deleted
+ * outright (§57.30), and this slicing is half the reason it could be. A gate
+ * exists to stand between a reader and a cost, and there is no cost left on the
+ * ordinary path.
+ *
+ * The whole-basin file is NOT deleted by this. It is still what step 9's
+ * "how many storms have passed within 100 miles since 1851" needs, and step 9
+ * is now its only reader.
  *
  * ==> THE SLICES ARE A VERBATIM CUT AND NOTHING IS EDITORIALISED. <== Lines go
  * out exactly as NOAA wrote them, invests and test numbers included. The app's
