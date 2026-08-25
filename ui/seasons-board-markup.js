@@ -20,6 +20,7 @@
 
 import { SEASONS } from '../config/constants.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
+import { stormDisplayName } from '../lib/season-names.js';
 import { dotted } from './loading-dots.js';
 
 export const esc = (s) =>
@@ -72,12 +73,11 @@ export function dateRange(facts) {
   return a === b ? a : `${a} – ${b}`;
 }
 
-/** How a storm is called on a row. §57.14: an unnamed storm displays as its
- *  number, never as a blank and never as the spelled-out number NOAA wrote in
- *  the name column (`lib/hurdat.js` folds those into unnamed). */
-export function displayName(storm) {
-  return storm?.name || `Storm ${storm?.number ?? '?'}`;
-}
+/** How a storm is called on a row — and, since step 6, along its track on the
+ *  globe. The rule moved to `lib/season-names.js` when it got that second
+ *  caller; this re-export is here so the markup's own callers below read the
+ *  same as they always did. */
+export const displayName = stormDisplayName;
 
 /* ---------------------------------------------------------------------------
  * THE PICKER
@@ -263,7 +263,7 @@ export function rowHtml({ storm, facts, on }) {
     : '';
 
   return `
-      <li class="seasons-row">
+      <li class="seasons-row" data-row="${esc(storm.id)}">
         <label class="seasons-check">
           <input type="checkbox" data-storm="${esc(storm.id)}" ${on ? 'checked' : ''}
                  aria-label="${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
@@ -273,6 +273,58 @@ export function rowHtml({ storm, facts, on }) {
           ${lf}
         </label>
       </li>`;
+}
+
+/**
+ * The current season could not be reached.
+ *
+ * ==> IT IS SAID ON EVERY SETTLED YEAR, NOT ONLY WHERE 2026 WOULD HAVE SAT.
+ * <== There is no row to hang it on: the year is simply absent from the
+ * picker, and an absent option explains nothing. A reader who came to see
+ * what is happening now needs to know the road is down rather than conclude
+ * the archive stops at last year.
+ *
+ * ==> MOVED HERE FROM THE VIEW WHEN THAT FILE CROSSED §12'S 700-LINE CEILING.
+ * <== It was always a markup function living outside the markup file, and it
+ * is TOLD what to draw rather than reading state, the same as everything else
+ * in here — `null` and flags in, a string out. Nothing about the behaviour
+ * moved with it.
+ *
+ * @param {object} opts
+ * @param {boolean} opts.hasLive  does this basin have a season in progress at
+ *   all? A basin with none has nothing to say, which is honest silence rather
+ *   than an error (§5)
+ * @param {boolean} opts.retrying a second attempt is in the air
+ * @param {string} opts.reason    why it could not be reached; empty when it was
+ */
+export function liveDownHtml({ hasLive, retrying, reason }) {
+  if (!hasLive) return '';
+  if (retrying) return waitingHtml('Looking for the season still running…');
+  if (!reason) return '';
+  /* ==> AND IT GETS A BUTTON, BECAUSE THIS ONE CAN ACTUALLY SUCCEED. <== §5
+   * asks every error state for a recovery action, and the distinction the
+   * rest of this board draws is whether pressing it could ever work: a year
+   * the archive does not hold gets no Retry, a road that was down for a
+   * moment does. `data/seasons-live.js` drops a failed fetch out of its own
+   * map, so this is a real second attempt rather than a replay. */
+  return `<p class="seasons-note seasons-bad">The season still running could not
+      be reached, so it is not in the list above. The settled years are all here.</p>
+      <button class="seasons-retry" type="button" data-retry="live">Try again</button>`;
+}
+
+/**
+ * The way back from focus, for a keyboard and for a thumb that missed the
+ * ocean. §57.21 item 2, §13.
+ *
+ * ==> IT IS ALWAYS IN THE MARKUP AND `hidden` MOST OF THE TIME. <== Focus
+ * moves on every tap on a track, and a control that appeared and disappeared
+ * from the DOM would mean rebuilding the roster on the feature's most frequent
+ * interaction — which costs the reader their scroll position and their focus
+ * ring. `hidden` takes it out of the tab order and off the screen without
+ * touching anything around it, so the view can toggle one property instead.
+ */
+export function showAllHtml() {
+  return `<button class="seasons-showall" type="button" hidden>Show all evenly</button>`;
 }
 
 /**
