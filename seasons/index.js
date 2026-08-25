@@ -151,8 +151,16 @@ export function openSeasons({
     season: link?.season ?? null,
     storms: link?.storms ?? [],
     returnFocusTo,
+    from,
     bar,
     handle: null,
+    /* ==> THE ENTRY FLIGHT HAPPENS ONCE PER VISIT AND THIS IS WHAT MAKES IT
+     * ONCE. <== `onWhere` is the hook that fires the moment the board has
+     * settled a season, which is the first moment the basin is KNOWN — but it
+     * also fires on every tick, every filter and every focus, and a camera
+     * that chased those would fly back to the basin every time the reader
+     * ticked a storm. §57.21c. */
+    flownIn: false,
   };
 
   function leave() {
@@ -325,6 +333,22 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * `2025 · Atlantic` over the top of it would silently swallow the one
      * message the words exist to carry (§5). */
     onWhere: (where) => safely(() => {
+      /* ==> THE ENTRY FLIGHT RIDES ON THIS HOOK BECAUSE IT IS THE FIRST MOMENT
+       * THE BASIN IS KNOWN. §57.21c item 5. <== Flying at `openSeasons` time
+       * would mean flying before the index has been read, when the season and
+       * its basin are both still null — so the storm-list door could only ever
+       * have gone to a default. It is deliberately OUTSIDE the bad-link guard
+       * below: a reader sent a broken `?season=` still gets a camera pointed
+       * somewhere sensible while the bar tells them the link was wrong.
+       *
+       * The once-flag is not an optimisation. `onWhere` fires on every tick,
+       * every filter change and every focus, and without it the globe would
+       * fly back to the basin each time somebody ticked a storm — including
+       * straight after `flyToStorm` had just framed one. */
+      if (where && !session?.flownIn && session) {
+        session.flownIn = true;
+        currentArchiveGlobe?.flyToEntry?.({ from: session.from, basin: where.basin });
+      }
       if (linkReason === 'malformed' || linkReason === 'out-of-range') return;
       /* ==> THE BOARD REPORTS FACTS AND THE BAR OWNS THE WORDS. §57.21b item
        * 8. <== `barDetail` is a pure function in `seasons/bar.js`, so the
@@ -339,7 +363,38 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * lands the reader on the roster they came from with their scroll position
      * and their ticks intact. `go` would throw that history away and leave
      * Back walking out of the archive entirely. */
-    onOpenStorm: (id) => safely(() => drawer?.push?.('season-detail', id)),
+    onOpenStorm: (id) => safely(() => {
+      drawer?.push?.('season-detail', id);
+      /* ==> AND THE GLOBE GOES WITH THE PANEL. §57.21c item 4. <== The reader
+       * asked to read about one storm; the strip of globe left above the sheet
+       * should be showing it rather than whatever ocean they were last
+       * looking at.
+       *
+       * ==> IT HANDS OVER POINTS, NOT THE STORM. <== `seasons/` must never let
+       * anything about `map/` leak in, and the reverse holds too: the camera
+       * has no business knowing what a season entry looks like. A list of
+       * coordinates is the smallest thing that crosses the wall.
+       *
+       * AFTER the push, so the drawer is up and `archiveOffset()` measures the
+       * sheet that is actually going to be there. Measuring first would centre
+       * the storm on the whole screen and then let the sheet slide up over it,
+       * which is the exact bug the offset exists to prevent.
+       *
+       * A storm the roster cannot find, or one with no usable fix, simply does
+       * not move the camera — the panel still opens and says what it knows. */
+      const entry = boardView?.currentEntries?.().find((e) => e.storm.id === id);
+      if (!entry) return;
+      /* ==> A STILL-RUNNING STORM OPENS ITS PANEL AND THE CAMERA STAYS PUT.
+       * §57.21c. <== `showStorm` already refuses to tick or focus one, because
+       * it is deliberately not on the sepia globe. Flying to it would be the
+       * same disagreement in a new place: a several-second flight ending on a
+       * patch of empty ocean, with a panel of figures beside it about a storm
+       * that is not drawn there. The reader would reasonably read the blank
+       * water as a rendering fault rather than as the rule it is. */
+      const running = currentLiveRunningIds?.();
+      if (running?.has(String(id).toLowerCase())) return;
+      currentArchiveGlobe?.flyToStorm?.(entry.storm.points || []);
+    }),
 
     /* ==> THE ONE QUESTION THE ARCHIVE HAS TO ASK THE LIVE APP. §57.21c. <==
      * Which storms are still happening, so the roster can say `– active` and

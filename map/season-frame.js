@@ -94,12 +94,13 @@ export function flyToArchiveEntry(map, { from, basin, home, offset }) {
  * puts the white direction ring and the name there, and §57.21c puts the glyph
  * there. The reader is flown to the thing with a mark on it.
  *
- * ==> AND THAT DELETED THE SEAM ARITHMETIC RATHER THAN SOLVING IT. <== The
+ * ==> AND THAT DELETED THE SEAM ARITHMETIC RATHER THAN MOVING IT. <== The
  * whole-track version took bounds off `lonU`, the unwrapped longitude, because
  * a min/max over raw values on a dateline-crossing storm reports a track
- * spanning the planet. There is no span here, so there is nothing to unwrap —
- * and the seam now bites the OTHER way round, which is why the point below is
- * read off `lon` and not `lonU`. See the note on it.
+ * spanning the planet. There is no span here, so there is nothing to unwrap,
+ * and — checked rather than assumed — the first fix's `lonU` and `lon` are
+ * equal by construction anyway. The note on the flight says why that matters
+ * more than it sounds.
  *
  * @param {object} map
  * @param {Array<{lon:number, lat:number}>} points  the storm's recorded fixes,
@@ -114,23 +115,26 @@ export function flyToArchiveStorm(map, points, { offset } = {}) {
   );
   if (!first) return false;
 
-  /* ==> `lon`, THE PUBLISHED LONGITUDE, AND NEVER `lonU`. <== This is the one
-   * seam decision left in the archive's camera and it is the reverse of the
-   * one the whole-track fit had to make. `lonU` is unwrapped so that a track
-   * crossing ±180 draws as one continuous line rather than jumping the map, so
-   * a storm's later fixes can carry values like 185 or -190 — and `lib/hurdat.js`
-   * unwraps relative to the FIRST fix, which means a start fix at 179.4°E can
-   * itself be handed to the camera as a number outside ±180 in a record that
-   * was unwrapped the other way.
+  /* ==> `lon`, THE PUBLISHED LONGITUDE. AND THE SEAM IS NOT THE REASON — THAT
+   * WAS CHECKED AND IT IS NOT TRUE HERE. <== The whole-track version this
+   * replaced had to take bounds off `lonU` or a dateline-crossing storm
+   * reported a planet-wide span. It is tempting to carry that rule across, and
+   * it would be cargo: `lib/hurdat.js` anchors its unwrap at the FIRST fix
+   * (`points[0].lonU = points[0].lon`, line 138), so on the point being framed
+   * the two properties are equal by construction. Della, the repo's seam
+   * fixture, cannot show a difference here and neither can anything else.
    *
-   * MapLibre takes a centre longitude literally and flies the short way to the
-   * number it is given, so an out-of-range value sends the camera the long way
-   * round the planet — a several-second flight across the wrong hemisphere to
-   * arrive at a point it was already next to. The published value is always in
-   * range and always names the right place, and there is no line being drawn
-   * here for an unwrap to keep continuous. `tools/test-season-frame.mjs` drives
-   * Della (CP011957), the repo's seam fixture, and the mutation is swapping
-   * this one property. */
+   * ==> SO THERE IS NO MUTATION TO WRITE FOR THIS AND NO TEST CLAIMING TO
+   * GUARD IT. <== §12 calls a test that passes on the same wrong assumption as
+   * the bug worse than no test, and a dateline case asserting these two agree
+   * would be exactly that — green forever, guarding nothing, and read by the
+   * next session as proof the seam is handled.
+   *
+   * `lon` is still the right property for two smaller reasons. It is the value
+   * the agency published and it always names the right place; and `find` above
+   * falls through to a LATER fix when the first one is unusable, and a later
+   * fix's `lonU` genuinely can sit outside ±180, which MapLibre would take
+   * literally and fly the long way round to reach. */
   flyToPoint(map, { lon: first.lon, lat: first.lat }, {
     zoom: SEASONS.stormZoom,
     offset,
