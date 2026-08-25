@@ -183,6 +183,11 @@ export function createHomeDashboardView({
    */
   let stepper = null;
 
+  /** The archive door, built once in `mount` and re-attached by `afterRender`.
+   *  Held here rather than looked up, because `render()`'s `innerHTML` write
+   *  detaches it — the reference is what survives, and with it the listener. */
+  let doorEl = null;
+
   const buildStepper = () => createStormStepper({
     siblings: () => currentThreat()?.ranked || [],
     current: () => currentThreat()?.storm || null,
@@ -219,7 +224,14 @@ export function createHomeDashboardView({
      * "what does this mean for my house", and the archive answers the same
      * question in the past tense. Right now it opens the plain archive; step 9
      * is what makes it open with the near-home filter already applied. */
-    if (onOpenSeasons) host.appendChild(createSeasonsDoor({ from: 'home', onOpen: onOpenSeasons }));
+    /* Built once, appended by `afterRender` at the foot of the scrolling body
+     * (§57.21b item 7). It is the LAST thing in the scroll on purpose: §57.16
+     * calls this the better door because Home already answers "what does this
+     * mean for my house", and the archive answers the same question in the
+     * past tense — but it is still a once-in-a-while trip, and a footer is
+     * where a reader looks for one. Step 9 is what makes it open with the
+     * near-home filter already applied. */
+    if (onOpenSeasons) doorEl = createSeasonsDoor({ from: 'home', onOpen: onOpenSeasons });
     host.addEventListener('click', onClick);
     render();
   }
@@ -404,6 +416,22 @@ export function createHomeDashboardView({
   function afterRender() {
     stepper?.render();
     requestChrome?.();
+    /* ==> AND THE ARCHIVE DOOR GOES BACK INTO THE SCROLL. §57.21b item 7. <==
+     * It used to be pinned BELOW the scroller as a sibling, for a mechanical
+     * reason rather than a design one: `render()` rewrites the body on every
+     * poll, so anything inside it is gone on the next tick. The cost was that
+     * a permanent bar sat under the dashboard taking a row of height from
+     * every screen forever, including the ones where the reader is trying to
+     * read a storm.
+     *
+     * ==> THE FIX IS TO RE-ATTACH THE SAME NODE, NOT TO REBUILD IT. <== The
+     * element is built once in `mount` and survives the `innerHTML` wipe as a
+     * detached node, so its click listener comes back with it. Appending it
+     * here rather than inside each of the five render paths is what keeps it
+     * on all of them — the same reason the stepper and the header are updated
+     * from this function. */
+    const el = body();
+    if (el && doorEl) el.appendChild(doorEl);
   }
 
   /* ---------------------------------------------------------------------- */
