@@ -379,6 +379,21 @@ html[data-seasons="on"] #btn-layers {
 
 .seasons-showall[hidden] { display: none; }
 
+/* Why the focused storm has no wind footprint (§57.26a). The slot is always in
+   the markup and empty most of the time — the view writes into it rather than
+   rebuilding the roster, because focus moves on every tap on a track.
+
+   `:empty` rather than a `hidden` attribute, so the view sets one property
+   (`innerHTML`) instead of two that could disagree. An empty box would still
+   take its margin and push the roster down by a line every time nothing needed
+   saying, which reads as the list twitching under the reader's thumb. */
+.seasons-footprint:empty { display: none; }
+
+/* The note inside it carries the roster's spacing above and none below — it
+   sits directly on top of the list it is about, and a gap there would read as
+   a note about the whole season rather than about the one bright storm. */
+.seasons-footprint .seasons-note { margin-bottom: 0; }
+
 /* The whole row is the label, so the tap target is the row rather than the
    checkbox — a 44px box in a 320px row is a target most thumbs miss (§13). */
 .seasons-check {

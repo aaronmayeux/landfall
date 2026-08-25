@@ -328,6 +328,125 @@ export function showAllHtml() {
 }
 
 /**
+ * The empty slot the footprint note is written into. §57.26a.
+ *
+ * ==> ALWAYS IN THE MARKUP, EMPTY MOST OF THE TIME, FOR THE SAME REASON
+ * `showAllHtml` IS. <== Its content depends on which storm is focused, and
+ * focus moves on every tap on a track. Rebuilding the roster to say one
+ * sentence would cost the reader their scroll position and their focus ring on
+ * the feature's most frequent interaction — so the view patches this one
+ * element instead, exactly as it patches the row classes.
+ *
+ * `role="status"` because it appears in response to the reader's own action
+ * and a screen reader should hear it without being moved there. It is polite
+ * by default, so it waits its turn rather than interrupting.
+ */
+export function footprintSlotHtml() {
+  return `<div class="seasons-footprint" role="status"></div>`;
+}
+
+/**
+ * The whole roster block — the list, or the reason there is no list.
+ *
+ * ==> IT MOVED HERE WHEN §12'S CEILING WAS CROSSED A SECOND TIME, AND IT IS
+ * THE SAME CUT `liveDownHtml` TOOK. <== Step 6b's footprint slot carried
+ * `ui/view-seasons-board.js` to 705 lines. This was the piece that had least
+ * business being there: assembling a roster is markup work, and every decision
+ * in it was already being made by the view and passed down. Nothing about the
+ * behaviour moved with it.
+ *
+ * TOLD, NOT READING. `ghosts` arrives as the roster or as `null` — the view
+ * decides that a narrowed list gets no whole-season ghost line, because
+ * "eighteen names are still unused" is a claim about the season and printing
+ * it under a Majors list would put an unfiltered fact at the foot of a
+ * filtered one (§57.18a). This file never learns what the filter is.
+ *
+ * @param {object} opts
+ * @param {string} opts.state       'loading' | 'unavailable' | 'ok'
+ * @param {string} opts.reason      why the season could not be read
+ * @param {number} opts.year
+ * @param {boolean} opts.provisional  is this the season still running
+ * @param {Array<{storm:object,facts:object}>} opts.rows  already filtered
+ * @param {boolean} opts.anyEntries   did the season have storms BEFORE the
+ *   filter — an empty list means two different things and this is which
+ * @param {Set<string>} opts.ticked
+ * @param {object|null} opts.ghosts   the unused-name roster, or null
+ */
+export function seasonRosterHtml({
+  state, reason, year, provisional, rows, anyEntries, ticked, ghosts,
+}) {
+  if (state === 'loading') {
+    return waitingHtml(provisional ? 'Reading this season…' : 'Reading the record…');
+  }
+  if (state === 'unavailable') return seasonFailedHtml({ year, reason });
+
+  if (!rows.length) {
+    return `
+        ${emptyRosterHtml({ year, filtered: anyEntries, provisional })}
+        ${ghostsHtml(ghosts)}`;
+  }
+
+  const list = rows
+    .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
+    .join('');
+
+  return `
+      ${showAllHtml()}
+      ${footprintSlotHtml()}
+      <ul class="seasons-roster">${list}</ul>
+      ${ghostsHtml(ghosts)}`;
+}
+
+/**
+ * Why the focused storm has no wind footprint. §57.25 rule 2, §57.26a.
+ *
+ * ==> THE SENTENCE IS THE WHOLE POINT OF STEP 6b, NOT A CAPTION ON IT. <==
+ * Three quarters of the archive has no wind field — measured, 826 storms of
+ * 3,266 — so for most of what a reader opens, this line IS the feature. §57.25
+ * asks it to teach something true about the record rather than read as a
+ * missing button, and that is the thing to judge on glass.
+ *
+ * ==> TWO WORDINGS, AND THE SECOND ONE EXISTS SO THE FIRST CANNOT LIE. <== The
+ * era sentence is only said for a storm from before the first season that
+ * records a wind field. A 2004-or-later storm with nothing to draw gets a
+ * plain statement instead, because "wasn't recorded before 2004" would be a
+ * claim about the record that this storm is the counter-example to. Every
+ * settled season measures 100% coverage from 2004 on, so in practice the
+ * second wording is for the season still running, whose b-decks are a
+ * different source — which is exactly the case worth not guessing about.
+ *
+ * ==> AND IT IS SILENT WHEN THERE IS A FOOTPRINT. <== §57.25's rule is that an
+ * absence which is information gets said; a presence speaks for itself, and
+ * the shape is on the globe. A line reading "this storm has a wind footprint"
+ * next to a wind footprint is furniture.
+ *
+ * ==> IT NAMES THE STORM THROUGH `displayName`, THE SAME ROUTE `rowHtml`
+ * TAKES. <== §57.14 gives an unnamed storm a display form, and a sentence
+ * calling it something the row beside it does not is the panel disagreeing
+ * with itself.
+ *
+ * @param {object|null} opts  `{ storm, facts }` for the FOCUSED storm, or null
+ * @returns {string} markup, or '' when nothing needs saying
+ */
+export function footprintNoteHtml(entry) {
+  const { storm, facts } = entry || {};
+  if (!storm || !facts) return '';
+  if (!facts.missing?.windField) return '';
+
+  const era = Number.isFinite(facts.year) && facts.year < SEASONS.windFieldFirstSeason;
+  const why = era
+    ? `Wind field size wasn't recorded before ${SEASONS.windFieldFirstSeason}`
+    : 'No wind field was recorded for this storm';
+
+  /* The two wordings are literals in this file and the year is a number out
+   * of a frozen constants block, so only the NAME goes through `esc` — it is
+   * the one value here that came out of a data file. Escaping the sentence as
+   * well turned its apostrophe into an entity for no gain. */
+  return `<p class="seasons-note">${why}, so there is no wind
+      footprint for ${esc(displayName(storm))}.</p>`;
+}
+
+/**
  * The unused names, for the season still running.
  *
  * ==> AND THE OFF-LIST CASE IS SAID OUT LOUD RATHER THAN SWALLOWED. <== A

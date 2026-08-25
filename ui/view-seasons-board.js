@@ -69,9 +69,8 @@ import { SEASONS } from '../config/constants.js';
 import { stormFacts, seasonFacts } from '../lib/season-facts.js';
 import { rosterFor } from '../lib/season-names.js';
 import {
-  emptyRosterHtml, esc, filtersFor, filtersHtml, ghostsHtml, indexFailedHtml,
-  liveDownHtml, pickerHtml, rowHtml, scoreHtml, seasonFailedHtml, showAllHtml,
-  waitingHtml,
+  esc, filtersFor, filtersHtml, footprintNoteHtml, indexFailedHtml,
+  liveDownHtml, pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
 } from './seasons-board-markup.js';
 
 /**
@@ -247,6 +246,24 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
 
     const btn = bodyEl.querySelector('.seasons-showall');
     if (btn) btn.hidden = focused == null;
+
+    /* ==> AND WHY THE FOCUSED STORM HAS NO WIND FOOTPRINT, WHERE THAT IS THE
+     * CASE. <== §57.25 rule 2, §57.26a. Three quarters of the archive has no
+     * wind field, so for most of what a reader opens this sentence IS step
+     * 6b — the footprint layer draws the focused storm and nothing else, so
+     * the presence and the absence are both discovered by the same tap.
+     *
+     * Written into a slot that is always in the markup, for the same reason
+     * `Show all evenly` is: focus moves on every tap and rebuilding the
+     * roster here would cost the reader their scroll position. `entries`
+     * rather than the filtered rows, because a storm can stay focused while
+     * the filter narrows past it (`onChange` documents that case) and the
+     * sentence must not vanish while its track is still bright. */
+    const slot = bodyEl.querySelector('.seasons-footprint');
+    if (slot) {
+      const e = focused ? entries.find((x) => x.storm.id === focused) : null;
+      slot.innerHTML = footprintNoteHtml(e);
+    }
   }
 
   /* --- loading ------------------------------------------------------------ */
@@ -417,38 +434,28 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
   }
 
   function rosterHtml() {
-    if (seasonState === 'loading') {
-      return waitingHtml(provisional ? 'Reading this season…' : 'Reading the record…');
-    }
-
-    if (seasonState === 'unavailable') {
-      return seasonFailedHtml({ year, reason: seasonReason });
-    }
-
-    const rows = visibleEntries();
-
-    /* ==> GHOSTS ARE A WHOLE-SEASON FACT AND A NARROWED LIST IS NOT THE PLACE
-     * FOR THEM. <== Step 5a's rule, kept deliberately across the markup split:
-     * "eighteen names are still unused" is about the season, and printing it
-     * under a Majors list would put an unfiltered claim at the foot of a
-     * filtered one. `null` rather than a flag — the markup is told what to
-     * draw, never what the state is (§57.18a). */
-    const ghosts = filter === 'all' ? roster : null;
-
-    if (!rows.length) {
-      return `
-        ${emptyRosterHtml({ year, filtered: entries.length > 0, provisional })}
-        ${ghostsHtml(ghosts)}`;
-    }
-
-    const list = rows
-      .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
-      .join('');
-
-    return `
-      ${showAllHtml()}
-      <ul class="seasons-roster">${list}</ul>
-      ${ghostsHtml(ghosts)}`;
+    /* ==> TOLD WHAT TO DRAW, NEVER WHAT THE STATE IS. <== This function is
+     * now four lines because the markup went to `seasons-board-markup.js`
+     * when §12's ceiling was crossed a second time — the same cut
+     * `liveDownHtml` took, and for the same reason: assembling a roster is
+     * markup work that happened to be living in the state file. What is left
+     * here is the two decisions the VIEW owns and the markup must not make.
+     *
+     * ==> GHOSTS ARE A WHOLE-SEASON FACT AND A NARROWED LIST IS NOT THE PLACE
+     * FOR THEM. <== Step 5a's rule. "Eighteen names are still unused" is about
+     * the season, and printing it under a Majors list would put an unfiltered
+     * claim at the foot of a filtered one. `null` rather than a flag (§57.18a).
+     */
+    return seasonRosterHtml({
+      state: seasonState,
+      reason: seasonReason,
+      year,
+      provisional,
+      rows: visibleEntries(),
+      anyEntries: entries.length > 0,
+      ticked,
+      ghosts: filter === 'all' ? roster : null,
+    });
   }
 
   function render() {
