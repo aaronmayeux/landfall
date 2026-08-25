@@ -1107,6 +1107,101 @@ three:
    coast. **The app is called Landfall.** These should be the most confident
    mark on the archive globe.
 
+### 57.21a Telling four storms apart, as built
+
+Step 6a. `map/layers/season-tracks.js` (the line and its name),
+`map/layers/season-marks.js` (landfall pins and one-record dots),
+`map/layers/season-focus.js` (the one shared opacity rule), and the focus
+state in `ui/view-seasons-board.js`. Numbers live in `ARCHIVE_GEO`
+(`config/tokens.js`); the one new themed ink is `geo.landfallRing`.
+
+**THE NAME IS SET ALONG THE TRACK BY MAPLIBRE, AND §57.21's POINTER AT
+`name-placement.js` WAS WRONG.** That module solves a different problem —
+where a name sits BESIDE a moving storm's dot, chosen in screen space against
+forecast geometry it must not cross. An archive track has no dot, no forecast
+and no current moment; it is a finished curve, and MapLibre sets text along a
+curve natively with its own collision handling. Ten names on ten tracks
+therefore never overlap, for free. The name repeats every
+`ARCHIVE_GEO.nameRepeatPx` along the line, because a name placed once sits at
+whatever the midpoint happens to be — frequently off-screen on an Atlantic
+crossing, leaving a bright unidentified line.
+
+**FOCUS IS ONE PAINT PROPERTY, NOT A SELECTION SYSTEM.** §57.30 step 5 left
+open whether the archive would eventually need the live layer engine once
+focus arrived. It does not: the whole set is pushed as before and MapLibre is
+told which id is bright, so the data never moves when focus does. That is a
+repaint rather than a re-tile of the source, which matters because focus moves
+on every tap. `ARCHIVE_GEO.dimmedOpacity` is 0.2 — a ghost, not an erasure:
+the shape of the year stays readable while the focused storm is unmistakably
+the subject. **Opacity is the only channel**, because hue already means
+strength everywhere in this app (§6) and a thinner line at globe distance is
+an invisible line.
+
+**THE OTHER NAMES GO TO ZERO WHILE THE OTHER TRACKS GO TO 0.2, AND THE
+INCONSISTENCY IS DELIBERATE.** Text is not geometry. A dimmed word is
+illegible AND still holds its place in MapLibre's collision index, so faded
+names would go on winning placement fights against the one name the reader
+asked for — the focused storm could end up the only unlabelled track on
+screen. Removing them entirely also reads correctly: focus means *just this
+one*.
+
+**TICKING A STORM FOCUSES IT.** Aaron's call on the design, 2026-08-24. Focus
+had to work by thumb, by mouse and by keyboard on the day it shipped (§13),
+and the alternative — a second control on every roster row — is clutter on a
+list that runs to forty rows. Reusing the tick means the keyboard path is the
+checkbox that was already there and the touch path is the row that was already
+44px. **The cost is real and is not hidden:** tick four storms in a row and
+only the last is bright. `Show all evenly` is the way back, and it is present
+in the markup but `hidden` until something is focused, so toggling it never
+rebuilds the roster and it is not a tab stop while it means nothing.
+
+**A TAP ON A TRACK FOCUSES IT; A TAP ON OPEN WATER CLEARS.** The hit box is
+`SIZE.touchTarget`, the same 44px the live globe uses, because a track is a
+1.75px line. It asks the LINE layer only — including the name layer would make
+the word a bigger target than the line it labels. The tap arrives in `main.js`
+and is routed to the BOARD through `seasons/index.js`'s `focusSeasonStorm`,
+never straight to the globe: the roster is what the reader believes about what
+is selected, and a track lighting up while the list looks unchanged is the
+panel and the map disagreeing.
+
+**INSIDE THE ARCHIVE THE TAP HANDLER ANSWERS FIRST AND RETURNS EITHER WAY.**
+Every other branch in it is about a layer the archive deliberately hides, and
+falling through would close the drawer — which in the archive is the reader's
+only way back out. **Consequence worth stating: the home marker is not
+tappable inside the archive.** It is still drawn, and nothing in Seasons has
+anything to say about it until step 9's near-home work.
+
+**A FOCUS NOBODY HAS TICKED IS REFUSED.** The globe only draws ticked storms,
+so honouring one would ghost every visible track for a highlight that is not
+on screen. Focus is dropped on a year change (ids do not repeat across
+seasons), on unticking the focused storm, and on leaving.
+
+**THE LANDFALL MARK'S FILL IS THE STRENGTH AT THE COAST, NOT THE STORM'S
+PEAK.** The track carries peak; the pin carries what actually arrived. Katrina
+peaked at Cat 5 over open water and came ashore in Louisiana at Cat 3, and a
+magenta pin would be the app stating something false about the event it is
+named after. `tools/test-season-marks.mjs` asserts this against her real
+records. The RING is the one mark in Seasons wearing an ink that is not a
+category colour, which is what makes it findable in a globe full of
+Saffir-Simpson hues — and the ring colour and the fill sit on separate paint
+properties, because one property holding both a themed colour and a feature
+read is evaluated in the worker, never receives the global state, and resolves
+to black without throwing (`map/theme-state.js` rule 1b).
+
+**A ONE-RECORD STORM NOW DRAWS A DOT.** `season-tracks.js` needs two points to
+make a line, so a single sighting from a passing ship — real, and common in
+the 19th century — was ticked by the reader and did nothing at all. It gets a
+small dot with no ring, so it can never be read as a landfall.
+
+**PER-RECORD DOTS ALONG EVERY TRACK WERE CONSIDERED AND REJECTED.** 2005 has
+28 storms averaging about 40 records each — over a thousand dots — and the
+line already says where the storm went. That belongs to the detail panel
+(step 7).
+
+**WHAT IS NOT HERE:** the wind field and the wind swath, which are step 6b.
+They are a different data question — HURDAT2 only records wind radii from
+2004, so most of the archive gets §57.25's honest line rather than a shape.
+
 ### 57.22 The storm detail panel
 
 Same shell as the live detail panel, same section pattern, different sections
@@ -1561,13 +1656,34 @@ them, by tap and by keyboard.
 
 ---
 
-**STEP 6 — THE GLOBE LAYERS.**
-Track rendering through the shared modules, landfall marks, name labels along
-tracks, focus-and-dim, wind field where it exists with §57.25's honest line
-where it does not, wind swath.
-**Aaron looks at:** four storms at once. Can he tell them apart? Does focus/dim
-feel right? Do the landfall marks read as the most confident thing on screen?
+**STEP 6a — THE GLOBE LAYERS. ==> BUILT. <==**
+Track rendering, landfall marks, name labels along tracks, focus-and-dim.
+**§57.21a is the as-built account. Read that, not this.**
+
+**==> IT IS TWO PASSES BECAUSE ITS OWN DONE-CONDITION ONLY TESTS ONE OF THEM.
+<==** §57.30 listed six things under one step, and the done-condition below
+covers four: four storms at once, telling them apart, focus, and the landfall
+marks. The wind field and the wind swath are a different question with a
+different source — HURDAT2 records wind radii only from 2004, so most of the
+archive gets §57.25's honest line rather than a shape — and folding them in
+would have made an unbisectable commit for no gain.
+
+**Aaron looks at:** four storms at once in 2005. Can he tell them apart? Does
+focus/dim feel right? Do the landfall marks read as the most confident thing
+on screen?
 **Done when:** confirmed on glass with at least four simultaneous storms.
+
+---
+
+**STEP 6b — THE WIND FIELD AND THE WIND SWATH.**
+Wind field where it exists with §57.25's honest line where it does not, and
+the swath — the total footprint that ever saw storm-force wind, which is a
+historical shape with no live equivalent (§57.26, §57.27).
+**Aaron looks at:** a 2004-or-later storm with radii, and a 19th-century one
+without. Does the sentence explaining the absence teach him something true
+about the record, or read as a missing feature?
+**Done when:** a storm from before 2004 says why it has no wind field, on
+glass.
 
 ---
 
