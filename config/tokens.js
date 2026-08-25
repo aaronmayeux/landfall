@@ -2796,6 +2796,30 @@ export const ARCHIVE_GEO = Object.freeze({
    *  one and a half phone-widths: close enough that a name is nearly always in
    *  view, far enough that a track is not a chain of its own name. */
   nameRepeatPx: 220,
+
+  /** ==> THE WIND FOOTPRINT (§57.26, §57.27, step 6b), AND IT IS DELIBERATELY
+   *  QUIETER THAN THE LIVE ONE. <==
+   *
+   *  Same three §6 threshold colours, same nesting — the 64 kt core inside the
+   *  50 inside the 34 — so the fills COMPOUND exactly the way `STORM_GEO`'s do
+   *  and these are tuned for the stacked result, never for one band alone.
+   *
+   *  Lower than the live `windFillOpacity` of 0.18 for two reasons that both
+   *  come off this globe rather than off that one. The archive's TRACK is the
+   *  subject of the screen (`season-tracks.js` gives it the forecast's
+   *  confident width for exactly that reason), and a footprint heavy enough to
+   *  compete would bury the line it is about. And the sepia basemap is a
+   *  lighter ground than the live dark sky, so the same wash reads stronger on
+   *  it. First dial to move if the footprint reads as fog on a phone.
+   *
+   *  ==> AND ONLY THE FOCUSED STORM WEARS ONE. <== Aaron's call, 2026-08-24.
+   *  Four ticked storms would be twelve translucent shapes piling on each
+   *  other — the look he rejected outright when the live swath was built — so
+   *  the footprint answers "tell me about this one" and nothing else. That
+   *  bound is in `map/layers/season-swath.js`, not here; these are the paint. */
+  swathFillOpacity: 0.14,
+  swathLineWidth:   1.25,
+  swathLineOpacity: 0.55,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */

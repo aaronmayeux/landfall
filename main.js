@@ -76,6 +76,9 @@ import {
 import {
   ensureSeasonMarks, setSeasonMarks, clearSeasonMarks, setSeasonMarkFocus,
 } from './map/layers/season-marks.js';
+import {
+  ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
+} from './map/layers/season-swath.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
  * left with app/bundle-pipeline.js. What stays here is what the CAGE and the
@@ -737,6 +740,12 @@ function boot() {
      * and name labels on top of them, and a layer added later cannot get back
      * underneath. It draws nothing until somebody opens the archive. */
     const archiveAnchor = map.getLayer('storm-dot-planet') ? 'storm-dot-planet' : undefined;
+    /* ==> THE FOOTPRINT GOES IN FIRST, SO IT IS THE BOTTOM OF THE ARCHIVE'S
+     * OWN STACK. <== It is a wash ABOUT a track, so the track has to sit on
+     * top of it — a 1.75 px line under a translucent fill is a line the reader
+     * cannot follow, and following it is the whole job of the archive globe.
+     * Same "insert directly beneath layer X" mechanic as the two below. */
+    ensureSeasonSwath(map, archiveAnchor);
     ensureSeasonTracks(map, archiveAnchor);
     /* ==> THE MARKS GO IN UNDER THE NAMES, NOT UNDER THE STORM DOTS. <== The
      * archive's own stack, bottom to top, is track line → landfall marks →
@@ -1367,17 +1376,28 @@ function boot() {
        * showing tracks with no landfall pins is a silent wrong answer rather
        * than a visible one. */
       setSeasonMarks(map, selected);
+      /* THE FOOTPRINT ONLY REMEMBERS THE SET HERE; it draws nothing until
+       * something is focused (§57.26a). Handed the same list for the same
+       * reason as the marks — one call the board cannot forget to make. */
+      setSeasonSwathSet(map, selected);
     },
     /** Which storm is bright; null puts them all back evenly. §57.21 item 2. */
     setFocus(id) {
       if (!styleReady) return;
       setSeasonTrackFocus(map, id);
       setSeasonMarkFocus(map, id);
+      /* ==> AND THE FOOTPRINT IS THE ONE THAT REBUILDS RATHER THAN REPAINTS.
+       * <== The two above swap a paint property over data MapLibre already
+       * holds; this one holds at most one storm's shapes, so a focus change IS
+       * new data. Measured at 12-13 ms a storm, which is what makes that
+       * affordable on the archive's most frequent interaction. */
+      setSeasonSwathFocus(map, id);
     },
     clearTracks() {
       if (!styleReady) return;
       clearSeasonTracks(map);
       clearSeasonMarks(map);
+      clearSeasonSwath(map);
     },
   };
 
