@@ -359,26 +359,6 @@ html[data-seasons="on"] #btn-layers {
   box-shadow: inset 2px 0 0 0 var(--focus-ring);
 }
 
-/* The way back to all-of-them-evenly, for a keyboard and for a thumb that
-   missed the ocean. Hidden until something is focused — `hidden` takes it out
-   of the tab order too, so it is not a stop on the way down the roster while
-   it means nothing. */
-.seasons-showall {
-  display: block;
-  width: 100%;
-  min-height: var(--touch-target);
-  margin-top: var(--space-snug);
-  padding: 0 var(--space-base);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  background: var(--glass-raised);
-  color: var(--text-primary);
-  font: inherit;
-  cursor: pointer;
-}
-
-.seasons-showall[hidden] { display: none; }
-
 /* Why the focused storm has no wind footprint (§57.26a). The slot is always in
    the markup and empty most of the time — the view writes into it rather than
    rebuilding the roster, because focus moves on every tap on a track.

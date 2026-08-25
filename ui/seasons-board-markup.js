@@ -60,6 +60,35 @@ export function filtersFor(provisional) {
     : [FILTER_ALL, FILTER_MAJORS, FILTER_LANDFALLS];
 }
 
+/**
+ * Which storms one filter actually shows.
+ *
+ * ==> IT LIVES BESIDE `filtersFor` BECAUSE THE TWO ARE ONE RULE. <== That
+ * function says which filters EXIST; this one says what each of them SELECTS,
+ * and a filter offered by one and unknown to the other is a control that
+ * narrows to nothing. They were in different files until this pass, which is
+ * exactly the drift §12 warns about — and moving this one here is also what
+ * took `ui/view-seasons-board.js` back under the ceiling for the third seasons
+ * pass running.
+ *
+ * ==> AN UNKNOWN FILTER ID SHOWS EVERYTHING RATHER THAN NOTHING. <== §5's
+ * shape applied to a control: a roster that empties because a filter name
+ * drifted looks exactly like a season with no storms in it, and the reader
+ * cannot tell those apart. Showing too much is visibly wrong; showing nothing
+ * is invisibly wrong.
+ *
+ * @param {Array<{storm:object, facts:object}>} entries  the whole season
+ * @param {string} filter  a filter id from `filtersFor`
+ */
+export function entriesMatching(entries, filter) {
+  if (filter === 'majors') {
+    return entries.filter((e) => Number.isFinite(e.facts.peakWindKt)
+      && e.facts.peakWindKt >= SEASONS.majorKt);
+  }
+  if (filter === 'landfalls') return entries.filter((e) => e.facts.landfalls.length > 0);
+  return entries;
+}
+
 /** Month and day, no year — the year is the whole screen's subject and
  *  repeating it on thirty rows is noise. UTC because the records are. */
 const MD = new Intl.DateTimeFormat('en-US', {
@@ -313,21 +342,6 @@ export function liveDownHtml({ hasLive, retrying, reason }) {
 }
 
 /**
- * The way back from focus, for a keyboard and for a thumb that missed the
- * ocean. §57.21 item 2, §13.
- *
- * ==> IT IS ALWAYS IN THE MARKUP AND `hidden` MOST OF THE TIME. <== Focus
- * moves on every tap on a track, and a control that appeared and disappeared
- * from the DOM would mean rebuilding the roster on the feature's most frequent
- * interaction — which costs the reader their scroll position and their focus
- * ring. `hidden` takes it out of the tab order and off the screen without
- * touching anything around it, so the view can toggle one property instead.
- */
-export function showAllHtml() {
-  return `<button class="seasons-showall" type="button" hidden>Show all evenly</button>`;
-}
-
-/**
  * The empty slot the footprint note is written into. §57.26a.
  *
  * ==> ALWAYS IN THE MARKUP, EMPTY MOST OF THE TIME, FOR THE SAME REASON
@@ -390,8 +404,13 @@ export function seasonRosterHtml({
     .map((e) => rowHtml({ storm: e.storm, facts: e.facts, on: ticked.has(e.storm.id) }))
     .join('');
 
+  /* ==> `Show all evenly` USED TO SIT HERE AND IS GONE. <== It existed to undo
+   * the coupling where ticking a storm also selected it, and that coupling was
+   * removed on 2026-08-25 (see `ui/view-seasons-board.js`). Selecting is now a
+   * deliberate act with its own two ways out — a tap on open water, and Enter
+   * on the open storm's row — so a third control undoing something the reader
+   * did on purpose is one control too many. */
   return `
-      ${showAllHtml()}
       ${footprintSlotHtml()}
       <ul class="seasons-roster">${list}</ul>
       ${ghostsHtml(ghosts)}`;

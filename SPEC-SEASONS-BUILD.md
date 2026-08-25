@@ -1109,11 +1109,19 @@ three:
 
 ### 57.21a Telling four storms apart, as built
 
-Step 6a. `map/layers/season-tracks.js` (the line and its name),
-`map/layers/season-marks.js` (landfall pins and one-record dots),
-`map/layers/season-focus.js` (the one shared opacity rule), and the focus
-state in `ui/view-seasons-board.js`. Numbers live in `ARCHIVE_GEO`
-(`config/tokens.js`); the one new themed ink is `geo.landfallRing`.
+Step 6a, revised on glass 2026-08-25. `map/layers/season-tracks.js` (the line
+and its name), `map/layers/season-points.js` (per-fix dots and one-record
+dots), `map/layers/season-focus.js` (the one shared opacity rule), and the
+selection state in `ui/view-seasons-board.js`. Numbers live in `ARCHIVE_GEO`
+(`config/tokens.js`) and the archive's vertex budget in
+`SEASONS.trackMaxVertices` (`config/constants.js`).
+
+**CHECKING A STORM AND SELECTING ONE ARE TWO DIFFERENT ACTIONS.** Checking puts
+a track on the globe: the line, its name, and nothing else. Four checks give
+four tracks, all equally bright. Selecting is a second, deliberate act — the
+rest drop to a ghost, the selected storm's line changes ink, and it gains a
+Saffir-Simpson dot at every position NOAA published. This split is the whole
+shape of the interaction and everything below follows from it.
 
 **THE NAME IS SET ALONG THE TRACK BY MAPLIBRE, AND §57.21's POINTER AT
 `name-placement.js` WAS WRONG.** That module solves a different problem —
@@ -1145,15 +1153,33 @@ asked for — the focused storm could end up the only unlabelled track on
 screen. Removing them entirely also reads correctly: focus means *just this
 one*.
 
-**TICKING A STORM FOCUSES IT.** Aaron's call on the design, 2026-08-24. Focus
-had to work by thumb, by mouse and by keyboard on the day it shipped (§13),
-and the alternative — a second control on every roster row — is clutter on a
-list that runs to forty rows. Reusing the tick means the keyboard path is the
-checkbox that was already there and the touch path is the row that was already
-44px. **The cost is real and is not hidden:** tick four storms in a row and
-only the last is bright. `Show all evenly` is the way back, and it is present
-in the markup but `hidden` until something is focused, so toggling it never
-rebuilds the roster and it is not a tab stop while it means nothing.
+**TICKING A STORM DOES NOT SELECT IT, AND THAT REVERSED A DECISION MADE ON
+2026-08-24.** It used to, on the reasoning that reusing the checkbox gave all
+three input paths for free without a second control on a forty-row list. The
+predicted cost arrived exactly as written: tick four storms to compare them and
+only the last is bright, the other three ghosted, with the bright one chosen by
+whichever the reader happened to touch last. Aaron's call on glass, 2026-08-25.
+`Show all evenly` existed only to undo that coupling and went with it — a third
+control undoing something the reader did on purpose is one control too many.
+
+**SELECTING HAS A PATH FOR EACH INPUT AND NEEDS NO NEW MARKUP.** A thumb or a
+mouse taps the track on the globe, and taps open water to clear. A keyboard
+presses **Enter on a ticked row**, which toggles. Tab already lands on the
+row's checkbox and Space already ticks it, and a native checkbox does nothing
+with Enter in any browser, so there is nothing to collide with.
+
+**ENTER ON AN UNTICKED ROW DOES NOTHING — NOT "CLEAR".** `setFocus` refuses an
+id nobody has ticked and resolves it to null, so without an explicit guard in
+the key handler, tabbing past a storm you had not ticked and pressing Enter
+would silently close the storm you were reading. The guard reads as redundant
+and is not; a mutation deleting it passed every other assertion in the suite
+until `tools/test-seasons-board.mjs` gained the case for it.
+
+**THE ROW CHEVRON WAS THE MORE DISCOVERABLE OPTION AND WAS DELIBERATELY NOT
+BUILT.** It is the same markup step 7 added before glass reported every tap
+target in this drawer misbehaving, and that cause is still unknown. Enter costs
+no markup at all, so it does not re-introduce the suspect shape while it is
+under suspicion. Revisit once step 7's fault is diagnosed.
 
 **A TAP ON A TRACK FOCUSES IT; A TAP ON OPEN WATER CLEARS.** The hit box is
 `SIZE.touchTarget`, the same 44px the live globe uses, because a track is a
@@ -1176,27 +1202,87 @@ so honouring one would ghost every visible track for a highlight that is not
 on screen. Focus is dropped on a year change (ids do not repeat across
 seasons), on unticking the focused storm, and on leaving.
 
-**THE LANDFALL MARK'S FILL IS THE STRENGTH AT THE COAST, NOT THE STORM'S
-PEAK.** The track carries peak; the pin carries what actually arrived. Katrina
-peaked at Cat 5 over open water and came ashore in Louisiana at Cat 3, and a
-magenta pin would be the app stating something false about the event it is
-named after. `tools/test-season-marks.mjs` asserts this against her real
-records. The RING is the one mark in Seasons wearing an ink that is not a
-category colour, which is what makes it findable in a globe full of
-Saffir-Simpson hues — and the ring colour and the fill sit on separate paint
-properties, because one property holding both a themed colour and a feature
-read is evaluated in the worker, never receives the global state, and resolves
-to black without throwing (`map/theme-state.js` rule 1b).
+**LANDFALL PINS ARE GONE.** Aaron's call, 2026-08-25: they were the archive's
+one mark in a non-category ink and on glass they read as clutter over a globe
+already full of Saffir-Simpson hues. NOAA's `L` records are not lost —
+`lib/season-facts.js` still reads them, the roster row still marks a storm that
+made one, and the Landfalls filter still works. What is gone is the mark on the
+globe, and `geo.landfallRing` was retired with it.
 
-**A ONE-RECORD STORM NOW DRAWS A DOT.** `season-tracks.js` needs two points to
-make a line, so a single sighting from a passing ship — real, and common in
-the 19th century — was ticked by the reader and did nothing at all. It gets a
-small dot with no ring, so it can never be read as a landfall.
+**THE SELECTED STORM'S LINE CHANGES INK, NOT WIDTH.** It wears
+`geo.trackForecast` — the same confident ink the live globe uses for a forecast
+leg. Every other track keeps its peak-category hue, which is still the only
+thing saying which storm was the monster. **Consequence on glass, and it is the
+opposite of the usual instinct:** the selected line becomes quieter, not
+louder. The emphasis comes from everything else dropping to a ghost and from
+the dots appearing. This mirrors the live globe exactly — a neutral line with
+coloured points on it — which is the point.
 
-**PER-RECORD DOTS ALONG EVERY TRACK WERE CONSIDERED AND REJECTED.** 2005 has
-28 storms averaging about 40 records each — over a thousand dots — and the
-line already says where the storm went. That belongs to the detail panel
-(step 7).
+**THE INK IS BAKED FROM `palette()`, NOT NAMED WITH `gs()`.** The expression
+reads `['get','id']`, and `map/theme-state.js` rule 1b makes a paint property
+holding both a global-state reference and a feature read resolve to BLACK in
+the worker without throwing. Baking is honest here rather than a workaround:
+the archive forces sepia for as long as it is open, so there is no theme change
+to miss, and the ink only enters through `setSeasonTrackFocus`, which can only
+run inside the archive. With nothing selected the expression is a bare
+`['get','color']` and carries no baked ink at all.
+
+**THE SELECTED STORM GETS A DOT AT EVERY RECORDED POSITION, DRAWN AS A LIVE
+FORECAST POINT.** Same radius, same dark ring, same one- or two-character code
+inside, same wider white ring on the earliest fix — the same `STORM_GEO` tokens,
+not a lookalike, so the two globes cannot drift apart. The white ring does the
+job it does on the live globe: **direction.** A chain reading TD → 3 → 3 → TD
+has no start and no end to the eye, and an archive track has no forecast cone to
+say which way round it runs.
+
+**EACH DOT IS THE CATEGORY AT THAT MOMENT, NOT THE STORM'S PEAK.** The line
+carries peak; a fix carries what was actually blowing there. Katrina reads
+Cat 1 over Florida, Cat 5 in the Gulf and Cat 3 at the Louisiana coast, which
+is what happened. Once she is selected her line is neutral, so the dots are the
+only thing telling the intensity story — the live globe's own division of
+labour. `tools/test-season-points.mjs` asserts her dots take more than one
+colour, which is what fails if anyone switches the fill to `peakCategory`.
+
+**KNOWN SIMPLIFICATION: AN EXTRATROPICAL TAIL IS GRADED BY WIND.** HURDAT2's
+status column distinguishes `EX` and `LO` from the cyclone codes, and §6 says a
+non-tropical system must not wear a Saffir-Simpson hue. Mapping those codes onto
+natures is a real change with its own glass call, and it would have to move the
+track colour and the peak figure with it or the row and the globe would
+disagree. Until then all three pass `'tropical'` unconditionally, so nothing
+contradicts anything. The visible cost is that a storm's extratropical tail
+draws in the hue of its wind rather than a duller one.
+
+**PER-FIX DOTS EXIST ONLY FOR THE SELECTED STORM, AND THAT BOUND IS WHAT MAKES
+THEM AFFORDABLE.** 2005 has 28 storms averaging about 40 fixes each. Over
+eleven hundred ten-pixel discs is not a season, it is a smear hiding the very
+lines it annotates. §57.21 rejected per-record dots outright on those numbers;
+the bound is what changed, not the arithmetic. Same bound and same reasoning as
+the wind footprint (§57.26a). **This is the one layer that REBUILDS on a
+selection change rather than repainting** — a fix does not exist until its
+storm is selected, so a selection change genuinely is new data. `season-points.js`
+therefore remembers the last pushed set, so the board never has to push twice.
+
+**A ONE-RECORD STORM DRAWS ITS DOT WHETHER OR NOT IT IS SELECTED, AND THAT IS
+THE WHOLE DIFFERENCE BETWEEN THE TWO KINDS.** `season-tracks.js` needs two
+points to make a line, so a single sighting from a passing ship — real, and
+common in the 19th century — has no track at all. A per-fix dot is DETAIL and
+waits to be asked for; this dot is the storm's ENTIRE presence on the globe, so
+withholding it until selection would be §5's silence arriving through a new
+door.
+
+**THE TRACKS ARE SMOOTHED WITH THE APP'S OWN CURVE.** `smoothPath` from
+`lib/trackline.js` — the same centripetal Catmull-Rom every live track and the
+cone are drawn through, so an archive track and a live one bend identically
+rather than the archive showing a hard corner at every six-hourly fix. It takes
+`SEASONS.trackMaxVertices` (400) rather than the live globe's 1200, because a
+season can put thirty tracks on screen where the live globe has one;
+`TRACK_LINE.spacingDeg` decides the count for an ordinary storm anyway, so the
+ceiling bites only on the long-lived monsters, which is where it is wanted. The
+curve interpolates rather than approximating, so the first and last vertices are
+NOAA's own positions — a storm is never drawn somewhere it was not. Results are
+memoised per storm and **pruned to the pushed set on every push**, because
+ticking is a whole-set push and browsing a dozen seasons in one visit would
+otherwise accumulate every curve of every storm ever ticked.
 
 **WHAT IS NOT HERE:** the wind field and the wind swath, which are step 6b.
 They are a different data question — HURDAT2 only records wind radii from

@@ -37,6 +37,11 @@ const eq = (what, got, want) => ok(
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { CATEGORY_COLOR, ARCHIVE_GEO } = await import('../config/tokens.js');
+const { SEASONS } = await import('../config/constants.js');
+/* The archive forces sepia, and `season-tracks.js` bakes the selected storm's
+ * ink from whatever palette is current — so this suite has to ask the same
+ * question the layer does rather than hardcode a hex. */
+const { palette: PALETTE } = await import('../config/theme.js');
 const {
   ensureSeasonTracks, setSeasonTracks, clearSeasonTracks,
   setSeasonTrackFocus, seasonStormAtPoint, __internals,
@@ -189,6 +194,119 @@ const seasonOf = (basin, year) => {
 }
 
 /* ---------------------------------------------------------------------------
+ * 1b-ii. ==> THE SELECTED STORM'S LINE CHANGES INK. <==
+ *
+ * Aaron's call, 2026-08-25. A storm opened in full detail wears the live
+ * globe's forecast ink and gains a category dot at every fix
+ * (`season-points.js`), so the DOTS carry the intensity story and the line
+ * stops competing with them. Every other track keeps its peak-category hue.
+ * ------------------------------------------------------------------------ */
+{
+  const al2005 = seasonOf('atlantic', 2005);
+  const katrina = al2005.find((s) => s.name === 'KATRINA');
+  const map = fakeMap();
+  ensureSeasonTracks(map);
+  setSeasonTracks(map, al2005.slice(0, 6).map(entry));
+
+  eq('==> WITH NOTHING OPEN IT IS A BARE FEATURE READ. <== Every track wears '
+    + 'its own peak, which is the archive\'s default reading and the whole '
+    + 'point of §6 on this screen',
+  map.layer('season-tracks').paint['line-color'], ['get', 'color']);
+
+  setSeasonTrackFocus(map, katrina.id);
+  const ink = map.paintOf('season-tracks', 'line-color');
+  eq('opening one storm switches ONLY that storm\'s ink, leaving the rest on '
+    + 'their category colour', [ink[0], ink[1], ink[3]],
+  ['case', ['==', ['get', 'id'], katrina.id], ['get', 'color']]);
+  /* ==> ASKED OF `palette()` RATHER THAN HARDCODED, BECAUSE THE HARNESS IS NOT
+   * THE ARCHIVE. <== Nothing here forces sepia, so this process reads the DARK
+   * value while a phone inside the archive reads the sepia one. What is being
+   * guarded is that the layer takes the ink from the CURRENT palette at call
+   * time — which is the whole reason it re-bakes on every selection change
+   * instead of at install. */
+  eq('and the ink it switches to is the live globe\'s forecast track',
+    ink[2], PALETTE().geo.trackForecast);
+
+  /* ==> AND IT IS BAKED, NOT NAMED. <== `map/theme-state.js` rule 1b: this
+   * expression reads `['get','id']`, so a `global-state` reference in it is
+   * evaluated in the worker, which never receives the state, and resolves to
+   * BLACK without throwing. Baking is safe here only because the archive
+   * forces sepia for as long as it is open. */
+  ok('the ink names no global state, or every selected track renders black on '
+    + 'a phone while looking fine in a test that only checks the shape',
+  !JSON.stringify(ink).includes('global-state'));
+
+  setSeasonTrackFocus(map, null);
+  eq('closing it puts every line back on its own category',
+    map.paintOf('season-tracks', 'line-color'), ['get', 'color']);
+}
+
+/* ---------------------------------------------------------------------------
+ * 1b-iii. ==> THE TRACKS ARE SMOOTHED, AND THE CURVES ARE MEMOISED. <==
+ *
+ * The same centripetal Catmull-Rom every live track uses, so an archive track
+ * and a live one bend the same way rather than the archive showing a hard
+ * corner at every six-hourly fix.
+ * ------------------------------------------------------------------------ */
+{
+  const al2005 = seasonOf('atlantic', 2005);
+  const katrina = al2005.find((s) => s.name === 'KATRINA');
+  const raw = katrina.points
+    .filter((p) => Number.isFinite(p.lat) && Number.isFinite(p.lonU)).length;
+
+  const map = fakeMap();
+  ensureSeasonTracks(map);
+  setSeasonTracks(map, [entry(katrina)]);
+  const drawn = map.data().features[0].geometry.coordinates;
+
+  ok(`her ${raw} fixes become ${drawn.length} vertices — if these are equal, `
+    + 'the curve has been lost and the track is drawn as straight legs between '
+    + 'fixes', drawn.length > raw);
+  ok('and it stays inside the archive\'s vertex budget, which is smaller than '
+    + 'the live globe\'s because a season can put thirty tracks on screen',
+  drawn.length <= SEASONS.trackMaxVertices);
+
+  /* ==> THE CURVE PASSES THROUGH THE PUBLISHED FIXES. <== Catmull-Rom
+   * interpolates rather than approximating, so the first and last vertices are
+   * NOAA's own positions. A smoothing that moved them would be the app drawing
+   * a storm somewhere it was not. */
+  const first = katrina.points.find((p) => Number.isFinite(p.lat) && Number.isFinite(p.lonU));
+  eq('the curve starts at the position NOAA published',
+    drawn[0], [first.lonU, first.lat]);
+
+  /* THE MEMO. Ticking is a whole-set push, so without it every tick re-splines
+   * every storm already on the globe. */
+  eq('one storm ticked, one curve held', __internals.curveCount(), 1);
+  setSeasonTracks(map, al2005.slice(0, 6).map(entry));
+  eq('six ticked, six held', __internals.curveCount(), 6);
+
+  eq('==> AND IT IS PRUNED TO WHAT IS DRAWN, NEVER GROWN. <== A reader '
+    + 'browsing a dozen seasons in one visit would otherwise accumulate every '
+    + 'curve of every storm they ever ticked',
+  (setSeasonTracks(map, [entry(katrina)]), __internals.curveCount()), 1);
+
+  clearSeasonTracks(map);
+  eq('and leaving drops them all', __internals.curveCount(), 0);
+
+  /* A two-point storm is a straight segment and must come back UNCHANGED
+   * rather than padded — `smoothPath` returns fewer than three points as they
+   * came, and a version that invented vertices would be drawing a curve
+   * through a storm with nothing to curve around. */
+  const two = {
+    id: 'AL081855',
+    points: [
+      { time: 0, lat: 22, lon: -60, lonU: -60, windKt: 45, status: 'TS' },
+      { time: 21600000, lat: 23, lon: -61, lonU: -61, windKt: 45, status: 'TS' },
+    ],
+  };
+  const map2 = fakeMap();
+  ensureSeasonTracks(map2);
+  setSeasonTracks(map2, [entry(two)]);
+  eq('a two-fix storm stays the straight segment it genuinely is',
+    map2.data().features[0].geometry.coordinates, [[-60, 22], [-61, 23]]);
+}
+
+/* ---------------------------------------------------------------------------
  * 1c. THE HIT TEST — a track has to be tappable by a thumb.
  * ------------------------------------------------------------------------ */
 {
@@ -333,8 +451,8 @@ const seasonOf = (basin, year) => {
 
   setSeasonTracks(map, [entry(onePoint), entry(noPoints), entry(good)]);
   eq('==> A ONE-RECORD STORM IS A REAL THING AND MUST NOT TAKE THE LAYER DOWN. '
-    + '<== It is not a LINE, so it is dropped here — `season-marks.js` gives it '
-    + 'a dot, and `tools/test-season-marks.mjs` is what proves it is not simply '
+    + '<== It is not a LINE, so it is dropped here — `season-points.js` gives it '
+    + 'a dot, and `tools/test-season-points.mjs` is what proves it is not simply '
     + 'lost', map.data().features.length, 1);
   eq('and the good storm beside it still drew', map.data().features[0].properties.id, good.id);
 

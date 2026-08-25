@@ -19,8 +19,9 @@
  * WHAT IT DRAWS: one line per ticked storm, coloured by the storm's PEAK
  * category so a reader can see at a glance which year had the monsters in it,
  * with the storm's NAME set along the line (§57.21 item 1) and the whole thing
- * dimmed to a ghost when some other storm is focused (§57.21 item 2). Landfall
- * marks and one-record storms are the sibling file, `season-marks.js`.
+ * dimmed to a ghost when some other storm is focused (§57.21 item 2). The dots
+ * — per-fix on the selected storm, and the standing dot a one-record storm gets
+ * instead of a line — are the sibling file, `season-points.js`.
  *
  * ==> THE NAME IS SET ALONG THE LINE BY MAPLIBRE, NOT PLACED BY
  * `map/layers/name-placement.js`. <== §57.21 pointed at that module and it is
@@ -42,6 +43,37 @@
  * A storm with no wind reading anywhere in the file — which is real, and common
  * before 1886 — gets the ungraded hue rather than a missing property.
  *
+ * ==> THE SELECTED STORM'S LINE CHANGES INK, NOT WIDTH. <== A storm the reader
+ * has opened in full detail wears `geo.trackForecast` — the same confident ink
+ * the live globe uses for a forecast leg — and gains a category-coloured dot at
+ * every recorded position (`season-points.js`). The category is then carried by
+ * the DOTS, which is exactly the live globe's own division of labour: a neutral
+ * line, coloured points. Peak-category ink stays on every OTHER track, where it
+ * is still the only thing saying which storm was the monster.
+ *
+ * ==> AND THE INK IS BAKED FROM `palette()` RATHER THAN READ WITH `gs()`. <==
+ * `map/theme-state.js` rule 1b: a paint property holding both a `global-state`
+ * reference and a `['get', …]` is evaluated in the worker, which never receives
+ * the global state, and resolves the colour to BLACK without throwing. This
+ * expression reads `['get','id']`, so it may not name a state key. Baking is
+ * honest here rather than a workaround: the archive FORCES sepia for as long as
+ * it is open (`seasons/index.js`), so there is no theme change to miss — and
+ * the ink only ever enters the expression through `setSeasonTrackFocus`, which
+ * can only run inside the archive. At style install, with nothing selected, the
+ * expression is a bare `['get','color']` and carries no baked ink at all.
+ *
+ * ==> THE TRACKS ARE SMOOTHED WITH THE APP'S OWN CURVE. <== `smoothPath` from
+ * `lib/trackline.js`, which is the same centripetal Catmull-Rom every live
+ * track and the cone are drawn through — so an archive track and a live one
+ * curve identically rather than the archive showing a hard corner at every
+ * six-hourly fix. It takes the smaller `SEASONS.trackMaxVertices` budget: a
+ * season can put thirty tracks on screen where the live globe has one.
+ *
+ * ==> AND THE RESULT IS MEMOISED PER STORM. <== Ticking is a whole-set push, so
+ * without this every tick re-splines every storm already on the globe. The memo
+ * is PRUNED to the ids in each push rather than grown, so browsing ten seasons
+ * in one visit holds one season's curves, not ten.
+ *
  * ==> AND IT DRAWS `lonU`, NOT `lon`. <== `lib/hurdat.js` carries both on every
  * point: `lon` is what NOAA published, inside ±180, and `lonU` is the
  * continuous one that may run past the antimeridian. A line drawn through raw
@@ -56,9 +88,11 @@
  */
 
 import { ARCHIVE_GEO, SIZE, STORM_GEO } from '../../config/tokens.js';
-import { ZOOM } from '../../config/constants.js';
+import { palette } from '../../config/theme.js';
+import { SEASONS, ZOOM } from '../../config/constants.js';
 import { categoryColor } from '../../lib/category.js';
 import { stormDisplayName } from '../../lib/season-names.js';
+import { smoothPath } from '../../lib/trackline.js';
 import { gs } from '../theme-state.js';
 import { focusOpacity } from './season-focus.js';
 
@@ -76,6 +110,12 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  *  paints the CURRENT truth rather than the default one. Cleared by
  *  `clearSeasonTracks`, which is the leave path. */
 let focusId = null;
+
+/** Smoothed coordinates, keyed on storm id. See the header: ticking is a
+ *  whole-set push, so this is what stops every tick re-splining every storm
+ *  already on the globe. Pruned to the pushed set on every push, so it can
+ *  never hold more than what is currently drawn. */
+const curves = new Map();
 
 /**
  * The hue for a whole track: the storm's strongest moment.
@@ -104,11 +144,19 @@ function trackColor(facts) {
  * visible rather than thrown at the renderer. Step 6 gives it a dot.
  */
 function trackFeature(storm, facts) {
-  const coords = (storm?.points || [])
+  const raw = (storm?.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lonU))
     .map((p) => [p.lonU, p.lat]);
 
-  if (coords.length < 2) return null;
+  if (raw.length < 2) return null;
+
+  /* `smoothPath` returns fewer than three points UNCHANGED rather than padded,
+   * so a two-fix storm stays the straight segment it genuinely is. */
+  let coords = curves.get(storm.id);
+  if (!coords) {
+    coords = smoothPath(raw, SEASONS.trackMaxVertices);
+    curves.set(storm.id, coords);
+  }
 
   return {
     type: 'Feature',
@@ -147,7 +195,7 @@ export function ensureSeasonTracks(map, beforeId) {
       source: SOURCE,
       layout: { 'line-cap': 'round', 'line-join': 'round' },
       paint: {
-        'line-color': ['get', 'color'],
+        'line-color': lineColor(focusId),
         /* The archive's tracks are the SUBJECT of the screen, not context, so
          * they take the forecast's confident width rather than the dotted past
          * track's. Nothing on this globe is a forecast — there is no second
@@ -203,6 +251,25 @@ export function ensureSeasonTracks(map, beforeId) {
 }
 
 /**
+ * The ink for every line, given which storm is open in full detail.
+ *
+ * Nothing selected is a bare `['get','color']` — every track wears its own peak
+ * category, which is the archive's default reading and the whole point of §6 on
+ * this screen. With one storm selected, that one switches to the live globe's
+ * forecast ink and the rest keep theirs; see the header for why the ink is
+ * baked rather than named, and why baking is safe here specifically.
+ *
+ * ==> IT IS `['case']` AND NOT `['match']`, for the same reason `circle-stroke-
+ * color` next door is. <== A `match` on the result of an `==` is a shape
+ * MapLibre accepts and reads inconsistently across versions; `case` takes the
+ * boolean directly.
+ */
+function lineColor(id) {
+  if (!id) return ['get', 'color'];
+  return ['case', ['==', ['get', 'id'], id], palette().geo.trackForecast, ['get', 'color']];
+}
+
+/**
  * What the NAMES draw at, which is not what the tracks draw at.
  *
  * ==> WITH A STORM FOCUSED, EVERY OTHER NAME GOES TO ZERO RATHER THAN TO THE
@@ -241,9 +308,18 @@ export function setSeasonTracks(map, selected = []) {
   if (!src) return;
 
   const features = [];
+  const live = new Set();
   for (const entry of selected) {
     const f = trackFeature(entry?.storm, entry?.facts);
     if (f) features.push(f);
+    if (entry?.storm?.id) live.add(entry.storm.id);
+  }
+
+  /* PRUNE, so the memo holds what is drawn and nothing else. A reader browsing
+   * a dozen seasons in one visit would otherwise accumulate every curve of
+   * every storm they ever ticked. */
+  for (const id of curves.keys()) {
+    if (!live.has(id)) curves.delete(id);
   }
 
   src.setData({ type: 'FeatureCollection', features });
@@ -266,6 +342,10 @@ export function setSeasonTrackFocus(map, id = null) {
   focusId = id || null;
   if (!map?.getLayer?.(LAYER)) return;
   map.setPaintProperty(LAYER, 'line-opacity', focusOpacity(focusId));
+  /* Rebuilt rather than left alone, because the ink is baked at call time —
+   * which is also what guarantees the sepia value is read, since this can only
+   * run inside the archive. */
+  map.setPaintProperty(LAYER, 'line-color', lineColor(focusId));
   if (map.getLayer(LAYER_NAME)) {
     map.setPaintProperty(LAYER_NAME, 'text-opacity', nameOpacity(focusId));
   }
@@ -307,9 +387,11 @@ export function seasonStormAtPoint(map, point) {
  *  season's ids failed to match it. */
 export function clearSeasonTracks(map) {
   focusId = null;
+  curves.clear();
   map?.getSource?.(SOURCE)?.setData(EMPTY);
   if (map?.getLayer?.(LAYER)) {
     map.setPaintProperty(LAYER, 'line-opacity', focusOpacity(null));
+    map.setPaintProperty(LAYER, 'line-color', lineColor(null));
   }
   if (map?.getLayer?.(LAYER_NAME)) {
     map.setPaintProperty(LAYER_NAME, 'text-opacity', nameOpacity(null));
@@ -320,5 +402,7 @@ export const __internals = {
   trackColor,
   trackFeature,
   nameOpacity,
+  lineColor,
   focus: () => focusId,
+  curveCount: () => curves.size,
 };

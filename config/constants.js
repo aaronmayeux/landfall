@@ -6675,6 +6675,27 @@ export const SEASONS = Object.freeze({
    *  in it still opens on its season. */
   deepLinkMaxStorms: 24,
 
+  /** ==> HOW MANY VERTICES ONE ARCHIVE TRACK MAY SPEND ON BEING CURVED, AND
+   *  WHY IT IS A THIRD OF THE LIVE GLOBE'S. <==
+   *
+   *  Archive tracks go through the same centripetal Catmull-Rom as every live
+   *  track (`lib/trackline.js` `smoothPath`), because a corner at every
+   *  six-hourly fix is the tell that says "this globe is a different app". What
+   *  differs is how MANY of them are on screen: the live globe draws one
+   *  storm's track, and a reader who ticks all of 2005 draws twenty-eight.
+   *
+   *  `TRACK_LINE.spacingDeg` is what actually decides the count for a typical
+   *  storm — roughly 5 nm between output vertices, so a 3,000 nm track lands
+   *  near 600 whatever the ceiling says. This ceiling therefore does nothing at
+   *  all to an ordinary storm and bites only on the long-lived monsters, which
+   *  are exactly the ones a full season has several of. 400 holds a fully
+   *  ticked 2005 near eleven thousand vertices instead of twenty thousand.
+   *
+   *  Same trade as `TRACK_LINE.maxVertices` and `RING_POLISH.maxSamples` before
+   *  it: a pathological track costs a slightly coarser line, never the frame
+   *  budget. Raise it if a long track reads faceted at close zoom on glass. */
+  trackMaxVertices: 400,
+
   /** ==> THE FIRST SEASON HURDAT2 RECORDS A WIND FIELD FOR, AND IT DECIDES
    *  WHICH SENTENCE IS SAID — NEVER WHETHER A FOOTPRINT IS BUILT. <==
    *

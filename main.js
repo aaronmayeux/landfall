@@ -74,8 +74,8 @@ import {
   setSeasonTrackFocus, seasonStormAtPoint,
 } from './map/layers/season-tracks.js';
 import {
-  ensureSeasonMarks, setSeasonMarks, clearSeasonMarks, setSeasonMarkFocus,
-} from './map/layers/season-marks.js';
+  ensureSeasonPoints, setSeasonPoints, clearSeasonPoints, setSeasonPointFocus,
+} from './map/layers/season-points.js';
 import {
   ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
 } from './map/layers/season-swath.js';
@@ -747,13 +747,13 @@ function boot() {
      * Same "insert directly beneath layer X" mechanic as the two below. */
     ensureSeasonSwath(map, archiveAnchor);
     ensureSeasonTracks(map, archiveAnchor);
-    /* ==> THE MARKS GO IN UNDER THE NAMES, NOT UNDER THE STORM DOTS. <== The
-     * archive's own stack, bottom to top, is track line → landfall marks →
-     * name labels, and MapLibre only understands "insert directly beneath
-     * layer X". Anchoring the marks to the name layer is what keeps a landfall
-     * pin ON its track rather than under it, while leaving the name — the
+    /* ==> THE DOTS GO IN UNDER THE NAMES, NOT UNDER THE STORM DOTS. <== The
+     * archive's own stack, bottom to top, is track line → dots → name labels,
+     * and MapLibre only understands "insert directly beneath layer X".
+     * Anchoring the dots to the name layer is what keeps a selected storm's
+     * fixes ON its track rather than under it, while leaving the name — the
      * thing that identifies which storm this is — on top of everything. */
-    ensureSeasonMarks(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
+    ensureSeasonPoints(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
     applyLayerState();
 
     /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
@@ -1371,32 +1371,34 @@ function boot() {
       setSeasonTracks(map, selected);
       /* ==> ONE CALL FROM THE ARCHIVE'S POINT OF VIEW, TWO SOURCES UNDERNEATH,
        * AND THAT SPLIT STAYS ON THIS SIDE OF THE INJECTION. <== The board
-       * knows one thing: which storms are ticked. Handing it a `setMarks` of
+       * knows one thing: which storms are ticked. Handing it a `setPoints` of
        * its own would mean a second call it could forget to make, and a globe
-       * showing tracks with no landfall pins is a silent wrong answer rather
-       * than a visible one. */
-      setSeasonMarks(map, selected);
+       * showing tracks with no dot on a one-record storm is a silent wrong
+       * answer rather than a visible one. */
+      setSeasonPoints(map, selected);
       /* THE FOOTPRINT ONLY REMEMBERS THE SET HERE; it draws nothing until
        * something is focused (§57.26a). Handed the same list for the same
        * reason as the marks — one call the board cannot forget to make. */
       setSeasonSwathSet(map, selected);
     },
-    /** Which storm is bright; null puts them all back evenly. §57.21 item 2. */
+    /** Which storm the reader has opened in full detail; null puts them all
+     *  back evenly. §57.21 item 2. */
     setFocus(id) {
       if (!styleReady) return;
       setSeasonTrackFocus(map, id);
-      setSeasonMarkFocus(map, id);
-      /* ==> AND THE FOOTPRINT IS THE ONE THAT REBUILDS RATHER THAN REPAINTS.
-       * <== The two above swap a paint property over data MapLibre already
-       * holds; this one holds at most one storm's shapes, so a focus change IS
-       * new data. Measured at 12-13 ms a storm, which is what makes that
-       * affordable on the archive's most frequent interaction. */
+      /* ==> TWO OF THE THREE REBUILD RATHER THAN REPAINT. <== The tracks swap
+       * a paint property over geometry MapLibre already holds. The dots and
+       * the footprint hold at most one storm's shapes, so a selection change
+       * IS new data for both. Measured at 12-13 ms a storm for the footprint,
+       * which is what makes that affordable on the archive's most frequent
+       * interaction; the dots are forty features and cost less again. */
+      setSeasonPointFocus(map, id);
       setSeasonSwathFocus(map, id);
     },
     clearTracks() {
       if (!styleReady) return;
       clearSeasonTracks(map);
-      clearSeasonMarks(map);
+      clearSeasonPoints(map);
       clearSeasonSwath(map);
     },
   };

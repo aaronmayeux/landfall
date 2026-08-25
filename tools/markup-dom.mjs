@@ -87,9 +87,17 @@ export class El {
   getAttribute(name) { return this.attrs[name] ?? null; }
 
   /** Bubble to the delegated listener on the scroller, the way a real event
-   *  does — the view binds on the body and reads `e.target.closest(...)`. */
-  fire(type, target) {
-    for (const fn of this._listeners.get(type) || []) fn({ target });
+   *  does — the view binds on the body and reads `e.target.closest(...)`.
+   *
+   *  ==> `init` AND `preventDefault` WERE ADDED FOR THE KEYBOARD SELECT PATH.
+   *  <== The board listens for `keydown` and reads `e.key`, then swallows the
+   *  event. A stand-in firing a bare `{ target }` gave the view `undefined`
+   *  for the key and threw on `preventDefault`, which is the same class of
+   *  silent lie the notes below describe: the stand-in has to be able to say
+   *  what a real event says, or the suite tests something the app never does. */
+  fire(type, target, init = {}) {
+    const e = { target, preventDefault() {}, stopPropagation() {}, ...init };
+    for (const fn of this._listeners.get(type) || []) fn(e);
   }
 
   descendants() {

@@ -729,21 +729,6 @@ export const DARK = Object.freeze({
     labelColor:     '#C7D6E2',
     labelHalo:      '#0B1420',
 
-    /** THE RING AROUND A LANDFALL MARK ON THE ARCHIVE GLOBE (§57.21 item 3).
-     *
-     *  ==> IT IS THE ONE MARK IN SEASONS WEARING AN INK THAT IS NOT A CATEGORY
-     *  COLOUR, AND THAT IS WHY IT EXISTS. <== The mark's FILL is the storm's
-     *  strength at the moment it crossed the coast, off the fixed §6 ramp like
-     *  everything else. If the ring were a category colour too, a landfall
-     *  would be a slightly fatter track dot; the whole job of this value is to
-     *  be the thing the eye picks out of a globe full of Saffir-Simpson hues.
-     *
-     *  Near-white rather than pure white, on the same reasoning as
-     *  `pointStroke` being near-black: it has to sit legibly on all seven
-     *  category fills, and the ramp runs light to mid. Defined in DARK because
-     *  every themed colour is, but the archive only ever draws it in SEPIA. */
-    landfallRing:   '#EAF2F8',
-
     /** THE X INSIDE AN ENDED STORM'S DOT, AND THE ONE MARK WHOSE INK HAS TO
      *  FLIP WITH THE THEME.
      *
@@ -1472,21 +1457,6 @@ export const LIGHT = Object.freeze({
     labelHalo:      '#F6F6F4',
     stormLabelHalo: '#F6F6F4',
 
-    /** THE ARCHIVE'S LANDFALL RING — and this one is never drawn.
-     *
-     *  The archive forces SEPIA for as long as a reader is inside it, so the
-     *  value that ships is `SEPIA.geo.landfallRing`. This exists because a
-     *  palette with a hole in it is a palette that throws
-     *  (`map/theme-state.js` reads every key on every repaint, in whatever
-     *  theme is current at the time), and because a themed colour defined in
-     *  only two of three palettes is a trap for whoever eventually gives the
-     *  live globe a landfall mark of its own.
-     *
-     *  Near-black rather than DARK's near-white, on the same rule as
-     *  `stormLabelColor` above: on a pale map the mark that must stand out is
-     *  the dark one. Inverted deliberately, not copied. */
-    landfallRing:   '#14191E',
-
     /** See DARK.geo.stormLabelColor. Near-black on the greyscale daytime
      *  globe, one step DARKER than the forecast time labels beside it — on a
      *  pale map the loudest label is the darkest one, which is the inverse of
@@ -1732,11 +1702,6 @@ export const SEPIA = Object.freeze({
     pointStrokeFirst:  '#FBF2E2',
     labelColor:        '#DED2BC',
     labelHalo:         '#1A1206',
-    /* Warm white, for the same reason `coneFill` is: #EAF2F8 is a cool blue
-     * white and over parchment it reads as a hole rather than as ink. This is
-     * the value that actually ships — the archive is the only screen that
-     * draws a landfall mark, and the archive is always sepia. */
-    landfallRing:      '#FBF2E2',
     endedMark:         '#1A1206',
     stormLabelHalo:    '#1C1409',
     stormLabelColor:   '#FAF4E8',
@@ -2722,10 +2687,17 @@ export const STORM_GEO = Object.freeze({
  * have meant one file's values quietly serving two arguments, and the first
  * time somebody tuned the live cone they would have moved the archive too.
  *
- * Colours are NOT here. Track and landfall fills come off the fixed
- * Saffir-Simpson ramp per feature (§6), and the two themed inks — the landfall
- * ring and the name label — are `geo.*` palette values reached through
- * `map/theme-state.js`, like every other themed colour the map draws.
+ * Colours are NOT here. Track and dot fills come off the fixed Saffir-Simpson
+ * ramp per feature (§6), and the name label's ink is a `geo.*` palette value
+ * reached through `map/theme-state.js`, like every other themed colour the map
+ * draws.
+ *
+ * ==> AND THE PER-FIX DOTS DELIBERATELY DO NOT HAVE VALUES HERE. <== They read
+ * `STORM_GEO`'s, which is the exception the paragraph above argues against and
+ * earns it: a selected archive storm is meant to be drawn AS a live forecast
+ * point, not as something that resembles one. Sharing the tokens is what stops
+ * the two globes drifting apart. Anything that should differ between them gets
+ * its own value here; anything that must stay identical reads `STORM_GEO`.
  */
 export const ARCHIVE_GEO = Object.freeze({
   /** ==> FOCUS AND DIM. THE MOST IMPORTANT INTERACTION IN THE FEATURE
@@ -2747,35 +2719,15 @@ export const ARCHIVE_GEO = Object.freeze({
   focusedOpacity: 1,
   dimmedOpacity:  0.2,
 
-  /** ==> THE LANDFALL MARK. IT IS SUPPOSED TO BE THE MOST CONFIDENT THING ON
-   *  THIS GLOBE AND THESE NUMBERS ARE WHAT MAKE THAT TRUE. <==
-   *
-   *  §57.21 item 3, and the app is called Landfall. These are NOAA's own `L`
-   *  records — the moment the centre crossed a coast, written into the reviewed
-   *  best track by the people who reviewed it. Nothing else the archive draws
-   *  is that specific, so nothing else may look heavier.
-   *
-   *  Smaller than a live forecast dot (`STORM_GEO.pointRadius` is 10) and that
-   *  is the point: a forecast point is a six-hourly waypoint on one storm, this
-   *  is a single moment on a season that may hold forty of them. A ten-pixel
-   *  disc repeated across the Gulf is a smear. Seven with a heavy ring reads as
-   *  a pin. */
-  landfallRadius:      7,
-  /** The ring, not the fill, is what makes it read as placed rather than as
-   *  another dot on the line — it is the one mark on the archive globe wearing
-   *  an ink that is not a category colour. Heavier than the live forecast dot's
-   *  1.5 for exactly that reason. */
-  landfallStrokeWidth: 2.5,
-
   /** ==> A STORM WITH ONE OBSERVATION GETS A DOT, BECAUSE IT IS NOT A LINE.
    *  <== Real and common in the 19th century — the record holds single
    *  sightings from passing ships. Step 5 dropped these on the floor
    *  (`trackFeature` returns null under two points) and a reader ticking one
    *  watched nothing happen, which is the silence §5 forbids.
    *
-   *  Smaller than a landfall mark and with no ring, so the two can never be
-   *  confused: a ring means NOAA marked this, a bare dot means this is all
-   *  there is. */
+   *  Smaller than a per-fix dot and with no ring, so the two can never be
+   *  confused: a full-size ringed dot is one of many along a selected storm's
+   *  track, a small bare one means this is all the record there is. */
   onePointRadius: 4,
 
   /** Storm names along the tracks (§57.21 item 1). One point smaller than the

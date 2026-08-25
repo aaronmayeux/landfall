@@ -129,13 +129,6 @@ export const THEME_STATE = Object.freeze({
   geoStormLabelHalo: 'geo.stormLabelHalo',
   geoStormLabelColor: 'geo.stormLabelColor',
   geoEndedMark:      'geo.endedMark',
-  /* The archive's landfall ring. It only ever paints in SEPIA — the live globe
-   * has no landfall marks — but it goes through the same mechanism as every
-   * other themed map colour rather than being baked from `palette()`, because
-   * an archive entered, left and re-entered around a theme change must not be
-   * able to hold a stale ink. Same rule as everything above it, no exception
-   * worth writing down. */
-  geoLandfallRing:   'geo.landfallRing',
 });
 
 /** Every legal state key, for the tools and the tests. */

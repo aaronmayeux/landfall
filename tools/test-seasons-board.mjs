@@ -599,12 +599,18 @@ const text = (body) => body.innerHTML;
 }
 
 /* ---------------------------------------------------------------------------
- * ==> FOCUS AND DIM. §57.21 ITEM 2, §57.30 STEP 6. <==
+ * ==> SELECTION. §57.21 ITEM 2, §57.30 STEP 6. <==
  *
- * The board OWNS which storm is bright. Everything here is about the roster
- * and the globe never being allowed to disagree about that — the same rule the
- * whole-set tick contract exists to keep, applied to the second thing a reader
- * can change.
+ * The board OWNS which storm is open in full detail. Everything here is about
+ * the roster and the globe never being allowed to disagree about that — the
+ * same rule the whole-set tick contract exists to keep, applied to the second
+ * thing a reader can change.
+ *
+ * ==> AND THE FIRST ASSERTION IS THE INVERSE OF WHAT IT USED TO BE. <==
+ * Ticking used to select. Aaron, 2026-08-25: a reader comparing four storms of
+ * 2005 ticked four and watched three drop to ghosts, with whichever one they
+ * happened to touch last arbitrarily bright. Checking now means "put this on
+ * the globe" and nothing else.
  * ------------------------------------------------------------------------ */
 {
   const { view, body, focus, drawn } = await board({ year: 2005 });
@@ -612,54 +618,79 @@ const text = (body) => body.innerHTML;
   const first = boxes[0];
   const second = boxes[1];
 
-  /* ==> TICKING A STORM ALSO FOCUSES IT, AND THAT IS THE WHOLE INTERACTION
-   * DESIGN. <== No second control per row: the checkbox was already 44px and
-   * already keyboard-reachable, so tap, click and Enter are one path (§13). */
   first.checked = true;
   body.fire('change', first);
-  eq('ticking a storm focuses it', focus.at(-1), first.dataset.storm);
-
-  /* ORDER MATTERS AND IT IS NOT COSMETIC. The globe has to hold the storm's
-   * geometry BEFORE it is told to brighten it, or the focus lands on a track
-   * that is not drawn yet and the first frame is a season of ghosts. */
-  ok('and the globe was given the geometry before it was told to brighten it',
-    drawn.at(-1).includes(first.dataset.storm));
+  ok('the globe was given the geometry', drawn.at(-1).includes(first.dataset.storm));
+  eq('==> TICKING A STORM DOES NOT SELECT IT. <== Four ticks are four tracks, '
+    + 'all equal — no storm is arbitrarily bright and no others are ghosted',
+  focus.at(-1) ?? null, null);
 
   const focusedRow = () => body.querySelectorAll('.seasons-row-focus');
+  eq('and no row is marked', focusedRow().length, 0);
+
+  /* ==> ENTER ON A TICKED ROW IS THE KEYBOARD'S WAY IN. <== A pointer selects
+   * by tapping the track on the globe, which a keyboard cannot reach at all.
+   * Space already ticks the row's checkbox and Enter does nothing on a native
+   * checkbox in any browser, so there is nothing for this to collide with. */
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('Enter on a ticked row opens that storm', focus.at(-1), first.dataset.storm);
   eq('exactly one row is marked', focusedRow().length, 1);
   eq('and it is that storm\'s row', focusedRow()[0].dataset.row, first.dataset.storm);
   eq('screen readers are told which one, in the ordinary way',
     focusedRow()[0].getAttribute('aria-current'), 'true');
 
-  /* ==> THE WAY BACK APPEARS ONLY WHILE IT MEANS SOMETHING. <== `hidden`
-   * rather than absent, so toggling it never rebuilds the roster — and hidden
-   * takes it out of the tab order too, so it is not a stop on the way down a
-   * forty-row list while there is nothing to undo. */
-  const showAll = body.querySelector('.seasons-showall');
-  ok('the way back out of focus exists', showAll !== null);
-  eq('and it is showing now that something is focused', showAll.hidden, false);
+  /* ==> AND IT TOGGLES, WHICH IS THE KEYBOARD'S WAY BACK OUT. <== Tapping open
+   * water is unreachable without a pointer. */
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('Enter again on the open storm closes it', focus.at(-1), null);
+  eq('no row is marked', focusedRow().length, 0);
 
-  /* Focus MOVES rather than accumulating. */
+  /* ==> ENTER ON AN UNTICKED ROW DOES NOTHING. <== The globe only draws ticked
+   * storms, so this would dim every visible track for a storm not on screen. */
+  body.fire('keydown', second, { key: 'Enter' });
+  eq('Enter on a storm that is not on the globe is refused',
+    focus.at(-1) ?? null, null);
+
+  /* ==> AND "NOTHING" MEANS NOTHING, NOT "CLOSE WHATEVER WAS OPEN". <== This
+   * is the assertion the guard in `onKeydown` actually earns. Without it,
+   * Enter on an unticked row reaches `setFocus`, which refuses the id and
+   * resolves to null — so tabbing past a storm you did not tick and pressing
+   * Enter would silently close the storm you were reading. A mutation removing
+   * that guard passes every other test in this block. */
+  first.checked = true;
+  body.fire('change', first);
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('with one storm open', focus.at(-1), first.dataset.storm);
+  body.fire('keydown', second, { key: 'Enter' });
+  eq('Enter on an UNTICKED row leaves the open storm alone',
+    focus.at(-1), first.dataset.storm);
+  body.fire('keydown', first, { key: 'Enter' });
+  eq('closed again', focus.at(-1), null);
+  first.checked = false;
+  body.fire('change', first);
+
+  /* Selection MOVES rather than accumulating. */
   second.checked = true;
   body.fire('change', second);
-  eq('ticking a second storm moves the focus to it', focus.at(-1), second.dataset.storm);
+  body.fire('keydown', first, { key: 'Enter' });
+  body.fire('keydown', second, { key: 'Enter' });
+  eq('opening a second storm moves the selection to it',
+    focus.at(-1), second.dataset.storm);
   eq('and still exactly one row is marked', focusedRow().length, 1);
   eq('the first row let go of it', focusedRow()[0].dataset.row, second.dataset.storm);
 
-  /* Unticking the FOCUSED storm puts everything back evenly; unticking any
-   * other storm must not touch the focus at all. */
+  /* Unticking any OTHER storm must not touch the selection. */
   first.checked = false;
   body.fire('change', first);
-  eq('unticking a storm that was not focused leaves the focus alone',
+  eq('unticking a storm that was not open leaves the selection alone',
     focus.at(-1), second.dataset.storm);
 
   second.checked = false;
   body.fire('change', second);
-  eq('==> UNTICKING THE FOCUSED STORM PUTS THEM ALL BACK EVENLY. <== A focus '
-    + 'left on a storm that is no longer drawn would ghost every visible track '
-    + 'in favour of one nobody can see', focus.at(-1), null);
+  eq('==> UNTICKING THE OPEN STORM CLOSES IT. <== A selection left on a storm '
+    + 'that is no longer drawn would ghost every visible track in favour of '
+    + 'one nobody can see', focus.at(-1), null);
   eq('no row is marked', focusedRow().length, 0);
-  eq('and the way back hides itself again', showAll.hidden, true);
 }
 
 /* ---------------------------------------------------------------------------
@@ -675,13 +706,15 @@ const text = (body) => body.innerHTML;
    * tap through the view rather than calling the globe directly. */
   boxes[0].checked = true;
   body.fire('change', boxes[0]);
-  view.setFocus(null);
-  eq('a tap on open water clears the focus', focus.at(-1), null);
+  eq('ticking alone leaves nothing selected', focus.at(-1) ?? null, null);
 
   view.setFocus(id);
-  eq('and a tap on a drawn track focuses it', focus.at(-1), id);
+  eq('a tap on a drawn track opens it', focus.at(-1), id);
   eq('the roster follows the globe, not just the other way round',
     body.querySelectorAll('.seasons-row-focus').length, 1);
+
+  view.setFocus(null);
+  eq('a tap on open water closes it', focus.at(-1), null);
 
   /* ==> A FOCUS NOBODY HAS TICKED IS REFUSED, NOT HONOURED. <== The globe only
    * draws ticked storms. Lighting an unticked one would dim every visible
@@ -692,10 +725,10 @@ const text = (body) => body.innerHTML;
     focus.at(-1), null);
 
   /* THE KEYBOARD'S WAY OUT. Tapping ocean is unreachable without a pointer, so
-   * the button carries the same action for Tab and Enter (§13). */
+   * Enter on the open storm carries the same action (§13). */
   view.setFocus(id);
-  body.fire('click', body.querySelector('.seasons-showall'));
-  eq('the Show all button clears the focus', focus.at(-1), null);
+  body.fire('keydown', boxes[0], { key: 'Enter' });
+  eq('Enter on the open storm closes it', focus.at(-1), null);
 
   /* A year change wipes the ticks, and the focus has to go with them: ids do
    * not repeat across seasons, so one left standing would ghost every track in
@@ -744,7 +777,8 @@ const text = (body) => body.innerHTML;
   const id = box.dataset.storm;
   box.checked = true;
   body.fire('change', box);
-  eq('it is focused', focus.at(-1), id);
+  body.fire('keydown', box, { key: 'Enter' });
+  eq('it is open in full detail', focus.at(-1), id);
   eq('and its row is marked', body.querySelectorAll('.seasons-row-focus').length, 1);
 
   /* Widen again. The filter does NOT un-choose the storm — the globe keeps

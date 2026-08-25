@@ -24,7 +24,7 @@
  * NOAA's own published swath for Ida. No fixtures, no invented payloads.
  *
  * The map is a stub that records what was pushed and deliberately does NOT
- * validate expressions — same rule and same reason as `test-season-marks.mjs`.
+ * validate expressions — same rule and same reason as `test-season-points.mjs`.
  *
  * Zero dependencies, plain node.
  */
@@ -353,7 +353,7 @@ function fakeMap() {
     [...new Set(map.data().features.map((f) => f.properties.id))], [ida.id]);
 
   setSeasonSwathFocus(map, null);
-  eq('`Show all evenly` takes the footprint off', map.data().features.length, 0);
+  eq('closing the storm takes the footprint off', map.data().features.length, 0);
 
   /* A storm nobody has ticked is refused, mirroring the board's own rule. */
   setSeasonSwathFocus(map, 'AL011851');

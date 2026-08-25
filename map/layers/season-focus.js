@@ -4,7 +4,7 @@
  *
  * ==> THIS FILE IS FORTY LINES AND IT EXISTS ANYWAY, BECAUSE TWO LAYER FILES
  * HAVE TO AGREE ABOUT WHAT "DIMMED" MEANS. <== The tracks live in
- * `season-tracks.js` and the landfall marks live in `season-marks.js`, and a
+ * `season-tracks.js` and the dots live in `season-points.js`, and a
  * focus that brightened one but not the other would be worse than no focus at
  * all — a dimmed track still wearing a full-strength landfall pin reads as a
  * rendering fault, not as emphasis. Putting the expression in either of those

@@ -47,15 +47,16 @@
  * is decided (§57.7) and is not this step.
  *
  * ==> TICKING A STORM ALSO FOCUSES IT, AND THAT IS THE WHOLE OF STEP 6'S
- * INTERACTION DESIGN. <== §57.21 item 2. Focus needed to work by thumb, by
- * mouse and by keyboard on the day it shipped (§13), and the alternative — a
- * second control on every roster row — is clutter on a phone for a list that
- * can run to forty rows. Reusing the tick means the keyboard path is the
- * checkbox that was already there, and the touch path is the row that was
- * already 44px. The cost is real and worth naming: tick four storms in a row
- * and only the last is bright, when the reader may have wanted all four even.
- * `Show all evenly` is the way back, and it appears only while something is
- * focused, so it costs nothing the rest of the time.
+ * INTERACTION DESIGN. <== §57.21 item 2. It has to work by thumb, by mouse and
+ * by keyboard (§13), and it must not put a second control on every roster row
+ * — that is clutter on a phone for a list running to forty rows. A pointer
+ * selects by tapping the track on the globe and clears by tapping open water;
+ * a keyboard uses Enter on the row, which toggles.
+ *
+ * ==> TICKING USED TO SELECT, AND IT COST EXACTLY WHAT WAS PREDICTED. <==
+ * Aaron, 2026-08-25: tick four storms to compare them and only the last is
+ * bright, with the other three ghosted. `Show all evenly` was the way back and
+ * it is gone with the coupling that needed it.
  *
  * WHAT IS NOT HERE, ON PURPOSE: the wind field is step 6b; the detail panel is
  * step 7; the near-home slider is step 9 and is why §57.19's fourth filter is
@@ -65,12 +66,15 @@
  * and the globe both arrive as injected facades (§12).
  */
 
-import { SEASONS } from '../config/constants.js';
 import { stormFacts, seasonFacts } from '../lib/season-facts.js';
 import { rosterFor } from '../lib/season-names.js';
 import {
-  esc, filtersFor, filtersHtml, footprintNoteHtml, indexFailedHtml,
-  liveDownHtml, pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
+  basinHasLive, isLiveSeason, liveYearOf, yearsFor as yearsForBasin,
+} from '../lib/season-years.js';
+import {
+  esc, entriesMatching, filtersFor, filtersHtml, footprintNoteHtml,
+  indexFailedHtml, liveDownHtml, pickerHtml, scoreHtml, seasonRosterHtml,
+  waitingHtml,
 } from './seasons-board-markup.js';
 
 /**
@@ -138,16 +142,19 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
    *  switching to Majors and back must not silently wipe the globe. */
   const ticked = new Set();
 
-  /** The one storm drawn at full strength, or null for all of them evenly.
-   *  §57.21 item 2.
+  /** The one storm the reader has opened in full detail, or null. §57.21
+   *  item 2.
    *
    *  ==> IT IS ALWAYS A STORM THAT IS ALSO TICKED, AND NOTHING ENFORCES THAT
-   *  BUT THE PATHS BELOW. <== A focused storm that is not on the globe would
+   *  BUT THE PATHS BELOW. <== A selected storm that is not on the globe would
    *  dim every visible track in favour of one nobody can see, which reads as
-   *  the archive breaking. There are exactly three ways focus is set —
-   *  ticking, a tap on a drawn track, and clearing — and none of them can
-   *  produce an unticked focus. A fourth would have to keep that promise
-   *  itself. */
+   *  the archive breaking. There are exactly three ways it is set — Enter on a
+   *  ticked row, a tap on a drawn track, and clearing — and none of them can
+   *  produce an unticked selection. A fourth would have to keep that promise
+   *  itself.
+   *
+   *  ==> TICKING IS NO LONGER ONE OF THEM. <== It was, until 2026-08-25. See
+   *  `onChange` for what that cost on glass. */
   let focused = null;
 
   /** Bumped on every season load, so a slow fetch that lands after the reader
@@ -155,42 +162,20 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
   let loadToken = 0;
 
   /* --- which years exist --------------------------------------------------
-   * The settled index answers for every year NOAA has reviewed; the live one
-   * adds at most one more on top. Both are asked here rather than in the
-   * markup, so the picker and the load path can never disagree about which
-   * years are choosable.
+   * The rule itself is `lib/season-years.js` — the settled index answers for
+   * every year NOAA has reviewed, the live one adds at most one on top, and
+   * both the picker and the load path ask the same question so they can never
+   * disagree about which years are choosable. Moved out when this file crossed
+   * §12's ceiling for the third seasons pass running; the four functions there
+   * read only the two indexes, which is what made them the cut that costs
+   * nothing. These are the bindings that hand them this board's state.
    * ---------------------------------------------------------------------- */
 
-  /** The season in progress, or null. Read off the b-deck FILENAMES by the
-   *  route, never off the reader's clock (§58.1). */
-  function liveYear() {
-    return liveIndex?.year ?? null;
-  }
+  const yearDeps = () => ({ seasonsIn: seasons.seasonsIn, index, liveIndex });
 
-  /** Does this basin have a live half at all? `SEASONS.liveBasins` answers,
-   *  and a basin missing from it has none — the honest state for the rest of
-   *  the world until step 13. */
-  function basinHasLive(b) {
-    return Boolean(SEASONS.liveBasins[b]);
-  }
-
-  /** Every year this basin offers, newest first. The live season sits at the
-   *  top when there is one, and only when the settled record has not already
-   *  caught up to it — in the spring both roads briefly know the same year and
-   *  the reviewed one wins, because it is the better record of the two. */
-  function yearsFor(b) {
-    const settled = seasons.seasonsIn(index, b);
-    const ly = liveYear();
-    if (ly == null || !basinHasLive(b) || settled.includes(ly)) return settled;
-    return [ly, ...settled];
-  }
-
-  /** Is this the year still running? The one place that question is answered,
-   *  because it decides the road, the filters, the stamp and the ghosts. */
-  function isLive(b, y) {
-    return liveYear() != null && Number(y) === liveYear() && basinHasLive(b)
-      && !seasons.seasonsIn(index, b).includes(Number(y));
-  }
+  const liveYear = () => liveYearOf(liveIndex);
+  const yearsFor = (b) => yearsForBasin(yearDeps(), b);
+  const isLive = (b, y) => isLiveSeason(yearDeps(), b, y);
 
   /* --- selection ---------------------------------------------------------- */
 
@@ -202,10 +187,10 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
     onSelection?.(selectedEntries());
   }
 
-  /* --- focus ---------------------------------------------------------------
-   * §57.21 item 2. Three entry points — a tick, a tap on the globe, and the
-   * `Show all evenly` button — and all three go through `setFocus` so the
-   * roster and the map can never disagree about which storm is bright.
+  /* --- selection -----------------------------------------------------------
+   * §57.21 item 2. Three entry points — Enter on a row, a tap on the globe,
+   * and clearing — and all three go through `setFocus`, so the roster and the
+   * map can never disagree about which storm is open.
    * ---------------------------------------------------------------------- */
 
   /**
@@ -216,8 +201,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
    * — the same reason ticking a checkbox does not re-render (see `onChange`).
    * Focus moves on every tap on the globe, so a wholesale rebuild here would
    * be the most disruptive thing in the feature attached to its most frequent
-   * interaction. The `Show all evenly` button is the one piece of markup that
-   * appears and disappears with focus, so it is toggled by hand alongside.
+   * interaction.
    */
   function setFocus(id) {
     /* An id nobody has ticked is refused rather than honoured. The globe only
@@ -244,18 +228,15 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       else row.removeAttribute('aria-current');
     }
 
-    const btn = bodyEl.querySelector('.seasons-showall');
-    if (btn) btn.hidden = focused == null;
-
     /* ==> AND WHY THE FOCUSED STORM HAS NO WIND FOOTPRINT, WHERE THAT IS THE
      * CASE. <== §57.25 rule 2, §57.26a. Three quarters of the archive has no
      * wind field, so for most of what a reader opens this sentence IS step
      * 6b — the footprint layer draws the focused storm and nothing else, so
      * the presence and the absence are both discovered by the same tap.
      *
-     * Written into a slot that is always in the markup, for the same reason
-     * `Show all evenly` is: focus moves on every tap and rebuilding the
-     * roster here would cost the reader their scroll position. `entries`
+     * Written into a slot that is always in the markup: selection moves on
+     * every tap on the globe, and rebuilding the roster here would cost the
+     * reader their scroll position and their focus ring. `entries`
      * rather than the filtered rows, because a storm can stay focused while
      * the filter narrows past it (`onChange` documents that case) and the
      * sentence must not vanish while its track is still bright. */
@@ -424,15 +405,6 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
    * snapping to the top every time a checkbox moves.
    * ---------------------------------------------------------------------- */
 
-  function visibleEntries() {
-    if (filter === 'majors') {
-      return entries.filter((e) => Number.isFinite(e.facts.peakWindKt)
-        && e.facts.peakWindKt >= SEASONS.majorKt);
-    }
-    if (filter === 'landfalls') return entries.filter((e) => e.facts.landfalls.length > 0);
-    return entries;
-  }
-
   function rosterHtml() {
     /* ==> TOLD WHAT TO DRAW, NEVER WHAT THE STATE IS. <== This function is
      * now four lines because the markup went to `seasons-board-markup.js`
@@ -451,7 +423,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       reason: seasonReason,
       year,
       provisional,
-      rows: visibleEntries(),
+      rows: entriesMatching(entries, filter),
       anyEntries: entries.length > 0,
       ticked,
       ghosts: filter === 'all' ? roster : null,
@@ -564,18 +536,6 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       return;
     }
 
-    if (e.target.closest('.seasons-showall')) {
-      /* ==> THE KEYBOARD'S WAY OUT OF FOCUS, AND THE THUMB'S SECOND ONE. <==
-       * §13: every action needs all three input paths. Tapping open water on
-       * the globe clears focus, which is fine for a thumb and unreachable
-       * without a pointer — so a real <button> in the roster carries the same
-       * action for Tab and Enter. It sits in the tab order beside the storm
-       * it is undoing, and it is hidden rather than absent so that toggling it
-       * never rebuilds the list. */
-      setFocus(null);
-      return;
-    }
-
     if (e.target.closest('.seasons-retry')) {
       /* Checked FIRST, because it is the narrower case. This button sits on a
        * board whose settled index loaded fine and whose season is on screen,
@@ -593,6 +553,39 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
         loadSeasonNow();
       }
     }
+  }
+
+  /**
+   * ==> ENTER ON A TICKED ROW OPENS THAT STORM IN FULL DETAIL, AND TOGGLES.
+   * <== §13 asks every action for a thumb, a mouse and a keyboard path. Since
+   * ticking stopped selecting, a pointer selects by tapping the track on the
+   * globe — which a keyboard cannot do at all, and a feature that exists only
+   * as a gesture does not exist for keyboard users.
+   *
+   * ==> ENTER RATHER THAN A SECOND BUTTON ON THE ROW, AND THAT IS A DELIBERATE
+   * AVOIDANCE. <== A chevron beside each row is the more discoverable control
+   * and it is also exactly the markup step 7 added before glass reported every
+   * tap target in this drawer misbehaving (NOW.md). The cause of that is still
+   * unknown, so this pass does not re-introduce the shape while it is under
+   * suspicion. Enter costs no markup at all: Tab already lands on the row's
+   * checkbox and Space already ticks it, and a native checkbox does nothing
+   * with Enter in any browser — so there is nothing to collide with.
+   *
+   * ==> IT TOGGLES, WHICH IS ALSO THE KEYBOARD'S WAY BACK OUT. <== A pointer
+   * clears the selection by tapping open water. Enter on the storm that is
+   * already open is the same escape without reaching for the globe, and it
+   * keeps the whole interaction on one key rather than needing a second.
+   */
+  function onKeydown(e) {
+    if (e.key !== 'Enter' || e.metaKey || e.ctrlKey || e.altKey) return;
+    const box = e.target.closest('[data-storm]');
+    if (!box) return;
+    const id = box.dataset.storm;
+    if (!ticked.has(id)) return;
+    /* Swallowed so the keypress cannot also reach the drawer or the globe's
+     * own Escape-and-arrows contract behind it. */
+    e.preventDefault();
+    setFocus(focused === id ? null : id);
   }
 
   function onChange(e) {
@@ -613,14 +606,19 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
        * list under a thumb mid-tap is how a roster loses its scroll position
        * and its focus ring at once. */
       pushSelection();
-      /* ==> THE TICK IS ALSO THE FOCUS, AND UNTICKING THE FOCUSED STORM PUTS
-       * EVERYTHING BACK EVENLY. <== §57.21 item 2, and the whole argument for
-       * not adding a second control per row is at the top of this file. The
-       * order matters: the globe must have the new storm's geometry before it
-       * is told to brighten it, or the focus lands on a track that is not
-       * drawn yet and the first frame is a season of ghosts. */
-      if (box.checked) setFocus(id);
-      else if (focused === id) setFocus(null);
+      /* ==> TICKING DOES NOT SELECT, AND THAT IS THE WHOLE POINT OF THE SPLIT.
+       * <== Aaron's call, 2026-08-25. It used to: ticking a storm focused it,
+       * so a reader comparing four storms of 2005 ticked four and watched
+       * three of them drop to ghosts, with the last one they happened to touch
+       * arbitrarily bright. Checking now means "put this on the globe" and
+       * nothing else — four ticks give four tracks, all equal.
+       *
+       * ==> UNTICKING THE SELECTED STORM STILL CLEARS THE SELECTION, AND THAT
+       * IS NOT THE OLD COUPLING COMING BACK. <== `setFocus` refuses an id
+       * nobody has ticked, so leaving this out would mean a selection pointing
+       * at a storm no longer on the globe: every remaining track ghosted in
+       * favour of one nobody can see. */
+      if (!box.checked && focused === id) setFocus(null);
     }
   }
 
@@ -634,6 +632,7 @@ export function createSeasonsBoardView({ seasons, live, onSelection, onFocus, on
       bodyEl = host.querySelector('#seasons-board-body');
       bodyEl.addEventListener('click', onClick);
       bodyEl.addEventListener('change', onChange);
+      bodyEl.addEventListener('keydown', onKeydown);
       render();
       loadIndexOnce();
     },

@@ -24,7 +24,7 @@
  * saying so, not drawing all of them.**
  *
  * ==> AND IT IS THE ONE SEASON LAYER THAT REBUILDS ON FOCUS RATHER THAN
- * REPAINTING. <== `season-tracks.js` and `season-marks.js` push every ticked
+ * REPAINTING. <== `season-tracks.js` and `season-points.js` push every ticked
  * storm once and then swap a paint property, precisely because focus moves on
  * every tap and a `setData` re-tiles the source in the worker. This file
  * cannot do that: it holds at most one storm's shapes at a time, so a focus

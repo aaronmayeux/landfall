@@ -315,19 +315,45 @@ the fault is elsewhere and the row is innocent.
 of it ever touched the drawer.** A future step 7 has its report lookup already
 solved and already deployed.
 
-**==> SEASONS: STEPS 6a AND 6b ARE BOTH DONE AND CONFIRMED ON GLASS. <==**
-Aaron, 2026-08-24 and 2026-08-25. The tracks, the names, the landfall marks,
-focus and dim, and the wind footprint with its honest sentence — **all
-correct, nothing left to look at.** `SPEC-SEASONS-BUILD.md` §57.21a and
-§57.26a are the as-built accounts. **Step 7 — the detail panel — is next.**
+**==> SEASONS UI POLISH, PUSH 1 OF 2: THE GLOBE. SHIPPED, NOT YET SEEN ON
+GLASS. <==** Aaron's list, 2026-08-25. Checking a storm and selecting one are
+now two different actions: checking draws the line and its name, four checks
+give four equal tracks; selecting dims the rest, switches that storm's line to
+the forecast ink and puts a Saffir-Simpson dot at every recorded position.
+Landfall pins are gone. Tracks are smoothed with the app's own curve.
+`SPEC-SEASONS-BUILD.md` §57.21a is the as-built account.
 
-**FOUR VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
+**WHAT TO JUDGE, AND ONE OF THESE IS EXPECTED TO COME BACK WRONG:**
+
+1. **The selected line is QUIETER, not louder** — neutral ink, same width,
+   with the emphasis carried by everything else ghosting and the dots
+   appearing. That is the live globe's grammar and it is the opposite of the
+   usual instinct. If it reads as "nothing happened", the lever is the ink.
+2. **Forty ten-pixel dots along one track at basin zoom.** They may be a
+   legible chain or a caterpillar that hides the line. The fix if so is a zoom
+   ladder on the radius, which was written up and deliberately not built once
+   the dots were bounded to one storm.
+3. **The white ring on the earliest fix.** It is there for direction, which an
+   archive track has no cone to supply. It may also just read as a fatter dot.
+4. **The curve.** 400 vertices per track; a long-lived storm may read faceted
+   at close zoom. `SEASONS.trackMaxVertices` is the dial.
+5. **Enter on a ticked row opens that storm; Enter again closes it.** The
+   keyboard path. Worth one pass with the mouse untouched.
+
+**PUSH 2 IS THE DRAWER AND THE BAR AND IS NOT BUILT.** Roster row rebuilt
+(checkbox, solid app-standard dot, name, strength badge, landfall mark left of
+the dates), two lines when the drawer is narrow and one when it is wide,
+check-all and uncheck-all, changing a filter clearing the checks, selecting
+from the globe scrolling its row into view, a taller drawer, the home door
+moving into the scroll, and the X becoming a minimise chevron with the bar
+reading as an info bar.
+
+**THREE VALUES ARE SETTLED ON GLASS AND SHOULD NOT BE REOPENED WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
 erasure. `nameRepeatPx` at 220 keeps a name attached to its line while
 panning. `swathFillOpacity` at 0.14 leaves the track readable through the
-wash. And **ticking a storm focusing it** — with only the last of four bright
-and `Show all evenly` as the way back — was judged a fair trade for not
-putting a second control on every roster row.
+wash. **The fourth — ticking a storm focusing it — was reversed on 2026-08-25
+and its cost was exactly what §57.21a predicted in writing.**
 
 **AND THE FOOTPRINT'S DISCOVERABILITY COST WAS ACCEPTED RATHER THAN
 OVERLOOKED.** With nothing focused, nothing draws — the bound that keeps four

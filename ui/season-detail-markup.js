@@ -288,7 +288,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
   }).join('');
 
   /* ==> THE STRENGTH SHOWN IS THE STRENGTH AT THE COAST, NOT THE PEAK, AND
-   * THAT IS THE SAME CALL THE LANDFALL PIN MAKES. <== `map/layers/season-marks.js`
+   * THAT IS THE SAME CALL THE LANDFALL PIN MAKES. <== `map/layers/season-points.js`
    * colours a pin by what actually arrived rather than by what the storm once
    * was, because Katrina peaked at Cat 5 over water and came ashore at Cat 3.
    * The panel and the globe must agree, or one of them is lying. */
