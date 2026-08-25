@@ -309,6 +309,24 @@
   box-sizing: border-box;
 }
 
+/* ==> A HEADER THAT DISMISSES ON A TAP HAS TO LOOK LIKE ONE. <== `minimises`
+ * is set on `#drawer` by `ui/drawer.js` for a view whose header is a bare
+ * title and a chevron — today the seasons board and nothing else. Pressing
+ * anywhere across it closes the sheet, because the chevron is a small target
+ * at the far edge of a wide bar and that is the corner a thumb reaches for
+ * least.
+ *
+ * Hover is gated on CAPABILITY, never on device class (§13), so a touchscreen
+ * laptop gets it and a finger is never asked to hover to discover anything —
+ * the cursor below is the mouse's affordance and the whole-bar target is the
+ * thumb's. The KEYBOARD path is unchanged and does not need one: the chevron
+ * is a real button in the tab order and answers Enter and Space. */
+#drawer[data-minimises="true"] .drawer-head { cursor: pointer; }
+
+@media (hover: hover) {
+  #drawer[data-minimises="true"] .drawer-head:hover { background: var(--hover); }
+}
+
 /* The lead slot. Holds the back button OR the eyebrow, never both — see the
  * note in ui/drawer.js renderChrome. It is a column of its own so the title's
  * centring does not depend on which one is in there. */

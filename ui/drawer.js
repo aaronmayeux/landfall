@@ -200,6 +200,7 @@ export function createDrawer({ root }) {
   const eyebrowEl = root.querySelector('.drawer-eyebrow');
   const closeBtn = root.querySelector('.drawer-close');
   const titleEl = root.querySelector('#drawer-title');
+  const headEl = root.querySelector('.drawer-head');
   const viewsEl = root.querySelector('#drawer-views');
 
   const current = () => (stack.length ? stack[stack.length - 1] : null);
@@ -304,6 +305,12 @@ export function createDrawer({ root }) {
      * The BUTTON does not change — same element, same handler, same tab stop.
      * Only the glyph and the word a screen reader hears. */
     const minimise = Boolean(def.minimises);
+    /* Published on the root so the header can LOOK pressable where it is.
+     * A surface that dismisses on a tap and gives no hover or cursor for it is
+     * a hidden gesture (§13); a surface that looks pressable and is not is
+     * worse. One attribute keeps the two honest. */
+    if (minimise) root.dataset.minimises = 'true';
+    else delete root.dataset.minimises;
     closeBtn.setAttribute('aria-label', minimise ? 'Minimise' : 'Close');
     closeBtn.innerHTML = minimise
       ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
@@ -490,6 +497,32 @@ export function createDrawer({ root }) {
 
   backBtn.addEventListener('click', () => back());
   closeBtn.addEventListener('click', () => close());
+
+  /**
+   * ==> THE WHOLE HEADER DISMISSES, FOR A VIEW THAT MINIMISES AND NO OTHER.
+   * <== Aaron on glass, 2026-08-25. On the seasons board the header is a bare
+   * title and a chevron, so it reads as a bar you should be able to press
+   * anywhere — and the chevron is a small target at the far edge of a wide
+   * sheet, which is the corner a thumb reaches for least.
+   *
+   * ==> IT IS GATED ON `minimises` BECAUSE EVERY OTHER HEADER IN THIS APP HAS
+   * A SECOND JOB. <== The storm detail panel's title slot holds an identity
+   * block that the home dashboard binds a click to — pressing the storm's name
+   * OPENS that storm — and any pushed view's header holds a Back button whose
+   * whole purpose is going up rather than out. A blanket rule here would have
+   * made the header of half the app do two things at once, with the
+   * destructive one winning.
+   *
+   * A press that lands on a real control is left alone: Back and the chevron
+   * own themselves, and swallowing their events here would either double the
+   * action or replace it with the wrong one.
+   */
+  headEl.addEventListener('click', (e) => {
+    const cur = current();
+    if (!cur || !entry(cur.id).def.minimises) return;
+    if (e.target.closest('button')) return;
+    close();
+  });
 
   /* Escape is NOT handled here — it is one global contract owned by
    * attachEscape() in map/globe.js (§10, §13). main.js routes it in. */

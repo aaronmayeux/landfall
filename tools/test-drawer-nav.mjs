@@ -66,7 +66,22 @@ function stubEl(tag = 'div') {
     setAttribute(k, v) { this.attrs[k] = String(v); },
     getAttribute(k) { return this.attrs[k] ?? null; },
     appendChild(c) { this.children.push(c); return c; },
-    addEventListener: noop,
+    /* ==> LISTENERS ARE RECORDED RATHER THAN DROPPED. <== They were `noop`
+     * while every control in this header was a button the suite could reach by
+     * calling the drawer's own API. The whole HEADER became a press target for
+     * a minimising view (§57.21b), and there is no API for "the reader tapped
+     * the bar" — so a stand-in that swallowed the listener would let that
+     * behaviour be deleted with the suite still green, which §12 calls worse
+     * than no test. */
+    addEventListener(type, fn) {
+      (this.on ||= {})[type] ||= [];
+      this.on[type].push(fn);
+    },
+    fire(type, e = {}) { for (const fn of (this.on?.[type] || [])) fn(e); },
+    /* Enough of one for `e.target.closest('button')`. A press that lands on a
+     * real control has to be left alone, and the default here is the ordinary
+     * case: a press on the bar itself, which is on no button at all. */
+    closest: () => null,
     querySelectorAll: () => [],
     focus() { this.focusCount++; lastFocused = this; },
   };
@@ -74,9 +89,10 @@ function stubEl(tag = 'div') {
 }
 
 /** What `root.querySelector` answers after the header string is written. The
- *  six names are the drawer's contract with its own markup; if one is renamed
- *  in drawer.js and not here, this suite throws on a null rather than passing
- *  silently, which is the right way round. */
+ *  seven names are the drawer's contract with its own markup; if one is
+ *  renamed in drawer.js and not here, this suite throws on a null rather than
+ *  passing silently, which is the right way round — and it did exactly that
+ *  when `.drawer-head` was added, which is why this list is seven now. */
 function drawerRoot() {
   const parts = {
     '.drawer-back': stubEl('button'),
@@ -84,6 +100,9 @@ function drawerRoot() {
     '.drawer-eyebrow': stubEl('span'),
     '.drawer-close': stubEl('button'),
     '#drawer-title': stubEl('div'),
+    /* The header itself. A view that MINIMISES dismisses on a press anywhere
+     * across it (§57.21b), so the drawer binds a listener here. */
+    '.drawer-head': stubEl('header'),
     '#drawer-views': stubEl('div'),
   };
   const root = stubEl('aside');
@@ -157,17 +176,18 @@ ok(!SIDE_TRIP_VIEWS.has('home') && !SIDE_TRIP_VIEWS.has('storms')
 
 /* --- a real drawer, for everything below ---------------------------------- */
 
+/** The shape every view in this suite starts from. Lifted out of `rig` when
+ *  the minimising-header cases needed to register one AFTER the rig was
+ *  built. */
+const plainViewDef = (id, title) => ({ id, title, mount: noop, onEnter: noop });
+
 function rig() {
   const root = drawerRoot();
   const drawer = createDrawer({ root });
   const seen = [];
 
-  const plainView = (id, title) => ({
-    id,
-    title,
-    mount: noop,
-    onEnter: (arg, opts) => seen.push({ id, arg, fresh: opts.fresh }),
-  });
+  const plainView = (id, title) => ({ ...plainViewDef(id, title),
+    onEnter: (arg, opts) => seen.push({ id, arg, fresh: opts.fresh }) });
 
   drawer.register(plainView('storms', 'Storms'));
   drawer.register(plainView('layers', 'Layers'));
@@ -383,6 +403,55 @@ const baseCluster = ruleBody(panelsCss, '\n  #controls {');
 ok(/visibility:\s*visible/.test(baseCluster || '')
    && /visibility\s+0s\s+linear\s+0s/.test(baseCluster || ''),
   'and coming BACK is instant, so the cluster is focusable the moment it starts moving rather than a quarter-second after it arrives');
+
+
+/* --- the minimising header ------------------------------------------------
+ *
+ * §57.21b. A view may ask for a minimise CHEVRON instead of the X, and its
+ * whole header then dismisses on a press. Both halves are opt-in, and the
+ * reason they are opt-in is every other header in this app: the storm panel's
+ * title slot holds an identity block that OPENS a storm when pressed, and any
+ * pushed view's header holds a Back button whose whole purpose is going up
+ * rather than out. A blanket rule would have made half the app's headers do
+ * two things at once, with the destructive one winning.
+ * ------------------------------------------------------------------------ */
+section('a minimising header dismisses on a press, and only that kind');
+
+{
+  const { drawer, parts } = rig();
+  drawer.register({ ...plainViewDef('archive', 'Past storms'), minimises: true });
+
+  drawer.go('storms', undefined, { from: stubEl('button') });
+  ok(drawer.isOpen(), 'an ordinary view is open');
+  parts['.drawer-head'].fire('click', { target: stubEl('span') });
+  ok(drawer.isOpen(),
+    '==> AND A PRESS ON ITS HEADER DOES NOTHING. <== Storms, the detail panel and the dashboard all put something else in this bar, so a blanket dismiss would fire instead of it');
+  ok(parts['.drawer-close'].getAttribute('aria-label') === 'Close',
+    'and its button is still a Close');
+
+  drawer.go('archive', undefined, { from: stubEl('button') });
+  ok(parts['.drawer-close'].getAttribute('aria-label') === 'Minimise',
+    'a minimising view says Minimise rather than Close — the archive is a MODE you are still standing in, and an X reads as leaving it');
+
+  parts['.drawer-head'].fire('click', { target: stubEl('span') });
+  ok(!drawer.isOpen(),
+    '==> A PRESS ANYWHERE ACROSS ITS HEADER CLOSES. <== The chevron is a small target at the far edge of a wide bar, which is the corner a thumb reaches for least');
+}
+
+{
+  const { drawer, parts } = rig();
+  drawer.register({ ...plainViewDef('archive', 'Past storms'), minimises: true });
+  drawer.go('archive', undefined, { from: stubEl('button') });
+
+  /* A press that lands on a real control is left alone. Swallowing it here
+   * would either double the action or replace it with the wrong one — Back
+   * goes UP and this goes OUT. */
+  const onAButton = stubEl('span');
+  onAButton.closest = (sel) => (sel === 'button' ? stubEl('button') : null);
+  parts['.drawer-head'].fire('click', { target: onAButton });
+  ok(drawer.isOpen(),
+    'a press that lands on Back or the chevron is left to that button, not answered twice');
+}
 
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {
