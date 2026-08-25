@@ -1329,20 +1329,139 @@ Opt-in, its own short list. Not a filter over `config/layers.js`.
 
 - **Track** — always
 - **Landfall marks** — always
-- **Wind field** — 2004 onward
-- **Wind swath** — the total footprint that ever saw storm-force wind.
-  `samples/ida-al092021/gis/best-track/AL092021_windswath.geojson` already has
-  one. **A historical shape with no live equivalent**
+- **Wind footprint** — where the record has one. **This is ONE entry, not the
+  two ("Wind field", "Wind swath") this list carried until step 6b** — see
+  §57.26a for why, and for why the wind field comes back when the clock lands
 - **Watches and warnings** — Tier 2 only
 - **Cone at the selected advisory** — Tier 2 only, and only while scrubbing
 - **Home marker and the distance circle**
 
 **Population is not on this list** (§57.1 decision 9).
 
+**==> AND THE LIST ITSELF DOES NOT EXIST YET. <== As built through step 6b the
+archive has no layer control at all** — the Layers button is hidden inside the
+archive (§57.16a) and the footprint appears with focus rather than with a
+switch. That is deliberate for now: a list of one entry is furniture, and the
+`Track` and `Landfall marks` rows above would both read `always`, which is a
+control that cannot do anything. The list becomes real when a second thing on
+it can be turned off.
+
 The modules underneath are the live ones taking different data — past track,
 wind field, coastline, globe, gestures, keyboard, drawer mechanics, type,
 spacing, touch targets. What differs is which layers get registered. The layer
 registry already supports this; a second registration set is the natural shape.
+
+### 57.26a The wind footprint, as built
+
+Step 6b. `lib/season-windswath.js` (HURDAT2's radii columns into a timeline),
+`lib/windswath.js`'s `sweepTimeline` (the shared sweep),
+`map/layers/season-swath.js` (the draw), `ARCHIVE_GEO.swath*` (the paint),
+`SEASONS.windFieldFirstSeason` (the sentence's year), and
+`footprintNoteHtml` in `ui/seasons-board-markup.js` (the sentence).
+`tools/test-season-swath.mjs` is the gate — 54 assertions, twelve mutations
+verified.
+
+**==> IT IS ONE LAYER WHERE §57.26 LISTED TWO, AND THAT IS A REAL CHANGE
+RATHER THAN A SHORTCUT. <==** The list above named a *wind field* (the extent
+at a moment) and a *wind swath* (the footprint over the whole life) as separate
+entries, which is the right split for a live storm. **A finished storm has no
+"a moment."** There is no now to draw the field at, and drawing it at the peak
+puts a ring inside a corridor that already covers the same ground — the same
+paint twice. So the archive draws the footprint and calls it that. **The wind
+field earns its own entry back the day step 10's clock exists**, because a
+clock is exactly the thing that gives a finished storm a moment; the layer file
+is written so that becomes picking a different record rather than a rewrite.
+
+**==> ONLY THE FOCUSED STORM WEARS ONE. <==** Aaron's call, 2026-08-24. Three
+nested corridors across four ticked storms is twelve translucent shapes
+compounding on each other — the look he rejected outright when the live swath
+was built, and the first thing `lib/windswath.js`'s header records. It is also
+what makes the feature cheap: **one storm is 12–13 ms and ~1,600 vertices;
+the whole 2005 season would be ~300 ms and ~34,500**, on a phone, on the
+archive's most frequent interaction. The footprint is a *tell me about this
+one* fact.
+
+**The cost is real and is not hidden:** with nothing focused, nothing draws, so
+a reader who never taps a track never sees a footprint. What makes that
+acceptable is that the same tap is what the SENTENCE is attached to, so the
+presence and the absence are discovered by one action. **If it reads as
+undiscoverable on glass, the fix is the roster saying so — not drawing all of
+them.**
+
+**==> NOAA'S OWN PUBLISHED SWATH IS NOT USABLE, AND THAT IS MEASURED. <==**
+§57.26 above pointed at `samples/ida-al092021/gis/best-track/AL092021_windswath.geojson`
+as if it were the source. Measured 2026-08-24: its 34 kt polygon is 1,070
+vertices and **100% of its edges are axis-aligned** — the same rasterized
+staircase §14 records the live merged product being. It is also a per-storm GIS
+download that only exists from 2008 (§57.9's third cliff), where the radii
+columns start in 2004. Building the shape from the radii is cheaper, smoother
+and covers four more years. Asserted in the suite rather than assumed, so if
+NOAA ever fixes it the shortcut becomes worth reconsidering.
+
+**Built against it, our corridors cover the same ground as the agency's** —
+Ida's three thresholds agree to within half a degree at every corner.
+
+**==> THE RULE THAT DECIDES THE SHAPE: A MISSING RADII ROW AND A ZERO RADII ROW
+ARE NOT THE SAME THING. <==**
+
+NOAA inserts extra records at landfalls and peaks, off the six-hour clock, and
+those rows carry `-999` in all twelve radii columns — nobody wrote the wind
+field down for that odd minute. `0,0,0,0` is a different statement: it was
+written down, and there was no wind at that threshold.
+
+The sweep breaks a corridor at any timeline point with no ring, which is
+exactly right for a zero — sweeping across an hour published as ring-free would
+claim wind the agency did not (§5). Applied to a MISSING row it is exactly
+wrong. **Katrina's three landfall records are all `-999`, so a raw feed snaps
+her footprint into three pieces at the three moments the app is named after.**
+
+So a row with no radii group at all is dropped from the timeline and the
+corridor interpolates across it; a row whose groups are present and zero stays
+and breaks the run. **Measured across both mirrored basins, 2004 on: 90 such
+rows, 85 off the six-hour clock, 73 of them landfalls, inside the wind-field
+life of 41 storms. And the two kinds never mix on one row** — 24,087 rows carry
+all three groups, 90 carry none, zero carry some — so "did this row have radii
+at all" is one question rather than three.
+
+**THE SWEEP IS SHARED WITH THE LIVE APP AND THAT IS WHY.** `sweepTimeline` was
+extracted out of `buildFullTrack` with no behaviour change (the 103 existing
+swath assertions prove it). Everything above it in that function is about a
+live feed — joining radii to centres across five MapServer layers, dropping
+forecast hours that have already happened, solving a ring's own centre — and
+none of it exists for a finished storm. What is left is the same maths either
+way, and **this project has already paid twice to get the seam right**; a
+second copy would drift.
+
+**==> THE ARCHIVE HAS ITS OWN SEAM STORMS AND THE FIRST VERSION OF THE SUITE
+DID NOT CATCH THEM. <==** It passed with the branch fold deliberately removed —
+the exact fault that swept Lala's 34 kt band 359.75° around the planet. Katrina
+and Ida are both mid-Atlantic and cannot show it. **Thirteen storms from 2004
+on cross ±180 carrying a wind field**: Ioke, Kika, Maka, Omeka, Pewa,
+Genevieve, Halola, Kilo, Hector, Dora and three unnamed. **Ioke 2006 is the
+fixture** — 83 records, all 83 with radii, crossing westbound where her
+published longitude jumps −179.8 to +179.3. Her 34 kt corridor is 56° wide;
+unfolded it is 356°, and that is now three assertions.
+
+**THE SENTENCE IS THE POINT OF THE STEP, NOT A CAPTION ON IT.** Three quarters
+of the archive has no wind field — **826 storms of 3,266** — so for most of
+what a reader opens, the sentence IS the feature. §57.25 rule 2 asks it to
+teach something true about the record rather than read as a missing button.
+
+**Two wordings, and the second exists so the first cannot lie.** The era
+sentence — *"Wind field size wasn't recorded before 2004"* — is only said for a
+storm from before `SEASONS.windFieldFirstSeason`. A 2004-or-later storm with
+nothing to draw gets *"No wind field was recorded for this storm"* instead,
+because the era claim would be a statement about the record that its own
+subject is the counter-example to. Every settled season measures 100% coverage
+from 2004 on, so in practice the second wording is for the season still
+running, whose b-decks are a different source. **A storm that HAS a footprint
+says nothing** — a presence speaks for itself and the shape is on the globe.
+
+**AND THE YEAR IS NEVER A GATE.** §57.6's rule holds here exactly as it does in
+the parser: a storm has a footprint if its rows carry radii, whatever the year.
+`windFieldFirstSeason` only chooses the wording once `season-facts.js` has
+already established there is nothing to draw. Proven by grafting radii onto an
+1851 storm and watching a footprint appear.
 
 ### 57.27 Things that exist only in Seasons
 
@@ -1684,11 +1803,27 @@ fair trade for not putting a second control on every roster row.
 Wind field where it exists with §57.25's honest line where it does not, and
 the swath — the total footprint that ever saw storm-force wind, which is a
 historical shape with no live equivalent (§57.26, §57.27).
+**§57.26a is the as-built account. Read that, not this.**
+
+**==> IT SHIPPED AS ONE LAYER, NOT TWO, AND THE LIST IN §57.26 WAS CORRECTED
+RATHER THAN FOLLOWED. <==** A finished storm has no "a moment" for a wind field
+to be the extent AT, and drawing it at the peak is a ring inside a corridor
+that already covers the same ground. The wind field earns its entry back when
+step 10's clock gives a finished storm a moment.
+
+**AND IT DRAWS THE FOCUSED STORM ONLY** — Aaron's call, 2026-08-24. Twelve
+translucent shapes across four ticked storms is the look he rejected when the
+live swath was built.
+
 **Aaron looks at:** a 2004-or-later storm with radii, and a 19th-century one
 without. Does the sentence explaining the absence teach him something true
 about the record, or read as a missing feature?
 **Done when:** a storm from before 2004 says why it has no wind field, on
 glass.
+
+**AWAITING GLASS.** Everything below it was measured — Katrina's landfall rows,
+Ida against NOAA's own published swath, Ioke across the date line, the 12 ms
+build cost — but nothing here has been seen on a phone.
 
 ---
 

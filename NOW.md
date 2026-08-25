@@ -276,11 +276,53 @@ refuses a stale answer on purpose, and a warmed copy nine hours old is an expire
 flood warning arriving by a different road. `SPEC-DATA.md` §58.3.
 
 
-**==> SEASONS: STEP 6a IS DONE AND CONFIRMED ON GLASS. <==** Aaron,
+**==> SEASONS: STEP 6b IS BUILT AND NOTHING IN IT HAS BEEN SEEN ON A PHONE.
+<==** The wind footprint — the ground that ever saw 34, 50 or 64 knot wind over
+a storm's whole life — plus the sentence for the three quarters of the archive
+that has no wind field. `SPEC-SEASONS-BUILD.md` §57.26a is the as-built
+account; read that, not this.
+
+**GLASS, and it is three looks:**
+
+1. **A modern storm with a footprint.** Open 2005, tick Katrina, **tap her
+   track**. Three nested corridors should appear beneath the line — widest
+   green, then orange, then the red core — and the track and the landfall pins
+   should stay clearly readable on top of the wash. `ARCHIVE_GEO.swathFillOpacity`
+   at 0.14 is the dial if it reads as fog on sepia.
+2. **A 19th-century storm without one.** Open 1851 or any pre-2004 year, tick a
+   storm, tap it. **No shape, and a line in the roster saying *"Wind field size
+   wasn't recorded before 2004, so there is no wind footprint for …"***. That
+   sentence is the whole done-condition — does it teach something true about
+   the record, or read as a missing feature?
+3. **==> THE DISCOVERABILITY COST, WHICH IS THE ONE REAL RISK IN THE DESIGN.
+   <==** With nothing focused, NOTHING draws — that is the bound that keeps
+   four ticked storms from becoming twelve compounding translucent shapes.
+   A reader who never taps a track never sees a footprint at all. **If that
+   reads as broken rather than as restraint, the fix is the roster saying so,
+   NOT drawing all of them** — the whole-season build is ~300 ms and ~34,500
+   vertices against one storm's 12 ms and ~1,600.
+
+**FOUR THINGS WERE MEASURED AND ARE NOT GLASS CALLS.** Read §57.26a for the
+numbers; the short version is that NOAA's landfall rows carry `-999` rather
+than zero and would have snapped Katrina's footprint into three pieces at the
+three moments the app is named after; NOAA's own published swath is 100%
+axis-aligned staircase and unusable; our corridors agree with the agency's to
+within half a degree on Ida; and thirteen archive storms cross the date line
+carrying a wind field, with Ioke 2006 as the fixture.
+
+**AND THE FIRST VERSION OF THE SUITE PASSED WITH THE SEAM FIX REMOVED**, which
+is the failure §12 calls worse than no test — Katrina and Ida are both
+mid-Atlantic and cannot show it. Ioke is in now and the mutation bites at 356°.
+Twelve mutations were run across the pass and **two survived**: the seam one,
+and the threshold-colour drop guard, which nothing else reached. Both are
+covered and re-verified. A third finding came out of a survivor rather than a
+failure — a comment in `lib/season-windswath.js` claimed a distinction that did
+nothing, and now says so.
+
+**==> STEP 6a IS DONE AND CONFIRMED ON GLASS. <==** Aaron,
 2026-08-24: four 2005 storms at once, the names, the landfall marks, focus and
 dim, and the tick-is-the-focus trade — **all correct, nothing left to look
-at.** `SPEC-SEASONS-BUILD.md` §57.21a is the as-built account. **Step 6b — the
-wind field and the wind swath — is next.**
+at.** `SPEC-SEASONS-BUILD.md` §57.21a is the as-built account.
 
 **THREE CALLS SETTLED ON GLASS THAT DAY. DO NOT REOPEN THEM WITHOUT NEW
 EVIDENCE.** `ARCHIVE_GEO.dimmedOpacity` at 0.2 reads as a ghost rather than an
@@ -294,12 +336,15 @@ It was flagged as a behaviour change made without asking and accepted. The tap
 handler answers for the archive and returns, because falling through would
 close the drawer, which is the only way back out. §57.21a records it.
 
-**THE §12 CEILING WAS CROSSED AND THE CUT WAS TAKEN RATHER THAN DOCUMENTED.**
-`ui/view-seasons-board.js` hit 705 lines, so `liveDownHtml` moved to
-`ui/seasons-board-markup.js` — it was always a markup function living outside
-the markup file. 686 now. **`main.js` is 1,639 and the `warmable layer` helper
-has been "the next cut" for four passes running**; §12's row says so plainly
-and the next pass that opens that file should take it.
+**THE §12 CEILING WAS CROSSED TWICE IN TWO SESSIONS AND THE CUT WAS TAKEN BOTH
+TIMES RATHER THAN DOCUMENTED.** Step 6a took `liveDownHtml` out of
+`ui/view-seasons-board.js`; step 6b's footprint slot put it back at 705, so the
+whole roster assembly went too — `seasonRosterHtml`, told what to draw and
+reading no state, same cut and same reason. **693 now, and the pattern is that
+this file grows on every seasons pass.** The next one should expect to cut
+again rather than be surprised. **`main.js` is 1,659 and the `warmable layer`
+helper has been "the next cut" for five passes running**; §12's row says so
+plainly and the next pass that opens that file should take it.
 
 **TWENTY-ONE MUTATIONS WERE RUN ACROSS THE THREE SUITES AND ONE SURVIVED**,
 which is the failure §12 calls worse than no test. `test-seasons-board.mjs`'s

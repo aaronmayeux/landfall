@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 303 numbered headings.
+Covering 11 files, 304 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -310,16 +310,17 @@ real home is the other row carrying the same section number.
 | `57.23` | &nbsp;&nbsp;The season clock | `SPEC-SEASONS-BUILD.md` | 1218-1239 |
 | `57.24` | &nbsp;&nbsp;The download gate | `SPEC-SEASONS-BUILD.md` | 1240-1295 |
 | `57.25` | &nbsp;&nbsp;What ports from the live app, and what does not | `SPEC-SEASONS-BUILD.md` | 1296-1325 |
-| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 1326-1346 |
-| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 1347-1356 |
-| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 1357-1362 |
-| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 1363-1374 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 1375-1787 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1788-1813 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1814-1835 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1836-1899 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 1900-1965 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 1966-2149 |
+| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 1326-1353 |
+| `57.26a` | &nbsp;&nbsp;The wind footprint, as built | `SPEC-SEASONS-BUILD.md` | 1354-1465 |
+| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 1466-1475 |
+| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 1476-1481 |
+| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 1482-1493 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 1494-1922 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 1923-1948 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 1949-1970 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 1971-2034 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 2035-2100 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 2101-2284 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -335,8 +336,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 103,196 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 118,613 | 42 |
+| `SPEC-SEASONS-BUILD.md` | 126,846 | 43 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 180,334 | 15 |
+| `SPEC.md` | 180,603 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
