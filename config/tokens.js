@@ -729,6 +729,21 @@ export const DARK = Object.freeze({
     labelColor:     '#C7D6E2',
     labelHalo:      '#0B1420',
 
+    /** THE RING AROUND A LANDFALL MARK ON THE ARCHIVE GLOBE (§57.21 item 3).
+     *
+     *  ==> IT IS THE ONE MARK IN SEASONS WEARING AN INK THAT IS NOT A CATEGORY
+     *  COLOUR, AND THAT IS WHY IT EXISTS. <== The mark's FILL is the storm's
+     *  strength at the moment it crossed the coast, off the fixed §6 ramp like
+     *  everything else. If the ring were a category colour too, a landfall
+     *  would be a slightly fatter track dot; the whole job of this value is to
+     *  be the thing the eye picks out of a globe full of Saffir-Simpson hues.
+     *
+     *  Near-white rather than pure white, on the same reasoning as
+     *  `pointStroke` being near-black: it has to sit legibly on all seven
+     *  category fills, and the ramp runs light to mid. Defined in DARK because
+     *  every themed colour is, but the archive only ever draws it in SEPIA. */
+    landfallRing:   '#EAF2F8',
+
     /** THE X INSIDE AN ENDED STORM'S DOT, AND THE ONE MARK WHOSE INK HAS TO
      *  FLIP WITH THE THEME.
      *
@@ -1457,6 +1472,21 @@ export const LIGHT = Object.freeze({
     labelHalo:      '#F6F6F4',
     stormLabelHalo: '#F6F6F4',
 
+    /** THE ARCHIVE'S LANDFALL RING — and this one is never drawn.
+     *
+     *  The archive forces SEPIA for as long as a reader is inside it, so the
+     *  value that ships is `SEPIA.geo.landfallRing`. This exists because a
+     *  palette with a hole in it is a palette that throws
+     *  (`map/theme-state.js` reads every key on every repaint, in whatever
+     *  theme is current at the time), and because a themed colour defined in
+     *  only two of three palettes is a trap for whoever eventually gives the
+     *  live globe a landfall mark of its own.
+     *
+     *  Near-black rather than DARK's near-white, on the same rule as
+     *  `stormLabelColor` above: on a pale map the mark that must stand out is
+     *  the dark one. Inverted deliberately, not copied. */
+    landfallRing:   '#14191E',
+
     /** See DARK.geo.stormLabelColor. Near-black on the greyscale daytime
      *  globe, one step DARKER than the forecast time labels beside it — on a
      *  pale map the loudest label is the darkest one, which is the inverse of
@@ -1702,6 +1732,11 @@ export const SEPIA = Object.freeze({
     pointStrokeFirst:  '#FBF2E2',
     labelColor:        '#DED2BC',
     labelHalo:         '#1A1206',
+    /* Warm white, for the same reason `coneFill` is: #EAF2F8 is a cool blue
+     * white and over parchment it reads as a hole rather than as ink. This is
+     * the value that actually ships — the archive is the only screen that
+     * draws a landfall mark, and the archive is always sepia. */
+    landfallRing:      '#FBF2E2',
     endedMark:         '#1A1206',
     stormLabelHalo:    '#1C1409',
     stormLabelColor:   '#FAF4E8',
@@ -2671,6 +2706,96 @@ export const STORM_GEO = Object.freeze({
    *  dial to raise if the spread is hard to see on a phone, and the first to
    *  lower if the map goes to soup with several models on. */
   modelLineOpacity: 0.7,
+});
+
+/**
+ * ARCHIVE GEOMETRY (§57.21, §57.30 step 6) — the numbers that belong to the
+ * SEASONS globe and to nothing else.
+ *
+ * ==> SEPARATE FROM `STORM_GEO` BECAUSE THE TWO GLOBES ARE ASKED DIFFERENT
+ * QUESTIONS. <== The live globe draws ONE storm's geometry over a handful of
+ * ambient tracks, and every number in `STORM_GEO` is tuned for that: the
+ * selected storm is the subject and everything else is context. The archive
+ * draws four, ten or forty FINISHED tracks at once with no selection at all,
+ * so its whole legibility problem is telling siblings apart rather than
+ * telling a subject from its background. Reusing `STORM_GEO`'s numbers would
+ * have meant one file's values quietly serving two arguments, and the first
+ * time somebody tuned the live cone they would have moved the archive too.
+ *
+ * Colours are NOT here. Track and landfall fills come off the fixed
+ * Saffir-Simpson ramp per feature (§6), and the two themed inks — the landfall
+ * ring and the name label — are `geo.*` palette values reached through
+ * `map/theme-state.js`, like every other themed colour the map draws.
+ */
+export const ARCHIVE_GEO = Object.freeze({
+  /** ==> FOCUS AND DIM. THE MOST IMPORTANT INTERACTION IN THE FEATURE
+   *  (§57.21 item 2), AND IT IS TWO NUMBERS. <==
+   *
+   *  The dimmed value is a real judgement rather than a token gesture. At 0.5
+   *  the unfocused tracks are still fully readable and focus reads as "slightly
+   *  brighter", which answers nothing; at 0.08 they are gone and focus becomes
+   *  an expensive way to hide the season. 0.2 leaves a ghost — the shape of the
+   *  year is still there, the focused storm is unmistakably the subject.
+   *
+   *  ==> OPACITY IS THE CHANNEL, DELIBERATELY, AND IT IS THE ONLY ONE. <== The
+   *  category ramp is a fixed contract (§6): a Cat 3 track cannot change hue to
+   *  say "not this one", because hue already means strength everywhere in this
+   *  app. Width is the other candidate and it is worse — a thinner line at
+   *  globe distance is an invisible line. Opacity also happens to be one of the
+   *  two properties this project animates at all, so this stays on the
+   *  compositor. First dial to move if the ghosts read as clutter on a phone. */
+  focusedOpacity: 1,
+  dimmedOpacity:  0.2,
+
+  /** ==> THE LANDFALL MARK. IT IS SUPPOSED TO BE THE MOST CONFIDENT THING ON
+   *  THIS GLOBE AND THESE NUMBERS ARE WHAT MAKE THAT TRUE. <==
+   *
+   *  §57.21 item 3, and the app is called Landfall. These are NOAA's own `L`
+   *  records — the moment the centre crossed a coast, written into the reviewed
+   *  best track by the people who reviewed it. Nothing else the archive draws
+   *  is that specific, so nothing else may look heavier.
+   *
+   *  Smaller than a live forecast dot (`STORM_GEO.pointRadius` is 10) and that
+   *  is the point: a forecast point is a six-hourly waypoint on one storm, this
+   *  is a single moment on a season that may hold forty of them. A ten-pixel
+   *  disc repeated across the Gulf is a smear. Seven with a heavy ring reads as
+   *  a pin. */
+  landfallRadius:      7,
+  /** The ring, not the fill, is what makes it read as placed rather than as
+   *  another dot on the line — it is the one mark on the archive globe wearing
+   *  an ink that is not a category colour. Heavier than the live forecast dot's
+   *  1.5 for exactly that reason. */
+  landfallStrokeWidth: 2.5,
+
+  /** ==> A STORM WITH ONE OBSERVATION GETS A DOT, BECAUSE IT IS NOT A LINE.
+   *  <== Real and common in the 19th century — the record holds single
+   *  sightings from passing ships. Step 5 dropped these on the floor
+   *  (`trackFeature` returns null under two points) and a reader ticking one
+   *  watched nothing happen, which is the silence §5 forbids.
+   *
+   *  Smaller than a landfall mark and with no ring, so the two can never be
+   *  confused: a ring means NOAA marked this, a bare dot means this is all
+   *  there is. */
+  onePointRadius: 4,
+
+  /** Storm names along the tracks (§57.21 item 1). One point smaller than the
+   *  live globe's `SIZE.stormLabelPx` of 14, because the archive can have ten
+   *  names on screen where the live globe has two or three, and because a name
+   *  set ALONG a curve reads a touch larger than the same size set flat. The
+   *  halo matches the live globe's exactly — the job is identical, keeping a
+   *  name legible where it crosses a coastline. */
+  nameSize:      13,
+  nameHaloWidth: 1.8,
+
+  /** How far apart MapLibre repeats a name along one track, in pixels. A long
+   *  Atlantic crossing is most of the width of the screen, and a name placed
+   *  once sits wherever the line's midpoint happens to fall — often off the
+   *  edge of the viewport at any zoom past the planet band, which leaves a
+   *  bright unlabelled line and nothing to identify it. Repeating is how a
+   *  line label stays attached to its line while the reader pans. 220 is about
+   *  one and a half phone-widths: close enough that a name is nearly always in
+   *  view, far enough that a track is not a chain of its own name. */
+  nameRepeatPx: 220,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */
