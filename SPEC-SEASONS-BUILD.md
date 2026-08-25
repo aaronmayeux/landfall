@@ -1215,6 +1215,59 @@ inside it. Contents are §57.15's derived facts, plus:
   on the night
 - A link to NHC's written report where one exists
 
+### 57.22a NHC's written reports — measured, and the answer is an index
+
+`tools/tcr-probe.mjs`, run 2026-08-25 on an Actions runner. §57.22 asks the
+panel for *"a link to NHC's written report where one exists"*; all three
+unknowns in that sentence are now measured.
+
+**WHERE THEY ARE.** `https://www.nhc.noaa.gov/data/tcr/index.php` is the entry
+point and it carries **no report links at all** — it is navigation plus a grid
+of **37** `?season=YYYY&basin=atl|epac|cpac` pages, and the reports live on
+those. A machine-readable index also exists at
+`https://www.nhc.noaa.gov/TCR_StormReportsIndex.xml`, 335 KB.
+
+**==> COVERAGE IS 532 OF 3,266 STORMS — 16.3% — AND IT STOPS DEAD AT 1995.
+<==** Not a taper: 1994 and everything before it has nothing at all. **This is
+a FOURTH cliff to set beside §57.9's three** (b-decks 1958, text advisories
+1998, GIS geometry 2008), and it is the earliest-biting of them. Within the
+covered years it is partial rather than complete — 2005 has 31 reports against
+48 storms, 2014 has 9 against 32 — so *"no report for this storm"* is the
+ordinary answer even in a modern season, not an error.
+
+**A MISS IS A CLEAN 404**, and every one of 40 sampled links returned 200. So a
+constructed link is at least *verifiable*.
+
+**==> BUT IT MUST NOT BE CONSTRUCTED, AND THE EXCEPTIONS ARE WHY. <==** The
+filename is `AL122005_Katrina.pdf` for 510 of 534 identified reports. The other
+24 fail in **two systematic ways, neither of which is random noise**:
+
+1. **A storm that crossed basins carries BOTH ids.**
+   `AL022022_EP042022_Bonnie.pdf`, `AL132022_EP182022_Julia.pdf`. Nothing in a
+   single storm id can predict that the file will name a second one.
+2. **An unnamed storm is written with its number spelled out** —
+   `AL102004_Ten.pdf`, `AL022003_Two.pdf` — where we hold the name as
+   `UNNAMED`. That is **our own normalisation, not NHC disagreeing with
+   itself**: §57.14 deliberately reads a spelled-out number as a placeholder
+   rather than a name, which is the rule that stopped 71 storms being called
+   `TEN` in the roster. The two decisions are both right and they do not
+   compose.
+
+**THE DECISION: SHIP AN INDEX, NEVER BUILD A URL.** 532 rows of id → filename
+is small, and it makes *"where one exists"* answerable **offline and without a
+request**. Constructing and then verifying would mean a fetch to NOAA every
+time a reader opens a panel, to answer a question that never changes for a
+settled season — and constructing without verifying ships silent dead links
+into the one panel whose whole job is historical accuracy.
+
+**AND THE PROBE'S FIRST RUN GOT THIS WRONG IN THE WAY WORTH RECORDING.** It
+asked for the XML under `/data/tcr/`, which was the one URL in it that was
+guessed rather than read, got a clean 404, and reported *"no machine-readable
+index exists"* in good faith. **A guessed URL's 404 is indistinguishable from
+an absence.** It was caught only because the probe saves raw bytes for a human
+to read afterwards — which is the argument for that habit, stated by the one
+time it paid.
+
 ### 57.23 The season clock
 
 **Static tracks are the default.** You tick storms, you see complete paths,
