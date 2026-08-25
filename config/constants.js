@@ -6833,6 +6833,55 @@ export const SEASONS = Object.freeze({
    *  the largest season in the record is under fifty storms. */
   meshMinPointsPerStorm: 3,
 
+  /* --- Tapping a glyph on the archive globe (§57.21d) ---------------------- */
+
+  /**
+   * ==> HOW FAR IN THE GLYPH GOES ON ANSWERING TAPS, AND IT IS READ OFF THE
+   * FADE THAT DRAWS IT RATHER THAN CHOSEN. <== §57.21d.
+   *
+   * `map/globe3d.js` fades the surface glyphs out across `DIVE.fade.nodes`,
+   * which is dive phase 0.14 to 0.60 — map zoom 2.42 to 3.80. This is the
+   * NEAR end of that band: the glyph answers a tap only while it is at full
+   * strength, and the track owns every zoom after that.
+   *
+   * ==> THE TWO TESTS ARE DISJOINT BY ZOOM ON PURPOSE, SO THEY CANNOT ARGUE.
+   * <== NOW.md's worry was the glyph test fighting the track test at closer
+   * zooms. It cannot, because it is switched off there — and nothing is lost,
+   * because the glyph is stamped on the track's FIRST fix, so in the fading
+   * band the track hit-test resolves the same storm from the same pixels.
+   *
+   * ==> IT IS A REFERENCE, NOT A COPY OF THE NUMBER. <== Written as `0.14` it
+   * would be two numbers that have to be kept in agreement by hand, and the
+   * symptom of them drifting is a glyph you can plainly see that will not
+   * answer a tap — which reads as a broken app rather than as a threshold.
+   */
+  glyphTapMaxPhase: DIVE.fade.nodes[0],
+
+  /**
+   * ==> IS THE GLYPH ON THE NEAR SIDE OF THE PLANET. <== §57.21d. The hit-test
+   * projects each drawn storm's first fix through MapLibre, and MapLibre
+   * returns a screen point for a position on the FAR side of the globe just as
+   * happily as for one you can see. Without this, a tap on the Atlantic could
+   * open a storm sitting behind the Earth.
+   *
+   * The test is the dot product of the storm's direction against the direction
+   * the map is centred on. This is the floor it must clear.
+   *
+   * ==> DERIVED FROM THE CAMERA RATHER THAN GUESSED. <== A point at radius `r`
+   * from the centre is over the horizon of the unit globe, seen from a camera
+   * at distance `d`, when `r · (p̂ · â) < 1`. So the floor is `1 / (r · d)`,
+   * with `r` the radius the glyphs are stamped at and `d` the camera's
+   * distance at the space floor. It works out at about 0.324 — a cap a little
+   * smaller than a hemisphere, which is what a camera at finite distance can
+   * actually see.
+   *
+   * `d` genuinely shrinks as you zoom in, which would raise the true floor —
+   * but this test only runs at the space floor (`glyphTapMaxPhase` above),
+   * where the camera is at `spaceDistance`, so using it is right rather than
+   * approximate.
+   */
+  glyphFacingMin: 1 / (DIVE.stormDotRadius * DIVE.spaceDistance),
+
   /** ==> THE FIRST YEAR NOAA WROTE A REPORT ON A STORM, AND IT ONLY EVER
    *  PICKS A SENTENCE. <== §57.22a.
    *

@@ -1840,6 +1840,108 @@ rendered one. It falls back to real attributes now. That file has told this
 class of lie three times; anything it cannot read gets made readable rather
 than worked around in the view.
 
+### 57.21d What a tap on the archive's globe means
+
+Push 2 of two, 2026-08-25. Items 2 and 7 of Aaron's list of seven, built as one
+piece because they are two answers to one question. `map/season-mesh.js` (the
+glyph list and the hit-test), `seasons/index.js` (the way in), `main.js` (the
+ordered branch). Numbers live in `SEASONS` — `glyphTapMaxPhase` and
+`glyphFacingMin`.
+
+**==> THERE IS ONE ORDERED LIST AND IT IS WRITTEN ONCE. <==** `main.js`'s
+`map.on('click')` archive branch, top to bottom: **glyph**, then **track**,
+then **empty water**. Every tap on the sepia globe resolves through exactly
+these three in this order and returns.
+
+**THE ORDER IS THE ARGUMENT RATHER THAN A PREFERENCE.** Without the glyph test
+in front, a tap on a hurricane glyph resolves to nothing and falls through to
+the empty-water branch — so building the minimise first would have shipped a
+tap that shrank the sheet on the one gesture it is supposed to open a storm
+with, and the glyph work would then have taken it back out.
+
+**==> THE GLYPH AND THE TRACK CANNOT FIGHT, BECAUSE THEY ARE DISJOINT BY ZOOM.
+<==** `map/globe3d.js` fades the surface glyphs across `DIVE.fade.nodes` — dive
+phase 0.14 to 0.60, map zoom 2.42 to 3.80. `SEASONS.glyphTapMaxPhase` is the
+NEAR end of that band, read off it rather than typed, so the glyph answers only
+while it is at full strength and the track owns every zoom from there in.
+**Nothing is lost at the handover:** the glyph is stamped on the track's own
+first fix, so in the fading band the track hit-test resolves the same storm
+from the same pixels.
+
+**==> THE HIT-TEST IS MAPLIBRE'S PROJECTION, NOT A RAY CAST AND NOT THREE'S.
+<==** The glyphs are Three.js sprites, so `queryRenderedFeatures` cannot see
+them. `map/globe-follow.js` spends every frame keeping the two globes
+pixel-locked — that is its whole job — so a longitude and latitude put through
+`map.project` land on the pixel the sprite was drawn at. No picking geometry,
+nothing added to the render path, and no second projection matrix that could
+disagree with the one on screen. At most a few dozen glyphs, each one a
+projection and a distance.
+
+**THE FAR SIDE OF THE PLANET IS REFUSED, AND IT HAD TO BE.** `map.project`
+answers for a position behind the globe as readily as for one in front of it,
+so without a facing test a tap on the visible Atlantic could open a storm round
+the back. `SEASONS.glyphFacingMin` is the floor a storm's direction must clear
+against the map's centre, and it is **derived rather than chosen**: a point at
+radius `r` is over the unit globe's horizon seen from a camera at distance `d`
+when `r · (p̂ · â) < 1`, so the floor is `1 / (DIVE.stormDotRadius ·
+DIVE.spaceDistance)` — about 0.324, a cap a little smaller than a hemisphere,
+which is what a camera at finite distance can actually see. `d` shrinks as you
+zoom in, which would raise the true floor, but this test only runs at the space
+floor where the camera is at `spaceDistance`.
+
+**NEAREST WINS, NOT FIRST-FOUND.** Two storms whose first fixes are a thumb's
+width apart both qualify, and the reader aimed at one of them. Reach is
+`SIZE.touchTarget`, the same half-box `stormAtPoint` and `seasonStormAtPoint`
+use.
+
+**==> THE GLYPH LIST IS A SECOND, TINY LIST AND NOT AN ID BOLTED ONTO THE RIDGE
+POINTS. <==** `buildSeasonMeshPoints` feeds `map/heightfield.js`, which copies
+every point into typed arrays on every recompute and tests each against all
+1,440 cage nodes. Putting a storm id on up to 1,600 of those objects for the
+benefit of the few dozen carrying a mark would be render-path cost for a field
+nothing in the render loop reads. `seasonGlyphs` is one entry per storm, built
+in `setTracks` beside the ridge and emptied in `clearTracks` beside it.
+
+**AND BOTH READ ONE `usableFixes`.** The mark goes on element 0 of a filtered,
+chronologically sorted list and the tap target is built from element 0 of the
+same list. Two copies of that filter-and-sort would drift the first time either
+was tuned, and the symptom is the worst kind: a mark you can plainly see that
+opens the wrong storm, with no console line and no visible cause.
+
+**==> OPENING A STORM IS ONE FUNCTION WITH TWO CALLERS. <==** `openStormNow` in
+`seasons/index.js`, hoisted out of the board's `onOpenStorm` callback. The
+roster row's chevron has run it since §57.22b; a glyph tap runs the same body,
+so the panel push, the camera flight and the still-running refusal are one
+behaviour rather than two that look alike today. `openSeasonStorm` is the
+export `main.js` reaches it through, guarded on the session and on the drawer
+the session holds.
+
+**A RUNNING STORM CANNOT BE REACHED THIS WAY AT ALL**, and that falls out of
+the design rather than needing a guard of its own: `selectedEntries` drops a
+still-running storm before the globe ever sees it, so it has no track, no ridge
+and no glyph to tap. The refusal inside `openStormNow` stays anyway, because it
+is the chevron's path too.
+
+**THE THIRD BRANCH IS UNCHANGED IN THIS PASS.** A tap on empty water still
+clears the focus, exactly as it did before. What it should do instead is the
+second half of this section and lands next.
+
+**THE KEYBOARD PATH FOR OPENING A STORM ALREADY EXISTED AND IS NOT DUPLICATED.**
+§13 says a gesture-only way to open a storm is a bug; Enter on a ticked roster
+row opens that storm and has since §57.21b. Making the glyphs tabbable would
+mean a focus ring on a Three.js sprite — real machinery for a road already
+paved, and a second way to reach one destination is a second thing to keep in
+step. The existing path is asserted in the suite so it cannot quietly go.
+
+**THE GATE.** `tools/test-season-glyph-tap.mjs` — the hit-test, the facing
+refusal, the zoom handover, nearest-wins, and the wiring read out of `main.js`
+and `seasons/index.js` as text, because everything behavioural passes just as
+happily against a hit-test nothing calls. **Fourteen mutations were run and one
+survived**: the first version of the ordering assertion matched
+`seasonGlyphAtPoint` inside the comment that explains the branch, so commenting
+the call out left the suite green. Both halves now match an actual invocation
+with its actual arguments.
+
 ### 57.22 The storm detail panel
 
 Same shell as the live detail panel, same section pattern, different sections

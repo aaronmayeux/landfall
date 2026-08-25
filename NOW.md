@@ -329,70 +329,24 @@ quiet one and confirm the `+`/`−` buttons do not move. Then judge whether four
 names is the right number, remembering the trade — a two-storm year now leaves
 empty sheet under its roster rather than shrinking to fit.
 
-**==> ITEM 2 AND THE GLYPH TAP ARE ONE PIECE OF WORK, NOT TWO, AND THE ORDER
-MATTERS. <==** Found 2026-08-25 while scoping item 2; nothing has been built.
+**==> THE GLYPH TAP IS BUILT. §57.21d IS THE AS-BUILT ACCOUNT — READ THAT, NOT
+THIS. <==** Tapping a hurricane glyph at the space floor opens that storm:
+panel, pan and zoom, the same function the roster row's chevron runs. The
+arbitration is one ordered list in `main.js`'s archive branch — glyph, then
+track, then empty water — and the glyph and the track are disjoint by zoom so
+they cannot argue.
 
-Both are answers to the same question — **what does a tap on the archive's
-globe mean** — and `main.js`'s `map.on('click')` archive branch is the one
-place that decides. It has two answers today: a tap that resolves to a track
-focuses it, a tap that resolves to nothing clears the focus. Item 2 wants a
-third (minimise the sheet) on exactly the branch that currently means
-"nothing", and the glyph tap wants to move cases OUT of that branch.
+**THE THIRD BRANCH IS THE HALF THAT IS LEFT.** Empty water still clears the
+focus today. Aaron's answer to the open question was **(b): minimise only**,
+and that lands next.
 
-**SO BUILDING ITEM 2 FIRST MEANS SHIPPING A BUG ON PURPOSE.** With no glyph
-hit-test in place, a tap on a hurricane glyph resolves to nothing — so it would
-minimise the drawer instead of opening the storm, on the one gesture Aaron
-asked for the glyph tap to serve. Then the glyph work would take it back out.
-**Do the hit-test first, then hang the minimise off the branch that is left.**
-
-**AND THE ARBITRATION IS THEN ONE ORDERED LIST, WRITTEN ONCE:** glyph (space
-floor only), then track (closer zooms), then empty water — which clears the
-focus AND minimises the sheet. `map/chrome-avoid.js` already measures the
-drawer's real box, so "above the drawer" needs no hardcoded height; it must not
-fire inside the archive's bar, and `SIZE.touchTarget` slop matters at that seam.
-
-**==> AND ONE NEW THING AARON WANTS: TAPPING A HURRICANE GLYPH ON THE GLOBE
-SHOULD OPEN THAT STORM. <==** 2026-08-25. Pan and zoom to it and open the
-detail drawer — the same thing tapping the roster row's chevron does now.
-
-**Most of the machinery is already there and pointing the right way.** A tap on
-an archive TRACK already works: `main.js`'s tap handler has an archive branch,
-it goes to the board rather than straight to the globe (the board owns focus),
-and `seasons/index.js`'s `onOpenStorm` already pushes `season-detail` AND flies
-the camera. So this is a new hit-test, not a new interaction.
-
-**THE HARD PART IS THE HIT-TEST AND IT IS NOT MAPLIBRE'S.** The glyphs live on
-the Three.js heightfield (`map/heightfield.js`, fed by `map/season-mesh.js`),
-not in a MapLibre source — so `map.queryRenderedFeatures` cannot see them and
-`stormAtPoint` does not know about them. It needs a ray cast against the cage,
-or the cheaper answer: project each glyph's `dir` vector to screen and take the
-nearest within `SIZE.touchTarget`. **The second is probably right** — there are
-at most a few dozen glyphs, they are already in memory, and it avoids putting
-picking geometry into the render path.
-
-**THREE THINGS TO GET RIGHT, ALL OF THEM §13:** the glyph is only on screen at
-the space floor, so the tap must not fight the track hit-test that owns closer
-zooms; a tap on empty ocean must still clear (that is the archive's only way to
-deselect); and **it needs a keyboard path, because a gesture-only way to open a
-storm is a bug rather than a limitation** — Tab through glyphs, or lean on the
-roster which already has one.
-
-**THE HARD HALF IS UNCHANGED AND IS NOT THE HIT-TEST.** A tap and the start of
-a drag are the same event: a pointerdown/pointerup pair that moved less than a
-small threshold and lasted less than a short time is a tap, and anything else
-belongs to the map and must reach it untouched, or pan and zoom stop working
-with the drawer open. Both numbers are constants, defined before the logic.
-
-**ALL THREE INPUT PATHS BEFORE EITHER IS DONE (§13).** Escape already minimises
-through the drawer's own contract — check it still does. Tab through glyphs, or
-lean on the roster, which already has a keyboard path. A gesture-only way to
-open a storm or dismiss a sheet is a bug rather than a limitation.
-
-**ONE OPEN QUESTION FOR AARON, AND IT IS THE ONLY THING BLOCKING THE BUILD.**
-Should a tap on empty water do BOTH things — clear the focus and minimise the
-sheet — or should minimising be the whole of it, leaving the roster's own
-control as the way to un-focus? Doing both is one gesture with two visible
-outcomes, which is usually a thing readers report as a glitch.
+**GLASS, AND IT IS ONE GESTURE:** at the space floor, with a season ticked, tap
+a hurricane glyph. It should fly to that storm and open its panel — identical
+to pressing the row's chevron. Then zoom in past the glyph's fade and tap the
+same storm's track: still opens it, by the other road. Two things worth
+watching: whether the reach feels right on a busy season like 2005, where first
+fixes cluster, and whether the handover between the two hit-tests is invisible
+or has a dead band in it.
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither

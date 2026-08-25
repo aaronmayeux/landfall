@@ -153,6 +153,13 @@ export function openSeasons({
     returnFocusTo,
     from,
     bar,
+    /* ==> THE DRAWER IS ON THE SESSION SO `openSeasonStorm` CAN REACH IT.
+     * §57.21d. <== It is the same object every visit — `main.js` builds one
+     * for the page — but the exported entry point runs outside every closure
+     * that has it, and holding it here rather than in a fourth module variable
+     * keeps its lifetime tied to the visit: no session, no drawer, no way for
+     * a stray tap to push a panel over the live globe. */
+    drawer,
     handle: null,
     /* ==> THE ENTRY FLIGHT HAPPENS ONCE PER VISIT AND THIS IS WHAT MAKES IT
      * ONCE. <== `onWhere` is the hook that fires the moment the board has
@@ -288,6 +295,80 @@ export function focusSeasonStorm(id) {
 }
 
 /**
+ * Open one storm: its panel, and the globe framed on it.
+ *
+ * ==> ONE FUNCTION, TWO CALLERS, AND THAT IS THE WHOLE POINT OF HOISTING IT
+ * OUT OF THE BOARD'S CALLBACK. <== §57.21d. The roster row's chevron has done
+ * this since §57.22b; a tap on a glyph out at the space floor now does the
+ * same thing, and Aaron's words for it were "the same as the roster row's
+ * chevron". Two copies would be two behaviours the moment either was tuned,
+ * and the difference — a camera that flies on one road and not the other —
+ * reads as a bug in the globe rather than as a second implementation.
+ *
+ * `push` rather than `go`: the panel sits ON TOP of the board, so Back is one
+ * press and lands the reader on the roster they came from with their scroll
+ * position and their ticks intact. `go` would throw that history away and
+ * leave Back walking out of the archive entirely.
+ *
+ * ==> AND THE GLOBE GOES WITH THE PANEL. §57.21c item 4. <== The reader asked
+ * to read about one storm; the strip of globe left above the sheet should be
+ * showing it rather than whatever ocean they were last looking at.
+ *
+ * ==> IT HANDS OVER POINTS, NOT THE STORM. <== `seasons/` must never let
+ * anything about `map/` leak in, and the reverse holds too: the camera has no
+ * business knowing what a season entry looks like. A list of coordinates is
+ * the smallest thing that crosses the wall.
+ *
+ * AFTER the push, so the drawer is up and `archiveOffset()` measures the sheet
+ * that is actually going to be there. Measuring first would centre the storm
+ * on the whole screen and then let the sheet slide up over it, which is the
+ * exact bug the offset exists to prevent.
+ *
+ * A storm the roster cannot find, or one with no usable fix, simply does not
+ * move the camera — the panel still opens and says what it knows.
+ */
+function openStormNow(drawer, id) {
+  drawer?.push?.('season-detail', id);
+  const entry = boardView?.currentEntries?.().find((e) => e.storm.id === id);
+  if (!entry) return;
+  /* ==> A STILL-RUNNING STORM OPENS ITS PANEL AND THE CAMERA STAYS PUT.
+   * §57.21c. <== `showStorm` already refuses to tick or focus one, because it
+   * is deliberately not on the sepia globe. Flying to it would be the same
+   * disagreement in a new place: a several-second flight ending on a patch of
+   * empty ocean, with a panel of figures beside it about a storm that is not
+   * drawn there. The reader would reasonably read the blank water as a
+   * rendering fault rather than as the rule it is. */
+  const running = currentLiveRunningIds?.();
+  if (running?.has(String(id).toLowerCase())) return;
+  currentArchiveGlobe?.flyToStorm?.(entry.storm.points || []);
+}
+
+/**
+ * A tap on a glyph out at the space floor chose a storm. §57.21d.
+ *
+ * ==> THE SAME SHAPE AS `focusSeasonStorm` ABOVE AND FOR THE SAME REASON. <==
+ * The globe belongs to `main.js` and is injected down, so a tap on it arrives
+ * there and has to come back up through this file. It cannot go straight at
+ * the drawer, because `seasons/` owns which view a storm opens in.
+ *
+ * ==> IT NEEDS THE DRAWER, AND THE DRAWER IS THE ONE INJECTED THING THIS FILE
+ * DOES NOT KEEP PER-SESSION. <== `currentArchiveGlobe` and
+ * `currentLiveRunningIds` are re-pointed on every entry because they are built
+ * fresh each time. The drawer is not: `main.js` builds exactly one for the
+ * page and hands the same object in every visit, which is why the board can be
+ * registered against it once and outlive every session. So this reads it back
+ * off the live session rather than holding a fourth module variable that could
+ * only ever hold the same value.
+ *
+ * Guarded on the session, so a stray call after leaving cannot push a panel
+ * over the live globe.
+ */
+export function openSeasonStorm(id) {
+  if (!seasonsOpen() || !id) return;
+  safely(() => openStormNow(session?.drawer, id));
+}
+
+/**
  * Register the board once, and wire the two things it talks to.
  *
  * ==> IT IS REGISTERED, NEVER RE-REGISTERED. <== `drawer.register` appends a
@@ -364,36 +445,7 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * and their ticks intact. `go` would throw that history away and leave
      * Back walking out of the archive entirely. */
     onOpenStorm: (id) => safely(() => {
-      drawer?.push?.('season-detail', id);
-      /* ==> AND THE GLOBE GOES WITH THE PANEL. §57.21c item 4. <== The reader
-       * asked to read about one storm; the strip of globe left above the sheet
-       * should be showing it rather than whatever ocean they were last
-       * looking at.
-       *
-       * ==> IT HANDS OVER POINTS, NOT THE STORM. <== `seasons/` must never let
-       * anything about `map/` leak in, and the reverse holds too: the camera
-       * has no business knowing what a season entry looks like. A list of
-       * coordinates is the smallest thing that crosses the wall.
-       *
-       * AFTER the push, so the drawer is up and `archiveOffset()` measures the
-       * sheet that is actually going to be there. Measuring first would centre
-       * the storm on the whole screen and then let the sheet slide up over it,
-       * which is the exact bug the offset exists to prevent.
-       *
-       * A storm the roster cannot find, or one with no usable fix, simply does
-       * not move the camera — the panel still opens and says what it knows. */
-      const entry = boardView?.currentEntries?.().find((e) => e.storm.id === id);
-      if (!entry) return;
-      /* ==> A STILL-RUNNING STORM OPENS ITS PANEL AND THE CAMERA STAYS PUT.
-       * §57.21c. <== `showStorm` already refuses to tick or focus one, because
-       * it is deliberately not on the sepia globe. Flying to it would be the
-       * same disagreement in a new place: a several-second flight ending on a
-       * patch of empty ocean, with a panel of figures beside it about a storm
-       * that is not drawn there. The reader would reasonably read the blank
-       * water as a rendering fault rather than as the rule it is. */
-      const running = currentLiveRunningIds?.();
-      if (running?.has(String(id).toLowerCase())) return;
-      currentArchiveGlobe?.flyToStorm?.(entry.storm.points || []);
+      openStormNow(drawer, id);
     }),
 
     /* ==> THE ONE QUESTION THE ARCHIVE HAS TO ASK THE LIVE APP. §57.21c. <==

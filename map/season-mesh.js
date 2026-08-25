@@ -44,15 +44,25 @@
  * severity claim, because nobody recorded one. Height is the loudest channel on
  * this globe (§9) and it must not shout a number that does not exist.
  *
- * `THREE` is a global (via lib/geo.js). Imports config/, lib/, and two map/
+ * ==> AND IT ANSWERS TAPS ON THAT GLYPH, WHICH IS WHY THE HIT-TEST LIVES HERE
+ * AND NOT IN A FILE OF ITS OWN. <== §57.21d. The only hard part of hitting a
+ * glyph is knowing WHICH fix carries it, and that decision is made here, four
+ * lines into `stormPoints`. A hit-test in another file would have to make the
+ * same decision a second time, and the day the two disagreed the symptom would
+ * be a mark you can plainly see that opens the wrong storm or none at all.
+ * `usableFixes` is the shared answer and both readers go through it.
+ *
+ * `THREE` is a global (via lib/geo.js). Imports config/, lib/, and three map/
  * siblings. One direction, no cycle.
  */
 
 import { MESH_TRACK, SEASONS } from '../config/constants.js';
+import { SIZE } from '../config/tokens.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 import { categoryColor, categoryFromKt } from '../lib/category.js';
 import { sevFromKt } from './heightfield.js';
 import { thin } from './storm-mesh.js';
+import { divePhase } from './globe-follow.js';
 
 /**
  * How many ridge points each ticked storm may spend.
@@ -88,16 +98,30 @@ function budgetPerStorm(count) {
  * @param {number} budget how many points this storm may spend
  * @returns {Array<{dir, sev, color, head}>}
  */
-function stormPoints(storm, facts, budget) {
-  /* CHRONOLOGICAL, and sorted here rather than trusted. `stormFacts` sorts its
-   * own copy and hands the original back untouched, and the glyph goes on the
-   * FIRST fix — so reading the file's row order would put the mark at whichever
-   * end the parser happened to emit first. */
-  const pts = (storm?.points || [])
+/**
+ * The storm's usable fixes, oldest first.
+ *
+ * ==> ONE FUNCTION BECAUSE THE GLYPH AND ITS TAP TARGET MUST NOT BE DECIDED
+ * TWICE. <== `stormPoints` below stamps the mark on element 0 of this list;
+ * `seasonGlyphs` builds the hit target from element 0 of this list. A second
+ * copy of the filter-and-sort would drift the first time either was tuned, and
+ * the symptom is the worst kind: a glyph you can see, and a tap on it that
+ * opens nothing or opens the wrong storm.
+ *
+ * CHRONOLOGICAL, and sorted here rather than trusted. `stormFacts` sorts its
+ * own copy and hands the original back untouched, so reading the file's row
+ * order would put the mark at whichever end the parser happened to emit first.
+ */
+function usableFixes(storm) {
+  return (storm?.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lon)
       && Number.isFinite(p?.time))
     .slice()
     .sort((a, b) => a.time - b.time);
+}
+
+function stormPoints(storm, facts, budget) {
+  const pts = usableFixes(storm);
 
   if (!pts.length) return [];
 
@@ -153,6 +177,100 @@ function stormPoints(storm, facts, budget) {
  * exactly what "you have drawn nothing" looks like. A source outage in the
  * archive is a different thing entirely and is answered in words by the roster.
  */
+/**
+ * Where each drawn storm's glyph is, as a longitude and a latitude. §57.21d.
+ *
+ * ==> A SECOND, TINY LIST RATHER THAN AN ID BOLTED ONTO THE RIDGE POINTS. <==
+ * `buildSeasonMeshPoints` above feeds `map/heightfield.js`, which copies every
+ * point into typed arrays on every recompute and tests each one against all
+ * 1,440 cage nodes. Adding a string to those objects would put a storm id on
+ * up to 1,600 of them for the benefit of the few dozen that carry a mark, on
+ * the hot path, for a list nothing in the render loop reads. This is one entry
+ * per storm and it never enters the render path at all.
+ *
+ * @param {Array<{storm:object}>} selected  the same list `setTracks` is given.
+ * @returns {Array<{id:string, lon:number, lat:number}>}
+ */
+export function seasonGlyphs(selected) {
+  const list = Array.isArray(selected) ? selected : [];
+  const out = [];
+  for (const entry of list) {
+    const storm = entry?.storm;
+    if (!storm?.id) continue;
+    const first = usableFixes(storm)[0];
+    if (!first) continue;
+    /* `lon`, not `lonU`, and for the same reason the ridge reads `lon`: this
+     * is a bearing on a sphere rather than a position on a plane, and it is
+     * the value `map.project` expects. On the FIRST fix the two are equal by
+     * construction anyway — `lib/hurdat.js` anchors the unwrap there — which
+     * is what makes the choice safe rather than merely defensible. */
+    out.push({ id: storm.id, lon: first.lon, lat: first.lat });
+  }
+  return out;
+}
+
+/**
+ * Which storm's glyph is under this tap, if any. §57.21d.
+ *
+ * ==> IT PROJECTS THROUGH MAPLIBRE RATHER THAN RAY-CASTING THE CAGE. <== The
+ * glyphs are Three.js sprites, so `map.queryRenderedFeatures` cannot see them
+ * and NOW.md offered two ways round it: cast a ray at the cage, or project
+ * each glyph to the screen and take the nearest. This is neither exactly — it
+ * is the second one, done with MapLibre's own projection instead of Three's,
+ * which is available because `map/globe-follow.js` spends every frame keeping
+ * the two globes pixel-locked. That IS the whole job of that file, so a
+ * longitude and latitude put through `map.project` land on the pixel the
+ * sprite was drawn at. No picking geometry, nothing added to the render path,
+ * and no second projection matrix that could disagree with the one on screen.
+ *
+ * ==> AND IT IS SWITCHED OFF ONCE THE GLYPH IS FADING. <== See
+ * `SEASONS.glyphTapMaxPhase`. A mark at 40% opacity is not the thing a reader
+ * is aiming at; the track under it is, and the track owns the tap from there
+ * in. Nothing is lost by the handover because the glyph stands on the track's
+ * first vertex.
+ *
+ * ==> THE FAR SIDE OF THE PLANET IS REFUSED. <== `map.project` answers for a
+ * position behind the globe as readily as for one in front of it, so without
+ * the facing test a tap on the visible Atlantic could open a storm in the
+ * Pacific that is round the back. See `SEASONS.glyphFacingMin`.
+ *
+ * NEAREST WINS, not first-found. Two storms that began within a thumb's width
+ * of each other both qualify, and the one whose mark is closest to the finger
+ * is the one that was aimed at.
+ *
+ * @param {object} map    MapLibre map
+ * @param {{x:number, y:number}} point  the tap, in screen pixels
+ * @param {Array<{id, lon, lat}>} glyphs  from `seasonGlyphs`
+ * @returns {string|null} a storm id, or null
+ */
+export function seasonGlyphAtPoint(map, point, glyphs) {
+  if (!map || !point || !Array.isArray(glyphs) || !glyphs.length) return null;
+  if (divePhase(map.getZoom?.() ?? 0) > SEASONS.glyphTapMaxPhase) return null;
+
+  const centre = map.getCenter?.();
+  if (!centre) return null;
+  const facing = lonLatToVec3(centre.lng, centre.lat, 1).normalize();
+
+  const reach = parseInt(SIZE.touchTarget, 10) / 2;
+  let bestId = null;
+  let bestDist = Infinity;
+
+  for (const g of glyphs) {
+    if (!Number.isFinite(g?.lon) || !Number.isFinite(g?.lat)) continue;
+    if (lonLatToVec3(g.lon, g.lat, 1).normalize().dot(facing) < SEASONS.glyphFacingMin) {
+      continue;
+    }
+    const p = map.project?.([g.lon, g.lat]);
+    if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
+    const d = Math.hypot(p.x - point.x, p.y - point.y);
+    if (d <= reach && d < bestDist) {
+      bestDist = d;
+      bestId = g.id;
+    }
+  }
+  return bestId;
+}
+
 export function buildSeasonMeshPoints(selected) {
   const list = Array.isArray(selected) ? selected : [];
   if (!list.length) return [];

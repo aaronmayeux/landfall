@@ -83,7 +83,9 @@ import {
  * season into cage points, the other into a flight — and both are reached only
  * through the `archiveGlobe` facade below, because `seasons/` never imports
  * `map/` (§12). §57.21c. */
-import { buildSeasonMeshPoints } from './map/season-mesh.js';
+import {
+  buildSeasonMeshPoints, seasonGlyphs, seasonGlyphAtPoint,
+} from './map/season-mesh.js';
 import { flyToArchiveEntry, flyToArchiveStorm } from './map/season-frame.js';
 import { loadFloodAlerts, evictFlood } from './data/flood.js';
 /* The geometry fetchers, the geometry cache and the pure bundle decorators all
@@ -845,11 +847,34 @@ function boot() {
      * calls looking for things that are not there, and — worse — closing the
      * drawer, which in the archive is the reader's only way back out.
      *
-     * A tap on a track focuses it. A tap on open water clears the focus, so
-     * "show them all evenly" is reachable by thumb without hunting for a
-     * control; the roster's own button is the keyboard path (§13). */
+     * ==> AND INSIDE IT THERE IS ONE ORDERED LIST, WRITTEN ONCE. §57.21d. <==
+     * Glyph, then track, then empty water. NOW.md called this out as one piece
+     * of work rather than two, and the order is the argument: without the
+     * glyph test in front, a tap on a hurricane glyph resolves to nothing and
+     * falls through to the empty-water branch — which would minimise the sheet
+     * on the exact gesture that is supposed to open the storm.
+     *
+     * The two hit-tests do not compete. The glyph answers only at the space
+     * floor, where it is at full strength (`SEASONS.glyphTapMaxPhase`), and
+     * the track owns every zoom from there in. Nothing is lost at the seam
+     * because the glyph is stamped on the track's own first fix. */
     if (isArchive()) {
-      focusSeasonStormNow(seasonStormAtPoint(map, e.point));
+      const glyphId = seasonGlyphAtPoint(map, e.point, seasonGlyphList);
+      if (glyphId) {
+        openSeasonStormNow(glyphId);
+        return;
+      }
+
+      const trackId = seasonStormAtPoint(map, e.point);
+      if (trackId) {
+        focusSeasonStormNow(trackId);
+        return;
+      }
+
+      /* Empty water clears the focus, so "show them all evenly" is reachable
+       * by thumb without hunting for a control; the roster's own row is the
+       * keyboard path (§13). */
+      focusSeasonStormNow(null);
       return;
     }
 
@@ -1406,6 +1431,16 @@ function boot() {
    * engine added. Adding it with the rest is what keeps the archive's tracks
    * BENEATH the storm dots that step 6 will put on top of them.
    */
+  /**
+   * Where the archive's hurricane glyphs are right now. §57.21d.
+   *
+   * ==> IT LIVES BESIDE THE FACADE THAT FILLS IT, NOT NEAR THE TAP HANDLER
+   * THAT READS IT. <== `setTracks` and `clearTracks` are the only two writers
+   * and they are the mirror of each other; putting the declaration between
+   * them is what makes a future third writer obvious.
+   */
+  let seasonGlyphList = [];
+
   const archiveGlobe = {
     setTracks(selected) {
       if (!styleReady) return;
@@ -1439,6 +1474,19 @@ function boot() {
        * could be read at all is the roster's question and it answers it in
        * words. */
       g3d.heightfield.setStormPoints('ok', buildSeasonMeshPoints(selected));
+      /* ==> AND WHERE EACH OF THOSE GLYPHS IS, FOR THE TAP HANDLER. §57.21d.
+       * <== Built here rather than in the tap path because it changes only
+       * when the ticked set changes, which is rare, while a tap can happen at
+       * any moment — and the alternative is asking the board for its entries
+       * inside a click handler, which would put a `seasons/` call on the one
+       * path that has to answer within a frame. `setTracks` is already the
+       * single call the board cannot forget to make, so this rides it for the
+       * same reason the dots and the footprint do.
+       *
+       * NOT GUARDED ON `styleReady`, like the cage above it: this is a plain
+       * array, not a MapLibre source. The hit-test that reads it asks the map
+       * for a projection and answers null when there is nothing to project. */
+      seasonGlyphList = seasonGlyphs(selected);
     },
     /** Which storm the reader has opened in full detail; null puts them all
      *  back evenly. §57.21 item 2. */
@@ -1470,6 +1518,9 @@ function boot() {
        * the whole method — but note it does not need one: the 3D engine owns
        * its own buffers and exists from boot. */
       g3d.heightfield.setStormPoints('ok', []);
+      /* The mirror of `setTracks`. A held list would leave a tap on empty
+       * parchment opening a storm off a globe that no longer draws it. */
+      seasonGlyphList = [];
     },
 
     /**
@@ -1640,6 +1691,20 @@ function boot() {
    */
   function focusSeasonStormNow(id) {
     seasonsMod?.focusSeasonStorm?.(id ?? null);
+  }
+
+  /**
+   * A tap on a hurricane glyph chose a storm. §57.21d.
+   *
+   * ==> IT GOES THE SAME ROAD `focusSeasonStormNow` DOES, AND FOR THE SAME
+   * REASON. <== The globe is owned here and the archive is owned over there,
+   * so a tap has to come back up. What it lands on is `seasons/index.js`'s
+   * `openSeasonStorm`, which is the very function the roster row's chevron
+   * runs — so a glyph tap and a chevron press are one behaviour rather than
+   * two that look alike today.
+   */
+  function openSeasonStormNow(id) {
+    seasonsMod?.openSeasonStorm?.(id);
   }
 
   /**
