@@ -3862,3 +3862,72 @@ deliberate piece of feedback, and if the bar goes, the thing that told the user
 "you are in the archive now" goes with it. **A door with no indication you have
 walked through it is worse than the bar.** The entry point can move; the "you
 are in the past" signal has to land somewhere.
+
+### 57.38 Proposed: the names, the rungs, and the archive pill
+
+**Aaron, 2026-08-26. PROPOSED, NOT BUILT.** Companion to §57.37 — if the
+archive bar goes, these are the names and the ladder that replace it.
+
+#### The archive gets a pill, and it is the SAME pill
+
+The live globe already carries `#storm-pill` along the bottom: a real button
+with a text label and a busy state, sized off `--pill-inset` and `--pill-mark`.
+**The archive does not get a second pill. It gets this one, saying something
+else.** A second element that looks identical and lives in a different file is
+how two things drift apart, and any pattern used twice gets extracted before
+the second use.
+
+What it says in the archive: **what is currently being shown**, in the same
+plain voice the live pill uses. Candidates, cheapest first — how many storms
+are drawn, which filters are on, which season. It must never be silent while
+the globe has storms on it, for the same reason the live pill is not: a globe
+covered in dots and no label is a screen that will not say what it is showing.
+
+#### The names, and one correction
+
+**Aaron's call: the drawers are `Season` and `Season Details`, and tapping a
+year opens the second from the first.**
+
+**==> ONE PUSHBACK, ON THE FIRST NAME ONLY. <==** The top drawer lists **175
+seasons**, so calling it `Season` singular fights what is on the screen — and
+`Season Details` beneath it makes the pair read as one thing and its detail
+view, when actually the first is a list of many and the second is one member of
+it. **Recommended: `Seasons` and `Season`.** The plural is the list, the
+singular is the one you opened, the relationship is obvious from the words
+alone, and `Seasons` is already the feature's name everywhere else in this
+spec. If Aaron prefers his original pair it is his call and this paragraph is
+the record of the objection, not a veto.
+
+#### The rungs
+
+The ladder, entry at the top. Each rung needs three things and they are not the
+same string: what OPENS it, what its HEADING says, and what its BACK control
+says. A back button reading "Back" tells the user nothing about where they are
+about to land.
+
+| Rung | Entry | Heading | Back says |
+|---|---|---|---|
+| 1 — the live globe | — | — | — |
+| 2 — **Seasons** (the wall) | the storm-list control (§57.37) | `Seasons` | closes to the globe |
+| 3 — **Season** (one year's board) | tapping a year row | the year itself | `Seasons` |
+
+**Rung 3's heading is the YEAR, not the word "Season".** `2005` is the most
+useful four characters that could sit there, the user tapped a year to get
+here, and repeating a generic noun would waste the one line that could confirm
+which year they landed on.
+
+#### The rung this table is missing, and it needs an answer
+
+**Tapping a storm in the roster.** The board is a list of storms and §57.17a
+priced a full Tier 2 storm at 7.7 MB, so something is clearly intended to open
+when one is tapped. That is a fourth rung with no name and no back label, and
+this table is wrong until it has them. **Not decided.** If the answer is that
+storms do not open at all from the archive, that is also an answer and it
+should be written down rather than left as a gap somebody fills by accident.
+
+#### What the names have to carry that the bar was carrying
+
+§57.37's warning applies here and this is where it gets paid: the bar turned
+sepia to say "you are in the past". **A heading reading `Seasons` and a sepia
+palette have to do that job now.** The palette is already doing most of it; the
+words must not fight it by being vague.
