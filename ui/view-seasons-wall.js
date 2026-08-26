@@ -295,7 +295,7 @@ export function createSeasonsWallView({
    *  states it is in. Always something — see `loadLive`. */
   function liveHtml() {
     if (liveStatus === 'loading') {
-      return liveRowPlaceholderHtml(liveYear, dotted('reading this season…'));
+      return liveRowPlaceholderHtml(liveYear, 'counting this season…');
     }
     if (liveStatus === 'unavailable') {
       return liveRowPlaceholderHtml(liveYear, liveReason);

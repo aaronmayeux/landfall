@@ -24,6 +24,7 @@
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { CAT, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
 import { esc } from './seasons-board-markup.js';
+import { dotted } from './loading-dots.js';
 
 /** A storm the record never graded gets GENERIC and never a colour it did not
  *  earn (SPEC §6). `'tropical'` is the nature every HURDAT2 storm in this file
@@ -163,15 +164,31 @@ export function liveRowHtml(row) {
     </button>`;
 }
 
-/** What the pinned row says while its storms are still being fetched, and what
- *  it says when they could not be. Both keep the row on screen: a row that
- *  disappears on failure reads as "there is no current season", which is the
- *  one thing this row exists to deny (§5). */
+/**
+ * What the pinned row says while its storms are still being fetched, and what
+ * it says when they could not be.
+ *
+ * ==> BOTH STATES KEEP THE ROW ON SCREEN. <== §5. A row that disappears on
+ * failure reads as "there is no current season", which is the one thing this
+ * row exists to deny.
+ *
+ * ==> `note` IS PLAIN TEXT AND THE ESCAPING HAPPENS HERE, ONCE. <== Aaron on
+ * glass, 2026-08-26: switching basin briefly showed markup on screen as
+ * literal text. The caller was handing over `dotted(…)`, which is HTML — the
+ * animated ellipsis the live globe uses — and this function escaped it a
+ * second time, so the reader saw the tag rather than the dots.
+ *
+ * The rule `ui/loading-dots.js` already states is escape FIRST and animate
+ * SECOND, and the only way to keep a caller from getting it backwards is to
+ * take text and never markup. A trailing `…` is what asks for the animation;
+ * escaping never produces one, so the two can never collide.
+ */
 export function liveRowPlaceholderHtml(year, note) {
+  const text = String(note ?? '');
   return `<div class="wall-row wall-row-live wall-row-flat" role="listitem"
-      aria-label="${esc(`${year == null ? 'This season' : year} — ${note}`)}">
+      aria-label="${esc(`${year == null ? 'This season' : year} — ${text}`)}">
       <span class="wall-year">${year == null ? '—' : year}</span>
-      <span class="wall-live-note wall-live-note-wide">${esc(note)}</span>
+      <span class="wall-live-note wall-live-note-wide">${dotted(esc(text))}</span>
     </div>`;
 }
 

@@ -410,6 +410,22 @@ section('9. The season in progress');
 
   ok('the pinned row is on the wall', m.body.innerHTML.includes('wall-row-live'));
 
+  /* ==> THE WAITING ROW ANIMATES INSTEAD OF PRINTING ITS OWN MARKUP. <== Aaron
+   * on glass, 2026-08-26: switching basin briefly put a tag on screen as
+   * literal text, because the caller handed HTML to a function that escaped
+   * everything it was given. Both halves are asserted — the dots are real
+   * elements, and no escaped tag reaches the reader. */
+  const waiting = mount({
+    wallResult: () => ({ status: 'ok', wall }),
+    indexResult: () => ({ status: 'ok', index }),
+    liveSeason: () => new Promise(() => {}),
+  });
+  await settle(); await settle(); await settle();
+  ok('the pinned row animates while it counts',
+    /class="dots"/.test(waiting.body.innerHTML));
+  ok('==> AND NO MARKUP IS PRINTED AT THE READER <==',
+    !/&lt;span/.test(waiting.body.innerHTML));
+
   /* ==> AND WITH NOTHING RUNNING IT STILL NAMES THE BASIN. <== The zero case
    * is the one that read wrong on glass, so it is the one asserted. */
   const quiet = mount({
@@ -460,6 +476,19 @@ section('9. The season in progress');
   ok('a live season that would not load keeps its row',
     m.body.innerHTML.includes('wall-row-live'));
   ok('and says why', /502/.test(m.body.innerHTML));
+
+  /* ==> AND A REASON OFF THE WIRE IS STILL ESCAPED. <== The fix below made the
+   * placeholder take TEXT rather than markup, and the way that goes wrong in
+   * the other direction is a relay message with a bracket in it reaching the
+   * page as live markup. */
+  const hostile = mount({
+    wallResult: () => ({ status: 'ok', wall }),
+    indexResult: () => ({ status: 'ok', index }),
+    liveSeason: () => ({ status: 'unavailable', reason: '<img src=x> broke' }),
+  });
+  await settle(); await settle(); await settle(); await settle();
+  ok('a reason carrying markup is escaped, not rendered',
+    /&lt;img/.test(hostile.body.innerHTML) && !/<img/.test(hostile.body.innerHTML));
   ok('and the settled wall is unaffected', m.host.querySelectorAll('.wall-row').length > 100);
 }
 
