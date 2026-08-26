@@ -204,7 +204,11 @@ export function createSeasonsWallView({
    *  measure, then correct — and the correction is a custom property rather
    *  than a re-render, so it cannot cost 175 rows of markup. */
   function stripPx() {
-    const slot = bodyEl?.querySelector('.wall-strip-slot');
+    /* Measured inside `.wall`, never on the pinned row: that row carries an
+     * extra column for its note, so its strip is narrower and sizing the whole
+     * basin off it would shrink all 175 rows to fit a row that is not part of
+     * the record. */
+    const slot = bodyEl?.querySelector('.wall .wall-strip-slot');
     const measured = slot?.getBoundingClientRect?.()?.width;
     return Number.isFinite(measured) && measured > 0 ? measured : FALLBACK_STRIP_PX;
   }
@@ -229,11 +233,18 @@ export function createSeasonsWallView({
     if (status !== 'ok' || !basin) return;
     const raf = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
     raf(() => {
-      const el = bodyEl?.querySelector('.wall');
-      if (!el?.style?.setProperty) return;
+      /* ==> THE SIZE GOES ON THE BODY, NOT ON `.wall`, AND THAT WAS A REAL
+       * BUG. <== Aaron on glass, 2026-08-26: the pinned 2026 row's dots were
+       * visibly bigger than every row under it. The pinned row sits ABOVE the
+       * `.wall` container — it is not part of the record — so a property set
+       * on `.wall` never reached it and it fell through to the stylesheet's
+       * default while the 175 rows below used the computed size. Two dot sizes
+       * on one screen, which is the one thing a wall drawn to a single scale
+       * must never show. The body is the nearest ancestor of both. */
+      if (!bodyEl?.style?.setProperty) return;
       const { size, gap } = dotSizeFor(wall, basin, stripPx());
-      el.style.setProperty('--wall-dot', `${size}px`);
-      el.style.setProperty('--wall-dot-gap', `${gap}px`);
+      bodyEl.style.setProperty('--wall-dot', `${size}px`);
+      bodyEl.style.setProperty('--wall-dot-gap', `${gap}px`);
     });
   }
 
@@ -291,7 +302,6 @@ export function createSeasonsWallView({
     }
     return liveRowHtml(
       liveRow({ year: liveYear, facts: liveFacts, running: liveRunningIds?.() ?? null }),
-      { basinLabel: seasons.basinLabel(index, basin) },
     );
   }
 

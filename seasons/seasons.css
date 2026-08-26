@@ -1168,8 +1168,13 @@ html[data-seasons="on"] #btn-layers {
 
    It keeps the same grid as an ordinary row so the year and the count stay in
    their columns; the note takes a fourth track of its own. */
+/* ==> THE COUNT SITS ON THE RIGHT EDGE, IN THE SAME COLUMN AS EVERY OTHER
+   ROW'S. <== Aaron on glass, 2026-08-26: it was reading as `10 2 still active
+   …`, two numbers jammed together with the count adrift from the column it
+   belongs to. The note takes a track of its own BEFORE the count, so the
+   right-hand edge of the wall stays one straight line from 2026 to 1851. */
 .wall-row-live {
-  grid-template-columns: 3.1em 1fr 2.2em auto;
+  grid-template-columns: 3.1em 1fr auto 2.2em;
   border-bottom: 1px solid var(--glass-border);
 }
 

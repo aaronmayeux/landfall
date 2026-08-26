@@ -131,7 +131,7 @@ export function rowHtml(row, { filtered = false } = {}) {
  * says the season is still being written and stops there rather than reporting
  * a zero it cannot stand behind.
  */
-export function liveRowHtml(row, { basinLabel = '' } = {}) {
+export function liveRowHtml(row) {
   const n = row.shown.length;
   const drawn = `${n} finished storm${n === 1 ? '' : 's'}`;
   /* ==> THE BASIN IS IN THE SENTENCE, AND LEAVING IT OUT READ AS A LIE. <==
@@ -141,19 +141,25 @@ export function liveRowHtml(row, { basinLabel = '' } = {}) {
    * Pacific, and no Atlantic storm at all. The COUNT was right and the WORDS
    * claimed the whole world. A row that is about one basin has to say which,
    * or its reader will correctly conclude it is wrong. */
-  const where = basinLabel ? ` in the ${basinLabel}` : '';
+  /* ==> "IN THE REGION" RATHER THAN THE BASIN'S NAME. <== Aaron on glass,
+   * 2026-08-26. Naming it was the fix for the row reading as a lie — the
+   * Atlantic row once said "nothing active right now" while two Pacific storms
+   * were running — but `East and Central Pacific` spelled out pushed the count
+   * off the right edge of a phone. The basin switch sits directly above this
+   * row and is the only thing it can mean, so the shorter word carries the
+   * same qualification in a quarter of the space. */
   const note = !row.activeKnown
     ? 'still being written'
     : row.active > 0
-      ? `${row.active} still active${where}`
-      : `nothing active${where} right now`;
+      ? `${row.active} active in the region`
+      : 'nothing active in the region';
 
   return `<button class="wall-row wall-row-live" type="button" data-year="${row.year}" data-live="1"
       aria-label="${esc(`${row.year}, this season — ${drawn}, ${note}`)}">
       <span class="wall-year">${row.year}</span>
       <span class="wall-strip-slot">${stripHtml(row.shown)}</span>
-      <span class="wall-count">${n}</span>
       <span class="wall-live-note">${esc(note)}</span>
+      <span class="wall-count">${n}</span>
     </button>`;
 }
 

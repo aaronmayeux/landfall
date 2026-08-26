@@ -418,16 +418,24 @@ section('9. The season in progress');
     running: new Set(),
   });
   await settle(); await settle(); await settle(); await settle();
-  ok('a basin with nothing running says so about THAT basin',
-    /nothing active in the Atlantic right now/.test(quiet.body.innerHTML));
+  ok('a basin with nothing running says so about that basin, not the world',
+    /nothing active in the region/.test(quiet.body.innerHTML));
   ok('and it names the current year',
     m.host.querySelector('.wall-row[data-live="1"]')?.dataset.year === '2026');
   /* ==> AND IT NAMES THE BASIN, BECAUSE LEAVING IT OUT READ AS A LIE. <==
    * The Atlantic row said "nothing active right now" while Iselle and Lala
    * were running in the Pacific. The count was right and the sentence claimed
    * the whole world. */
-  ok('==> AND IT SAYS HOW MANY STORMS ARE STILL ACTIVE, IN WHICH BASIN <==',
-    /1 still active in the Atlantic/.test(m.body.innerHTML));
+  ok('==> AND IT SAYS HOW MANY STORMS ARE STILL ACTIVE <==',
+    /1 active in the region/.test(m.body.innerHTML));
+
+  /* ==> THE COUNT IS THE LAST THING IN THE ROW, IN EVERY ROW. <== It read as
+   * `10 2 active…` on glass — two numbers jammed together, the count adrift
+   * from the column the other 175 rows keep it in. */
+  const liveEl = m.host.querySelector('.wall-row[data-live="1"]');
+  const kids = liveEl.children.map((c) => c.attrs.class);
+  eq('the count is the last cell in the pinned row', kids.at(-1), 'wall-count');
+  ok('and the note comes before it', kids.at(-2) === 'wall-live-note');
 
   /* It sits ABOVE the record, not inside it — a row in the run of years would
    * say the season was settled. */

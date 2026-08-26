@@ -66,10 +66,20 @@ import * as deepLink from './deep-link.js';
  * always land on the top of the wall — so a reader who minimised the drawer to
  * look at 2005's tracks would lose 2005 to get the roster back.
  *
- * A year rather than a view id: the wall is the only rung that can be restored
- * from nothing, and a year is all the board needs to rebuild itself.
+ * ==> IT IS FED BY `drawer.onChange`, AND THE FIRST VERSION WROTE IT ONLY WHEN
+ * A YEAR WAS TAPPED. <== That version was wrong in a way Aaron caught on glass
+ * and a Playwright run reproduced exactly: open 2005, press Back to the wall,
+ * minimise, reopen — and it came back on 2005, because nothing had ever
+ * unwritten the year. A record of "the last rung the reader ENTERED" is not a
+ * record of where they ARE. Only the drawer knows that, so only the drawer is
+ * allowed to say it.
+ *
+ * ==> AND IT IS DELIBERATELY NOT UPDATED WHILE THE DRAWER IS SHUT. <== `close`
+ * clears the stack, so `currentId()` answers null the moment it happens. A
+ * listener that took that at face value would wipe the memory in the very act
+ * of creating the need for it.
  */
-let lastYear = null;
+let lastRung = { year: null, stormId: null };
 
 /** Registered once per page load. A dynamic import is cached, so a second
  *  `import()` returns this same namespace — which is what makes "has the board
@@ -165,11 +175,7 @@ export function openSeasons({
      * it rather than finding nothing. */
     onOpenBoard: () => safely(() => {
       if (drawer?.isOpen?.()) { drawer.close(); return; }
-      drawer?.go?.('seasons-wall');
-      if (Number.isFinite(lastYear)) {
-        boardView?.setSeason?.(lastYear);
-        drawer?.push?.('seasons-board', lastYear);
-      }
+      restoreRung(drawer);
     }),
   });
 
@@ -237,6 +243,18 @@ export function openSeasons({
     safely(() => forgetReports());
     currentArchiveGlobe = null;
     currentLiveRunningIds = null;
+    /* ==> THE WATCHER GOES BEFORE THE DRAWER IS CLOSED, AND THE ORDER IS THE
+     * WHOLE OF IT. <== `close` fires a change with an empty stack. The
+     * listener guards against believing that, but a listener left bound across
+     * a session boundary is a listener still running for a session that has
+     * ended — and the next entry would add a second one. */
+    safely(() => session?.unwatchRung?.());
+    /* ==> AND THE RUNG IS FORGOTTEN ON THE WAY OUT, NOT ON THE WAY IN. <==
+     * Leaving the archive entirely is a different act from minimising the
+     * drawer. Coming back afterwards is a new visit and should open on the
+     * wall — carrying 2005 across it would be a screen remembering a choice
+     * from a visit that has ended, which is the mistake `openFrom` records. */
+    lastRung = { year: null, stormId: null };
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
     safely(() => bar.unmount());
@@ -275,6 +293,7 @@ export function openSeasons({
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
+    state.unwatchRung = watchRung(drawer);
     /* ==> WHICH DOOR THIS WAS DECIDES WHICH FILTER OPENS, AND IT IS ASKED ON
      * EVERY ENTRY. <== §57.16 calls the home door the BETTER one, because Home
      * already answers what a storm means for this house and the archive answers
@@ -305,15 +324,12 @@ export function openSeasons({
      * means their Back button finds the wall — which is where they would have
      * come from had they walked in.
      *
-     * `lastYear` is set from the link for the same reason: a reader who
-     * arrives on 2005 and minimises the drawer should get 2005 back, not the
-     * top of the wall. */
+     * The rung record looks after itself from here: `watchRung` below is
+     * already listening, so whichever of these two navigations happens is what
+     * gets remembered. */
     drawer?.go?.('seasons-wall');
     if (Number.isFinite(state.season)) {
-      lastYear = state.season;
       drawer?.push?.('seasons-board', state.season);
-    } else {
-      lastYear = null;
     }
 
     deepLink.write({ season: state.season, storms: state.storms });
@@ -395,6 +411,60 @@ export function focusSeasonStorm(id) {
  * A storm the roster cannot find, or one with no usable fix, simply does not
  * move the camera — the panel still opens and says what it knows.
  */
+/**
+ * Keep `lastRung` in step with wherever the drawer actually is.
+ *
+ * ==> ONE LISTENER, AND IT ONLY EVER BELIEVES AN OPEN DRAWER. <== See
+ * `lastRung`. A `close` empties the stack, so `currentId()` says null at
+ * exactly the moment the memory becomes useful, and a listener without this
+ * guard erases it on its way out.
+ *
+ * @returns {() => void} the unsubscribe, held on the session
+ */
+function watchRung(drawer) {
+  return drawer?.onChange?.(() => {
+    if (!drawer.isOpen?.()) return;
+    const id = drawer.currentId?.();
+    const arg = drawer.currentArg?.();
+    if (id === 'seasons-wall') lastRung = { year: null, stormId: null };
+    else if (id === 'seasons-board') {
+      lastRung = { year: Number.isFinite(arg) ? arg : lastRung.year, stormId: null };
+    } else if (id === 'season-detail') lastRung = { ...lastRung, stormId: arg || null };
+    /* Any other view is not a rung of this ladder — Layers and Settings both
+     * push on top of the archive — so the memory is left alone rather than
+     * overwritten with a side trip. */
+  }) || (() => {});
+}
+
+/**
+ * Put the reader back where they were, whole ladder included.
+ *
+ * ==> THE RUNGS BELOW ARE REBUILT, NOT SKIPPED. <== Landing straight on a
+ * storm's panel with an empty history would leave Back walking out of the
+ * archive from a screen three deep. So the wall goes down first, then the
+ * year, then the storm, and every Back press finds what it would have found
+ * had the reader walked in.
+ */
+function restoreRung(drawer) {
+  /* ==> SNAPSHOT FIRST, OR THE RESTORE ERASES WHAT IT IS RESTORING. <== The
+   * first line below navigates to the wall, `watchRung` hears it, and "the
+   * reader is on the wall" is exactly what it writes down — so by the time the
+   * next line read `lastRung.year` it was already null and every restore
+   * landed on the top of the wall. Caught by re-running the same Playwright
+   * reproduction that found the original fault, which is the only reason it
+   * did not ship as the fix for it. */
+  const want = { ...lastRung };
+
+  drawer?.go?.('seasons-wall');
+  if (!Number.isFinite(want.year)) return;
+  boardView?.setSeason?.(want.year);
+  drawer?.push?.('seasons-board', want.year);
+  /* `openStormNow` rather than a bare push: it also draws the storm and
+   * focuses it, and a panel about Katrina over a globe that is not drawing her
+   * is the disagreement §57.21a exists to prevent. */
+  if (want.stormId) openStormNow(drawer, want.stormId);
+}
+
 function openStormNow(drawer, id) {
   drawer?.push?.('season-detail', id);
   const entry = boardView?.currentEntries?.().find((e) => e.storm.id === id);
@@ -518,11 +588,10 @@ function ensureBoard({ bar, drawer, linkReason }) {
        * a re-render underneath an open storm panel, and navigating out of that
        * panel because a repaint happened would close a screen the reader is
        * reading. */
-      if (Number.isFinite(where?.year) && where.year !== lastYear) {
-        lastYear = where.year;
-        if (drawer?.currentId?.() === 'seasons-board') {
-          drawer.push('seasons-board', where.year);
-        }
+      if (Number.isFinite(where?.year)
+        && drawer?.currentId?.() === 'seasons-board'
+        && drawer?.currentArg?.() !== where.year) {
+        drawer.push('seasons-board', where.year);
       }
 
       if (linkReason === 'malformed' || linkReason === 'out-of-range') return;
@@ -589,7 +658,6 @@ function ensureBoard({ bar, drawer, linkReason }) {
      * their scroll position intact. `go` throws the stack away and leaves Back
      * walking straight out of the archive. */
     onOpenYear: (year, basin) => safely(() => {
-      lastYear = year;
       /* Basin first: `setSeason` only holds a number, and a board still on the
        * Atlantic would load the Atlantic's copy of the year the reader tapped
        * on the Pacific wall — the same four digits, the wrong storms, and
