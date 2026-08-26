@@ -1215,6 +1215,9 @@ those were real faults rather than checks**: `Number('')` is `0`, so a blank
 value was clamping silently to the ten-mile minimum, and the sort assertion was
 passing on a fixture that could not show it.
 
+**CONFIRMED ON GLASS 2026-08-25.** The three values §57.30 step 9 lists as settled
+by acceptance were settled here.
+
 **AND IT FOUND A GAP IN A FILE THAT WAS NOT ITS OWN.** `ui/slider-grab.js` binds
 a `pointerup` listener on `window` and had no guard for there not being one.
 Settings has armed it since 2026-07-25 and never met the case; this is the second
@@ -3121,11 +3124,16 @@ fast-mover case since step 2, both ways, and the mutation was run then. What ste
 9 added is 99 assertions and 19 mutations over everything BETWEEN that
 measurement and a reader.
 
-**Aaron looks at:** the slider under a thumb — does the roster keep up, and does
-the globe emptying on the first drag read as correct rather than as a bug. Then
-the row line at small type: *"Passed 31 mi WSW as a Cat 2."* Then the door on the
-dashboard, which needs a home set and about four seconds.
-**Done when:** all three are confirmed on glass.
+**AARON'S VERDICT, 2026-08-25: it works.** The slider under a thumb, the row line
+at small type, and the standing sentence on the dashboard — all three confirmed.
+The done-condition is met.
+
+**THREE VALUES ARE NOW SETTLED BY ACCEPTANCE AND SHOULD NOT BE REOPENED WITHOUT
+NEW EVIDENCE.** `nearHomeRange`'s default at 120 mi / 200 km, which is the number
+the door quotes AND the number the slider opens on; `nearHomeIndexDelayMs` at 4
+seconds, which put the sentence on the door without arriving over a storm somebody
+was reading; and the globe emptying on the first step of a drag, which reads as
+correct rather than as a fault.
 
 ---
 
