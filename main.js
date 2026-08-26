@@ -79,9 +79,6 @@ import {
 import {
   ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
 } from './map/layers/season-swath.js';
-import {
-  ensureSeasonClock, setSeasonClockHeads, clearSeasonClock,
-} from './map/layers/season-clock.js';
 /* The archive's ridge and its camera. Both are pure — one turns a ticked
  * season into cage points, the other into a flight — and both are reached only
  * through the `archiveGlobe` facade below, because `seasons/` never imports
@@ -787,13 +784,6 @@ function boot() {
      * fixes ON its track rather than under it, while leaving the name — the
      * thing that identifies which storm this is — on top of everything. */
     ensureSeasonPoints(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
-    /* ==> THE CLOCK'S MOVING HEADS GO ON TOP OF THE ARCHIVE'S OWN STACK, UNDER
-     * THE NAMES. §57.23. <== Same anchor and same reason as the dots above: a
-     * head sits at the leading end of its own track and must be over the line
-     * rather than under it, while the name that says which storm it is stays
-     * over everything. Added after the dots so it wins where a head lands on
-     * top of a recorded fix, which it does at every step on a selected storm. */
-    ensureSeasonClock(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
     applyLayerState();
 
     /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
@@ -1557,14 +1547,9 @@ function boot() {
   let seasonGlyphList = [];
 
   const archiveGlobe = {
-    setTracks(selected, cuts = null) {
+    setTracks(selected) {
       if (!styleReady) return;
-      /* ==> `cuts` IS THE SEASON CLOCK SHORTENING THE LINES, AND IT IS
-       * OPTIONAL BECAUSE IT IS NORMALLY ABSENT. §57.23. <== The clock hands
-       * down a map of storm id to how much of that storm had happened; with no
-       * clock running it is null and every track draws whole, which is what
-       * every caller before step 10 did and still does. */
-      setSeasonTracks(map, selected, cuts);
+      setSeasonTracks(map, selected);
       /* ==> ONE CALL FROM THE ARCHIVE'S POINT OF VIEW, TWO SOURCES UNDERNEATH,
        * AND THAT SPLIT STAYS ON THIS SIDE OF THE INJECTION. <== The board
        * knows one thing: which storms are ticked. Handing it a `setPoints` of
@@ -1608,17 +1593,6 @@ function boot() {
        * for a projection and answers null when there is nothing to project. */
       seasonGlyphList = seasonGlyphs(selected);
     },
-
-    /** Where each storm IS at the moment the clock is showing. §57.23. Its own
-     *  method rather than a field on `setTracks`, for the reason §57.35 fault
-     *  3 gives: the heads move on every step and the trails do not, so folding
-     *  them together would mean re-pushing a season's line geometry to nudge a
-     *  dot. `seasons/index.js` calls this ten times a second and `setTracks`
-     *  only when a storm actually crosses a vertex. */
-    setClockHeads(running, cutMs) {
-      if (!styleReady) return;
-      setSeasonClockHeads(map, running, cutMs);
-    },
     /** Which storm the reader has opened in full detail; null puts them all
      *  back evenly. §57.21 item 2. */
     setFocus(id) {
@@ -1638,7 +1612,6 @@ function boot() {
       clearSeasonTracks(map);
       clearSeasonPoints(map);
       clearSeasonSwath(map);
-      clearSeasonClock(map);
       /* ==> AND THE RIDGE COMES DOWN WITH THEM. §57.21c. <== `setTracks` put
        * it up and this is its mirror. Without it, leaving the archive keeps
        * 1935's mountains standing until `liveGlobe.show()`'s `refreshCage()`

@@ -84,9 +84,6 @@ function fakeEl(tag) {
       this.parent = null;
     },
     addEventListener(type, fn) { (this.listeners[type] ||= []).push(fn); },
-    removeEventListener(type, fn) {
-      this.listeners[type] = (this.listeners[type] || []).filter((f) => f !== fn);
-    },
     focus() { this.focused += 1; },
     /** Fire the handler the component actually registered. */
     click() { for (const fn of this.listeners.click || []) fn({ target: this }); },
@@ -108,25 +105,12 @@ const docEl = fakeEl('html');
  * discarded — section 7 asserts that it ran at all. */
 docEl.style = { props: {}, setProperty(k, v) { this.props[k] = v; } };
 const body = fakeEl('body');
-/* ==> THE DOCUMENT LISTENS, AND IT COUNTS. <== §57.23 puts Space-to-play on
- * the document rather than on the play button, because a reader watching the
- * season has no reason to be standing on the control. That means a listener
- * that has to come off again when the archive closes, and a stand-in with no
- * `removeEventListener` cannot see whether it did — it threw instead, which is
- * how this arrived. Made readable rather than worked around, per CLAUDE.md:
- * the count below is asserted in section 8. */
-const docListeners = {};
 globalThis.document = {
   documentElement: docEl,
   body,
   createElement: (t) => fakeEl(t),
   createElementNS: (_ns, t) => fakeEl(t),
   querySelector: () => null,
-  addEventListener(type, fn) { (docListeners[type] ||= []).push(fn); },
-  removeEventListener(type, fn) {
-    docListeners[type] = (docListeners[type] || []).filter((f) => f !== fn);
-  },
-  listenerCount: (type) => (docListeners[type] || []).length,
 };
 globalThis.location = { search: '', pathname: '/', hash: '' };
 globalThis.history = { state: null, replaceState(_s, _t, url) { this.lastUrl = url; } };
@@ -332,13 +316,6 @@ const opener = fakeEl('button');
 const handle = openSeasons({ ...h, returnFocusTo: opener });
 
 eq(archive.isArchive(), true, 'the flag is up');
-/* ==> THE SEASON CLOCK'S SPACE SHORTCUT IS ON THE DOCUMENT WHILE THE ARCHIVE
- * IS OPEN. §57.23a. <== It lives there rather than on the play button because
- * a reader watching a season has no reason to be standing on the control —
- * which means a listener with a lifetime, and a listener with a lifetime is a
- * leak until something proves it ends. The other half is asserted after
- * `leave()` below. */
-eq(document.listenerCount('keydown'), 1, 'the clock listens for Space while inside');
 eq(theme.forcedMode(), theme.MODE.SEPIA, 'the palette is forced to sepia');
 eq(theme.isLight(), false, 'and sepia is still a dark-ground palette');
 ok(h.calls.includes('hide'), 'the live globe was emptied');
@@ -425,12 +402,6 @@ eq(theme.themeMode(), theme.MODE.SEPIA, 'the archive keeps the screen');
 
 handle.leave();
 eq(archive.isArchive(), false, 'the flag is down');
-/* ==> AND THE CLOCK'S SPACE HANDLER COMES OFF WITH IT. §57.23a. <== A listener
- * that outlived the archive would answer Space over the LIVE globe, where it
- * means nothing — and it would stack, one more every time somebody opened the
- * archive in a session. This assertion is the reason the stand-in document
- * grew a real `removeEventListener` rather than the call being guarded away. */
-eq(document.listenerCount('keydown'), 0, 'and the clock stopped listening on the way out');
 eq(theme.forcedMode(), null, 'nothing is forced any more');
 eq(theme.themeMode(), theme.MODE.LIGHT,
   '==> AND IT RESTORED THE PREFERENCE SET WHILE INSIDE, not the one from entry');

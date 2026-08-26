@@ -26,23 +26,7 @@ html[data-seasons="on"] {
      term is a token — the bar is exactly as tall as the button inside it. */
   --seasons-bar-h: calc(
     var(--touch-target) + var(--space-snug) * 2 + var(--safe-bottom)
-    + var(--seasons-clock-h)
   );
-  /* ==> THE CLOCK'S ROW IS ZERO UNTIL THERE IS SOMETHING TO PLAY. §57.23. <==
-     The controls hide themselves when nothing is ticked, and a bar that kept
-     their row reserved would be a permanent empty band across the bottom of a
-     phone in the state every visit starts in. `ui/seasons-clock-bar.js` sets
-     the attribute below when a span appears, which is the same mechanism
-     `seasons/bar.js` already uses for `data-seasons` — and it is on <html> for
-     the same reason: the drawer and the control cluster both read
-     `--seasons-bar-h` and neither is a sibling of the bar. */
-  --seasons-clock-h: 0px;
-}
-
-html[data-seasons-clock="on"] {
-  /* One touch target for the play button and the slider's own thumb, plus the
-     gap above the row. Nothing here is a literal. */
-  --seasons-clock-h: calc(var(--touch-target) + var(--space-snug));
 }
 
 /* --- the bar ------------------------------------------------------------- */
@@ -57,12 +41,6 @@ html[data-seasons-clock="on"] {
   z-index: 50;
   display: flex;
   align-items: center;
-  /* ==> IT WRAPS, SO THE CLOCK GETS ITS OWN ROW WITHOUT ITS OWN ELEMENT. <==
-     §57.23, Aaron's call 2026-08-26: the controls fold into the bar rather
-     than adding a second strip. The clock is `flex-basis: 100%`, so it always
-     breaks to a new line and the sentence and the Leave button keep the layout
-     they had. */
-  flex-wrap: wrap;
   gap: var(--space-base);
   box-sizing: border-box;
   padding: var(--space-snug) var(--safe-right) calc(var(--space-snug) + var(--safe-bottom))
@@ -128,106 +106,6 @@ html[data-seasons-clock="on"] {
    touchscreen laptop has both. */
 @media (hover: hover) {
   .seasons-leave:hover { background: var(--hover); }
-}
-
-/* --- the season clock (§57.23) -------------------------------------------- */
-
-/* ==> ITS OWN ROW, AND `order` PUTS IT UNDER THE OTHER TWO WITHOUT MOVING IT
-   IN THE DOM. <== The DOM has it after `Leave` on purpose — the way out must
-   not have a play button and a slider in front of it in the tab order — and
-   `flex-basis: 100%` is what makes it break to a second line. */
-.seasons-clock {
-  flex: 1 0 100%;
-  display: flex;
-  align-items: center;
-  gap: var(--space-base);
-  min-width: 0;
-}
-.seasons-clock[hidden] { display: none; }
-
-.seasons-clock-play {
-  flex: 0 0 auto;
-  min-height: var(--touch-target);
-  min-width: var(--touch-target);
-  padding: 0 var(--space-base);
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: var(--type-small);
-  font-weight: 600;
-  cursor: pointer;
-  /* Transform and opacity only (§9). */
-  transition: transform var(--duration-instant) var(--ease-swap);
-}
-.seasons-clock-play:active { transform: scale(0.97); }
-.seasons-clock-play:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-
-@media (hover: hover) {
-  .seasons-clock-play:hover { background: var(--hover); }
-}
-
-/* ==> THE SLIDER IS THE BROWSER'S OWN, RESTYLED, NOT A REBUILT ONE. <== §13
-   wants tap, click and keyboard on one path, and a real range answers arrows,
-   Home and End and announces its value to a screen reader for free. The only
-   thing worth overriding is the track and thumb, because the platform default
-   is a light-mode control on a night-sky globe. */
-.seasons-clock-scrub {
-  flex: 1 1 auto;
-  min-width: 0;
-  /* The touch target is the whole row, not the 4 px track: a slider a thumb
-     cannot land on is a slider that does not exist (§13). */
-  height: var(--touch-target);
-  margin: 0;
-  background: transparent;
-  cursor: pointer;
-  -webkit-appearance: none;
-  appearance: none;
-}
-.seasons-clock-scrub:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
-
-.seasons-clock-scrub::-webkit-slider-runnable-track {
-  height: 4px;
-  border-radius: var(--radius-tight);
-  background: var(--glass-border);
-}
-.seasons-clock-scrub::-moz-range-track {
-  height: 4px;
-  border-radius: var(--radius-tight);
-  background: var(--glass-border);
-}
-.seasons-clock-scrub::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  margin-top: -7px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  border: none;
-}
-.seasons-clock-scrub::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--text-primary);
-  border: none;
-}
-
-/* ==> A FIXED WIDTH AND TABULAR FIGURES, BECAUSE IT CHANGES TEN TIMES A
-   SECOND. <== A readout that resizes as the date ticks over drags the slider
-   left and right underneath the reader's thumb while they are dragging it,
-   which reads as the app being broken rather than as text. */
-.seasons-clock-date {
-  flex: 0 0 auto;
-  font-family: var(--font-ui);
-  font-size: var(--type-micro);
-  font-variant-numeric: tabular-nums;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  min-width: 9ch;
-  text-align: right;
 }
 
 /* --- getting the live chrome off the bar --------------------------------- */
