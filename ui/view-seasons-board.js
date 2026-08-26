@@ -52,15 +52,22 @@
  * ==> AND THE FETCHING IS NOT HERE EITHER, SINCE 2026-08-25. <== SPEC.md §12's
  * fifth cut out of this file. `ui/seasons-board-loading.js` holds every index,
  * every season and every failure reason; what is left here is what the reader
- * CHOSE — the basin, the year, the filter, the ticks and the open storm — plus
- * the render where the two halves meet.
+ * CHOSE — the basin, the year and the filter — plus the render where the two
+ * halves meet.
+ *
+ * ==> NOR THE TICKS AND THE OPEN STORM, SINCE THE SIXTH CUT. <==
+ * `ui/seasons-board-selection.js` holds `ticked`, `focused`, and every rule
+ * about which of them the globe is allowed to hear. Both cuts were made on the
+ * same test and it is the only one worth applying to this file: **the state
+ * goes with the code, or it is a relocation rather than a cut.** Handing a
+ * getter over a value you kept is how a knot ends up in two files instead of
+ * one.
  *
  * Imports config/, lib/ and its own siblings. Never data/ or map/ — the fetch
  * and the globe both arrive as injected facades (§12).
  */
 
 import { stormDisplayName } from '../lib/season-names.js';
-import { isStillRunning } from '../lib/season-facts.js';
 import { basinHasLive } from '../lib/season-years.js';
 import { createSeasonsBoardLoading } from './seasons-board-loading.js';
 import {
@@ -69,7 +76,8 @@ import {
 import {
   indexFailedHtml, liveDownHtml, scoreHtml, waitingHtml,
 } from './seasons-board-furniture.js';
-import { paintCheckAll, paintFocus, paintTick } from './seasons-board-paint.js';
+import { paintTick } from './seasons-board-paint.js';
+import { createSeasonsBoardSelection } from './seasons-board-selection.js';
 import {
   NEAR_HOME_FILTER, radiusFromValue, radiusSliderHtml,
 } from './seasons-near-home.js';
@@ -158,24 +166,6 @@ export function createSeasonsBoardView({
    *  season offers it (`onSeasonChanging`). */
   let radius = rangeFor(systemNow()).default;
 
-  /** Storm ids the reader has ticked. Survives a filter change on purpose —
-   *  switching to Majors and back must not silently wipe the globe. */
-  const ticked = new Set();
-
-  /** The one storm the reader has opened in full detail, or null. §57.21
-   *  item 2.
-   *
-   *  ==> IT IS ALWAYS A STORM THAT IS ALSO TICKED, AND NOTHING ENFORCES THAT
-   *  BUT THE PATHS BELOW. <== A selected storm that is not on the globe would
-   *  dim every visible track in favour of one nobody can see, which reads as
-   *  the archive breaking. There are exactly three ways it is set — Enter on a
-   *  ticked row, a tap on a drawn track, and clearing — and none of them can
-   *  produce an unticked selection. A fourth would have to keep that promise
-   *  itself.
-   *
-   *  ==> TICKING IS NO LONGER ONE OF THEM. <== It was, until 2026-08-25. See
-   *  `onChange` for what that cost on glass. */
-  let focused = null;
 
   /* --- the fetched half ---------------------------------------------------
    * `ui/seasons-board-loading.js` holds every index, every season and every
@@ -230,151 +220,47 @@ export function createSeasonsBoardView({
     return r ? `${r.radius} ${rangeFor(sys).unit}` : '';
   }
 
-  /* --- selection -----------------------------------------------------------
-   * §57.21 item 2. Three entry points — Enter on a row, a tap on the globe,
-   * and clearing — and all three go through `setFocus`, so the roster and the
-   * map can never disagree about which storm is open.
+  /* --- the selected half ---------------------------------------------------
+   * `ui/seasons-board-selection.js` holds what is ticked, what is open, and
+   * every rule about which of the two the globe is allowed to hear —
+   * INCLUDING the state itself. That is the sixth cut out of this file and it
+   * was made on the same test as the fifth: the state went with the code, so
+   * there is no piece of it left here to be handed back through a getter.
    *
-   * ==> WHAT THIS SECTION DECIDES, AND WHAT IT DOES NOT. <== It owns what is
-   * TRUE: which storm is open, which are ticked, who needs telling. Turning
-   * that into changes on rows that are already on screen is
-   * `ui/seasons-board-paint.js`, which took the cut when this file crossed
-   * §12's ceiling for the fourth seasons pass running. The two functions below
-   * that end in `Now` are the bindings that hand it this board's state.
+   * Everything it needs arrives as a getter rather than a value, because this
+   * view is mounted once and kept: the season, the filter, the house and the
+   * body element all change underneath it.
    * ---------------------------------------------------------------------- */
 
-  /**
-   * The storms in this season that are still happening. §57.21c.
+  const selection = createSeasonsBoardSelection({
+    entries: () => loading.entries(),
+    provisional: () => loading.state().provisional,
+    bodyEl: () => bodyEl,
+    liveRunningIds,
+    filter: () => filter,
+    near: () => nearNow(),
+    onSelection,
+    onFocus,
+    announce: () => announceWhere(),
+  });
+
+  /* ==> THE SIX NAMES BELOW ARE ALIASES, AND THEY EXIST SO THE CUT CARRIED NO
+   * BEHAVIOUR. <== Twenty-odd call sites through this file read these, and
+   * rewriting every one of them to say `selection.` would have meant proving
+   * twenty diffs changed nothing rather than one. The move is the change; the
+   * spelling is not part of it. `ticked` is the live Set rather than a copy,
+   * so `.has`, `.add`, `.delete`, `.clear` and `.size` all still reach the one
+   * that decides what the globe draws.
    *
-   * ==> RECOMPUTED PER READ RATHER THAN HELD, BECAUSE IT GOES STALE ON ITS OWN.
-   * <== This is an answer about the live feed and the clock, not about the
-   * file: a storm that was running when the season loaded can have its final
-   * advisory filed while somebody is still looking at the roster, and nothing
-   * on this screen would change. Every caller here runs at paint time or at
-   * tap time, so asking then is asking at the only moment the answer is worth
-   * anything — and it costs one set lookup per row.
-   *
-   * ==> WHAT IT DOES NOT DO IS REPAINT ITSELF. <== The archive does not
-   * subscribe to the live poll, so a storm that finishes while the board is on
-   * screen moves from `– active` to drawable on the next thing that renders —
-   * a year change, a filter, a tick. Accepted rather than overlooked: wiring
-   * the poll into the archive to repaint a date cell would mean the live app
-   * reaching into a world it is deliberately walled out of (§57.2), and the
-   * window is minutes on a surface nobody is watching for that transition.
-   *
-   * A settled year returns an empty set on the first comparison inside the
-   * predicate, so the ordinary case pays almost nothing.
-   */
-  function activeIds() {
-    const provisional = loading.state().provisional;
-    const out = new Set();
-    if (!provisional) return out;
+   * ==> `focused` IS THE ONE THAT COULD NOT BE ALIASED. <== It is a primitive,
+   * so a local binding would freeze at whatever the highlight was when this
+   * ran. The five places that read it ask `focusedId()` instead, and those
+   * five lines are the entire behavioural surface of this cut. */
+  const { ticked, activeIds, selectedEntries, pushSelection, setFocus } = selection;
+  const focusedId = selection.focusedId;
+  const paintFocusNow = selection.paintFocus;
+  const paintCheckAllNow = selection.paintCheckAll;
 
-    /* ==> THE LIVE APP IS ASKED FIRST, BECAUSE IT IS THE ONE ALREADY SHOWING
-     * THE READER AN ANSWER. §57.21c. <== A storm greyed out on the live globe
-     * is finished as far as this globe is concerned; anything still in colour
-     * is still happening and stays off the sepia record. One predicate, both
-     * worlds, the same way `categoryFromKt` grades a Cat 3 in 1935 and today.
-     *
-     * `liveRunning` is a lowercased ATCF id set; the roster's ids are the same
-     * strings out of the b-deck filename. */
-    const liveRunning = liveRunningIds?.() ?? null;
-    if (liveRunning) {
-      for (const e of loading.entries()) {
-        if (liveRunning.has(String(e.storm.id).toLowerCase())) out.add(e.storm.id);
-      }
-      return out;
-    }
-
-    /* ==> AND THE FALLBACK IS FOR ONE CASE ONLY: THE LIVE FEED HAS NEVER
-     * ANSWERED. <== Not "answered with no storms" — that is a real answer and
-     * it means nothing is running. This is a deep link straight into the
-     * archive, or a first poll still in flight, or every source down. The
-     * honest reading of "we cannot ask" is not "everything is finished", which
-     * would draw a storm currently out there as settled history with nothing
-     * on screen saying so (§5). The age of the last b-deck row is a worse
-     * answer than the live app's and a much better one than silence. */
-    for (const e of loading.entries()) {
-      if (isStillRunning(e.facts, { provisional })) out.add(e.storm.id);
-    }
-    return out;
-  }
-
-  /**
-   * What the globe draws: the ticked storms, minus any that are still running.
-   *
-   * ==> THE FILTER IS HERE AND NOT ONLY ON THE CHECKBOX, AND THAT IS NOT BELT
-   * AND BRACES. <== The box being disabled stops a reader ticking a running
-   * storm; it does nothing about one that was ticked while it was finished, or
-   * about `showStorm`, which ticks on the panel's behalf. And the storm can
-   * change state under a tick that is already set — the archive can be open for
-   * an hour. This is the single place that decides what reaches the sepia
-   * globe, so there is one rule rather than three that have to agree.
-   */
-  function selectedEntries() {
-    const active = activeIds();
-    return loading.entries().filter(
-      (e) => ticked.has(e.storm.id) && !active.has(e.storm.id)
-    );
-  }
-
-  function pushSelection() {
-    onSelection?.(selectedEntries());
-    /* The bar carries the count of what is drawn, so every push is also an
-     * announcement. §57.21b item 8. */
-    announceWhere();
-  }
-
-  /**
-   * Move the highlight, tell the globe, and repaint the rows.
-   *
-   * ==> THE ROWS ARE PATCHED, NOT RE-RENDERED. <== `render()` rebuilds the
-   * whole roster, which loses the scroll position and the keyboard focus ring
-   * — the same reason ticking a checkbox does not re-render (see `onChange`).
-   * Focus moves on every tap on the globe, so a wholesale rebuild here would
-   * be the most disruptive thing in the feature attached to its most frequent
-   * interaction.
-   */
-  function setFocus(id) {
-    /* An id nobody has ticked is refused rather than honoured. The globe only
-     * draws ticked storms, so focusing one that is not there would ghost every
-     * visible track for a highlight nobody can see.
-     *
-     * ==> AND "TICKED" IS NOT QUITE THE TEST. THE TEST IS "DRAWN". <== §57.21c
-     * takes a running storm off the archive globe whatever its tick says, so
-     * the refusal has to ask the same question `selectedEntries` does or Enter
-     * on such a row would ghost the whole year for an invisible highlight. */
-    const drawn = id && selectedEntries().some((e) => e.storm.id === id);
-    const next = drawn ? id : null;
-    if (next === focused) return;
-    focused = next;
-    paintFocusNow();
-    onFocus?.(focused);
-    /* The bar names the open storm, so it has to hear about this. §57.21b
-     * item 8. */
-    announceWhere();
-  }
-
-  /** The open storm, out of the WHOLE season rather than the filtered rows —
-   *  a storm can stay open while a filter narrows past it and the footprint
-   *  sentence must not vanish while its track is still bright. */
-  function paintFocusNow() {
-    const entries = loading.entries();
-    paintFocus(bodyEl, focused, focused ? entries.find((x) => x.storm.id === focused) : null);
-  }
-
-  /** The master box counts the FILTERED list against the ticks, which is the
-   *  spreadsheet's rule — under Majors it speaks for the majors. */
-  function paintCheckAllNow() {
-    /* DRAWABLE rows, matching `seasonRosterHtml`. A running storm's box is
-     * disabled, so counting it here would leave the master box permanently
-     * short of full — see the note beside `drawable` in the markup. */
-    const active = activeIds();
-    const shown = entriesMatching(loading.entries(), filter, nearNow())
-      .filter((x) => !active.has(x.storm.id));
-    paintCheckAll(bodyEl, shown.length,
-      shown.reduce((n, x) => n + (ticked.has(x.storm.id) ? 1 : 0), 0));
-  }
 
   /* --- the two hooks the loading file calls back on -------------------------
    * Both are moments where a FETCH has to touch a CHOICE. They are here rather
@@ -455,7 +341,7 @@ export function createSeasonsBoardView({
       return;
     }
     const entries = loading.entries();
-    const open = focused ? entries.find((e) => e.storm.id === focused) : null;
+    const open = focusedId() ? entries.find((e) => e.storm.id === focusedId()) : null;
     onWhere?.({
       basin,
       year,
@@ -763,7 +649,7 @@ export function createSeasonsBoardView({
     /* Swallowed so the keypress cannot also reach the drawer or the globe's
      * own Escape-and-arrows contract behind it. */
     e.preventDefault();
-    setFocus(focused === id ? null : id);
+    setFocus(focusedId() === id ? null : id);
   }
 
   /**
@@ -865,7 +751,7 @@ export function createSeasonsBoardView({
       for (const x of shown) {
         if (full) ticked.delete(x.storm.id); else ticked.add(x.storm.id);
       }
-      if (focused && !ticked.has(focused)) setFocus(null);
+      if (focusedId() && !ticked.has(focusedId())) setFocus(null);
       pushSelection();
       /* A rebuild rather than a patch, and this is the one tick path that
        * earns it: every row's box has just changed, so there is nothing to
@@ -898,7 +784,7 @@ export function createSeasonsBoardView({
        * nobody has ticked, so leaving this out would mean a selection pointing
        * at a storm no longer on the globe: every remaining track ghosted in
        * favour of one nobody can see. */
-      if (!box.checked && focused === id) setFocus(null);
+      if (!box.checked && focusedId() === id) setFocus(null);
     }
   }
 
