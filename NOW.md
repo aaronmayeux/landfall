@@ -337,8 +337,14 @@ tap-outside-minimises. Nothing about this pass is unbuilt.
 ordered list — glyph, then track, then empty water. A tap on a hurricane glyph
 at the space floor opens that storm (panel, pan and zoom) through the same
 function the roster row's chevron runs. A tap on a track still focuses it. A tap
-on open globe outside the sheet minimises the sheet, and — Aaron's answer to the
-open question, (b) — does nothing else.
+on open globe outside the furniture answers whatever is in front of it: **sheet
+up, it minimises the sheet; sheet down, it clears the focus.**
+
+**==> THAT SECOND HALF WAS MISSING WHEN THE PASS FIRST SHIPPED AND AARON FOUND
+IT ON GLASS. <==** With the sheet already down, a tap on empty water did nothing
+at all, so there was no way to get back to an un-dimmed globe short of the bar,
+the board and the row — three presses to undo one. Fixed the same day; §57.21d
+records how a suite stayed green over it.
 
 **GLASS, AND IT IS FOUR THINGS, ALL AT ONCE ON A PHONE.** Tick a season, stay at
 the space floor.
@@ -348,9 +354,10 @@ the space floor.
    and tap the same storm's TRACK: still opens it, by the other road. The
    handover between the two should be invisible — if there is a dead band where
    neither answers, `SEASONS.glyphTapMaxPhase` is the dial.
-2. **Tap open globe above the sheet.** The sheet should come down. Then try it
-   just above the sheet's top edge — a few pixels — where it should do NOTHING,
-   because that is the slop strip protecting a thumb that missed the drawer.
+2. **Tap open globe above the sheet.** The sheet should come down. **Tap again
+   and the focus should clear** — every track back to even. Then try a tap just
+   above the sheet's top edge, a few pixels, where it should do NOTHING: that is
+   the slop strip protecting a thumb that missed the drawer.
 3. **==> PAN AND ZOOM WITH THE SHEET OPEN, WHICH IS THE ONE MOST LIKELY TO COME
    BACK WRONG. <==** Drag the globe, pinch it, two-finger rotate it — all with
    the board up. None of it should minimise the sheet. If a slow drag that
@@ -360,11 +367,12 @@ the space floor.
    it — it rides the drawer's own contract — so this is a check that the pass
    did not break something it never touched.
 
-**AND ONE THING THAT IS EXPECTED TO FEEL DIFFERENT RATHER THAN BROKEN.**
-Un-focusing a storm by tapping open ocean is GONE. It is the roster's job now:
-tap the focused storm's row again. With the sheet minimised that is two presses
-— the bar, then the row — where it used to be one. That was the trade in
-option (b) and it was named before it was built.
+**AND ONE THING THAT IS EXPECTED TO FEEL DIFFERENT RATHER THAN BROKEN.** With
+the sheet UP, a tap on open ocean minimises rather than un-focusing. So from a
+focused storm with the board open it is two taps back to an even globe — the
+first brings the sheet down, the second clears the focus. That escalation is
+deliberate: each tap does one visible thing, which is the whole reason option
+(b) was chosen over doing both at once.
 
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither

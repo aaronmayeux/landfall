@@ -209,7 +209,7 @@ const archiveBranch = (() => {
 {
   const glyph = archiveBranch.indexOf('seasonGlyphAtPoint(map, e.point, seasonGlyphList)');
   const track = archiveBranch.indexOf('seasonStormAtPoint(map, e.point)');
-  const water = archiveBranch.indexOf('minimiseArchiveSheet(e);');
+  const water = archiveBranch.indexOf('tapOnEmptyArchiveWater(e);');
 
   ok('the archive branch is one ordered list: glyph, track, empty water',
     glyph > 0 && track > glyph && water > track);
@@ -231,8 +231,53 @@ ok('the minimise measures the furniture rather than reading a height',
 ok('  and pads it by half a touch target',
   /const slop = parseInt\(SIZE\.touchTarget, 10\) \/ 2/.test(mainJs));
 
-ok('the minimise does nothing when the sheet is already down',
-  /function minimiseArchiveSheet[\s\S]{0,200}if \(!drawer\.isOpen\(\)\) return;/.test(mainJs));
+/* ==> THE TWO ANSWERS, AND THIS IS THE ASSERTION WHOSE ABSENCE SHIPPED A DEAD
+ * GESTURE. <== The first version of this feature opened with
+ * `if (!drawer.isOpen()) return;`, so with the sheet already down a tap on
+ * empty water did NOTHING — not minimise, because there was nothing to
+ * minimise, and not un-focus, because that had just been removed in favour of
+ * the roster. Every assertion in this suite passed against that, because every
+ * one of them was about the sheet-UP case. Aaron found it on glass.
+ *
+ * So the sheet-down half is asserted first and explicitly. A branch that
+ * handles only one state is exactly the shape that reads as finished. */
+{
+  /* From the declaration to its own closing brace at function indent. Keyed on
+   * the brace rather than on whatever happens to be written next, so moving
+   * the function does not silently make this slice empty — an empty slice
+   * fails every regex below and would read as four broken rules. */
+  const fnFrom = mainJs.indexOf('function tapOnEmptyArchiveWater');
+  const fnTo = mainJs.indexOf('\n  }\n', fnFrom);
+  const fn = fnFrom > 0 && fnTo > fnFrom ? mainJs.slice(fnFrom, fnTo) : '';
+  ok('the empty-water branch was found and is a function, not a wall of text',
+    fn.length > 0 && fn.length < 1200);
+
+  ok('with the sheet DOWN, a tap on empty water clears the focus',
+    /else focusSeasonStormNow\(null\);/.test(fn));
+
+  ok('with the sheet UP, the same tap minimises it instead',
+    /if \(drawer\.isOpen\(\)\) drawer\.close\(\);/.test(fn));
+
+  /* ==> AND IT MUST NOT DO BOTH IN ONE TAP. <== That is option (a), which was
+   * considered and rejected: one gesture with two visible outcomes reads as a
+   * glitch. The two answers belong to two STATES, and an `else` is what says
+   * so. A version with two unconditional statements would pass both
+   * assertions above. */
+  ok('  and never both at once — the two answers are an if/else, not a pair',
+    /if \(drawer\.isOpen\(\)\) drawer\.close\(\);\s*\n\s*else focusSeasonStormNow\(null\);/.test(fn));
+
+  /* ==> BOTH ANSWERS SIT BEHIND THE TAP GATES, NOT JUST THE MINIMISE. <== A
+   * failed drag must not un-focus a storm any more than it may dismiss a
+   * sheet, and the guards are early returns — so this asserts they come
+   * BEFORE either answer rather than merely existing somewhere in the file. */
+  const gate = Math.max(
+    fn.indexOf('TAP.maxMs'),
+    fn.indexOf('TAP_BLOCKING_SELECTORS')
+  );
+  ok('both answers are behind the duration and furniture gates',
+    gate > 0 && gate < fn.indexOf('drawer.close()')
+    && gate < fn.indexOf('focusSeasonStormNow(null)'));
+}
 
 /* ==> AND EMPTY WATER NO LONGER CLEARS THE FOCUS. <== Aaron's (b), 2026-08-25.
  * The old behaviour was `focusSeasonStormNow(null)` on that branch, and one

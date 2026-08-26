@@ -1923,15 +1923,40 @@ still-running storm before the globe ever sees it, so it has no track, no ridge
 and no glyph to tap. The refusal inside `openStormNow` stays anyway, because it
 is the chevron's path too.
 
-**==> A TAP ON EMPTY WATER MINIMISES THE SHEET AND DOES NOTHING ELSE. <==**
-Aaron's call, 2026-08-25, answering the question §57.21c left open. It used to
-CLEAR THE FOCUS, and that is **gone rather than kept alongside** — one gesture
-with two visible outcomes is the shape readers report as a glitch.
+**==> A TAP ON EMPTY WATER ANSWERS WHATEVER IS IN FRONT OF IT. <==** Aaron's
+call, 2026-08-25, and his correction to it on glass the same day.
 
-**THE COST IS REAL AND WAS ACCEPTED RATHER THAN OVERLOOKED.** Un-focusing is
-now only reachable from the roster, by tapping the focused storm's row again.
-With the sheet minimised that is two presses — the bar to bring the board back,
-then the row — where it used to be one tap on open ocean.
+- **Sheet up** — minimise it.
+- **Sheet down** — clear the focus, every track back to even.
+
+**IT IS STILL ONE TAP AND ONE VISIBLE OUTCOME, WHICH IS WHY THIS IS (b) AND NOT
+(a).** The two answers belong to two STATES rather than to one gesture. Option
+(a) — clear the focus AND minimise together — was considered and rejected: one
+gesture with two visible outcomes is the shape readers report as a glitch. From
+"sheet up with a storm focused" it is two taps to a clean globe and they
+escalate outward: deal with the sheet, then the globe underneath it.
+
+**==> THE FIRST VERSION HAD ONLY THE FIRST HALF, AND IT SHIPPED A DEAD GESTURE.
+<==** It opened `if (!drawer.isOpen()) return;`, so **with the sheet already
+down a tap on empty water did nothing at all** — not minimise, because there
+was nothing to minimise, and not un-focus, because that had just been removed
+in favour of the roster. The only road to an un-dimmed globe was the bar, then
+the board, then the row: **three presses to undo one.**
+
+**THE RULE WAS READ AS "THE ROSTER OWNS UN-FOCUS" AND NOBODY CHECKED WHAT THE
+GESTURE DID IN THE STATE WITH NO SHEET.** Every assertion in the suite passed
+against it, because every one of them was about the sheet-UP case. **A branch
+that handles only one of two states is exactly the shape that reads as
+finished**, and the gate against it is now the first thing
+`tools/test-archive-tap.mjs` asserts — the sheet-down half explicitly, and an
+`else` rather than two statements, because a version doing both at once would
+satisfy each half on its own.
+
+**BOTH ANSWERS SIT BEHIND THE TAP GATES, NOT JUST THE MINIMISE.** A failed drag
+must not un-focus a storm any more than it may dismiss a sheet, and the
+furniture measurement covers both — with the sheet down `#drawer[data-open]`
+simply stops matching, while the archive's bar and the control cluster stay in
+the list, so a press on either cannot quietly un-focus a storm behind them.
 
 **==> A TAP AND THE START OF A DRAG ARE THE SAME EVENT, AND MAPLIBRE ALREADY
 ANSWERS HALF OF IT. <==** `map.on('click')` does not fire when the pointer moved
@@ -2007,11 +2032,20 @@ the mutation was re-run and bites.
 
 **AND ONE ASSERTION FAILED AGAINST CORRECT CODE, WHICH IS THE SAME LESSON FROM
 THE OTHER SIDE.** The tap suite's ordering check searched the whole of `main.js`
-for `minimiseArchiveSheet(e)` and found the FUNCTION DEFINITION, which sits
-above the click handler — so it compared a definition against a call and went
-red on a working branch. It cuts the archive branch out of the file first now,
-between `if (isArchive()) {` and the home marker test that follows it, and reads
-only that.
+for the empty-water call and found the FUNCTION DEFINITION, which sits above the
+click handler — so it compared a definition against a call and went red on a
+working branch. It cuts the archive branch out of the file first now, between
+`if (isArchive()) {` and the home marker test that follows it, and reads only
+that. **The same trap bit the dead-gesture fix**: the slice for the function
+body was keyed on the text that happened to follow it, which matched earlier in
+the file and produced a negative-length slice — four rules reading as broken.
+It is keyed on the function's own closing brace now, and the slice's length is
+itself asserted, so an empty slice fails as one clear thing rather than as four
+false alarms.
+
+**FIVE MORE MUTATIONS ON THE FIX AND ALL FIVE BITE**, including reintroducing
+the dead gesture itself — which is the one that matters, since the suite was
+green over it once.
 
 ### 57.22 The storm detail panel
 

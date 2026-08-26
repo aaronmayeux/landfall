@@ -875,8 +875,32 @@ function boot() {
   /**
    * A tap landed on the archive's globe and resolved to nothing. §57.21d.
    *
-   * ==> THE SHEET COMES DOWN, AND ONLY IF THIS WAS ACTUALLY A TAP. <== See the
-   * clock above for why duration is asked and movement is not.
+   * ==> IT DOES WHATEVER IS IN FRONT OF IT, AND THAT IS TWO ANSWERS RATHER
+   * THAN ONE. <== Aaron on glass, 2026-08-25.
+   *
+   *   SHEET UP   -> minimise it.
+   *   SHEET DOWN -> clear the focus, every track back to even.
+   *
+   * ==> THE FIRST VERSION HAD ONLY THE FIRST HALF AND THAT SHIPPED A DEAD
+   * GESTURE. <== It opened `if (!drawer.isOpen()) return;`, so with the sheet
+   * already down a tap on empty water did NOTHING AT ALL — not minimise,
+   * because there was nothing to minimise, and not un-focus, because that had
+   * just been removed in favour of the roster. The only road left to an
+   * un-dimmed globe was the bar, then the board, then the row: three presses
+   * to undo one. The rule was read as "the roster owns un-focus" without
+   * anybody checking what the gesture did in the state where there is no sheet.
+   *
+   * ==> AND IT IS STILL ONE TAP, ONE VISIBLE OUTCOME, WHICH IS THE WHOLE
+   * REASON (b) WAS CHOSEN OVER (a). <== The two answers are in different
+   * STATES, not in one gesture. From "sheet up with a storm focused" it is two
+   * taps to a clean globe and they escalate outward — deal with the sheet,
+   * then the globe underneath it — rather than both happening at once, which
+   * is the thing readers report as a glitch.
+   *
+   * ==> AND ONLY IF THIS WAS ACTUALLY A TAP. <== See the clock above for why
+   * duration is asked and movement is not. Both answers are behind that gate:
+   * a failed drag must not un-focus a storm any more than it may dismiss a
+   * sheet.
    *
    * ==> "OUTSIDE THE DRAWER" IS MEASURED, NEVER A HEIGHT. <==
    * `map/chrome-avoid.js` reads the furniture's real boxes off the DOM, which
@@ -893,19 +917,25 @@ function boot() {
    * that achieves nothing costs one more press, and a press that dismisses the
    * sheet somebody was reaching into costs them the sheet.
    *
+   * ==> THE FURNITURE IS MEASURED THE SAME WAY WITH THE SHEET DOWN, AND THAT
+   * MATTERS FOR THE UN-FOCUS TOO. <== `#drawer[data-open="true"]` simply
+   * stops matching, so the sheet's old box is gone from the list — but the
+   * archive's bar and the control cluster are still in it, and a press on
+   * either must not quietly un-focus a storm behind them.
+   *
    * THE MEASUREMENT IS TAKEN HERE RATHER THAN HELD. It is one
    * `getBoundingClientRect` pass on a handful of elements, on a tap — not in a
    * frame loop — and the boxes move whenever the year steps or the window
    * turns, so a cached copy would be wrong exactly when it mattered.
    */
-  function minimiseArchiveSheet(e) {
-    if (!drawer.isOpen()) return;
+  function tapOnEmptyArchiveWater(e) {
     if (performance.now() - pressStartedAt > TAP.maxMs) return;
     const slop = parseInt(SIZE.touchTarget, 10) / 2;
     if (occludedByChrome(e.point.x, e.point.y, measureChrome(slop, TAP_BLOCKING_SELECTORS))) {
       return;
     }
-    drawer.close();
+    if (drawer.isOpen()) drawer.close();
+    else focusSeasonStormNow(null);
   }
 
   /* Tap/click a storm dot — same action as a list row (SPEC §16). The 44 px
@@ -945,17 +975,11 @@ function boot() {
         return;
       }
 
-      /* ==> EMPTY WATER MINIMISES THE SHEET AND DOES NOTHING ELSE. <== Aaron's
-       * call, 2026-08-25, answering the question §57.21c left open. It used to
-       * CLEAR THE FOCUS here, and that is gone rather than kept alongside — one
-       * gesture with two visible outcomes is the shape readers report as a
-       * glitch.
-       *
-       * ==> THE COST IS REAL AND WAS ACCEPTED. <== Un-focusing is now only
-       * reachable from the roster, by tapping the focused storm's row again.
-       * With the sheet minimised that is two presses — the bar to bring the
-       * board back, then the row — where it used to be one tap on open ocean. */
-      minimiseArchiveSheet(e);
+      /* ==> EMPTY WATER ANSWERS WHATEVER IS IN FRONT OF IT: THE SHEET IF IT IS
+       * UP, THE FOCUS IF IT IS DOWN. <== Aaron's call, 2026-08-25, and the
+       * correction to it on glass the same day. The rule and the reason it is
+       * two answers rather than one are on the function itself. */
+      tapOnEmptyArchiveWater(e);
       return;
     }
 
