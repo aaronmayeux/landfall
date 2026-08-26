@@ -2792,6 +2792,32 @@ export const ARCHIVE_GEO = Object.freeze({
   swathFillOpacity: 0.14,
   swathLineWidth:   1.25,
   swathLineOpacity: 0.55,
+
+  /** ==> THE MOVING STORM HEAD, WHILE THE CLOCK IS RUNNING (§57.23). <== The
+   *  one thing on the archive globe that is about a MOMENT rather than a whole
+   *  finished life, so it is the one thing allowed to be louder than the
+   *  tracks.
+   *
+   *  Bigger than `STORM_GEO.pointRadius`'s per-fix dot and ringed like it,
+   *  because it has a different job: a per-fix dot is one of forty along a
+   *  selected storm and must not shout, while this is the reader's eye-line
+   *  and there may be six of them scattered across a globe. Smaller than the
+   *  live globe's position glyph, because this is history rather than weather
+   *  happening now, and the two must never be mistaken for each other. */
+  clockHeadRadius:      6,
+  clockHeadStrokeWidth: 1.5,
+
+  /** The trail BEHIND a storm that has already finished, while the clock is
+   *  still running on the others. §57.23 asks for the season to accumulate,
+   *  which means a dead storm's line stays on screen — but at full strength a
+   *  season's worth of finished tracks would drown the two or three storms
+   *  actually moving, which is the whole thing the reader is watching.
+   *
+   *  Higher than `dimmedOpacity`'s 0.2 on purpose: a ghost is what a storm
+   *  looks like when the reader has focused a DIFFERENT one, and that is a
+   *  statement about attention. This is a statement about time, and a finished
+   *  storm is still part of the picture being built. */
+  clockEndedOpacity: 0.45,
 });
 
 /** Elevation — panels float over the globe, nothing takes the full screen. */

@@ -111,6 +111,12 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  *  `clearSeasonTracks`, which is the leave path. */
 let focusId = null;
 
+/** Is a clock cut currently being drawn. Module state for the same reason
+ *  `focusId` above is: the opacity expression is installed at `ensure` time
+ *  and swapped on focus, and neither of those knows whether somebody has
+ *  pressed play. Flipped by `setSeasonTracks` and cleared on the way out. */
+let clocked = false;
+
 /** Smoothed coordinates, keyed on storm id. See the header: ticking is a
  *  whole-set push, so this is what stops every tick re-splining every storm
  *  already on the globe. Pruned to the pushed set on every push, so it can
@@ -201,7 +207,7 @@ export function ensureSeasonTracks(map, beforeId) {
          * track's. Nothing on this globe is a forecast — there is no second
          * line for them to be quieter than. */
         'line-width': STORM_GEO.trackForecastWidth,
-        'line-opacity': focusOpacity(focusId),
+        'line-opacity': lineOpacity(focusId),
       },
     },
     beforeId
@@ -248,6 +254,42 @@ export function ensureSeasonTracks(map, beforeId) {
     },
     beforeId
   );
+}
+
+/**
+ * What a TRACK draws at, which is focus and one more thing.
+ *
+ * ==> A STORM THAT HAS ALREADY FINISHED, WHILE THE CLOCK IS STILL RUNNING ON
+ * THE OTHERS, DROPS BACK. §57.23. <== The season is meant to accumulate on the
+ * globe, so a dead storm's line stays — but at full strength a busy September
+ * would drown the two or three storms actually moving, which is the thing the
+ * reader is watching.
+ *
+ * ==> IT IS ONE STATIC EXPRESSION AND IT COSTS NOTHING WHEN THE CLOCK IS OFF.
+ * <== `ended` is stamped on the feature by `setSeasonTracks` only when a cut
+ * is supplied, so with the clock stopped the test is against a property that
+ * is never present and every track takes the focus answer unchanged. That is
+ * what lets this be installed once at `ensure` rather than swapped on every
+ * step — a paint call ten times a second to say something that has not changed
+ * is exactly the cost §57.35 fault 3 is about.
+ *
+ * ==> `['==', ..., true]` RATHER THAN A BARE `['get']`. <== MapLibre's `case`
+ * wants a boolean and a missing property reads as `null`, which it refuses at
+ * validation time rather than treating as false — so the bare form would throw
+ * the whole layer away at `addLayer` on every reader who never presses play.
+ * That is the same class of fault as §48.21's third bug, which shipped.
+ */
+function lineOpacity(id) {
+  /* ==> WITH NO CLOCK RUNNING THIS IS THE BARE FOCUS ANSWER, WHICH IS A PLAIN
+   * NUMBER WHEN NOTHING IS FOCUSED. <== `tools/test-season-tracks.mjs` asserts
+   * exactly that and it caught this file wrapping every reader in an
+   * expression for a feature most of them never start. `focusOpacity`'s own
+   * note has the reason: an expression is evaluated per feature per frame, and
+   * "nobody has tapped anything with the clock stopped" is where most of the
+   * time in the archive is spent. So the wrap is added only once a cut is
+   * actually in play. */
+  if (!clocked) return focusOpacity(id);
+  return ['case', ['==', ['get', 'ended'], true], ARCHIVE_GEO.clockEndedOpacity, focusOpacity(id)];
 }
 
 /**
@@ -309,16 +351,52 @@ function nameOpacity(id) {
  * @param {object} map
  * @param {Array<{storm:object, facts:object}>} selected
  */
-export function setSeasonTracks(map, selected = []) {
+export function setSeasonTracks(map, selected = [], cuts = null) {
   const src = map?.getSource?.(SOURCE);
   if (!src) return;
+
+  /* ==> A CHANGE OF CLOCK STATE REPAINTS, AND IT HAPPENS TWICE PER PLAYBACK
+   * RATHER THAN TEN TIMES A SECOND. <== The expression itself does not depend
+   * on the moment, only on whether there IS one, so this fires once when the
+   * clock starts and once when it stops. */
+  const nowClocked = Boolean(cuts);
+  if (nowClocked !== clocked) {
+    clocked = nowClocked;
+    if (map?.getLayer?.(LAYER)) map.setPaintProperty(LAYER, 'line-opacity', lineOpacity(focusId));
+  }
 
   const features = [];
   const live = new Set();
   for (const entry of selected) {
     const f = trackFeature(entry?.storm, entry?.facts);
-    if (f) features.push(f);
     if (entry?.storm?.id) live.add(entry.storm.id);
+    if (!f) continue;
+
+    /* ==> THE CLOCK SHORTENS THIS LINE; IT DOES NOT DRAW A SECOND ONE.
+     * §57.23. <== `map/layers/season-clock.js`'s header has the whole
+     * argument. The short version: the name along the line, the focus
+     * dimming, the peak-category ink and the 44 px tap target all already
+     * live on this feature, and a parallel clock line layer means each of
+     * them either gets duplicated or quietly stops working the moment
+     * somebody presses play.
+     *
+     * `cuts` null is the clock switched off and is the ordinary state — the
+     * whole feature is one `if` away from not existing. A storm the cut says
+     * is UNBORN is dropped entirely rather than drawn empty: MapLibre accepts
+     * a one-coordinate LineString as data and renders nothing, so an empty
+     * line would be a feature that answers taps and carries a name over a
+     * storm that has not happened yet. */
+    const cut = cuts?.get?.(entry?.storm?.id);
+    if (cut) {
+      if (cut.state === 'unborn' || !(cut.coords?.length >= 2)) continue;
+      f.geometry = { type: 'LineString', coordinates: cut.coords };
+      /* What a FINISHED storm looks like while others are still running
+       * (§57.23: the season accumulates). Read by the paint expression rather
+       * than applied here, because opacity is a paint property and stamping
+       * it on the feature would mean re-pushing to change it. */
+      f.properties.ended = cut.state === 'ended';
+    }
+    features.push(f);
   }
 
   /* PRUNE, so the memo holds what is drawn and nothing else. A reader browsing
@@ -347,7 +425,7 @@ export function setSeasonTracks(map, selected = []) {
 export function setSeasonTrackFocus(map, id = null) {
   focusId = id || null;
   if (!map?.getLayer?.(LAYER)) return;
-  map.setPaintProperty(LAYER, 'line-opacity', focusOpacity(focusId));
+  map.setPaintProperty(LAYER, 'line-opacity', lineOpacity(focusId));
   /* Rebuilt rather than left alone, because the ink is baked at call time —
    * which is also what guarantees the sepia value is read, since this can only
    * run inside the archive. */
@@ -393,10 +471,11 @@ export function seasonStormAtPoint(map, point) {
  *  season's ids failed to match it. */
 export function clearSeasonTracks(map) {
   focusId = null;
+  clocked = false;
   curves.clear();
   map?.getSource?.(SOURCE)?.setData(EMPTY);
   if (map?.getLayer?.(LAYER)) {
-    map.setPaintProperty(LAYER, 'line-opacity', focusOpacity(null));
+    map.setPaintProperty(LAYER, 'line-opacity', lineOpacity(null));
     map.setPaintProperty(LAYER, 'line-color', lineColor(null));
   }
   if (map?.getLayer?.(LAYER_NAME)) {
@@ -406,9 +485,11 @@ export function clearSeasonTracks(map) {
 
 export const __internals = {
   trackColor,
+  lineOpacity,
   trackFeature,
   nameOpacity,
   lineColor,
   focus: () => focusId,
+  clocked: () => clocked,
   curveCount: () => curves.size,
 };

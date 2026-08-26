@@ -72,10 +72,14 @@ export function barDetail(where) {
  * @param {object} opts
  * @param {() => void} opts.onLeave  pressed, or activated by keyboard.
  * @param {() => void} [opts.onOpenBoard]  the reader wants the board back.
+ * @param {HTMLElement} [opts.clockEl]  the season clock's controls (§57.23),
+ *   built by `ui/seasons-clock-bar.js`. Handed in rather than built here so
+ *   this file stays what it is — the sentence and the way out — and so a bar
+ *   with no clock in it is still a bar.
  * @returns {{el:HTMLElement, mount:()=>void, unmount:()=>void,
  *            focusLeave:()=>void, setDetail:(text:string)=>void}}
  */
-export function createSeasonsBar({ onLeave, onOpenBoard }) {
+export function createSeasonsBar({ onLeave, onOpenBoard, clockEl }) {
   const el = document.createElement('div');
   el.id = 'seasons-bar';
   /* A landmark rather than a status: it is a place with a control in it, and
@@ -127,6 +131,20 @@ export function createSeasonsBar({ onLeave, onOpenBoard }) {
   leave.addEventListener('click', () => onLeave?.());
 
   el.append(where, leave);
+
+  /* ==> THE CLOCK GOES IN ON ITS OWN LINE, BENEATH THE SENTENCE AND THE WAY
+   * OUT. §57.23, Aaron's call 2026-08-26. <== Folded into this bar rather than
+   * given a strip of its own, because the archive globe's only chrome is this
+   * element and a second horizontal band on a 390 px phone is globe the reader
+   * does not get back.
+   *
+   * ==> AND IT IS APPENDED AFTER `leave`, SO THE WAY OUT KEEPS ITS PLACE IN
+   * THE TAB ORDER. <== Leaving is the one action in this mode that must never
+   * be hard to reach (see the header), and inserting a play button and a
+   * slider in front of it would put two controls between a keyboard reader and
+   * the exit. The stylesheet puts the clock on the second row visually; the
+   * DOM order is the honest one. */
+  if (clockEl) el.append(clockEl);
 
   return {
     el,

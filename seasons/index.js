@@ -54,6 +54,9 @@ import { resolveSystem } from '../lib/units.js';
 import { getHome } from '../data/home.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { barDetail, createSeasonsBar } from './bar.js';
+import { createClockEngine } from './clock-engine.js';
+import { createSeasonsClockBar } from '../ui/seasons-clock-bar.js';
+import { buildTimeline, clockSpan, cutTimeline, trailFingerprint } from '../lib/season-clock.js';
 import * as deepLink from './deep-link.js';
 
 /** Registered once per page load. A dynamic import is cached, so a second
@@ -123,8 +126,87 @@ export function openSeasons({
    * looking at. */
   if (session) return session.handle;
 
+  /* ==> THE CLOCK IS THREE OBJECTS AND THIS IS WHERE THEY MEET. §57.23. <==
+   * `clock` knows what time it is, `clockBar` shows it, and `clockTracks`
+   * below holds the curves. None of the three knows about the other two; this
+   * file is the only place that does, which is the same arrangement `liveGlobe`
+   * and `archiveGlobe` already use (§12).
+   *
+   * ==> AND IT IS BUILT EVEN WHEN NOTHING IS TICKED. <== The controls hide
+   * themselves on an empty span rather than being created on demand, because
+   * ticking a storm is the most frequent thing that happens in this mode and
+   * building a control in the middle of it would put DOM work on the one path
+   * that already re-pushes geometry. */
+  const clockBar = createSeasonsClockBar({
+    onToggle: () => safely(() => clock.toggle()),
+    onSeek: (ms) => safely(() => clock.seek(ms)),
+  });
+
+  /**
+   * Every ticked storm's curve, with a time on every vertex. Rebuilt only when
+   * the ticked SET changes — see `pushClock`.
+   *
+   * ==> THE WHOLE POINT OF HOLDING IT IS THAT `buildTimeline` IS THE EXPENSIVE
+   * HALF AND `cutTimeline` IS NOT. §57.35 fault 3. <== Smoothing a track is
+   * Catmull-Rom over a few hundred points; cutting one is a binary search.
+   * Rebuilding on every step would be the fault that section names, exactly.
+   */
+  let clockTracks = [];
+  /** The document-level Space handler, held so `leave()` can take it off
+   *  again. A listener that outlived the archive would answer Space over the
+   *  live globe, where it means nothing. */
+  let onSpace = null;
+  /** What the trail geometry was last time it was pushed. See
+   *  `trailFingerprint` — this is what makes the big source grow in chunks
+   *  rather than get rewritten ten times a second. */
+  let lastTrail = '';
+
+  /**
+   * Draw the archive at one moment.
+   *
+   * ==> IT PUSHES THE HEADS EVERY STEP AND THE TRAILS ONLY WHEN THEY CHANGED.
+   * <== §57.35 fault 3's split, and the fingerprint is where it is decided.
+   * The heads are one tiny feature per running storm and have to move
+   * smoothly, so they go unconditionally; the trails are the season's whole
+   * line geometry and are held when no storm crossed a vertex.
+   *
+   * ==> HOW OFTEN THAT ACTUALLY SAVES A PUSH IS MEASURED, NOT ASSUMED, AND IT
+   * IS LESS THAN IT SOUNDS. <== `tools/season-clock-cost.mjs` against real
+   * 2005 bytes: one storm ticked pushes on 100% of steps, four on 55%, the
+   * whole season on 69%. The saving comes from storms that are unborn or over,
+   * never from a running storm sitting still. **The size of a push is the
+   * number that matters on a phone and it is not bounded by this** — a whole
+   * ticked season is ~8,000 vertices handed to MapLibre seven times a second,
+   * and whether that holds frame rate is Aaron's glass call. `SEASONS
+   * .clockStepsPerSecond` is the dial if it does not.
+   */
+  function drawAt(cutMs) {
+    const cuts = new Map();
+    const running = [];
+    for (const t of clockTracks) {
+      const cut = cutTimeline(t.timeline, cutMs);
+      cuts.set(t.entry?.storm?.id, cut);
+      running.push({ storm: t.entry?.storm, cut });
+    }
+
+    const print = trailFingerprint(
+      clockTracks.map((t) => ({ id: t.entry?.storm?.id, ...cuts.get(t.entry?.storm?.id) }))
+    );
+    if (print !== lastTrail) {
+      lastTrail = print;
+      safely(() => currentArchiveGlobe?.setTracks?.(clockTracks.map((t) => t.entry), cuts));
+    }
+    safely(() => currentArchiveGlobe?.setClockHeads?.(running, cutMs));
+  }
+
+  const clock = createClockEngine({
+    onStep: (cutMs) => drawAt(cutMs),
+    onState: (s) => safely(() => clockBar.setState(s)),
+  });
+
   const bar = createSeasonsBar({
     onLeave: () => leave(),
+    clockEl: clockBar.el,
     /* ==> THE BAR'S OWN SENTENCE TOGGLES THE BOARD. <== Aaron on glass,
      * 2026-08-25. It only ever opened, which made it a one-way door: press it
      * with the board already up and nothing happened, so the only way to get
@@ -194,6 +276,14 @@ export function openSeasons({
      * the same reason the palette does: one frame with 1935's tracks over
      * today's storms would read as a glitch, and it is the frame a reader
      * sees on the way out rather than on the way in. */
+    /* ==> THE CLOCK STOPS BEFORE THE GEOMETRY GOES. <== Its loop calls
+     * `setTracks` and `setClockHeads`, and a step landing after the layers were
+     * cleared would push a 1935 storm back onto a globe the reader has already
+     * left. `destroy` also drops the span, so coming back to a different year
+     * cannot find last year's moment still held. */
+    safely(() => clock.destroy());
+    clockTracks = [];
+    lastTrail = '';
     safely(() => archiveGlobe?.clearTracks?.());
     safely(() => boardView?.reset?.());
     /* ==> THE REPORT INDEX IS DROPPED ON THE WAY OUT. <== It is ~100 KB held
@@ -207,6 +297,7 @@ export function openSeasons({
     currentLiveRunningIds = null;
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
+    if (onSpace) { document.removeEventListener('keydown', onSpace); onSpace = null; }
     safely(() => bar.unmount());
     safely(() => deepLink.clear());
 
@@ -240,6 +331,21 @@ export function openSeasons({
      * the LINK, and it does not stop being true when a season loads. */
     bar.setDetail(detailFor(linkReason));
     bar.mount();
+    /* ==> SPACE PLAYS AND PAUSES, AND IT IS LISTENED FOR HERE RATHER THAN ON
+     * THE BAR. §57.23, §13. <== A reader watching the season has no reason to
+     * have the play button focused, so a listener on the control itself would
+     * mean the shortcut only works while you are standing on the thing it is a
+     * shortcut FOR. The document is the honest scope, and it is safe because
+     * it exists only while the archive does — mounted here, removed in
+     * `leave()`.
+     *
+     * `clockBar.handleKey` refuses when the reader is on a button, a slider or
+     * a checkbox, where Space already means something. It reports whether it
+     * acted, and only then is the page's own scroll suppressed. */
+    onSpace = (e) => {
+      if (clockBar.handleKey(e)) e.preventDefault();
+    };
+    document.addEventListener('keydown', onSpace);
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
@@ -421,7 +527,29 @@ function ensureBoard({ bar, drawer, linkReason }) {
 
     /* The globe redraws from the WHOLE ticked set on every change, so there is
      * no add path and no remove path to drift apart. */
-    onSelection: (selected) => safely(() => currentArchiveGlobe?.setTracks?.(selected)),
+    onSelection: (selected) => safely(() => {
+      /* ==> THE TIMELINES ARE BUILT HERE, ON THE TICK, AND NOT ON THE STEP.
+       * §57.35 fault 3. <== This is the only moment the ticked set changes, so
+       * it is the only moment the curves can be out of date. Ten steps a
+       * second later there is nothing left to do but slice them.
+       *
+       * ==> AND A STORM WITH NOTHING TO PLAY KEEPS ITS TRACK. <== A single
+       * 19th-century sighting has a position and no duration, so
+       * `buildTimeline` answers null — and that storm is drawn as it always
+       * was, whole, at every moment. Dropping it from the globe because the
+       * clock has nothing to say about it would delete a real record to serve
+       * a feature it is not part of. */
+      clockTracks = selected.map((entry) => ({ entry, timeline: buildTimeline(entry?.storm) }));
+      lastTrail = '';
+      clock.setSpan(clockSpan(clockTracks));
+
+      /* ==> WITH NO CLOCK RUNNING THE GLOBE GETS THE PLAIN WHOLE-SET PUSH IT
+       * ALWAYS GOT. <== `setSpan` redraws at the current moment when there IS
+       * a span, so this branch only covers the case where there is nothing to
+       * play — a season with one single-sighting storm ticked, or nothing
+       * ticked at all, which is the state every visit starts in. */
+      if (!clock.state().available) currentArchiveGlobe?.setTracks?.(selected);
+    }),
 
     /* ==> FOCUS IS A SECOND CALLBACK RATHER THAN A FIELD ON THE FIRST, AND
      * THAT IS ABOUT COST. <== §57.21 item 2. Ticking changes the DATA on the
