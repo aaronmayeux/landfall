@@ -135,19 +135,62 @@ function radiusFor(size, cat, weight) {
   return r * (0.55 + 0.45 * (c / 6));
 }
 
-function stripSvg(list, size, gap, weight) {
+/* ==> THE LANDFALL RECORD HAS A TWELVE-YEAR HOLE AND THE TRIANGLE WOULD DRAW
+ * IT AS TWELVE PEACEFUL YEARS. <== Measured off our own HURDAT2, landfalling
+ * storms per year: 5.45 across 1951-70, then 1971-1982 is EXACTLY ZERO, then
+ * 4.89 across 1983-2000. Twelve consecutive years, no storm marked as coming
+ * ashore, sitting between two eras thick with them. NOAA simply never coded
+ * the landfall marker through that stretch of the reanalysis.
+ *
+ * An always-on triangle makes that hole the loudest thing on the wall, and it
+ * reads as deliberate — a clean band of "nothing hit land" in the middle of
+ * the modern era. §5's distinction exactly: this is UNAVAILABLE, not NONE, and
+ * the two must never look the same. So those rows say so. */
+const LANDFALL_GAP = [1971, 1982];
+const inLandfallGap = (y) => y >= LANDFALL_GAP[0] && y <= LANDFALL_GAP[1];
+
+/* ==> THE GLOW IS TWO CIRCLES, NOT A BLUR FILTER, AND THAT IS A PERFORMANCE
+ * DECISION. <== The app's dots are DOM elements wearing
+ * `box-shadow: 0 0 var(--dot-glow-blur) <ink>` (ui/panels.css, index.html).
+ * box-shadow does not apply to SVG shapes, and the honest equivalent —
+ * feGaussianBlur — would mean a real blur pass over up to 31 dots a row across
+ * every row on screen. That is a frame-budget fire on a phone for an effect
+ * that is 8px wide.
+ *
+ * So each dot draws twice: a wider, low-opacity circle of its own colour
+ * underneath, and the crisp dot on top. Not a true gaussian, and it does not
+ * need to be at six pixels — it reads as a light at night, which is the whole
+ * point of §6's glow. THE RADIUS STILL COMES FROM THE SHARED TOKEN so it can
+ * never drift from the rest of the app. */
+const GLOW_SCALE = 1.42;   /* outer radius as a multiple of the dot's own */
+const GLOW_ALPHA = 0.38;
+
+function stripSvg(list, size, gap, weight, year) {
   const w = list.length * size + Math.max(0, list.length - 1) * gap;
-  const h = size + 2;
+  /* Room under the dots for the marker. The triangle is centred on its dot
+   * and points UP at it — it reads as "this one came ashore" rather than as a
+   * second, unrelated row of shapes. */
+  const tri = Math.max(3, Math.round(size * 0.72));
+  const triH = Math.max(2.5, tri * 0.72);
+  const h = size + triH + 3;
   const parts = list.map((s, i) => {
     const x = i * (size + gap);
     const r = size / 2;
     const rr = radiusFor(size, s[CAT_I], weight);
-    const dot = `<circle cx="${x + r}" cy="${r}" r="${rr}" fill="${catColor(s[CAT_I])}"/>`;
-    const lf = s[LF] ? `<rect class="lf" x="${x}" y="${size + 0.5}" width="${size}" height="1.5" fill="var(--text-primary)" opacity="0.7"/>` : '';
-    return dot + lf;
+    const ink = catColor(s[CAT_I]);
+    const glow = `<circle cx="${x + r}" cy="${r}" r="${(rr * GLOW_SCALE).toFixed(2)}"
+      fill="${ink}" opacity="${GLOW_ALPHA}"/>`;
+    const dot = `<circle cx="${x + r}" cy="${r}" r="${rr}" fill="${ink}"/>`;
+    let lf = '';
+    if (s[LF]) {
+      const cx = x + r, top = size + 1.5, bot = top + triH;
+      lf = `<path class="lf" d="M ${cx} ${top} L ${(cx + tri / 2).toFixed(2)} ${bot}
+        L ${(cx - tri / 2).toFixed(2)} ${bot} Z" fill="var(--text-primary)" opacity="0.8"/>`;
+    }
+    return glow + dot + lf;
   }).join('');
   return `<svg class="yr-strip" viewBox="0 0 ${Math.max(w, 1)} ${h}" width="${w}" height="${h}"
-    preserveAspectRatio="xMinYMid meet" aria-hidden="true">${parts}</svg>`;
+    preserveAspectRatio="xMinYMax meet" aria-hidden="true">${parts}</svg>`;
 }
 
 /* A row's accessible name. The dots are decoration; this sentence is what a
@@ -209,6 +252,9 @@ function wallHtml(basin, stripPx) {
 
   /* ==> ALWAYS VISIBLE. An over-filtered wall and a broken wall are the same
    * screen without it. <== */
+  /* Rows carrying a triangle are taller than rows without. Left alone the
+   * strip would be clipped by the 44px row, so the SVG is bottom-aligned and
+   * the row keeps its touch height. */
   html += `<p class="tally">${live.length} season${live.length === 1 ? '' : 's'} shown`
     + (empty.length ? ` &middot; ${empty.length} with none` : '') + `</p>`;
 
@@ -234,8 +280,8 @@ function wallHtml(basin, stripPx) {
       : `${r.total}`;
     return `<button class="yr" type="button" data-year="${r.year}"${pre ? ' data-pre="1"' : ''}
       aria-label="${rowLabel(r.year, r.shown)}">
-      <span class="yr-num">${r.year}${pre && !inPlace ? '<i class="premark" aria-hidden="true">*</i>' : ''}</span>
-      <span>${stripSvg(r.shown, size, gap, WEIGHT)}</span>
+      <span class="yr-num">${r.year}${pre && !inPlace ? '<i class="premark" aria-hidden="true">*</i>' : ''}${inLandfallGap(r.year) ? '<i class="nolf" title="landfalls not recorded">&#9663;</i>' : ''}</span>
+      <span>${stripSvg(r.shown, size, gap, WEIGHT, r.year)}</span>
       <span class="yr-count">${count}</span>
     </button>`;
   };

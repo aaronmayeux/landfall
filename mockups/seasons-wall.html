@@ -50,6 +50,10 @@
       border-left:2px solid var(--coast-glow);padding:7px 9px;margin:8px 0 4px;border-radius:0 5px 5px 0}
     .warn b{color:var(--text-primary)}
     .premark{font-style:normal;color:var(--coast-glow);margin-left:2px}
+    /* The twelve years NOAA never coded a landfall in. An empty outline, not a
+       filled triangle — the shape says "this is where a marker would be" and
+       the emptiness says nobody recorded one. Unavailable, not none. */
+    .nolf{font-style:normal;color:var(--text-muted);margin-left:2px;font-size:.7em}
 
     /* Empty rows. Hairline in year order (the gaps ARE the record); collapsed
        into one line once a non-year sort has already destroyed the timeline. */
@@ -262,7 +266,12 @@ body {
   font-family: var(--font-numeric); font-size: var(--type-small);
   color: var(--text-secondary); font-variant-numeric: tabular-nums;
 }
-.yr-strip { display: block; width: 100%; height: calc(var(--dot) + 2px); overflow: visible; }
+/* Taller than the dot now — the landfall triangle hangs below it. The glow is
+   drawn INSIDE the svg as a second circle (box-shadow does not reach svg
+   shapes and a blur filter on thousands of dots is a phone-killer), so the
+   radius token is applied in seasons-wall.js rather than here. */
+.yr-strip { display: block; width: 100%;
+  height: calc(var(--dot) + var(--dot) * 0.72 + 3px); overflow: visible; }
 .yr-count {
   font-family: var(--font-numeric); font-size: var(--type-micro);
   color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 1.6em; text-align: right;
@@ -287,7 +296,6 @@ body[data-pre="rule"] .yr[data-pre] .yr-num { color: var(--text-muted); }
 body[data-pre="dim"] .era-mark, body[data-pre="rule"] .era-mark { display: block; }
 
 /* Landfall mark — a hairline under the dot, not a second colour. */
-body:not([data-lf="on"]) .lf { display: none; }
 
 /* --------------------------------------------------------------------------
  * THE SECOND SCREEN — the board as it is today, minus the year dropdown.
@@ -335,7 +343,7 @@ body:not([data-lf="on"]) .lf { display: none; }
 .frame.rail .bar { display: none; }
 </style>
 </head>
-<body data-pre="rule" data-count="on" data-lf="off" data-density="44" data-weight="even">
+<body data-pre="rule" data-count="on" data-density="44" data-weight="even">
 
 <div class="page">
   <h1>The Wall of Years — mockup</h1>
