@@ -908,6 +908,19 @@ const text = (body) => body.innerHTML;
   body.fire('change', master());
   eq('the master box ticks what is SHOWN, not the whole season',
     drawn.at(-1).length, majors);
+  /* ==> AND THE BOX HAS TO LOOK FULL, WHICH IS A SECOND COUNT IN A SECOND
+   * PLACE. <== The line above proves the HANDLER narrowed; this proves the
+   * PAINT did. They are different code — `onChange` counts the filtered rows
+   * to decide what to tick, and `paintCheckAll` counts them again to decide
+   * what the box should show — so a paint that reached past the filter would
+   * leave the box stuck in the middle state over a list where every row is
+   * ticked, with the handler behaving perfectly. Found by mutation on
+   * 2026-08-25: blinding the paint's count to the filter left this whole
+   * section green, which is the failure §12 calls worse than no test. */
+  eq('and the box PAINTS as full, counting the narrowed list and not the season',
+    master().checked, true);
+  eq('so it is not left in the middle state over a fully ticked list',
+    master().indeterminate, false);
   /* ==> AND THE MIDDLE STATE SURVIVES A REBUILD, WHICH IS THE HALF THE MARKUP
    * CANNOT CARRY. <== `checked` is an attribute and comes back with the
    * roster; `indeterminate` is a property and does not. Re-entering the board
