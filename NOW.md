@@ -309,24 +309,47 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> `ui/view-seasons-board.js` IS 1,064 LINES AND THE CUT IS THE NEXT SESSION'S
-OWN JOB. <==** §12's ceiling table told step 9 four times to take an inventory
-before adding its filter and its slider. It did not, and the file went 868 ->
-1064. **A ceiling row that names a cut and defers it does not stop a feature** —
-the feature arrives with its own reasons and the row is read after the code is
-written. That is the finding, and it is worth more than the number.
+**==> THE BOARD'S CUT IS TAKEN — TWICE — AND `SPEC.md` §12 HAS THE AS-BUILT ROW.
+<==** 2026-08-26, 1,064 -> 823. `ui/seasons-board-selection.js` took the ticks,
+the open storm and every rule about which of them the globe hears;
+`ui/seasons-board-render.js` took the markup. Read §12's row, not this — it
+carries the inventory, the measurement and the reason the two cuts are different
+kinds. Nothing here is waiting on Aaron and there is no phone test: neither cut
+changed a pixel, deliberately, so a break can only be the move.
 
-**The seam is named and, unlike the last three times this was written down, it is
-clean.** The table has said for four passes that lifting the handlers means a
-callback bag as wide as the state itself. That was true of the shape it imagined.
-The handlers do not need `basin`, `year`, `filter`, `radius`, `ticked` and
-`focused` — they need six ACTIONS, and every one already exists as a function in
-that file: choose a basin, choose a year, choose a filter, set the radius, toggle
-a tick, open a storm. A new input module takes the routing (~300 lines) and is
-handed those six.
+**==> AND THE SEAM §12 RECOMMENDED FIVE TIMES DOES NOT EXIST. <==** It called the
+input block "roughly 300 lines of event routing" over "six ACTIONS, and every one
+already exists as a function". Measured: about **fifteen** of those 288 lines are
+dispatch, and **three** of the ten actions are functions. Lifting the routing
+moves nothing; extracting the actions first is a rewrite of the handlers. **A
+seam can be named in a ceiling row for five passes without anyone once checking
+it is there** — that is worth more than the line count, and it is the reason the
+row now tells the next session to argue from the 363-code-lines figure instead.
 
-**On its own, with no feature riding on it, and BEFORE step 10.** The season clock
-lands in this same view and would repeat exactly what step 9 did.
+**==> ONE MUTATION SURVIVED AND IT IS A REAL HOLE, LEFT OPEN FOR AARON TO PRICE.
+<==** Forcing the radius slider to render under every filter changes nothing any
+suite can see. The cause is bigger than that one line: **no board-level test
+mounts the view with a home**, so the Near home filter never appears in any of
+them and neither it nor its slider is covered at view level at all — only
+`radiusSliderHtml` in isolation. §57.19 says the slider is REVEALED by the
+choice, and that behaviour is currently unasserted. Closing it needs new
+scaffolding (a mount carrying `home` and `system`), which is a piece of work
+rather than an assertion. **Not started. Aaron's call whether it is worth a
+pass.**
+
+**==> STEP 10'S SEASON CLOCK MUST LAND IN ITS OWN FILE. <==** Every seasons pass
+has grown this view and every one has promised to cut next time. That promise has
+been broken five times and two cuts in one session do not buy a sixth.
+
+**==> AND THE WHOLE-BASIN PASS'S PHONE COST IS UNMEASURED. <==** §57.19a used to
+state "two to three seconds on a phone" as a fact; nobody has run it on one, and
+the section now says so. Everything else in that table reproduces off the real
+files — `node tools/near-home-size.mjs` prints it, and the stored-answer row was
+wrong by about double until it did. **Nothing is blocked on the phone number.**
+The pass runs four seconds after boot in a Worker to fill in one sentence, so a
+slow device shows that sentence late and nothing else. If it is ever wanted, the
+Worker reporting its own elapsed time through the D1 telemetry already in place
+is the cheap route and real devices answer it.
 
 **==> SEASONS UI POLISH, PUSH 2: THE DRAWER. ITEM 1 IS DONE, ITEM 2 IS NOT.
 <==** Aaron's list, 2026-08-25, items 6 and 7 of seven.
