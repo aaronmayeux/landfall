@@ -1093,15 +1093,42 @@ only place both are reached.
   whole-basin files have left after step 8's deletion.
 
 **MEASURED, on the real files in this repo, and these five numbers are the whole
-design:**
+design. ==> RUN `node tools/near-home-size.mjs` AND QUOTE WHAT PRINTS; DO NOT
+COPY THIS TABLE FORWARD. <==** Every figure below is that tool's output,
+re-verified 2026-08-26.
 
 | | |
 |---|---|
 | the archive | 3,266 storms · 87,631 positions · 84,365 segments |
-| both whole-basin files | 10.65 MB of text → **0.94 MB over the wire** |
-| parse | 570 ms on a desktop CPU; two to three seconds on a phone |
-| the near-home pass itself | 50–100 ms |
-| the answer that is KEPT | 10–65 KB — 526 entries for New Orleans, 775 for Miami, 112 for Honolulu |
+| both whole-basin files | 11.17 MB of text → **0.93 MB over the wire** |
+| parse | 358 ms on a cloud-sandbox CPU — see the phone note below |
+| the near-home pass itself | 42–50 ms |
+| the answer that is KEPT | **19–131 KB** — 526 entries for New Orleans (89 KB), 775 for Miami (131 KB), 112 for Honolulu (19 KB) |
+
+**==> ONE ROW OF THIS TABLE WAS TYPED RATHER THAN COMPUTED AND IT WAS WRONG BY
+ABOUT DOUBLE. <==** The stored answer read `10–65 KB`; it is 19–131 KB. Harmless
+in effect — `localStorage` is around 5 MB and a house needs a tenth of a
+percent of it — but it is precisely the failure CLAUDE.md's first section
+describes: a fluent wrong number that nothing about invites a second look. The
+entry COUNTS beside it were right, which is what made it read as measured. That
+is why the tool exists and why this table now points at it rather than standing
+on its own.
+
+**AND THE TWO SIZE FIGURES WERE IN DIFFERENT UNIT SYSTEMS, ONE COMMA APART.**
+`10.65 MB` was binary and `0.94 MB` decimal. Both are decimal now, which is what
+a browser's network panel and Cloudflare's own reporting use, so the number in
+this table is the number a reader would see if they looked.
+
+**==> THE PHONE COST IS STILL UNMEASURED AND THIS SECTION USED TO STATE IT AS A
+FACT. <==** It said *"two to three seconds on a phone"*. Nobody has run it on
+one. CLAUDE.md is explicit that a millisecond figure out of node is evidence
+about node, and the parse and the pass both run in a Worker on a CPU this
+sandbox knows nothing about. The design does not depend on the answer — the
+pass starts `nearHomeIndexDelayMs` after boot, off the main thread, to fill in
+one sentence, so a slow device shows that sentence late and nothing else — but
+the figure must not be quoted as though it were taken. **If it is ever wanted
+for real, the cheap route is having the Worker report its own elapsed time
+through the D1 telemetry already in place and letting real devices answer it.**
 
 The download and the parse are big enough that they must not run on the main
 thread and must not run on boot. The answer is small enough to store, which
@@ -3104,7 +3131,7 @@ block in `config/constants.js`.
 
 **§57.19a is the as-built account. Read that, not this.** The one-line version:
 the filter and its slider are free because a season is already in memory, and
-only the Home dashboard's standing line pays for the whole-basin pass — 0.94 MB,
+only the Home dashboard's standing line pays for the whole-basin pass — 0.93 MB,
 in a worker, several seconds after first paint, once per house rather than once
 per visit.
 

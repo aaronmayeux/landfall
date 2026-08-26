@@ -3988,7 +3988,7 @@ export const STORAGE_KEY = Object.freeze({
   /* How close every storm since 1851 came to this house — data/near-home-index.js.
    * THE ONLY KEY ON THIS LIST THAT HOLDS A COMPUTED ANSWER RATHER THAN A
    * PREFERENCE OR A RECORD, and it is here for one reason: producing it costs
-   * a 0.94 MB download and a pass over 84,365 track segments, so doing it once
+   * a 0.93 MB download and a pass over 84,365 track segments, so doing it once
    * per house beats doing it once per visit.
    *
    * ==> LOSING IT MUST BE SILENT. <== §57.35 FIX 8's one surviving sentence.
@@ -6688,7 +6688,7 @@ export const SEASONS = Object.freeze({
   nearHomeKeepMi: 500,
 
   /** ==> THE WHOLE-ARCHIVE PASS WAITS UNTIL AFTER THE APP HAS DRAWN. <==
-   *  §57.35 fault 4. It reads two files that together are 0.94 MB over the
+   *  §57.35 fault 4. It reads two files that together are 0.93 MB over the
    *  wire, and it exists to fill in one sentence at the foot of the
    *  dashboard. Starting it during boot would put that megabyte in front of
    *  the storm a reader actually opened the app for. Long enough that first
