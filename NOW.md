@@ -329,51 +329,6 @@ quiet one and confirm the `+`/`−` buttons do not move. Then judge whether four
 names is the right number, remembering the trade — a two-storm year now leaves
 empty sheet under its roster rather than shrinking to fit.
 
-**==> SEASONS UI POLISH, PUSH 2 IS DONE. §57.21d IS THE AS-BUILT ACCOUNT —
-READ THAT, NOT THIS. <==** Both halves shipped together: the glyph tap and the
-tap-outside-minimises. Nothing about this pass is unbuilt.
-
-**What it is, in one paragraph.** `main.js`'s archive tap branch is now one
-ordered list — glyph, then track, then empty water. A tap on a hurricane glyph
-at the space floor opens that storm (panel, pan and zoom) through the same
-function the roster row's chevron runs. A tap on a track still focuses it. A tap
-on open globe outside the furniture answers whatever is in front of it: **sheet
-up, it minimises the sheet; sheet down, it clears the focus.**
-
-**==> THAT SECOND HALF WAS MISSING WHEN THE PASS FIRST SHIPPED AND AARON FOUND
-IT ON GLASS. <==** With the sheet already down, a tap on empty water did nothing
-at all, so there was no way to get back to an un-dimmed globe short of the bar,
-the board and the row — three presses to undo one. Fixed the same day; §57.21d
-records how a suite stayed green over it.
-
-**GLASS, AND IT IS FOUR THINGS, ALL AT ONCE ON A PHONE.** Tick a season, stay at
-the space floor.
-
-1. **Tap a hurricane glyph.** It should fly to that storm and open its panel,
-   identical to pressing the row's chevron. Then zoom in past the glyph's fade
-   and tap the same storm's TRACK: still opens it, by the other road. The
-   handover between the two should be invisible — if there is a dead band where
-   neither answers, `SEASONS.glyphTapMaxPhase` is the dial.
-2. **Tap open globe above the sheet.** The sheet should come down. **Tap again
-   and the focus should clear** — every track back to even. Then try a tap just
-   above the sheet's top edge, a few pixels, where it should do NOTHING: that is
-   the slop strip protecting a thumb that missed the drawer.
-3. **==> PAN AND ZOOM WITH THE SHEET OPEN, WHICH IS THE ONE MOST LIKELY TO COME
-   BACK WRONG. <==** Drag the globe, pinch it, two-finger rotate it — all with
-   the board up. None of it should minimise the sheet. If a slow drag that
-   barely moves dismisses it, the movement threshold is being read from the
-   wrong place; if a long press does, `TAP.maxMs` is the dial.
-4. **Escape, with the mouse untouched.** Still minimises. Nothing was built for
-   it — it rides the drawer's own contract — so this is a check that the pass
-   did not break something it never touched.
-
-**AND ONE THING THAT IS EXPECTED TO FEEL DIFFERENT RATHER THAN BROKEN.** With
-the sheet UP, a tap on open ocean minimises rather than un-focusing. So from a
-focused storm with the board open it is two taps back to an even globe — the
-first brings the sheet down, the second clears the focus. That escalation is
-deliberate: each tap does one visible thing, which is the whole reason option
-(b) was chosen over doing both at once.
-
 **==> TWO RELAY ROUTES WERE WARMED FOR WEEKS AND READ NONE OF IT. FIXED. <==**
 `tcgp/storms` and `nws/flood` were both in the cron's `LIST_FEEDS` and neither
 route imported `kvRead` at all — **~576 origin fetches and KV writes a day

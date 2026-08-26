@@ -1843,7 +1843,8 @@ than worked around in the view.
 ### 57.21d What a tap on the archive's globe means
 
 Push 2 of two, 2026-08-25. Items 2 and 7 of Aaron's list of seven, built as one
-piece because they are two answers to one question. `map/season-mesh.js` (the
+piece because they are two answers to one question. **Confirmed on glass
+2026-08-25** — all four gestures, on a phone, after the dead-gesture fix below. `map/season-mesh.js` (the
 glyph list and the hit-test), `seasons/index.js` (the way in), `main.js` (the
 ordered branch, the press clock and the minimise), `map/chrome-avoid.js`
 (`TAP_BLOCKING_SELECTORS`), `map/globe.js` (the movement threshold). Numbers
