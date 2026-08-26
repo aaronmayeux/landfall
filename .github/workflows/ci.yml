@@ -215,6 +215,17 @@ jobs:
       - name: privacy-check
         run: node tools/privacy-check.mjs
 
+      # ==> THE MOCKUPS RUN UNDER THE SAME POLICY AND THREE OF THEM DID NOT.
+      # <== `script-src` is 'self' plus index.html's one pinned hash, so an
+      # inline <script> on any other page is refused. style-src DOES allow
+      # inline, so a blocked mockup still draws its layout and its chrome and
+      # simply does nothing — it reads as missing data, on a page nobody has a
+      # console open on. It shipped that way twice, and the first run of this
+      # check found three OLDER mockups that had been dead on the live site for
+      # as long as the CSP has been enforced. SPEC-OPS.md §17.4.
+      - name: mockup-csp-check
+        run: node tools/mockup-csp-check.mjs
+
       # ==> A LAYOUT CHECK, AND IT HAS TO BE ONE. <== Both facts it asserts are
       # about pixels and neither is visible in a string of HTML: that entering
       # a view resets its scroll (setting scrollTop on an element that cannot

@@ -266,6 +266,35 @@ is: add the entry Report-Only, watch one clean session at both widths with a
 storm selected and imagery on, then flip. Editing an enforced policy directly
 skips the rung that exists to catch the mistake.
 
+**==> A NEW PAGE UNDER `mockups/` MUST PUT ITS SCRIPT IN AN EXTERNAL `.js`
+FILE, AND THE SYMPTOM OF FORGETTING LOOKS LIKE A DATA BUG. <==** `script-src`
+is `'self'` plus ONE pinned hash — `index.html`'s own inline boot script — and
+carries no `'unsafe-inline'`. An inline `<script>` on any other page is refused
+by the live CSP. `style-src` DOES allow inline, so the page renders: the layout
+draws, the controls draw, the chrome is styled, and every panel is empty. It
+reads as "the data did not load" and it is nothing of the kind.
+
+**IT HAS NOW HAPPENED TWICE, AND THE SECOND TIME IS THE FINDING.**
+`mockups/environment-ribbon.html` hit it, was fixed, and wrote the warning into
+its own file header. `mockups/seasons-wall.html` hit the identical wall on
+2026-08-26 with that warning sitting in a sibling file nobody had reason to
+open. **A rule recorded inside one artifact does not reach the next one** —
+that is why it is here. Same-origin `.js` is permitted and needs no policy
+change, so the fix is always the split, never a CSP edit.
+
+**`node tools/mockup-csp-check.mjs` IS THE GATE, AND WRITING IT FOUND THREE
+MORE DEAD PAGES.** It reads the policy out of this file, stamps it onto every
+response, boots every `mockups/*.html` and fails on any violation — the dev
+server sends no headers at all, which is precisely the blind spot that let this
+ship twice. Its first run reported `home.html`, `home-round2.html` and
+`home-corridor.html` as blocked: **all three had been dead on the deployed site
+for as long as the CSP has been enforced, and nobody had noticed**, because a
+mockup nobody opens fails silently forever. All six pass now. It needs
+Playwright and a server on 8099, so it runs through `tools/with-server.sh` and
+in CI's browser job rather than in the pre-push hook.
+
+**NEVER EDIT THE CSP TO MAKE A MOCKUP WORK.** The fix is always the split.
+
 **THE TWO CLOUDFLARE RUM HOSTS ARE ALLOWED, NOT BLOCKED** —
 `static.cloudflareinsights.com` on `script-src`, `cloudflareinsights.com` on
 `connect-src`. Cloudflare INJECTS its Web Analytics beacon into every response
