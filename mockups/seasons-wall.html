@@ -25,6 +25,41 @@
       were EMPTY. It looks precisely like missing data. SPEC-OPS.md §17.9.
 -->
 <style>
+    /* ==> THE SEVEN CHIPS ARE THE CATEGORY FILTER. <== Coloured exactly as the
+       dots, so the control explains itself in one row rather than seven
+       labelled checkboxes. All start on; there is no "majors" shortcut. */
+    .ctl{position:sticky;top:0;z-index:2;background:var(--glass-raised);padding:8px 0 10px;
+      border-bottom:1px solid var(--glass-border)}
+    .chips{display:flex;gap:5px;margin-bottom:8px}
+    .chip{flex:1;min-width:0;height:30px;border-radius:7px;cursor:pointer;
+      border:1.5px solid var(--chip);background:transparent;color:var(--chip);
+      font:600 .72rem/1 system-ui;letter-spacing:.02em}
+    .chip[aria-pressed="true"]{background:var(--chip);color:#0d0b07}
+    .chip:focus-visible,.sortbtn:focus-visible,.tail:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+    .lf{display:flex;align-items:center;gap:7px;font-size:.76rem;color:var(--text-secondary);
+      margin-bottom:8px;cursor:pointer;min-height:30px}
+    .sorts{display:flex;gap:5px}
+    .sortbtn{flex:1;min-height:30px;border-radius:7px;cursor:pointer;
+      border:1px solid var(--glass-border);background:transparent;color:var(--text-secondary);
+      font:500 .72rem/1 system-ui;padding:0 4px}
+    .sortbtn[aria-pressed="true"]{border-color:var(--coast-glow);color:var(--coast-glow);font-weight:650}
+
+    /* Always visible — an over-filtered wall and a broken wall are one screen. */
+    .tally{font-size:.74rem;color:var(--text-secondary);margin:9px 0 2px;letter-spacing:.01em}
+    .warn{font-size:.72rem;line-height:1.45;color:var(--text-secondary);background:var(--hover);
+      border-left:2px solid var(--coast-glow);padding:7px 9px;margin:8px 0 4px;border-radius:0 5px 5px 0}
+    .warn b{color:var(--text-primary)}
+    .premark{font-style:normal;color:var(--coast-glow);margin-left:2px}
+
+    /* Empty rows. Hairline in year order (the gaps ARE the record); collapsed
+       into one line once a non-year sort has already destroyed the timeline. */
+    .hair{display:flex;align-items:center;height:9px;opacity:.4;
+      border-bottom:1px solid var(--glass-border)}
+    .hair span{font:500 .6rem/1 system-ui;color:var(--text-secondary);width:3.4em;flex:none}
+    .tail{width:100%;min-height:44px;margin-top:6px;border-radius:8px;cursor:pointer;
+      border:1px dashed var(--glass-border);background:transparent;color:var(--text-secondary);font:.76rem system-ui}
+    .yr-count small{font-size:.62rem;opacity:.55;font-weight:400;margin-left:2px}
+
 /* --------------------------------------------------------------------------
  * TOKENS — RESTATED from config/tokens.js SEPIA and index.html. Not a second
  * source of truth; this page has no build step and no module graph.
@@ -300,7 +335,7 @@ body:not([data-lf="on"]) .lf { display: none; }
 .frame.rail .bar { display: none; }
 </style>
 </head>
-<body data-pre="dim" data-count="on" data-lf="off" data-density="44" data-weight="even">
+<body data-pre="rule" data-count="on" data-lf="off" data-density="44" data-weight="even">
 
 <div class="page">
   <h1>The Wall of Years — mockup</h1>
@@ -310,33 +345,6 @@ body:not([data-lf="on"]) .lf { display: none; }
     blue&nbsp;TD, green&nbsp;TS, then yellow through magenta for Cat&nbsp;1&ndash;5.
     <strong>Tap a year</strong> to see the second screen: today&rsquo;s board with the dropdown gone.
   </p>
-
-  <div class="controls">
-    <span class="grp">Density
-      <select id="density">
-        <option value="44">44px — the touch-target rule</option>
-        <option value="36">36px — breaks the rule</option>
-        <option value="28">28px — breaks it badly</option>
-      </select>
-    </span>
-    <span class="grp">Dot weight
-      <select id="weight">
-        <option value="even">even — one storm, one size</option>
-        <option value="graded">graded — a Cat 5 draws bigger</option>
-      </select>
-    </span>
-    <span class="grp">Before 1966
-      <select id="pre">
-        <option value="dim">dimmed + a line</option>
-        <option value="rule">shaded + a line</option>
-        <option value="off">nothing (looks calm — it isn&rsquo;t)</option>
-      </select>
-    </span>
-    <label><input type="checkbox" id="count" checked> storm count on the right</label>
-    <label><input type="checkbox" id="lf"> mark landfalls</label>
-    <label><input type="checkbox" id="dec" checked> decade headings</label>
-  </div>
-
   <div class="stage">
     <div class="frame-wrap">
       <p class="frame-cap">Phone &mdash; 390 &times; 844</p>

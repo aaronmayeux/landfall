@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 310 numbered headings.
+Covering 11 files, 311 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -106,24 +106,24 @@ real home is the other row carrying the same section number.
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
-| `17.4` | &nbsp;&nbsp;`_headers` and the CSP | `SPEC-OPS.md` | 207-276 |
-| `17.5` | &nbsp;&nbsp;Telemetry | `SPEC-OPS.md` | 277-530 |
-| `17.6` | &nbsp;&nbsp;The app has a failure state for its own boot | `SPEC-OPS.md` | 531-559 |
-| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 560-852 |
-| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 853-913 |
-| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 914-979 |
-| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 980-991 |
-| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 992-1063 |
-| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1115-1153 |
-| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1174-1184 |
-| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1185-1195 |
-| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1196-1217 |
-| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1218-1420 |
-| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1421-1427 |
-| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1428-1439 |
-| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1440-1493 |
-| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1494-1569 |
-| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1570-1683 |
+| `17.4` | &nbsp;&nbsp;`_headers` and the CSP | `SPEC-OPS.md` | 207-305 |
+| `17.5` | &nbsp;&nbsp;Telemetry | `SPEC-OPS.md` | 306-559 |
+| `17.6` | &nbsp;&nbsp;The app has a failure state for its own boot | `SPEC-OPS.md` | 560-588 |
+| `17.7` | &nbsp;&nbsp;The origin collapse — one fetch per feed, globally | `SPEC-OPS.md` | 589-881 |
+| `17.8` | &nbsp;&nbsp;The Cloudflare setup, recorded so it can be rebuilt | `SPEC-OPS.md` | 882-942 |
+| `17.9` | &nbsp;&nbsp;Money, and the two things that can bill | `SPEC-OPS.md` | 943-1008 |
+| `17.10` | &nbsp;&nbsp;Push notifications are the one v2 feature that needs server state | `SPEC-OPS.md` | 1009-1020 |
+| `17.11` | &nbsp;&nbsp;The PWA — service worker, icons, and the install door | `SPEC-OPS.md` | 1021-1092 |
+| `17.12` | &nbsp;&nbsp;IP, copying, and monetization | `SPEC-OPS.md` | 1144-1182 |
+| `18` | Research from a sandbox with no internet | `SPEC-OPS.md` | 1203-1213 |
+| `18.1` | &nbsp;&nbsp;Live web search — DISCOVERY | `SPEC-OPS.md` | 1214-1224 |
+| `18.2` | &nbsp;&nbsp;WebFetch — TRIAGE | `SPEC-OPS.md` | 1225-1246 |
+| `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1247-1449 |
+| `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1450-1456 |
+| `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1457-1468 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1469-1522 |
+| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1523-1598 |
+| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1599-1712 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -209,7 +209,7 @@ real home is the other row carrying the same section number.
 | `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2982-3021 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2220-2274 |
 | `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 3022-3046 |
-| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1154-1173 |
+| `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1183-1202 |
 | `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2361-2397 |
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2398-2430 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2431-2481 |
@@ -327,6 +327,7 @@ real home is the other row carrying the same section number.
 | `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3284-3347 |
 | `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3348-3439 |
 | `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3440-3674 |
+| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 3675-3691 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -341,8 +342,8 @@ real home is the other row carrying the same section number.
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 103,285 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 214,017 | 49 |
+| `SPEC-OPS.md` | 105,155 | 23 |
+| `SPEC-SEASONS-BUILD.md` | 220,786 | 50 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 187,384 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

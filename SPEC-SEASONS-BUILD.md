@@ -3671,3 +3671,132 @@ feature is most exposed to, since the whole subject is absence.
   runner and the browser Worker import the same file. Two parsers drifting apart
   is a bug this project has already paid for elsewhere.
 - The retention rules (§57.34).
+
+### 57.36 The Wall of Years — the front door, its filters, and how they stack
+
+**Aaron's calls, 2026-08-26, judged on glass.** §57.30 gated step 14 as
+optional and last. It is neither any more, and the reason is that its job
+changed: **the wall is the archive's FRONT DOOR, not a second way to reach the
+year picker.** Enter Seasons, see the wall, tap a year, land on the board —
+and the year dropdown is REMOVED from the season drawer entirely. There is one
+way into a year and this is it.
+
+**The settled look, taken off a phone and not up for re-litigation:** rows are
+44px (§'s touch-target rule, no exception carved out), every dot is the same
+size regardless of strength, the storm count sits on the right, pre-1966 rows
+are shaded with a line drawn at the boundary, individual landfalls are NOT
+marked on the dots, and **there are no decade headings.** The decade heading
+was the first thing to go on glass — it broke the scroll into chunks and the
+wall reads better as one unbroken run of years.
+
+#### The whole design rests on one rule: filter first, then sort what survives
+
+**==> EVERY SORT KEY IS COMPUTED OVER THE FILTERED SET, NEVER OVER THE WHOLE
+SEASON. <==** This is the entire reason the two controls stack, and getting it
+backwards makes the feature useless without looking broken.
+
+Aaron's own example is the test case. *Filter to Category 5, then sort by count,
+high to low.* If "count" meant the season's total storms, that sort would rank
+2005 above 1932 because 2005 had 31 storms — a fact the filter was explicitly
+asked to ignore. Counting only what survives the filter gives the answer he
+actually asked for:
+
+| Season | Cat 5s |
+|---|---|
+| 2005 | 4 |
+| 2025 | 3 |
+| 2024, 2019, 2017, 2007, 1961, 1933, 1932 | 2 |
+
+**So there is no "sort by number of Category 5s" key, and there must never be
+one.** It falls out of two general controls, and so does every question of that
+shape — most landfalling storms, most major hurricanes, most ACE contributed by
+storms that hit land. A special-purpose sort key for each of those is the
+combinatorial explosion this rule exists to avoid.
+
+The sort keys are **year, count, strongest, landfalls, and ACE** — each
+reversible, high-to-low and low-to-high. Four of the five are recomputed under
+the filter. Ties break by year, newest first.
+
+#### ACE under a filter stops being the published number, and must say so
+
+ACE sums per storm, so "the ACE of the storms still showing" is a well-defined
+and genuinely interesting number — the share of a season's violence that came
+from majors, say. **But it is no longer the figure NOAA publishes for that
+season,** and a reader who checks 2005 against any reference will find 250 and
+see something else on our screen. Whenever a filter is active the ACE column is
+labelled as the filtered figure rather than presented bare. §5: a number that
+is right about a different question is a wrong number.
+
+#### The count column carries both figures, because the ratio is the story
+
+Under a Cat 5 filter, 2005 shows 4 and 1932 shows 2. Bare, that reads as though
+those seasons were comparable. **2005 had 31 storms and 1932 had 15**, and the
+row loses the only context that makes its own number mean anything. The shown
+count is the large figure and the season total sits beside it small — `4 of 31`.
+
+#### Empty rows: hairlines keep the timeline, a collapsed tail is fine once the timeline is gone
+
+**Measured: filtering the Atlantic wall to Category 5 empties 142 of its 175
+rows.** That is the normal case for a tight filter, not an edge case, and it
+decides the rule:
+
+- **Sorted by year, empty rows stay in place as hairlines** with the year still
+  legible. The gaps ARE the information — a run of empty years is what a quiet
+  stretch looks like, and collapsing them would quietly redraw history.
+- **Sorted by anything else the timeline is already destroyed**, so 142
+  hairlines are just dead scroll. They collapse to a single line at the foot —
+  *"142 seasons had no Category 5"* — expandable, never hidden.
+
+#### The count line is always visible, under every combination
+
+*"33 seasons shown · 142 with none"*. With filters this sharp, an over-filtered
+wall and a broken wall are the same screen. §5 again.
+
+#### ==> STACKING FILTER AND SORT IS WHERE THE PRE-SATELLITE UNDERCOUNT TURNS FROM A FOOTNOTE INTO A FALSE CLAIM. <==
+
+A shaded band and a line at 1966 are enough when the wall is in year order,
+because the shading is contiguous and reads as "the record gets thinner up
+here." **Sort by anything else and the old years scatter through the list,
+the line cannot be drawn at all, and the shading loses its meaning.**
+
+The Category 5 case is the sharpest version and it is measured, not asserted:
+
+| | Cat 5s | Seasons | Per year |
+|---|---|---|---|
+| Pre-1966 | 13 | 115 | **0.11** |
+| 1966 onward | 32 | 60 | **0.53** |
+
+Nearly five times the rate, and **only 3 of the top 20 Cat 5 seasons are
+pre-satellite.** Almost none of that gap is weather. Nobody could measure a
+140-knot wind over open water in 1890, so storms that never came ashore were
+recorded at whatever a ship happened to see. An unmarked Cat 5 leaderboard
+therefore states that Category 5 hurricanes are a modern phenomenon — **a
+climate claim this dataset cannot support, made accidentally, by a sort
+control.**
+
+So: whenever a filter or a non-year sort is active, **a persistent line sits
+under the controls carrying the actual numbers**, and every pre-1966 row keeps
+its own mark rather than relying on a band. Not a tooltip and not a shade —
+those are dismissable and this is not.
+
+#### One filter vocabulary, shared with the board
+
+The board already has pills — All, Hurricanes, Majors, Landfalling, Near home.
+The wall must not grow a second, differently-worded set. **They are one filter
+model with two presentations**, and a filter chosen on the wall carries through
+when a year is tapped.
+
+**Visible by default:** the seven category chips, coloured exactly as the dots
+are, so the control documents itself in one row instead of seven labelled
+checkboxes; the near-home slider; the landfall toggle.
+**Collapsed:** retired names, long-lived, lowest pressure, ACE threshold.
+All categories start checked. **There is no "Majors" shortcut** — it is three
+chips, and a shortcut that duplicates a control is a second thing to keep in
+sync. Category means PEAK category, matching what the dots are coloured by.
+
+#### Sorting the dots inside a row is forbidden
+
+The strip reads left to right as the season happened. Reorder it by strength
+and June stops being on the left, and no two rows can be compared. **Duration
+and lowest pressure sort on the BOARD, not the wall** — they are facts about a
+storm, and the board is the screen that lists storms.
