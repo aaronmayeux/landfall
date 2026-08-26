@@ -42,6 +42,11 @@ import { parseHurdat2 } from '../lib/hurdat.js';
  *  `_headers`, and the only door to a filename. */
 const INDEX_URL = '/seasons/index.json';
 
+/** Every season reduced to four numbers a storm, for the wall. §57.36. Written
+ *  by `tools/seasons-wall.mjs`; `no-cache` in `_headers` for the same reason
+ *  the index is — the name carries no revision stamp. */
+const WALL_URL = '/seasons/wall.json';
+
 /** One in-flight or settled promise per key, so two callers asking for the
  *  same year at once make one request. Keyed by URL for the season files and
  *  by a constant for the index. */
@@ -78,6 +83,34 @@ export function loadIndex() {
     return res.json();
   })
     .then((index) => ({ status: 'ok', index }))
+    .catch((e) => ({ status: 'unavailable', reason: String(e?.message || e) }));
+}
+
+/**
+ * The Wall of Years index — one line about every season at once. §57.36.
+ *
+ * ==> IT IS A SECOND FILE RATHER THAN A SECTION OF THE FIRST, AND THAT IS A
+ * BOOT-COST DECISION. <== `index.json` is 12 KB and is fetched the moment
+ * anybody enters the archive, because nothing can happen without a filename.
+ * The wall index is 46 KB, and folding it in would put those 46 KB in front of
+ * every reader who came to look at one year through a deep link. Two files
+ * means the wall's cost is paid by the wall.
+ *
+ * ==> IT IS `no-cache` FOR THE SAME REASON THE INDEX IS. <== The filename
+ * carries no revision stamp, so it is the one file under `/seasons/` that can
+ * change meaning without changing name. `_headers` says so; this says so too,
+ * because a rule that lives only in a server config is a rule nothing in this
+ * repo can test.
+ *
+ * @returns {Promise<{status:'ok', wall:object} | {status:'unavailable', reason:string}>}
+ */
+export function loadWall() {
+  return once(WALL_URL, async () => {
+    const res = await fetch(WALL_URL, { credentials: 'omit', cache: 'no-cache' });
+    if (!res.ok) throw new Error(`the wall of years answered ${res.status}`);
+    return res.json();
+  })
+    .then((wall) => ({ status: 'ok', wall }))
     .catch((e) => ({ status: 'unavailable', reason: String(e?.message || e) }));
 }
 

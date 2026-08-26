@@ -117,6 +117,15 @@ export class El {
     for (const fn of this._listeners.get(type) || []) fn(e);
   }
 
+  /** ==> A NO-OP, BUT IT HAS TO EXIST. <== A view that moves focus after a
+   *  repaint is doing the right thing (§13), and a stand-in without this
+   *  throws a TypeError in the middle of a click handler — which reads as the
+   *  VIEW being broken rather than as the scaffold being thin. Same rule as
+   *  the compound-selector note above: anything the stand-in cannot do gets
+   *  made readable here rather than worked around in the app. Nothing asserts
+   *  on focus in `node`; where focus matters it is a real-browser check. */
+  focus() {}
+
   descendants() {
     const out = [];
     for (const c of this.children) { out.push(c); out.push(...c.descendants()); }

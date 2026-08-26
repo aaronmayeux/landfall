@@ -239,7 +239,14 @@ const text = (body) => body.innerHTML;
   ok('the board opens on a season with storms in it', rows(body).length > 0);
   ok('and the bar is told where it is',
     where.some((w) => w && /Atlantic/.test(w.label)));
-  ok('the year select is there to focus', body.querySelector('.seasons-select') !== null);
+  /* ==> THE 175-YEAR `<select>` IS GONE AND THE STEPPER IS WHAT FOCUS LANDS
+   * ON. <== §57.36 moved choosing a year to the wall. The assertion is kept
+   * rather than deleted because what it was really guarding is that this view
+   * has SOMETHING at the top to receive focus (§13) — a screen whose `focus()`
+   * returns null drops the reader on the document body. */
+  ok('the year stepper is there to focus', body.querySelector('.seasons-step') !== null);
+  ok('and the year it is sitting on is drawn beside it',
+    body.querySelector('.seasons-year-now') !== null);
 }
 
 /* ---------------------------------------------------------------------------
@@ -454,8 +461,14 @@ const text = (body) => body.innerHTML;
   const { body, where } = await board();
 
   eq('the board opens on the season in progress', where.at(-1)?.year, 2026);
-  ok('the picker says which option is that season',
-    /2026 — this season/.test(text(body)));
+  /* ==> THE `— this season` OPTION LABEL WENT WITH THE DROPDOWN. §57.36. <==
+   * What it was guarding is that a reader looking at the season in progress is
+   * TOLD it is in progress, rather than reading working numbers as settled
+   * ones. That job is the scorecard's note, which says considerably more than
+   * three words on an option ever did — and the moment of CHOOSING is now the
+   * wall's pinned row, which is asserted in `tools/test-seasons-wall.mjs`. */
+  ok('the board says these are working numbers for a season still running',
+    /season still\s+running/.test(text(body)));
   ok('the Atlantic side of it has storms', rows(body).length > 0);
   ok('ARTHUR is on the roster', /ARTHUR/.test(text(body)));
 
@@ -531,10 +544,10 @@ const text = (body) => body.innerHTML;
   /* ==> AND THE FILTER COMES BACK ON A SETTLED YEAR. <== A control removed for
    * one season and never restored is the same bug wearing the opposite face. */
   freshLive();
-  const { body } = await board();
-  const select = body.querySelector('.seasons-select');
-  select.value = '2005';
-  body.fire('change', select);
+  const { body, view } = await board();
+  /* The wall's road in: it hands the board a year and the board loads it.
+   * There is no in-board control that jumps 21 years any more. */
+  view.setSeason(2005);
   await settle();
 
   const filters = body.querySelectorAll('[data-filter]').map((b) => b.dataset.filter);
@@ -553,10 +566,13 @@ const text = (body) => body.innerHTML;
  * ------------------------------------------------------------------------ */
 {
   freshLive();
-  const { body } = await board();
-  const pacific = body.querySelectorAll('[data-basin]')
-    .find((b) => b.dataset.basin === 'epacific');
-  body.fire('click', pacific);
+  const { body, view } = await board();
+  /* ==> THE BASIN SWITCH LEFT THIS SCREEN WITH THE YEAR PICKER. <== §57.36 —
+   * the wall owns the basin, because changing it there happens while no year
+   * is open. `setBasin` is the road the wall uses, and it is what this drives
+   * now that there is no segment to press. */
+  view.setBasin('epacific');
+  await settle();
   await settle();
 
   const ids = rows(body).map((r) => r.dataset.storm);
@@ -634,7 +650,14 @@ const text = (body) => body.innerHTML;
   ok('and says the season still running could not be reached',
     /could not\s+be reached/.test(text(body)));
   ok('with a way to try again', /data-retry="live"/.test(text(body)));
-  ok('2026 is not in the picker', !/2026/.test(text(body)));
+  /* ==> WITH THE DROPDOWN GONE, "2026 IS NOT OFFERED" IS A FACT ABOUT THE
+   * STEPPER. §57.36. <== Asserting that the string 2026 is absent from the
+   * body passes trivially now that no list of years is drawn, which is a check
+   * that can no longer fail. The observable is that there is nowhere newer to
+   * step: 2025 is the newest year the board knows while the live index is
+   * down. */
+  ok('and there is nowhere newer to step to',
+    body.querySelectorAll('[data-step="newer"]')[0]?.attrs.disabled !== undefined);
 
   /* The recovery actually recovers, and it does not disturb the year on
    * screen while doing it. */
@@ -644,8 +667,11 @@ const text = (body) => body.innerHTML;
   await settle();
   await settle();
 
-  ok('retrying puts the season in progress back in the picker',
-    /2026 — this season/.test(text(body)));
+  /* The recovery is observable as the step forward becoming possible again:
+   * the season in progress is back in the years the board knows, so 2026 is
+   * one press away. */
+  ok('retrying puts the season in progress back within reach',
+    body.querySelectorAll('[data-step="newer"]')[0]?.attrs.disabled === undefined);
   ok('and the year on screen did not change', where.at(-1)?.year === 2025);
 }
 
@@ -785,9 +811,7 @@ const text = (body) => body.innerHTML;
    * not repeat across seasons, so one left standing would ghost every track in
    * the new year in favour of a storm that is not in it. */
   view.setFocus(id);
-  const select = body.querySelector('.seasons-select');
-  select.value = '1935';
-  body.fire('change', select);
+  view.setSeason(1935);
   await settle();
   await settle();
   eq('changing the year drops the focus with the ticks', focus.at(-1), null);

@@ -66,6 +66,7 @@ import { pathToFileURL } from 'node:url';
 
 import { parseHurdat2 } from '../lib/hurdat.js';
 import { syncSlices } from './seasons-slice.mjs';
+import { syncWall } from './seasons-wall.mjs';
 
 /* ---------------------------------------------------------------------------
  * WHERE THE DATA COMES FROM
@@ -484,6 +485,27 @@ async function run(root, reportDir) {
     writeFileSync(indexPath, nextText);
     changed = true;
     lines.push(`Rewrote \`${INDEX_FILE}\`.`);
+  }
+
+  /* ==> THE WALL IS REBUILT FROM WHATEVER IS ACTUALLY ON DISK, AFTER THE
+   * INDEX. <== §57.36. It reduces every storm in both basins to four numbers,
+   * and it reads the index to learn which revision of each basin file is
+   * really there — so it has to run once the index describes this run rather
+   * than the last one. Skipped when nothing changed, because rebuilding it
+   * would only rewrite identical bytes.
+   *
+   * A failure here is reported and does NOT fail the run: the wall going stale
+   * for a month is a screen showing last February's history, which is bad; the
+   * whole job refusing is a screen showing nothing, which is worse. */
+  if (changed) {
+    try {
+      const w = syncWall(root, nextIndex, { generatedAt: report.runAt });
+      if (w.written) lines.push(`Rebuilt \`seasons/wall.json\` (${w.bytes.toLocaleString()} B).`);
+      else lines.push('`seasons/wall.json` unchanged.');
+    } catch (e) {
+      lines.push(`**The wall of years could not be rebuilt** — ${e?.message || e}. `
+        + 'The archive still works; the Wall of Years is showing the previous run.');
+    }
   }
 
   writeReport(reportDir, report, lines, changed ? 'commit' : 'skip');

@@ -48,6 +48,7 @@ import { isArchive, setArchive } from '../lib/archive-mode.js';
 import * as seasonsData from '../data/seasons.js';
 import * as seasonsLive from '../data/seasons-live.js';
 import { createSeasonsBoardView } from '../ui/view-seasons-board.js';
+import { createSeasonsWallView } from '../ui/view-seasons-wall.js';
 import { createSeasonDetailView } from '../ui/view-season-detail.js';
 import { reportFor, forgetReports } from '../data/season-reports.js';
 import { resolveSystem } from '../lib/units.js';
@@ -56,12 +57,33 @@ import { settingValue } from '../data/settings-prefs.js';
 import { barDetail, createSeasonsBar } from './bar.js';
 import * as deepLink from './deep-link.js';
 
+/**
+ * WHERE THE READER WAS LAST TIME THEY HAD THE ARCHIVE'S DRAWER OPEN.
+ *
+ * ==> IT EXISTS SO REOPENING IS RESUMING RATHER THAN STARTING OVER. <== The
+ * ladder is `Past storms -> a year -> a storm` (§57.39), and the drawer can be
+ * minimised at any rung. Without this, the one control that reopens it would
+ * always land on the top of the wall — so a reader who minimised the drawer to
+ * look at 2005's tracks would lose 2005 to get the roster back.
+ *
+ * A year rather than a view id: the wall is the only rung that can be restored
+ * from nothing, and a year is all the board needs to rebuild itself.
+ */
+let lastYear = null;
+
 /** Registered once per page load. A dynamic import is cached, so a second
  *  `import()` returns this same namespace — which is what makes "has the board
  *  been registered" answerable from module state rather than by asking the
  *  drawer, whose `register` is deliberately dumb and would happily add a
  *  second host for the same id. */
 let boardView = null;
+
+/** The Wall of Years (§57.36, step 14) — rung 2, and the archive's front door.
+ *  Registered beside the board and guarded the same way. It is built in
+ *  `ensureBoard` rather than in a function of its own, because a wall the
+ *  drawer knows about with no board underneath it is a year row that opens
+ *  nothing: the two rungs are registered together or neither is. */
+let wallView = null;
 
 /** The storm detail panel (§57.22, §57.22b, step 7). Registered beside the
  *  board and for the same reason: once per page load, guarded on module state
@@ -132,12 +154,22 @@ export function openSeasons({
      * The bar is the thing that is ALWAYS on screen in here, so it is the
      * right place for both halves of one action.
      *
-     * `go` rather than `push` on the way in: there is nothing else in the
-     * archive's history to go back to, and a stack of one is what Back should
-     * find. */
+     * ==> AND IT REOPENS THE RUNG THE READER LEFT, NOT THE TOP OF THE WALL.
+     * <== §57.39 put a screen above the board, so "open the archive's drawer"
+     * stopped having one answer. Always landing on the wall would mean a
+     * reader who minimised the drawer to look at 2005's tracks lost 2005 to
+     * get the roster back — the drawer's whole reason for minimising rather
+     * than closing (§57.21b item 8) undone by the control that reopens it.
+     *
+     * The wall is rebuilt first either way, so Back from a restored year finds
+     * it rather than finding nothing. */
     onOpenBoard: () => safely(() => {
-      if (drawer?.isOpen?.()) drawer.close();
-      else drawer?.go?.('seasons-board');
+      if (drawer?.isOpen?.()) { drawer.close(); return; }
+      drawer?.go?.('seasons-wall');
+      if (Number.isFinite(lastYear)) {
+        boardView?.setSeason?.(lastYear);
+        drawer?.push?.('seasons-board', lastYear);
+      }
     }),
   });
 
@@ -259,10 +291,30 @@ export function openSeasons({
     const board = ensureBoard({ bar, drawer, linkReason });
     board.openFrom(from);
     board.setSeason(state.season);
-    /* `go` rather than `push`: entering the archive is a fresh start, and a
-     * history stack reaching back into the live app is a Back button that
-     * walks a reader out of a world the bar says they are still in. */
-    drawer?.go?.('seasons-board');
+
+    /* ==> THE WALL IS THE FIRST SCREEN NOW, AND A YEAR SITS ON TOP OF IT.
+     * §57.36, §57.39. <== `go` rather than `push` for the wall: entering the
+     * archive is a fresh start, and a history stack reaching back into the
+     * live app is a Back button that walks a reader out of a world the palette
+     * says they are still in.
+     *
+     * ==> A DEEP LINK NAMING A YEAR STILL LANDS ON THAT YEAR, WITH THE WALL
+     * UNDERNEATH IT. <== `?season=2005` is a link to a season, not to a list
+     * of seasons, so making the reader tap through the wall to reach it would
+     * break the one thing the parameter is for. Pushing rather than going
+     * means their Back button finds the wall — which is where they would have
+     * come from had they walked in.
+     *
+     * `lastYear` is set from the link for the same reason: a reader who
+     * arrives on 2005 and minimises the drawer should get 2005 back, not the
+     * top of the wall. */
+    drawer?.go?.('seasons-wall');
+    if (Number.isFinite(state.season)) {
+      lastYear = state.season;
+      drawer?.push?.('seasons-board', state.season);
+    } else {
+      lastYear = null;
+    }
 
     deepLink.write({ season: state.season, storms: state.storms });
   } catch (e) {
@@ -455,6 +507,24 @@ function ensureBoard({ bar, drawer, linkReason }) {
         session.flownIn = true;
         currentArchiveGlobe?.flyToEntry?.({ from: session.from, basin: where.basin });
       }
+      /* ==> A STEP TO A NEIGHBOURING YEAR HAS TO REACH THE DRAWER'S HEADING.
+       * <== Rung 3 is titled with the year (§57.39) and the drawer builds that
+       * from the navigation argument, so a `+`/`−` press inside the board would
+       * otherwise leave `2005` over 2006's roster. Re-pushing the same view id
+       * replaces the top of the stack rather than growing it, so Back still
+       * finds the wall and one press still gets there.
+       *
+       * Guarded on the board being the current view: `onWhere` also fires from
+       * a re-render underneath an open storm panel, and navigating out of that
+       * panel because a repaint happened would close a screen the reader is
+       * reading. */
+      if (Number.isFinite(where?.year) && where.year !== lastYear) {
+        lastYear = where.year;
+        if (drawer?.currentId?.() === 'seasons-board') {
+          drawer.push('seasons-board', where.year);
+        }
+      }
+
       if (linkReason === 'malformed' || linkReason === 'out-of-range') return;
       /* ==> THE BOARD REPORTS FACTS AND THE BAR OWNS THE WORDS. §57.21b item
        * 8. <== `barDetail` is a pure function in `seasons/bar.js`, so the
@@ -490,6 +560,67 @@ function ensureBoard({ bar, drawer, linkReason }) {
    * caught it — the entry path ran clean and the board would never have been
    * on screen. */
   drawer?.register?.(boardView);
+
+  /* ==> THE WALL IS REGISTERED IN THE SAME BREATH, AND THE ORDER OF THESE TWO
+   * DOES NOT MATTER BUT THEIR PRESENCE DOES. <== A wall the drawer knows with
+   * no board behind it is a screen full of year rows that open nothing, and
+   * `drawer.push` fails silently rather than throwing — the exact fault the
+   * comment above records the board itself having. Registering all three rungs
+   * at one call site means there is one place to forget instead of three. */
+  wallView = createSeasonsWallView({
+    seasons: seasonsData,
+
+    /* ==> THE SEASON IN PROGRESS IS NOT IN `seasons/wall.json` AND CANNOT BE.
+     * <== It comes out of HURDAT2, NOAA's reviewed record, which does not hold
+     * the current year until the following spring (§57.11). Without this the
+     * wall's newest row would be last year and the season actually happening
+     * would be unreachable — the regression that removing the year dropdown
+     * created. Separate from `seasons` for the reason the board records: two
+     * different sources, two different failures, two different sentences. */
+    live: seasonsLive,
+
+    /* Which storms are still running, so the pinned row draws the finished
+     * ones and COUNTS the rest instead of drawing them. §57.21c — the same
+     * rule that keeps a running storm off the sepia globe. */
+    liveRunningIds: () => currentLiveRunningIds?.() ?? null,
+
+    /* ==> A YEAR ROW `push`es THE BOARD, IT DOES NOT `go` TO IT. §57.39. <==
+     * The board's Back has to land on the wall the reader tapped from, with
+     * their scroll position intact. `go` throws the stack away and leaves Back
+     * walking straight out of the archive. */
+    onOpenYear: (year, basin) => safely(() => {
+      lastYear = year;
+      /* Basin first: `setSeason` only holds a number, and a board still on the
+       * Atlantic would load the Atlantic's copy of the year the reader tapped
+       * on the Pacific wall — the same four digits, the wrong storms, and
+       * nothing on screen saying so. */
+      boardView?.setBasin?.(basin);
+      boardView?.setSeason?.(year);
+      /* The year rides along as the navigation argument as well as through
+       * `setSeason`, because the drawer builds its heading from the argument
+       * before the view renders. Without it the header would read `Past
+       * storms` for one frame and then the year. */
+      drawer?.push?.('seasons-board', year);
+    }),
+
+    /* ==> THE ENTRY FLIGHT MOVED HERE WITH THE FRONT DOOR. §57.21c item 5. <==
+     * It used to ride on the board's `onWhere`, because the board was the
+     * first screen that knew which basin was open. The wall is that screen
+     * now, and the board no longer loads a season until a year is tapped — so
+     * leaving the flight where it was would have meant a reader entering the
+     * archive and getting no camera move at all until they picked a year.
+     *
+     * `session.flownIn` is the same once-flag as before and is deliberately
+     * shared with the board's copy: whichever of the two speaks first flies,
+     * and the other one does not fly again. */
+    onWhere: (where) => safely(() => {
+      if (where && session && !session.flownIn) {
+        session.flownIn = true;
+        currentArchiveGlobe?.flyToEntry?.({ from: session.from, basin: where.basin });
+      }
+    }),
+  });
+  drawer?.register?.(wallView);
 
   /* ==> THE DETAIL PANEL IS REGISTERED AT THE SAME MOMENT, NOT ON FIRST OPEN.
    * <== A view the drawer does not know is a `push` that silently does

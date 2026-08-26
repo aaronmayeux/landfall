@@ -173,33 +173,32 @@ export const displayName = stormDisplayName;
  * ------------------------------------------------------------------------- */
 
 /**
- * Basin segments, a native year `<select>`, and two step buttons.
+ * Two step buttons and the year between them.
  *
- * A native `<select>` for 175 years is a considered choice rather than a
- * shrug. It is one control that already works by thumb, by mouse and by
- * keyboard, it gets the OS's own scroll-and-type behaviour free, and on a
- * phone it opens the platform picker — which beats anything a list of 175 rows
- * in a 60vh sheet could do. §57.29's Wall of Years is the richer alternative
- * and is explicitly last, and only if this proves to be the weak link.
+ * ==> THE 175-YEAR `<select>` IS GONE AND THE WALL REPLACED IT. <== §57.36.
+ * There is one way into a year now and it is the Wall of Years, so a second
+ * control listing every season would be a second front door — and two doors to
+ * one place drift apart the moment either grows a filter. What is left is the
+ * NEIGHBOURS: stepping from 2005 to 2004 is a different act from choosing a
+ * year out of 175, and it is the one a reader comparing two seasons actually
+ * performs.
  *
- * ==> THE SEASON IN PROGRESS SAYS SO IN THE OPTION ITSELF. <== It sits at the
- * top because the list runs newest first and it IS the newest, but a bare
- * `2026` beside `2025` would read as one more settled year in a file NOAA has
- * reviewed. It has not. The words are on the option because that is the moment
- * the reader chooses it, rather than only in a note they meet afterwards.
+ * ==> THE BASIN SEGMENTS WENT WITH IT, AND FOR A SHARPER REASON. <== The wall
+ * owns the basin now. Leaving the switch here as well would mean changing basin
+ * with a year already open, and the Pacific record starts in 1949 — so
+ * switching to it from 1900 has to silently move the reader to a year they did
+ * not ask for. The wall changes basin while nothing is open, where that
+ * question cannot arise.
+ *
+ * ==> THE YEAR IS STILL DRAWN HERE EVEN THOUGH THE DRAWER'S HEADING SAYS IT.
+ * <== Two buttons with a gap between them are two buttons; two buttons either
+ * side of `2005` are a stepper. The repetition buys the control its own
+ * meaning, and it is the thing that moves when the buttons are pressed —
+ * `--seasons-sheet-h` was measured so those buttons hold still while it does
+ * (§57.21b item 1).
  */
-export function pickerHtml({ basins, labelFor, basin, years, year, liveYear }) {
+export function pickerHtml({ years, year }) {
   const i = years.indexOf(year);
-
-  const basinSegs = basins.map((b) => `
-      <button class="seg" type="button" role="radio" data-basin="${esc(b)}"
-              aria-checked="${String(b === basin)}">
-        ${esc(labelFor(b))}
-      </button>`).join('');
-
-  const options = years.map((y) => `
-      <option value="${y}" ${y === year ? 'selected' : ''}>${y}${
-  y === liveYear ? ' — this season' : ''}</option>`).join('');
 
   /* Older is DOWN the list, so "previous year" is the next index along.
    * Disabled at the ends rather than hidden — a control that vanishes reads
@@ -209,14 +208,13 @@ export function pickerHtml({ basins, labelFor, basin, years, year, liveYear }) {
 
   return `
       <div class="seasons-picker">
-        <div class="seg-group" role="radiogroup" aria-label="Basin">${basinSegs}</div>
         <div class="seasons-year">
           <button class="seasons-step" type="button" data-step="older"
-                  aria-label="Previous season"
+                  aria-label="${older == null ? 'No earlier season' : `Go to ${older}`}"
                   ${older == null ? 'disabled aria-disabled="true"' : ''}>−</button>
-          <select class="seasons-select" aria-label="Season">${options}</select>
+          <span class="seasons-year-now">${year == null ? '—' : year}</span>
           <button class="seasons-step" type="button" data-step="newer"
-                  aria-label="Next season"
+                  aria-label="${newer == null ? 'No later season' : `Go to ${newer}`}"
                   ${newer == null ? 'disabled aria-disabled="true"' : ''}>+</button>
         </div>
       </div>`;

@@ -27,6 +27,19 @@ html[data-seasons="on"] {
   --seasons-bar-h: calc(
     var(--touch-target) + var(--space-snug) * 2 + var(--safe-bottom)
   );
+
+  /* ==> A WALL ROW IS ONE TOUCH TARGET AND THE TOKEN SAYS SO RATHER THAN A
+     NUMBER. <== §57.36 froze 44px on glass, and `SEASONS.wallRowPx` carries
+     the same figure for the arithmetic in `lib/wall-index.js`. Writing
+     `--touch-target` here rather than `44px` means the two can never disagree
+     about what a touch target is: if that floor ever moves, the wall moves
+     with it instead of quietly falling under it. */
+  --seasons-wall-row-h: var(--touch-target);
+
+  /* A quiet year is not a destination, so it does not take a touch target.
+     Tall enough to read a year at `--type-small` and no taller — a run of
+     forty of these at row height would drown the years that carry storms. */
+  --seasons-wall-hair-h: 18px;
 }
 
 /* --- the bar ------------------------------------------------------------- */
@@ -301,8 +314,8 @@ html[data-seasons="on"] #btn-layers {
   gap: var(--space-snug);
 }
 
-/* Both step buttons and the select clear the touch minimum on their own, so
-   the row works by thumb without the sheet growing a special case (§13). */
+/* Both step buttons clear the touch minimum on their own, so the row works by
+   thumb without the sheet growing a special case (§13). */
 .seasons-step {
   min-width: var(--touch-target);
   height: var(--touch-target);
@@ -317,43 +330,16 @@ html[data-seasons="on"] #btn-layers {
 
 .seasons-step:disabled { opacity: 0.5; cursor: default; }
 
-.seasons-select {
+/* The year the stepper is sitting on. A span rather than a control: it is not
+   a target, and the drawer's heading says the same four digits — see
+   `pickerHtml` for why the repetition earns its place. `tabular-nums` so the
+   digits do not shuffle sideways as the year steps. */
+.seasons-year-now {
   flex: 1 1 auto;
   min-width: 0;
-  height: var(--touch-target);
-  padding: 0 var(--space-snug);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  background: var(--glass-raised);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--type-title);
   text-align: center;
-}
-
-/* ==> THE OPEN LIST OF 175 YEARS, PAINTED OUT OF THE PALETTE. <== Aaron on
-   glass, 2026-08-25: on desktop it opened as a white sheet with a system-blue
-   selected row, over a sepia globe.
-
-   ==> AND `--ocean` RATHER THAN `--glass-raised`, WHICH IS THE WHOLE POINT.
-   <== Every other surface in this app is glass over the globe and is therefore
-   translucent. This one is not ours to composite — the browser draws it as an
-   opaque menu ABOVE the page, and an rgba background handed to it is what made
-   the browser fall back to its own light colours in the first place. `--ocean`
-   is the palette's own opaque ground, which in sepia is the parchment's
-   shadow.
-
-   ==> WHAT THIS CANNOT REACH, SAID PLAINLY RATHER THAN LEFT TO BE DISCOVERED.
-   <== Safari and iOS ignore `option` styling completely and render the
-   platform's own wheel; that sheet is already DARK, because `color-scheme` is
-   published as `dark` for the sepia palette (`app/theme-switch.js`), but it
-   will never be sepia. Making it sepia means replacing the native `<select>`
-   with a custom listbox, which §57.18a rejected on purpose: one control that
-   already works by thumb, by mouse and by keyboard, with the OS's own
-   scroll-and-type behaviour free, beats anything a list of 175 rows in a 60vh
-   sheet could do. A palette is not worth that trade. */
-.seasons-select option {
-  background-color: var(--ocean);
+  font-size: var(--type-title);
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }
 
@@ -361,7 +347,6 @@ html[data-seasons="on"] #btn-layers {
    ring is drawn on the box beside it. Never `outline: none` without a
    replacement (§10). */
 .seasons-step:focus-visible,
-.seasons-select:focus-visible,
 .seasons-retry:focus-visible,
 .seasons-check input:focus-visible + .check-box {
   outline: 2px solid var(--focus-ring);
@@ -987,3 +972,191 @@ html[data-seasons="on"] #btn-layers {
      the row's edge reads as clipped. */
   margin-inline: auto var(--space-tight);
 }
+
+/* ---------------------------------------------------------------------------
+ * THE WALL OF YEARS (§57.29, §57.36)
+ *
+ * ==> ONE VERTICAL SCROLL AND NOTHING BREAKING IT INTO CHUNKS. <== Aaron on
+ * glass, 2026-08-26: the decade heading was the first thing to go. The wall
+ * reads as one unbroken run of years, and the only thing that interrupts it is
+ * the satellite-era line, which is a claim about the data rather than a
+ * navigation aid.
+ *
+ * ==> IT REUSES `.seg` AND `.drawer-body` FROM panels.css. <== Same reasoning
+ * the board records: a second, near-identical set of segment styles is two
+ * places one control drifts apart.
+ * ------------------------------------------------------------------------- */
+
+.wall-basins {
+  display: flex;
+  gap: var(--space-tight);
+  margin-bottom: var(--space-snug);
+}
+
+.wall-tally {
+  margin: 0 0 var(--space-snug);
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+.wall {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ==> 44px, AND NO EXCEPTION WAS CARVED OUT FOR A DENSE WALL. <== §13's touch
+   floor, judged on glass rather than assumed. The height is the constant so a
+   row cannot drift below the target by picking up padding.
+
+   `grid` rather than `flex` so the year column and the count column line up
+   down the whole wall — ragged columns would make the counts unreadable as a
+   series, which is half of what the screen is for. */
+.wall-row {
+  display: grid;
+  grid-template-columns: 3.4em 1fr 2.6em;
+  align-items: center;
+  gap: var(--space-tight);
+  width: 100%;
+  height: var(--seasons-wall-row-h);
+  padding: 0 var(--space-tight);
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .wall-row:hover { background: var(--glass-raised); }
+}
+
+.wall-row:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.wall-year {
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+/* The strip is bottom-of-its-box aligned and clipped rather than allowed to
+   push the row taller: step 4 adds a landfall triangle UNDER the dots, and a
+   row that grew to fit one would break the 44px rhythm on exactly the years
+   that matter most. */
+.wall-strip-slot {
+  min-width: 0;
+  overflow: hidden;
+  line-height: 0;
+}
+
+.wall-strip { display: block; }
+
+.wall-count {
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-primary);
+}
+
+.wall-count small {
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+/* ==> A QUIET YEAR KEEPS ITS PLACE AND ITS YEAR. <== §57.36 — the gaps are the
+   information. Short rather than 44px because it is not a destination: there
+   is nothing to open, so it takes no touch target and no tab stop. */
+.wall-hair {
+  display: flex;
+  align-items: center;
+  height: var(--seasons-wall-hair-h);
+  padding: 0 var(--space-tight);
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
+/* ==> THE LINE UNDER WHICH NOBODY WAS WATCHING FROM ORBIT. <== It carries a
+   rule above it because the boundary is the point, and it is a SENTENCE rather
+   than a shade because only words can say that a short strip up here is a gap
+   in the record and not a quiet year (§5). */
+.wall-era {
+  margin: var(--space-snug) 0;
+  padding-top: var(--space-snug);
+  border-top: 1px solid var(--glass-border);
+  font-size: var(--type-small);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* Everything below the line is dimmed as a body, so the shading is contiguous
+   and reads as "the record gets thinner up here" rather than as a per-row
+   state. In year order that is enough; the moment a sort scatters these rows
+   it stops being enough, and step 4 owns the per-row mark that replaces it. */
+.wall-row[data-pre="1"] { background: var(--glass); }
+.wall-row[data-pre="1"] .wall-year { color: var(--text-muted); }
+
+.wall-note {
+  margin: var(--space-base) 0;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.wall-note-bad { color: var(--text-primary); }
+
+/* The reason the fetch failed, said out loud. §5 — "something went wrong"
+   gives a reader nothing to act on and the next session nothing to read. */
+.wall-why {
+  display: block;
+  margin-top: var(--space-tight);
+  font-size: var(--type-small);
+  color: var(--text-muted);
+}
+
+.wall-retry {
+  min-height: var(--touch-target);
+  padding: 0 var(--space-base);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  cursor: pointer;
+}
+
+.wall-retry:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* ==> THE SEASON IN PROGRESS, PINNED ABOVE THE RECORD. <== §57.36, §57.11. It
+   is not in `wall.json` and cannot be until NOAA reviews it, so it is built in
+   the browser and sits above the wall rather than inside it — a row in the run
+   of years would say it was settled. The rule under it is the seam between
+   what is being written and what has been.
+
+   It keeps the same grid as an ordinary row so the year and the count stay in
+   their columns; the note takes a fourth track of its own. */
+.wall-row-live {
+  grid-template-columns: 3.4em 1fr 2.6em auto;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+/* The two states where there are no storms to draw yet — reading, and could
+   not be read. Not a button: there is nothing to open, and a control that
+   does nothing when pressed is worse than no control. */
+.wall-row-flat {
+  grid-template-columns: 3.4em 1fr;
+  cursor: default;
+}
+
+.wall-live-note {
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.wall-live-note-wide { white-space: normal; }

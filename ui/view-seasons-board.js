@@ -353,7 +353,6 @@ export function createSeasonsBoardView({
 
   const painter = createSeasonsBoardRender({
     bodyEl: () => bodyEl,
-    seasons,
     loading,
     basin: () => basin,
     year: () => year,
@@ -382,22 +381,6 @@ export function createSeasonsBoardView({
    * ---------------------------------------------------------------------- */
 
   function onClick(e) {
-    const basinBtn = e.target.closest('[data-basin]');
-    if (basinBtn) {
-      const next = basinBtn.dataset.basin;
-      if (next === basin) return;
-      basin = next;
-      /* Hold the year across a basin change when the other basin has it. The
-       * Pacific record opens in 1949, so 1900 has no Pacific half — falling
-       * back to that basin's newest year is better than refusing the switch.
-       * `yearsFor` rather than the settled list, so switching basins inside
-       * the season in progress stays inside it. */
-      const years = loading.yearsFor(basin);
-      if (!years.includes(year)) year = years[0] ?? null;
-      loadSeasonNow();
-      return;
-    }
-
     const step = e.target.closest('[data-step]');
     if (step) {
       const years = loading.yearsFor(basin);
@@ -586,15 +569,6 @@ export function createSeasonsBoardView({
   }
 
   function onChange(e) {
-    const select = e.target.closest('.seasons-select');
-    if (select) {
-      const next = Number(select.value);
-      if (!Number.isFinite(next) || next === year) return;
-      year = next;
-      loadSeasonNow();
-      return;
-    }
-
     /* ==> THE MASTER BOX, AND IT ANSWERS BEFORE THE PER-STORM ONE. §57.21b
      * item 4. <== It carries no `data-storm`, so the order is not strictly
      * load-bearing — but it is the narrower case and reading it first is what
@@ -663,7 +637,20 @@ export function createSeasonsBoardView({
 
   return {
     id: 'seasons-board',
+
+    /** ==> RUNG 3'S HEADING IS THE YEAR. §57.39. <== `2005` is the most useful
+     *  four characters that could sit there: the reader tapped a year to get
+     *  here, and repeating a generic noun would waste the one line that could
+     *  confirm which year they landed on. The drawer passes the year through as
+     *  the navigation argument, so the heading is right on the frame the view
+     *  opens rather than one render later.
+     *
+     *  The fallback is the feature's own on-screen name (§57.16a), and it is
+     *  reachable: a restore that lost the year would otherwise put an empty
+     *  heading on the drawer, which reads as a broken screen rather than as a
+     *  missing number. */
     title: 'Past storms',
+    titleFor: (arg) => (Number.isFinite(arg) ? String(arg) : 'Past storms'),
 
     /* ==> THE HEADER'S X IS A MINIMISE CHEVRON HERE, AND NOWHERE ELSE. §57.21b
      * item 8. <== Closing this board does not leave the archive — the globe
@@ -722,14 +709,46 @@ export function createSeasonsBoardView({
       filter = door === 'home' ? NEAR_HOME_FILTER : 'all';
     },
 
-    /** First stop is the year, because choosing a year is why anyone opens
-     *  this. Not the Back button, and not the first storm. */
+    /** ==> FIRST STOP IS THE YEAR STEPPER, AND IT USED TO BE THE 175-YEAR
+     *  `<select>`. <== §57.36 moved choosing a year to the wall, so what is at
+     *  the top of this screen now is the pair of buttons that step to the
+     *  neighbouring seasons. `:not([disabled])` matters at the ends of the
+     *  record: 1851 has no earlier season, so its `−` is disabled, and putting
+     *  focus on a disabled control is putting it nowhere (§13). */
     focus() {
-      return bodyEl?.querySelector('.seasons-select');
+      return bodyEl?.querySelector('.seasons-step:not([disabled])');
     },
 
     /**
-     * Open on a particular year — a `?season=` link, and nothing else today.
+     * Which basin this board is showing, chosen on the wall.
+     *
+     * ==> THE BOARD NO LONGER PICKS A BASIN AND NO LONGER OFFERS THE SWITCH.
+     * <== §57.36. The wall owns it, because changing basin there happens while
+     * no year is open — whereas changing it here would mean deciding what
+     * becomes of a year the other basin does not hold, and the Pacific record
+     * starts in 1949. Ignored when the index has not named that basin, so a
+     * stale argument cannot empty the roster.
+     */
+    setBasin(b) {
+      if (!b || b === basin || !loading.yearsFor(b).length) return;
+      basin = b;
+      /* ==> AND IT LOADS, FOR THE REASON `setSeason` DOES. <== The two are
+       * called together when a year is opened off the wall, and the year is
+       * often the SAME number in both basins — 2005 exists in each. Leaving
+       * the load to `setSeason` means it declines as a no-op and the reader
+       * gets the Atlantic's 2005 under a Pacific heading: the same four
+       * digits, the wrong storms, nothing on screen saying so.
+       *
+       * Hold the year across the change when the new basin has it. The
+       * Pacific record opens in 1949, so 1900 has no Pacific half, and falling
+       * back to that basin's newest year is better than an empty roster. */
+      const years = loading.yearsFor(basin);
+      if (!years.includes(year)) year = years[0] ?? null;
+      loadSeasonNow();
+    },
+
+    /**
+     * Open on a particular year — a `?season=` link, or a row on the wall.
      *
      * ==> IT IS ASKED FOR, NOT IMPOSED, AND THAT IS WHY IT TAKES EFFECT IN TWO
      * PLACES. <== Entry calls this BEFORE the index has arrived, so there is
@@ -740,7 +759,23 @@ export function createSeasonsBoardView({
      * year is a plausible number; only the index knows if it is a real season.
      */
     setSeason(y) {
-      if (Number.isFinite(y)) year = y;
+      if (!Number.isFinite(y) || y === year) return;
+      year = y;
+      /* ==> AND IT LOADS, WHICH IT DID NOT NEED TO WHEN IT WAS ONLY EVER
+       * CALLED BEFORE MOUNT. <== It had one caller — a `?season=` link, read
+       * before the index had arrived — so holding the number was enough and
+       * `loadIndexOnce` did the fetching. The wall calls it on an ALREADY
+       * MOUNTED board, once per year row tapped, and without this the reader
+       * would land on a heading saying 2005 over last year's roster: the
+       * panel-and-globe disagreement §57.21a is careful about everywhere else,
+       * arriving through the front door.
+       *
+       * ==> BEFORE THE INDEX LANDS THIS STILL ONLY HOLDS THE NUMBER. <==
+       * `yearsFor` answers with nothing until then, so the guard below
+       * declines and `loadIndexOnce` honours the held year exactly as it
+       * always has — including dropping it when the archive does not hold that
+       * season. Only the index knows which years are real. */
+      if (loading.yearsFor(basin).includes(y)) loadSeasonNow();
     },
 
     /**

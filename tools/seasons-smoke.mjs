@@ -101,10 +101,21 @@ ok('the bar mounted, so entry did not throw', true);
 ok('the archive flag reached the document',
   await page.getAttribute('html', 'data-seasons') === 'on');
 
-section('The board is on screen and it read a real season');
+section('The WALL is on screen — entry lands on rung 2, not on a year');
 
-await page.waitForSelector('#seasons-board-body .seasons-select', { timeout: 30_000 });
-ok('the year picker exists', true);
+await page.waitForSelector('#seasons-wall-body .wall-row', { timeout: 30_000 });
+const wallRows = await page.locator('#seasons-wall-body .wall-row').count();
+ok(`the wall drew year rows (${wallRows})`, wallRows > 0);
+
+/* ==> ENTERING NO LONGER OPENS A SEASON, AND THAT IS THE STEP-14 CHANGE. <==
+ * §57.36 — the wall is the front door. A board on screen here would mean the
+ * ladder had been skipped and the reader landed on a year nobody chose. */
+ok('and the board is NOT on screen yet',
+  await page.locator('#seasons-board-body [data-storm]').count() === 0);
+
+section('Tapping 2005 opens Season Details, which is the season with the known numbers');
+
+await page.click('#seasons-wall-body .wall-row[data-year="2005"]');
 
 /* The roster is behind a fetch of index.json and a season file, both real
  * HTTP against the static server. */
@@ -117,9 +128,6 @@ ok(`the bar names the season ("${detail}")`, /\d{4}/.test(detail || ''));
 ok('==> AND THE "NOT BUILT YET" APOLOGY IS GONE <==',
   !/not built yet/.test(detail || ''));
 
-section('2005, which is the season with the known numbers in it');
-
-await page.selectOption('#seasons-board-body .seasons-select', '2005');
 await page.waitForFunction(
   () => document.querySelectorAll('#seasons-board-body [data-storm]').length === 31,
   { timeout: 30_000 }
@@ -185,8 +193,12 @@ await page.waitForTimeout(200);
 const barOpen = page.locator('.seasons-bar-open');
 ok('the bar\'s sentence is a button', await barOpen.count() === 1);
 await barOpen.click();
-await page.waitForSelector('#seasons-board-body .seasons-select', { timeout: 15_000 });
-ok('==> AND PRESSING IT BRINGS THE BOARD BACK <==', true);
+/* ==> IT COMES BACK ON THE RUNG THE READER LEFT, NOT ON THE TOP OF THE WALL.
+ * <== 2005 was open when the drawer was minimised, so 2005 is what reopening
+ * has to find — otherwise minimising to look at the tracks costs the year. */
+await page.waitForSelector('#seasons-board-body [data-storm]', { timeout: 15_000 });
+ok('==> AND PRESSING IT BRINGS BACK THE YEAR THAT WAS OPEN <==',
+  await page.locator('#seasons-board-body [data-storm]').count() === 31);
 
 ok('the ticked storm is still drawn after a round trip', await drawn() === 1);
 

@@ -44,7 +44,6 @@ import { requireThumbGrab } from './slider-grab.js';
  *   construction. `ticked` is the exception and is passed straight through — it
  *   is a Set, so the live object IS the current answer.
  * @param {() => (Element|null)} opts.bodyEl   the drawer body this writes into.
- * @param {object} opts.seasons                the settled-years fetch facade.
  * @param {object} opts.loading                `ui/seasons-board-loading.js`.
  * @param {() => (string|null)} opts.basin
  * @param {() => (number|null)} opts.year
@@ -60,7 +59,7 @@ import { requireThumbGrab } from './slider-grab.js';
  * @param {() => void} opts.paintCheckAll
  */
 export function createSeasonsBoardRender({
-  bodyEl, seasons, loading, basin, year, filter, radius,
+  bodyEl, loading, basin, year, filter, radius,
   home, system, near, radiusWords, activeIds, ticked,
   paintFocus, paintCheckAll,
 }) {
@@ -129,14 +128,9 @@ export function createSeasonsBoardRender({
      * inside one reads as a class name to it, and it reported `.basinsIn` and
      * `.basinLabel` as dead CSS. A checker that can be confused by formatting
      * is one whose next real finding gets waved through as noise. */
-    const idx = loading.index();
     const picker = pickerHtml({
-      basins: seasons.basinsIn(idx),
-      labelFor: (b) => seasons.basinLabel(idx, b),
-      basin: basin(),
       years: loading.yearsFor(basin()),
       year: year(),
-      liveYear: loading.liveYear(),
     });
 
     const scorecard = scoreHtml({

@@ -6651,6 +6651,37 @@ export const SEASONS = Object.freeze({
    *  are exactly what cannot show it. §57.6. */
   satelliteEraFrom: 1966,
 
+  /* --- The Wall of Years (§57.29, §57.36) ---------------------------------- */
+
+  /** ==> ONE ROW IS ONE TOUCH TARGET AND NO EXCEPTION WAS CARVED OUT FOR IT.
+   *  <== §13's 44px floor. Aaron judged this on glass 2026-08-26 against the
+   *  alternative — a denser wall that fits more years on a phone — and kept
+   *  the target. 175 rows at 44px is a long scroll on purpose: the length IS
+   *  the record, and a wall you can flick through in two swipes stops being
+   *  about how much history there is. */
+  wallRowPx: 44,
+
+  /** The dot bounds. `dotSizeFor` divides the strip by the BUSIEST season in
+   *  the basin, so these two decide what happens at the extremes rather than
+   *  in the ordinary case.
+   *
+   *  ==> THE FLOOR EXISTS BECAUSE THE ATLANTIC'S BUSIEST SEASON IS 31 STORMS.
+   *  <== Measured off `seasons/wall.json`: 2005. On a 390px phone that is
+   *  about 8px of strip per storm before the gap, so an unclamped divide lands
+   *  near the floor already and a basin any busier would compute a dot smaller
+   *  than the anti-aliasing. Below 3px a dot stops being a dot.
+   *
+   *  The ceiling stops a sparse basin — or a wide desktop rail — drawing a
+   *  quiet year as a row of beach balls, which would make 1914's single storm
+   *  louder than 2005's thirty-one. */
+  wallDotMin: 3,
+  wallDotMax: 12,
+
+  /** Between dots. Two pixels is enough to read thirty-one of them as
+   *  thirty-one rather than as a bar, and small enough that a quiet year's
+   *  strip is still visibly short. */
+  wallDotGap: 2,
+
   /* --- Near home (§57.19) -------------------------------------------------- */
 
   /** The radius slider. Under 10 miles is noise against a position every six

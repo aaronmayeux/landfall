@@ -167,6 +167,14 @@
 /seasons/reports.json
   Cache-Control: no-cache
 
+# The Wall of Years (§57.36) — every season reduced to four numbers a storm,
+# 46 KB, rewritten by the same monthly job that refreshes HURDAT2. Its name
+# carries no revision stamp, unlike everything under `seasons/data/`, so it is
+# the one file in the feature that can change meaning without changing name.
+# Held immutable it would show last February's history for a year.
+/seasons/wall.json
+  Cache-Control: no-cache
+
 # ===> THE ARCHIVE'S CODE, LISTED FILE BY FILE, AND THE UGLINESS IS THE POINT.
 # `seasons/` is the one directory in this repo that holds BOTH kinds of thing:
 # `seasons/data/*` is NOAA's history, immutable forever (above), and these four
