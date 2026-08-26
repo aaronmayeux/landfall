@@ -3800,3 +3800,65 @@ The strip reads left to right as the season happened. Reorder it by strength
 and June stops being on the left, and no two rows can be compared. **Duration
 and lowest pressure sort on the BOARD, not the wall** — they are facts about a
 storm, and the board is the screen that lists storms.
+
+### 57.37 Proposed: the archive bar goes, the storm-list button becomes the door
+
+**Aaron, 2026-08-26. PROPOSED, NOT BUILT.** Recorded here so the build pass has
+it; nothing in this section is in the code yet.
+
+**The change.** Delete `#seasons-bar` — the strip along the bottom of the
+viewport — and make the existing storm-list control (`btn-storms` in
+`index.html`, one of the four `.control` buttons) the way into the archive.
+
+#### Two objections checked before writing this down, and only one survived
+
+**==> THE HONESTY SURFACE IS NOT IN THE BAR, SO DELETING IT COSTS NOTHING
+THERE. <==** The first worry was that the bottom bar was carrying data age and
+source health, in which case removing it would be a §5 violation dressed up as
+a layout change. It is not. `ui/status.js` owns source health, stale flags and
+"GDACS is not responding", it lives on the TOP edge, and it is silent when
+everything is clean. The two are independent. **This objection is dead and the
+change is safe on those grounds.**
+
+**The one that stands: the bar is currently TWO doors, not one.** §57.16 calls
+it "the archive bar and the two doors into it", and a single button cannot be
+two doors without deciding what happens to the second. That has to be answered
+before this is built, not during.
+
+#### What the bar costs and what it buys back
+
+`--seasons-bar-h` is published on `<html>` and every sheet in the app is laid
+out above it, because §57.16's own header notes that a bar added underneath a
+sheet is a bar with a sheet sitting on top of it. **So this is not one element
+being deleted — it is a layout variable that other files subtract from their
+own height.** Removing it means every consumer of `--seasons-bar-h` has to be
+found and unwound, and that is the actual size of the job. It also returns that
+strip of screen to the globe on every single view, which on a phone is the
+whole argument for doing it.
+
+#### The open question the build pass must answer first
+
+**What does the storm-list button do when it is now two things?** The
+candidates, and none is obviously right:
+
+- **A segmented control inside the storm sheet** — live storms and past storms
+  as two tabs of one list. Cheapest, and it matches the idea that both are
+  "storms", but it buries the archive one level down.
+- **Long-press or a second tap for the archive.** Rejected on sight: §'s input
+  rule says every action needs a tap, click AND keyboard path, and a
+  press-and-hold has no keyboard equivalent. This would make the archive
+  unreachable without a pointer.
+- **A fifth `.control` button** for the archive, leaving the storm list alone.
+  Honest, keyboard-clean, and it admits the bar was carrying something the
+  button cluster now has to carry.
+
+**Aaron's call, and it is not made yet.**
+
+#### What must not be lost
+
+The bar's other door, whatever it is, and the sepia-on-its-own behaviour §57.16
+describes — the bar turning sepia the instant the palette changes was a
+deliberate piece of feedback, and if the bar goes, the thing that told the user
+"you are in the archive now" goes with it. **A door with no indication you have
+walked through it is worse than the bar.** The entry point can move; the "you
+are in the past" signal has to land somewhere.
