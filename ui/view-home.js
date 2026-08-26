@@ -60,6 +60,7 @@ import { countdownHtml, headingOf, motionDetail } from './countdown-home.js';
  * set that drifts. See ui/section-icon.js. */
 import { iconSvg } from './section-icon.js';
 import { createSeasonsDoor } from './seasons-door.js';
+import { startStandingLine } from './near-home-standing.js';
 
 const esc = (t) =>
   String(t ?? '').replace(/[&<>"']/g, (c) =>
@@ -232,6 +233,22 @@ export function createHomeDashboardView({
      * where a reader looks for one. Step 9 is what makes it open with the
      * near-home filter already applied. */
     if (onOpenSeasons) doorEl = createSeasonsDoor({ from: 'home', onOpen: onOpenSeasons });
+
+    /* ==> AND THE DOOR'S SUBTITLE BECOMES THIS READER'S OWN ANSWER, SEVERAL
+     * SECONDS FROM NOW. <== §57.19's standing line. Everything about it —
+     * the wait, the worker, the megabyte, and the rule that a failure changes
+     * nothing on screen — lives in `ui/near-home-standing.js`. What is here is
+     * three lines because that file owns the one rule this one must not bury:
+     * the archive is dynamically imported and nothing about it touches boot
+     * (§57.35 fault 4). */
+    if (doorEl) {
+      startStandingLine({
+        home: () => getHome(),
+        system: () => sys(),
+        onLine: (sentence) => doorEl?.setNote?.(sentence),
+      });
+    }
+
     host.addEventListener('click', onClick);
     render();
   }

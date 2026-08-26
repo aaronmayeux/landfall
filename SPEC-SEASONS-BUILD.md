@@ -1070,6 +1070,158 @@ Selecting **Near home** reveals a radius slider:
   line — *"31 storms have passed within 100 miles since 1851. The last was
   2021."* That is the hook, and it is free.
 
+### 57.19a Near home, as built
+
+**Step 9, 2026-08-25.** `lib/near-home-words.js`, `ui/seasons-near-home.js`,
+`data/near-home-index.js`, `seasons/near-home-worker.js`,
+`ui/near-home-standing.js`, and the `nearHomeRange` / `nearHomeKeepMi` /
+`nearHomeIndexDelayMs` block in `config/constants.js`. The measurement itself is
+step 2's `lib/near-home.js` and is unchanged.
+
+**==> IT IS TWO FEATURES WITH TWO COSTS, AND CONFUSING THEM IS THE MISTAKE THIS
+SECTION EXISTS TO PREVENT. <==** §57.35 names two shapes and this step is the
+only place both are reached.
+
+- **The filter and its slider are FREE.** A season is already in memory — thirty
+  storms, nine hundred segments — so `entriesNearHome` re-measures the whole year
+  on every step of a slider drag in well under a millisecond. No fetch, no
+  worker, no store. Reaching for the precomputed index here would be paying a
+  megabyte to answer a question the loaded file already answers.
+- **The standing line on the Home dashboard is the WHOLE-BASIN pass**, because
+  *"how many storms have passed within 120 miles since 1851"* is every season at
+  once and cannot be answered a year at a time. That is the one caller the
+  whole-basin files have left after step 8's deletion.
+
+**MEASURED, on the real files in this repo, and these five numbers are the whole
+design:**
+
+| | |
+|---|---|
+| the archive | 3,266 storms · 87,631 positions · 84,365 segments |
+| both whole-basin files | 10.65 MB of text → **0.94 MB over the wire** |
+| parse | 570 ms on a desktop CPU; two to three seconds on a phone |
+| the near-home pass itself | 50–100 ms |
+| the answer that is KEPT | 10–65 KB — 526 entries for New Orleans, 775 for Miami, 112 for Honolulu |
+
+The download and the parse are big enough that they must not run on the main
+thread and must not run on boot. The answer is small enough to store, which
+means they need not run twice.
+
+**==> SO IT RUNS ONCE PER HOUSE, NOT ONCE PER VISIT. <==** The result is written
+to `STORAGE_KEY.nearHome` against the coordinates it was computed for **and the
+revision stamps of the files it was computed from**. The second half is not
+belt-and-braces: NOAA republishes seasons it has already published (§57.30 step
+3b — five revisions of the 2022 Atlantic file), and a correction can move a storm
+across the reader's radius. Keyed on the year alone a house would hold an answer
+computed from a file NOAA has since withdrawn, silently, forever.
+
+**==> AND THERE IS NO MAIN-THREAD FALLBACK, ON PURPOSE. <==** A browser with no
+Web Worker gets no standing line. The alternative is a two-to-three second parse
+in front of a globe that is trying to hold frame rate, to fill in one sentence at
+the foot of a dashboard — which is §57.35 FAULT 1 happening deliberately. A
+missing sentence costs a reader nothing.
+
+#### §57.19's mile-only range did not survive contact with the unit setting
+
+**==> THE RANGE IS PER-SYSTEM NOW, AND THIS IS A CORRECTION RATHER THAN A
+PREFERENCE. <==** §57.19 fixed 10–500 miles stepping by 10, on the reasoning that
+a reader thinks in miles. Half of them think in kilometres and `lib/units.js`
+already knows which. The two ways of serving that reader are both worse than
+this one: converting 500 miles gives a slider running to 805 and stepping by 16,
+and holding the slider in miles while every other distance on screen is in
+kilometres is a control lying about its own units.
+
+So each system gets round numbers of its own, **covering the same ground**:
+10–500 step 10 mi, or 20–800 step 20 km. Measured, 500 mi is 434.5 nm and 800 km
+is 432.0 nm — the same circle to within half a percent, asserted in
+`tools/test-seasons-near-home.mjs` so the two cannot drift and quietly cost a
+metric reader their reach.
+
+**`radiusToNm` IS THE ONLY PLACE THE TWO SYSTEMS MEET.** Everything above it is a
+reader-facing number on a control; everything below is `lib/near-home.js`'s
+nautical miles. A second converter anywhere else is how a metric reader ends up
+filtering a circle 60% the size of the one on their screen, with a roster that
+looks merely quiet rather than wrong.
+
+**The default is the same number in both places by design** — the door says
+*"within 120 mi"* and the board opens with its slider on 120. A door that names
+one circle and opens a screen set to another is the app disagreeing with itself
+in two taps.
+
+#### The list is sorted by distance, and that breaks §57.18's rule deliberately
+
+§57.18 says the roster is chronological and that nobody should ever tidy it by
+sorting. **That rule is about a SEASON** — the order names were handed out in IS
+the shape of the year. This list is not a season; it is an answer to *"what has
+come near my house"*, and the first thing a reader wants from it is the closest
+one. Every other filter still sorts chronologically and switching back to All
+restores it.
+
+**==> AND NEW ORLEANS CANNOT PROVE IT, WHICH IS WHY MIAMI IS IN THE SUITE. <==**
+Deleting the sort left the assertion GREEN on the first mutation run: 2005 gives
+New Orleans two storms, Cindy then Katrina, arriving in chronological order that
+happens to already be ascending by distance. Miami in the same season is the
+shape that can show it — Katrina 10, Ophelia 86, Rita 123, Tammy 96, Wilma 49 —
+and the suite now asserts the fixture is out of order before asserting the sort
+puts it right. **A fixture that cannot show the thing is worse than no
+assertion, because it reads as coverage.**
+
+#### Three absences, and each one is a rule rather than an omission
+
+- **The filter is not offered when there is no house.** §57.18a's rule about a
+  control that cannot succeed: with no home set, Near home can only ever narrow
+  to nothing, and an empty roster is the one shape this feature must not produce
+  by accident.
+- **A strength is not claimed unless the record supports one.** §57.19 asks for
+  the strength AT CLOSEST APPROACH, and HURDAT2 records `EX`, `LO`, `WV` and `DB`
+  alongside the five cyclone statuses. A storm can be extratropical when it
+  passes and a Cat 4 two days earlier, so *"as a Cat 2"* read off an `EX` record
+  would be a Saffir-Simpson grading NOAA never gave it (§6). The clause is
+  dropped; the distance and the direction stay, because they are true either way.
+- **A direct hit gets no direction.** At a distance of nothing the bearing is
+  arbitrary, and *"0.0 mi NNE"* is a compass point invented out of rounding.
+
+#### The empty answer is the answer
+
+*"No storms in 1997 match that filter"* is true and useless. Under this filter
+the empty result **is** what somebody asked for, and it says so in its own words,
+naming the circle they chose: *"No storm in 1997 came within 50 mi of home."*
+That is the difference between the feature working and the feature looking like
+it failed, and it is `emptyRosterHtml`'s fourth branch.
+
+The same rule with the opposite sign governs the standing line. **A failure there
+changes nothing on screen** (§57.35 FIX 8's surviving sentence): the archive door
+keeps its scope subtitle, which is true, rather than gaining an apology for a
+question nobody put. `setNote` refuses an empty string so a failure path cannot
+blank a subtitle that was already correct. **What must never happen is the door
+reporting zero**, because *"no storm has ever come near you"* and *"we could not
+work it out"* are different facts and this feature's whole subject is absence.
+
+#### The standing line takes the door's own subtitle
+
+No new row, no new element, no change to the dashboard's layout. The archive door
+already carries a line stating the archive's SCOPE — *"Every storm since 1851"* —
+which answers *"why would I press this"*. The standing line answers the same
+question with the reader's house in it, which is strictly better, and *"since
+1851"* is read off the archive index rather than typed so it cannot outlive the
+files that make it true.
+
+**99 assertions in `tools/test-seasons-near-home.mjs`, and NINETEEN mutations
+were run to prove they bite** — including the bearing taken the wrong way round,
+kilometres converted as miles, the last year read off the whole index instead of
+from inside the circle, the revision dropped from the cache key, the worker left
+running after a good answer, and an empty slider value read as zero. **Two of
+those were real faults rather than checks**: `Number('')` is `0`, so a blank
+value was clamping silently to the ten-mile minimum, and the sort assertion was
+passing on a fixture that could not show it.
+
+**AND IT FOUND A GAP IN A FILE THAT WAS NOT ITS OWN.** `ui/slider-grab.js` binds
+a `pointerup` listener on `window` and had no guard for there not being one.
+Settings has armed it since 2026-07-25 and never met the case; this is the second
+caller and met it on the first run, taking the whole board suite down with a
+`ReferenceError`. The guard is at that file's own door rather than at this
+caller's, so the third caller inherits it.
+
 ### 57.20 The theme — sepia, and the collision it has to survive
 
 **Aaron chose sepia on glass.** It reads as an old historical record, which is
@@ -2942,12 +3094,38 @@ is not coming.
 
 ---
 
-**STEP 9 — NEAR HOME.**
-§57.19's line-not-points measurement, computed at index time per §57.35 fault 2 —
-**the slider filters precomputed numbers and never scans geometry.** Plus the standing line on the
-Home dashboard.
-**Done when:** a deliberately fast-moving storm that skips over the circle is
-still caught — verified by a test that fails without the line measurement.
+**STEP 9 — NEAR HOME. ==> BUILT 2026-08-25. <==**
+`lib/near-home-words.js`, `ui/seasons-near-home.js`, `data/near-home-index.js`,
+`seasons/near-home-worker.js`, `ui/near-home-standing.js`, and the near-home
+block in `config/constants.js`.
+
+**§57.19a is the as-built account. Read that, not this.** The one-line version:
+the filter and its slider are free because a season is already in memory, and
+only the Home dashboard's standing line pays for the whole-basin pass — 0.94 MB,
+in a worker, several seconds after first paint, once per house rather than once
+per visit.
+
+**==> IT SIZED THE PASS THIS STEP INHERITED FROM STEP 8'S DELETION, AND THE
+NUMBERS ARE IN §57.19a. <==** 3,266 storms, 84,365 segments, 570 ms to parse on a
+desktop, 50–100 ms to measure, 10–65 KB of answer. The last of those is what makes
+storing it worth doing and is why the megabyte is paid once.
+
+**==> AND IT CORRECTED §57.19's RANGE. <==** The slider is per unit system now —
+10–500 mi or 20–800 km, the same circle to within half a percent — because half
+this app's readers think in kilometres and a control fixed in miles beside
+kilometre distances is lying about its own units.
+
+**The done-condition was already met before this step opened**, and that is worth
+saying plainly rather than quietly: `tools/test-near-home.mjs` has asserted the
+fast-mover case since step 2, both ways, and the mutation was run then. What step
+9 added is 99 assertions and 19 mutations over everything BETWEEN that
+measurement and a reader.
+
+**Aaron looks at:** the slider under a thumb — does the roster keep up, and does
+the globe emptying on the first drag read as correct rather than as a bug. Then
+the row line at small type: *"Passed 31 mi WSW as a Cat 2."* Then the door on the
+dashboard, which needs a home set and about four seconds.
+**Done when:** all three are confirmed on glass.
 
 ---
 
@@ -3049,6 +3227,12 @@ seasons/            entry, shell, mode state, deep links
 lib/hurdat.js       HURDAT2 + ATCF parsing into one shape        BUILT (step 2)
 lib/season-facts.js the derived figures in §57.15                BUILT (step 2)
 lib/near-home.js    line-to-point distance against a track       BUILT (step 2)
+lib/near-home-words.js   the wording, and the per-system range   BUILT (step 9)
+ui/seasons-near-home.js  the filter, the slider, the row line    BUILT (step 9)
+data/near-home-index.js  the whole-archive answer, cached        BUILT (step 9)
+seasons/near-home-worker.js  that pass, off the main thread      BUILT (step 9)
+ui/near-home-standing.js the dashboard's standing line           BUILT (step 9)
+ui/seasons-board-furniture.js  the season's own sentences        BUILT (step 9)
 data/seasons.js     fetch and cache — NOT offline, see §57.30 step 8
 map/layers/season-*.js   track, landfall marks, swath, ghosts
 ui/view-seasons*.js      shelf, board, roster, detail
@@ -3059,7 +3243,8 @@ config/constants.js      + a SEASONS block                       BUILT (step 2)
 **Also built, and they are TOOLS rather than app code — nothing imports them:**
 `tools/seasons-fixtures.mjs` with its workflow (cut real storms out of the full
 NOAA files on a runner), and `tools/test-hurdat.mjs`,
-`tools/test-season-facts.mjs`, `tools/test-near-home.mjs`.
+`tools/test-season-facts.mjs`, `tools/test-near-home.mjs`,
+`tools/test-seasons-near-home.mjs`.
 
 ## 57.33 What this costs — nothing, and the three limits that keep it that way
 

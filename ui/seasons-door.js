@@ -82,5 +82,29 @@ export function createSeasonsDoor({ from, onOpen }) {
   el.append(text, chevron);
   el.addEventListener('click', () => onOpen?.(el));
 
+  /**
+   * Replace the subtitle with something better.
+   *
+   * ==> THE DEFAULT IS A SCOPE LINE AND THE REPLACEMENT IS AN ANSWER. <==
+   * §57.19. *"Every storm since 1851"* says why the archive is worth opening;
+   * *"143 storms have passed within 120 mi since 1851"* says why THIS reader's
+   * archive is, which is the same job done with their house in it. Same slot,
+   * same height, no change to the dashboard's layout.
+   *
+   * ==> AN EMPTY STRING IS REFUSED RATHER THAN HONOURED. <== A caller with
+   * nothing to say must leave the scope line standing, and the way that goes
+   * wrong is a failure path handing this `''` and blanking a subtitle that was
+   * true. The door is a hook: it has no third state and must not grow one.
+   *
+   * ==> AND IT STAYS ON THE ELEMENT ACROSS A DASHBOARD REDRAW. <== The door is
+   * built once and re-attached by `ui/view-home.js`'s `afterRender`, so this
+   * survives the `innerHTML` wipe the same way its click listener does — which
+   * is why the sentence can be worked out once, several seconds in, rather than
+   * on every poll.
+   */
+  el.setNote = (sentence) => {
+    if (typeof sentence === 'string' && sentence.trim()) note.textContent = sentence;
+  };
+
   return el;
 }

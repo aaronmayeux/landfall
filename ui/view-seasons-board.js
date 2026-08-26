@@ -64,10 +64,17 @@ import { isStillRunning } from '../lib/season-facts.js';
 import { basinHasLive } from '../lib/season-years.js';
 import { createSeasonsBoardLoading } from './seasons-board-loading.js';
 import {
-  entriesMatching, filtersFor, filtersHtml, indexFailedHtml, liveDownHtml,
-  pickerHtml, scoreHtml, seasonRosterHtml, waitingHtml,
+  entriesMatching, filtersFor, filtersHtml, pickerHtml, seasonRosterHtml,
 } from './seasons-board-markup.js';
+import {
+  indexFailedHtml, liveDownHtml, scoreHtml, waitingHtml,
+} from './seasons-board-furniture.js';
 import { paintCheckAll, paintFocus, paintTick } from './seasons-board-paint.js';
+import {
+  NEAR_HOME_FILTER, radiusFromValue, radiusSliderHtml,
+} from './seasons-near-home.js';
+import { rangeFor } from '../lib/near-home-words.js';
+import { requireThumbGrab } from './slider-grab.js';
 
 
 /**
@@ -100,6 +107,7 @@ import { paintCheckAll, paintFocus, paintTick } from './seasons-board-paint.js';
  */
 export function createSeasonsBoardView({
   seasons, live, onSelection, onFocus, onWhere, onOpenStorm, liveRunningIds,
+  home = null, system = null,
 }) {
   let host = null;
   let bodyEl = null;
@@ -122,6 +130,34 @@ export function createSeasonsBoardView({
   let year = null;
 
   let filter = 'all';
+
+  /* ==> HOME AND UNITS ARRIVE AS FUNCTIONS, NOT VALUES, AND THAT IS NOT
+   * CEREMONY. <== A drawer view is mounted once and kept for the life of the
+   * app (`ui/drawer.js`). A reader can move house from the dashboard or switch
+   * to kilometres in Settings while this board is sitting behind them, and a
+   * value captured at construction would leave the roster measuring against an
+   * address they no longer live at, silently, with nothing on screen wrong
+   * enough to notice. Asked at render time, both are always current.
+   *
+   * ==> `ui/` STILL NEVER IMPORTS `data/`. <== §12. Both getters are handed in
+   * from `seasons/index.js`, the same shape the two fetch facades take. */
+  const homeNow = () => (typeof home === 'function' ? home() : home) || null;
+  const systemNow = () => (typeof system === 'function' ? system() : system) || null;
+
+  /** The radius slider's value, in whatever units the reader's setting shows —
+   *  miles or kilometres, never nautical miles. §57.19.
+   *
+   *  ==> IT IS A READER CHOICE, WHICH IS WHY IT LIVES HERE AND NOT IN THE
+   *  LOADING FILE. <== That is the seam the fifth cut was made on: what was
+   *  fetched goes there, what was chosen stays here. This is chosen.
+   *
+   *  ==> AND IT SURVIVES A YEAR CHANGE ON PURPOSE. <== A reader comparing 2005
+   *  against 1935 at 50 miles is asking one question of two years. Resetting
+   *  the slider on every year change would make them re-ask it each time, and
+   *  the filter itself already travels across a year change wherever the new
+   *  season offers it (`onSeasonChanging`). */
+  let radius = rangeFor(systemNow()).default;
+
   /** Storm ids the reader has ticked. Survives a filter change on purpose —
    *  switching to Majors and back must not silently wipe the globe. */
   const ticked = new Set();
@@ -162,6 +198,37 @@ export function createSeasonsBoardView({
    *  view owns — so every caller below asks through here rather than the
    *  loading file reading state it does not hold. */
   const loadSeasonNow = () => loading.loadSeason(basin, year);
+
+  /**
+   * The house and the circle, as one bundle, or null.
+   *
+   * ==> IT IS COMPUTED IN ONE PLACE AND HANDED TO SIX CALLERS. <== Every
+   * `entriesMatching` in this file needs it, and so does the roster. Six copies
+   * of "read home, read units, convert the slider" is six places the archive's
+   * roster can end up disagreeing with the globe about which storms are near,
+   * which is the panel-and-map disagreement this whole view is careful about
+   * everywhere else.
+   *
+   * ==> `null` WHEN THE FILTER IS NOT NEAR HOME, DELIBERATELY. <== The other
+   * three filters have no use for it, and passing a live measurement they
+   * ignore would mean the geometry running on every filter change for nothing.
+   */
+  function nearNow() {
+    if (filter !== NEAR_HOME_FILTER) return null;
+    const h = homeNow();
+    if (!Number.isFinite(h?.lon) || !Number.isFinite(h?.lat)) return null;
+    const r = radiusFromValue(radius, systemNow());
+    return r ? { home: h, nm: r.nm } : null;
+  }
+
+  /** The circle in the reader's own words, for the empty-roster sentence. It
+   *  reads the CLAMPED value rather than `radius`, so the words can never name
+   *  a number the filter did not actually use. */
+  function radiusWordsNow() {
+    const sys = systemNow();
+    const r = radiusFromValue(radius, sys);
+    return r ? `${r.radius} ${rangeFor(sys).unit}` : '';
+  }
 
   /* --- selection -----------------------------------------------------------
    * §57.21 item 2. Three entry points — Enter on a row, a tap on the globe,
@@ -303,7 +370,7 @@ export function createSeasonsBoardView({
      * disabled, so counting it here would leave the master box permanently
      * short of full — see the note beside `drawable` in the markup. */
     const active = activeIds();
-    const shown = entriesMatching(loading.entries(), filter)
+    const shown = entriesMatching(loading.entries(), filter, nearNow())
       .filter((x) => !active.has(x.storm.id));
     paintCheckAll(bodyEl, shown.length,
       shown.reduce((n, x) => n + (ticked.has(x.storm.id) ? 1 : 0), 0));
@@ -354,7 +421,7 @@ export function createSeasonsBoardView({
     /* The filter travels with the season and one of them may not exist on the
      * next. Falling back to `all` rather than refusing the year: the reader
      * asked for the season, not for the filter. */
-    if (!filtersFor(provisional).some((f) => f.id === filter)) filter = 'all';
+    if (!filtersFor(provisional, homeNow()).some((f) => f.id === filter)) filter = 'all';
     /* The globe empties the moment the year changes, before the new one
      * arrives. Leaving 2005's tracks up while 1935 loads would put a year on
      * the bar that the globe is not showing. */
@@ -425,13 +492,21 @@ export function createSeasonsBoardView({
       reason: s.seasonReason,
       year,
       provisional: s.provisional,
-      rows: entriesMatching(entries, filter),
+      rows: entriesMatching(entries, filter, nearNow()),
       anyEntries: entries.length > 0,
       ticked,
       ghosts: filter === 'all' ? s.roster : null,
       /* §57.21c. The row uses it for the disabled box and the `– active` date;
        * the master box uses it to count only what can be drawn. */
       activeIds: activeIds(),
+      /* §57.19. The row prints how close its storm came; the empty state names
+       * the circle that came back with nothing in it. Both are handed the
+       * house and the units rather than reading them, so this file stays the
+       * only place that decides what is current. */
+      home: homeNow(),
+      system: systemNow(),
+      filter,
+      radiusWords: radiusWordsNow(),
     });
   }
 
@@ -479,7 +554,20 @@ export function createSeasonsBoardView({
       stale: Boolean(s.provisional && s.liveStale),
     });
 
-    const filters = filtersHtml({ filters: filtersFor(s.provisional), filter });
+    const filters = filtersHtml({
+      filters: filtersFor(s.provisional, homeNow()),
+      filter,
+    });
+
+    /* ==> THE SLIDER APPEARS WITH THE FILTER AND NOT BEFORE. <== §57.19 calls
+     * it "revealed" by the choice, and that is the plainer statement: a control
+     * greyed out under the other three filters would be furniture explaining
+     * itself. Hoisted out of the template for the same reason everything else
+     * here is — `tools/css-orphan-check.mjs` reads a method call inside a
+     * template literal as a class name. */
+    const radiusSlider = filter === NEAR_HOME_FILTER
+      ? radiusSliderHtml(radius, systemNow())
+      : '';
 
     /* Hoisted out of the template for the reason above, and it is no longer
      * optional: `s.liveRetrying` inside a template literal reads to
@@ -492,12 +580,28 @@ export function createSeasonsBoardView({
 
     const roster = rosterHtml();
 
+    /* ==> THE ROSTER GETS A WRAPPER, AND IT IS LOAD-BEARING RATHER THAN TIDY.
+     * <== A radius drag has to change the list without touching the control the
+     * reader's thumb is on: replace the whole body and the range input is a new
+     * node mid-gesture, so the drag ends on an element that no longer exists.
+     * `repaintRoster` swaps the contents of this one div instead, which leaves
+     * the picker, the filters and the slider exactly where they were. */
     bodyEl.innerHTML = `
       ${picker}
       ${liveDown}
       ${scorecard}
       ${filters}
-      ${roster}`;
+      ${radiusSlider}
+      <div class="seasons-roster-slot">${roster}</div>`;
+
+    /* ==> THE THUMB-GRAB RULE IS ARMED AFTER EVERY REBUILD, BECAUSE THE INPUT
+     * IS A NEW NODE. <== `ui/slider-grab.js` marks the ROOT it has armed, and
+     * the root here is the scroller — which survives — so this is one cheap
+     * check on the ordinary redraw rather than a rebind. The rule itself is
+     * not optional on this screen: this is a slider inside a sheet a reader
+     * scrolls with their thumb, which is exactly the trap that file exists for,
+     * and a stray press would silently change which storms are on the globe. */
+    requireThumbGrab(bodyEl);
 
     /* ==> THE FOCUS IS RE-APPLIED AFTER EVERY REBUILD, BECAUSE THE ROWS ARE
      * NEW NODES. <== `innerHTML` throws away the elements carrying the focus
@@ -662,6 +766,66 @@ export function createSeasonsBoardView({
     setFocus(focused === id ? null : id);
   }
 
+  /**
+   * The reader is dragging the radius. §57.19.
+   *
+   * ==> `input`, NOT `change`, BECAUSE A SLIDER THAT ONLY ANSWERS ON RELEASE
+   * IS NOT A SLIDER. <== The whole reason to drag rather than type a number is
+   * to watch the answer move, and this is the one control in the app where the
+   * answer is a list rather than a shape on the globe.
+   *
+   * ==> IT PATCHES, AND WHAT IT PATCHES IS EVERYTHING EXCEPT THE SLIDER. <==
+   * `render()` replaces the body, which would replace the range input in the
+   * middle of a gesture — the drag would end on a detached node and the thumb
+   * would stick. So the value text is written in place and the roster's own
+   * wrapper has its contents swapped, which leaves the control untouched and
+   * costs one list rebuild per step of the slider rather than per pixel.
+   *
+   * ==> AND THE FIRST STEP EMPTIES THE GLOBE, ONCE. <== Same rule as a filter
+   * change, and Aaron's call of 2026-08-25 behind it: a globe carrying storms
+   * the list in front of you does not contain is the panel and the map
+   * disagreeing. Narrowing from 200 miles to 50 would otherwise leave the wider
+   * set drawn with no rows to point at. Guarded on the set being non-empty, so
+   * it is one push at the start of a drag rather than one per step.
+   */
+  function onInput(e) {
+    const slider = e.target.closest('[data-radius]');
+    if (!slider) return;
+
+    const sys = systemNow();
+    const next = radiusFromValue(slider.value, sys);
+    if (!next || next.radius === radius) return;
+    radius = next.radius;
+
+    const words = `${radius} ${rangeFor(sys).unit}`;
+    const readout = bodyEl?.querySelector('.seasons-radius .slider-value');
+    if (readout) readout.textContent = words;
+    /* The visible figure and the announced one come off the same string, so a
+     * screen-reader user and a sighted one can never be told different numbers.
+     * A bare "120" would be a value with no unit on it. */
+    slider.setAttribute('aria-valuetext', words);
+
+    if (ticked.size) {
+      ticked.clear();
+      setFocus(null);
+      pushSelection();
+    }
+
+    repaintRoster();
+  }
+
+  /** Swap the roster's contents and put back the two states `innerHTML` cannot
+   *  carry. The same pair `render()` restores, for the same reason: these are
+   *  fresh nodes and the focus class and the master box's third state both live
+   *  on elements that have just been thrown away. */
+  function repaintRoster() {
+    const slot = bodyEl?.querySelector('.seasons-roster-slot');
+    if (!slot) return;
+    slot.innerHTML = rosterHtml();
+    paintFocusNow();
+    paintCheckAllNow();
+  }
+
   function onChange(e) {
     const select = e.target.closest('.seasons-select');
     if (select) {
@@ -695,7 +859,7 @@ export function createSeasonsBoardView({
        * reach "full". Ticking a running storm here would be a tick the globe
        * declines, which is a control that appears to do nothing. §57.21c. */
       const active = activeIds();
-      const shown = entriesMatching(loading.entries(), filter)
+      const shown = entriesMatching(loading.entries(), filter, nearNow())
         .filter((x) => !active.has(x.storm.id));
       const full = shown.length > 0 && shown.every((x) => ticked.has(x.storm.id));
       for (const x of shown) {
@@ -755,16 +919,48 @@ export function createSeasonsBoardView({
       bodyEl = host.querySelector('#seasons-board-body');
       bodyEl.addEventListener('click', onClick);
       bodyEl.addEventListener('change', onChange);
+      bodyEl.addEventListener('input', onInput);
       bodyEl.addEventListener('keydown', onKeydown);
       render();
       loading.loadIndexOnce();
     },
 
     onEnter() {
+      /* ==> A UNITS CHANGE WHILE THE BOARD WAS CLOSED HAS TO MOVE THE SLIDER.
+       * <== The value is the reader's number in THEIR units, and Settings can
+       * flip those between visits. 500 is a real value on the mile slider and
+       * off the end of the kilometre one, so a stale number would put the thumb
+       * at the maximum while the roster filtered a circle 60% the size — the
+       * control and the list disagreeing, silently. `radiusFromValue` clamps
+       * into whichever range is now in play, so this is a re-seat rather than a
+       * reset: 200 stays 200 in both systems, and only a value the new range
+       * cannot express moves at all. */
+      const r = radiusFromValue(radius, systemNow());
+      if (r) radius = r.radius;
+
       /* Re-announce on every entry. The reader may have closed the board and
        * come back, and the bar must still name the year the globe is showing. */
       announceWhere();
       render();
+    },
+
+    /**
+     * Which door this visit came through. §57.16, §57.19.
+     *
+     * ==> IT SETS THE FILTER AND NOTHING ELSE. <== Called on every entry, from
+     * `seasons/index.js`, before the index has arrived — so there is no season
+     * yet to check the filter against and none is checked. `onSeasonChanging`
+     * runs the moment there is one and drops anything the season does not
+     * offer, which is the same guard a deep-linked year goes through.
+     *
+     * ==> AND IT ALWAYS SETS SOMETHING, INCLUDING BACK TO `all`. <== The board
+     * outlives the session. A reader who filtered to Near home, left, and came
+     * back off the storms list would otherwise find the archive still narrowed
+     * to their house with no memory of having asked for it — a screen that
+     * remembers a choice from a visit that has ended.
+     */
+    openFrom(door) {
+      filter = door === 'home' ? NEAR_HOME_FILTER : 'all';
     },
 
     /** First stop is the year, because choosing a year is why anyone opens

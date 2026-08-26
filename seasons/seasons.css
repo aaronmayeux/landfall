@@ -408,6 +408,36 @@ html[data-seasons="on"] #btn-layers {
 
 .seasons-bad { color: var(--text-primary); }
 
+/* --- the radius slider (§57.19) ------------------------------------------- */
+
+/* ==> THE CONTROL ITSELF IS SETTINGS', NOT A SECOND ONE THAT LOOKS LIKE IT.
+   <== `.slider`, `.slider-row`, `.slider-label` and `.slider-value` all live in
+   `ui/panels.css` and carry the thumb, the track, the focus ring, the coarse-
+   pointer sizing and the hover state. What this rule adds is the ONE thing that
+   is about where the control sits in this drawer rather than about what it is:
+   the gap between it and the filter segments above it. A second set of slider
+   styles here would be a second thing to keep in step with the visual contract
+   (§10), and the first divergence nobody would notice is the 28px touch thumb.
+
+   ==> IT APPEARS AND DISAPPEARS WITH THE FILTER, SO IT NEEDS NO HIDDEN STATE.
+   <== `ui/view-seasons-board.js` puts it in the markup only under Near home. A
+   `display: none` variant would be a rule for a case that cannot happen. */
+.seasons-radius {
+  margin-top: var(--space-snug);
+}
+
+/* ==> A WRAPPER WITH NO BOX, AND THAT IS THE WHOLE RULE. <== The div exists so
+   a radius drag can swap the roster's contents without replacing the range
+   input the reader's thumb is on. It must not change a single thing about the
+   layout it wraps — the footprint slot, the master checkbox and the roster were
+   siblings of the filters before this and still are. `display: contents` is the
+   one declaration that says "I am plumbing", and it is load-bearing: as an
+   ordinary block it would introduce a margin-collapsing boundary and the
+   spacing above the master checkbox would change. */
+.seasons-roster-slot {
+  display: contents;
+}
+
 .seasons-retry {
   min-height: var(--touch-target);
   padding: 0 var(--space-base);
@@ -620,9 +650,30 @@ html[data-seasons="on"] #btn-layers {
   grid-template-columns: minmax(0, 1fr) var(--badge-col);
   grid-template-areas:
     "name  badge"
-    "meta  meta";
+    "meta  meta"
+    "near  near";
   align-items: baseline;
   gap: var(--space-tight) var(--space-snug);
+}
+
+/* ==> HOW CLOSE THIS STORM CAME, ON A LINE OF ITS OWN. §57.19. <== It only
+   exists under the Near home filter, so the track is empty on every other row
+   in the app and costs nothing there — a `grid-template-areas` row with no
+   element in it collapses to zero height.
+
+   ==> IT SPANS THE WHOLE WIDTH RATHER THAN SHARING THE META TRACK. <== The
+   dates already live there, right-aligned, and *"Passed 31 mi WSW as a Cat 2"*
+   beside *"Aug 26 – Sep 1"* is two facts of different kinds competing for one
+   line at small type. Given its own row it reads as what it is: the answer to
+   the question the reader asked the slider. */
+.seasons-approach {
+  grid-area: near;
+  min-width: 0;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Line 2 in the narrow layout, the third column in the wide one. The landfall
@@ -683,7 +734,9 @@ html[data-seasons="on"] #btn-layers {
 @container roster (min-width: 400px) {
   .seasons-row-text {
     grid-template-columns: minmax(0, 1fr) var(--badge-col) var(--meta-col);
-    grid-template-areas: "name badge meta";
+    grid-template-areas:
+      "name badge meta"
+      "near near near";
     gap: var(--space-base);
   }
 }

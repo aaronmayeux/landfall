@@ -119,6 +119,21 @@ function thumbCenterX(el, thumb) {
  */
 export function requireThumbGrab(root) {
   if (!root || root.dataset.sliderGrab === 'true') return;
+
+  /* ==> NO `window`, NO GESTURE TO REFUSE. <== This whole file is about a
+   * pointer coming down on a track, and it binds a `pointerup` listener on
+   * `window` to know when one has finished. Somewhere without one is somewhere
+   * with no pointers at all — a suite driving a stand-in DOM, which is how
+   * `tools/test-seasons-board.mjs` mounts a board.
+   *
+   * ==> IT IS GUARDED AT THIS DOOR RATHER THAN AT EACH CALLER, AND THAT IS THE
+   * POINT. <== Settings has armed this since 2026-07-25 and never met the case;
+   * the archive's radius slider (§57.19) is the second caller and met it on the
+   * first run, throwing a `ReferenceError` that took the whole board's suite
+   * down. A guard in the board would have fixed the board and left the same
+   * trap for the third caller. */
+  if (typeof window === 'undefined') return;
+
   root.dataset.sliderGrab = 'true';
 
   /** The slider whose current gesture was refused, and the value it held when

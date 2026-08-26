@@ -51,6 +51,7 @@ import { createSeasonsBoardView } from '../ui/view-seasons-board.js';
 import { createSeasonDetailView } from '../ui/view-season-detail.js';
 import { reportFor, forgetReports } from '../data/season-reports.js';
 import { resolveSystem } from '../lib/units.js';
+import { getHome } from '../data/home.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { barDetail, createSeasonsBar } from './bar.js';
 import * as deepLink from './deep-link.js';
@@ -242,7 +243,22 @@ export function openSeasons({
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
-    ensureBoard({ bar, drawer, linkReason }).setSeason(state.season);
+    /* ==> WHICH DOOR THIS WAS DECIDES WHICH FILTER OPENS, AND IT IS ASKED ON
+     * EVERY ENTRY. <== §57.16 calls the home door the BETTER one, because Home
+     * already answers what a storm means for this house and the archive answers
+     * the same question in the past tense. Step 4 wrote `from` for exactly this
+     * and this is where it is finally spent.
+     *
+     * ==> IT IS NOT A CONSTRUCTION-TIME DEFAULT, WHICH IS THE MISTAKE THIS
+     * SHAPE AVOIDS. <== The board is built once and outlives every session, so
+     * a filter chosen when it was created would be the filter forever: enter
+     * once from the dashboard and every later visit off the storms list would
+     * still open on Near home. A reader with no house set gets All anyway —
+     * `filtersFor` does not offer a filter there is no home for, and
+     * `onSeasonChanging` drops any filter the season does not carry. */
+    const board = ensureBoard({ bar, drawer, linkReason });
+    board.openFrom(from);
+    board.setSeason(state.season);
     /* `go` rather than `push`: entering the archive is a fresh start, and a
      * history stack reaching back into the live app is a Back button that
      * walks a reader out of a world the bar says they are still in. */
@@ -386,6 +402,15 @@ function ensureBoard({ bar, drawer, linkReason }) {
 
   boardView = createSeasonsBoardView({
     seasons: seasonsData,
+
+    /* ==> BOTH ARE GETTERS, AND `ui/` NEVER IMPORTS `data/`. <== §12. The
+     * board is registered once and outlives every session, so a value read
+     * here would be a house and a unit system frozen at the moment somebody
+     * first opened the archive. `data/home.js` and `data/settings-prefs.js`
+     * both answer from storage on every call, so asking at render time is both
+     * current and cheap. §57.19. */
+    home: () => getHome(),
+    system: () => resolveSystem(settingValue('units')),
     /* ==> THE SECOND ROAD, AND IT IS INJECTED SEPARATELY ON PURPOSE. <==
      * §57.30 step 5b. `data/seasons.js` reads a settled year out of a static
      * file in this repo; `data/seasons-live.js` reads the season still

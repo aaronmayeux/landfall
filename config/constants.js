@@ -3985,6 +3985,18 @@ export const STORAGE_KEY = Object.freeze({
    * ended storm is out of both feeds, so a reload has nothing to rebuild it
    * from. Every other store on this list can be thrown away and refetched. */
   ended: 'landfall.ended',
+  /* How close every storm since 1851 came to this house — data/near-home-index.js.
+   * THE ONLY KEY ON THIS LIST THAT HOLDS A COMPUTED ANSWER RATHER THAN A
+   * PREFERENCE OR A RECORD, and it is here for one reason: producing it costs
+   * a 0.94 MB download and a pass over 84,365 track segments, so doing it once
+   * per house beats doing it once per visit.
+   *
+   * ==> LOSING IT MUST BE SILENT. <== §57.35 FIX 8's one surviving sentence.
+   * It is a cache of an answer that can always be recomputed, so a cleared
+   * store means "work it out again", never "no storm has ever come near you".
+   * Absence is this whole feature's subject and is the one thing it must not
+   * accidentally state. */
+  nearHome: 'landfall.nearHome',
   /* The anonymous device number — lib/device-id.js. THE ONLY KEY ON THIS LIST
    * THAT IS SENT ANYWHERE, and the only cross-visit identifier this app has
    * ever had. Added 2026-08-05 as a deliberate reversal of the old "no
@@ -6642,11 +6654,47 @@ export const SEASONS = Object.freeze({
   /* --- Near home (§57.19) -------------------------------------------------- */
 
   /** The radius slider. Under 10 miles is noise against a position every six
-   *  hours; over 500 and everything in the Atlantic matches. */
-  nearHomeMinMi: 10,
-  nearHomeMaxMi: 500,
-  nearHomeStepMi: 10,
-  nearHomeDefaultMi: 120,
+   *  hours; over 500 and everything in the Atlantic matches.
+   *
+   *  ==> IT IS DEFINED TWICE, ONCE PER UNIT SYSTEM, AND THAT IS NOT
+   *  DUPLICATION. <== §57.19 wrote this range in miles because a reader
+   *  thinks in miles. This app has a metric reader too (`lib/units.js`), and
+   *  the two ways of serving them are both worse than this one: converting
+   *  500 miles gives a slider that runs to 805 and steps by 16, and holding
+   *  the slider in miles while every other distance on screen is in
+   *  kilometres is a control lying about its own units. So each system gets
+   *  round numbers of its own, covering the same ground — 800 km is 432 nm
+   *  and 500 mi is 434 nm, which is the same circle to within half a percent.
+   *
+   *  `default` is the radius the Home dashboard's standing line quotes as
+   *  well as the one the slider opens on, deliberately: a door that says
+   *  "within 120 miles" and then opens a screen set to a different number is
+   *  the app disagreeing with itself in two taps. */
+  nearHomeRange: Object.freeze({
+    imperial: Object.freeze({ min: 10, max: 500, step: 10, default: 120, unit: 'mi' }),
+    metric: Object.freeze({ min: 20, max: 800, step: 20, default: 200, unit: 'km' }),
+  }),
+
+  /** How far out the whole-archive answer is KEPT, in statute miles.
+   *
+   *  ==> IT IS THE LARGER OF THE TWO SLIDER MAXIMA, AND THAT IS THE WHOLE
+   *  RULE. <== The index pass runs once and its result is stored; anything
+   *  further from home than the slider can ever ask about is weight with no
+   *  question behind it. 500 mi covers the imperial maximum exactly and the
+   *  metric one (800 km = 497 mi) with room to spare, so switching units can
+   *  never reach past what was kept. Measured on the real archive: 526
+   *  storms for New Orleans, 775 for Miami, 112 for Honolulu — 10 to 65 KB
+   *  of JSON, which is why this can be stored at all. */
+  nearHomeKeepMi: 500,
+
+  /** ==> THE WHOLE-ARCHIVE PASS WAITS UNTIL AFTER THE APP HAS DRAWN. <==
+   *  §57.35 fault 4. It reads two files that together are 0.94 MB over the
+   *  wire, and it exists to fill in one sentence at the foot of the
+   *  dashboard. Starting it during boot would put that megabyte in front of
+   *  the storm a reader actually opened the app for. Long enough that first
+   *  paint and the first poll are both done; short enough that the sentence
+   *  is there before anyone scrolls to the bottom. */
+  nearHomeIndexDelayMs: 4000,
 
   /** ==> THE INDEX MEASURES AGAINST THE LINE, NOT THE POINTS. <== A storm
    *  moving 20 mph covers 120 miles between six-hourly records, so a fast
