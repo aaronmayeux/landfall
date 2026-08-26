@@ -89,7 +89,7 @@ ok(jsMs === cssMs, `the two agree (motion.js ${jsMs}, index.html ${cssMs})`);
 /* Comments talk ABOUT these strings constantly, so lines that are comment
  * continuations or contain no quote at all are skipped. What is left is
  * user-facing copy. */
-/* `waitingHtml(` is `ui/seasons-board-markup.js`'s one-line front door onto
+/* `waitingHtml(` is `ui/seasons-board-furniture.js`'s one-line front door onto
  * `dotted()` — the season board hands it a sentence and gets the animated
  * version back. It was added when the board's markup was split out (§57.18b):
  * the view kept the sentences and the markup file kept the import, so the view

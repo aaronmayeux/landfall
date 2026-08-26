@@ -24,7 +24,7 @@
  * clock, no `config/`.
  */
 
-import { footprintNoteHtml } from './seasons-board-markup.js';
+import { footprintNoteHtml } from './seasons-board-furniture.js';
 
 /**
  * Bring one row into view, and no further than it has to.

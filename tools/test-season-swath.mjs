@@ -52,7 +52,10 @@ const { buildSeasonSwath, timelineFor } = await import('../lib/season-windswath.
 const {
   ensureSeasonSwath, setSeasonSwathSet, setSeasonSwathFocus, clearSeasonSwath, __internals,
 } = await import('../map/layers/season-swath.js');
-const { footprintNoteHtml } = await import('../ui/seasons-board-markup.js');
+/* Moved to `ui/seasons-board-furniture.js` on 2026-08-25 with the cut §12's
+ * table had named: the footprint note is a SEASON-level sentence, not part of a
+ * storm's row. Nothing about it changed. */
+const { footprintNoteHtml } = await import('../ui/seasons-board-furniture.js');
 
 const seasonOf = (basin, year) => {
   const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
