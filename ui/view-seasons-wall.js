@@ -189,13 +189,52 @@ export function createSeasonsWallView({
 
   /* --- markup -------------------------------------------------------------- */
 
-  /** How wide a strip actually is, measured rather than assumed. The drawer is
-   *  a sheet on a phone and a rail on a desktop and the two are different
-   *  widths, so a hardcoded number would size every dot for one of them. */
+  /** How wide a strip actually is, measured rather than assumed.
+   *
+   *  ==> IT MEASURES THE STRIP THAT IS ALREADY ON SCREEN, WHICH IS THE WHOLE
+   *  RESIZE BUG. <== Aaron on glass, 2026-08-26: the dots were one size on
+   *  first open and a smaller one after coming back from a season. He was
+   *  right and it was not a trick of the eye. This runs while the NEXT render
+   *  is still being assembled, so on the very first paint there is no strip to
+   *  measure and it fell back to a guessed width — then every later render
+   *  measured the real one and got a different answer. Two sizes, decided by
+   *  whether the reader had been here before.
+   *
+   *  The fix is not a better guess. It is `settleDotSize` below: paint, then
+   *  measure, then correct — and the correction is a custom property rather
+   *  than a re-render, so it cannot cost 175 rows of markup. */
   function stripPx() {
     const slot = bodyEl?.querySelector('.wall-strip-slot');
     const measured = slot?.getBoundingClientRect?.()?.width;
     return Number.isFinite(measured) && measured > 0 ? measured : FALLBACK_STRIP_PX;
+  }
+
+  /**
+   * Correct the dot size once the browser has actually laid the strip out.
+   *
+   * ==> THE SIZE IS A CUSTOM PROPERTY, SO THIS COSTS ONE STYLE WRITE. <== The
+   * markup carries no pixel figures at all; every dot reads `--wall-dot` and
+   * `--wall-dot-gap` off the container. So correcting a strip that turned out
+   * to be 300px rather than the guessed 254 is two `setProperty` calls, not a
+   * rebuild of every row — which matters because this runs on every entry.
+   *
+   * ==> ONE FRAME, AND ONE CORRECTION. <== `requestAnimationFrame` puts this
+   * after layout. It deliberately does not loop: the dot size does not change
+   * the strip's width — the slot is a `1fr` grid track and takes what is left
+   * over whatever is inside it — so one pass converges. A loop here would be a
+   * measure-write-measure cycle on a scrolling list, which is the frame budget
+   * gone.
+   */
+  function settleDotSize() {
+    if (status !== 'ok' || !basin) return;
+    const raf = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
+    raf(() => {
+      const el = bodyEl?.querySelector('.wall');
+      if (!el?.style?.setProperty) return;
+      const { size, gap } = dotSizeFor(wall, basin, stripPx());
+      el.style.setProperty('--wall-dot', `${size}px`);
+      el.style.setProperty('--wall-dot-gap', `${gap}px`);
+    });
   }
 
   function basinsHtml() {
@@ -238,12 +277,12 @@ export function createSeasonsWallView({
       return `<p class="wall-note">The record holds no seasons for this basin.</p>`;
     }
 
-    return basinsHtml() + liveHtml(size, gap) + wallHtml(rows, { size, gap, filtered: false });
+    return basinsHtml() + liveHtml() + wallHtml(rows, { size, gap, filtered: false });
   }
 
   /** The pinned row for the season in progress, in whichever of its three
    *  states it is in. Always something — see `loadLive`. */
-  function liveHtml(size, gap) {
+  function liveHtml() {
     if (liveStatus === 'loading') {
       return liveRowPlaceholderHtml(liveYear, dotted('reading this season…'));
     }
@@ -252,13 +291,14 @@ export function createSeasonsWallView({
     }
     return liveRowHtml(
       liveRow({ year: liveYear, facts: liveFacts, running: liveRunningIds?.() ?? null }),
-      { size, gap },
+      { basinLabel: seasons.basinLabel(index, basin) },
     );
   }
 
   function render() {
     if (!bodyEl) return;
     bodyEl.innerHTML = bodyHtml();
+    settleDotSize();
   }
 
   /* --- input ---------------------------------------------------------------

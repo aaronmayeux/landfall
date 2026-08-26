@@ -6666,16 +6666,26 @@ export const SEASONS = Object.freeze({
    *  in the ordinary case.
    *
    *  ==> THE FLOOR EXISTS BECAUSE THE ATLANTIC'S BUSIEST SEASON IS 31 STORMS.
-   *  <== Measured off `seasons/wall.json`: 2005. On a 390px phone that is
-   *  about 8px of strip per storm before the gap, so an unclamped divide lands
-   *  near the floor already and a basin any busier would compute a dot smaller
-   *  than the anti-aliasing. Below 3px a dot stops being a dot.
+   *  <== Measured off `seasons/wall.json`: 2005 and 2020, both 31. That single
+   *  number sets the scale for all 175 rows, because a violent year has to
+   *  physically look longer than a quiet one or there is no reason to draw a
+   *  wall at all.
+   *
+   *  ==> AND IT IS WHY "BIGGER DOTS AND WIDER GAPS" CANNOT BOTH BE HAD. <==
+   *  Aaron asked for both on glass, 2026-08-26. The strip has roughly 300 CSS
+   *  pixels on a 390px phone, so 31 storms get about 9.7px each INCLUDING the
+   *  gap — dot plus gap cannot exceed that without the busiest rows spilling
+   *  past the count column, and clipping 2005 would make the wall lie about
+   *  the year it exists to show. The room was found by trimming the year and
+   *  count columns instead, and the glow is what does the rest of the work:
+   *  a 7px dot with `--dot-glow-blur` around it reads considerably larger than
+   *  a 7px dot without one.
    *
    *  The ceiling stops a sparse basin — or a wide desktop rail — drawing a
    *  quiet year as a row of beach balls, which would make 1914's single storm
    *  louder than 2005's thirty-one. */
-  wallDotMin: 3,
-  wallDotMax: 12,
+  wallDotMin: 4,
+  wallDotMax: 14,
 
   /** Between dots. Two pixels is enough to read thirty-one of them as
    *  thirty-one rather than as a bar, and small enough that a quiet year's

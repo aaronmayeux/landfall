@@ -262,6 +262,16 @@ const index = {
   ok('the tally is on screen under every combination',
     /seasons shown/.test(m.body.innerHTML));
   ok('the era line is drawn once', (m.body.innerHTML.match(/wall-era/g) || []).length === 1);
+
+  /* ==> EVERY PRE-SATELLITE ROW CARRIES THE MARK, NOT JUST A BAND BEHIND
+   * THEM. <== The shaded band was invisible on glass, and it could never have
+   * survived step 3's sorts scattering these rows anyway. */
+  const starred = m.host.querySelectorAll('.wall-row[data-pre="1"]');
+  ok(`every pre-1966 row is starred (${starred.length})`,
+    starred.length > 0 && starred.every((r) => r.querySelector('.wall-star')));
+  ok('and no satellite-era row is',
+    m.host.querySelectorAll('.wall-row').filter((r) => r.dataset.pre !== '1')
+      .every((r) => !r.querySelector('.wall-star')));
   ok('and the pill is told which basin', m.wheres.at(-1)?.basin === 'atlantic');
 
   /* Tapping a year hands over a NUMBER and a basin, and nothing else — the
@@ -399,10 +409,25 @@ section('9. The season in progress');
   await settle(); await settle(); await settle(); await settle();
 
   ok('the pinned row is on the wall', m.body.innerHTML.includes('wall-row-live'));
+
+  /* ==> AND WITH NOTHING RUNNING IT STILL NAMES THE BASIN. <== The zero case
+   * is the one that read wrong on glass, so it is the one asserted. */
+  const quiet = mount({
+    wallResult: () => ({ status: 'ok', wall }),
+    indexResult: () => ({ status: 'ok', index }),
+    running: new Set(),
+  });
+  await settle(); await settle(); await settle(); await settle();
+  ok('a basin with nothing running says so about THAT basin',
+    /nothing active in the Atlantic right now/.test(quiet.body.innerHTML));
   ok('and it names the current year',
     m.host.querySelector('.wall-row[data-live="1"]')?.dataset.year === '2026');
-  ok('==> AND IT SAYS HOW MANY STORMS ARE STILL ACTIVE <==',
-    /1 active storm\b/.test(m.body.innerHTML));
+  /* ==> AND IT NAMES THE BASIN, BECAUSE LEAVING IT OUT READ AS A LIE. <==
+   * The Atlantic row said "nothing active right now" while Iselle and Lala
+   * were running in the Pacific. The count was right and the sentence claimed
+   * the whole world. */
+  ok('==> AND IT SAYS HOW MANY STORMS ARE STILL ACTIVE, IN WHICH BASIN <==',
+    /1 still active in the Atlantic/.test(m.body.innerHTML));
 
   /* It sits ABOVE the record, not inside it — a row in the run of years would
    * say the season was settled. */
