@@ -69,6 +69,36 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> STEP 14, THE WALL OF YEARS. PUSHES 1 AND 2 ARE CONFIRMED ON GLASS
+2026-08-26. AARON: "ALL WORKS." <==** The wall is the archive's front door now
+and the 175-year dropdown is gone. **Read §57.36a before touching this screen**
+— it is the as-built record and it holds the numbers, the two honesty flags
+step 4 depends on, and the three faults that reached his phone.
+
+Confirmed working: the wall, the pinned season in progress (real dots for what
+ended, `n active in the region` for what has not), the asterisk on
+pre-satellite years, the glow, one dot size across the screen, and the drawer
+reopening on the rung the reader left.
+
+**NEXT IS STEP 3 — filters and sort, stacking per §57.36: filter first, sort
+what survives.** Two things decided before it starts:
+
+1. **The near-home slider stays OUT of step 3.** §57.36 lists it among the
+   wall's default controls and it is not free here the way it is inside a
+   season (§57.19a) — the wall never loads track data, so filtering 175 years
+   by distance needs the whole-basin pass, 0.93 MB, phone cost unmeasured. It
+   gets its own pass once that number exists.
+2. **Build the browser check alongside step 3, not after.** All three faults
+   that reached Aaron's phone this session lived in the seam between the real
+   drawer and `tools/markup-dom.mjs`, which has no history stack and stayed
+   green through every one of them. `tools/seasons-rung-check.mjs` is the
+   pattern; step 3 puts considerably more state on that screen.
+
+Still unbuilt after step 3: the landfall triangles and honesty marks (step 4),
+the entry-point unwind and the top pill (step 5 and 6, §57.37 as amended — the
+doors do NOT change, only `#seasons-bar` is deleted), and Storm Details (step
+7, payload cost still unresolved).
+
 **==> THE ARCHIVE GLOBE AND ITS DRAWER ARE CONFIRMED ON GLASS 2026-08-25.
 AARON: "ALL WORKS GREAT." NOTHING HERE IS WAITING ON HIM. <==** Push 1 (§57.21c
 — the globe) and push 2 item 1 (§57.21b — the sheet's height) are both landed,

@@ -3221,8 +3221,14 @@ roster.
 
 ---
 
-**STEP 14 — THE WALL OF YEARS.** §57.29. Optional, last, and only if the year
-picker has proven to be the weak link.
+**STEP 14 — THE WALL OF YEARS.** §57.29, §57.36, and **§57.36a for what it
+actually is now that it is built.** No longer optional and no longer last: it
+is the archive's front door, and the year picker it replaced is deleted.
+
+Sub-steps 1 and 2 (the wall, and the pinned season in progress) are **DONE** —
+on `main`, confirmed on Aaron's phone 2026-08-26. Remaining: filters and sort,
+then the landfall triangles and honesty marks, then the entry-point unwind and
+the top pill (§57.37 as amended), then Storm Details.
 
 ---
 
@@ -3825,7 +3831,46 @@ it "the archive bar and the two doors into it", and a single button cannot be
 two doors without deciding what happens to the second. That has to be answered
 before this is built, not during.
 
+#### RESOLVED — Aaron, 2026-08-26. Half of this section is withdrawn.
+
+**The entry points do not change.** The two existing doors stay exactly as they
+are: the `Past storms` row at the foot of the live storm list, and the Home
+dashboard row that opens with the near-home filter already applied. `btn-storms`
+is NOT the way in and never becomes one — it opens the live storm list, as it
+always did. The proposal above to make it the door is withdrawn, and the "two
+doors" objection above dissolves with it: there was never a need to collapse
+two doors into one button.
+
+A measured correction while this section is open: it says `btn-storms` is "one
+of the four `.control` buttons". There are FIVE — recenter, home, storms,
+layers and settings — so the rejected fifth-button option would have been a
+sixth element in that cluster, which is a stronger argument against it than the
+one the section makes.
+
+**What DOES change is still the bar.** `#seasons-bar` is deleted, its
+`--seasons-bar-h` with it, and the jobs it was doing move:
+
+- **Naming where you are, and being the way out** → a new, small pill at the
+  TOP of the archive globe. §57.38, as amended there. Not `#storm-pill`: both
+  are on screen at once.
+- **Reopening the drawer** → `btn-storms` while the archive is open reopens the
+  ladder at the rung the reader left, rather than the live storm list. The
+  rung memory this needs is already built (`lastRung` in `seasons/index.js`,
+  fed by `drawer.onChange`) and is proved by `tools/seasons-rung-check.mjs`.
+- **Source health** → nowhere, because it was never here. The objection above
+  is correct and `ui/status.js` keeps it. Aaron's call, 2026-08-26: the top
+  status strip is suppressed inside the archive, because nothing in there reads
+  a live feed. A season that will not load still speaks, through the board's
+  own three states (`ui/seasons-board-loading.js`).
+
+**Only the last two bullets remain unbuilt.** They are step 5 and step 6.
+
 #### What the bar costs and what it buys back
+
+**MEASURED 2026-08-26: `--seasons-bar-h` has five references and all five are
+inside `seasons/seasons.css`.** Nothing outside that file subtracts from it and
+nothing reads it through `getComputedStyle`. The unwind is smaller than the
+paragraph below fears.
 
 `--seasons-bar-h` is published on `<html>` and every sheet in the app is laid
 out above it, because §57.16's own header notes that a bar added underneath a
@@ -3872,10 +3917,16 @@ archive bar goes, these are the names and the ladder that replace it.
 
 The live globe already carries `#storm-pill` along the bottom: a real button
 with a text label and a busy state, sized off `--pill-inset` and `--pill-mark`.
-**The archive does not get a second pill. It gets this one, saying something
-else.** A second element that looks identical and lives in a different file is
-how two things drift apart, and any pattern used twice gets extracted before
-the second use.
+**SUPERSEDED — Aaron, 2026-08-26. The archive gets TWO pills, and they are
+different things.** The rule above assumed the archive needed one pill doing
+one job. It needs two, and they are on screen at the same time: the existing
+`#storm-pill` stays at the bottom and goes on saying what is currently drawn,
+while a second, smaller pill at the top says "you are in the past" and is the
+way out. One element cannot be in two places saying two things, so the
+extract-before-the-second-use rule does not reach this case. What the rule was
+protecting against — a lookalike drifting in another file — is still real, and
+the answer to it is that the top pill carries no detail at all: it has one
+sentence and one action, so there is nothing in it to drift.
 
 What it says in the archive: **what is currently being shown**, in the same
 plain voice the live pill uses. Candidates, cheapest first — how many storms
@@ -3908,8 +3959,8 @@ about to land.
 | Rung | Entry | Heading | Back says |
 |---|---|---|---|
 | 1 — the live globe | — | — | — |
-| 2 — **Seasons** (the wall) | the storm-list control (§57.37) | `Seasons` | closes to the globe |
-| 3 — **Season** (one year's board) | tapping a year row | the year itself | `Seasons` |
+| 2 — **Past storms** (the wall) | the two existing doors (§57.16) | `Past storms` | closes to the globe |
+| 3 — **Season** (one year's board) | tapping a year row | the year itself | `Past storms` |
 
 **Rung 3's heading is the YEAR, not the word "Season".** `2005` is the most
 useful four characters that could sit there, the user tapped a year to get
@@ -3949,13 +4000,124 @@ the same work AND extends to the third rung for free. `Seasons` / `Season` had
 no natural third term; `Storm Details` falls straight out of this one. **It is
 a system rather than three separate choices, and that is why it is settled.**
 
+### 57.36a The wall, as built
+
+Step 14's first two pushes. Everything here is on `main` and confirmed on
+Aaron's phone; §57.36 above is the design and this is what shipping it taught.
+
+**The data is a second file, not a section of the first.** `seasons/wall.json`,
+46 KB raw and 10.4 KB gzipped, written by `tools/seasons-wall.mjs` on the same
+monthly runner that refreshes HURDAT2. Every storm reduces to four numbers —
+`[peakCategory, landfall, ace, peakWindKt]` — which is exactly what §57.36's
+chips, landfall toggle and five sort keys need and nothing more. It is separate
+from `seasons/index.json` because the index is fetched by anyone entering the
+archive at all, including through a deep link to one year, and 46 KB in front
+of that reader buys them nothing.
+
+The narrow alternatives were measured on the real files before the shape was
+chosen — 2,286 B gzipped for categories alone, 3,159 B with landfall — and
+rejected: they would have saved 8 KB and forced three controls to fetch
+something else. Re-derive with `node tools/seasons-wall.mjs --measure`.
+
+**One scale covers the screen, and 31 storms set it.** 2005 and 2020 are the
+widest seasons on record, so a strip has about 9.7 CSS pixels per storm on a
+390px phone INCLUDING the gap. Aaron asked for bigger dots and wider gaps on
+glass; they cannot both be had, because exceeding that budget means clipping
+2005, and the wall lying about its longest row defeats the screen. Room was
+found by trimming the year and count columns instead, and the glow does the
+rest. **If it is still too small, the next lever is letting the busiest rows be
+denser than the others, which costs the row-to-row comparison — a product call,
+not a technical one.**
+
+**The dots are elements, not SVG.** They have to glow the way the live storm
+list's do, that glow is `box-shadow` off `--dot-glow-blur`, and `box-shadow`
+does not apply to an SVG circle. The alternatives were a filter per row — 175
+filter passes down a scroll — or a faked halo, which would be a second
+definition of a glow. Same construction as the live list, one rule, one place.
+
+**The size is corrected after layout, never guessed.** It is a custom property
+on the drawer BODY, so a correction costs two style writes rather than 175 rows
+of markup, and it is on the body rather than on `.wall` because the pinned live
+row sits outside that container and would otherwise draw at a different size.
+
+**An asterisk marks the pre-satellite years, not a shaded band.** §57.36 called
+for shading; at the contrast a sepia palette allows it was invisible on glass.
+The mark survives any palette, a colour-blind reader, and — the reason it was
+always the better answer — a sort that scatters the rows, which a contiguous
+band cannot. The era line carries the key.
+
+#### The season in progress is pinned above the record
+
+**It cannot come from `wall.json` and this is not an oversight.** That file is
+built from HURDAT2, the REVIEWED record, which does not hold the current year
+until the following spring (§57.11). Removing the year dropdown while landing
+on a wall whose newest row is last year would have left the season actually
+happening unreachable — the regression this row exists to prevent.
+
+So the browser builds one row from the live facade and pins it above the wall
+with a rule underneath. **Ended storms get real dots; storms still running are
+counted in words** — `2 active in the region` — which is §57.21c's rule in a
+new place: a storm the live app is still drawing in colour is not part of the
+past, and is not on the sepia globe either.
+
+Two honesty flags ride with it, both load-bearing for step 4:
+
+- `activeKnown` is false when the live feed has never answered. "Cannot ask" is
+  not "nothing is running", so neither claim is made.
+- `landfallsKnown` is **always** false. Measured on the real 2026 b-decks
+  (§57.18b): the working best track carries no landfall marker, so a 0 there
+  means "not recorded yet". **Step 4 must read this flag and draw nothing,
+  rather than drawing the absence as a fact.**
+
+The row says "in the region" rather than naming the basin. Naming it was the
+fix for the row once reading as a lie — the Atlantic row said "nothing active
+right now" while two Pacific storms were running — but spelling out `East and
+Central Pacific` pushed the count off a phone's right edge. The basin switch
+sits directly above the row and is the only thing "the region" can mean.
+
+#### What left the board, and what the ladder cost
+
+The 175-year `<select>` and the basin segments are gone from Season Details.
+The step buttons stay: stepping to a neighbour is a different act from choosing
+out of 175. `setSeason` and `setBasin` both LOAD now — they had one caller
+between them before, a `?season=` link read before the index arrived.
+
+**The entry camera flight moved to the wall**, because the board no longer
+loads anything until a year is tapped.
+
+**Reopening the drawer resumes the rung**, including a storm, with the rungs
+below it rebuilt so Back still walks the ladder. The memory is fed by
+`drawer.onChange` rather than by recording taps, and `restoreRung` reads a
+SNAPSHOT taken before it navigates — its own first move would otherwise
+overwrite what it is restoring. Both faults shipped once each and are held down
+by `tools/seasons-rung-check.mjs`, a real-browser check kept precisely because
+the node stand-in has no history stack and stayed green through both.
+
+#### Still open on this screen
+
+- **Filters and sort** (step 3), **the glow's landfall triangles and the
+  honesty marks** (step 4). `filtered` is already threaded through the markup
+  and the count column already carries both figures, so step 3 fills a slot.
+- **The near-home slider.** §57.36 lists it among the wall's default controls.
+  It is NOT free here the way it is inside a season (§57.19a): the wall never
+  loads track data, so filtering 175 years by distance needs the whole-basin
+  pass — 0.93 MB, and its cost on a phone has never been measured. **Do not
+  build it into step 3 on the assumption it behaves like the board's.**
+
 #### The three strings per rung
 
 | Rung | Opens from | Heading | Back says |
 |---|---|---|---|
-| **Seasons** | the storm-list control (§57.37) | `Seasons` | closes to the globe |
-| **Season Details** | tapping a year row | the year — `2005` | `Seasons` |
+| **Past storms** (the wall) | the two existing doors (§57.16) | `Past storms` | closes to the globe |
+| **Season Details** | tapping a year row | the year — `2005` | `Past storms` |
 | **Storm Details** | tapping a storm in the roster | the storm's name | the year — `2005` |
+
+**CORRECTED 2026-08-26: the reader never sees the word `Seasons`.** The table
+above said `Seasons` in three places and §57.16a says every on-screen string
+for this feature reads `Past storms`. Two names for one thing on a phone is
+what that rule exists to prevent, so the on-screen name wins and `Seasons`
+survives only as the name of the SECTION, never as a string. The entry column
+is corrected too — see §57.37.
 
 **Each back control names the DESTINATION, never the word "Back".** Rung 3's
 back says `2005` because that is where the tap lands, not `Season Details`,
