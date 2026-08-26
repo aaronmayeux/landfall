@@ -3931,3 +3931,62 @@ should be written down rather than left as a gap somebody fills by accident.
 sepia to say "you are in the past". **A heading reading `Seasons` and a sepia
 palette have to do that job now.** The palette is already doing most of it; the
 words must not fight it by being vague.
+
+### 57.39 The ladder — SETTLED
+
+**Aaron's call, 2026-08-26.** This supersedes the naming question left open in
+§57.38 and fills the fourth rung that section flagged as missing.
+
+```
+Seasons  ->  Season Details (year)  ->  Storm Details (name)
+```
+
+**The naming objection in §57.38 is resolved, and Aaron's answer is better than
+the one recommended there.** That section argued for `Seasons` / `Season` on
+the grounds that plural-then-singular carries the relationship. Aaron kept the
+plural for the list and made `Details` a consistent suffix instead, which does
+the same work AND extends to the third rung for free. `Seasons` / `Season` had
+no natural third term; `Storm Details` falls straight out of this one. **It is
+a system rather than three separate choices, and that is why it is settled.**
+
+#### The three strings per rung
+
+| Rung | Opens from | Heading | Back says |
+|---|---|---|---|
+| **Seasons** | the storm-list control (§57.37) | `Seasons` | closes to the globe |
+| **Season Details** | tapping a year row | the year — `2005` | `Seasons` |
+| **Storm Details** | tapping a storm in the roster | the storm's name | the year — `2005` |
+
+**Each back control names the DESTINATION, never the word "Back".** Rung 3's
+back says `2005` because that is where the tap lands, not `Season Details`,
+which is a label for a kind of screen rather than the screen being returned to.
+
+#### ==> 41% OF THE ARCHIVE HAS NO NAME, AND THE THIRD RUNG'S HEADING IS BUILT ON ONE. <==
+
+Measured across both basins: **3,266 storms, 1,915 named, 1,351 unnamed — 41%.**
+Naming did not begin until 1950, so nearly every storm before then is a blank.
+
+`Storm Details (name)` is therefore a heading with no value for two of every
+five storms in the archive, and the default failure is that it renders empty or
+prints `undefined` — §5's fabrication rule and its silence rule at once. The
+rung needs a stated fallback before it is built:
+
+- **A storm with an alias uses it.** §57.14's list is exactly this — Galveston
+  1900, the Labor Day hurricane of 1935. These are the famous ones, and they
+  are the ones most likely to be opened.
+- **Everything else needs a constructed heading**, not a blank. Something built
+  from what the record does hold — the year and the month it formed, or its
+  storm number within the season. `Unnamed · September 1899` is a real heading;
+  an empty bar is a bug.
+
+**The back label on rung 3 is unaffected** — it is the year, which every storm
+has. Only the heading is exposed.
+
+#### What rung 3 costs, and it is the expensive one
+
+§57.17a measured a full Tier 2 storm at **7.7 MB, and 4.6 MB of that is two
+geometry files** — forecast wind radii and the cone. Rungs 1 and 2 are cheap;
+this one is not. Adding `Storm Details` to the ladder means deciding what a
+storm detail actually loads, and "everything NHC published" is not the answer
+at 7.7 MB a storm on a phone. **That is a separate decision and it is not made
+here** — this section settles the NAME and the NAVIGATION only.
