@@ -177,10 +177,12 @@ export function createClockEngine({ onStep, onState, now, raf, cancel } = {}) {
       endedAtMs = 0;
       if (!span && playing) { playing = false; stop(); }
       announce();
-      /* The globe is told even when stopped, so a reader who ticks a storm
-       * while paused sees it appear at the moment they are parked on rather
-       * than having to nudge the scrubber to wake it up. */
-      if (span) emit();
+      /* ==> IT DOES NOT DRAW. §57.23's first line: STATIC TRACKS ARE THE
+       * DEFAULT. <== This used to `emit()` here, which put the globe under the
+       * clock the instant a span existed — at the opening moment, where every
+       * storm is unborn or one vertex old. Ticking four storms therefore drew
+       * an empty world. The caller pushes whole tracks on every tick and the
+       * clock takes over only once somebody engages it. */
     },
 
     play() {
@@ -191,6 +193,13 @@ export function createClockEngine({ onStep, onState, now, raf, cancel } = {}) {
       if (at() >= span.endMs) cutMs = span.startMs;
       endedAtMs = 0;
       playing = true;
+      /* ==> THE FIRST DRAW HAPPENS ON THE PRESS, NOT ON THE FIRST STEP. <==
+       * Until the reader engages, the globe is showing WHOLE tracks (§57.23's
+       * default). Waiting for the loop to owe a step would leave the finished
+       * season on screen for a tenth of a second and then snap it back to the
+       * beginning, which reads as a stutter on the one press this feature is
+       * about. */
+      emit();
       announce();
       start();
     },

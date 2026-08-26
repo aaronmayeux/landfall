@@ -77,6 +77,18 @@ let detailView = null;
  *  which would draw a second visit's tracks into a dead facade. */
 let currentArchiveGlobe = null;
 
+/** The CURRENT session's clock and its controls (§57.23a). ==> SAME SHAPE AND
+ *  SAME REASON AS `currentArchiveGlobe` ABOVE, AND STEP 10 SHIPPED WITHOUT IT.
+ *  <== The board is registered ONCE for the page; the bar and the clock are
+ *  rebuilt on every entry. So a board callback that closed over the clock it
+ *  saw on the first visit went on driving that dead engine forever, updating a
+ *  detached element, while the row actually on screen was never told anything
+ *  at all — a blank play button, an uninitialised scrubber, and a play press
+ *  that did nothing. Reached through module state instead, exactly as the
+ *  globe already was. */
+let currentClock = null;
+let currentClockBar = null;
+
 /** The CURRENT session's way of asking the live app what is still running
  *  (§57.21c). Same shape and same reason as `currentArchiveGlobe` above: the
  *  board is registered once and lives for the page, while the injection
@@ -138,8 +150,8 @@ export function openSeasons({
    * building a control in the middle of it would put DOM work on the one path
    * that already re-pushes geometry. */
   const clockBar = createSeasonsClockBar({
-    onToggle: () => safely(() => clock.toggle()),
-    onSeek: (ms) => safely(() => clock.seek(ms)),
+    onToggle: () => safely(() => currentClock?.toggle()),
+    onSeek: (ms) => safely(() => currentClock?.seek(ms)),
   });
 
   /**
@@ -201,7 +213,7 @@ export function openSeasons({
 
   const clock = createClockEngine({
     onStep: (cutMs) => drawAt(cutMs),
-    onState: (s) => safely(() => clockBar.setState(s)),
+    onState: (s) => safely(() => currentClockBar?.setState(s)),
   });
 
   const bar = createSeasonsBar({
@@ -282,6 +294,8 @@ export function openSeasons({
      * left. `destroy` also drops the span, so coming back to a different year
      * cannot find last year's moment still held. */
     safely(() => clock.destroy());
+    currentClock = null;
+    currentClockBar = null;
     clockTracks = [];
     lastTrail = '';
     safely(() => archiveGlobe?.clearTracks?.());
@@ -343,11 +357,13 @@ export function openSeasons({
      * a checkbox, where Space already means something. It reports whether it
      * acted, and only then is the page's own scroll suppressed. */
     onSpace = (e) => {
-      if (clockBar.handleKey(e)) e.preventDefault();
+      if (currentClockBar?.handleKey(e)) e.preventDefault();
     };
     document.addEventListener('keydown', onSpace);
 
     currentArchiveGlobe = archiveGlobe || null;
+    currentClock = clock;
+    currentClockBar = clockBar;
     currentLiveRunningIds = liveRunningIds || null;
     /* ==> WHICH DOOR THIS WAS DECIDES WHICH FILTER OPENS, AND IT IS ASKED ON
      * EVERY ENTRY. <== §57.16 calls the home door the BETTER one, because Home
@@ -541,14 +557,20 @@ function ensureBoard({ bar, drawer, linkReason }) {
        * a feature it is not part of. */
       clockTracks = selected.map((entry) => ({ entry, timeline: buildTimeline(entry?.storm) }));
       lastTrail = '';
-      clock.setSpan(clockSpan(clockTracks));
+      currentClock?.setSpan(clockSpan(clockTracks));
 
-      /* ==> WITH NO CLOCK RUNNING THE GLOBE GETS THE PLAIN WHOLE-SET PUSH IT
-       * ALWAYS GOT. <== `setSpan` redraws at the current moment when there IS
-       * a span, so this branch only covers the case where there is nothing to
-       * play — a season with one single-sighting storm ticked, or nothing
-       * ticked at all, which is the state every visit starts in. */
-      if (!clock.state().available) currentArchiveGlobe?.setTracks?.(selected);
+      /* ==> STATIC TRACKS ARE THE DEFAULT AND TICKING ONE ALWAYS DRAWS IT
+       * WHOLE. §57.23's first line. <== Step 10 shipped with this the other way
+       * round: a span being available was enough to put the globe under the
+       * clock, so `setSpan` redrew at the clock's opening moment — where every
+       * storm is either unborn or one vertex old. Four ticked storms went to
+       * the globe as three drops and a two-point stub, which on glass is an
+       * empty world with `4 shown` written under it.
+       *
+       * The clock now cuts nothing until the reader ENGAGES it, and this push
+       * is unconditional. `drawAt` takes over from the first press of play or
+       * the first scrub, and hands back on the next tick. */
+      currentArchiveGlobe?.setTracks?.(selected);
     }),
 
     /* ==> FOCUS IS A SECOND CALLBACK RATHER THAN A FIELD ON THE FIRST, AND

@@ -2558,6 +2558,43 @@ done-condition and it is Aaron's glass call. If it does not, the dial is
 `clockStepsPerSecond` and the fallback §57.35 fault 3 names is fewer steps,
 never a smaller feature.
 
+#### Three faults glass found on the day it shipped, 2026-08-26
+
+Aaron's report was four symptoms — *nothing in the play button, the thumb
+doesn't start at zero, I see no storms, and nothing happens when I hit play* —
+and diagnosing it found three separate defects.
+
+**1. A SPAN EXISTING PUT THE GLOBE UNDER THE CLOCK, WHICH BREAKS §57.23'S FIRST
+LINE.** Static tracks are the DEFAULT. `setSpan` drew at the clock's opening
+moment, where every storm is either unborn or one vertex old, so ticking four
+storms handed the globe three drops and a two-point stub — an empty world with
+`4 shown` written under it. **The clock now cuts nothing until the reader
+engages it**, ticking always pushes whole tracks, and `play()` draws on the
+press rather than waiting for the loop to owe a step (which would leave the
+finished season on screen for a tenth of a second and then snap).
+
+**2. THE CLOCK CLOSED OVER THE SESSION WHILE THE BOARD OUTLIVES IT — AND THIS
+FILE ALREADY DOCUMENTED THE HAZARD.** `ensureBoard` registers the view ONCE for
+the page; the bar and the clock are rebuilt on every entry. A board callback
+holding the first visit's clock drives a dead engine on the second, repainting
+a detached element, while the row actually on screen is never told anything.
+`currentArchiveGlobe` and `currentLiveRunningIds` exist for exactly this reason
+and each carries a comment saying so. Step 10 read neither. **`currentClock`
+and `currentClockBar` now sit beside them.**
+
+**3. A CONTROL THAT CAN BE SEEN BEFORE IT HAS BEEN TOLD ANYTHING HAD NO STARTING
+STATE.** `hidden` is false on a fresh element, so the row rendered as a blank
+shell — empty button, scrubber at the browser's default position, no date — for
+as long as nothing had called `setState`. It paints itself now before it is
+returned. **The general rule, worth more than this instance: a component that
+is appended to the document must have an honest starting state of its own
+rather than depending on a caller remembering to send one.**
+
+All three are guarded in `tools/test-season-clock.mjs` and all three mutations
+were verified to bite. **None of them was visible to any assertion that existed
+before**, and two are read off the shipped file rather than driven, because no
+behavioural test of an engine can see a stale closure.
+
 #### One export was added to `lib/trackline.js`
 
 `smoothPathIndexed` returns the curve plus the map back to the points it was

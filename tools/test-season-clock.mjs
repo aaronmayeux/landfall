@@ -464,6 +464,69 @@ function harness() {
 const SPAN_MS = 10 * 86400000;
 const SPAN = { startMs: 0, endMs: SPAN_MS };
 
+/* ---------------------------------------------------------------------------
+ * 8b. THE THREE FAULTS GLASS FOUND ON 2026-08-26.
+ *
+ * Aaron's report was "nothing in the play button, the thumb doesn't start at
+ * zero, I see no storms, and nothing happens when I hit play" — four symptoms,
+ * and diagnosing them found three separate defects. All three are guarded here
+ * because none of them is visible to any assertion that existed before.
+ * ------------------------------------------------------------------------ */
+
+{
+  /* ==> FAULT 1: A SPAN EXISTING MUST NOT PUT THE GLOBE UNDER THE CLOCK.
+   * §57.23's first line is that static tracks are the DEFAULT. <== `setSpan`
+   * used to draw at the clock's opening moment, where every storm is unborn or
+   * one vertex old — so ticking four storms drew an empty world. */
+  const h = harness();
+  h.engine.setSpan(SPAN);
+  eq('a span alone draws NOTHING — static tracks are the default', h.steps.length, 0);
+  ok('but the controls are told they are available', h.states.some((x) => x.available));
+
+  h.engine.play();
+  ok('and the globe is only drawn once the reader engages', h.steps.length > 0);
+
+  const h2 = harness();
+  h2.engine.setSpan(SPAN);
+  eq('and scrubbing engages it too, without playing', h2.steps.length, 0);
+  h2.engine.seek(SPAN_MS / 2);
+  eq('the seek drew', h2.steps.length, 1);
+}
+
+{
+  /* ==> FAULT 2 AND IT IS THE ONE THAT MADE EVERY SYMPTOM AT ONCE. <== The
+   * board is registered ONCE for the page and the clock is rebuilt on every
+   * entry, so a board callback closing over the clock it saw first drives a
+   * dead engine on the second visit while the row on screen is never told
+   * anything. `seasons/index.js` already documents this hazard for
+   * `currentArchiveGlobe`; step 10 ignored it. Read off the shipped file,
+   * because no behavioural test of the engine can see a stale closure. */
+  const index = readFileSync(join(ROOT, 'seasons', 'index.js'), 'utf8');
+  ok('the clock is held in module state, not closed over',
+    /let\s+currentClock\s*=\s*null/.test(index)
+    && /let\s+currentClockBar\s*=\s*null/.test(index));
+  ok('and the ticking path reaches it through that', /currentClock\?\.setSpan\(/.test(index));
+  ok('and the play button does too', /currentClock\?\.toggle\(\)/.test(index));
+  ok('and the controls are repainted through it', /currentClockBar\?\.setState\(/.test(index));
+  ok('and both are cleared on the way out',
+    /currentClock\s*=\s*null;\s*\n\s*currentClockBar\s*=\s*null;/.test(index));
+  /* ==> AND TICKING DRAWS WHOLE TRACKS UNCONDITIONALLY. <== The other half of
+   * fault 1: the push must not sit behind a test on the clock's state. */
+  ok('and ticking a storm always pushes it to the globe',
+    /\n\s*currentArchiveGlobe\?\.setTracks\?\.\(selected\);/.test(index));
+}
+
+{
+  /* ==> FAULT 3: A CONTROL THAT CAN BE SEEN BEFORE IT HAS BEEN TOLD ANYTHING
+   * NEEDS A STARTING STATE OF ITS OWN. <== `hidden` is false on a fresh
+   * element, so the row rendered as a blank shell — empty button, scrubber at
+   * the browser's default position, no date — for as long as nothing had
+   * called `setState`. */
+  const barSrc = readFileSync(join(ROOT, 'ui', 'seasons-clock-bar.js'), 'utf8');
+  ok('the controls paint their own starting state before being returned',
+    /api\.setState\(\{\s*available:\s*false\s*\}\);/.test(barSrc));
+}
+
 {
   const h = harness();
   eq('with nothing ticked the clock is unavailable', h.engine.state().available, false);
@@ -474,7 +537,7 @@ const SPAN = { startMs: 0, endMs: SPAN_MS };
   eq('a span makes it available', h.engine.state().available, true);
   eq('and it opens at the beginning', h.engine.state().cutMs, 0);
   eq('and it is not playing on its own', h.engine.state().playing, false);
-  ok('but the globe was told, so a ticked storm shows while paused', h.steps.length === 1);
+  eq('and the globe was NOT redrawn by the span alone (fault 1)', h.steps.length, 0);
 }
 
 {
@@ -483,8 +546,11 @@ const SPAN = { startMs: 0, endMs: SPAN_MS };
    * really about. */
   const h = harness();
   h.engine.setSpan(SPAN);
-  const before = h.steps.length;
   h.engine.play();
+  /* Taken AFTER the press, because engaging draws immediately by design — see
+   * `play()`. What is being counted here is what the LOOP does, not what the
+   * press did. */
+  const before = h.steps.length;
 
   const stepMs = 1000 / SEASONS.clockStepsPerSecond;
   for (let i = 0; i < 5; i++) h.frame(stepMs / 6);
@@ -666,7 +732,7 @@ const SPAN = { startMs: 0, endMs: SPAN_MS };
   ok('and hands the bar the controls to mount', /clockEl:\s*clockBar\.el/.test(index));
   ok('and rebuilds the timelines when the ticked set changes',
     /clockTracks\s*=\s*selected\.map\(/.test(index));
-  ok('and tells the engine the new span', /clock\.setSpan\(clockSpan\(clockTracks\)\)/.test(index));
+  ok('and tells the engine the new span', /currentClock\?\.setSpan\(clockSpan\(clockTracks\)\)/.test(index));
   ok('and tears the clock down on the way out', /clock\.destroy\(\)/.test(index));
   ok('and takes the Space handler off with it',
     /removeEventListener\('keydown',\s*onSpace\)/.test(index));

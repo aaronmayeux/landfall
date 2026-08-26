@@ -89,7 +89,7 @@ export function createSeasonsClockBar({ onToggle, onSeek }) {
     onSeek?.(startMs + (endMs - startMs) * f);
   });
 
-  return {
+  const api = {
     el,
 
     /**
@@ -160,4 +160,16 @@ export function createSeasonsClockBar({ onToggle, onSeek }) {
       return true;
     },
   };
+
+  /* ==> IT PAINTS ITSELF BEFORE ANYBODY TELLS IT ANYTHING. <== A control built
+   * and appended but never sent a state renders as a blank shell: an empty
+   * play button, a scrubber sitting at the browser's default position, and no
+   * date. That is precisely what glass reported on 2026-08-26, and the row was
+   * visible the whole time because `hidden` is false on a fresh element. An
+   * element that can be seen before it has been told anything must have an
+   * honest starting state of its own rather than depending on a caller
+   * remembering to send one. */
+  api.setState({ available: false });
+
+  return api;
 }
