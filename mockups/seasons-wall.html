@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Landfall — the Wall of Years (mockup)</title>
+<!--
+  MOCKUP ONLY. Nothing here ships. §57.29, §57.30 step 14.
+
+  ==> IT IS A PAINT CHIP AND §57.31 ITEM 1 ALREADY REJECTED JUDGING COLOUR OFF
+      ONE. <== What this page is FOR is the shape: how dense the wall reads, how
+      wide a dot has to be, whether a violent decade is visible without reading,
+      and whether losing the year dropdown on the second screen feels like a
+      loss. The sepia values below are RESTATED from config/tokens.js so the
+      page is honest about temperature, but the real judgement is on the globe.
+
+  ==> EVERY DOT IS A REAL STORM. <== seasons-wall-data.js was generated in the
+      sandbox from the two whole-basin HURDAT2 files in this repo by the app's
+      own parser. 3,266 storms, 252 season rows, nothing invented.
+-->
+<style>
+/* --------------------------------------------------------------------------
+ * TOKENS — RESTATED from config/tokens.js SEPIA and index.html. Not a second
+ * source of truth; this page has no build step and no module graph.
+ * ---------------------------------------------------------------------- */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-numeric: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+
+  --type-title: 1.05rem;
+  --type-lead:  0.95rem;
+  --type-body:  0.875rem;
+  --type-small: 0.78rem;
+  --type-micro: 0.6875rem;
+
+  --space-tight: 4px;
+  --space-snug:  8px;
+  --space-base:  12px;
+  --space-comfy: 16px;
+  --radius: 10px;
+  --radius-large: 16px;
+  --touch-target: 44px;
+
+  /* SEPIA */
+  --ocean:          #1C1409;
+  --space-far:      #060402;
+  --text-primary:   #F3E7D2;
+  --text-secondary: #C9B692;
+  --text-muted:     #9C8A69;
+  --glass:          rgba(28, 20, 9, 0.30);
+  --glass-raised:   rgba(46, 33, 16, 0.44);
+  --glass-border:   rgba(199, 154, 78, 0.16);
+  --hover:          rgba(199, 154, 78, 0.12);
+  --focus-ring:     #E8C67E;
+  --coast-glow:     #C79A4E;
+  --seg-active:     #5A4425;
+  --seg-active-edge:#8A6B3A;
+
+  /* Saffir-Simpson — FIXED, never themeable (SPEC §6). */
+  --cat0: #5BA8E0;  /* TD  */
+  --cat1: #3ECC7A;  /* TS  */
+  --cat2: #FFE14D;  /* Cat 1 */
+  --cat3: #FFB52E;  /* Cat 2 */
+  --cat4: #FF7A33;  /* Cat 3 */
+  --cat5: #FF4D6D;  /* Cat 4 */
+  --cat6: #E05BE0;  /* Cat 5 */
+  --catNone: #B5474D; /* GENERIC — strength never assigned */
+
+  /* Set from JS once the strip width is known. */
+  --dot: 8px;
+  --dot-gap: 2px;
+  --row-h: 44px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  background: #0B0805;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* --------------------------------------------------------------------------
+ * The page around the mockup. Not part of the design.
+ * ---------------------------------------------------------------------- */
+.page { padding: 20px 16px 60px; max-width: 1100px; margin: 0 auto; }
+.page h1 { font-size: 1.15rem; margin: 0 0 4px; letter-spacing: -0.01em; }
+.page .sub { color: var(--text-muted); font-size: var(--type-small); margin: 0 0 18px; line-height: 1.5; }
+.controls {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  padding: 12px; margin-bottom: 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  font-size: var(--type-small);
+}
+.controls label { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); cursor: pointer; }
+.controls .grp { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); }
+.controls select { font: inherit; background: #1a1409; color: var(--text-primary);
+  border: 1px solid var(--glass-border); border-radius: 6px; padding: 3px 6px; }
+
+.stage { display: flex; gap: 28px; flex-wrap: wrap; align-items: flex-start; }
+.frame-wrap { flex: 0 0 auto; }
+.frame-cap { font-size: var(--type-micro); text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted); margin: 0 0 8px 2px; }
+
+/* --------------------------------------------------------------------------
+ * THE DEVICE FRAME — a globe behind a drawer, which is the real backdrop.
+ * ---------------------------------------------------------------------- */
+.frame {
+  position: relative; overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background:
+    radial-gradient(120% 90% at 50% 42%, #33240F 0%, #1C1409 46%, #0B0805 78%);
+}
+.frame.phone { width: 390px; height: 844px; }
+.frame.rail  { width: 340px; height: 700px; }
+
+/* A hint of the archive globe behind the sheet, so the panel is judged over
+   something rather than over black. */
+.frame::before {
+  content: ""; position: absolute; inset: 0;
+  background:
+    radial-gradient(46% 30% at 50% 34%, rgba(199,154,78,0.16), transparent 70%),
+    radial-gradient(30% 20% at 34% 26%, rgba(122,90,46,0.30), transparent 70%);
+  pointer-events: none;
+}
+
+/* The drawer. Bottom sheet on the phone, full-height rail when wide — the
+   same two shapes ui/panels.css already builds. */
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 88%;
+  display: flex; flex-direction: column;
+  background: var(--glass);
+  backdrop-filter: blur(20px) saturate(1.1);
+  -webkit-backdrop-filter: blur(20px) saturate(1.1);
+  border-top: 1px solid var(--glass-border);
+  border-radius: var(--radius-large) var(--radius-large) 0 0;
+}
+.frame.rail .sheet { top: 0; height: 100%; border-radius: 0 var(--radius-large) var(--radius-large) 0;
+  border-top: 0; border-right: 1px solid var(--glass-border); }
+
+.sheet-head {
+  display: grid; grid-template-columns: var(--touch-target) 1fr var(--touch-target);
+  align-items: center; gap: var(--space-snug);
+  padding: var(--space-snug) var(--space-snug);
+  border-bottom: 1px solid var(--glass-border);
+  flex: 0 0 auto;
+}
+.sheet-title { font-size: var(--type-title); font-weight: 600; letter-spacing: -0.01em; }
+.sheet-title small { display: block; font-size: var(--type-small); font-weight: 400;
+  color: var(--text-muted); letter-spacing: 0; margin-top: 1px; }
+.icon-btn {
+  width: var(--touch-target); height: var(--touch-target);
+  display: grid; place-items: center;
+  background: none; border: 0; color: var(--text-secondary);
+  border-radius: var(--radius); cursor: pointer; font: inherit; font-size: 1.1rem;
+}
+.icon-btn:hover { background: var(--hover); color: var(--text-primary); }
+.icon-btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.icon-btn[hidden] { visibility: hidden; }
+
+.sheet-body { flex: 1 1 auto; overflow-y: auto; overscroll-behavior: contain; }
+
+/* --------------------------------------------------------------------------
+ * BASIN — the segmented control that already exists elsewhere in the app.
+ * ---------------------------------------------------------------------- */
+.basin {
+  display: flex; gap: 2px; padding: 3px; margin: var(--space-snug) var(--space-comfy);
+  background: var(--glass-raised); border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+.basin button {
+  flex: 1; min-height: 34px; font: inherit; font-size: var(--type-small);
+  color: var(--text-secondary); background: none; border: 0; border-radius: 7px; cursor: pointer;
+}
+.basin button[aria-pressed="true"] {
+  background: var(--seg-active); color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--seg-active-edge);
+}
+.basin button:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 1px; }
+
+/* --------------------------------------------------------------------------
+ * THE WALL.
+ *
+ * ==> THE ROW IS THE BUTTON. THE DOT IS NOT. <== 252 focusable things, not
+ *     3,266. The strip is one <svg> per row, so a phone lays out one element
+ *     per year rather than one per storm.
+ * ---------------------------------------------------------------------- */
+.wall { padding: 0 0 var(--space-comfy); }
+
+.wall-note {
+  margin: var(--space-snug) var(--space-comfy) var(--space-base);
+  font-size: var(--type-small); color: var(--text-muted); line-height: 1.45;
+}
+
+.decade {
+  position: sticky; top: 0; z-index: 2;
+  padding: var(--space-snug) var(--space-comfy) var(--space-tight);
+  font-size: var(--type-micro); text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--text-muted);
+  background: linear-gradient(to bottom, rgba(28,20,9,0.92), rgba(28,20,9,0.72));
+  backdrop-filter: blur(6px);
+}
+
+.yr {
+  display: grid;
+  grid-template-columns: 3.4em 1fr auto;
+  align-items: center; gap: var(--space-snug);
+  width: 100%; min-height: var(--row-h);
+  padding: 0 var(--space-comfy);
+  background: none; border: 0; border-top: 1px solid rgba(199,154,78,0.07);
+  color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.yr:hover { background: var(--hover); }
+.yr:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: -2px; }
+.yr-num {
+  font-family: var(--font-numeric); font-size: var(--type-small);
+  color: var(--text-secondary); font-variant-numeric: tabular-nums;
+}
+.yr-strip { display: block; width: 100%; height: calc(var(--dot) + 2px); overflow: visible; }
+.yr-count {
+  font-family: var(--font-numeric); font-size: var(--type-micro);
+  color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 1.6em; text-align: right;
+}
+body:not([data-count="on"]) .yr-count { display: none; }
+body:not([data-count="on"]) .yr { grid-template-columns: 3.4em 1fr; }
+
+/* ==> BEFORE 1966 THE RECORD IS AN UNDERCOUNT AND THE WALL WOULD OTHERWISE
+ *     BE DRAWING THE INVENTION OF THE SATELLITE. <== SEASONS.satelliteEraFrom.
+ *     Three treatments to choose between; `off` is the honest-looking lie. */
+body[data-pre="dim"] .yr[data-pre] .yr-strip { opacity: 0.58; }
+body[data-pre="dim"] .yr[data-pre] .yr-num { color: var(--text-muted); }
+body[data-pre="rule"] .yr[data-pre] { background: rgba(255,255,255,0.018); }
+body[data-pre="rule"] .yr[data-pre] .yr-num { color: var(--text-muted); }
+
+.era-mark {
+  display: none;
+  padding: var(--space-base) var(--space-comfy) var(--space-snug);
+  border-top: 1px solid rgba(199,154,78,0.22);
+  font-size: var(--type-small); color: var(--text-muted); line-height: 1.45;
+}
+body[data-pre="dim"] .era-mark, body[data-pre="rule"] .era-mark { display: block; }
+
+/* Landfall mark — a hairline under the dot, not a second colour. */
+body:not([data-lf="on"]) .lf { display: none; }
+
+/* --------------------------------------------------------------------------
+ * THE SECOND SCREEN — the board as it is today, minus the year dropdown.
+ * Deliberately a light representation: enough to judge the NAVIGATION.
+ * ---------------------------------------------------------------------- */
+.score {
+  display: flex; flex-wrap: wrap; gap: var(--space-snug) var(--space-comfy);
+  padding: var(--space-base) var(--space-comfy);
+  border-bottom: 1px solid var(--glass-border);
+}
+.score div { min-width: 62px; }
+.score b { display: block; font-size: var(--type-title); font-weight: 600; font-variant-numeric: tabular-nums; }
+.score span { font-size: var(--type-micro); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); }
+
+.filters { display: flex; gap: 6px; padding: var(--space-snug) var(--space-comfy); flex-wrap: wrap; }
+.filters button {
+  font: inherit; font-size: var(--type-small); padding: 6px 11px; min-height: 32px;
+  background: var(--glass-raised); border: 1px solid var(--glass-border);
+  border-radius: 999px; color: var(--text-secondary); cursor: pointer;
+}
+.filters button[aria-pressed="true"] { background: var(--seg-active); color: var(--text-primary); border-color: var(--seg-active-edge); }
+
+.roster { list-style: none; margin: 0; padding: 0 0 var(--space-comfy); }
+.st {
+  display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: var(--space-base);
+  min-height: var(--touch-target); padding: 0 var(--space-comfy);
+  border-top: 1px solid rgba(199,154,78,0.07);
+}
+.st-dot { width: 12px; height: 12px; border-radius: 50%; }
+.st-name { font-size: var(--type-lead); }
+.st-name small { display: block; font-size: var(--type-micro); color: var(--text-muted); }
+.st-badge { font-size: var(--type-micro); font-family: var(--font-numeric); color: var(--text-secondary);
+  border: 1px solid var(--glass-border); border-radius: 6px; padding: 2px 6px; }
+
+.bar {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding: 10px var(--space-comfy) 18px;
+  background: linear-gradient(to top, rgba(11,8,5,0.92), rgba(11,8,5,0));
+  font-size: var(--type-small); color: var(--text-secondary);
+  display: flex; justify-content: space-between; gap: 10px;
+  pointer-events: none;
+}
+/* The rail is full-height, so in the real app the bar sits to the RIGHT of it
+   over the globe rather than under it. Nothing to show inside this frame. */
+.frame.rail .bar { display: none; }
+</style>
+</head>
+<body data-pre="dim" data-count="on" data-lf="off" data-density="44" data-weight="even">
+
+<div class="page">
+  <h1>The Wall of Years — mockup</h1>
+  <p class="sub">
+    Every dot is a real storm, read out of this repo&rsquo;s own HURDAT2 files by the app&rsquo;s own parser.
+    3,266 storms across 252 season rows. Colour is peak Saffir-Simpson strength and it is the fixed scale &mdash;
+    blue&nbsp;TD, green&nbsp;TS, then yellow through magenta for Cat&nbsp;1&ndash;5.
+    <strong>Tap a year</strong> to see the second screen: today&rsquo;s board with the dropdown gone.
+  </p>
+
+  <div class="controls">
+    <span class="grp">Density
+      <select id="density">
+        <option value="44">44px — the touch-target rule</option>
+        <option value="36">36px — breaks the rule</option>
+        <option value="28">28px — breaks it badly</option>
+      </select>
+    </span>
+    <span class="grp">Dot weight
+      <select id="weight">
+        <option value="even">even — one storm, one size</option>
+        <option value="graded">graded — a Cat 5 draws bigger</option>
+      </select>
+    </span>
+    <span class="grp">Before 1966
+      <select id="pre">
+        <option value="dim">dimmed + a line</option>
+        <option value="rule">shaded + a line</option>
+        <option value="off">nothing (looks calm — it isn&rsquo;t)</option>
+      </select>
+    </span>
+    <label><input type="checkbox" id="count" checked> storm count on the right</label>
+    <label><input type="checkbox" id="lf"> mark landfalls</label>
+    <label><input type="checkbox" id="dec" checked> decade headings</label>
+  </div>
+
+  <div class="stage">
+    <div class="frame-wrap">
+      <p class="frame-cap">Phone &mdash; 390 &times; 844</p>
+      <div class="frame phone" data-frame="phone"></div>
+    </div>
+    <div class="frame-wrap">
+      <p class="frame-cap">Desktop rail &mdash; 340px, the narrowest it ever gets</p>
+      <div class="frame rail" data-frame="rail"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { WALL } from './seasons-wall-data.js';
+
+/* Saffir-Simpson index -> the fixed colour. Index 0 is TD. A null category is
+ * a storm the record never graded, and it gets GENERIC — never a colour it did
+ * not earn (SPEC §6). */
+const CAT = ['var(--cat0)','var(--cat1)','var(--cat2)','var(--cat3)','var(--cat4)','var(--cat5)','var(--cat6)'];
+const catColor = (c) => (c == null ? 'var(--catNone)' : CAT[c] || 'var(--catNone)');
+const SATELLITE_ERA_FROM = 1966;   /* SEASONS.satelliteEraFrom */
+const CAT_LABEL = ['tropical depression','tropical storm','Category 1','Category 2','Category 3','Category 4','Category 5'];
+
+/* Each storm arrives as [name, cat, windKt, landfall, firstDay, lastDay] —
+ * see the header of seasons-wall-data.js. Named here once so nothing below
+ * indexes a raw array and quietly reads the wrong column. */
+const NAME = 0, CAT_I = 1, WIND = 2, LF = 3, T0 = 4, T1 = 5;
+const DAY_MS = 86400000;
+
+const state = { basin: 'atlantic', screen: 'wall', year: null };
+
+/* -------------------------------------------------------------------------
+ * ONE DOT SIZE ACROSS THE WHOLE WALL.
+ *
+ * If a violent year did not LOOK bigger than a quiet one the screen would have
+ * no point, so the scale cannot be per-row. The dot is sized so the widest
+ * season in the basin fits the strip, and every other year is drawn at that
+ * same size with empty space after it.
+ * ----------------------------------------------------------------------- */
+function dotSizeFor(basin, stripPx) {
+  const years = WALL.basins[basin].years;
+  let widest = 0;
+  for (const list of Object.values(years)) if (list.length > widest) widest = list.length;
+  const gap = 2;
+  const size = Math.floor((stripPx - gap * (widest - 1)) / widest);
+  return { size: Math.max(3, Math.min(12, size)), gap, widest };
+}
+
+/* ==> THE STRENGTH QUESTION, AND IT IS THE ONE WORTH ARGUING ABOUT. <==
+ * `even` is what §57.29 describes: one storm, one dot, one size, so the LENGTH
+ * of a strip is the season's count and colour carries strength. It reads count
+ * loudly and strength quietly — a long weak year out-shouts a short violent
+ * one, and 1935 is exactly that shape.
+ * `graded` scales the radius with the category, so a Cat 5 draws at full size
+ * and a depression at just over half. The season's weight becomes visible; the
+ * count becomes slightly harder to read off, because the strip is no longer a
+ * uniform ruler. */
+function radiusFor(size, cat, weight) {
+  const r = size / 2;
+  if (weight !== 'graded') return r;
+  const c = cat == null ? 1 : cat;      /* ungraded sits with a TS, not at zero */
+  return r * (0.55 + 0.45 * (c / 6));
+}
+
+function stripSvg(list, size, gap, weight) {
+  const w = list.length * size + Math.max(0, list.length - 1) * gap;
+  const h = size + 2;
+  const parts = list.map((s, i) => {
+    const x = i * (size + gap);
+    const r = size / 2;
+    const rr = radiusFor(size, s[CAT_I], weight);
+    const dot = `<circle cx="${x + r}" cy="${r}" r="${rr}" fill="${catColor(s[CAT_I])}"/>`;
+    const lf = s[LF] ? `<rect class="lf" x="${x}" y="${size + 0.5}" width="${size}" height="1.5" fill="var(--text-primary)" opacity="0.7"/>` : '';
+    return dot + lf;
+  }).join('');
+  return `<svg class="yr-strip" viewBox="0 0 ${Math.max(w, 1)} ${h}" width="${w}" height="${h}"
+    preserveAspectRatio="xMinYMid meet" aria-hidden="true">${parts}</svg>`;
+}
+
+/* A row's accessible name. The dots are decoration; this sentence is what a
+ * screen reader gets, and it has to carry the same information. */
+function rowLabel(year, list) {
+  if (!list.length) return `${year} — no storms recorded`;
+  let peak = null;
+  for (const s of list) if (s[CAT_I] != null && (peak == null || s[CAT_I] > peak)) peak = s[CAT_I];
+  const strongest = peak == null ? 'none graded' : `strongest ${CAT_LABEL[peak]}`;
+  const under = year < SATELLITE_ERA_FROM ? ', before satellites — likely an undercount' : '';
+  return `${year} — ${list.length} storm${list.length === 1 ? '' : 's'}, ${strongest}${under}`;
+}
+
+function wallHtml(basin, stripPx, decades, weight) {
+  const b = WALL.basins[basin];
+  const years = Object.keys(b.years).map(Number).sort((a, z) => z - a);
+  const { size, gap, widest } = dotSizeFor(basin, stripPx);
+  const first = years[years.length - 1];
+
+  let html = `<div class="wall" style="--dot:${size}px;--dot-gap:${gap}px">`;
+  html += `<p class="wall-note">${b.label} &middot; ${years.length} seasons, ${first}&ndash;${years[0]}.
+    One dot per storm, coloured by the strongest it ever got. Busiest year: ${widest} storms.</p>`;
+
+  let lastDecade = null;
+  let eraDrawn = false;
+  for (const y of years) {
+    if (!eraDrawn && y < SATELLITE_ERA_FROM) {
+      html += `<p class="era-mark">Below this line nobody was watching from orbit. A storm that
+        stayed at sea was simply never recorded, so these rows are an undercount &mdash; a short
+        strip here is not evidence of a quiet year.</p>`;
+      eraDrawn = true;
+    }
+    const dec = Math.floor(y / 10) * 10;
+    if (decades && dec !== lastDecade) {
+      html += `<p class="decade">${dec}s</p>`;
+      lastDecade = dec;
+    }
+    const list = b.years[y];
+    const pre = y < SATELLITE_ERA_FROM ? ' data-pre="1"' : '';
+    html += `<button class="yr" type="button" data-year="${y}"${pre} aria-label="${rowLabel(y, list)}">
+      <span class="yr-num">${y}</span>
+      <span>${stripSvg(list, size, gap, weight)}</span>
+      <span class="yr-count">${list.length}</span>
+    </button>`;
+  }
+  return html + '</div>';
+}
+
+/* -------------------------------------------------------------------------
+ * THE SECOND SCREEN. Today's board with the year dropdown removed and the
+ * year moved into the header, where the back chevron is.
+ * ----------------------------------------------------------------------- */
+function boardHtml(basin, year) {
+  const b = WALL.basins[basin];
+  const list = b.years[year] || [];
+  const named = list.filter((s) => s[NAME]).length;
+  const hur = list.filter((s) => s[CAT_I] != null && s[CAT_I] >= 2).length;
+  const maj = list.filter((s) => s[CAT_I] != null && s[CAT_I] >= 4).length;
+  const lf = list.filter((s) => s[LF]).length;
+  const fmt = (d) => (d == null ? '' : new Date(d * DAY_MS).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }));
+
+  let html = `<div class="score">
+      <div><b>${list.length}</b><span>storms</span></div>
+      <div><b>${hur}</b><span>hurricanes</span></div>
+      <div><b>${maj}</b><span>major</span></div>
+      <div><b>${lf}</b><span>landfalls</span></div>
+    </div>
+    <div class="filters">
+      <button type="button" aria-pressed="true">All</button>
+      <button type="button" aria-pressed="false">Hurricanes</button>
+      <button type="button" aria-pressed="false">Majors</button>
+      <button type="button" aria-pressed="false">Landfalling</button>
+      <button type="button" aria-pressed="false">Near home</button>
+    </div>
+    <ul class="roster">`;
+  for (const s of list) {
+    const name = s[NAME] || 'Unnamed';
+    const badge = s[WIND] == null ? '—' : `${s[WIND]} kt`;
+    html += `<li class="st">
+      <span class="st-dot" style="background:${catColor(s[CAT_I])}"></span>
+      <span class="st-name">${name}<small>${fmt(s[T0])} – ${fmt(s[T1])}${s[LF] ? ' · landfall' : ''}</small></span>
+      <span class="st-badge">${badge}</span>
+    </li>`;
+  }
+  html += '</ul>';
+  if (!list.length) html = `<p class="wall-note">The record holds no storms for ${year}.</p>`;
+  if (named === 0 && list.length) {
+    html += `<p class="wall-note">No storm this year was named — naming began in 1950.</p>`;
+  }
+  return html;
+}
+
+/* ------------------------------------------------------------------------- */
+function render() {
+  for (const frame of document.querySelectorAll('.frame')) {
+    const isRail = frame.dataset.frame === 'rail';
+    const width = isRail ? 340 : 390;
+    /* strip width = frame - sheet padding (16 each side) - year column (3.4em
+     * at 0.78rem ≈ 42px) - two 8px gaps - the count column when shown */
+    const countCol = document.body.dataset.count === 'on' ? 30 : 0;
+    const stripPx = width - 32 - 42 - 16 - countCol;
+
+    const b = WALL.basins[state.basin];
+    const decades = document.getElementById('dec').checked;
+
+    const head = state.screen === 'wall'
+      ? `<div class="sheet-head">
+           <span class="icon-btn" hidden></span>
+           <span class="sheet-title">Past storms<small>${b.label} &middot; every season on record</small></span>
+           <button class="icon-btn" type="button" title="Close">&#10005;</button>
+         </div>
+         <div class="basin">
+           <button type="button" data-basin="atlantic" aria-pressed="${state.basin === 'atlantic'}">Atlantic</button>
+           <button type="button" data-basin="epacific" aria-pressed="${state.basin === 'epacific'}">East Pacific</button>
+         </div>`
+      : `<div class="sheet-head">
+           <button class="icon-btn" type="button" data-back title="Back to every year">&#8249;</button>
+           <span class="sheet-title">${state.year}<small>${b.label} &middot; ${(b.years[state.year] || []).length} storms</small></span>
+           <button class="icon-btn" type="button" title="Close">&#10005;</button>
+         </div>`;
+
+    const body = state.screen === 'wall'
+      ? wallHtml(state.basin, stripPx, decades, document.body.dataset.weight || 'even')
+      : boardHtml(state.basin, state.year);
+
+    const bar = state.screen === 'wall'
+      ? `<div class="bar"><span>Past storms &middot; ${b.label}</span><span>pick a year</span></div>`
+      : `<div class="bar"><span>Past storms &middot; ${state.year} &middot; ${b.label}</span><span>0 drawn</span></div>`;
+
+    frame.innerHTML = `<div class="sheet">${head}<div class="sheet-body">${body}</div></div>${bar}`;
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const yr = e.target.closest('.yr');
+  if (yr) { state.year = Number(yr.dataset.year); state.screen = 'board'; render(); return; }
+  if (e.target.closest('[data-back]')) { state.screen = 'wall'; render(); return; }
+  const bs = e.target.closest('[data-basin]');
+  if (bs) { state.basin = bs.dataset.basin; state.screen = 'wall'; render(); }
+});
+
+const set = (k, v) => { document.body.dataset[k] = v; render(); };
+document.getElementById('density').onchange = (e) => {
+  document.documentElement.style.setProperty('--row-h', `${e.target.value}px`);
+  set('density', e.target.value);
+};
+document.getElementById('pre').onchange   = (e) => set('pre', e.target.value);
+document.getElementById('count').onchange = (e) => set('count', e.target.checked ? 'on' : 'off');
+document.getElementById('lf').onchange    = (e) => set('lf', e.target.checked ? 'on' : 'off');
+document.getElementById('dec').onchange   = () => render();
+document.getElementById('weight').onchange = (e) => set('weight', e.target.value);
+
+render();
+</script>
+</body>
+</html>
