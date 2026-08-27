@@ -1,0 +1,186 @@
+{
+  "at": "2026-08-27T18:25:05.595Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "styleLoaded": false,
+      "storms": 6,
+      "ttfbMs": 196,
+      "fcpMs": 456,
+      "lcpMs": 456,
+      "dclMs": 2750,
+      "loadMs": 3529,
+      "bootMarks": {
+        "create": 2538.1999999999825,
+        "load": 5625.100000000006,
+        "fullLoad": 5626.6999999999825
+      },
+      "longTaskCount": 18,
+      "blockedMs": 15989,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 209,
+      "ourWaves": 15,
+      "staircaseMs": 1958,
+      "firstModuleAtMs": 242,
+      "lastModuleAtMs": 2201,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 33,
+      "apiKB": 279,
+      "totalRequests": 250,
+      "transferKB": 2366,
+      "firstApiAtMs": 2725,
+      "data": {
+        "depth": 6,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2725
+          },
+          {
+            "url": "/api/jtwc/storms",
+            "startMs": 4120
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 6579
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP2&kind=TCP",
+            "startMs": 9595
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=wp202026&carq=1",
+            "startMs": 11136
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 15263
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "styleLoaded": false,
+      "storms": 2,
+      "ttfbMs": 15,
+      "fcpMs": 3488,
+      "lcpMs": 3488,
+      "dclMs": 7431,
+      "loadMs": 7439,
+      "bootMarks": {
+        "create": 3506.100000000006,
+        "load": 21699.600000000006,
+        "fullLoad": 21699.899999999994
+      },
+      "longTaskCount": 13,
+      "blockedMs": 27330,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 209,
+      "ourWaves": 7,
+      "staircaseMs": 837,
+      "firstModuleAtMs": 1742,
+      "lastModuleAtMs": 2579,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 27,
+      "apiKB": 203,
+      "totalRequests": 243,
+      "transferKB": 203,
+      "firstApiAtMs": 7417,
+      "data": {
+        "depth": 2,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 7417
+          },
+          {
+            "url": "/api/nhc/advisory?bin=AT4&kind=TCP",
+            "startMs": 14799
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "styleLoaded": false,
+    "storms": 0,
+    "ttfbMs": 85,
+    "fcpMs": 3864,
+    "lcpMs": 3864,
+    "dclMs": 22186,
+    "loadMs": 93122,
+    "bootMarks": {
+      "create": 3908.2999999999884
+    },
+    "longTaskCount": 4,
+    "blockedMs": 94283,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 209,
+    "ourWaves": 18,
+    "staircaseMs": 1918,
+    "firstModuleAtMs": 170,
+    "lastModuleAtMs": 2089,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 6,
+    "apiKB": 18,
+    "totalRequests": 221,
+    "transferKB": 2105,
+    "firstApiAtMs": 22159,
+    "data": {
+      "depth": 2,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 22159
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 22591
+        }
+      ]
+    },
+    "radarTiles": 1,
+    "radarOnLoad": 1,
+    "radarOnPan": 8,
+    "frames": {
+      "frames": 2,
+      "medianMs": 4099.8,
+      "p95Ms": 4099.8,
+      "worstMs": 4099.8,
+      "droppedPct": 50,
+      "approxFps": 0
+    }
+  },
+  "budget": {
+    "ok": false,
+    "notes": [
+      "FAIL styleLoaded: the map never built on warm-sw — nothing below was measured",
+      "FAIL ourModules: 209 > 175",
+      "ok   ourWaves: 7 <= 8",
+      "ok   staircaseMs: 837 <= 3000",
+      "ok   dataSerialDepth: 2 <= 6",
+      "FAIL blockedMs: 27330 > 1200",
+      "ok   transferKB: 203 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 8 <= 120"
+    ]
+  }
+}
