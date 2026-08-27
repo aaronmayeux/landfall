@@ -24,7 +24,7 @@ import { dirname, join } from 'node:path';
 import { parseBdeck } from '../lib/hurdat.js';
 import { stormFacts } from '../lib/season-facts.js';
 
-import { CAT, LANDFALL, ACE, PEAK_KT, dotSizeFor, liveRow, rowsFor, rowLabel, SATELLITE_ERA_FROM }
+import { CAT, LANDFALL, ACE, PEAK_KT, DAYS, PRESSURE_MB, NAME, dotSizeFor, liveRow, rowsFor, rowLabel, SATELLITE_ERA_FROM }
   from '../lib/wall-index.js';
 import * as gen from './seasons-wall.mjs';
 import { SEASONS } from '../config/constants.js';
@@ -58,7 +58,15 @@ eq('category is column 0', [gen.CAT, CAT], [0, 0]);
 eq('landfall is column 1', [gen.LANDFALL, LANDFALL], [1, 1]);
 eq('ace is column 2', [gen.ACE, ACE], [2, 2]);
 eq('peak wind is column 3', [gen.PEAK_KT, PEAK_KT], [3, 3]);
-eq('and the file says so itself', wall.fields, ['category', 'landfall', 'ace', 'peakWindKt']);
+/* Step 3's three. `lib/wall-index.js` names them for the browser and
+ * `tools/seasons-wall.mjs` names them for the runner, and an off-by-one here
+ * reads a pressure as a duration — every threshold filter silently wrong, with
+ * nothing thrown and nothing on screen to notice. */
+eq('days is column 4', [gen.DAYS, DAYS], [4, 4]);
+eq('pressure is column 5', [gen.PRESSURE_MB, PRESSURE_MB], [5, 5]);
+eq('name is column 6', [gen.NAME, NAME], [6, 6]);
+eq('and the file says so itself', wall.fields,
+  ['category', 'landfall', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name']);
 
 /* ---------------------------------------------------------------------------
  * 2. THE REAL RECORD, AT NUMBERS THAT CAN BE CHECKED AGAINST NOAA.

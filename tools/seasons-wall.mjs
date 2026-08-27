@@ -12,28 +12,35 @@
  * controls actually need, once, and the browser fetches the result as a single
  * small file.
  *
- * ==> THE FOUR FIELDS ARE THE FOUR THE CONTROLS NEED, AND NOTHING ELSE IS
- * CARRIED. <== §57.36 names seven category chips, a landfall toggle, and five
- * sort keys — year, count, strongest, landfalls and ACE. Working backwards from
- * those, one storm is:
+ * ==> THE SEVEN FIELDS ARE THE SEVEN THE CONTROLS NEED, AND NOTHING ELSE IS
+ * CARRIED. <== §57.36 names seven category chips, a landfall toggle, five sort
+ * keys, and a collapsed set of thresholds on duration, pressure and ACE.
+ * Working backwards from those, one storm is:
  *
- *     [peakCategory, madeLandfall, ace, peakWindKt]
+ *     [peakCategory, madeLandfall, ace, peakWindKt, days, pressureMb, name]
  *
- * Names, dates, positions and pressures are all absent on purpose. They belong
- * to the season file, which is what a reader downloads when they tap a year.
+ * Dates and positions are still absent on purpose. They belong to the season
+ * file, which is what a reader downloads when they tap a year.
  *
  * ==> AND THE SIZE WAS MEASURED BEFORE THE SHAPE WAS CHOSEN, ON THE REAL FILES
- * IN THIS REPO. <== Three candidates, both basins, 3,266 storms:
+ * IN THIS REPO. <== Both basins, 3,266 storms. Printed by `--measure`; do not
+ * copy this table forward, re-derive it.
  *
  *   | category only               |  8,827 B raw |  2,286 B gzipped |
  *   | + landfall flag             | 21,891 B raw |  3,159 B gzipped |
- *   | + ACE + peak wind (SHIPPED) | 45,992 B raw | 10,388 B gzipped |
+ *   | + ACE + peak wind           | 45,992 B raw | 10,388 B gzipped |
+ *   | + days alive                | 57,794 B raw | 14,128 B gzipped |
+ *   | + lowest pressure           | 72,641 B raw | 17,803 B gzipped |
+ *   | + name            (SHIPPED) | 93,107 B raw | 24,277 B gzipped |
  *
- * Ten kilobytes buys every control §57.36 specifies. The narrow version would
- * have saved 8 KB and forced the landfall toggle, the landfall sort and the ACE
- * sort to fetch something else — so the cheap-looking option was the expensive
- * one. Re-derive with `node tools/seasons-wall.mjs --measure`; do not copy this
- * table forward.
+ * ==> THE LAST 15 KB WAS BOUGHT, NOT SPENT BY ACCIDENT. <== The first four
+ * columns cover the chips, the landfall toggle and every sort key. The last
+ * three exist only for §57.36's COLLAPSED filters, and the alternative was
+ * dropping three controls rather than saving bytes — a wall that cannot answer
+ * "which storms lasted a fortnight" is a smaller feature, not a cheaper one.
+ * The narrow versions above are kept for the same reason they always were: the
+ * cheap-looking option was the expensive one, because it forces three controls
+ * to go and fetch something else.
  *
  * ==> ACE IS ROUNDED TO ONE DECIMAL AND THAT IS A SIZE DECISION WITH A LIMIT
  * ON IT. <== Full precision runs to fourteen digits per storm and the wall
@@ -72,6 +79,7 @@ export const WALL_FILE = 'seasons/wall.json';
  *  quietly reads the wrong column. The browser has the same four names in
  *  `lib/wall-index.js` and the two must not drift. */
 export const CAT = 0, LANDFALL = 1, ACE = 2, PEAK_KT = 3;
+export const DAYS = 4, PRESSURE_MB = 5, NAME = 6;
 
 /** One decimal place. See the header — this is a floor, not a preference. */
 const ACE_DP = 10;
@@ -175,7 +183,7 @@ export function buildWall(root, index, { generatedAt }) {
      * HURDAT2 is the reviewed record; the season in progress is not in here
      * at all, and a reader has to be able to tell which they are looking at. */
     provisional: false,
-    fields: ['category', 'landfall', 'ace', 'peakWindKt'],
+    fields: ['category', 'landfall', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name'],
     basins,
   };
 }
@@ -217,12 +225,15 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   if (process.argv.includes('--measure')) {
     const wall = buildWall(root, index, { generatedAt: '' });
-    const narrow = {}, mid = {};
+    const narrow = {}, mid = {}, four = {}, five = {}, six = {};
     for (const [k, b] of Object.entries(wall.basins)) {
-      narrow[k] = {}; mid[k] = {};
+      narrow[k] = {}; mid[k] = {}; four[k] = {}; five[k] = {}; six[k] = {};
       for (const [y, list] of Object.entries(b.years)) {
         narrow[k][y] = list.map((s) => s[CAT]);
         mid[k][y] = list.map((s) => [s[CAT], s[LANDFALL]]);
+        four[k][y] = list.map((s) => s.slice(0, 4));
+        five[k][y] = list.map((s) => s.slice(0, 5));
+        six[k][y] = list.map((s) => s.slice(0, 6));
       }
     }
     const size = (o) => {
@@ -234,9 +245,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     console.log(`storms: ${storms.toLocaleString()}`);
     console.log(`category only              : ${size(narrow)}`);
     console.log(`+ landfall flag            : ${size(mid)}`);
+    console.log(`+ ACE + peak wind          : ${size(four)}`);
+    console.log(`+ days alive               : ${size(five)}`);
+    console.log(`+ lowest pressure          : ${size(six)}`);
     const full = {};
     for (const [k, b] of Object.entries(wall.basins)) full[k] = b.years;
-    console.log(`+ ACE + peak wind (SHIPPED): ${size(full)}`);
+    console.log(`+ name           (SHIPPED) : ${size(full)}`);
   } else {
     const r = syncWall(root, index, { generatedAt: new Date().toISOString() });
     console.log(r.written ? `wrote ${WALL_FILE} (${r.bytes.toLocaleString()} B)` : `${WALL_FILE} unchanged`);
