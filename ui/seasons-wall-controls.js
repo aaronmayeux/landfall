@@ -164,41 +164,50 @@ export function moreFiltersHtml(f, open) {
  * ------------------------------------------------------------------------- */
 
 /**
- * ==> TEN NAMED ORDERINGS IN ONE NATIVE DROPDOWN, RATHER THAN FIVE BUTTONS
- * THAT FLIP WHEN PRESSED TWICE. <== Aaron's call, 2026-08-26. Five segments
- * where re-pressing the selected one reverses it is compact and it is the
- * usual pattern, but nothing on screen says the second press does anything
- * different, and §13 requires a keyboard path for every action — "press it
- * again" has no honest keyboard equivalent that is not just a second Enter
- * doing something invisible.
+ * ==> FIVE BUTTONS, AND PRESSING THE SELECTED ONE REVERSES IT. <== Aaron on
+ * glass, 2026-08-27, against the mockup. This shipped first as a `<select>`
+ * holding ten named orderings, on the argument that "press it again" is an
+ * affordance nothing on screen announces. He looked at both and chose the
+ * buttons, and he is the one holding the phone.
  *
- * A `<select>` gets the keyboard, the screen reader and the platform picker
- * for nothing, and it costs one line instead of a row of five.
+ * ==> SO THE ARROW HAS TO DO THE ANNOUNCING. <== The selected button carries a
+ * visible ↓ or ↑ — that is the whole signal that direction exists at all, and
+ * without it this control has a hidden second state. `aria-label` spells the
+ * rest out for a screen reader: which way it is sorting now, and that pressing
+ * again flips it. Enter on a focused button is the keyboard path and it is the
+ * same one press-again uses, so §13 is satisfied by the ordinary button
+ * behaviour rather than by a second control.
  *
- * ==> THE WORDS ARE THE ORDERING, NOT THE FIELD. <== `Most storms first`
- * rather than `Count, descending`. The reader is choosing an arrangement of
- * the screen, and "descending" makes them work out which end that puts first.
+ * ==> AND THE ROW WRAPS RATHER THAN SCROLLING SIDEWAYS. <== The mockup has
+ * four; this has five, and five labels do not fit across 390px at a legible
+ * size. A horizontal scroller would hide ACE behind a gesture with nothing
+ * saying it was there.
  */
-const SORT_OPTIONS = [
-  ['year', 'desc', 'Newest year first'],
-  ['year', 'asc', 'Oldest year first'],
-  ['count', 'desc', 'Most storms first'],
-  ['count', 'asc', 'Fewest storms first'],
-  ['strongest', 'desc', 'Strongest first'],
-  ['strongest', 'asc', 'Weakest first'],
-  ['landfalls', 'desc', 'Most landfalls first'],
-  ['landfalls', 'asc', 'Fewest landfalls first'],
-  ['ace', 'desc', 'Most ACE first'],
-  ['ace', 'asc', 'Least ACE first'],
+const SORT_KEYS = [
+  ['year', 'Year', 'Newest year first', 'Oldest year first'],
+  ['count', 'Count', 'Most storms first', 'Fewest storms first'],
+  ['strongest', 'Strongest', 'Strongest first', 'Weakest first'],
+  ['landfalls', 'Landfalls', 'Most landfalls first', 'Fewest landfalls first'],
+  ['ace', 'ACE', 'Most ACE first', 'Least ACE first'],
 ];
 
 export function sortHtml(key, dir) {
-  const opts = SORT_OPTIONS.map(([k, d, label]) => `
-      <option value="${k}:${d}"${k === key && d === dir ? ' selected' : ''}>${esc(label)}</option>`).join('');
-  return `<div class="wall-sort">
-      <label class="wall-sort-label" for="wall-sort">Order</label>
-      <select class="wall-sort-select" id="wall-sort" data-sort>${opts}</select>
-    </div>`;
+  const buttons = SORT_KEYS.map(([k, label, descLabel, ascLabel]) => {
+    const on = k === key;
+    const desc = on ? dir !== 'asc' : true;
+    const now = desc ? descLabel : ascLabel;
+    const flipped = desc ? ascLabel : descLabel;
+    /* An unselected button says what it WOULD do; the selected one says what it
+     * is doing and what a second press changes it to. */
+    const spoken = on ? `${now}. Press again for ${flipped.toLowerCase()}` : now;
+    const arrow = on ? `<span class="wall-sort-arrow" aria-hidden="true">${desc ? '↓' : '↑'}</span>` : '';
+    return `
+      <button class="wall-sort-btn" type="button" data-sort="${k}"
+              aria-pressed="${String(on)}" aria-label="${esc(spoken)}"
+      ><span aria-hidden="true">${label}</span>${arrow}</button>`;
+  }).join('');
+
+  return `<div class="wall-sort" role="group" aria-label="Order">${buttons}</div>`;
 }
 
 /* ---------------------------------------------------------------------------

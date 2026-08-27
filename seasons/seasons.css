@@ -1229,12 +1229,14 @@ html[data-seasons="on"] #btn-layers {
   border-radius: var(--radius);
 }
 
-/* ==> OFF IS FLAT AND DIM; ON CARRIES THE CATEGORY'S OWN INK. <== §57.36 chose
-   coloured chips over labelled checkboxes precisely so the control documents
-   itself, so the colour has to mean "this one is included" rather than just
-   "this one is Cat 3". A chip that was coloured in both states would leave the
-   state carried by nothing but a font weight, which is the fault §57.21b
-   already fixed once on the segment control. */
+/* ==> ON IS THE CATEGORY'S OWN COLOUR AT FULL STRENGTH. <== Aaron on glass,
+   2026-08-27, against the mockup. It shipped first as a 28% tint of the hue,
+   which kept the chips quiet next to the wall — and made the row of them read
+   as seven greyish pills rather than as the Saffir-Simpson scale itself. The
+   scale IS the legend for every dot below, so the chips are worth the weight.
+
+   The ink is `--on-bright` rather than the app's own pale text, because none
+   of the seven can carry that at AA — Cat 1's yellow least of all. */
 .wall-chip {
   flex: 1 1 0;
   min-width: 0;
@@ -1254,13 +1256,10 @@ html[data-seasons="on"] #btn-layers {
 }
 
 .wall-chip[aria-pressed="true"] {
-  /* The same hue as the dot, at a weight a background can carry. The text
-     stays the app's own ink rather than the category colour: Cat 1's yellow
-     cannot reach AA at this size, which is the same reason the board's
-     strength badge is neutral. */
-  background: color-mix(in srgb, var(--wall-chip-ink) 28%, transparent);
-  border-color: color-mix(in srgb, var(--wall-chip-ink) 70%, transparent);
-  color: var(--text-primary);
+  background: var(--wall-chip-ink);
+  border-color: var(--wall-chip-ink);
+  color: var(--on-bright);
+  font-weight: 600;
 }
 
 .wall-chip:focus-visible {
@@ -1280,39 +1279,61 @@ html[data-seasons="on"] #btn-layers {
    room to breathe and this one sits in a stack of four. */
 .wall-switch { min-height: var(--touch-target); }
 
+/* ==> FIVE BUTTONS THAT WRAP, NOT A ROW THAT SCROLLS SIDEWAYS. <== Aaron on
+   glass against the mockup. The mockup carries four across 390px; this has
+   five, and the fifth does not fit at a legible size. Wrapping shows all of
+   them; a horizontal scroller would hide ACE behind a gesture with nothing on
+   screen saying it was there. */
 .wall-sort {
   display: flex;
-  align-items: center;
-  gap: var(--space-snug);
-  min-height: var(--touch-target);
+  flex-wrap: wrap;
+  gap: var(--space-tight);
 }
 
-.wall-sort-label {
-  flex: 0 0 auto;
-  font-size: var(--type-small);
-  color: var(--text-secondary);
-}
-
-/* ==> A REAL `<select>`, STYLED AS LITTLE AS POSSIBLE. <== It gets the
-   platform picker, the keyboard and the screen reader for nothing, and every
-   pixel of custom dropdown is a pixel of that thrown away and rebuilt worse. */
-.wall-sort-select {
+.wall-sort-btn {
   flex: 1 1 auto;
-  min-width: 0;
-  min-height: 36px;
-  padding: 0 var(--space-tight);
-  background: var(--glass-raised);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-snug);
+  background: none;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font: inherit;
   font-size: var(--type-small);
+  white-space: nowrap;
   cursor: pointer;
+  transition: background var(--duration-base) var(--ease-settle),
+              color var(--duration-base) var(--ease-settle),
+              border-color var(--duration-base) var(--ease-settle);
 }
 
-.wall-sort-select:focus-visible {
+/* The selected key reads as chosen the same way the drawer's segment control
+   does — a lit edge and full-strength ink, never a darker patch on a dark
+   panel (§57.21b, which this project learned the hard way). */
+.wall-sort-btn[aria-pressed="true"] {
+  background: var(--seg-active);
+  border-color: var(--seg-active-edge);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* ==> THE ARROW IS THE ONLY THING SAYING DIRECTION EXISTS. <== Press-again-to
+   -reverse is a hidden state otherwise, which was the whole objection to this
+   control. It appears on the selected button only, because an unselected key
+   has no direction yet. */
+.wall-sort-arrow { font-size: var(--type-small); }
+
+.wall-sort-btn:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .wall-sort-btn:hover { background: var(--hover); color: var(--text-primary); }
 }
 
 .wall-more > summary {
@@ -1385,3 +1406,14 @@ html[data-seasons="on"] #btn-layers {
   display: flex;
   flex-direction: column;
 }
+
+/* ==> `2 of 13` IS ONE LINE OR IT IS BROKEN. <== Aaron on glass, 2026-08-27.
+   The count column is sized for a bare `31`, so the moment a filter turned it
+   into a ratio it wrapped onto two lines inside a 44px row — the number and its
+   denominator stacked, which reads as two separate figures rather than as one.
+   The column widens only while the ratio is showing, so an unfiltered wall
+   keeps every pixel of its strip. */
+.wall-count { white-space: nowrap; }
+
+.wall-row[data-ratio] { grid-template-columns: 3.1em 1fr 4.6em; }
+.wall-row[data-figure][data-ratio] { grid-template-columns: 3.1em 1fr 2.6em 4.6em; }

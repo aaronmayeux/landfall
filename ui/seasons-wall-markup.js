@@ -144,7 +144,9 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
    * three numbers in a row with no idea which is which. */
   const spoken = fig && fig.value !== '—' ? `${label}, ${fig.value} ${fig.unit}` : label;
 
-  return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}${fig ? ' data-figure="1"' : ''}
+  const ratio = filtered && row.shown.length !== row.total;
+
+  return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}${fig ? ' data-figure="1"' : ''}${ratio ? ' data-ratio="1"' : ''}
       aria-label="${esc(spoken)}">
       <span class="wall-year">${row.year}${row.pre ? '<b class="wall-star">*</b>' : ''}</span>
       <span class="wall-strip-slot">${stripHtml(row.shown)}</span>

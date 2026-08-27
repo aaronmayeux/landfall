@@ -394,8 +394,25 @@ export function createSeasonsWallView({
    * captured first, or a chip tap would close it. */
   function changed() {
     moreOpen = !!bodyEl?.querySelector('[data-more]')?.open;
+    /* ==> A REPAINT MUST NOT THROW THE READER BACK TO 1851. <== `render()`
+     * replaces the body's markup, which resets its scroll to the top. Dragging
+     * a threshold slider repaints on every step — twelve arrow presses is
+     * twelve jumps — and tapping a chip after scrolling down the wall loses
+     * the reader's place entirely. The controls sit at the top, so this is
+     * invisible in a fresh session and unmissable in a real one. */
+    const top = bodyEl?.scrollTop ?? 0;
     render();
+    if (bodyEl) bodyEl.scrollTop = top;
   }
+
+  /** Hand focus back to the control the reader is using. The markup was
+   *  replaced, so the element under their thumb is a new one — without this a
+   *  keyboard reader moves a slider once and then loses focus into the body.
+   *
+   *  ==> `preventScroll`, OR RESTORING THE SCROLL POSITION IS UNDONE A LINE
+   *  LATER. <== The default scrolls the focused element into view, which on a
+   *  phone reads as the sheet lurching every time a chip is tapped. */
+  const refocus = (sel) => bodyEl?.querySelector(sel)?.focus({ preventScroll: true });
 
   /** A threshold slider at its rail is OFF, not a filter matching everything.
    *  Pressure runs the other way — see `SEASONS.wallPressureMin`. */
@@ -419,17 +436,10 @@ export function createSeasonsWallView({
        * Handing focus back keeps a keyboard reader on the control they were
        * dragging — without it, arrow-keying a slider moves it once and then
        * loses the focus into the body. */
-      bodyEl.querySelector(`[data-threshold="${id}"]`)?.focus();
+      refocus(`[data-threshold="${id}"]`);
       return;
     }
 
-    const sort = e.target.closest?.('[data-sort]');
-    if (sort) {
-      const [k, d] = String(sort.value).split(':');
-      if (SEASONS.wallSortKeys.includes(k)) { sortKey = k; sortDir = d === 'asc' ? 'asc' : 'desc'; }
-      changed();
-      bodyEl.querySelector('[data-sort]')?.focus();
-    }
   }
 
   function onClick(e) {
@@ -446,7 +456,7 @@ export function createSeasonsWallView({
       if (filter.cats.has(c)) { if (filter.cats.size > 1) filter.cats.delete(c); }
       else filter.cats.add(c);
       changed();
-      bodyEl.querySelector(`[data-chip="${c}"]`)?.focus();
+      refocus(`[data-chip="${c}"]`);
       return;
     }
 
@@ -454,7 +464,23 @@ export function createSeasonsWallView({
     if (landfall) {
       filter.landfall = !filter.landfall;
       changed();
-      bodyEl.querySelector('[data-landfall]')?.focus();
+      refocus('[data-landfall]');
+      return;
+    }
+
+    const sort = e.target.closest('[data-sort]');
+    if (sort) {
+      const k = sort.dataset.sort;
+      if (SEASONS.wallSortKeys.includes(k)) {
+        /* ==> PRESSING THE SELECTED KEY REVERSES IT; PRESSING ANOTHER STARTS
+         * IT LARGEST-FIRST. <== Arriving at "fewest landfalls first" because
+         * the previous key happened to be ascending would be the control
+         * remembering something the reader never asked it to. */
+        if (k === sortKey) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+        else { sortKey = k; sortDir = 'desc'; }
+      }
+      changed();
+      refocus(`[data-sort="${k}"]`);
       return;
     }
 
