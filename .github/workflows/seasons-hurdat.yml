@@ -66,6 +66,23 @@ jobs:
         id: run
         run: node tools/seasons-hurdat.mjs . /tmp/hurdat-report
 
+      # ==> THE DERIVED FILES ARE REBUILT BEFORE THE COMMIT, NOT AFTER. <==
+      # §57.7a. `seasons/data/<basin>-landfalls-<rev>.json` and
+      # `seasons/wall.json` are both computed FROM the HURDAT2 files above and
+      # both carry the revision stamp in their name or their contents. A new
+      # revision landing without these rebuilt in the same commit would leave
+      # the app fetching a landfall file whose revision no longer exists — a
+      # 404 on every landfall in the archive, with the wall still confidently
+      # drawing last month's numbers.
+      #
+      # Runs whether or not HURDAT moved: both scripts write only on a real
+      # change, and the coastline pin can move without the archive moving.
+      - name: recompute landfalls and the wall
+        if: always() && steps.run.outcome != 'cancelled'
+        run: |
+          node tools/seasons-landfall.mjs
+          node tools/seasons-wall.mjs
+
       # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== The decision is made
       # inside the script, not here, because only it knows whether the file
       # changed or NOAA merely listed the same name again. A monthly commit
@@ -77,13 +94,17 @@ jobs:
           set -euo pipefail
           DECISION="$(cat /tmp/hurdat-report/decision.txt 2>/dev/null || echo skip)"
           echo "decision: $DECISION"
-          if [ "$DECISION" != "commit" ]; then
-            echo "nothing moved — no commit"
-            exit 0
-          fi
           git config user.name  "Andy (Cowork)"
           git config user.email "andy@getgravitate.app"
           git add -A seasons
+          # The archive may be unchanged while a derived file moved — a new
+          # coastline pin, or a threshold in `config/constants.js`. `git diff`
+          # below is the real decision either way; the script's verdict only
+          # decides whether to bother looking.
+          if [ "$DECISION" != "commit" ] && git diff --cached --quiet; then
+            echo "nothing moved — no commit"
+            exit 0
+          fi
           if git diff --cached --quiet; then
             echo "the script asked to commit but git sees no change — not committing"
             exit 0

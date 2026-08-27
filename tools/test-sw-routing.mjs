@@ -152,6 +152,20 @@ console.log('\nthe fallback-page guard — what stops a 404 becoming permanent')
     typeMatchesUrl(html, `${HOST}/vendor/maplibre-gl-5.6.0.js`) === false,
   );
   ok(
+    /* ==> `seasons/data/` HOLDS A SECOND FILE TYPE SINCE §57.7a. <== The
+     * computed landfalls are `.json` under a CACHE-FIRST, immutable path.
+     * A cache-first path is where a transient 404 answered with the app shell
+     * becomes permanent, so the guard has to refuse HTML for this shape too —
+     * and it is a different extension under the same path from the `.txt`
+     * above, which is exactly the pairing nothing else in the repo checks. */
+    'an HTML answer for a computed-landfalls .json is refused',
+    typeMatchesUrl(html, `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === false,
+  );
+  ok(
+    'and real JSON for it is accepted',
+    typeMatchesUrl(res('application/json'), `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === true,
+  );
+  ok(
     'an HTML answer for the index .json is refused',
     typeMatchesUrl(html, `${HOST}/seasons/index.json`) === false,
   );
