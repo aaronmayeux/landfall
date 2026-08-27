@@ -23,6 +23,7 @@
 
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { CAT, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
+import { isTimeline, sortFigure } from '../lib/wall-filter.js';
 import { esc } from './seasons-board-markup.js';
 import { dotted } from './loading-dots.js';
 
@@ -33,6 +34,27 @@ export const dotColor = (cat) => categoryColor(Number.isFinite(cat) ? cat : null
 
 /** `tropical depression`, `Category 4` — for the row's spoken label. */
 export const catLabel = (cat) => categoryShortLabel(cat, 'tropical', null);
+
+/**
+ * The same grade, spelled out for a sentence.
+ *
+ * ==> `Cat 5` IS A COLUMN LABEL AND `Category 5` IS PROSE, AND THE COLLAPSED
+ * TAIL NEEDS THE SECOND. <== §57.36's own wording is *"142 seasons had no
+ * Category 5"*, and `categoryShortLabel` is deliberately terse because its job
+ * is fitting inside a badge on a forty-row list. Abbreviating inside a sentence
+ * reads as a truncation rather than as a name.
+ *
+ * It is here rather than in `lib/category.js` because it is the WALL's
+ * register, not a second opinion about what a category is — the numbers and
+ * the boundaries still come from there, and this only decides how many letters
+ * to spend on them.
+ */
+export const catProse = (cat) => {
+  if (cat === 0) return 'tropical depression';
+  if (cat === 1) return 'tropical storm';
+  const label = catLabel(cat);
+  return label.startsWith('Cat ') ? `Category ${label.slice(4)}` : label;
+};
 
 /**
  * One season's dots, as elements rather than as SVG.
@@ -90,11 +112,23 @@ export function stripHtml(list) {
  * `total` are always equal and the small half is omitted. The SHAPE is right
  * now so that step 3 fills a slot rather than changing every row on the wall.
  */
-export function rowHtml(row, { filtered = false } = {}) {
+export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
   const label = rowLabel(row, { catLabel });
   const count = filtered && row.shown.length !== row.total
     ? `${row.shown.length}<small> of ${row.total}</small>`
     : `${row.total}`;
+
+  /* ==> A NUMBER YOU ARE SORTING BY AND CANNOT SEE READS AS A BROKEN CONTROL.
+   * <== Aaron, 2026-08-26. Year and count are already drawn in their own
+   * columns, so those two sorts add nothing here and the strip keeps its full
+   * width. The other three borrow about 2.6em of it — measured against the
+   * busiest basin that takes a dot from roughly 7px to 6px, and only while
+   * that sort is on. `dotSizeFor` re-measures the strip on every render, so
+   * the correction is automatic rather than a second calculation. */
+  const fig = sortFigure(row, sortKey, { catLabel });
+  const figure = fig
+    ? `<span class="wall-figure" aria-hidden="true">${esc(fig.value)}</span>`
+    : '';
 
   /* ==> AN ASTERISK RATHER THAN A SHADED BACKGROUND. <== Aaron on glass,
    * 2026-08-26: at the contrast a sepia palette allows, the shaded band under
@@ -105,10 +139,16 @@ export function rowHtml(row, { filtered = false } = {}) {
    * colour-blind reader, and it is the mark §57.36 always wanted for the
    * moment a sort scatters these rows and a contiguous band stops being
    * possible at all. That moment is step 3; the mark lands now. */
-  return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}
-      aria-label="${esc(label)}">
+  /* The figure is `aria-hidden` and repeated inside the label instead: read as
+   * a bare column it announces "18.8" after a sentence and a count, which is
+   * three numbers in a row with no idea which is which. */
+  const spoken = fig && fig.value !== '—' ? `${label}, ${fig.value} ${fig.unit}` : label;
+
+  return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}${fig ? ' data-figure="1"' : ''}
+      aria-label="${esc(spoken)}">
       <span class="wall-year">${row.year}${row.pre ? '<b class="wall-star">*</b>' : ''}</span>
       <span class="wall-strip-slot">${stripHtml(row.shown)}</span>
+      ${figure}
       <span class="wall-count">${count}</span>
     </button>`;
 }
@@ -204,9 +244,46 @@ export function liveRowPlaceholderHtml(year, note) {
  * Not a button, deliberately: a control that does nothing when pressed is worse
  * than no control, and it would take a tab stop for a year with no content.
  */
-export function hairlineHtml(row) {
+/**
+ * ==> AND WITH A FILTER ON IT MUST NOT SAY "NO STORMS RECORDED". <== §5. Step
+ * 3 is the first thing that ever produces an empty row: measured 2026-08-26,
+ * EVERY season in both basins holds at least one storm, so before the filters
+ * landed this function could not be reached at all and its sentence had never
+ * been read by anybody. A filtered-out 2005 is not a quiet year, and saying it
+ * is would be the wall lying about the busiest season on record.
+ */
+export function hairlineHtml(row, { filtered = false, phrase = '' } = {}) {
+  const what = filtered && phrase
+    ? `${row.year} — no ${phrase}`
+    : `${row.year} — no storms recorded`;
   return `<div class="wall-hair" role="listitem"
-    aria-label="${row.year} — no storms recorded"><span>${row.year}</span></div>`;
+    aria-label="${esc(what)}"><span>${row.year}</span></div>`;
+}
+
+/**
+ * The collapsed tail, for a wall that is no longer a timeline.
+ *
+ * ==> IN YEAR ORDER THE GAPS ARE THE INFORMATION; IN ANY OTHER ORDER THEY ARE
+ * DEAD SCROLL. <== §57.36, and it is measured rather than assumed: filtering
+ * the Atlantic to Category 5 empties 142 of 175 rows. Sorted by year those 142
+ * hairlines are what a quiet stretch LOOKS like and collapsing them would
+ * quietly redraw history. Sorted by count the timeline is already destroyed,
+ * so the same 142 rows are 142 lines of nothing between the reader and the
+ * bottom of the screen.
+ *
+ * ==> COLLAPSED, NEVER HIDDEN, AND IT NAMES WHAT IT IS HIDING. <== A
+ * `<details>` so it opens by keyboard for free. *"142 seasons had none"* would
+ * make the reader scroll back to the chips to find out what "none" meant.
+ */
+export function tailHtml(rows, { filtered, phrase }) {
+  if (!rows.length) return '';
+  const n = rows.length;
+  const what = filtered && phrase ? `no ${phrase}` : 'no storms recorded';
+  const inner = rows.map((r) => hairlineHtml(r, { filtered, phrase })).join('');
+  return `<details class="wall-tail" data-tail>
+      <summary>${n} season${n === 1 ? '' : 's'} had ${esc(what)}</summary>
+      <div class="wall-tail-rows" role="list">${inner}</div>
+    </details>`;
 }
 
 /**
@@ -248,25 +325,45 @@ export function tallyHtml(live, empty) {
  * @param {number} opts.gap
  * @param {boolean} [opts.filtered]
  */
-export function wallHtml(rows, { size, gap, filtered = false } = {}) {
+export function wallHtml(rows, {
+  size, gap, filtered = false, sortKey = 'year', sortDir = 'desc', phrase = '',
+} = {}) {
   const live = rows.filter((r) => r.shown.length > 0).length;
   const empty = rows.length - live;
+
+  /* ==> THE TIMELINE IS WHAT DECIDES WHERE THE EMPTY ROWS GO, AND THE SORT
+   * DIRECTION IS PART OF IT. <== Oldest-first is still a timeline: the era
+   * line just lands on the way UP the record instead of on the way down. Any
+   * other key is not. */
+  const timeline = isTimeline(sortKey);
 
   let html = tallyHtml(live, empty);
   html += `<div class="wall" role="list" style="--wall-dot:${size}px;--wall-dot-gap:${gap}px">`;
 
+  const tail = [];
   let eraDrawn = false;
+
   for (const row of rows) {
-    /* Rows arrive newest first, so the boundary is crossed exactly once on the
-     * way down and the line lands immediately above the first pre-satellite
-     * year. A basin whose record starts after 1966 never crosses it and never
-     * draws the line, which is correct rather than a missing case. */
-    if (!eraDrawn && row.year < SATELLITE_ERA_FROM) {
-      html += eraLineHtml();
-      eraDrawn = true;
+    if (row.shown.length === 0 && !timeline) { tail.push(row); continue; }
+
+    /* ==> THE LINE IS DRAWN AT THE CROSSING, WHICHEVER WAY THE ROWS RUN. <==
+     * Newest first it lands immediately above the first pre-satellite year;
+     * oldest first it lands immediately below the last one, which is the same
+     * boundary approached from the other side. Off a timeline it is not drawn
+     * at all — the years are scattered and there is nothing for a line to
+     * separate, which is exactly when `honestyHtml` takes over. A basin whose
+     * record starts after 1966 never crosses it and never draws it, which is
+     * correct rather than a missing case. */
+    if (timeline && !eraDrawn) {
+      const crossingDown = sortDir !== 'asc' && row.year < SATELLITE_ERA_FROM;
+      const crossingUp = sortDir === 'asc' && row.year >= SATELLITE_ERA_FROM;
+      if (crossingDown || crossingUp) { html += eraLineHtml(); eraDrawn = true; }
     }
-    html += row.shown.length === 0 ? hairlineHtml(row) : rowHtml(row, { filtered });
+
+    html += row.shown.length === 0
+      ? hairlineHtml(row, { filtered, phrase })
+      : rowHtml(row, { filtered, sortKey });
   }
 
-  return `${html}</div>`;
+  return `${html}</div>${tailHtml(tail, { filtered, phrase })}`;
 }

@@ -24,20 +24,31 @@
  * the archive is genuinely empty, and the second has never been true. Each
  * state gets its own sentence and the failure gets a real retry.
  *
- * WHAT IS NOT HERE, ON PURPOSE: the filters and the sort control are step 3;
- * the glow, the landfall triangles and the honesty marks are step 4. `filtered`
- * is threaded through to the markup already as `false`, so step 3 fills a slot
- * rather than rewriting every row.
+ * ==> THE FILTERS AND THE SORT STACK IN ONE DIRECTION AND ONLY ONE. <== §57.36,
+ * and it is the rule the whole screen rests on: FILTER FIRST, then sort what
+ * survives. `keepFor` builds the predicate, `rowsFor` applies it and recomputes
+ * every per-row figure over what is left, and only then does `sortRows` run.
+ * Sorting first and filtering after would give the same rows in an order
+ * computed from storms the reader asked to ignore — wrong, and invisibly so.
+ *
+ * WHAT IS NOT HERE, ON PURPOSE: the near-home slider, held to its own pass
+ * because filtering 175 years by distance needs the 0.93 MB whole-basin file;
+ * the retired-names chip, which needs a list this repo does not hold (§57.17);
+ * and the landfall triangles, which are step 4.
  *
  * Imports config/, lib/ and its own siblings. Never data/ or map/ — the fetch
  * arrives as an injected facade (§12).
  */
 
 import { SEASONS } from '../config/constants.js';
-import { dotSizeFor, liveRow, rowsFor } from '../lib/wall-index.js';
+import { aggregate, dotSizeFor, liveRow, rowsFor } from '../lib/wall-index.js';
+import {
+  emptyFilter, eraSplit, filterPhrase, isFiltered, keepFor, sortRows,
+} from '../lib/wall-filter.js';
 import { stormFacts } from '../lib/season-facts.js';
 import { esc } from './seasons-board-markup.js';
-import { liveRowHtml, liveRowPlaceholderHtml, wallHtml } from './seasons-wall-markup.js';
+import { catProse, liveRowHtml, liveRowPlaceholderHtml, wallHtml } from './seasons-wall-markup.js';
+import { controlsHtml } from './seasons-wall-controls.js';
 import { dotted } from './loading-dots.js';
 
 /** Where a strip's width comes from when the element has not been laid out
@@ -88,6 +99,24 @@ export function createSeasonsWallView({
    *  the wall must not hardcode `atlantic`, because which basins exist is the
    *  runner's answer, not this file's. */
   let basin = null;
+
+  /* --- what the reader chose -----------------------------------------------
+   * ==> ALL OF IT SURVIVES A BASIN SWITCH AND A DATA RELOAD, DELIBERATELY.
+   * <== A reader who narrows to Category 5 and then taps East Pacific is
+   * asking the same question of a different ocean; resetting the chips would
+   * make the basin switch feel like a Back button. Nothing here is ever
+   * cleared by the fetch, only by the reader.
+   * ---------------------------------------------------------------------- */
+
+  let filter = emptyFilter();
+  let sortKey = SEASONS.wallSortDefault;
+  let sortDir = SEASONS.wallSortDirDefault;
+
+  /** Whether the `More filters` disclosure is open. Held here rather than left
+   *  to the DOM because every render replaces the markup, and a chip tap that
+   *  slammed this shut under the reader's thumb is the kind of fault that only
+   *  ever shows up on glass. */
+  let moreOpen = false;
 
   let loadStarted = false;
 
@@ -279,7 +308,17 @@ export function createSeasonsWallView({
     }
 
     const { size, gap } = dotSizeFor(wall, basin, stripPx());
-    const rows = rowsFor(wall, basin);
+
+    /* ==> FILTER, THEN RECOMPUTE, THEN SORT. IN THAT ORDER. <== §57.36. */
+    const keep = keepFor(filter);
+    const rows = sortRows(rowsFor(wall, basin, keep), sortKey, sortDir);
+
+    const filtered = isFiltered(filter);
+    /* ==> THE PROSE LABEL HERE, THE SHORT ONE IN THE ROWS. <== This phrase ends
+     * up inside a sentence — *"142 seasons had no Category 5"* — where `Cat 5`
+     * would read as a truncation. The figure column keeps the short form,
+     * because it is a column. */
+    const phrase = filterPhrase(filter, { catLabel: catProse });
 
     /* Not reachable from the real file — every basin it carries has seasons —
      * but a wall with no rows must still say which of the two it is, because
@@ -288,21 +327,47 @@ export function createSeasonsWallView({
       return `<p class="wall-note">The record holds no seasons for this basin.</p>`;
     }
 
-    return basinsHtml() + liveHtml() + wallHtml(rows, { size, gap, filtered: false });
+    const controls = controlsHtml({
+      filter,
+      sortKey,
+      sortDir,
+      moreOpen,
+      /* Computed over the FILTERED rows, so the line quotes the undercount for
+       * the question actually on screen rather than for storms in general. */
+      split: eraSplit(rows),
+      phrase,
+    });
+
+    return basinsHtml() + controls + liveHtml(keep)
+      + wallHtml(rows, { size, gap, filtered, sortKey, sortDir, phrase });
   }
 
   /** The pinned row for the season in progress, in whichever of its three
    *  states it is in. Always something — see `loadLive`. */
-  function liveHtml() {
+  function liveHtml(keep) {
     if (liveStatus === 'loading') {
       return liveRowPlaceholderHtml(liveYear, 'counting this season…');
     }
     if (liveStatus === 'unavailable') {
       return liveRowPlaceholderHtml(liveYear, liveReason);
     }
-    return liveRowHtml(
-      liveRow({ year: liveYear, facts: liveFacts, running: liveRunningIds?.() ?? null }),
-    );
+
+    const row = liveRow({ year: liveYear, facts: liveFacts, running: liveRunningIds?.() ?? null });
+
+    /* ==> THE PINNED ROW OBEYS THE SAME FILTER AS EVERY ROW UNDER IT. <== It
+     * is the same wall, one year higher up. A Category 5 filter that emptied
+     * 142 settled seasons and left this year showing all of its tropical
+     * storms would read as the current season being extraordinary, which is
+     * the exact class of accidental claim §57.36's whole filter/sort rule
+     * exists to prevent.
+     *
+     * The aggregate is re-derived rather than kept, for the same reason
+     * `rowsFor` re-derives it: the strongest storm STILL SHOWING is a
+     * different fact from the strongest storm of the year. `total` is left
+     * alone — it is the season's real size and it is what the count column's
+     * small half is for. */
+    const shown = keep ? row.shown.filter(keep) : row.shown;
+    return liveRowHtml(shown === row.shown ? row : { ...row, shown, ...aggregate(shown), landfalls: 0 });
   }
 
   function render() {
@@ -322,8 +387,76 @@ export function createSeasonsWallView({
    * the basin group's arrow keys, which a radiogroup owes its reader.
    * ---------------------------------------------------------------------- */
 
+  /* ==> ONE REPAINT PER CHANGE, AND IT REDRAWS THE CONTROLS TOO. <== The
+   * chips, the tally, the honesty line and the rows are all functions of the
+   * same state, so there is nothing to keep in step by hand — and the one
+   * thing the DOM was holding on its own (the disclosure's open state) is
+   * captured first, or a chip tap would close it. */
+  function changed() {
+    moreOpen = !!bodyEl?.querySelector('[data-more]')?.open;
+    render();
+  }
+
+  /** A threshold slider at its rail is OFF, not a filter matching everything.
+   *  Pressure runs the other way — see `SEASONS.wallPressureMin`. */
+  function thresholdValue(id, raw) {
+    const v = Number(raw);
+    if (!Number.isFinite(v)) return null;
+    if (id === 'pressure') return v >= SEASONS.wallPressureMax ? null : v;
+    return v <= 0 ? null : v;
+  }
+
+  function onInput(e) {
+    const slider = e.target.closest?.('[data-threshold]');
+    if (slider) {
+      const id = slider.dataset.threshold;
+      const v = thresholdValue(id, slider.value);
+      if (id === 'days') filter.minDays = v;
+      else if (id === 'pressure') filter.maxPressureMb = v;
+      else if (id === 'ace') filter.minAce = v;
+      changed();
+      /* The markup was replaced, so the element under the thumb is a new one.
+       * Handing focus back keeps a keyboard reader on the control they were
+       * dragging — without it, arrow-keying a slider moves it once and then
+       * loses the focus into the body. */
+      bodyEl.querySelector(`[data-threshold="${id}"]`)?.focus();
+      return;
+    }
+
+    const sort = e.target.closest?.('[data-sort]');
+    if (sort) {
+      const [k, d] = String(sort.value).split(':');
+      if (SEASONS.wallSortKeys.includes(k)) { sortKey = k; sortDir = d === 'asc' ? 'asc' : 'desc'; }
+      changed();
+      bodyEl.querySelector('[data-sort]')?.focus();
+    }
+  }
+
   function onClick(e) {
     if (e.target.closest('[data-retry]')) { load(); return; }
+
+    const chip = e.target.closest('[data-chip]');
+    if (chip) {
+      const c = Number(chip.dataset.chip);
+      /* ==> UNCHECKING THE LAST CHIP IS REFUSED RATHER THAN ALLOWED. <== §5.
+       * Zero categories checked is a wall with nothing on it, which looks
+       * exactly like a wall that failed to load — and the reader's own last
+       * tap is the least likely explanation they will reach for. Refusing the
+       * tap leaves them one chip from where they were. */
+      if (filter.cats.has(c)) { if (filter.cats.size > 1) filter.cats.delete(c); }
+      else filter.cats.add(c);
+      changed();
+      bodyEl.querySelector(`[data-chip="${c}"]`)?.focus();
+      return;
+    }
+
+    const landfall = e.target.closest('[data-landfall]');
+    if (landfall) {
+      filter.landfall = !filter.landfall;
+      changed();
+      bodyEl.querySelector('[data-landfall]')?.focus();
+      return;
+    }
 
     const seg = e.target.closest('[data-basin]');
     if (seg) {
@@ -378,6 +511,10 @@ export function createSeasonsWallView({
       bodyEl = host.querySelector('#seasons-wall-body');
       bodyEl.addEventListener('click', onClick);
       bodyEl.addEventListener('keydown', onKeydown);
+      /* `input` rather than `change`, so a dragged slider narrows the wall as
+       * it moves. `change` would leave the reader dragging against a screen
+       * that does not answer until they let go. */
+      bodyEl.addEventListener('input', onInput);
       render();
       load();
     },

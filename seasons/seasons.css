@@ -1193,3 +1193,195 @@ html[data-seasons="on"] #btn-layers {
 }
 
 .wall-live-note-wide { white-space: normal; }
+
+/* ---------------------------------------------------------------------------
+ * THE WALL'S FILTERS AND ITS SORT (§57.36, step 3)
+ *
+ * ==> EVERY ROW OF CONTROLS IS A ROW OF YEARS THE READER CANNOT SEE. <== The
+ * sheet is 66vh and the wall is the whole point of the screen, so the chips,
+ * the toggle and the sort share as little vertical space as three controls
+ * can. That is why the thresholds are behind a disclosure and why the sort is
+ * one dropdown rather than a row of five buttons.
+ *
+ * ==> AND IT REUSES `.switch-row`, `.slider-row` AND `.slider` FROM panels.css
+ * RATHER THAN GROWING LOOKALIKES. <== §12. What is here is only what those
+ * three do not already cover.
+ * ------------------------------------------------------------------------- */
+
+.wall-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  margin-bottom: var(--space-snug);
+}
+
+/* ==> SEVEN CHIPS ACROSS A 390px PHONE, AND THEY SHARE THE WIDTH RATHER THAN
+   CLAIMING IT. <== `flex: 1 1 0` gives each one about 47px inside the sheet's
+   padding, so the 44px touch floor is cleared on the narrowest screen the app
+   supports without the row ever scrolling sideways. A horizontal scroller here
+   would hide the strongest categories behind a gesture. */
+.wall-chips {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
+/* ==> OFF IS FLAT AND DIM; ON CARRIES THE CATEGORY'S OWN INK. <== §57.36 chose
+   coloured chips over labelled checkboxes precisely so the control documents
+   itself, so the colour has to mean "this one is included" rather than just
+   "this one is Cat 3". A chip that was coloured in both states would leave the
+   state carried by nothing but a font weight, which is the fault §57.21b
+   already fixed once on the segment control. */
+.wall-chip {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 40px;          /* the GROUP clears 44px including its padding */
+  padding: 0 2px;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: calc(var(--radius) - 3px);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background var(--duration-base) var(--ease-settle),
+              color var(--duration-base) var(--ease-settle),
+              border-color var(--duration-base) var(--ease-settle);
+}
+
+.wall-chip[aria-pressed="true"] {
+  /* The same hue as the dot, at a weight a background can carry. The text
+     stays the app's own ink rather than the category colour: Cat 1's yellow
+     cannot reach AA at this size, which is the same reason the board's
+     strength badge is neutral. */
+  background: color-mix(in srgb, var(--wall-chip-ink) 28%, transparent);
+  border-color: color-mix(in srgb, var(--wall-chip-ink) 70%, transparent);
+  color: var(--text-primary);
+}
+
+.wall-chip:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+@media (hover: hover) {
+  .wall-chip:hover { background: color-mix(in srgb, var(--wall-chip-ink) 14%, transparent); }
+  .wall-chip[aria-pressed="true"]:hover {
+    background: color-mix(in srgb, var(--wall-chip-ink) 38%, transparent);
+  }
+}
+
+/* The landfall toggle borrows `.switch-row` whole; this only trims the height
+   it reserves, because the shared rule is written for a settings panel with
+   room to breathe and this one sits in a stack of four. */
+.wall-switch { min-height: var(--touch-target); }
+
+.wall-sort {
+  display: flex;
+  align-items: center;
+  gap: var(--space-snug);
+  min-height: var(--touch-target);
+}
+
+.wall-sort-label {
+  flex: 0 0 auto;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+}
+
+/* ==> A REAL `<select>`, STYLED AS LITTLE AS POSSIBLE. <== It gets the
+   platform picker, the keyboard and the screen reader for nothing, and every
+   pixel of custom dropdown is a pixel of that thrown away and rebuilt worse. */
+.wall-sort-select {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  padding: 0 var(--space-tight);
+  background: var(--glass-raised);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-small);
+  cursor: pointer;
+}
+
+.wall-sort-select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.wall-more > summary {
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.wall-more > summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+/* ==> THE LINE THAT KEEPS A SORT CONTROL FROM MAKING A CLIMATE CLAIM. <==
+   §57.36. It is a persistent block rather than a tooltip or a tint, because
+   both of those are dismissable and this is not — and because the moment it
+   matters most is the moment a non-year sort has scattered the old years
+   through the list and the satellite-era line cannot be drawn at all. */
+.wall-honesty {
+  margin: 0 0 var(--space-snug);
+  padding: var(--space-snug);
+  background: var(--glass-raised);
+  border-radius: var(--radius);
+  font-size: var(--type-small);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* ==> THE FIGURE COLUMN EXISTS ONLY WHILE ITS SORT IS ON. <== It borrows about
+   2.6em from the strip, which on the busiest basin is a dot from roughly 7px
+   to 6px — paid only by a reader who asked to compare that number, and
+   returned the moment they sort by year or by count again. The row's own grid
+   is redeclared rather than a column left empty, so nothing is reserved when
+   nothing is drawn. */
+.wall-row[data-figure] {
+  grid-template-columns: 3.1em 1fr 2.6em 2.2em;
+}
+
+.wall-figure {
+  font-size: var(--type-small);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* ==> COLLAPSED, NEVER HIDDEN. <== §57.36. Off a timeline the empty rows are
+   dead scroll, but deleting them would let an over-filtered wall pass for a
+   complete one — the count in the summary is the thing standing between those
+   two readings. */
+.wall-tail > summary {
+  min-height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.wall-tail > summary:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.wall-tail-rows {
+  display: flex;
+  flex-direction: column;
+}

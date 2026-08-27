@@ -6692,6 +6692,58 @@ export const SEASONS = Object.freeze({
    *  strip is still visibly short. */
   wallDotGap: 2,
 
+  /* --- The wall's filters and sort (§57.36, step 3) ------------------------
+   * ==> EVERY THRESHOLD BELOW IS A REAL PERCENTILE OFF `seasons/wall.json`,
+   * NOT A ROUND NUMBER SOMEBODY LIKED. <== Measured 2026-08-26 over both
+   * basins, 3,266 storms. A ceiling above the strongest storm on record gives
+   * a slider a dead zone at the top and a reader no way to know it is dead;
+   * one just past the record keeps every position meaningful.
+   * ---------------------------------------------------------------------- */
+
+  /** ACE contributed by ONE storm. Median 4.5, 90th percentile 21.7, and the
+   *  most violent storm in the record is 85.3 — so the ceiling is 90 and the
+   *  step is 5, which puts the useful part of the range (0 to 25) in the first
+   *  third of the travel where a thumb actually lands. */
+  wallAceMin: 0,
+  wallAceMax: 90,
+  wallAceStep: 5,
+
+  /** How long a storm lasted, in days. Median 5.5, 90th percentile 11.8, and
+   *  the longest-lived storm in the record ran 32.8 days. A half-day step is
+   *  the record's own resolution — HURDAT2 fixes are six-hourly, so anything
+   *  finer would be filtering on arithmetic rather than on measurement. */
+  wallDaysMin: 0,
+  wallDaysMax: 35,
+  wallDaysStep: 0.5,
+
+  /** ==> LOWEST PRESSURE RUNS THE OTHER WAY AND THAT IS THE WHOLE TRAP. <== A
+   *  LOWER number is a STRONGER storm, so this is a ceiling ("under 950 mb")
+   *  where the other two are floors. Wilma's 882 mb is the Atlantic record and
+   *  872 is the lowest in the file, so the floor sits at 870; the top is 1010
+   *  because a storm at 1010 mb is barely a storm and a slider that runs to
+   *  1016 spends its last third on rows nothing filters out.
+   *
+   *  ==> AND A STORM WITH NO PRESSURE READING IS EXCLUDED, NOT SWEPT IN. <==
+   *  §5. 1,258 of the 3,266 carry no central pressure at all, almost all of
+   *  them before aircraft reconnaissance. Treating "not measured" as "not low"
+   *  is defensible; treating it as "low" would put the entire 19th century
+   *  under a 950 mb filter on the strength of a reading nobody took. */
+  wallPressureMin: 870,
+  wallPressureMax: 1010,
+  wallPressureStep: 5,
+
+  /** ==> THE FIVE SORT KEYS, AND THERE MUST NEVER BE A SIXTH OF THE SHAPE
+   *  "MOST CATEGORY 5s". <== §57.36. Every question of that form falls out of
+   *  a filter stacked on one of these, which is the entire reason the two
+   *  controls exist as two controls. Named here so `lib/wall-filter.js` and
+   *  the control markup cannot disagree about which keys exist. */
+  wallSortKeys: Object.freeze(['year', 'count', 'strongest', 'landfalls', 'ace']),
+
+  /** The wall opens newest-year-first, which is the order it has always been
+   *  in and the only order in which the satellite-era line can be drawn. */
+  wallSortDefault: 'year',
+  wallSortDirDefault: 'desc',
+
   /* --- Near home (§57.19) -------------------------------------------------- */
 
   /** The radius slider. Under 10 miles is noise against a position every six
