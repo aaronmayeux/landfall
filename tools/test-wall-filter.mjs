@@ -101,12 +101,17 @@ ok('and every one of them really is a Cat 5',
 ok('three chips select the union of the three',
   survives(catFilter(CAT3, 5, CAT5)).every((s) => [CAT3, 5, CAT5].includes(s[CAT])));
 
+/* ==> THE COLUMN IS A COUNT SINCE §57.7a, NOT A FLAG, AND THESE READ `>= 1`
+ * RATHER THAN `=== 1` FOR THAT REASON. <== They said `=== 1` until 2026-08-27
+ * and went red the moment the wall started carrying real landfall counts —
+ * which is the suite working. A storm that came ashore three times is still a
+ * storm that came ashore. */
 ok('the landfall toggle keeps only storms that came ashore',
-  survives({ ...emptyFilter(), landfall: true }).every((s) => s[LANDFALL] === 1));
+  survives({ ...emptyFilter(), landfall: true }).every((s) => s[LANDFALL] >= 1));
 
 ok('and it stacks with the chips rather than replacing them',
   survives({ ...catFilter(CAT5), landfall: true })
-    .every((s) => s[CAT] === CAT5 && s[LANDFALL] === 1));
+    .every((s) => s[CAT] === CAT5 && s[LANDFALL] >= 1));
 
 ok('a duration floor keeps only storms that lasted at least that long',
   survives({ ...emptyFilter(), minDays: 14 }).every((s) => s[DAYS] >= 14));
@@ -239,8 +244,22 @@ ok('the strongest key reads the filtered maximum',
   cat5Rows.filter((r) => r.shown.length).every((r) => r.strongest === CAT5));
 
 const lfRows = rowsFor(wall, 'atlantic', keepFor({ ...emptyFilter(), landfall: true }));
-ok('the landfall count equals the number of surviving storms under a landfall filter',
-  lfRows.every((r) => r.landfalls === r.shown.length));
+ok('every storm surviving a landfall filter came ashore at least once',
+  lfRows.every((r) => r.shown.every((s) => s[LANDFALL] >= 1)));
+ok('and the row total is the SUM of their landfalls, not a count of them',
+  lfRows.every((r) => r.landfalls === r.shown.reduce((t, s) => t + s[LANDFALL], 0)));
+
+/* ==> AND THE TWO ARE GENUINELY DIFFERENT NUMBERS, WHICH IS THE WHOLE POINT
+ * OF §57.7a. <== This assertion is the guard against sliding back: the column
+ * counted STORMS and called them landfalls until 2026-08-27, and for 2005 that
+ * was 16 against a real 30. If a future change makes the total equal the storm
+ * count on every row again, the bug is back and this goes red. */
+ok('at least one season records more landfalls than it has storms that came ashore',
+  lfRows.some((r) => r.landfalls > r.shown.length));
+
+const y2005 = lfRows.find((r) => r.year === 2005);
+ok(`2005 records more landfalls than landfalling storms — got ${y2005?.landfalls} across ${y2005?.shown.length}`,
+  !!y2005 && y2005.landfalls > y2005.shown.length);
 
 /* ---------------------------------------------------------------------------
  * 5. THE COMPARATOR

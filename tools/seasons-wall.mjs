@@ -128,12 +128,20 @@ export function fillGaps(years) {
  * season happened, and a row sorted by strength has June somewhere in the
  * middle and cannot be compared to the row above it.
  */
-export function basinRows(text) {
+export function basinRows(text, marks = null) {
   const parsed = parseHurdat2(String(text ?? ''));
   const storms = parsed?.storms || [];
 
   const rows = {};
   for (const storm of storms) {
+    /* ==> THE WALL READS THE SAME FILE THE BROWSER DOES. <== §57.7a. The
+     * landfalls are computed once by `tools/seasons-landfall.mjs` and written
+     * to `seasons/data/<basin>-landfalls-<rev>.json`; both this generator and
+     * `data/seasons.js` attach that file's answer to the storm before asking
+     * `stormFacts`. Recomputing here instead would put a second land mask and
+     * a second set of thresholds behind one number, and the failure would be
+     * the wall and the board disagreeing about 2005 with nothing saying why. */
+    if (marks) storm.landfallsComputed = marks[storm.id] || [];
     const facts = stormFacts(storm);
     if (!facts || !Number.isFinite(facts.year)) continue;
     const key = String(facts.year);
@@ -169,12 +177,22 @@ export function buildWall(root, index, { generatedAt }) {
     if (!name) continue;
     const path = join(root, 'seasons/data', name);
     if (!existsSync(path)) continue;
+    /* Absent is not fatal and must not be silent: the wall still draws, every
+     * landfall figure falls back to NOAA's sparse markers, and the log says
+     * so. A generator that crashed here would take the whole archive down over
+     * one companion file. */
+    const marksPath = join(root, 'seasons/data', `${key}-landfalls-${entry.revision}.json`);
+    let marks = null;
+    if (existsSync(marksPath)) marks = JSON.parse(readFileSync(marksPath, 'utf8'))?.storms || null;
+    else console.warn(`  ! ${key}: no computed landfalls on disk — falling back to NOAA's markers`);
+
     basins[key] = {
       label: entry.label,
       revision: entry.revision,
       firstSeason: entry.firstSeason,
       lastSeason: entry.lastSeason,
-      years: basinRows(readFileSync(path, 'utf8')),
+      landfallSource: marks ? 'computed' : 'noaa',
+      years: basinRows(readFileSync(path, 'utf8'), marks),
     };
   }
   return {
@@ -183,7 +201,7 @@ export function buildWall(root, index, { generatedAt }) {
      * HURDAT2 is the reviewed record; the season in progress is not in here
      * at all, and a reader has to be able to tell which they are looking at. */
     provisional: false,
-    fields: ['category', 'landfall', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name'],
+    fields: ['category', 'landfalls', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name'],
     basins,
   };
 }
