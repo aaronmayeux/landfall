@@ -322,17 +322,17 @@ real home is the other row carrying the same section number.
 | `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 2782-2791 |
 | `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 2792-2797 |
 | `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 2798-2809 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 2810-3330 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3331-3356 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3357-3385 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3386-3449 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3450-3541 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3542-3776 |
-| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 3777-3793 |
-| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 3906-3914 |
-| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4007-4011 |
-| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4082-4098 |
-| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4099-4216 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 2810-3347 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3348-3373 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3374-3402 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3403-3466 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3467-3558 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3559-3793 |
+| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 3794-3810 |
+| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 3923-3931 |
+| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4024-4028 |
+| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4099-4115 |
+| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4116-4233 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -348,7 +348,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 250,098 | 55 |
+| `SPEC-SEASONS-BUILD.md` | 251,050 | 55 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 187,384 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

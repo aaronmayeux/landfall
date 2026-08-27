@@ -100,10 +100,29 @@ item, not a leftover, and §57.36a records the reasoning:
    pass, with a full context.** §57.36 also names a "Hurricanes" pill the board
    has never had; the real set is All, Majors, Landfalls, Near home.
 
-Still unbuilt: the landfall triangles and honesty marks (step 4),
-the entry-point unwind and the top pill (step 5 and 6, §57.37 as amended — the
-doors do NOT change, only `#seasons-bar` is deleted), and Storm Details (step
-7, payload cost still unresolved).
+**==> STEP 4 SHRANK, BECAUSE THE THING ITS HONESTY MARKS EXISTED FOR IS GONE.
+READ §57.7a BEFORE PLANNING IT. <==** We compute landfalls ourselves now, for
+every basin and every year, so the twelve uncoded Atlantic years and the
+thirty-nine East Pacific ones are no longer holes. **The hollow gap marks, the
+"not recorded" hairline wording and the landfall honesty line are all deleted
+from step 4's scope** — there is nothing left for them to be honest about.
+
+What is left of step 4 is **the triangle under each dot that came ashore**,
+plus **the current season**, which still has no landfall data: live b-decks
+carry no marker and the browser has no coastline. 2026 keeps its hollow mark
+and its `landfallsKnown: false`.
+
+Still unbuilt: those triangles (step 4), the entry-point unwind and the top
+pill (step 5 and 6, §57.37 as amended — the doors do NOT change, only
+`#seasons-bar` is deleted), and Storm Details (step 7, payload cost still
+unresolved).
+
+**==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
+<==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on
+the board — and it is one of the twelve years NOAA recorded nothing for, so it
+is the row with no independent check. Its individual storms were read and land
+in plausible places (Texas, Louisiana, Bermuda, Nova Scotia, Florida, the
+Antilles), but plausible is not confirmed.
 
 **==> THE ARCHIVE GLOBE AND ITS DRAWER ARE CONFIRMED ON GLASS 2026-08-25.
 AARON: "ALL WORKS GREAT." NOTHING HERE IS WAITING ON HIM. <==** Push 1 (§57.21c
@@ -1275,6 +1294,33 @@ storm source, and one hour cannot tell them apart. NEXT UP item 4 pollutes the
 denominator.
 
 ## SCOPED, NOT STARTED
+
+**==> THE REST OF THE WORLD ALREADY HAS ITS LANDFALL ANSWER, SO DO NOT BUILD A
+SECOND ONE. <==** Step 13, §57.7a. **IBTrACS carries no landfall marker in any
+form** — that is the reason Aaron chose ours-everywhere over ours-where-NOAA-
+is-silent on 2026-08-27, and it means the West Pacific, the Indian Ocean and
+the Southern Hemisphere get landfalls the day their tracks are parsed, with no
+extra work and no second method. `lib/landfall.js` takes any track with `lat`
+and `lonU`; `tools/seasons-landfall.mjs` needs a basin added to its loop and a
+file written per basin. **Do not reach for a per-agency marker in the IBTrACS
+columns.** One method, one answer, every basin.
+
+**LANDFALLS FOR THE SEASON IN PROGRESS — GENUINELY OPEN, AND THE ONLY REASON
+2026 STILL SHOWS A HOLLOW MARK.** §57.7a. The runner computes the archive and
+ships the answers, so no phone carries a coastline. The live season has no
+reviewed record, so nothing computes it. Three ways out and none has been
+costed: ship a bit-packed mask (it is 119 MB as bytes, ~15 MB packed — almost
+certainly too much), have the relay compute it when it polls (cheap, but it is
+a live-data change and touches the worker), or leave it hollow and honest.
+**Nobody has measured a packed mask restricted to the tropics, and that is the
+number the decision turns on.** Do not guess it.
+
+**THE COASTLINE PIN IS A DELIBERATE HAND BRAKE.** §57.7a.
+`nvkelso/natural-earth-vector@v5.1.2`, pinned to a tag rather than `master`, so
+175 years of landfalls cannot change under us between two monthly runs with
+nothing in the diff explaining why. **Moving it is a deliberate act with a
+re-measurement attached** — run `node tools/seasons-landfall.mjs --check` and
+compare the agreement figure before and after.
 
 **AN ALERT IN FORCE THAT REACHES NOBODY — AND THE OBVIOUS FIX IS THE WRONG
 ONE.** `SPEC-DATA.md` §50.3, §50.12. The app fetches live government cyclone

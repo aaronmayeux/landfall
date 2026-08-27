@@ -3321,10 +3321,27 @@ roster.
 actually is now that it is built.** No longer optional and no longer last: it
 is the archive's front door, and the year picker it replaced is deleted.
 
-Sub-steps 1 and 2 (the wall, and the pinned season in progress) are **DONE** —
-on `main`, confirmed on Aaron's phone 2026-08-26. Remaining: filters and sort,
-then the landfall triangles and honesty marks, then the entry-point unwind and
-the top pill (§57.37 as amended), then Storm Details.
+Sub-steps 1, 2 and 3 (the wall, the pinned season in progress, and filters and
+sort) are **DONE** — on `main`, confirmed on Aaron's phone 2026-08-27.
+
+Remaining: **the landfall triangles**, then the entry-point unwind and the top
+pill (§57.37 as amended), then Storm Details.
+
+**==> SUB-STEP 4 SHRANK AND §57.7a IS WHY. <==** It was "the landfall triangles
+AND the honesty marks". The marks existed because NOAA's record had twelve
+uncoded Atlantic years and thirty-nine East Pacific ones; we compute landfalls
+ourselves now, in every basin and every year, so there is no hole left to be
+honest about. **The hollow gap marks, the "not recorded" hairline wording and
+the landfall honesty line are out of scope.** What remains is the triangle
+itself, plus the season in progress — live b-decks carry no marker and no phone
+carries a coastline, so 2026 keeps its hollow mark and its
+`landfallsKnown: false`.
+
+**And step 13 got easier rather than harder.** IBTrACS carries no landfall
+marker in any form, so every basin it brings in gets landfalls from
+`lib/landfall.js` the day its tracks are parsed. That is the reason Aaron chose
+ours-everywhere over ours-where-NOAA-is-silent (§57.7a) and it should not be
+re-litigated when step 13 opens.
 
 ---
 
