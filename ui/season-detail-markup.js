@@ -285,6 +285,16 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
   const list = facts?.landfalls || [];
 
   if (!list.length) {
+    /* ==> SINCE §57.7a AN EMPTY LIST USUALLY MEANS WHAT IT SAYS, AND THE
+     * SENTENCE HAS TO KNOW WHICH KIND OF EMPTY IT IS. <== We compute landfalls
+     * ourselves now, so a 1976 storm with none genuinely stayed at sea and the
+     * hole paragraph below would be the app apologising for a fact. It is kept
+     * for exactly the case it was written for — the computed file not being
+     * on screen, which `landfallSource` is the only honest way to detect. */
+    if (facts?.landfallSource === 'computed') {
+      return absenceHtml('This storm did not come ashore.');
+    }
+
     const inHole = Number.isFinite(facts?.year)
       && facts.year >= markerHoleFrom && facts.year <= markerHoleTo;
     if (inHole) {

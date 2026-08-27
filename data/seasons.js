@@ -172,9 +172,16 @@ export function loadSeason(index, basin, year) {
   }
 
   const url = `${dir}/${file}`;
-  return once(url, () => getText(url))
-    .then((text) => {
+  return Promise.all([once(url, () => getText(url)), loadLandfalls(index, basin)])
+    .then(([text, marks]) => {
       const { storms, faults } = parseHurdat2(text);
+      /* ==> THE COMPUTED LANDFALLS ARE ATTACHED HERE, AT THE PARSE BOUNDARY,
+       * AND THAT IS THE WHOLE WIRING. <== §57.7a. `stormFacts` reads
+       * `landfallsComputed` off the storm, so the board, the roster, the
+       * detail panel and the globe all get our answer without one of them
+       * learning that a second file exists. A seam anywhere further in would
+       * mean every consumer taking a new argument. */
+      if (marks) for (const storm of storms) storm.landfallsComputed = marks[storm.id] || [];
       return { status: 'ok', storms, faults, year, basin };
     })
     .catch((e) => ({
@@ -183,6 +190,40 @@ export function loadSeason(index, basin, year) {
       year,
       basin,
     }));
+}
+
+/**
+ * The landfalls we computed ourselves, for a whole basin.
+ *
+ * ==> ONE FILE PER BASIN RATHER THAN ONE PER SEASON, AND THE ARITHMETIC IS
+ * WHY. <== Per season it would be about 1 KB, which is cheaper for a reader
+ * who opens exactly one year — but it is a SECOND round trip on every year
+ * opened, and the archive is a screen people step through. Per basin is 36 KB
+ * gzipped once, shared by all 175 years, and `immutable` for a year because
+ * the revision stamp is in the filename.
+ *
+ * ==> A FAILURE HERE MUST NOT LOSE THE SEASON. <== §5, and it is the reason
+ * this resolves to `null` rather than rejecting. The storms are the thing the
+ * reader asked for; the landfalls are an improvement on a fact the season file
+ * already carries in NOAA's sparser form. Losing the year because a 36 KB
+ * companion 404'd would be the tail wagging the dog, so `stormFacts` falls
+ * back to NOAA's `L` markers and `landfallSource` says which is on screen.
+ *
+ * @returns {Promise<object|null>}  storm id -> landfall list, or null
+ */
+export function loadLandfalls(index, basin) {
+  const dir = index?.dir || '/seasons/data';
+  const revision = index?.basins?.[basin]?.revision;
+  if (!revision) return Promise.resolve(null);
+
+  const url = `${dir}/${basin}-landfalls-${revision}.json`;
+  return once(url, async () => {
+    const res = await fetch(url, { credentials: 'omit' });
+    if (!res.ok) throw new Error(`landfalls answered ${res.status}`);
+    return res.json();
+  })
+    .then((payload) => payload?.storms || null)
+    .catch(() => null);
 }
 
 /** Drop everything held. For tests, and for a future Settings control — this
