@@ -124,12 +124,59 @@ const EXPORT_RE = /^export\s+(?:async\s+)?(?:const|function|class|let|var)\s+(\w
 const EXPORT_LIST_RE = /^export\s*\{([^}]*)\}/gms;
 const IMPORT_RE = /import\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/gs;
 
+/** ==> ONE STATEMENT CAN DECLARE SEVERAL NAMES AND THIS GATE USED TO SEE ONLY
+ *  THE FIRST. <== `export const CAT = 0, LANDFALL = 1, ACE = 2;` exports three
+ *  names; `EXPORT_RE` above captures `CAT` and stops. So an import of
+ *  `LANDFALL` was reported as a broken link that blanks the page, when it is
+ *  perfectly valid — a gate crying wolf, which is the failure mode that gets a
+ *  gate switched off.
+ *
+ *  Found 2026-08-26 by `lib/wall-filter.js` importing the second and third
+ *  columns of a wall row. The hole had existed since those constants were
+ *  written and nothing had noticed, because nothing had imported past the
+ *  first name.
+ *
+ *  ==> THE SPLIT IS DEPTH-AWARE, OR `export const A = [1, 2]` READS AS TWO
+ *  DECLARATIONS. <== Commas inside brackets, braces, parens or quotes belong
+ *  to an initialiser and are not declarator separators. */
+const DECL_RE = /^export\s+(?:const|let|var)\s+([\s\S]*?);\s*$/gm;
+
+function declaratorNames(body) {
+  const names = [];
+  let depth = 0;
+  let quote = null;
+  let start = 0;
+  const push = (end) => {
+    const piece = body.slice(start, end).trim();
+    const m = /^([A-Za-z_$][\w$]*)\s*(?:=|$)/.exec(piece);
+    if (m) names.push(m[1]);
+  };
+  for (let i = 0; i < body.length; i++) {
+    const ch = body[i];
+    if (quote) {
+      if (ch === '\\') i++;
+      else if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') { quote = ch; continue; }
+    if (ch === '(' || ch === '[' || ch === '{') depth++;
+    else if (ch === ')' || ch === ']' || ch === '}') depth--;
+    else if (ch === ',' && depth === 0) { push(i); start = i + 1; }
+  }
+  push(body.length);
+  return names;
+}
+
 /** Every name a file exports. Handles `export const x`, `export async function
- *  y`, and `export { a, b as c }` — the last one matters because this project
- *  uses it for test seams (`export { normalizeEvent as _normalizeGdacsEvent }`). */
+ *  y`, `export { a, b as c }` — the last one matters because this project
+ *  uses it for test seams (`export { normalizeEvent as _normalizeGdacsEvent }`)
+ *  — and several declarators in one `export const`. */
 function exportsOf(src) {
   const names = new Set();
   for (const m of src.matchAll(EXPORT_RE)) names.add(m[1]);
+  for (const m of src.matchAll(DECL_RE)) {
+    for (const name of declaratorNames(m[1])) names.add(name);
+  }
   for (const m of src.matchAll(EXPORT_LIST_RE)) {
     for (const part of m[1].split(',')) {
       const name = part.trim().split(/\s+as\s+/).pop()?.trim();
