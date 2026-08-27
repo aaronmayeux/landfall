@@ -66,7 +66,7 @@ eq('days is column 4', [gen.DAYS, DAYS], [4, 4]);
 eq('pressure is column 5', [gen.PRESSURE_MB, PRESSURE_MB], [5, 5]);
 eq('name is column 6', [gen.NAME, NAME], [6, 6]);
 eq('and the file says so itself', wall.fields,
-  ['category', 'landfalls', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name']);
+  ['category', 'landfall', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name']);
 
 /* ---------------------------------------------------------------------------
  * 2. THE REAL RECORD, AT NUMBERS THAT CAN BE CHECKED AGAINST NOAA.

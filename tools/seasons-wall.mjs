@@ -201,7 +201,7 @@ export function buildWall(root, index, { generatedAt }) {
      * HURDAT2 is the reviewed record; the season in progress is not in here
      * at all, and a reader has to be able to tell which they are looking at. */
     provisional: false,
-    fields: ['category', 'landfalls', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name'],
+    fields: ['category', 'landfall', 'ace', 'peakWindKt', 'days', 'pressureMb', 'name'],
     basins,
   };
 }

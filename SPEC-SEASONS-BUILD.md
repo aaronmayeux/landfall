@@ -358,9 +358,30 @@ has not arrived — the season in progress, or a sidecar that failed — an empt
 list would claim the storm stayed at sea. `landfallSource` on the facts names
 which is on screen.
 
-**Two consequences named rather than hidden:** every landfall figure on a
-screen already signed off has moved, and our numbers no longer match anything
-NOAA publishes.
+**Our numbers no longer match anything NOAA publishes**, and across the years
+NOAA did mark we find **1.73x** as many landfalls. That ratio is almost
+entirely an era effect: modern seasons match NOAA nearly exactly (2020 is 34
+against 34, 2005 is 30 against 29) while 1933 is 41 against 7. NOAA's
+reanalysis never marked Caribbean landfalls in the early record. The extra ones
+are real crossings nobody wrote down.
+
+**==> AND THE WALL COUNTS STORMS, NOT LANDFALLS. AARON REVERTED THE COUNT ON
+GLASS, 2026-08-27. <==** For about a day `seasons/wall.json` carried a real
+landfall count, because computing them ourselves finally made counting
+possible. It made the `Landfalls` sort a **ranking of archipelagos**: Irene
+crossed five separate Bahamian islands and scored 10 while Katrina scored 1,
+and 1933 topped the wall at 41 against a season that flattened the Gulf coast
+scoring 6. Every number was correct and the leaderboard was useless.
+
+**The wall asks whether a storm touched land, not how often.** The column is 0
+or 1, the season figure is how many storms came ashore, and the sort is
+labelled **"Came ashore"** to match the filter toggle's own wording — the two
+controls ask the same question and calling it two things invited the reader to
+assume the sort counted something the toggle did not.
+
+The real per-storm counts are not lost. They are in the landfall file and on
+the detail panel, where "Irene made 10 landfalls" is a fact about Irene rather
+than a claim about 1933 being the worst season on record.
 
 ### 57.8 What HURDAT2 does not contain, at all
 

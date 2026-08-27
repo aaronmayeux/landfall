@@ -187,7 +187,11 @@ const SORT_KEYS = [
   ['year', 'Year', 'Newest year first', 'Oldest year first'],
   ['count', 'Count', 'Most storms first', 'Fewest storms first'],
   ['strongest', 'Strongest', 'Strongest first', 'Weakest first'],
-  ['landfalls', 'Landfalls', 'Most landfalls first', 'Fewest landfalls first'],
+  /* ==> "CAME ASHORE" RATHER THAN "LANDFALLS", AND IT MATCHES THE FILTER
+   * TOGGLE'S OWN WORDING ON PURPOSE. <== The two controls ask the same
+   * question — did this storm touch land — and calling it two things invited
+   * the reader to assume the sort counted something the toggle did not. */
+  ['landfalls', 'Came ashore', 'Most came ashore first', 'Fewest came ashore first'],
   ['ace', 'ACE', 'Most ACE first', 'Least ACE first'],
 ];
 
