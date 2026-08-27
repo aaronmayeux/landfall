@@ -69,32 +69,38 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> STEP 14, THE WALL OF YEARS. PUSHES 1 AND 2 ARE CONFIRMED ON GLASS
-2026-08-26. AARON: "ALL WORKS." <==** The wall is the archive's front door now
-and the 175-year dropdown is gone. **Read §57.36a before touching this screen**
-— it is the as-built record and it holds the numbers, the two honesty flags
-step 4 depends on, and the three faults that reached his phone.
+**==> THE WALL OF YEARS IS DONE THROUGH STEP 3. CONFIRMED ON GLASS 2026-08-27.
+AARON: "WORKS GREAT." <==** The wall is the archive's front door, the 175-year
+dropdown is gone, and it filters and sorts. **Read §57.36a before touching this
+screen** — it is the as-built record and it holds every measured number, the two
+honesty flags step 4 depends on, and the faults that reached his phone.
 
-Confirmed working: the wall, the pinned season in progress (real dots for what
-ended, `n active in the region` for what has not), the asterisk on
-pre-satellite years, the glow, one dot size across the screen, and the drawer
-reopening on the rung the reader left.
+Confirmed working: the wall itself, the pinned season in progress, the asterisk
+on pre-satellite years, one dot size across the screen, the drawer reopening on
+the rung the reader left, seven solid category chips, the landfall toggle, three
+threshold sliders behind `More filters`, five sort buttons that reverse when
+pressed again, the collapsed tail off a timeline, and the pre-satellite
+undercount line.
 
-**NEXT IS STEP 3 — filters and sort, stacking per §57.36: filter first, sort
-what survives.** Two things decided before it starts:
+**Three of §57.36's controls are deliberately NOT built.** Each is a real open
+item, not a leftover, and §57.36a records the reasoning:
 
-1. **The near-home slider stays OUT of step 3.** §57.36 lists it among the
-   wall's default controls and it is not free here the way it is inside a
-   season (§57.19a) — the wall never loads track data, so filtering 175 years
-   by distance needs the whole-basin pass, 0.93 MB, phone cost unmeasured. It
-   gets its own pass once that number exists.
-2. **Build the browser check alongside step 3, not after.** All three faults
-   that reached Aaron's phone this session lived in the seam between the real
-   drawer and `tools/markup-dom.mjs`, which has no history stack and stayed
-   green through every one of them. `tools/seasons-rung-check.mjs` is the
-   pattern; step 3 puts considerably more state on that screen.
+1. **The near-home slider.** The wall never loads track data, so filtering 175
+   years by distance needs the whole-basin pass, 0.93 MB, phone cost unmeasured.
+   It gets its own pass once that number exists.
+2. **The retired-names chip.** Needs a list of ~120 retired names that does not
+   exist in this repo; §57.17 rejects scraping NHC for it and authoring it from
+   memory is how a wrong fact reaches the screen with nothing flagging it.
+   `seasons/wall.json` carries the storm names already, so this is a list away rather
+   than a rebuild away — **Aaron can paste one, or a runner job can fetch it.**
+3. **A filter carrying through when a year is tapped.** The wall is seven
+   independent chips plus toggles; the board is one pill at a time. Most wall
+   states have no pill to become, so honouring this means bringing both screens
+   onto one model — which changes a board already confirmed on glass. **Its own
+   pass, with a full context.** §57.36 also names a "Hurricanes" pill the board
+   has never had; the real set is All, Majors, Landfalls, Near home.
 
-Still unbuilt after step 3: the landfall triangles and honesty marks (step 4),
+Still unbuilt: the landfall triangles and honesty marks (step 4),
 the entry-point unwind and the top pill (step 5 and 6, §57.37 as amended — the
 doors do NOT change, only `#seasons-bar` is deleted), and Storm Details (step
 7, payload cost still unresolved).

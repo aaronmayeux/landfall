@@ -4002,22 +4002,94 @@ a system rather than three separate choices, and that is why it is settled.**
 
 ### 57.36a The wall, as built
 
-Step 14's first two pushes. Everything here is on `main` and confirmed on
-Aaron's phone; §57.36 above is the design and this is what shipping it taught.
+Steps 14 and 3. Everything here is on `main` and confirmed on Aaron's phone;
+§57.36 above is the design and this is what shipping it taught.
 
 **The data is a second file, not a section of the first.** `seasons/wall.json`,
-46 KB raw and 10.4 KB gzipped, written by `tools/seasons-wall.mjs` on the same
-monthly runner that refreshes HURDAT2. Every storm reduces to four numbers —
-`[peakCategory, landfall, ace, peakWindKt]` — which is exactly what §57.36's
-chips, landfall toggle and five sort keys need and nothing more. It is separate
-from `seasons/index.json` because the index is fetched by anyone entering the
-archive at all, including through a deep link to one year, and 46 KB in front
-of that reader buys them nothing.
+93 KB raw and 24.3 KB gzipped, written by `tools/seasons-wall.mjs` on the same
+monthly runner that refreshes HURDAT2. Every storm reduces to seven values —
+`[peakCategory, landfall, ace, peakWindKt, days, pressureMb, name]`. It is
+separate from `seasons/index.json` because the index is fetched by anyone
+entering the archive at all, including through a deep link to one year, and the
+wall's payload in front of that reader buys them nothing.
 
-The narrow alternatives were measured on the real files before the shape was
-chosen — 2,286 B gzipped for categories alone, 3,159 B with landfall — and
-rejected: they would have saved 8 KB and forced three controls to fetch
-something else. Re-derive with `node tools/seasons-wall.mjs --measure`.
+Every width was measured on the real files before the shape was chosen, both
+basins, 3,266 storms. Re-derive with `node tools/seasons-wall.mjs --measure`:
+
+| category only | 8,827 B raw | 2,286 B gzipped |
+| + landfall flag | 21,891 B | 3,159 B |
+| + ACE + peak wind | 45,992 B | 10,388 B |
+| + days alive | 57,794 B | 14,128 B |
+| + lowest pressure | 72,641 B | 17,803 B |
+| + name (SHIPPED) | 93,107 B | 24,277 B |
+
+The first four columns cover the chips, the landfall toggle and all five sort
+keys; step 3 bought the last three for §57.36's COLLAPSED filters, at 14 KB
+gzipped. The alternative was dropping three controls, not saving bytes — a wall
+that cannot answer *"which storms lasted a fortnight"* is a smaller feature, not
+a cheaper one. Names are carried though nothing filters on them yet, because
+they are half that cost and regenerating the file is a monthly-runner round
+trip.
+
+**Three of §57.36's controls are not built, and none of the three is an
+oversight.** The near-home slider needs track geometry the wall never loads:
+filtering 175 seasons by distance means the 0.93 MB whole-basin file, whose
+phone cost is unmeasured. The retired-names chip needs a list of ~120 retired
+names that does not exist in this repo and which §57.17 rejects scraping for;
+the names are in `wall.json` now, so it is a list away rather than a rebuild
+away. And a filter chosen on the wall does NOT survive a tap into a year: the
+wall is seven independent chips plus toggles and the board is one pill at a
+time, so most wall states have no pill to become. Reconciling them means
+changing a board already confirmed on glass, and that is its own pass.
+
+**Filter first, then sort what survives.** `keepFor` builds the predicate,
+`rowsFor` applies it and recomputes every per-row figure over what is left, and
+only then does `sortRows` run. Reversed, the same rows come back in an order
+computed from storms the reader asked to ignore — wrong, and invisibly so:
+filtered to Category 5 and sorted by count, a season-total count ranks 1933
+above 1932 on the strength of six storms the filter excluded.
+
+**Sorting by a number that is nowhere on screen reads as a broken control.**
+Year and count are already drawn, so those two add nothing; strongest, landfalls
+and ACE borrow about 2.6em from the strip while their sort is active, which
+takes a dot in the busiest basin from roughly 7px to 6px and gives it straight
+back. `dotSizeFor` re-measures on every render, so no second calculation exists.
+
+**`2 of 13` is one line or it is broken.** The count column was sized for a bare
+count; the moment a filter turned it into a ratio it wrapped inside a 44px row
+and read as two stacked numbers. It widens only while the ratio is showing.
+
+**Solid category chips, and five sort buttons rather than a dropdown.** Both are
+Aaron's calls on glass against the mockup, 2026-08-27, and both overruled a
+shipped implementation. The chips were a 28% tint, which made the row read as
+seven greyish pills rather than as the Saffir-Simpson scale — and that scale is
+the legend for every dot below it. The sort was a `<select>` of ten named
+orderings, argued for because press-again-to-reverse is a state nothing
+announces; the arrow on the selected key now carries that signal and
+`aria-label` spells it out. Ink on a saturated fill is `--on-bright`: none of
+the seven category colours can carry the app's own pale text at AA.
+
+**A repaint must not throw the reader back to 1851.** Every control change
+replaces the body's markup, which resets its scroll — twelve arrow presses on a
+threshold slider was twelve jumps — and the refocus that follows scrolled the
+sheet on its own, undoing the fix a line later. Scroll is restored explicitly
+and focus is handed back with `preventScroll`.
+
+**Every season in both basins holds at least one storm.** Measured, not assumed.
+So the hairline row and the tally's *"· N with none"* half had never rendered
+before step 3 — a filter is the only thing that can produce an empty row, which
+is exactly why *"no storms recorded"* is the wrong sentence for one. A filtered
+row names what it is missing.
+
+**What was never measured is excluded, never counted as nought.** A storm with
+no central pressure is not a storm at 1013 mb; 1,258 of the 3,266 carry none at
+all. A season with no measurable ACE is unknown, not quiet, and sinks to the
+bottom in BOTH sort directions. An ungraded storm cannot be claimed for a
+category chip. Three of the fourteen mutations run against
+`tools/test-wall-filter.mjs` survived the first pass and all three were breaches
+of exactly this rule — including one JavaScript trap worth naming: `null > -1`
+is TRUE, so dropping a `Number.isFinite` guard silently reports an ungraded
+storm as a tropical depression.
 
 **One scale covers the screen, and 31 storms set it.** 2005 and 2020 are the
 widest seasons on record, so a strip has about 9.7 CSS pixels per storm on a

@@ -288,6 +288,21 @@ jobs:
       - name: seasons-height-check
         run: node tools/seasons-height-check.mjs
 
+      # The Wall of Years' rungs — §57.36's dot size and row rhythm. Written
+      # alongside step 14 and never wired in until now, which is why it is
+      # arriving in the same commit as the check below it.
+      - name: seasons-rung-check
+        run: node tools/seasons-rung-check.mjs
+
+      # The wall's filters and its sort (§57.36 step 3). Every fault this
+      # catches lives where markup-dom cannot look: a chip tap that changes
+      # state without changing the screen, a <details> that slams shut on
+      # every repaint, focus lost after one arrow key, two dot sizes when the
+      # figure column narrows the strip, and `2 of 13` wrapping onto two lines
+      # inside a 44px row. The node suites were green through all of them.
+      - name: seasons-wall-check
+        run: node tools/seasons-wall-check.mjs
+
       # This needs the basemap, which the sandbox cannot reach. This runner is
       # the only place it can honestly run.
       - name: offline-check
