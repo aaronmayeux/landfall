@@ -6644,6 +6644,53 @@ export const SEASONS = Object.freeze({
   landfallMarkerHoleFrom: 1971,
   landfallMarkerHoleTo: 1982,
 
+  /* --- Landfalls we compute ourselves (§57.7a, `lib/landfall.js`) ---------- */
+
+  /** ==> THE LAND MASK'S CELL, AND IT IS ALREADY FINER THAN THE RECORD IT
+   *  MEASURES. <== 0.02° is about 2.2 km. Every one of the 87,631 coordinates
+   *  in the archive is at 0.1° — roughly 11 km — so this is five times finer
+   *  than the positions being tested against it, and going finer measures
+   *  nothing that is there.
+   *
+   *  MEASURED 2026-08-27, not reasoned: halving it to 0.01° made agreement
+   *  with NOAA's own markers slightly WORSE (a finer mask has more water, and
+   *  a 0.1°-rounded position on a barrier island falls in it) while taking the
+   *  mask from 119 MB to 475 MB. The only thing it bought was Bermuda.
+   *
+   *  WHAT THIS COSTS, said out loud: an island narrower than one cell drops
+   *  out of the mask entirely. Bermuda is the one found in the archive, and
+   *  Walaka's 2018 landfall on French Frigate Shoals is the one storm it
+   *  demonstrably loses. */
+  landfallMaskStep: 0.02,
+
+  /** How far the mask reaches. Tropical cyclones do not occur outside this
+   *  band and every degree costs 18,000 cells; the walk returns "not land"
+   *  above and below it, which is correct rather than a missing case — there
+   *  is no tropical cyclone landfall at 75°N to miss. */
+  landfallMaskLatMin: -60,
+  landfallMaskLatMax: 72,
+
+  /** ==> THE PATH BETWEEN FIXES IS SAMPLED AT THIS SPACING, AND IT IS THE
+   *  WHOLE REASON THE METHOD WORKS. <== Measured across the archive: the
+   *  median distance between consecutive fixes is 107 km and the ninetieth
+   *  percentile is 202 km, while every gap is exactly six hours. Dominica is
+   *  45 km across. Testing only AT the fixes would report open ocean for a
+   *  storm that crossed an island between two observations.
+   *
+   *  5 km sits below the mask cell and far below the 11 km position error, so
+   *  it costs nothing in accuracy terms and catches every island wider than
+   *  itself. Roughly two million samples across the whole archive, which walks
+   *  in about half a second. */
+  landfallSampleKm: 5,
+
+  /** ==> HOW MUCH OPEN WATER MAKES A SECOND CROSSING A SECOND LANDFALL. <==
+   *  A track running along a ragged coast at 0.1° precision crosses the line
+   *  repeatedly, and without this a storm skimming the Outer Banks reports six
+   *  landfalls. The storm has to have genuinely gone back out to sea.
+   *
+   *  It changes only the COUNT, never whether a storm came ashore at all. */
+  landfallSeparationKm: 50,
+
   /** ==> BEFORE THIS, STORMS ARE SIMPLY MISSING FROM THE RECORD. <== Nobody
    *  saw the ones that stayed at sea. A quiet-looking 1935 season page is not
    *  evidence of a quiet season, and the board has to say so — which is a

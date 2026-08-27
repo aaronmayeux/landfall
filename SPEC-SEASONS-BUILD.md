@@ -254,7 +254,7 @@ Two more that are not date cliffs but are missing data all the same:
   nobody saw them. A quiet-looking 1935 season page is not evidence of a quiet
   season, and must carry a line saying so.
 
-### 57.7 The landfall gap — 1971–1982, not 1971–1990
+### 57.7 The landfall gap — twelve Atlantic years, thirty-nine Pacific ones
 
 **==> COUNTED, NOT INFERRED, 2026-08-24. <==** This section used to say the
 hole ran to 1990 and cited Hugo, Gloria, Alicia and Elena as its casualties.
@@ -277,15 +277,90 @@ need re-checking against the file rather than against this section.** E/C
 Pacific: 1971 through 1988. NOAA has evidently backfilled part of the range
 since whatever document the old claim came from.
 
-**Decision unchanged, scope halved: we compute the missing landfalls ourselves**
-by crossing the track against a coastline, and label them as ours rather than
-NOAA's. Twelve Atlantic years, not twenty. A mark the app derived and a mark
-NOAA published must be distinguishable in the data even if they draw
-identically — `lib/season-facts.js` stamps every published mark `source:
-'noaa'` from the first day so nothing has to be retrofitted.
+**==> AND THE EAST PACIFIC HOLE IS FAR LARGER THAN THIS SECTION SAID.
+MEASURED 2026-08-27 ACROSS EVERY MIRRORED SEASON. <==** Not 1971–1988. **39 of
+77 East Pacific seasons carry no `L` marker at all** — 1949 through 1958 and
+1960 through 1988, with a single storm in 1959 the lone exception in forty
+years. Cross-checked against the raw bytes: **Liza, 1976, which killed around
+a thousand people at La Paz, carries zero `L` records in our own copy of the
+file.** That is a reanalysis gap, not weather.
+
+**Decision, and it went further than this section originally proposed.** See
+§57.7a: we compute landfalls ourselves and **ours are the answer everywhere**,
+not only where NOAA is silent. NOAA's markers are still parsed and still
+carried, stamped `source: 'noaa'`; they no longer decide.
 
 **Do not re-derive this from the old table.** Re-run the count when NOAA
-publishes a new revision; `tools/seasons-fixtures.mjs` does it in one job.
+publishes a new revision; `tools/seasons-fixtures.mjs` does it in one job, and
+`tools/seasons-landfall.mjs --check` prints the agreement figure every time it
+runs.
+
+### 57.7a Landfalls we compute ourselves
+
+**Aaron's call, 2026-08-27: ours everywhere, rather than ours where NOAA is
+silent.** The reason is §57.30 step 13 — IBTrACS carries no landfall marker in
+any form, so a hybrid would make the West Pacific look different from the
+Atlantic for reasons that are about which agency reanalysed the record rather
+than about the weather. One method, one answer, every basin and every year.
+
+**How.** `lib/landfall.js` rasterises a coastline into a land mask and walks
+each track, recording every crossing from water to land while the system was a
+cyclone. `tools/seasons-landfall.mjs` runs it on the runner. Nothing reaches a
+phone: the mask is built, used and thrown away inside one job, and what ships
+is the answer.
+
+**The numbers, measured over all 3,266 storms in both basins:**
+
+| | |
+|---|---|
+| storms NOAA marked with any landfall | 839 |
+| storms we find came ashore | **1,343** |
+| landfalls we find | 2,537 |
+| agreement with NOAA, per storm, over the 839 | **98.6%** |
+| NOAA marked and we do not — extratropical at NOAA's own mark | 3 |
+| NOAA marked and we do not — genuine misses | **9** |
+| we mark and NOAA never did | 516 |
+
+**==> WHAT THE SOURCE DATA CANNOT SUPPORT, SO THAT NOTHING BUILT ON THIS
+PRETENDS OTHERWISE. <==**
+
+- **Every one of the 87,631 coordinates in the archive is at 0.1°**, about
+  11 km, and every gap between fixes is six hours. A computed position is never
+  better than ±11 km and a computed time never better than about half an hour.
+- **600 of NOAA's own 1,314 markers sit on WATER** against a proper coastline,
+  because a 0.1°-rounded position on a barrier island is a coin toss. Matching
+  NOAA landfall-for-landfall is therefore chasing noise; the per-STORM question
+  is the one that can be answered well, and it is the one the wall asks.
+- A mask finer than the position error buys nothing. Tested at 0.01°: agreement
+  got slightly **worse** and memory quadrupled. 0.02° it is.
+- The 9 genuine misses are at that floor — Alice '54 on Anegada, Andres '97,
+  and Walaka's 2018 landfall on French Frigate Shoals, an atoll no global
+  polygon set carries.
+
+**The coastline is Natural Earth 10m land plus minor islands, pinned to
+`nvkelso/natural-earth-vector@v5.1.2`.** A branch would let 175 years of
+history change between two monthly runs with nothing in the diff explaining
+why. **`map/coastline.js` is NOT the source and must never be** — it is 1:110m,
+126 rings, and Barbados is 296 km from its nearest vertex. It is a drawing
+asset and it is correct for drawing.
+
+**Where the answers live.** `seasons/data/<basin>-landfalls-<revision>.json`,
+under `seasons/data/` so it inherits that path's `immutable` header and
+revision-stamped filename rather than needing new rules. One file per basin,
+36 KB gzipped for the Atlantic, shared by all 175 years. `data/seasons.js`
+attaches it to each storm at the parse boundary and `stormFacts` reads it, so
+the board, the panel, the roster and the globe all get it without any of them
+learning a second file exists. `tools/seasons-wall.mjs` reads the same file, so
+the wall and the board cannot disagree.
+
+**The fallback is NOAA's list, not an empty one.** §5. When the computed file
+has not arrived — the season in progress, or a sidecar that failed — an empty
+list would claim the storm stayed at sea. `landfallSource` on the facts names
+which is on screen.
+
+**Two consequences named rather than hidden:** every landfall figure on a
+screen already signed off has moved, and our numbers no longer match anything
+NOAA publishes.
 
 ### 57.8 What HURDAT2 does not contain, at all
 
