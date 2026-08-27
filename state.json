@@ -18,10 +18,10 @@
     "sha256": "e11726c25f85034f3da24dbe4001a88b45a2525626b59bfa452987aa8ede3892"
   },
   "btk/2026/bcp012026.dat": {
-    "etag": "\"6912-65a0350adcc3c\"",
-    "lastModified": "Thu, 27 Aug 2026 08:42:25 GMT",
-    "bytes": 26898,
-    "sha256": "4d3670191f6ddc062c10261d1b15eec34b7b8e27497689c27142bda2bb3b5b90"
+    "etag": "\"6a7d-65a0bdc280346\"",
+    "lastModified": "Thu, 27 Aug 2026 18:54:05 GMT",
+    "bytes": 27261,
+    "sha256": "320ce3b33eb01c3d013d58815948bddd08816569155c493353622c1fea021aa0"
   },
   "btk/2026/bcp022026.dat": {
     "etag": "\"17e7-659db30594b84\"",
@@ -88,5 +88,11 @@
     "lastModified": "Tue, 25 Aug 2026 20:38:19 GMT",
     "bytes": 5255,
     "sha256": "278e81ffc9931f5cb949a1d94313269b0c60a5d890b63e0a81d8561ccecdc7c9"
+  },
+  "btk/2026/bal042026.dat": {
+    "etag": "\"dc7-65a0c31b62781\"",
+    "lastModified": "Thu, 27 Aug 2026 19:18:00 GMT",
+    "bytes": 3527,
+    "sha256": "ebe785d07ca64ce62769690f5dffbf1aad2017e1467b7c85f9920aaea506623f"
   }
 }
