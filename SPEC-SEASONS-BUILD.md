@@ -3414,8 +3414,12 @@ is the archive's front door, and the year picker it replaced is deleted.
 Sub-steps 1, 2 and 3 (the wall, the pinned season in progress, and filters and
 sort) are **DONE** — on `main`, confirmed on Aaron's phone 2026-08-27.
 
-Remaining: **the landfall triangles**, then the entry-point unwind and the top
-pill (§57.37 as amended), then Storm Details.
+Sub-step 4 (the landfall triangles), the entry-point unwind and both pills
+(§57.37 as amended, §57.38b–d) are **DONE** — confirmed on Aaron's phone and on
+desktop, 2026-08-28.
+
+Remaining: **Storm Details** (§57.22, the third rung of §57.39's ladder), which
+is the only unbuilt piece of the wall's own ladder.
 
 **==> SUB-STEP 4 SHRANK AND §57.7a IS WHY. <==** It was "the landfall triangles
 AND the honesty marks". The marks existed because NOAA's record had twelve

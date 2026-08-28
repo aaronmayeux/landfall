@@ -323,21 +323,21 @@ real home is the other row carrying the same section number.
 | `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 2872-2881 |
 | `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 2882-2887 |
 | `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 2888-2899 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 2900-3437 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3438-3463 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3464-3492 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3493-3556 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3557-3648 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3649-3883 |
-| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 3884-3900 |
-| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 4013-4021 |
-| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4139-4143 |
-| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4214-4230 |
-| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4231-4394 |
-| `57.38a` | &nbsp;&nbsp;The way out, as built | `SPEC-SEASONS-BUILD.md` | 4502-4528 |
-| `57.38b` | &nbsp;&nbsp;The bar is gone, and its two jobs are two pills — as built | `SPEC-SEASONS-BUILD.md` | 4610-4614 |
-| `57.38c` | &nbsp;&nbsp;What glass found in step 5, and the two reversals it caused | `SPEC-SEASONS-BUILD.md` | 4747-4751 |
-| `57.38d` | &nbsp;&nbsp;Both bottom pills, at every width | `SPEC-SEASONS-BUILD.md` | 4832-4835 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 2900-3441 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3442-3467 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3468-3496 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3497-3560 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3561-3652 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3653-3887 |
+| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 3888-3904 |
+| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 4017-4025 |
+| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4143-4147 |
+| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4218-4234 |
+| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4235-4398 |
+| `57.38a` | &nbsp;&nbsp;The way out, as built | `SPEC-SEASONS-BUILD.md` | 4506-4532 |
+| `57.38b` | &nbsp;&nbsp;The bar is gone, and its two jobs are two pills — as built | `SPEC-SEASONS-BUILD.md` | 4614-4618 |
+| `57.38c` | &nbsp;&nbsp;What glass found in step 5, and the two reversals it caused | `SPEC-SEASONS-BUILD.md` | 4751-4755 |
+| `57.38d` | &nbsp;&nbsp;Both bottom pills, at every width | `SPEC-SEASONS-BUILD.md` | 4836-4839 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -353,7 +353,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 277,748 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 282,329 | 60 |
+| `SPEC-SEASONS-BUILD.md` | 282,520 | 60 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 187,384 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

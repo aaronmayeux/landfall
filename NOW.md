@@ -113,43 +113,14 @@ counting today's storms, `#status` reporting feeds the archive does not read).
 Judged on phone and on desktop, nothing sent back. **§57.38a is the as-built
 account; nothing is held here.**
 
-**==> STEP 5 IS BUILT, GLASS FOUND FOUR FAULTS, ALL FOUR ARE FIXED AND NONE HAS
-BEEN SEEN AGAIN. <==** 2026-08-28. The archive bar is gone and its jobs are two
-pills. **§57.38b is the as-built account and §57.38c is what glass found — read
-those, not this.**
-
-**WHAT TO LOOK AT, and the first four are re-checks of a reported fault:**
-
-1. **The bottom pill has words in it, on the wall.** It was an empty capsule.
-   Entering the archive should now show `Atlantic · tap a year to open it` once
-   the sheet is minimised, and the year and count once a season is open.
-2. **It is UNDER the drawer.** It was painting through the open sheet.
-3. **The drawer header is a title and an X, like every other drawer**, with no
-   hover highlight — and pressing the header itself no longer dismisses. That
-   gesture went deliberately: the hover was its only advertisement, so keeping
-   one without the other would have been a hidden gesture (§13). **If you miss
-   pressing the bar to dismiss, say so — it comes back with its highlight or
-   not at all.**
-4. **Nothing else lost its X.** Storms, detail, layers, settings and home were
-   always X and must still be.
-5. **THE ONE STILL-OPEN QUESTION FROM STEP 5:** does the archive still say you
-   are in the past with the drawer down? `PAST STORMS` used to do that from the
-   bar. What is left is sepia, the two pills, and the drawer heading while it
-   is open. If it reads wrong the fix is words.
-
-**==> AND BOTH PILLS NOW SHOW AT EVERY WIDTH. NOT YET SEEN ON DESKTOP. <==**
-Aaron, 2026-08-28. This REVERSES the paragraph that used to sit here calling the
-missing desktop pill settled — the rule hiding it was resting on "the rail is
-open by default", which stopped being true when §16's open-on-launch sketch was
-rejected on glass. §57.38d.
-
-**What to look at on a desktop browser, live globe and archive both:** each
-pill centred at the bottom of the window, exactly as on a phone, and staying
-put when the rail opens. A version that shifted them right to centre on the
-visible globe was built and rejected — do not rebuild it without new evidence.
-
-**The live pill still disappears while the storm LIST is open**, because the
-list says everything the pill would. Every other view keeps it.
+**==> THE ARCHIVE BAR IS GONE AND EVERYTHING THAT REPLACED IT IS CONFIRMED ON
+GLASS, 2026-08-28. AARON: "WORKS GREAT." NOTHING HERE IS WAITING ON HIM. <==**
+Step 5 of the chrome work, plus four faults glass found and one reversal.
+**§57.38b, §57.38c and §57.38d are the as-built account — read those, not
+this.** Confirmed: the two pills at every width, centred on the window; the
+drawer header as a title and an X on every view, with no hover and no
+press-anywhere dismiss; `btn-storms` reopening the archive at the rung the
+reader left; and the bad-link sentence on the wall.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on
