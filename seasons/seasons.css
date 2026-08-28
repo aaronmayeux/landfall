@@ -155,9 +155,13 @@ html[data-seasons="on"] {
    its contents. `left: 50%` with a transform is what survived both. */
 #seasons-status-pill {
   position: fixed;
-  left: 50%;
   transform: translateX(-50%);
   bottom: var(--safe-bottom);
+  /* Centred on the GLOBE rather than the window: `--pill-shift` is published
+     by `ui/panels.css` and is zero except on a wide screen with the rail out.
+     One number, read by both pills, so they can never disagree about where
+     the middle is. */
+  left: calc(50% + var(--pill-shift, 0px));
   width: max-content;
   max-width: calc(100vw - 2 * var(--pill-inset));
   /* ==> BELOW THE DRAWER, AND THAT IS WHERE IT DIFFERS FROM ITS MODEL. <==
@@ -229,9 +233,17 @@ html[data-seasons="on"] {
    globe is redundant chrome. The job it does on a phone — reopening the
    archive's drawer — is `#btn-storms`'s up here, and that button is visible in
    the archive for exactly this reason. */
-@media (min-width: 720px) {
-  #seasons-status-pill { display: none; }
-}
+/* ==> IT SHOWS AT EVERY WIDTH NOW, AND SO DOES THE LIVE ONE. <== Aaron,
+   2026-08-28. This copied `#storm-pill`'s wide-screen hide, and that rule
+   turned out to be resting on a premise that had already died — the rail is
+   NOT open by default at any width, so a desktop reader arrived at a globe
+   with no caption. Both pills are unhidden together, because the pair is the
+   point: they are the same furniture on the same edge and having one appear
+   only on a phone was never a decision anybody made.
+
+   `#btn-storms` keeps the job it took at step 5 — it is a second road to the
+   drawer, not a replacement for this pill, and on a wide screen the two are
+   now both available. */
 
 /* --- getting the live chrome out of the archive --------------------------------- */
 

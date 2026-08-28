@@ -165,6 +165,26 @@
 /* Wide: left rail, fixed width, full height. A touchscreen laptop gets the
  * rail because it is WIDE, and that is correct (capability, not device). */
 @media (min-width: 720px) {
+  html {
+    /* The rail's width, named so more than one thing can read it. The clamp
+       and the reasoning behind 36vw are on `#drawer` below. */
+    --rail-w: clamp(340px, 36vw, 440px);
+
+    /* ==> HOW FAR THE BOTTOM PILLS MOVE SO THEY CENTRE ON THE GLOBE RATHER
+       THAN ON THE WINDOW. <== Aaron, 2026-08-28, asked for the pills on
+       desktop. A pill centred on the VIEWPORT with a 340px rail open on a
+       720px window sits at x=360 — inside the rail — so it would be half
+       buried by the one panel it is meant to sit beside. Shifting it by half
+       the rail puts it in the middle of what is actually visible.
+
+       Zero when the rail is shut, which is most of the time: nothing is
+       covering the globe then and the window IS the globe. */
+    --pill-shift: 0px;
+  }
+  html[data-drawer="open"] {
+    --pill-shift: calc(var(--rail-w) / 2);
+  }
+
   #drawer {
     top: 0;
     left: 0;
@@ -205,7 +225,7 @@
      * 36vw rather than 30: at 30 a 1024px laptop still clamped to the 340px
      * floor and got no improvement at all, which left the most common desktop
      * size out of a fix aimed at desktop. */
-    width: clamp(340px, 36vw, 440px);
+    width: var(--rail-w);
     border-radius: 0 var(--radius-large) var(--radius-large) 0;
     padding-top: var(--safe-top);
     transform: translateX(-105%);
@@ -1323,7 +1343,12 @@
 
 /* --- the collapsed pill (narrow first-launch, SPEC §16) ------------------- */
 #storm-pill {
-  /* ==> HOW THIS IS CENTRED AND HOW IT IS SIZED KEEP FIGHTING, SO BOTH ARE
+  /* ==> IT CENTRES ON THE GLOBE, NOT ON THE WINDOW. <== `--pill-shift` is 0
+     at phone width and on any width with the drawer shut, so this reads as
+     plain centring everywhere except a wide screen with the rail out. See the
+     property's own note in the wide block above.
+
+     ==> HOW THIS IS CENTRED AND HOW IT IS SIZED KEEP FIGHTING, SO BOTH ARE
      WRITTEN DOWN. <==
 
      It began as `left: 50%` with no `right`, which centred it correctly and
@@ -1342,12 +1367,18 @@
      `SIZE.pillInset` is still the number — it just does its job through the
      clamp now rather than through two offsets. */
   position: fixed;
-  left: 50%;
+  left: calc(50% + var(--pill-shift, 0px));
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100vw - 2 * var(--pill-inset));
   bottom: var(--safe-bottom);
-  z-index: 30;
+  /* ==> UNDER THE DRAWER, NOT TIED WITH IT. <== `#drawer` is also 30 and this
+     rule is later in the file, so the pill won the tie and painted OVER the
+     sheet. It never showed on a phone with the storm list up — that view hides
+     it — but Layers, Settings and Home do not, and none of them was checked.
+     The archive's pill hit the identical fault on glass (§57.38c) and this is
+     the same fix. Nothing wants this pill above a panel. */
+  z-index: 20;
   min-height: var(--touch-target);
   padding: 0 var(--space-comfy);
   display: flex;
@@ -1450,11 +1481,19 @@
   outline-offset: 2px;
 }
 
-/* Wide: the pill never shows — the rail is open by default and the Storms
- * control reopens it. */
-@media (min-width: 720px) {
-  #storm-pill { display: none; }
-}
+/* ==> THE PILL SHOWS AT EVERY WIDTH NOW. <== Aaron, 2026-08-28.
+ *
+ * It used to be `display: none` above 720px, and the reason written here was
+ * "the rail is open by default and the Storms control reopens it". **That
+ * premise died and the rule outlived it.** `main.js` opens nothing on launch
+ * at any width — §16's sketch had the rail open on wide screens and glass said
+ * no, because the globe is the product and a list over it on arrival buries
+ * the thing the reader came for. So a desktop visitor arrived to a globe with
+ * no caption at all, which is the one job this pill has.
+ *
+ * It still takes itself off screen while the storm LIST is open
+ * (`ui/view-storms.js` sets `data-hidden`), because then the list is saying
+ * everything the pill would. */
 
 /* --- the storm identity (SPEC-UI §16.5) ------------------------------------
  *
