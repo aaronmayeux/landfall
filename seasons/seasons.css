@@ -71,6 +71,71 @@ html[data-seasons="on"] {
   );
 }
 
+/* --- the pill: the way back to the live globe ---------------------------- */
+
+/* ==> THE ONE THING ON SCREEN THAT MUST NEVER BE COVERED. <== It is the only
+   way out of the archive — Escape steps the drawer back and closes it, it
+   never leaves — so it sits above the drawer (30) and the control cluster (40)
+   at the same rung the bar holds for the same reason.
+
+   THE CENTRING AND THE SIZING FIGHT, AND `#storm-pill` ALREADY LOST THAT FIGHT
+   TWICE (ui/panels.css). Setting `left` alone silently caps a fixed element at
+   half the screen; setting `left` AND `right` stops it growing to its contents.
+   So: centre with the transform, which asks nothing of the box, and clamp with
+   `max-width`. Copied deliberately rather than re-derived — that comment is the
+   record of two glass faults and this pill has the same shape. */
+#seasons-pill {
+  position: fixed;
+  top: var(--safe-top);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--pill-inset));
+  z-index: 50;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-comfy);
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+  background: var(--glass-raised);
+  backdrop-filter: blur(var(--glass-blur-raised));
+  -webkit-backdrop-filter: blur(var(--glass-blur-raised));
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--type-body);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  -webkit-appearance: none;
+  appearance: none;
+  /* Transform and opacity only (§9). */
+  transition: transform var(--duration-instant) var(--ease-swap),
+              opacity var(--duration-instant) var(--ease-swap);
+}
+
+/* Sized off the text rather than a pixel literal, so it tracks the label at
+   every type scale instead of becoming a speck or a billboard. */
+.seasons-pill-chevron {
+  flex: 0 0 auto;
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.seasons-pill-text {
+  white-space: nowrap;
+}
+
+#seasons-pill:active { transform: translateX(-50%) scale(0.97); }
+#seasons-pill:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+/* Hover is a CAPABILITY, never a device (§Input). A finger has none, and a
+   touchscreen laptop has both. */
+@media (hover: hover) {
+  #seasons-pill:hover { background: var(--hover); }
+}
+
 /* --- the bar ------------------------------------------------------------- */
 
 #seasons-bar {
@@ -179,6 +244,39 @@ html[data-seasons="on"] #controls {
 html[data-seasons="on"] #btn-storms,
 html[data-seasons="on"] #btn-home,
 html[data-seasons="on"] #btn-layers {
+  display: none;
+}
+
+/* ==> AND TWO MORE LIVE SURFACES WERE STILL ON SCREEN IN HERE, WHICH IS THE
+ * SAME §5 FAULT AS THE THREE BUTTONS ABOVE. <== Found by audit 2026-08-28, not
+ * by glass — both sit under the drawer at its 66vh and only appear once the
+ * reader minimises the sheet, which is exactly the state the archive's own
+ * chrome is designed for.
+ *
+ * `#storm-pill` is the narrow-width entry to the LIVE storm list. It goes on
+ * counting today's storms over a sepia globe, and a tap opens a list naming
+ * storms that are not drawn — the identical wrong surface `#btn-storms` is
+ * hidden to prevent, reached by a different control.
+ *
+ * `#status` is the source-health strip: stale flags, "GDACS is not responding".
+ * Aaron's call, 2026-08-26 (§57.37): it is suppressed in here because nothing
+ * in the archive reads a live feed, so every word it could say is about a
+ * world the reader is not looking at. It is NOT §5 silence — a season that
+ * will not load still speaks, through the board's own three states
+ * (`ui/seasons-board-loading.js`). It also occupies exactly the slot the
+ * archive's own pill sits in, so leaving it would be two things at the top
+ * edge arguing about a globe only one of them is describing.
+ *
+ * `display: none` rather than `visibility` or opacity, for the reason the
+ * buttons above use it: this has to take them out of the TAB ORDER too, or a
+ * keyboard user walks into both (§13).
+ *
+ * SPECIFICITY IS WHY BOTH ARE WRITTEN AS DESCENDANTS OF `html[data-seasons]`.
+ * `#storm-pill[data-hidden="true"]` in ui/panels.css is (1,1,0); this is
+ * (1,1,1) and wins regardless of which stylesheet loads first. A bare
+ * `#storm-pill` here would tie and hand the answer to source order. */
+html[data-seasons="on"] #storm-pill,
+html[data-seasons="on"] #status {
   display: none;
 }
 

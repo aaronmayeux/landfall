@@ -23,7 +23,7 @@
  *
  * ==> LEAVING RUNS EVERY ONE OF THOSE BACKWARDS, AND IT RUNS EVEN IF ENTERING
  * WENT WRONG. <== A half-entered archive with no way out is the failure mode
- * worth spending code on: sepia sky, no storms, no bar. Entry is wrapped, and
+ * worth spending code on: sepia sky, no storms, no pill. Entry is wrapped, and
  * a throw anywhere inside it leaves through the same door a button press
  * would.
  *
@@ -55,6 +55,7 @@ import { resolveSystem } from '../lib/units.js';
 import { getHome } from '../data/home.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { barDetail, createSeasonsBar } from './bar.js';
+import { createSeasonsPill } from './pill.js';
 import * as deepLink from './deep-link.js';
 
 /**
@@ -155,8 +156,13 @@ export function openSeasons({
    * looking at. */
   if (session) return session.handle;
 
+  /* ==> THE WAY OUT IS A PILL AT THE TOP, AND IT IS THE ONLY ONE. <== Step 6,
+   * §57.37. Escape steps the drawer back and closes it; it never leaves the
+   * archive. So this control is the whole of the exit, which is why it is
+   * built before anything that can throw and torn down last. */
+  const pill = createSeasonsPill({ onLeave: () => leave() });
+
   const bar = createSeasonsBar({
-    onLeave: () => leave(),
     /* ==> THE BAR'S OWN SENTENCE TOGGLES THE BOARD. <== Aaron on glass,
      * 2026-08-25. It only ever opened, which made it a one-way door: press it
      * with the board already up and nothing happened, so the only way to get
@@ -192,6 +198,7 @@ export function openSeasons({
     returnFocusTo,
     from,
     bar,
+    pill,
     /* ==> THE DRAWER IS ON THE SESSION SO `openSeasonStorm` CAN REACH IT.
      * §57.21d. <== It is the same object every visit — `main.js` builds one
      * for the page — but the exported entry point runs outside every closure
@@ -258,6 +265,18 @@ export function openSeasons({
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
     safely(() => bar.unmount());
+    safely(() => pill.unmount());
+    /* ==> THE LAYOUT ATTRIBUTE COMES OFF HERE, NOT INSIDE A COMPONENT. <==
+     * Step 6, 2026-08-28. It used to ride on `bar.mount`/`unmount`, which was
+     * only ever true by accident — the bar happened to be the first thing on
+     * screen. Every rule it drives outlives the bar: the drawer's fixed sheet
+     * height, the three hidden cluster buttons, the control cluster's offset,
+     * and now the two live surfaces the archive suppresses. Step 5 deletes
+     * `seasons/bar.js`, and none of that may go with it, so the session owns
+     * it. Last of the chrome teardown, for the same reason it is first on the
+     * way in: nothing should be laid out for the archive after the archive
+     * has stopped being on screen. */
+    safely(() => document.documentElement.removeAttribute('data-seasons'));
     safely(() => deepLink.clear());
 
     /* §13. Back to the row that opened this, not the top of the document. If
@@ -289,7 +308,16 @@ export function openSeasons({
      * with a bad year overrides it and keeps saying so — that reason is about
      * the LINK, and it does not stop being true when a season loads. */
     bar.setDetail(detailFor(linkReason));
+    /* ==> THE ATTRIBUTE GOES ON BEFORE ANY ARCHIVE FURNITURE DOES. <== It is
+     * what every `html[data-seasons="on"]` rule in `seasons/seasons.css` hangs
+     * off, so mounting the bar or the pill first would lay both out against
+     * the live app's geometry for a frame and then move them. */
+    document.documentElement.setAttribute('data-seasons', 'on');
     bar.mount();
+    /* The way out goes on screen in the same breath as the thing it is the way
+     * out OF. Anything below here can throw; the catch calls `leave()`, and
+     * `leave()` can only tidy up a pill that exists. */
+    pill.mount();
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
@@ -335,7 +363,7 @@ export function openSeasons({
     deepLink.write({ season: state.season, storms: state.storms });
   } catch (e) {
     /* ==> A FAILED ENTRY LEAVES. <== The alternative is a reader looking at a
-     * sepia globe with no storms and no bar, and no way back short of a
+     * sepia globe with no storms and no pill, and no way back short of a
      * reload. Reported rather than swallowed: this is a bug, and the console
      * is where the next session finds it. */
     console.error('[landfall] could not enter the archive:', e);

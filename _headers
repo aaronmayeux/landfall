@@ -196,6 +196,9 @@
 /seasons/bar.js
   Cache-Control: no-cache
 
+/seasons/pill.js
+  Cache-Control: no-cache
+
 /seasons/deep-link.js
   Cache-Control: no-cache
 

@@ -14,10 +14,18 @@
  * record: an empty globe with nothing said about it is the silence §5 forbids,
  * and only words can tell a typo from a genuinely quiet season.
  *
- * THE LEAVE BUTTON IS A REAL BUTTON, TABBABLE, AT THE TOUCH MINIMUM. Leaving
- * is the one action in this whole mode that must never be gesture-only: a
- * reader who cannot find the way out of a sepia globe with no storms on it
- * will assume the app broke and close it.
+ * ==> THE LEAVE BUTTON HAS GONE, AND SO HAS THIS FILE'S CLAIM ON `data-seasons`.
+ * <== Step 6, 2026-08-28. Getting out of the archive is `seasons/pill.js` at
+ * the TOP of the globe now — a chevron and the destination in words, which is
+ * the grammar `ui/drawer.js` already uses for every other back control. There
+ * is exactly one way out and it is not in here.
+ *
+ * The layout attribute moved with it, to `seasons/index.js`, which owns the
+ * session. It was in this file's `mount`/`unmount` only because the bar
+ * happened to be the first thing on screen — and every rule it drives (the
+ * sheet's height, the three hidden cluster buttons, the control cluster's
+ * offset) outlives the bar. Step 5 deletes this file; none of that may go
+ * with it.
  *
  * NO HARDCODED COLOUR AND NO PIXEL LITERAL. Every value is a custom property
  * already published by `applyTokens`, which is also what makes the bar go
@@ -70,12 +78,11 @@ export function barDetail(where) {
  * Build the bar. Not mounted — the caller decides when it goes on screen.
  *
  * @param {object} opts
- * @param {() => void} opts.onLeave  pressed, or activated by keyboard.
  * @param {() => void} [opts.onOpenBoard]  the reader wants the board back.
  * @returns {{el:HTMLElement, mount:()=>void, unmount:()=>void,
- *            focusLeave:()=>void, setDetail:(text:string)=>void}}
+ *            setDetail:(text:string)=>void}}
  */
-export function createSeasonsBar({ onLeave, onOpenBoard }) {
+export function createSeasonsBar({ onOpenBoard } = {}) {
   const el = document.createElement('div');
   el.id = 'seasons-bar';
   /* A landmark rather than a status: it is a place with a control in it, and
@@ -117,42 +124,17 @@ export function createSeasonsBar({ onLeave, onOpenBoard }) {
 
   where.append(mark, detail);
 
-  const leave = document.createElement('button');
-  leave.type = 'button';
-  leave.className = 'seasons-leave';
-  leave.textContent = 'Leave';
-  /* The visible word is already "Leave"; the label says leave WHAT, because
-   * out of context a button called Leave is a button called nothing. */
-  leave.setAttribute('aria-label', `Leave ${ARCHIVE_LABEL.toLowerCase()}`);
-  leave.addEventListener('click', () => onLeave?.());
-
-  el.append(where, leave);
+  el.append(where);
 
   return {
     el,
 
     mount() {
       document.body.appendChild(el);
-      /* The attribute is what shifts the drawer and the control cluster up off
-       * the bar (seasons.css). It lives on <html> rather than on the bar so
-       * the rules that read it do not have to be siblings of it. */
-      document.documentElement.setAttribute('data-seasons', 'on');
     },
 
     unmount() {
-      document.documentElement.removeAttribute('data-seasons');
       el.remove();
-    },
-
-    /** §13 — a keyboard user must land somewhere they can see. Entering the
-     *  archive closes the drawer, which would otherwise drop focus onto the
-     *  document body with nothing on screen to explain where they are. */
-    focusLeave() {
-      try {
-        leave.focus();
-      } catch {
-        /* A detached or hidden button is not worth an exception here. */
-      }
     },
 
     /** The sentence beside the name — `2005 · Atlantic` once a season is
