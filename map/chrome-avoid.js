@@ -72,25 +72,30 @@ export const OCCLUDING_SELECTORS = [
  * the moment `--seasons-sheet-h` moved.
  *
  * ==> IT IS BELT AND BRACES RATHER THAN A FIX, AND SAYING SO IS THE POINT.
- * <== `#drawer` and `#seasons-bar` are SIBLINGS of `#globe`, not children, so
+ * <== `#drawer` and the archive's pills are SIBLINGS of `#globe`, not children, so
  * a press on either never reaches MapLibre's own listener and never becomes a
  * map click at all. That is a property of `index.html`'s structure, and
  * nothing in this file or in the tap handler would notice it changing. The
  * list exists so that the day somebody nests a panel inside the map container,
  * the archive does not start dismissing its own sheet.
  *
- * ==> `#seasons-bar` AND `#seasons-pill` ARE THE TWO IDS `index.html` DOES NOT
- * CARRY. <== Both are created at runtime, by `seasons/bar.js` and
- * `seasons/pill.js`, because the archive's furniture is loaded with the
+ * ==> THE TWO `#seasons-` IDS ARE THE ONES `index.html` DOES NOT CARRY. <==
+ * Both are created at runtime, by `seasons/pill.js` and
+ * `seasons/status-pill.js`, because the archive's furniture is loaded with the
  * archive and must not be on the boot path. The selector contract still holds
  * — it is just a contract with a different file, and
  * `tools/test-chrome-avoid.mjs` checks each against its own.
+ *
+ * `#seasons-bar` was the third until step 5 deleted it. Its replacement is
+ * `#seasons-status-pill`, and it still belongs on this list for the same
+ * reason: it is a control the reader presses, so a press on it must never
+ * also register as a tap on the globe underneath.
  */
 export const TAP_BLOCKING_SELECTORS = [
   '#controls',
   '#drawer[data-open="true"]',
-  '#seasons-bar',
   '#seasons-pill',
+  '#seasons-status-pill',
 ];
 
 /**

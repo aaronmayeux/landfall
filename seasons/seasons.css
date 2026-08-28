@@ -7,11 +7,16 @@
  * forced: it is written against the same variables as every panel, so the
  * archive costs the theme system nothing and cannot drift out of step with it.
  *
- * ==> AND THE ONE SUBSTANTIVE THING THIS FILE DOES: IT GETS THE BAR OUT FROM
- * UNDER THE DRAWER AND THE CONTROL CLUSTER. <== Both are `position: fixed` to
- * the bottom of the viewport, so a bar added underneath them is a bar with a
- * sheet sitting on top of it. `--seasons-bar-h` is published on <html> while
- * the archive is open and every rule that needs to move up reads it.
+ * ==> THE BAR IS GONE AND SO IS THE LAYOUT VARIABLE IT COST. <== Step 5,
+ * §57.38b. `#seasons-bar` was `position: fixed` to the bottom of the viewport,
+ * so the drawer and the control cluster — both fixed to the same edge — had to
+ * be pushed up by its height or they sat on top of it. That was
+ * `--seasons-bar-h`, published on <html> and subtracted from in three places.
+ * All four are deleted. Its two jobs are now two pills that cost no layout at
+ * all: `seasons/pill.js` at the top is the way out, `seasons/status-pill.js`
+ * at the bottom says what is drawn, and both sit at a z-index above the globe
+ * rather than pushing anything off it. That strip of screen goes back to the
+ * globe on every archive view, which on a phone was the whole argument.
  *
  * Those overrides are scoped to `html[data-seasons="on"]`, which outranks the
  * bare `#drawer` and `#controls` rules on specificity — so the live app's own
@@ -22,12 +27,6 @@
  * ------------------------------------------------------------------------- */
 
 html[data-seasons="on"] {
-  /* Bar height: one touch target, its padding, and the OS gesture inset. Every
-     term is a token — the bar is exactly as tall as the button inside it. */
-  --seasons-bar-h: calc(
-    var(--touch-target) + var(--space-snug) * 2 + var(--safe-bottom)
-  );
-
   /* ==> A WALL ROW IS ONE TOUCH TARGET AND THE TOKEN SAYS SO RATHER THAN A
      NUMBER. <== §57.36 froze 44px on glass, and `SEASONS.wallRowPx` carries
      the same figure for the arithmetic in `lib/wall-index.js`. Writing
@@ -136,112 +135,124 @@ html[data-seasons="on"] {
   #seasons-pill:hover { background: var(--hover); }
 }
 
-/* --- the bar ------------------------------------------------------------- */
+/* --- the pill along the bottom ------------------------------------------- */
 
-#seasons-bar {
+/* ==> THE SECOND PILL, AND IT SAYS WHAT IS DRAWN. §57.38, §57.38b. <== The
+   archive has two: `#seasons-pill` above is the way out, this one is the
+   caption. They are two elements because one element cannot be in two places
+   saying two things.
+
+   ==> IT IS THE DELETED BAR'S JOB WITHOUT THE BAR'S COST. <== `#seasons-bar`
+   was fixed to this same edge and full width, so the drawer and the control
+   cluster had to be pushed up by its height. This is a lozenge at
+   `z-index: 30` — the same layer `#storm-pill` sits on — so nothing is pushed
+   anywhere and that strip of screen is the globe's again.
+
+   MEASUREMENTS ARE `#storm-pill`'s, COPIED RATHER THAN RE-DERIVED. It is the
+   same shape doing the same job on the same edge, and its own comment records
+   two glass faults about centring a fixed element: `left` alone silently caps
+   the width at half the screen, and `left` plus `right` stops it growing to
+   its contents. `left: 50%` with a transform is what survived both. */
+#seasons-status-pill {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  /* Above the drawer (30) and the control cluster (40). It is the one thing on
-     screen that must never be covered: it is the way out. */
-  z-index: 50;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: var(--safe-bottom);
+  width: max-content;
+  max-width: calc(100vw - 2 * var(--pill-inset));
+  z-index: 30;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-comfy);
   display: flex;
   align-items: center;
-  gap: var(--space-base);
-  box-sizing: border-box;
-  padding: var(--space-snug) var(--safe-right) calc(var(--space-snug) + var(--safe-bottom))
-           var(--safe-left);
   background: var(--glass-raised);
   backdrop-filter: blur(var(--glass-blur-raised));
   -webkit-backdrop-filter: blur(var(--glass-blur-raised));
-  border-top: 1px solid var(--glass-border);
-  color: var(--text-primary);
-}
-
-.seasons-bar-where {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-tight);
-}
-
-.seasons-bar-mark {
-  font-family: var(--font-ui);
-  font-size: var(--type-micro);
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  border: 1px solid var(--glass-border);
+  border-radius: 999px;
+  /* ==> MUTED, NOT PRIMARY, AND THAT IS THE ONE DELIBERATE DIFFERENCE FROM THE
+     PILL ABOVE. <== This is a caption about what is on the globe; the top pill
+     is the only way out. If they carried the same weight the eye would have to
+     choose between them, and the one that must never be missed would lose
+     half the time. */
   color: var(--text-secondary);
-}
-
-/* The honest line about an empty globe. Muted, because it is a note about what
-   is not built rather than a warning about the weather — this is not an error
-   state and must not borrow the colour of one. */
-.seasons-bar-detail {
   font-family: var(--font-ui);
   font-size: var(--type-small);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.seasons-bar-detail[hidden] { display: none; }
-
-.seasons-leave {
-  flex: 0 0 auto;
-  min-height: var(--touch-target);
-  padding: 0 var(--space-comfy);
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  color: var(--text-primary);
-  font-family: var(--font-ui);
-  font-size: var(--type-body);
-  font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 4px 20px var(--glass-shadow);
+  -webkit-appearance: none;
+  appearance: none;
   /* Transform and opacity only (§9). */
   transition: transform var(--duration-instant) var(--ease-swap),
               opacity var(--duration-instant) var(--ease-swap);
 }
-.seasons-leave:active { transform: scale(0.97); }
-.seasons-leave:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
-/* Hover is a CAPABILITY, never a device (§Input). A finger has none, and a
-   touchscreen laptop has both. */
+/* One line, and it ellipses rather than wrapping. A two-line lozenge on a
+   390px phone is a panel, and this is a caption. */
+.seasons-status-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#seasons-status-pill:active { transform: translateX(-50%) scale(0.97); }
+#seasons-status-pill:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Hover is a CAPABILITY, never a device (§Input). */
 @media (hover: hover) {
-  .seasons-leave:hover { background: var(--hover); }
+  #seasons-status-pill:hover { background: var(--hover); }
 }
 
-/* --- getting the live chrome off the bar --------------------------------- */
-
-html[data-seasons="on"] #controls {
-  bottom: calc(var(--safe-bottom) + var(--seasons-bar-h));
+/* ==> WIDE SCREENS DO NOT GET IT, AND `btn-storms` IS WHY THAT IS SAFE. <==
+   `#storm-pill` sets this precedent: above 720px the drawer is a docked rail
+   and the control cluster is the navigation, so a lozenge floating over the
+   globe is redundant chrome. The job it does on a phone — reopening the
+   archive's drawer — is `#btn-storms`'s up here, and that button is visible in
+   the archive for exactly this reason. */
+@media (min-width: 720px) {
+  #seasons-status-pill { display: none; }
 }
 
-/* ==> THREE OF THE FIVE CLUSTER BUTTONS ARE GONE WHILE THE ARCHIVE IS OPEN,
- * AND THAT IS §5 RATHER THAN TIDINESS. <== Storms, Home and Layers all open a
- * live-app drawer over a sepia globe with nothing on it: a storm list naming
- * storms that are not drawn, a dashboard describing a house against a storm
- * that is not there, and a set of toggles for layers with no data behind them.
- * Three surfaces that would each be confidently wrong.
+/* --- getting the live chrome out of the archive --------------------------------- */
+
+/* ==> THE CLUSTER SITS WHERE IT ALWAYS DID NOW. <== It used to be pushed up by
+   `--seasons-bar-h`; step 5 deleted the bar, so the override went with it and
+   the archive's cluster is the live app's cluster in the same place. One less
+   thing that can be in two positions depending on which world you are in. */
+
+/* ==> TWO OF THE FIVE CLUSTER BUTTONS ARE GONE WHILE THE ARCHIVE IS OPEN,
+ * AND THAT IS §5 RATHER THAN TIDINESS. <== Home and Layers both open a
+ * live-app drawer over a sepia globe with nothing on it: a dashboard
+ * describing a house against a storm that is not there, and a set of toggles
+ * for layers with no data behind them. Two surfaces that would each be
+ * confidently wrong.
  *
  * `display: none` rather than `visibility` or an opacity fade: this has to
- * take them out of the TAB ORDER too, or a keyboard user walks into all three
+ * take them out of the TAB ORDER too, or a keyboard user walks into both
  * (§13, the same trap the closed drawer hit).
+ *
+ * ==> AND STORMS CAME BACK AT STEP 5, DOING A DIFFERENT JOB. <== §57.37,
+ * §57.38b. It was hidden for the same reason as the other two — it opened the
+ * LIVE storm list. Inside the archive it now reopens the archive's own drawer
+ * at the rung the reader left, so the surface it opens is about the world on
+ * screen and the §5 objection is answered rather than dodged.
+ *
+ * ==> IT IS THE WIDE HALF OF ONE ACTION, NOT A SECOND CONTROL. <== The bottom
+ * pill does this on a phone and is `display: none` above 720px, exactly as
+ * `#storm-pill` is. Without this the archive would have no way back to its
+ * drawer on a desktop at all. Both roads run through the same function in
+ * `seasons/index.js`, so they cannot drift into two different ideas of where
+ * the reader was.
  *
  * ==> RECENTER AND SETTINGS STAY, AND BOTH EARN IT. <== Recenter is the
  * camera, and the camera is the same camera. Settings is app-wide — units,
  * motion, theme — and its theme control is the one thing in this whole mode
  * that has an explicit answer for being used from in here: `setThemeMode`
  * keeps the new preference as the RESTORE target instead of applying it, so a
- * theme changed inside the archive is the theme you get back on the way out.
- *
- * Step 5 replaces the three with the archive's own board; this is what the
- * gap looks like until then. */
-html[data-seasons="on"] #btn-storms,
+ * theme changed inside the archive is the theme you get back on the way out. */
 html[data-seasons="on"] #btn-home,
 html[data-seasons="on"] #btn-layers {
   display: none;
@@ -255,8 +266,15 @@ html[data-seasons="on"] #btn-layers {
  *
  * `#storm-pill` is the narrow-width entry to the LIVE storm list. It goes on
  * counting today's storms over a sepia globe, and a tap opens a list naming
- * storms that are not drawn — the identical wrong surface `#btn-storms` is
- * hidden to prevent, reached by a different control.
+ * storms that are not drawn.
+ *
+ * ==> IT STAYS HIDDEN AND THE ARCHIVE BUILDS ITS OWN, WHICH IS A CORRECTION TO
+ * §57.38 RATHER THAN AGREEMENT WITH IT. <== That section said the existing
+ * pill should stay and change what it says. It cannot: `ui/view-storms.js`
+ * rewrites this element's text, its busy state and its error tone on EVERY
+ * POLL, open drawer or not, so the archive would inherit a red pill because
+ * GDACS is down — a fact about today, under 1935's tracks. `#seasons-status-pill`
+ * is a second element for that reason (§57.38b).
  *
  * `#status` is the source-health strip: stale flags, "GDACS is not responding".
  * Aaron's call, 2026-08-26 (§57.37): it is suppressed in here because nothing
@@ -283,10 +301,6 @@ html[data-seasons="on"] #status {
 /* Narrow: the drawer is a bottom sheet and sits ON the bar. Same breakpoint as
    panels.css, restated because a media query adds no specificity. */
 @media (max-width: 719.9px) {
-  html[data-seasons="on"] #drawer {
-    bottom: var(--seasons-bar-h);
-  }
-
   /* ==> THE ARCHIVE'S SHEET IS A FIXED HEIGHT, NOT A CONTENT HEIGHT.
      §57.21b item 3, corrected by push 2 item 1. <==
 
@@ -337,15 +351,6 @@ html[data-seasons="on"] #status {
     height: var(--seasons-sheet-h);
     height: min(var(--seasons-sheet-h),
                 calc(100dvh - var(--keyboard-inset) - var(--space-comfy)));
-  }
-}
-
-/* Wide: the drawer is a left rail, and its bottom already rides the keyboard
-   inset. The bar is added to that rather than replacing it, or the rail drops
-   behind the keyboard the moment somebody types. */
-@media (min-width: 720px) {
-  html[data-seasons="on"] #drawer {
-    bottom: calc(var(--keyboard-inset) + var(--seasons-bar-h));
   }
 }
 
@@ -866,32 +871,6 @@ html[data-seasons="on"] #status {
   min-height: var(--touch-target);
   color: var(--text-secondary);
   font-style: italic;
-}
-
-/* --- the bar's own button ------------------------------------------------ */
-
-/* The sentence naming the year is the way back to the board. No new chrome,
-   and it is a real button so it is tabbable and works by keyboard (§13). */
-.seasons-bar-open {
-  flex: 1 1 auto;
-  min-width: 0;
-  min-height: var(--touch-target);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.seasons-bar-open:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
-  border-radius: var(--radius);
 }
 
 /* ==========================================================================

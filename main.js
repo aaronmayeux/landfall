@@ -1910,6 +1910,17 @@ function boot() {
   for (const [id, viewId] of CLUSTER) {
     const btn = document.getElementById(id);
     btn.addEventListener('click', () => {
+      /* ==> INSIDE THE ARCHIVE, STORMS MEANS THE ARCHIVE'S OWN DRAWER. §57.37,
+       * §57.38b. <== It used to be hidden in here, because opening the LIVE
+       * storm list over a sepia globe lists storms that are not drawn (§5).
+       * Step 5 gave it a job about the world on screen instead: it reopens the
+       * archive's ladder at the rung the reader left. Home and Layers stay
+       * hidden — neither has an archive equivalent to be given.
+       *
+       * The archive answers for itself and says whether it did, rather than
+       * this file testing a mode flag: `seasons/` owns what its controls mean,
+       * and a `false` here is the ordinary live-globe case. */
+      if (viewId === 'storms' && seasonsMod?.reopenArchiveDrawer?.()) return;
       const act = clusterAction(viewId, {
         open: drawer.isOpen(),
         currentId: drawer.currentId(),
