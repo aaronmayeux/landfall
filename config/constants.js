@@ -6691,6 +6691,17 @@ export const SEASONS = Object.freeze({
    *  It changes only the COUNT, never whether a storm came ashore at all. */
   landfallSeparationKm: 50,
 
+  /** ==> WHERE THE PREBUILT MASK LIVES, AND WHY THE PIN IS IN THE NAME. <==
+   *  §57.7b. The archive gets its landfalls from the runner; the season in
+   *  progress has no runner pass, so the phone answers for it and needs this
+   *  file. Built by `node tools/land-mask-pack.mjs`.
+   *
+   *  The coastline pin and the cell size are both in the filename because the
+   *  answers change when either does, and a cached mask from before a change
+   *  would go on giving the old answers against new code with nothing to show
+   *  for it. A new name is a new URL and every cache misses it at once. */
+  landfallMaskUrl: '/seasons/data/landmask-v5.1.2-0.02.bin.gz',
+
   /** ==> BEFORE THIS, STORMS ARE SIMPLY MISSING FROM THE RECORD. <== Nobody
    *  saw the ones that stayed at sea. A quiet-looking 1935 season page is not
    *  evidence of a quiet season, and the board has to say so — which is a
