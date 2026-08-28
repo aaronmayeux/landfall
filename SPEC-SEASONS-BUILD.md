@@ -4122,13 +4122,19 @@ button was the only exit — Escape never leaves the archive — so deleting the
 bar before building the pill would have shipped a sepia globe with no way off
 it. The pill is on `main` and confirmed before step 5 touches anything.
 
-**The "you are in the past" signal now rests on three things and none of them
-is the bar:** the sepia palette, the drawer's own heading (`Past storms`, or
-the year), and a pill offering to take the reader back to `Live storms` —
-which only makes sense if they are not there. **The last of those is the one
-still to be judged on glass**, because it is an inference rather than a
-statement: nothing on the archive globe says `Past storms` once the drawer is
-minimised.
+**==> AND THE SIGNAL IS STILL THE BAR'S JOB TODAY, WHICH IS WHY STEP 6 COULD
+NOT ANSWER THIS QUESTION. <==** Step 6's glass pass was asked whether the
+archive still says where you are with the drawer minimised, and the answer was
+unreadable: `PAST STORMS` was sitting at the bottom left of the screenshot
+doing exactly that. **The question does not become real until this bar is
+deleted.**
+
+After step 5 the signal rests on three things and none of them is a statement:
+the sepia palette, the drawer's own heading (`Past storms`, or the year) which
+is only there while the drawer is open, and a pill offering to take the reader
+back to `Live storms` — which only makes sense if they are not there. **That
+last one is an inference, not a label**, and whether it is enough on a
+minimised archive globe is step 5's first glass call.
 
 ### 57.38 Proposed: the names, the rungs, and the archive pill
 
@@ -4495,8 +4501,9 @@ here** — this section settles the NAME and the NAVIGATION only.
 
 ### 57.38a The way out, as built
 
-Step 6. Everything here is on `main`; §57.37 and §57.38 above are the design
-and this is what shipping it taught.
+Step 6. Everything here is on `main` and **confirmed on Aaron's phone and on
+desktop, 2026-08-28**, with nothing sent back; §57.37 and §57.38 above are the
+design and this is what shipping it taught.
 
 **`seasons/pill.js` is a left chevron and the words `Live storms`, centred at
 the top of the archive globe.** It names where the tap LANDS, not where the
