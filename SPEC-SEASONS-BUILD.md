@@ -4054,8 +4054,10 @@ one the section makes.
 `--seasons-bar-h` with it, and the jobs it was doing move:
 
 - **Naming where you are, and being the way out** → a new, small pill at the
-  TOP of the archive globe. §57.38, as amended there. Not `#storm-pill`: both
-  are on screen at once.
+  TOP of the archive globe. **BUILT — step 6, §57.38a is the as-built account.**
+  It reads `‹ Live storms` and names the DESTINATION rather than the current
+  place; §57.38's "what is currently being shown" wording is superseded there.
+  Not `#storm-pill`, which is suppressed inside the archive entirely (§57.38a).
 - **Reopening the drawer** → `btn-storms` while the archive is open reopens the
   ladder at the rung the reader left, rather than the live storm list. The
   rung memory this needs is already built (`lastRung` in `seasons/index.js`,
@@ -4066,7 +4068,11 @@ one the section makes.
   a live feed. A season that will not load still speaks, through the board's
   own three states (`ui/seasons-board-loading.js`).
 
-**Only the last two bullets remain unbuilt.** They are step 5 and step 6.
+**Step 6 — the pill — is BUILT (§57.38a), and the layout attribute
+`data-seasons` moved to `seasons/index.js` with it, ahead of this file being
+deleted. The status-strip suppression landed in the same pass. What remains
+unbuilt is step 5: the bar itself, `--seasons-bar-h` and its four consumers,
+and `btn-storms` reopening the ladder.**
 
 #### What the bar costs and what it buys back
 
@@ -4110,6 +4116,19 @@ deliberate piece of feedback, and if the bar goes, the thing that told the user
 "you are in the archive now" goes with it. **A door with no indication you have
 walked through it is worse than the bar.** The entry point can move; the "you
 are in the past" signal has to land somewhere.
+
+**==> STEP 6 IS WHY THE ORDER IS PILL FIRST, BAR SECOND. <==** The bar's Leave
+button was the only exit — Escape never leaves the archive — so deleting the
+bar before building the pill would have shipped a sepia globe with no way off
+it. The pill is on `main` and confirmed before step 5 touches anything.
+
+**The "you are in the past" signal now rests on three things and none of them
+is the bar:** the sepia palette, the drawer's own heading (`Past storms`, or
+the year), and a pill offering to take the reader back to `Live storms` —
+which only makes sense if they are not there. **The last of those is the one
+still to be judged on glass**, because it is an inference rather than a
+statement: nothing on the archive globe says `Past storms` once the drawer is
+minimised.
 
 ### 57.38 Proposed: the names, the rungs, and the archive pill
 
@@ -4473,3 +4492,101 @@ this one is not. Adding `Storm Details` to the ladder means deciding what a
 storm detail actually loads, and "everything NHC published" is not the answer
 at 7.7 MB a storm on a phone. **That is a separate decision and it is not made
 here** — this section settles the NAME and the NAVIGATION only.
+
+### 57.38a The way out, as built
+
+Step 6. Everything here is on `main`; §57.37 and §57.38 above are the design
+and this is what shipping it taught.
+
+**`seasons/pill.js` is a left chevron and the words `Live storms`, centred at
+the top of the archive globe.** It names where the tap LANDS, not where the
+reader is standing — Aaron's call, 2026-08-28, overruling a proposed
+`Past storms · 2005 · Atlantic` that named the current place and left the
+action unlabelled.
+
+**It takes the back grammar rather than an X, and that was already settled
+elsewhere in this app.** `ui/drawer.js` puts a chevron plus the destination in
+words on every back control, because a bare `‹` was indistinguishable from the
+storm stepper's chevron on glass (2026-08-12) and because an icon cannot answer
+*back to what*. An X means dismiss, and a reader who presses one expecting to
+leave and finds themselves still in 2005 has been told the wrong thing by the
+icon. The chevron's path is read out of `ui/drawer.js` by
+`tools/test-seasons-pill.mjs` rather than restated, so the two cannot become
+two slightly different arrows.
+
+**`Live storms` mirrors `Past storms` deliberately** — that is the word on both
+doors into the archive and in the drawer's own heading, so the pair reads as
+one axis. The visible words name the destination; `aria-label` carries *back*,
+which the chevron supplies for a sighted reader in less space than a word.
+
+#### It is the only way out, and that is why it is a real button
+
+`attachEscape` steps the drawer back and then closes it; **it never leaves the
+archive**, and `leaveSeasons()` has no caller. So this one control is the whole
+of the exit, and a pill wired to no handler is pixel-identical to a working one.
+`tools/test-archive-mode.mjs` therefore leaves by PRESSING it rather than by
+calling `leave()`, and every teardown assertion in that section rides on the
+listener existing.
+
+The bar's `Leave` button is gone with it. Two ways out is two things to keep in
+step, and the bar is deleted at step 5 anyway.
+
+#### ==> THE LAYOUT ATTRIBUTE MOVED, AND IT IS THE PART STEP 5 WOULD HAVE BROKEN. <==
+
+`data-seasons="on"` was set and cleared inside `seasons/bar.js`'s
+`mount`/`unmount`, which was only ever true by accident — the bar happened to
+be the first archive furniture on screen. **Every rule it drives outlives the
+bar:** the drawer's fixed `--seasons-sheet-h`, the three hidden cluster
+buttons, the control cluster's offset, and the two suppressions below. It is
+owned by `seasons/index.js` now, set before any furniture mounts and cleared
+last on the way out. Step 5 deletes `seasons/bar.js` and none of that goes with
+it.
+
+#### Two live surfaces were still on screen in the archive
+
+Found by audit rather than by glass, 2026-08-28. Both sit under the drawer at
+its 66vh, so only a reader who minimised the sheet ever met them — which is
+exactly the state the archive's chrome exists for.
+
+- **`#storm-pill`** is the narrow-width entry to the LIVE storm list. It went
+  on counting today's storms over a sepia globe, and a tap opened a list naming
+  storms that were not drawn: the identical wrong surface `#btn-storms` is
+  hidden to prevent, reached by a different control.
+- **`#status`** is source health — stale flags, *GDACS is not responding*.
+  Suppressed per §57.37, because nothing in the archive reads a live feed, so
+  every word it could say is about a world the reader is not looking at. **It
+  is not §5 silence:** a season that will not load still speaks, through the
+  board's own three states (`ui/seasons-board-loading.js`). It also sat in
+  exactly the slot the archive's own pill occupies.
+
+Both use `display: none` rather than a fade, for the reason the three buttons
+already do: they have to leave the TAB ORDER too (§13). Both are written as
+descendants of `html[data-seasons="on"]` — that is (1,1,1) against
+`#storm-pill[data-hidden="true"]`'s (1,1,0), so it wins regardless of which
+stylesheet loads first. A bare `#storm-pill` would tie and hand the answer to
+source order.
+
+#### What it is styled by, and the two comments it inherited
+
+The pill is styled by its **id**, the way `#storm-pill` is, because it needs to
+outrank a bare id rule and to sit above the drawer (30) and the control cluster
+(40). A class beside the id would be a second name with no rule behind it, and
+`tools/css-orphan-check.mjs` caught exactly that in the first version.
+
+Its centring is `ui/panels.css`'s, copied rather than re-derived: a fixed
+element given `left` alone is silently capped at half the screen, and one given
+`left` AND `right` stops growing to its contents. That comment is the record of
+two glass faults and this pill has the same shape.
+
+#### Eleven mutations, eleven killed
+
+Including the three that would have shipped something that looked right: a pill
+with no click listener, a pill reading `Past storms`, and the layout attribute
+never cleared on the way out. The chevron-match, the `aria-label`'s *back*, and
+`<button>` versus `<div>` were each verified to bite.
+
+**`tools/seasons-smoke.mjs` fails six assertions in the cloud sandbox and did
+so before this change** — 20 passing on clean `main`, 25 passing with the pill.
+All six are *does a track actually draw*, which needs `tiles.openfreemap.org`;
+it is blocked, MapLibre never finishes building, and the geometry never lands.
+They pass on the CI runner. **Do not chase them here.**

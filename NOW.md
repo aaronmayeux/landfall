@@ -105,12 +105,47 @@ item, not a leftover, and §57.36a records the reasoning:
 deployed and judged. Nothing is held here; the detail lives in those two spec
 sections rather than in this file.
 
-Still unbuilt in the Seasons build: **the entry-point unwind and the top pill**
-(steps 5 and 6, §57.37 as amended — the doors do NOT change, only
-`#seasons-bar` is deleted), and **Storm Details** (step 7, payload cost still
-unresolved). Steps 5 and 6 are the natural next pass: step 4 was the last thing
-gating them, and until the bar goes there are two doors into the archive saying
-different things.
+**==> STEP 6 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. <==** The archive has a
+pill at the TOP now — a left chevron and the words `Live storms` — and it is
+the ONLY way out: the bar's `Leave` button is gone, and Escape never left the
+archive in the first place. **§57.38a is the as-built account; read that, not
+this.**
+
+**GLASS, and the first one is the only one that is not cosmetic:**
+
+1. **Does `‹ Live storms` read as the way out?** It names the DESTINATION
+   rather than the place you are standing, which is `ui/drawer.js`'s grammar
+   for every other back control. The thing it does NOT say is `Past storms`,
+   so with the drawer minimised nothing on the globe states where you are —
+   only the sepia palette and a pill offering to take you somewhere else.
+   **If that reads as ambiguous rather than obvious, the fix is words, and it
+   is one line.**
+2. **Is it comfortable at the top of the screen?** It sits at `--safe-top`,
+   centred. Worth checking it clears the notch and that reaching it is not a
+   two-handed job on a phone.
+3. **Desktop width, deliberately.** The drawer is a left rail there and its
+   own `‹ Past storms` back button sits beside a top-centre pill — two left
+   chevrons on screen with different destinations. Both name where they go,
+   which is what defuses it, but it is worth one deliberate look rather than
+   noticing in passing.
+4. **The live storm pill and the status strip are gone in here.** Minimise the
+   sheet: the bottom of the sepia globe should be empty. Those were both still
+   on screen counting live storms and reporting live feeds, found by audit and
+   not by glass.
+
+Still unbuilt in the Seasons build: **the entry-point unwind** (step 5, §57.37
+as amended — the doors do NOT change, only `#seasons-bar` is deleted, and
+`btn-storms` reopens the ladder at the rung the reader left), and **Storm
+Details** (step 7, payload cost still unresolved). **Step 5 is next and step 6
+was the thing gating it** — the bar's Leave button was the only exit, so the
+bar could not go until something else was.
+
+**THE ONE THING STEP 5 MUST NOT UNDO:** `data-seasons="on"` no longer lives in
+`seasons/bar.js`. It moved to `seasons/index.js` in this pass, because it drives
+the drawer's fixed sheet height, the three hidden cluster buttons, the control
+cluster's offset and the two new suppressions — all of which outlive the bar.
+Deleting `seasons/bar.js` naively would have taken the archive's whole layout contract
+with it, silently. §57.38a.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on
