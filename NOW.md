@@ -113,35 +113,33 @@ counting today's storms, `#status` reporting feeds the archive does not read).
 Judged on phone and on desktop, nothing sent back. **§57.38a is the as-built
 account; nothing is held here.**
 
-**==> STEP 5 IS BUILT AND IT IS THE THING TO LOOK AT. NOT YET SEEN ON GLASS.
-<==** The archive bar is deleted and its two jobs are two pills: the top one
-(`‹ Live storms`) is still the way out, and a new bottom one says what is drawn.
-`btn-storms` is visible in the archive again and reopens the ladder at the rung
-you left. **§57.38b is the as-built account and carries every measurement — read
-that, not this.**
+**==> STEP 5 IS BUILT, GLASS FOUND FOUR FAULTS, ALL FOUR ARE FIXED AND NONE HAS
+BEEN SEEN AGAIN. <==** 2026-08-28. The archive bar is gone and its jobs are two
+pills. **§57.38b is the as-built account and §57.38c is what glass found — read
+those, not this.**
 
-**FIVE THINGS TO JUDGE, AND THE FIRST IS THE ONE STEP 6 COULD NOT ASK:**
+**WHAT TO LOOK AT, and the first four are re-checks of a reported fault:**
 
-1. **Does the archive still say you are in the past with the drawer down?**
-   `PAST STORMS` was doing that job from the bar and the bar is gone. What is
-   left is the sepia palette, the drawer's heading while it is open, and the
-   two pills. The bottom one should read something like `2005 · Atlantic · 3
-   shown · tap a track for detail`, and the expectation is that a specific year
-   and basin answers this BETTER than the old words did. If it reads wrong the
-   fix is words, not structure.
-2. **The strip of screen the bar was taking.** The drawer and the control
-   cluster both sat above it and now sit at the bottom edge. Worth a look at
-   whether the cluster is too close to the OS gesture area on your phone —
-   that is the one thing the bar was incidentally protecting.
-3. **The bottom pill against the drawer.** It sits UNDER the sheet by design,
-   so it only appears once you minimise. Check it is not half-hidden behind
-   the sheet's shadow at 66vh, and that it does not fight the control cluster.
-4. **`btn-storms` inside the archive.** It should bring the drawer back on the
-   rung you left, not the top of the wall — open 2005, minimise, press it.
-   **On desktop this is the ONLY way back**, because the pill is hidden above
-   720px. Worth pressing on both.
-5. **A bad deep link.** `?season=1066` should land on the wall with `That year
-   is not in the record.` above the year rows. It used to be on the bar.
+1. **The bottom pill has words in it, on the wall.** It was an empty capsule.
+   Entering the archive should now show `Atlantic · tap a year to open it` once
+   the sheet is minimised, and the year and count once a season is open.
+2. **It is UNDER the drawer.** It was painting through the open sheet.
+3. **The drawer header is a title and an X, like every other drawer**, with no
+   hover highlight — and pressing the header itself no longer dismisses. That
+   gesture went deliberately: the hover was its only advertisement, so keeping
+   one without the other would have been a hidden gesture (§13). **If you miss
+   pressing the bar to dismiss, say so — it comes back with its highlight or
+   not at all.**
+4. **Nothing else lost its X.** Storms, detail, layers, settings and home were
+   always X and must still be.
+5. **THE ONE STILL-OPEN QUESTION FROM STEP 5:** does the archive still say you
+   are in the past with the drawer down? `PAST STORMS` used to do that from the
+   bar. What is left is sepia, the two pills, and the drawer heading while it
+   is open. If it reads wrong the fix is words.
+
+**The desktop pill is NOT a fault and is settled** — `#storm-pill` has never
+shown above 720px either, the rail is the navigation at that width, and
+`btn-storms` carries the reopen job. §57.38c.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on

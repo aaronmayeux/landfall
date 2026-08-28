@@ -4743,3 +4743,88 @@ The pill removed from `TAP_BLOCKING_SELECTORS`; `reopenArchiveDrawer` answering
 true with no session; the pill rendering an empty lozenge instead of hiding; and
 the pill built as a `<div>` rather than a `<button>`. The second survived the
 first pass and its assertion was written because of it.
+
+### 57.38c What glass found in step 5, and the two reversals it caused
+
+Aaron on his phone, 2026-08-28, on the first look at the deleted bar. Five
+reports, of which one was not a fault.
+
+#### The pill was invisible in the worst way: present and empty
+
+It rendered as a bare capsule over the globe with no words in it.
+`createSeasonsStatusPill` sets `el.hidden = true` and clears it in `setDetail`,
+and that was correct and did nothing — **the browser's own `[hidden] { display:
+none }` is a bare element selector and lost to `#seasons-status-pill`'s
+`display: flex`.** Declared explicitly now.
+
+**The rule this generalises to: an id rule that declares `display` owes a
+`[hidden]` companion beside it**, or the element's `hidden` property is
+decoration. Nothing in the repo catches this and the suite for it is
+`tools/test-seasons-status-pill.mjs`, at the CSS text.
+
+#### It painted through the open drawer
+
+`#seasons-status-pill` and `#drawer` were both `z-index: 30` — a tie broken by
+stylesheet order, and `seasons.css` loads after `panels.css`. **`#storm-pill`
+carries 30 and never shows this**, because it sets `data-hidden` whenever the
+drawer opens; the archive's pill has no such rule on purpose, since being there
+when the sheet comes down is its whole job. It sits at **20** now, under the
+drawer rather than beside it. Asserted as a range below 30, not as a literal.
+
+#### It said nothing on the archive's first screen
+
+Step 5 wired the BOARD's `onWhere` to the pill and not the WALL's, so the pill
+was empty from entry until a year was opened — and entry lands on the wall
+(§57.36). **The wall reports now, and it needed words of its own**: it draws
+nothing on the globe, so `tick a storm to draw it` names a roster the reader
+cannot see. `where.rung` tells the two apart and the wall's sentence is
+`Atlantic · tap a year to open it`.
+
+**==> BOTH HALVES WERE UNTESTED AND THE SUITE WAS GREEN. <==** The words did not
+exist and nothing called them. The wiring half has no symptom a unit test can
+see, so it is asserted bluntly — the shipped module is read and the wall's block
+is required to touch the pill. Same instrument `tools/test-kv-keys.mjs` had to
+grow when two relay routes were warmed and read by nobody (`SPEC-DATA.md`
+§58.3), and the same lesson: **a reporter wired at one end only is invisible to
+every test that drives the other end.**
+
+#### The desktop pill is not a fault
+
+Aaron reported not seeing it on desktop and then observed that `#storm-pill` has
+never appeared there either. Correct on both counts and by design: the pill is
+`display: none` above 720px, the drawer is a docked rail at that width, and
+`#btn-storms` carries the reopen job (§57.38b). **Recorded so it is not
+rediscovered as a bug.**
+
+#### REVERSAL: the drawer header is a title and an X, on every view
+
+**Aaron on glass, 2026-08-28, reversing §57.21b items 5 and 6.** The archive's
+header had a minimise chevron instead of the X, a hover highlight across the
+whole bar, and a press anywhere on it dismissed the sheet. All three are
+deleted. `def.minimises`, `data-minimises`, the header click handler and the two
+CSS rules are gone from the code rather than left unset.
+
+**==> THE THREE COULD NOT BE SEPARATED, AND THAT IS THE ARGUMENT. <== The hover
+was the mouse's affordance FOR the press-anywhere target.** Removing the
+highlight and keeping the press leaves a surface that dismisses on a tap and
+gives no sign that it will, which is precisely the hidden gesture §13 forbids.
+So the report "stop highlighting on hover" is a request to delete the gesture,
+not to hide it.
+
+**AND THE ORIGINAL OBJECTION TO THE X HAS BEEN ANSWERED BY STEP 5.** §57.21b
+argued an X reads as *leave*, and a reader who presses it expecting to leave and
+finds themselves still in 2005 has been told the wrong thing by the icon. That
+held while the sheet was the only archive furniture on screen. It does not now:
+`‹ Live storms` sits at the top of the globe naming the exit, so the X can mean
+what it means everywhere else. **The two decisions were correct in sequence —
+the second became available only because the first shipped.**
+
+#### A bug caught in the fix, not on glass
+
+The wall's and the board's `onWhere` closures were written over `ensureBoard`'s
+`statusPill` parameter. **That function runs once per page load and both views
+outlive every visit, while the pill is rebuilt on each entry** — so from the
+second visit onward every sentence would have been written into a detached
+element, silently, since `setDetail` on an orphan throws nothing. Both read
+`session.statusPill` now. Third instance of this trap in one feature, after
+`home`/`system` (§57.19) and `linkNote` (§57.38b).
