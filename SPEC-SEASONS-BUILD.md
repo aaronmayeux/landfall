@@ -3803,10 +3803,10 @@ way into a year and this is it.
 **The settled look, taken off a phone and not up for re-litigation:** rows are
 44px (§'s touch-target rule, no exception carved out), every dot is the same
 size regardless of strength, the storm count sits on the right, pre-1966 rows
-are shaded with a line drawn at the boundary, individual landfalls are NOT
-marked on the dots, and **there are no decade headings.** The decade heading
-was the first thing to go on glass — it broke the scroll into chunks and the
-wall reads better as one unbroken run of years.
+are shaded with a line drawn at the boundary, a storm that came ashore carries
+a small triangle under its dot, and **there are no decade headings.** The decade
+heading was the first thing to go on glass — it broke the scroll into chunks and
+the wall reads better as one unbroken run of years.
 
 #### The whole design rests on one rule: filter first, then sort what survives
 
@@ -4224,6 +4224,48 @@ definition of a glow. Same construction as the live list, one rule, one place.
 on the drawer BODY, so a correction costs two style writes rather than 175 rows
 of markup, and it is on the body rather than on `.wall` because the pinned live
 row sits outside that container and would otherwise draw at a different size.
+
+**A storm that came ashore carries a triangle under its dot, and it is an
+attribute on the dot rather than a second element.** 1,343 of the 3,266 storms
+in the archive are flagged, so a span apiece would be 1,343 extra nodes down a
+175-row scroll. A `::after` on the dot cannot drift from the dot it belongs to,
+because it IS the dot — no second coordinate system and nothing to re-measure
+when `dotSizeFor` rescales the strip. It is `clip-path` rather than the border
+trick, which needs three widths held in step and draws a box whose width and
+height argue every time the dot resizes.
+
+**It is neutral ink, not the storm's colour.** Coming ashore is a fact about
+land; strength is what the dot already says. Tinted by category it became a
+dimmer second copy of the dot sitting directly under the dot, which reads as a
+smudge rather than as a mark.
+
+**The mark is sized off the dot and it moves no row.** Both ratios are the
+mockup's — a little under three-quarters of the dot wide, and a little under
+three-quarters of that tall — because `--wall-dot` ranges from 4px to 14px and a
+fixed size would be a speck against one and wider than the other. Floors at 3px
+and 2.5px, because at `wallDotMin` the arithmetic gives 2.88 by 2.07 and below
+about 3px a triangle stops reading as a triangle. The `::after` is out of flow,
+so a year with sixteen landfalls is exactly as tall as a year with none; the
+wall is a comparison BETWEEN rows and a row growing to fit its own marks would
+break that on the years most worth comparing. The strip's padding is a `max()`
+of the glow and the triangle, because the glow needs more room at small dot
+sizes and the triangle needs more at large ones — at `wallDotMax` it reaches
+9.8px against the glow's 8px — and the slot clips whatever does not fit.
+
+**The strip is `aria-hidden`, so the row's spoken sentence carries the count.**
+It names how many came ashore, and it says *"none came ashore"* out loud on a
+year where none did. A sentence that mentions landfalls only when there were
+some cannot be told from one that never mentions them, and that is the §5
+difference between a measured nought and an unanswered question — every settled
+season has a computed answer (§57.7a), so nought here is a real measurement.
+
+**A suite can be green over a wall that claims every storm in 175 years came
+ashore.** The mark shipped half-written — `data-lf` on every dot rather than on
+the flagged ones — and all 72 assertions in `tools/test-seasons-wall.mjs` passed
+over it, because not one of them read the strip's markup. The count is now
+asserted in `tools/test-wall-filter.mjs` against `wall.json` itself, both
+directions and both basins, so a moved coastline pin or a NOAA revision carries
+both sides together instead of turning the test red on a correct rebuild.
 
 **An asterisk marks the pre-satellite years, not a shaded band.** §57.36 called
 for shading; at the contrast a sepia palette allows it was invisible on glass.

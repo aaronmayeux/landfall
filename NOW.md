@@ -107,14 +107,21 @@ thirty-nine East Pacific ones are no longer holes. **The hollow gap marks, the
 "not recorded" hairline wording and the landfall honesty line are all deleted
 from step 4's scope** — there is nothing left for them to be honest about.
 
-What is left of step 4 is **the triangle under each dot that came ashore**,
-plus **the current season**, which still has no landfall data: live b-decks
-carry no marker and the browser has no coastline. 2026 keeps its hollow mark
-and its `landfallsKnown: false`.
+**The triangles are BUILT** (§57.36a) — a `::after` on each dot the file flags,
+neutral ink, out of flow so no row grows, and the row's spoken sentence carries
+the count because the strip is `aria-hidden`. Awaiting glass.
 
-Still unbuilt: those triangles (step 4), the entry-point unwind and the top
-pill (step 5 and 6, §57.37 as amended — the doors do NOT change, only
-`#seasons-bar` is deleted), and Storm Details (step 7, payload cost still
+What is left of step 4 is **the current season**, which still has no landfall
+data: live b-decks carry no marker and the browser has no coastline. 2026's dots
+carry no triangles today, which is honest but not what Aaron wants — he asked on
+2026-08-28 for the finished storms of the running year to be computed and
+marked, and explicitly did **not** want a hollow mark. The mask is now measured;
+see the landfall block further down for the two remaining options and why the
+runner cannot do it.
+
+Still unbuilt: the current season's landfalls (above), the entry-point unwind
+and the top pill (step 5 and 6, §57.37 as amended — the doors do NOT change,
+only `#seasons-bar` is deleted), and Storm Details (step 7, payload cost still
 unresolved).
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
@@ -1305,15 +1312,42 @@ and `lonU`; `tools/seasons-landfall.mjs` needs a basin added to its loop and a
 file written per basin. **Do not reach for a per-agency marker in the IBTrACS
 columns.** One method, one answer, every basin.
 
-**LANDFALLS FOR THE SEASON IN PROGRESS — GENUINELY OPEN, AND THE ONLY REASON
-2026 STILL SHOWS A HOLLOW MARK.** §57.7a. The runner computes the archive and
-ships the answers, so no phone carries a coastline. The live season has no
-reviewed record, so nothing computes it. Three ways out and none has been
-costed: ship a bit-packed mask (it is 119 MB as bytes, ~15 MB packed — almost
-certainly too much), have the relay compute it when it polls (cheap, but it is
-a live-data change and touches the worker), or leave it hollow and honest.
-**Nobody has measured a packed mask restricted to the tropics, and that is the
-number the decision turns on.** Do not guess it.
+**LANDFALLS FOR THE SEASON IN PROGRESS — STILL OPEN, BUT THE DECIDING NUMBER IS
+NOW MEASURED AND IT WENT THE OTHER WAY.** §57.7a. The runner computes the
+archive and ships the answers, so no phone carries a coastline. The live season
+has no reviewed record, so nothing computes it.
+
+**A packed mask is affordable over the wire, and the old "~15 MB, almost
+certainly too much" was the UNCOMPRESSED size.** Measured 2026-08-28 against
+`nvkelso/natural-earth-vector@v5.1.2`, at the same 0.02° step the archive
+already uses — a land mask is long runs of all-water and all-land, so it
+compresses about fiftyfold:
+
+| band | raw | gzip | brotli |
+|---|---|---|---|
+| −60…72° (the constants' own band) | 14.85 MB | 0.30 MB | 0.22 MB |
+| −50…60° | 12.38 MB | 0.23 MB | 0.17 MB |
+
+**A coarser mask does not pay, and that is measured too** — every one of the
+3,266 storms walked at each resolution and compared against the shipped answers.
+Same step at the narrower band agrees 99.97% (loses Tomas 2010 alone); 0.05°
+agrees 99.05%, 31 storms changing answer; 0.1° agrees 98.35%, 54 changing. Full
+resolution or nothing, and full resolution costs ~220 KB on the wire.
+
+**So the remaining cost is MEMORY, not bandwidth — about 12–15 MB held while the
+phone walks this year's storms, then freed — and that is unmeasured and is a
+glass question.** Fetched only when someone opens Seasons, never on the boot
+path.
+
+Two live options, Aaron's call, asked 2026-08-28 and not yet answered: **ship
+the mask and compute on the phone** (additive, off the boot path, reverts in one
+commit, and needs `lib/landfall.js` split so the scanline rasteriser stays on
+the runner and only the lookup and the track walk ship), or **compute at the
+edge** (phone downloads nothing, but it puts coastline geometry into the path
+that serves live storms during hurricane season). **The runner cannot do it:**
+`seasons-hurdat.yml` is the only job that commits to `main`, a commit there
+fires a Cloudflare Pages build, and those are capped at 500 a month — which is
+the whole reason the current season lives behind a route instead of in the repo.
 
 **THE COASTLINE PIN IS A DELIBERATE HAND BRAKE.** §57.7a.
 `nvkelso/natural-earth-vector@v5.1.2`, pinned to a tag rather than `master`, so
