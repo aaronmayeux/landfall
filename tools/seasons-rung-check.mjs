@@ -43,9 +43,13 @@ const shut = async () => {
   await page.click('.drawer-close, [aria-label="Minimise"], [aria-label="Close"]');
   await page.waitForTimeout(400);
 };
-/** The bar's own sentence is the control that reopens. §57.21b item 8. */
+/** ==> THE BOTTOM PILL IS THE CONTROL THAT REOPENS. §57.21b item 8, §57.38b.
+ *  <== It inherited this from the archive bar, which step 5 deleted. On a wide
+ *  window the pill is `display: none` and `#btn-storms` carries the same job
+ *  through the same function — this suite runs at phone width, so it drives
+ *  the pill. */
 const reopen = async () => {
-  await page.click('.seasons-bar-open');
+  await page.click('#seasons-status-pill');
   await page.waitForTimeout(800);
 };
 

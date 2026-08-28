@@ -95,8 +95,8 @@ await door.waitFor({ timeout: 30_000 });
 ok('the door into the archive is on screen', await door.isVisible());
 
 await door.click();
-await page.waitForSelector('#seasons-bar', { timeout: 30_000 });
-ok('the bar mounted, so entry did not throw', true);
+await page.waitForSelector('#seasons-status-pill', { timeout: 30_000 });
+ok('the status pill mounted, so entry did not throw', true);
 
 /* ==> AND THE WAY OUT IS ON SCREEN FROM THE FIRST FRAME. <== Step 6. It is the
  * only exit — Escape steps the drawer back and closes it, it never leaves —
@@ -141,8 +141,8 @@ await page.waitForSelector('#seasons-board-body [data-storm]', { timeout: 30_000
 const rowCount = await page.locator('#seasons-board-body [data-storm]').count();
 ok(`the roster drew storms (${rowCount})`, rowCount > 0);
 
-const detail = await page.textContent('.seasons-bar-detail');
-ok(`the bar names the season ("${detail}")`, /\d{4}/.test(detail || ''));
+const detail = await page.textContent('.seasons-status-text');
+ok(`the pill names the season ("${detail}")`, /\d{4}/.test(detail || ''));
 ok('==> AND THE "NOT BUILT YET" APOLOGY IS GONE <==',
   !/not built yet/.test(detail || ''));
 
@@ -202,15 +202,16 @@ ok('and Space again unticks it', await drawn() === 1);
 section('The way back to the board, and the way out');
 
 /* Closing the board over an archive globe must not strand anybody — the
- * storms, home and layers buttons are all hidden in here. */
+ * home and layers are hidden in here, and Storms is the WIDE half of the same
+ * job the pill does at this width. */
 await page.click('#drawer .drawer-close').catch(async () => {
   await page.keyboard.press('Escape');
 });
 await page.waitForTimeout(200);
 
-const barOpen = page.locator('.seasons-bar-open');
-ok('the bar\'s sentence is a button', await barOpen.count() === 1);
-await barOpen.click();
+const statusPill = page.locator('#seasons-status-pill');
+ok('the status pill is a button', await statusPill.count() === 1);
+await statusPill.click();
 /* ==> IT COMES BACK ON THE RUNG THE READER LEFT, NOT ON THE TOP OF THE WALL.
  * <== 2005 was open when the drawer was minimised, so 2005 is what reopening
  * has to find — otherwise minimising to look at the tracks costs the year. */
@@ -222,7 +223,8 @@ ok('the ticked storm is still drawn after a round trip', await drawn() === 1);
 
 await page.click('#seasons-pill');
 await page.waitForTimeout(300);
-ok('leaving removes the bar', await page.locator('#seasons-bar').count() === 0);
+ok('leaving removes the status pill',
+  await page.locator('#seasons-status-pill').count() === 0);
 ok('and the pill takes itself off with it',
   await page.locator('#seasons-pill').count() === 0);
 ok('and the archive flag with it',

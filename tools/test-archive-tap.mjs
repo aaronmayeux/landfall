@@ -69,16 +69,18 @@ const { SIZE } = await import('../config/tokens.js');
 
 const SLOP = parseInt(SIZE.touchTarget, 10) / 2;
 
-/* The archive on a phone: sheet docked to the bottom at 66vh, the bar under
- * it. Numbers are the real shapes those two take, not round ones. */
-const BAR_H = 44 + 8 * 2; /* one touch target and its padding — seasons.css */
+/* ==> THE ARCHIVE ON A PHONE, AND THE SHEET REACHES THE BOTTOM EDGE NOW.
+ * <== Step 5 deleted `#seasons-bar` and `--seasons-bar-h` with it, so nothing
+ * pushes the drawer up any more: 66vh docked to the bottom of the viewport.
+ * The status pill sits at that same edge UNDERNEATH the sheet, which is why it
+ * is not in this stage — it is only reachable once the sheet is minimised, and
+ * that case is its own block below. */
 const SHEET_H = Math.round(SCREEN.h * 0.66);
 const PHONE = () => [
   el('#drawer[data-open="true"]', {
     left: 0, right: SCREEN.w,
-    top: SCREEN.h - BAR_H - SHEET_H, bottom: SCREEN.h - BAR_H,
+    top: SCREEN.h - SHEET_H, bottom: SCREEN.h,
   }),
-  el('#seasons-bar', { left: 0, right: SCREEN.w, top: SCREEN.h - BAR_H, bottom: SCREEN.h }),
   el('#controls', { left: SCREEN.w - 60, right: SCREEN.w - 8, top: 100, bottom: 260 }),
 ];
 
@@ -91,7 +93,7 @@ const outsideFurniture = (x, y) =>
 stage = PHONE();
 
 {
-  const sheetTop = SCREEN.h - BAR_H - SHEET_H;
+  const sheetTop = SCREEN.h - SHEET_H;
 
   ok('a tap high on the globe is outside the furniture',
     outsideFurniture(SCREEN.w / 2, 120));
@@ -99,8 +101,8 @@ stage = PHONE();
   ok('a tap in the middle of the sheet is not',
     !outsideFurniture(SCREEN.w / 2, sheetTop + 100));
 
-  ok('a tap in the archive bar is not — that is the way out',
-    !outsideFurniture(SCREEN.w / 2, SCREEN.h - BAR_H / 2));
+  ok('a tap at the very bottom edge is not — the sheet reaches it now',
+    !outsideFurniture(SCREEN.w / 2, SCREEN.h - 10));
 
   /* ==> THE SLOP STRIP, WHICH IS THE WHOLE REASON THE PADDING IS THERE. <== A
    * thumb aimed at the sheet's own top edge lands a few pixels above it, and
@@ -124,8 +126,7 @@ stage = PHONE();
 {
   const RAIL_W = 300;
   stage = [
-    el('#drawer[data-open="true"]', { left: 0, right: RAIL_W, top: 0, bottom: 900 }),
-    el('#seasons-bar', { left: 0, right: 1440, top: 900, bottom: 960 }),
+    el('#drawer[data-open="true"]', { left: 0, right: RAIL_W, top: 0, bottom: 960 }),
   ];
 
   ok('a tap on the globe beside a left-docked rail counts as outside',
@@ -162,10 +163,37 @@ stage = PHONE();
 {
   stage = [
     el('#drawer', { left: 0, right: SCREEN.w, top: 500, bottom: 800 }),
-    el('#seasons-bar', { left: 0, right: SCREEN.w, top: 800, bottom: 844 }),
   ];
   ok('a closed drawer blocks nothing — the selector asks for data-open',
     outsideFurniture(SCREEN.w / 2, 600));
+}
+
+/* --- the minimised archive, which is the state the pill exists for -----------
+ * ==> THE SHEET IS DOWN AND THE STATUS PILL IS THE ONLY FURNITURE LEFT AT THE
+ * BOTTOM. <== It is a real button — pressing it brings the drawer back — so a
+ * press on it must not ALSO be read as a tap on the globe underneath. That is
+ * the whole reason it is in `TAP_BLOCKING_SELECTORS`, and it is the assertion
+ * that used to be made about the bar.
+ * -------------------------------------------------------------------------- */
+
+{
+  const PILL_H = 44;
+  stage = [
+    el('#drawer', { left: 0, right: SCREEN.w, top: 500, bottom: 800 }),
+    el('#seasons-status-pill', {
+      left: 90, right: SCREEN.w - 90,
+      top: SCREEN.h - PILL_H, bottom: SCREEN.h,
+    }),
+  ];
+
+  ok('a tap on the status pill is not a tap on the globe',
+    !outsideFurniture(SCREEN.w / 2, SCREEN.h - PILL_H / 2));
+
+  ok('  but the globe beside it is still the globe — the pill is a lozenge, not a bar',
+    outsideFurniture(20, SCREEN.h - PILL_H / 2));
+
+  ok('  and the open globe above it is untouched',
+    outsideFurniture(SCREEN.w / 2, 200));
 }
 
 /* --- the two numbers ---------------------------------------------------------- */

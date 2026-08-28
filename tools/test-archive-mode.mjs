@@ -42,7 +42,7 @@ const section = (n) => console.log(`\n  ${n}`);
  * THE SMALLEST DOM `seasons/` CAN RUN AGAINST.
  *
  * It is installed BEFORE any import, because `ui/seasons-door.js` and
- * `seasons/bar.js` call `document.createElement` inside their factories and
+ * `seasons/status-pill.js` call `document.createElement` inside their factories and
  * `config/theme.js` is imported by the entry point.
  * ====================================================================== */
 function fakeEl(tag) {
@@ -59,7 +59,7 @@ function fakeEl(tag) {
     parent: null,
     focused: 0,
     listeners: {},
-    /* Real enough for `add` and `contains`, which is all `seasons/bar.js`
+    /* Real enough for `add` and `contains`, which is all the archive's own
      * uses. It writes through to `className` deliberately: every assertion in
      * this suite reads that string, and a classList that kept its own private
      * set would let the two drift — the element would report one set of
@@ -125,7 +125,7 @@ globalThis.localStorage = {
 const archive = await import('../lib/archive-mode.js');
 const deepLink = await import('../seasons/deep-link.js');
 const { createSeasonsDoor } = await import('../ui/seasons-door.js');
-const { createSeasonsBar } = await import('../seasons/bar.js');
+const { createSeasonsStatusPill } = await import('../seasons/status-pill.js');
 const theme = await import('../config/theme.js');
 const { openSeasons } = await import('../seasons/index.js');
 const lifecycle = await import('../data/lifecycle.js');
@@ -272,7 +272,7 @@ eq(openedFrom, doorStorms,
 section('entering and leaving, and everything undone in reverse');
 
 /** Whether the stubbed drawer is currently open. Module-level because
- *  `harness()` is called several times and the bar's toggle has to see the
+ *  `harness()` is called several times and the status pill's toggle has to see the
  *  state the last navigation left. */
 let drawerOpen = false;
 
@@ -291,7 +291,7 @@ function harness() {
      * it happens exactly once across many entries — called twice it leaves an
      * orphaned host and a live listener bound to it. */
     /* `isOpen` is a real flag rather than a constant `false`, because the
-     * bar's sentence TOGGLES the board (§57.21b) and a stub that always says
+     * pill's sentence TOGGLES the board (§57.21b) and a stub that always says
      * shut can only ever exercise one half of that. */
     drawer: {
       register: (def) => { calls.push(`drawer.register:${def.id}`); registered.push(def); },
@@ -342,13 +342,14 @@ ok(registeredHere.includes('drawer.register:seasons-board'),
 ok(registeredHere.includes('drawer.register:season-detail'),
   '==> AND THE STORM PANEL, OR ITS CHEVRON PUSHES AT AN ID THE DRAWER DOES '
   + 'NOT KNOW AND NOTHING HAPPENS <==');
-eq(docEl.getAttribute('data-seasons'), 'on', 'the chrome knows to move up off the bar');
-ok(body.children.some((c) => c.id === 'seasons-bar'), 'the bar is on screen');
+eq(docEl.getAttribute('data-seasons'), 'on', 'the archive\'s layout rules are live');
+ok(body.children.some((c) => c.id === 'seasons-status-pill'),
+  '==> THE PILL THAT SAYS WHAT IS DRAWN IS ON SCREEN <==');
 
-const bar = body.children.find((c) => c.id === 'seasons-bar');
+const statusPill = body.children.find((c) => c.id === 'seasons-status-pill');
 
 /* ==> THE WAY OUT IS THE PILL AT THE TOP, AND IT IS THE ONLY ONE. <== Step 6,
- * §57.37. The bar used to carry a Leave button; it does not any more, and
+ * §57.37. The bar used to carry a Leave button; the bar itself is gone now, and
  * `attachEscape` never leaves the archive — it steps the drawer back and then
  * closes it. So this control is the whole of the exit, and a version of the
  * app that mounts the sepia globe without it is a reader stuck in 1935 with a
@@ -357,8 +358,8 @@ const pill = body.children.find((c) => c.id === 'seasons-pill');
 ok(!!pill, '==> THE WAY OUT IS ON SCREEN <==');
 eq(pill.tagName, 'BUTTON',
   'and it is a real button, so it is tabbable and answers Enter (§13)');
-ok(!bar.children.some((c) => (c.className || '').includes('seasons-leave')),
-  'and the bar no longer carries a second one — one way out, not two');
+ok(!body.children.some((c) => c.id === 'seasons-bar'),
+  '==> AND THE BAR IS GONE ENTIRELY (step 5) — one way out, not two <==');
 
 /* The chevron says "back" and the words say back to WHAT — `ui/drawer.js`'s
  * grammar, and the reason an icon alone was not enough there either. */
@@ -387,42 +388,67 @@ ok(!pill.focused,
 /* ==> THE APOLOGY IS GONE, AND ITS SLOT NOW CARRIES A FACT. <== §57.16a said
  * step 5 DELETES that sentence rather than editing it: a leftover "not built
  * yet" beside a working year picker is worse than the silence it replaced. */
-const detail = bar.find('seasons-bar-detail')?.textContent || '';
+const detail = statusPill.find('seasons-status-text')?.textContent || '';
 ok(!/not built yet/.test(detail),
   '==> THE \'NOT BUILT YET\' SENTENCE IS DELETED, NOT EDITED (§57.16a)');
 
-/* And the sentence is a BUTTON now, because closing the board over an archive
- * globe would otherwise leave no way back to the year picker — the storms,
- * home and layers buttons are all hidden in here (§57.16a). */
-const where = bar.children.find((c) => (c.className || '').includes('seasons-bar-open'));
-ok(!!where, '==> THE BAR\'S SENTENCE IS THE WAY BACK TO THE BOARD <==');
-ok(where.tagName === 'BUTTON',
-  'and it is a real button, so it is tabbable and answers Enter (§13)');
+/* ==> IT MOUNTS HIDDEN AND STAYS HIDDEN UNTIL IT HAS A FACT. <== An empty
+ * glass lozenge floating over the globe is a control with no label, which is
+ * worse than no control. Not §5 silence: the drawer is open on top of it at
+ * that moment saying in its own words that it is loading. */
+ok(statusPill.hidden === true,
+  '==> WITH NOTHING TRUE TO SAY YET, THE PILL IS NOT ON SCREEN <==');
+
+/* And the pill is a BUTTON, because closing the board over an archive globe
+ * would otherwise leave no way back to the year picker on a phone — Home and
+ * Layers are hidden in here, and Storms is the WIDE half of this same job. */
+ok(statusPill.tagName === 'BUTTON',
+  '==> THE PILL IS THE WAY BACK TO THE BOARD, AND IT IS A REAL BUTTON (§13) <==');
 
 /* ==> AND IT TOGGLES. <== §57.21b, Aaron on glass 2026-08-25. It only ever
  * opened, which made it a one-way door: press it with the board already up and
  * nothing happened, so the only way to clear the globe again was to find the
- * chevron at the far edge of the header. The bar is the one thing always on
- * screen in the archive, so it carries both halves of one action. */
+ * chevron at the far edge of the header. */
 {
   const before = h.calls.length;
   ok(drawerOpen, 'the board is open after entry');
-  where.click();
+  statusPill.click();
   ok(h.calls.slice(before).includes('drawer.close'),
-    '==> PRESSING THE BAR WITH THE BOARD OPEN CLOSES IT <==');
+    '==> PRESSING THE PILL WITH THE BOARD OPEN CLOSES IT <==');
   ok(!drawerOpen, 'and the drawer knows it is shut');
 
   const mid = h.calls.length;
-  where.click();
+  statusPill.click();
   ok(h.calls.slice(mid).includes('drawer.go:seasons-wall'),
     'and pressing it again brings the archive back — the same control, both ways');
   ok(drawerOpen, 'which reopens it');
 }
 
+/* ==> AND THE WIDE HALF GOES THROUGH THE SAME FUNCTION. <== §57.38b. The pill
+ * is `display: none` above 720px, so on a desktop `btn-storms` carries this
+ * instead — `main.js` asks the archive first and leaves the live storm list
+ * alone when it says yes. Driving the exported entry point rather than a
+ * second copy of the rule is the point: two roads, one idea of the rung.
+ *
+ * ==> IT ANSWERS FALSE WHEN THERE IS NO ARCHIVE, AND THAT IS LOAD-BEARING.
+ * <== A `true` on the live globe would swallow every ordinary press of the
+ * Storms button, and nothing on screen would say why. */
+{
+  const seasonsMod = await import('../seasons/index.js');
+  const mid = h.calls.length;
+  ok(seasonsMod.reopenArchiveDrawer() === true,
+    '==> THE ARCHIVE ANSWERS FOR ITS OWN STORMS BUTTON <==');
+  ok(h.calls.slice(mid).includes('drawer.close'),
+    'and it toggles exactly as the pill does');
+  statusPill.click();  // put the drawer back for the assertions that follow
+  ok(drawerOpen, 'drawer restored for the rest of the section');
+}
+
 /* Pressing a door while already in is somebody pressing what they are looking
  * at. It must not build a second bar. */
 openSeasons(harness());
-eq(body.children.filter((c) => c.id === 'seasons-bar').length, 1, 'no second bar');
+eq(body.children.filter((c) => c.id === 'seasons-status-pill').length, 1,
+  'no second status pill');
 eq(body.children.filter((c) => c.id === 'seasons-pill').length, 1, 'and no second pill');
 
 /* ==> A SETTINGS CHANGE MADE INSIDE THE ARCHIVE IS THE THEME YOU GET BACK.
@@ -454,9 +480,25 @@ ok(h.calls.indexOf('tracks.clear') < h.calls.indexOf('show'),
   'and before the live storms come back, never after');
 
 eq(docEl.getAttribute('data-seasons'), null, 'the chrome attribute is gone');
-ok(!body.children.some((c) => c.id === 'seasons-bar'), 'and so is the bar');
+ok(!body.children.some((c) => c.id === 'seasons-status-pill'),
+  'and so is the pill that said what was drawn');
 ok(!body.children.some((c) => c.id === 'seasons-pill'), 'and so is the pill');
 ok(opener.focused > 0, 'focus went back to the row that opened it (§13)');
+
+/* ==> AND THE STORMS BUTTON IS THE LIVE APP'S AGAIN. <== §57.38b. `main.js`
+ * asks the archive first and returns early when the answer is yes, so a `true`
+ * out here would swallow EVERY ordinary press of that button on the live
+ * globe — the storm list would simply stop opening, with nothing on screen
+ * saying why and no exception to find it by. The false is the load-bearing
+ * half of this function, not the true.
+ *
+ * A mutation proved it: making `reopenArchiveDrawer` answer true whenever
+ * there is no session left all 92 of the assertions above green. */
+{
+  const seasonsMod = await import('../seasons/index.js');
+  eq(seasonsMod.reopenArchiveDrawer(), false,
+    '==> OUTSIDE THE ARCHIVE THE STORMS BUTTON IS NOT OURS TO ANSWER <==');
+}
 
 /* A leave path runs from a button AND from an error route, potentially both.
  * One that threw on the second call would strand somebody in sepia. */

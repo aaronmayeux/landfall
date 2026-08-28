@@ -99,16 +99,20 @@ check(
  * THE TAP-BLOCKING SET, AND THE TWO IDS THAT LIVE IN DIFFERENT FILES.
  * §57.21d. The archive minimises its sheet on a tap that lands outside the
  * furniture, and this is the list it measures. Two of its four ids are in
- * index.html and were checked in the loop above; `#seasons-bar` and
- * `#seasons-pill` are created at runtime by seasons/bar.js and
- * seasons/pill.js, because the archive's furniture must not be on the boot
- * path. Each selector is still a contract, just with a different file — so
- * each is checked against its own file rather than excused.
+ * index.html and were checked in the loop above; the two `#seasons-` ones are
+ * created at runtime by seasons/pill.js and seasons/status-pill.js, because
+ * the archive's furniture must not be on the boot path. Each selector is still
+ * a contract, just with a different file — so each is checked against its own
+ * file rather than excused.
+ *
+ * `#seasons-bar` was here until step 5 deleted it; `#seasons-status-pill` took
+ * its place on the list for the same reason it was on it — a press on a
+ * control must never also register as a tap on the globe underneath.
  * ------------------------------------------------------------------------ */
 
 const RUNTIME_EMITTED = [
-  ['#seasons-bar', 'seasons-bar', 'seasons/bar.js'],
   ['#seasons-pill', 'seasons-pill', 'seasons/pill.js'],
+  ['#seasons-status-pill', 'seasons-status-pill', 'seasons/status-pill.js'],
 ];
 
 for (const [selector, id, file] of RUNTIME_EMITTED) {
