@@ -405,52 +405,58 @@ ok(/visibility:\s*visible/.test(baseCluster || '')
   'and coming BACK is instant, so the cluster is focusable the moment it starts moving rather than a quarter-second after it arrives');
 
 
-/* --- the minimising header ------------------------------------------------
+/* --- one header, one X ----------------------------------------------------
  *
- * §57.21b. A view may ask for a minimise CHEVRON instead of the X, and its
- * whole header then dismisses on a press. Both halves are opt-in, and the
- * reason they are opt-in is every other header in this app: the storm panel's
- * title slot holds an identity block that OPENS a storm when pressed, and any
- * pushed view's header holds a Back button whose whole purpose is going up
- * rather than out. A blanket rule would have made half the app's headers do
- * two things at once, with the destructive one winning.
+ * ==> THIS SECTION USED TO ASSERT THE OPPOSITE. <== §57.21b items 5 and 6 gave
+ * the archive's drawer a minimise CHEVRON and a header that dismissed on a
+ * press anywhere across it. Aaron reversed both on glass, 2026-08-28: the
+ * hover highlight that advertised the press read as wrong, and the press could
+ * not stay without it — a surface that dismisses on a tap and gives no sign it
+ * will is the hidden gesture §13 forbids. What is asserted now is that no view
+ * can opt out of the X.
  * ------------------------------------------------------------------------ */
-section('a minimising header dismisses on a press, and only that kind');
+section('every header is a title and an X, and a press across it does nothing');
 
 {
   const { drawer, parts } = rig();
-  drawer.register({ ...plainViewDef('archive', 'Past storms'), minimises: true });
+  drawer.register(plainViewDef('archive', 'Past storms'));
 
   drawer.go('storms', undefined, { from: stubEl('button') });
-  ok(drawer.isOpen(), 'an ordinary view is open');
   parts['.drawer-head'].fire('click', { target: stubEl('span') });
   ok(drawer.isOpen(),
-    '==> AND A PRESS ON ITS HEADER DOES NOTHING. <== Storms, the detail panel and the dashboard all put something else in this bar, so a blanket dismiss would fire instead of it');
-  ok(parts['.drawer-close'].getAttribute('aria-label') === 'Close',
-    'and its button is still a Close');
+    'a press across an ordinary view\'s header does nothing');
 
   drawer.go('archive', undefined, { from: stubEl('button') });
-  ok(parts['.drawer-close'].getAttribute('aria-label') === 'Minimise',
-    'a minimising view says Minimise rather than Close — the archive is a MODE you are still standing in, and an X reads as leaving it');
-
   parts['.drawer-head'].fire('click', { target: stubEl('span') });
-  ok(!drawer.isOpen(),
-    '==> A PRESS ANYWHERE ACROSS ITS HEADER CLOSES. <== The chevron is a small target at the far edge of a wide bar, which is the corner a thumb reaches for least');
+  ok(drawer.isOpen(),
+    '==> AND NEITHER DOES A PRESS ON THE ARCHIVE\'S <== — that is the reversal');
 }
 
 {
-  const { drawer, parts } = rig();
-  drawer.register({ ...plainViewDef('archive', 'Past storms'), minimises: true });
-  drawer.go('archive', undefined, { from: stubEl('button') });
+  /* ==> THE GLYPH IS ASSERTED AT THE SOURCE, NOT THROUGH THE RIG. <== It is
+   * static markup in the header template now rather than something
+   * `renderChrome` writes per view, so a stub DOM with no HTML parser cannot
+   * see it and an assertion through `parts` would be testing the rig. The
+   * point of the change is that there is nothing left to vary. */
+  const drawerJs = readFileSync(path.join(ROOT, 'ui/drawer.js'), 'utf8');
+  ok(/class="drawer-close"[^>]*aria-label="Close"/.test(drawerJs),
+    'the one close button is labelled Close in the shared header');
+  ok(/M6 6l12 12M18 6L6 18/.test(drawerJs),
+    '  and draws an X');
+  ok(!/M6 9l6 6 6-6/.test(drawerJs),
+    '==> AND THE MINIMISE CHEVRON IS NOWHERE IN THIS FILE <==');
+}
 
-  /* A press that lands on a real control is left alone. Swallowing it here
-   * would either double the action or replace it with the wrong one — Back
-   * goes UP and this goes OUT. */
-  const onAButton = stubEl('span');
-  onAButton.closest = (sel) => (sel === 'button' ? stubEl('button') : null);
-  parts['.drawer-head'].fire('click', { target: onAButton });
-  ok(drawer.isOpen(),
-    'a press that lands on Back or the chevron is left to that button, not answered twice');
+{
+  /* Deleted rather than left unused, so no view can reintroduce it with a
+   * flag. `retire cleanly` — and a dormant branch is how the chevron would
+   * come back by accident. */
+  const drawerJs = readFileSync(path.join(ROOT, 'ui/drawer.js'), 'utf8');
+  ok(!/def\.minimises/.test(drawerJs),
+    'and the per-view override is gone from the code, not merely unset');
+  const css = readFileSync(path.join(ROOT, 'ui/panels.css'), 'utf8');
+  ok(!/\[data-minimises="true"\]\s*\.drawer-head/.test(css),
+    'and its hover and cursor rules went with it');
 }
 
 /* --- report -------------------------------------------------------------- */

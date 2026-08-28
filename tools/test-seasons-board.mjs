@@ -201,7 +201,6 @@ async function board({ year = null } = {}) {
   drawer.attrs.id = 'drawer';
   drawer.dataset.open = 'true';
   drawer.dataset.view = 'seasons-board';
-  drawer.dataset.minimises = 'true';
   const views = new El('div');
   views.parent = drawer;
   drawer.children.push(views);

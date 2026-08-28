@@ -332,13 +332,18 @@ ok('  and pads it by half a touch target',
   ok('Escape closes an open panel before it touches the camera',
     /if \(isPanelOpen\?\.\(\)\) closePanel\?\.\(\);/.test(globeJs));
 
+  /* ==> AND CLOSE IS CLOSE, ON EVERY VIEW. <== Aaron reversed the minimise
+   * chevron on glass 2026-08-28, so there is no longer a view for which
+   * `close()` means something different. Escape reaching `close()` still ends
+   * with the sheet down and the archive still on screen — the behaviour is
+   * unchanged, only the glyph and the words were. */
   const drawerJs = readFileSync(join(ROOT, 'ui/drawer.js'), 'utf8');
-  ok('and for a view that minimises, close IS the minimise',
-    /minimises/.test(drawerJs) && /closeBtn\.setAttribute\('aria-label', minimise \?/.test(drawerJs));
+  ok('and closing is one behaviour with one glyph, not a per-view branch',
+    !/def\.minimises/.test(drawerJs));
 
   const board = readFileSync(join(ROOT, 'ui/view-seasons-board.js'), 'utf8');
-  ok('  and the seasons board is such a view',
-    /minimises:\s*true/.test(board));
+  ok('  and the seasons board asks for no override',
+    !/minimises:\s*true/.test(board));
 }
 
 /* --- report ------------------------------------------------------------------ */

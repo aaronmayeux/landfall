@@ -22,7 +22,12 @@
  * Zero dependencies, plain node.
  */
 
+import { readFileSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { pillDetail } from '../seasons/status-pill.js';
+
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 
 let pass = 0;
 const fails = [];
@@ -112,6 +117,56 @@ for (const w of [
   ok(`the year and basin survive every state (shown=${w.shown}, open=${w.openName || 'none'})`,
     pillDetail(w).startsWith('2005 · Atlantic'));
 }
+
+/* --------------------------------------------------------------------------
+ * THE WALL IS ITS OWN STATE, AND THIS IS THE SECTION THE BUG WALKED PAST.
+ *
+ * ==> THE PILL WAS EMPTY ON THE ARCHIVE'S FIRST SCREEN AND EVERY SUITE WAS
+ * GREEN. <== Glass, 2026-08-28. Step 5 wired only the BOARD's report, so
+ * entering the archive — which lands on the wall — left the pill with nothing
+ * to say. Both halves of that were untested: the words, and whether anybody
+ * called them.
+ * ------------------------------------------------------------------------ */
+
+eq('the wall names the basin and what to do next',
+  pillDetail({ label: 'Atlantic', rung: 'wall' }),
+  'Atlantic · tap a year to open it');
+
+ok('and it does NOT borrow the board\'s sentence about ticking a storm',
+  !/tick a storm/.test(pillDetail({ label: 'Atlantic', rung: 'wall' })));
+
+ok('  which would name a roster the reader cannot see from the wall',
+  !/shown/.test(pillDetail({ label: 'Atlantic', rung: 'wall' })));
+
+/* ==> AND A BLUNT INSTRUMENT FOR THE HALF THAT HAD NO SYMPTOM. <== The words
+ * being right is worth nothing if nothing calls them, and that is exactly the
+ * shape this bug took — a reporter wired at one end only. The same instrument
+ * `tools/test-kv-keys.mjs` had to grow for the same reason. */
+const indexJs = readFileSync(join(ROOT, 'seasons/index.js'), 'utf8');
+const wallBlock = indexJs.slice(indexJs.indexOf('wallView = createSeasonsWallView'));
+ok('==> THE WALL ACTUALLY REPORTS TO THE PILL <==',
+  /statusPill\?\.setDetail/.test(wallBlock.slice(0, wallBlock.indexOf('\n  });'))));
+
+/* --------------------------------------------------------------------------
+ * TWO CSS FACTS THE ELEMENT CANNOT ENFORCE ABOUT ITSELF.
+ * ------------------------------------------------------------------------ */
+
+const css = readFileSync(join(ROOT, 'seasons/seasons.css'), 'utf8');
+
+/* ==> `hidden` LOSES TO AN ID RULE'S `display`, AND THAT SHIPPED. <== Glass,
+ * 2026-08-28: the pill rendered as an empty capsule over the globe. The
+ * property was being set correctly the whole time; the browser's own
+ * `[hidden] { display: none }` is a bare element selector and an id beats it. */
+ok('==> THE PILL\'S HIDDEN STATE IS DECLARED, NOT ASSUMED <==',
+  /#seasons-status-pill\[hidden\]\s*\{\s*display:\s*none/.test(css));
+
+/* ==> AND IT SITS UNDER THE DRAWER. <== It painted THROUGH the open sheet,
+ * because it and `#drawer` were both at 30 and stylesheet order broke the tie
+ * in the pill's favour. Anything below the drawer's 30 is correct; the number
+ * is asserted as a RANGE rather than a literal so a future re-layer does not
+ * fail this for moving it to 25. */
+const z = Number(/#seasons-status-pill\s*\{[^}]*z-index:\s*(\d+)/s.exec(css)?.[1]);
+ok(`==> AND IT IS LAYERED BELOW THE DRAWER'S 30 (z=${z}) <==`, z > 0 && z < 30);
 
 /* ------------------------------------------------------------------------ */
 
