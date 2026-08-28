@@ -66,11 +66,19 @@
  * PURE, and exported so a suite can drive it without a DOM.
  *
  * @param {object|null} where  `{ label, shown, openName }` from the board, or
- *   null before a season has settled.
+ *   `{ label, rung: 'wall' }` from the wall, or null before either has settled.
  * @returns {string} the sentence, or '' when there is nothing true to say yet.
  */
 export function pillDetail(where) {
   if (!where?.label) return '';
+  /* ==> THE WALL IS ITS OWN STATE AND IT NEEDED ONE. <== Glass, 2026-08-28:
+   * the pill was empty for the whole of the archive's FIRST screen, because
+   * only the board reported to it and entering lands on the wall. The wall
+   * draws nothing on the globe at all, so none of the three sentences below is
+   * true there — `tick a storm to draw it` names a roster the reader cannot
+   * see yet. What is true is which basin they are looking at and what to do
+   * next. */
+  if (where.rung === 'wall') return `${where.label} · tap a year to open it`;
   if (where.openName) return `${where.label} · ${where.openName}`;
   if (where.shown > 0) {
     return `${where.label} · ${where.shown} shown · tap a track for detail`;

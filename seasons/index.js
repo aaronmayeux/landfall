@@ -359,7 +359,7 @@ export function openSeasons({
      * still open on Near home. A reader with no house set gets All anyway —
      * `filtersFor` does not offer a filter there is no home for, and
      * `onSeasonChanging` drops any filter the season does not carry. */
-    const board = ensureBoard({ statusPill, drawer, linkReason });
+    const board = ensureBoard({ drawer, linkReason });
     board.openFrom(from);
     board.setSeason(state.season);
 
@@ -595,7 +595,15 @@ export function openSeasonStorm(id) {
  * touches the globe or the pill itself — it says what changed, and this file
  * decides who needs to know.
  */
-function ensureBoard({ statusPill, drawer, linkReason }) {
+/* ==> THE PILL IS READ OFF THE SESSION, NOT CLOSED OVER. <== This function
+ * runs ONCE per page load and both views it builds outlive every visit, while
+ * `statusPill` is built fresh on each entry. A closure over the parameter would
+ * therefore hold visit one's element forever and write every later visit's
+ * sentence into a detached node — silently, because `setDetail` on an orphan
+ * throws nothing. Same trap `linkNote` is a getter to avoid, found the same
+ * way. `drawer` is safe to close over for the opposite reason: main.js builds
+ * exactly one for the page. */
+function ensureBoard({ drawer, linkReason }) {
   if (boardView) return boardView;
 
   boardView = createSeasonsBoardView({
@@ -684,7 +692,7 @@ function ensureBoard({ statusPill, drawer, linkReason }) {
        * the sentence lives beside the element that shows it and can be driven
        * by a suite without a DOM. This file stays what it was: the place that
        * decides WHO needs to know, never what they are told. */
-      statusPill.setDetail(pillDetail(where));
+      session?.statusPill?.setDetail(pillDetail(where));
     }),
 
     /* ==> A ROW'S CHEVRON OPENS THE STORM'S PANEL. §57.22b. <== `push` rather
@@ -787,6 +795,13 @@ function ensureBoard({ statusPill, drawer, linkReason }) {
         session.flownIn = true;
         currentArchiveGlobe?.flyToEntry?.({ from: session.from, basin: where.basin });
       }
+      /* ==> THE WALL FEEDS THE PILL TOO, AND LEAVING IT OUT WAS A REAL HOLE.
+       * <== Glass, 2026-08-28. Step 5 wired only the BOARD's report, so the
+       * pill was empty for the whole of the archive's first screen — which is
+       * the screen every visit starts on. `rung` is what tells the two apart:
+       * the board knows how many storms are drawn, the wall draws none. */
+      session?.statusPill?.setDetail(
+        pillDetail(where ? { ...where, rung: 'wall' } : null));
     }),
   });
   drawer?.register?.(wallView);
