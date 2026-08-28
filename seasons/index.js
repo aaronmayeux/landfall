@@ -16,7 +16,10 @@
  *      change or an OS theme flip that happened while the archive was open.
  *   2. The live globe is emptied. Storm dots, watched areas, imagery and the
  *      3D cage all go, and the poll behind them stops repainting them.
- *   3. The bar goes on screen, so the way out is always visible.
+ *   3. TWO PILLS go on screen (§57.38). The top one is the way out and is
+ *      always visible; the bottom one says what is currently drawn and sits
+ *      under the drawer, so it costs the globe no layout. The bar that used to
+ *      do both jobs was deleted at step 5.
  *   4. THE WALL GOES UP. `lib/archive-mode.js` is what `data/lifecycle.js`
  *      reads before it writes, and it is the reason a 1935 storm cannot end
  *      up in the live ended-storm registry the way Ida did in August (§57.2).
@@ -54,7 +57,7 @@ import { reportFor, forgetReports } from '../data/season-reports.js';
 import { resolveSystem } from '../lib/units.js';
 import { getHome } from '../data/home.js';
 import { settingValue } from '../data/settings-prefs.js';
-import { barDetail, createSeasonsBar } from './bar.js';
+import { createSeasonsStatusPill, pillDetail } from './status-pill.js';
 import { createSeasonsPill } from './pill.js';
 import * as deepLink from './deep-link.js';
 
@@ -162,28 +165,37 @@ export function openSeasons({
    * built before anything that can throw and torn down last. */
   const pill = createSeasonsPill({ onLeave: () => leave() });
 
-  const bar = createSeasonsBar({
-    /* ==> THE BAR'S OWN SENTENCE TOGGLES THE BOARD. <== Aaron on glass,
-     * 2026-08-25. It only ever opened, which made it a one-way door: press it
-     * with the board already up and nothing happened, so the only way to get
-     * the globe clear again was to find the chevron in the drawer's header.
-     * The bar is the thing that is ALWAYS on screen in here, so it is the
-     * right place for both halves of one action.
-     *
-     * ==> AND IT REOPENS THE RUNG THE READER LEFT, NOT THE TOP OF THE WALL.
-     * <== §57.39 put a screen above the board, so "open the archive's drawer"
-     * stopped having one answer. Always landing on the wall would mean a
-     * reader who minimised the drawer to look at 2005's tracks lost 2005 to
-     * get the roster back — the drawer's whole reason for minimising rather
-     * than closing (§57.21b item 8) undone by the control that reopens it.
-     *
-     * The wall is rebuilt first either way, so Back from a restored year finds
-     * it rather than finding nothing. */
-    onOpenBoard: () => safely(() => {
-      if (drawer?.isOpen?.()) { drawer.close(); return; }
-      restoreRung(drawer);
-    }),
+  /* ==> AND THE ONE AT THE BOTTOM SAYS WHAT IS DRAWN. <== Step 5, §57.38. It
+   * carries the deleted bar's sentence unchanged and inherits its behaviour:
+   * pressing it TOGGLES the drawer rather than only opening it. Aaron on glass,
+   * 2026-08-25 — the open-only version was a one-way door, so the only way to
+   * clear the globe again was to hunt for the chevron in the drawer's header.
+   *
+   * ==> AND IT REOPENS THE RUNG THE READER LEFT, NOT THE TOP OF THE WALL. <==
+   * §57.39 put a screen above the board, so "open the archive's drawer"
+   * stopped having one answer. Always landing on the wall would mean a reader
+   * who minimised the drawer to look at 2005's tracks lost 2005 to get the
+   * roster back — the drawer's whole reason for minimising rather than closing
+   * (§57.21b item 8) undone by the control that reopens it. */
+  const statusPill = createSeasonsStatusPill({
+    onToggleBoard: () => safely(() => toggleDrawer()),
   });
+
+  /** ==> ONE FUNCTION, TWO CONTROLS, AND THAT IS DELIBERATE. <== The bottom
+   *  pill is hidden above 720px (`#storm-pill` sets that precedent and this
+   *  follows it), so on a desktop the archive would otherwise have no way to
+   *  get the drawer back. §57.37 gives that job to `btn-storms`, which reaches
+   *  it through `reopenArchiveDrawer` below. The two are the narrow and wide
+   *  halves of one action, split exactly the way the live app already splits
+   *  the pill and the cluster — so they share the function rather than growing
+   *  two rules about rungs that could drift apart.
+   *
+   *  The wall is rebuilt first either way, so Back from a restored year finds
+   *  it rather than finding nothing. */
+  function toggleDrawer() {
+    if (drawer?.isOpen?.()) { drawer.close(); return; }
+    restoreRung(drawer);
+  }
 
   /* ==> A LINK NAMING A YEAR OUTSIDE THE RECORD IS NOT AN EMPTY SEASON. <==
    * `parse` returns null both when there is no parameter and when there is a
@@ -197,8 +209,20 @@ export function openSeasons({
     storms: link?.storms ?? [],
     returnFocusTo,
     from,
-    bar,
+    statusPill,
     pill,
+    /* ==> WHY THE LINK'S VERDICT IS ON THE SESSION AND NOT A LOCAL. <== The
+     * wall reads it back through a getter, and the wall is registered once per
+     * page load while this object is rebuilt on every entry. Holding it here
+     * is what makes "which link opened THIS visit" answerable. */
+    linkReason,
+    /* ==> THE TOGGLE IS ON THE SESSION BECAUSE `btn-storms` REACHES IT FROM
+     * OUTSIDE EVERY CLOSURE. <== `reopenArchiveDrawer` is exported for
+     * `main.js`'s cluster handler, which runs on the live page and has no way
+     * into this function's scope. Holding it here rather than in a module
+     * variable ties its lifetime to the visit: no session, no toggle, so a
+     * cluster press after leaving cannot reopen a drawer over the live globe. */
+    toggleDrawer,
     /* ==> THE DRAWER IS ON THE SESSION SO `openSeasonStorm` CAN REACH IT.
      * §57.21d. <== It is the same object every visit — `main.js` builds one
      * for the page — but the exported entry point runs outside every closure
@@ -264,16 +288,16 @@ export function openSeasons({
     lastRung = { year: null, stormId: null };
     safely(() => drawer?.close?.());
     safely(() => liveGlobe?.show());
-    safely(() => bar.unmount());
+    safely(() => statusPill.unmount());
     safely(() => pill.unmount());
     /* ==> THE LAYOUT ATTRIBUTE COMES OFF HERE, NOT INSIDE A COMPONENT. <==
      * Step 6, 2026-08-28. It used to ride on `bar.mount`/`unmount`, which was
      * only ever true by accident — the bar happened to be the first thing on
      * screen. Every rule it drives outlives the bar: the drawer's fixed sheet
-     * height, the three hidden cluster buttons, the control cluster's offset,
-     * and now the two live surfaces the archive suppresses. Step 5 deletes
-     * `seasons/bar.js`, and none of that may go with it, so the session owns
-     * it. Last of the chrome teardown, for the same reason it is first on the
+     * height, the two hidden cluster buttons, and the live surfaces the
+     * archive suppresses. Step 5 deleted `seasons/bar.js` and none of that
+     * went with it, because the session owns it rather than any one piece of
+     * furniture. Last of the chrome teardown, for the same reason it is first on the
      * way in: nothing should be laid out for the archive after the archive
      * has stopped being on screen. */
     safely(() => document.documentElement.removeAttribute('data-seasons'));
@@ -302,22 +326,22 @@ export function openSeasons({
     safely(() => liveGlobe?.hide());
     forceMode(MODE.SEPIA);
 
-    /* ==> THE BAR SAYS SOMETHING TRUE FROM THE FIRST FRAME. <== It mounts
-     * before the board has read a byte, so without this it would carry an
-     * empty sentence for as long as the index takes to arrive. A deep link
-     * with a bad year overrides it and keeps saying so — that reason is about
-     * the LINK, and it does not stop being true when a season loads. */
-    bar.setDetail(detailFor(linkReason));
     /* ==> THE ATTRIBUTE GOES ON BEFORE ANY ARCHIVE FURNITURE DOES. <== It is
      * what every `html[data-seasons="on"]` rule in `seasons/seasons.css` hangs
-     * off, so mounting the bar or the pill first would lay both out against
-     * the live app's geometry for a frame and then move them. */
+     * off, so mounting either pill first would lay it out against the live
+     * app's geometry for a frame and then move it. */
     document.documentElement.setAttribute('data-seasons', 'on');
-    bar.mount();
     /* The way out goes on screen in the same breath as the thing it is the way
      * out OF. Anything below here can throw; the catch calls `leave()`, and
      * `leave()` can only tidy up a pill that exists. */
     pill.mount();
+    /* ==> THE BOTTOM PILL MOUNTS SILENT AND STAYS SILENT UNTIL IT HAS A FACT.
+     * <== It goes up before the board has read a byte, and `setDetail` has
+     * never been called, so it is `hidden` — an empty lozenge over the globe
+     * would be a control with no label. The board fills it through `onWhere`
+     * a moment later. That is not §5 silence: the drawer is open on top of it
+     * at that moment, saying in its own words that it is still loading. */
+    statusPill.mount();
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
@@ -335,7 +359,7 @@ export function openSeasons({
      * still open on Near home. A reader with no house set gets All anyway —
      * `filtersFor` does not offer a filter there is no home for, and
      * `onSeasonChanging` drops any filter the season does not carry. */
-    const board = ensureBoard({ bar, drawer, linkReason });
+    const board = ensureBoard({ statusPill, drawer, linkReason });
     board.openFrom(from);
     board.setSeason(state.season);
 
@@ -382,6 +406,30 @@ export function seasonsOpen() {
 /** Leave from outside — main.js's own teardown paths. No-op when not in. */
 export function leaveSeasons() {
   session?.handle.leave();
+}
+
+/**
+ * The Storms button was pressed while the archive is open. §57.37, §57.38b.
+ *
+ * ==> IT IS THE WIDE HALF OF WHAT THE BOTTOM PILL DOES ON A PHONE. <== That
+ * pill is `display: none` above 720px, exactly as `#storm-pill` is, so without
+ * this a desktop reader who minimised the archive's drawer would have no way
+ * to get it back. Both roads call the SAME function on the session, so they
+ * cannot drift into two different ideas of which rung the reader left.
+ *
+ * ==> IT TOGGLES RATHER THAN OPENS. <== Aaron on glass, 2026-08-25, about the
+ * control this one inherits from: an open-only version is a one-way door, and
+ * the reader is then hunting the drawer's header chevron to see the globe
+ * again.
+ *
+ * @returns {boolean} true when the archive handled the press, so `main.js`
+ *   knows to leave the live storm list alone. False when there is no session,
+ *   which is every ordinary press on the live globe.
+ */
+export function reopenArchiveDrawer() {
+  if (!seasonsOpen() || !session?.toggleDrawer) return false;
+  safely(() => session.toggleDrawer());
+  return true;
 }
 
 /**
@@ -544,10 +592,10 @@ export function openSeasonStorm(id) {
  * variable rather than anything the drawer could tell us.
  *
  * The two callbacks are the whole of the board's outward reach. It never
- * touches the globe or the bar itself — it says what changed, and this file
+ * touches the globe or the pill itself — it says what changed, and this file
  * decides who needs to know.
  */
-function ensureBoard({ bar, drawer, linkReason }) {
+function ensureBoard({ statusPill, drawer, linkReason }) {
   if (boardView) return boardView;
 
   boardView = createSeasonsBoardView({
@@ -595,7 +643,7 @@ function ensureBoard({ bar, drawer, linkReason }) {
        * its basin are both still null — so the storm-list door could only ever
        * have gone to a default. It is deliberately OUTSIDE the bad-link guard
        * below: a reader sent a broken `?season=` still gets a camera pointed
-       * somewhere sensible while the bar tells them the link was wrong.
+       * somewhere sensible while the wall tells them the link was wrong.
        *
        * The once-flag is not an optimisation. `onWhere` fires on every tick,
        * every filter change and every focus, and without it the globe would
@@ -622,13 +670,21 @@ function ensureBoard({ bar, drawer, linkReason }) {
         drawer.push('seasons-board', where.year);
       }
 
-      if (linkReason === 'malformed' || linkReason === 'out-of-range') return;
-      /* ==> THE BOARD REPORTS FACTS AND THE BAR OWNS THE WORDS. §57.21b item
-       * 8. <== `barDetail` is a pure function in `seasons/bar.js`, so the
-       * sentence lives beside the element that shows it and can be driven by
-       * a suite without a DOM. This file stays what it was: the place that
+      /* ==> THE BAD-LINK GUARD THAT USED TO SIT HERE IS GONE, AND STEP 5 IS
+       * WHY. <== It existed because the bar showed one sentence at a time, so
+       * `2025 · Atlantic` would have painted over `That year is not in the
+       * record` and swallowed the one message the words exist to carry (§5).
+       * The two facts now live on two elements — the note on the wall, the
+       * count on this pill — so they no longer compete and the reader gets
+       * both. Suppressing the count here would now be hiding a true thing for
+       * no reason.
+       *
+       * ==> THE BOARD REPORTS FACTS AND THE PILL OWNS THE WORDS. §57.21b item
+       * 8. <== `pillDetail` is a pure function in `seasons/status-pill.js`, so
+       * the sentence lives beside the element that shows it and can be driven
+       * by a suite without a DOM. This file stays what it was: the place that
        * decides WHO needs to know, never what they are told. */
-      bar.setDetail(barDetail(where));
+      statusPill.setDetail(pillDetail(where));
     }),
 
     /* ==> A ROW'S CHEVRON OPENS THE STORM'S PANEL. §57.22b. <== `push` rather
@@ -666,6 +722,23 @@ function ensureBoard({ bar, drawer, linkReason }) {
    * at one call site means there is one place to forget instead of three. */
   wallView = createSeasonsWallView({
     seasons: seasonsData,
+
+    /* ==> THE BAD LINK'S REASON LANDS HERE NOW, AND STEP 5 IS WHY. <== It was
+     * the archive bar's, and the bar is deleted. Its replacement
+     * (`seasons/status-pill.js`) sits UNDER the drawer so it costs the globe
+     * no layout — which is the whole win — but that means it is covered at the
+     * exact moment a bad link matters, because entering opens the drawer on
+     * this wall. So the sentence goes on the screen the reader is actually
+     * looking at.
+     *
+     * ==> A GETTER, FOR THE REASON `home` AND `system` ARE GETTERS. <== The
+     * wall is registered ONCE per page load and outlives every visit, so a
+     * plain string here would be the note from whichever visit happened to be
+     * first — arrive on a bad link, leave, come back clean, and the wall would
+     * still be apologising about a link from ten minutes ago. Reading it off
+     * the live session means it is true for the visit on screen and empty when
+     * there is no visit at all. */
+    linkNote: () => detailFor(session?.linkReason ?? 'absent'),
 
     /* ==> THE SEASON IN PROGRESS IS NOT IN `seasons/wall.json` AND CANNOT BE.
      * <== It comes out of HURDAT2, NOAA's reviewed record, which does not hold

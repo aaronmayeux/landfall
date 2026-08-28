@@ -77,9 +77,15 @@ const FALLBACK_STRIP_PX = 390 - 32 - 42 - 16 - 46;
  *   null when the feed has never answered. §57.21c.
  * @param {(where:{basin:string, label:string}|null) => void} [opts.onWhere]
  *   which basin the wall is showing, for the pill.
+ * @param {() => string} [opts.linkNote]  a sentence about the `?season=` link
+ *   that opened this, when that link named a year the record does not have.
+ *   Empty for every ordinary entry. See `noteHtml` below for why it lands
+ *   here, and why it is a GETTER: this view is registered once per page load
+ *   and outlives every visit, so a string would be frozen at whichever visit
+ *   was first.
  */
 export function createSeasonsWallView({
-  seasons, live, onOpenYear, onWhere, liveRunningIds,
+  seasons, live, onOpenYear, onWhere, liveRunningIds, linkNote = null,
 }) {
   let host = null;
   let bodyEl = null;
@@ -334,6 +340,34 @@ export function createSeasonsWallView({
     return `${h}</div>`;
   }
 
+  /**
+   * The sentence about a `?season=` link that named a year outside the record.
+   *
+   * ==> ONLY WORDS CAN TELL A TYPO FROM A QUIET SEASON, AND THIS IS THE SCREEN
+   * THE TYPO LANDS ON. <== A bad year falls through to no season at all, so
+   * the reader arrives on the wall looking at a working archive that is
+   * quietly not the year they were sent — worse than an empty globe, not
+   * better (§5).
+   *
+   * ==> IT USED TO BE ON THE ARCHIVE BAR AND COULD NOT STAY THERE. <== Step 5
+   * deleted the bar, and its replacement (`seasons/status-pill.js`) sits UNDER
+   * the drawer so it costs no layout. The drawer is open on this wall at the
+   * exact moment a bad link matters, so a sentence down there would be
+   * covered by the screen that is meant to be reading it.
+   *
+   * ==> ABOVE EVERY STATE, NOT JUST THE LOADED ONE. <== The link was wrong
+   * whether or not the archive answered, and the two failures are unrelated —
+   * a reader whose link was bad AND whose wall would not load is owed both
+   * sentences, not whichever one rendered last.
+   */
+  function noteHtml() {
+    /* Asked at RENDER time, not at construction time. See the parameter's own
+     * note: this view is built once and every later visit re-uses it. */
+    const note = linkNote?.() || '';
+    if (!note) return '';
+    return `<p class="wall-note wall-note-bad">${esc(note)}</p>`;
+  }
+
   function bodyHtml() {
     if (status === 'loading') {
       /* `dotted` after `esc`, never before — its own header records that the
@@ -417,7 +451,7 @@ export function createSeasonsWallView({
 
   function render() {
     if (!bodyEl) return;
-    bodyEl.innerHTML = bodyHtml();
+    bodyEl.innerHTML = noteHtml() + bodyHtml();
     settleDotSize();
   }
 
