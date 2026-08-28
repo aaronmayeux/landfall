@@ -117,7 +117,16 @@ function drawerRoot() {
 
 let lastFocused = null;
 
+/* ==> `documentElement` IS REAL ENOUGH TO READ AN ATTRIBUTE OFF. <== The
+ * drawer publishes its open state at the root as well as on its own element,
+ * because `#storm-pill` sits BEFORE `#drawer` in the markup and CSS cannot
+ * select backwards past a sibling. A stub without this made the drawer throw
+ * on every navigation — and the right fix was here rather than a guard in the
+ * app: `document.documentElement` cannot be absent in a browser, so guarding
+ * it would only have hidden the next stub that forgot it. */
+const docEl = stubEl('html');
 globalThis.document = {
+  documentElement: docEl,
   createElement: (tag) => stubEl(tag),
   addEventListener: noop,
   getElementById: () => null,
@@ -430,6 +439,34 @@ section('every header is a title and an X, and a press across it does nothing');
   parts['.drawer-head'].fire('click', { target: stubEl('span') });
   ok(drawer.isOpen(),
     '==> AND NEITHER DOES A PRESS ON THE ARCHIVE\'S <== — that is the reversal');
+}
+
+/* --------------------------------------------------------------------------
+ * THE OPEN STATE IS PUBLISHED AT THE ROOT, NOT ONLY ON THE DRAWER.
+ *
+ * ==> IT IS LOAD-BEARING FOR SOMETHING THAT IS NOT A DESCENDANT. <== The two
+ * bottom pills centre on the GLOBE rather than on the window, which means
+ * moving out of the rail's way when it is out. `#storm-pill` is earlier in the
+ * markup than `#drawer`, so no sibling rule reaches it. If this attribute
+ * stops being written the pill silently sits half under the rail — no error,
+ * just a buried caption on one width.
+ * ------------------------------------------------------------------------ */
+section('the drawer says at the root whether it is open');
+
+{
+  const { drawer } = rig();
+  /* Cleared by hand: `docEl` is one object shared by every rig in this file,
+   * so whatever the last block left behind is still on it. Asserting a
+   * starting value without this would be testing the previous test. */
+  delete docEl.dataset.drawer;
+
+  drawer.go('storms', undefined, { from: stubEl('button') });
+  ok(docEl.dataset.drawer === 'open',
+    '==> OPENING SAYS SO ON <html> <==');
+
+  drawer.close();
+  ok(docEl.dataset.drawer === 'shut',
+    '  and closing says so too, rather than leaving the last answer standing');
 }
 
 {

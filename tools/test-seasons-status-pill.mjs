@@ -168,6 +168,49 @@ ok('==> THE PILL\'S HIDDEN STATE IS DECLARED, NOT ASSUMED <==',
 const z = Number(/#seasons-status-pill\s*\{[^}]*z-index:\s*(\d+)/s.exec(css)?.[1]);
 ok(`==> AND IT IS LAYERED BELOW THE DRAWER'S 30 (z=${z}) <==`, z > 0 && z < 30);
 
+/* --------------------------------------------------------------------------
+ * BOTH PILLS SHOW AT EVERY WIDTH, AND BOTH CENTRE ON THE SAME MIDDLE.
+ *
+ * Aaron, 2026-08-28. The wide-screen hide came off both together — the archive
+ * pill had copied it from `#storm-pill`, whose own reason ("the rail is open
+ * by default") had already stopped being true.
+ * ------------------------------------------------------------------------ */
+
+const panels = readFileSync(join(ROOT, 'ui/panels.css'), 'utf8');
+
+ok('==> NEITHER PILL IS HIDDEN ON A WIDE SCREEN ANY MORE <==',
+  !/#storm-pill\s*\{\s*display:\s*none/.test(panels)
+  && !/#seasons-status-pill\s*\{\s*display:\s*none\s*;?\s*\}/.test(css));
+
+/* ==> THE SHIFT IS ONE NUMBER READ BY BOTH, NOT TWO THAT AGREE TODAY. <== A
+ * pill centred on the VIEWPORT with the rail out sits inside it at the narrow
+ * end of desktop, so both move by half the rail — and if they ever moved by
+ * different amounts they would sit at two different middles on one screen. */
+for (const [name, sheet] of [['the live pill', panels], ['the archive pill', css]]) {
+  ok(`${name} centres on --pill-shift rather than a bare 50%`,
+    /left:\s*calc\(50%\s*\+\s*var\(--pill-shift/.test(sheet));
+}
+
+ok('and the shift is published once, by the drawer\'s own stylesheet',
+  /--pill-shift:\s*0px/.test(panels)
+  && /html\[data-drawer="open"\][^}]*--pill-shift:\s*calc\(var\(--rail-w\)\s*\/\s*2\)/s.test(panels));
+
+/* ==> AND THE DRAWER HAS TO PUBLISH ITS STATE WHERE THE LIVE PILL CAN READ IT.
+ * <== `#storm-pill` sits BEFORE `#drawer` in index.html and CSS has no
+ * backwards sibling combinator, so the rule hangs off `<html>` instead. If
+ * that attribute stops being written the pill silently stops moving and sits
+ * under the rail — no error, just a half-buried caption. */
+const drawerJs = readFileSync(join(ROOT, 'ui/drawer.js'), 'utf8');
+ok('==> AND THE DRAWER PUBLISHES ITS OPEN STATE ON <html> <==',
+  /documentElement\.dataset\.drawer\s*=/.test(drawerJs));
+
+/* The live pill stopped outranking the drawer at the same time — same fault
+ * the archive pill had, and it was reachable on a phone through Layers,
+ * Settings or Home, none of which hide it. */
+const liveZ = Number(/#storm-pill\s*\{[^}]*z-index:\s*(\d+)/s.exec(panels)?.[1]);
+ok(`and the live pill is under the drawer too (z=${liveZ})`,
+  liveZ > 0 && liveZ < 30);
+
 /* ------------------------------------------------------------------------ */
 
 if (fails.length) {
