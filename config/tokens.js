@@ -522,6 +522,40 @@ export const DARK = Object.freeze({
   glassBorder:    'rgba(120, 190, 225, 0.16)',
   glassShadow:    'rgba(0, 0, 0, 0.55)',
 
+  /* ==> A CONTROL'S EDGE IS NOT A HAIRLINE SEPARATOR, AND FOR TWO YEARS IT WAS
+   *  DRAWN WITH THE SAME TOKEN. <==
+   *
+   *  Aaron on glass, 2026-08-28: the empty check boxes in the season roster are
+   *  hard to see. Measured, they were `glassBorder` at 1px, which is **1.30:1
+   *  against the sepia drawer** — and 1.33:1 in dark and 1.41:1 in light, so
+   *  this was never a sepia problem. The archive just put thirteen of them in a
+   *  column and made it obvious.
+   *
+   *  ==> THE TWO USES WERE NEVER THE SAME REQUIREMENT. <== `glassBorder` draws
+   *  separators and panel edges: decoration, with no contrast floor to meet,
+   *  and deliberately quiet because a loud rule between every row would fight
+   *  the list. A check box is a CONTROL, and WCAG 1.4.11 asks for 3:1 against
+   *  what is adjacent to it. One token cannot be both quiet enough for the
+   *  first job and loud enough for the second, so raising `glassBorder` to fix
+   *  the box would have put a 4:1 rule between all forty roster rows.
+   *
+   *  ==> THE HUE IS THE PALETTE'S OWN BORDER HUE AND ONLY THE ALPHA MOVES. <==
+   *  Nothing about the box's colour is new — it is the same edge it always was,
+   *  turned up until it is visible. A new hue would be a fourth colour to keep
+   *  in step across three palettes for no gain.
+   *
+   *  ==> AND IT TARGETS 4:1 RATHER THAN SITTING ON THE 3:1 FLOOR. <==
+   *  `tools/tmp` measurement, 2026-08-28: alpha 0.49 clears 3:1 here by 0.06.
+   *  A token parked one hundredth above its own gate fails the next time
+   *  anything under it moves — and `glass` and `glassRaised` have both been
+   *  retuned by eye more than once. 0.61 gives 4.12:1 on glass and 4.07:1 on
+   *  raised, which is a whole point of headroom.
+   *
+   *  Same reading of 1.4.11 `segActiveEdge` and `installCtaEdge` already use:
+   *  the EDGE identifies the control, the fill is reinforcement. Gated in
+   *  `tools/contrast-check.mjs` at AA_NONTEXT on both surfaces. */
+  controlEdge:    'rgba(120, 190, 225, 0.61)',
+
   /* Text — never a severity color */
   textPrimary:    '#E8F1F8',
   textSecondary:  '#9DB3C7',
@@ -1240,6 +1274,13 @@ export const LIGHT = Object.freeze({
   glass:          'rgba(252, 252, 251, 0.38)',
   glassRaised:    'rgba(255, 255, 255, 0.52)',
   glassBorder:    'rgba(28, 32, 36, 0.18)',
+
+  /* The control edge. See the long note on DARK's `controlEdge` for why a check
+   * box cannot share the separator's token: this palette's box was 1.41:1
+   * against the panel, and 1.4.11 asks 3:1. Same hue as `glassBorder`, alpha
+   * raised until measured — 0.62 gives 4.09:1 on glass and 4.23:1 on raised.
+   * Gated in `tools/contrast-check.mjs`. */
+  controlEdge:    'rgba(28, 32, 36, 0.62)',
   glassShadow:    'rgba(20, 23, 26, 0.20)',
 
   /* Text */
@@ -1666,6 +1707,14 @@ export const SEPIA = Object.freeze({
   glass:          'rgba(28, 20, 9, 0.30)',
   glassRaised:    'rgba(46, 33, 16, 0.44)',
   glassBorder:    'rgba(199, 154, 78, 0.16)',
+
+  /* The control edge. THIS IS THE PALETTE AARON WAS LOOKING AT when he called
+   * the empty check boxes hard to see, and at 1.30:1 it was the worst of the
+   * three — but all three were broken, so the fix is in all three. See DARK's
+   * `controlEdge` for the reasoning. 0.71 gives 4.17:1 on glass and 4.02:1 on
+   * raised; sepia needs the highest alpha of the three because its border hue
+   * is the closest in luminance to its own background. */
+  controlEdge:    'rgba(199, 154, 78, 0.71)',
 
   /* --- ink --------------------------------------------------------------- */
   textPrimary:    '#F3E7D2',

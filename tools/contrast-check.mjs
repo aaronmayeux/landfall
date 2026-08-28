@@ -185,6 +185,20 @@ function requiredPairs(P) {
      * number is printed in ADVISORY so a change that flattens it is still
      * visible, but the edge is the pair that gates the run. */
     ['chosen segment edge vs group',  P.segActiveEdge, raised, base, AA_NONTEXT],
+
+    /* ==> THE EMPTY CHECK BOX, AND IT WENT UNMEASURED FOR AS LONG AS IT DREW
+     * ITSELF WITH THE SEPARATOR'S TOKEN. <== Aaron on glass, 2026-08-28. An
+     * unchecked box has NO fill and no tick — its 1px edge is the entire
+     * control, which makes it the purest case 1.4.11 describes and the one
+     * with the least margin for a quiet colour. It was `glassBorder`, which is
+     * decoration and has no floor to meet: 1.30:1 in sepia, 1.33 in dark, 1.41
+     * in light. Nothing here caught it because nothing here was looking at it.
+     *
+     * BOTH SURFACES, because the roster sits on `glass` and the Layers panel's
+     * rows sit on `glassRaised`, and one token draws the box in both. */
+    ['empty check box edge on glass', P.controlEdge,   glass,  base, AA_NONTEXT],
+    ['empty check box edge on raised', P.controlEdge,  raised, base, AA_NONTEXT],
+
     ['body text on chosen segment',   P.textPrimary,   P.segActive, base, AA_TEXT],
     /* ==> THE EDGE, NOT THE FILL, AND THIS PAIR MOVED ON PURPOSE. <==
      *

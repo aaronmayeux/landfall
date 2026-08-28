@@ -57,6 +57,7 @@ export function applyTokens() {
   r.setProperty('--glass', P.glass);
   r.setProperty('--glass-raised', P.glassRaised);
   r.setProperty('--glass-border', P.glassBorder);
+  r.setProperty('--control-edge', P.controlEdge);
   r.setProperty('--glass-shadow', P.glassShadow);
   r.setProperty('--scroll-thumb', P.scrollThumb);
   r.setProperty('--scroll-thumb-hover', P.scrollThumbHover);

@@ -2537,7 +2537,16 @@ button.drawer-identity:focus-visible {
   flex: 0 0 auto;
   width: 14px;
   height: 14px;
-  border: 1px solid var(--glass-border);
+  /* ==> `--control-edge`, NOT `--glass-border`, AND THE DIFFERENCE IS THE
+   * WHOLE POINT. <== Aaron on glass, 2026-08-28: the empty boxes in the season
+   * roster were hard to see. Measured at 1.30:1 against the sepia drawer —
+   * 1.33 in dark, 1.41 in light, so it was never a sepia problem, the archive
+   * just put thirteen of them in a column. A separator has no contrast floor
+   * to meet and wants to be quiet; a control's edge has to clear 3:1 under
+   * WCAG 1.4.11. One token could not be both, and raising the separator would
+   * have put a 4:1 rule between every roster row. The token carries the
+   * measurements. */
+  border: 1px solid var(--control-edge);
   border-radius: 3px;
   align-self: center;
 }
