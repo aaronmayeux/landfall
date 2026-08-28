@@ -113,28 +113,35 @@ counting today's storms, `#status` reporting feeds the archive does not read).
 Judged on phone and on desktop, nothing sent back. **§57.38a is the as-built
 account; nothing is held here.**
 
-Still unbuilt in the Seasons build: **the entry-point unwind** (step 5, §57.37
-as amended — the doors do NOT change, only `#seasons-bar` is deleted, and
-`btn-storms` reopens the ladder at the rung the reader left), and **Storm
-Details** (step 7, payload cost still unresolved). **Step 5 is next and step 6
-was the thing gating it** — the bar's Leave button was the only exit, so the
-bar could not go until something else was.
+**==> STEP 5 IS BUILT AND IT IS THE THING TO LOOK AT. NOT YET SEEN ON GLASS.
+<==** The archive bar is deleted and its two jobs are two pills: the top one
+(`‹ Live storms`) is still the way out, and a new bottom one says what is drawn.
+`btn-storms` is visible in the archive again and reopens the ladder at the rung
+you left. **§57.38b is the as-built account and carries every measurement — read
+that, not this.**
 
-**THE ONE THING STEP 5 MUST NOT UNDO:** `data-seasons="on"` no longer lives in
-`seasons/bar.js`. It moved to `seasons/index.js` in step 6, because it drives
-the drawer's fixed sheet height, the three hidden cluster buttons, the control
-cluster's offset and the two suppressions — all of which outlive the bar.
-Deleting `seasons/bar.js` naively would take the archive's whole layout
-contract with it, silently. §57.38a.
+**FIVE THINGS TO JUDGE, AND THE FIRST IS THE ONE STEP 6 COULD NOT ASK:**
 
-**AND STEP 5 INHERITS ONE UNANSWERED QUESTION.** Step 6's glass pass was asked
-whether the archive still says where you are with the drawer minimised, and the
-answer was unreadable — `PAST STORMS` was still sitting at the bottom left
-doing that job. **It becomes a real question the moment the bar goes**, after
-which the only things saying "you are in the past" are the sepia palette, the
-drawer heading while the drawer is open, and a pill offering to take you
-somewhere else. That last is an inference rather than a label. It is step 5's
-first glass call, and the fix if it reads wrong is words.
+1. **Does the archive still say you are in the past with the drawer down?**
+   `PAST STORMS` was doing that job from the bar and the bar is gone. What is
+   left is the sepia palette, the drawer's heading while it is open, and the
+   two pills. The bottom one should read something like `2005 · Atlantic · 3
+   shown · tap a track for detail`, and the expectation is that a specific year
+   and basin answers this BETTER than the old words did. If it reads wrong the
+   fix is words, not structure.
+2. **The strip of screen the bar was taking.** The drawer and the control
+   cluster both sat above it and now sit at the bottom edge. Worth a look at
+   whether the cluster is too close to the OS gesture area on your phone —
+   that is the one thing the bar was incidentally protecting.
+3. **The bottom pill against the drawer.** It sits UNDER the sheet by design,
+   so it only appears once you minimise. Check it is not half-hidden behind
+   the sheet's shadow at 66vh, and that it does not fight the control cluster.
+4. **`btn-storms` inside the archive.** It should bring the drawer back on the
+   rung you left, not the top of the wall — open 2005, minimise, press it.
+   **On desktop this is the ONLY way back**, because the pill is hidden above
+   720px. Worth pressing on both.
+5. **A bad deep link.** `?season=1066` should land on the wall with `That year
+   is not in the record.` above the year rows. It used to be on the bar.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on
@@ -890,12 +897,13 @@ file's own rule: an item that lands leaves, and the spec describes what is.**
    ACTIONS names are D1 columns, so restoring it means an `ALTER TABLE` on
    `sessions`. Every tap on a watched area since §45 is counted as nothing.
 
-4. **`tools/test-genesis.mjs` HANGS RATHER THAN FAILS.** It stops after the
-   section headed *a broken NHC half is an OUTAGE, never an empty sky*, where
-   `fetchGenesis` is driven with every relay hop throwing, and never returns.
-   Killed at 130 s. **Confirmed pre-existing** — it hangs identically with the
-   flood work reverted. A suite that hangs is worse than a red one: it blocks
-   whatever runs it and names nothing.
+4. **`tools/test-genesis.mjs` IS SLOW, NOT HUNG — CORRECTED 2026-08-28.** It
+   was recorded here as hanging, on the evidence of being killed at 130 s. Run
+   to completion in the full suite pass it **finishes green in 195 seconds**,
+   which is the slowest suite in the repo by a factor of three. The section it
+   appeared to stop at drives `fetchGenesis` with every relay hop throwing, and
+   that path is genuinely slow rather than stuck. **Nothing to fix; the note was
+   the fault.** Worth knowing before anyone kills it again.
 
 **==> AND ONE THING TO READ BEFORE ADDING ANY ROUTE THAT TAKES AN IDENTIFIER
 FROM A QUERY STRING. <==** `functions/api/nws/alert.js` is the only route in this

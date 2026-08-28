@@ -4557,8 +4557,17 @@ exactly the state the archive's chrome exists for.
 
 - **`#storm-pill`** is the narrow-width entry to the LIVE storm list. It went
   on counting today's storms over a sepia globe, and a tap opened a list naming
-  storms that were not drawn: the identical wrong surface `#btn-storms` is
+  storms that were not drawn: the identical wrong surface `#btn-storms` was
   hidden to prevent, reached by a different control.
+
+  **==> AND HIDING IT WAS THE CHEAP HALF OF THE FIX, WHICH §57.38 HAD ALREADY
+  SAID. <== CORRECTED 2026-08-28.** That section's own resolution reads: the
+  existing pill *stays at the bottom and goes on saying what is currently
+  drawn*. Step 6 suppressed it instead and wrote the suppression up here as a
+  clean win, without noticing it contradicted the design two sections above.
+  **The diagnosis was right and the remedy was half of one.** Step 5 built the
+  missing half; §57.38b is the account, and it also records why the element is
+  a NEW one rather than the live pill repurposed.
 - **`#status`** is source health — stale flags, *GDACS is not responding*.
   Suppressed per §57.37, because nothing in the archive reads a live feed, so
   every word it could say is about a world the reader is not looking at. **It
@@ -4597,3 +4606,140 @@ so before this change** — 20 passing on clean `main`, 25 passing with the pill
 All six are *does a track actually draw*, which needs `tiles.openfreemap.org`;
 it is blocked, MapLibre never finishes building, and the geometry never lands.
 They pass on the CI runner. **Do not chase them here.**
+
+### 57.38b The bar is gone, and its two jobs are two pills — as built
+
+Step 5. Everything here is on `main`. §57.37 and §57.38 are the design; this is
+what shipping it taught. **Not yet confirmed on glass.**
+
+#### What was deleted
+
+`seasons/bar.js`, its five rule blocks in `seasons/seasons.css`, the dead
+`.seasons-leave` rules step 6 orphaned when it removed that button, and
+`--seasons-bar-h` with all three of its consumers.
+
+**The layout variable was the real content of this step.** `#seasons-bar` was
+`position: fixed` to the bottom edge and full width, and the drawer and the
+control cluster are fixed to that same edge — so both had to be pushed up by
+its height or they sat on top of it. Three rules did that subtraction: the
+cluster's offset, the narrow drawer's `bottom`, and the wide rail's
+`calc(keyboard-inset + bar)`. All four are gone, the cluster sits where the
+live app puts it, and **that strip of screen is the globe's again on every
+archive view** — which on a phone was the whole argument for the change.
+
+Measured before the work: five references, all inside `seasons/seasons.css`.
+Nothing outside that file subtracted from it and nothing read it through
+`getComputedStyle`, so the unwind was smaller than §57.37 feared.
+
+#### The bottom pill is a NEW element, and that is a correction to §57.38
+
+§57.38 says the existing `#storm-pill` should stay and change what it says. **It
+cannot.** `ui/view-storms.js` rewrites that element's text, its busy state and
+its error tone **on every poll, open drawer or not** — its own comment says the
+pill updates whether or not the view is on screen. Sharing it would mean the
+archive inheriting `data-tone="error"` because GDACS is down: a red pill about
+today, under 1935's tracks. That is the §5 confusion step 6 was right to
+remove, arriving by a different road.
+
+So `#storm-pill` stays suppressed and `seasons/status-pill.js` is a second
+element. §57.38 already made this argument once, for the top pill — one element
+cannot be in two places saying two things — and it applies again to one element
+saying two things at two different times with two different writers.
+
+**It carries `pillDetail`, which is the deleted bar's `barDetail` unchanged.**
+Same four states, same words. The sentence was always meant to end up in a
+bottom pill; the bar was just the surface that existed first.
+
+**It mounts hidden and stays hidden until it has a fact.** Not §5 silence: the
+only moment it is empty is before the index has been read, and the drawer is
+open on top of it saying so in its own words. An empty glass lozenge is a
+control with no label, which is worse than no control.
+
+**Muted rather than primary, and that is the one deliberate difference from the
+pill above it.** This is a caption; the top pill is the only way out. Equal
+weight would make the eye choose between them, and the one that must never be
+missed would lose half the time.
+
+#### Pressing it toggles the drawer, and `btn-storms` is the same action
+
+The pill inherits the bar's sentence-is-a-button behaviour, including that it
+**toggles** rather than opens — Aaron on glass 2026-08-25, after the open-only
+version turned out to be a one-way door.
+
+**`#btn-storms` is visible in the archive again, doing a different job.** It was
+hidden with Home and Layers because it opened the LIVE storm list over a sepia
+globe (§5). It now reopens the archive's own drawer, so the surface it opens is
+about the world on screen and the objection is answered rather than dodged.
+Home and Layers stay hidden; neither has an archive equivalent to be given.
+
+**==> THE TWO ARE THE NARROW AND WIDE HALVES OF ONE ACTION, NOT TWO CONTROLS.
+<==** The pill is `display: none` above 720px, exactly as `#storm-pill` is, so
+without the button a desktop reader who minimised the drawer would have no way
+to get it back. Both roads call `session.toggleDrawer` through the exported
+`reopenArchiveDrawer()`, so they cannot drift into two ideas of which rung the
+reader left.
+
+**`main.js` asks the archive first and returns early on a yes.** So the
+function's `false` is the load-bearing half, not its `true`: a `true` out on the
+live globe would swallow every ordinary press of that button, the storm list
+would stop opening, and nothing on screen would say why. **A mutation proved
+that hole was open** — making it answer true with no session left all 92
+assertions green, and the assertion that closes it is in
+`tools/test-archive-mode.mjs`.
+
+#### The bad link's sentence went to the wall, not to the pill
+
+`detailFor` still produces it; `ui/view-seasons-wall.js` shows it. The pill sits
+UNDER the drawer — that is what makes it cost no layout — and entering the
+archive opens the drawer on the wall, so a sentence down there would be covered
+at the exact moment a bad link matters. It renders above every one of the wall's
+states, because the link was wrong whether or not the archive answered and the
+two failures are unrelated.
+
+**It is passed as a GETTER, and a plain string was a real bug caught during the
+build.** The wall is registered once per page load and outlives every visit, so
+a string would have been the note from whichever visit was first: arrive on
+`?season=1066`, leave, come back clean, and the wall would still be apologising
+about a link from ten minutes ago. It reads `session.linkReason` at render time.
+Same trap `home` and `system` are getters to avoid in the board (§57.19).
+
+**The guard that suppressed the pill's own sentence on a bad link is deleted.**
+It existed because the bar showed one thing at a time, so the season would have
+painted over the apology. Two elements now, so the reader gets both facts and
+suppressing either would be hiding a true thing for no reason.
+
+#### What this step taught about the gates
+
+**`tools/check-syntax.mjs` passed over an archive that threw on entry.** The
+half-finished working tree this step started from assigned to an undeclared
+variable and referenced a deleted import six times; the gate proves imports
+resolve and cannot see a free variable. **This is the second recorded instance**
+— §57.30 step 4's deep-link constants were the first, and that entry already
+says the gate cannot catch the class. `tools/test-archive-mode.mjs` caught it,
+by running the thing.
+
+**`tools/css-orphan-check.mjs` reports emitted-classes-with-no-rule and not the
+reverse.** `.seasons-leave` sat in the stylesheet for the whole of step 6 with
+nothing emitting it. The gate went green throughout and only spoke when
+`seasons/bar.js` was deleted and its classes became orphans in the direction it
+does check.
+
+#### The glass call this step finally makes real
+
+§57.37 records that step 6 could not answer whether the archive still says
+*where you are* with the drawer minimised, because `PAST STORMS` was still
+sitting at the bottom left doing that job. **The bar is gone, so the question is
+now live.** After this step the signals are the sepia palette, the drawer's own
+heading while it is open, a top pill offering to take you to `Live storms`, and
+a bottom pill reading `2005 · Atlantic · 3 shown`.
+
+**The expectation is that the bottom pill answers it better than the bar did** —
+a specific year and basin is a stronger statement of "you are in the past" than
+the words `PAST STORMS` were. If it reads wrong the fix is words, not structure.
+
+#### Four mutations, four killed
+
+The pill removed from `TAP_BLOCKING_SELECTORS`; `reopenArchiveDrawer` answering
+true with no session; the pill rendering an empty lozenge instead of hiding; and
+the pill built as a `<div>` rather than a `<button>`. The second survived the
+first pass and its assertion was written because of it.
