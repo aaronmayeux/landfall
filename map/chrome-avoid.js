@@ -79,16 +79,18 @@ export const OCCLUDING_SELECTORS = [
  * list exists so that the day somebody nests a panel inside the map container,
  * the archive does not start dismissing its own sheet.
  *
- * ==> `#seasons-bar` IS THE ONE ID `index.html` DOES NOT CARRY. <== It is
- * created at runtime by `seasons/bar.js`, because the archive's furniture is
- * loaded with the archive and must not be on the boot path. The selector
- * contract still holds — it is just a contract with a different file, and
- * `tools/test-chrome-avoid.mjs` checks it against that one.
+ * ==> `#seasons-bar` AND `#seasons-pill` ARE THE TWO IDS `index.html` DOES NOT
+ * CARRY. <== Both are created at runtime, by `seasons/bar.js` and
+ * `seasons/pill.js`, because the archive's furniture is loaded with the
+ * archive and must not be on the boot path. The selector contract still holds
+ * — it is just a contract with a different file, and
+ * `tools/test-chrome-avoid.mjs` checks each against its own.
  */
 export const TAP_BLOCKING_SELECTORS = [
   '#controls',
   '#drawer[data-open="true"]',
   '#seasons-bar',
+  '#seasons-pill',
 ];
 
 /**

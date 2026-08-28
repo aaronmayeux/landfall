@@ -96,37 +96,44 @@ check(
 );
 
 /* --------------------------------------------------------------------------
- * THE TAP-BLOCKING SET, AND THE ONE ID THAT LIVES IN A DIFFERENT FILE.
+ * THE TAP-BLOCKING SET, AND THE TWO IDS THAT LIVE IN DIFFERENT FILES.
  * §57.21d. The archive minimises its sheet on a tap that lands outside the
- * furniture, and this is the list it measures. Two of its three ids are in
- * index.html and were checked in the loop above; `#seasons-bar` is created at
- * runtime by seasons/bar.js, because the archive's furniture must not be on
- * the boot path. The selector is still a contract, just with a different file
- * — so it is checked against that file rather than excused.
+ * furniture, and this is the list it measures. Two of its four ids are in
+ * index.html and were checked in the loop above; `#seasons-bar` and
+ * `#seasons-pill` are created at runtime by seasons/bar.js and
+ * seasons/pill.js, because the archive's furniture must not be on the boot
+ * path. Each selector is still a contract, just with a different file — so
+ * each is checked against its own file rather than excused.
  * ------------------------------------------------------------------------ */
 
-const barJs = fs.readFileSync('seasons/bar.js', 'utf8');
+const RUNTIME_EMITTED = [
+  ['#seasons-bar', 'seasons-bar', 'seasons/bar.js'],
+  ['#seasons-pill', 'seasons-pill', 'seasons/pill.js'],
+];
 
-check(
-  'the archive bar is in the tap-blocking set',
-  TAP_BLOCKING_SELECTORS.includes('#seasons-bar'),
-  'a tap could be answered through the one control that is the way out'
-);
-check(
-  'and seasons/bar.js is the file that emits that id',
-  /\.id\s*=\s*'seasons-bar'/.test(barJs),
-  'nothing sets id="seasons-bar" — the selector matches nothing and fails silently'
-);
+for (const [selector, id, file] of RUNTIME_EMITTED) {
+  check(
+    `${selector} is in the tap-blocking set`,
+    TAP_BLOCKING_SELECTORS.includes(selector),
+    'a tap could be answered through the archive\'s own furniture'
+  );
+  check(
+    `and ${file} is the file that emits that id`,
+    new RegExp(`\\.id\\s*=\\s*'${id}'`).test(fs.readFileSync(file, 'utf8')),
+    `nothing sets id="${id}" — the selector matches nothing and fails silently`
+  );
+}
 check(
   'the open drawer blocks a tap',
   TAP_BLOCKING_SELECTORS.some((s) => s.startsWith('#drawer')),
   'nothing in TAP_BLOCKING_SELECTORS targets #drawer — the sheet would dismiss on a tap inside itself'
 );
 /* Every id in the tap set that index.html DOES carry still has to be real.
- * The runtime-emitted one is named above and skipped here rather than
+ * The runtime-emitted ones are named above and skipped here rather than
  * silently exempted by a looser rule. */
+const RUNTIME_IDS = RUNTIME_EMITTED.map(([, id]) => id);
 for (const id of idsIn(TAP_BLOCKING_SELECTORS)) {
-  if (id === 'seasons-bar') continue;
+  if (RUNTIME_IDS.includes(id)) continue;
   check(
     `#${id} exists in index.html (tap-blocking set)`,
     markup.includes(`id="${id}"`),
