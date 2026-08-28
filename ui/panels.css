@@ -309,23 +309,15 @@
   box-sizing: border-box;
 }
 
-/* ==> A HEADER THAT DISMISSES ON A TAP HAS TO LOOK LIKE ONE. <== `minimises`
- * is set on `#drawer` by `ui/drawer.js` for a view whose header is a bare
- * title and a chevron — today the seasons board and nothing else. Pressing
- * anywhere across it closes the sheet, because the chevron is a small target
- * at the far edge of a wide bar and that is the corner a thumb reaches for
- * least.
+/* ==> THE SEASONS HEADER'S HOVER AND CURSOR ARE GONE. <== Aaron on glass,
+ * 2026-08-28. `#drawer[data-minimises]` used to give that one header a pointer
+ * cursor and a hover highlight, because a press anywhere across it dismissed
+ * the sheet. The press went (`ui/drawer.js` records why the three could not be
+ * separated), so the affordances for it go too — a surface that looks
+ * pressable and is not is worse than one that never offered.
  *
- * Hover is gated on CAPABILITY, never on device class (§13), so a touchscreen
- * laptop gets it and a finger is never asked to hover to discover anything —
- * the cursor below is the mouse's affordance and the whole-bar target is the
- * thumb's. The KEYBOARD path is unchanged and does not need one: the chevron
- * is a real button in the tab order and answers Enter and Space. */
-#drawer[data-minimises="true"] .drawer-head { cursor: pointer; }
-
-@media (hover: hover) {
-  #drawer[data-minimises="true"] .drawer-head:hover { background: var(--hover); }
-}
+ * Nothing sets `data-minimises` any more. Every drawer header in this app is
+ * now a title and an X, and there is one set of rules for all of them. */
 
 /* The lead slot. Holds the back button OR the eyebrow, never both — see the
  * note in ui/drawer.js renderChrome. It is a column of its own so the title's

@@ -608,7 +608,6 @@ export function createSeasonsWallView({
      *  item 8. <== Closing the wall does not leave the archive — the globe
      *  stays sepia and the top pill stays on screen as the way out. An X says
      *  "done with this", which is not what the button does. */
-    minimises: true,
 
     mount(el) {
       host = el;

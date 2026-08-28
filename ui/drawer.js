@@ -189,8 +189,6 @@ export function createDrawer({ root }) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
              stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
-      <!-- The glyph and the label above are replaced by a minimise chevron for
-           a view that sets "minimises". See renderChrome. -->
     </header>
     <div class="drawer-views" id="drawer-views"></div>
   `;
@@ -289,34 +287,27 @@ export function createDrawer({ root }) {
     eyebrowEl.hidden = !eyebrow;
     eyebrowEl.textContent = eyebrow || '';
 
-    /* ==> ONE VIEW MAY ASK FOR A MINIMISE CHEVRON INSTEAD OF THE X, AND ONLY
-     * ONE DOES. §57.21b item 8. <== The archive is a MODE, not a panel you are
-     * done with: closing its board leaves a sepia globe you are still standing
-     * on, with the bar as the way back in. An X on that reads as "leave", and
-     * a reader who presses it expecting to leave and finds themselves still in
-     * 2005 has been told the wrong thing by the icon.
+    /* ==> EVERY HEADER IN THIS APP CARRIES THE SAME X. <== Aaron on glass,
+     * 2026-08-28, reversing §57.21b items 5 and 6. The seasons drawer had a
+     * minimise chevron, a hover highlight across the whole bar, and a press
+     * anywhere on it dismissed the sheet. All three are gone; the archive's
+     * header is the storms list's header now, and this function no longer has
+     * a per-view branch in it at all.
      *
-     * ==> IT IS A PER-VIEW OVERRIDE RATHER THAN A NEW HEADER, BECAUSE THE
-     * HEADER IS SHARED. <== `ui/drawer.js` draws the chrome for every screen in
-     * this app, so the naive edit here changes the storms list, the detail
-     * panel, Layers and Settings as well. `minimises` is opt-in and no other
-     * view sets it.
+     * ==> THE THREE WENT TOGETHER BECAUSE THEY WERE ONE THING. <== The hover
+     * was the mouse's affordance FOR the press-anywhere target. Removing the
+     * highlight and keeping the target leaves a surface that dismisses on a
+     * tap and gives no sign that it will, which is the hidden gesture §13
+     * forbids — so asking for the highlight to go is asking for the gesture to
+     * go with it.
      *
-     * The BUTTON does not change — same element, same handler, same tab stop.
-     * Only the glyph and the word a screen reader hears. */
-    const minimise = Boolean(def.minimises);
-    /* Published on the root so the header can LOOK pressable where it is.
-     * A surface that dismisses on a tap and gives no hover or cursor for it is
-     * a hidden gesture (§13); a surface that looks pressable and is not is
-     * worse. One attribute keeps the two honest. */
-    if (minimise) root.dataset.minimises = 'true';
-    else delete root.dataset.minimises;
-    closeBtn.setAttribute('aria-label', minimise ? 'Minimise' : 'Close');
-    closeBtn.innerHTML = minimise
-      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>`
-      : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
-              stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>`;
+     * ==> AND THE ORIGINAL OBJECTION TO THE X IS ANSWERED BY STEP 5. <== It
+     * was that an X reads as "leave", and a reader who presses it expecting to
+     * leave and finds themselves still in 2005 has been told the wrong thing.
+     * That held while the sheet was the only archive furniture on screen. It
+     * is not any more: `‹ Live storms` sits at the top of the globe naming the
+     * exit, so the X can mean here what it means everywhere else — dismiss
+     * this panel — without being mistaken for the way out. */
   }
 
   /** Show one view's host, hide the rest. `hidden` (not opacity) so the
@@ -497,32 +488,6 @@ export function createDrawer({ root }) {
 
   backBtn.addEventListener('click', () => back());
   closeBtn.addEventListener('click', () => close());
-
-  /**
-   * ==> THE WHOLE HEADER DISMISSES, FOR A VIEW THAT MINIMISES AND NO OTHER.
-   * <== Aaron on glass, 2026-08-25. On the seasons board the header is a bare
-   * title and a chevron, so it reads as a bar you should be able to press
-   * anywhere — and the chevron is a small target at the far edge of a wide
-   * sheet, which is the corner a thumb reaches for least.
-   *
-   * ==> IT IS GATED ON `minimises` BECAUSE EVERY OTHER HEADER IN THIS APP HAS
-   * A SECOND JOB. <== The storm detail panel's title slot holds an identity
-   * block that the home dashboard binds a click to — pressing the storm's name
-   * OPENS that storm — and any pushed view's header holds a Back button whose
-   * whole purpose is going up rather than out. A blanket rule here would have
-   * made the header of half the app do two things at once, with the
-   * destructive one winning.
-   *
-   * A press that lands on a real control is left alone: Back and the chevron
-   * own themselves, and swallowing their events here would either double the
-   * action or replace it with the wrong one.
-   */
-  headEl.addEventListener('click', (e) => {
-    const cur = current();
-    if (!cur || !entry(cur.id).def.minimises) return;
-    if (e.target.closest('button')) return;
-    close();
-  });
 
   /* Escape is NOT handled here — it is one global contract owned by
    * attachEscape() in map/globe.js (§10, §13). main.js routes it in. */

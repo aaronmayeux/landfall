@@ -657,7 +657,6 @@ export function createSeasonsBoardView({
      * stays sepia and the bar stays on screen as the way back in. An X says
      * "done with this", which is not what the button does. The flag is read by
      * `ui/drawer.js`; every other view leaves it unset and keeps its X. */
-    minimises: true,
 
     mount(el) {
       host = el;
