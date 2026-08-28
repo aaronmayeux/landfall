@@ -961,7 +961,17 @@ function boot() {
      * The two hit-tests do not compete. The glyph answers only at the space
      * floor, where it is at full strength (`SEASONS.glyphTapMaxPhase`), and
      * the track owns every zoom from there in. Nothing is lost at the seam
-     * because the glyph is stamped on the track's own first fix. */
+     * because the glyph is stamped on the track's own first fix.
+     *
+     * ==> AND BOTH HIT-TESTS NOW LEAD TO THE SAME PLACE: THE STORM'S PANEL,
+     * WITH THE CAMERA ON ITS FIRST FIX. §57.21e. <== Aaron's call, 2026-08-28.
+     * The track used only to brighten, which made ONE mark on this globe mean
+     * two different things depending on how far in the reader had zoomed —
+     * open the storm out at the space floor, merely light it once the glyph
+     * had faded. That is the seam reading as a bug rather than as a handover.
+     * The order below survives because it is about WHICH STORM the pixels
+     * resolve to, not about what happens next; the answer to that is one
+     * answer now. */
     if (isArchive()) {
       const glyphId = seasonGlyphAtPoint(map, e.point, seasonGlyphList);
       if (glyphId) {
@@ -971,7 +981,7 @@ function boot() {
 
       const trackId = seasonStormAtPoint(map, e.point);
       if (trackId) {
-        focusSeasonStormNow(trackId);
+        openSeasonStormNow(trackId);
         return;
       }
 
@@ -1786,12 +1796,20 @@ function boot() {
   let seasonsMod = null;
 
   /**
-   * A tap on the globe chose a storm — or chose open water, which clears.
+   * A tap on open water cleared the focus, every track back to even. §57.21e.
    *
-   * ==> IT GOES TO THE BOARD, NOT STRAIGHT TO THE GLOBE. <== Painting the
-   * focus here would light a track while the roster went on looking exactly
-   * as it did, and the roster is the thing the reader believes about what is
-   * selected (`map/layers/season-tracks.js` makes the same argument about
+   * ==> ONLY EVER CALLED WITH NULL NOW, AND IT KEEPS THE ID PARAMETER ANYWAY.
+   * <== The track branch above used to call this with a storm; §57.21e sent it
+   * to `openSeasonStormNow` instead, which leaves the clear as the one caller.
+   * Narrowing the signature to `clearSeasonFocus()` would be a rename across
+   * the wall into `seasons/` for no behaviour, and the export on the other side
+   * is documented as taking "an id, or null for all of them evenly" — so the
+   * shape stays and this comment carries the fact.
+   *
+   * ==> IT GOES TO THE BOARD, NOT STRAIGHT TO THE GLOBE. <== Clearing the
+   * focus here would even out the tracks while the roster went on showing a
+   * row still lit, and the roster is the thing the reader believes about what
+   * is selected (`map/layers/season-tracks.js` makes the same argument about
    * ticking). The board owns focus; it tells the globe. One direction.
    */
   function focusSeasonStormNow(id) {
@@ -1799,14 +1817,17 @@ function boot() {
   }
 
   /**
-   * A tap on a hurricane glyph chose a storm. §57.21d.
+   * A tap on the archive's globe chose a storm — glyph or track. §57.21d,
+   * §57.21e.
    *
-   * ==> IT GOES THE SAME ROAD `focusSeasonStormNow` DOES, AND FOR THE SAME
-   * REASON. <== The globe is owned here and the archive is owned over there,
-   * so a tap has to come back up. What it lands on is `seasons/index.js`'s
-   * `openSeasonStorm`, which is the very function the roster row's chevron
-   * runs — so a glyph tap and a chevron press are one behaviour rather than
-   * two that look alike today.
+   * ==> BOTH HIT-TESTS COME HERE, AND THAT IS THE POINT OF §57.21e. <== The
+   * globe is owned here and the archive is owned over there, so a tap has to
+   * come back up. What it lands on is `seasons/index.js`'s `openSeasonStorm`,
+   * which is the very function the roster row's chevron runs — so a glyph tap,
+   * a track tap and a chevron press are ONE behaviour rather than three that
+   * look alike today. The panel's own `onOpen` ticks and focuses the storm on
+   * the way in, so the brightening the track tap used to do by itself is not
+   * lost; it now arrives with the sheet and the flight.
    */
   function openSeasonStormNow(id) {
     seasonsMod?.openSeasonStorm?.(id);

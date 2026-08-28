@@ -2278,13 +2278,13 @@ same list. Two copies of that filter-and-sort would drift the first time either
 was tuned, and the symptom is the worst kind: a mark you can plainly see that
 opens the wrong storm, with no console line and no visible cause.
 
-**==> OPENING A STORM IS ONE FUNCTION WITH TWO CALLERS. <==** `openStormNow` in
+**==> OPENING A STORM IS ONE FUNCTION WITH THREE CALLERS. <==** `openStormNow` in
 `seasons/index.js`, hoisted out of the board's `onOpenStorm` callback. The
 roster row's chevron has run it since §57.22b; a glyph tap runs the same body,
-so the panel push, the camera flight and the still-running refusal are one
-behaviour rather than two that look alike today. `openSeasonStorm` is the
-export `main.js` reaches it through, guarded on the session and on the drawer
-the session holds.
+and a track tap joined them in §57.21e — so the panel push, the camera flight
+and the still-running refusal are one behaviour rather than three that look
+alike today. `openSeasonStorm` is the export `main.js` reaches it through,
+guarded on the session and on the drawer the session holds.
 
 **A RUNNING STORM CANNOT BE REACHED THIS WAY AT ALL**, and that falls out of
 the design rather than needing a guard of its own: `selectedEntries` drops a
@@ -2396,8 +2396,12 @@ prove it asks the same questions in the same order.
 glyph suite's ordering assertion did `indexOf('seasonGlyphAtPoint')`, which
 matched the word inside the comment that EXPLAINS the branch — so commenting
 the call out left the suite green, which is the failure §12 calls worse than no
-test. Both halves now match an actual invocation with its actual arguments, and
-the mutation was re-run and bites.
+test. Both halves were changed to match an actual invocation with its actual
+arguments, **and §57.21e later proved that was only half a fix**: a
+commented-out call carries its arguments too, so `// openSeasonStormNow(glyphId);`
+matched just as happily. **Both tap suites now strip comments out of the source
+before any assertion reads it**, and the mutation was re-run against the strip
+and bites.
 
 **AND ONE ASSERTION FAILED AGAINST CORRECT CODE, WHICH IS THE SAME LESSON FROM
 THE OTHER SIDE.** The tap suite's ordering check searched the whole of `main.js`
@@ -2415,6 +2419,74 @@ false alarms.
 **FIVE MORE MUTATIONS ON THE FIX AND ALL FIVE BITE**, including reintroducing
 the dead gesture itself — which is the one that matters, since the suite was
 green over it once.
+
+### 57.21e A tap on a track opens the storm, the same as a tap on a glyph
+
+Aaron's call, 2026-08-28. `main.js` (the one line, and both doc blocks around
+it), `tools/test-archive-tap.mjs` and `tools/test-season-glyph-tap.mjs` (the
+assertions, and the comment strip both now read through).
+
+**==> EVERY WAY OF CHOOSING A STORM ON THE SEPIA GLOBE NOW LEADS TO THE SAME
+PLACE: ITS PANEL, WITH THE CAMERA ON ITS FIRST FIX ABOVE THE SHEET. <==** The
+track branch calls `openSeasonStormNow` rather than `focusSeasonStormNow`.
+§57.21d's ordered list is untouched — glyph, then track, then empty water —
+because that order is about WHICH STORM the pixels resolve to, not about what
+happens next, and the answer to that is one answer now.
+
+**THE OLD BEHAVIOUR WAS ONE MARK MEANING TWO THINGS EITHER SIDE OF A ZOOM.**
+A glyph tap opened the storm; a track tap only brightened it. The glyph is
+stamped on the track's own first fix, so the same pixels did two different
+things depending on whether the reader had crossed `SEASONS.glyphTapMaxPhase`.
+§57.21d calls that band a handover; before this it read as a bug.
+
+**==> THE BRIGHTENING IS NOT LOST, AND NOTHING WAS BUILT TO KEEP IT. <==** The
+panel's `onOpen` runs `showStorm`, which ticks the storm if it is not already
+ticked and then focuses it (§57.22b). So the highlight the track tap used to be
+arrives anyway — with the sheet and the flight attached. A second focus call in
+the tap branch would be the roster and the globe being told twice by two
+different roads, which is the disagreement §57.21a exists to prevent.
+
+**A SECOND TAP ON A DIFFERENT TRACK DOES NOT STACK A SECOND PANEL**, and that
+needed no work either: `ui/drawer.js`'s `push` replaces the top step when the
+view id is the one already showing, precisely so Back does not walk through the
+same view twice. Back stays one press from any storm to the roster.
+
+**==> `focusSeasonStormNow` IS NOW ONLY EVER CALLED WITH NULL, AND IT KEEPS ITS
+PARAMETER. <==** The empty-water clear is its one caller. Narrowing it to
+`clearSeasonFocus()` would be a rename reaching across the wall into `seasons/`
+for no behaviour, and the export on the other side is documented as taking an
+id or null. The shape stays; the doc block on the function carries the fact so
+the next reader does not go looking for the caller that used to be there.
+
+**THE COST WAS NAMED BEFORE GLASS AND ACCEPTED.** With four storms ticked, a
+reader can no longer flick between their tracks with the sheet down to compare
+them — every track tap now raises it. One tap on empty water minimises it again
+(§57.21d), so the comparison is still two gestures rather than one. Judged
+worth it against one mark meaning one thing.
+
+**==> THE GATE CAUGHT A HOLE IN ITSELF, AND THAT IS THE FINDING WORTH KEEPING.
+<==** The new assertion was mutation-tested by commenting the call out, and the
+suite stayed green: `// openSeasonStormNow(trackId);` is the same TEXT as a live
+call, so a regex over raw source proves a string is present rather than that
+anything is invoked. §57.21d had already recorded this exact trap being fixed
+once with arguments — arguments do not help, because a dead line carries them
+too.
+
+**BOTH TAP SUITES STRIP COMMENTS BEFORE READING.** Block comments first, then
+line comments, so a `//` inside a block cannot orphan the rest. Each strip is
+done ONCE and every assertion in that block reads it, because the previous
+attempt at this shape was fixed at one call site and the next assertion written
+underneath inherited the bug. **Each strip asserts it left real code behind**,
+so a regex change that empties the source fails as one clear thing rather than
+as every rule at once — the same guard §57.21d put on its negative-length
+slice.
+
+**SEVEN MUTATIONS, ALL SEVEN BITE.** Revert the track to focus-only; focus AND
+open (which every positive assertion alone would have passed, so the guard is
+an ABSENCE — the branch must not reach for the focus-only road at all); comment
+out the track call; comment out the glyph call; comment out the empty-water
+call; swap the glyph and track order; and the glyph suite's own commented-out
+call, which survived before this pass and does not now.
 
 ### 57.22 The storm detail panel
 

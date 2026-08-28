@@ -69,6 +69,22 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> A TAP ON A TRACK NOW OPENS THE STORM. NEEDS GLASS. §57.21e. <==** Aaron's
+call, 2026-08-28. Tapping a track on the sepia globe used to only brighten it;
+it now pushes the storm panel and flies to the first fix above the sheet — the
+same road the roster chevron and a glyph tap already took. **The one thing to
+judge is the cost that was accepted going in:** with several storms ticked you
+can no longer flick between their tracks with the sheet down to compare them,
+because every track tap raises it. One tap on empty water minimises it again.
+If that comparison turns out to matter more than one mark meaning one thing,
+this is a one-word revert and §57.21e says which word.
+
+**Also worth a look while you are in there:** whether `SEASONS.stormZoom` is
+the right landing zoom arriving from a track tap. The chevron and the glyph
+both come from a known place — the roster, or the space floor — but a track tap
+can start at any zoom, so the flight can now zoom OUT to reach it. Not measured,
+not changed, and it may well read fine.
+
 **==> THE WALL OF YEARS IS DONE THROUGH STEP 3. CONFIRMED ON GLASS 2026-08-27.
 AARON: "WORKS GREAT." <==** The wall is the archive's front door, the 175-year
 dropdown is gone, and it filters and sorts. **Read §57.36a before touching this
