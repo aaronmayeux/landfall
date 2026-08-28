@@ -19,7 +19,8 @@
  */
 
 import { SEASONS } from '../config/constants.js';
-import { buildLandMask, cameAshore, landfallsFor } from '../lib/landfall.js';
+import { cameAshore, landfallsFor } from '../lib/landfall.js';
+import { buildLandMask } from './land-raster.mjs';
 
 let passed = 0;
 const failures = [];

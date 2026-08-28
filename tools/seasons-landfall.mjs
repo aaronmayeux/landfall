@@ -36,7 +36,8 @@ import { join } from 'node:path';
 
 import { SEASONS } from '../config/constants.js';
 import { parseHurdat2 } from '../lib/hurdat.js';
-import { buildLandMask, landfallsFor } from '../lib/landfall.js';
+import { landfallsFor } from '../lib/landfall.js';
+import { buildLandMask } from './land-raster.mjs';
 
 /* ---------------------------------------------------------------------------
  * THE COASTLINE
