@@ -4828,3 +4828,71 @@ second visit onward every sentence would have been written into a detached
 element, silently, since `setDetail` on an orphan throws nothing. Both read
 `session.statusPill` now. Third instance of this trap in one feature, after
 `home`/`system` (§57.19) and `linkNote` (§57.38b).
+
+### 57.38d Both bottom pills, at every width
+
+**Aaron, 2026-08-28.** The two pills were phone-only; they are not any more.
+
+#### The rule that hid them had outlived its own reason
+
+`#storm-pill` carried `display: none` above 720px, and the reason written beside
+it was *"the rail is open by default and the Storms control reopens it"*.
+**That premise is dead and has been for some time.** `main.js` opens nothing on
+launch at any width — §16's first-launch sketch had the rail out on wide screens
+and glass rejected it, because the globe is the product and a list over it on
+arrival buries what the reader came for.
+
+So a desktop visitor arrived at a globe with **no caption at all**, which is the
+one job that pill has. The archive's pill then copied the hide from it at step 5
+(§57.38b), inheriting a rule whose justification had already gone.
+
+**Both are unhidden together**, because the pair is the point: same furniture,
+same edge, and one appearing only on a phone was never a decision anybody made.
+`#btn-storms` keeps the job it took at step 5 — it is a second road to the
+drawer, not a replacement for the pill.
+
+#### They centre on the globe, not on the window
+
+A pill centred on the VIEWPORT with a 340px rail out on a 720px window sits at
+x=360 — **inside the rail** — so it would be half buried by the one panel it is
+meant to sit beside. Both shift right by half the rail width when the rail is
+out, and by nothing otherwise.
+
+`--pill-shift` is published once in `ui/panels.css` and read by both pills, so
+they cannot end up at two different middles on one screen. It derives from
+`--rail-w`, which is the drawer's own `clamp(340px, 36vw, 440px)` lifted into a
+property rather than restated — the rail's width now has one definition.
+
+#### The drawer publishes its open state on `<html>`
+
+**==> BECAUSE ONE OF THE TWO THINGS THAT NEEDS IT IS NOT REACHABLE FROM THE
+DRAWER. <==** `#storm-pill` sits BEFORE `#drawer` in `index.html`, and CSS has
+no backwards sibling combinator, so `#drawer[data-open="true"] ~ #storm-pill`
+matches nothing.
+
+The alternatives were reordering the markup — which changes the tab order to
+solve a styling problem — or `:has()`, which nothing in this repo uses yet.
+`document.documentElement.dataset.drawer` is the pattern the archive already
+established with `data-seasons`: a mode published at the root, readable
+wherever the element happens to sit.
+
+**Its failure mode is silent**, which is why it is asserted directly in
+`tools/test-drawer-nav.mjs`: stop writing it and the pill does not error, it
+just sits half under the rail on one width.
+
+#### And the live pill stopped outranking the drawer
+
+`#storm-pill` was `z-index: 30` against `#drawer`'s 30, later in the same file,
+so it won the tie and painted OVER the sheet. **It never showed on a phone with
+the storm list up, because that view hides the pill** — but Layers, Settings and
+Home do not, and none of them was ever checked. Found while fixing the identical
+fault on the archive's pill (§57.38c) rather than on glass. Both are at 20 now.
+
+#### Eight mutations, eight killed
+
+The desktop hide reinstated; the centring reverted to a bare 50%; the root
+attribute never written; the root attribute never cleared; the shift as a
+literal rather than half the rail; and the live pill back at 30. The stub DOM in
+`tools/test-drawer-nav.mjs` gained a `documentElement` rather than the drawer
+gaining a guard — `document.documentElement` cannot be absent in a browser, so
+a guard would only have hidden the next stub that forgot it.
