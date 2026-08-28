@@ -2365,6 +2365,21 @@ still open — see `NOW.md`.
   Layers panel on `--glass-raised`. **The token targets 4:1 rather than 3:1 on
   purpose** — one parked a hundredth above its own gate fails the next time
   anything under it is retuned by eye, and both glass tokens have been.
+- **A CONTROL THAT REPAINTS ITSELF MID-GESTURE IS A CONTROL THAT DOES NOT
+  WORK.** A view that answers `input` by replacing its whole body destroys the
+  element the reader's finger is on, and a pointer drag cannot continue on a
+  node that no longer exists — so the thumb takes one step and stops. It looks
+  like a broken slider and it is a broken render. **Patch what the value
+  changed and leave the control alone**: the roster's radius slider
+  (`view-seasons-board.js`) and the wall's thresholds
+  (`view-seasons-wall.js`) both keep the markup they own in a slot below the
+  controls for exactly this. Found on glass twice, 2026-08-28 the second time.
+- **A RANGE SLIDER MOVES ONLY WHEN ITS THUMB IS GRABBED.** `ui/slider-grab.js`
+  owns the rule and every slider inside a scrollable sheet is armed with it. A
+  native range commits its value on the PRESS, anywhere along the track, before
+  any movement — so inside a sheet the reader scrolls with a thumb, a finger
+  passing over a slider silently changes a setting. This is a separate fault
+  from the repaint above and both were reported as one symptom.
 - **AN EMPTY GRID ROW STILL TAKES ITS GAP.** A row named in
   `grid-template-areas` exists whether or not anything is placed in it: it
   collapses to zero height, and the gap either side of it does not. A block with

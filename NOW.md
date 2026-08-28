@@ -69,26 +69,42 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> TWO ROSTER-ROW FIXES OFF THE SAME SCREENSHOT. NEED GLASS. §9.1. <==**
-Aaron, 2026-08-28, looking at 2025: the empty check boxes were hard to see and
-the boxes, dots and text were not on one line. Both were measured before they
-were touched and both are gated.
+**==> SIX ARCHIVE UI FIXES OFF ONE ROUND OF SCREENSHOTS. NEED GLASS. <==**
+Aaron, 2026-08-28. All six are measured and gated; the checks cannot tell
+whether they READ well.
 
-1. **The check box was drawing itself with the separator's token.** 1.30:1 in
-   sepia, and 1.33 and 1.41 in the other two — so this was never a sepia
-   problem, the archive just put thirteen in a column. `--control-edge` is now
-   its own token at 4.02–4.23:1 across all three palettes. **The Layers panel
-   uses the same box, so look at it too** — the fix reaches further than the
-   screen that found it.
-2. **The text sat 6px high while every mark beside it sat true.** An empty grid
-   row still takes its gap, and the roster declared a `near home` row on every
-   row in the app while `.seasons-approach` exists only under one filter. The
-   note makes its own row now. **The case to check is the Near home filter** —
-   a row WITH the note should still stack name, then note, with the dot centred
-   on the pair.
+1. **The More filters sliders now slide.** Two faults under one symptom. The
+   wall replaced its whole body on every `input`, destroying the element under
+   the thumb — fixed with a results slot below the controls, the same shape the
+   board's radius slider uses. And they were never armed with
+   `ui/slider-grab.js`, so a swipe across the track changed the value. §9.1
+   carries both rules now.
+2. **"Came ashore" is "Made landfall"** on the toggle, the sort and the spoken
+   row. Aaron's reason is the whole argument: the app is called Landfall.
+3. **The landfall sort reads `18 of 31`.** The denominator is storms SHOWN,
+   not the season's total — under a filter the numerator is already computed
+   over the subset, so the season's full size would be the wrong ratio in the
+   direction that flatters the old years. **Worth a look under a category
+   filter specifically.**
+4. **The asterisk line is one sentence with no figures**, per Aaron. The old
+   version's numbers came out and `rate` went with them.
+5. **The master check box lines up with the rows'** — it was 15px adrift, and
+   the label after it another 4px on top of that. Both were invisible to every
+   check because the row rules are scoped to `.seasons-row` and the master box
+   is not one. It is in the harness now.
+6. **More filters looks like a control**, with a chevron and a slide. **The
+   thing to judge is the animation** — it is a grid row going 0fr to 1fr, which
+   is the only shape a `<details>` can be eased with, and reduced-motion turns
+   it off.
 
-Both land as one or two sentences in §9.1 once confirmed; §9.1 already carries
-the general rules, so nothing new is owed to the spec but the confirmation.
+**AND THE YEAR PICKER IN THE HEADING IS MEASURED BUT NOT BUILT.** Aaron asked
+for the −/+ to move into the drawer heading and the standalone row to go. It
+FITS at 375px and up (24px clear of the back text at 390); it COLLIDES by 11px
+at 320. It was held back deliberately rather than run in with six other
+changes: it moves a control across the view/drawer boundary, so it needs its
+own click binding outside the body's delegated listener and needs the heading
+to re-render on every step. **That is its own pass, and the fit numbers above
+mean it can start without re-measuring.**
 
 **==> THE WALL OF YEARS IS DONE THROUGH STEP 3. CONFIRMED ON GLASS 2026-08-27.
 AARON: "WORKS GREAT." <==** The wall is the archive's front door, the 175-year
