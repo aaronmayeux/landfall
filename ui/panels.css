@@ -165,26 +165,6 @@
 /* Wide: left rail, fixed width, full height. A touchscreen laptop gets the
  * rail because it is WIDE, and that is correct (capability, not device). */
 @media (min-width: 720px) {
-  html {
-    /* The rail's width, named so more than one thing can read it. The clamp
-       and the reasoning behind 36vw are on `#drawer` below. */
-    --rail-w: clamp(340px, 36vw, 440px);
-
-    /* ==> HOW FAR THE BOTTOM PILLS MOVE SO THEY CENTRE ON THE GLOBE RATHER
-       THAN ON THE WINDOW. <== Aaron, 2026-08-28, asked for the pills on
-       desktop. A pill centred on the VIEWPORT with a 340px rail open on a
-       720px window sits at x=360 — inside the rail — so it would be half
-       buried by the one panel it is meant to sit beside. Shifting it by half
-       the rail puts it in the middle of what is actually visible.
-
-       Zero when the rail is shut, which is most of the time: nothing is
-       covering the globe then and the window IS the globe. */
-    --pill-shift: 0px;
-  }
-  html[data-drawer="open"] {
-    --pill-shift: calc(var(--rail-w) / 2);
-  }
-
   #drawer {
     top: 0;
     left: 0;
@@ -225,7 +205,7 @@
      * 36vw rather than 30: at 30 a 1024px laptop still clamped to the 340px
      * floor and got no improvement at all, which left the most common desktop
      * size out of a fix aimed at desktop. */
-    width: var(--rail-w);
+    width: clamp(340px, 36vw, 440px);
     border-radius: 0 var(--radius-large) var(--radius-large) 0;
     padding-top: var(--safe-top);
     transform: translateX(-105%);
@@ -1343,12 +1323,7 @@
 
 /* --- the collapsed pill (narrow first-launch, SPEC §16) ------------------- */
 #storm-pill {
-  /* ==> IT CENTRES ON THE GLOBE, NOT ON THE WINDOW. <== `--pill-shift` is 0
-     at phone width and on any width with the drawer shut, so this reads as
-     plain centring everywhere except a wide screen with the rail out. See the
-     property's own note in the wide block above.
-
-     ==> HOW THIS IS CENTRED AND HOW IT IS SIZED KEEP FIGHTING, SO BOTH ARE
+  /* ==> HOW THIS IS CENTRED AND HOW IT IS SIZED KEEP FIGHTING, SO BOTH ARE
      WRITTEN DOWN. <==
 
      It began as `left: 50%` with no `right`, which centred it correctly and
@@ -1367,7 +1342,7 @@
      `SIZE.pillInset` is still the number — it just does its job through the
      clamp now rather than through two offsets. */
   position: fixed;
-  left: calc(50% + var(--pill-shift, 0px));
+  left: 50%;
   transform: translateX(-50%);
   width: max-content;
   max-width: calc(100vw - 2 * var(--pill-inset));

@@ -4851,34 +4851,21 @@ same edge, and one appearing only on a phone was never a decision anybody made.
 `#btn-storms` keeps the job it took at step 5 — it is a second road to the
 drawer, not a replacement for the pill.
 
-#### They centre on the globe, not on the window
+#### They centre on the WINDOW, the same as the pill at the top
 
-A pill centred on the VIEWPORT with a 340px rail out on a 720px window sits at
-x=360 — **inside the rail** — so it would be half buried by the one panel it is
-meant to sit beside. Both shift right by half the rail width when the rail is
-out, and by nothing otherwise.
+**A version that centred them on the visible globe was built and rejected on
+glass, 2026-08-28.** It shifted both right by half the rail when the rail was
+out, on the reasoning that a viewport-centred pill sits inside a 340px rail at
+the narrow end of desktop. Aaron's call is that a pill which MOVES when the
+drawer opens reads worse than one that sits still, and that the bottom pills
+should match `seasons/pill.js` at the top — which has always been plain
+`left: 50%`.
 
-`--pill-shift` is published once in `ui/panels.css` and read by both pills, so
-they cannot end up at two different middles on one screen. It derives from
-`--rail-w`, which is the drawer's own `clamp(340px, 36vw, 440px)` lifted into a
-property rather than restated — the rail's width now has one definition.
-
-#### The drawer publishes its open state on `<html>`
-
-**==> BECAUSE ONE OF THE TWO THINGS THAT NEEDS IT IS NOT REACHABLE FROM THE
-DRAWER. <==** `#storm-pill` sits BEFORE `#drawer` in `index.html`, and CSS has
-no backwards sibling combinator, so `#drawer[data-open="true"] ~ #storm-pill`
-matches nothing.
-
-The alternatives were reordering the markup — which changes the tab order to
-solve a styling problem — or `:has()`, which nothing in this repo uses yet.
-`document.documentElement.dataset.drawer` is the pattern the archive already
-established with `data-seasons`: a mode published at the root, readable
-wherever the element happens to sit.
-
-**Its failure mode is silent**, which is why it is asserted directly in
-`tools/test-drawer-nav.mjs`: stop writing it and the pill does not error, it
-just sits half under the rail on one width.
+**The machinery went with it rather than being left unused:** `--pill-shift`,
+`--rail-w`, and `document.documentElement.dataset.drawer`. That last existed
+only because `#storm-pill` sits before `#drawer` in the markup and CSS cannot
+select backwards past a sibling — a problem that only arises if the pill needs
+to know the rail is out, which it no longer does.
 
 #### And the live pill stopped outranking the drawer
 
@@ -4888,11 +4875,9 @@ the storm list up, because that view hides the pill** — but Layers, Settings a
 Home do not, and none of them was ever checked. Found while fixing the identical
 fault on the archive's pill (§57.38c) rather than on glass. Both are at 20 now.
 
-#### Eight mutations, eight killed
+#### What is asserted
 
-The desktop hide reinstated; the centring reverted to a bare 50%; the root
-attribute never written; the root attribute never cleared; the shift as a
-literal rather than half the rail; and the live pill back at 30. The stub DOM in
-`tools/test-drawer-nav.mjs` gained a `documentElement` rather than the drawer
-gaining a guard — `document.documentElement` cannot be absent in a browser, so
-a guard would only have hidden the next stub that forgot it.
+That neither pill is hidden on a wide screen, that both centre on the window,
+and that the live pill sits under the drawer. The desktop hide reinstated and
+the live pill back at 30 were each mutation-checked and each turns
+`tools/test-seasons-status-pill.mjs` red.

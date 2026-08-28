@@ -143,16 +143,13 @@ missing desktop pill settled — the rule hiding it was resting on "the rail is
 open by default", which stopped being true when §16's open-on-launch sketch was
 rejected on glass. §57.38d.
 
-**What to look at on a desktop browser, live globe and archive both:**
+**What to look at on a desktop browser, live globe and archive both:** each
+pill centred at the bottom of the window, exactly as on a phone, and staying
+put when the rail opens. A version that shifted them right to centre on the
+visible globe was built and rejected — do not rebuild it without new evidence.
 
-- **With the rail shut**, each pill should sit centred at the bottom of the
-  window, the same as on a phone.
-- **With the rail out**, they should slide right so they are centred on the
-  GLOBE rather than the window — half the rail's width. Worth checking at a
-  narrow desktop window (around 800px) where the rail is a big share of the
-  screen, since that is the case a plain centre would have buried.
-- **The live pill still disappears while the storm LIST is open**, because the
-  list says everything the pill would. Every other view keeps it.
+**The live pill still disappears while the storm LIST is open**, because the
+list says everything the pill would. Every other view keeps it.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on

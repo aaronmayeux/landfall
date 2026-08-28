@@ -182,27 +182,12 @@ ok('==> NEITHER PILL IS HIDDEN ON A WIDE SCREEN ANY MORE <==',
   !/#storm-pill\s*\{\s*display:\s*none/.test(panels)
   && !/#seasons-status-pill\s*\{\s*display:\s*none\s*;?\s*\}/.test(css));
 
-/* ==> THE SHIFT IS ONE NUMBER READ BY BOTH, NOT TWO THAT AGREE TODAY. <== A
- * pill centred on the VIEWPORT with the rail out sits inside it at the narrow
- * end of desktop, so both move by half the rail — and if they ever moved by
- * different amounts they would sit at two different middles on one screen. */
+/* ==> BOTH CENTRE ON THE WINDOW, THE SAME AS THE PILL AT THE TOP. <== A
+ * version that shifted them right by half the rail so they centred on the
+ * visible globe was built and rejected on glass, 2026-08-28. */
 for (const [name, sheet] of [['the live pill', panels], ['the archive pill', css]]) {
-  ok(`${name} centres on --pill-shift rather than a bare 50%`,
-    /left:\s*calc\(50%\s*\+\s*var\(--pill-shift/.test(sheet));
+  ok(`${name} centres on the window`, /left:\s*50%/.test(sheet));
 }
-
-ok('and the shift is published once, by the drawer\'s own stylesheet',
-  /--pill-shift:\s*0px/.test(panels)
-  && /html\[data-drawer="open"\][^}]*--pill-shift:\s*calc\(var\(--rail-w\)\s*\/\s*2\)/s.test(panels));
-
-/* ==> AND THE DRAWER HAS TO PUBLISH ITS STATE WHERE THE LIVE PILL CAN READ IT.
- * <== `#storm-pill` sits BEFORE `#drawer` in index.html and CSS has no
- * backwards sibling combinator, so the rule hangs off `<html>` instead. If
- * that attribute stops being written the pill silently stops moving and sits
- * under the rail — no error, just a half-buried caption. */
-const drawerJs = readFileSync(join(ROOT, 'ui/drawer.js'), 'utf8');
-ok('==> AND THE DRAWER PUBLISHES ITS OPEN STATE ON <html> <==',
-  /documentElement\.dataset\.drawer\s*=/.test(drawerJs));
 
 /* The live pill stopped outranking the drawer at the same time — same fault
  * the archive pill had, and it was reachable on a phone through Layers,

@@ -441,61 +441,6 @@ section('every header is a title and an X, and a press across it does nothing');
     '==> AND NEITHER DOES A PRESS ON THE ARCHIVE\'S <== — that is the reversal');
 }
 
-/* --------------------------------------------------------------------------
- * THE OPEN STATE IS PUBLISHED AT THE ROOT, NOT ONLY ON THE DRAWER.
- *
- * ==> IT IS LOAD-BEARING FOR SOMETHING THAT IS NOT A DESCENDANT. <== The two
- * bottom pills centre on the GLOBE rather than on the window, which means
- * moving out of the rail's way when it is out. `#storm-pill` is earlier in the
- * markup than `#drawer`, so no sibling rule reaches it. If this attribute
- * stops being written the pill silently sits half under the rail — no error,
- * just a buried caption on one width.
- * ------------------------------------------------------------------------ */
-section('the drawer says at the root whether it is open');
-
-{
-  const { drawer } = rig();
-  /* Cleared by hand: `docEl` is one object shared by every rig in this file,
-   * so whatever the last block left behind is still on it. Asserting a
-   * starting value without this would be testing the previous test. */
-  delete docEl.dataset.drawer;
-
-  drawer.go('storms', undefined, { from: stubEl('button') });
-  ok(docEl.dataset.drawer === 'open',
-    '==> OPENING SAYS SO ON <html> <==');
-
-  drawer.close();
-  ok(docEl.dataset.drawer === 'shut',
-    '  and closing says so too, rather than leaving the last answer standing');
-}
-
-{
-  /* ==> THE GLYPH IS ASSERTED AT THE SOURCE, NOT THROUGH THE RIG. <== It is
-   * static markup in the header template now rather than something
-   * `renderChrome` writes per view, so a stub DOM with no HTML parser cannot
-   * see it and an assertion through `parts` would be testing the rig. The
-   * point of the change is that there is nothing left to vary. */
-  const drawerJs = readFileSync(path.join(ROOT, 'ui/drawer.js'), 'utf8');
-  ok(/class="drawer-close"[^>]*aria-label="Close"/.test(drawerJs),
-    'the one close button is labelled Close in the shared header');
-  ok(/M6 6l12 12M18 6L6 18/.test(drawerJs),
-    '  and draws an X');
-  ok(!/M6 9l6 6 6-6/.test(drawerJs),
-    '==> AND THE MINIMISE CHEVRON IS NOWHERE IN THIS FILE <==');
-}
-
-{
-  /* Deleted rather than left unused, so no view can reintroduce it with a
-   * flag. `retire cleanly` — and a dormant branch is how the chevron would
-   * come back by accident. */
-  const drawerJs = readFileSync(path.join(ROOT, 'ui/drawer.js'), 'utf8');
-  ok(!/def\.minimises/.test(drawerJs),
-    'and the per-view override is gone from the code, not merely unset');
-  const css = readFileSync(path.join(ROOT, 'ui/panels.css'), 'utf8');
-  ok(!/\[data-minimises="true"\]\s*\.drawer-head/.test(css),
-    'and its hover and cursor rules went with it');
-}
-
 /* --- report -------------------------------------------------------------- */
 if (failures.length) {
   console.log(`\n✗ ${failures.length} failed:`);

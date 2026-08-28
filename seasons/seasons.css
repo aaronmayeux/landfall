@@ -157,11 +157,12 @@ html[data-seasons="on"] {
   position: fixed;
   transform: translateX(-50%);
   bottom: var(--safe-bottom);
-  /* Centred on the GLOBE rather than the window: `--pill-shift` is published
-     by `ui/panels.css` and is zero except on a wide screen with the rail out.
-     One number, read by both pills, so they can never disagree about where
-     the middle is. */
-  left: calc(50% + var(--pill-shift, 0px));
+  /* ==> CENTRED ON THE WINDOW, THE SAME AS THE PILL AT THE TOP. <== Aaron,
+     2026-08-28. A version that shifted right by half the rail so it centred on
+     the visible globe was built and rejected on glass: the pill moving when
+     the drawer opens reads worse than it sitting still, and the two pills must
+     agree with each other before either agrees with the rail. */
+  left: 50%;
   width: max-content;
   max-width: calc(100vw - 2 * var(--pill-inset));
   /* ==> BELOW THE DRAWER, AND THAT IS WHERE IT DIFFERS FROM ITS MODEL. <==

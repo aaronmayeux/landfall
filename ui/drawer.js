@@ -402,19 +402,6 @@ export function createDrawer({ root }) {
   function setOpenState(next) {
     open = next;
     root.dataset.open = String(open);
-    /* ==> AND PUBLISHED ON `<html>` TOO, BECAUSE ONE THING THAT NEEDS IT IS
-     * NOT A DESCENDANT OR A LATER SIBLING. <== `#storm-pill` sits BEFORE
-     * `#drawer` in `index.html`, and CSS has no backwards sibling combinator —
-     * so `#drawer[data-open="true"] ~ #storm-pill` reaches nothing and the
-     * pill cannot move out of the rail's way on a wide screen from the
-     * drawer's own attribute.
-     *
-     * The alternatives were reordering the markup, which changes the tab
-     * order for a styling problem, or `:has()`, which nothing in this repo
-     * uses yet. This is the pattern the archive already established with
-     * `data-seasons` — a mode published at the root where any rule can read
-     * it regardless of where the element sits. */
-    document.documentElement.dataset.drawer = open ? 'open' : 'shut';
   }
 
   /* --- public navigation ---------------------------------------------------
