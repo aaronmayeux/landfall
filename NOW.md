@@ -69,42 +69,33 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> SIX ARCHIVE UI FIXES OFF ONE ROUND OF SCREENSHOTS. NEED GLASS. <==**
-Aaron, 2026-08-28. All six are measured and gated; the checks cannot tell
-whether they READ well.
+**==> FIVE OF THE SIX ARCHIVE UI FIXES ARE CONFIRMED ON GLASS. <==** Aaron,
+2026-08-28: sliders, the landfall rename, the short asterisk line, the master
+check box and the More filters control all land. They are in §9.1 and need
+nothing further.
 
-1. **The More filters sliders now slide.** Two faults under one symptom. The
-   wall replaced its whole body on every `input`, destroying the element under
-   the thumb — fixed with a results slot below the controls, the same shape the
-   board's radius slider uses. And they were never armed with
-   `ui/slider-grab.js`, so a swipe across the track changed the value. §9.1
-   carries both rules now.
-2. **"Came ashore" is "Made landfall"** on the toggle, the sort and the spoken
-   row. Aaron's reason is the whole argument: the app is called Landfall.
-3. **The landfall sort reads `18 of 31`.** The denominator is storms SHOWN,
-   not the season's total — under a filter the numerator is already computed
-   over the subset, so the season's full size would be the wrong ratio in the
-   direction that flatters the old years. **Worth a look under a category
-   filter specifically.**
-4. **The asterisk line is one sentence with no figures**, per Aaron. The old
-   version's numbers came out and `rate` went with them.
-5. **The master check box lines up with the rows'** — it was 15px adrift, and
-   the label after it another 4px on top of that. Both were invisible to every
-   check because the row rules are scoped to `.seasons-row` and the master box
-   is not one. It is in the harness now.
-6. **More filters looks like a control**, with a chevron and a slide. **The
-   thing to judge is the animation** — it is a grid row going 0fr to 1fr, which
-   is the only shape a `<details>` can be eased with, and reduced-motion turns
-   it off.
+**AND THE SIXTH CAME BACK WRONG, IN THE ONE WAY NOTHING COULD SEE.** The
+landfall sort read `18 of 3`. The DOM said `18 of 31` and every node assertion
+agreed with it — the figure column was 2.6em with `overflow: hidden`, so the
+browser threw the last character away at paint. **`textContent` cannot see a
+clip; only a layout engine can.** The ratio now lives in the count column,
+which is where its denominator already was — a figure of its own printed the
+total twice AND clipped doing it. `seasons-wall-check.mjs` section 11 measures
+`scrollWidth - clientWidth` on every row, and both mutations bite.
 
-**AND THE YEAR PICKER IN THE HEADING IS MEASURED BUT NOT BUILT.** Aaron asked
-for the −/+ to move into the drawer heading and the standalone row to go. It
-FITS at 375px and up (24px clear of the back text at 390); it COLLIDES by 11px
-at 320. It was held back deliberately rather than run in with six other
-changes: it moves a control across the view/drawer boundary, so it needs its
-own click binding outside the body's delegated listener and needs the heading
-to re-render on every step. **That is its own pass, and the fit numbers above
-mean it can start without re-measuring.**
+**THE LESSON WORTH KEEPING IS ABOUT THE GATE, NOT THE COLUMN.** Every text
+assertion in this repo compares strings that the browser may never finish
+drawing. **Anywhere a number shares a fixed-width column with new content,
+the assertion has to be a measurement.**
+
+**==> AND THE YEAR PICKER IN THE HEADING IS MEASURED BUT NOT BUILT. <==** Aaron
+asked for the −/+ to move into the drawer heading and the standalone row to go.
+It FITS at 375px and up (24px clear of the back text at 390); it COLLIDES by
+11px at 320. Held back deliberately rather than run in with six other changes:
+it moves a control across the view/drawer boundary, so it needs its own click
+binding outside the body's delegated listener and needs the heading to
+re-render on every step. **That is its own pass, and the fit numbers above mean
+it can start without re-measuring.**
 
 **==> THE WALL OF YEARS IS DONE THROUGH STEP 3. CONFIRMED ON GLASS 2026-08-27.
 AARON: "WORKS GREAT." <==** The wall is the archive's front door, the 175-year
