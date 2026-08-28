@@ -162,6 +162,21 @@ console.log('\nthe fallback-page guard — what stops a 404 becoming permanent')
     typeMatchesUrl(html, `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === false,
   );
   ok(
+    /* ==> AND A THIRD FILE TYPE SINCE §57.7b. <== The land mask is
+     * `landmask-*.bin.gz` under the same cache-first, immutable path.
+     * `lib/land-mask.js` checks its magic bytes, so an HTML page in its place
+     * throws rather than answering wrongly — but on a cache-first path a bad
+     * answer is never re-fetched, so it would throw FOREVER and the running
+     * season would silently lose its landfalls until someone cleared the
+     * cache. Loud-but-permanent is still the wrong outcome. */
+    'an HTML answer for the land mask .gz is refused',
+    typeMatchesUrl(html, `${HOST}/seasons/data/landmask-v5.1.2-0.02.bin.gz`) === false,
+  );
+  ok(
+    'and real gzip bytes for it are accepted',
+    typeMatchesUrl(res('application/gzip'), `${HOST}/seasons/data/landmask-v5.1.2-0.02.bin.gz`) === true,
+  );
+  ok(
     'and real JSON for it is accepted',
     typeMatchesUrl(res('application/json'), `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === true,
   );

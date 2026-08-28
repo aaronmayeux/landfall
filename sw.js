@@ -170,11 +170,18 @@ self.addEventListener('fetch', (event) => {
  * Atlantic record and never look again — and unlike the vendor case there is
  * no MIME error to make it obvious, just a parser finding no storms and the
  * archive looking empty rather than broken.
+ * ==> `gz` IS IN THE LIST FOR THE SAME REASON AND ONE WORSE. <== §57.7b added
+ * `landmask-*.bin.gz` under the same cache-first path. `lib/land-mask.js`
+ * checks the magic bytes, so an HTML page served in its place FAILS loudly
+ * rather than answering wrongly — but failing loudly forever is still the wrong
+ * outcome: cache-first means the bad answer is never re-fetched, and the
+ * running season would silently stop showing landfalls until someone cleared
+ * the cache by hand.
  */
 function typeMatchesUrl(res, url) {
   const type = (res.headers.get('Content-Type') || '').toLowerCase();
   if (!type.includes('text/html')) return true;
-  return !/\.(js|css|mjs|json|txt|png|webmanifest)$/i.test(new URL(url).pathname);
+  return !/\.(js|css|mjs|json|txt|png|gz|webmanifest)$/i.test(new URL(url).pathname);
 }
 
 /* Version-pinned vendor files: a URL that can never mean something new is safe
