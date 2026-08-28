@@ -43,22 +43,19 @@
 import { SEASONS } from '../config/constants.js';
 import { aggregate, dotSizeFor, liveRow, rowsFor } from '../lib/wall-index.js';
 import {
-  emptyFilter, eraSplit, filterPhrase, isFiltered, keepFor, sortRows,
+  emptyFilter, eraSplit, filterPhrase, isFiltered, isTimeline, keepFor, sortRows,
 } from '../lib/wall-filter.js';
 import { stormFacts } from '../lib/season-facts.js';
 import { loadLandMask } from '../lib/land-mask.js';
 import { landfallsFor } from '../lib/landfall.js';
 import { esc } from './seasons-board-markup.js';
 import { catProse, liveRowHtml, liveRowPlaceholderHtml, wallHtml } from './seasons-wall-markup.js';
-import { controlsHtml } from './seasons-wall-controls.js';
+import { THRESHOLD_WORDS, controlsHtml, honestyHtml } from './seasons-wall-controls.js';
 import { dotted } from './loading-dots.js';
-
-/** Where a strip's width comes from when the element has not been laid out
- *  yet — first paint, or a hidden host. `dotSizeFor` clamps whatever it gets,
- *  so a wrong guess here is a dot one pixel out for one frame, never a broken
- *  row. Measured from the real sheet at 390px: 32px of padding, a 42px year
- *  column, two 8px gaps and a 46px count column. */
-const FALLBACK_STRIP_PX = 390 - 32 - 42 - 16 - 46;
+import { requireThumbGrab } from './slider-grab.js';
+/* The strip's geometry — cut out when this file crossed §12's ceiling. Both
+ * take what they need as arguments, so nothing about this view leaks into it. */
+import { settleDotSize as settleDotSizeIn, stripPx as stripPxIn } from './seasons-wall-strip.js';
 
 /**
  * @param {object} opts
@@ -269,64 +266,8 @@ export function createSeasonsWallView({
 
   /* --- markup -------------------------------------------------------------- */
 
-  /** How wide a strip actually is, measured rather than assumed.
-   *
-   *  ==> IT MEASURES THE STRIP THAT IS ALREADY ON SCREEN, WHICH IS THE WHOLE
-   *  RESIZE BUG. <== Aaron on glass, 2026-08-26: the dots were one size on
-   *  first open and a smaller one after coming back from a season. He was
-   *  right and it was not a trick of the eye. This runs while the NEXT render
-   *  is still being assembled, so on the very first paint there is no strip to
-   *  measure and it fell back to a guessed width — then every later render
-   *  measured the real one and got a different answer. Two sizes, decided by
-   *  whether the reader had been here before.
-   *
-   *  The fix is not a better guess. It is `settleDotSize` below: paint, then
-   *  measure, then correct — and the correction is a custom property rather
-   *  than a re-render, so it cannot cost 175 rows of markup. */
-  function stripPx() {
-    /* Measured inside `.wall`, never on the pinned row: that row carries an
-     * extra column for its note, so its strip is narrower and sizing the whole
-     * basin off it would shrink all 175 rows to fit a row that is not part of
-     * the record. */
-    const slot = bodyEl?.querySelector('.wall .wall-strip-slot');
-    const measured = slot?.getBoundingClientRect?.()?.width;
-    return Number.isFinite(measured) && measured > 0 ? measured : FALLBACK_STRIP_PX;
-  }
-
-  /**
-   * Correct the dot size once the browser has actually laid the strip out.
-   *
-   * ==> THE SIZE IS A CUSTOM PROPERTY, SO THIS COSTS ONE STYLE WRITE. <== The
-   * markup carries no pixel figures at all; every dot reads `--wall-dot` and
-   * `--wall-dot-gap` off the container. So correcting a strip that turned out
-   * to be 300px rather than the guessed 254 is two `setProperty` calls, not a
-   * rebuild of every row — which matters because this runs on every entry.
-   *
-   * ==> ONE FRAME, AND ONE CORRECTION. <== `requestAnimationFrame` puts this
-   * after layout. It deliberately does not loop: the dot size does not change
-   * the strip's width — the slot is a `1fr` grid track and takes what is left
-   * over whatever is inside it — so one pass converges. A loop here would be a
-   * measure-write-measure cycle on a scrolling list, which is the frame budget
-   * gone.
-   */
-  function settleDotSize() {
-    if (status !== 'ok' || !basin) return;
-    const raf = globalThis.requestAnimationFrame || ((fn) => setTimeout(fn, 0));
-    raf(() => {
-      /* ==> THE SIZE GOES ON THE BODY, NOT ON `.wall`, AND THAT WAS A REAL
-       * BUG. <== Aaron on glass, 2026-08-26: the pinned 2026 row's dots were
-       * visibly bigger than every row under it. The pinned row sits ABOVE the
-       * `.wall` container — it is not part of the record — so a property set
-       * on `.wall` never reached it and it fell through to the stylesheet's
-       * default while the 175 rows below used the computed size. Two dot sizes
-       * on one screen, which is the one thing a wall drawn to a single scale
-       * must never show. The body is the nearest ancestor of both. */
-      if (!bodyEl?.style?.setProperty) return;
-      const { size, gap } = dotSizeFor(wall, basin, stripPx());
-      bodyEl.style.setProperty('--wall-dot', `${size}px`);
-      bodyEl.style.setProperty('--wall-dot-gap', `${gap}px`);
-    });
-  }
+  const stripPx = () => stripPxIn(bodyEl);
+  const settleDotSize = () => settleDotSizeIn({ bodyEl, wall, basin, status });
 
   function basinsHtml() {
     const basins = seasons.basinsIn(index).filter((b) => wall.basins?.[b]);
@@ -406,19 +347,35 @@ export function createSeasonsWallView({
       return `<p class="wall-note">The record holds no seasons for this basin.</p>`;
     }
 
-    const controls = controlsHtml({
-      filter,
-      sortKey,
-      sortDir,
-      moreOpen,
-      /* Computed over the FILTERED rows, so the line quotes the undercount for
-       * the question actually on screen rather than for storms in general. */
-      split: eraSplit(rows),
-      phrase,
-    });
+    const controls = controlsHtml({ filter, sortKey, sortDir, moreOpen });
 
-    return basinsHtml() + controls + liveHtml(keep)
-      + wallHtml(rows, { size, gap, filtered, sortKey, sortDir, phrase });
+    /* ==> EVERYTHING BELOW THE CONTROLS IS ITS OWN SLOT, AND THAT IS THE
+     * SLIDER FIX. <== Aaron on glass, 2026-08-28: the More filters sliders do
+     * not slide. The cause is here rather than in the slider — `changed()`
+     * replaced the WHOLE body on every `input` event, so the input under the
+     * reader's thumb was destroyed and rebuilt between one step of the drag
+     * and the next. A pointer cannot keep dragging a node that no longer
+     * exists, so the thumb moved once and stopped.
+     *
+     * The board already solved this and this is its shape: patch what the
+     * value CHANGED and leave the control alone (`view-seasons-board.js`'s
+     * `repaintRoster`). The controls block holds the sliders, so it is the one
+     * thing a slider drag must not touch. Everything a threshold can alter —
+     * the honesty line, the pinned row, the wall — is below it and inside
+     * this slot.
+     *
+     * A chip or a sort press still redraws the lot: those replace no node the
+     * reader is mid-gesture on. */
+    return basinsHtml() + controls
+      + `<div class="wall-results-slot">${resultsHtml(keep, rows, { size, gap, filtered, sortKey, sortDir, phrase })}</div>`;
+  }
+
+  /** The honesty line, the pinned row and the wall itself — everything a
+   *  threshold slider can change without the controls above it moving. */
+  function resultsHtml(keep, rows, opts) {
+    const disclose = isFiltered(filter) || !isTimeline(sortKey);
+    return (disclose ? honestyHtml(eraSplit(rows)) : '')
+      + liveHtml(keep) + wallHtml(rows, opts);
   }
 
   /** The pinned row for the season in progress, in whichever of its three
@@ -453,6 +410,19 @@ export function createSeasonsWallView({
     if (!bodyEl) return;
     bodyEl.innerHTML = noteHtml() + bodyHtml();
     settleDotSize();
+    /* ==> A THRESHOLD SLIDER MOVES ONLY WHEN YOU GRAB ITS THUMB. <== Aaron on
+     * glass, 2026-08-28: swiping the sheet moved the thumb. `ui/slider-grab.js`
+     * has owned this rule since Settings hit it, and these sliders were simply
+     * never armed with it — the second half of the same report as the drag
+     * fix, and a different fault: a native range commits its value on the
+     * PRESS, anywhere along the track, before any movement. Inside a sheet the
+     * reader scrolls with their thumb that means a finger passing over a
+     * slider silently changes which seasons are on the wall.
+     *
+     * Armed after every render because `innerHTML` puts fresh inputs in. The
+     * file marks the root it has armed, so this is one cheap check on the
+     * ordinary redraw rather than a rebind. */
+    requireThumbGrab(bodyEl);
   }
 
   /* --- input ---------------------------------------------------------------
@@ -510,15 +480,60 @@ export function createSeasonsWallView({
       if (id === 'days') filter.minDays = v;
       else if (id === 'pressure') filter.maxPressureMb = v;
       else if (id === 'ace') filter.minAce = v;
-      changed();
-      /* The markup was replaced, so the element under the thumb is a new one.
-       * Handing focus back keeps a keyboard reader on the control they were
-       * dragging — without it, arrow-keying a slider moves it once and then
-       * loses the focus into the body. */
-      refocus(`[data-threshold="${id}"]`);
+
+      /* ==> THE READOUT AND THE RESULTS ARE PATCHED. THE CONTROLS ARE NOT.
+       * <== Aaron on glass, 2026-08-28: these sliders did not slide. This line
+       * used to be `changed()`, which replaces the whole body — including the
+       * `<input>` the reader's finger is on. A pointer drag cannot continue on
+       * a node that has been destroyed and replaced, so the thumb took one
+       * step and stopped dead, on every engine, every time.
+       *
+       * It is the same fix and the same shape as `view-seasons-board.js`'s
+       * `repaintRoster`: change what the value CHANGED and leave the control
+       * the gesture is on alone. No scroll save/restore is needed either,
+       * because the scroller's own contents above the slot no longer move. */
+      paintThresholdReadout(slider, id);
+      repaintResults();
       return;
     }
 
+  }
+
+  /** The figure beside a threshold's label, patched in place.
+   *
+   *  ==> THE SEEN NUMBER AND THE ANNOUNCED ONE COME OFF ONE STRING. <== §13.
+   *  The same rule the board's radius slider states: a sighted reader and a
+   *  screen-reader reader must never be told different numbers, and a bare
+   *  figure with no unit on it is not a value. */
+  function paintThresholdReadout(slider, id) {
+    const v = thresholdValue(id, slider.value);
+    /* `Any` when the threshold is OFF — the same distinction the markup makes,
+     * and the reason this reads `thresholdValue` rather than `slider.value`:
+     * a slider parked at its rail is not filtering at zero, it is not
+     * filtering. */
+    const words = v == null ? 'Any' : THRESHOLD_WORDS[id](v);
+    const readout = slider.closest('.slider-row')?.querySelector('.slider-value');
+    if (readout) readout.textContent = words;
+    slider.setAttribute('aria-valuetext', words);
+  }
+
+  /** Swap the honesty line, the pinned row and the wall — everything a
+   *  threshold can change — without touching the controls above them. */
+  function repaintResults() {
+    const slot = bodyEl?.querySelector('.wall-results-slot');
+    if (!slot) { changed(); return; }
+    const { size, gap } = dotSizeFor(wall, basin, stripPx());
+    const keep = keepFor(filter);
+    const rows = sortRows(rowsFor(wall, basin, keep), sortKey, sortDir);
+    slot.innerHTML = resultsHtml(keep, rows, {
+      size,
+      gap,
+      filtered: isFiltered(filter),
+      sortKey,
+      sortDir,
+      phrase: filterPhrase(filter, { catLabel: catProse }),
+    });
+    settleDotSize();
   }
 
   function onClick(e) {

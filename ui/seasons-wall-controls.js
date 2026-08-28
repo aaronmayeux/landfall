@@ -77,10 +77,32 @@ export function chipsHtml(cats) {
 export function landfallToggleHtml(on) {
   return `<button class="switch-row wall-switch" type="button" role="switch"
       data-landfall aria-checked="${String(!!on)}">
-      <span>Came ashore</span>
+      <span>Made landfall</span>
       <span class="switch-track" aria-hidden="true"></span>
     </button>`;
 }
+
+/**
+ * What each threshold's figure reads as.
+ *
+ * ==> HOISTED OUT OF `moreFiltersHtml` AND EXPORTED, BECAUSE A SECOND CALLER
+ * APPEARED. <== §12: a pattern used twice gets extracted before the second
+ * use. The view patches this readout in place while the reader drags (the
+ * slider fix — see `view-seasons-wall.js`'s `onInput`), so the words are now
+ * written in one place and read in two. Inline copies would look identical
+ * the day they were written and drift the first time a unit was retuned, and
+ * the symptom would be the dragged figure disagreeing with the rendered one.
+ *
+ * ==> `Any` IS NOT IN HERE, BECAUSE IT IS NOT A VALUE. <== It is what the row
+ * says when the filter is OFF, which `thresholdHtml` decides from whether the
+ * value is finite at all. Folding it in would make every caller ask the same
+ * question twice.
+ */
+export const THRESHOLD_WORDS = Object.freeze({
+  days: (v) => `${v} day${v === 1 ? '' : 's'}`,
+  pressure: (v) => `${v} mb`,
+  ace: (v) => `${v} ACE`,
+});
 
 /**
  * One threshold slider.
@@ -128,7 +150,7 @@ export function moreFiltersHtml(f, open) {
     min: SEASONS.wallDaysMin,
     max: SEASONS.wallDaysMax,
     step: SEASONS.wallDaysStep,
-    words: (v) => `${v} day${v === 1 ? '' : 's'}`,
+    words: THRESHOLD_WORDS.days,
   }) + thresholdHtml({
     id: 'pressure',
     label: 'Pressure below',
@@ -136,7 +158,7 @@ export function moreFiltersHtml(f, open) {
     min: SEASONS.wallPressureMin,
     max: SEASONS.wallPressureMax,
     step: SEASONS.wallPressureStep,
-    words: (v) => `${v} mb`,
+    words: THRESHOLD_WORDS.pressure,
     /* ==> THIS ONE'S "OFF" IS AT THE TOP OF THE TRAVEL, NOT THE BOTTOM. <==
      * Lower pressure is a stronger storm, so dragging LEFT narrows here and
      * narrows nothing on the other two. Parking it at the max when unset is
@@ -150,12 +172,26 @@ export function moreFiltersHtml(f, open) {
     min: SEASONS.wallAceMin,
     max: SEASONS.wallAceMax,
     step: SEASONS.wallAceStep,
-    words: (v) => `${v} ACE`,
+    words: THRESHOLD_WORDS.ace,
   });
 
+  /* ==> THE ROWS SIT INSIDE A WRAPPER, AND THE WRAPPER IS WHAT ANIMATES. <==
+   * A `<details>` cannot be transitioned: the browser flips its children
+   * between rendered and not-rendered, so there is nothing in between to ease.
+   * The shipped trick is a grid whose single row goes 0fr -> 1fr, which IS
+   * animatable — and the inner element needs `min-height: 0` and
+   * `overflow: hidden` or it refuses to be squashed below its content.
+   *
+   * ==> WHICH MEANS THE PANEL MUST NOT BE `display: none` WHILE CLOSED. <== A
+   * closed `<details>` hides everything after the summary, so the markup keeps
+   * the panel visible to CSS and lets the grid do the hiding. Its own rule in
+   * `seasons.css` says so where a future reader would otherwise "fix" it. */
   return `<details class="wall-more"${open ? ' open' : ''} data-more>
-      <summary>More filters</summary>
-      ${rows}
+      <summary>
+        <span>More filters</span>
+        <span class="wall-more-chevron" aria-hidden="true"></span>
+      </summary>
+      <div class="wall-more-panel"><div class="wall-more-inner">${rows}</div></div>
     </details>`;
 }
 
@@ -187,11 +223,18 @@ const SORT_KEYS = [
   ['year', 'Year', 'Newest year first', 'Oldest year first'],
   ['count', 'Count', 'Most storms first', 'Fewest storms first'],
   ['strongest', 'Strongest', 'Strongest first', 'Weakest first'],
-  /* ==> "CAME ASHORE" RATHER THAN "LANDFALLS", AND IT MATCHES THE FILTER
-   * TOGGLE'S OWN WORDING ON PURPOSE. <== The two controls ask the same
-   * question — did this storm touch land — and calling it two things invited
-   * the reader to assume the sort counted something the toggle did not. */
-  ['landfalls', 'Came ashore', 'Most came ashore first', 'Fewest came ashore first'],
+  /* ==> "MADE LANDFALL", AND IT MATCHES THE FILTER TOGGLE'S OWN WORDING ON
+   * PURPOSE. <== The two controls ask the same question — did this storm touch
+   * land — and calling it two things invited the reader to assume the sort
+   * counted something the toggle did not.
+   *
+   * ==> IT WAS "CAME ASHORE" UNTIL 2026-08-28 AND AARON'S REASON FOR THE
+   * CHANGE IS THE WHOLE ARGUMENT: THE APP IS CALLED LANDFALL. <== The old
+   * wording was chosen to avoid implying a COUNT of crossings, but that
+   * concern is about what the number means and is answered where the number is
+   * computed (`lib/wall-index.js` counts storms, not crossings). It was never
+   * a reason to spend the app's own word. */
+  ['landfalls', 'Made landfall', 'Most landfalls first', 'Fewest landfalls first'],
   ['ace', 'ACE', 'Most ACE first', 'Least ACE first'],
 ];
 
@@ -218,11 +261,6 @@ export function sortHtml(key, dir) {
  * THE HONESTY LINE
  * ------------------------------------------------------------------------- */
 
-/** `0.53` -> `0.53`, `2` -> `2`. Two places is the resolution the rates
- *  actually differ at — 0.11 against 0.53 — and three would be a precision the
- *  underlying counts do not support. */
-const rate = (n) => (n == null ? '—' : String(Math.round(n * 100) / 100));
-
 /**
  * The pre-satellite undercount, in the numbers it currently has.
  *
@@ -242,26 +280,17 @@ const rate = (n) => (n == null ? '—' : String(Math.round(n * 100) / 100));
  * @param {object} split  from `eraSplit`
  * @param {string} phrase from `filterPhrase`
  */
-export function honestyHtml(split, phrase) {
+export function honestyHtml(split) {
   /* A basin whose whole record is post-satellite has no comparison to draw and
    * nothing to disclose — the East Pacific starts in 1949, so it does have
    * pre-1966 seasons, but a future basin might not. Saying nothing is correct
    * here rather than a missing case. */
   if (!split || split.preSeasons === 0) return '';
 
-  const per = (n) => `${rate(n)} a year`;
-  const times = split.ratio != null && split.ratio >= 1.5
-    ? ` &mdash; about ${Math.round(split.ratio * 10) / 10}&times; the rate`
-    : '';
-
   return `<p class="wall-honesty" role="note">
       <b class="wall-star">*</b>
-      Before ${split.from}, ${split.preStorms} of these across ${split.preSeasons} seasons
-      (${per(split.preRate)}). Since, ${split.postStorms} across ${split.postSeasons}
-      (${per(split.postRate)})${times}.
-      Almost none of that gap is weather &mdash; nobody could measure a storm that stayed at
-      sea before satellites, so every starred row is an undercount and a
-      ${esc(phrase)} leaderboard is not a record of the weather.</p>`;
+      Starred seasons are from before satellites, when a storm that stayed at sea
+      went uncounted &mdash; so their figures are undercounts, not the weather.</p>`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -271,20 +300,25 @@ export function honestyHtml(split, phrase) {
 /**
  * Everything above the wall.
  *
+ * ==> THE HONESTY LINE IS NO LONGER RENDERED HERE, AND THAT IS THE SLIDER FIX
+ * REACHING BACK ONE FILE. <== It is a function of the FILTERED rows, so it
+ * changes as a threshold moves — which meant it had to live below the sliders
+ * rather than in the same block as them, or a drag would rebuild its own
+ * control. `view-seasons-wall.js`'s results slot renders it now, and
+ * `honestyHtml` is exported for that caller. This block is the controls and
+ * nothing else.
+ *
  * @param {object} opts
  * @param {object} opts.filter
  * @param {string} opts.sortKey
  * @param {string} opts.sortDir
  * @param {boolean} opts.moreOpen
- * @param {object|null} opts.split   from `eraSplit`, over the filtered rows
- * @param {string} opts.phrase       from `filterPhrase`
  */
-export function controlsHtml({ filter, sortKey, sortDir, moreOpen, split, phrase }) {
-  const disclose = isFiltered(filter) || !isTimeline(sortKey);
+export function controlsHtml({ filter, sortKey, sortDir, moreOpen }) {
   return `<div class="wall-controls">
       ${chipsHtml(filter.cats)}
       ${landfallToggleHtml(filter.landfall)}
       ${sortHtml(sortKey, sortDir)}
       ${moreFiltersHtml(filter, moreOpen)}
-    </div>${disclose ? honestyHtml(split, phrase) : ''}`;
+    </div>`;
 }
