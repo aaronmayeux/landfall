@@ -46,6 +46,8 @@ import {
   emptyFilter, eraSplit, filterPhrase, isFiltered, keepFor, sortRows,
 } from '../lib/wall-filter.js';
 import { stormFacts } from '../lib/season-facts.js';
+import { loadLandMask } from '../lib/land-mask.js';
+import { landfallsFor } from '../lib/landfall.js';
 import { esc } from './seasons-board-markup.js';
 import { catProse, liveRowHtml, liveRowPlaceholderHtml, wallHtml } from './seasons-wall-markup.js';
 import { controlsHtml } from './seasons-wall-controls.js';
@@ -168,6 +170,49 @@ export function createSeasonsWallView({
 
     liveFacts = (season.storms || []).map(stormFacts).filter(Boolean);
     liveStatus = 'ok';
+    render();
+
+    /* ==> THE ROW PAINTS FIRST AND THE LANDFALLS CATCH UP. <== §57.7b. The
+     * mask is 0.30 MB and the storms are already in hand, so awaiting it here
+     * would hold a row the reader can otherwise see immediately — for a mark
+     * under a dot. It is deliberately not awaited: the season renders, the
+     * mask lands, the triangles appear. Until then `landfallSource` stays
+     * `noaa` and `landfallsKnown` is false, which is the honest reading of an
+     * empty list rather than a claim that nothing came ashore (§5). */
+    markLiveLandfalls(forBasin, season.storms || []);
+  }
+
+  /**
+   * ==> THE RUNNING SEASON IS MEASURED WITH THE ARCHIVE'S OWN INSTRUMENT. <==
+   * §57.7b. The same pinned coastline, the same 0.02° cell and the same walk
+   * in `lib/landfall.js` that produced every answer back to 1851. A second
+   * method here is exactly how 2026 and 1971 would come to disagree about what
+   * a landfall is, on a wall that puts them in one column.
+   *
+   * ==> A MASK THAT NEVER ARRIVES LEAVES THE ROW EXACTLY AS IT WAS. <== §5. It
+   * does not blank the season, and it does not fill in zeroes: it simply never
+   * upgrades `noaa` to `computed`, so the row goes on saying it does not know.
+   */
+  async function markLiveLandfalls(forBasin, storms) {
+    if (!storms.length) return;
+
+    let mask;
+    try {
+      mask = await loadLandMask();
+    } catch (err) {
+      /* Errors surface near their source in human language, and this one has
+       * no reader-facing surface: the row is already correct without it. */
+      console.warn('[seasons] the land mask did not load, so this season keeps NOAA\'s landfalls:', err.message);
+      return;
+    }
+
+    /* The reader may have switched basin or left while that was in flight. */
+    if (liveBasin !== forBasin || liveStatus !== 'ok') return;
+
+    for (const storm of storms) {
+      storm.landfallsComputed = landfallsFor(storm.points || [], mask.isLand);
+    }
+    liveFacts = storms.map(stormFacts).filter(Boolean);
     render();
   }
 
