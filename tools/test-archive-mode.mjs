@@ -346,18 +346,43 @@ eq(docEl.getAttribute('data-seasons'), 'on', 'the chrome knows to move up off th
 ok(body.children.some((c) => c.id === 'seasons-bar'), 'the bar is on screen');
 
 const bar = body.children.find((c) => c.id === 'seasons-bar');
-const leaveBtn = bar.children.find((c) => c.className === 'seasons-leave');
-ok(!!leaveBtn, 'the way out is on screen and is a real button');
 
-/* ==> FOCUS IS THE DRAWER'S JOB NOW, AND THAT IS THE POINT OF PUTTING THE
- * BOARD INSIDE IT (§13). <== Step 4 focused the Leave button by hand, because
+/* ==> THE WAY OUT IS THE PILL AT THE TOP, AND IT IS THE ONLY ONE. <== Step 6,
+ * §57.37. The bar used to carry a Leave button; it does not any more, and
+ * `attachEscape` never leaves the archive — it steps the drawer back and then
+ * closes it. So this control is the whole of the exit, and a version of the
+ * app that mounts the sepia globe without it is a reader stuck in 1935 with a
+ * reload as their only move. */
+const pill = body.children.find((c) => c.id === 'seasons-pill');
+ok(!!pill, '==> THE WAY OUT IS ON SCREEN <==');
+eq(pill.tagName, 'BUTTON',
+  'and it is a real button, so it is tabbable and answers Enter (§13)');
+ok(!bar.children.some((c) => (c.className || '').includes('seasons-leave')),
+  'and the bar no longer carries a second one — one way out, not two');
+
+/* The chevron says "back" and the words say back to WHAT — `ui/drawer.js`'s
+ * grammar, and the reason an icon alone was not enough there either. */
+const pillText = pill.children.find((c) => c.className === 'seasons-pill-text');
+eq(pillText?.textContent, 'Live storms',
+  '==> IT NAMES THE DESTINATION, NOT THE PLACE THE READER IS STANDING <==');
+ok(/live globe/i.test(pill.getAttribute('aria-label') || ''),
+  'and the label spells out what the chevron means for a screen reader');
+
+/* ==> FOCUS IS THE DRAWER'S JOB, AND THAT IS THE POINT OF PUTTING THE BOARD
+ * INSIDE IT (§13). <== Step 4 focused the way-out button by hand, because
  * closing the drawer would otherwise have dropped focus onto the document body
  * with nothing on screen to explain where the reader was. The drawer opens on
  * entry now and lands focus on the board's own `focus()` — the year picker,
- * which is what a reader came here to use. Focusing Leave as well would be two
- * things fighting for the caret. */
-ok(!leaveBtn.focused,
+ * which is what a reader came here to use. Focusing the pill as well would be
+ * two things fighting for the caret. */
+ok(!pill.focused,
   'entry no longer grabs focus by hand — the drawer owns it');
+
+/* ==> AND PRESSING IT LEAVES. <== The button existing proves nothing; a pill
+ * wired to no handler looks identical on screen and strands the reader just
+ * as completely. A mutation dropping the click listener has to turn this red.
+ * Left as the LAST thing checked before the deliberate `handle.leave()` below
+ * so the rest of this section still runs inside the archive. */
 
 /* ==> THE APOLOGY IS GONE, AND ITS SLOT NOW CARRIES A FACT. <== §57.16a said
  * step 5 DELETES that sentence rather than editing it: a leftover "not built
@@ -398,6 +423,7 @@ ok(where.tagName === 'BUTTON',
  * at. It must not build a second bar. */
 openSeasons(harness());
 eq(body.children.filter((c) => c.id === 'seasons-bar').length, 1, 'no second bar');
+eq(body.children.filter((c) => c.id === 'seasons-pill').length, 1, 'and no second pill');
 
 /* ==> A SETTINGS CHANGE MADE INSIDE THE ARCHIVE IS THE THEME YOU GET BACK.
  * <== `createThemeSwitch.apply()` runs on EVERY settings change, not just a
@@ -406,7 +432,12 @@ eq(body.children.filter((c) => c.id === 'seasons-bar').length, 1, 'no second bar
 theme.setThemeMode(theme.MODE.LIGHT);
 eq(theme.themeMode(), theme.MODE.SEPIA, 'the archive keeps the screen');
 
-handle.leave();
+/* ==> LEFT BY PRESSING THE PILL, NOT BY CALLING `leave()`. <== A pill wired to
+ * no handler looks identical on screen and strands the reader just as
+ * completely, and every teardown assertion below would still pass if this
+ * suite reached past the button and called the function itself. Going through
+ * the control is what makes a dropped listener turn this section red. */
+pill.click();
 eq(archive.isArchive(), false, 'the flag is down');
 eq(theme.forcedMode(), null, 'nothing is forced any more');
 eq(theme.themeMode(), theme.MODE.LIGHT,
@@ -424,6 +455,7 @@ ok(h.calls.indexOf('tracks.clear') < h.calls.indexOf('show'),
 
 eq(docEl.getAttribute('data-seasons'), null, 'the chrome attribute is gone');
 ok(!body.children.some((c) => c.id === 'seasons-bar'), 'and so is the bar');
+ok(!body.children.some((c) => c.id === 'seasons-pill'), 'and so is the pill');
 ok(opener.focused > 0, 'focus went back to the row that opened it (§13)');
 
 /* A leave path runs from a button AND from an error route, potentially both.
@@ -468,8 +500,8 @@ console.warn = quietWarn;
  * throw there is warned about and stepped over rather than aborting entry.
  * What must be true either way is that the app is in ONE of the two states and
  * never between them. */
-const stranded = archive.isArchive() && !body.children.some((c) => c.id === 'seasons-bar');
-ok(!stranded, '==> NEVER: flag up, no bar, no way out short of a reload');
+const stranded = archive.isArchive() && !body.children.some((c) => c.id === 'seasons-pill');
+ok(!stranded, '==> NEVER: flag up, no pill, no way out short of a reload');
 
 if (archive.isArchive()) {
   const { leaveSeasons } = await import('../seasons/index.js');

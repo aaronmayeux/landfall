@@ -98,8 +98,26 @@ await door.click();
 await page.waitForSelector('#seasons-bar', { timeout: 30_000 });
 ok('the bar mounted, so entry did not throw', true);
 
+/* ==> AND THE WAY OUT IS ON SCREEN FROM THE FIRST FRAME. <== Step 6. It is the
+ * only exit — Escape steps the drawer back and closes it, it never leaves —
+ * so an archive that mounts without this one is one a reader cannot get off. */
+await page.waitForSelector('#seasons-pill', { timeout: 30_000 });
+ok('the way out is on screen', true);
+ok('and it names where it goes rather than where the reader is',
+  (await page.textContent('#seasons-pill') || '').includes('Live storms'));
+
 ok('the archive flag reached the document',
   await page.getAttribute('html', 'data-seasons') === 'on');
+
+/* ==> TWO LIVE SURFACES ARE OFF IN HERE, AND THEY WERE ON UNTIL STEP 6. <==
+ * `#storm-pill` counts today's storms and opens the LIVE list; `#status`
+ * reports feeds the archive does not read. Both sat under the drawer at 66vh,
+ * so only a reader who minimised the sheet ever met them. `display: none`
+ * rather than a fade, because they have to leave the tab order too (§13). */
+ok('the live storm pill is not on the sepia globe',
+  !(await page.locator('#storm-pill').isVisible().catch(() => false)));
+ok('and neither is the live source-health strip',
+  !(await page.locator('#status').isVisible().catch(() => false)));
 
 section('The WALL is on screen — entry lands on rung 2, not on a year');
 
@@ -202,9 +220,11 @@ ok('==> AND PRESSING IT BRINGS BACK THE YEAR THAT WAS OPEN <==',
 
 ok('the ticked storm is still drawn after a round trip', await drawn() === 1);
 
-await page.click('.seasons-leave');
+await page.click('#seasons-pill');
 await page.waitForTimeout(300);
 ok('leaving removes the bar', await page.locator('#seasons-bar').count() === 0);
+ok('and the pill takes itself off with it',
+  await page.locator('#seasons-pill').count() === 0);
 ok('and the archive flag with it',
   await page.getAttribute('html', 'data-seasons') === null);
 ok('==> AND THE ARCHIVE\'S TRACKS CAME OFF THE LIVE GLOBE <==', await drawn() === 0);
