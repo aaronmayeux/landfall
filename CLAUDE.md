@@ -123,6 +123,38 @@ changes what a reader sees for a given input.
 off the `archive` branch before writing a line of parser.** Invented fixtures
 inherit the wrong assumptions and the tests then pass on them.
 
+**==> THE PRE-PUSH HOOK ALREADY RUNS THE FULL CHAIN, AND IT RUNS MORE THAN THE
+MANUAL LIST DOES. <==** `tools/bootstrap.sh` installs it. A session that has run
+`check-syntax`, the suites and the four doc gates by hand has still not run
+everything the push will run, so **do not treat a hand-run chain as the gate —
+the hook is the gate.** What it does, in order:
+
+1. credential scan
+2. `doc-check` — the docs still describe this code
+3. `spec-index` is current
+4. `css-orphan-check` — markup and stylesheets agree
+5. `selector-contract-check` — every selector still names something
+6. `relay-archive-check` — every relay route archived or excused
+7. type-scale check — every size is on the scale
+8. drawer text-role check
+9. `constants-toc` is current
+10. relay mirror check — the app and the relay agree
+11. `check-syntax` — every module parses
+12. **boot smoke in a browser** — the app loads, nothing throws, every layer
+    toggle flips both ways
+13. `seasons-row-check` — the roster's columns line up
+14. `seasons-height-check` — the archive sheet holds one height
+15. home-setup browser check
+
+**Four of those are browser checks.** They need a chromium in `/opt/pw-browsers`
+and `playwright@1.56.0` installed. If this sandbox has neither, the push will
+fail on them and that is the hook working, not a broken environment — install
+`playwright@1.56.0` and set `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
+
+**`seasons-wall-check.mjs` is NOT in the hook** and is the one that drives the
+Wall of Years in a real browser. Run it by hand after any wall change:
+`bash tools/with-server.sh node tools/seasons-wall-check.mjs`.
+
 **Run the affected suites while working; run the FULL chain once, before the
 push.** Running all 117 after every edit buys nothing the pre-push run does not.
 

@@ -378,7 +378,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed (credentials + doc-check + spec-index + css-orphan + selector-contract + type-scale + constants-toc + relay-mirrors + check-syntax + boot-smoke + seasons-row + home-setup)"
+ok "pre-push hook installed — 15 checks, 4 of them in a browser (see CLAUDE.md)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""
@@ -403,6 +403,18 @@ say "      git show origin/archive:latest/telemetry/platform-rollup.json"
 say ""
 say "  sessions.ts is in SECONDS, not milliseconds. Dividing by 1000 gives you"
 say "  1970 and does not error."
+say ""
+say "THE PRE-PUSH HOOK IS THE GATE, NOT YOUR HAND-RUN CHAIN."
+say "  It runs 15 checks, FOUR OF THEM IN A BROWSER — boot smoke, the roster"
+say "  columns, the archive sheet height, home setup. A session that ran"
+say "  check-syntax and the suites by hand has still not run what the push"
+say "  will run. CLAUDE.md lists all fifteen in order."
+say "  Browser checks need: npm i playwright@1.56.0 and"
+say "  PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (only if /opt/pw-browsers exists)."
+say ""
+say "  NOT in the hook and easy to forget: seasons-wall-check.mjs, the only"
+say "  browser check for the Wall of Years. After any wall change, run"
+say "      bash tools/with-server.sh node tools/seasons-wall-check.mjs"
 say ""
 say "bootstrap done."
 say ""
