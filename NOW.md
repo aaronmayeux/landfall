@@ -1312,42 +1312,32 @@ and `lonU`; `tools/seasons-landfall.mjs` needs a basin added to its loop and a
 file written per basin. **Do not reach for a per-agency marker in the IBTrACS
 columns.** One method, one answer, every basin.
 
-**LANDFALLS FOR THE SEASON IN PROGRESS — STILL OPEN, BUT THE DECIDING NUMBER IS
-NOW MEASURED AND IT WENT THE OTHER WAY.** §57.7a. The runner computes the
-archive and ships the answers, so no phone carries a coastline. The live season
-has no reviewed record, so nothing computes it.
+**LANDFALLS FOR THE SEASON IN PROGRESS — BUILT AND AWAITING GLASS.** §57.7b.
+Aaron chose option A on 2026-08-28: ship the mask, answer on the device. The
+running season now computes its own landfalls with the archive's own instrument
+— same pinned coastline, same 0.02 degree cell, same walk.
 
-**A packed mask is affordable over the wire, and the old "~15 MB, almost
-certainly too much" was the UNCOMPRESSED size.** Measured 2026-08-28 against
-`nvkelso/natural-earth-vector@v5.1.2`, at the same 0.02° step the archive
-already uses — a land mask is long runs of all-water and all-land, so it
-compresses about fiftyfold:
+`landmask-v5.1.2-0.02.bin.gz`, **0.30 MB on the wire**, built by
+`node tools/land-mask-pack.mjs`, fetched only when someone opens the archive and
+never on the boot path. `lib/landfall.js` was split so the rasteriser stays on
+the runner (`tools/land-raster.mjs`) and only the lookup and the walk ship.
 
-| band | raw | gzip | brotli |
-|---|---|---|---|
-| −60…72° (the constants' own band) | 14.85 MB | 0.30 MB | 0.22 MB |
-| −50…60° | 12.38 MB | 0.23 MB | 0.17 MB |
+Verified before pushing: identical landfall counts to the runner's own mask for
+all 3,266 storms, 1.5 million cells sampled with zero disagreements, and NHC's
+real 2026 b-decks walked end to end — Arthur ashore in Texas, Bertha twice in
+Louisiana, Lala and Fausto at sea.
 
-**A coarser mask does not pay, and that is measured too** — every one of the
-3,266 storms walked at each resolution and compared against the shipped answers.
-Same step at the narrower band agrees 99.97% (loses Tomas 2010 alone); 0.05°
-agrees 99.05%, 31 storms changing answer; 0.1° agrees 98.35%, 54 changing. Full
-resolution or nothing, and full resolution costs ~220 KB on the wire.
+**==> WHAT IS NOT MEASURED IS THE MEMORY, AND IT IS THE ONE THING LEFT. <==**
+The mask unpacks to about 14.85 MB held while the phone walks the season's
+storms, then freed. That number has never been watched on a real device. If it
+janks the wall or the archive feels heavier to open, the fallback is option B —
+compute at the edge — and this reverts in one commit.
 
-**So the remaining cost is MEMORY, not bandwidth — about 12–15 MB held while the
-phone walks this year's storms, then freed — and that is unmeasured and is a
-glass question.** Fetched only when someone opens Seasons, never on the boot
-path.
-
-Two live options, Aaron's call, asked 2026-08-28 and not yet answered: **ship
-the mask and compute on the phone** (additive, off the boot path, reverts in one
-commit, and needs `lib/landfall.js` split so the scanline rasteriser stays on
-the runner and only the lookup and the track walk ship), or **compute at the
-edge** (phone downloads nothing, but it puts coastline geometry into the path
-that serves live storms during hurricane season). **The runner cannot do it:**
-`seasons-hurdat.yml` is the only job that commits to `main`, a commit there
-fires a Cloudflare Pages build, and those are capped at 500 a month — which is
-the whole reason the current season lives behind a route instead of in the repo.
+**Also open, and Aaron's call:** storms still RUNNING are measured too, not just
+finished ones. A landfall that has already happened is a fact the moment it
+happens and the flag can only go from no to yes as the track grows, so it cannot
+flip back and mislead. Aaron asked for finished storms only; this is the
+deliberate deviation and it is one line to change.
 
 **THE COASTLINE PIN IS A DELIBERATE HAND BRAKE.** §57.7a.
 `nvkelso/natural-earth-vector@v5.1.2`, pinned to a tag rather than `master`, so

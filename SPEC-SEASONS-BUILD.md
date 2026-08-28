@@ -383,6 +383,89 @@ The real per-storm counts are not lost. They are in the landfall file and on
 the detail panel, where "Irene made 10 landfalls" is a fact about Irene rather
 than a claim about 1933 being the worst season on record.
 
+### 57.7b The season in progress answers for itself, on the device
+
+Aaron's call, 2026-08-28: option A, ship the mask. §57.7a computes the archive's
+landfalls on the monthly runner and ships the answers, so no phone ever carried
+a coastline. The running season has no reviewed record and no runner pass — the
+working best track carries no landfall marker at all (§57.18b) — so its dots
+were permanently unmarked and `landfallsKnown` was a constant `false`.
+
+**The number that decided this had never been measured, and when it was it went
+the other way.** `NOW.md` carried *"~15 MB packed, almost certainly too much"*
+for a fortnight. That was the UNCOMPRESSED size. Measured 2026-08-28 at the
+archive's own 0.02° cell, both figures from `node tools/land-mask-pack.mjs
+--measure`:
+
+| one byte per cell | 118.80 MB |
+| packed to one bit | 14.85 MB |
+| **gzipped, which is what ships** | **0.30 MB** |
+
+A raster of the Earth is vast runs of unbroken ocean and unbroken interior; only
+coasts carry detail, and coasts are a rounding error of the planet's area. **A
+coarser mask does not pay and that is measured too** — every one of the 3,266
+storms walked at each resolution against the shipped answers: 0.05° agrees
+99.05% with 31 storms changing answer, 0.1° agrees 98.35% with 54. There is no
+cheap coarse version, and full resolution costs 0.30 MB anyway.
+
+**The runner cannot do this job, which is why it is done on the device.**
+`seasons-hurdat.yml` is the only workflow that commits to `main`, a commit there
+spends one of 500 monthly Cloudflare Pages builds, and a season in progress needs
+answering more often than monthly. That ceiling is the same reason the current
+season lives behind a route rather than in the repo.
+
+**`lib/landfall.js` was split, and the seam is visible in the path.** Every
+import in this project ships to every visitor, so the scanline rasteriser — 480,000
+coastline edges into a 119 MB array — moved to `tools/land-raster.mjs` and stays
+on the runner. The walk stayed in `lib/` because both sides genuinely run it.
+That file predicted this: it said its one-byte-per-cell choice was for speed and
+that if it ever reached a browser "that decision flips". It flipped.
+
+**Both sides run the identical walk over an identical mask, and that is the
+point.** The wall puts 2026 in the same column as 1851; a second implementation
+for the browser is exactly how the two would come to disagree about what a
+landfall is. Verified rather than asserted: the shipped mask read back through
+`lib/land-mask.js` gives byte-identical landfall counts to the runner's own mask
+for all 3,266 storms, with 1.5 million cells sampled directly and zero
+disagreements.
+
+**The file describes itself and the constants are only checked against it.** A
+32-byte header carries the magic, the cell size, the latitude floor and the
+dimensions. If `config/constants.js` later moved `landfallMaskStep` and the
+reader trusted the constant, every lookup would be offset and every coastline on
+Earth would shift sideways while still returning clean booleans — a wrong answer
+with no error, on a file that is still perfectly valid. The header decides and a
+mismatch throws.
+
+**The coastline pin and the cell size are in the filename** —
+`landmask-v5.1.2-0.02.bin.gz` — because the answers change when either does, and
+a cached mask from before a change would go on giving old answers to new code. A
+new name is a new URL and every cache misses at once.
+
+**The row paints first and the landfalls catch up.** The mask is not awaited: the
+season renders from storms already in hand, the mask lands, the triangles appear.
+Holding a visible row for a mark under a dot is the wrong trade.
+
+**A mask that never arrives leaves the row exactly as it was (§5).** It does not
+blank the season and it does not fill in zeroes — it simply never upgrades
+`noaa` to `computed`, so the row goes on saying it does not know. Known-ness is
+read off the facts `stormFacts` already stamps rather than threaded down beside
+them, because a separate flag invites the quiet failure: the mask fails, the flag
+still says true, and the row states nothing came ashore this year on the strength
+of markers the working best track does not carry.
+
+**`.gz` joined the service worker's fallback-page guard.** `/seasons/data/` is
+cache-first, so a transient 404 answered with the app shell becomes permanent.
+The mask's magic bytes mean an HTML page fails loudly rather than answering
+wrongly — but on a cache-first path it would fail loudly FOREVER, and the running
+season would lose its landfalls until someone cleared the cache by hand.
+
+**Verified on NHC's real 2026 bytes**, not a fixture: Arthur comes ashore on the
+Texas coast at 28.6, −96.1, Bertha twice on the Louisiana coast, and Lala and
+Fausto stay at sea. `tools/test-land-mask.mjs` asserts the landfall point is on
+land the mask itself agrees is land, which is a check against geography rather
+than against a number someone typed.
+
 ### 57.8 What HURDAT2 does not contain, at all
 
 Watches and warnings. Cones. Forecast tracks. Rainfall. Surge. Radar.
