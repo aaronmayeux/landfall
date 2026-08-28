@@ -337,20 +337,34 @@ eq('  and one whose rows carry no position is dropped the same way',
    * matched the word inside the comment that explains the branch, so
    * commenting the call out left the suite green — a test passing on the same
    * wrong assumption as the bug, which §12 calls worse than no test. Both
-   * halves now match an actual invocation with its actual arguments. */
-  const glyphCall = mainJs.indexOf('seasonGlyphAtPoint(map, e.point, seasonGlyphList)');
-  const trackCall = mainJs.indexOf('seasonStormAtPoint(map, e.point)');
+   * halves now match an actual invocation with its actual arguments.
+   *
+   * ==> AND THAT WAS ONLY HALF THE FIX, WHICH §57.21e FOUND BY RE-RUNNING THE
+   * MUTATION. <== Arguments and all, `// openSeasonStormNow(glyphId);` still
+   * matches — a commented-out call is the same text as a live one. So the
+   * comments come OFF before anything is read, and the assertions below are
+   * about code rather than about prose. Block comments first, then line
+   * comments, so a `//` inside a block cannot orphan the rest of the file. */
+  const mainCode = mainJs
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/[^\n]*/g, ' ');
+
+  ok('the comment strip left real code behind to assert against',
+    mainCode.includes("map.on('click'") && mainCode.length > 1000);
+
+  const glyphCall = mainCode.indexOf('seasonGlyphAtPoint(map, e.point, seasonGlyphList)');
+  const trackCall = mainCode.indexOf('seasonStormAtPoint(map, e.point)');
   ok('main.js actually calls the glyph hit-test', glyphCall > 0);
   ok('  and calls it BEFORE the track hit-test',
     glyphCall > 0 && trackCall > 0 && glyphCall < trackCall);
   ok('  and opens the storm rather than merely focusing it',
-    /openSeasonStormNow\(glyphId\)/.test(mainJs));
+    /openSeasonStormNow\(glyphId\)/.test(mainCode));
 
   ok('main.js keeps the glyph list current from setTracks',
-    /seasonGlyphList\s*=\s*seasonGlyphs\(selected\)/.test(mainJs));
+    /seasonGlyphList\s*=\s*seasonGlyphs\(selected\)/.test(mainCode));
 
   ok('and empties it with the ridge, so a stale list cannot answer a tap',
-    /seasonGlyphList\s*=\s*\[\]/.test(mainJs));
+    /seasonGlyphList\s*=\s*\[\]/.test(mainCode));
 
   const seasonsIdx = readFileSync(join(ROOT, 'seasons/index.js'), 'utf8');
   ok('seasons/index.js exports the way in',

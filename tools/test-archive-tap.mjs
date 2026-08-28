@@ -234,10 +234,33 @@ const archiveBranch = (() => {
   return mainJs.slice(from, to);
 })();
 
+/**
+ * The same branch with every comment removed.
+ *
+ * ==> THE COMMENTS ARE STRIPPED BECAUSE A MUTATION SURVIVED WITHOUT IT.
+ * §57.21e. <== Commenting the track's `openSeasonStormNow(trackId)` call out
+ * left this suite green: the regex matched the dead line perfectly well, so
+ * the assertion was proving the TEXT was present rather than that the branch
+ * called anything. That is §12's "a test that passes on the same wrong
+ * assumption as the bug", and §57.21d records the identical trap biting the
+ * glyph suite once already — a name matched inside the prose that explains it.
+ *
+ * ==> ONE STRIP, USED BY EVERY ASSERTION ABOUT WHAT THE BRANCH DOES. <== The
+ * previous fix for this shape was written at one call site and the next
+ * assertion added underneath it inherited the bug. Block comments first, then
+ * line comments, so a `//` sitting inside a block cannot orphan the rest.
+ */
+const archiveCode = archiveBranch
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/\/\/[^\n]*/g, ' ');
+
+ok('the comment strip left real code behind to assert against',
+  archiveCode.includes('if (isArchive())') && archiveCode.length > 100);
+
 {
-  const glyph = archiveBranch.indexOf('seasonGlyphAtPoint(map, e.point, seasonGlyphList)');
-  const track = archiveBranch.indexOf('seasonStormAtPoint(map, e.point)');
-  const water = archiveBranch.indexOf('tapOnEmptyArchiveWater(e);');
+  const glyph = archiveCode.indexOf('seasonGlyphAtPoint(map, e.point, seasonGlyphList)');
+  const track = archiveCode.indexOf('seasonStormAtPoint(map, e.point)');
+  const water = archiveCode.indexOf('tapOnEmptyArchiveWater(e);');
 
   ok('the archive branch is one ordered list: glyph, track, empty water',
     glyph > 0 && track > glyph && water > track);
@@ -312,13 +335,27 @@ ok('  and pads it by half a touch target',
  * gesture with two visible outcomes is what readers report as a glitch. This
  * asserts the removal rather than the addition, because a version that did
  * BOTH would pass every assertion above. */
+/* ==> AND A TAP ON A TRACK OPENS THE STORM, THE SAME AS A TAP ON A GLYPH.
+ * §57.21e. <== Aaron's call, 2026-08-28. The old behaviour was
+ * `focusSeasonStormNow(trackId)` — brighten only — which made one mark mean
+ * two different things either side of the zoom where the glyph fades out.
+ *
+ * ==> THE THIRD ASSERTION IS THE ONE THAT BITES, AND IT ASSERTS AN ABSENCE.
+ * <== A version that focused AND opened would satisfy both positive
+ * assertions, so the guard against the old road coming back has to be that
+ * the branch does not reach for it at all. The pattern is deliberately the
+ * bare name rather than a full call: a negative assertion that is too broad
+ * can only ever go red, and §12's trap — matching a word inside the comment
+ * that explains the branch — is the failure mode for POSITIVE ones. */
 {
   ok('a tap on empty water does not also clear the focus',
-    !/focusSeasonStormNow\(null\)/.test(archiveBranch));
-  ok('  while a tap on a track still focuses one',
-    /focusSeasonStormNow\(trackId\)/.test(archiveBranch));
-  ok('  and a tap on a glyph OPENS rather than focuses',
-    /openSeasonStormNow\(glyphId\)/.test(archiveBranch));
+    !/focusSeasonStormNow\(null\)/.test(archiveCode));
+  ok('  a tap on a track OPENS the storm rather than merely focusing it',
+    /openSeasonStormNow\(trackId\)/.test(archiveCode));
+  ok('  and a tap on a glyph does the same thing',
+    /openSeasonStormNow\(glyphId\)/.test(archiveCode));
+  ok('  and the branch does not reach for the focus-only road at all',
+    !/focusSeasonStormNow/.test(archiveCode));
 }
 
 /* --- Escape still minimises --------------------------------------------------
