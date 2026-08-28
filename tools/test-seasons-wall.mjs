@@ -173,14 +173,14 @@ ok('a quiet year says no storms rather than nothing',
  * distinction between a measured nought and an unanswered question. */
 const ashore2005 = y2005.shown.filter((s) => s[LANDFALL]).length;
 ok(`2005 speaks its landfall count (${ashore2005} of 31)`,
-  ashore2005 > 0 && label2005.includes(`${ashore2005} came ashore`));
+  ashore2005 > 0 && label2005.includes(`${ashore2005} made landfall`));
 
 const noneAshore = rowLabel(
   { year: 1999, shown: [[3, 0, 5, 90]], strongest: 3, landfalls: 0, pre: false },
   { catLabel: (c) => `Category ${c}` },
 );
-ok(`a year where nothing came ashore says so ("${noneAshore}")`,
-  /none came ashore/.test(noneAshore));
+ok(`a year where nothing made landfall says so ("${noneAshore}")`,
+  /none made landfall/.test(noneAshore));
 
 eq('the era boundary is the one constant, not a literal',
   SATELLITE_ERA_FROM, SEASONS.satelliteEraFrom);

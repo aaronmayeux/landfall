@@ -149,8 +149,12 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
    * that sort is on. `dotSizeFor` re-measures the strip on every render, so
    * the correction is automatic rather than a second calculation. */
   const fig = sortFigure(row, sortKey, { catLabel });
+  /* `sub` is the denominator, and it is drawn in the same `<small> of N</small>`
+   * shape the count column uses — one visual idiom for "this many out of that
+   * many", so a reader who has learned it once has learned it everywhere. */
   const figure = fig
-    ? `<span class="wall-figure" aria-hidden="true">${esc(fig.value)}</span>`
+    ? `<span class="wall-figure" aria-hidden="true">${esc(fig.value)}${
+        fig.sub ? `<small> of ${esc(fig.sub)}</small>` : ''}</span>`
     : '';
 
   /* ==> AN ASTERISK RATHER THAN A SHADED BACKGROUND. <== Aaron on glass,
@@ -165,7 +169,12 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
   /* The figure is `aria-hidden` and repeated inside the label instead: read as
    * a bare column it announces "18.8" after a sentence and a count, which is
    * three numbers in a row with no idea which is which. */
-  const spoken = fig && fig.value !== '—' ? `${label}, ${fig.value} ${fig.unit}` : label;
+  /* Spoken as "18 of 31 storms ashore" where there is a denominator, so a
+   * screen-reader reader gets the ratio the sighted one can see rather than a
+   * bare figure the column no longer shows on its own. */
+  const figWords = fig && fig.sub ? `${fig.value} of ${fig.sub} ${fig.unit}`
+    : fig ? `${fig.value} ${fig.unit}` : '';
+  const spoken = fig && fig.value !== '—' ? `${label}, ${figWords}` : label;
 
   const ratio = filtered && row.shown.length !== row.total;
 
