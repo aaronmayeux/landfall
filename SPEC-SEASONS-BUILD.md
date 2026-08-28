@@ -2422,8 +2422,9 @@ green over it once.
 
 ### 57.21e A tap on a track opens the storm, the same as a tap on a glyph
 
-Aaron's call, 2026-08-28. `main.js` (the one line, and both doc blocks around
-it), `tools/test-archive-tap.mjs` and `tools/test-season-glyph-tap.mjs` (the
+Aaron's call, 2026-08-28. **Confirmed on glass the same day — "works".**
+`main.js` (the one line, and both doc blocks around it),
+`tools/test-archive-tap.mjs` and `tools/test-season-glyph-tap.mjs` (the
 assertions, and the comment strip both now read through).
 
 **==> EVERY WAY OF CHOOSING A STORM ON THE SEPIA GLOBE NOW LEADS TO THE SAME

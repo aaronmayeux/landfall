@@ -2350,13 +2350,35 @@ still open — see `NOW.md`.
   at different heights, so a label/value row drifts apart by a pixel or more on
   every line. It shows on a desktop before it shows on a phone, because the
   desktop font pairing is wider apart. `tools/test-css-vars.mjs` sweeps for it.
-- **Hover has its own token and it is never a panel colour.** `--hover` is a
-  light wash in the dark theme and a dark one in the light theme, so both
-  answer a pointer with the same strength of change in opposite directions.
-  Reaching for `--glass-raised` looks right and is not: a dark panel laid over
-  a dark panel over a near-black ocean moves the composite by single digits and
-  is invisible in the one place hover exists at all. Hover stays below the
-  selected treatment and never carries severity (§6).
+- **A CONTROL'S EDGE AND A SEPARATOR ARE TWO TOKENS, NOT ONE.** `--glass-border`
+  draws hairlines and panel edges: decoration, no contrast floor, deliberately
+  quiet because a loud rule between every list row fights the list.
+  `--control-edge` draws the boundary of a control, which WCAG 1.4.11 puts at
+  3:1 against what is adjacent. One token cannot do both jobs, and the failure
+  is silent in the direction that matters — the check box drew itself with the
+  separator's token and measured **1.30:1 in sepia, 1.33 in dark, 1.41 in
+  light** until Aaron said on glass that he could not see it (2026-08-28).
+  Nothing caught it because nothing was measuring it as a control. An *unchecked*
+  box is the purest case of the rule: it has no fill and no tick, so the 1px
+  edge is the entire control. Both surfaces are gated in
+  `tools/contrast-check.mjs`, because the roster sits on `--glass` and the
+  Layers panel on `--glass-raised`. **The token targets 4:1 rather than 3:1 on
+  purpose** — one parked a hundredth above its own gate fails the next time
+  anything under it is retuned by eye, and both glass tokens have been.
+- **AN EMPTY GRID ROW STILL TAKES ITS GAP.** A row named in
+  `grid-template-areas` exists whether or not anything is placed in it: it
+  collapses to zero height, and the gap either side of it does not. A block with
+  an optional last line therefore carries dead space on every row that does not
+  have one, and `align-items: center` on the parent duly centres the dead space
+  along with the text — which reads as the text sitting high against every mark
+  beside it. **Let the optional item make its own row** (`grid-column: 1 / -1`
+  and no `grid-area`, so it auto-places onto an implicit row) rather than
+  declaring a row for something that is usually absent. Found on glass in the
+  season roster, 2026-08-28: 12px of dead space, text 6px high, every mark
+  beside it at the row's exact centre. Gated in `tools/seasons-row-check.mjs`,
+  which measures the marks **against the text** rather than against the row —
+  asserting the marks are centred would have passed on the bug, because they
+  always were.
 
 **Visual direction: a cyan nodal-network entry that dissolves into a lit
 volumetric globe.** At the planet band the globe is a glowing geodesic node cage
