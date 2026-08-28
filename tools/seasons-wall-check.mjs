@@ -143,8 +143,14 @@ ok(`33 seasons keep a strip and 142 go to hairlines (${cat5Rows}, ${cat5Hairs})`
 ok('the empty years keep their place, because year order is a timeline',
   await page.$('[data-tail]') === null);
 ok('==> AND THE UNDERCOUNT LINE APPEARS <==', await page.$('.wall-honesty') !== null);
-ok('carrying the real numbers rather than a vague warning',
-  /13 .*115 seasons/s.test(await page.textContent('.wall-honesty')));
+/* ==> IT NO LONGER CARRIES THE FIGURES, AND THE ASSERTION MOVED WITH IT
+ * RATHER THAN BEING DELETED. <== Aaron, 2026-08-28: the long version was too
+ * much. What the line still owes the reader is the REASON a starred row is not
+ * comparable — satellites, and an undercount — so that is what is checked. A
+ * bare `.wall-honesty` exists check would pass on an empty paragraph. */
+const honesty = await page.textContent('.wall-honesty');
+ok(`saying why a starred season undercounts ("${honesty.trim().slice(0, 48)}…")`,
+  /satellite/i.test(honesty) && /undercount/i.test(honesty));
 
 ok('the count column now shows both figures',
   await page.$$eval('.wall-row:not(.wall-row-live) .wall-count small',
@@ -347,6 +353,47 @@ await settle();
 ok('and Back finds the wall still narrowed to Category 5',
   await page.getAttribute('[data-chip="6"]', 'aria-pressed') === 'true'
   && await page.getAttribute('[data-chip="0"]', 'aria-pressed') === 'false');
+
+section('11. The landfall sort puts its ratio in the count column, uncut');
+
+/* ==> A NUMBER WIDER THAN ITS COLUMN IS INVISIBLE TO EVERY TEXT ASSERTION.
+ * <== Aaron on glass, 2026-08-28: the landfall sort read `18 of 3`. The value
+ * in the DOM was `18 of 31` and every node suite agreed with it — the column
+ * was 2.6em with `overflow: hidden`, so the browser threw the last character
+ * away at paint time. `textContent` cannot see that. Only a layout engine can.
+ *
+ * The fix was to stop drawing a figure column for this sort at all: the
+ * denominator is the count column's own number, so a separate figure printed
+ * the total twice AND clipped doing it. Both halves are asserted here. */
+
+/* Back to every chip, so the wall is the whole record again. */
+for (const c of [0, 1, 2, 3, 4, 5]) await page.click(`[data-chip="${c}"]`);
+await settle();
+await page.click('[data-sort="landfalls"]');
+await settle();
+
+const lf = await page.evaluate(() => {
+  const rows = [...document.querySelectorAll('#seasons-wall-body .wall .wall-row')].slice(0, 12);
+  return rows.map((r) => {
+    const c = r.querySelector('.wall-count');
+    return {
+      text: c?.textContent.trim() ?? '',
+      /* The measurement that catches a clip: content wider than the box. */
+      overflow: c ? c.scrollWidth - c.clientWidth : 0,
+      hasFigure: !!r.querySelector('.wall-figure'),
+    };
+  });
+});
+
+ok(`the landfall sort draws no separate figure column (${lf.length} rows read)`,
+  lf.length > 0 && lf.every((r) => !r.hasFigure));
+
+ok(`and the count column carries the ratio ("${lf[0]?.text}")`,
+  lf.every((r) => /^\d+\s*of\s*\d+$/.test(r.text.replace(/\s+/g, ' '))));
+
+const worst = Math.max(...lf.map((r) => r.overflow));
+ok(`and no ratio is cut off by its column (worst overflow ${worst}px, was 8)`,
+  worst <= 1);
 
 await browser.close();
 

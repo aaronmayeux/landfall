@@ -380,8 +380,13 @@ eq('ACE draws its own figure',
   sortFigure(mk(2005, 18.75), 'ace', { catLabel: label }).value, '18.8');
 eq('==> AND UNMEASURED ACE IS A DASH, NEVER A NOUGHT <==',
   sortFigure(mk(2005, null, false), 'ace', { catLabel: label }).value, '—');
-eq('landfalls draws its count',
-  sortFigure({ ...mk(2005, 1), landfalls: 7 }, 'landfalls', { catLabel: label }).value, '7');
+/* ==> LANDFALLS DRAWS NO EXTRA COLUMN EITHER, AND THAT IS A CHANGE. <== It
+ * had one until 2026-08-28. Its ratio lives in the count column now, because
+ * the denominator is that column's own number — a figure of its own printed
+ * the total twice and clipped doing it. Asserted as null rather than deleted,
+ * so a version that puts the column back fails here rather than on glass. */
+ok('landfalls draws no extra column — its ratio is the count column',
+  sortFigure({ ...mk(2005, 1), landfalls: 7 }, 'landfalls', { catLabel: label }) === null);
 eq('strongest draws the category',
   sortFigure({ ...mk(2005, 1), strongest: CAT5 }, 'strongest', { catLabel: label }).value,
   'Category 5');

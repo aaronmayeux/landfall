@@ -137,9 +137,25 @@ export function stripHtml(list) {
  */
 export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
   const label = rowLabel(row, { catLabel });
-  const count = filtered && row.shown.length !== row.total
-    ? `${row.shown.length}<small> of ${row.total}</small>`
-    : `${row.total}`;
+  /* ==> ON THE LANDFALL SORT THE COUNT COLUMN CARRIES THE RATIO. <== Aaron on
+   * glass, 2026-08-28: he liked the filtered column's `8 of 18` and wanted the
+   * same for this sort. Putting it in a column of its own gave `18 of 31` next
+   * to a count column already reading `31` — the same total twice, and clipped
+   * besides. The denominator IS this column's number, so this is where the
+   * ratio goes and `sortFigure` returns nothing for the sort.
+   *
+   * ==> THE DENOMINATOR IS `shown`, NOT `total`, AND UNDER A FILTER THAT IS A
+   * DELIBERATE TRADE. <== The landfall count is computed over the storms still
+   * showing, so pairing it with the season's full size would be a filtered
+   * numerator over an unfiltered denominator — a ratio that is simply wrong,
+   * in the direction that flatters the old years. What is given up is the
+   * season's total while BOTH a filter and this sort are on; what is kept is a
+   * ratio that is true. The strip beside it is the storms being counted. */
+  const count = sortKey === 'landfalls'
+    ? `${row.landfalls}<small> of ${row.shown.length}</small>`
+    : filtered && row.shown.length !== row.total
+      ? `${row.shown.length}<small> of ${row.total}</small>`
+      : `${row.total}`;
 
   /* ==> A NUMBER YOU ARE SORTING BY AND CANNOT SEE READS AS A BROKEN CONTROL.
    * <== Aaron, 2026-08-26. Year and count are already drawn in their own
@@ -149,12 +165,8 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
    * that sort is on. `dotSizeFor` re-measures the strip on every render, so
    * the correction is automatic rather than a second calculation. */
   const fig = sortFigure(row, sortKey, { catLabel });
-  /* `sub` is the denominator, and it is drawn in the same `<small> of N</small>`
-   * shape the count column uses — one visual idiom for "this many out of that
-   * many", so a reader who has learned it once has learned it everywhere. */
   const figure = fig
-    ? `<span class="wall-figure" aria-hidden="true">${esc(fig.value)}${
-        fig.sub ? `<small> of ${esc(fig.sub)}</small>` : ''}</span>`
+    ? `<span class="wall-figure" aria-hidden="true">${esc(fig.value)}</span>`
     : '';
 
   /* ==> AN ASTERISK RATHER THAN A SHADED BACKGROUND. <== Aaron on glass,
@@ -169,14 +181,9 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
   /* The figure is `aria-hidden` and repeated inside the label instead: read as
    * a bare column it announces "18.8" after a sentence and a count, which is
    * three numbers in a row with no idea which is which. */
-  /* Spoken as "18 of 31 storms ashore" where there is a denominator, so a
-   * screen-reader reader gets the ratio the sighted one can see rather than a
-   * bare figure the column no longer shows on its own. */
-  const figWords = fig && fig.sub ? `${fig.value} of ${fig.sub} ${fig.unit}`
-    : fig ? `${fig.value} ${fig.unit}` : '';
-  const spoken = fig && fig.value !== '—' ? `${label}, ${figWords}` : label;
+  const spoken = fig && fig.value !== '—' ? `${label}, ${fig.value} ${fig.unit}` : label;
 
-  const ratio = filtered && row.shown.length !== row.total;
+  const ratio = sortKey === 'landfalls' || (filtered && row.shown.length !== row.total);
 
   return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}${fig ? ' data-figure="1"' : ''}${ratio ? ' data-ratio="1"' : ''}
       aria-label="${esc(spoken)}">
