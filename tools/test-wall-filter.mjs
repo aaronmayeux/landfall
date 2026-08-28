@@ -25,7 +25,7 @@ import {
   CATEGORY_INDEXES, categoriesNarrowed, emptyFilter, eraSplit, filterPhrase,
   isFiltered, isTimeline, keepFor, sortFigure, sortRows, sortValue,
 } from '../lib/wall-filter.js';
-import { catProse } from '../ui/seasons-wall-markup.js';
+import { catProse, stripHtml } from '../ui/seasons-wall-markup.js';
 
 let passed = 0;
 const failures = [];
@@ -404,6 +404,39 @@ for (const b of Object.keys(wall.basins)) {
   const rows = rowsFor(wall, b);
   ok(`every ${b} season on record holds at least one storm`,
     rows.every((r) => r.shown.length > 0));
+}
+
+section('10. The landfall mark is on the storms that came ashore, and only those');
+
+/* ==> THIS EXISTS BECAUSE THE SUITE WAS GREEN OVER THE BUG. <== §57.30 step 14
+ * sub-step 4 shipped a half-finished line — `data-lf` written onto EVERY dot
+ * rather than onto the ones the file flags — and 72 assertions in
+ * `test-seasons-wall.mjs` passed over it, because none of them reads the
+ * strip's markup at all. A wall claiming all 3,266 storms in 175 years came
+ * ashore is not a subtle wrong answer, and nothing caught it.
+ *
+ * ==> COUNTED AGAINST THE REAL FILE, NEVER AGAINST A NUMBER TYPED HERE. <== A
+ * NOAA revision or a moved coastline pin changes how many storms came ashore
+ * in 2005, and both sides of this comparison move together when it does. A
+ * literal would turn red on a correct rebuild, which is the kind of failing
+ * test that gets deleted rather than read. */
+for (const basin of Object.keys(wall.basins)) {
+  const rows = rowsFor(wall, basin);
+  let dots = 0, marks = 0, want = 0;
+  for (const row of rows) {
+    const html = stripHtml(row.shown);
+    dots += (html.match(/<i /g) || []).length;
+    marks += (html.match(/ data-lf/g) || []).length;
+    want += row.shown.filter((s) => s[LANDFALL]).length;
+  }
+  eq(`${basin}: a mark for every storm flagged ashore, and no others`, marks, want);
+  ok(`${basin}: and a dot for every storm (${dots})`,
+    dots === rows.reduce((n, r) => n + r.shown.length, 0));
+  /* The mutation the count alone cannot see: if `marks` and `want` were both
+   * "all of them" this would still pass, so the shape of the answer is
+   * asserted too — some storms came ashore and some did not. */
+  ok(`${basin}: marks are some of the dots rather than all of them (${marks} of ${dots})`,
+    marks > 0 && marks < dots);
 }
 
 console.log(`\ntest-wall-filter: ${passed} passed, ${failures.length} failed`);

@@ -40,6 +40,35 @@ html[data-seasons="on"] {
      Tall enough to read a year at `--type-small` and no taller — a run of
      forty of these at row height would drown the years that carry storms. */
   --seasons-wall-hair-h: 18px;
+
+  /* ==> THE LANDFALL TRIANGLE IS SIZED OFF THE DOT, NEVER OFF A PIXEL COUNT.
+     <== §57.30 step 14 sub-step 4. `--wall-dot` is measured after layout and
+     ranges from `SEASONS.wallDotMin` (4) to `wallDotMax` (14) depending on how
+     busy the basin's widest season is, so a fixed triangle would be a speck
+     against a 14px dot and wider than a 4px one. The two ratios are the
+     mockup's, which is the version Aaron judged: the triangle is a little under
+     three-quarters of the dot wide, and a little under three-quarters of its
+     own width tall.
+
+     The floors exist because at `wallDotMin` the arithmetic gives 2.88px by
+     2.07px, and below about 3px a triangle stops reading as a triangle and
+     starts reading as dirt on the screen. */
+  --wall-lf-w: max(3px, calc(var(--wall-dot, 7px) * 0.72));
+  --wall-lf-h: max(2.5px, calc(var(--wall-lf-w) * 0.72));
+
+  /* Clear of the dot's edge without floating free of it. */
+  --wall-lf-gap: 1.5px;
+
+  /* ==> THE STRIP'S BREATHING ROOM ANSWERS TO WHICHEVER MARK NEEDS MORE. <==
+     The slot clips, so both the glow bleeding outward and the triangle hanging
+     below have to fit inside this padding or they are cut off. The glow wins at
+     small dot sizes and the triangle wins at large ones — at `wallDotMax` the
+     triangle reaches 9.8px against the glow's 8px — so it is a `max()` rather
+     than a number, and neither can be starved by a change to the other. */
+  --wall-strip-pad: max(
+    var(--dot-glow-blur),
+    calc(var(--wall-lf-gap) + var(--wall-lf-h) + 1px)
+  );
 }
 
 /* --- the bar ------------------------------------------------------------- */
@@ -1055,8 +1084,8 @@ html[data-seasons="on"] #btn-layers {
 .wall-strip-slot {
   min-width: 0;
   overflow: hidden;
-  padding: var(--dot-glow-blur) 0;
-  margin: calc(var(--dot-glow-blur) * -1) 0;
+  padding: var(--wall-strip-pad) 0;
+  margin: calc(var(--wall-strip-pad) * -1) 0;
 }
 
 .wall-strip {
@@ -1070,12 +1099,39 @@ html[data-seasons="on"] #btn-layers {
    there is exactly one definition of what a glowing dot looks like in this
    app; a second one here would drift the first time either moved. */
 .wall-strip i {
+  position: relative;
   flex: 0 0 auto;
   width: var(--wall-dot, 7px);
   height: var(--wall-dot, 7px);
   border-radius: 50%;
   background: var(--wall-swatch);
   box-shadow: 0 0 var(--dot-glow-blur) var(--wall-swatch);
+}
+
+/* ==> A TRIANGLE POINTING UP AT THE STORM THAT CAME ASHORE. <== §57.30 step 14
+   sub-step 4. `clip-path` rather than the old border trick: the border version
+   needs three widths kept in step with each other and computed from the same
+   dot size, and it draws a box whose height and width argue with each other
+   every time the dot resizes. A polygon is the shape stated once.
+
+   ==> IT HANGS BELOW THE DOT AND MOVES NOTHING. <== The `::after` is out of
+   flow, so a year with twelve landfalls is exactly as tall as a year with none
+   and the 44px row rhythm holds. A reader scanning down the wall is comparing
+   rows, and a row that grew to fit its own marks would break that on precisely
+   the years worth comparing.
+
+   Neutral ink at 0.8 rather than the storm's colour — see `stripHtml`. */
+.wall-strip i[data-lf]::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + var(--wall-lf-gap));
+  left: 50%;
+  width: var(--wall-lf-w);
+  height: var(--wall-lf-h);
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  opacity: 0.8;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
 }
 
 .wall-count {

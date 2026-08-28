@@ -22,7 +22,7 @@
  */
 
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
-import { CAT, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
+import { CAT, LANDFALL, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
 import { isTimeline, sortFigure } from '../lib/wall-filter.js';
 import { esc } from './seasons-board-markup.js';
 import { dotted } from './loading-dots.js';
@@ -95,11 +95,34 @@ export const catProse = (cat) => {
  * what the arithmetic says a dot is and what lands on the glass. A strip scaled
  * to fit its box would make `wallDotMin` a lie.
  */
+/**
+ * ==> THE LANDFALL MARK IS AN ATTRIBUTE, NOT A SECOND ELEMENT. <== §57.30 step
+ * 14 sub-step 4, and Aaron's shape off the mockup: a small triangle pointing UP
+ * at the dot it belongs to, centred under it. In the mockup the strip was still
+ * an `<svg>` and the triangle was a drawn `<path>`; the shipped strip is DOM
+ * elements, because that is what lets a dot carry the app's `box-shadow` glow
+ * (see below). So the triangle is a `::after` on the dot itself.
+ *
+ * That is one attribute rather than a second span per storm, which matters at
+ * this scale: 2005 alone is 31 dots and the wall is 175 rows. It also means the
+ * mark can never drift away from its dot, because it IS its dot — no second
+ * coordinate system, no re-measuring when the strip resizes.
+ *
+ * ==> IT IS NEUTRAL INK RATHER THAN THE STORM'S OWN COLOUR, DELIBERATELY. <==
+ * Coming ashore is a fact about land; strength is what the dot already says.
+ * Tinting the triangle by category would make it a dimmer second copy of the
+ * dot sitting directly beneath the dot, which reads as a smudge rather than as
+ * a mark. `seasons/seasons.css` carries the geometry.
+ */
 export function stripHtml(list) {
   if (!list.length) return '';
   let parts = '';
   for (const storm of list) {
-    parts += `<i style="--wall-swatch:${dotColor(storm[CAT])}"></i>`;
+    /* ==> THE COLUMN IS 0 OR 1 AND IT IS READ AS A FLAG, NEVER COUNTED. <==
+     * §57.7a. It briefly carried a real landfall count and Aaron reverted that
+     * on glass: the wall asks whether a storm touched land, not how often. */
+    const ashore = storm[LANDFALL] ? ' data-lf' : '';
+    parts += `<i style="--wall-swatch:${dotColor(storm[CAT])}"${ashore}></i>`;
   }
   return `<span class="wall-strip" aria-hidden="true">${parts}</span>`;
 }

@@ -62,6 +62,68 @@ ok('and no undercount line is showing yet', await page.$('.wall-honesty') === nu
 ok('all seven chips are pressed',
   await page.$$eval('[data-chip]', (e) => e.every((c) => c.getAttribute('aria-pressed') === 'true')));
 
+/* --- the landfall triangles ---------------------------------------------- */
+
+section('1b. ==> THE LANDFALL MARK IS ON SCREEN, NOT MERELY IN THE DOM <==');
+/* ==> COUNTING THE ELEMENTS IS EXACTLY THE CHECK THAT ALREADY PASSED OVER AN
+ * INVISIBLE TRIANGLE. <== While step 14's mark was still a mockup, 732 of them
+ * rendered into the DOM and none of them was visible: a `display: none` left
+ * behind by a deleted toggle. The element count said everything was fine and
+ * only the pixels disagreed. So this asks the layout engine for the drawn size
+ * of the pseudo-element rather than asking the document whether it exists. */
+const tri = await page.evaluate(() => {
+  const dot = document.querySelector('.wall-strip i[data-lf]');
+  if (!dot) return null;
+  const s = getComputedStyle(dot, '::after');
+  return {
+    w: parseFloat(s.width),
+    h: parseFloat(s.height),
+    clipped: s.clipPath,
+    shown: s.display !== 'none' && s.content !== 'none' && parseFloat(s.opacity) > 0,
+  };
+});
+ok('a storm that came ashore carries a mark', tri !== null);
+ok(`the mark has real size (${tri?.w} x ${tri?.h})`, tri && tri.w >= 3 && tri.h >= 2.5);
+ok('and it is actually painted', Boolean(tri?.shown));
+ok(`it is a triangle rather than a box (${tri?.clipped})`, /polygon/.test(tri?.clipped || ''));
+
+/* ==> AND THE MARKS ARE THE ONES THE FILE ASKED FOR. <== The assertions above
+ * prove a triangle is drawn; none of them would notice a triangle under EVERY
+ * dot, which is the same screen saying something entirely different — that
+ * every storm in 175 years came ashore. The count is read back out of
+ * `seasons/wall.json` rather than written here, so a NOAA revision moves both
+ * sides together instead of turning this red. */
+const marks = await page.evaluate(async () => {
+  const wall = await (await fetch('/seasons/wall.json')).json();
+  const y2005 = wall.basins.atlantic.years['2005'];
+  const row = document.querySelector('.wall-row[data-year="2005"]');
+  return {
+    wantAshore: y2005.filter((s) => s[1]).length,
+    wantTotal: y2005.length,
+    gotAshore: row?.querySelectorAll('.wall-strip i[data-lf]').length,
+    gotTotal: row?.querySelectorAll('.wall-strip i').length,
+  };
+});
+ok(`2005 draws ${marks.gotAshore} marks under ${marks.gotTotal} dots`,
+  marks.gotAshore === marks.wantAshore && marks.gotTotal === marks.wantTotal);
+ok('and they are some of the storms rather than all of them',
+  marks.wantAshore > 0 && marks.wantAshore < marks.wantTotal);
+
+/* ==> AND A ROW THAT CARRIES MARKS IS EXACTLY AS TALL AS ONE THAT DOES NOT.
+ * <== The whole wall is a comparison between rows, so a year growing to fit
+ * its own landfalls would break the comparison on the years most worth
+ * comparing. The `::after` is out of flow to prevent that, and out-of-flow is
+ * the kind of claim only a layout engine can settle. */
+const heights = await page.evaluate(() => {
+  const withMark = [...document.querySelectorAll('.wall-row')]
+    .find((r) => r.querySelector('.wall-strip i[data-lf]'));
+  const without = [...document.querySelectorAll('.wall-row')]
+    .find((r) => r.querySelector('.wall-strip i') && !r.querySelector('.wall-strip i[data-lf]'));
+  return [withMark?.getBoundingClientRect().height, without?.getBoundingClientRect().height];
+});
+ok(`marks do not make a row taller (${heights.join(' vs ')})`,
+  heights[0] && heights[1] && Math.abs(heights[0] - heights[1]) < 0.5);
+
 /* --- the chips ----------------------------------------------------------- */
 
 section('2. ==> A CHIP TAP NARROWS WHAT IS ON SCREEN <==');

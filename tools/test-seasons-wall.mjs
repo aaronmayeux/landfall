@@ -165,6 +165,23 @@ ok('a pre-satellite year says so out loud',
 ok('a quiet year says no storms rather than nothing',
   /no storms recorded/.test(rowLabel({ year: 1800, shown: [], pre: true }, { catLabel: () => '' })));
 
+/* ==> THE TRIANGLES ARE DRAWN INSIDE AN `aria-hidden` STRIP, SO THE SENTENCE
+ * IS THE ONLY WAY A READER WHO CANNOT SEE THEM LEARNS THEY ARE THERE. <==
+ * §13, §57.30 step 14 sub-step 4. Both directions are asserted, because the
+ * cheap version of this — mentioning landfalls only when there were some —
+ * cannot be told apart from not mentioning them at all, and that is the §5
+ * distinction between a measured nought and an unanswered question. */
+const ashore2005 = y2005.shown.filter((s) => s[LANDFALL]).length;
+ok(`2005 speaks its landfall count (${ashore2005} of 31)`,
+  ashore2005 > 0 && label2005.includes(`${ashore2005} came ashore`));
+
+const noneAshore = rowLabel(
+  { year: 1999, shown: [[3, 0, 5, 90]], strongest: 3, landfalls: 0, pre: false },
+  { catLabel: (c) => `Category ${c}` },
+);
+ok(`a year where nothing came ashore says so ("${noneAshore}")`,
+  /none came ashore/.test(noneAshore));
+
 eq('the era boundary is the one constant, not a literal',
   SATELLITE_ERA_FROM, SEASONS.satelliteEraFrom);
 
