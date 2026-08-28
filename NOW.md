@@ -100,29 +100,17 @@ item, not a leftover, and §57.36a records the reasoning:
    pass, with a full context.** §57.36 also names a "Hurricanes" pill the board
    has never had; the real set is All, Majors, Landfalls, Near home.
 
-**==> STEP 4 SHRANK, BECAUSE THE THING ITS HONESTY MARKS EXISTED FOR IS GONE.
-READ §57.7a BEFORE PLANNING IT. <==** We compute landfalls ourselves now, for
-every basin and every year, so the twelve uncoded Atlantic years and the
-thirty-nine East Pacific ones are no longer holes. **The hollow gap marks, the
-"not recorded" hairline wording and the landfall honesty line are all deleted
-from step 4's scope** — there is nothing left for them to be honest about.
+**==> STEP 4 IS DONE AND CONFIRMED ON GLASS, 2026-08-28. <==** The triangles
+(§57.36a) and the running season's own landfalls (§57.7b) are both built,
+deployed and judged. Nothing is held here; the detail lives in those two spec
+sections rather than in this file.
 
-**The triangles are BUILT** (§57.36a) — a `::after` on each dot the file flags,
-neutral ink, out of flow so no row grows, and the row's spoken sentence carries
-the count because the strip is `aria-hidden`. Awaiting glass.
-
-What is left of step 4 is **the current season**, which still has no landfall
-data: live b-decks carry no marker and the browser has no coastline. 2026's dots
-carry no triangles today, which is honest but not what Aaron wants — he asked on
-2026-08-28 for the finished storms of the running year to be computed and
-marked, and explicitly did **not** want a hollow mark. The mask is now measured;
-see the landfall block further down for the two remaining options and why the
-runner cannot do it.
-
-Still unbuilt: the current season's landfalls (above), the entry-point unwind
-and the top pill (step 5 and 6, §57.37 as amended — the doors do NOT change,
-only `#seasons-bar` is deleted), and Storm Details (step 7, payload cost still
-unresolved).
+Still unbuilt in the Seasons build: **the entry-point unwind and the top pill**
+(steps 5 and 6, §57.37 as amended — the doors do NOT change, only
+`#seasons-bar` is deleted), and **Storm Details** (step 7, payload cost still
+unresolved). Steps 5 and 6 are the natural next pass: step 4 was the last thing
+gating them, and until the bar goes there are two doors into the archive saying
+different things.
 
 **==> AARON HAS NOT YET LOOKED AT 1971 AND IT IS THE ROW TO LOOK AT HARDEST.
 <==** It sits top of `Came ashore` at 18 of 22 storms — the highest ratio on
@@ -1312,32 +1300,19 @@ and `lonU`; `tools/seasons-landfall.mjs` needs a basin added to its loop and a
 file written per basin. **Do not reach for a per-agency marker in the IBTrACS
 columns.** One method, one answer, every basin.
 
-**LANDFALLS FOR THE SEASON IN PROGRESS — BUILT AND AWAITING GLASS.** §57.7b.
-Aaron chose option A on 2026-08-28: ship the mask, answer on the device. The
-running season now computes its own landfalls with the archive's own instrument
-— same pinned coastline, same 0.02 degree cell, same walk.
+**LANDFALLS FOR THE SEASON IN PROGRESS — SHIPPED AND CONFIRMED ON GLASS,
+2026-08-28.** §57.7b holds the whole account. Kept here only because one figure
+is worth carrying forward rather than re-deriving:
 
-`landmask-v5.1.2-0.02.bin.gz`, **0.30 MB on the wire**, built by
-`node tools/land-mask-pack.mjs`, fetched only when someone opens the archive and
-never on the boot path. `lib/landfall.js` was split so the rasteriser stays on
-the runner (`tools/land-raster.mjs`) and only the lookup and the walk ship.
+**The 14.85 MB the mask occupies while the phone walks the season was the one
+unmeasured risk, and glass cleared it** — Aaron confirmed the archive still
+opens and feels right with the mask in play. So the option-B fallback
+(computing at the edge) is NOT needed and should not be built speculatively.
 
-Verified before pushing: identical landfall counts to the runner's own mask for
-all 3,266 storms, 1.5 million cells sampled with zero disagreements, and NHC's
-real 2026 b-decks walked end to end — Arthur ashore in Texas, Bertha twice in
-Louisiana, Lala and Fausto at sea.
-
-**==> WHAT IS NOT MEASURED IS THE MEMORY, AND IT IS THE ONE THING LEFT. <==**
-The mask unpacks to about 14.85 MB held while the phone walks the season's
-storms, then freed. That number has never been watched on a real device. If it
-janks the wall or the archive feels heavier to open, the fallback is option B —
-compute at the edge — and this reverts in one commit.
-
-**Also open, and Aaron's call:** storms still RUNNING are measured too, not just
-finished ones. A landfall that has already happened is a fact the moment it
-happens and the flag can only go from no to yes as the track grows, so it cannot
-flip back and mislead. Aaron asked for finished storms only; this is the
-deliberate deviation and it is one line to change.
+**Do not rebuild the mask casually.** `node tools/land-mask-pack.mjs` takes the
+pinned coastline and about ten minutes of runner time. It only needs rerunning
+if the pin moves or `landfallMaskStep` changes, and either of those is the
+hand-brake case below.
 
 **THE COASTLINE PIN IS A DELIBERATE HAND BRAKE.** §57.7a.
 `nvkelso/natural-earth-vector@v5.1.2`, pinned to a tag rather than `master`, so

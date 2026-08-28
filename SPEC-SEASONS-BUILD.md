@@ -466,6 +466,13 @@ Fausto stay at sea. `tools/test-land-mask.mjs` asserts the landfall point is on
 land the mask itself agrees is land, which is a check against geography rather
 than against a number someone typed.
 
+**Confirmed on glass 2026-08-28, and that closed the last open question.** The
+mask occupies about 14.85 MB while the phone walks the season and is then freed;
+no test could answer whether that hurt, and it does not — the archive opens and
+scrolls as it did. **So option B, computing landfalls at the edge, is not needed
+and should not be built speculatively.** It stays on record as the fallback if a
+future device says otherwise.
+
 ### 57.8 What HURDAT2 does not contain, at all
 
 Watches and warnings. Cones. Forecast tracks. Rainfall. Surge. Radar.
@@ -4341,6 +4348,10 @@ year where none did. A sentence that mentions landfalls only when there were
 some cannot be told from one that never mentions them, and that is the §5
 difference between a measured nought and an unanswered question — every settled
 season has a computed answer (§57.7a), so nought here is a real measurement.
+
+**Confirmed on glass 2026-08-28**, both the archive's triangles and the running
+season's. Neutral ink and the mockup's proportions were right; nothing was sent
+back.
 
 **A suite can be green over a wall that claims every storm in 175 years came
 ashore.** The mark shipped half-written — `data-lf` on every dot rather than on
