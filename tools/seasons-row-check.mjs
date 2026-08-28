@@ -185,6 +185,61 @@ try {
     });
     ok(`${label}: lays out as expected`, lines === (width < 600 ? 2 : 1));
 
+    /* ==> THE MARKS AND THE TEXT SIT ON ONE LINE. <== Aaron on glass,
+     * 2026-08-28: the box, the dot and the name were not centred with each
+     * other. The cause was a grid rule nothing here was looking for — an
+     * EMPTY row still takes its gap, so the permanently-declared `near` row
+     * left a dead `--space-base` under the text and `align-items: center`
+     * duly centred the block including the dead space, putting the text 6px
+     * high while every mark beside it sat true.
+     *
+     * ==> IT IS MEASURED AGAINST THE TEXT RATHER THAN AGAINST THE ROW. <==
+     * The box, the dot and the chevron were all at the row's exact centre
+     * while it was broken — asserting THEY are centred would have passed on
+     * the bug. What was wrong is the relationship, so that is what is asserted.
+     *
+     * ==> ONLY ON THE ONE-LINE LAYOUT. <== On two lines the name genuinely
+     * sits above centre because it is the first of two lines, and the dot is
+     * centred on the block on purpose (`seasons.css` says so where it says
+     * `margin-top: 0`). There is no single line to share there. */
+    if (lines === 1) {
+      const centres = await page.$eval('.seasons-row', (r) => {
+        const mid = (sel) => {
+          const b = r.querySelector(sel)?.getBoundingClientRect();
+          return b ? b.top + b.height / 2 : null;
+        };
+        return {
+          box: mid('.check-box'),
+          dot: mid('.row-swatch'),
+          name: mid('.seasons-name'),
+          chev: mid('.seasons-open-chevron'),
+        };
+      });
+      const off = (k) => Math.abs(centres[k] - centres.name);
+      /* ==> 1.5px, AND THE NUMBER IS NOT ARBITRARY. <== The bug was 6px. Text
+       * centres move by fractions of a pixel with the font's own metrics and
+       * a whole pixel of that is invisible; anything the eye can read as
+       * "not on the same line" is several. A tighter bound would go red on a
+       * font substitution rather than on a regression. */
+      for (const k of ['box', 'dot', 'chev']) {
+        ok(`${label}: the ${k} shares the name's centre line (${off(k).toFixed(2)}px, was 6)`,
+          centres[k] !== null && off(k) <= 1.5);
+      }
+
+      /* ==> AND THE TEXT BLOCK CARRIES NO DEAD SPACE UNDER IT. <== The
+       * assertion above catches the symptom; this catches the cause, so a
+       * future edit that re-declares the empty row fails as the thing it is
+       * rather than as three mysterious offsets. One line of text, one line
+       * of block. */
+      const slack = await page.$eval('.seasons-row', (r) => {
+        const block = r.querySelector('.seasons-row-text').getBoundingClientRect();
+        const name = r.querySelector('.seasons-name').getBoundingClientRect();
+        return block.height - name.height;
+      });
+      ok(`${label}: the text block is no taller than its one line (${slack.toFixed(2)}px slack, was 12)`,
+        slack <= 1.5);
+    }
+
     await page.close();
   }
 } finally {

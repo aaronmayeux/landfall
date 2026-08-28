@@ -790,6 +790,26 @@ html[data-seasons="on"] #status {
   --meta-col: calc(var(--type-small) * 10.6);
 }
 
+/* ==> THE `near` ROW IS NO LONGER DECLARED, AND THAT IS A CENTRING FIX RATHER
+   THAN A TIDY-UP. <== Aaron on glass, 2026-08-28: the box, the dot and the text
+   were not on one line. Measured, the marks sat dead centre and the TEXT sat
+   6px high on the one-line layout.
+
+   The cause is a grid rule that is easy to read straight past: **an empty row
+   still takes its gap.** `near` was declared on every row in the app, and
+   `.seasons-approach` only exists under the Near home filter — so on every
+   other row the grid was a 19px line of text inside a 31px block with a dead
+   `--space-base` hanging off the bottom. `align-items: center` on the button
+   then centred the BLOCK, which put the text half a gap high.
+
+   ==> SO THE ROW IS CREATED BY THE ITEM RATHER THAN BY THE TEMPLATE. <== The
+   note carries `grid-column: 1 / -1` and no `grid-area`, so it auto-places onto
+   an IMPLICIT row. An implicit row does not exist when nothing is in it, and a
+   gap that does not exist cannot be taken. Nothing about the note's own
+   appearance changes when it is there.
+
+   `align-items: baseline` still does the work it always did — name, badge and
+   dates share one baseline across the columns. */
 .seasons-row-text {
   flex: 1 1 auto;
   min-width: 0;
@@ -797,8 +817,7 @@ html[data-seasons="on"] #status {
   grid-template-columns: minmax(0, 1fr) var(--badge-col);
   grid-template-areas:
     "name  badge"
-    "meta  meta"
-    "near  near";
+    "meta  meta";
   align-items: baseline;
   gap: var(--space-tight) var(--space-snug);
 }
@@ -814,7 +833,11 @@ html[data-seasons="on"] #status {
    line at small type. Given its own row it reads as what it is: the answer to
    the question the reader asked the slider. */
 .seasons-approach {
-  grid-area: near;
+  /* `grid-column`, NOT `grid-area` — see `.seasons-row-text`. Naming an area
+     means declaring it in the template, and a declared row takes its gap even
+     with nothing in it. Spanning every column instead puts the note on an
+     implicit row that only exists when the note does. */
+  grid-column: 1 / -1;
   min-width: 0;
   font-size: var(--type-small);
   color: var(--text-secondary);
@@ -881,9 +904,7 @@ html[data-seasons="on"] #status {
 @container roster (min-width: 400px) {
   .seasons-row-text {
     grid-template-columns: minmax(0, 1fr) var(--badge-col) var(--meta-col);
-    grid-template-areas:
-      "name badge meta"
-      "near near near";
+    grid-template-areas: "name badge meta";
     gap: var(--space-base);
   }
 }
