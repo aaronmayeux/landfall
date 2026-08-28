@@ -240,6 +240,53 @@ try {
         slack <= 1.5);
     }
 
+    /* ==> THE MASTER BOX SHARES THE ROWS' COLUMN. <== Aaron on glass,
+     * 2026-08-28. It is a `.seasons-check` like every row's, which is exactly
+     * why nothing caught this: it LOOKED covered by the row assertions, but
+     * the column rule is scoped to `.seasons-row` and the master box is not
+     * one, so the two were never compared by anything. They sat 15px apart
+     * down the whole list.
+     *
+     * ==> THE EDGES AND THE SIZE ARE TWO ASSERTIONS. <== Aaron reported both
+     * and only one of them was true — the boxes were always the same 14px —
+     * so each is checked rather than one standing in for the other. A single
+     * combined assertion would have gone red and sent the next reader looking
+     * for a sizing bug that was never there. */
+    const checkBoxes = await page.evaluate(() => {
+      const rect = (sel) => {
+        const b = document.querySelector(sel)?.getBoundingClientRect();
+        return b ? { left: b.left, w: b.width, h: b.height } : null;
+      };
+      return {
+        master: rect('.seasons-check-all .check-box'),
+        row: rect('.seasons-row .check-box'),
+        masterText: rect('.seasons-check-all .seasons-name'),
+        rowContent: rect('.seasons-row .seasons-open'),
+      };
+    });
+    ok(`${label}: the harness rendered both check boxes`,
+      !!checkBoxes.master && !!checkBoxes.row);
+    if (checkBoxes.master && checkBoxes.row) {
+      const drift = Math.abs(checkBoxes.master.left - checkBoxes.row.left);
+      ok(`${label}: the master box shares the rows' left edge (${drift.toFixed(2)}px, was 15)`,
+        drift <= 1);
+      ok(`${label}: and is drawn at the same size (${checkBoxes.master.w}x${checkBoxes.master.h})`,
+        checkBoxes.master.w === checkBoxes.row.w && checkBoxes.master.h === checkBoxes.row.h);
+    }
+
+    /* ==> AND WHAT FOLLOWS THE BOX STARTS IN THE SAME PLACE, WHICH IS A
+     * SEPARATE ASSERTION BECAUSE A MUTATION SURVIVED WITHOUT IT. <== Giving
+     * the master box a left margin only lines the two BOXES up and leaves the
+     * label beside it 15px adrift of the rows' content — a half fix that reads
+     * as a different bug, and the check above passed on it happily. The box
+     * has to OCCUPY the column, not merely be offset into it, and this is the
+     * assertion that knows the difference. */
+    if (checkBoxes.masterText && checkBoxes.rowContent) {
+      const textDrift = Math.abs(checkBoxes.masterText.left - checkBoxes.rowContent.left);
+      ok(`${label}: the master label starts where a row's content does (${textDrift.toFixed(2)}px)`,
+        textDrift <= 1);
+    }
+
     await page.close();
   }
 } finally {

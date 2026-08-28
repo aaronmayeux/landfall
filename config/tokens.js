@@ -1821,6 +1821,18 @@ export const SIZE = Object.freeze({
    *  A control may LOOK smaller; its hit area never is. */
   touchTarget: '44px',
 
+  /** The drawn check box — the square the reader sees, not its hit area.
+   *
+   *  ==> IT IS A TOKEN BECAUSE TWO PLACES HAVE TO AGREE ON IT AND ONE OF THEM
+   *  IS ARITHMETIC. <== Aaron on glass, 2026-08-28: the roster's master box did
+   *  not line up with the boxes below it. A row centres its box inside a
+   *  `touchTarget` column, so the box sits `(44 - 14) / 2` in from the column's
+   *  edge; the master box is not inside such a column and sat flush left, 15px
+   *  adrift down the whole list. The correction is that same expression, which
+   *  means the size is now READ rather than assumed — and a future retune of
+   *  the box moves the master box with it instead of silently un-aligning it. */
+  checkBox: '14px',
+
   /** How far the collapsed storm pill stays clear of each screen edge.
    *
    *  ==> IT IS A TOUCH TARGET PLUS A GAP, NOT A CHOSEN NUMBER. <== The info

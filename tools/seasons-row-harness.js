@@ -5,7 +5,7 @@
  */
 import { applyTokens } from '../app/theme-switch.js';
 import { forceMode, MODE } from '../config/theme.js';
-import { rowHtml } from '../ui/seasons-board-markup.js';
+import { checkAllHtml, rowHtml } from '../ui/seasons-board-markup.js';
 
 /* ==> THE TYPE SCALE IS NOT IN A STYLESHEET, SO IT HAS TO BE FETCHED. <==
  * `--type-small` and its siblings are declared in `index.html`'s own `:root`
@@ -62,4 +62,10 @@ const rows = CASES.map(([name, badge, landfalls, firstTime, lastTime]) => rowHtm
   on: false,
 })).join('');
 
-document.getElementById('body').innerHTML = `<ul class="seasons-roster">${rows}</ul>`;
+/* ==> THE MASTER BOX IS IN THE HARNESS BECAUSE NOTHING WAS MEASURING IT. <==
+ * Aaron on glass, 2026-08-28: it did not line up with the boxes below it. It
+ * is a `.seasons-check` like every row's, so it LOOKED like it was covered —
+ * but the rows scope their own column rule to `.seasons-row`, and the master
+ * box is not one, so the two were never actually compared by anything. */
+document.getElementById('body').innerHTML =
+  `${checkAllHtml({ shown: CASES.length, on: 0 })}<ul class="seasons-roster">${rows}</ul>`;

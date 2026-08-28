@@ -732,6 +732,37 @@ html[data-seasons="on"] #status {
 
 /* --- the master box ------------------------------------------------------ */
 
+/* ==> THE MASTER BOX SITS IN THE SAME COLUMN THE ROWS CENTRE THEIRS IN. <==
+   Aaron on glass, 2026-08-28: it did not line up with the boxes below it.
+   Measured, both boxes are the same 14px and they sat 15px apart — a row
+   centres its box inside a `--touch-target` column (`.seasons-row
+   .seasons-check` above), and this label is not a `.seasons-row`, so its box
+   sat flush against the left edge while every box under it sat inset.
+
+   ==> THE MARGIN IS THE ROWS' OWN CENTRING, WRITTEN AS ARITHMETIC RATHER THAN
+   AS 15px. <== Both halves are read from the tokens the other rule uses, so a
+   retune of either the touch target or the box size carries this with it. A
+   literal would be correct today and quietly wrong the first time either
+   moved, which is the failure that produced the misalignment in the first
+   place.
+
+   ==> BOTH SIDES, NOT JUST THE LEFT. <== The box then OCCUPIES the full
+   column, so the label after it starts exactly where a row's dot starts. Only
+   the left margin would line the boxes up and leave the two lines of text
+   still 15px apart, which is half a fix that looks like a different bug. */
+.seasons-check-all .check-box {
+  margin-inline: calc((var(--touch-target) - var(--check-box)) / 2);
+}
+
+/* ==> AND THE GAP AFTER THE BOX IS THE ROW'S GAP, NOT THE LABEL'S. <== With
+   the box occupying its column the label was still 4px out, because
+   `.seasons-check` separates its parts by `--space-snug` while `.seasons-row`
+   separates the box column from the storm's button by `--space-tight`. Two
+   different gaps doing the same job in the same column is what the 4px was. */
+.seasons-check-all {
+  gap: var(--space-tight);
+}
+
 /* ==> THE SPREADSHEET'S FILTER HEADER. §57.21b item 4. <== It is a row like
    the storms below it and deliberately reads as one: same box, same height,
    same target. What sets it apart is the rule under it, which is the same
@@ -1520,18 +1551,113 @@ html[data-seasons="on"] #status {
   .wall-sort-btn:hover { background: var(--hover); color: var(--text-primary); }
 }
 
+/* ==> THE SLOT MUST NOT BE A BOX. <== It exists so a threshold drag can
+   replace everything below the controls without touching the controls
+   themselves (`view-seasons-wall.js`). `display: contents` means its children
+   lay out exactly as they did when they were siblings — the wrapper is a
+   handle for `innerHTML` and nothing else, and a stray block here would put a
+   margin between the honesty line and the wall that was never there. */
+.wall-results-slot { display: contents; }
+
+/* ==> IT LOOKS LIKE A CONTROL NOW, BECAUSE IT WAS NOT BEING FOUND. <== Aaron
+   on glass, 2026-08-28: "the More filters button is inconspicuous, it's hard
+   to notice". It was small secondary text on the panel with no edge, no
+   background and no affordance — the three sliders behind it were effectively
+   undiscoverable. It now carries the same raised fill and hairline as the sort
+   buttons beside it, so it reads as one of the row of controls it belongs to
+   rather than as a caption between them.
+
+   `list-style: none` plus the WebKit pseudo-element, or Safari draws its own
+   triangle next to ours. */
 .wall-more > summary {
   min-height: var(--touch-target);
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: var(--space-snug);
+  padding: 0 var(--space-snug);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  background: var(--glass-raised);
   font-size: var(--type-small);
   color: var(--text-secondary);
   cursor: pointer;
+  list-style: none;
+}
+
+.wall-more > summary::-webkit-details-marker { display: none; }
+
+@media (hover: hover) {
+  .wall-more > summary:hover {
+    background: var(--hover);
+    color: var(--text-primary);
+  }
 }
 
 .wall-more > summary:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
+}
+
+/* Two borders and a rotation rather than a shipped icon, the same construction
+   `.seasons-open-chevron` uses — it inherits the summary's colour, so it goes
+   sepia with everything else with no second place to remember. Points DOWN
+   when closed and UP when open. */
+.wall-more-chevron {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform var(--duration-base) var(--ease-settle);
+}
+
+.wall-more[open] > summary .wall-more-chevron {
+  transform: translateY(2px) rotate(-135deg);
+}
+
+/* ==> THE SLIDE IS A GRID ROW GOING 0fr TO 1fr. <== A `<details>` flips its
+   children between rendered and not, so there is nothing in between to ease
+   and `height` cannot be transitioned from `auto` anyway. A single-row grid
+   CAN be, and it costs no layout thrash of its own.
+
+   ==> THE PANEL IS NOT HIDDEN WHILE CLOSED, AND THAT IS DELIBERATE. <== A
+   closed `<details>` would otherwise hide it outright and there would be
+   nothing to animate. `overflow: hidden` plus a zero row does the hiding, and
+   `min-height: 0` on the inner element is load-bearing — without it a grid
+   item refuses to shrink below its content and the panel never closes. */
+.wall-more > .wall-more-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration-base) var(--ease-settle);
+}
+
+.wall-more[open] > .wall-more-panel { grid-template-rows: 1fr; }
+
+.wall-more > .wall-more-panel > .wall-more-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ==> AND A CLOSED PANEL IS OUT OF THE TAB ORDER, WHICH THE GRID ALONE DOES
+   NOT DO. <== `overflow: hidden` clips the sliders visually and leaves them
+   focusable, so a keyboard reader would Tab into three controls they cannot
+   see — §13 calls that a bug rather than a limitation. `visibility` is
+   animatable in the sense that matters here: it flips at the END of the
+   collapse and at the START of the expand, so the content is never invisible
+   while it is moving. */
+.wall-more:not([open]) > .wall-more-panel > .wall-more-inner {
+  visibility: hidden;
+  transition: visibility 0s linear var(--duration-base);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wall-more > .wall-more-panel,
+  .wall-more-chevron { transition: none; }
+  .wall-more:not([open]) > .wall-more-panel > .wall-more-inner {
+    transition: none;
+  }
 }
 
 /* ==> THE LINE THAT KEEPS A SORT CONTROL FROM MAKING A CLIMATE CLAIM. <==
