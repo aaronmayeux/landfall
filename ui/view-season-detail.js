@@ -44,6 +44,7 @@
 import { SEASONS } from '../config/constants.js';
 import { rankInSeason } from '../lib/season-facts.js';
 import { rankStorm } from '../lib/rankings.js';
+import { isCollapsed, readSections, writeSections } from '../lib/section-state.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { storyClauses } from '../lib/season-story.js';
 import {
@@ -76,6 +77,38 @@ import { archiveRankHtml, seasonRankHtml } from './season-rank-markup.js';
  *   §57.21a's rule that the roster and the globe must never disagree,
  *   extended one screen further.
  */
+/**
+ * ==> THE TWO RANK SECTIONS OPEN AND THE REST FOLD. <== Aaron's call,
+ * 2026-08-29. The panel has nine sections and a reader stepping through the
+ * archive is looking for where a storm SITS before they want its arithmetic,
+ * so the comparison is what the panel opens on. Everything else is one tap
+ * away and its heading is still on screen, which is the difference between
+ * folded and absent.
+ *
+ * ==> IT IS THE OPEN LIST RATHER THAN THE CLOSED ONE, AND THAT IS DELIBERATE.
+ * <== A new section added to this panel then defaults to FOLDED, which is the
+ * safe direction: an unfamiliar section arriving already open pushes eight
+ * known ones off a phone screen, and the reader who was looking for `Landfalls`
+ * has to hunt for it. A closed list would have made the new section open by
+ * omission, which is the failure mode nobody notices until it is on glass.
+ */
+const OPEN_BY_DEFAULT = new Set(['rank-season', 'rank-archive']);
+
+/**
+ * ==> THIS PANEL'S FOLDS SHARE ONE STORAGE RECORD WITH THE LIVE PANEL'S, SO
+ * THEY ARE NAMESPACED. <== `lib/section-state.js` owns a single key, which is
+ * right — the parsing rules and the private-mode failure behaviour should have
+ * one owner. But the record is flat, so two panels putting a bare `wind` in it
+ * would silently fold each other's sections, and the bug would look like the
+ * app forgetting a choice rather than like a collision.
+ *
+ * No id collides today (the live panel uses `home`, `vitals`, `wind`, `ww`,
+ * `advisory`, `environment`, `flooding`, `people` and `rainfall`) and that is
+ * exactly the state in which a prefix is cheap. Added later, it would also
+ * have to migrate whatever readers had already written.
+ */
+const storeKey = (id) => `season:${id}`;
+
 export function createSeasonDetailView({ entries, archive, loadReport, units, onOpen }) {
   let host = null;
   let bodyEl = null;
@@ -90,16 +123,21 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
    *  three states in §5 stay three states all the way to the markup. */
   let report = null;
 
-  /** ==> WHICH SECTIONS THE READER HAS FOLDED, FOR THIS STORM ONLY. <== Held
-   *  in memory and cleared on every `onEnter`, so opening a second storm gives
-   *  all of it again. See the note above `section()` for why it is not
-   *  persisted the way the live panel's is.
+  /** ==> WHICH SECTIONS THE READER HAS FOLDED, PERSISTED THE WAY THE LIVE
+   *  PANEL'S ARE. <== Aaron's call, 2026-08-29, reversing the decision
+   *  recorded here on the same day. The old reasoning was that an archive
+   *  storm is opened, read and left, so nothing was worth keeping; the
+   *  reasoning that beats it is that **a reader stepping through 1851 to 2025
+   *  is doing the same thing over and over**, and re-folding six sections on
+   *  every storm is the tax that reasoning missed.
    *
-   *  ==> IT MUST SURVIVE A RE-RENDER EVEN THOUGH IT DOES NOT SURVIVE A STORM.
-   *  <== This panel re-renders when NOAA's report arrives, which is a beat
-   *  after it paints. Without this the reader's folds would spring open under
-   *  them a second after they made them, on every storm that has a report. */
-  const collapsed = Object.create(null);
+   *  ==> AND IT MUST SURVIVE A RE-RENDER AS WELL AS A RELOAD. <== This panel
+   *  redraws when NOAA's report arrives a beat after it paints, so a fold
+   *  living only in the DOM would spring open under the reader a second after
+   *  they made it, on the 47% of storms that have a report. Reading the record
+   *  in `section()` covers both, because a redraw and a fresh load take the
+   *  same road. */
+  let collapsed = readSections();
 
   /** ==> A TOKEN, BECAUSE THE READER CAN OPEN A SECOND STORM WHILE THE FIRST
    *  LOOKUP IS IN THE AIR. <== Without it the slower answer wins and Katrina's
@@ -160,7 +198,7 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
 
   function section(id, title, innerHtml) {
     if (!innerHtml) return '';
-    const shut = !!collapsed[id];
+    const shut = isCollapsed(collapsed, storeKey(id), !OPEN_BY_DEFAULT.has(id));
     return `
       <section class="detail-section" data-section="${id}" data-collapsed="${shut}">
         <button class="detail-section-head" type="button" aria-expanded="${!shut}">
@@ -289,7 +327,8 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     const shut = sec.dataset.collapsed !== 'true';
     sec.dataset.collapsed = String(shut);
     head.setAttribute('aria-expanded', String(!shut));
-    collapsed[id] = shut;
+    collapsed[storeKey(id)] = shut;
+    writeSections(collapsed);
   }
 
   return {
@@ -351,11 +390,6 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     onEnter(arg) {
       stormId = arg || null;
       report = null;
-      /* ==> EVERY STORM OPENS FULLY EXPANDED. <== See `section()`: an archive
-       * storm is opened, read and left, so a fold made on Katrina must not
-       * arrive pre-applied on a storm from 1851 that has half as many sections
-       * and no reason for any of them to be shut. */
-      for (const k of Object.keys(collapsed)) delete collapsed[k];
       render();
       if (stormId) {
         onOpen?.(stormId);
