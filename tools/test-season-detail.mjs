@@ -347,6 +347,57 @@ function mount({
 }
 
 /* ---------------------------------------------------------------------------
+ * 3b. THE LOOP — §57.49, in `How it moved` and above the birthplace
+ * ------------------------------------------------------------------------- */
+{
+  /* ==> DRIVEN THROUGH THE MOUNTED VIEW RATHER THAN THROUGH `loopHtml`. <==
+   * Both §57.49 sentences are APPENDED by the view, so their order is a fact
+   * about `view-season-detail.js` and nothing in `season-shape-markup.js` can
+   * see it. §57.48 shipped exactly this kind of ordering as a comment and a
+   * mutation run walked straight through it. */
+  const atl2004 = seasonOf('atlantic', 2004);
+  const jeanne = atl2004.find((s) => s.id === 'AL112004');
+  const m = mount({ storms: [jeanne] });
+  m.view.onEnter('AL112004');
+  const html = m.html();
+
+  ok('==> JEANNE 2004 GETS THE LOOP SENTENCE. <== She turned a full circle east of the '
+    + 'Bahamas and came back over the same water', html.includes('It looped.'));
+  ok('and it names the width in the reader\u2019s own units, so it agrees with the '
+    + 'distance rows in the same section', html.includes('157 mi'));
+
+  /* ==> ABOVE THE BIRTHPLACE, AND THAT IS THE DECISION WORTH ASSERTING. <==
+   * §57.49. The origin sentence fires on 1,993 of 2,004 Atlantic storms and
+   * reads as background; the loop fires on 120 of 3,266 and is the reason a
+   * reader stops. A rare fact printed under a near-universal one is a rare
+   * fact nobody sees. */
+  const loopAt = html.indexOf('It looped.');
+  const originAt = html.indexOf('It formed inside the basin');
+  ok('==> AND IT IS PRINTED ABOVE THE BIRTHPLACE SENTENCE, NOT BELOW IT. <== The rare '
+    + 'fact leads; the one nearly every Atlantic storm carries follows',
+  loopAt > -1 && originAt > -1 && loopAt < originAt);
+
+  /* ==> AND THE SAME PANEL IN KILOMETRES, WHICH IS THE ASSERTION A MUTATION
+   * RUN ADDED. <== Dropping `system` from the view's call left every other
+   * case green: `formatDistance` falls back to the device locale, which in a
+   * sandbox is imperial, so the miles assertion above still passed while a
+   * metric reader would have been shown miles. The unit has to be proven to
+   * TRAVEL, not merely to be right on the default. */
+  const metric = mount({ storms: [jeanne], units: () => 'metric' });
+  metric.view.onEnter('AL112004');
+  ok('==> A METRIC READER IS SHOWN THE LOOP IN KILOMETRES. <== The preference has to '
+    + 'reach the sentence from the view, not be assumed by it',
+  metric.html().includes('252 km'));
+
+  /* Katrina never crosses her own track, so the slot must vanish rather than
+   * render empty. §57.25: a value that shrugs is worse than no row. */
+  const k = mount({ storms: [katrina] });
+  k.view.onEnter('AL122005');
+  ok('and a storm that never crossed its own track gains nothing at all',
+    !k.html().includes('It looped'));
+}
+
+/* ---------------------------------------------------------------------------
  * 4. LANDFALLS — the strength at the coast, and the twelve-year hole
  * ------------------------------------------------------------------------ */
 {
