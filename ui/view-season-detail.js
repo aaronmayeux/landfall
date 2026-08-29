@@ -56,6 +56,13 @@ import {
  * renderers on this panel that take a comparison rather than a fact, and they
  * were the 126 lines that put `season-detail-markup.js` over the ceiling. */
 import { archiveRankHtml, seasonRankHtml } from './season-rank-markup.js';
+/* ==> §57.48. THREE SENTENCES THAT JOIN THREE SECTIONS THAT ALREADY EXIST.
+ * <== They are appended to the markup those sections are built from rather
+ * than given headings of their own, which is Aaron's call: the panel is at
+ * nine sections and a tenth was not worth three facts. A section is where a
+ * sentence appears; it does not have to be where the sentence is written, and
+ * `ui/season-detail-markup.js` was 19 lines under §12's ceiling. */
+import { comebackHtml, seasonWindowHtml, originHtml } from './season-shape-markup.js';
 
 /**
  * @param {object} opts
@@ -256,7 +263,15 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * reason: a rank captured when the panel first painted would go on
           * describing last year's roster under this year's heading. It is one
           * pass over at most 31 storms, so rebuilding it per render is free. */
-    section('rank-season', 'In its season', 'calendar', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
+    section('rank-season', 'In its season', 'calendar',
+      seasonRankHtml(rankInSeason(facts, seasonFacts()))
+      /* ==> §57.48. IT GOES LAST, UNDER THE RANKS, BECAUSE IT IS ABOUT THE
+       * CALENDAR RATHER THAN ABOUT THE OTHER STORMS. <== The two rank rows
+       * answer "where did it come among them"; this answers "was it even
+       * supposed to be there". Above them it would be the first thing read
+       * about a section headed `In its season` and would push the comparison
+       * the heading promises down the screen. */
+      + seasonWindowHtml(facts.seasonWindow))}
       ${/* ==> IT SITS DIRECTLY UNDER `In its season`, NARROW COMPARISON THEN
           * WIDE. <== §57.44. The two rank sections answer the same question at
           * two sizes, and a reader who has just read "3rd strongest of 28"
@@ -290,6 +305,14 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
   }))}
       ${section('change', 'How it changed', 'trend', changeHtml(facts, system, {
     windowHours: SEASONS.intensificationWindowHours,
+    /* ==> §57.48. THE COMEBACK IS HANDED IN RATHER THAN APPENDED, BECAUSE THIS
+     * SECTION IS IN CHRONOLOGICAL ORDER AND APPENDING WOULD BREAK IT. <== The
+     * section runs strengthening, then the weakening before the coast, then
+     * how the storm finished. A comeback happened before it finished, so a
+     * sentence stuck on the end would sit under `Dissipated. The record simply
+     * stops.` and describe a hurricane coming back afterwards. The other two
+     * §57.48 sentences ARE appended, because neither joins an ordered list. */
+    comebackHtml: comebackHtml(facts.comeback),
   }))}
       ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
     floorKt: SEASONS.trackSpeedFloorKt,
@@ -299,7 +322,13 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
      * get printed, never their units. */
     distanceFloorNm: SEASONS.trackDistanceFloorNm,
     cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
-  }))}
+  })
+    /* ==> §57.48. APPENDED, AND THAT IS SAFE HERE IN A WAY IT WAS NOT IN
+     * `How it changed`. <== That section is a chronology; this one is a set of
+     * facts about the track with no order to break. The birthplace goes last
+     * because the distance and speed rows above it are what a reader came to
+     * this section for, and this is the sentence that colours them. */
+    + originHtml(facts.origin))}
       ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}

@@ -7364,19 +7364,85 @@ export const SEASONS = Object.freeze({
    */
   rankingsMinStorms: 30,
 
-  /**
-   * ==> HOW MANY RANKS THE PANEL PRINTS BEFORE IT STOPS. <== Seven, since
-   * §57.46 added distance travelled on Aaron's call. The constant exists
-   * because the list is a screen on a phone and the next statistic added to
-   * `RANK_STATS` should have to think about that rather than simply land —
-   * §57.43 already put two new sections on a panel that now has nine, and
-   * Aaron named the crowding as the risk he was accepting. An eighth rank is a
-   * glass call, not a free addition.
+  /* ==> THERE IS NO CAP ON HOW MANY RANKS THE PANEL PRINTS, AND ITS ABSENCE IS
+   * A DECISION RATHER THAN AN OVERSIGHT. <== `rankingsMaxRows` used to sit
+   * here at 7 and truncate the list, so that adding a statistic to
+   * `RANK_STATS` was a glass call about crowding instead of a free addition.
+   * **Aaron removed it on 2026-08-29: every figure the archive can rank gets
+   * its rank printed.** A statistic added to `RANK_STATS` now lands on the
+   * panel on its own, and the section grows with the archive rather than
+   * against a number nobody re-derives. If the section ever reads as too long,
+   * the lever is which statistics are worth ranking at all — not a silent
+   * truncation that hides the last of them with nothing on screen saying so.
    *
-   * ==> IT COUNTS ROWS, NOT `RANK_STATS` ENTRIES, AND THOSE STOPPED BEING THE
-   * SAME NUMBER AT SEVEN. <== Distance ships as two entries — one ladder
-   * rounded to miles, one to kilometres — and `rankStorm` drops the one that
-   * is not the reader's before a row is built. Eight entries, seven rows.
+   * ==> AND A TRUNCATION WAS THE WRONG SHAPE FOR THIS SECTION ANYWAY. <== §5.
+   * The cut rows vanished without a word, so a reader could not tell a
+   * statistic the archive declined to rank from one the panel simply stopped
+   * before. Two different facts, one identical blank. */
+
+  /* --- The shape of a storm's life (§57.48) ------------------------------- */
+
+  /**
+   * ==> WHEN EACH BASIN'S SEASON OFFICIALLY RUNS, AS `[month, day]` PAIRS.
+   * <== §57.48. A storm whose first record falls outside its own basin's
+   * window gets a sentence saying so.
+   *
+   * ==> THE WINDOWS ARE PER BASIN BECAUSE ONE WINDOW WOULD MISLABEL 41 REAL
+   * STORMS. <== Aaron's call, 2026-08-29. The Atlantic season opens June 1 and
+   * the East Pacific opens May 15, and **41 East Pacific storms in the archive
+   * formed between May 15 and May 31** — measured over both mirrored basins.
+   * Under a single June 1 window every one of them would be told it arrived
+   * before its season started, which is false about the season it actually
+   * belongs to. The Central Pacific shares the Atlantic's dates.
+   *
+   * ==> A BASIN THAT IS NOT LISTED PRODUCES NO SENTENCE, WHICH IS THE POINT.
+   * <== §5. Step 13 brings basins whose seasons run across the new year and
+   * whose official dates this repo has not measured. Silence there is the
+   * honest answer; a default window would quietly grade them against the
+   * Atlantic's calendar and read exactly like a measurement.
    */
-  rankingsMaxRows: 7,
+  seasonWindows: Object.freeze({
+    AL: Object.freeze({ start: Object.freeze([6, 1]), end: Object.freeze([11, 30]) }),
+    EP: Object.freeze({ start: Object.freeze([5, 15]), end: Object.freeze([11, 30]) }),
+    CP: Object.freeze({ start: Object.freeze([6, 1]), end: Object.freeze([11, 30]) }),
+  }),
+
+  /**
+   * ==> THE BOX A CAPE VERDE STORM IS BORN IN. <== §57.48. Genesis east of
+   * `capeVerdeMaxLon` and south of `capeVerdeMaxLat` means the storm came off
+   * Africa rather than forming in the western basin, which changes how a
+   * reader reads the whole track: a Cape Verde storm has an ocean's width to
+   * cross and a fortnight to do it in.
+   *
+   * MEASURED 2026-08-29 across the mirrored archive: 182 of 2,004 Atlantic
+   * storms are born inside this box.
+   */
+  capeVerdeMaxLon: -30,
+  capeVerdeMaxLat: 20,
+
+  /**
+   * ==> AND IT IS SAID IN THE ATLANTIC ONLY, BECAUSE IT IS AN ATLANTIC IDEA.
+   * <== §57.48. \"Cape Verde\" names a real place upwind of one basin. The same
+   * box in the East Pacific sits over South America, and calling an East
+   * Pacific storm \"home-grown\" would be labelling every storm in the basin
+   * with a distinction that does not exist there — a qualifier that fires
+   * everywhere qualifies nothing, which is the `Tied` lesson §57.44 paid for.
+   */
+  capeVerdeBasins: Object.freeze(['AL']),
+
+  /**
+   * ==> THE COMEBACK: A HURRICANE THAT FELL THIS FAR AND CAME BACK. <==
+   * §57.48. The high bar is `hurricaneKt` and the low bar is this. Both ends
+   * are already on the panel's vocabulary, so nothing new has to be explained
+   * to a reader.
+   *
+   * ==> 34 KT RATHER THAN 64, AND THE DIFFERENCE IS 14 STORMS AGAINST 181.
+   * <== Measured 2026-08-29 over all 3,266 mirrored storms. A storm that dips
+   * under hurricane force and recovers is ordinary — 181 of them, which is a
+   * qualifier that fires too often to be worth a sentence. A hurricane that
+   * falls all the way back to a depression and becomes a hurricane again is
+   * **14 storms in 175 years**, and they are the ones people remember: Jeanne
+   * 2004, Ida 2009, Eta 2020, John 1994 and John 2024.
+   */
+  comebackFloorKt: 34,
 });

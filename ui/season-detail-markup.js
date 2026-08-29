@@ -316,7 +316,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
 }
 
 /** Fastest intensification, and how it ended. §57.15. */
-export function changeHtml(facts, system, { windowHours }) {
+export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
   const rows = [];
   /* ==> `fastest24h`, NOT `fastest`, AND THIS ONE WORD MEANT THE SECTION HAD
    * NEVER RENDERED. <== `lib/season-facts.js` writes `fastest24h`; this file
@@ -378,8 +378,15 @@ export function changeHtml(facts, system, { windowHours }) {
   };
   const ending = ENDINGS[facts?.ending] || null;
 
+  /* ==> THE SECTION IS IN TIME ORDER AND `comebackHtml` HAS TO LAND INSIDE IT.
+   * <== §57.48. Strengthening, then what it gave up at the coast, then the
+   * comeback, then how it finished. It arrives already built rather than being
+   * computed here, because this file was 19 lines under §12's ceiling — see
+   * `ui/season-shape-markup.js`. An empty string is the ordinary case: 14
+   * storms in 3,266 have a comeback. */
   return rowsHtml(rows)
     + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
+    + comebackHtml
     + (ending ? absenceHtml(ending) : '');
 }
 
