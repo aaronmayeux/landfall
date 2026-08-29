@@ -1048,6 +1048,28 @@ html[data-seasons="on"] #status {
   color: var(--text-primary);
 }
 
+/* --- the storm's life, in a paragraph (§57.41) ---------------------------- */
+
+/* ==> IT IS SET AS PROSE, NOT AS A NOTE. <== Every other free-text line on this
+   panel is a `.detail-note` — a caveat about the figure beside it, secondary
+   colour, deliberately quieter than the numbers. This one is the opposite: it
+   is the thing to READ, and the figures below it are the supporting detail. So
+   it takes primary colour and a comfortable measure, and it is the only block
+   on the panel with real line spacing.
+
+   ==> AND IT IS OUTSIDE `.detail-section`, WHICH IS WHY IT NEEDS ITS OWN
+   INSET. <== It cannot be a collapsible section (a reader must not be able to
+   fold away the summary and then read the figures without it), so it does not
+   inherit the section padding and states its own. */
+.season-story {
+  margin: 0;
+  padding: var(--space-snug) var(--drawer-inset) var(--space-base);
+  font-size: var(--type-body);
+  line-height: 1.55;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--glass-border);
+}
+
 /* --- landfalls ----------------------------------------------------------- */
 
 .season-landfalls {

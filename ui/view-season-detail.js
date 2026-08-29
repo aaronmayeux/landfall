@@ -43,9 +43,10 @@
 
 import { SEASONS } from '../config/constants.js';
 import { stormDisplayName } from '../lib/season-names.js';
+import { storyClauses } from '../lib/season-story.js';
 import {
   changeHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml, peakHtml,
-  reportHtml, windFieldHtml,
+  reportHtml, storyHtml, windFieldHtml,
 } from './season-detail-markup.js';
 
 /**
@@ -124,8 +125,23 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
     const { storm, facts } = e;
     const system = units();
 
+    /* ==> THE PARAGRAPH IS BUILT HERE RATHER THAN CACHED WITH THE FACTS,
+     * BECAUSE IT DEPENDS ON THE READER'S UNITS. <== `stormFacts` is stable
+     * forever and is computed once when the board loads a season; this reads
+     * mph or km/h and would go stale the moment somebody changed the setting.
+     * It is a few string joins over one storm, so rebuilding it per render is
+     * free — and `points` and `places` both hang off the storm the board is
+     * already holding, so nothing is fetched to draw it. */
+    const story = storyClauses(facts, {
+      name: stormDisplayName(storm),
+      points: storm.points,
+      places: storm.places ?? null,
+      system,
+    });
+
     bodyEl.innerHTML = `
       ${headHtml({ storm, facts, provisional: !!facts.provisional })}
+      ${storyHtml(story)}
       ${section('Strongest', peakHtml(facts, system))}
       ${section('Its life', lifeHtml(facts))}
       ${section('Landfalls', landfallsHtml(facts, system, {

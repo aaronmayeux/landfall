@@ -25,6 +25,9 @@ The newest is picked by the last season in the filename, never by sorting.
 | `AL111989` | HUGO | 64 rows | HUGO 1989 — inside the 1971-1990 landfall hole. A US landfall that NOAA did not mark. §57.7. |
 | `AL031935` | UNNAMED | 52 rows | LABOR DAY 1935 — UNNAMED, pre-1950, and the headline entry on §57.14 alias list. |
 | `AL011851` | UNNAMED | 14 rows | The first storm in the file. Already held as part of the probe sample; kept here so one directory holds every era. |
+| `AL092017` | HARVEY | 74 rows | HARVEY 2017 — §57.41's headline case. He went inland near Rockport, back out over the Gulf and ashore again near Cameron, so a stall measured from a window's own FIRST FIX reports nothing at all for the storm whose whole reputation is that it stopped moving. Cut 2026-08-29. |
+| `AL052019` | DORIAN | 70 rows | DORIAN 2019 — the other stall, and a different shape: two days genuinely parked over Grand Bahama rather than a track that doubles back. Five landfalls, so the naming and the count are both exercised. Cut 2026-08-29. |
+| `AL182012` | SANDY | 45 rows | SANDY 2012 — §57.41's extratropical rule. NOAA marks her New Jersey landfall; this app declines it because she was already extratropical, and her ENTIRE reputation is that landfall. The paragraph has to say so in words or a correct rule reads as a bug. Cut 2026-08-29. |
 
 **Found by rule**
 

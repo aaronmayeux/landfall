@@ -206,6 +206,30 @@ export function headHtml({ storm, facts, provisional }) {
     </header>`;
 }
 
+/**
+ * The storm's life in a paragraph. §57.41.
+ *
+ * ==> IT SITS UNDER THE HONESTY LINE AND ABOVE `Strongest`, AND IT IS NOT A
+ * SECTION. <== Aaron's call on the placement; the rest follows from it. Every
+ * `section()` on this panel can be collapsed, and a paragraph that summarises
+ * the whole record must not be something a reader folds away and then reads the
+ * figures without. It is also qualified by the honesty line above it, so
+ * nothing here can be read before that sentence.
+ *
+ * ==> NO CLAUSE IS ASSEMBLED IN THIS FILE. <== `lib/season-story.js` returns
+ * finished sentences and this only escapes them and puts them in a tag. The
+ * arithmetic and the wording are one thing, tested together, and a renderer
+ * that started making its own sentences would be a second author for the same
+ * paragraph.
+ *
+ * @param {string[]} clauses  from `storyClauses`
+ */
+export function storyHtml(clauses) {
+  const real = (clauses || []).filter((s) => typeof s === 'string' && s.trim());
+  if (!real.length) return '';
+  return `<p class="season-story">${esc(real.join(' '))}</p>`;
+}
+
 /* ---------------------------------------------------------------------------
  * THE SECTIONS
  * ------------------------------------------------------------------------ */
