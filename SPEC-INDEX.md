@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 338 numbered headings.
+Covering 11 files, 339 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -349,12 +349,13 @@ real home is the other row carrying the same section number.
 | `57.40` | &nbsp;&nbsp;Naming a place — as built | `SPEC-SEASONS-BUILD.md` | 5551-5640 |
 | `57.40a` | &nbsp;&nbsp;The places sidecar — as built | `SPEC-SEASONS-BUILD.md` | 5641-5750 |
 | `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5751-5924 |
-| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5925-6049 |
-| `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 6050-6061 |
-| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 6243-6516 |
-| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6517-6532 |
-| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6694-6748 |
-| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6822-6875 |
+| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5925-6076 |
+| `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 6077-6088 |
+| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 6270-6549 |
+| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6550-6565 |
+| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6729-6784 |
+| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6862-6915 |
+| `57.48` | &nbsp;&nbsp;The comeback, the calendar and the origin — as built | `SPEC-SEASONS-BUILD.md` | 6973-6985 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -370,8 +371,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 280,502 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 399,080 | 77 |
+| `SPEC-SEASONS-BUILD.md` | 414,372 | 78 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 190,163 | 15 |
+| `SPEC.md` | 190,373 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

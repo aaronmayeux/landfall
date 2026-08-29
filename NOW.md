@@ -78,6 +78,32 @@ The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
 list; a refused crossing gets a sentence instead of silence; and a dot is graded
 from the status column rather than from the wind.
 
+**==> THREE NEW SENTENCES ON THE STORM PANEL, SHIPPED 2026-08-29, NOT YET SEEN
+ON GLASS. <==** §57.48, Group A of §57.42. They join sections that already
+exist — no new heading. **What to judge, and the first is the one most likely
+to come back wrong:**
+
+1. **The origin sentence fires on EVERY Atlantic storm**, unlike the other two,
+   which stay silent on the ordinary case. That is deliberate (§57.48: both
+   labels are real information) but it means `How it moved` gains a line on
+   1,993 of 2,004 Atlantic storms. **If it reads as filler rather than as
+   context, that is the finding** — and the lever is dropping the home-grown
+   half and keeping only Cape Verde, which is one branch in `originHtml`.
+2. **The comeback on Jeanne 2004 or Ida 2009.** It should sit under the coastal
+   weakening and ABOVE the ending sentence. If it reads below *"Became
+   extratropical"* the slot moved and the chronology is broken.
+3. **`Where it ranks` with no cap.** Nothing changes on a storm ranked on seven
+   statistics, because seven was the cap. **It only becomes visible when an
+   eighth is added**, so this is a look at the section's height today rather
+   than a check on a change — the baseline before the next statistic lands.
+4. **Andres 2021, or any East Pacific storm formed in the second half of May.**
+   The sentence must name **May 15**, not June 1. A June in that sentence means
+   the per-basin windows are not reaching the markup.
+
+**THE THREE FACTS DO NOT TOUCH THE GLOBE, THE ROSTER OR ANY SIDECAR.** No new
+files ship, no cache header is involved, and nothing was regenerated. A fault
+here can only be in three files.
+
 **THREE THINGS ARE LEFT AND ONLY ONE OF THEM IS WORK.**
 
 **1. THE LIVE GLOBE STILL DRAWS A PRE-GENESIS FIX IN THE OLD TEAL, AND THAT IS
@@ -452,19 +478,31 @@ NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
 (§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
-(§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)** and **Tier 1
-item 1, distance travelled (§57.45, ranked in §57.46)**. **Read those six, not
-this.** Tier 2 item 1 is done and deleted from §57.42; six Tier 1 items and
-four Tier 2 items are untouched.
+(§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)**, **Tier 1
+item 1, distance travelled (§57.45, ranked in §57.46)** and **Tier 1 items 4, 6
+and 8 (§57.48)**. **Read those seven, not this.** Tier 2 item 1 is done and
+deleted from §57.42; **three Tier 1 items (5, 7, 10) and four Tier 2 items are
+untouched.**
 
-**==> THE SIX REMAINING TIER 1 ITEMS ARE ALL CHEAPER THAN THEY WERE. <==**
-Items 4, 5, 6, 7, 8 and 10 each add one fact to the panel. **Any of them
-added to `RANK_STATS` gets an archive-wide rank for free** — one table entry
-rather than a feature. `SEASONS.rankingsMaxRows` is 7 and deliberately in the
-way, so an EIGHTH rank is a glass call rather than a free addition. **And a
-statistic printed in the reader's units costs two entries rather than one**
+**==> §57.42 NOW CARRIES A GROUPING — A, B AND C — AND GROUP A IS BUILT. <==**
+Aaron asked on 2026-08-29 that the groups be written into the spec so a new
+chat picks one up cold. They are grouped by SHAPE OF RISK, not by subject.
+**Group A (items 4, 6, 8 — the comeback, out of season, Cape Verde) shipped as
+§57.48.** Group B is item 5, the loop, which needs segment intersection and a
+meander-versus-loop judgement. Group C is items 7 and 10, both figures.
+
+**THREE TIER 1 ITEMS REMAIN: 5, 7 AND 10.** Any of them added to `RANK_STATS`
+gets an archive-wide rank for free — one table entry rather than a feature.
+**A statistic printed in the reader's units costs two entries rather than one**
 (§57.46), plus a `RANKINGS_SCHEMA` bump so the new table actually reaches a
 phone (§57.47).
+
+**==> AND THE ROW CAP IS GONE. <==** Aaron, 2026-08-29: *"I don't care about a
+rankings row cap. There should be no cap."* `SEASONS.rankingsMaxRows` is
+deleted, along with the `.slice()` it fed and both assertions enforcing it.
+**An eighth rank is no longer a glass call** — a statistic added to
+`RANK_STATS` lands on the panel by itself. §57.48 holds the reasoning, and four
+spec sections that described the cap as current behaviour were corrected.
 
 **==> AND ITEM 7 IS NOT THE CHEAP ONE IT LOOKS LIKE. <==** Northernmost and
 southernmost reach are free arithmetic, but *where it died* would print bare

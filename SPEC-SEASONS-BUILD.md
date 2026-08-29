@@ -5931,6 +5931,31 @@ started.** Take one, build it, delete its entry, and write what IS in its place.
 
 **The order below is not a priority order.** Aaron picks.
 
+**==> BUT THE ITEMS DO NOT ALL COST THE SAME, AND THE GROUPING BELOW IS THE
+PLAN. AARON ASKED FOR IT TO BE WRITTEN DOWN FOR NEW CHATS ON 2026-08-29. <==**
+It is a grouping by SHAPE OF RISK rather than by subject, so that a session can
+take a whole group in one pass and a break can only be one kind of thing.
+
+| Group | Items | Why they belong together | State |
+|---|---|---|---|
+| **A — yes/no facts** | 4 comeback, 6 out of season, 8 Cape Verde | Each reads straight off rows already parsed and answers a question with a sentence rather than a figure. One new lib module, one new markup module, one suite, one mutation run. None of them adds a number to `RANK_STATS`. | **BUILT, §57.48** |
+| **B — geometry** | 5 the loop | Segment intersection over the track, plus a judgement the other items do not need: what counts as a loop rather than a meander. A different kind of risk, and it wants its own bisect. | Not started |
+| **C — figures** | 7 reach, 10 season-mates | Both produce a number, so both are candidates for `RANK_STATS` and both land beside an existing figure rather than on their own. Item 7 is also half a runner job — see below. | Not started |
+
+**WHY THE GROUPING IS WORTH KEEPING RATHER THAN RE-DERIVING.** The obvious cut
+is by panel section, and it is the wrong one: it puts the comeback with the
+rapid-intensification arithmetic and the origin with the distance figures, so a
+pass touching two sections touches two unrelated kinds of code. Grouped by risk,
+Group A shares a test strategy and a failure mode, and the three sentences could
+be judged on glass together as one change.
+
+**A NOTE ON GROUP C THAT WAS TRUE WHEN THIS WAS WRITTEN AND IS NOT NOW.** The
+grouping originally warned that a figure added to `RANK_STATS` would push
+against `SEASONS.rankingsMaxRows` and therefore be a glass call rather than a
+free addition. **Aaron deleted that cap on 2026-08-29** (§57.48). Group C's
+figures now rank freely; what remains true is that they are figures and the
+Group A items were not.
+
 **TIER 1 — FREE. Arithmetic on rows `lib/hurdat.js` already parses.**
 
 No new data, no runner job, no bytes on the phone. All of these land in
@@ -5938,12 +5963,14 @@ No new data, no runner job, no bytes on the phone. All of these land in
 
 | # | Fact | Note |
 |---|---|---|
-| 4 | **The comeback** | dropped below 34 kt and returned to 64 kt |
 | 5 | **The loop** | the track crosses itself. Jeanne 2004 did a full circle |
-| 6 | **Out of season** | formed before Jun 1 or after Nov 30 |
 | 7 | **Northernmost / southernmost reach, and where it died** | lands in `How it moved` beside item 2 |
-| 8 | **Cape Verde or home-grown** | genesis east of 30°W and south of 20°N. Changes how a reader reads the whole track |
 | 10 | **How many other storms were running the same day** | lands in `In its season` beside item 9 |
+
+**==> ITEMS 4, 6 AND 8 ARE BUILT. §57.48 IS THE AS-BUILT ACCOUNT. <==** The
+comeback, the season window and the origin — Group A of the grouping below.
+**Their rows are deleted from the table above rather than ticked, and the
+numbers stay as permanent addresses.**
 
 **==> ITEMS 2, 3 AND 9 ARE BUILT. §57.43 IS THE AS-BUILT ACCOUNT. <==** Forward
 speed, the weakening before the coast, and the rank within the season. Their
@@ -6511,8 +6538,14 @@ lines, no behaviour change**, so a break can only be the move.
 
 **THE PANEL NOW HAS NINE SECTIONS AND THAT IS THE RISK IN THIS PASS.** §57.43
 put two on a panel that had seven and Aaron accepted the crowding as the thing
-he was accepting; this adds a ninth. `SEASONS.rankingsMaxRows` exists so a
-seventh statistic has to be a glass call rather than a free addition.
+he was accepting; this adds a ninth.
+
+**==> THIS SECTION ONCE CAPPED ITSELF AT `SEASONS.rankingsMaxRows` ROWS AND THE
+CAP IS GONE. <==** Aaron removed it on 2026-08-29 (§57.48). Every statistic
+`RANK_STATS` can rank now reaches the panel on its own. The reasoning is in
+§57.48; the short version is that a silent truncation made the last rows
+indistinguishable from statistics the archive had declined to rank, which is
+the §5 confusion this whole section exists to prevent.
 
 ### 57.45 How far a storm went — as built
 
@@ -6687,16 +6720,19 @@ settled by acceptance at 0.9 and should not be reopened without new evidence.**
 
 **Distance travelled is the strongest remaining candidate for an archive-wide
 rank** — Faith 1966 leads at 9,251 nm, and §57.44's `RANK_STATS` would take it
-as one table entry. It was NOT added: `SEASONS.rankingsMaxRows` is 6
-deliberately, so a seventh statistic is Aaron's decision rather than a free
-addition. Nothing here is blocked on it.
+as one table entry. It was NOT added in this pass: at the time
+`SEASONS.rankingsMaxRows` was 6 deliberately, so a seventh statistic was
+Aaron's decision rather than a free addition. **That constant no longer exists**
+— §57.48 — so the gate this paragraph describes is history rather than current
+behaviour. §57.46 is what added the rank.
 
 ### 57.46 Distance travelled, ranked against the archive — as built
 
 **Aaron's call, 2026-08-29, immediately after §57.45 landed.** `Where it ranks`
 now carries a seventh row: *"135th longest track in the Atlantic, 148th of
 3,231 overall."* `SEASONS.rankingsMaxRows` moved from 6 to 7, which is the
-decision that constant existed to force.
+decision that constant existed to force. **The constant was deleted outright
+later the same day (§57.48) and there is no cap now.**
 
 **==> IT IS THE FIRST RANKED STATISTIC WHOSE PRINTED FIGURE DEPENDS ON THE
 READER, AND THAT BROKE §57.44's RUNG RULE. <==** Every other statistic has one
@@ -6816,8 +6852,12 @@ preference from 609th to 610th.
 APPEARING TWICE ON ONE PANEL. <==** Both were named as risks before glass.
 `Where it ranks` was already the tallest section on the panel and open by
 default (§57.44), and this made it taller; `Distance travelled` now appears
-under `How it moved` as a figure and here as a rank. Neither came back. **An
-eighth rank is still a glass call** — `rankingsMaxRows` is what makes it one.
+under `How it moved` as a figure and here as a rank. Neither came back.
+
+**==> AN EIGHTH RANK IS NOT A GLASS CALL. THE CAP THAT MADE IT ONE IS GONE.
+<==** Aaron, 2026-08-29: *"I don't care about a rankings row cap. There should
+be no cap."* §57.48 removed `rankingsMaxRows` and both assertions that enforced
+it. A statistic added to `RANK_STATS` now lands on the panel by itself.
 
 ### 57.47 The rankings file needs a version of its own — as built
 
@@ -6929,3 +6969,225 @@ readers and its own tests to re-derive, and bundling three cache-busting
 changes into the push that fixes a live fault is how a small correct change
 becomes a large risky one. **It is the next thing to do to those two files, and
 it should happen before either gains a field rather than after.**
+
+### 57.48 The comeback, the calendar and the origin — as built
+
+**§57.42 Tier 1 items 4, 6 and 8, built 2026-08-29. Group A of §57.42's
+grouping.** Three yes/no facts, each computed from rows `lib/hurdat.js` already
+parses: no new data, no runner job, not one byte on the phone.
+`lib/storm-shape.js` computes, `ui/season-shape-markup.js` writes the
+sentences, and each one joins a section that already existed.
+
+**==> EVERY FIGURE IN THIS SECTION WAS COUNTED OFF THE MIRRORED ARCHIVE, AND
+THREE OF THEM CHANGED THE DESIGN BEFORE ANY CODE WAS WRITTEN. <==** They are
+recorded with their numbers attached because each is the reason a rule exists,
+and a rule with its reason deleted is a rule the next session simplifies away.
+
+#### Where the three sentences go
+
+**Aaron's call: existing sections, no new heading.** The panel was at nine
+sections and a tenth was not worth three facts.
+
+| Fact | Section | Position |
+|---|---|---|
+| The comeback | `How it changed` | after the coastal weakening, **before** the ending |
+| Out of season | `In its season` | last, under the two rank rows |
+| Cape Verde or home-grown | `How it moved` | last, under the distance and speed rows |
+
+**==> THE COMEBACK IS HANDED INTO `changeHtml` AS AN ARGUMENT. THE OTHER TWO
+ARE APPENDED BY THE VIEW. <==** That asymmetry is the one structural decision in
+this pass. `How it changed` is a CHRONOLOGY — strengthening, then what the storm
+gave up at the coast, then how it finished — so a sentence stuck on the end sits
+under *"Dissipated. The record simply stops."* and describes a hurricane coming
+back afterwards. `In its season` and `How it moved` are unordered sets of facts
+and have nothing to break.
+
+**A MUTATION RUN IS WHY THAT ORDERING IS ASSERTED RATHER THAN COMMENTED.**
+Moving the slot to the end of `changeHtml`'s return left both suites green — the
+rule was a comment and nothing else. `tools/test-season-detail.mjs` now drives
+`changeHtml` with a marker string and asserts it lands above the ending.
+
+#### Item 4 — the comeback
+
+*"It fell apart and came back. By September 17, 2004 it was down to 30 knots,
+weaker than a tropical storm, and by September 20, 2004 it was a hurricane
+again."*
+
+Three stages in order: reach `hurricaneKt`, fall below `comebackFloorKt`, reach
+`hurricaneKt` again. **Order is the whole rule** — every storm on record starts
+under 34 kt, so a test that only asks whether the storm was ever weak and ever
+strong is true of the entire archive.
+
+**==> THE FLOOR IS 34 KT AND NOT 64, AND THE DIFFERENCE IS 14 STORMS AGAINST
+181. <==** Both counted over all 3,266 mirrored storms. A hurricane that dips
+below hurricane force and recovers is ordinary — 181 of them, a qualifier that
+fires too often to be worth a sentence. A hurricane that falls all the way back
+to a depression and becomes a hurricane again is **14 storms in 175 years**, and
+they are the ones people remember: Jeanne 2004, Ida 2009, Eta 2020, John 1994
+and John 2024.
+
+**==> THERE IS NO CYCLONE-STATUS FILTER, AND JOHN 2024 IS WHY. <==** The obvious
+tidy-up is to require a cyclone status at the low point, the rule `forwardSpeed`
+and ACE both correctly apply. Thirteen of the fourteen sit at `TD` when they
+bottom out; **the fourteenth, John (EP102024), is `DB`** — a disturbance. That
+is the storm that came ashore in Mexico, fell to pieces over land and rebuilt
+into a hurricane offshore, which is the single best example of the fact the
+sentence exists to state. **The filter deletes exactly that storm and nothing
+about the result looks wrong.**
+
+The filter is right for the other two callers for a reason that does not apply
+here: they measure a RATE, where a remnant carried along by the westerlies is
+the atmosphere moving rather than the storm. This measures whether the wind came
+back, and a disturbance's wind is still the storm's.
+
+Nothing is said on the other 3,252 storms. *"It did not weaken and recover"* is
+a qualifier that fires everywhere and therefore qualifies nothing.
+
+#### Item 6 — out of season
+
+*"It formed out of season, on May 8. This basin's season does not open until
+May 15."*
+
+**==> THE WINDOWS ARE PER BASIN, WHICH IS AARON'S CALL, AND 41 REAL STORMS ARE
+WHY. <==** The Atlantic season opens June 1 and the East Pacific opens May 15.
+Counted over both mirrored basins, **41 East Pacific storms formed between May
+15 and May 31.** Under a single June 1 window every one of them is told it
+arrived before its season started, which is false about the season it actually
+belongs to — and the sentence would carry a date, which is what makes a wrong
+one read as checked. The Central Pacific shares the Atlantic's dates.
+`SEASONS.seasonWindows` holds all three.
+
+**82 storms in the archive formed outside their own basin's season** — 65 early,
+17 late. Both ends of a window are inclusive: a storm first seen on June 1
+opened the Atlantic season rather than beating it.
+
+**THE DATE READ IS THE FIRST RECORD, WHICH IS THE ONE `lifeHtml` ALREADY
+PRINTS.** Using the first CYCLONE fix instead would be defensible in isolation
+and would put two different formation dates on one screen, two rows apart.
+
+**==> A BASIN WITH NO WINDOW ON FILE PRODUCES NO SENTENCE, AND THAT MATTERS FOR
+STEP 13. <==** §5. Step 13 brings basins whose seasons run across the new year
+and whose official dates this repo has not measured. Silence there is the honest
+answer; a default window would grade them against the Atlantic's calendar and
+read exactly like a measurement.
+
+**THE SENTENCE CARRIES THE SEASON'S OWN DATES rather than just the verdict.** A
+reader who learned *"the season starts June 1"* from an Atlantic storm and then
+met an East Pacific storm dated May 20 with no explanation would reasonably
+conclude the app had missed one. It does not compute *"three weeks early"* — the
+two dates are on the same line and the gap is visible, and a second figure is a
+second thing to get wrong for nothing.
+
+#### Item 8 — Cape Verde or home-grown
+
+*"It was a Cape Verde storm, formed in the far eastern Atlantic off the coast of
+Africa, with the whole ocean ahead of it."* Or: *"It formed inside the basin
+rather than coming off Africa, west of 30°W."*
+
+Genesis east of `capeVerdeMaxLon` (30°W) and south of `capeVerdeMaxLat` (20°N).
+
+**==> THE ANSWER HAS THREE VALUES, NOT TWO, AND 11 REAL STORMS ARE WHY. <==**
+The obvious build is a boolean: inside the box is Cape Verde, everything else is
+home-grown. Counted over the 2,004 Atlantic storms in the archive: **182 inside
+the box, 1,811 west of 30°W, and 11 east of 30°W but north of 20°N** — born in
+the far eastern Atlantic, off Africa, and not in the Cape Verde latitudes. **A
+boolean tells each of those 11 it formed inside the basin, which is false, and
+the sentence reads perfectly.** `origin` returns a `kind` of `null` for them and
+nothing is printed. §5: the rule looked and declined, which is a different thing
+from the rule not being asked.
+
+**==> IT IS SAID IN THE ATLANTIC ONLY. <==** "Cape Verde" names a real place
+upwind of one basin. The same box in the East Pacific sits over South America,
+and calling an East Pacific storm "home-grown" would label every storm in the
+basin with a distinction that does not exist there — a qualifier that fires
+everywhere qualifies nothing, which is the `Tied` lesson §57.44 already paid
+for. `SEASONS.capeVerdeBasins` is the gate.
+
+**THIS IS THE ONE OF THE THREE THAT SPEAKS ON THE ORDINARY CASE TOO.** The other
+two say nothing when the answer is no, because "it did not make a comeback" is a
+non-event. Both origin labels are real information and the distinction only
+means anything if a reader sees both halves: a storm born off Africa has an
+ocean to cross before it threatens anybody, and one born in the western
+Caribbean may have two days.
+
+**IT READS `lon` RATHER THAN `lonU`.** The unwrapped longitude is a running
+total built for measuring distance across the date line and can legitimately
+read −190. This is a box on the real globe, so it wants the published position.
+Measured: no Atlantic genesis in the archive lies east of the prime meridian at
+all, so the two agree today, and using the published value keeps them agreeing
+if step 13 files a basin that does not.
+
+**IT READS THE FIRST FIX WITH A POSITION, NOT SIMPLY THE FIRST FIX.** Taking a
+missing longitude as zero puts a genesis on the prime meridian and calls every
+such storm Cape Verde. **Zero storms in the settled record can reach that
+branch** — no storm has a fix without coordinates — so it guards the season in
+progress, which arrives from ATCF b-decks (§57.11), and step 13's basins. It is
+the same shape as `changeHtml`'s negative-gain branch. **A mutation run is why
+it is asserted:** replacing the search with `ordered[0]` left the whole suite
+green, because nothing in the archive could tell the difference.
+
+#### The rankings row cap is deleted
+
+**Aaron, 2026-08-29: *"I don't care about a rankings row cap. There should be no
+cap."*** `SEASONS.rankingsMaxRows` is gone, the `.slice()` in
+`archiveRankHtml` is gone, and both assertions in `tools/test-rankings.mjs` that
+enforced it now assert the opposite — that **every ranked row reaches the
+panel**, as an equality rather than a ceiling.
+
+**THE CAP WAS THE WRONG SHAPE FOR THIS SECTION ANYWAY, AND THAT IS WORTH
+KEEPING.** It cut rows away with nothing on screen saying so, so a reader could
+not tell a statistic the archive had DECLINED to rank from one the panel had
+simply stopped before. Two different facts, one identical blank — §5's silence,
+on the section whose whole job is telling a reader where a figure stands.
+
+**What it cost while it existed:** adding a statistic to `RANK_STATS` was a
+glass call about crowding rather than a free addition, which is written into
+§57.44, §57.45, §57.46 and §57.47 and is now history in all four. **If this
+section ever reads as too long the lever is which statistics are worth ranking,
+decided in `RANK_STATS` where a reader of the code can see it** — not a silent
+truncation downstream of it.
+
+#### Testing
+
+`tools/test-storm-shape.mjs`, 57 assertions, zero dependencies.
+
+**==> IT WALKS THE WHOLE MIRRORED ARCHIVE, AND THAT IS THE POINT RATHER THAN AN
+EXTRAVAGANCE. <==** 3,266 storms parse in about 650 ms, so the four counts these
+rules produce are ASSERTED rather than written into a comment and trusted — 14
+comebacks, 82 out-of-season storms, 182 Cape Verde storms and the 11 that are
+neither. **Every one of those is a number a design decision was made on.** A
+comment holding them goes stale the first time a rule moves and nothing says so.
+
+It reads the two whole-basin files rather than globbing `seasons/data/*.txt`,
+which §57.42 records as returning an exact 2× that looks like real data.
+
+**TWELVE MUTATIONS WERE RUN AND TWO SURVIVED.** Both are now closed and both are
+described above: the `changeHtml` ordering, and the positionless leading fix.
+The ten that bit immediately: the comeback floor moved to 64 kt, the stage
+ordering dropped, a cyclone-status filter added, one season window for every
+basin, the window made exclusive at its start, an unknown basin falling back to
+the Atlantic, origin as a boolean, origin's basin gate removed, the origin
+sentence printing the nearer label instead of nothing, and the rank cap
+reintroduced.
+
+**WHAT NO SUITE HERE CAN PROVE is whether the three sentences read well on a
+phone.** That is glass, and it is what is outstanding.
+
+#### Fixtures
+
+One added: `samples/seasons/storms/al112004.txt`, **Jeanne 2004**, sliced from
+the mirrored whole-basin file. None of the fourteen comeback storms had a
+fixture and the comeback needed a real end-to-end case. Hugo 1989 (Cape Verde),
+Katrina 2005 (home-grown) and Andres 2021 (formed May 8, a week before the East
+Pacific opens) were all already in the sample set and cover the other two facts.
+
+#### Where the files went, and why they are new
+
+`lib/season-facts.js` was **63 lines under §12's ceiling** and
+`ui/season-detail-markup.js` was **19 lines under it**. Three functions carrying
+their reasons would have taken both over. **The ceiling exists precisely so that
+the answer is a new file rather than a bigger one**, so the computation went to
+`lib/storm-shape.js` and the markup to `ui/season-shape-markup.js`. A section is
+where a sentence APPEARS; it does not have to be where the sentence is written.
+Imports run one way: `season-facts` imports `storm-shape`, and the view imports
+the markup.
