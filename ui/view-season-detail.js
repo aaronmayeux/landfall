@@ -62,7 +62,7 @@ import { archiveRankHtml, seasonRankHtml } from './season-rank-markup.js';
  * nine sections and a tenth was not worth three facts. A section is where a
  * sentence appears; it does not have to be where the sentence is written, and
  * `ui/season-detail-markup.js` was 19 lines under §12's ceiling. */
-import { comebackHtml, seasonWindowHtml, originHtml } from './season-shape-markup.js';
+import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-shape-markup.js';
 
 /**
  * @param {object} opts
@@ -323,11 +323,17 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     distanceFloorNm: SEASONS.trackDistanceFloorNm,
     cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
   })
-    /* ==> §57.48. APPENDED, AND THAT IS SAFE HERE IN A WAY IT WAS NOT IN
-     * `How it changed`. <== That section is a chronology; this one is a set of
-     * facts about the track with no order to break. The birthplace goes last
-     * because the distance and speed rows above it are what a reader came to
-     * this section for, and this is the sentence that colours them. */
+    /* ==> §57.48, §57.49. BOTH SENTENCES ARE APPENDED, AND THAT IS SAFE HERE
+     * IN A WAY IT WAS NOT IN `How it changed`. <== That section is a
+     * chronology; this one is a set of facts about the track with no order to
+     * break.
+     *
+     * ==> THE LOOP GOES ABOVE THE BIRTHPLACE BECAUSE IT IS THE RARE ONE.
+     * <== Aaron's call, 2026-08-29. The origin sentence fires on 1,993 of the
+     * 2,004 Atlantic storms, so it reads as background; the loop fires on 120
+     * of 3,266 and is the reason a reader stops. A rare fact printed under a
+     * near-universal one is a rare fact nobody sees. */
+    + loopHtml(facts.loop, system)
     + originHtml(facts.origin))}
       ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,

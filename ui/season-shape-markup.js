@@ -25,6 +25,12 @@
  */
 
 import { SEASONS } from '../config/constants.js';
+/* ==> THE LOOP'S WIDTH IS THE FIRST FIGURE THIS FILE PRINTS, AND IT GOES
+ * THROUGH THE APP'S ONE CONVERTER. <== §57.45, §57.49. The other three
+ * sentences here carry dates, knots and degrees, none of which change with the
+ * reader's unit preference. A distance does, and writing the arithmetic here
+ * would be a second opinion about a setting `lib/units.js` already owns. */
+import { formatDistance } from '../lib/units.js';
 import { absenceHtml, utcDay } from './season-markup-bits.js';
 
 /** Month names for the season-window sentence. Written out rather than run
@@ -135,6 +141,43 @@ export function seasonWindowHtml(sw) {
  * @returns {string}  HTML, or '' outside the basins that make the distinction
  *   and on a genesis neither label fits
  */
+/**
+ * A track that turned a full circle and crossed itself.
+ *
+ * ==> IT NAMES BOTH DATES AND THE WIDTH, WHICH IS THE SAME RULE THE COMEBACK
+ * FOLLOWS. <== Without them the sentence is a label the reader has to take on
+ * trust. With them it is a claim they can check by looking at the track on the
+ * globe, and the width is the difference between Ivan 2004 turning a circle
+ * 790 miles across and a storm doing a tight one in a day.
+ *
+ * ==> THE WIDTH GOES THROUGH `formatDistance`, WHICH MEANS `system` HAS TO
+ * REACH HERE. <== §57.45. It is the one function in the app that turns a
+ * stored nautical mile into the reader's own miles or kilometres, and `auto`
+ * — which follows the device — is exactly the value a conversion written
+ * here would get wrong. It is also what keeps this sentence agreeing with the
+ * distance rows directly above it in the same section.
+ *
+ * ==> AND IT SAYS NOTHING WHEN THERE WAS NO LOOP. <== 120 storms in 3,266
+ * have one. `trackLoop` has already refused the ones too small to be real, so
+ * an empty answer here covers both "it did not loop" and "it wobbled inside
+ * the rounding", and neither is worth a line on the panel.
+ *
+ * @param {object|null} lp  `facts.loop` from `lib/storm-shape.js`
+ * @param {string|null} system  the reader's unit preference
+ * @returns {string}  HTML, or '' when there is nothing to say
+ */
+export function loopHtml(lp, system) {
+  if (!lp || !Number.isFinite(lp.widthNm)) return '';
+  const from = utcDay(lp.startTime);
+  const to = utcDay(lp.endTime);
+  if (!from || !to) return '';
+
+  return absenceHtml(
+    `It looped. Between ${from} and ${to} its track crossed itself, turning a full `
+    + `circle about ${formatDistance(lp.widthNm, system)} across.`,
+  );
+}
+
 export function originHtml(o) {
   if (o?.kind === 'cape-verde') {
     return absenceHtml('It was a Cape Verde storm, formed in the far eastern Atlantic '

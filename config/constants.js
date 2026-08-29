@@ -7445,4 +7445,32 @@ export const SEASONS = Object.freeze({
    * 2004, Ida 2009, Eta 2020, John 1994 and John 2024.
    */
   comebackFloorKt: 34,
+
+  /**
+   * ==> THE LOOP: HOW BIG THE HOLE IN THE TRACK HAS TO BE BEFORE IT IS ONE.
+   * <== §57.49. A track that crosses itself has, by definition, turned through
+   * a full circle — the crossing IS the proof, so nothing here is measuring
+   * whether the storm went round. It is measuring whether the circle is big
+   * enough to be a fact rather than an artefact.
+   *
+   * The figure compared against it is the diameter of a circle enclosing the
+   * same area as the loop, which is the hole a reader can actually see on the
+   * globe. A hairpin that doubles back along its own line encloses almost
+   * nothing however far it reached, and this refuses it; a tight circle a
+   * quarter the width encloses more, and this accepts it.
+   *
+   * ==> 50 NM IS EIGHT TIMES THE DATA'S OWN PRECISION, AND THAT IS THE
+   * ARGUMENT. <== HURDAT2 stores position to 0.1°, about 6 nm, so a stalling
+   * storm jittering inside its own rounding can manufacture a crossing that
+   * never happened. Measured 2026-08-29 over all 3,266 mirrored storms: 224
+   * cross their own track at all, and the smallest is 3 nm across — under the
+   * width of a single rounding step. **Harvey 2017 is one of them, at 8 nm
+   * over 12 hours**, which is Harvey sitting still over Texas. A rule that
+   * says "Harvey looped" is a wrong fact that reads perfectly.
+   *
+   * At 50 nm the sentence fires on **120 storms, 3.7% of the archive** — rare
+   * enough to be worth reading, common enough to be worth building. The dial
+   * either way, measured the same day: 30 nm is 152 storms and 75 nm is 85.
+   */
+  loopMinWidthNm: 50,
 });
