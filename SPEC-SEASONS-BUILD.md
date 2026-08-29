@@ -895,13 +895,18 @@ colour-null hunt (`NOW.md` item 0d) went looking for. `palette()` is read inside
 the mode changes. **The radius expression is two literal numbers**, so it reads
 feature data only and a test asserts there is no `global-state` in it.
 
+**CONFIRMED ON GLASS 2026-08-29. Aaron: "it looks fucking good."** The bone
+grey, the two sizes and the letters are all accepted, on the sepia archive globe
+and at phone width. Do not reopen the colour or the split without new evidence.
+
 **THE LIVE GLOBE DOES NOT MOVE THIS PASS. Aaron's call — option 3 of three.**
 Its pre-genesis fixes keep `PREGENESIS_COLOR`, so the two globes now answer one
 question two ways, which is precisely the split that produced §57.7f's bug.
-**That is deliberate and it is temporary**: judging a new grey against 175 years
-of settled archive costs nothing, and moving the live globe is a second glass
-call on a day with real storms on it. It is under `NOW.md` so the next session
-reads it as an open item rather than rediscovering it as a fault.
+**That was deliberate and it is temporary**: judging a new grey against 175
+years of settled archive costs nothing, and moving the live globe is a second
+glass call on a day with real storms on it. **The grey is now judged, so the
+condition is met and the second pass is unblocked** — it is under `NOW.md` as
+the one piece of real work left behind this feature.
 
 ### 57.8 What HURDAT2 does not contain, at all
 

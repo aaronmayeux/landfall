@@ -69,117 +69,51 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> POST-TROPICAL LANDFALLS ARE IN, AND `LO` WENT IN A DAY LATER. SHIPPED,
-NOT YET SEEN ON GLASS. <==** Aaron's report, 2026-08-29: Sandy was not listed as
-coming ashore near Atlantic City. She is now, and so are Ophelia on Ireland, Lee
-on Nova Scotia, Fiona on Cape Breton and **Dorian at Halifax at 80 kt**, none of
-which had that landfall at all. **§57.7c and §57.7d are the as-built accounts
-with every measured number — read those, not this.** The archive went from 1,343
-storms ashore to 1,435 and from 2,537 landfalls to 2,883.
+**==> POST-TROPICAL LANDFALLS, THE REFUSAL SENTENCE AND THE DOT GRADING ARE ALL
+CONFIRMED ON GLASS, 2026-08-29. AARON: "IT LOOKS FUCKING GOOD." <==** Four
+sections shipped in one day and every one has been seen on a phone. **§57.7d,
+§57.7e, §57.7f and §57.7g are the as-built accounts — read those, not this.**
+The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
+2,883; Dorian's Halifax crossing and Sandy's New Jersey crossing are both in the
+list; a refused crossing gets a sentence instead of silence; and a dot is graded
+from the status column rather than from the wind.
 
-**WHAT TO JUDGE, AND THE FIRST ONE IS THE DECISION RATHER THAN A DETAIL:**
+**THREE THINGS ARE LEFT AND ONLY ONE OF THEM IS WORK.**
 
-1. **The Wall counts these, so 92 storms moved from "stayed at sea" to "came
-   ashore".** A handful of 1880s seasons now look busier than a reader would
-   expect, because a decayed-but-still-50-kt post-tropical storm crossing
-   Newfoundland is a real crossing nobody ever wrote down. **This was Andy's
-   call to make it one method and one answer everywhere, and it is a glass call
-   that reverses in one predicate.** Sort the wall by `Came ashore` and see
-   whether the early record reads honest or inflated. **The `LO` half of that
-   moved exactly one row** (Paul, East Pacific 2012), measured field by field
-   across all 3,266 — so the busier-1880s question is entirely §57.7c's.
-2. **Sandy's panel.** Four landfalls now, the fourth reading
-   `Smithville, New Jersey, United States` with `Post-Trop · 80 mph · 946 mb`.
-   **The question is whether `Post-Trop` reads as plain English.** It is the
-   app's existing vocabulary — the live storm list has said it for months — and
-   it was reused deliberately rather than inventing a second spelling. If it
-   reads as jargon, the fix moves the live list with it and is its own pass.
-3. **Her paragraph.** *"It came ashore four times: Easington, Saint Thomas,
-   Jamaica; El Cobre, Santiago de Cuba, Cuba; Marsh Harbour, Bahamas; and
-   Smithville, New Jersey, United States."* That is four full labels in one
-   sentence, which §57.41 already flagged as the length question. Sandy is now
-   the worst case for it.
-4. **Ophelia 2017 and Lee 2023.** Both read *"by then a post-tropical storm"*
-   where a category would normally go. Does that land as the explanation it is,
-   or as the app hedging.
-5. **No Saffir-Simpson number on a post-tropical landfall, anywhere.** If a
-   `Cat 1` appears beside one, `coastalWeakening` or the markup is grading it
-   from wind again and that is a bug, not a preference.
-6. **Dorian 2019, and he is the one worth opening first.** Seven landfalls now,
-   the sixth `Post-Trop` on the Nova Scotia coast and the seventh on
-   Newfoundland. HURDAT2 codes both `LO`, which is why §57.7c missed them.
+**1. THE LIVE GLOBE STILL DRAWS A PRE-GENESIS FIX IN THE OLD TEAL, AND THAT IS
+THE ONE REAL ITEM.** Aaron's call, option 3 of three: judge the grey on 175
+years of settled archive where nothing is urgent, then move the live globe in
+its own pass. **The grey is now judged and accepted, so the condition is met.**
+§57.7g holds the reasoning. It is small — `map/layers/points-forecast.js` and
+its siblings read `PREGENESIS_COLOR` the same way the archive did — but it is a
+glass call on a day with real storms on screen, which is why it was not folded
+in. **Until it lands the two globes answer one question two different ways, and
+that is exactly the split that produced §57.7f's bug.**
 
-**==> AND GLASS FOUND THE THING THAT SENTENCE WAS ARGUING WITH. <==** Aaron,
-2026-08-29, on Beryl 2018: *"Beryl did come ashore didn't it?"* She did not, and
-the panel was right — HURDAT2 codes her `DB` for every crossing of Dominica,
-Puerto Rico and Hispaniola. **The globe above it was drawing that run as green
-`TS` dots**, because it graded a fix from its wind alone and never read the
-status column. Her wind never dropped; her structure did.
+**2. THE FIRST FIX'S WIDE WHITE RING ON A SMALL DOT — NOTICED, NEVER LOOKED AT.**
+Dorian 2013 opens on a pre-genesis `LO`, so his earliest dot is 6 px wearing a
+ring sized for 10. It may read as direction or as a bullseye. One storm, one
+look, and the lever is a stroke width rather than the radius.
 
-**§57.7f is the as-built account — read that, not this.** 12,355 fixes across
-1,440 storms were wearing a cyclone's letters at a non-cyclone status, and 687
-were wearing a Saffir-Simpson NUMBER on an `EX` or `LO` fix — the grading §6
-forbids, on the globe rather than on the panel where `NOW.md` was telling you to
-watch for it.
+**3. FOUR QUESTIONS §57.7c ASKED THAT GLASS HAS NOT ANSWERED**, kept because
+they are about wording rather than about the pass that just landed. Whether
+`Post-Trop` reads as plain English on Sandy's landfall row; whether her
+paragraph's four full place names in one sentence is earning its length
+(§57.41); whether *"by then a post-tropical storm"* lands as explanation or as
+hedging on Ophelia 2017 and Lee 2023; and whether the Wall's `Came ashore`
+column reads honest or inflated in the 1880s now that 92 storms moved into it.
+**None blocks anything.**
 
-**AND THE FIRST ATTEMPT'S COLOURS CAME BACK WRONG THE SAME DAY.** Aaron: *"the
-blue is too close to TD and the red reads like it's a strong storm."* Both
-non-cyclone readings are `stormEnded` now, and SIZE separates them. **§57.7g is
-the as-built account.**
-
-| never a cyclone (`DB`, `WV`, `LO` before genesis) | small, blank |
-| was a cyclone (`EX`, `LO` after genesis) | full size, lettered |
-
-**WHAT TO JUDGE, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK WRONG:**
-
-1. **`stormEnded` is BONE, not dim.** It shipped dim once and Aaron read it as
-   *far away* rather than *finished*, so it was brightened. **Nobody has seen it
-   as a small dot, and nobody has seen it on the sepia globe** — the sepia
-   palette has its own value (`#EAE1D2`) that no one has looked at. Open Beryl
-   2018: 20 small pale dots across the Antilles. If it reads as a string of
-   pearls rather than a quiet passage, the lever is a second dimmer token, NOT
-   the size.
-2. **`ARCHIVE_GEO.remnantPointRadius` is 6 against a full 10.** A dial, not an
-   answer, and the one number deciding whether a dying tail reads as quiet or
-   as absent.
-3. **Sandy stays full size with `EX` in it.** Nine of them, after her Cat 3 run.
-   If they read as retired, the post-tropical branch is wrong.
-4. **Dorian 2019 is the control.** 64 graded dots, zero small ones, six grey in
-   the tail. Any change to his coloured run is a regression, not the fix.
-5. **The first fix's wide white ring on a SMALL dot.** Dorian 2013 opens on a
-   pre-genesis `LO`, so his earliest dot is 6px wearing a ring sized for 10.
-   Nobody has looked at it.
-
-**==> AND THE TWO GLOBES NOW DISAGREE ON PURPOSE. <==** The LIVE globe still
-draws a pre-genesis fix in the teal `PREGENESIS_COLOR`; the archive draws it
-grey. **Aaron's call, option 3 of three** — judge the grey where nothing is
-urgent, then move the live globe in its own pass. This is exactly the split that
-caused §57.7f's bug, so it is written down rather than left to be rediscovered
-as a fault. **It is not done until the live globe moves.**
-
-**==> AND ONE SENTENCE ON THE PANEL HAS NEVER BEEN SEEN BY ANYONE. <==**
-§57.7e. Where the walk turned a real coast crossing down, the panel now says so:
-*"Its track crossed a coast one other time while it was not a tropical cyclone.
-This archive does not count that as coming ashore."* It fires on **92 storms**,
-and on **26 of them it sits directly under "This storm did not come ashore"** —
-which is exactly the pair that needs judging. Anna 1969, Beryl 2018 and Dorian
-2013 are three of the 26. **The question is whether the two sentences together
-read as one honest answer or as the app contradicting itself.**
-
-**THE SIDECAR FILENAMES ARE AT v3 AND THAT IS THE PART THAT COULD BITE
-SILENTLY.** Both generated sidecars carry a schema version
-(`seasons/data/atlantic-landfalls-v3-02272026.json`), because `_headers` holds
-`/seasons/data/*` `immutable` and this pass changed their contents without NOAA
-revising anything. **If the archive opens and every landfall list is empty, that
-is a 404 on the new name rather than a rule that stopped working** — check the
-network tab before touching `lib/landfall.js`.
-
-**AND THE FOUR SIDECARS PLUS THE WALL WERE REGENERATED IN THE SANDBOX, NOT ON
-THE RUNNER.** `raw.githubusercontent.com` is reachable, so `seasons-landfall`,
-`seasons-places` and `seasons-wall` all ran locally and their output is in the
-same push as the rule that changed it. **There is no window where main asks for
-a v3 file that does not exist**, which is the failure a schema bump normally
-buys. The monthly job will reproduce the identical files.
+**THE SIDECARS ARE AT v3 AND THAT IS THE PART THAT COULD BITE SILENTLY.**
+`_headers` holds `/seasons/data/*` `immutable`, so a content change without a
+name change is served from a browser cache until 2027. **If the archive ever
+opens with every landfall list empty, that is a 404 on the filename rather than
+a rule that stopped working** — check the network tab before touching
+`lib/landfall.js`. All four files plus `seasons/wall.json` were regenerated in the
+sandbox rather than on the runner (`raw.githubusercontent.com` is reachable), so
+they shipped in the same push as the rule that changed them and there was never
+a window where main asked for a file that did not exist. The monthly job
+reproduces them identically.
 
 **==> FIVE OF THE SIX ARCHIVE UI FIXES ARE CONFIRMED ON GLASS. <==** Aaron,
 2026-08-28: sliders, the landfall rename, the short asterisk line, the master
