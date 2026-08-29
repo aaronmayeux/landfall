@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 327 numbered headings.
+Covering 11 files, 328 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -342,8 +342,9 @@ real home is the other row carrying the same section number.
 | `57.39a` | &nbsp;&nbsp;The archive drawer's two lines — as built | `SPEC-SEASONS-BUILD.md` | 4962-5073 |
 | `57.39b` | &nbsp;&nbsp;The season scorecard counts storms, not coast crossings | `SPEC-SEASONS-BUILD.md` | 5074-5115 |
 | `57.40` | &nbsp;&nbsp;Naming a place — as built | `SPEC-SEASONS-BUILD.md` | 5116-5205 |
-| `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — DESIGNED, NOT BUILT | `SPEC-SEASONS-BUILD.md` | 5206-5317 |
-| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5318-5429 |
+| `57.40a` | &nbsp;&nbsp;The places sidecar — as built | `SPEC-SEASONS-BUILD.md` | 5206-5298 |
+| `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5299-5472 |
+| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5473-5577 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -359,7 +360,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 280,502 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 312,938 | 66 |
+| `SPEC-SEASONS-BUILD.md` | 321,390 | 67 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 188,212 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

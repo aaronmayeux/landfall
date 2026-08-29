@@ -5203,7 +5203,100 @@ root `package.json` and `node_modules/` it creates — verified clean on
 
 ---
 
-### 57.41 The storm's life, in a paragraph — DESIGNED, NOT BUILT
+### 57.40a The places sidecar — as built
+
+**`tools/seasons-places.mjs` writes `seasons/data/{basin}-places-{revision}.json`.**
+Runner-only, like `seasons-landfall.mjs` and for the same reason: the gazetteer
+is 58 MB and what ships is a few tens of kilobytes of strings.
+
+**Per storm: the genesis place, one place per landfall in order, and the stall.**
+
+```
+{ "basin": "atlantic", "revision": "02272026",
+  "gazetteer": "natural-earth-vector@v5.1.2 + all-the-cities",
+  "nearKm": 60, "farKm": 400, "stallRadiusKm": 150, "stallMinHours": 48,
+  "source": "computed",
+  "storms": {
+    "AL092017": {
+      "landfalls": [ {"name":"Crane, Barbados","km":3}, … ],
+      "stall": {"at":1503705600000,"hours":66,
+                "name":"Bloomington, Texas, United States","km":9} } } }
+```
+
+**==> IT READS THE LANDFALL SIDECAR RATHER THAN RECOMPUTING LANDFALLS, AND THAT
+IS WHAT MAKES THE INDEX ALIGNMENT A FACT RATHER THAN A HOPE. <==** The names are
+joined to the marks by position on the phone. A second walk against a coastline
+that had moved would produce a different list of a different length, and lining
+the two up would put Cameron's name on a Florida landfall. Reading the file also
+means this job needs no 119 MB mask and finishes in about a second per basin.
+**The landfall sidecar is therefore REQUIRED**, not optional — without it every
+landfall would come back unnamed, and the file would be indistinguishable from a
+basin whose landfalls are all in open country. The job refuses rather than
+writing that.
+
+**==> A STORM ABSENT FROM `storms` MEANS "WE LOOKED AND FOUND NOTHING TO NAME",
+NOT "WE DID NOT LOOK". <==** §5, and the same convention the landfall sidecar
+already uses for a storm that stayed at sea. **The FILE being on screen is what
+carries "this basin was walked."** `data/seasons.js` keeps the two apart at the
+attach point: `storm.places` is `null` when the file did not arrive and `{}`
+when it did and this storm had nothing inside the cap. `null` and `{}` reach
+different sentences — see §57.41 — and collapsing them prints *"out over open
+water"* under a storm that formed in the Gulf of Mexico on a day the file 404'd.
+
+**==> THE STALL IS WRITTEN DOWN WHOLE RATHER THAN AS A NAME THE PHONE HAS TO
+RE-EARN. <==** The runner is the only side that can look a name up, so the
+obvious split is "runner names it, phone recomputes the window". That makes the
+name belong to a window the phone derives independently, and a constant moved
+without a new revision stamp would silently attach the right name to the wrong
+three days with nothing noticing. A self-contained answer cannot drift.
+`lib/season-story.js` still owns the algorithm and the season in progress still
+runs it on the device, so there is one implementation either way.
+
+**==> LONGITUDE IS WRAPPED AT THE DOOR. <==** The archive stores `lonU`
+unwrapped so a track crossing the date line is one line rather than two, and
+`lib/landfall.js` writes that same value into every mark. A Marshall Islands
+landfall therefore arrives at 187°. Handed to a town index keyed on real
+longitude that is a point in the Atlantic, and the answer would be a confident
+wrong name rather than no name at all. `wrapLon` returns an in-range value
+untouched rather than passing it through the modulo, which turns 179.9 into
+179.89999999999998.
+
+**Measured, 2026-08-29, over the whole shipped archive:**
+
+| | |
+|---|---|
+| Storms walked | 3,266 |
+| Storms carrying at least one name | 2,080 |
+| Landfalls named, at the 60 km cap | **2,313 of 2,537 — 91.2%** |
+| Stalls named, at the 400 km cap | 224 of 433 |
+| Atlantic file | 234 KB raw, **38.5 KB gzipped** |
+| East Pacific file | 57 KB raw, **8.8 KB gzipped** |
+| Runner time | 3.1 s to load the gazetteer, then 0.7 s and 0.3 s to walk |
+
+**==> IT IS THREE TIMES THE SIZE §57.42 ESTIMATED, AND THE ESTIMATE WAS COUNTING
+THE WRONG THING. <==** That figure — 12 to 15 KB gzipped — counted the 2,537
+landfall marks. It did not count the genesis place on every one of 3,266 storms,
+which is the clause §57.41 never drops. **The file rides in the same
+`Promise.all` as the season text** rather than arriving late, because the archive
+panel paints instantly and completely today and a paragraph appearing a beat
+afterwards would make the whole panel twitch. **If that cost is ever judged too
+high, the lever is deferring this one fetch until a storm panel opens** —
+nothing on the roster, the wall or the globe reads it.
+
+**`seasons/data/*` is a wildcard in `_headers`, so this inherits `immutable` and
+needs no hand-written line.** The revision stamp is in the filename, which is
+what makes that safe.
+
+**`tools/test-seasons-places.mjs` is the gate**, 49 assertions. The gazetteer
+itself is not driven — it loads 58 MB over the network, which is a runner's job
+and not a suite's — so a stub records every question it was asked and the
+assertions are about the QUESTIONS: which point, at which cap, with the
+longitude wrapped. Six mutations against the job and three against the attach
+point were run and all nine bite.
+
+---
+
+### 57.41 The storm's life, in a paragraph — as built
 
 **Aaron's ask, 2026-08-29:** a short paragraph at the top of the archive drawer
 summarising the storm's life — *"almost like a summary of all the stats we will
@@ -5294,24 +5387,86 @@ is dropped entirely** and only the count and the hardest one are given. Andrew
 1992 came ashore four times with three names available, and printing four
 alongside three reads as a miscount.
 
-**Where it goes when built:** `lib/season-story.js`, pure, no DOM and no clock,
-driven by `stormFacts` plus the places sidecar. Rendered by
-`ui/season-detail-markup.js`. It is shipped code, unlike §57.40's gazetteer,
-because the season in progress has no runner pass and must assemble its own
-paragraph on the phone.
+**Where it lives:** `lib/season-story.js` — pure, no DOM, no network and no
+clock, driven by `stormFacts` plus the storm's own fixes plus its entry from the
+places sidecar. `storyHtml` in `ui/season-detail-markup.js` escapes the finished
+sentences and puts them in one `<p class="season-story">`; it assembles nothing
+itself, so there is one author for the paragraph. `ui/view-season-detail.js`
+draws it between `headHtml` and the first section, which is directly under the
+honesty line and above `Strongest`.
 
-**Prototype output, verified 2026-08-29 against the real archive files** — this
-is what was shown to Aaron and accepted:
+**It is SHIPPED code, unlike §57.40's gazetteer.** The season in progress has no
+runner pass at all, so the phone assembles that storm's paragraph itself — every
+clause except the ones that need a name.
 
-> Harvey was first seen on August 16, 2017 over open water. It reached hurricane
-> strength 9 days later — far longer than a storm usually takes. It peaked at
-> 132 mph on August 26, a Category 4. It came ashore four times — Crane, Biabou,
-> Seadrift, Cameron, hardest near Seadrift on August 26 as a Category 4. It
-> barely moved for 3 days, staying within 150 km of Bloomington. It lost its
-> tropical structure on September 2, 17 days after it was first seen.
+**==> IT IS NOT A `section()`, AND THAT IS THE ONE STRUCTURAL DECISION HERE.
+<==** Every collapsible section on this panel can be folded away. A paragraph
+that summarises the whole record must not be something a reader can fold and
+then read the figures without.
 
-It degrades cleanly to 1856. The prototype is `/tmp` scratch and did not survive
-the session; the algorithm above is the record of it.
+**==> THE PARAGRAPH REBUILDS ON EVERY RENDER RATHER THAN BEING CACHED WITH THE
+FACTS. <==** `stormFacts` is stable forever and is computed once when the board
+loads a season; this reads mph or km/h and would go stale the moment somebody
+changed the units setting. It is a handful of string joins over one storm, and
+both its inputs already hang off the storm the board is holding, so nothing is
+fetched to draw it.
+
+**Real output, 2026-08-29, off the shipped archive files:**
+
+> HARVEY was first seen on August 16, 2017, out over open water. It reached
+> hurricane strength 9 days later, far longer than a storm usually takes. It
+> peaked at 132 mph on August 26, a Category 4. It came ashore four times:
+> Crane, Barbados; Biabou, Saint George, Saint Vincent and the Grenadines;
+> Fulton, Texas, United States; and Cameron, Louisiana, United States. The
+> hardest was near Fulton on August 26, a Category 4. It barely moved for
+> 3 days, staying within about 90 mi of Bloomington, Texas, United States. It
+> lost its tropical structure on September 2, 17 days after it was first seen.
+
+**==> TWO FIGURES IN THE ACCEPTED PROTOTYPE DO NOT REPRODUCE, AND BOTH TIMES
+THE PROTOTYPE WAS THE ONE THAT WAS WRONG. <==** It named Harvey's Texas landfall
+`Seadrift`; the computed landfall names `Fulton, Texas, United States` at 11 km,
+which is what §57.40's own hand-checked table says. And it said Andrew 1992 came
+ashore four times with THREE names available — all four now resolve
+(Dunmore Town, San Andros, Goulds, Patterson). The partial-list rule below still
+stands and is still tested; Andrew is no longer an example of it.
+
+**==> NO CLAUSE USES AN EM DASH, AND THAT IS A GUARD RATHER THAN TYPOGRAPHY.
+<==** `lib/units.js` returns a bare `—` as its MISSING sentinel, so a paragraph
+containing one is the cheapest available signal that a figure failed to resolve
+and was printed anyway. `tools/test-season-story.mjs` bans the character across
+every fixture, and that guard only works if nothing here uses one decoratively.
+The comparison clause takes a comma; the landfall roll-call takes a colon and
+gives the hardest one its own sentence. **Both of those read fine with a dash
+and the dash was removed anyway** — the first version of this clause shipped
+one, it was spotted in a browser rather than by the suite, and the choice was
+between weakening the guard and rewording. The wording lost nothing.
+
+**The hardest landfall is named by its town alone when the roll-call above it
+already spelled the place out**, and by its full `town, region, country` label
+when there is no roll-call — the partly named case, where that mention is the
+only one. §57.40 forbids an AMBIGUOUS name, not a repeated one.
+
+**Durations are digits; counts are words.** `four times`, `3 days`. A duration
+is a measurement a reader may compare against another storm, and "twelve days"
+beside "22 days" makes two facts of the same kind look like two different kinds.
+Anything under 36 hours reads in hours, so a day is never printed singular.
+
+**The stall radius is rounded before it is printed.** `stallRadiusKm` is 150 — a
+chosen bound, not something anybody counted — and converted straight it reads
+`93 mi`, which looks like the answer to a question rather than the edge of a box.
+It prints as `about 90 mi`, still interpolated from the constant.
+
+**`tools/test-season-story.mjs` is the gate**, 74 assertions. Twelve mutations
+were run against it and every one bites, including the two that matter:
+measuring the stall from a window's first fix instead of its centroid, and
+breaking out of the search at the first burst window instead of continuing past
+it.
+
+**Confirmed rendering in a real browser 2026-08-29**, at 390px and at desktop
+width: the paragraph draws between `.season-honesty` and the `Strongest`
+section, with the place names from the sidecar in it and no horizontal
+overflow. That is a wiring check and not a glass one — whether it READS well is
+Aaron's, and it has not been seen on a phone.
 
 ---
 
@@ -5365,14 +5520,7 @@ than loading the archive.
 The pattern §57.7a already established: 119 MB of mask on a runner, a small JSON
 on the phone.
 
-**1. The places sidecar.** §57.40's gazetteer exists and is tested; nothing
-writes its answers to a file yet. Needs `tools/seasons-places.mjs` writing
-`seasons/data/{basin}-places-{revision}.json` — per storm, the genesis place,
-one place per landfall in order, and the stall centre. **Its own file rather
-than a field in the landfall sidecar**, so two jobs never write one file and so
-a places failure degrades to coordinates without taking landfalls down with it.
-Cost measured: the landfall sidecars are 255 KB and 36 KB raw, 37 KB gzipped;
-names add roughly 12–15 KB gzipped across 2,537 marks.
+**1. The places sidecar — BUILT. §57.40a is the as-built account.**
 
 **2. People in the path.** `lib/population-count.js` already counts towns inside
 a polygon. Run it against each storm's wind swath on the runner:

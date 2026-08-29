@@ -404,18 +404,46 @@ research. **§57.42 is the whole backlog** — Tier 1 (free arithmetic) and Tier
 build it, delete its entry, write what IS in its place. Tier 3 is recorded as
 NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
-**What already landed:** `tools/gazetteer.mjs` names a point as
-`town, region, country` and is tested against fifteen real landfalls. **§57.40
-is the as-built account.** Nothing writes its answers to a file yet — that is
-§57.42 Tier 2 item 1, and it is the natural next step.
+**What already landed:** the gazetteer (§57.40), the places sidecar it feeds
+(§57.40a) and the storm-life paragraph (§57.41). **Read those three, not this.**
+Tier 2 item 1 is done and deleted from §57.42; Tier 1 and the other four Tier 2
+items are untouched.
 
-**The summary paragraph is designed and accepted but NOT BUILT. §57.41.** It
-carries Aaron's four calls on voice and the two faults the prototype hit. **Read
-it before writing a line of the story assembler** — the stall measured from a
-window's first fix misses Harvey completely, which is the one storm it exists
-for. (§57.41 names the file it should become; this line deliberately does not,
-because `tools/doc-check.mjs` checks every path named in a doc against disk and
-is right to.)
+**==> THE PARAGRAPH HAS NOT BEEN SEEN ON GLASS. IT IS THE FIRST NEW THING ON
+THAT PANEL SINCE STEP 7. <==** It sits between the honesty line and
+`Strongest`, is not collapsible, and is the only block on the panel set as prose
+rather than as a note. **What to judge, and the first one is the one most likely
+to come back wrong:**
+
+1. **THE STORM'S NAME IS IN CAPITALS.** The paragraph opens *"HARVEY was first
+   seen on August 16, 2017…"*, because HURDAT2 stores names uppercase and this
+   archive has shown them that way on the roster, the globe and the panel
+   heading since step 5. In a table that reads as a label; in a sentence it
+   reads as shouting. **It was left alone deliberately rather than title-cased
+   here** — fixing it only in the paragraph would spell the same storm two ways
+   two lines apart. If Aaron wants `Harvey`, the change is one line in
+   `stormDisplayName` and it moves the roster and the globe labels with it.
+   That is a different pass and a glass call on all three surfaces at once.
+2. **Length.** Harvey's runs six sentences and one of them lists four place
+   names in full, which is long. §57.41 says length is variable and a storm
+   earns it; whether four full `town, region, country` labels in one sentence is
+   earning it or is a wall of text is Aaron's call.
+3. **Does it read as assembled?** The repetitive `It … It … It …` is deliberate
+   (§57.41, Aaron's call 2). The question is whether it lands as plain or as
+   robotic.
+4. **Sandy.** Open her and check the extratropical sentence reads as an
+   explanation rather than an excuse. She is the storm where a correct rule
+   looks like a bug.
+5. **A pre-1900 storm** — 1851's first storm, or Labor Day 1935. Three of the
+   six clauses drop out. Does what is left still read as a paragraph or as a
+   fragment.
+
+**AND ONE MEASURED NUMBER WORTH A DECISION.** The places file is **38.5 KB
+gzipped** on the Atlantic, against §57.42's estimate of 12–15 KB — the estimate
+counted the 2,537 landfall marks and not the genesis place on all 3,266 storms.
+It loads alongside the season text on the first year opened. §57.40a names the
+lever if that is too much: defer it until a storm panel opens. **Nothing is
+blocked on this; it is a cost worth knowing rather than a fault.**
 
 **==> AND ONE COUNT IS UNEXPLAINED, WHICH BLOCKS THE RANKINGS. <==** A scratch
 walk over the mirrored archive on 2026-08-29 visited **6,532 storm entries
