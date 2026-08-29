@@ -4958,3 +4958,128 @@ That neither pill is hidden on a wide screen, that both centre on the window,
 and that the live pill sits under the drawer. The desktop hide reinstated and
 the live pill back at 30 were each mutation-checked and each turns
 `tools/test-seasons-status-pill.mjs` red.
+
+### 57.39a The archive drawer's two lines — as built
+
+**Aaron on glass, 2026-08-28, on 2020.** Two faults, one control.
+
+The header read `2020`. One line under it, inside the scroller, a full-width
+row read `−  2020  +` — a bordered box pinned to the sheet's left edge and
+another pinned to the right. **The year was printed twice, one line apart, at
+the same size**, and the two buttons sat directly beneath the drawer's Back
+chevron and its close X. That second half is the layout `ui/storm-stepper.js`
+was rebuilt to escape on 2026-08-12 and the consequence is the same and still
+asymmetric: press `+` instead of X and you step a year, press X instead of `+`
+and you are out of the panel.
+
+**The shape is the live storm drawer's, which Aaron pointed at directly.**
+`KARINA` in the header, `‹ 1 of 7 ›` on its own pinned line beneath it. The
+archive now reads the same way:
+
+```
+Atlantic                     <- ui/drawer.js, from titleFor()
+−     2005     +             <- ui/year-stepper.js, pinned
+```
+
+**The header gave way, not the picker.** §57.39 titled rung 3 with the year and
+was right that four digits beat a generic noun — but the year has to be beside
+the buttons that change it, so of the two lines the header is the one that can
+say something else. The basin is a fact this drawer otherwise never stated
+anywhere. **§57.39's ladder is unchanged**; what changed is which of a rung's
+two lines carries the year.
+
+**Pinned, not scrolled, and that is load-bearing.** The element is a sibling of
+`.drawer-body` rather than its first child — `.drawer-view` is a flex column
+and only the body flexes — so it holds still while a 31-row roster moves under
+it. This is the one control on the screen a reader presses repeatedly, and
+§57.21b item 1 already records what happens when it moves between presses.
+
+**`−` and `+`, not chevrons.** The live stepper uses chevrons because nothing
+sits beside it. Here the Back button's own `‹` is one line up; two of the same
+glyph at the same size on adjacent lines is the mis-press fault returning by
+proximity rather than by position.
+
+**It is not `ui/storm-stepper.js` and must not be merged into it.** Three rules
+differ: the live one WRAPS and this one STOPS at 1851 (a `−` press that landed
+on 2026 would be a lie), the live one HIDES below two storms and this one never
+hides, and its middle slot is the subject rather than a position. Eleven shared
+lines of shape is a coincidence, not a component; merging would mean one file
+with a `wrap` flag, a `hide` flag and two label modes.
+
+**Built node by node rather than from an `innerHTML` string.** The three
+elements persist anyway — the buttons survive their own activation, which is
+what keeps keyboard focus on the button under the thumb across a step — so
+parsing a string and querying it back out buys nothing and costs a dependency
+on `querySelector`. `tools/test-archive-mode.mjs` drives the real archive
+against a deliberately tiny element stub with no parser, and the first cut
+threw there.
+
+**It has its own click listener.** The board binds one delegated handler on
+`#seasons-board-body`; this row is outside it by construction. The old
+`[data-step]` branch in `ui/view-seasons-board.js` is deleted, not moved.
+
+**What was measured, at 390×844, with the busiest season open.** Furniture
+above the first storm name is 318px, and the breakdown reconciles: header 60,
+stepper 45, scorecard 94, filters 42, gaps and padding 77. The sheet is
+unchanged at 58.9vh for four names, so this is a legibility and safety fix
+rather than a height saving — the earlier estimate of ~94px recovered was
+wrong.
+
+`tools/seasons-height-measure.mjs`'s breakdown had two dead selectors and was
+silently attributing 164px to "gaps and padding". `.seasons-picker` no longer
+exists and `segGroups[1]` had pointed past the end of a one-element list since
+§57.36 deleted the basin segments. Both are fixed; that file's own reconcile
+assertion is what caught it.
+
+**The gates.** `tools/test-seasons-board.mjs` asserts the stepper is a sibling
+of the scroller and not a descendant, that the header names the basin, and that
+no four-digit number appears in the header. All three were mutation-verified:
+moving the row back inside the body, and titling the header with the year, each
+turn it red.
+
+`tools/markup-dom.mjs` gained `append`, `prepend`, and reflection for
+`className` and `disabled`. Each was a real gap: the stand-in was answering
+"no such element" and "not disabled" for a control that was working, which is
+the fourth and fifth time that file has told that particular lie. **A selector
+it cannot read is indistinguishable from an element that does not match**, so
+anything it cannot see gets fixed there rather than worked around in the app.
+
+### 57.39b The season scorecard counts storms, not coast crossings
+
+**Aaron on glass, 2026-08-28.** The `Landfalls` cell on 2020 read `34`. Two
+lines below it the roster said `All 18 storms shown` under the Landfalls
+filter, and one screen away the Wall of Years said `18 of 31`.
+
+**Both figures are real and neither was a bug.** Counted off
+`seasons/data/atlantic-landfalls-02272026.json`, 2020 Atlantic is **18 storms
+and 34 crossings** — Laura alone made 7, across Hispaniola, Cuba and Louisiana.
+The cell was printing `score.landfalls` (crossings) while every other surface
+in the feature printed the count of storms. **One word, three surfaces, two
+meanings, and nothing on screen to say which question was being answered.**
+
+**The app had already decided which question, and this cell had not heard.**
+§57.7a: the wall carried a real crossing count for about a day and Aaron
+reverted it on 2026-08-27, because counting crossings turns a season into a
+ranking of archipelagos — 1933 topped the board at 41 while a year that
+flattened the Gulf coast scored 6. A season's question is how many storms
+reached land. How often one particular storm did is a fact about that storm,
+and it is on the storm's own row and in its panel.
+
+**So the cell reads `score.stormsWithLandfall`, which `lib/season-facts.js` has
+computed since it was written and nothing had ever displayed.**
+
+**And the label changed with it, because it had to.** `Landfalls: 18` would be
+a worse lie than `Landfalls: 34` — the same word over a figure that no longer
+counts landfalls at all. It reads `Came ashore`, which is the wall's own
+wording for the same measurement, so the two screens agree in words as well as
+in arithmetic.
+
+**Unchanged:** the dash for a season still running (§5 — a figure the record
+cannot support is never a zero, and the working best track carries no landfall
+marker), and the `landfalls` filter, which has always selected storms rather
+than crossings.
+
+**The gate** asserts the cell against the roster the reader can count for
+themselves rather than against a typed number, so arithmetic that drifts fails
+it too. Switching the cell back to crossings turns
+`tools/test-seasons-board.mjs` red (29 against 16 on the season it opens on).
