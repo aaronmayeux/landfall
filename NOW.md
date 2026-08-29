@@ -487,7 +487,39 @@ scrolls. Measured off a real render at phone width, not estimated. **If it ever
 reads as too much, the lever is shortening the basin clause**, not moving the
 section: the placement is settled by acceptance.
 
-**==> AND ONE ANSWER IS WANTED BEFORE STEP 13. <==** The archive wind rank is
+**==> DISTANCE TRAVELLED IS NOW THE SEVENTH RANK. SHIPPED, NOT YET SEEN ON
+GLASS. <==** Aaron's call 2026-08-29, straight after §57.45. `Where it ranks`
+carries *"135th longest track in the Atlantic, 148th of 3,231 overall"* and
+`rankingsMaxRows` moved 6 to 7, which is the decision that constant existed to
+force. **§57.46 is the as-built account — read that, not this.**
+
+**GLASS, and the first is the only one that is not cosmetic:**
+
+1. **Switch units in Settings and watch the rank row, not just the figure.**
+   Distance ranks against two ladders because a rung has to be the number the
+   panel prints and `formatDistance` prints two. Sandy 2012 is the storm where
+   it shows: **609th in the Atlantic in miles, 610th in kilometres.** Anything
+   else means the wrong ladder is being read.
+2. **Seven rows in `Where it ranks` at 390px.** §57.44 already recorded that
+   each row wraps to three lines on a phone and that the section is the
+   tallest on the panel and open by default. This adds a seventh. **If it is
+   too much, the lever is still shortening the basin clause**, not moving the
+   section.
+3. **`Distance travelled` now appears twice on one panel** — as a figure under
+   `How it moved` and as a rank under `Where it ranks`. Whether that reads as
+   the same fact placed, or as a repeat, is the judgement.
+
+**==> AND ITS COST IS MEASURED AND WORTH A DECISION. <== The rankings file went
+from 3,846 to 26,297 bytes gzipped, 6.8x.** Distance is near-continuous —
+2,236 distinct mile rungs against **31** distinct peak-wind values across the
+whole archive — so its ladder approaches the size of the archive itself. It
+still loads once on the first year opened and is `immutable` for a year, and
+the places sidecar beside it is 38.5 KB. **Nothing is blocked on this.** If it
+is ever too much, §57.46 names the lever: delta-encoding the values arrays, no
+honesty cost. **Coarsening the rung was considered and rejected** — it would
+falsify a sentence already on that section.
+
+**==> AND ONE ANSWER IS WANTED BEFORE STEP 13. <== The archive wind rank is
 honest today because both basins are NHC's, so every wind is a one-minute
 sustained average. Most of the world publishes a ten-minute average, which
 reads lower for the identical storm, and §57.31 already measured that IBTrACS

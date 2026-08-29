@@ -6220,3 +6220,118 @@ rank** — Faith 1966 leads at 9,251 nm, and §57.44's `RANK_STATS` would take i
 as one table entry. It was NOT added: `SEASONS.rankingsMaxRows` is 6
 deliberately, so a seventh statistic is Aaron's decision rather than a free
 addition. Nothing here is blocked on it.
+
+### 57.46 Distance travelled, ranked against the archive — as built
+
+**Aaron's call, 2026-08-29, immediately after §57.45 landed.** `Where it ranks`
+now carries a seventh row: *"135th longest track in the Atlantic, 148th of
+3,231 overall."* `SEASONS.rankingsMaxRows` moved from 6 to 7, which is the
+decision that constant existed to force.
+
+**==> IT IS THE FIRST RANKED STATISTIC WHOSE PRINTED FIGURE DEPENDS ON THE
+READER, AND THAT BROKE §57.44's RUNG RULE. <==** Every other statistic has one
+printed rounding: wind prints its knots in brackets, pressure is millibars
+everywhere, lifespan is whole hours, ACE is a bare index. `formatDistance`
+renders the same stored nautical mile as **miles or as kilometres**, and those
+two roundings carve the archive into different equivalence classes.
+
+**MEASURED over both mirrored basins, which is what settled it:**
+
+| Rung | Storms printing one figure at two different ranks |
+|---|---|
+| Whole nautical miles | **575** in miles, **263** in kilometres |
+| Whole kilometres | **999** in miles |
+| Whole miles | **251** in kilometres |
+
+AL061851, AL111886 and AL162021 all print **1,014 mi** and sit at 881.53,
+880.83 and 881.10 nm — three whole-nm rungs, three ranks, one figure on screen.
+**That is exactly the fault §57.44's rule was written to prevent, arriving
+through a statistic that rule did not anticipate**, and it is not a corner
+case: it is a sixth of the archive.
+
+**SO THE LADDER IS BUILT TWICE.** `RANK_STATS` carries `trackDistanceMi` and
+`trackDistanceKm`, one fact and two entries, differing only in quantizer and a
+new `system` field. `rankStorm` takes the reader's preference and drops the
+entry that is not theirs before a row is built, so **eight entries produce
+seven rows** and a storm shows `Distance travelled` once.
+
+**COARSENING THE RUNG WAS CONSIDERED AND REJECTED, AND THE REASON IS A SENTENCE
+RATHER THAN A NUMBER.** Binning the printed value at ten display units cuts the
+distinct rungs from 4,772 to 1,377 and would save roughly 17 KB. But §57.44's
+note already on that section reads *"Storms sharing a figure share a place"*,
+and under binning storms **not** sharing a figure would share a place too. The
+saving costs a true sentence on a section confirmed on glass.
+
+**==> THE FILE GREW 6.8x AND THAT IS THE ONE THING WORTH ARGUING WITH. <==**
+**14,389 raw / 3,846 gzipped became 84,708 raw / 26,297 gzipped.** The cause is
+that distance is near-continuous where every other statistic is not: 2,236
+distinct mile rungs against **31** distinct peak-wind values across 3,266
+storms. Ranking a continuous quantity against the archive means the ladder
+approaches the size of the archive.
+
+It still loads once, in the same `Promise.all` as the season text, on the first
+year a reader opens, and `_headers` holds it `immutable` for a year. For scale:
+§57.40a's places sidecar is 38.5 KB gzipped and was accepted as a cost worth
+knowing. **The lever, if it is ever too much, is delta-encoding the `values`
+arrays** — a format change inside `placeOn`, no honesty cost, not taken because
+nothing is blocked on it.
+
+#### The quantizers reproduce the renderer, and one assertion proves it
+
+`quantizeDisplay` takes its ratio from `lib/units.js`'s `nmPerDisplayUnit`
+rather than carrying a copy — that file keeps 1.15077945 and 1.852 private on
+purpose, and a second copy is a second opinion about how long a mile is. It
+mirrors `formatDistance`'s **decimal branch** as well as its conversion: one
+decimal under ten display units, whole ones above.
+
+**THE CHECK IS A SWEEP THROUGH THE SHIPPED RENDERER, NOT A RESTATEMENT OF ITS
+LOGIC.** `tools/test-rankings.mjs` walks 3,477 nautical-mile values across the
+archive's whole range in both systems, pulls the number out of
+`formatDistance`'s own output, and demands the rung equal it — **6,954
+comparisons.** Re-deriving the expected figure in the suite would be the
+builder marking its own homework.
+
+**==> AND THE FIRST VERSION OF THAT CHECK WAS ITSELF WRONG, WHICH IS HOW IT
+ANNOUNCED ITSELF. <==** It fed the rung back into `formatDistance` as if it
+were nautical miles, converting a second time; all 6,954 comparisons failed at
+once. A test that is wrong about everything is cheap to find. A test that is
+wrong about one branch is the expensive kind, and it is why the sweep is dense
+rather than a handful of spot checks.
+
+#### What is refused
+
+**A storm under `trackDistanceFloorNm` gets no distance rank.** The same rule
+`hoursAtMajor` applies to a storm that never became a major hurricane. The
+three storms the record never moves print `no movement recorded` in
+`How it moved` precisely because the figure is not a measurement of a short
+track — so *"3,232nd longest of 3,234"* beside it would be a rank taken on a
+number the panel has just declined to state. `readRankableDistance` is one
+function serving both entries, so the pair cannot drift into ranking different
+sets.
+
+**Pressure and distance are both unaffected by the mixed-averaging problem
+§57.44 flagged for step 13.** A millibar is a millibar and a nautical mile is a
+nautical mile; only wind depends on whose averaging period produced it.
+
+#### The gates, and the mutation that survived twice
+
+`tools/test-rankings.mjs` and `tools/test-season-detail.mjs`. **Seven mutations
+were run and one survived the first pass — the same shape as §57.45's, one
+layer further out.**
+
+**==> THE VIEW DROPPING `system` FROM ITS `rankStorm` CALL CHANGED NOTHING ANY
+ASSERTION COULD SEE. <==** The row still appears, still carries the right
+label, and simply ranks against whichever ladder `resolveSystem(undefined)`
+happens to land on. **Katrina and Harvey both rank identically in miles and in
+kilometres, so neither can catch it.**
+
+**Sandy is the probe and she is the only fixture that is.** She is **609th**
+longest track in the Atlantic by miles and **610th** by kilometres. Every other
+storm under `samples/seasons/storms/` gives the same number in both, which was
+measured rather than assumed. She is mounted twice, once per system, and the
+number is the only thing on screen that differs.
+
+**AND THE QUANTIZER TRIPWIRE FIRED EXACTLY AS BUILT.** §57.44 left
+`Object.keys(QUANTIZERS).length === 2` in the suite with the note *"a third
+statistic printed a third way needs a third"*. It went red the moment this
+landed. Four now, and the tripwire moved with it rather than being deleted.
