@@ -37,6 +37,7 @@
  */
 
 import { parseHurdat2 } from '../lib/hurdat.js';
+import { rankingsFileName } from '../lib/rankings.js';
 
 /** The index of every season we hold. Mutable on the server, `no-cache` in
  *  `_headers`, and the only door to a filename. */
@@ -176,8 +177,15 @@ export function loadSeason(index, basin, year) {
     once(url, () => getText(url)),
     loadLandfalls(index, basin),
     loadPlaces(index, basin),
+    /* ==> IT RIDES IN THE SAME BREATH AS THE SEASON RATHER THAN ARRIVING
+     * AFTER IT, AND THE REASON IS THE SAME ONE THE PLACES FILE HAS. <== This
+     * panel paints instantly and completely today; a rank appearing a beat
+     * later would make eight sections shuffle. It is 3.8 KB gzipped and
+     * `once()` holds it for the session, so it is one round trip on the first
+     * year a reader opens and free on all 174 others. */
+    loadRankings(index),
   ])
-    .then(([text, marks, places]) => {
+    .then(([text, marks, places, rankings]) => {
       const { storms, faults } = parseHurdat2(text);
       /* ==> THE COMPUTED LANDFALLS ARE ATTACHED HERE, AT THE PARSE BOUNDARY,
        * AND THAT IS THE WHOLE WIRING. <== §57.7a. `stormFacts` reads
@@ -194,7 +202,10 @@ export function loadSeason(index, basin, year) {
        * Collapsing the two would print "out over open water" under a storm
        * that formed in the Gulf of Mexico on a day this file 404'd. */
       for (const storm of storms) storm.places = places ? (places[storm.id] || {}) : null;
-      return { status: 'ok', storms, faults, year, basin };
+      /* Not attached to each storm: it is a table ABOUT the archive rather
+       * than a fact about a storm, and 3,266 copies of one pointer would
+       * invite somebody to treat it as per-storm data. */
+      return { status: 'ok', storms, faults, year, basin, rankings };
     })
     .catch((e) => ({
       status: 'unavailable',
@@ -277,6 +288,46 @@ export function loadPlaces(index, basin) {
     return res.json();
   })
     .then((payload) => payload?.storms || null)
+    .catch(() => null);
+}
+
+/**
+ * Where every storm stands against the whole archive. §57.44, §57.42 Tier 1
+ * item 11.
+ *
+ * ==> IT IS ONE FILE FOR ALL BASINS, WHICH IS WHY IT IS NOT KEYED ON ONE. <==
+ * The landfalls and the places are per-basin because a fact about a storm
+ * belongs to that storm's basin. A RANK is a comparison, and the comparison
+ * this feature exists to make crosses basins — so the file carries every
+ * scope, and its name is derived from every contributing basin's revision
+ * rather than from one of them. `rankingsFileName` in `lib/rankings.js` does
+ * that derivation and the runner does it with the same function.
+ *
+ * ==> IT IS DERIVED RATHER THAN LOOKED UP IN THE INDEX, AND THAT IS THE
+ * TWO-WRITERS RULE. <== §57.40a. `index.json` belongs to the mirror job. A
+ * rankings job that added its own filename to it would be a second writer of
+ * one file, and the failure is a lost edit nothing detects.
+ *
+ * ==> A FAILURE HERE MUST NOT LOSE THE SEASON, SAME AS THE OTHER TWO. <== §5.
+ * It resolves to `null`, the panel simply has no `Where it ranks` section, and
+ * every other figure on it is unaffected. A rank is the least load-bearing
+ * thing on that screen: losing 175 years of history because a 4 KB companion
+ * 404'd would be the tail wagging the dog.
+ *
+ * @returns {Promise<object|null>}  the scope table, or null
+ */
+export function loadRankings(index) {
+  const dir = index?.dir || '/seasons/data';
+  const { file } = rankingsFileName(index?.basins || {});
+  if (!file) return Promise.resolve(null);
+
+  const url = `${dir}/${file}`;
+  return once(url, async () => {
+    const res = await fetch(url, { credentials: 'omit' });
+    if (!res.ok) throw new Error(`rankings answered ${res.status}`);
+    return res.json();
+  })
+    .then((payload) => (payload?.scopes ? payload : null))
     .catch(() => null);
 }
 

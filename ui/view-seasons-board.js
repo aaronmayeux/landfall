@@ -976,6 +976,20 @@ export function createSeasonsBoardView({
       return loading.entries();
     },
 
+    /**
+     * The archive-wide ranking table and the basin it is read against, for the
+     * detail panel. §57.44.
+     *
+     * ==> A FUNCTION FOR THE SAME REASON `currentEntries` IS, AND THE BASIN
+     * TRAVELS WITH IT FOR A SHARPER ONE. <== A table read against the wrong
+     * basin does not fail; it silently ranks an Atlantic storm against the
+     * Pacific ladder and prints the answer with full confidence. The two are
+     * only ever correct together, so they are only ever handed over together.
+     */
+    currentArchive() {
+      return loading.archive();
+    },
+
     /** Leaving the archive entirely — drop the globe's tracks and forget the
      *  ticks, so a second visit does not open with a stale selection. */
     reset() {

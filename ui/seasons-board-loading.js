@@ -107,6 +107,25 @@ export function createSeasonsBoardLoading({
   let seasonReason = '';
   /** `[{ storm, facts }]`, chronological, as parsed. */
   let entries = [];
+
+  /** ==> THE ARCHIVE-WIDE RANKING TABLE, AND IT IS HELD HERE RATHER THAN IN
+   *  THE PANEL BECAUSE THE PANEL IS NOT ITS ONLY FUTURE READER. <== §57.44.
+   *  It arrives with the season (`data/seasons.js` puts it in the same
+   *  `Promise.all` as the text) and `once()` holds the bytes for the session,
+   *  so stepping through years re-reads a pointer rather than re-fetching 4 KB.
+   *  `null` until a settled season has loaded, and `null` for the season in
+   *  progress, which has no archive rank by design. */
+  let rankings = null;
+
+  /** ==> WHICH BASIN THE LOADED TABLE IS BEING READ AGAINST. <== Set beside
+   *  `rankings` and never read from the view, because this file deliberately
+   *  holds no basin state — the basin is the READER'S choice and lives in the
+   *  view (see `loadSeason` below). This is a different fact: it is which
+   *  basin the season that actually loaded belongs to, which is a property of
+   *  the load rather than of the reader, and holding the two together is what
+   *  stops a panel ranking an Atlantic storm against the Pacific in the beat
+   *  after a basin change. */
+  let rankingsBasin = null;
   let score = null;
   let roster = null;
   /** True while the chosen year is the one still running. */
@@ -223,6 +242,8 @@ export function createSeasonsBoardLoading({
     const wasLive = isLive(basin, year);
     seasonState = 'loading';
     entries = [];
+    rankings = null;
+    rankingsBasin = null;
     score = null;
     roster = null;
     unreadable = 0;
@@ -253,6 +274,21 @@ export function createSeasonsBoardLoading({
     entries = res.storms.map((storm) => ({ storm, facts: stormFacts(storm) }))
       .filter((e) => e.facts);
     score = seasonFacts(res.storms, { year, basin });
+    /* ==> THE LIVE BRANCH RETURNS NO TABLE AND THAT IS THE CORRECT OUTCOME,
+     * NOT A GAP. <== `live.loadLiveSeason` reads operational b-decks, whose
+     * figures NOAA has not reviewed and will move. `rankStorm` refuses a
+     * provisional storm anyway, so this is the belt beside that brace: no
+     * table means the section cannot be built even if that rule were ever
+     * loosened. */
+    rankings = res.rankings || null;
+    /* ==> NOT `rankings ? basin : null`, WHICH IS WHAT THIS SAID AND WHICH
+     * GUARDED NOTHING. <== A mutation run survived deleting the condition,
+     * and the reason is that `rankStorm` bails on a missing table before it
+     * ever looks at the basin. A guard with no observable effect is a guard
+     * the next reader has to work out is dead, so it is deleted rather than
+     * tested (§12, retire cleanly). Both slots are cleared together at the top
+     * of this function, which is where the staleness actually matters. */
+    rankingsBasin = basin;
     unreadable = res.unreadable || 0;
 
     /* ==> THE FOURTH ARGUMENT IS THE GHOSTS-ARE-THIS-SEASON-ONLY RULE, AND IT
@@ -295,6 +331,11 @@ export function createSeasonsBoardLoading({
      *  against a mutation nobody makes would cost more than it protects. It is
      *  replaced wholesale on every load, never edited in place. */
     entries: () => entries,
+
+    /** The ranking table with the basin it must be read against, in one shape,
+     *  because reading them apart is how a panel comes to rank an Atlantic
+     *  storm against the Pacific after a basin change. */
+    archive: () => ({ table: rankings, basin: rankingsBasin }),
 
     /** Everything the render reads, in one bundle. One call per redraw rather
      *  than a dozen getters threaded through the template. */

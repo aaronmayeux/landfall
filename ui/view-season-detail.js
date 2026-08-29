@@ -43,12 +43,17 @@
 
 import { SEASONS } from '../config/constants.js';
 import { rankInSeason } from '../lib/season-facts.js';
+import { rankStorm } from '../lib/rankings.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { storyClauses } from '../lib/season-story.js';
 import {
   changeHtml, headHtml, landfallsHtml, lifeHtml, movementHtml, noStormHtml,
-  peakHtml, reportHtml, seasonRankHtml, storyHtml, windFieldHtml,
+  peakHtml, reportHtml, storyHtml, windFieldHtml,
 } from './season-detail-markup.js';
+/* ==> THE TWO RANK SECTIONS LIVE NEXT DOOR. <== SPEC.md §12. They are the only
+ * renderers on this panel that take a comparison rather than a fact, and they
+ * were the 126 lines that put `season-detail-markup.js` over the ceiling. */
+import { archiveRankHtml, seasonRankHtml } from './season-rank-markup.js';
 
 /**
  * @param {object} opts
@@ -59,6 +64,11 @@ import {
  * @param {(id:string) => Promise<object>} opts.loadReport
  *   `data/season-reports.js`'s `reportFor`, injected so a suite can drive
  *   every one of its three answers without a network.
+ * @param {() => ({table:object|null, basin:string|null})} opts.archive
+ *   the archive-wide ranking table and which basin the board is showing.
+ *   ==> A FUNCTION FOR THE SAME REASON `entries` IS. <== §57.44. The board
+ *   reloads on a basin change, and a table captured when this panel first
+ *   painted would go on ranking an Atlantic storm against the Pacific.
  * @param {() => string} opts.units  the reader's measurement preference.
  * @param {(id:string) => void} [opts.onOpen]
  *   the panel opened on this storm. The board draws it and focuses it, so
@@ -66,7 +76,7 @@ import {
  *   §57.21a's rule that the roster and the globe must never disagree,
  *   extended one screen further.
  */
-export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
+export function createSeasonDetailView({ entries, archive, loadReport, units, onOpen }) {
   let host = null;
   let bodyEl = null;
 
@@ -100,6 +110,17 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
    *  reason `entries` is a function rather than an array. */
   function seasonFacts() {
     return entries().map((e) => e.facts).filter(Boolean);
+  }
+
+  /** The archive-wide table and the basin it is read against, both read fresh
+   *  on every render. Two small readers rather than one destructure so a
+   *  caller that supplies neither costs nothing. */
+  function archiveTable() {
+    return archive?.()?.table || null;
+  }
+
+  function archiveBasin() {
+    return archive?.()?.basin || null;
   }
 
   /* --- sections ---------------------------------------------------------
@@ -171,6 +192,24 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
           * describing last year's roster under this year's heading. It is one
           * pass over at most 31 storms, so rebuilding it per render is free. */
     section('In its season', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
+      ${/* ==> IT SITS DIRECTLY UNDER `In its season`, NARROW COMPARISON THEN
+          * WIDE. <== §57.44. The two rank sections answer the same question at
+          * two sizes, and a reader who has just read "3rd strongest of 28"
+          * reads "11th strongest in the Atlantic" as the next sentence rather
+          * than as a contradiction. Separated by anything else they read as
+          * two unrelated facts about ranking.
+          *
+          * ==> AND IT DRAWS NOTHING AT ALL WHEN THE TABLE DID NOT ARRIVE. <==
+          * `section()` returns '' for empty markup, so a 404 on a 4 KB
+          * companion costs this section and nothing else. That is deliberate
+          * rather than a §5 silence: a rank is a comparison the app offers,
+          * not a fact about the storm, and every figure it would have ranked
+          * is already on screen above with its own units. There is no wrong
+          * impression left behind by its absence. */
+    section('Where it ranks', archiveRankHtml(
+      rankStorm(facts, archiveTable(), archiveBasin()),
+      { year: storm.year },
+    ))}
       ${section('Wind footprint', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}

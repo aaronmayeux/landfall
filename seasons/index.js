@@ -831,6 +831,11 @@ function ensureBoard({ drawer, linkReason }) {
    * describing last year's storm under this year's heading. */
   detailView = createSeasonDetailView({
     entries: () => boardView?.currentEntries?.() || [],
+    /* ==> THE TABLE AND ITS BASIN, RESOLVED AT CALL TIME LIKE EVERYTHING ELSE
+     * HERE. <== §57.44. The board reloads on a basin change as well as a year
+     * change, and a captured table would go on ranking against the basin the
+     * reader has left. */
+    archive: () => boardView?.currentArchive?.() || { table: null, basin: null },
     loadReport: reportFor,
     /* ==> RESOLVED AT CALL TIME, NOT CAPTURED. <== `app/views.js` does exactly
      * this and the reason is the same: a stored preference of `auto` has to go

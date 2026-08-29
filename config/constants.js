@@ -7234,4 +7234,33 @@ export const SEASONS = Object.freeze({
    *  storms. So "no report for this one" is the ORDINARY answer, not an error,
    *  and §57.25 rule 2 rather than §5's failure states is what applies. */
   reportsFirstSeason: 1958,
+
+  /* --- Where a storm stands in the whole archive (§57.44, §57.42 item 11) -- */
+
+  /**
+   * ==> HOW FEW STORMS STILL MAKE A RANK WORTH PRINTING. <== A ladder built
+   * from two storms says "2nd lowest of 2", which is arithmetic rather than
+   * information, and it reads as a boast. `rankInSeason` already refuses under
+   * two for the same reason one screen up; this floor is higher because the
+   * sentence it licenses is bigger — "of 2,008 on record" invites a reader to
+   * believe the archive was consulted, and a scope of thirty has not been.
+   *
+   * THIRTY, and it is a floor on the DENOMINATOR of one statistic in one
+   * scope, not on the scope's storm count. Today nothing comes near it: the
+   * thinnest ladder in the file is the East Pacific's pressure at 754.
+   * **It is here for the day the rest of the world arrives** — the South
+   * Atlantic carries a handful of storms in the whole record, and a scope that
+   * small must produce no rank rather than a proud one.
+   */
+  rankingsMinStorms: 30,
+
+  /**
+   * ==> HOW MANY OF THE SIX RANKS THE PANEL PRINTS BEFORE IT STOPS. <== All
+   * six, today. The constant exists because the list is a screen on a phone
+   * and the next statistic added to `RANK_STATS` should have to think about
+   * that rather than simply land — §57.43 already put two new sections on a
+   * panel that now has eight, and Aaron named the crowding as the risk he was
+   * accepting. A seventh rank is a glass call, not a free addition.
+   */
+  rankingsMaxRows: 6,
 });
