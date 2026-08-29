@@ -487,8 +487,24 @@ scrolls. Measured off a real render at phone width, not estimated. **If it ever
 reads as too much, the lever is shortening the basin clause**, not moving the
 section: the placement is settled by acceptance.
 
-**==> DISTANCE TRAVELLED IS NOW THE SEVENTH RANK. SHIPPED, NOT YET SEEN ON
-GLASS. <==** Aaron's call 2026-08-29, straight after §57.45. `Where it ranks`
+**==> THE DISTANCE RANK SHIPPED AND DID NOT REACH THE PHONE, AND THE CAUSE WAS
+THE FILENAME. <==** Aaron, 2026-08-29, on Sandy: six rows in `Where it ranks`,
+no distance. **The rankings file is `immutable` for a year and its name was
+built out of NOAA's revisions alone**, so changing its CONTENTS left the URL
+identical and every returning phone kept the six-statistic table. §57.44 named
+this failure for the case of NOAA revising a basin and never considered our own
+code changing the output. `RANKINGS_SCHEMA` is the other half of the name now
+(`seasons/data/rankings-v2-02272026.json`) and **§57.47 is the whole account.**
+
+**==> AND THE TWO OTHER GENERATED SIDECARS HAVE THE SAME FAULT, VERIFIED, NOT
+YET FIXED. <==** `atlantic-landfalls-<revision>.json` and
+`atlantic-places-<revision>.json` are both revision-only under the same
+`immutable` rule. Neither has bitten because neither has changed shape since it
+shipped. **Do it before either gains a field, not after** — the symptom is a
+screen that looks right.
+
+**==> DISTANCE TRAVELLED IS THE SEVENTH RANK. SHIPPED, AND THE FIRST DEPLOY OF
+IT NEVER REACHED GLASS — SEE ABOVE. <==** Aaron's call 2026-08-29, straight after §57.45. `Where it ranks`
 carries *"135th longest track in the Atlantic, 148th of 3,231 overall"* and
 `rankingsMaxRows` moved 6 to 7, which is the decision that constant existed to
 force. **§57.46 is the as-built account — read that, not this.**

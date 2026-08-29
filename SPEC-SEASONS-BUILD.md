@@ -6335,3 +6335,83 @@ number is the only thing on screen that differs.
 `Object.keys(QUANTIZERS).length === 2` in the suite with the note *"a third
 statistic printed a third way needs a third"*. It went red the moment this
 landed. Four now, and the tripwire moved with it rather than being deleted.
+
+### 57.47 The rankings file needs a version of its own — as built
+
+**Found on glass, 2026-08-29.** Aaron opened Sandy after §57.46 deployed and
+`Where it ranks` showed six rows. No distance. **No error, no empty section, no
+console line — a panel that looked entirely correct and was a version behind.**
+
+**==> THE CONTENTS CHANGED AND THE URL DID NOT. <==** `_headers` holds
+`/seasons/data/*` at `max-age=31536000, immutable`, and `rankingsFileName`
+built the name out of NOAA's basin revisions alone. §57.46 added two ladders
+per scope; NOAA had revised nothing; the file was still
+`rankings-02272026.json`. **Every browser that had ever opened the archive went
+on serving the six-statistic table, and would have until 2027.**
+
+**==> §57.44 NAMED THIS EXACT FAILURE AND GOT THE DIRECTION WRONG. <==** It
+wrote that the stamp must carry every contributing basin's revision *"so a
+stamp that failed to move when NOAA revised one basin would leave a stale
+ladder on every returning phone until 2027"* — which is right, and guards the
+file's **input**. It never considered that this repo could change the file's
+**output** without NOAA touching anything. A rule written against one direction
+of a two-directional problem reads as complete.
+
+**`RANKINGS_SCHEMA` IS THE OTHER HALF OF THE NAME.** `rankings-v2-02272026.json`
+today. It is bumped whenever the file's shape or content rules change: a new
+statistic, a changed quantizer, a changed floor, a changed `read`. **The test
+is not "did the code change" but "would a phone holding yesterday's file be
+wrong"**, and for every one of those the answer is yes.
+
+**THE OLD FILE IS DELETED RATHER THAN LEFT.** §12, retire cleanly. Nothing
+computes its name any more, so it is unreachable bytes in the deploy.
+
+#### Why nothing caught it, and the two gates that do now
+
+**BOTH SUITES HAD THE FILENAME TYPED OUT**, and both fell back to `null` when
+they could not find it. `test-rankings.mjs` guards a third of its assertions
+behind `if (table)` and `test-season-detail.mjs` guards every rank assertion
+behind `RANK_TABLE`. **So the first schema bump would have turned a third of
+two suites into a skip nobody reads, silently** — the §12 failure with no bug
+required, waiting one commit behind the one that shipped.
+
+Both now derive the name through `rankingsFileName`, the same function the
+runner and the phone use, so all three can only ever agree. **And a missing
+table is a loud failure rather than a skip.**
+
+**==> THE FIRST VERSION OF THAT FIX SHIPPED A NULL AND THE NEW ASSERTION
+CAUGHT IT WITHIN THE MINUTE. <==** `test-season-detail.mjs` derives the name
+inside a `try/catch` that returns null, and `rankingsFileName` had not been
+imported — so the `catch` ate a `ReferenceError` and handed back exactly the
+silent null the change existed to prevent. The loud assertion was already in by
+then and said so.
+
+**AND THE SCHEMA STAMP IS MUTATION-VERIFIED IN BOTH DIRECTIONS.** Removing it
+from the filename goes red; leaving it at `v1` while the shape has moved goes
+red, because the committed table and the name the code derives no longer agree.
+That second one is the forgotten-bump case, which is the way this rule will
+actually be broken.
+
+#### What this says about the next artifact
+
+**ANY FILE UNDER AN `immutable` HEADER WHOSE CONTENT THIS REPO GENERATES NEEDS
+A STAMP THIS REPO CONTROLS.** A stamp derived only from upstream data covers
+upstream changing and nothing else. `seasons/data/`'s HURDAT2 files are safe —
+their content IS the upstream data, so a change to it moves the revision by
+definition.
+
+**==> THE OTHER TWO GENERATED SIDECARS WERE CHECKED AND BOTH CARRY THE SAME
+LATENT FAULT. <==** `tools/seasons-landfall.mjs`'s `landfallFile` is
+`${basin}-landfalls-${revision}.json` and `tools/seasons-places.mjs`'s
+`placesFile` is `${basin}-places-${revision}.json` — **revision only, no
+schema stamp, both under the same `immutable` rule.** Neither has bitten,
+because neither file's shape has changed since it shipped. **The day one does —
+a new field on a landfall mark, a changed gazetteer radius, a different place
+label format — every returning phone keeps the old one until the year is out,
+and the symptom will be what it was here: a screen that looks right.**
+
+Not fixed in this pass, deliberately: each is its own artifact with its own
+readers and its own tests to re-derive, and bundling three cache-busting
+changes into the push that fixes a live fault is how a small correct change
+becomes a large risky one. **It is the next thing to do to those two files, and
+it should happen before either gains a field rather than after.**

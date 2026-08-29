@@ -33,14 +33,26 @@ const { SEASONS } = await import('../config/constants.js');
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const {
-  RANK_STATS, QUANTIZERS, toRung, placeOn, rankStorm, rankingsFileName, scopeOrder,
+  RANK_STATS, QUANTIZERS, RANKINGS_SCHEMA, toRung, placeOn, rankStorm, rankingsFileName,
+  scopeOrder,
   eraCaveat, meetsFloor, countsAgree,
 } = await import('../lib/rankings.js');
 const { archiveRankHtml, eraCaveatWords } = await import('../ui/season-rank-markup.js');
 const { formatDistance } = await import('../lib/units.js');
 
-const TABLE_FILE = 'seasons/data/rankings-02272026.json';
+/* ==> THE NAME IS DERIVED, NOT TYPED, AND THAT IS §57.47's LESSON APPLIED TO
+ * THIS SUITE. <== It was `'seasons/data/rankings-02272026.json'` written out,
+ * and half the assertions below sit behind `if (table)` — so the day the
+ * filename gained its schema stamp this suite would have gone quietly green
+ * over a file it could no longer find. A test that skips silently is the §12
+ * failure with no bug required. `rankingsFileName` is the same function the
+ * runner and the phone use, so all three can only ever agree. */
+const INDEX = JSON.parse(readFileSync('seasons/index.json', 'utf8'));
+const TABLE_FILE = `seasons/data/${rankingsFileName(INDEX.basins).file}`;
 const table = existsSync(TABLE_FILE) ? JSON.parse(readFileSync(TABLE_FILE, 'utf8')) : null;
+ok(table !== null,
+  `==> AND ITS ABSENCE IS A FAILURE, NOT A SKIP. <== ${TABLE_FILE} must exist; `
+  + 'every assertion guarded by `if (table)` below is worthless without it');
 
 const raw = (f) => readFileSync(`samples/seasons/storms/${f}.txt`, 'utf8');
 const oneStorm = (f) => parseHurdat2(raw(f)).storms[0];
@@ -49,12 +61,27 @@ const oneStorm = (f) => parseHurdat2(raw(f)).storms[0];
 section('THE FILENAME — derived on both sides, and it moves when a revision does');
 {
   const one = rankingsFileName({ atlantic: { revision: 'A' }, epacific: { revision: 'A' } });
-  ok(one.file === 'rankings-A.json',
+  ok(one.file === `rankings-${RANKINGS_SCHEMA}-A.json`,
     `two basins on one revision give one stamp. Got ${one.file}`);
 
   const two = rankingsFileName({ atlantic: { revision: 'B' }, epacific: { revision: 'A' } });
-  ok(two.file === 'rankings-A-B.json',
+  ok(two.file === `rankings-${RANKINGS_SCHEMA}-A-B.json`,
     `a split revision names both, sorted so the order of the index cannot change the URL. Got ${two.file}`);
+
+  /* ==> AND THE OTHER HALF OF THE NAME, WHICH REACHED A PHONE BY BEING
+   * ABSENT. <== §57.47. NOAA's revision covers the file's INPUT changing; the
+   * schema covers this repo changing its OUTPUT. §57.46 added two statistics,
+   * NOAA had revised nothing, the URL did not move, and every returning phone
+   * went on serving the six-statistic table out of an `immutable` cache. The
+   * distance row was simply absent on glass, with nothing on screen wrong. */
+  ok(one.file.includes(`-${RANKINGS_SCHEMA}-`),
+    `==> THE SCHEMA STAMP IS IN THE NAME. <== Got ${one.file}`);
+  ok(/^v\d+$/.test(RANKINGS_SCHEMA),
+    `and it is a bumpable version rather than free text. Got ${RANKINGS_SCHEMA}`);
+  ok(rankingsFileName({ atlantic: { revision: 'A' } }).file
+    !== `rankings-A.json`,
+  '==> A FILE BUILT BEFORE THE SCHEMA EXISTED CAN NEVER SHARE A URL WITH ONE '
+    + 'BUILT AFTER. <== That is the whole job: an old cached copy has to miss');
 
   const flipped = rankingsFileName({ epacific: { revision: 'A' }, atlantic: { revision: 'B' } });
   ok(flipped.file === two.file,

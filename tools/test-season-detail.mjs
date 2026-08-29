@@ -74,6 +74,7 @@ const eq = (what, got, want) => ok(
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts, rankInSeason } = await import('../lib/season-facts.js');
+const { rankingsFileName } = await import('../lib/rankings.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
 /* ==> TWO MODULES BEHIND ONE HANDLE, BECAUSE THE RANK SECTIONS MOVED AND THE
@@ -126,9 +127,26 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
  */
 /** The shipped ranking table, or null when it has not been built. §57.44. */
 const RANK_TABLE = (() => {
-  try { return JSON.parse(readFileSync(join(ROOT, 'seasons', 'data', 'rankings-02272026.json'), 'utf8')); }
+  /* Derived rather than typed — §57.47. A hardcoded name goes stale the day
+   * the schema stamp moves, and this one falls back to null, which turns every
+   * rank assertion below into a skip nobody sees. */
+  try {
+    const idx = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
+    const { file } = rankingsFileName(idx.basins);
+    return JSON.parse(readFileSync(join(ROOT, 'seasons', 'data', file), 'utf8'));
+  }
   catch { return null; }
 })();
+
+/* ==> AND ITS ABSENCE IS A FAILURE HERE TOO. <== §57.47. The loader above
+ * catches, which is right — a table that has not been built yet is a real
+ * state. But every rank assertion in this file sits behind it, so a null would
+ * turn a third of this suite into a skip nobody reads. The first version of
+ * this very fix shipped a null, because `rankingsFileName` was not imported
+ * and the `catch` ate the ReferenceError. */
+ok('==> THE SHIPPED RANKING TABLE LOADS. <== Every rank assertion in this file '
+  + 'is guarded by it, so a null here is a silent third of the suite',
+RANK_TABLE !== null);
 
 function mount({
   storms, loadReport, units = () => 'imperial', onOpen,
