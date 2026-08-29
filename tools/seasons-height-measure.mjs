@@ -71,11 +71,19 @@ try {
       pitch,
       rowCount: rows.length,
       parts: {
+        /* ==> THE BREAKDOWN STOPPED RECONCILING TWICE, BOTH TIMES BECAUSE A
+         * SELECTOR OUTLIVED ITS MARKUP — which is the failure the assertion
+         * below exists for, arriving in this file's own list. §57.39a moved
+         * the year picker out of the scroller onto its own pinned line
+         * (`.seasons-year`, no longer wrapped in `.seasons-picker`), and
+         * §57.36 deleted the basin segments, which left `segGroups[1]`
+         * pointing past the end of a one-element list. Both read as zero and
+         * cost nothing visible. */
         'drawer header': h(document.querySelector('.drawer-head')),
-        'basin + year picker': h(document.querySelector('.seasons-picker')),
+        'year stepper': h(document.querySelector('.seasons-year')),
         'live-down note': h(document.querySelector('.seasons-note')),
         scorecard: h(document.querySelector('.seasons-score')),
-        filters: h(segGroups[1] ?? null),
+        filters: h(segGroups[0] ?? null),
       },
     };
   });

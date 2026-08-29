@@ -220,6 +220,21 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
 
 const rows = (body) => body.querySelectorAll('[data-storm]');
 
+/* ==> THE YEAR STEPPER IS NOT IN THE BODY ANY MORE. §57.39a. <== It is pinned
+ * as a sibling of the scroller so it holds still while the roster moves, which
+ * puts it out of reach of `body.querySelector` AND out of reach of the body's
+ * delegated click listener — it has its own. These three helpers are the whole
+ * difference; every assertion below reads the same things it always did.
+ *
+ * ==> THE PRESS GOES THROUGH THE STEPPER'S OWN ELEMENT. <== Firing at the body
+ * would be testing the suite's idea of the interaction rather than the
+ * component's, which is the trap `tools/markup-dom.mjs`'s own notes describe. */
+const stepper = (host) => host.querySelector('.seasons-year');
+const stepBtn = (host, dir) =>
+  host.querySelectorAll('[data-step]').find((b) => b.dataset.step === dir) || null;
+const stepYear = (host) => host.querySelector('.seasons-year-now')?.textContent || '';
+const pressStep = (host, dir) => stepper(host).fire('click', stepBtn(host, dir));
+
 /* ==> THE STRENGTH AND THE LANDFALL MOVED OFF THE CHECKBOX AND ONTO THE ROW'S
  * OPEN BUTTON. §57.22b. <== The box now says only *"Draw KATRINA on the
  * globe"*, because that is the only thing it does; the button that opens the
@@ -234,7 +249,7 @@ const text = (body) => body.innerHTML;
  * 1. IT OPENS ON A REAL SEASON AND NAMES IT.
  * ------------------------------------------------------------------------ */
 {
-  const { body, where } = await board();
+  const { body, host, view, where } = await board();
   ok('the board opens on a season with storms in it', rows(body).length > 0);
   ok('and the bar is told where it is',
     where.some((w) => w && /Atlantic/.test(w.label)));
@@ -243,9 +258,28 @@ const text = (body) => body.innerHTML;
    * rather than deleted because what it was really guarding is that this view
    * has SOMETHING at the top to receive focus (§13) — a screen whose `focus()`
    * returns null drops the reader on the document body. */
-  ok('the year stepper is there to focus', body.querySelector('.seasons-step') !== null);
-  ok('and the year it is sitting on is drawn beside it',
-    body.querySelector('.seasons-year-now') !== null);
+  ok('the year stepper is there to focus', stepBtn(host, 'older') !== null);
+  ok('and the year it is sitting on is drawn between the two buttons',
+    /^\d{4}$/.test(stepYear(host)));
+  /* ==> AND IT IS PINNED, NOT SCROLLED. <== Aaron, 2026-08-28. A stepper
+   * inside the scroller walks off the top of the sheet on a long roster and
+   * has to be hunted for after every press. `.drawer-body` is the scroller and
+   * this asserts the control is a SIBLING of it rather than a descendant —
+   * which is the whole mechanism, since `.drawer-view` is a flex column and
+   * only the body flexes. Moving it back inside makes this fail. */
+  ok('and the stepper is pinned outside the scrolling body',
+    stepper(host) !== null && body.querySelector('.seasons-year') === null);
+
+  /* ==> AND THE HEADER NAMES THE BASIN, NOT THE YEAR. §57.39a. <== Aaron on
+   * glass 2026-08-28: the header said `2020` and the picker one line below
+   * said `2020`, at nearly the same size. Of the two the header gave way, so
+   * the sheet reads basin-then-year the way the live drawer reads name-then-
+   * position. Four digits appearing up there again is the duplication coming
+   * back, so this asserts their ABSENCE as well as the basin's presence —
+   * checking only for "Atlantic" would pass on "Atlantic 2005". */
+  ok('the header names the basin', /Atlantic/.test(view.titleFor()));
+  ok('and does not repeat the year the stepper is already showing',
+    !/\d{4}/.test(view.titleFor()));
 }
 
 /* ---------------------------------------------------------------------------
@@ -292,7 +326,7 @@ const text = (body) => body.innerHTML;
  * 4. TICKING DRAWS, UNTICKING CLEARS — step 5's whole done-condition.
  * ------------------------------------------------------------------------ */
 {
-  const { body, drawn } = await board({ year: 2005 });
+  const { body, host, drawn, where } = await board({ year: 2005 });
   const before = drawn.length;
   const box = rows(body)[11];
 
@@ -327,7 +361,7 @@ const text = (body) => body.innerHTML;
  * change.
  * ------------------------------------------------------------------------ */
 {
-  const { body, drawn } = await board({ year: 2005 });
+  const { body, host, drawn, where } = await board({ year: 2005 });
 
   const weak = rows(body).find((r) => rowLabel(body, r).includes('TS'));
   ok('2005 has a tropical storm to tick', !!weak);
@@ -375,18 +409,25 @@ const text = (body) => body.innerHTML;
  * as the fetch takes.
  * ------------------------------------------------------------------------ */
 {
-  const { body, drawn } = await board({ year: 2005 });
+  const { body, host, drawn, where } = await board({ year: 2005 });
   const box = rows(body)[0];
   box.checked = true;
   body.fire('change', box);
   ok('something is drawn', drawn[drawn.length - 1].length === 1);
 
-  const older = body.querySelectorAll('[data-step]').find((b) => b.dataset.step === 'older');
-  body.fire('click', older);
+  pressStep(host, 'older');
   eq('the globe empties the moment the year changes', drawn[drawn.length - 1], []);
   await settle();
   eq('and the new season draws nothing on its own', drawn[drawn.length - 1], []);
-  ok('the roster is now 2004', /2004/.test(text(body)));
+  /* ==> READ OFF THE STEPPER AND OFF THE BAR, NOT OUT OF THE ROSTER. <== The
+   * roster prints month and day without a year (§57.18), so `/2004/` over the
+   * body only ever matched the picker that used to be inside it. Two
+   * independent answers now: what the control says, and what the view told the
+   * status pill. A step that moved one and not the other is the panel and the
+   * globe disagreeing, which is what this suite is for. */
+  eq('the stepper is now sitting on 2004', stepYear(host), '2004');
+  ok('and the bar was told the same year',
+    /2004/.test(where[where.length - 1]?.label || ''));
 }
 
 /* ---------------------------------------------------------------------------
@@ -457,7 +498,7 @@ const text = (body) => body.innerHTML;
  * ------------------------------------------------------------------------ */
 {
   freshLive();
-  const { body, where } = await board();
+  const { body, host, where } = await board();
 
   eq('the board opens on the season in progress', where.at(-1)?.year, 2026);
   /* ==> THE `— this season` OPTION LABEL WENT WITH THE DROPDOWN. §57.36. <==
@@ -505,7 +546,7 @@ const text = (body) => body.innerHTML;
    * is no clock in this path. */
   freshLive();
   liveYearIs = 2027;
-  const { body, where } = await board();
+  const { body, host, where } = await board();
 
   eq('the board opens on the year the record names', where.at(-1)?.year, 2027);
   ok('and its unused names are that year\'s',
@@ -533,7 +574,7 @@ const text = (body) => body.innerHTML;
   const filters = body.querySelectorAll('[data-filter]').map((b) => b.dataset.filter);
   eq('the season in progress offers no landfalls filter', filters, ['all', 'majors']);
   ok('the landfall count is a dash rather than a zero',
-    /<span class="seasons-stat-n">—<\/span>\s*<span class="seasons-stat-k">Landfalls/.test(text(body)));
+    /<span class="seasons-stat-n">—<\/span>\s*<span class="seasons-stat-k">Came ashore/.test(text(body)));
   ok('and it says where the marks come from instead',
     /Landfall marks\s+come with that reviewed record/.test(text(body)));
   ok('no row claims a landfall', !/made landfall/.test(text(body)));
@@ -552,7 +593,26 @@ const text = (body) => body.innerHTML;
   const filters = body.querySelectorAll('[data-filter]').map((b) => b.dataset.filter);
   eq('a settled year offers all three again', filters, ['all', 'majors', 'landfalls']);
   ok('and its landfall count is a real number',
-    /<span class="seasons-stat-n">\d+<\/span>\s*<span class="seasons-stat-k">Landfalls/.test(text(body)));
+    /<span class="seasons-stat-n">\d+<\/span>\s*<span class="seasons-stat-k">Came ashore/.test(text(body)));
+
+  /* ==> AND IT COUNTS STORMS, NOT COAST CROSSINGS. §57.39b. <== Aaron on glass
+   * 2026-08-28. The cell used to print `score.landfalls`, which is every time a
+   * centre crossed a coast — 2005 Atlantic is 22 storms and 45 crossings, and
+   * the tile said 45 while the filter beside it listed 22 rows and the Wall of
+   * Years said `22 of 31`. Both figures are real; only one answers a question
+   * about a SEASON (§57.7a — counting crossings ranks archipelagos).
+   *
+   * ==> THE ASSERTION IS AGAINST THE ROSTER, NOT AGAINST A TYPED NUMBER. <==
+   * Switching the cell back to crossings makes this fail, and so does any
+   * arithmetic that drifts from the list the reader can count for themselves.
+   * A literal here would only prove the cell still says what it said. */
+  const ashore = Number(text(body).match(
+    /<span class="seasons-stat-n">(\d+)<\/span>\s*<span class="seasons-stat-k">Came ashore/)?.[1]);
+  const withMark = body.querySelectorAll('.seasons-open')
+    .filter((b) => /made(\s+\d+)?\s+landfall/.test(b.attrs['aria-label'] || '')).length;
+  eq('the cell counts storms that came ashore, not crossings', ashore, withMark);
+  ok('and 2005 really does have more crossings than storms — or this proves nothing',
+    withMark > 0 && withMark < 45);
 }
 
 /* ---------------------------------------------------------------------------
@@ -643,7 +703,7 @@ const text = (body) => body.innerHTML;
    * is a failure a second attempt can actually fix. */
   freshLive();
   liveIndexFails = 'the current season answered 502';
-  const { body, where } = await board();
+  const { body, host, where } = await board();
 
   ok('the board still opens on a settled year', where.at(-1)?.year === 2025);
   ok('and says the season still running could not be reached',
@@ -656,7 +716,7 @@ const text = (body) => body.innerHTML;
    * step: 2025 is the newest year the board knows while the live index is
    * down. */
   ok('and there is nowhere newer to step to',
-    body.querySelectorAll('[data-step="newer"]')[0]?.attrs.disabled !== undefined);
+    stepBtn(host, 'newer')?.attrs.disabled !== undefined);
 
   /* The recovery actually recovers, and it does not disturb the year on
    * screen while doing it. */
@@ -670,7 +730,7 @@ const text = (body) => body.innerHTML;
    * the season in progress is back in the years the board knows, so 2026 is
    * one press away. */
   ok('retrying puts the season in progress back within reach',
-    body.querySelectorAll('[data-step="newer"]')[0]?.attrs.disabled === undefined);
+    stepBtn(host, 'newer')?.attrs.disabled === undefined);
   ok('and the year on screen did not change', where.at(-1)?.year === 2025);
 }
 

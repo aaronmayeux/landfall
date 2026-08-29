@@ -97,6 +97,57 @@ export class El {
     this.scrolledIntoView = opts || {};
   }
 
+  /** ==> ADDED WITH `prepend` BELOW, AND FOR THE SAME COMPONENT. <== The year
+   *  stepper builds its three children rather than parsing them out of a
+   *  string, which is the right shape for a persistent control — see the note
+   *  at the top of `ui/year-stepper.js`. `parent` is set because `closest`
+   *  walks that chain. */
+  append(...kids) {
+    for (const k of kids) k.parent = this;
+    this.children.push(...kids);
+  }
+
+  /** ==> ADDED FOR THE ARCHIVE'S PINNED YEAR STEPPER (§57.39a). <== That
+   *  control is a persistent element attached ABOVE the scrolling body rather
+   *  than part of its `innerHTML` — its two buttons have to survive their own
+   *  activation, so they cannot be rebuilt on every render. `ui/drawer.js`'s
+   *  live steppers use the same call. Without this the view threw on mount and
+   *  the whole suite reported a broken board.
+   *
+   *  It sets `parent`, which is not optional: `closest` walks that chain, and
+   *  a stepper whose buttons had no parent would answer null to the very
+   *  selector its own listener reads out of the event. */
+  prepend(...kids) {
+    for (const k of kids) k.parent = this;
+    this.children.unshift(...kids);
+  }
+
+  /* ==> `className` IS THE SAME THING AS THE `class` ATTRIBUTE, AND THIS STOOD
+   *  IN AS A PLAIN PROPERTY UNTIL §57.39a. <== Markup parsed out of a template
+   *  lands in `attrs.class`, which is what `matches` reads — but a component
+   *  that BUILDS its element writes `el.className`, and the archive's pinned
+   *  year stepper is the first one this suite drives. Left unmapped it set an
+   *  own property nothing consults, so `.seasons-year` matched nothing and the
+   *  suite reported a view that was working. That is the fourth time this
+   *  stand-in has told that particular lie; see the notes on `matches`. */
+  /* ==> `disabled` REFLECTS TO THE ATTRIBUTE, BECAUSE ON A REAL BUTTON IT
+   *  DOES. <== Markup carrying a bare `disabled` lands in `attrs`; a component
+   *  that toggles the state at runtime writes the PROPERTY, and the browser
+   *  keeps the two in step. This stand-in did not, so the archive's year
+   *  stepper disabling its `−` at 1851 was invisible to every assertion that
+   *  reads `attrs.disabled` — the control was working and the suite could not
+   *  see it. Same lie as `className` above, in the other direction. */
+  get disabled() { return this.attrs.disabled !== undefined; }
+
+  set disabled(on) {
+    if (on) this.attrs.disabled = '';
+    else delete this.attrs.disabled;
+  }
+
+  get className() { return this.attrs.class || ''; }
+
+  set className(v) { this.attrs.class = String(v); }
+
   setAttribute(name, value) { this.attrs[name] = String(value); }
 
   removeAttribute(name) { delete this.attrs[name]; }
