@@ -57,7 +57,7 @@ const eq = (what, got, want) => ok(
 );
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
-const { stormFacts } = await import('../lib/season-facts.js');
+const { stormFacts, rankInSeason } = await import('../lib/season-facts.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
 const M = await import('../ui/season-detail-markup.js');
@@ -591,6 +591,184 @@ function mount({ storms, loadReport, units = () => 'imperial', onOpen } = {}) {
       second.state, 'has');
     eq('and it really did ask again', calls, 2);
   });
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. §57.43 — the three new figures, and the sentences they turn into
+ * ------------------------------------------------------------------------ */
+{
+  const sys = 'imperial';
+  const kf = stormFacts(katrina);
+  const speedOpts = {
+    floorKt: SEASONS.trackSpeedFloorKt,
+    maxLegHours: SEASONS.trackSpeedMaxLegHours,
+  };
+
+  /* --- HOW MUCH IT WEAKENED BEFORE THE COAST ---------------------------- */
+
+  const chg = flat(M.changeHtml(kf, sys, { windowHours: SEASONS.intensificationWindowHours }));
+  ok('==> KATRINA\u2019S PANEL SAYS THE THING PEOPLE GET WRONG. <== A Category 5 '
+    + 'that arrived a Category 3, said in one sentence because the two numbers '
+    + 'only mean anything next to each other',
+  chg.includes('had been a Category 5') && chg.includes('came ashore a Category 3'));
+  ok(`and the figure is the measured gap (${Math.round(kf.coastalWeakening.dropKt)} kt), not a typed one`,
+    chg.includes(`${Math.round(kf.coastalWeakening.dropKt * 1.15078)} mph weaker`));
+  ok('==> AND IT IS NOT AN EM DASH BESIDE A WIND FIGURE. <== `lib/units.js` '
+    + 'returns a bare em dash as its MISSING sentinel, so one written for '
+    + 'punctuation is a place a failed conversion could hide',
+  !/\u2014\s*\d+\s*mph weaker/.test(chg));
+
+  /* ==> ZERO IS A SENTENCE, NOT A DROPPED ROW. <== §57.25 bans a value cell
+   * reading `0`; it does not ban the fact. "It came ashore at its strongest"
+   * is the most alarming thing this section can say and it is the case for 703
+   * of the 1,341 storms in the archive that came ashore gradeably. */
+  const harvey = M.coastalWeakeningWords({
+    dropKt: 0, peakWindKt: 115, peakCategory: 5, landfallWindKt: 115,
+    landfallCategory: 5, categoriesDropped: 0, landfallIndex: 0,
+  }, sys);
+  ok('a storm that did not weaken says so out loud rather than showing nothing',
+    /came ashore at its strongest/.test(harvey));
+  ok('and never as a zero', !/\b0\b/.test(harvey));
+
+  /* ==> THE MIDDLE CASE, BECAUSE A DROP IN WIND IS NOT ALWAYS A DROP IN
+   * CATEGORY. <== 150 kt to 140 kt is ten knots gone and still a Category 5 at
+   * the coast. Naming the same category twice in one sentence reads as a
+   * misprint. */
+  const sameCat = M.coastalWeakeningWords({
+    dropKt: 10, peakWindKt: 150, peakCategory: 6, landfallWindKt: 140,
+    landfallCategory: 6, categoriesDropped: 0, landfallIndex: 0,
+  }, sys);
+  ok('a storm that weakened without changing category states the wind and the '
+    + 'category it kept, rather than naming Category 5 twice',
+  /still a Category 5/.test(sameCat)
+    && !/had been a Category 5 before/.test(sameCat));
+
+  ok('and a storm with no landfall contributes no sentence at all',
+    M.coastalWeakeningWords(null, sys) === null);
+
+  /* --- HOW IT MOVED ------------------------------------------------------ */
+
+  const moved = flat(M.movementHtml(kf, sys, speedOpts));
+  ok('==> THE SECTION RENDERS FOR A REAL STORM. <== The field name the markup '
+    + 'reads must be the one `stormFacts` writes, and only real output can '
+    + 'prove that \u2014 §57.43 exists partly because `fastest24h` versus '
+    + '`fastest` went unseen for a month',
+  moved.includes('Fastest') && moved.includes('Slowest'));
+  ok('with the measured figures, not typed ones',
+    moved.includes(`${Math.round(kf.forwardSpeed.fastestKt * 1.15078)} mph`)
+      && moved.includes(`${Math.round(kf.forwardSpeed.slowestKt * 1.15078)} mph`));
+  ok('==> AND THE NOTE SAYS THESE ARE AVERAGES OVER A LEG, NOT TOP SPEEDS. <== '
+    + 'A reader comparing against an advisory\u2019s instantaneous "moving NW at '
+    + '12 mph" is entitled to know which of the two they are looking at',
+  moved.includes('average over') && moved.includes('rather than a top speed'));
+  ok(`and the window in that sentence is the constant (${SEASONS.trackSpeedMaxLegHours}), `
+    + 'interpolated rather than written as a word that a later change would leave behind',
+  moved.includes(`${SEASONS.trackSpeedMaxLegHours}-hourly`));
+
+  /* ==> BELOW THE RECORD'S OWN PRECISION IT IS WORDS. <== Positions are
+   * written to a tenth of a degree, about a knot over six hours, so 100 storms
+   * in the archive would otherwise print `Slowest 0 mph` — the dash §57.25
+   * forbids, wearing a number. */
+  const crawler = {
+    ...kf,
+    forwardSpeed: { ...kf.forwardSpeed, slowestKt: 0 },
+  };
+  const crawl = flat(M.movementHtml(crawler, sys, speedOpts));
+  ok('==> A STORM THE RECORD CANNOT TELL FROM STATIONARY IS NOT "0 mph". <==',
+    crawl.includes('barely moving') && !/Slowest[^|]*0 mph/.test(crawl));
+  ok('and the note then explains why, naming the precision rather than shrugging',
+    crawl.includes('tenth of a degree'));
+  ok('while a storm above the floor gets no such sentence, so it is not boilerplate',
+    !moved.includes('tenth of a degree'));
+
+  /* A storm seen once has no speed, and the section says which kind of nothing
+   * that is rather than rendering empty. §5, §57.25 rule 2. */
+  const once = flat(M.movementHtml({ forwardSpeed: null }, sys, speedOpts));
+  ok('a storm never seen twice on the clock is told, not left blank',
+    once.includes('never seen twice'));
+  ok('and that answer is never a dash', !once.includes('\u2014'));
+
+  /* --- WHERE IT STOOD IN ITS OWN SEASON ---------------------------------- */
+
+  const all2005 = atl2005.map(stormFacts);
+  const rankOf = (id) => rankInSeason(all2005.find((f) => f.id === id), all2005);
+  const kr = flat(M.seasonRankHtml(rankOf('AL122005')));
+  ok('Katrina reads as third strongest of the 31 storms of 2005',
+    kr.includes('3rd strongest of 31'));
+  const wr = flat(M.seasonRankHtml(rankOf('AL252005')));
+  ok('==> AND AN OUTRIGHT WINNER IS "Strongest", NOT "1st strongest". <== '
+    + 'Nobody says a storm came first out of thirty-one',
+  wr.includes('Strongest of 31') && !wr.includes('1st strongest'));
+
+  /* ==> A DRAW IS SAID AS A DRAW, AND 54 OF 294 SEASONS ARE ONE. <== */
+  const tied = flat(M.seasonRankHtml({
+    storms: 10,
+    strength: { rank: 1, tied: 2, of: 10 },
+    lifespan: { rank: 4, tied: 1, of: 10 },
+    majors: 3, onlyMajor: false,
+  }));
+  ok('two storms drawing at the top are "Tied strongest", not both "Strongest"',
+    tied.includes('Tied strongest of 10'));
+  ok('and a draw further down keeps its ordinal',
+    flat(M.seasonRankHtml({
+      storms: 10, strength: { rank: 3, tied: 2, of: 10 }, lifespan: null,
+      majors: 1, onlyMajor: false,
+    })).includes('Tied 3rd strongest of 10'));
+
+  ok('==> THE ONLY-MAJOR SENTENCE APPEARS ONLY WHEN IT IS TRUE. <==',
+    flat(M.seasonRankHtml({
+      storms: 8, strength: { rank: 1, tied: 1, of: 8 }, lifespan: null,
+      majors: 1, onlyMajor: true,
+    })).includes('only major hurricane of its season')
+    && !kr.includes('only major hurricane'));
+
+  ok('and a season with no ranking to give draws nothing at all, not an empty tag',
+    M.seasonRankHtml(null) === '');
+
+  /* The teens are the whole reason `ordinal` is a function. */
+  eq('ordinals: 1, 2, 3', [M.ordinal(1), M.ordinal(2), M.ordinal(3)], ['1st', '2nd', '3rd']);
+  eq('==> AND 11, 12, 13 ARE NOT 11st, 12nd, 13rd. <== A 31-storm season '
+    + 'reaches every one of them',
+  [M.ordinal(11), M.ordinal(12), M.ordinal(13)], ['11th', '12th', '13th']);
+  eq('while 21, 22, 23 go back to st/nd/rd',
+    [M.ordinal(21), M.ordinal(22), M.ordinal(23)], ['21st', '22nd', '23rd']);
+
+  /* --- AND ALL THREE ARE ACTUALLY ON THE MOUNTED PANEL -------------------
+   *
+   * ==> A MUTATION SAID THIS WAS MISSING BEFORE A READING DID: DELETING THE
+   * WHOLE `How it moved` SECTION FROM THE VIEW LEFT EVERY ASSERTION ABOVE
+   * GREEN. <== That is exactly the shape of the `fastest24h` fault — markup
+   * that was correct, tested, and never called — which ran unseen for a month
+   * across 175 years of storms until Aaron read a panel. Testing a markup
+   * function proves the function; only mounting proves the panel.
+   * -------------------------------------------------------------------- */
+  {
+    const m = mount({ storms: atl2005 });
+    m.view.onEnter('AL122005');
+    const panel = flat(m.html());
+    ok('the panel really carries a `How it moved` section', panel.includes('How it moved'));
+    ok('and an `In its season` section', panel.includes('In its season'));
+    ok('with Katrina\u2019s measured rank inside it, so the view is passing the '
+      + 'whole season and not an empty list', panel.includes('3rd strongest of 31'));
+    ok('and her forward speed inside the other one',
+      panel.includes('Fastest') && panel.includes('Slowest'));
+    ok('and the weakening sentence is on it too, under `How it changed`',
+      panel.includes('came ashore a Category 3'));
+  }
+
+  /* --- THE WHOLE PANEL, STILL NEVER A DASH ------------------------------- */
+
+  const oldFacts = stormFacts(oldOne);
+  const oldAll = atl1851.map(stormFacts);
+  const everything = [
+    M.changeHtml(oldFacts, sys, { windowHours: SEASONS.intensificationWindowHours }),
+    M.movementHtml(oldFacts, sys, speedOpts),
+    M.seasonRankHtml(rankInSeason(oldFacts, oldAll)),
+  ].join('');
+  ok('==> AN 1851 STORM\u2019S THREE NEW SECTIONS CARRY NO PLACEHOLDER DASH AND '
+    + 'NO EMPTY CELL. <== §57.25, extended to everything §57.43 added',
+  !everything.includes('>\u2014<') && !everything.includes('\u2014</dd>')
+    && !/<dd>\s*<\/dd>/.test(everything));
 }
 
 /* ------------------------------------------------------------------------ */
