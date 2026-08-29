@@ -474,6 +474,128 @@ section('==> HOW FAST IT WAS MOVING — §57.43 <==');
 }
 
 /* ------------------------------------------------------------------------- */
+section('==> HOW FAR IT WENT — §57.45 <==');
+{
+  const harvey = one('al092017');
+  const hd = stormFacts(harvey).trackDistance;
+
+  /* ==> EVERY CONSECUTIVE PAIR IS A LEG, WITH NONE OF `forwardSpeed`'s
+   * FILTERING. <== This is the whole design of §57.45 in one assertion, and it
+   * is the one that goes red the moment somebody "tidies" this walk to match
+   * the speed walk above it. Harvey carries 74 fixes and must give 73 legs;
+   * the synoptic-and-cyclone walk gives him 36. */
+  ok(hd && hd.legs === harvey.points.length - 1,
+    `==> NO FIX IS SKIPPED AND NO LEG IS CAPPED. <== Harvey has `
+    + `${harvey.points.length} fixes, so 73 legs. Got ${hd?.legs}`);
+  ok(hd.legs > stormFacts(harvey).forwardSpeed.legs,
+    '==> AND THE TWO WALKS REALLY ARE DIFFERENT, SO THIS IS NOT VACUOUS. <== '
+    + 'A distance walk that happened to equal the speed walk would pass the '
+    + 'assertion above while being the thing it forbids');
+
+  ok(Math.abs(hd.totalNm - 4350) < 1,
+    `Harvey's whole track measures 4,350 nm. Got ${hd.totalNm.toFixed(1)}`);
+  ok(Math.abs(hd.cycloneNm - 2297) < 1,
+    `and 2,297 nm of it as a tropical cyclone. Got ${hd.cycloneNm.toFixed(1)}`);
+
+  /* ==> THE TWO FIGURES PARTITION THE TRACK, WHICH IS WHY A LEG IS
+   * ATTRIBUTED TO THE STATUS AT ITS START. <== Requiring both ends to be a
+   * cyclone leaves every transition leg belonging to neither, and the panel's
+   * "the gap between the two is ground it covered as a wave" sentence then
+   * quietly overstates that gap by six hours of travel per transition.
+   * Measured directly rather than by re-deriving the walk: the non-cyclone
+   * remainder computed from the start status must add back to the total. */
+  {
+    const pts = harvey.points.slice().sort((a, b) => a.time - b.time);
+    let nonCyclone = 0;
+    for (let i = 0; i < pts.length - 1; i++) {
+      if (__internals.isCyclone(pts[i].status)) continue;
+      nonCyclone += __internals.distanceNm(
+        pts[i].lat, pts[i].lonU, pts[i + 1].lat, pts[i + 1].lonU,
+      );
+    }
+    ok(Math.abs((hd.cycloneNm + nonCyclone) - hd.totalNm) < 1e-6,
+      `==> CYCLONE MILES PLUS THE REST EQUALS THE WHOLE TRACK, EXACTLY. <== `
+      + `Got ${(hd.cycloneNm + nonCyclone).toFixed(4)} against `
+      + `${hd.totalNm.toFixed(4)}`);
+    ok(nonCyclone > 1000,
+      '==> AND HARVEY REALLY DOES HAVE A LARGE NON-CYCLONE STRETCH. <== He '
+      + 'crossed the Caribbean as a wave. A partition asserted on a storm that '
+      + `was a cyclone throughout proves nothing. Got ${nonCyclone.toFixed(0)} nm`);
+  }
+
+  /* A storm that was a cyclone for every fix reports the same figure twice,
+   * and that is what keeps the panel's second row off it. */
+  const andrew = stormFacts(one('al041992')).trackDistance;
+  ok(andrew.cycloneNm === andrew.totalNm,
+    `Andrew was a tropical cyclone for every leg of his track. Got `
+    + `${andrew.cycloneNm.toFixed(1)} of ${andrew.totalNm.toFixed(1)}`);
+
+  /* ==> THE DATE LINE, AND THE HONEST VERSION OF WHY THIS PASSES. <== The
+   * same haversine and the same reasoning as the speed walk: sin(Δλ/2) is
+   * periodic, so Della's crossing costs nothing. The assertion exists so that
+   * a later session swapping in flat-plane arithmetic loses the protection
+   * LOUDLY — on a plane her crossing leg alone reads as roughly 18,000 nm. */
+  const della = stormFacts(one('cp011957')).trackDistance;
+  ok(Math.abs(della.totalNm - 3029) < 2,
+    `Della crosses the antimeridian and her track stays 3,029 nm. Got `
+    + `${della.totalNm.toFixed(1)}`);
+
+  /* ==> THE RECORD DOES CONTAIN STORMS IT NEVER MOVES, AND NO FIXTURE IN THIS
+   * DIRECTORY HAS THE SHAPE. <== Measured over both mirrored basins
+   * 2026-08-29: three of 3,234 storms total under one 0.1° step, and AL051851
+   * is the case — sixteen consecutive fixes at 32.5N 73.5W, four days at
+   * 50 kt. Built by hand here for the same reason §57.43 built its gap storm.
+   * The facts layer reports the real zero; refusing to print it is the
+   * renderer's job and `test-season-detail.mjs` holds that half. */
+  const stuck = stormFacts({
+    id: 'ZZ051851', basin: 'AL', number: 5, year: 1851, name: 'STUCK',
+    points: [0, 6, 12, 18].map((h) => ({
+      time: Date.parse('1851-09-13T00:00:00Z') + h * 3600e3,
+      status: 'TS', lat: 32.5, lon: -73.5, lonU: -73.5, windKt: 50,
+      pressureMb: null, radii: {}, marker: null, rmwNm: null,
+    })),
+  });
+  ok(stuck.trackDistance && stuck.trackDistance.totalNm === 0,
+    `==> A STORM THE RECORD NEVER MOVES REPORTS A REAL ZERO, NOT A NULL. <== `
+    + `Zero is a measurement; null would mean nobody looked. Got `
+    + `${stuck.trackDistance?.totalNm}`);
+  ok(stuck.trackDistance.legs === 3,
+    `and it still walked its three legs. Got ${stuck.trackDistance.legs}`);
+
+  /* One fix is not a distance of zero, exactly as it is not a speed of zero. */
+  ok(stormFacts({
+    id: 'ZZ062000', basin: 'AL', number: 6, year: 2000, name: 'ONCE',
+    points: [{
+      time: Date.parse('2000-09-01T00:00:00Z'), status: 'TS',
+      lat: 20, lon: -50, lonU: -50, windKt: 40,
+      pressureMb: null, radii: {}, marker: null, rmwNm: null,
+    }],
+  }).trackDistance === null,
+    '==> ONE FIX IS NOT A TRACK OF ZERO LENGTH. <== It is a storm nobody '
+    + 'measured twice, which is a different sentence on the panel');
+
+  /* ==> THE CLAIM THAT THE FILE HAS NO GAPS IS ASSERTED, NOT REMEMBERED. <==
+   * §57.45 gives this walk no leg cap on the strength of one measurement:
+   * 84,365 consecutive legs across both mirrored basins, not one longer than
+   * six hours, the worst exactly 6.00. If that ever stops being true the walk
+   * needs a cap and this is what says so. Checked against every fixture here
+   * rather than the whole archive, which no suite may read. */
+  {
+    let worst = 0;
+    for (const f of ['al092017', 'al182012', 'al041992', 'al122005', 'cp011957',
+      'al092021', 'al011851', 'al031935']) {
+      const pts = one(f).points.slice().sort((a, b) => a.time - b.time);
+      for (let i = 0; i < pts.length - 1; i++) {
+        worst = Math.max(worst, (pts[i + 1].time - pts[i].time) / 3600e3);
+      }
+    }
+    ok(worst <= SEASONS.trackSpeedMaxLegHours,
+      `==> AND THAT IS WHY THIS WALK NEEDS NO LEG CAP. <== The longest gap `
+      + `between two consecutive rows in any fixture here is ${worst} hours`);
+  }
+}
+
+/* ------------------------------------------------------------------------- */
 section('==> WHERE IT STOOD IN ITS OWN SEASON — §57.43 <==');
 {
   const all = seasonStorms('al-2005').map(stormFacts);

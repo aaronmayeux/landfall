@@ -97,7 +97,17 @@ ok(jsMs === cssMs, `the two agree (motion.js ${jsMs}, index.html ${cssMs})`);
  * right to. The wrapper counts because it IS the route, not because naming it
  * here makes the warning go away — the day something types a bare `…` and
  * calls nothing, this must still bite. */
-const HELPERS = /dotted\(|dotsEl\(|setDottedText\(|waitingHtml\(|DOTS|endsWith\('…'\)/;
+/* `absenceHtml(` is the archive storm panel's front door onto `dotted()`, and
+ * it counts for exactly the reason `waitingHtml(` does. §57.45 moved it out of
+ * `ui/season-detail-markup.js` into `ui/season-markup-bits.js` when that file
+ * crossed §12's ceiling — so the panel kept its sentences and the bits file
+ * kept the import, and this check called `reportHtml`'s "Checking whether NOAA
+ * wrote a report on this storm…" a stray. It was right to: the file it was
+ * reading really did have an ellipsis and no helper in sight. The wrapper
+ * counts because it IS the route. A file that types a bare `…` and calls
+ * nothing must still bite, and `absenceHtml` never returns text it has not
+ * dotted. */
+const HELPERS = /dotted\(|dotsEl\(|setDottedText\(|waitingHtml\(|absenceHtml\(|DOTS|endsWith\('…'\)/;
 const stray = [];
 
 for (const file of readdirSync(join(ROOT, 'ui')).filter((f) => f.endsWith('.js'))) {
@@ -144,9 +154,14 @@ ok(
  * draws visible angle brackets on screen. Step 7's first version did exactly
  * that; it was reverted before anybody opened the panel, so nothing ever saw
  * it. The stray scan above cannot catch it — the file uses a helper either
- * way — so the shape is pinned here. */
+ * way — so the shape is pinned here.
+ *
+ * ==> IT READS `season-markup-bits.js` SINCE §57.45. <== `absenceHtml` moved
+ * there with the rest of the panel's primitives, and this assertion followed
+ * it rather than being widened to whichever file happens to hold it. An
+ * assertion that searches two files passes when the wrong one is right. */
 ok(
-  /dotted\(esc\(text\)\)/.test(read('ui/season-detail-markup.js')),
+  /dotted\(esc\(text\)\)/.test(read('ui/season-markup-bits.js')),
   'the archive panel escapes FIRST and animates second, never the reverse',
 );
 

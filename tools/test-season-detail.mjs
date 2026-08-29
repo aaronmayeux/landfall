@@ -639,9 +639,14 @@ function mount({
 {
   const sys = 'imperial';
   const kf = stormFacts(katrina);
+  /* ==> THE REAL CONSTANTS, NOT NUMBERS TYPED HERE. <== A suite carrying its
+   * own copy of a threshold goes on passing after somebody moves the shipped
+   * one, which is the §12 failure at the size of a literal. */
   const speedOpts = {
     floorKt: SEASONS.trackSpeedFloorKt,
     maxLegHours: SEASONS.trackSpeedMaxLegHours,
+    distanceFloorNm: SEASONS.trackDistanceFloorNm,
+    cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
   };
 
   /* --- HOW MUCH IT WEAKENED BEFORE THE COAST ---------------------------- */
@@ -686,9 +691,87 @@ function mount({
   ok('and a storm with no landfall contributes no sentence at all',
     M.coastalWeakeningWords(null, sys) === null);
 
-  /* --- HOW IT MOVED ------------------------------------------------------ */
+  /* --- HOW FAR IT WENT — §57.45 ------------------------------------------ */
 
   const moved = flat(M.movementHtml(kf, sys, speedOpts));
+
+  ok('==> THE DISTANCE ROW RENDERS FOR A REAL STORM, FROM THE FIELD '
+    + '`stormFacts` ACTUALLY WRITES. <== The `fastest24h` versus `fastest` '
+    + 'fault ran unseen for a month, and only real output can prove the name',
+  moved.includes('Distance travelled') && moved.includes('2,106 mi'));
+
+  ok('==> AND IT LEADS THE SECTION, ABOVE THE SPEEDS. <== A reader wants the '
+    + 'length of the line before its pace, and 19 mph means something '
+    + 'different on a 300-mile track than on a 5,000-mile one',
+  moved.indexOf('Distance travelled') < moved.indexOf('Fastest'));
+
+  /* ==> THE READER'S OWN UNITS, THROUGH `formatDistance` AND NOTHING ELSE.
+   * <== Aaron's requirement on this pass. `ui/view-season-detail.js` resolves
+   * the Settings preference per render and hands it down as `system`, so the
+   * only way this row can be wrong is arithmetic written at the call site.
+   * The same facts rendered twice is what catches that: a hardcoded
+   * conversion, or a dropped `system` argument, gives the same string twice. */
+  const movedKm = flat(M.movementHtml(kf, 'metric', speedOpts));
+  ok('the same storm in metric gives kilometres', movedKm.includes('3,388 km'));
+  ok('==> AND NOT A TRACE OF THE IMPERIAL FIGURE, SO THE PREFERENCE IS REALLY '
+    + 'REACHING THE ROW. <== A conversion hardcoded here rather than taken '
+    + 'from `formatDistance` renders identically in both systems',
+  !movedKm.includes('2,106 mi') && !movedKm.includes(' mi<') && movedKm !== moved);
+
+  /* ==> KATRINA IS THE BOUNDARY CASE AND SHE IS ON THE RIGHT SIDE OF IT. <==
+   * She was a tropical cyclone for 92.2% of her track, just above
+   * `trackDistanceCycloneShareMax`, so the second row stays off her. This is
+   * the assertion that goes red if somebody widens the threshold to "any
+   * difference at all" and turns the row into boilerplate. */
+  ok('a storm that was a cyclone for nearly all of its track shows one '
+    + 'distance, not two', !moved.includes('As a tropical cyclone'));
+  ok('and no sentence explaining a gap the reader cannot see',
+    !moved.includes('before it became a tropical cyclone'));
+
+  /* ==> HARVEY IS THE OTHER SIDE, AND HE IS THE REASON THE ROW EXISTS. <== He
+   * crossed the Caribbean as a wave: 5,006 miles of track, 2,644 of them as a
+   * tropical cyclone. */
+  const harveyMoved = flat(M.movementHtml(
+    stormFacts(seasonOf('atlantic', 2017).find((s) => s.id === 'AL092017')),
+    sys, speedOpts,
+  ));
+  ok('==> A STORM THAT SPENT HALF ITS TRACK AS A WAVE SHOWS BOTH FIGURES. <==',
+    harveyMoved.includes('5,006 mi') && harveyMoved.includes('As a tropical cyclone')
+    && harveyMoved.includes('2,644 mi'));
+  ok('and the note says what the gap between them is, rather than leaving the '
+    + 'reader to guess why one number is half the other',
+  harveyMoved.includes('before it became a tropical cyclone')
+    && harveyMoved.includes('extratropical'));
+
+  /* ==> A STORM THE RECORD NEVER MOVES PRINTS WORDS, NOT `0 mi`. <== Three of
+   * 3,234 storms, measured: AL051851 sits at 32.5N 73.5W for sixteen fixes.
+   * §57.25 forbids the dashed shrug wearing a number. */
+  const stuck = {
+    ...kf,
+    trackDistance: { totalNm: 0, cycloneNm: 0, legs: 3 },
+    forwardSpeed: { ...kf.forwardSpeed, fastestKt: 0, slowestKt: 0 },
+  };
+  const stuckHtml = flat(M.movementHtml(stuck, sys, speedOpts));
+  ok('the distance reads as words', stuckHtml.includes('no movement recorded'));
+  ok('and nowhere on the section is a zero wearing a unit',
+    !/\b0(\.0)? (mi|km|mph|km\/h)\b/.test(stuckHtml));
+
+  /* ==> AND THIS ONE WAS A LIVE FAULT ON `main` UNTIL §57.45. <== §57.43 put
+   * its floor on the SLOWEST row alone, so those same three storms have been
+   * printing `Fastest 0 mph`. Both rows go rather than both reading `barely
+   * moving`: two rows exist to show a range, and there is none. */
+  ok('==> A STORM WITH NO MEASURABLE LEG AT EITHER END SHOWS NO SPEED ROWS AT '
+    + 'ALL, RATHER THAN `Fastest 0 mph`. <==',
+  !stuckHtml.includes('Fastest') && !stuckHtml.includes('Slowest'));
+  ok('and the note says so in words instead, so nothing is silently dropped',
+    stuckHtml.includes('no speed to give'));
+  ok('==> AND IT SAYS IT ONCE. <== Both floors trip on the same three storms, '
+    + 'so the two explanations would otherwise sit in adjacent sentences '
+    + 'saying one thing twice',
+  !stuckHtml.includes('no fastest or slowest to give'));
+
+  /* --- HOW FAST IT WAS MOVING -------------------------------------------- */
+
   ok('==> THE SECTION RENDERS FOR A REAL STORM. <== The field name the markup '
     + 'reads must be the one `stormFacts` writes, and only real output can '
     + 'prove that \u2014 §57.43 exists partly because `fastest24h` versus '
@@ -792,8 +875,59 @@ function mount({
       + 'whole season and not an empty list', panel.includes('3rd strongest of 31'));
     ok('and her forward speed inside the other one',
       panel.includes('Fastest') && panel.includes('Slowest'));
+    /* ==> AND THE DISTANCE ROW, FOR THE SAME REASON EVERY OTHER FIGURE HERE
+     * IS CHECKED ON THE MOUNTED PANEL. <== §57.45 added two constants to the
+     * view's call, and a renderer given no `distanceFloorNm` still returns
+     * markup — it simply compares against `undefined`, which is false, so
+     * every storm would silently lose the floor. Only mounting drives the
+     * real argument list. */
+    ok('==> AND HER DISTANCE TRAVELLED, IN THE READER’S UNITS. <== The '
+      + 'markup assertions above prove the function; this proves the view '
+      + 'calls it with the whole option set',
+    panel.includes('Distance travelled') && panel.includes('2,106 mi'));
     ok('and the weakening sentence is on it too, under `How it changed`',
       panel.includes('came ashore a Category 3'));
+  }
+
+  /* ==> AND HARVEY IS MOUNTED TOO, BECAUSE KATRINA CANNOT CATCH A DROPPED
+   * CONSTANT. <== A mutation removing `distanceFloorNm` and `cycloneShareMax`
+   * from the view's call survived every assertion above. Both then compare
+   * against `undefined`, which is false, so the floor and the second row
+   * quietly stop existing — and Katrina's panel is byte-identical either way,
+   * because she sits above both thresholds. A branch asserted against a storm
+   * that cannot take it is green over the bug, which is §12's whole point.
+   *
+   * Harvey can take it: he crossed the Caribbean as a wave, so his second row
+   * appears at all only if `cycloneShareMax` really arrived. */
+  {
+    const m = mount({ storms: seasonOf('atlantic', 2017) });
+    m.view.onEnter('AL092017');
+    const panel = flat(m.html());
+    ok('==> HARVEY\u2019S SECOND DISTANCE ROW REACHES THE MOUNTED PANEL. <== '
+      + 'The only road to it is the view passing `cycloneShareMax` down',
+    panel.includes('5,006 mi') && panel.includes('As a tropical cyclone')
+      && panel.includes('2,644 mi'));
+  }
+
+  /* ==> THE FLOOR IS ASSERTED AGAINST THE SHIPPED SOURCE, BECAUSE NO REAL
+   * SEASON CAN DRIVE IT THROUGH A MOUNT. <== The three storms the record never
+   * moves are 1851, 1857 and 1864, none of them a fixture here, and a
+   * hand-built storm cannot be fed to this view — it loads a real season file.
+   * Blunt, and the right instrument for the same reason §57.44 read the
+   * shipped module to prove `stitchSeams` sat on the fetch path: a constant
+   * nobody passes is exactly the state being guarded, and it has no symptom.
+   *
+   * ==> IT MATCHES THE NAMES, NOT THE FORMATTING. <== A reordered option list
+   * or a whitespace change must not turn this red; only the constant going
+   * missing may. */
+  {
+    const src = readFileSync(join(ROOT, 'ui', 'view-season-detail.js'), 'utf8');
+    ok('==> THE VIEW REALLY PASSES `distanceFloorNm` FROM THE CONSTANTS. <== '
+      + 'Dropped, every storm silently loses the floor and `no movement '
+      + 'recorded` goes back to being `0 mi`',
+    /distanceFloorNm:\s*SEASONS\.trackDistanceFloorNm/.test(src));
+    ok('and `cycloneShareMax` from the constants, never a number typed at the '
+      + 'call site', /cycloneShareMax:\s*SEASONS\.trackDistanceCycloneShareMax/.test(src));
   }
 
   /* --- THE WHOLE PANEL, STILL NEVER A DASH ------------------------------- */
