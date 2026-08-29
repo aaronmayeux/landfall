@@ -5031,11 +5031,38 @@ exists and `segGroups[1]` had pointed past the end of a one-element list since
 §57.36 deleted the basin segments. Both are fixed; that file's own reconcile
 assertion is what caught it.
 
+**AND THE HEADER SAT ON ITS FALLBACK UNTIL THE READER PRESSED `+`.** Aaron on
+glass the same day, on the first build of this section. It read `Past storms`,
+and stepping a year fixed it.
+
+**Nothing was computing the wrong string.** `titleFor` is drawn ONCE, when the
+drawer enters the view, and on that frame the index has not landed — so there
+is no basin to name and the fallback is correct. What was missing is anybody
+asking for the header again afterwards. `onIndexReady` redraws the BODY, and
+the only thing that had ever refreshed the header was `onWhere` re-pushing the
+view on a year change, which is why `+` appeared to fix it.
+
+The board now takes the drawer's own `refreshChrome`, the same hook the home
+dashboard and the storm panel take and for the same reason: a view cannot
+redraw furniture it does not own. **It asks only when the answer changes**,
+which is once a visit. That guard is what makes it safe to sit on the render
+path at all — `render` runs on every poll, every filter change and every tick
+of the roster, and rebuilding the header that often would throw away the Back
+button and the X on a surface the reader may have focused. **The ceiling is
+asserted beside the floor**, because the over-correction is the worse bug.
+
+**No existing assertion could have caught this and the reason is worth
+keeping.** Every one of them calls `titleFor()` after the index has settled,
+which is a question about the STRING rather than about WHEN the header was
+painted — and the string was right the whole time. The gate counts redraw
+REQUESTS instead, which is the only observable that differs between a header
+that catches up and one that does not.
+
 **The gates.** `tools/test-seasons-board.mjs` asserts the stepper is a sibling
 of the scroller and not a descendant, that the header names the basin, and that
-no four-digit number appears in the header. All three were mutation-verified:
-moving the row back inside the body, and titling the header with the year, each
-turn it red.
+no four-digit number appears in the header. All five were mutation-verified:
+moving the row back inside the body, titling the header with the year, never
+asking for a redraw, and asking on every render each turn it red.
 
 `tools/markup-dom.mjs` gained `append`, `prepend`, and reflection for
 `className` and `disabled`. Each was a real gap: the stand-in was answering

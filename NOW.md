@@ -100,11 +100,15 @@ number.**
 real; §57.7a had already settled which question a season answers and this cell
 had not heard. It reads `Came ashore`, the wall's own wording. **§57.39b.**
 
+**Aaron confirmed the shape works, 2026-08-28, and found one fault with it: the
+header read `Past storms` until a year was stepped.** Fixed — the board takes
+the drawer's `refreshChrome` and asks for the header back once the basin is
+knowable. §57.39a records why no existing assertion could see it.
+
 **GLASS — three things, and all three are judgements only Aaron can make:**
 
-1. **`Atlantic` over the year.** §57.39 titled this rung with the year and that
-   was right until the picker beside it drew the same four digits. The basin is
-   the replacement; whether it earns the line is his call.
+1. **`Atlantic` appearing on entry rather than after a year step.** The shape
+   itself is confirmed; this is the fix to the one fault glass found.
 2. **Do the borderless `−` and `+` still read as pressable?** They were framed
    boxes and are now bare glyphs in muted ink, matching the live chevrons.
    Targets are still 44px; the question is whether they LOOK like targets.
