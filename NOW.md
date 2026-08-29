@@ -438,6 +438,28 @@ to come back wrong:**
    six clauses drop out. Does what is left still read as a paragraph or as a
    fragment.
 
+**==> AND GLASS ALREADY FOUND TWO FAULTS, BOTH FIXED, NEITHER SEEN AGAIN YET.
+<==** Aaron, 2026-08-29, on Katrina's panel.
+
+1. **`How it changed` had never rendered its own content, on any storm, since
+   step 7.** `lib/season-facts.js` writes `fastest24h` and
+   `ui/season-detail-markup.js` asked for `fastest`, so `Fastest strengthening`,
+   `Began` and the rapid-intensification sentence were `undefined` and the
+   section was the ending sentence alone for 175 years of storms. **The suite
+   was green over it the whole time** because the only case that drove that
+   branch hand-built its own facts object using the same wrong name — §12's
+   failure exactly. It drives real `stormFacts` output now. Katrina reads
+   *50 kt in 24 hours* and clears the rapid-intensification threshold.
+2. **The `Landfalls` list still showed bare coordinates** after §57.40 had
+   already named every one of them. Each landfall leads with its place now.
+   §57.40a is the account.
+
+**A THIRD THING ONLY BECAME VISIBLE BECAUSE OF THE FIRST.** The intensification
+row said *50 kt in 1 day* three lines above *"the 30 kt in 24 hours that
+forecasters call rapid intensification"* — two ways of saying one duration,
+reading as two measurements. It is hours now. Nobody had ever seen those two
+lines together.
+
 **AND ONE MEASURED NUMBER WORTH A DECISION.** The places file is **38.5 KB
 gzipped** on the Atlantic, against §57.42's estimate of 12–15 KB — the estimate
 counted the 2,537 landfall marks and not the genesis place on all 3,266 storms.

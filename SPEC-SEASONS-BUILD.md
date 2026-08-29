@@ -5287,6 +5287,23 @@ nothing on the roster, the wall or the globe reads it.
 needs no hand-written line.** The revision stamp is in the filename, which is
 what makes that safe.
 
+**==> THE `Landfalls` SECTION READS THE SIDECAR TOO, AND IT DID NOT ON THE DAY
+THE SIDECAR SHIPPED. <==** Aaron on glass, 2026-08-29: the panel still read
+`29.3°N 89.6°W` under Katrina's Louisiana landfall after this job had already
+worked out it was Port Sulphur. The paragraph had the names and the list did
+not. Each landfall now leads with its place, with the UTC stamp and the
+coordinates demoted under it — **the name does not REPLACE the coordinates**,
+because those are exact and are what the record holds, while a name 22 km away
+is an orientation rather than a position.
+
+**The alignment guard is the same one the paragraph uses**: a length check plus
+`landfallSource === 'computed'`. Two lists that happen to be the same size are
+still two lists, so NOAA-sourced landfalls get no names even when the counts
+match. A landfall with no town inside `placeNearKm` simply has no place line,
+and the timestamp demotes on every row either way — a rule that only applied
+when a name was present would set two landfalls in one list at two different
+sizes, which reads as a fault rather than as a hierarchy.
+
 **`tools/test-seasons-places.mjs` is the gate**, 49 assertions. The gazetteer
 itself is not driven — it loads 58 MB over the network, which is a runner's job
 and not a suite's — so a stub records every question it was asked and the
