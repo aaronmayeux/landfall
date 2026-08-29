@@ -748,6 +748,95 @@ device (§57.7b) and fills the same array, so a 2026 panel discloses what an 185
 panel discloses. A settled year that explained itself while the current one
 stayed quiet would be two apps in one column.
 
+### 57.7f The globe reads the status column, not just the wind
+
+**Aaron, 2026-08-29, on Beryl 2018: "Beryl did come ashore didn't it?"** She did
+not, and the panel was right. What made him ask was the globe directly above it.
+
+**HER OWN RECORD, at the moment it matters:**
+
+```
+20180708, 0600,  , TS, 13.4N,  55.2W,  45, 1006
+20180708, 1200,  , DB, 14.1N,  56.9W,  45, 1006
+20180709, 0000,  , DB, 15.5N,  61.3W,  35, 1010   <- Dominica
+20180709, 1800,  , DB, 17.1N,  67.1W,  35, 1013   <- Puerto Rico
+20180710, 0600,  , DB, 18.1N,  70.5W,  30, 1013   <- Hispaniola
+```
+
+Her last fix as a cyclone is 400 km east of Barbados, still at sea. From 12Z on
+8 July she is `DB`, a disturbance, and she is `DB` for every coast crossing.
+**Her wind never dropped — 45 kt at Dominica. What she lost was her structure**,
+and that is exactly the distinction the status column carries and a wind number
+cannot.
+
+**`map/layers/season-points.js` graded a dot from the wind alone.** A 45 kt
+disturbance drew as `TS`, a 25 kt disturbance as `TD`. So the globe printed
+tropical-cyclone letters across the Antilles while the panel two inches below
+said *"while it was not a tropical cyclone"* (§57.7e, shipped the day before).
+A reader can only conclude one of them is lying.
+
+**THE FILE SAID SO IN ADVANCE AND UNDERSTATED IT.** Its own comment called
+passing `'tropical'` unconditionally "a known simplification" whose visible cost
+was "a storm's extratropical tail draws in the hue of its wind rather than a
+duller one." Measured over all 3,266 storms:
+
+| fixes wearing a tropical dot code at a non-cyclone status | **12,355** |
+| storms affected | **1,440 of 3,266** |
+| of those fixes, wearing an actual Saffir-Simpson NUMBER on `EX` or `LO` | **687** |
+
+**A hue is a preference. Letters that contradict the sentence below them are a
+§5 failure, and 687 Saffir-Simpson numbers on post-tropical fixes are the exact
+grading §6 and §57.7c forbid** — sitting on the globe, while `NOW.md` was
+telling Aaron to watch for one on the panel.
+
+**==> THE MACHINERY ALREADY EXISTED AND NOBODY WAS CALLING IT. <==**
+`lib/category.js` has taken a `nature` since it was written and already knows
+`post-tropical`, `remnant` and `potential`. The archive globe passed
+`'tropical'` for everything. The fix is a mapping, not a new grading system.
+
+**THE THREE READINGS.**
+
+| `tropical` | graded exactly as before, unchanged |
+| `post-tropical` | the loud generic hue, **never** a category number |
+| `remnant` | the globe's quiet pre-genesis hue |
+
+**A REAL CYCLONE'S DOT DID NOT MOVE**, which is what keeps this off the glass
+for most storms. Dorian 2019 still runs `TD` → `TS` → `1` → `5`; only his tail
+changed.
+
+**THE LETTERS ARE THE RECORD'S OWN CODE — `DB`, `WV`, `LO`, `EX` — AND THAT IS
+AARON'S CALL.** Offered blank, the code, or a plain word on 2026-08-29; he chose
+the code. A blank grey dot beside a lettered one reads as a dot that failed to
+load; `DB` reads as a fact the reader can look up. It is jargon, and it is the
+jargon the record itself uses. **Two characters or nothing** —
+`STORM_GEO.pointCodeSize` is set for `TD` and for a single digit, and a code
+that will not fit is dropped rather than truncated, because `PTC` cut to `PT` is
+a wrong label rather than a short one.
+
+**==> THE RULE LIVES IN `lib/season-nature.js` AND `lib/landfall.js` NOW READS
+IT FROM THERE. <==** That file held the same status tests privately, for
+landfalls. A second copy in the map layer is how the panel and the globe come to
+disagree the first time the rule moves — and it moved twice in two days
+(§57.7c, §57.7d). `firstCycloneTime` moved with them.
+
+**==> AND THERE IS NO WIND FLOOR IN THE NATURE TEST, WHICH IS THE ONE PLACE THIS
+DIFFERS FROM `landfallNature`. <==** `postTropicalLandfallMinKt` decides whether
+a crossing COUNTS AS A LANDFALL. It does not decide what a system IS: a 20 kt
+remnant low is post-tropical by NWS's own definition (§57.7d), it simply is not
+coming ashore in any sense worth a mark. Applying the floor here would make a
+dying tail change species halfway along for a reason that is about landfalls.
+
+**THE QUIET HUE IS `PREGENESIS_COLOR`, WHICH IS TEAL RATHER THAN GREY.** Aaron
+asked for grey; this is the colour the app already uses for "nothing has
+happened here yet" on the live globe, so using it keeps the two globes in step
+and adds no token. **If it reads wrong on the sepia archive globe the lever is
+one token**, and it moves the live globe with it.
+
+**WHAT THE PEAK FIGURE DOES: almost nothing.** Only **81 storms of 3,266** have
+their peak-wind fix at a non-cyclone status, so the panel's `Strongest` and the
+globe stay in step without `lib/season-facts.js` moving. That was the cost the
+old comment feared and it is smaller than it looks.
+
 ### 57.8 What HURDAT2 does not contain, at all
 
 Watches and warnings. Cones. Forecast tracks. Rainfall. Surge. Radar.

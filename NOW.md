@@ -109,6 +109,35 @@ storms ashore to 1,435 and from 2,537 landfalls to 2,883.
    the sixth `Post-Trop` on the Nova Scotia coast and the seventh on
    Newfoundland. HURDAT2 codes both `LO`, which is why §57.7c missed them.
 
+**==> AND GLASS FOUND THE THING THAT SENTENCE WAS ARGUING WITH. <==** Aaron,
+2026-08-29, on Beryl 2018: *"Beryl did come ashore didn't it?"* She did not, and
+the panel was right — HURDAT2 codes her `DB` for every crossing of Dominica,
+Puerto Rico and Hispaniola. **The globe above it was drawing that run as green
+`TS` dots**, because it graded a fix from its wind alone and never read the
+status column. Her wind never dropped; her structure did.
+
+**§57.7f is the as-built account — read that, not this.** 12,355 fixes across
+1,440 storms were wearing a cyclone's letters at a non-cyclone status, and 687
+were wearing a Saffir-Simpson NUMBER on an `EX` or `LO` fix — the grading §6
+forbids, on the globe rather than on the panel where `NOW.md` was telling you to
+watch for it.
+
+**WHAT TO JUDGE, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK WRONG:**
+
+1. **`DB` on a dot is jargon and Aaron chose it deliberately** over a blank
+   circle and over a plain word. Open Beryl 2018 and read the Antilles run. If
+   `DB` reads as noise, a word is one function.
+2. **The quiet hue is TEAL, not grey.** `PREGENESIS_COLOR`, the live globe's own
+   "nothing has happened here yet" colour, reused so the two globes stay in
+   step. **Nobody has seen it on the sepia archive globe** — §57.20 measured the
+   sepia coastline against a Cat 2 dot and never against this. If it disappears
+   into the ground, the lever is one token and it moves the live globe too.
+3. **Sandy stays loud.** Her New Jersey approach is `EX` and must keep the hue
+   that holds the eye rather than going quiet. If her last dots look retired,
+   the post-tropical branch is wrong.
+4. **A real cyclone's dot must be unchanged.** Dorian 2019 still runs
+   `TD` → `TS` → `1` → `5`. Any change there is a regression, not the fix.
+
 **==> AND ONE SENTENCE ON THE PANEL HAS NEVER BEEN SEEN BY ANYONE. <==**
 §57.7e. Where the walk turned a real coast crossing down, the panel now says so:
 *"Its track crossed a coast one other time while it was not a tropical cyclone.
