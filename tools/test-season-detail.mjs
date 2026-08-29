@@ -210,8 +210,38 @@ function mount({ storms, loadReport, units = () => 'imperial', onOpen } = {}) {
    * The failure it guards is a panel reading "Fastest strengthening: -15 kt in
    * 24 hours", which is a sentence that contradicts itself. */
   const sys = 'imperial';
+
+  /* ==> THE FIRST ASSERTION IS THAT THE SECTION RENDERS AT ALL, AND IT IS HERE
+   * BECAUSE THIS SUITE WAS GREEN WHILE IT NEVER DID. <== `stormFacts` writes
+   * `fastest24h`; `changeHtml` asked for `fastest`. Every real storm therefore
+   * produced an ending sentence and nothing else, from step 7 until Aaron saw
+   * Katrina's panel on 2026-08-29 — and this suite passed the whole time,
+   * because the only case that exercised the branch HAND-BUILT its facts using
+   * the same wrong name. That is §12's failure exactly: a test that agrees with
+   * the bug is worse than no test.
+   *
+   * So the field name is now proved against REAL `stormFacts` output. Katrina
+   * gained 50 kt in 24 hours, which is measured off her own rows rather than
+   * quoted, and it clears the rapid-intensification threshold. */
+  const katrinaFacts = stormFacts(katrina);
+  const real = M.changeHtml(katrinaFacts, sys, { windowHours: SEASONS.intensificationWindowHours });
+  ok('==> THE SECTION ACTUALLY RENDERS FOR A REAL STORM. <== The field name '
+    + 'changeHtml reads must be the one stormFacts writes, and nothing but a '
+    + 'real facts object can prove that',
+  real.includes('Fastest strengthening'));
+  ok(`and it is the measured gain (${Math.round(katrinaFacts.fastest24h.gainKt)} kt), not a typed one`,
+    real.includes(`${Math.round(katrinaFacts.fastest24h.gainKt)} kt`));
+  ok('and Katrina clears the rapid-intensification threshold, so it is named',
+    katrinaFacts.fastest24h.gainKt >= SEASONS.rapidIntensificationKt
+      && real.includes('rapid intensification'));
+  ok('==> AND THE WINDOW IS SAID IN HOURS, THE SAME UNIT THE SENTENCE UNDER IT '
+    + 'USES. <== "50 kt in 1 day" three lines above "the 30 kt in 24 hours that '
+    + 'forecasters call rapid intensification" reads as two measurements',
+  real.includes(`${Math.round(katrinaFacts.fastest24h.hours)} hours`)
+    && !/kt in 1 day/.test(real));
+
   const decaying = M.changeHtml(
-    { fastest: { gainKt: -15, fromTime: Date.UTC(2005, 7, 1), toTime: Date.UTC(2005, 7, 2), hours: 24 },
+    { fastest24h: { gainKt: -15, fromTime: Date.UTC(2005, 7, 1), toTime: Date.UTC(2005, 7, 2), hours: 24 },
       ending: 'dissipated', year: 2005 },
     sys,
     { windowHours: SEASONS.intensificationWindowHours }
@@ -245,6 +275,57 @@ function mount({ storms, loadReport, units = () => 'imperial', onOpen } = {}) {
     coastCats.every((c) => c !== 6));
   ok('the strongest of them renders as Cat 3, not Cat 5',
     html.includes('Cat 3') && !html.includes('Cat 5'));
+
+  /* ==> THE PLACE NAME, WHICH IS WHAT AARON WENT LOOKING FOR ON GLASS AND DID
+   * NOT FIND. <== §57.40a. The names arrive from the places sidecar, aligned by
+   * index against the COMPUTED landfall list. */
+  const marks = JSON.parse(readFileSync(
+    join(ROOT, 'seasons', 'data', 'atlantic-landfalls-02272026.json'), 'utf8')).storms;
+  const placeFile = JSON.parse(readFileSync(
+    join(ROOT, 'seasons', 'data', 'atlantic-places-02272026.json'), 'utf8')).storms;
+  const withMarks = { ...katrina, landfallsComputed: marks.AL122005 };
+  const computed = stormFacts(withMarks);
+  const named = M.landfallsHtml(computed, 'imperial', {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: placeFile.AL122005,
+  });
+  ok('==> KATRINA\u2019S LOUISIANA LANDFALL IS NAMED, NOT JUST PLOTTED. <== The '
+    + 'panel read 29.3\u00b0N 89.6\u00b0W after \u00a757.40 had already worked out it was '
+    + 'Port Sulphur',
+  named.includes('Port Sulphur, Louisiana, United States'));
+  ok('and the coordinates stay under it \u2014 they are exact where a name 22 km '
+    + 'away is an orientation',
+  named.includes('29.3') && named.includes('89.6'));
+  ok('every landfall gets its own place line', (named.match(/season-landfall-where/g) || []).length === 3);
+
+  /* ==> AND THE NAMES ARE REFUSED WHEN THEY CANNOT BE ALIGNED. <== A sidecar of
+   * a different length is a different list. Lining it up against NOAA's sparser
+   * `L` markers would print Port Sulphur beside a Florida landfall. */
+  const misaligned = M.landfallsHtml(computed, 'imperial', {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: { landfalls: [{ name: 'Somewhere Else', km: 1 }] },
+  });
+  ok('a places array of the wrong length names nothing at all',
+    !misaligned.includes('Somewhere Else') && !misaligned.includes('season-landfall-where'));
+
+  const noaaSourced = M.landfallsHtml(facts, 'imperial', {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: placeFile.AL122005,
+  });
+  ok('==> AND WHEN THE LANDFALLS ARE NOAA\u2019S RATHER THAN OURS, THE NAMES ARE '
+    + 'REFUSED EVEN AT THE SAME LENGTH. <== Two lists that happen to be the same '
+    + 'size are still two lists, and `landfallSource` is the only honest test',
+  !noaaSourced.includes('season-landfall-where'));
+
+  ok('and a landfall with no town inside the cap simply has no place line',
+    !M.landfallsHtml(computed, 'imperial', {
+      markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+      markerHoleTo: SEASONS.landfallMarkerHoleTo,
+      places: { landfalls: [null, null, null] },
+    }).includes('season-landfall-where'));
 
   /* ==> THE 1971-1982 HOLE. <== The one absence in this archive that LOOKS
    * LIKE A FACT. Driven by moving a real storm into the window rather than by

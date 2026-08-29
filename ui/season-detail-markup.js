@@ -304,8 +304,15 @@ export function lifeHtml(facts) {
  * information. In that window it means "nobody wrote it down", and the two
  * read identically. A storm that plainly hit Texas showing no landfalls is
  * the app appearing to state something false.
+ *
+ * ==> THE PLACE NAME LEADS AND THE COORDINATES STAY UNDER IT. <== Aaron on
+ * glass, 2026-08-29: this section still read `29.3°N 89.6°W` after §57.40 had
+ * already worked out it was Port Sulphur, Louisiana. The name is what a reader
+ * scans for, so it goes first — but it does NOT replace the coordinates. Those
+ * are exact and are what the record actually holds, while a name 22 km away is
+ * an orientation rather than a position. Both, in that order.
  */
-export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
+export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, places = null }) {
   const list = facts?.landfalls || [];
 
   if (!list.length) {
@@ -331,7 +338,21 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
     return absenceHtml('NOAA marked no landfall for this storm.');
   }
 
-  const items = list.map((lf) => {
+  /* ==> THE NAMES ARE INDEX-ALIGNED AGAINST THE COMPUTED LIST AND ARE REFUSED
+   * IF THEY CANNOT BE. <== §57.40a. The sidecar names the landfalls WE
+   * computed. When that file did not arrive, `stormFacts` falls back to NOAA's
+   * sparser `L` markers — a different list, in a different order, of a
+   * different length — and lining the two up would print Cameron's name beside
+   * a Florida landfall. The length check plus `landfallSource` is the whole
+   * guard, and dropping to coordinates alone is a real answer rather than a
+   * degradation: it is what this panel showed before §57.40 existed, and it is
+   * never wrong. */
+  const names = places && facts.landfallSource === 'computed'
+    && Array.isArray(places.landfalls) && places.landfalls.length === list.length
+    ? places.landfalls : null;
+
+  const items = list.map((lf, i) => {
+    const where = names?.[i]?.name || null;
     const bits = [utcStamp(lf.time), coords(lf.lat, lf.lon)].filter(Boolean);
     const strength = [
       windWords(lf.windKt, system),
@@ -341,6 +362,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
     const cat = catRaw && catRaw !== '—' ? catRaw : null;
     return `
       <li class="season-landfall">
+        ${where ? `<span class="season-landfall-where">${esc(where)}</span>` : ''}
         <span class="season-landfall-when">${esc(bits.join(' · '))}</span>
         ${cat || strength.length
     ? `<span class="season-landfall-what">${esc([cat, ...strength].filter(Boolean).join(' · '))}</span>`
@@ -360,7 +382,20 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo }) {
 /** Fastest intensification, and how it ended. §57.15. */
 export function changeHtml(facts, system, { windowHours }) {
   const rows = [];
-  const f = facts?.fastest;
+  /* ==> `fastest24h`, NOT `fastest`, AND THIS ONE WORD MEANT THE SECTION HAD
+   * NEVER RENDERED. <== `lib/season-facts.js` writes `fastest24h`; this file
+   * asked for `fastest` and got `undefined` on every storm since step 7, so
+   * `Fastest strengthening`, `Began` and the rapid-intensification sentence
+   * have never once been on screen. `How it changed` was the ending sentence
+   * and nothing else, on every storm in 175 years. Aaron spotted it on glass
+   * (Katrina, 2026-08-29) as the section reading thin.
+   *
+   * ==> AND `tools/test-season-detail.mjs` WAS GREEN OVER IT, BECAUSE IT
+   * HAND-BUILT ITS OWN FACTS OBJECT USING THE WRONG NAME. <== §12's failure —
+   * a test that passes on the same wrong assumption as the bug is worse than
+   * no test. It drives real `stormFacts` output now, so the two names cannot
+   * drift apart again without something going red. */
+  const f = facts?.fastest24h;
   /* ==> A NEGATIVE OR ZERO "FASTEST GAIN" IS A WEAKENING STORM AND IS NOT
    * SHOWN. <== `season-facts` reports the best window it found, and for a
    * storm that only ever weakened that is a loss. Labelling a loss
@@ -379,7 +414,17 @@ export function changeHtml(facts, system, { windowHours }) {
    * `tools/test-season-detail.mjs` drives it directly, because there is no
    * real example to find. */
   if (f && Number.isFinite(f.gainKt) && f.gainKt > 0) {
-    rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${spanWords(f.hours)}`]);
+    /* ==> THIS ONE SPAN IS SAID IN HOURS RATHER THAN THROUGH `spanWords`, AND
+     * THE SENTENCE TWO ROWS DOWN IS WHY. <== The window is capped at
+     * `intensificationWindowHours`, so `spanWords` renders the common case as
+     * "1 day" — directly above a line reading "the 30 kt in 24 hours that
+     * forecasters call rapid intensification". Two ways of saying the same
+     * duration, three lines apart, reads as two different measurements. It is
+     * always hours here, and the number is interpolated rather than typed.
+     *
+     * Only visible from 2026-08-29: the whole block had never rendered (see
+     * `fastest24h` above), so nobody had ever seen these two lines together. */
+    rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${Math.round(f.hours)} hours`]);
     rows.push(['Began', utcStamp(f.fromTime)]);
     /* Rapid intensification has an agreed threshold, and naming it is the
      * difference between a number and a fact the reader can place. */
