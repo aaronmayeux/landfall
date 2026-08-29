@@ -5931,6 +5931,37 @@ ALL.** "Never touched" and "deliberately opened" are both falsy and would
 collapse into one answer if the record were read as a boolean, so a reader who
 opened `Landfalls` would find it folded again on the next storm.
 
+**EVERY HEADING CARRIES AN ICON, FROM `ui/section-icon.js` AND NOT A SECOND
+SET.** Aaron's call. Five sections take a mark the app already owns, and the
+match is by IDEA rather than by picture, which is that file's own rule:
+`Strongest` takes the `gauge` the live panel's Vitals uses (peak wind and
+lowest pressure are the same kind of figure), `Wind footprint` takes `wind`,
+`Its life` takes the `clock` Home's Timeline uses because every row on it is a
+time, `Landfalls` takes the `pin`, and `NOAA's report` takes the `doc` the live
+Advisory uses — both being somebody else's document rather than our reading of
+one.
+
+**FOUR ARE NEW, AND THE TWO RANK SECTIONS ARE THE REASON THE SET HAD TO GROW.**
+`In its season` and `Where it ranks` both say *"3rd strongest of N"* and the
+only thing separating them is whether N is one year or 175 of them. **"One
+name, one shape" would argue them into one glyph, and that is exactly the
+arrangement that defeats the point** — icons are here for scanning, and two
+adjacent headings wearing the same mark give the eye nothing. So the mark names
+the SET instead: `calendar` for the season, `podium` for the ranking proper.
+`trend` is an asymmetric rise-and-fall for `How it changed`, which is the
+storm's intensity arc and covers both directions; `track` is a recurving path
+with an arrow for `How it moved`, the one section about the track as a path
+rather than a figure measured on it.
+
+**ALL FOUR WERE DRAWN, RENDERED AND LOOKED AT RATHER THAN REASONED ABOUT, AND
+THREE OF THEM CHANGED AS A RESULT.** Rendered at 64px and at the shipping 16px
+against the rest of the set: `trend` and `track` were both up-and-right strokes
+and read as near-duplicates in adjacent headings; `trend`'s first shape implied
+only an increase; `podium`'s bars touched and blurred into one block at 16px.
+A second attempt gave `trend` a baseline, which closed the shape into something
+too near the `alert` warning triangle. **None of those three faults is visible
+in the path data.**
+
 **IT IS ONE SECTION RATHER THAN SIX RANKS GLUED ONTO SIX EXISTING ROWS.** The
 scope sentence would otherwise have to be repeated six times or left off, and
 it is the sentence that stops the whole thing being misread. `Lowest pressure`

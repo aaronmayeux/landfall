@@ -863,6 +863,34 @@ function mount({
   ok('the chevron is hidden from the reader, being decoration',
     p.html().includes('<span class="detail-chevron" aria-hidden="true">'));
 
+  /* ==> EVERY SECTION CARRIES AN ICON, AND EVERY ICON IS A REAL ONE. <==
+   * `iconSvg` answers '' for a name that is not in the set, which is the right
+   * failure for a drawer and the wrong one for a suite: a typo in a call site
+   * costs the glyph silently and the heading just looks slightly wrong. This
+   * counts them instead. */
+  const heads = p.body().querySelectorAll('.detail-section-head');
+  ok('nine sections are on the panel', heads.length === 9);
+  ok('and every one of them drew an icon, so no call site has a typo in the name',
+    (p.html().match(/class="sect-ico"/g) || []).length === heads.length);
+  ok('the icon is hidden from a screen reader, the heading beside it being the name',
+    !/<svg class="sect-ico"(?![^>]*aria-hidden="true")/.test(p.html()));
+
+  /* ==> NO TWO ADJACENT SECTIONS SHARE A GLYPH. <== The icons exist for
+   * SCANNING — a shape at the left edge is what the eye uses to find its place
+   * — and two neighbours wearing the same mark is the one arrangement that
+   * defeats it. It is a live risk here: `In its season` and `Where it ranks`
+   * are the same idea at two scales, which "one name, one shape" would
+   * otherwise argue into one glyph. */
+  const glyphs = [...p.html().matchAll(/data-section="([^"]+)"[\s\S]*?<svg class="sect-ico"[^>]*>(.*?)<\/svg>/g)]
+    .map((m) => m[2]);
+  ok('every section drew a distinguishable glyph', glyphs.length === 9);
+  ok('and no two neighbours share one',
+    glyphs.every((g, i) => i === 0 || g !== glyphs[i - 1]));
+  ok('==> AND ALL NINE ARE DIFFERENT, WHICH IS STRICTER THAN THE RULE NEEDS '
+    + 'AND IS THE STATE WORTH DEFENDING. <== Nothing on this panel is the same '
+    + 'idea as anything else on it',
+  new Set(glyphs).size === 9);
+
   const ariaOf = (id) => p.body()
     .querySelector(`.detail-section[data-section="${id}"] .detail-section-head`)
     .attrs['aria-expanded'];
