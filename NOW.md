@@ -69,23 +69,25 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> POST-TROPICAL LANDFALLS ARE IN. SHIPPED, NOT YET SEEN ON GLASS, AND THE
-WALL MOVED UNDER IT. <==** Aaron's report, 2026-08-29: Sandy was not listed as
-coming ashore near Atlantic City. She is now, and so are Ophelia on Ireland,
-Lee on Nova Scotia and Fiona on Cape Breton, none of which had a landfall at
-all. **§57.7c is the as-built account with every measured number — read that,
-not this.** The archive went from 1,343 storms ashore to 1,434 and from 2,537
-landfalls to 2,878.
+**==> POST-TROPICAL LANDFALLS ARE IN, AND `LO` WENT IN A DAY LATER. SHIPPED,
+NOT YET SEEN ON GLASS. <==** Aaron's report, 2026-08-29: Sandy was not listed as
+coming ashore near Atlantic City. She is now, and so are Ophelia on Ireland, Lee
+on Nova Scotia, Fiona on Cape Breton and **Dorian at Halifax at 80 kt**, none of
+which had that landfall at all. **§57.7c and §57.7d are the as-built accounts
+with every measured number — read those, not this.** The archive went from 1,343
+storms ashore to 1,435 and from 2,537 landfalls to 2,883.
 
 **WHAT TO JUDGE, AND THE FIRST ONE IS THE DECISION RATHER THAN A DETAIL:**
 
-1. **The Wall counts these, so 91 storms moved from "stayed at sea" to "came
+1. **The Wall counts these, so 92 storms moved from "stayed at sea" to "came
    ashore".** A handful of 1880s seasons now look busier than a reader would
    expect, because a decayed-but-still-50-kt post-tropical storm crossing
    Newfoundland is a real crossing nobody ever wrote down. **This was Andy's
    call to make it one method and one answer everywhere, and it is a glass call
    that reverses in one predicate.** Sort the wall by `Came ashore` and see
-   whether the early record reads honest or inflated.
+   whether the early record reads honest or inflated. **The `LO` half of that
+   moved exactly one row** (Paul, East Pacific 2012), measured field by field
+   across all 3,266 — so the busier-1880s question is entirely §57.7c's.
 2. **Sandy's panel.** Four landfalls now, the fourth reading
    `Smithville, New Jersey, United States` with `Post-Trop · 80 mph · 946 mb`.
    **The question is whether `Post-Trop` reads as plain English.** It is the
@@ -103,14 +105,33 @@ landfalls to 2,878.
 5. **No Saffir-Simpson number on a post-tropical landfall, anywhere.** If a
    `Cat 1` appears beside one, `coastalWeakening` or the markup is grading it
    from wind again and that is a bug, not a preference.
+6. **Dorian 2019, and he is the one worth opening first.** Seven landfalls now,
+   the sixth `Post-Trop` on the Nova Scotia coast and the seventh on
+   Newfoundland. HURDAT2 codes both `LO`, which is why §57.7c missed them.
 
-**THE OLD SIDECAR FILENAMES ARE GONE AND THAT IS THE PART THAT COULD BITE
-SILENTLY.** Both generated sidecars now carry a schema version
-(`seasons/data/atlantic-landfalls-v2-02272026.json`), because `_headers` holds
+**==> AND ONE SENTENCE ON THE PANEL HAS NEVER BEEN SEEN BY ANYONE. <==**
+§57.7e. Where the walk turned a real coast crossing down, the panel now says so:
+*"Its track crossed a coast one other time while it was not a tropical cyclone.
+This archive does not count that as coming ashore."* It fires on **92 storms**,
+and on **26 of them it sits directly under "This storm did not come ashore"** —
+which is exactly the pair that needs judging. Anna 1969, Beryl 2018 and Dorian
+2013 are three of the 26. **The question is whether the two sentences together
+read as one honest answer or as the app contradicting itself.**
+
+**THE SIDECAR FILENAMES ARE AT v3 AND THAT IS THE PART THAT COULD BITE
+SILENTLY.** Both generated sidecars carry a schema version
+(`seasons/data/atlantic-landfalls-v3-02272026.json`), because `_headers` holds
 `/seasons/data/*` `immutable` and this pass changed their contents without NOAA
 revising anything. **If the archive opens and every landfall list is empty, that
 is a 404 on the new name rather than a rule that stopped working** — check the
 network tab before touching `lib/landfall.js`.
+
+**AND THE FOUR SIDECARS PLUS THE WALL WERE REGENERATED IN THE SANDBOX, NOT ON
+THE RUNNER.** `raw.githubusercontent.com` is reachable, so `seasons-landfall`,
+`seasons-places` and `seasons-wall` all ran locally and their output is in the
+same push as the rule that changed it. **There is no window where main asks for
+a v3 file that does not exist**, which is the failure a schema bump normally
+buys. The monthly job will reproduce the identical files.
 
 **==> FIVE OF THE SIX ARCHIVE UI FIXES ARE CONFIRMED ON GLASS. <==** Aaron,
 2026-08-28: sliders, the landfall rename, the short asterisk line, the master

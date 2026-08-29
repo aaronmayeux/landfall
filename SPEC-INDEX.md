@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 334 numbered headings.
+Covering 11 files, 336 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -289,68 +289,70 @@ real home is the other row carrying the same section number.
 | `57.7` | &nbsp;&nbsp;The landfall gap — twelve Atlantic years, thirty-nine Pacific ones | `SPEC-SEASONS-BUILD.md` | 257-297 |
 | `57.7a` | &nbsp;&nbsp;Landfalls we compute ourselves | `SPEC-SEASONS-BUILD.md` | 298-397 |
 | `57.7b` | &nbsp;&nbsp;The season in progress answers for itself, on the device | `SPEC-SEASONS-BUILD.md` | 398-487 |
-| `57.7c` | &nbsp;&nbsp;A post-tropical storm still comes ashore | `SPEC-SEASONS-BUILD.md` | 488-607 |
-| `57.8` | &nbsp;&nbsp;What HURDAT2 does not contain, at all | `SPEC-SEASONS-BUILD.md` | 608-614 |
-| `57.9` | &nbsp;&nbsp;Two tiers, and the app must say which it is showing | `SPEC-SEASONS-BUILD.md` | 615-682 |
-| `57.10` | &nbsp;&nbsp;Watches and warnings — the three states | `SPEC-SEASONS-BUILD.md` | 683-700 |
-| `57.11` | &nbsp;&nbsp;Operational versus reviewed | `SPEC-SEASONS-BUILD.md` | 701-715 |
-| `57.12` | &nbsp;&nbsp;Only two basins have annual name lists | `SPEC-SEASONS-BUILD.md` | 716-728 |
-| `57.13` | &nbsp;&nbsp;Storm numbers must be filtered | `SPEC-SEASONS-BUILD.md` | 729-737 |
-| `57.14` | &nbsp;&nbsp;Unnamed storms | `SPEC-SEASONS-BUILD.md` | 738-773 |
-| `57.15` | &nbsp;&nbsp;Derived facts — computed, never fetched | `SPEC-SEASONS-BUILD.md` | 774-789 |
-| `57.16` | &nbsp;&nbsp;Getting in, and getting out | `SPEC-SEASONS-BUILD.md` | 792-820 |
-| `57.16a` | &nbsp;&nbsp;Getting in and out, as built | `SPEC-SEASONS-BUILD.md` | 821-939 |
-| `57.17` | &nbsp;&nbsp;The shelf — and it is NOT the Tier 2 list | `SPEC-SEASONS-BUILD.md` | 940-956 |
-| `57.17a` | &nbsp;&nbsp;What a Tier 2 storm actually costs — MEASURED | `SPEC-SEASONS-BUILD.md` | 997-1035 |
-| `57.18` | &nbsp;&nbsp;The season board | `SPEC-SEASONS-BUILD.md` | 1065-1087 |
-| `57.18a` | &nbsp;&nbsp;The season board, as built | `SPEC-SEASONS-BUILD.md` | 1088-1159 |
-| `57.18b` | &nbsp;&nbsp;The season in progress, as built | `SPEC-SEASONS-BUILD.md` | 1236-1269 |
-| `57.19` | &nbsp;&nbsp;Filters, and the near-home slider | `SPEC-SEASONS-BUILD.md` | 1348-1390 |
-| `57.19a` | &nbsp;&nbsp;Near home, as built | `SPEC-SEASONS-BUILD.md` | 1391-1468 |
-| `57.20` | &nbsp;&nbsp;The theme — sepia, and the collision it has to survive | `SPEC-SEASONS-BUILD.md` | 1573-1608 |
-| `57.21` | &nbsp;&nbsp;Telling four storms apart on one globe | `SPEC-SEASONS-BUILD.md` | 1609-1624 |
-| `57.21a` | &nbsp;&nbsp;Telling four storms apart, as built | `SPEC-SEASONS-BUILD.md` | 1625-1848 |
-| `57.21b` | &nbsp;&nbsp;The drawer and the bar, as built | `SPEC-SEASONS-BUILD.md` | 1849-2114 |
-| `57.21c` | &nbsp;&nbsp;The archive's globe: live storms off it, a ridge on it, and a camera | `SPEC-SEASONS-BUILD.md` | 2115-2342 |
-| `57.21d` | &nbsp;&nbsp;What a tap on the archive's globe means | `SPEC-SEASONS-BUILD.md` | 2343-2554 |
-| `57.21e` | &nbsp;&nbsp;A tap on a track opens the storm, the same as a tap on a glyph | `SPEC-SEASONS-BUILD.md` | 2555-2623 |
-| `57.22` | &nbsp;&nbsp;The storm detail panel | `SPEC-SEASONS-BUILD.md` | 2624-2636 |
-| `57.22a` | &nbsp;&nbsp;NHC's written reports — measured, and the answer is an index | `SPEC-SEASONS-BUILD.md` | 2637-2689 |
-| `57.22b` | &nbsp;&nbsp;The panel as built, and the three bugs it shipped with the first time | `SPEC-SEASONS-BUILD.md` | 2690-2828 |
-| `57.23` | &nbsp;&nbsp;The season clock | `SPEC-SEASONS-BUILD.md` | 2829-2850 |
-| `57.24` | &nbsp;&nbsp;The download gate | `SPEC-SEASONS-BUILD.md` | 2851-2906 |
-| `57.25` | &nbsp;&nbsp;What ports from the live app, and what does not | `SPEC-SEASONS-BUILD.md` | 2907-2936 |
-| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 2937-2964 |
-| `57.26a` | &nbsp;&nbsp;The wind footprint, as built | `SPEC-SEASONS-BUILD.md` | 2965-3076 |
-| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 3077-3086 |
-| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 3087-3092 |
-| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 3093-3104 |
-| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 3105-3646 |
-| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3647-3672 |
-| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3673-3701 |
-| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3702-3765 |
-| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3766-3857 |
-| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 3858-4092 |
-| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 4093-4109 |
-| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 4222-4230 |
-| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4348-4352 |
-| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4423-4439 |
-| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4440-4603 |
-| `57.38a` | &nbsp;&nbsp;The way out, as built | `SPEC-SEASONS-BUILD.md` | 4711-4737 |
-| `57.38b` | &nbsp;&nbsp;The bar is gone, and its two jobs are two pills — as built | `SPEC-SEASONS-BUILD.md` | 4819-4823 |
-| `57.38c` | &nbsp;&nbsp;What glass found in step 5, and the two reversals it caused | `SPEC-SEASONS-BUILD.md` | 4956-4960 |
-| `57.38d` | &nbsp;&nbsp;Both bottom pills, at every width | `SPEC-SEASONS-BUILD.md` | 5041-5044 |
-| `57.39a` | &nbsp;&nbsp;The archive drawer's two lines — as built | `SPEC-SEASONS-BUILD.md` | 5094-5205 |
-| `57.39b` | &nbsp;&nbsp;The season scorecard counts storms, not coast crossings | `SPEC-SEASONS-BUILD.md` | 5206-5247 |
-| `57.40` | &nbsp;&nbsp;Naming a place — as built | `SPEC-SEASONS-BUILD.md` | 5248-5337 |
-| `57.40a` | &nbsp;&nbsp;The places sidecar — as built | `SPEC-SEASONS-BUILD.md` | 5338-5447 |
-| `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5448-5621 |
-| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5622-5746 |
-| `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 5747-5758 |
-| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 5940-6190 |
-| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6191-6206 |
-| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6368-6422 |
-| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6496-6549 |
+| `57.7c` | &nbsp;&nbsp;A post-tropical storm still comes ashore | `SPEC-SEASONS-BUILD.md` | 488-608 |
+| `57.7d` | &nbsp;&nbsp;`LO` is the other half of the same code, and Dorian is the proof | `SPEC-SEASONS-BUILD.md` | 609-690 |
+| `57.7e` | &nbsp;&nbsp;What the walk refused, said out loud | `SPEC-SEASONS-BUILD.md` | 691-750 |
+| `57.8` | &nbsp;&nbsp;What HURDAT2 does not contain, at all | `SPEC-SEASONS-BUILD.md` | 751-757 |
+| `57.9` | &nbsp;&nbsp;Two tiers, and the app must say which it is showing | `SPEC-SEASONS-BUILD.md` | 758-825 |
+| `57.10` | &nbsp;&nbsp;Watches and warnings — the three states | `SPEC-SEASONS-BUILD.md` | 826-843 |
+| `57.11` | &nbsp;&nbsp;Operational versus reviewed | `SPEC-SEASONS-BUILD.md` | 844-858 |
+| `57.12` | &nbsp;&nbsp;Only two basins have annual name lists | `SPEC-SEASONS-BUILD.md` | 859-871 |
+| `57.13` | &nbsp;&nbsp;Storm numbers must be filtered | `SPEC-SEASONS-BUILD.md` | 872-880 |
+| `57.14` | &nbsp;&nbsp;Unnamed storms | `SPEC-SEASONS-BUILD.md` | 881-916 |
+| `57.15` | &nbsp;&nbsp;Derived facts — computed, never fetched | `SPEC-SEASONS-BUILD.md` | 917-932 |
+| `57.16` | &nbsp;&nbsp;Getting in, and getting out | `SPEC-SEASONS-BUILD.md` | 935-963 |
+| `57.16a` | &nbsp;&nbsp;Getting in and out, as built | `SPEC-SEASONS-BUILD.md` | 964-1082 |
+| `57.17` | &nbsp;&nbsp;The shelf — and it is NOT the Tier 2 list | `SPEC-SEASONS-BUILD.md` | 1083-1099 |
+| `57.17a` | &nbsp;&nbsp;What a Tier 2 storm actually costs — MEASURED | `SPEC-SEASONS-BUILD.md` | 1140-1178 |
+| `57.18` | &nbsp;&nbsp;The season board | `SPEC-SEASONS-BUILD.md` | 1208-1230 |
+| `57.18a` | &nbsp;&nbsp;The season board, as built | `SPEC-SEASONS-BUILD.md` | 1231-1302 |
+| `57.18b` | &nbsp;&nbsp;The season in progress, as built | `SPEC-SEASONS-BUILD.md` | 1379-1412 |
+| `57.19` | &nbsp;&nbsp;Filters, and the near-home slider | `SPEC-SEASONS-BUILD.md` | 1491-1533 |
+| `57.19a` | &nbsp;&nbsp;Near home, as built | `SPEC-SEASONS-BUILD.md` | 1534-1611 |
+| `57.20` | &nbsp;&nbsp;The theme — sepia, and the collision it has to survive | `SPEC-SEASONS-BUILD.md` | 1716-1751 |
+| `57.21` | &nbsp;&nbsp;Telling four storms apart on one globe | `SPEC-SEASONS-BUILD.md` | 1752-1767 |
+| `57.21a` | &nbsp;&nbsp;Telling four storms apart, as built | `SPEC-SEASONS-BUILD.md` | 1768-1991 |
+| `57.21b` | &nbsp;&nbsp;The drawer and the bar, as built | `SPEC-SEASONS-BUILD.md` | 1992-2257 |
+| `57.21c` | &nbsp;&nbsp;The archive's globe: live storms off it, a ridge on it, and a camera | `SPEC-SEASONS-BUILD.md` | 2258-2485 |
+| `57.21d` | &nbsp;&nbsp;What a tap on the archive's globe means | `SPEC-SEASONS-BUILD.md` | 2486-2697 |
+| `57.21e` | &nbsp;&nbsp;A tap on a track opens the storm, the same as a tap on a glyph | `SPEC-SEASONS-BUILD.md` | 2698-2766 |
+| `57.22` | &nbsp;&nbsp;The storm detail panel | `SPEC-SEASONS-BUILD.md` | 2767-2779 |
+| `57.22a` | &nbsp;&nbsp;NHC's written reports — measured, and the answer is an index | `SPEC-SEASONS-BUILD.md` | 2780-2832 |
+| `57.22b` | &nbsp;&nbsp;The panel as built, and the three bugs it shipped with the first time | `SPEC-SEASONS-BUILD.md` | 2833-2971 |
+| `57.23` | &nbsp;&nbsp;The season clock | `SPEC-SEASONS-BUILD.md` | 2972-2993 |
+| `57.24` | &nbsp;&nbsp;The download gate | `SPEC-SEASONS-BUILD.md` | 2994-3049 |
+| `57.25` | &nbsp;&nbsp;What ports from the live app, and what does not | `SPEC-SEASONS-BUILD.md` | 3050-3079 |
+| `57.26` | &nbsp;&nbsp;The Seasons layer list | `SPEC-SEASONS-BUILD.md` | 3080-3107 |
+| `57.26a` | &nbsp;&nbsp;The wind footprint, as built | `SPEC-SEASONS-BUILD.md` | 3108-3219 |
+| `57.27` | &nbsp;&nbsp;Things that exist only in Seasons | `SPEC-SEASONS-BUILD.md` | 3220-3229 |
+| `57.28` | &nbsp;&nbsp;First run | `SPEC-SEASONS-BUILD.md` | 3230-3235 |
+| `57.29` | &nbsp;&nbsp;The Wall of Years — specified, not built | `SPEC-SEASONS-BUILD.md` | 3236-3247 |
+| `57.30` | The build, in steps | `SPEC-SEASONS-BUILD.md` | 3248-3789 |
+| `57.31` | Open — not decided, do not assume | `SPEC-SEASONS-BUILD.md` | 3790-3815 |
+| `57.32` | Files this feature is expected to create | `SPEC-SEASONS-BUILD.md` | 3816-3844 |
+| `57.33` | What this costs — nothing, and the three limits that keep it that way | `SPEC-SEASONS-BUILD.md` | 3845-3908 |
+| `57.34` | Retention — nothing in this feature grows without a bound | `SPEC-SEASONS-BUILD.md` | 3909-4000 |
+| `57.35` | The pipeline, audited — parse once, precompute, never block | `SPEC-SEASONS-BUILD.md` | 4001-4235 |
+| `57.36` | &nbsp;&nbsp;The Wall of Years — the front door, its filters, and how they stack | `SPEC-SEASONS-BUILD.md` | 4236-4252 |
+| `57.37` | &nbsp;&nbsp;Proposed: the archive bar goes, the storm-list button becomes the door | `SPEC-SEASONS-BUILD.md` | 4365-4373 |
+| `57.38` | &nbsp;&nbsp;Proposed: the names, the rungs, and the archive pill | `SPEC-SEASONS-BUILD.md` | 4491-4495 |
+| `57.39` | &nbsp;&nbsp;The ladder — SETTLED | `SPEC-SEASONS-BUILD.md` | 4566-4582 |
+| `57.36a` | &nbsp;&nbsp;The wall, as built | `SPEC-SEASONS-BUILD.md` | 4583-4746 |
+| `57.38a` | &nbsp;&nbsp;The way out, as built | `SPEC-SEASONS-BUILD.md` | 4854-4880 |
+| `57.38b` | &nbsp;&nbsp;The bar is gone, and its two jobs are two pills — as built | `SPEC-SEASONS-BUILD.md` | 4962-4966 |
+| `57.38c` | &nbsp;&nbsp;What glass found in step 5, and the two reversals it caused | `SPEC-SEASONS-BUILD.md` | 5099-5103 |
+| `57.38d` | &nbsp;&nbsp;Both bottom pills, at every width | `SPEC-SEASONS-BUILD.md` | 5184-5187 |
+| `57.39a` | &nbsp;&nbsp;The archive drawer's two lines — as built | `SPEC-SEASONS-BUILD.md` | 5237-5348 |
+| `57.39b` | &nbsp;&nbsp;The season scorecard counts storms, not coast crossings | `SPEC-SEASONS-BUILD.md` | 5349-5390 |
+| `57.40` | &nbsp;&nbsp;Naming a place — as built | `SPEC-SEASONS-BUILD.md` | 5391-5480 |
+| `57.40a` | &nbsp;&nbsp;The places sidecar — as built | `SPEC-SEASONS-BUILD.md` | 5481-5590 |
+| `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5591-5764 |
+| `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5765-5889 |
+| `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 5890-5901 |
+| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 6083-6356 |
+| `57.45` | &nbsp;&nbsp;How far a storm went — as built | `SPEC-SEASONS-BUILD.md` | 6357-6372 |
+| `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6534-6588 |
+| `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6662-6715 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -366,7 +368,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 280,502 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 380,925 | 73 |
+| `SPEC-SEASONS-BUILD.md` | 390,136 | 75 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 190,163 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

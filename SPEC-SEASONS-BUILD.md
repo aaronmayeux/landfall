@@ -518,8 +518,9 @@ not. So the separators have to be measured ones.
 **THE RULE, in `lib/landfall.js` `landfallNature()`.** A crossing counts as a
 **post-tropical** landfall when all three hold:
 
-1. the status is in `SEASONS.postTropicalStatuses` (`EX` today; step 13 adds
-   ATCF and IBTrACS spellings),
+1. the status is in `SEASONS.postTropicalStatuses` (`EX` and `LO` — §57.7d adds
+   the second and says why; step 13 adds IBTrACS's spellings once a probe has
+   read them),
 2. the interpolated wind at the coast is at least
    `SEASONS.postTropicalLandfallMinKt` (34 kt, the tropical-storm floor),
 3. the crossing is at or after the system's **first** tropical or subtropical
@@ -604,6 +605,148 @@ carried-but-unfixed and said to do it before either file gained a field. This is
 that moment: every landfall list grew and every places array grew with it, under
 `_headers`' `immutable` rule. See §57.47.
 
+
+### 57.7d `LO` is the other half of the same code, and Dorian is the proof
+
+**§57.7c was right and incomplete, and the gap took one day to find.** It chose
+`EX` from Sandy and stopped there. Aaron asked on 2026-08-29 whether the running
+season was losing post-tropical landfalls to a missing spelling, and the answer
+turned out to be bigger and in a different place.
+
+**==> WHAT THE REAL BYTES SAY, AND THE FIRST FINDING IS A NEGATIVE ONE. <==**
+`lib/track-point.js` names `PT` and `PTC` as NHC's other spellings and
+`spec-parameter.md` §29.3 marks both `[UNVERIFIED]`. Measured across every ATCF
+b-deck this project has ever held — 18 storms in AL, EP and CP for 2026, off the
+`seasons-live` capture branch and the copies in `samples/` — the status column
+carries exactly five values:
+
+| `DB` | `LO` | `TD` | `TS` | `HU` |
+
+**Zero `EX`. Zero `PT`. Zero `PTC`.** So adding `PT`/`PTC` would have been
+adding codes nothing this project has ever seen has produced, from a published
+table rather than from a file. They stay out.
+
+**==> WHAT THE OPERATIONAL FILE WRITES INSTEAD IS `LO`, AND ONE HOUR PROVES IT.
+<==** Lala, 2026-08-28 06:00Z:
+
+| CPHC's b-deck `bcp012026.dat` | `LO`, 35 kt, 38.1N 179.1W |
+| JTWC's product for the identical fix | `POST-TROPICAL STORM` |
+
+Same storm, same hour, two vocabularies. Every 2026 storm that decayed decayed
+into `LO`; none reached `EX`.
+
+**==> AND HURDAT2 USES `LO` THE SAME WAY, WHICH IS WHERE THE REAL MISS WAS.
+<==** The reviewed record codes **Dorian's 2019 Nova Scotia crossing — 80 kt at
+44.64N 63.30W — as `LO`, not `EX`.** The walk found it, `landfallNature` refused
+it on the code, and the panel said Dorian did not come ashore in Canada. That is
+Sandy's fault again, one letter over. He now carries seven landfalls, the sixth
+`post-tropical` at Halifax and the seventh at 51.06N 56.91W on Newfoundland.
+
+**==> THE JUSTIFICATION IS NWS'S OWN, NOT THIS PROJECT'S. <==** Instruction
+10-604 makes the extratropical cyclone and the remnant low **two specific
+classes of one thing**, both post-tropical, and it draws the line between them
+at **34 knots**: a non-frontal system above that "cannot be designated a remnant
+low" and "is merely described as post-tropical." So
+`postTropicalLandfallMinKt` is not a threshold that happens to sit at the
+tropical-storm floor. It is the published boundary, and `LO` above it is exactly
+the set NWS itself calls post-tropical.
+
+**THE NUMBERS, measured over all 3,266 storms on 2026-08-29:**
+
+| | §57.7c | after |
+|---|---|---|
+| landfalls found | 2,878 | **2,883** |
+| storms that came ashore | 1,434 | **1,435** |
+| of those, post-tropical | 349 | **354** |
+| agreement with NOAA, per storm, over the 839 NOAA marked | 99.0% | **99.0%** |
+| deliberate differences | 0 | **0** |
+| genuine misses at the 0.1° position floor | 8 | 8 |
+
+**THE WALL MOVED BY ONE ROW AND THAT IS MEASURED RATHER THAN ASSERTED.** The
+regenerated `seasons/wall.json` was compared against the old one field by field
+across all 3,266 rows: **one landfall flag changed — Paul, East Pacific 2012 —
+and no other field in any row moved at all.** The busier-1880s risk §57.7c named
+does not arise here.
+
+**==> THE FLOOR DOES THE WORK, NOT THE CODE LIST, AND THAT IS WHY THIS IS
+SAFE. <==** The walk finds 47 `LO` crossings after a storm had already been a
+cyclone. **Five clear 34 kt.** The other 42 are the remnant lows the rule is
+supposed to refuse, and they are still refused. Condition 3 (at or after the
+first cyclone fix) catches none of the five, so it is unexercised on real data
+and is asserted anyway.
+
+**`DB` AND `WV` STAY OUT AND THAT IS A DECISION RATHER THAN AN OVERSIGHT.** A
+disturbance and a wave have no closed circulation, so they are not a former
+cyclone in any state. Adding them would admit four crossings, **every one at
+exactly 35 kt in the Lesser Antilles**, where a 0.1°-rounded position and a
+5 kt-rounded wind are doing all the deciding. `tools/test-landfall.mjs` asserts
+a `WV` and a `DB` at 70 kt after a hurricane phase are still refused, which is
+the only case that separates them from `LO` at all.
+
+**BOTH SIDECAR SCHEMAS WENT TO v3** (§57.47's rule: would a phone holding
+yesterday's file be wrong — yes, by five landfalls), and the places file moved
+with the landfall file because the two are index-aligned (§57.40a). The v2 files
+are deleted, not left beside them (§12).
+
+### 57.7e What the walk refused, said out loud
+
+**§5's rule is that silence is never the answer, and this panel was silent about
+135 real coast crossings.** The walk finds them, turns them down, and until now
+dropped them without trace.
+
+**WHAT IS REFUSED, measured over all 3,266 storms:**
+
+| under the wind floor | 86 |
+| a code that is not a former cyclone (`DB`, `WV`) | 38 |
+| before the system had ever been a cyclone | 11 |
+| **total** | **135**, across **92 storms** |
+
+**==> AND FOR 26 OF THOSE STORMS IT IS EVERY CROSSING THEY HAVE. <==** Their
+panels read *"This storm did not come ashore"* — true by this app's rule, and it
+reads as "it stayed at sea," which for these is false. The other 66 came ashore
+somewhere else and had a further crossing turned down, so a sentence that only
+appeared under an empty list would have missed most of them. It appears in both
+places.
+
+**THE SENTENCE.** *"Its track crossed a coast one other time while it was not a
+tropical cyclone. This archive does not count that as coming ashore."* The count
+is a word rather than a digit (§57.41), and the maximum in the archive is four.
+
+**IT DOES NOT NAME THE THREE REASONS AND THAT IS DELIBERATE.** They are three
+ways of saying the system was not a tropical cyclone at the moment it crossed,
+which is the part a reader needs. Splitting them would put a paragraph of
+vocabulary under a list of places, and the storm's own dates and winds are
+already on screen for anyone who wants to work out which.
+
+**==> THE REFUSAL IS RECORDED WHERE IT HAPPENS AND NOWHERE ELSE. <==**
+`landfallsFor` takes an optional `declined` array and fills it at the single
+point where a real crossing stops being a landfall. A second implementation
+counting them from outside would be a second opinion about the same question,
+and would drift the first time the rule moved — which it just did, in §57.7d.
+
+**IT IS AN OUT-PARAMETER RATHER THAN A CHANGED RETURN SHAPE.** Four callers ask
+this walk for landfalls and none of them wants refusals; changing what it
+returns would have moved all four, and `cameAshore` reads `.length` on it.
+Callers that pass nothing pay nothing.
+
+**THE SIDECAR CARRIES A COUNT, NOT THE RECORDS.** A sibling `declined` map keyed
+by storm id, beside the existing `storms` map. Two reasons: the panel says one
+sentence about these and never lists them, so shipping 135 position records
+would be bytes on every phone for a number; and the 26 storms that most need
+this have an empty array to hang a field on. **A key absent from a sidecar that
+DID arrive means zero, not unknown** — the walk ran for every storm in the file,
+which is what `source: 'computed'` already states.
+
+**==> `null` IS THE FOURTH STATE AND IT IS SILENT. <==** `stormFacts` sets
+`crossingsDeclined` to a number when a walk ran and `null` when one did not,
+which is the NOAA fallback path. NOAA publishes markers, not refusals, so a zero
+there would state that nothing was declined on the strength of a file that never
+looked. Same distinction `places` makes between `null` and `{}` (§57.40a).
+
+**THE RUNNING SEASON RECORDS THEM TOO.** `ui/view-seasons-wall.js` walks on the
+device (§57.7b) and fills the same array, so a 2026 panel discloses what an 1851
+panel discloses. A settled year that explained itself while the current one
+stayed quiet would be two apps in one column.
 
 ### 57.8 What HURDAT2 does not contain, at all
 
@@ -6025,7 +6168,30 @@ is written into the file rather than assumed by the reader, so the day a scope
 carries mixed averaging periods it says so and the row simply does not appear
 there. **Pressure is unaffected: a millibar is a millibar everywhere.**
 
-**THE TWO RANK SECTIONS SIT ABOVE `Strongest`, AND EVERY SECTION FOLDS.**
+**AND STEP 13 CARRIES A SECOND QUESTION OF THE SAME SHAPE, ADDED 2026-08-29
+AFTER §57.7d.** *How does IBTrACS spell post-tropical, and does it separate an
+extratropical cyclone from a remnant low?* This is not a tidy-up item. **A
+missing spelling silently loses every post-tropical landfall outside the
+Atlantic and East Pacific**, and it loses them the way §57.7c and §57.7d both
+lost theirs: no error, no empty state, just a storm that came ashore showing
+that it did not. Sandy cost a day to find because a reader noticed; nobody is
+going to notice the equivalent on a 1974 typhoon.
+
+**THE QUESTION IS TWO QUESTIONS AND BOTH MATTER.** HURDAT2 writes `EX` and `LO`
+and means one thing by the pair; the operational b-decks write `LO` alone and
+never `EX` at all (§57.7d). A third vocabulary is the ordinary expectation
+rather than a surprise, and IBTrACS is a merge of twelve agencies, so it may
+well carry more than one. **Read the real column off the real file before adding
+a single code**, the way §57.7d did — this project has now twice added a status
+code from a published table and been wrong about which one the file uses.
+
+**And the answer changes nothing else.** `landfallNature` already takes its
+codes from a constant, the 34 kt floor is NWS's published boundary rather than
+ours (§57.7d) and applies unchanged in every basin, and the sequence test reads
+`cycloneStatuses`, which step 13 has to map anyway. **What is needed is the
+spelling and nothing more.**
+
+
 Aaron's call, 2026-08-29, after seeing the panel on glass. The comparison comes
 before the storm's own numbers, so a peak wind arrives already placed rather
 than needing to be carried down the panel to a rank eight sections later.
