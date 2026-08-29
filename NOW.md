@@ -405,16 +405,57 @@ build it, delete its entry, write what IS in its place. Tier 3 is recorded as
 NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
-(§57.40a), the storm-life paragraph (§57.41) and **Tier 1 items 2, 3 and 9
-(§57.43)**. **Read those four, not this.** Tier 2 item 1 is done and deleted
-from §57.42; seven Tier 1 items and four Tier 2 items are untouched.
+(§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
+(§57.43)** and **Tier 1 item 11, the archive-wide rankings (§57.44)**. **Read
+those five, not this.** Tier 2 item 1 is done and deleted from §57.42; seven
+Tier 1 items and four Tier 2 items are untouched.
 
-**==> THE COUNT THAT BLOCKED THE ARCHIVE-WIDE RANKINGS IS EXPLAINED, AND THE
-ITEM IS UNBLOCKED. <==** The 6,532-against-3,266 walk was reading
-`seasons/data/*.txt`, which holds the per-season slices AND the two whole-basin
-`hurdat2-*.txt` files. Counted 2026-08-29: 3,266 each, 6,532 together. Nothing
-is wrong with the archive — the walk has to pick one set, and for an
-archive-wide pass that is the whole-basin files. §57.42 carries it.
+**==> THE SEVEN REMAINING TIER 1 ITEMS ARE ALL CHEAPER THAN THEY WERE. <==**
+Items 1, 4, 5, 6, 7, 8 and 10 each add one fact to the panel. **Any of them
+added to `RANK_STATS` gets an archive-wide rank for free** — distance travelled
+ranked against 3,266 storms is one table entry rather than a feature. That is
+the one thing this pass changed about the rest of the list, and
+`SEASONS.rankingsMaxRows` is deliberately in the way so a seventh rank is a
+glass call rather than a free addition.
+
+**==> ITEM 11 IS BUILT AND SHIPPED. §57.44 IS THE AS-BUILT ACCOUNT — READ THAT,
+NOT THIS. <==** Every figure on the storm panel now carries its place in the
+record. Katrina reads *11th strongest in the Atlantic, 15th of 3,266 overall*
+and *9th lowest pressure in the Atlantic, 11th of 2,008*. The count that
+blocked it is not just explained but asserted: `countsAgree` fails the build
+unless the per-season slices and the cumulative files report the same 3,266.
+
+**GLASS, AND THE FIRST ITEM IS THE ONE MOST LIKELY TO COME BACK WRONG:**
+
+1. **THE PANEL NOW HAS NINE SECTIONS.** §57.43 put two on a panel that had
+   seven and you accepted the crowding as the thing you were accepting. This
+   adds a ninth, `Where it ranks`, directly under `In its season` — narrow
+   comparison then wide. **If nine is too many, say so before anything else
+   lands there.** The cheapest alternative is folding the ranks into the
+   existing rows, which costs the one-place scope note, and that note is what
+   stops the whole section being misread.
+2. **Does the note earn its length?** Three sentences under six rows: what
+   "overall" means, why the totals differ row to row, and that storms sharing a
+   figure share a place. Each one answers a question the rows raise, but it is
+   the longest note on the panel.
+3. **Open a pre-1966 storm** — 1935's Labor Day hurricane. A fourth sentence
+   appears saying its place would be **lower** in a complete record. Does that
+   read as useful precision or as the app arguing with its own number?
+4. **A storm with few ranks.** An 1851 storm has no pressure, no ACE and never
+   reached major strength, so three of the six rows drop out. Does what is left
+   still read as a section or as a fragment.
+5. **The season in progress gets no ranks at all**, on purpose — its figures
+   are working numbers NOAA has not reviewed. Open a 2026 storm and confirm the
+   section is simply absent rather than empty.
+
+**AND ONE ANSWER IS WANTED BEFORE STEP 13.** The archive wind rank is honest
+today because both basins are NHC's, so every wind is a one-minute average.
+Most of the world publishes a ten-minute average, which reads lower for the
+identical storm. The flag that declines a mixed wind rank is built and tested;
+what has NOT been decided is whether the global scope should use IBTrACS's
+re-analysed US-style wind instead and keep the row. **Nothing in the sandbox
+can reach IBTrACS to find out what that column actually holds, so nothing was
+assumed.** It is a question for step 13's probe, not a gap.
 
 **==> AND SPEED, THE COAST AND THE SEASON RANK ARE CONFIRMED ON GLASS,
 2026-08-29. AARON: "ALL LOOKS GREAT." NOTHING HERE IS WAITING ON HIM. <==**
