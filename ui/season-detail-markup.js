@@ -122,19 +122,6 @@ export function windWords(kt, system) {
   return `${formatWind(kt, system)} (${Math.round(kt)} kt)`;
 }
 
-/**
- * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
- * 13 take `th` while 1, 2 and 3 take `st`, `nd`, `rd`, and a season with 31
- * storms reaches every one of those cases.
- */
-export function ordinal(n) {
-  if (!Number.isInteger(n) || n < 1) return null;
-  const teen = n % 100;
-  if (teen >= 11 && teen <= 13) return `${n}th`;
-  const last = n % 10;
-  return `${n}${last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th'}`;
-}
-
 /* ---------------------------------------------------------------------------
  * ROWS
  * ------------------------------------------------------------------------ */
@@ -573,44 +560,6 @@ export function movementHtml(facts, system, { floorKt, maxLegHours }) {
       : '');
 
   return rowsHtml(rows) + absenceHtml(note);
-}
-
-/**
- * Where this storm stood among the storms it shared a season with. §57.43.
- *
- * ==> RANKS SHARE A PLACE, BECAUSE THE RECORD IS WRITTEN IN FIVE-KNOT STEPS.
- * <== 54 of the archive's 294 seasons have a tied strongest storm. Printing an
- * outright winner where two storms drew would be the app stating something the
- * record does not support, and the reader who looks up the other one finds the
- * same claim made twice.
- *
- * @param {object|null} rank  from `rankInSeason` in `lib/season-facts.js`
- */
-export function seasonRankHtml(rank) {
-  if (!rank) return '';
-
-  const place = (r, superlative, comparative) => {
-    if (!r || !Number.isInteger(r.rank)) return null;
-    const ord = ordinal(r.rank);
-    const word = r.rank === 1 ? superlative : `${ord} ${comparative}`;
-    /* `tied` counts this storm too, so two storms sharing a place is 2. */
-    const head = r.tied > 1 ? `Tied ${word.charAt(0).toLowerCase()}${word.slice(1)}` : word;
-    return `${head} of ${r.of}`;
-  };
-
-  const rows = [
-    ['Strength', place(rank.strength, 'Strongest', 'strongest')],
-    ['Lifespan', place(rank.lifespan, 'Longest-lived', 'longest-lived')],
-  ];
-
-  /* ==> ONLY SAID WHEN IT IS TRUE OF THIS STORM. <== `rankInSeason` checks the
-   * id, so a season with one major does not put this sentence on the other
-   * twenty storms in it. */
-  const only = rank.onlyMajor
-    ? absenceHtml('It was the only major hurricane of its season.')
-    : '';
-
-  return rowsHtml(rows) + only;
 }
 
 /**
