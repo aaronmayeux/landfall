@@ -45,6 +45,7 @@ import { SEASONS } from '../config/constants.js';
 import { rankInSeason } from '../lib/season-facts.js';
 import { rankStorm } from '../lib/rankings.js';
 import { isCollapsed, readSections, writeSections } from '../lib/section-state.js';
+import { iconSvg } from './section-icon.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { storyClauses } from '../lib/season-story.js';
 import {
@@ -194,15 +195,26 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
    * heading would change the moment a heading is reworded, and the reader's
    * open section would silently spring shut on deploy. The id is a stable
    * name; the title is copy.
+   *
+   * ==> AND SO IS `icon`, FOR THE LIVE PANEL'S OWN REASON. <== A map from id
+   * to icon would be a second list of this panel's sections that a new section
+   * could be added to only half of, and the failure is that the new section
+   * silently gets no icon and looks like a rendering bug. Passed at the call
+   * site it sits in the same line as the heading it belongs to and is
+   * impossible to forget.
+   *
+   * ==> AN UNKNOWN ICON NAME COSTS THE ICON AND NOTHING ELSE. <== `iconSvg`
+   * answers '' rather than throwing. A heading with no glyph is a cosmetic
+   * loss; a heading that takes the drawer down with it is not.
    * -------------------------------------------------------------------- */
 
-  function section(id, title, innerHtml) {
+  function section(id, title, icon, innerHtml) {
     if (!innerHtml) return '';
     const shut = isCollapsed(collapsed, storeKey(id), !OPEN_BY_DEFAULT.has(id));
     return `
       <section class="detail-section" data-section="${id}" data-collapsed="${shut}">
         <button class="detail-section-head" type="button" aria-expanded="${!shut}">
-          <h2><span>${title}</span></h2>
+          <h2>${iconSvg(icon)}<span>${title}</span></h2>
           <span class="detail-chevron" aria-hidden="true"></span>
         </button>
         <div class="detail-section-body">${innerHtml}</div>
@@ -244,7 +256,7 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * reason: a rank captured when the panel first painted would go on
           * describing last year's roster under this year's heading. It is one
           * pass over at most 31 storms, so rebuilding it per render is free. */
-    section('rank-season', 'In its season', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
+    section('rank-season', 'In its season', 'calendar', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
       ${/* ==> IT SITS DIRECTLY UNDER `In its season`, NARROW COMPARISON THEN
           * WIDE. <== §57.44. The two rank sections answer the same question at
           * two sizes, and a reader who has just read "3rd strongest of 28"
@@ -259,28 +271,28 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * not a fact about the storm, and every figure it would have ranked
           * is already on screen above with its own units. There is no wrong
           * impression left behind by its absence. */
-    section('rank-archive', 'Where it ranks', archiveRankHtml(
+    section('rank-archive', 'Where it ranks', 'podium', archiveRankHtml(
       rankStorm(facts, archiveTable(), archiveBasin()),
       { year: storm.year },
     ))}
-      ${section('peak', 'Strongest', peakHtml(facts, system))}
-      ${section('life', 'Its life', lifeHtml(facts))}
-      ${section('landfalls', 'Landfalls', landfallsHtml(facts, system, {
+      ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system))}
+      ${section('life', 'Its life', 'clock', lifeHtml(facts))}
+      ${section('landfalls', 'Landfalls', 'pin', landfallsHtml(facts, system, {
     markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
     markerHoleTo: SEASONS.landfallMarkerHoleTo,
     places: storm.places ?? null,
   }))}
-      ${section('change', 'How it changed', changeHtml(facts, system, {
+      ${section('change', 'How it changed', 'trend', changeHtml(facts, system, {
     windowHours: SEASONS.intensificationWindowHours,
   }))}
-      ${section('movement', 'How it moved', movementHtml(facts, system, {
+      ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
     floorKt: SEASONS.trackSpeedFloorKt,
     maxLegHours: SEASONS.trackSpeedMaxLegHours,
   }))}
-      ${section('windfield', 'Wind footprint', windFieldHtml(facts, {
+      ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}
-      ${section('report', "NOAA's report", reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}`;
+      ${section('report', "NOAA's report", 'doc', reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}`;
   }
 
   async function lookUpReport() {
