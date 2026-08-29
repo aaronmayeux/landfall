@@ -48,7 +48,14 @@ const eq = (what, got, want) => ok(
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { stormDisplayName } = await import('../lib/season-names.js');
-const { CATEGORY_COLOR, ARCHIVE_GEO, STORM_GEO } = await import('../config/tokens.js');
+const {
+  CATEGORY_COLOR, PREGENESIS_COLOR, ARCHIVE_GEO, STORM_GEO,
+} = await import('../config/tokens.js');
+
+/* Every Saffir-Simpson hue, so a non-cyclone dot can be asserted to wear NONE
+ * of them rather than merely not the one the test happened to think of. */
+const CAT_HUES = new Set(Object.entries(CATEGORY_COLOR)
+  .filter(([k]) => k !== 'GENERIC').map(([, v]) => v));
 const {
   ensureSeasonPoints, setSeasonPoints, clearSeasonPoints, setSeasonPointFocus, __internals,
 } = await import('../map/layers/season-points.js');
@@ -332,13 +339,88 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
 
   /* A fix with no wind reading is real in this era, and it must get the
    * ungraded hue rather than a missing paint property — the same guarantee
-   * `season-tracks.js` carries for the line colour. */
-  const g = __internals.gradeAt(null);
-  eq('an ungraded fix is the generic hue, not a category it never earned',
+   * `season-tracks.js` carries for the line colour.
+   *
+   * ==> IT CARRIES A STATUS, AND SINCE §57.7f THAT MATTERS. <== The 19th
+   * century is short of WINDS, not of statuses; every one of these rows says
+   * `HU` or `TS` or `TD`. Driving this with no status at all would exercise the
+   * remnant branch and assert nothing about the case it was written for. */
+  const g = __internals.gradeAt(null, 'HU', 0, 0);
+  eq('an ungraded cyclone fix is the generic hue, not a category it never earned',
     g.color, CATEGORY_COLOR.GENERIC);
   eq('==> AND IT CARRIES NO CODE RATHER THAN A GUESSED ONE. <== A blank circle '
     + 'says "nobody measured this"; a "TD" would be the app inventing a reading',
   g.code, '');
+}
+
+/* ---------------------------------------------------------------------------
+ * 3b. ==> THE STATUS COLUMN DECIDES WHAT A DOT IS. §57.7f <==
+ *
+ * Aaron, 2026-08-29, on Beryl 2018: a chain of green `TS` dots across Dominica
+ * and Puerto Rico, under a panel correctly saying she never came ashore. Her
+ * wind never dropped — 45 kt at Dominica — so grading from wind alone could
+ * never have got this right. HURDAT2 codes her `DB`.
+ * ------------------------------------------------------------------------ */
+{
+  /* ==> BERYL'S OWN ROWS, NOT AN INVENTED SHAPE. <== §12: a case that builds
+   * its own convenient input can pass on the same wrong assumption as the bug.
+   * These four are copied from her record in `seasons/data`. */
+  const beryl = { id: 'AL022018', points: [
+    { time: 4, lat: 13.4, lon: -55.2, lonU: -55.2, windKt: 45, status: 'TS' },
+    { time: 5, lat: 14.1, lon: -56.9, lonU: -56.9, windKt: 45, status: 'DB' },
+    { time: 6, lat: 15.5, lon: -61.3, lonU: -61.3, windKt: 35, status: 'DB' },
+    { time: 7, lat: 33.3, lon: -69.4, lonU: -69.4, windKt: 25, status: 'LO' },
+  ] };
+  const born = 4;
+
+  const stillTs = __internals.gradeAt(45, 'TS', born, 4);
+  const nowDb = __internals.gradeAt(45, 'DB', born, 5);
+  eq('at 45 kt as a TS she is a tropical storm', stillTs.code, 'TS');
+  eq('==> AT THE SAME 45 kt AS A DB SHE IS NOT. <== The wind is identical and '
+    + 'the answer is different, which is the whole point',
+  nowDb.code, 'DB');
+  eq('and she is graded remnant rather than tropical', nowDb.nature, 'remnant');
+  ok('so the two dots are not the same colour', stillTs.color !== nowDb.color);
+  eq('the disturbance takes the globe\u2019s quiet pre-genesis hue',
+    nowDb.color, PREGENESIS_COLOR);
+
+  /* ==> A `LO` AFTER THE CYCLONE PHASE IS POST-TROPICAL AND STAYS LOUD. <==
+   * Sandy approaching New Jersey must not go quiet; she was still lethal. */
+  const tail = __internals.gradeAt(25, 'LO', born, 7);
+  eq('a low AFTER the storm was a cyclone is post-tropical', tail.nature, 'post-tropical');
+  ok('and it does NOT take the quiet hue', tail.color !== PREGENESIS_COLOR);
+  eq('and it carries the record\u2019s own letters', tail.code, 'LO');
+
+  /* The identical code BEFORE the storm ever formed is the other answer, and
+   * this is the pair that proves the rule is about sequence rather than code. */
+  const preGenesis = __internals.gradeAt(25, 'LO', born, 1);
+  eq('the same LO before it was ever a cyclone is a remnant', preGenesis.nature, 'remnant');
+  eq('and takes the quiet hue', preGenesis.color, PREGENESIS_COLOR);
+
+  /* ==> NO SAFFIR-SIMPSON NUMBER ON ANYTHING THAT IS NOT A CYCLONE. <== 687
+   * fixes in the archive wore one before this, on `EX` and `LO` rows. That is
+   * the grading \u00a76 and \u00a757.7c forbid, and it was on the globe rather than on
+   * the panel where it was being watched for. */
+  for (const [status, when] of [['EX', 7], ['LO', 7], ['DB', 5], ['WV', 5]]) {
+    const hurricaneForce = __internals.gradeAt(100, status, born, when);
+    ok(`a ${status} fix at 100 kt wears no category number`,
+      !/^[1-5]$/.test(hurricaneForce.code));
+    ok(`and no Saffir-Simpson hue`, !CAT_HUES.has(hurricaneForce.color));
+  }
+
+  /* The whole storm through the real builder, which is what actually reaches
+   * the globe. */
+  const feats = __internals.pointsForStorm(beryl, true);
+  const codes = feats.map((f) => f.properties._code);
+  eq('through the builder her four dots read TS, DB, DB, LO',
+    codes.join(','), 'TS,DB,DB,LO');
+
+  /* A status the record does not carry today must not overflow the circle.
+   * `lib/hurdat.js` passes the column through unvalidated on purpose. */
+  eq('a three-letter code is dropped rather than truncated to a wrong label',
+    __internals.gradeAt(30, 'PTC', born, 7).code, '');
+  eq('and an absent status is simply blank',
+    __internals.gradeAt(30, null, born, 7).code, '');
 }
 
 /* ---------------------------------------------------------------------------
