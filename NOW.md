@@ -78,6 +78,38 @@ The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
 list; a refused crossing gets a sentence instead of silence; and a dot is graded
 from the status column rather than from the wind.
 
+**==> §57.49 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. GROUP B OF §57.42 IS
+NOW CLOSED. <==** The loop — a track that turned a full circle and crossed
+itself — in `How it moved`. **§57.49 is the as-built account; read that, not
+this.** It fires on 120 of 3,266 storms, so most panels are unchanged.
+
+**THREE THINGS TO JUDGE, AND THE SECOND IS THE ONE MOST LIKELY TO COME BACK
+WRONG.**
+
+1. **Jeanne 2004 is the storm to open.** *"It looped. Between Sep 20, 2004 and
+   Sep 24, 2004 its track crossed itself, turning a full circle about 157 mi
+   across."* Check it against her track on the globe — the whole reason the
+   sentence carries two dates and a width is so a reader can. Ivan 2004 is the
+   other end of the range at 684 nm.
+2. **THE FLOOR IS 50 NM AND SANDY 2012 MISSES IT BY 1.2.** She crosses her own
+   track at 48.8 nm and is told nothing; Ophelia 2017 at 41.9 likewise. Both
+   are real loops. **Any floor has a storm just underneath it and this is which
+   one** — it is recorded rather than discovered later. `SEASONS.loopMinWidthNm`
+   is the one-line dial: 30 nm brings in 152 storms, 75 nm cuts to 85. Harvey
+   2017 at 8.5 nm must stay out at any setting; that is him sitting still over
+   Texas inside HURDAT2's own 0.1° rounding.
+3. **THE LOOP SITS ABOVE THE BIRTHPLACE SENTENCE, WHICH REVERSES §57.48'S
+   PLACEMENT.** The reasoning is that origin fires on 1,993 of 2,004 Atlantic
+   storms and reads as background while the loop fires on 120 of 3,266. On
+   Jeanne's panel both sentences appear together, so it is one look: does the
+   rare fact leading read right, or does `How it moved` now bury its distance
+   rows.
+
+**NOTHING ELSE IS OPEN ON IT.** Nine mutations were run and the three that
+survived are all closed or corrected — §57.49 and the test commit hold the
+account. The loop is deliberately NOT ranked; that is a decision with its
+reasoning in §57.49, not a gap.
+
 **==> §57.48 IS CONFIRMED ON GLASS, 2026-08-29. AARON: "ALL WORKS." NOTHING
 HERE IS WAITING ON HIM. <==** The comeback, the season window and the origin —
 Group A of §57.42 — plus the deleted rankings row cap. **§57.48 is the as-built
@@ -462,19 +494,26 @@ NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
 (§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
 (§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)**, **Tier 1
-item 1, distance travelled (§57.45, ranked in §57.46)** and **Tier 1 items 4, 6
-and 8 (§57.48)**. **Read those seven, not this.** Tier 2 item 1 is done and
-deleted from §57.42; **three Tier 1 items (5, 7, 10) and four Tier 2 items are
-untouched.**
+item 1, distance travelled (§57.45, ranked in §57.46)** **Tier 1 items 4, 6
+and 8 (§57.48)** and **Tier 1 item 5, the loop (§57.49)**. **Read those eight,
+not this.** Tier 2 item 1 is done and deleted from §57.42; **two Tier 1 items
+(7, 10) and four Tier 2 items are untouched.**
 
 **==> §57.42 NOW CARRIES A GROUPING — A, B AND C — AND GROUP A IS BUILT. <==**
 Aaron asked on 2026-08-29 that the groups be written into the spec so a new
 chat picks one up cold. They are grouped by SHAPE OF RISK, not by subject.
 **Group A (items 4, 6, 8 — the comeback, out of season, Cape Verde) shipped as
-§57.48.** Group B is item 5, the loop, which needs segment intersection and a
-meander-versus-loop judgement. Group C is items 7 and 10, both figures.
+§57.48, and Group B (item 5, the loop) shipped as §57.49.** **Group C — items 7
+and 10, both figures — is all that is left of Tier 1.**
 
-**THREE TIER 1 ITEMS REMAIN: 5, 7 AND 10.** Any of them added to `RANK_STATS`
+**==> AND GROUP B'S JUDGEMENT TURNED OUT TO BE ONE CONSTANT, NOT A HEURISTIC.
+<==** The grouping warned that the loop needed a meander-versus-loop call the
+other items did not. It did, and the answer is that **a crossing is already
+proof of a full circle**, so the only open question was size —
+`SEASONS.loopMinWidthNm`, measured. Worth knowing before Group C: the expensive
+part of that item was the measuring, not the geometry.
+
+**TWO TIER 1 ITEMS REMAIN: 7 AND 10.** Any of them added to `RANK_STATS`
 gets an archive-wide rank for free — one table entry rather than a feature.
 **A statistic printed in the reader's units costs two entries rather than one**
 (§57.46), plus a `RANKINGS_SCHEMA` bump so the new table actually reaches a
