@@ -272,7 +272,13 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * is already on screen above with its own units. There is no wrong
           * impression left behind by its absence. */
     section('rank-archive', 'Where it ranks', 'podium', archiveRankHtml(
-      rankStorm(facts, archiveTable(), archiveBasin()),
+      /* ==> `system` IS AN ARGUMENT HERE FOR THE SAME REASON IT IS ONE
+       * EVERYWHERE ELSE ON THIS PANEL. <== §57.46. The distance rank ships as
+       * two ladders, one rounded to miles and one to kilometres, because a
+       * rung has to be the number the row above it prints. Handing the
+       * preference down is what keeps the rank and the figure agreeing when a
+       * reader switches units. */
+      rankStorm(facts, archiveTable(), archiveBasin(), system),
       { year: storm.year },
     ))}
       ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system))}

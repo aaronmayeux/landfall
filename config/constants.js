@@ -7284,12 +7284,18 @@ export const SEASONS = Object.freeze({
   rankingsMinStorms: 30,
 
   /**
-   * ==> HOW MANY OF THE SIX RANKS THE PANEL PRINTS BEFORE IT STOPS. <== All
-   * six, today. The constant exists because the list is a screen on a phone
-   * and the next statistic added to `RANK_STATS` should have to think about
-   * that rather than simply land — §57.43 already put two new sections on a
-   * panel that now has eight, and Aaron named the crowding as the risk he was
-   * accepting. A seventh rank is a glass call, not a free addition.
+   * ==> HOW MANY RANKS THE PANEL PRINTS BEFORE IT STOPS. <== Seven, since
+   * §57.46 added distance travelled on Aaron's call. The constant exists
+   * because the list is a screen on a phone and the next statistic added to
+   * `RANK_STATS` should have to think about that rather than simply land —
+   * §57.43 already put two new sections on a panel that now has nine, and
+   * Aaron named the crowding as the risk he was accepting. An eighth rank is a
+   * glass call, not a free addition.
+   *
+   * ==> IT COUNTS ROWS, NOT `RANK_STATS` ENTRIES, AND THOSE STOPPED BEING THE
+   * SAME NUMBER AT SEVEN. <== Distance ships as two entries — one ladder
+   * rounded to miles, one to kilometres — and `rankStorm` drops the one that
+   * is not the reader's before a row is built. Eight entries, seven rows.
    */
-  rankingsMaxRows: 6,
+  rankingsMaxRows: 7,
 });
