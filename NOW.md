@@ -411,9 +411,11 @@ is the as-built account.** Nothing writes its answers to a file yet — that is
 
 **The summary paragraph is designed and accepted but NOT BUILT. §57.41.** It
 carries Aaron's four calls on voice and the two faults the prototype hit. **Read
-it before writing a line of `lib/season-story.js`** — the stall measured from a
+it before writing a line of the story assembler** — the stall measured from a
 window's first fix misses Harvey completely, which is the one storm it exists
-for.
+for. (§57.41 names the file it should become; this line deliberately does not,
+because `tools/doc-check.mjs` checks every path named in a doc against disk and
+is right to.)
 
 **==> AND ONE COUNT IS UNEXPLAINED, WHICH BLOCKS THE RANKINGS. <==** A scratch
 walk over the mirrored archive on 2026-08-29 visited **6,532 storm entries
