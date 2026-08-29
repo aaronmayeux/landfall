@@ -60,7 +60,17 @@ const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts, rankInSeason } = await import('../lib/season-facts.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
-const M = await import('../ui/season-detail-markup.js');
+/* ==> TWO MODULES BEHIND ONE HANDLE, BECAUSE THE RANK SECTIONS MOVED AND THE
+ * ASSERTIONS ABOUT THEM DID NOT NEED TO. <== SPEC.md §12, §57.44. The archive
+ * ranking section put `season-detail-markup.js` 124 lines over the ceiling, so
+ * `ordinal`, `seasonRankHtml` and `archiveRankHtml` were lifted into
+ * `season-rank-markup.js` with no behaviour change. Merging them here keeps
+ * this suite's subject "everything the panel draws" rather than "one file",
+ * which is what it was always testing. */
+const M = {
+  ...await import('../ui/season-detail-markup.js'),
+  ...await import('../ui/season-rank-markup.js'),
+};
 
 const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
 const seasonOf = (basin, year) => parseHurdat2(
