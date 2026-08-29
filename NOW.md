@@ -78,31 +78,14 @@ The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
 list; a refused crossing gets a sentence instead of silence; and a dot is graded
 from the status column rather than from the wind.
 
-**==> THREE NEW SENTENCES ON THE STORM PANEL, SHIPPED 2026-08-29, NOT YET SEEN
-ON GLASS. <==** §57.48, Group A of §57.42. They join sections that already
-exist — no new heading. **What to judge, and the first is the one most likely
-to come back wrong:**
-
-1. **The origin sentence fires on EVERY Atlantic storm**, unlike the other two,
-   which stay silent on the ordinary case. That is deliberate (§57.48: both
-   labels are real information) but it means `How it moved` gains a line on
-   1,993 of 2,004 Atlantic storms. **If it reads as filler rather than as
-   context, that is the finding** — and the lever is dropping the home-grown
-   half and keeping only Cape Verde, which is one branch in `originHtml`.
-2. **The comeback on Jeanne 2004 or Ida 2009.** It should sit under the coastal
-   weakening and ABOVE the ending sentence. If it reads below *"Became
-   extratropical"* the slot moved and the chronology is broken.
-3. **`Where it ranks` with no cap.** Nothing changes on a storm ranked on seven
-   statistics, because seven was the cap. **It only becomes visible when an
-   eighth is added**, so this is a look at the section's height today rather
-   than a check on a change — the baseline before the next statistic lands.
-4. **Andres 2021, or any East Pacific storm formed in the second half of May.**
-   The sentence must name **May 15**, not June 1. A June in that sentence means
-   the per-basin windows are not reaching the markup.
-
-**THE THREE FACTS DO NOT TOUCH THE GLOBE, THE ROSTER OR ANY SIDECAR.** No new
-files ship, no cache header is involved, and nothing was regenerated. A fault
-here can only be in three files.
+**==> §57.48 IS CONFIRMED ON GLASS, 2026-08-29. AARON: "ALL WORKS." NOTHING
+HERE IS WAITING ON HIM. <==** The comeback, the season window and the origin —
+Group A of §57.42 — plus the deleted rankings row cap. **§57.48 is the as-built
+account; read that, not this.** Four things were put up for judgement and all
+four were accepted, including the one flagged as most likely to come back
+wrong: the origin sentence firing on 1,993 of 2,004 Atlantic storms. **Its
+placement and its every-storm frequency are settled by acceptance and should
+not be reopened without new evidence.**
 
 **THREE THINGS ARE LEFT AND ONLY ONE OF THEM IS WORK.**
 

@@ -7171,7 +7171,16 @@ sentence printing the nearer label instead of nothing, and the rank cap
 reintroduced.
 
 **WHAT NO SUITE HERE CAN PROVE is whether the three sentences read well on a
-phone.** That is glass, and it is what is outstanding.
+phone.** That is glass.
+
+**==> AND GLASS ANSWERED: ALL THREE WORK. AARON, 2026-08-29, "ALL WORKS." <==**
+Four things were put up for judgement and all four were accepted. **The one
+flagged beforehand as most likely to come back wrong was the origin sentence
+firing on 1,993 of 2,004 Atlantic storms**, and it did not — the every-storm
+frequency and the placement at the foot of `How it moved` are settled by
+acceptance. The comeback reads above the ending sentence on Jeanne 2004, the
+East Pacific window names May 15 on Andres 2021, and `Where it ranks` without
+its cap is the baseline for the next statistic to land against.
 
 #### Fixtures
 
