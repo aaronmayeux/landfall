@@ -122,21 +122,40 @@ were wearing a Saffir-Simpson NUMBER on an `EX` or `LO` fix — the grading §6
 forbids, on the globe rather than on the panel where `NOW.md` was telling you to
 watch for it.
 
+**AND THE FIRST ATTEMPT'S COLOURS CAME BACK WRONG THE SAME DAY.** Aaron: *"the
+blue is too close to TD and the red reads like it's a strong storm."* Both
+non-cyclone readings are `stormEnded` now, and SIZE separates them. **§57.7g is
+the as-built account.**
+
+| never a cyclone (`DB`, `WV`, `LO` before genesis) | small, blank |
+| was a cyclone (`EX`, `LO` after genesis) | full size, lettered |
+
 **WHAT TO JUDGE, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK WRONG:**
 
-1. **`DB` on a dot is jargon and Aaron chose it deliberately** over a blank
-   circle and over a plain word. Open Beryl 2018 and read the Antilles run. If
-   `DB` reads as noise, a word is one function.
-2. **The quiet hue is TEAL, not grey.** `PREGENESIS_COLOR`, the live globe's own
-   "nothing has happened here yet" colour, reused so the two globes stay in
-   step. **Nobody has seen it on the sepia archive globe** — §57.20 measured the
-   sepia coastline against a Cat 2 dot and never against this. If it disappears
-   into the ground, the lever is one token and it moves the live globe too.
-3. **Sandy stays loud.** Her New Jersey approach is `EX` and must keep the hue
-   that holds the eye rather than going quiet. If her last dots look retired,
-   the post-tropical branch is wrong.
-4. **A real cyclone's dot must be unchanged.** Dorian 2019 still runs
-   `TD` → `TS` → `1` → `5`. Any change there is a regression, not the fix.
+1. **`stormEnded` is BONE, not dim.** It shipped dim once and Aaron read it as
+   *far away* rather than *finished*, so it was brightened. **Nobody has seen it
+   as a small dot, and nobody has seen it on the sepia globe** — the sepia
+   palette has its own value (`#EAE1D2`) that no one has looked at. Open Beryl
+   2018: 20 small pale dots across the Antilles. If it reads as a string of
+   pearls rather than a quiet passage, the lever is a second dimmer token, NOT
+   the size.
+2. **`ARCHIVE_GEO.remnantPointRadius` is 6 against a full 10.** A dial, not an
+   answer, and the one number deciding whether a dying tail reads as quiet or
+   as absent.
+3. **Sandy stays full size with `EX` in it.** Nine of them, after her Cat 3 run.
+   If they read as retired, the post-tropical branch is wrong.
+4. **Dorian 2019 is the control.** 64 graded dots, zero small ones, six grey in
+   the tail. Any change to his coloured run is a regression, not the fix.
+5. **The first fix's wide white ring on a SMALL dot.** Dorian 2013 opens on a
+   pre-genesis `LO`, so his earliest dot is 6px wearing a ring sized for 10.
+   Nobody has looked at it.
+
+**==> AND THE TWO GLOBES NOW DISAGREE ON PURPOSE. <==** The LIVE globe still
+draws a pre-genesis fix in the teal `PREGENESIS_COLOR`; the archive draws it
+grey. **Aaron's call, option 3 of three** — judge the grey where nothing is
+urgent, then move the live globe in its own pass. This is exactly the split that
+caused §57.7f's bug, so it is written down rather than left to be rediscovered
+as a fault. **It is not done until the live globe moves.**
 
 **==> AND ONE SENTENCE ON THE PANEL HAS NEVER BEEN SEEN BY ANYONE. <==**
 §57.7e. Where the walk turned a real coast crossing down, the panel now says so:

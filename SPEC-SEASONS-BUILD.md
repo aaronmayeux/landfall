@@ -804,14 +804,10 @@ telling Aaron to watch for one on the panel.
 for most storms. Dorian 2019 still runs `TD` → `TS` → `1` → `5`; only his tail
 changed.
 
-**THE LETTERS ARE THE RECORD'S OWN CODE — `DB`, `WV`, `LO`, `EX` — AND THAT IS
-AARON'S CALL.** Offered blank, the code, or a plain word on 2026-08-29; he chose
-the code. A blank grey dot beside a lettered one reads as a dot that failed to
-load; `DB` reads as a fact the reader can look up. It is jargon, and it is the
-jargon the record itself uses. **Two characters or nothing** —
-`STORM_GEO.pointCodeSize` is set for `TD` and for a single digit, and a code
-that will not fit is dropped rather than truncated, because `PTC` cut to `PT` is
-a wrong label rather than a short one.
+**WHAT THE LAST TWO LOOK LIKE IS §57.7g, and it changed on glass the same
+day.** The first attempt gave `remnant` the teal `PREGENESIS_COLOR` and
+`post-tropical` the brick `CATEGORY_COLOR.GENERIC`, with the record's own code
+inside both. Aaron rejected both hues; read §57.7g for what shipped.
 
 **==> THE RULE LIVES IN `lib/season-nature.js` AND `lib/landfall.js` NOW READS
 IT FROM THERE. <==** That file held the same status tests privately, for
@@ -826,16 +822,86 @@ remnant low is post-tropical by NWS's own definition (§57.7d), it simply is not
 coming ashore in any sense worth a mark. Applying the floor here would make a
 dying tail change species halfway along for a reason that is about landfalls.
 
-**THE QUIET HUE IS `PREGENESIS_COLOR`, WHICH IS TEAL RATHER THAN GREY.** Aaron
-asked for grey; this is the colour the app already uses for "nothing has
-happened here yet" on the live globe, so using it keeps the two globes in step
-and adds no token. **If it reads wrong on the sepia archive globe the lever is
-one token**, and it moves the live globe with it.
-
 **WHAT THE PEAK FIGURE DOES: almost nothing.** Only **81 storms of 3,266** have
 their peak-wind fix at a non-cyclone status, so the panel's `Strongest` and the
 globe stay in step without `lib/season-facts.js` moving. That was the cost the
 old comment feared and it is smaller than it looks.
+
+### 57.7g One grey, two sizes
+
+**Aaron on glass, 2026-08-29, on §57.7f's first attempt: *"the blue is too close
+to TD and the red reads like it's a strong storm."*** Both complaints were
+about hues the app already owned rather than about the rule underneath, and both
+were right.
+
+**WHAT WAS WRONG.** `remnant` took `PREGENESIS_COLOR`, a teal, which sits close
+enough to the `TD` blue that a disturbance read as a weak cyclone — the same
+confusion §57.7f had just fixed, arriving through the colour instead of the
+letters. `post-tropical` took `CATEGORY_COLOR.GENERIC`, a brick red, which
+reads as severity on a globe whose whole palette means severity.
+
+**==> NEITHER SYSTEM HAS A SEVERITY TO CLAIM, SO NEITHER GETS A HUE THAT IMPLIES
+ONE. <== Both are `stormEnded`.** That token already exists in all three
+palettes and its own comment is the argument for using it here: *"an ended storm
+has no current category to be wrong about … any Saffir-Simpson hue here would be
+a severity claim about a system the issuing agency has stopped describing. Grey
+is the absence of that claim."* A disturbance and a post-tropical system are the
+same kind of absence.
+
+**IT IS BONE RATHER THAN DIM, AND THAT WAS DECIDED ONCE ALREADY.** `stormEnded`
+shipped at `#6F7885` and Aaron read it on glass as *far away* rather than as
+*finished*; it was brightened to `#DCE4EC` for exactly that reason. So a small
+`DB` dot is small and pale and quite present rather than receding. If Beryl's
+Antilles run reads as a string of pearls rather than as a quiet passage, that is
+why, and the lever is a second dimmer token rather than the size.
+
+**==> SIZE CARRIES "WAS THIS EVER A STORM". <== Aaron's call.**
+
+| never a cyclone — `DB`, `WV`, `LO` before genesis | `ARCHIVE_GEO.remnantPointRadius`, **blank** |
+| was a cyclone — `EX`, `LO` after genesis | `STORM_GEO.pointRadius`, **lettered** |
+
+**`LO` IS ON BOTH ROWS AND THAT IS THE WHOLE REASON THE SPLIT IS NOT BY CODE.**
+Sandy carries three `LO` fixes before she formed and nine `EX` at the end;
+Dorian 2013 carries four `LO` before and three after. Same two letters, opposite
+meaning, inside one storm. The test is the sequence one §57.7c already ships —
+at or after the first cyclone fix — so this cost nothing new.
+
+**WHY NOT ONE SIZE.** Sandy crossed New Jersey at 80 kt as an `EX`. Under a
+single grey at a single size she would draw identically to a 25 kt wave drifting
+the mid-Atlantic, and the globe would stop saying that the worst hours of that
+storm happened after her colour drained out. The panel does say it in words
+(`Post-Trop · 80 mph`, and the paragraph's *"by then a post-tropical storm"*),
+which is why one size was a real option and not an obviously wrong one.
+
+**MEASURED THROUGH THE REAL BUILDER, on the shipped files:**
+
+| Beryl 2018 | 22 full cyclone dots, **20 small blank**, 10 full `LO` |
+| Sandy 2012 | 33 full cyclone dots, **3 small blank**, 9 full `EX` |
+| Dorian 2019 | 64 full cyclone dots, 0 small, 6 full `LO`/`EX` |
+
+Dorian's zero is the control: he has no pre-genesis fix at all, so nothing about
+his dots may change except the tail.
+
+**THE ONE-RECORD DOT TAKES THE COLOUR AND NOT THE SIZE.** It already draws at
+`onePointRadius` and it is a storm's ENTIRE presence on the globe; shrinking it
+again for being a `DB` works against the §5 reason that kind of dot exists.
+
+**==> THE GREY IS RESOLVED AT BUILD TIME, NOT IN THE PAINT EXPRESSION. <==**
+`stormEnded` is palette-scoped, so the obvious spelling is `gs('stormEnded')` in
+the layer. That would put a global-state reference in the same expression as
+`['get', 'color']` — the shape `SPEC-MAP.md` rule 1b forbids and the one the
+colour-null hunt (`NOW.md` item 0d) went looking for. `palette()` is read inside
+`gradeAt` instead, which is correct because this file rebuilds its features when
+the mode changes. **The radius expression is two literal numbers**, so it reads
+feature data only and a test asserts there is no `global-state` in it.
+
+**THE LIVE GLOBE DOES NOT MOVE THIS PASS. Aaron's call — option 3 of three.**
+Its pre-genesis fixes keep `PREGENESIS_COLOR`, so the two globes now answer one
+question two ways, which is precisely the split that produced §57.7f's bug.
+**That is deliberate and it is temporary**: judging a new grey against 175 years
+of settled archive costs nothing, and moving the live globe is a second glass
+call on a day with real storms on it. It is under `NOW.md` so the next session
+reads it as an open item rather than rediscovering it as a fault.
 
 ### 57.8 What HURDAT2 does not contain, at all
 
