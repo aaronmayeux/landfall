@@ -91,11 +91,11 @@ let lastSet = [];
  * expression matches on, so a one-record storm's dot dims with the tracks
  * around it as one object. Nothing in this app selects an individual fix.
  */
-function pointFeature({ id, kind, lat, lon, color, code = '', first = false }) {
+function pointFeature({ id, kind, lat, lon, color, code = '', first = false, small = false }) {
   return {
     type: 'Feature',
     geometry: { type: 'Point', coordinates: [lon, lat] },
-    properties: { id, kind, color, _code: code, _first: first },
+    properties: { id, kind, color, _code: code, _first: first, _small: small },
   };
 }
 
@@ -122,13 +122,19 @@ function pointFeature({ id, kind, lat, lon, color, code = '', first = false }) {
  *
  *   - **tropical** — graded exactly as before. Nothing about a real cyclone's
  *     dot changed, which is what keeps this off the glass for most storms.
- *   - **post-tropical** — the loud generic hue, no category number. Sandy
- *     approaching New Jersey must not go quiet; she was still lethal.
- *   - **remnant** — the globe's quiet pre-genesis grey. A disturbance, a wave,
- *     or a low before the storm ever formed.
+ *   - **post-tropical** — `stormEnded`, full size, with the record's own
+ *     letters. Sandy approaching New Jersey must not shrink away; she was still
+ *     lethal.
+ *   - **remnant** — `stormEnded`, small and blank. Never a storm, nothing to
+ *     say about it.
  *
- * The letters for the last two are the record's own code (`DB`, `WV`, `LO`,
- * `EX`), Aaron's call — see `statusDotCode`.
+ * ==> BOTH NON-CYCLONE READINGS ARE THE SAME GREY, AND SIZE IS WHAT SEPARATES
+ * THEM. <== Aaron's call, 2026-08-29, after the first attempt used the teal
+ * `PREGENESIS_COLOR` for one and the brick `CATEGORY_COLOR.GENERIC` for the
+ * other: the teal read too close to the `TD` blue and the brick read as a
+ * strong storm. Neither system has a severity to claim, so neither gets a hue
+ * that implies one — `stormEnded` is the app's existing "this had a colour and
+ * no longer has one", already defined in all three palettes.
  */
 function gradeAt(windKt, status = null, bornAt = null, time = null) {
   const nature = natureAt(status, time, bornAt);
@@ -138,17 +144,30 @@ function gradeAt(windKt, status = null, bornAt = null, time = null) {
    * a later caller reading `cat` for something else. */
   const cat = nature === 'tropical' && Number.isFinite(windKt)
     ? categoryFromKt(windKt) : null;
+  if (nature === 'tropical') {
+    return {
+      nature,
+      small: false,
+      /* `categoryColor` answers with the ungraded hue rather than nothing when
+       * the record carries no wind — which happens all through the 19th century
+       * — so this can never resolve to a missing paint property. Same guarantee
+       * the track colour carries. */
+      color: categoryColor(cat, nature, null),
+      code: categoryDotCode(cat, nature),
+    };
+  }
+  /* ==> THE GREY IS RESOLVED HERE, AT BUILD TIME, AND THAT IS DELIBERATE. <==
+   * `stormEnded` is palette-scoped, so the obvious spelling is a `gs()` in the
+   * layer's paint. That would put a global-state reference in the same
+   * expression as `['get', 'color']` — the shape `SPEC-MAP.md` rule 1b forbids
+   * and the one the colour-null hunt went looking for. `palette()` is a
+   * question asked at paint time, and this file already rebuilds its features
+   * when the mode changes, so reading it here is both correct and cheap. */
   return {
     nature,
-    /* `categoryColor` answers with the ungraded hue rather than nothing when
-     * the record carries no wind — which happens all through the 19th century
-     * — so this can never resolve to a missing paint property. Same guarantee
-     * the track colour carries. */
-    color: categoryColor(cat, nature, null),
-    /* A cyclone gets its Saffir-Simpson code; everything else gets the letters
-     * the record itself used. Empty rather than a guessed code where there is
-     * no earned reading either way. */
-    code: nature === 'tropical' ? categoryDotCode(cat, nature) : statusDotCode(status),
+    small: nature === 'remnant',
+    color: palette().stormEnded,
+    code: nature === 'post-tropical' ? statusDotCode(status) : '',
   };
 }
 
@@ -186,6 +205,11 @@ function pointsForStorm(storm, selected) {
     if (drawable.length === 1) {
       const p0 = drawable[0];
       const g = gradeAt(p0.windKt, p0.status, bornAt, p0.time);
+      /* ==> IT TAKES THE COLOUR BUT NOT THE SMALL SIZE. <== §57.7g. A one-record
+       * dot is already its own smaller radius (`onePointRadius`) and it is the
+       * storm's ENTIRE presence on the globe — shrinking it again for being a
+       * `DB` would work against the §5 reason this kind of dot exists at all.
+       * The grey still says what it was. */
       out.push(pointFeature({
         id, kind: 'one', lat: drawable[0].lat, lon: drawable[0].lon, color: g.color,
       }));
@@ -205,6 +229,7 @@ function pointsForStorm(storm, selected) {
       lon: p.lon,
       color: g.color,
       code: g.code,
+      small: g.small,
       /* The earliest fix wears the white wider ring, and the job it does here
        * is the job it does on the live globe: DIRECTION. A chain of dots
        * reading TD → 3 → 3 → TD has no start and no end to the eye, and on a
@@ -386,7 +411,14 @@ export function ensureSeasonPoints(map, beforeId) {
       source: SOURCE,
       filter: ['==', ['get', 'kind'], 'fix'],
       paint: {
-        'circle-radius': STORM_GEO.pointRadius,
+        /* ==> TWO RADII, AND THE EXPRESSION READS ONLY FEATURE DATA. <== §57.7g.
+         * Both values are literal numbers off `config/tokens.js`, so there is
+         * no `gs()` sharing this expression with a `['get', ...]` — the shape
+         * rule 1b forbids. A system that was never a storm draws small and
+         * blank; a cyclone and a post-tropical system both draw full size. */
+        'circle-radius': [
+          'case', ['get', '_small'], ARCHIVE_GEO.remnantPointRadius, STORM_GEO.pointRadius,
+        ],
         'circle-color': ['get', 'color'],
         /* NO FOCUS EXPRESSION ON THESE, and it is not an omission. A fix only
          * exists while its storm is selected, so there is nothing for it to be

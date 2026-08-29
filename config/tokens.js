@@ -2791,6 +2791,24 @@ export const ARCHIVE_GEO = Object.freeze({
    *  track, a small bare one means this is all the record there is. */
   onePointRadius: 4,
 
+  /** ==> HOW BIG A DOT IS WHEN THE SYSTEM WAS NEVER A STORM. <== §57.7g,
+   *  Aaron's call 2026-08-29 after seeing Beryl 2018 on glass. A `DB`, a `WV`
+   *  or a `LO` from before the cyclone ever formed draws at this radius,
+   *  blank, in `stormEnded`. A cyclone and a POST-tropical system both draw at
+   *  the full `STORM_GEO.pointRadius`.
+   *
+   *  ==> SIZE CARRIES "WAS THIS EVER A STORM" AND COLOUR DOES NOT, WHICH IS
+   *  WHY THIS CONSTANT EXISTS AT ALL. <== Sandy crossed New Jersey at 80 kt as
+   *  an `EX`; a 25 kt wave drifted the mid-Atlantic as a `WV`. Both are grey,
+   *  because neither has a Saffir-Simpson severity to claim. Drawn at one size
+   *  they would read as one thing, and the globe would stop saying that the
+   *  worst hours of Sandy's life happened after her colour drained out.
+   *
+   *  60% of the full radius. A dial, not an answer: it is the one number that
+   *  decides whether a dying tail reads as quiet or as absent, and glass is the
+   *  only thing that can say. */
+  remnantPointRadius: 6,
+
   /** Storm names along the tracks (§57.21 item 1). One point smaller than the
    *  live globe's `SIZE.stormLabelPx` of 14, because the archive can have ten
    *  names on screen where the live globe has two or three, and because a name
