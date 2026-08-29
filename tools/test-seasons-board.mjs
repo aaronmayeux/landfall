@@ -176,6 +176,11 @@ async function board({ year = null } = {}) {
   const where = [];
   const focus = [];
   const opened = [];
+  /* Every time the view asks the drawer to redraw its header. `ui/drawer.js`
+   * owns that furniture, so a view whose title changes while it is already
+   * open has to ask — and the ONLY observable difference between a header that
+   * catches up and one that does not is whether the request was made. */
+  const chrome = [];
   const view = createSeasonsBoardView({
     seasons,
     live,
@@ -210,10 +215,15 @@ async function board({ year = null } = {}) {
   host.parent = views;
   views.children.push(host);
 
+  /* Wired BEFORE mount, the way `seasons/index.js` wires it — after
+   * `drawer.register` and before anything enters. A suite that attached it
+   * later would miss the first request, which is exactly the one at issue. */
+  view.setChromeRefresh(() => chrome.push(view.titleFor()));
+
   view.mount(host);
   await settle();
   const body = host.querySelector('#seasons-board-body');
-  return { view, host, drawer, body, drawn, where, focus, opened };
+  return { view, host, drawer, body, drawn, where, focus, opened, chrome };
 }
 
 const settle = () => new Promise((r) => setTimeout(r, 0));
@@ -249,7 +259,7 @@ const text = (body) => body.innerHTML;
  * 1. IT OPENS ON A REAL SEASON AND NAMES IT.
  * ------------------------------------------------------------------------ */
 {
-  const { body, host, view, where } = await board();
+  const { body, host, view, where, chrome } = await board();
   ok('the board opens on a season with storms in it', rows(body).length > 0);
   ok('and the bar is told where it is',
     where.some((w) => w && /Atlantic/.test(w.label)));
@@ -280,6 +290,35 @@ const text = (body) => body.innerHTML;
   ok('the header names the basin', /Atlantic/.test(view.titleFor()));
   ok('and does not repeat the year the stepper is already showing',
     !/\d{4}/.test(view.titleFor()));
+
+  /* ==> AND THE DRAWER IS ASKED TO REDRAW THE HEADER ONCE THE BASIN IS
+   * KNOWABLE. §57.39a. <== Aaron on glass, 2026-08-28. The header read
+   * `Past storms` and stayed there until he pressed `+`. Nothing here was
+   * wrong: `titleFor` is drawn ONCE, when the drawer enters the view, and on
+   * that frame the index has not landed so there is no basin to name and the
+   * fallback is correct. What was missing is anybody asking for it again.
+   *
+   * ==> THE FALLBACK IS WHY NO EXISTING ASSERTION COULD SEE THIS. <== Every
+   * one of them calls `titleFor()` after the index has settled, which is a
+   * question about the STRING and not about WHEN the header was painted. This
+   * counts the requests instead, which is the only observable that differs.
+   * The board is built with the hook already wired, so the count includes the
+   * transition from the fallback to `Atlantic`. */
+  ok('the drawer was asked to redraw the header once the basin arrived',
+    chrome.length >= 1);
+
+  /* ==> AND ASKED ONCE, NOT ON EVERY RENDER. <== `render` runs on every poll,
+   * every filter change and every tick of the roster, and `refreshChrome`
+   * rebuilds the whole header — the Back button and the X with it, both of
+   * which a reader may have focused. A guard that fired every time would pass
+   * the assertion above and be a worse bug than the one it fixed, so the
+   * ceiling is asserted beside the floor. Removing the `!== headingShown`
+   * comparison turns this red. */
+  const before = chrome.length;
+  view.setFilter?.('majors');
+  body.fire('click', body.querySelectorAll('[data-filter]')[1]);
+  await settle();
+  eq('and not again on an ordinary redraw', chrome.length, before);
 }
 
 /* ---------------------------------------------------------------------------
