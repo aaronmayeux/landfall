@@ -24,7 +24,7 @@
  */
 
 import { SEASONS } from '../config/constants.js';
-import { absenceHtml, rowsHtml } from './season-detail-markup.js';
+import { absenceHtml, rowsHtml } from './season-markup-bits.js';
 
 /**
  * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
