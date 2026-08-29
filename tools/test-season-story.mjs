@@ -13,10 +13,13 @@
  * Harvey has a stall at all, and the second is that it is measured in days
  * rather than hours.
  *
- * ==> AND SANDY IS THE SECOND ONE. <== A correct rule that looks like a bug is
- * worse than no rule. This app declines a landfall by a system that has already
- * gone extratropical, so Sandy's New Jersey landfall — the only thing anybody
- * remembers about her — is not in the list. The paragraph has to say so.
+ * ==> AND SANDY IS THE SECOND ONE. <== She used to be here because a correct
+ * rule looked like a bug: the app declined a landfall by a system that had
+ * already gone extratropical, so the only thing anybody remembers about her was
+ * missing and the paragraph carried a sentence apologising for it. §57.7c made
+ * that landfall count. The section is kept, pointed the other way, because the
+ * assertions that guarded the old behaviour are exactly the ones that would let
+ * it come back.
  *
  * ==> EVERY PLACES OBJECT HERE IS HAND-WRITTEN, NOT GENERATED. <== A fixture
  * produced by the code under test proves the code agrees with itself. These are
@@ -38,6 +41,7 @@ const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
+const { landfallFileName } = await import('../lib/seasons-sidecar.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { SEASONS } = await import('../config/constants.js');
 const {
@@ -49,8 +53,15 @@ const raw = (f) => readFileSync(`samples/seasons/storms/${f}.txt`, 'utf8');
 const one = (f) => parseHurdat2(raw(f)).storms[0];
 
 /** The real computed landfalls for a fixture storm, off the shipped sidecar,
- *  so `landfallSource` is `computed` exactly as it is in the app. */
-const MARKS = JSON.parse(readFileSync('seasons/data/atlantic-landfalls-02272026.json', 'utf8')).storms;
+ *  so `landfallSource` is `computed` exactly as it is in the app.
+ *
+ *  ==> THE NAME IS BUILT, NEVER TYPED. <== §57.7c bumped
+ *  `SEASONS.landfallsSchema` and three suites went red on a filename they had
+ *  spelled out by hand. `landfallFileName` is the same function the app and
+ *  the runner use, so a future bump moves this with them. */
+const INDEX = JSON.parse(readFileSync('seasons/index.json', 'utf8'));
+const MARKS = JSON.parse(readFileSync(
+  `seasons/data/${landfallFileName('atlantic', INDEX.basins.atlantic.revision)}`, 'utf8')).storms;
 function factsFor(file) {
   const s = one(file);
   s.landfallsComputed = MARKS[s.id] || [];
@@ -157,14 +168,50 @@ section('HARVEY — a misaligned places array is refused rather than guessed at'
 }
 
 /* ------------------------------------------------------------------------- */
-section('SANDY — a correct rule that looks like a bug gets its own sentence');
+section('SANDY — the post-tropical landfall counts. §57.7c');
 {
+  const { facts } = factsFor('al182012');
   const p = para('al182012');
-  ok(/already lost its tropical structure/.test(p),
-    '==> SANDY\'S NEW JERSEY LANDFALL IS THE ONLY THING ANYBODY REMEMBERS AND IT IS NOT IN THE '
-    + `LIST. <== §57.7a declines it. Unexplained, that reads as a fault. Got: ${p}`);
-  ok(/came ashore three times/.test(p),
-    `and the three tropical ones are still counted. Got: ${p}`);
+
+  ok(/came ashore four times/.test(p),
+    '==> NEW JERSEY IS IN THE COUNT. <== Jamaica, Cuba, the Bahamas and Brigantine. Three of '
+    + `these was the old answer and it was the one thing everybody would have checked. Got: ${p}`);
+
+  const nj = facts.landfalls.find((l) => l.nature === 'post-tropical');
+  ok(nj && nj.windKt >= 60, `and it is stamped post-tropical. Got: ${JSON.stringify(nj)}`);
+  ok(nj && nj.category === null,
+    'with no Saffir-Simpson number on it, which is what the app does everywhere else for a '
+    + `system that has lost its tropical structure. Got: ${JSON.stringify(nj)}`);
+
+  ok(!/so it is not in the list above/.test(p),
+    '==> AND THE APOLOGY IS GONE, NOT SOFTENED. <== The paragraph used to explain why the '
+    + `landfall was missing. It is not missing. Got: ${p}`);
+
+  /* Her HARDEST landfall is Cuba at 100 kt, not New Jersey, so the ordinary
+   * category wording is what should appear here. The post-tropical phrasing
+   * has its own storm below. */
+  ok(/The hardest was on October 25, a Category 3/.test(p),
+    `the hardest is still Cuba, graded normally. Got: ${p}`);
+}
+
+/* ------------------------------------------------------------------------- */
+section('OPHELIA — a storm whose ONLY landfalls are post-tropical. §57.7c');
+{
+  const { facts } = factsFor('al172017');
+  ok(facts.landfalls.length > 0,
+    '==> SHE USED TO COME ASHORE NOWHERE AT ALL. <== Ophelia crossed Ireland at 65 kt and the '
+    + `archive said she stayed at sea. Got: ${JSON.stringify(facts.landfalls)}`);
+  ok(facts.landfalls.every((l) => l.nature === 'post-tropical'),
+    'and every one of them is post-tropical, which is why she was invisible');
+
+  const p = para('al172017');
+  ok(!/It never came ashore/.test(p), `so the paragraph no longer says she did not. Got: ${p}`);
+  ok(/by then a post-tropical storm/.test(p),
+    '==> AND THE HARDEST ONE SAYS WHAT IT WAS INSTEAD OF WHAT IT SCORED. <== It has no '
+    + `category, so without this clause the sentence would go quiet on the whole point. Got: ${p}`);
+  ok(!/hardest[^.]*after it had lost its tropical structure/.test(p),
+    '==> AND IT DOES NOT DATE THE TRANSITION A SECOND TIME. <== The closing sentence stamps '
+    + `the transition with the end of the RECORD, and Ophelia printed two dates for it. Got: ${p}`);
 }
 
 /* ------------------------------------------------------------------------- */

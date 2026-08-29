@@ -75,6 +75,7 @@ const eq = (what, got, want) => ok(
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts, rankInSeason } = await import('../lib/season-facts.js');
 const { rankingsFileName } = await import('../lib/rankings.js');
+const { landfallFileName, placesFileName } = await import('../lib/seasons-sidecar.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
 /* ==> TWO MODULES BEHIND ONE HANDLE, BECAUSE THE RANK SECTIONS MOVED AND THE
@@ -341,10 +342,14 @@ function mount({
   /* ==> THE PLACE NAME, WHICH IS WHAT AARON WENT LOOKING FOR ON GLASS AND DID
    * NOT FIND. <== §57.40a. The names arrive from the places sidecar, aligned by
    * index against the COMPUTED landfall list. */
+  /* ==> BOTH NAMES ARE BUILT RATHER THAN TYPED. <== §57.7c bumped both schema
+   * versions and this suite went red on two hand-spelled filenames. */
+  const idx2 = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
+  const rev2 = idx2.basins.atlantic.revision;
   const marks = JSON.parse(readFileSync(
-    join(ROOT, 'seasons', 'data', 'atlantic-landfalls-02272026.json'), 'utf8')).storms;
+    join(ROOT, 'seasons', 'data', landfallFileName('atlantic', rev2)), 'utf8')).storms;
   const placeFile = JSON.parse(readFileSync(
-    join(ROOT, 'seasons', 'data', 'atlantic-places-02272026.json'), 'utf8')).storms;
+    join(ROOT, 'seasons', 'data', placesFileName('atlantic', rev2)), 'utf8')).storms;
   const withMarks = { ...katrina, landfallsComputed: marks.AL122005 };
   const computed = stormFacts(withMarks);
   const named = M.landfallsHtml(computed, 'imperial', {

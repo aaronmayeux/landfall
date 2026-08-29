@@ -259,7 +259,14 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
       windWords(lf.windKt, system),
       Number.isFinite(lf.pressureMb) ? formatPressure(lf.pressureMb) : null,
     ].filter(Boolean);
-    const catRaw = lf.category != null ? categoryShortLabel(lf.category, 'tropical', null) : null;
+    /* ==> THE NATURE CARRIED ON THE ENTRY, NOT AN ASSUMED `tropical`. <==
+     * §57.7c. A post-tropical landfall has no Saffir-Simpson number by design,
+     * and hard-coding `tropical` here would have printed a bare dash for it —
+     * which reads as "no data" for a storm we know came ashore at 80 mph.
+     * `categoryShortLabel` already speaks this vocabulary, so Sandy's New
+     * Jersey row says `Post-Trop` in the same words the live storm list uses
+     * rather than in a second one invented here. */
+    const catRaw = categoryShortLabel(lf.category ?? null, lf.nature || 'tropical', null);
     const cat = catRaw && catRaw !== '—' ? catRaw : null;
     return `
       <li class="season-landfall">
