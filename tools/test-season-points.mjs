@@ -48,8 +48,9 @@ const eq = (what, got, want) => ok(
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { stormDisplayName } = await import('../lib/season-names.js');
+const { palette } = await import('../config/theme.js');
 const {
-  CATEGORY_COLOR, PREGENESIS_COLOR, ARCHIVE_GEO, STORM_GEO,
+  CATEGORY_COLOR, ARCHIVE_GEO, STORM_GEO,
 } = await import('../config/tokens.js');
 
 /* Every Saffir-Simpson hue, so a non-cyclone dot can be asserted to wear NONE
@@ -128,7 +129,16 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
    * point of reading the same tokens is that the two globes cannot drift, so
    * this asserts the tokens themselves rather than the numbers they hold. */
   const fix = map.layer('season-point-fix').paint;
-  eq('a fix is a forecast dot\'s radius', fix['circle-radius'], STORM_GEO.pointRadius);
+  /* ==> A CYCLONE'S FIX IS STILL EXACTLY A FORECAST DOT. <== §57.7g added a
+   * second, smaller radius for a system that was never a storm. The token
+   * identity this assertion exists to protect is the DEFAULT arm — if that ever
+   * stops being `pointRadius` the two globes have drifted, whatever the other
+   * arm says. */
+  eq('a fix is a forecast dot\'s radius', fix['circle-radius'], [
+    'case', ['get', '_small'], ARCHIVE_GEO.remnantPointRadius, STORM_GEO.pointRadius,
+  ]);
+  ok('and the expression reads feature data only, never global state — rule 1b',
+    !JSON.stringify(fix['circle-radius']).includes('global-state'));
   eq('and its ring widens on the earliest point, the same way and by the same '
     + 'amount', fix['circle-stroke-width'],
   ['case', ['get', '_first'], STORM_GEO.pointStrokeWidthFirst, STORM_GEO.pointStrokeWidth]);
@@ -376,26 +386,34 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
   const stillTs = __internals.gradeAt(45, 'TS', born, 4);
   const nowDb = __internals.gradeAt(45, 'DB', born, 5);
   eq('at 45 kt as a TS she is a tropical storm', stillTs.code, 'TS');
-  eq('==> AT THE SAME 45 kt AS A DB SHE IS NOT. <== The wind is identical and '
+  eq('==> AT THE SAME 45 kt AS A DB SHE IS BLANK. <== The wind is identical and '
     + 'the answer is different, which is the whole point',
-  nowDb.code, 'DB');
+  nowDb.code, '');
   eq('and she is graded remnant rather than tropical', nowDb.nature, 'remnant');
   ok('so the two dots are not the same colour', stillTs.color !== nowDb.color);
-  eq('the disturbance takes the globe\u2019s quiet pre-genesis hue',
-    nowDb.color, PREGENESIS_COLOR);
+  eq('==> THE DISTURBANCE TAKES THE ENDED-STORM GREY. <== \u00a757.7g, Aaron on '
+    + 'glass: the teal read too close to the TD blue and the brick read as a '
+    + 'strong storm. Neither system has a severity to claim',
+  nowDb.color, palette().stormEnded);
+  ok('and it draws small, which is what separates it from a post-tropical dot',
+    nowDb.small === true);
 
   /* ==> A `LO` AFTER THE CYCLONE PHASE IS POST-TROPICAL AND STAYS LOUD. <==
    * Sandy approaching New Jersey must not go quiet; she was still lethal. */
   const tail = __internals.gradeAt(25, 'LO', born, 7);
   eq('a low AFTER the storm was a cyclone is post-tropical', tail.nature, 'post-tropical');
-  ok('and it does NOT take the quiet hue', tail.color !== PREGENESIS_COLOR);
+  eq('it is the same grey as a remnant', tail.color, palette().stormEnded);
+  ok('==> AND IT DRAWS FULL SIZE, WHICH IS THE WHOLE SEPARATION. <== Sandy '
+    + 'crossed New Jersey at 80 kt as an EX; a 25 kt wave drifted the '
+    + 'mid-Atlantic. One grey, two sizes',
+  tail.small === false);
   eq('and it carries the record\u2019s own letters', tail.code, 'LO');
 
   /* The identical code BEFORE the storm ever formed is the other answer, and
    * this is the pair that proves the rule is about sequence rather than code. */
   const preGenesis = __internals.gradeAt(25, 'LO', born, 1);
   eq('the same LO before it was ever a cyclone is a remnant', preGenesis.nature, 'remnant');
-  eq('and takes the quiet hue', preGenesis.color, PREGENESIS_COLOR);
+  ok('and draws small and blank', preGenesis.small === true && preGenesis.code === '');
 
   /* ==> NO SAFFIR-SIMPSON NUMBER ON ANYTHING THAT IS NOT A CYCLONE. <== 687
    * fixes in the archive wore one before this, on `EX` and `LO` rows. That is
@@ -412,13 +430,15 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
    * the globe. */
   const feats = __internals.pointsForStorm(beryl, true);
   const codes = feats.map((f) => f.properties._code);
-  eq('through the builder her four dots read TS, DB, DB, LO',
-    codes.join(','), 'TS,DB,DB,LO');
+  eq('through the builder her four dots read TS, blank, blank, LO',
+    codes.join('|'), 'TS|||LO');
+  eq('and the two disturbances are the small ones',
+    feats.map((f) => (f.properties._small ? 's' : 'L')).join(''), 'LssL');
 
   /* A status the record does not carry today must not overflow the circle.
    * `lib/hurdat.js` passes the column through unvalidated on purpose. */
   eq('a three-letter code is dropped rather than truncated to a wrong label',
-    __internals.gradeAt(30, 'PTC', born, 7).code, '');
+    __internals.gradeAt(30, 'PTX', born, 7).code, '');
   eq('and an absent status is simply blank',
     __internals.gradeAt(30, null, born, 7).code, '');
 }
