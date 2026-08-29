@@ -407,15 +407,18 @@ NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
 (§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
 (§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)** and **Tier 1
-item 1, distance travelled (§57.45)**. **Read those six, not this.** Tier 2
-item 1 is done and deleted from §57.42; six Tier 1 items and four Tier 2 items
-are untouched.
+item 1, distance travelled (§57.45, ranked in §57.46)**. **Read those six, not
+this.** Tier 2 item 1 is done and deleted from §57.42; six Tier 1 items and
+four Tier 2 items are untouched.
 
 **==> THE SIX REMAINING TIER 1 ITEMS ARE ALL CHEAPER THAN THEY WERE. <==**
 Items 4, 5, 6, 7, 8 and 10 each add one fact to the panel. **Any of them
 added to `RANK_STATS` gets an archive-wide rank for free** — one table entry
-rather than a feature. `SEASONS.rankingsMaxRows` is deliberately in the way so
-a seventh rank is a glass call rather than a free addition.
+rather than a feature. `SEASONS.rankingsMaxRows` is 7 and deliberately in the
+way, so an EIGHTH rank is a glass call rather than a free addition. **And a
+statistic printed in the reader's units costs two entries rather than one**
+(§57.46), plus a `RANKINGS_SCHEMA` bump so the new table actually reaches a
+phone (§57.47).
 
 **==> AND ITEM 7 IS NOT THE CHEAP ONE IT LOOKS LIKE. <==** Northernmost and
 southernmost reach are free arithmetic, but *where it died* would print bare
@@ -423,50 +426,6 @@ coordinates — the exact fault glass sent back on the `Landfalls` list — and
 §57.40a's places sidecar names only genesis and landfalls. Naming a death
 point is a runner pass, which moves item 7 out of Tier 1 in everything but the
 table it sits in.
-
-**==> ITEM 1 IS BUILT AND SHIPPED. NOT YET SEEN ON GLASS. <==**
-`How it moved` now opens with the length of the track, and with a second row
-naming the part covered as a tropical cyclone when the two differ. **§57.45 is
-the as-built account — read that, not this.** It holds the measured 84,365
-legs behind the no-cap decision, the three storms the record never moves, and
-the mutation that found the hole.
-
-**GLASS, and the first is the only one that is not cosmetic:**
-
-1. **Open Harvey 2017.** He should read `Distance travelled 5,006 mi` with
-   `As a tropical cyclone 2,644 mi` under it, and a sentence explaining that
-   the gap is ground he covered as a wave. **The question is whether two
-   distance figures read as one fact at two sizes or as a contradiction** —
-   this is the same risk §57.44's two rank sections carried and it is the one
-   thing in this pass that could come back wrong.
-2. **Open Katrina.** She should show ONE distance row, `2,106 mi`, and no
-   second one — she was a cyclone for 92.2% of her track, just above the
-   threshold. If the second row is there, the constant is not reaching the
-   view.
-3. **Switch units in Settings and come back.** Katrina should read `3,388 km`.
-   Aaron asked for this explicitly on 2026-08-29; it goes through
-   `formatDistance` and the preference is resolved per render, so it should
-   change without the archive being re-entered.
-4. **The section is now four rows on some storms and two on others.** Whether
-   `How it moved` earns that at 390px is the judgement call.
-
-**==> AND ONE FAULT IT EXPOSED WAS ALREADY ON `main`. <==** Three storms —
-AL051851, AL031857, AL041864 — have been printing `Fastest 0 mph` since
-§57.43, which put its floor on the slowest row alone. Fixed here; both speed
-rows now drop and a sentence replaces them. **Nobody had seen it because
-nobody opens 1857, and it only became visible when the distance row above it
-started saying the opposite.** A wrong figure alone reads as a figure; the
-same figure beside a contradicting one reads as a fault. There is no glass
-call in it — no fixture reaches those storms and no real season file does
-either.
-
-**==> `ui/season-detail-markup.js` CROSSED §12's CEILING AND THE CUT WAS TAKEN
-IN THE SAME PASS. <==** 759 down to 646, with `ui/season-markup-bits.js` at
-154 taking `esc`, the four small formatters, `rowsHtml` and `absenceHtml`. No
-behaviour change, so a break can only be the move. **`tools/test-loading-dots.mjs`
-went red on it and was right to** — `absenceHtml` is the panel's route onto
-`dotted()` and the gate was reading the file it had left. Both of its rules
-followed the function and both were re-verified by mutation.
 
 **==> ITEM 11 IS BUILT AND CONFIRMED ON GLASS, 2026-08-29. AARON: "LOOKS
 GREAT." NOTHING HERE IS WAITING ON HIM. <==** Every figure on the archive's
@@ -487,53 +446,13 @@ scrolls. Measured off a real render at phone width, not estimated. **If it ever
 reads as too much, the lever is shortening the basin clause**, not moving the
 section: the placement is settled by acceptance.
 
-**==> THE DISTANCE RANK SHIPPED AND DID NOT REACH THE PHONE, AND THE CAUSE WAS
-THE FILENAME. <==** Aaron, 2026-08-29, on Sandy: six rows in `Where it ranks`,
-no distance. **The rankings file is `immutable` for a year and its name was
-built out of NOAA's revisions alone**, so changing its CONTENTS left the URL
-identical and every returning phone kept the six-statistic table. §57.44 named
-this failure for the case of NOAA revising a basin and never considered our own
-code changing the output. `RANKINGS_SCHEMA` is the other half of the name now
-(`seasons/data/rankings-v2-02272026.json`) and **§57.47 is the whole account.**
+**==> THE TWO OTHER GENERATED SIDECARS CARRY §57.47's FAULT AND IT IS NOT FIXED.
+<==** `atlantic-landfalls-<revision>.json` and `atlantic-places-<revision>.json`
+are named from NOAA's revision alone, under the same `immutable` rule that let a
+stale rankings table reach Aaron's phone. Neither has bitten because neither has
+changed shape since it shipped. **Do it before either gains a field, not after**
+— the symptom is a screen that looks right. §57.47 is the account.
 
-**==> AND THE TWO OTHER GENERATED SIDECARS HAVE THE SAME FAULT, VERIFIED, NOT
-YET FIXED. <==** `atlantic-landfalls-<revision>.json` and
-`atlantic-places-<revision>.json` are both revision-only under the same
-`immutable` rule. Neither has bitten because neither has changed shape since it
-shipped. **Do it before either gains a field, not after** — the symptom is a
-screen that looks right.
-
-**==> DISTANCE TRAVELLED IS THE SEVENTH RANK. SHIPPED, AND THE FIRST DEPLOY OF
-IT NEVER REACHED GLASS — SEE ABOVE. <==** Aaron's call 2026-08-29, straight after §57.45. `Where it ranks`
-carries *"135th longest track in the Atlantic, 148th of 3,231 overall"* and
-`rankingsMaxRows` moved 6 to 7, which is the decision that constant existed to
-force. **§57.46 is the as-built account — read that, not this.**
-
-**GLASS, and the first is the only one that is not cosmetic:**
-
-1. **Switch units in Settings and watch the rank row, not just the figure.**
-   Distance ranks against two ladders because a rung has to be the number the
-   panel prints and `formatDistance` prints two. Sandy 2012 is the storm where
-   it shows: **609th in the Atlantic in miles, 610th in kilometres.** Anything
-   else means the wrong ladder is being read.
-2. **Seven rows in `Where it ranks` at 390px.** §57.44 already recorded that
-   each row wraps to three lines on a phone and that the section is the
-   tallest on the panel and open by default. This adds a seventh. **If it is
-   too much, the lever is still shortening the basin clause**, not moving the
-   section.
-3. **`Distance travelled` now appears twice on one panel** — as a figure under
-   `How it moved` and as a rank under `Where it ranks`. Whether that reads as
-   the same fact placed, or as a repeat, is the judgement.
-
-**==> AND ITS COST IS MEASURED AND WORTH A DECISION. <== The rankings file went
-from 3,846 to 26,297 bytes gzipped, 6.8x.** Distance is near-continuous —
-2,236 distinct mile rungs against **31** distinct peak-wind values across the
-whole archive — so its ladder approaches the size of the archive itself. It
-still loads once on the first year opened and is `immutable` for a year, and
-the places sidecar beside it is 38.5 KB. **Nothing is blocked on this.** If it
-is ever too much, §57.46 names the lever: delta-encoding the values arrays, no
-honesty cost. **Coarsening the rung was considered and rejected** — it would
-falsify a sentence already on that section.
 
 **==> AND ONE ANSWER IS WANTED BEFORE STEP 13. <== The archive wind rank is
 honest today because both basins are NHC's, so every wind is a one-minute

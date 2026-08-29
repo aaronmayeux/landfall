@@ -6213,7 +6213,19 @@ widened to search two files — **an assertion that searches two files passes
 when the wrong one is right** — and both were re-verified by mutation
 afterwards.
 
-#### Not built, and it is a glass call
+#### Judged on glass, 2026-08-29
+
+**Aaron: "works".** Confirmed on a phone with nothing sent back: the distance
+row on Harvey with its second figure and the sentence explaining the gap,
+Katrina at one row, and the units following the Settings preference.
+
+**==> THE TWO-FIGURE ROW WAS THE RISK IN THIS PASS AND IT WAS ACCEPTED. <==**
+It was named in writing before glass rather than discovered after: two
+distances on one storm could have read as a contradiction rather than as one
+fact at two sizes. It reads as the second. **`trackDistanceCycloneShareMax` is
+settled by acceptance at 0.9 and should not be reopened without new evidence.**
+
+#### Then ranked, and it is no longer a glass call
 
 **Distance travelled is the strongest remaining candidate for an archive-wide
 rank** — Faith 1966 leads at 9,251 nm, and §57.44's `RANK_STATS` would take it
@@ -6336,6 +6348,19 @@ number is the only thing on screen that differs.
 statistic printed a third way needs a third"*. It went red the moment this
 landed. Four now, and the tripwire moved with it rather than being deleted.
 
+#### Judged on glass, 2026-08-30
+
+**Aaron: "works".** Confirmed on a phone after §57.47 unblocked the deploy:
+seven rows in `Where it ranks`, and Sandy's distance rank following the units
+preference from 609th to 610th.
+
+**==> SEVEN ROWS AT 390px IS SETTLED BY ACCEPTANCE, AND SO IS THE FIGURE
+APPEARING TWICE ON ONE PANEL. <==** Both were named as risks before glass.
+`Where it ranks` was already the tallest section on the panel and open by
+default (§57.44), and this made it taller; `Distance travelled` now appears
+under `How it moved` as a figure and here as a rank. Neither came back. **An
+eighth rank is still a glass call** — `rankingsMaxRows` is what makes it one.
+
 ### 57.47 The rankings file needs a version of its own — as built
 
 **Found on glass, 2026-08-29.** Aaron opened Sandy after §57.46 deployed and
@@ -6391,6 +6416,13 @@ from the filename goes red; leaving it at `v1` while the shape has moved goes
 red, because the committed table and the name the code derives no longer agree.
 That second one is the forgotten-bump case, which is the way this rule will
 actually be broken.
+
+#### Confirmed on glass, 2026-08-30
+
+**Aaron: "works".** The distance rank reached the phone on the first load after
+this shipped, which is the only proof this section can have: the fault it fixes
+is invisible from the sandbox and invisible in the deploy. **A successful build
+was never the question — a successful FETCH was.**
 
 #### What this says about the next artifact
 
