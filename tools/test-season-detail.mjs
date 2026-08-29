@@ -104,10 +104,24 @@ const settle = () => new Promise((r) => setTimeout(r, 0));
  * `e.target.closest(...)` out of the event, so `press` fires a real event with
  * a real target rather than reaching past the view and calling its handler.
  */
-function mount({ storms, loadReport, units = () => 'imperial', onOpen } = {}) {
+/** The shipped ranking table, or null when it has not been built. §57.44. */
+const RANK_TABLE = (() => {
+  try { return JSON.parse(readFileSync(join(ROOT, 'seasons', 'data', 'rankings-02272026.json'), 'utf8')); }
+  catch { return null; }
+})();
+
+function mount({
+  storms, loadReport, units = () => 'imperial', onOpen,
+  /* ==> DEFAULTS TO NO TABLE, WHICH IS THE STATE EVERY EXISTING CASE HERE WAS
+   * WRITTEN AGAINST. <== `Where it ranks` then renders nothing at all, which
+   * is the §57.44 behaviour those cases should keep exercising. The one case
+   * that cares about the section passes the real table in. */
+  archive = () => ({ table: null, basin: null }),
+} = {}) {
   const view = createSeasonDetailView({
     entries: () => (storms || []).map(entryFor),
     loadReport: loadReport || (async () => ({ state: 'none' })),
+    archive,
     units,
     onOpen,
   });
@@ -779,6 +793,106 @@ function mount({ storms, loadReport, units = () => 'imperial', onOpen } = {}) {
     + 'NO EMPTY CELL. <== §57.25, extended to everything §57.43 added',
   !everything.includes('>\u2014<') && !everything.includes('\u2014</dd>')
     && !/<dd>\s*<\/dd>/.test(everything));
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. THE SECTIONS FOLD, AND THE ORDER PUTS THE COMPARISON FIRST — Aaron's
+ *    call 2026-08-29
+ * ------------------------------------------------------------------------ */
+{
+  const p = mount({
+    storms: atl2005,
+    loadReport: async () => ({ state: 'none' }),
+    archive: () => ({ table: RANK_TABLE, basin: 'atlantic' }),
+  });
+  p.view.onEnter('AL122005');
+  await settle();
+
+  ok('the archive ranking section needs its table to draw at all, and has one here',
+    RANK_TABLE !== null && p.html().includes('data-section="rank-archive"'));
+
+  /* ==> BOTH RANK SECTIONS SIT ABOVE `Strongest`. <== The reader is given the
+   * comparison before the storm's own numbers, so a peak wind arrives already
+   * placed. The two are moved TOGETHER because they answer one question at two
+   * sizes (§57.44); splitting them leaves the wide one orphaned mid-panel with
+   * nothing leading into it. */
+  const order = (id) => p.html().indexOf(`data-section="${id}"`);
+  ok('`In its season` comes before `Strongest`',
+    order('rank-season') !== -1 && order('rank-season') < order('peak'));
+  ok('and `Where it ranks` stays directly with it, narrow comparison then wide',
+    order('rank-archive') > order('rank-season') && order('rank-archive') < order('peak'));
+  ok('everything else keeps its order — life, landfalls, change, movement',
+    order('life') < order('landfalls') && order('landfalls') < order('change')
+    && order('change') < order('movement'));
+
+  /* ==> THE HEAD IS A REAL BUTTON, WHICH IS WHAT BUYS THE KEYBOARD. <== §13.
+   * A `<div>` with a click handler is unreachable by Tab and does nothing on
+   * Enter, and this panel rendered exactly that until now. Nothing about the
+   * appearance changed — `ui/panels.css` has styled `.detail-section-head` as
+   * a button all along and this panel was only ever getting the type rules. */
+  ok('every section head is a <button>, not a div with a click handler',
+    !/<div class="detail-section-head"/.test(p.html())
+    && /<button class="detail-section-head" type="button"/.test(p.html()));
+  ok('and each one announces its state to a screen reader',
+    p.html().includes('aria-expanded="true"'));
+  ok('the chevron is hidden from the reader, being decoration',
+    p.html().includes('<span class="detail-chevron" aria-hidden="true">'));
+  ok('nothing starts folded — an archive storm is opened to be read',
+    !p.html().includes('data-collapsed="true"'));
+
+  /* Pressing a head folds it, and pressing again unfolds it. */
+  p.press('.detail-section[data-section="peak"] .detail-section-head');
+  const shut = p.body().querySelector('.detail-section[data-section="peak"]');
+  ok('pressing a head folds that section',
+    shut && shut.dataset.collapsed === 'true');
+  ok('and says so to a screen reader',
+    p.body().querySelector('.detail-section[data-section="peak"] .detail-section-head')
+      .attrs['aria-expanded'] === 'false');
+  ok('==> AND ONLY THAT SECTION. <== Folding one must not fold its neighbours',
+    p.body().querySelector('.detail-section[data-section="life"]').dataset.collapsed !== 'true');
+
+  p.press('.detail-section[data-section="peak"] .detail-section-head');
+  ok('pressing it again unfolds it',
+    p.body().querySelector('.detail-section[data-section="peak"]')
+      .dataset.collapsed !== 'true');
+}
+
+/* ==> A FOLD MUST SURVIVE THE REPORT ARRIVING, AND THIS IS THE SILENT FAILURE.
+ * <== The panel re-renders when NOAA's report lands, a beat after it paints.
+ * If the fold lived only in the DOM, the reader's section would spring open
+ * under them a second after they closed it — and only on the storms that have
+ * a report, which is the half of the archive nobody would test. */
+{
+  let release;
+  const held = new Promise((r) => { release = r; });
+  const p = mount({
+    storms: atl2005,
+    loadReport: async () => { await held; return { state: 'none' }; },
+  });
+  p.view.onEnter('AL122005');
+  await settle();
+
+  p.press('.detail-section[data-section="landfalls"] .detail-section-head');
+  ok('a section is folded while the report is still in the air',
+    p.body().querySelector('.detail-section[data-section="landfalls"]')
+      .dataset.collapsed === 'true');
+
+  release();
+  await settle();
+  ok('==> AND IT IS STILL FOLDED AFTER THE REPORT ARRIVES AND THE PANEL '
+    + 'REDRAWS. <== The state is held in the view, not read back off the DOM',
+  p.body().querySelector('.detail-section[data-section="landfalls"]')
+    .dataset.collapsed === 'true');
+  ok('and the report section itself drew, so the redraw really happened',
+    p.html().includes('data-section="report"'));
+
+  /* ==> BUT IT MUST NOT SURVIVE A SECOND STORM. <== A fold made on Katrina
+   * arriving pre-applied on a storm from 1851 — which has half as many
+   * sections and no reason for any to be shut — would look like a bug. */
+  p.view.onEnter('AL252005');
+  await settle();
+  ok('opening a second storm gives every section back',
+    !p.html().includes('data-collapsed="true"'));
 }
 
 /* ------------------------------------------------------------------------ */

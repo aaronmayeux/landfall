@@ -5882,6 +5882,29 @@ is written into the file rather than assumed by the reader, so the day a scope
 carries mixed averaging periods it says so and the row simply does not appear
 there. **Pressure is unaffected: a millibar is a millibar everywhere.**
 
+**THE TWO RANK SECTIONS SIT ABOVE `Strongest`, AND EVERY SECTION FOLDS.**
+Aaron's call, 2026-08-29, after seeing the panel on glass. The comparison comes
+before the storm's own numbers, so a peak wind arrives already placed rather
+than needing to be carried down the panel to a rank eight sections later.
+**They moved together**: they answer one question at two sizes, and splitting
+them leaves the wide one orphaned mid-panel with nothing leading into it.
+
+**The fold is the live panel's mechanism, unchanged, and no CSS moved.**
+`ui/panels.css` has styled `.detail-section-head` as a button since the live
+panel was built — the 44px target, the chevron, the hover and the focus ring
+are all already in it. **This panel had been rendering a `<div>` into that
+recipe and getting only the type rules**, so its heads were unreachable by Tab
+and did nothing on Enter. A real `<button>` buys all of it back for free.
+
+**The state is held for one storm and is not persisted.** The live panel writes
+a reader's folds to storage because a live storm is one thing they come back to
+over days; an archive storm is opened, read and left. It must survive a
+re-render, though, and that is the silent failure: this panel redraws when
+NOAA's report arrives a beat after it paints, so a fold living only in the DOM
+would spring open under the reader a second after they made it — **and only on
+the storms that have a report**, which is 47% of the archive and the half
+nobody would think to test.
+
 **IT IS ONE SECTION RATHER THAN SIX RANKS GLUED ONTO SIX EXISTING ROWS.** The
 scope sentence would otherwise have to be repeated six times or left off, and
 it is the sentence that stops the whole thing being misread. `Lowest pressure`
