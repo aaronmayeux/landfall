@@ -64,14 +64,37 @@ export function scoreHtml({ score, roster, provisional, stale, unreadable }) {
    * called Landfall, and `0` on that cell reads as "nothing reached land this
    * year" rather than "nobody has marked them yet". Both are six characters on
    * a phone and only one of them is true. The line under the grid is what
-   * turns the dash from a hole into an answer. */
+   * turns the dash from a hole into an answer.
+   *
+   * ==> AND IT COUNTS STORMS THAT CAME ASHORE, NOT TIMES A COAST WAS CROSSED.
+   * §57.39b. <== Aaron on glass, 2026-08-28, on 2020. Both figures are real
+   * and this cell had the other one: 2020 Atlantic is 18 storms and 34
+   * crossings — Laura alone made 7 of them, across Hispaniola, Cuba and
+   * Louisiana. Printed as `34` it sat two lines above `All 18 storms shown`
+   * under the Landfalls filter, and one screen away from the Wall of Years
+   * saying `18 of 31`. One word, three surfaces, two meanings, and nothing on
+   * screen to tell a reader which question was being answered.
+   *
+   * ==> THE APP ALREADY DECIDED WHICH QUESTION, AND THIS CELL HAD NOT HEARD.
+   * <== §57.7a: the wall carried a real crossing count for about a day and
+   * Aaron reverted it on 2026-08-27, because counting crossings turns a season
+   * into a ranking of ARCHIPELAGOS — 1933 topped the board at 41 while a year
+   * that flattened the Gulf coast scored 6. A season's question is how many
+   * storms reached land. How often one particular storm did is a fact about
+   * that storm, and it is on the storm's own row and in its panel.
+   *
+   * ==> SO THE LABEL CHANGES WITH THE NUMBER, AND HAD TO. <== `Landfalls: 18`
+   * would be a worse lie than `Landfalls: 34` — the same word over a figure
+   * that no longer counts landfalls at all. `Came ashore` is the wall's own
+   * wording for the same measurement, so the two screens now agree in words as
+   * well as in arithmetic. */
   const cells = [
     ['Storms', score.storms],
     ['Named', score.named],
     ['Hurricanes', score.hurricanes],
     ['Majors', score.majors],
     ['ACE', Number.isFinite(score.ace) ? score.ace.toFixed(1) : '—'],
-    ['Landfalls', provisional ? '—' : score.landfalls],
+    ['Came ashore', provisional ? '—' : score.stormsWithLandfall],
   ].map(([k, v]) => `
       <div class="seasons-stat">
         <span class="seasons-stat-n">${esc(v)}</span>

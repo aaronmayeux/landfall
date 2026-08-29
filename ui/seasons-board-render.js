@@ -28,7 +28,7 @@
 
 import { basinHasLive } from '../lib/season-years.js';
 import {
-  entriesMatching, filtersFor, filtersHtml, pickerHtml, seasonRosterHtml,
+  entriesMatching, filtersFor, filtersHtml, seasonRosterHtml,
 } from './seasons-board-markup.js';
 import {
   indexFailedHtml, liveDownHtml, scoreHtml, waitingHtml,
@@ -128,11 +128,12 @@ export function createSeasonsBoardRender({
      * inside one reads as a class name to it, and it reported `.basinsIn` and
      * `.basinLabel` as dead CSS. A checker that can be confused by formatting
      * is one whose next real finding gets waved through as noise. */
-    const picker = pickerHtml({
-      years: loading.yearsFor(basin()),
-      year: year(),
-    });
 
+    /* ==> THE YEAR PICKER IS NOT BUILT HERE AND IS NOT IN THE BODY. <==
+     * §57.39a. It is the drawer's heading, a live node owned by
+     * `ui/year-stepper.js` and held by `ui/view-seasons-board.js`, which
+     * re-renders it alongside this. It is outside the body on purpose — see
+     * the note at the top of `ui/seasons-board-markup.js`. */
     const scorecard = scoreHtml({
       score: s.score,
       roster: s.roster,
@@ -172,9 +173,10 @@ export function createSeasonsBoardRender({
      * reader's thumb is on: replace the whole body and the range input is a new
      * node mid-gesture, so the drag ends on an element that no longer exists.
      * `repaintRoster` swaps the contents of this one div instead, which leaves
-     * the picker, the filters and the slider exactly where they were. */
+     * the filters and the slider exactly where they were. (The year picker is
+     * safe from this either way now — it is the drawer's heading and is not in
+     * this body at all, §57.39a.) */
     body.innerHTML = `
-      ${picker}
       ${liveDown}
       ${scorecard}
       ${filters}

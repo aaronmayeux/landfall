@@ -463,44 +463,82 @@ html[data-seasons="on"] #status {
  * same custom property name `.row-swatch` in the live storm list already uses.
  * ------------------------------------------------------------------------- */
 
-.seasons-picker {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-snug);
-  margin-bottom: var(--space-base);
-}
+/* ==> THE YEAR STEPPER IS A PINNED ROW UNDER THE HEADER, SHAPED LIKE THE LIVE
+   ONE. <== §57.39a. It used to be a full-width block at the top of the
+   SCROLLER: a bordered `−` box against the sheet's left edge, `+` against the
+   right, and the year between them — one line under a header that already said
+   the same four digits. Aaron on glass 2026-08-28, pointing at the live storm
+   drawer and asking for that shape instead.
 
+   THREE THINGS ARE LOAD-BEARING HERE.
+
+   PINNED. `flex: 0 0 auto` outside `.drawer-body`, so it holds still while the
+   roster scrolls under it. This is the one control on the screen a reader
+   presses repeatedly and it must not have to be hunted for between presses —
+   the same complaint §57.21b item 1 answered when the sheet was resizing.
+
+   TIGHT AND CENTRED. `ui/panels.css`'s `.storm-step` block records why: buttons
+   on the outer edges land under the Back chevron and the close X, and a
+   mis-aimed press there dismisses the panel instead of stepping. Clustered in
+   the middle they are clear of both.
+
+   BORDERLESS. In the old block each button was a framed box, which is why they
+   read as the loudest thing on the sheet. Bare glyphs in muted ink, exactly
+   like the live chevrons.
+
+   TWO SMALL BLOCKS RATHER THAN ONE SHARED ONE, deliberately: `.storm-step` is
+   a live-drawer control on 30 lines across 9 files and confirmed on glass, and
+   renaming it to share eleven lines of shape with this would be churn on
+   something working. Each block points at the other; if a third stepper ever
+   appears, extract then. */
 .seasons-year {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: var(--space-snug);
+  justify-content: center;
+  gap: var(--space-tight);
+  border-bottom: 1px solid var(--glass-border);
 }
 
-/* Both step buttons clear the touch minimum on their own, so the row works by
-   thumb without the sheet growing a special case (§13). */
+/* Square at the full touch target on both axes (§17). */
 .seasons-step {
-  min-width: var(--touch-target);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
   height: var(--touch-target);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  background: var(--glass-raised);
-  color: var(--text-primary);
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
   font-size: var(--type-title);
   line-height: 1;
   cursor: pointer;
 }
 
+/* Disabled at the ends of the record rather than hidden (§7) — one end always
+   is, since 1851 has no earlier Atlantic season. */
 .seasons-step:disabled { opacity: 0.5; cursor: default; }
 
-/* The year the stepper is sitting on. A span rather than a control: it is not
-   a target, and the drawer's heading says the same four digits — see
-   `pickerHtml` for why the repetition earns its place. `tabular-nums` so the
-   digits do not shuffle sideways as the year steps. */
+@media (hover: hover) {
+  .seasons-step:not(:disabled):hover { color: var(--text-primary); }
+}
+
+/* The year the stepper is sitting on. A step down from the header's title so
+   the two lines read as basin-then-year rather than as two titles arguing —
+   the same relationship `KARINA` and `1 of 7` have in the live drawer — but in
+   primary ink rather than muted, because unlike a position the year is the
+   thing the reader came for.
+
+   `tabular-nums` and a fixed floor so the pair does not shift as the digits
+   change: a stepper whose target moves as you step is one you re-aim at every
+   press. `min-width` rather than a width, so the "No season" fallback is not
+   clipped. */
 .seasons-year-now {
-  flex: 1 1 auto;
-  min-width: 0;
+  min-width: 5.5em;
   text-align: center;
-  font-size: var(--type-title);
+  font-size: var(--type-lead);
   font-variant-numeric: tabular-nums;
   color: var(--text-primary);
 }

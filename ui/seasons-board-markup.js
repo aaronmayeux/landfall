@@ -172,56 +172,30 @@ export const displayName = stormDisplayName;
  * THE PICKER
  * ------------------------------------------------------------------------- */
 
-/**
- * Two step buttons and the year between them.
+/* ==> THE YEAR PICKER IS NOT IN THIS FILE ANY MORE. <== §57.39a. It is the
+ * drawer's HEADING now, built by `ui/year-stepper.js` as a live node rather
+ * than as a string of markup, and the row it used to occupy at the top of the
+ * body is deleted. Two reasons, both from glass on 2026-08-28: the year was
+ * printed twice one line apart (`pickerHtml` used to argue that repetition
+ * earned its place, and it did not), and the two buttons sat directly under
+ * the Back chevron and the close X, which is the mis-press fault
+ * `ui/storm-stepper.js` was rebuilt to escape in the live drawers.
  *
- * ==> THE 175-YEAR `<select>` IS GONE AND THE WALL REPLACED IT. <== §57.36.
- * There is one way into a year now and it is the Wall of Years, so a second
- * control listing every season would be a second front door — and two doors to
- * one place drift apart the moment either grows a filter. What is left is the
- * NEIGHBOURS: stepping from 2005 to 2004 is a different act from choosing a
- * year out of 175, and it is the one a reader comparing two seasons actually
- * performs.
+ * It could not stay a string. The header is a SIBLING of the body this file
+ * writes into, so it is outside the board's one delegated click listener, and
+ * a control rebuilt on every render would throw away the focus of a reader
+ * walking the record by keyboard. Both of those want a persistent element.
  *
- * ==> THE BASIN SEGMENTS WENT WITH IT, AND FOR A SHARPER REASON. <== The wall
- * owns the basin now. Leaving the switch here as well would mean changing basin
- * with a year already open, and the Pacific record starts in 1949 — so
- * switching to it from 1900 has to silently move the reader to a year they did
- * not ask for. The wall changes basin while nothing is open, where that
- * question cannot arise.
- *
- * ==> THE YEAR IS STILL DRAWN HERE EVEN THOUGH THE DRAWER'S HEADING SAYS IT.
- * <== Two buttons with a gap between them are two buttons; two buttons either
- * side of `2005` are a stepper. The repetition buys the control its own
- * meaning, and it is the thing that moves when the buttons are pressed —
- * `--seasons-sheet-h` was measured so those buttons hold still while it does
- * (§57.21b item 1).
- */
-export function pickerHtml({ years, year }) {
-  const i = years.indexOf(year);
-
-  /* Older is DOWN the list, so "previous year" is the next index along.
-   * Disabled at the ends rather than hidden — a control that vanishes reads
-   * as a bug (§7). */
-  const older = years[i + 1];
-  const newer = years[i - 1];
-
-  return `
-      <div class="seasons-picker">
-        <div class="seasons-year">
-          <button class="seasons-step" type="button" data-step="older"
-                  aria-label="${older == null ? 'No earlier season' : `Go to ${older}`}"
-                  ${older == null ? 'disabled aria-disabled="true"' : ''}>−</button>
-          <span class="seasons-year-now">${year == null ? '—' : year}</span>
-          <button class="seasons-step" type="button" data-step="newer"
-                  aria-label="${newer == null ? 'No later season' : `Go to ${newer}`}"
-                  ${newer == null ? 'disabled aria-disabled="true"' : ''}>+</button>
-        </div>
-      </div>`;
-}
-
-/* ---------------------------------------------------------------------------
- * THE SCORECARD
+ * ==> WHAT THE OLD COMMENT SAID ABOUT THE 175-YEAR `<select>` AND THE BASIN
+ * SEGMENTS IS STILL TRUE AND STILL LOAD-BEARING. <== §57.36. There is one way
+ * into a year and it is the Wall of Years; a second control listing every
+ * season would be a second front door, and two doors to one place drift apart
+ * the moment either grows a filter. The wall owns the basin for a sharper
+ * reason: changing basin with a year already open has to decide what becomes
+ * of a year the other ocean does not hold, and the Pacific record starts in
+ * 1949. The wall changes it while nothing is open, where that cannot arise.
+ * What is left here is the NEIGHBOURS, which is the move a reader comparing
+ * two seasons actually makes.
  * ------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------------------

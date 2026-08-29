@@ -75,6 +75,7 @@ import { createSeasonsBoardSelection } from './seasons-board-selection.js';
 import { createSeasonsBoardRender } from './seasons-board-render.js';
 import { NEAR_HOME_FILTER, radiusFromValue } from './seasons-near-home.js';
 import { rangeFor } from '../lib/near-home-words.js';
+import { createYearStepper } from './year-stepper.js';
 
 
 /**
@@ -368,10 +369,45 @@ export function createSeasonsBoardView({
     paintCheckAll: paintCheckAllNow,
   });
 
+  /* --- the pinned year row ------------------------------------------------
+   * ==> THE YEAR PICKER IS A PINNED ROW UNDER THE HEADER, NOT A ROW IN THE
+   * SCROLLER. §57.39a. <== `ui/year-stepper.js` carries the whole account of
+   * why, and it is Karina's panel: the header names the basin, this names the
+   * year and changes it. Two things about it belong HERE rather than there:
+   *
+   *   IT IS BUILT ONCE, AT CONSTRUCTION, and attached in `mount`. It has to
+   *   outlive every render — that is the entire reason its two buttons survive
+   *   their own activation — so it genuinely cannot be part of the body's
+   *   `innerHTML` string.
+   *
+   *   IT READS THIS VIEW'S OWN `year`, NOT THE NAVIGATION ARGUMENT. The two
+   *   agree on every ordinary path — the wall passes the year through as the
+   *   arg — but a `+` press changes `year` HERE and only reaches the drawer
+   *   when `onWhere` re-pushes. Reading the argument would leave the row a
+   *   beat behind its own button on the one control a reader uses repeatedly.
+   * ---------------------------------------------------------------------- */
+
+  const yearStep = createYearStepper({
+    years: () => loading.yearsFor(basin),
+    year: () => year,
+    onStep: (next) => {
+      year = next;
+      loadSeasonNow();
+    },
+  });
+
   /* Aliases, for the reason given beside the selection module's: the call
    * sites through this file are the same lines they were, so the move is the
-   * only change in the diff. */
-  const { render, rosterHtml } = painter;
+   * only change in the diff.
+   *
+   * ==> `render` IS NOW BOTH HALVES OF THE SCREEN. <== The body and the
+   * heading are drawn by two different owners and there is exactly one moment
+   * they must agree — a heading reading 2005 over 2006's roster is the
+   * panel-and-globe disagreement §57.21a is careful about everywhere else,
+   * arriving through the header. Wrapping here rather than teaching forty call
+   * sites about a second render keeps that impossible to forget. */
+  const { rosterHtml } = painter;
+  const render = () => { painter.render(); yearStep.render(); };
 
   /* --- input --------------------------------------------------------------
    * ONE DELEGATED LISTENER PER EVENT TYPE, on the scroller, so a wholesale
@@ -380,18 +416,12 @@ export function createSeasonsBoardView({
    * are the same path and none of this branches on device (§13).
    * ---------------------------------------------------------------------- */
 
+  /* ==> THERE IS NO `[data-step]` BRANCH HERE ANY MORE, AND THERE CANNOT BE.
+   * <== §57.39a. The year picker moved into the drawer's header, which is a
+   * SIBLING of this body rather than a child of it, so this listener would
+   * never see the press. The step lives on the stepper's own element instead —
+   * see `yearStep` above. */
   function onClick(e) {
-    const step = e.target.closest('[data-step]');
-    if (step) {
-      const years = loading.yearsFor(basin);
-      const i = years.indexOf(year);
-      const next = step.dataset.step === 'older' ? years[i + 1] : years[i - 1];
-      if (next == null) return;
-      year = next;
-      loadSeasonNow();
-      return;
-    }
-
     const filterBtn = e.target.closest('[data-filter]');
     if (filterBtn) {
       if (filterBtn.dataset.filter === filter) return;
@@ -650,7 +680,40 @@ export function createSeasonsBoardView({
      *  heading on the drawer, which reads as a broken screen rather than as a
      *  missing number. */
     title: 'Past storms',
-    titleFor: (arg) => (Number.isFinite(arg) ? String(arg) : 'Past storms'),
+
+    /** ==> RUNG 3'S HEADING IS THE BASIN, AND THE YEAR IS THE PINNED ROW UNDER
+     *  IT. §57.39a. <== Aaron's call, 2026-08-28, pointing at the live storm
+     *  drawer: `KARINA` in the header, `‹ 1 of 7 ›` on its own line beneath.
+     *  The archive now has the same two lines — `Atlantic`, then `− 2005 +`.
+     *
+     *  ==> IT USED TO BE THE YEAR, AND THAT IS WHAT BROKE. <== §57.39's
+     *  reasoning was sound on its own terms — four digits confirming where the
+     *  reader landed beat a generic noun — but the picker below ALSO drew the
+     *  year, so the sheet printed it twice one line apart at the same size. Of
+     *  the two, the header is the one that gives way: the year has to be
+     *  beside the buttons that change it, and the basin is a fact this drawer
+     *  otherwise never states anywhere.
+     *
+     *  The fallback is the feature's own on-screen name (§57.16a) and it is
+     *  reachable: the index has not landed on the first frame, and `basinLabel`
+     *  cannot name a basin the index has not described yet. An empty heading
+     *  reads as a broken screen rather than as a wait. */
+    titleFor: () => {
+      const label = basin ? seasons.basinLabel(loading.index(), basin) : null;
+      return label || 'Past storms';
+    },
+
+    /** ==> THE BUTTON POINTING BACK HERE NAMES THE YEAR, NOT THE BASIN. <==
+     *  `ui/drawer.js` asks for this before it asks for a title, so a view can
+     *  label itself differently on somebody else's Back button — and here it
+     *  should. What sits on top of this board is a storm's panel, reached from
+     *  a row's chevron, and `‹ 2005` says which roster you are returning to
+     *  where `‹ Atlantic` says only which ocean.
+     *
+     *  Off the navigation ARGUMENT rather than off `year`: this labels a button
+     *  pointing at a view that is not on screen, and the argument is what that
+     *  entry in the stack was opened with. */
+    backLabelFor: (arg) => (Number.isFinite(arg) ? String(arg) : 'Past storms'),
 
     /* ==> THE HEADER'S X IS A MINIMISE CHEVRON HERE, AND NOWHERE ELSE. §57.21b
      * item 8. <== Closing this board does not leave the archive — the globe
@@ -662,6 +725,16 @@ export function createSeasonsBoardView({
       host = el;
       host.innerHTML = '<div class="drawer-body" id="seasons-board-body"></div>';
       bodyEl = host.querySelector('#seasons-board-body');
+      /* ==> PINNED ABOVE THE SCROLLER, NOT INSIDE IT. §57.39a. <== A SIBLING of
+       * the body rather than its first child, which is the same position
+       * `ui/storm-stepper.js` takes in the two live drawers. `.drawer-view` is
+       * a flex column and the body is the only thing that flexes, so anything
+       * prepended here holds still while the roster scrolls under it. That is
+       * the point: this is the one control on the screen a reader presses
+       * repeatedly, and a picker that scrolled away would have to be hunted
+       * for after every step — the same complaint §57.21b item 1 fixed when
+       * the sheet itself was resizing. */
+      host.prepend(yearStep.el);
       bodyEl.addEventListener('click', onClick);
       bodyEl.addEventListener('change', onChange);
       bodyEl.addEventListener('input', onInput);
@@ -708,14 +781,21 @@ export function createSeasonsBoardView({
       filter = door === 'home' ? NEAR_HOME_FILTER : 'all';
     },
 
-    /** ==> FIRST STOP IS THE YEAR STEPPER, AND IT USED TO BE THE 175-YEAR
-     *  `<select>`. <== §57.36 moved choosing a year to the wall, so what is at
-     *  the top of this screen now is the pair of buttons that step to the
-     *  neighbouring seasons. `:not([disabled])` matters at the ends of the
-     *  record: 1851 has no earlier season, so its `−` is disabled, and putting
-     *  focus on a disabled control is putting it nowhere (§13). */
+    /** ==> FIRST STOP IS THE YEAR STEPPER, PINNED ABOVE THE SCROLLER. <==
+     *  §57.36 moved choosing a year to the wall and §57.39a moved what was
+     *  left of the picker out of the body onto its own pinned line, so this no
+     *  longer queries the body — the control is not in it.
+     *
+     *  ==> THE BUTTON JUST PRESSED COMES FIRST. <== A `+` press re-pushes this
+     *  view, and the drawer asks this question on the way back in. Handing
+     *  back the button under the reader's thumb makes walking the record by
+     *  keyboard one press per year; anything else dumps focus at the start of
+     *  the header on every step. `firstEnabled` is the answer for every other
+     *  way in — a row on the wall, a deep link — and it skips a disabled end,
+     *  because 1851 has no `−` and focus on a disabled control is focus
+     *  nowhere (§13). */
     focus() {
-      return bodyEl?.querySelector('.seasons-step:not([disabled])');
+      return yearStep.takeFocus() || yearStep.firstEnabled();
     },
 
     /**
