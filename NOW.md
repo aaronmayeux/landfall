@@ -69,6 +69,49 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> POST-TROPICAL LANDFALLS ARE IN. SHIPPED, NOT YET SEEN ON GLASS, AND THE
+WALL MOVED UNDER IT. <==** Aaron's report, 2026-08-29: Sandy was not listed as
+coming ashore near Atlantic City. She is now, and so are Ophelia on Ireland,
+Lee on Nova Scotia and Fiona on Cape Breton, none of which had a landfall at
+all. **§57.7c is the as-built account with every measured number — read that,
+not this.** The archive went from 1,343 storms ashore to 1,434 and from 2,537
+landfalls to 2,878.
+
+**WHAT TO JUDGE, AND THE FIRST ONE IS THE DECISION RATHER THAN A DETAIL:**
+
+1. **The Wall counts these, so 91 storms moved from "stayed at sea" to "came
+   ashore".** A handful of 1880s seasons now look busier than a reader would
+   expect, because a decayed-but-still-50-kt post-tropical storm crossing
+   Newfoundland is a real crossing nobody ever wrote down. **This was Andy's
+   call to make it one method and one answer everywhere, and it is a glass call
+   that reverses in one predicate.** Sort the wall by `Came ashore` and see
+   whether the early record reads honest or inflated.
+2. **Sandy's panel.** Four landfalls now, the fourth reading
+   `Smithville, New Jersey, United States` with `Post-Trop · 80 mph · 946 mb`.
+   **The question is whether `Post-Trop` reads as plain English.** It is the
+   app's existing vocabulary — the live storm list has said it for months — and
+   it was reused deliberately rather than inventing a second spelling. If it
+   reads as jargon, the fix moves the live list with it and is its own pass.
+3. **Her paragraph.** *"It came ashore four times: Easington, Saint Thomas,
+   Jamaica; El Cobre, Santiago de Cuba, Cuba; Marsh Harbour, Bahamas; and
+   Smithville, New Jersey, United States."* That is four full labels in one
+   sentence, which §57.41 already flagged as the length question. Sandy is now
+   the worst case for it.
+4. **Ophelia 2017 and Lee 2023.** Both read *"by then a post-tropical storm"*
+   where a category would normally go. Does that land as the explanation it is,
+   or as the app hedging.
+5. **No Saffir-Simpson number on a post-tropical landfall, anywhere.** If a
+   `Cat 1` appears beside one, `coastalWeakening` or the markup is grading it
+   from wind again and that is a bug, not a preference.
+
+**THE OLD SIDECAR FILENAMES ARE GONE AND THAT IS THE PART THAT COULD BITE
+SILENTLY.** Both generated sidecars now carry a schema version
+(`seasons/data/atlantic-landfalls-v2-02272026.json`), because `_headers` holds
+`/seasons/data/*` `immutable` and this pass changed their contents without NOAA
+revising anything. **If the archive opens and every landfall list is empty, that
+is a 404 on the new name rather than a rule that stopped working** — check the
+network tab before touching `lib/landfall.js`.
+
 **==> FIVE OF THE SIX ARCHIVE UI FIXES ARE CONFIRMED ON GLASS. <==** Aaron,
 2026-08-28: sliders, the landfall rename, the short asterisk line, the master
 check box and the More filters control all land. They are in §9.1 and need
@@ -446,13 +489,6 @@ scrolls. Measured off a real render at phone width, not estimated. **If it ever
 reads as too much, the lever is shortening the basin clause**, not moving the
 section: the placement is settled by acceptance.
 
-**==> THE TWO OTHER GENERATED SIDECARS CARRY §57.47's FAULT AND IT IS NOT FIXED.
-<==** `atlantic-landfalls-<revision>.json` and `atlantic-places-<revision>.json`
-are named from NOAA's revision alone, under the same `immutable` rule that let a
-stale rankings table reach Aaron's phone. Neither has bitten because neither has
-changed shape since it shipped. **Do it before either gains a field, not after**
-— the symptom is a screen that looks right. §57.47 is the account.
-
 
 **==> AND ONE ANSWER IS WANTED BEFORE STEP 13. <== The archive wind rank is
 honest today because both basins are NHC's, so every wind is a one-minute
@@ -493,9 +529,11 @@ to come back wrong:**
 3. **Does it read as assembled?** The repetitive `It … It … It …` is deliberate
    (§57.41, Aaron's call 2). The question is whether it lands as plain or as
    robotic.
-4. **Sandy.** Open her and check the extratropical sentence reads as an
-   explanation rather than an excuse. She is the storm where a correct rule
-   looks like a bug.
+4. **Sandy.** ==> THIS ITEM WAS ANSWERED AND THE ANSWER WAS THAT THE RULE WAS
+   WRONG. <== It used to say she was "the storm where a correct rule looks like
+   a bug". Aaron opened her on 2026-08-29, saw no Atlantic City landfall, and
+   the sentence being judged was an honest apology for a wrong answer. §57.7c.
+   The sentence is deleted and the landfall is in the list.
 5. **A pre-1900 storm** — 1851's first storm, or Labor Day 1935. Three of the
    six clauses drop out. Does what is left still read as a paragraph or as a
    fragment.

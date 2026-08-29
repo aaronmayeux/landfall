@@ -305,21 +305,29 @@ than about the weather. One method, one answer, every basin and every year.
 
 **How.** `lib/landfall.js` rasterises a coastline into a land mask and walks
 each track, recording every crossing from water to land while the system was a
-cyclone. `tools/seasons-landfall.mjs` runs it on the runner. Nothing reaches a
-phone: the mask is built, used and thrown away inside one job, and what ships
-is the answer.
+cyclone, **or was what a cyclone had turned into (§57.7c)**.
+`tools/seasons-landfall.mjs` runs it on the runner. Nothing reaches a phone: the
+mask is built, used and thrown away inside one job, and what ships is the
+answer.
 
-**The numbers, measured over all 3,266 storms in both basins:**
+**The numbers, measured over all 3,266 storms in both basins, re-measured
+2026-08-29 after §57.7c:**
 
 | | |
 |---|---|
 | storms NOAA marked with any landfall | 839 |
-| storms we find came ashore | **1,343** |
-| landfalls we find | 2,537 |
-| agreement with NOAA, per storm, over the 839 | **98.6%** |
-| NOAA marked and we do not — extratropical at NOAA's own mark | 3 |
-| NOAA marked and we do not — genuine misses | **9** |
-| we mark and NOAA never did | 516 |
+| storms we find came ashore | **1,434** |
+| landfalls we find | 2,878 |
+| of those, post-tropical (§57.7c) | 349 |
+| agreement with NOAA, per storm, over the 839 | **99.0%** |
+| NOAA marked and we do not — extratropical at NOAA's own mark | **0** |
+| NOAA marked and we do not — genuine misses | **8** |
+| we mark and NOAA never did | 603 |
+
+**==> THE PER-STORM METRIC IS RIGHT AND IT IS BLIND IN ONE DIRECTION. <==** It
+is the honest score for the reason given below, and it stays. But a storm that
+came ashore SOMEWHERE ELSE can hide a landfall this code dropped, and for a year
+it hid Sandy's. §57.7c is the account.
 
 **==> WHAT THE SOURCE DATA CANNOT SUPPORT, SO THAT NOTHING BUILT ON THIS
 PRETENDS OTHERWISE. <==**
@@ -333,7 +341,7 @@ PRETENDS OTHERWISE. <==**
   is the one that can be answered well, and it is the one the wall asks.
 - A mask finer than the position error buys nothing. Tested at 0.01°: agreement
   got slightly **worse** and memory quadrupled. 0.02° it is.
-- The 9 genuine misses are at that floor — Alice '54 on Anegada, Andres '97,
+- The 8 genuine misses are at that floor — Alice '54 on Anegada, Andres '97,
   and Walaka's 2018 landfall on French Frigate Shoals, an atoll no global
   polygon set carries.
 
@@ -344,9 +352,13 @@ why. **`map/coastline.js` is NOT the source and must never be** — it is 1:110m
 126 rings, and Barbados is 296 km from its nearest vertex. It is a drawing
 asset and it is correct for drawing.
 
-**Where the answers live.** `seasons/data/<basin>-landfalls-<revision>.json`,
-under `seasons/data/` so it inherits that path's `immutable` header and
-revision-stamped filename rather than needing new rules. One file per basin,
+**Where the answers live.**
+`seasons/data/<basin>-landfalls-<schema>-<revision>.json`, under `seasons/data/`
+so it inherits that path's `immutable` header. **The schema half of the name is
+not decoration** — `immutable` means a file whose contents this repo changes
+without changing its name is served from a browser cache until 2027. §57.47,
+and `lib/seasons-sidecar.js` is the one place both the app and the runner build
+that name. One file per basin,
 36 KB gzipped for the Atlantic, shared by all 175 years. `data/seasons.js`
 attaches it to each storm at the parse boundary and `stormFacts` reads it, so
 the board, the panel, the roster and the globe all get it without any of them
@@ -472,6 +484,126 @@ no test could answer whether that hurt, and it does not — the archive opens an
 scrolls as it did. **So option B, computing landfalls at the edge, is not needed
 and should not be built speculatively.** It stays on record as the fallback if a
 future device says otherwise.
+
+### 57.7c A post-tropical storm still comes ashore
+
+**Aaron, 2026-08-29: Sandy is not listed as having made landfall near Atlantic
+City, and she should be.** He was right, and the reason it happened is worth
+more than the fix.
+
+**WHAT THE RECORD ACTUALLY HOLDS.** Sandy's own row in the shipped 2012 file:
+
+```
+20121029, 2330, L, EX, 39.4N,  74.4W,  70,  945, ...
+```
+
+`L` is NOAA's landfall flag. That position is **4.4 km from Atlantic City**.
+NHC's own report calls it a landfall. The app parsed the record, found the
+crossing with its own coastline walk, and then threw it away, because the
+fourth column reads `EX`.
+
+**§57.7a's rule was "a wave or an extratropical low crossing a coast is not a
+landfall in any sense this app should draw", and that sentence is true about
+an extratropical low and false about Sandy.** She had been a Category 3
+hurricane thirty hours earlier and was still carrying 70 kt when she crossed
+the beach. The rule read as obviously correct and was refusing the single most
+consequential landfall in the modern Atlantic record.
+
+**==> `EX` IS ONE CODE FOR TWO DIFFERENT THINGS, AND THAT IS THE WHOLE
+DIFFICULTY. <==** HURDAT2 spells "post-tropical cyclone at hurricane force over
+New Jersey" and "decayed remnant drifting over Newfoundland five days later"
+with the same two letters. NOAA's prose separates them; the file format does
+not. So the separators have to be measured ones.
+
+**THE RULE, in `lib/landfall.js` `landfallNature()`.** A crossing counts as a
+**post-tropical** landfall when all three hold:
+
+1. the status is in `SEASONS.postTropicalStatuses` (`EX` today; step 13 adds
+   ATCF and IBTrACS spellings),
+2. the interpolated wind at the coast is at least
+   `SEASONS.postTropicalLandfallMinKt` (34 kt, the tropical-storm floor),
+3. the crossing is at or after the system's **first** tropical or subtropical
+   fix.
+
+Condition 3 is about sequence rather than recency, and the anchor is the FIRST
+cyclone fix on purpose. A storm that is an extratropical low on the way in,
+crosses a coast, goes back out and only then becomes tropical has not made a
+post-tropical landfall; seven crossings in the archive are that shape. Anchoring
+on the LAST cyclone fix would pass those same seven and break a storm that
+re-intensifies after transition, which is why a recency window was measured and
+rejected: **any clock cuts a real landfall somewhere.** At 24 hours it drops
+Lee's Nova Scotia landfall, which NOAA itself marks, at +27.6 h.
+
+**==> IT IS LABELLED, NEVER GRADED. <==** A post-tropical landfall carries
+`nature: 'post-tropical'` and `category: null`. That is not a new rule invented
+here — `lib/category.js` has always refused to put a Saffir-Simpson number on a
+system that has lost its tropical structure, and has always kept it visually
+distinct from a system that was never a cyclone at all. Carrying the nature on
+the entry means every surface gets the app's existing vocabulary for free:
+`categoryShortLabel` prints `Post-Trop`, `coastalWeakening` declines to compute
+a category drop, and the storm-life paragraph writes *"by then a post-tropical
+storm"* where it would otherwise have gone silent.
+
+**THE NUMBERS, measured over all 3,266 storms in both basins on 2026-08-29:**
+
+| | before | after |
+|---|---|---|
+| storms that came ashore | 1,343 | **1,434** |
+| landfalls found | 2,537 | **2,878** |
+| of those, post-tropical | 0 | **349**, across 205 storms |
+| agreement with NOAA, per storm, over the 839 NOAA marked | 98.6% | **99.0%** |
+| NOAA marked and we do not | 12 | **8** |
+| of those, extratropical at NOAA's own mark | 3 | **0** |
+| genuine misses at the 0.1° position floor | 9 | 8 |
+| we mark and NOAA never did | 516 | 603 |
+
+**The "deliberate difference" line is now zero, and that is the headline.**
+There is no longer a single storm in 175 years where NOAA published a landfall
+and this app silently declined it. Ophelia on Ireland, Lee on Nova Scotia,
+Fiona on Cape Breton and an unnamed 1880 storm on New England were all showing
+**no landfall at all** and now read correctly. Sandy gains her fourth, named
+`Smithville, New Jersey, United States`, 3 km from the crossing.
+
+**==> §57.7a's OWN SCORE COULD NOT SEE THIS AND THE METRIC IS THE REASON. <==**
+That table counted per STORM, because 600 of NOAA's 1,314 markers sit on water
+and an event-level score measures NOAA's rounding more than it measures this
+code. That is still true and the metric stays. But per-storm scoring means a
+storm that came ashore SOMEWHERE ELSE masks a landfall we dropped: Sandy and
+Fiona both scored as agreements while missing the landfall people remember.
+Only the three storms that ended with an empty list were ever visible. **A
+metric can be the right one and still be blind in a direction nobody named.**
+
+**WHAT DOES NOT COUNT, and it is deliberate.** 52 extratropical crossings fall
+under the wind floor, and 85 more are `LO`, `WV` or `DB` — a low, a wave, a
+disturbance. Those are refused as they always were. Nothing on screen discloses
+them, which is the same silence that existed before this change rather than a
+new one.
+
+**THE APOLOGY SENTENCE IS DELETED.** `lib/season-story.js` used to print *"NOAA
+also marks a landfall for this storm after it had already lost its tropical
+structure … so it is not in the list above"* whenever the case arose. It was an
+honest sentence about a wrong answer. The landfall is in the list now, so the
+sentence would be false rather than apologetic, and it is gone along with the
+`declinedExtratropicalMark` helper that fed it. §12, retire cleanly.
+
+**THE FALLBACK TOOK THE SAME RULE, AND UNTIL THIS IT HAD NO RULE AT ALL.**
+`stormFacts` falls back to NOAA's raw `L` markers when the computed sidecar has
+not arrived, and that path applied no status test whatsoever. So Sandy showed
+her New Jersey landfall when a file failed to load and hid it when the file
+arrived — **the same storm answering two different ways depending on a network
+result.** Both roads call `landfallNature` now.
+
+**THE WALL COUNTS THESE.** A season's `Came ashore` figure and the storm's 0/1
+column include post-tropical landfalls, so 91 storms move from "stayed at sea"
+to "came ashore". One method, one answer, and the panel does the explaining.
+**This is a glass call and it is reversible in one predicate** if a wall full of
+busier-looking 1880s seasons reads wrong.
+
+**AND THE TWO SIDECARS FINALLY GOT THEIR OWN VERSIONS.** §57.47 named this as
+carried-but-unfixed and said to do it before either file gained a field. This is
+that moment: every landfall list grew and every places array grew with it, under
+`_headers`' `immutable` rule. See §57.47.
+
 
 ### 57.8 What HURDAT2 does not contain, at all
 
@@ -6390,6 +6522,30 @@ wrong"**, and for every one of those the answer is yes.
 
 **THE OLD FILE IS DELETED RATHER THAN LEFT.** §12, retire cleanly. Nothing
 computes its name any more, so it is unreachable bytes in the deploy.
+
+**==> AND THE OTHER TWO GENERATED SIDECARS NOW CARRY THE SAME GUARD. CLOSED
+2026-08-29. <==** This section used to end by naming
+`<basin>-landfalls-<revision>.json` and `<basin>-places-<revision>.json` as
+carrying the identical fault unfixed, and saying to do it **before** either file
+gained a field rather than after. §57.7c is that moment: the landfall rule
+changed, every landfall list grew, and every places array grew with it.
+
+**`SEASONS.landfallsSchema` AND `SEASONS.placesSchema` ARE THE OTHER HALF OF
+THOSE NAMES**, both `v2` today, and `lib/seasons-sidecar.js` is the single place
+either name is built. That module exists because the app was spelling these
+inline in `data/seasons.js` while the runner spelled them in `tools/`, and **two
+spellings of one rule is a guard that is decorative rather than real**: bumping
+one side and not the other produces a 404 that `loadLandfalls` swallows into
+`null` by design, which the app then reports honestly as "the sidecar is not on
+screen". Every surface degrades gracefully and nothing anywhere says the deploy
+is broken.
+
+**THE PLACES FILE'S VERSION MOVES WHEN THE LANDFALL RULE MOVES, even though not
+one line of the gazetteer changed.** §57.40a: its `landfalls` array is
+index-aligned against the computed landfall list. A phone pairing a new landfall
+list with an old places file gets a length mismatch, the alignment guard refuses
+the names, and the panel drops silently back to bare coordinates — a degradation
+rather than a wrong answer, which is exactly why nobody would have noticed.
 
 #### Why nothing caught it, and the two gates that do now
 
