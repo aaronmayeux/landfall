@@ -88,37 +88,14 @@ assertion in this repo compares strings that the browser may never finish
 drawing. **Anywhere a number shares a fixed-width column with new content,
 the assertion has to be a measurement.**
 
-**==> THE ARCHIVE DRAWER'S TWO LINES ARE BUILT AND WAITING ON GLASS. <==**
-Aaron, 2026-08-28, pointing at the live storm drawer: the header names the
-BASIN and the year stepper is a pinned row under it, `−  2005  +`, the same
-shape `KARINA` / `‹ 1 of 7 ›` has. The old full-width picker inside the
-scroller is deleted. **§57.39a is the as-built account and holds every measured
-number.**
-
-**And the `Landfalls` cell now counts storms rather than coast crossings** —
-2020 read `34` above a roster saying `All 18 storms shown`. Both figures were
-real; §57.7a had already settled which question a season answers and this cell
-had not heard. It reads `Came ashore`, the wall's own wording. **§57.39b.**
-
-**Aaron confirmed the shape works, 2026-08-28, and found one fault with it: the
-header read `Past storms` until a year was stepped.** Fixed — the board takes
-the drawer's `refreshChrome` and asks for the header back once the basin is
-knowable. §57.39a records why no existing assertion could see it.
-
-**GLASS — three things, and all three are judgements only Aaron can make:**
-
-1. **`Atlantic` appearing on entry rather than after a year step.** The shape
-   itself is confirmed; this is the fix to the one fault glass found.
-2. **Do the borderless `−` and `+` still read as pressable?** They were framed
-   boxes and are now bare glyphs in muted ink, matching the live chevrons.
-   Targets are still 44px; the question is whether they LOOK like targets.
-3. **Does the row hold still while the roster scrolls?** That is the whole
-   reason it is pinned outside the scroller.
-
-**320px was NOT solved and was not the problem it looked like.** The earlier
-measurement — fits at 375+, collides by 11px at 320 — was about putting the
-stepper INSIDE the heading, which is not what got built. On its own line there
-is no collision at any width. Nothing is held here.
+**==> THE ARCHIVE DRAWER'S TWO LINES AND THE LANDFALL CELL ARE CONFIRMED ON
+GLASS, 2026-08-28. AARON: "WORKS GREAT." NOTHING HERE IS WAITING ON HIM. <==**
+The header names the basin, the year stepper is a pinned row under it, and the
+scorecard counts storms that came ashore rather than coast crossings.
+**§57.39a and §57.39b are the as-built account — read those, not this.** They
+hold every measured number, the one fault glass found (the header sat on its
+`Past storms` fallback until a year was stepped), and why no existing assertion
+could see it.
 
 **==> THE WALL OF YEARS IS DONE THROUGH STEP 3. CONFIRMED ON GLASS 2026-08-27.
 AARON: "WORKS GREAT." <==** The wall is the archive's front door, the 175-year
