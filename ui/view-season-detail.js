@@ -42,11 +42,12 @@
  */
 
 import { SEASONS } from '../config/constants.js';
+import { rankInSeason } from '../lib/season-facts.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { storyClauses } from '../lib/season-story.js';
 import {
-  changeHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml, peakHtml,
-  reportHtml, storyHtml, windFieldHtml,
+  changeHtml, headHtml, landfallsHtml, lifeHtml, movementHtml, noStormHtml,
+  peakHtml, reportHtml, seasonRankHtml, storyHtml, windFieldHtml,
 } from './season-detail-markup.js';
 
 /**
@@ -92,6 +93,13 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
 
   function entry() {
     return entryFor(stormId);
+  }
+
+  /** Every storm in the season the board is holding, as facts. The denominator
+   *  behind "3rd strongest of 31" — read fresh on every render for the same
+   *  reason `entries` is a function rather than an array. */
+  function seasonFacts() {
+    return entries().map((e) => e.facts).filter(Boolean);
   }
 
   /* --- sections ---------------------------------------------------------
@@ -152,6 +160,17 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
       ${section('How it changed', changeHtml(facts, system, {
     windowHours: SEASONS.intensificationWindowHours,
   }))}
+      ${section('How it moved', movementHtml(facts, system, {
+    floorKt: SEASONS.trackSpeedFloorKt,
+    maxLegHours: SEASONS.trackSpeedMaxLegHours,
+  }))}
+      ${/* ==> THE RANK IS COMPUTED HERE RATHER THAN CACHED WITH THE FACTS,
+          * BECAUSE IT IS A FACT ABOUT THE SEASON AND THE SEASON IS WHAT THE
+          * BOARD RELOADS. <== `entries()` is a function for exactly this
+          * reason: a rank captured when the panel first painted would go on
+          * describing last year's roster under this year's heading. It is one
+          * pass over at most 31 storms, so rebuilding it per render is free. */
+    section('In its season', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
       ${section('Wind footprint', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}

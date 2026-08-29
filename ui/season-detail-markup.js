@@ -30,7 +30,13 @@
 import { SEASONS } from '../config/constants.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { stormDisplayName } from '../lib/season-names.js';
-import { formatWind, formatPressure } from '../lib/units.js';
+/* ==> THE PROSE CATEGORY LABEL COMES FROM THE STORY FILE RATHER THAN BEING
+ * WRITTEN AGAIN HERE. <== `categoryPhrase` says "a Category 3"; this file's own
+ * `categoryShortLabel` says "Cat 3", which is right for a list row and wrong
+ * inside a sentence. Two spellings of the same grading is how a panel comes to
+ * disagree with its own paragraph four lines further up. */
+import { categoryPhrase } from '../lib/season-story.js';
+import { formatWind, formatPressure, formatSpeed } from '../lib/units.js';
 /* Every "…" in this app pulses through one helper, so a waiting line reads as
  * thinking rather than as a full stop that lost its way.
  * `tools/test-loading-dots.mjs` fails the build on a stray one — it caught this
@@ -114,6 +120,19 @@ export function spanWords(hours) {
 export function windWords(kt, system) {
   if (!Number.isFinite(kt)) return null;
   return `${formatWind(kt, system)} (${Math.round(kt)} kt)`;
+}
+
+/**
+ * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
+ * 13 take `th` while 1, 2 and 3 take `st`, `nd`, `rd`, and a season with 31
+ * storms reaches every one of those cases.
+ */
+export function ordinal(n) {
+  if (!Number.isInteger(n) || n < 1) return null;
+  const teen = n % 100;
+  if (teen >= 11 && teen <= 13) return `${n}th`;
+  const last = n % 10;
+  return `${n}${last === 1 ? 'st' : last === 2 ? 'nd' : last === 3 ? 'rd' : 'th'}`;
 }
 
 /* ---------------------------------------------------------------------------
@@ -442,7 +461,156 @@ export function changeHtml(facts, system, { windowHours }) {
   };
   const ending = ENDINGS[facts?.ending] || null;
 
-  return rowsHtml(rows) + (ending ? absenceHtml(ending) : '');
+  return rowsHtml(rows)
+    + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
+    + (ending ? absenceHtml(ending) : '');
+}
+
+/**
+ * How much the storm gave up between its strongest moment and the coast.
+ * §57.43, `coastalWeakening` in `lib/season-facts.js`.
+ *
+ * ==> IT IS A SENTENCE RATHER THAN A ROW, AND THAT IS BECAUSE IT IS A
+ * COMPARISON. <== `Weakened before landfall — 46 mph` is a figure the reader
+ * then has to reassemble into the thing they actually wanted to know, which is
+ * that a Category 5 arrived as a Category 3. The two numbers only mean
+ * anything next to each other, so they are said next to each other.
+ *
+ * ==> AND ZERO GETS ITS OWN SENTENCE INSTEAD OF BEING DROPPED. <== §57.25 bans
+ * a row reading `0`, because a zero in a value slot is a shrug. But "it came
+ * ashore at its strongest" is not an absence — it is the most alarming thing
+ * this section can say, and it is the case for 703 of the 1,341 storms in the
+ * archive that came ashore at a gradeable strength.
+ *
+ * ==> THE MIDDLE CASE EXISTS BECAUSE A DROP IN WIND IS NOT ALWAYS A DROP IN
+ * CATEGORY. <== 150 kt to 140 kt is ten knots gone and still a Category 5 at
+ * the coast. Naming the same category twice in one sentence reads as a
+ * misprint, so that case states the wind and the surviving category instead.
+ *
+ * @returns {string|null}  a sentence, or null when there is nothing to say
+ */
+export function coastalWeakeningWords(cw, system) {
+  if (!cw || !Number.isFinite(cw.dropKt) || !Number.isFinite(cw.peakWindKt)) return null;
+
+  if (cw.dropKt === 0) {
+    return 'It came ashore at its strongest. It had not weakened at all before it hit.';
+  }
+
+  /* ==> `formatWind` ON A DIFFERENCE, DELIBERATELY. <== Wind is a linear
+   * conversion with no offset, so the gap between two speeds converts exactly
+   * the way the speeds do, and using the same formatter means the figure here
+   * can never disagree with the peak and landfall numbers on the same panel. */
+  const gap = formatWind(cw.dropKt, system);
+  const was = categoryPhrase(cw.peakCategory);
+  const landed = categoryPhrase(cw.landfallCategory);
+
+  /* ==> NO EM DASH ANYWHERE NEAR A WIND FIGURE. <== `lib/units.js` returns a
+   * bare em dash as its MISSING sentinel, so a sentence carrying one
+   * decoratively is a sentence where a failed conversion would hide in plain
+   * sight. `lib/season-story.js` bans the character outright for exactly this
+   * reason and the ban only works if nothing writes one for punctuation. */
+  if (cw.categoriesDropped > 0 && was && landed) {
+    return `It had been ${was} before its hardest landfall and came ashore `
+      + `${landed}, ${gap} weaker.`;
+  }
+  return landed
+    ? `It gave up ${gap} between its strongest point and its hardest landfall, `
+      + `but it was still ${landed} when it came ashore.`
+    : `It gave up ${gap} between its strongest point and its hardest landfall.`;
+}
+
+/**
+ * How fast the centre was travelling, at its quickest and its slowest. §57.43.
+ *
+ * ==> THE SLOW END IS THE HALF WORTH HAVING, WHICH IS THE OPPOSITE OF WHAT THE
+ * SECTION LOOKS LIKE. <== A storm that sprints is a wind story and the peak
+ * figure above already tells it. A storm that crawls ashore is a flood story,
+ * and nothing else on this panel says so — Harvey's reputation is entirely
+ * about a forward speed, not a wind speed.
+ *
+ * ==> THE NOTE UNDER IT IS NOT BOILERPLATE. <== The figures are averages over
+ * a six-hour leg, so "fastest" is the quickest six hours and not a top speed,
+ * and a reader comparing against an advisory's instantaneous "moving NW at 12
+ * mph" is entitled to know which of those they are looking at.
+ */
+export function movementHtml(facts, system, { floorKt, maxLegHours }) {
+  const s = facts?.forwardSpeed;
+  if (!s || !Number.isFinite(s.fastestKt)) {
+    /* No pair of consecutive synoptic fixes, which is 32 storms in the
+     * archive — one observation and then nothing. §57.25 rule 2: name the
+     * reason rather than leaving the section blank. */
+    return absenceHtml('This storm was never seen twice on the six-hourly clock, '
+      + 'so there is no distance between two fixes to measure a speed over.');
+  }
+
+  /* ==> BELOW THE FLOOR IT IS WORDS, NOT A NUMBER, AND THE FLOOR IS THE
+   * RECORD'S OWN PRECISION RATHER THAN A JUDGEMENT. <== Positions are written
+   * to a tenth of a degree, which over six hours is a knot, so anything under
+   * that is indistinguishable from stationary. 100 storms in the archive would
+   * otherwise print `Slowest 0 mph`, which is the dash §57.25 forbids wearing
+   * a number. */
+  const slow = s.slowestKt < floorKt ? 'barely moving' : formatSpeed(s.slowestKt, system);
+
+  /* The leg's START day. A leg spans two stamps and naming both would be three
+   * quarters of a row spent on punctuation; the day it set off is the one a
+   * reader can find on the track. */
+  const rows = [
+    ['Fastest', `${formatSpeed(s.fastestKt, system)} on ${utcDay(s.fastestFromTime)}`],
+    ['Slowest', `${slow} on ${utcDay(s.slowestFromTime)}`],
+  ];
+
+  /* ==> EVERY FIGURE IN THIS SENTENCE INTERPOLATES THE CONSTANT THAT PRODUCED
+   * IT. <== A typed "six hours" beside a `trackSpeedMaxLegHours` somebody later
+   * moves is a sentence that reads perfectly and describes a different
+   * measurement from the one above it. `CLAUDE.md`'s rule, and §57.41 already
+   * paid for breaking it once. */
+  const note = `Measured between the ${maxLegHours}-hourly observations, so each figure `
+    + `is an average over ${maxLegHours} hours rather than a top speed.`
+    + (s.slowestKt < floorKt
+      ? ' Every position in the record is rounded to a tenth of a degree, which over '
+        + `${maxLegHours} hours is about ${floorKt} knot, so a storm slower than that `
+        + 'cannot be told apart from one sitting still.'
+      : '');
+
+  return rowsHtml(rows) + absenceHtml(note);
+}
+
+/**
+ * Where this storm stood among the storms it shared a season with. §57.43.
+ *
+ * ==> RANKS SHARE A PLACE, BECAUSE THE RECORD IS WRITTEN IN FIVE-KNOT STEPS.
+ * <== 54 of the archive's 294 seasons have a tied strongest storm. Printing an
+ * outright winner where two storms drew would be the app stating something the
+ * record does not support, and the reader who looks up the other one finds the
+ * same claim made twice.
+ *
+ * @param {object|null} rank  from `rankInSeason` in `lib/season-facts.js`
+ */
+export function seasonRankHtml(rank) {
+  if (!rank) return '';
+
+  const place = (r, superlative, comparative) => {
+    if (!r || !Number.isInteger(r.rank)) return null;
+    const ord = ordinal(r.rank);
+    const word = r.rank === 1 ? superlative : `${ord} ${comparative}`;
+    /* `tied` counts this storm too, so two storms sharing a place is 2. */
+    const head = r.tied > 1 ? `Tied ${word.charAt(0).toLowerCase()}${word.slice(1)}` : word;
+    return `${head} of ${r.of}`;
+  };
+
+  const rows = [
+    ['Strength', place(rank.strength, 'Strongest', 'strongest')],
+    ['Lifespan', place(rank.lifespan, 'Longest-lived', 'longest-lived')],
+  ];
+
+  /* ==> ONLY SAID WHEN IT IS TRUE OF THIS STORM. <== `rankInSeason` checks the
+   * id, so a season with one major does not put this sentence on the other
+   * twenty storms in it. */
+  const only = rank.onlyMajor
+    ? absenceHtml('It was the only major hurricane of its season.')
+    : '';
+
+  return rowsHtml(rows) + only;
 }
 
 /**

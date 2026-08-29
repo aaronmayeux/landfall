@@ -6731,6 +6731,38 @@ export const SEASONS = Object.freeze({
    *  and the difference between them is the flooding. */
   stallMinHours: 48,
 
+  /* --- How fast it was moving (§57.43, `lib/season-facts.js`) ------------- */
+
+  /** ==> FORWARD SPEED IS MEASURED BETWEEN SYNOPTIC OBSERVATIONS AND NOTHING
+   *  ELSE, AND THIS IS THE CAP THAT ENFORCES IT. <== §57.43.
+   *
+   *  MEASURED over the whole mirrored archive on 2026-08-29, not reasoned:
+   *  70,841 legs between consecutive cyclone-status synoptic fixes, of which
+   *  **70,772 are exactly six hours**. The other 69 are gaps — 63 of them run
+   *  longer than a day, because the storm spent the middle of them as a wave
+   *  or a low and nobody was writing synoptic rows. AL062023 has a 228-hour
+   *  one. An average across a gap like that is not a forward speed; it is the
+   *  straight-line distance between two places the storm happened to be, and
+   *  reporting it as "slowest" would be a measurement of the record's silence.
+   *
+   *  So a leg longer than this is DROPPED rather than divided. Six is the
+   *  file's own clock, and there is nothing between six and twenty-four to
+   *  choose from. */
+  trackSpeedMaxLegHours: 6,
+
+  /** ==> THE SPEED BELOW WHICH THE RECORD CANNOT TELL SLOW FROM STOPPED, AND
+   *  IT IS ARITHMETIC RATHER THAN A CHOICE. <== Every position in the archive
+   *  is written to 0.1° — about 6 nautical miles. Over a six-hour leg that is
+   *  1 knot. A storm reported at 0.4 kt and one genuinely stationary produce
+   *  the same two rows in the file, so any figure under this is precision the
+   *  source does not have.
+   *
+   *  MEASURED 2026-08-29: 185 of 3,234 storms have a slowest leg under 1 kt
+   *  and 100 of them come out at exactly zero. Those hundred would otherwise
+   *  read `Slowest 0 mph`, which is the dashed-row shrug §57.25 forbids
+   *  wearing a number. The panel says the storm was barely moving instead. */
+  trackSpeedFloorKt: 1,
+
   /** ==> THE ARCHIVE'S MIDDLE, FOR THE ONE COMPARISON THE STORY MAKES. <==
    *  §57.41. Hours from a storm's first fix to hurricane strength, median over
    *  every storm first seen BELOW tropical-storm strength — the filter is the
