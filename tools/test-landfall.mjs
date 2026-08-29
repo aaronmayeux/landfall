@@ -19,7 +19,7 @@
  */
 
 import { SEASONS } from '../config/constants.js';
-import { cameAshore, landfallsFor } from '../lib/landfall.js';
+import { cameAshore, landfallNature, landfallsFor } from '../lib/landfall.js';
 import { buildLandMask } from './land-raster.mjs';
 
 let passed = 0;
@@ -166,9 +166,9 @@ eq('no landfall for a track that never touched water first', inland.length, 0);
 /* ==> MUTATION: seeding `wasLand` to false rather than reading the first
  * sample reports a landfall on the first step and this goes red. */
 
-section('8. Only a cyclone comes ashore');
+section('8. A cyclone comes ashore, and so does what one turned into');
 
-for (const status of ['EX', 'LO', 'WV', 'DB']) {
+for (const status of ['LO', 'WV', 'DB']) {
   eq(`a ${status} crossing the coast is not a landfall`,
     landfallsFor([fix(0, -45, 15, { status }), fix(1, -35, 15, { status })], mask.isLand).length, 0);
 }
@@ -177,10 +177,102 @@ for (const status of SEASONS.cycloneStatuses) {
     landfallsFor([fix(0, -45, 15, { status }), fix(1, -35, 15, { status })], mask.isLand).length, 1);
 }
 
-/* ==> MUTATION: dropping the `isCyclone` guard turns the four EX/LO/WV/DB
- * cases red. Hard-coding TD/TS/HU instead of reading SEASONS.cycloneStatuses
- * turns the two subtropical cases red — which is the real bug, since a
- * subtropical storm does come ashore. */
+/* ==> MUTATION: hard-coding TD/TS/HU instead of reading
+ * SEASONS.cycloneStatuses turns the two subtropical cases red — which is the
+ * real bug, since a subtropical storm does come ashore. Accepting every status
+ * turns the three LO/WV/DB cases red. */
+
+section('8a. A post-tropical storm comes ashore. §57.7c');
+
+/* Sandy's shape, in miniature: a hurricane out at sea, transition, then the
+ * coast crossed while still well above tropical-storm force.
+ *
+ * ==> BOTH ENDS OF THE CROSSING LEG ARE `EX` DELIBERATELY. <== The walk reads
+ * the status of whichever fix the sample is NEARER, so a leg that begins as a
+ * hurricane and ends extratropical would test the hurricane branch for a
+ * crossing in its first half. Straddling the transition is a different case
+ * and not the one this section is about. */
+const sandyish = (over = {}) => [
+  fix(0, -55, 15, { status: 'HU', windKt: 80 }),
+  fix(1, -45, 15, { status: 'EX', windKt: 70, ...over }),
+  fix(2, -35, 15, { status: 'EX', windKt: 70, ...over }),
+];
+
+const post = landfallsFor(sandyish(), mask.isLand);
+eq('a system that was a hurricane and crossed the coast as EX came ashore', post.length, 1);
+eq('and it is stamped post-tropical rather than tropical',
+  post[0]?.nature, 'post-tropical');
+eq('==> AND IT IS NOT GIVEN A SAFFIR-SIMPSON CATEGORY, however strong it was',
+  post[0]?.category, null);
+eq('while the wind at the coast is still reported', post[0]?.windKt, 70);
+
+/* ==> MUTATION: returning `'tropical'` from `landfallNature` for an EX status
+ * turns the nature case red; grading it with `categoryFromKt` regardless of
+ * nature turns the category case red. Both were run. */
+
+eq('a tropical crossing is stamped tropical',
+  landfallsFor([fix(0, -45, 15), fix(1, -35, 15)], mask.isLand)[0]?.nature, 'tropical');
+
+section('8b. The two floors that separate Sandy from a dying remnant');
+
+eq(`under ${SEASONS.postTropicalLandfallMinKt} kt a post-tropical crossing does not count`,
+  landfallsFor(sandyish({ windKt: SEASONS.postTropicalLandfallMinKt - 1 }), mask.isLand).length, 0);
+eq('exactly at the floor it does',
+  landfallsFor(sandyish({ windKt: SEASONS.postTropicalLandfallMinKt }), mask.isLand).length, 1);
+
+/* ==> MUTATION: deleting the wind test, or writing `>` where the code writes
+ * `<`, turns one of these two red. */
+
+/* An extratropical low that comes ashore BEFORE it was ever tropical. Same
+ * strength, same coast, and it must not count — it had not been a storm yet. */
+const preTropical = landfallsFor([
+  fix(0, -45, 15, { status: 'EX', windKt: 70 }),
+  fix(1, -35, 15, { status: 'EX', windKt: 70 }),
+  fix(2, -25, 15, { status: 'HU', windKt: 80 }),
+], mask.isLand);
+eq('an EX crossing before the system was ever a cyclone is not a landfall',
+  preTropical.length, 0);
+
+/* And the same track with the tropical phase FIRST does count, which is the
+ * control that proves the assertion above is about sequence and not about the
+ * statuses being present at all. */
+eq('the identical crossing after a tropical phase does', landfallsFor([
+  fix(0, -55, 15, { status: 'HU', windKt: 80 }),
+  fix(1, -45, 15, { status: 'EX', windKt: 70 }),
+  fix(2, -35, 15, { status: 'EX', windKt: 70 }),
+], mask.isLand).length, 1);
+
+/* ==> MUTATION: dropping the `firstCycloneTime` test turns the pre-tropical
+ * case red. Anchoring on the LAST cyclone fix instead of the first leaves both
+ * green here but breaks a storm that re-intensifies, which is why the header
+ * says first and the code reads first. */
+
+section('8c. `landfallNature` answers directly');
+
+eq('a hurricane is tropical', landfallNature('HU', 80, 100, 0), 'tropical');
+eq('a subtropical storm is tropical too', landfallNature('SS', 40, 100, 0), 'tropical');
+eq('a wave is nothing', landfallNature('WV', 80, 100, 0), null);
+eq('a strong EX after the tropical phase is post-tropical',
+  landfallNature('EX', 70, 100, 0), 'post-tropical');
+eq('a weak EX is nothing', landfallNature('EX', 20, 100, 0), null);
+eq('an EX with no wind reading at all is nothing, never assumed strong',
+  landfallNature('EX', null, 100, 0), null);
+eq('and an ABSENT wind reading is the same answer, which is not free',
+  landfallNature('EX', undefined, 100, 0), null);
+eq('an EX on a system that was never a cyclone is nothing',
+  landfallNature('EX', 70, 100, null), null);
+eq('and an EX before the tropical phase is nothing',
+  landfallNature('EX', 70, 100, 200), null);
+
+/* ==> MUTATION: each null case was made to return a nature in turn and each
+ * one bites. The ABSENT-wind case is the one worth naming, and the reason it
+ * is here is a mutation that survived. Replacing `!Number.isFinite(windKt) ||
+ * windKt < …` with a bare `windKt < …` changed NOTHING for `null`, because
+ * `null` coerces to 0 and `0 < 34` is true — so the suite stayed green over a
+ * real hole. `undefined < 34` is `NaN < 34`, which is false, and that one lets
+ * an unmeasured crossing through as a landfall. The walk itself only ever
+ * produces `null`, but `landfallNature` is exported and the NOAA fallback in
+ * `lib/season-facts.js` hands it a parser field that can be absent. */
 
 section('9. A storm skimming a ragged coast is one landfall, not six');
 

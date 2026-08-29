@@ -6691,6 +6691,42 @@ export const SEASONS = Object.freeze({
    *  It changes only the COUNT, never whether a storm came ashore at all. */
   landfallSeparationKm: 50,
 
+  /** ==> A STORM THAT HAS GONE POST-TROPICAL STILL COMES ASHORE. <== §57.7c,
+   *  Aaron's call 2026-08-29. Sandy crossed the New Jersey coast six hours
+   *  after transition at 70 kt, NOAA stamps an `L` on that record, NHC's own
+   *  report calls it a landfall, and this app used to refuse it because the
+   *  status column reads `EX`.
+   *
+   *  HURDAT2 HAS ONE CODE FOR TWO DIFFERENT THINGS, which is the whole reason
+   *  a threshold is needed at all: `EX` covers Sandy at 70 kt over Brigantine
+   *  AND a decayed remnant drifting over Newfoundland five days later. NOAA's
+   *  own vocabulary separates them; the file format does not. */
+  postTropicalStatuses: Object.freeze(['EX']),
+
+  /** How strong a post-tropical system must still be at the coast to count as
+   *  having come ashore. 34 kt is `namedStormKt` — the tropical-storm floor,
+   *  fixed meteorology rather than a taste call — and it is stated separately
+   *  here because the two are the same number for different reasons and a
+   *  future change to one must not silently move the other.
+   *
+   *  MEASURED 2026-08-29 over all 3,266 storms: the walk finds 404 crossings
+   *  while extratropical. 352 are at or above this floor and 52 below it. */
+  postTropicalLandfallMinKt: 34,
+
+  /** ==> THE SHAPE OF THE TWO GENERATED SIDECARS, AND THE OTHER HALF OF THEIR
+   *  FILENAMES. <== §57.47 found this fault on the rankings table and named
+   *  these two as carrying it unfixed: both were stamped with NOAA's revision
+   *  alone, under `_headers`' `immutable` rule, so a phone holding yesterday's
+   *  copy would go on serving it until 2027 even though this repo had changed
+   *  what the file contains. §57.7c is the change that made that real — the
+   *  landfall lists grew and the places arrays grew with them.
+   *
+   *  BUMP THESE WHENEVER THE FILE'S CONTENT RULES CHANGE, not only when its
+   *  shape does. The test is "would a phone holding yesterday's file be
+   *  wrong", and for a changed landfall rule the answer is yes. */
+  landfallsSchema: 'v2',
+  placesSchema: 'v2',
+
   /** ==> HOW FAR A TOWN CAN BE AND STILL NAME THE SPOT. <== §57.40. Beyond
    *  this the answer is no name at all and the panel falls back to
    *  coordinates, because "came ashore near Nouakchott" for a point 400 km
