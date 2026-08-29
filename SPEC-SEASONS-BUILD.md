@@ -5503,7 +5503,6 @@ No new data, no runner job, no bytes on the phone. All of these land in
 
 | # | Fact | Note |
 |---|---|---|
-| 1 | **Distance travelled** | sum of great-circle legs. `distanceNm` in `lib/season-facts.js` already exists for item 2 |
 | 4 | **The comeback** | dropped below 34 kt and returned to 64 kt |
 | 5 | **The loop** | the track crosses itself. Jeanne 2004 did a full circle |
 | 6 | **Out of season** | formed before Jun 1 or after Nov 30 |
@@ -5517,6 +5516,18 @@ rows are deleted from the table above rather than ticked, per this file's own
 rule — **the numbers stay as permanent addresses and nothing renumbers.** Two of
 the remaining seven now have a home named for them, which is the one thing that
 pass changed about the rest of this list.
+
+**==> AND ITEM 1 IS BUILT. §57.45 IS THE AS-BUILT ACCOUNT. <==** Distance
+travelled, in `How it moved` beside the speeds. **Its row is deleted from the
+table above and the number 1 stays a permanent address.**
+
+**==> ITEM 7 IS THE ONE THAT IS MIS-FILED, AND THAT IS WORTH KNOWING BEFORE
+SOMEBODY PICKS IT FOR BEING FREE. <==** Northernmost and southernmost reach are
+arithmetic on rows already parsed. *Where it died* is not: it would print bare
+coordinates, which is the fault glass sent back on the `Landfalls` list before
+§57.40a, and the places sidecar names only genesis points and landfalls. Naming
+a death point is a runner pass over 3,266 new positions, so item 7 is Tier 1 in
+its first half and Tier 2 in its second.
 
 **Item 11 — archive-wide rankings — is the research feature and is worth its own
 pass.** Every figure in the drawer carries its rank: *"937 mb — 41st lowest of
@@ -6044,3 +6055,168 @@ lines, no behaviour change**, so a break can only be the move.
 put two on a panel that had seven and Aaron accepted the crowding as the thing
 he was accepting; this adds a ninth. `SEASONS.rankingsMaxRows` exists so a
 seventh statistic has to be a glass call rather than a free addition.
+
+### 57.45 How far a storm went — as built
+
+**§57.42 Tier 1 item 1, built 2026-08-29.** `How it moved` now opens with the
+length of the track and, when the two differ, the length of the part the storm
+covered as a tropical cyclone. `lib/season-facts.js` computes it,
+`ui/season-detail-markup.js` writes the rows, `config/constants.js` holds the
+two thresholds.
+
+**==> EVERY FIGURE BELOW WAS COUNTED OFF THE MIRRORED ARCHIVE AND THREE OF THEM
+DECIDED THE DESIGN. <==** They are recorded with their numbers attached because
+each is the reason a rule exists.
+
+Katrina reads `Distance travelled 2,106 mi`; Harvey reads `5,006 mi` with
+`As a tropical cyclone 2,644 mi` under it. Both were printed by the shipped
+code against the real season files before they were written here.
+
+#### The walk has none of `forwardSpeed`'s rules, and that is measured
+
+`trackDistance` on `stormFacts` sums the great-circle distance between every
+consecutive fix. No synoptic filter, no cyclone filter, no leg cap. **Three
+things say so and each would have to be disproved to change it:**
+
+1. **THE FILE HAS NO GAPS TO BRIDGE.** Counted across both mirrored basins:
+   **84,365 consecutive legs and not one longer than six hours**, the worst
+   exactly 6.00. The 228-hour leg `trackSpeedMaxLegHours` exists to refuse is
+   **created by the speed walk's own cyclone filter** rather than present in
+   the record. A straight sum has nothing to trip over.
+2. **IT IS THE LINE ON THE GLOBE.** `map/layers/season-tracks.js` draws every
+   recorded position with no status filter. A panel printing a shorter number
+   under a longer line is the app disagreeing with its own picture, and a
+   reader has no way to tell which half is wrong.
+3. **IT IS THE SPAN `lifespanHours` ALREADY MEASURES.** That runs first record
+   to last and filters nothing either, so the two divide into a real average
+   speed. Filtering one and not the other puts two figures on one panel that
+   cannot be used together.
+
+**A LEG IS ATTRIBUTED TO THE STATUS AT ITS START, SO THE TWO FIGURES PARTITION
+THE TRACK EXACTLY.** Requiring both ends to be a cyclone leaves every
+transition leg belonging to neither, and the *"the gap between the two is
+ground it covered as a wave"* sentence would then overstate that gap by six
+hours of travel per transition. `tools/test-season-facts.mjs` adds the
+non-cyclone remainder back to the cyclone figure and demands the whole track,
+to six decimal places.
+
+**THE DATE LINE IS FREE HERE FOR THE SAME REASON IT IS FREE FOR SPEED.**
+Haversine takes `sin(Δλ/2)`, which is periodic. The protection belongs to the
+formula rather than to the data, so Della (CP011957) is asserted at 3,029 nm:
+on a flat plane her crossing leg alone reads as roughly 18,000 nm, and a later
+session swapping in plane arithmetic for speed goes red rather than quiet.
+
+#### The second row, and why it is not on every storm
+
+`SEASONS.trackDistanceCycloneShareMax` is **0.9**. Below it the panel adds
+`As a tropical cyclone` and a sentence saying what the gap is.
+
+**MEASURED: 1,097 of 3,234 storms fall below it, and the spread is what argues
+for a threshold at all.** Mitch 1998 ran 6,449 nm and was a cyclone for 2,262
+of them, 35%. Harvey 2017 is 53% — he crossed the Caribbean as a wave. Andrew
+1992 and Della are 100%. **Katrina is 92.2% and is the boundary case in the
+suite**, because she is the storm that proves the threshold is doing work: a
+rule of *"show both whenever they differ at all"* would put a second row on
+1,440 storms, most of them describing the dying tail of a storm the total
+already describes fairly. **That is the qualifier-fires-everywhere failure
+§57.44 already paid for once with `Tied`.**
+
+#### Two storms the record never moves, and one live fault they exposed
+
+`SEASONS.trackDistanceFloorNm` is **6**, which is the 0.1° step every position
+in the archive is written to. A whole track summing to less than one step
+cannot be told from a storm the record placed once.
+
+**MEASURED: exactly 3 of 3,234 storms, and it is the SAME THREE at 1 nm, at
+3 nm, at 6 nm and at 12 nm** — so nothing delicate rests on the number.
+AL051851 is the shape: sixteen consecutive fixes at 32.5N 73.5W, four days at
+50 kt without the record moving it once. Those three print
+`no movement recorded` rather than `0 mi`, which is the dashed shrug §57.25
+forbids wearing a number.
+
+**==> AND THEY HAVE BEEN PRINTING `Fastest 0 mph` ON `main` SINCE §57.43. <==**
+That pass put its floor on the **slowest** row alone, which is correct for the
+100 storms whose slowest leg rounds to nothing and blind to the three whose
+fastest does too. Nobody saw it because nobody opens 1857. **It only became
+visible when the distance row above it started saying the opposite**, which is
+worth more than the fix: a wrong figure alone reads as a figure, and the same
+wrong figure beside a contradicting one reads as a fault.
+
+**BOTH SPEED ROWS GO, RATHER THAN BOTH READING `barely moving`.** Two rows
+exist to show a range between two ends and there is no range; one phrase
+printed twice under two different dates invites the reader to hunt for a
+difference that is not there. The note says it in a sentence instead.
+
+**AND THE TWO FLOORS SAY ONE THING BETWEEN THEM.** A storm under the distance
+floor is also a storm with no measurable leg, so both branches fire on exactly
+the same three storms. The distance wording is the stronger claim and it
+accounts for the missing speed rows, so the speed sentence stands down.
+
+#### The reader's units, and the one way this could have been wrong
+
+**EVERY FIGURE GOES THROUGH `formatDistance(nm, system)` AND NOTHING IS
+CONVERTED AT THE CALL SITE.** `ui/view-season-detail.js` resolves the Settings
+preference per render — `resolveSystem(settingValue('units'))`, already a
+function rather than a captured value — and hands it down as `system`, so
+`auto` goes on following the device and a reader who switches miles to
+kilometres sees this section move with the rest of the panel rather than a
+beat later.
+
+**THE ASSERTION THAT PROVES IT IS THE SAME STORM RENDERED TWICE.** Katrina
+gives `2,106 mi` and `3,388 km`, and the metric render is checked for the
+ABSENCE of the imperial figure. A hardcoded conversion, or a dropped `system`
+argument, returns the identical string in both systems and passes any
+single-system test.
+
+#### What the gates are, and the mutation that found the hole
+
+`tools/test-season-facts.mjs` and `tools/test-season-detail.mjs`. **Nine
+mutations were run and one survived the first pass.**
+
+**==> DROPPING BOTH NEW CONSTANTS FROM THE VIEW'S CALL LEFT EVERYTHING
+GREEN. <==** Missing, they compare against `undefined`, which is false, so the
+floor and the second row quietly stop existing — no error, no empty render,
+just two rules that are no longer there. **The mount drove Katrina, who is
+above both thresholds and whose panel is byte-identical either way.** A branch
+asserted against a storm that cannot take it is green over the bug, which is
+§12's whole point and the third time in three passes this panel has produced
+one.
+
+Closed two ways. **Harvey is mounted as well as Katrina**, so the second row
+has to survive the real call to appear. And the floor is asserted against the
+**shipped source** of `view-season-detail.js`, because no real season can drive
+it through a mount — the three storms are 1851, 1857 and 1864, none of them a
+fixture, and a hand-built storm cannot be fed to a view that loads a season
+file. Blunt, and the right instrument for the reason §57.44 read a module to
+prove `stitchSeams` sat on the fetch path: **a constant nobody passes is
+exactly the state being guarded, and it has no symptom.**
+
+#### `ui/season-detail-markup.js` crossed §12's ceiling and the cut was taken in the same pass
+
+It entered at 647 and reached 759. **`ui/season-markup-bits.js` holds
+`esc`, the four small formatters, `rowsHtml` and `absenceHtml`** — the layer
+every section renderer uses and none of them defines. **646 and 154 lines, no
+behaviour change**, so a break can only be the move.
+
+`NOW.md` records `ui/view-seasons-board.js` promising this same cut on five
+consecutive passes and taking it later at a bigger size each time, so it was
+taken immediately, exactly as §57.44 took the last one. **`ui/season-rank-markup.js`
+was already reaching through the old file for `absenceHtml` and `rowsHtml`**
+and now imports them from their real home, which makes that dependency say
+what it is.
+
+**`tools/test-loading-dots.mjs` WENT RED ON THE MOVE AND WAS RIGHT TO.**
+`absenceHtml` is the panel's front door onto `dotted()`; with it gone,
+`reportHtml`'s waiting sentence was an ellipsis in a file with no helper in
+sight. Both of that gate's rules followed the function rather than being
+widened to search two files — **an assertion that searches two files passes
+when the wrong one is right** — and both were re-verified by mutation
+afterwards.
+
+#### Not built, and it is a glass call
+
+**Distance travelled is the strongest remaining candidate for an archive-wide
+rank** — Faith 1966 leads at 9,251 nm, and §57.44's `RANK_STATS` would take it
+as one table entry. It was NOT added: `SEASONS.rankingsMaxRows` is 6
+deliberately, so a seventh statistic is Aaron's decision rather than a free
+addition. Nothing here is blocked on it.

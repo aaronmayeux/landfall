@@ -406,17 +406,67 @@ NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
 (§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
-(§57.43)** and **Tier 1 item 11, the archive-wide rankings (§57.44)**. **Read
-those five, not this.** Tier 2 item 1 is done and deleted from §57.42; seven
-Tier 1 items and four Tier 2 items are untouched.
+(§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)** and **Tier 1
+item 1, distance travelled (§57.45)**. **Read those six, not this.** Tier 2
+item 1 is done and deleted from §57.42; six Tier 1 items and four Tier 2 items
+are untouched.
 
-**==> THE SEVEN REMAINING TIER 1 ITEMS ARE ALL CHEAPER THAN THEY WERE. <==**
-Items 1, 4, 5, 6, 7, 8 and 10 each add one fact to the panel. **Any of them
-added to `RANK_STATS` gets an archive-wide rank for free** — distance travelled
-ranked against 3,266 storms is one table entry rather than a feature. That is
-the one thing this pass changed about the rest of the list, and
-`SEASONS.rankingsMaxRows` is deliberately in the way so a seventh rank is a
-glass call rather than a free addition.
+**==> THE SIX REMAINING TIER 1 ITEMS ARE ALL CHEAPER THAN THEY WERE. <==**
+Items 4, 5, 6, 7, 8 and 10 each add one fact to the panel. **Any of them
+added to `RANK_STATS` gets an archive-wide rank for free** — one table entry
+rather than a feature. `SEASONS.rankingsMaxRows` is deliberately in the way so
+a seventh rank is a glass call rather than a free addition.
+
+**==> AND ITEM 7 IS NOT THE CHEAP ONE IT LOOKS LIKE. <==** Northernmost and
+southernmost reach are free arithmetic, but *where it died* would print bare
+coordinates — the exact fault glass sent back on the `Landfalls` list — and
+§57.40a's places sidecar names only genesis and landfalls. Naming a death
+point is a runner pass, which moves item 7 out of Tier 1 in everything but the
+table it sits in.
+
+**==> ITEM 1 IS BUILT AND SHIPPED. NOT YET SEEN ON GLASS. <==**
+`How it moved` now opens with the length of the track, and with a second row
+naming the part covered as a tropical cyclone when the two differ. **§57.45 is
+the as-built account — read that, not this.** It holds the measured 84,365
+legs behind the no-cap decision, the three storms the record never moves, and
+the mutation that found the hole.
+
+**GLASS, and the first is the only one that is not cosmetic:**
+
+1. **Open Harvey 2017.** He should read `Distance travelled 5,006 mi` with
+   `As a tropical cyclone 2,644 mi` under it, and a sentence explaining that
+   the gap is ground he covered as a wave. **The question is whether two
+   distance figures read as one fact at two sizes or as a contradiction** —
+   this is the same risk §57.44's two rank sections carried and it is the one
+   thing in this pass that could come back wrong.
+2. **Open Katrina.** She should show ONE distance row, `2,106 mi`, and no
+   second one — she was a cyclone for 92.2% of her track, just above the
+   threshold. If the second row is there, the constant is not reaching the
+   view.
+3. **Switch units in Settings and come back.** Katrina should read `3,388 km`.
+   Aaron asked for this explicitly on 2026-08-29; it goes through
+   `formatDistance` and the preference is resolved per render, so it should
+   change without the archive being re-entered.
+4. **The section is now four rows on some storms and two on others.** Whether
+   `How it moved` earns that at 390px is the judgement call.
+
+**==> AND ONE FAULT IT EXPOSED WAS ALREADY ON `main`. <==** Three storms —
+AL051851, AL031857, AL041864 — have been printing `Fastest 0 mph` since
+§57.43, which put its floor on the slowest row alone. Fixed here; both speed
+rows now drop and a sentence replaces them. **Nobody had seen it because
+nobody opens 1857, and it only became visible when the distance row above it
+started saying the opposite.** A wrong figure alone reads as a figure; the
+same figure beside a contradicting one reads as a fault. There is no glass
+call in it — no fixture reaches those storms and no real season file does
+either.
+
+**==> `ui/season-detail-markup.js` CROSSED §12's CEILING AND THE CUT WAS TAKEN
+IN THE SAME PASS. <==** 759 down to 646, with `ui/season-markup-bits.js` at
+154 taking `esc`, the four small formatters, `rowsHtml` and `absenceHtml`. No
+behaviour change, so a break can only be the move. **`tools/test-loading-dots.mjs`
+went red on it and was right to** — `absenceHtml` is the panel's route onto
+`dotted()` and the gate was reading the file it had left. Both of its rules
+followed the function and both were re-verified by mutation.
 
 **==> ITEM 11 IS BUILT AND CONFIRMED ON GLASS, 2026-08-29. AARON: "LOOKS
 GREAT." NOTHING HERE IS WAITING ON HIM. <==** Every figure on the archive's
