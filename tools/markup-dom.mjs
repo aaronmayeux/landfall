@@ -231,12 +231,48 @@ export class El {
     return this.tagName === sel.toUpperCase();
   }
 
+  /**
+   * ==> A DESCENDANT COMBINATOR IS A WALK, NOT A COMPOUND. <== Added
+   * 2026-08-29, and it is the FOURTH lie this stand-in has told in the same
+   * shape. `matches()` splits a selector into parts and demands every part
+   * match ONE element, which is right for `.a[data-b]` and completely wrong
+   * for `.a .b` — the space means "inside", so the parts belong to different
+   * elements. Handed `.detail-section[data-section="peak"] .detail-section-head`
+   * it required one element to be both, found none, and returned null.
+   *
+   * ==> WHICH IS INDISTINGUISHABLE FROM THE VIEW NEVER RENDERING THE HEAD.
+   * <== Same failure as the three recorded above it: a selector this file
+   * cannot read looks exactly like markup the app did not draw, so the suite
+   * reports a working view as broken and the next session goes looking in the
+   * wrong file. `NOW.md`'s rule is that anything this stand-in cannot read is
+   * made readable here rather than worked around in the view or in the test.
+   *
+   * Right-to-left, which is how a browser does it and is also the cheap way:
+   * find the elements matching the LAST step, then walk each one's ancestors
+   * satisfying the earlier steps in reverse. Child (`>`), sibling and
+   * pseudo-class combinators are still unsupported and will fall through to
+   * `matches` as one compound — if one is ever needed, add it here.
+   */
+  matchesPath(sel) {
+    const steps = sel.trim().split(/\s+/);
+    if (steps.length === 1) return this.matches(sel.trim());
+    if (!this.matches(steps[steps.length - 1])) return false;
+    let n = this.parent;
+    let i = steps.length - 2;
+    while (n && i >= 0) {
+      if (n.matches(steps[i])) i--;
+      n = n.parent;
+    }
+    return i < 0;
+  }
+
   querySelector(sel) {
-    return this.descendants().find((n) => sel.split(',').some((s) => n.matches(s.trim()))) || null;
+    return this.descendants()
+      .find((n) => sel.split(',').some((s) => n.matchesPath(s.trim()))) || null;
   }
 
   querySelectorAll(sel) {
-    return this.descendants().filter((n) => sel.split(',').some((s) => n.matches(s.trim())));
+    return this.descendants().filter((n) => sel.split(',').some((s) => n.matchesPath(s.trim())));
   }
 }
 
