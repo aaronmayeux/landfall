@@ -5939,7 +5939,7 @@ take a whole group in one pass and a break can only be one kind of thing.
 | Group | Items | Why they belong together | State |
 |---|---|---|---|
 | **A — yes/no facts** | 4 comeback, 6 out of season, 8 Cape Verde | Each reads straight off rows already parsed and answers a question with a sentence rather than a figure. One new lib module, one new markup module, one suite, one mutation run. None of them adds a number to `RANK_STATS`. | **BUILT, §57.48** |
-| **B — geometry** | 5 the loop | Segment intersection over the track, plus a judgement the other items do not need: what counts as a loop rather than a meander. A different kind of risk, and it wants its own bisect. | Not started |
+| **B — geometry** | 5 the loop | Segment intersection over the track, plus a judgement the other items do not need: what counts as a loop rather than a meander. A different kind of risk, and it wants its own bisect. | **BUILT, §57.49** |
 | **C — figures** | 7 reach, 10 season-mates | Both produce a number, so both are candidates for `RANK_STATS` and both land beside an existing figure rather than on their own. Item 7 is also half a runner job — see below. | Not started |
 
 **WHY THE GROUPING IS WORTH KEEPING RATHER THAN RE-DERIVING.** The obvious cut
@@ -5963,9 +5963,17 @@ No new data, no runner job, no bytes on the phone. All of these land in
 
 | # | Fact | Note |
 |---|---|---|
-| 5 | **The loop** | the track crosses itself. Jeanne 2004 did a full circle |
 | 7 | **Northernmost / southernmost reach, and where it died** | lands in `How it moved` beside item 2 |
 | 10 | **How many other storms were running the same day** | lands in `In its season` beside item 9 |
+
+**==> ITEM 5 IS BUILT AND GROUP B IS CLOSED. §57.49 IS THE AS-BUILT ACCOUNT.
+<==** The loop, in `How it moved` above the birthplace sentence. **Its row is
+deleted from the table above rather than ticked and the number 5 stays a
+permanent address.** It answered the loop-versus-meander judgement with one
+constant — `SEASONS.loopMinWidthNm` at 50, measured — rather than a heuristic,
+and it is **deliberately not in `RANK_STATS`**; §57.49 holds the reasoning.
+
+**TWO TIER 1 ITEMS REMAIN, 7 AND 10, AND THEY ARE GROUP C.**
 
 **==> ITEMS 4, 6 AND 8 ARE BUILT. §57.48 IS THE AS-BUILT ACCOUNT. <==** The
 comeback, the season window and the origin — Group A of the grouping below.
@@ -7200,3 +7208,146 @@ the answer is a new file rather than a bigger one**, so the computation went to
 where a sentence APPEARS; it does not have to be where the sentence is written.
 Imports run one way: `season-facts` imports `storm-shape`, and the view imports
 the markup.
+
+### 57.49 The loop — as built
+
+**§57.42 Tier 1 item 5, built 2026-08-29. Group B of §57.42's grouping, and the
+whole of it.** A track that turned a full circle and crossed itself.
+`lib/storm-shape.js` computes, `ui/season-shape-markup.js` writes the sentence,
+and it joins `How it moved`, which already existed. No new data, no runner job,
+not one byte on the phone.
+
+**==> EVERY FIGURE IN THIS SECTION WAS COUNTED OFF THE MIRRORED ARCHIVE BEFORE
+ANY CODE WAS WRITTEN, AND THE COUNTS ARE WHAT SET THE ONE CONSTANT. <==**
+
+*"It looped. Between Sep 20, 2004 and Sep 24, 2004 its track crossed itself,
+turning a full circle about 157 mi across."* — Jeanne 2004.
+
+#### The crossing is the proof of the circle, so nothing counts degrees of turn
+
+A closed piece of track is a closed curve, and a closed curve has turned through
+360°. **So the geometry answers the question completely and the only thing left
+open is size.** That is the whole of the "loop versus meander" judgement §57.42
+flagged, and it is one constant rather than a heuristic.
+
+The crossing test runs in raw `(lonU, lat)` degrees. Longitude degrees are
+shorter than latitude degrees everywhere but the equator, so that plane is
+stretched sideways — but the stretch is a constant scale on one axis, which is
+an **affine** map, and an affine map cannot turn a crossing into a miss.
+Projecting first would cost arithmetic and change no answer.
+
+**`lonU` RATHER THAN `lon`, AND THE DATE LINE IS WHY.** The published longitude
+jumps from +179 to −179 at the seam, which draws as a segment straight back
+across the whole map and crosses nearly every other segment in the track. A
+geometric probe walking west around the world scores **null** on `lonU` and
+**a 1,700 nm loop** on `lon`; both are asserted, because no storm in either
+mirrored basin goes near 180° and step 13's west Pacific is the first thing
+that will.
+
+**The inequalities are strict, so a segment that merely touches another is not a
+crossing.** Two fixes rounded into the same 0.1° cell, or a storm passing back
+over a fix it already held, both produce contact with no enclosed area.
+
+#### The size is measured as area, and Edouard 1990 is why
+
+The figure compared against the floor is **the diameter of a circle enclosing
+the same area as the loop**. The obvious alternative — how far the storm got
+from the crossing point — was measured and rejected on one storm. **Edouard
+1990 spans 533 nm end to end and encloses 1,104 square nautical miles**: a long
+thin sliver, a storm running out and back along nearly the same line and
+clipping it on the way past. By reach he is the sixth biggest loop in the
+archive; by area he is 60 nm across, which is what he looks like on the globe.
+
+#### `SEASONS.loopMinWidthNm` is 50, and the number is eight times the data's own precision
+
+Counted 2026-08-29 over all 3,266 mirrored storms:
+
+| | |
+|---|---|
+| cross their own track at all | **224** (6.9%) |
+| do it more than once | **57**, Nadine 2012 five times |
+| smallest crossing in the archive | **3 nm** |
+| loops at the 50 nm floor | **120** (3.7%) |
+| the dial either way | 30 nm is 152 storms, 75 nm is 85 |
+
+HURDAT2 stores position to 0.1°, about 6 nm, **so a stalling storm jittering
+inside its own rounding manufactures a crossing that never happened.** Harvey
+2017 is one of them, at **8.5 nm over 12 hours**, which is Harvey sitting still
+over Texas. A rule that says "Harvey looped" is a wrong fact that reads
+perfectly, and it would sit on one of the best known storms in the archive.
+
+**==> TWO REAL LOOPS ARE REFUSED BY THE FLOOR AND BOTH ARE RECORDED HERE ON
+PURPOSE. <==** Ophelia 2017 crosses at **41.9 nm**. **Sandy 2012 crosses at 48.8
+nm and misses by 1.2.** Any floor has a storm just underneath it; the honest
+thing is to know which one rather than meet it on a phone. Both are asserted, so
+moving the floor announces itself.
+
+**`biggestCrossing` IS SPLIT OUT OF `trackLoop` FOR EXACTLY THAT.** Without the
+seam a suite can prove Sandy gets no sentence but cannot tell that from Sandy
+never having crossed at all, **and separating those two is the only thing the
+constant does.** §12.
+
+#### It reports the biggest loop, not the first and not a count
+
+The first crossing is an accident of which end the walk starts from. A count is
+a number with nothing on the panel to compare it against — and 57 storms have
+more than one. The biggest is the one a reader looking at the globe will see.
+**Ivan 2004 is the widest in the record at 684 nm**, turning back around Florida
+into the Gulf, and that is asserted too: a change to the way width is measured
+that left the counts alone would still move it.
+
+#### Where the sentence goes
+
+**`How it moved`, appended after the rows and ABOVE the birthplace sentence.**
+That section is a set of facts about the track with no order to break, unlike
+`How it changed` (§57.48).
+
+**==> THE LOOP LEADS AND THE BIRTHPLACE FOLLOWS, WHICH REVERSES §57.48's
+PLACEMENT. <==** Aaron's call, 2026-08-29. The origin sentence fires on 1,993 of
+2,004 Atlantic storms and reads as background; the loop fires on 120 of 3,266
+and is the reason a reader stops. **A rare fact printed under a near-universal
+one is a rare fact nobody sees.** The order is asserted through the mounted
+view rather than commented, because both sentences are appended by the view and
+nothing in the markup file can see their order — §57.48 shipped that same
+ordering as a comment and a mutation walked straight through it.
+
+#### The width goes through `formatDistance`
+
+§57.45. It is the one function in the app that turns a stored nautical mile into
+the reader's own miles or kilometres, and `auto` — which follows the device — is
+exactly the value a conversion written into the sentence would get wrong. It is
+also what keeps this sentence agreeing with the distance rows a few lines above
+it in the same section.
+
+**A MUTATION RUN IS WHY THAT IS ASSERTED AT VIEW LEVEL AND NOT ONLY AT MARKUP
+LEVEL.** Dropping `system` from the view's call left every other case green:
+`formatDistance` falls back to the device locale, which in the sandbox is
+imperial, so the miles assertion still passed while a metric reader would have
+been shown miles. **The unit has to be proven to travel, not merely to be right
+on the default.**
+
+#### Cost
+
+`trackLoop` is the only fact in `stormFacts` whose cost grows with the square of
+the track length. Measured 2026-08-29 on the longest track in the archive
+(AL031899, 133 fixes): **0.33 ms**, and **45 ms to walk all 3,266 storms**.
+Nothing needs a bound on the track length.
+
+#### Fixtures
+
+**None added.** Jeanne 2004 (the loop), Harvey 2017 (the 8.5 nm wobble), Ophelia
+2017 and Sandy 2012 (the two refusals) and Katrina 2005 (never crosses) were all
+already in `samples/seasons/storms/`. The date-line case and the figure-of-eight
+are geometric probes driven directly, and are labelled as such rather than
+dressed up as storms.
+
+#### One thing left undone, deliberately
+
+**The loop is not in `RANK_STATS`.** §57.42's grouping puts item 5 in Group B —
+geometry — and items 7 and 10 in Group C, the figures. A width in nautical miles
+would rank, but ranking it means two `RANK_STATS` entries (§57.46, one ladder
+per unit) and a `RANKINGS_SCHEMA` bump (§57.47) over a statistic that exists for
+120 of 3,266 storms. **A rank whose denominator is the 120 storms that have the
+thing is a different kind of row from every other rank on that panel**, which
+compares against the whole archive. Not started, and it is a decision rather
+than an omission.
