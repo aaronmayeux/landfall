@@ -105,6 +105,36 @@ export const ICON_PATH = Object.freeze({
    * a population. */
   people: '<circle cx="9" cy="8" r="3"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/>' +
     '<path d="M16 5.6a3 3 0 0 1 0 4.8"/><path d="M17.5 14.2A5.5 5.5 0 0 1 20.5 19"/>',
+  /* --- added for the archive's storm panel (§57.44) ----------------------- */
+
+  /* ==> `In its season` — a calendar, because what makes that section
+   * different from `Where it ranks` is the SET, not the ranking. <== Both
+   * sections say "3rd strongest of N" and the only thing separating them is
+   * whether N is one year or 175 of them. They sit adjacent on the panel, so
+   * giving them one shape — which "one name, one shape" would otherwise argue
+   * for — destroys the only thing an icon is here to do. A calendar says "a
+   * year" faster than any ranking mark can say "a small ranking". */
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2"/>'
+    + '<path d="M3.5 10h17"/><path d="M8 3.5v3M16 3.5v3"/>',
+  /* ==> `Where it ranks` — a podium, tallest in the middle. <== The ranking
+   * mark, unqualified, because this is the ranking section and the season one
+   * is its local variant. Three blocks rather than a "1st" numeral: the panel
+   * prints ranks in the hundreds and thousands, and a glyph promising a medal
+   * would be lying on most storms. */
+  podium: '<path d="M3 20.5h18"/><path d="M4 20.5v-5h4v5"/>'
+    + '<path d="M10 20.5V9.5h4v11"/><path d="M16 20.5v-7h4v7"/>',
+  /* ==> `How it changed` — a line that rises and falls. <== The section is the
+   * storm's intensity arc: the fastest 24 hours, what it gave up before the
+   * coast, and how it ended. A single arrow would claim one direction and the
+   * section describes both. */
+  trend: '<path d="M3 20 8.6 4.4l4.4 6.4 8 9.2"/>',
+  /* ==> `How it moved` — a curved path with an arrow on the end. <== Forward
+   * speed, fastest and slowest. The curve is doing the work: this is the one
+   * section about the track as a PATH rather than about a figure measured
+   * somewhere on it. */
+  track: '<path d="M3.8 20.4c5.8 0 8.2-3.6 8.2-8.2 0-3.6 2.8-5.9 7-5.9"/>'
+    + '<path d="M15.2 2.6 19.9 6.3 15.5 10.2"/>',
+
   /* Advisory — a page of text. The only section on the panel whose content is
    * somebody else's document rather than our reading of it, and the icon is
    * the one place that distinction is made at a glance. */
