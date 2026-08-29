@@ -77,10 +77,26 @@ jobs:
       #
       # Runs whether or not HURDAT moved: both scripts write only on a real
       # change, and the coastline pin can move without the archive moving.
-      - name: recompute landfalls and the wall
+      #
+      # ==> THE PLACES SIDECAR IS IN THE SAME BREATH AND MUST STAY THERE. <==
+      # §57.40a. It carries the revision stamp too, so a new revision landing
+      # without it rebuilt is a 404 on every NAME in the archive — and that
+      # failure is SILENT by design: `data/seasons.js` answers null and the
+      # paragraph simply stops saying where anything happened. Nothing on
+      # screen would look broken.
+      #
+      # It runs AFTER the landfall job because it reads that job's output, and
+      # refuses rather than writing a file full of unnamed landfalls if it is
+      # not there. `npm install` is the same ad-hoc dependency
+      # `tools/build-population.mjs` already asks for; it lands in
+      # `node_modules/` and a root `package.json`, both of which `.gitignore`
+      # blocks, so nothing reaches `git add -A seasons` below.
+      - name: recompute landfalls, places and the wall
         if: always() && steps.run.outcome != 'cancelled'
         run: |
           node tools/seasons-landfall.mjs
+          npm install --no-audit --no-fund all-the-cities
+          node tools/seasons-places.mjs
           node tools/seasons-wall.mjs
 
       # ==> COMMIT ONLY WHEN A BYTE ACTUALLY MOVED. <== The decision is made

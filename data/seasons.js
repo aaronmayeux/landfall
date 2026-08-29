@@ -172,8 +172,12 @@ export function loadSeason(index, basin, year) {
   }
 
   const url = `${dir}/${file}`;
-  return Promise.all([once(url, () => getText(url)), loadLandfalls(index, basin)])
-    .then(([text, marks]) => {
+  return Promise.all([
+    once(url, () => getText(url)),
+    loadLandfalls(index, basin),
+    loadPlaces(index, basin),
+  ])
+    .then(([text, marks, places]) => {
       const { storms, faults } = parseHurdat2(text);
       /* ==> THE COMPUTED LANDFALLS ARE ATTACHED HERE, AT THE PARSE BOUNDARY,
        * AND THAT IS THE WHOLE WIRING. <== §57.7a. `stormFacts` reads
@@ -182,6 +186,14 @@ export function loadSeason(index, basin, year) {
        * learning that a second file exists. A seam anywhere further in would
        * mean every consumer taking a new argument. */
       if (marks) for (const storm of storms) storm.landfallsComputed = marks[storm.id] || [];
+      /* ==> `null` AND `{}` MEAN DIFFERENT THINGS HERE AND THE PARAGRAPH READS
+       * BOTH. <== §5, §57.41. `null` is "the sidecar is not on screen, so
+       * nobody looked" and the story then says nothing about where the storm
+       * was born. `{}` is "the basin was walked and this storm had nothing
+       * inside the cap", which is what open water looks like and IS sayable.
+       * Collapsing the two would print "out over open water" under a storm
+       * that formed in the Gulf of Mexico on a day this file 404'd. */
+      for (const storm of storms) storm.places = places ? (places[storm.id] || {}) : null;
       return { status: 'ok', storms, faults, year, basin };
     })
     .catch((e) => ({
@@ -220,6 +232,48 @@ export function loadLandfalls(index, basin) {
   return once(url, async () => {
     const res = await fetch(url, { credentials: 'omit' });
     if (!res.ok) throw new Error(`landfalls answered ${res.status}`);
+    return res.json();
+  })
+    .then((payload) => payload?.storms || null)
+    .catch(() => null);
+}
+
+/**
+ * The names for every spot the archive points at, for a whole basin. §57.40,
+ * §57.42 Tier 2 item 1.
+ *
+ * ==> A SECOND FILE RATHER THAN A FIELD ON THE FIRST, AND THAT IS A FAILURE
+ * DECISION. <== §57.42. Two runner jobs must never write one file, and losing
+ * the names must not take the landfalls with it. A landfall is a FACT about the
+ * storm; a name is what we call the spot it happened at. The panel degrades to
+ * coordinates without one and loses nothing it can prove.
+ *
+ * ==> AND IT COSTS 38.5 KB GZIPPED ON THE ATLANTIC, WHICH IS MORE THAN §57.42
+ * ESTIMATED. <== Measured 2026-08-29 on the real file: 234 KB raw, 38.5 KB
+ * gzipped, against an estimate of 12-15 KB. The estimate counted the 2,537
+ * landfall marks and not the genesis place on every one of 3,266 storms, which
+ * is the clause §57.41 never drops. It rides in the same `Promise.all` as the
+ * season text rather than arriving late, because the archive panel paints
+ * instantly and completely today and a paragraph appearing a beat afterwards
+ * would make the whole panel twitch. **The lever if that cost is ever judged
+ * too high is deferring this one fetch until a storm panel opens** — nothing on
+ * the roster or the globe reads it.
+ *
+ * ==> A FAILURE HERE MUST NOT LOSE THE SEASON, SAME AS THE LANDFALLS. <== §5.
+ * It resolves to `null`, and `null` travels all the way to the paragraph, where
+ * it means "nobody looked" rather than "there was nothing there".
+ *
+ * @returns {Promise<object|null>}  storm id -> `{genesis, landfalls, stall}`, or null
+ */
+export function loadPlaces(index, basin) {
+  const dir = index?.dir || '/seasons/data';
+  const revision = index?.basins?.[basin]?.revision;
+  if (!revision) return Promise.resolve(null);
+
+  const url = `${dir}/${basin}-places-${revision}.json`;
+  return once(url, async () => {
+    const res = await fetch(url, { credentials: 'omit' });
+    if (!res.ok) throw new Error(`places answered ${res.status}`);
     return res.json();
   })
     .then((payload) => payload?.storms || null)
