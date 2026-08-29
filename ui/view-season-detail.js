@@ -90,6 +90,17 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
    *  three states in §5 stay three states all the way to the markup. */
   let report = null;
 
+  /** ==> WHICH SECTIONS THE READER HAS FOLDED, FOR THIS STORM ONLY. <== Held
+   *  in memory and cleared on every `onEnter`, so opening a second storm gives
+   *  all of it again. See the note above `section()` for why it is not
+   *  persisted the way the live panel's is.
+   *
+   *  ==> IT MUST SURVIVE A RE-RENDER EVEN THOUGH IT DOES NOT SURVIVE A STORM.
+   *  <== This panel re-renders when NOAA's report arrives, which is a beat
+   *  after it paints. Without this the reader's folds would spring open under
+   *  them a second after they made them, on every storm that has a report. */
+  const collapsed = Object.create(null);
+
   /** ==> A TOKEN, BECAUSE THE READER CAN OPEN A SECOND STORM WHILE THE FIRST
    *  LOOKUP IS IN THE AIR. <== Without it the slower answer wins and Katrina's
    *  report link lands on Rita's panel. Compared on arrival rather than
@@ -124,20 +135,38 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
   }
 
   /* --- sections ---------------------------------------------------------
-   * ==> COLLAPSE STATE IS DELIBERATELY NOT KEPT. <== The live panel remembers
-   * which sections a reader folded, because a live storm is one thing they
-   * come back to over days. An archive storm is opened, read and left; the
-   * reader who taps 1893's second storm has never seen this panel before and
-   * should get all of it. Nothing to persist means nothing to get stale.
+   * ==> EVERY SECTION FOLDS, THE SAME WAY THE LIVE PANEL'S DO. <== Aaron's
+   * call, 2026-08-29. The head is a real `<button>`, which is what buys the
+   * 44px target, the hover, the focus ring and Enter/Space for free — the
+   * whole recipe already exists in `ui/panels.css` under
+   * `.detail-section-head`, and this panel had been rendering a `<div>` into
+   * it and getting only the type styling. **No CSS changed.**
+   *
+   * ==> BUT THE STATE IS NOT PERSISTED, AND THAT PART OF THE OLD RULE STANDS.
+   * <== The live panel writes a reader's folds to storage because a live storm
+   * is one thing they come back to over days. An archive storm is opened, read
+   * and left; the reader who taps 1893's second storm has never seen this
+   * panel before and should get all of it. So the folds live for as long as
+   * one storm is open and no longer — nothing to persist means nothing to get
+   * stale, and nothing carries a fold from Katrina onto a storm from 1851 that
+   * has half as many sections.
+   *
+   * ==> `id` IS AN ARGUMENT RATHER THAN DERIVED FROM THE TITLE. <== Same
+   * reasoning the live panel gives for its icon: a slug computed from the
+   * heading would change the moment a heading is reworded, and the reader's
+   * open section would silently spring shut on deploy. The id is a stable
+   * name; the title is copy.
    * -------------------------------------------------------------------- */
 
-  function section(title, innerHtml) {
+  function section(id, title, innerHtml) {
     if (!innerHtml) return '';
+    const shut = !!collapsed[id];
     return `
-      <section class="detail-section" data-collapsed="false">
-        <div class="detail-section-head">
+      <section class="detail-section" data-section="${id}" data-collapsed="${shut}">
+        <button class="detail-section-head" type="button" aria-expanded="${!shut}">
           <h2><span>${title}</span></h2>
-        </div>
+          <span class="detail-chevron" aria-hidden="true"></span>
+        </button>
         <div class="detail-section-body">${innerHtml}</div>
       </section>`;
   }
@@ -171,27 +200,13 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     bodyEl.innerHTML = `
       ${headHtml({ storm, facts, provisional: !!facts.provisional })}
       ${storyHtml(story)}
-      ${section('Strongest', peakHtml(facts, system))}
-      ${section('Its life', lifeHtml(facts))}
-      ${section('Landfalls', landfallsHtml(facts, system, {
-    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
-    markerHoleTo: SEASONS.landfallMarkerHoleTo,
-    places: storm.places ?? null,
-  }))}
-      ${section('How it changed', changeHtml(facts, system, {
-    windowHours: SEASONS.intensificationWindowHours,
-  }))}
-      ${section('How it moved', movementHtml(facts, system, {
-    floorKt: SEASONS.trackSpeedFloorKt,
-    maxLegHours: SEASONS.trackSpeedMaxLegHours,
-  }))}
       ${/* ==> THE RANK IS COMPUTED HERE RATHER THAN CACHED WITH THE FACTS,
           * BECAUSE IT IS A FACT ABOUT THE SEASON AND THE SEASON IS WHAT THE
           * BOARD RELOADS. <== `entries()` is a function for exactly this
           * reason: a rank captured when the panel first painted would go on
           * describing last year's roster under this year's heading. It is one
           * pass over at most 31 storms, so rebuilding it per render is free. */
-    section('In its season', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
+    section('rank-season', 'In its season', seasonRankHtml(rankInSeason(facts, seasonFacts())))}
       ${/* ==> IT SITS DIRECTLY UNDER `In its season`, NARROW COMPARISON THEN
           * WIDE. <== §57.44. The two rank sections answer the same question at
           * two sizes, and a reader who has just read "3rd strongest of 28"
@@ -206,14 +221,28 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * not a fact about the storm, and every figure it would have ranked
           * is already on screen above with its own units. There is no wrong
           * impression left behind by its absence. */
-    section('Where it ranks', archiveRankHtml(
+    section('rank-archive', 'Where it ranks', archiveRankHtml(
       rankStorm(facts, archiveTable(), archiveBasin()),
       { year: storm.year },
     ))}
-      ${section('Wind footprint', windFieldHtml(facts, {
+      ${section('peak', 'Strongest', peakHtml(facts, system))}
+      ${section('life', 'Its life', lifeHtml(facts))}
+      ${section('landfalls', 'Landfalls', landfallsHtml(facts, system, {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: storm.places ?? null,
+  }))}
+      ${section('change', 'How it changed', changeHtml(facts, system, {
+    windowHours: SEASONS.intensificationWindowHours,
+  }))}
+      ${section('movement', 'How it moved', movementHtml(facts, system, {
+    floorKt: SEASONS.trackSpeedFloorKt,
+    maxLegHours: SEASONS.trackSpeedMaxLegHours,
+  }))}
+      ${section('windfield', 'Wind footprint', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}
-      ${section("NOAA's report", reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}`;
+      ${section('report', "NOAA's report", reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}`;
   }
 
   async function lookUpReport() {
@@ -237,7 +266,30 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
   function onClick(ev) {
     if (ev.target.closest('[data-retry="report"]')) {
       lookUpReport();
+      return;
     }
+
+    /* ==> DELEGATED, RATHER THAN A LISTENER PER HEAD REWIRED AFTER EVERY
+     * RENDER. <== `render()` replaces `innerHTML` wholesale and runs again
+     * when NOAA's report arrives, so per-head listeners would have to be
+     * reattached each time and the failure mode is silent: the heads stop
+     * responding a beat after the panel paints, on exactly the storms that
+     * have a report. One listener on the body outlives every repaint.
+     *
+     * ==> THE DOM IS UPDATED HERE AND `collapsed` IS THE RECORD. <== Not a
+     * re-render: folding a section must not rebuild eight others, and a
+     * re-render would also lose the reader's scroll position halfway down a
+     * long panel. `render()` reads `collapsed` when it next runs for its own
+     * reasons, so the two cannot drift. */
+    const head = ev.target.closest('.detail-section-head');
+    if (!head) return;
+    const sec = head.closest('.detail-section');
+    const id = sec?.dataset.section;
+    if (!id) return;
+    const shut = sec.dataset.collapsed !== 'true';
+    sec.dataset.collapsed = String(shut);
+    head.setAttribute('aria-expanded', String(!shut));
+    collapsed[id] = shut;
   }
 
   return {
@@ -299,6 +351,11 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     onEnter(arg) {
       stormId = arg || null;
       report = null;
+      /* ==> EVERY STORM OPENS FULLY EXPANDED. <== See `section()`: an archive
+       * storm is opened, read and left, so a fold made on Katrina must not
+       * arrive pre-applied on a storm from 1851 that has half as many sections
+       * and no reason for any of them to be shut. */
+      for (const k of Object.keys(collapsed)) delete collapsed[k];
       render();
       if (stormId) {
         onOpen?.(stormId);
