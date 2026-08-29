@@ -38,6 +38,7 @@
 
 import { parseHurdat2 } from '../lib/hurdat.js';
 import { rankingsFileName } from '../lib/rankings.js';
+import { landfallFileName, placesFileName } from '../lib/seasons-sidecar.js';
 
 /** The index of every season we hold. Mutable on the server, `no-cache` in
  *  `_headers`, and the only door to a filename. */
@@ -239,7 +240,7 @@ export function loadLandfalls(index, basin) {
   const revision = index?.basins?.[basin]?.revision;
   if (!revision) return Promise.resolve(null);
 
-  const url = `${dir}/${basin}-landfalls-${revision}.json`;
+  const url = `${dir}/${landfallFileName(basin, revision)}`;
   return once(url, async () => {
     const res = await fetch(url, { credentials: 'omit' });
     if (!res.ok) throw new Error(`landfalls answered ${res.status}`);
@@ -281,7 +282,7 @@ export function loadPlaces(index, basin) {
   const revision = index?.basins?.[basin]?.revision;
   if (!revision) return Promise.resolve(null);
 
-  const url = `${dir}/${basin}-places-${revision}.json`;
+  const url = `${dir}/${placesFileName(basin, revision)}`;
   return once(url, async () => {
     const res = await fetch(url, { credentials: 'omit' });
     if (!res.ok) throw new Error(`places answered ${res.status}`);

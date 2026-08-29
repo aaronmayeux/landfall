@@ -159,7 +159,7 @@ console.log('\nthe fallback-page guard — what stops a 404 becoming permanent')
      * and it is a different extension under the same path from the `.txt`
      * above, which is exactly the pairing nothing else in the repo checks. */
     'an HTML answer for a computed-landfalls .json is refused',
-    typeMatchesUrl(html, `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === false,
+    typeMatchesUrl(html, `${HOST}/seasons/data/atlantic-landfalls-v2-02272026.json`) === false,
   );
   ok(
     /* ==> AND A THIRD FILE TYPE SINCE §57.7b. <== The land mask is
@@ -178,7 +178,7 @@ console.log('\nthe fallback-page guard — what stops a 404 becoming permanent')
   );
   ok(
     'and real JSON for it is accepted',
-    typeMatchesUrl(res('application/json'), `${HOST}/seasons/data/atlantic-landfalls-02272026.json`) === true,
+    typeMatchesUrl(res('application/json'), `${HOST}/seasons/data/atlantic-landfalls-v2-02272026.json`) === true,
   );
   ok(
     'an HTML answer for the index .json is refused',

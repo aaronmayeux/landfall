@@ -43,6 +43,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { SEASONS } from '../config/constants.js';
+import { landfallFileName, placesFileName } from '../lib/seasons-sidecar.js';
 import { parseHurdat2 } from '../lib/hurdat.js';
 import { stallWindow } from '../lib/season-story.js';
 import { loadGazetteer, placeLabel } from './gazetteer.mjs';
@@ -52,7 +53,7 @@ import { NE_REF } from './seasons-landfall.mjs';
  *  directory is already `immutable` in `_headers` by a wildcard and already
  *  carries a revision stamp in every filename, so this inherits both rather
  *  than needing a new hand-written header line (§57.16a). */
-export const placesFile = (basin, revision) => `seasons/data/${basin}-places-${revision}.json`;
+export const placesFile = (basin, revision) => `seasons/data/${placesFileName(basin, revision)}`;
 
 /**
  * ==> LONGITUDE COMES OUT OF THE ARCHIVE UNWRAPPED AND THE GAZETTEER EXPECTS
@@ -209,9 +210,10 @@ export async function main(argv = []) {
      * indistinguishable from a basin whose landfalls are all in open country.
      * That is exactly the "unavailable read as none_matched" confusion §5
      * forbids, written into a static file where nothing can correct it. */
-    const marksPath = join(root, 'seasons/data', `${basin}-landfalls-${entry.revision}.json`);
+    const marksName = landfallFileName(basin, entry.revision);
+    const marksPath = join(root, 'seasons/data', marksName);
     if (!existsSync(marksPath)) {
-      console.error(`  ${basin}: ${basin}-landfalls-${entry.revision}.json is not on disk`);
+      console.error(`  ${basin}: ${marksName} is not on disk`);
       console.error('    run tools/seasons-landfall.mjs first — naming landfalls needs the list of them');
       return 1;
     }

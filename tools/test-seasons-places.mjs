@@ -37,6 +37,8 @@ const section = (n) => console.log(`\n  ${n}`);
 
 const { SEASONS } = await import('../config/constants.js');
 const { wrapLon, placeEntry, basinPlaces, syncPlaces, placesFile } = await import('./seasons-places.mjs');
+const { landfallFileName, placesFileName } = await import('../lib/seasons-sidecar.js');
+const SHIPPED_INDEX = JSON.parse(readFileSync('seasons/index.json', 'utf8'));
 
 /** A gazetteer that answers a fixed name and remembers every question. */
 function stubGazetteer(answer = { name: 'Testville', region: 'Testshire', country: 'Testland', km: 7 }) {
@@ -208,7 +210,7 @@ section('WRITING — an unchanged archive commits nothing');
 
   const onDisk = JSON.parse(readFileSync(path.join(dir, placesFile('atlantic', 'R1')), 'utf8'));
   ok(onDisk.storms.A.genesis.name === 'Y', 'and it is the new bytes on disk');
-  ok(placesFile('atlantic', 'R1') === 'seasons/data/atlantic-places-R1.json',
+  ok(placesFile('atlantic', 'R1') === `seasons/data/atlantic-places-${SEASONS.placesSchema}-R1.json`,
     '==> THE REVISION IS IN THE FILENAME. <== `seasons/data/*` is `immutable` for a year in '
     + '_headers, so a corrected archive has to arrive as a NEW URL or no browser ever sees it');
   rmSync(dir, { recursive: true, force: true });
@@ -218,9 +220,11 @@ section('WRITING — an unchanged archive commits nothing');
 section('THE SHIPPED FILES AGREE WITH THE SHIPPED LANDFALLS');
 {
   for (const basin of ['atlantic', 'epacific']) {
-    const rev = '02272026';
-    const places = JSON.parse(readFileSync(`seasons/data/${basin}-places-${rev}.json`, 'utf8'));
-    const marks = JSON.parse(readFileSync(`seasons/data/${basin}-landfalls-${rev}.json`, 'utf8'));
+    /* The revision off the index and the names off the shared builder, so a
+     * schema bump does not leave this suite reading a deleted file. */
+    const rev = SHIPPED_INDEX.basins[basin].revision;
+    const places = JSON.parse(readFileSync(`seasons/data/${placesFileName(basin, rev)}`, 'utf8'));
+    const marks = JSON.parse(readFileSync(`seasons/data/${landfallFileName(basin, rev)}`, 'utf8'));
 
     ok(places.source === 'computed',
       `${basin}: the file says so itself, so a reader of this JSON in two years does not have `

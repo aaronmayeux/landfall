@@ -68,6 +68,7 @@ import { join } from 'node:path';
 
 import { parseHurdat2 } from '../lib/hurdat.js';
 import { stormFacts } from '../lib/season-facts.js';
+import { landfallFileName } from '../lib/seasons-sidecar.js';
 import { stormRow } from '../lib/wall-index.js';
 
 /** Where the browser fetches it. One file, not one per basin: the wall's basin
@@ -181,7 +182,7 @@ export function buildWall(root, index, { generatedAt }) {
      * landfall figure falls back to NOAA's sparse markers, and the log says
      * so. A generator that crashed here would take the whole archive down over
      * one companion file. */
-    const marksPath = join(root, 'seasons/data', `${key}-landfalls-${entry.revision}.json`);
+    const marksPath = join(root, 'seasons/data', landfallFileName(key, entry.revision));
     let marks = null;
     if (existsSync(marksPath)) marks = JSON.parse(readFileSync(marksPath, 'utf8'))?.storms || null;
     else console.warn(`  ! ${key}: no computed landfalls on disk — falling back to NOAA's markers`);

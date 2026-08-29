@@ -37,6 +37,7 @@ import { join } from 'node:path';
 import { SEASONS } from '../config/constants.js';
 import { parseHurdat2 } from '../lib/hurdat.js';
 import { landfallsFor } from '../lib/landfall.js';
+import { landfallFileName } from '../lib/seasons-sidecar.js';
 import { buildLandMask } from './land-raster.mjs';
 
 /* ---------------------------------------------------------------------------
@@ -107,7 +108,7 @@ export async function fetchCoastline({ fetchImpl = globalThis.fetch } = {}) {
  *  directory is already `immutable` in `_headers` and already carries a
  *  revision stamp in every filename, so this inherits both rather than needing
  *  a new rule and a new hand-written header line (§57.16a). */
-export const landfallFile = (basin, revision) => `seasons/data/${basin}-landfalls-${revision}.json`;
+export const landfallFile = (basin, revision) => `seasons/data/${landfallFileName(basin, revision)}`;
 
 /**
  * One basin, walked.
