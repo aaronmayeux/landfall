@@ -397,6 +397,31 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**==> THE ARCHIVE'S NEXT WAVE IS WRITTEN DOWN IN FULL. START AT §57.42. <==**
+Aaron's ask, 2026-08-29: make the past-storm drawer the thing people go to for
+research. **§57.42 is the whole backlog** — Tier 1 (free arithmetic) and Tier 2
+(one runner job each), every item sized and independently buildable. Take ONE,
+build it, delete its entry, write what IS in its place. Tier 3 is recorded as
+NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
+
+**What already landed:** `tools/gazetteer.mjs` names a point as
+`town, region, country` and is tested against fifteen real landfalls. **§57.40
+is the as-built account.** Nothing writes its answers to a file yet — that is
+§57.42 Tier 2 item 1, and it is the natural next step.
+
+**The summary paragraph is designed and accepted but NOT BUILT. §57.41.** It
+carries Aaron's four calls on voice and the two faults the prototype hit. **Read
+it before writing a line of `lib/season-story.js`** — the stall measured from a
+window's first fix misses Harvey completely, which is the one storm it exists
+for.
+
+**==> AND ONE COUNT IS UNEXPLAINED, WHICH BLOCKS THE RANKINGS. <==** A scratch
+walk over the mirrored archive on 2026-08-29 visited **6,532 storm entries
+against 3,266 unique ids** — an exact 2×, never chased down. The 3,266 agrees
+with `seasons/reports.json`, so the archive is fine and the WALK is not. Every
+ranking in §57.42 Tier 1 item 11 is a claim about a denominator, so **find the
+doubling before building the table.** Nothing else depends on it.
+
 **==> THE BOARD'S CUT IS TAKEN — TWICE — AND `SPEC.md` §12 HAS THE AS-BUILT ROW.
 <==** 2026-08-26, 1,064 -> 823. `ui/seasons-board-selection.js` took the ticks,
 the open storm and every rule about which of them the globe hears;
