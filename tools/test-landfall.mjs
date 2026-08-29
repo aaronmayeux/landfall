@@ -168,9 +168,31 @@ eq('no landfall for a track that never touched water first', inland.length, 0);
 
 section('8. A cyclone comes ashore, and so does what one turned into');
 
-for (const status of ['LO', 'WV', 'DB']) {
+/* ==> `LO` IS NOT IN THIS LOOP ANY MORE AND THAT IS THE POINT OF §57.7d. <==
+ * It used to be, and with `LO` added to `postTropicalStatuses` these tracks
+ * would STILL have passed — every fix is `LO`, so the system was never a
+ * cyclone and the sequence test refuses it anyway. The assertion would have
+ * gone on printing "a LO crossing the coast is not a landfall" while the code
+ * had stopped meaning it. §12: a test that stays green on the wrong reason is
+ * worse than no test. `LO` gets its own cases in 8b, both ways. */
+for (const status of ['WV', 'DB']) {
   eq(`a ${status} crossing the coast is not a landfall`,
     landfallsFor([fix(0, -45, 15, { status }), fix(1, -35, 15, { status })], mask.isLand).length, 0);
+}
+
+/* ==> AND A WAVE OR A DISTURBANCE STAYS REFUSED EVEN AFTER A TROPICAL PHASE,
+ * WHICH IS THE CASE THE LOOP ABOVE CANNOT REACH. <== A `WV` or `DB` at full
+ * tropical-storm force, after the system had genuinely been a hurricane, is
+ * the exact shape `LO` now passes — so the only thing separating them is the
+ * code list. Four real crossings in the archive are this, all at 35 kt in the
+ * Lesser Antilles, and all of them stay out on purpose. */
+for (const status of ['WV', 'DB']) {
+  eq(`a ${status} at 70 kt after a hurricane phase is still not a landfall`,
+    landfallsFor([
+      fix(0, -55, 15, { status: 'HU', windKt: 80 }),
+      fix(1, -45, 15, { status, windKt: 70 }),
+      fix(2, -35, 15, { status, windKt: 70 }),
+    ], mask.isLand).length, 0);
 }
 for (const status of SEASONS.cycloneStatuses) {
   eq(`a ${status} crossing the coast is`,
@@ -223,6 +245,43 @@ eq('exactly at the floor it does',
 /* ==> MUTATION: deleting the wind test, or writing `>` where the code writes
  * `<`, turns one of these two red. */
 
+/* ==> DORIAN'S SHAPE, AND IT IS `LO` RATHER THAN `EX`. <== §57.7d. HURDAT2
+ * codes his 2019 Nova Scotia crossing — 80 kt at 44.64N 63.30W, the storm
+ * Canada remembers — as `LO`, not `EX`. The `EX` list alone refused it, for
+ * exactly the reason it once refused Sandy. NWS Instruction 10-604 makes the
+ * remnant low and the extratropical cyclone two classes of ONE thing, and
+ * draws the line between them at 34 kt, which is the floor this file already
+ * had. */
+const dorianish = (over = {}) => [
+  fix(0, -55, 15, { status: 'HU', windKt: 95 }),
+  fix(1, -45, 15, { status: 'LO', windKt: 80, ...over }),
+  fix(2, -35, 15, { status: 'LO', windKt: 80, ...over }),
+];
+
+const lo = landfallsFor(dorianish(), mask.isLand);
+eq('a system that was a hurricane and crossed the coast as LO came ashore', lo.length, 1);
+eq('and it is post-tropical, the same as an EX crossing', lo[0]?.nature, 'post-tropical');
+eq('and it is not graded either', lo[0]?.category, null);
+
+eq('under the floor the same LO crossing does not count',
+  landfallsFor(dorianish({ windKt: SEASONS.postTropicalLandfallMinKt - 1 }), mask.isLand).length, 0);
+
+/* ==> MUTATION: removing `'LO'` from SEASONS.postTropicalStatuses turns the
+ * first three of these red and leaves the floor case green — which is the
+ * asymmetry worth knowing, because it is why the floor case alone would not
+ * have caught the bug. Both mutations were run. */
+
+/* An LO that was never a cyclone is still nothing, and this is the case that
+ * keeps `LO` from swallowing every pre-genesis low over 34 kt. Measured: of
+ * the 47 LO crossings the archive walk finds after a cyclone phase, 5 clear
+ * the floor and 0 of those are pre-genesis — the guard is unexercised on real
+ * data and is here so it stays correct anyway. */
+eq('an LO crossing on a system that was never a cyclone is not a landfall',
+  landfallsFor([
+    fix(0, -45, 15, { status: 'LO', windKt: 70 }),
+    fix(1, -35, 15, { status: 'LO', windKt: 70 }),
+  ], mask.isLand).length, 0);
+
 /* An extratropical low that comes ashore BEFORE it was ever tropical. Same
  * strength, same coast, and it must not count — it had not been a storm yet. */
 const preTropical = landfallsFor([
@@ -263,6 +322,13 @@ eq('an EX on a system that was never a cyclone is nothing',
   landfallNature('EX', 70, 100, null), null);
 eq('and an EX before the tropical phase is nothing',
   landfallNature('EX', 70, 100, 200), null);
+eq('a strong LO after the tropical phase is post-tropical too',
+  landfallNature('LO', 80, 100, 0), 'post-tropical');
+eq('a weak LO is nothing', landfallNature('LO', 20, 100, 0), null);
+eq('an LO on a system that was never a cyclone is nothing',
+  landfallNature('LO', 80, 100, null), null);
+eq('a DB at the same strength and sequence is still nothing',
+  landfallNature('DB', 80, 100, 0), null);
 
 /* ==> MUTATION: each null case was made to return a nature in turn and each
  * one bites. The ABSENT-wind case is the one worth naming, and the reason it
@@ -274,7 +340,45 @@ eq('and an EX before the tropical phase is nothing',
  * produces `null`, but `landfallNature` is exported and the NOAA fallback in
  * `lib/season-facts.js` hands it a parser field that can be absent. */
 
-section('9. A storm skimming a ragged coast is one landfall, not six');
+section('8d. The walk can say what it refused. §57.7e');
+
+/* ==> THE DEFAULT IS SILENCE AND THAT IS THE POINT OF AN OUT-PARAMETER. <==
+ * Four callers ask this walk for landfalls and none of them wants refusals.
+ * A changed return shape would have moved all four. */
+const quiet = landfallsFor(dorianish({ windKt: 20 }), mask.isLand);
+eq('with no array passed the walk still just returns landfalls', quiet.length, 0);
+
+const refused = [];
+eq('a crossing under the floor is refused',
+  landfallsFor(dorianish({ windKt: 20 }), mask.isLand, { declined: refused }).length, 0);
+eq('and the refusal is recorded', refused.length, 1);
+eq('with the status that caused it', refused[0]?.status, 'LO');
+eq('and the wind at the coast, so a reader could work out why', refused[0]?.windKt, 20);
+ok('and a position', Number.isFinite(refused[0]?.lat) && Number.isFinite(refused[0]?.lon));
+
+/* ==> AN ACCEPTED CROSSING IS NEVER ALSO A REFUSED ONE. <== The panel prints
+ * "one other time" off this count, so double-counting Dorian's own landfall
+ * would make the sentence contradict the list directly above it. */
+const both = [];
+eq('a crossing that IS a landfall is not recorded as refused',
+  landfallsFor(dorianish(), mask.isLand, { declined: both }).length, 1);
+eq('so the refusal list stays empty', both.length, 0);
+
+/* A wave at full force after a hurricane phase — refused on the code alone. */
+const waveRefused = [];
+landfallsFor([
+  fix(0, -55, 15, { status: 'HU', windKt: 80 }),
+  fix(1, -45, 15, { status: 'WV', windKt: 70 }),
+  fix(2, -35, 15, { status: 'WV', windKt: 70 }),
+], mask.isLand, { declined: waveRefused });
+eq('a WV crossing at 70 kt is refused and recorded', waveRefused.length, 1);
+eq('and it names WV rather than guessing a reason', waveRefused[0]?.status, 'WV');
+
+/* ==> MUTATION: deleting the `declined.push` block turns four of these red and
+ * leaves the `quiet` and `both` cases green — which is why both of those are
+ * here. Pushing on EVERY crossing rather than on a refused one turns the
+ * `both` case red. Both mutations were run. */
+
 
 /* Two islands 20 km apart. Crossing both is two crossings, but the storm never
  * genuinely went back out to sea. */

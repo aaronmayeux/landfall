@@ -394,9 +394,82 @@ function mount({
       places: { landfalls: [null, null, null] },
     }).includes('season-landfall-where'));
 
-  /* ==> THE 1971-1982 HOLE. <== The one absence in this archive that LOOKS
-   * LIKE A FACT. Driven by moving a real storm into the window rather than by
-   * inventing one, so the rest of the shape is real. */
+  /* ==> WHAT THE WALK REFUSED GETS A SENTENCE. <== §57.7e, §5. 135 real coast
+   * crossings across the archive are not landfalls, and for 26 storms that is
+   * every crossing they have — so this panel said "this storm did not come
+   * ashore" over a track that plainly touched land.
+   *
+   * ==> DRIVEN OFF THE REAL SIDECAR RATHER THAN A HAND-BUILT COUNT. <== §12:
+   * the `How it changed` section was green for weeks because its only case
+   * built its own facts object with the same wrong field name the bug had.
+   * These read `declined` out of the file the runner wrote. */
+  const declinedFile = JSON.parse(readFileSync(
+    join(ROOT, 'seasons', 'data', landfallFileName('atlantic', rev2)), 'utf8')).declined;
+  const refusedId = Object.keys(declinedFile).find((id) => !marks[id]);
+  ok('==> THE ARCHIVE REALLY HAS STORMS WHOSE ONLY CROSSING WAS REFUSED. <== '
+    + 'If this ever finds none, the sentence below is guarding nothing',
+  Boolean(refusedId));
+
+  const refusedFacts = {
+    ...stormFacts(katrina), landfalls: [], year: 1995,
+    landfallSource: 'computed', crossingsDeclined: declinedFile[refusedId],
+  };
+  const refusedHtml = flat(M.landfallsHtml(refusedFacts, 'imperial', {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+  }));
+  ok('a storm with no landfalls but a refused crossing still says it did not come ashore',
+    refusedHtml.includes('did not come ashore'));
+  ok('==> AND NO LONGER STOPS THERE, WHICH IS THE WHOLE POINT. <== The track '
+    + 'touched land and the panel used to be silent about it',
+  refusedHtml.includes('crossed a coast'));
+  ok('and it says WHY in plain English rather than naming a status code',
+    refusedHtml.includes('not a tropical cyclone')
+      && !refusedHtml.includes('EX') && !refusedHtml.includes('LO'));
+
+  /* The count is spelled as a word, per §57.41's rule that counts are words. */
+  ok('one refusal reads as "one other time"',
+    flat(M.landfallsHtml({ ...refusedFacts, crossingsDeclined: 1 }, 'imperial', {
+      markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+      markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    })).includes('one other time'));
+  ok('and three reads as "three other times", not "3"',
+    flat(M.landfallsHtml({ ...refusedFacts, crossingsDeclined: 3 }, 'imperial', {
+      markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+      markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    })).includes('three other times'));
+
+  /* ==> AND IT SITS UNDER A REAL LIST TOO. <== 66 of the 92 storms with a
+   * refusal DID come ashore somewhere else, so a sentence that only appeared
+   * on empty lists would miss most of them. */
+  const bothHtml = flat(M.landfallsHtml({ ...computed, crossingsDeclined: 2 }, 'imperial', {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+  }));
+  ok('a storm that came ashore AND had a crossing refused still lists all three landfalls',
+    (bothHtml.match(/season-landfall-when/g) || []).length === 3);
+  ok('the refusal note follows the list rather than replacing it',
+    bothHtml.includes('season-landfalls') && bothHtml.includes('two other times'));
+
+  /* ==> ZERO AND `null` ARE BOTH SILENT, FOR DIFFERENT REASONS. <== Zero is
+   * "the walk ran and refused nothing"; null is "nobody walked", which is the
+   * NOAA fallback. Neither has anything to disclose, and a sentence on either
+   * would be the app inventing a caveat. */
+  for (const [what, value] of [['zero refusals', 0], ['an unwalked storm', null]]) {
+    ok(`${what} says nothing about crossings`,
+      !flat(M.landfallsHtml({ ...refusedFacts, crossingsDeclined: value }, 'imperial', {
+        markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+        markerHoleTo: SEASONS.landfallMarkerHoleTo,
+      })).includes('crossed a coast'));
+  }
+
+  /* ==> MUTATION: dropping `refusedNote` from the empty branch turns the
+   * "crossed a coast" case red; dropping it from the list branch turns the
+   * "follows the list" case red; printing the digit instead of the word turns
+   * the two counting cases red; treating `null` as 0 leaves everything green
+   * BUT treating 0 as truthy turns the zero case red. All four were run. */
+
+
   const inHole = { ...stormFacts(katrina), landfalls: [], year: 1975 };
   const holeHtml = M.landfallsHtml(inHole, 'imperial', {
     markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
