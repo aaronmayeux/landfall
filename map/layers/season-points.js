@@ -57,6 +57,7 @@ import { LABEL_PLACEMENT } from '../../config/constants.js';
 import { palette } from '../../config/theme.js';
 import { categoryColor, categoryDotCode, categoryFromKt } from '../../lib/category.js';
 import { stormDisplayName } from '../../lib/season-names.js';
+import { firstCycloneTime, natureAt, statusDotCode } from '../../lib/season-nature.js';
 import { gs } from '../theme-state.js';
 import { focusOpacity } from './season-focus.js';
 import { placeName } from './name-placement.js';
@@ -99,29 +100,55 @@ function pointFeature({ id, kind, lat, lon, color, code = '', first = false }) {
 }
 
 /**
- * The category at one fix, graded from the wind the record carries.
+ * The reading at one fix: what kind of system it was, what colour that is, and
+ * what letters go inside the circle.
  *
- * ==> `'tropical'` IS PASSED UNCONDITIONALLY, WHICH IS A KNOWN SIMPLIFICATION
- * RATHER THAN AN OVERSIGHT. <== HURDAT2's status column distinguishes `EX`
- * (extratropical) and `LO` from the cyclone codes, and §6 says a non-tropical
- * system must not wear a Saffir-Simpson hue. Mapping those codes onto natures
- * is a real change with its own glass call, and it would have to move the track
- * colour and the peak figure with it or the row and the globe would disagree.
- * Until then this matches what `season-tracks.js` and `lib/season-facts.js`
- * already do, so the three cannot drift. The visible cost is that a storm's
- * extratropical tail draws in the hue of its wind rather than a duller one.
+ * ==> IT READS THE STATUS COLUMN NOW, AND UNTIL 2026-08-29 IT READ ONLY THE
+ * WIND. <== §57.7f. Aaron opened Beryl 2018 and found a chain of green `TS`
+ * dots across Dominica and Puerto Rico under a panel correctly saying she never
+ * came ashore. **Her wind never dropped — she was 45 kt at Dominica. What she
+ * lost was her structure**, which is the one thing a wind number cannot tell
+ * you and the status column can. She is coded `DB` for every one of those
+ * crossings.
+ *
+ * The old comment here called passing `'tropical'` unconditionally "a known
+ * simplification" whose cost was "an extratropical tail draws in the hue of its
+ * wind rather than a duller one." Measured, the cost was 12,355 fixes across
+ * 1,440 storms wearing a cyclone's letters, and 687 of them wearing a
+ * Saffir-Simpson NUMBER on an `EX` or `LO` fix. A hue is a preference; letters
+ * that contradict the sentence below them are a §5 failure.
+ *
+ * Three readings, and the vocabulary is `lib/category.js`'s existing one:
+ *
+ *   - **tropical** — graded exactly as before. Nothing about a real cyclone's
+ *     dot changed, which is what keeps this off the glass for most storms.
+ *   - **post-tropical** — the loud generic hue, no category number. Sandy
+ *     approaching New Jersey must not go quiet; she was still lethal.
+ *   - **remnant** — the globe's quiet pre-genesis grey. A disturbance, a wave,
+ *     or a low before the storm ever formed.
+ *
+ * The letters for the last two are the record's own code (`DB`, `WV`, `LO`,
+ * `EX`), Aaron's call — see `statusDotCode`.
  */
-function gradeAt(windKt) {
-  const cat = Number.isFinite(windKt) ? categoryFromKt(windKt) : null;
+function gradeAt(windKt, status = null, bornAt = null, time = null) {
+  const nature = natureAt(status, time, bornAt);
+  /* ==> A CATEGORY IS COMPUTED ONLY FOR A CYCLONE. <== `categoryColor` and
+   * `categoryDotCode` both refuse a non-categorizable nature anyway, so this is
+   * belt and braces — but it also means the number never exists to be leaked by
+   * a later caller reading `cat` for something else. */
+  const cat = nature === 'tropical' && Number.isFinite(windKt)
+    ? categoryFromKt(windKt) : null;
   return {
+    nature,
     /* `categoryColor` answers with the ungraded hue rather than nothing when
      * the record carries no wind — which happens all through the 19th century
      * — so this can never resolve to a missing paint property. Same guarantee
      * the track colour carries. */
-    color: categoryColor(cat, 'tropical', null),
-    /* Empty rather than a guessed code where there is no earned reading. The
-     * dot's colour still carries §6; the circle is simply blank. */
-    code: categoryDotCode(cat, 'tropical'),
+    color: categoryColor(cat, nature, null),
+    /* A cyclone gets its Saffir-Simpson code; everything else gets the letters
+     * the record itself used. Empty rather than a guessed code where there is
+     * no earned reading either way. */
+    code: nature === 'tropical' ? categoryDotCode(cat, nature) : statusDotCode(status),
   };
 }
 
@@ -144,13 +171,21 @@ function pointsForStorm(storm, selected) {
   const drawable = (storm.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lon));
 
+  /* ==> COMPUTED ONCE OVER THE WHOLE TRACK, NOT PER DOT. <== §57.7f. Whether a
+   * fix is post-tropical or merely pre-genesis depends on when the storm FIRST
+   * became a cyclone, which is a fact about the storm rather than about the
+   * fix. Read from `storm.points` rather than from `drawable` so that dropping
+   * an unreadable position cannot move the birth moment. */
+  const bornAt = firstCycloneTime(storm.points || []);
+
   /* THE ONE-RECORD CASE FIRST, and it is `< 2` rather than `=== 1` so that a
    * storm whose only points are unreadable is treated the same way: something
    * was ticked, so something must appear. It returns immediately — a storm
    * with one fix must never draw both kinds of dot on top of each other. */
   if (drawable.length < 2) {
     if (drawable.length === 1) {
-      const g = gradeAt(drawable[0].windKt);
+      const p0 = drawable[0];
+      const g = gradeAt(p0.windKt, p0.status, bornAt, p0.time);
       out.push(pointFeature({
         id, kind: 'one', lat: drawable[0].lat, lon: drawable[0].lon, color: g.color,
       }));
@@ -162,7 +197,7 @@ function pointsForStorm(storm, selected) {
 
   for (let i = 0; i < drawable.length; i++) {
     const p = drawable[i];
-    const g = gradeAt(p.windKt);
+    const g = gradeAt(p.windKt, p.status, bornAt, p.time);
     out.push(pointFeature({
       id,
       kind: 'fix',
