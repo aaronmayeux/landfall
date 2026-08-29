@@ -722,6 +722,18 @@ function ensureBoard({ drawer, linkReason }) {
    * on screen. */
   drawer?.register?.(boardView);
 
+  /* ==> AND IT IS HANDED THE DRAWER'S OWN HEADER REDRAW. §57.39a. <== The
+   * board's heading names the BASIN, and on the frame the view is entered the
+   * index has not landed, so there is no basin to name yet and the header
+   * falls back to `Past storms`. Without this it stayed on that fallback until
+   * something re-pushed the view — pressing `+` did, so the header caught up
+   * only if the reader happened to change year. Aaron on glass, 2026-08-28.
+   *
+   * The board only calls it when the answer actually changes, which is once a
+   * visit; see the note beside `render` in `ui/view-seasons-board.js` for why
+   * that guard is what makes it safe to put on the render path at all. */
+  boardView.setChromeRefresh?.(() => drawer?.refreshChrome?.());
+
   /* ==> THE WALL IS REGISTERED IN THE SAME BREATH, AND THE ORDER OF THESE TWO
    * DOES NOT MATTER BUT THEIR PRESENCE DOES. <== A wall the drawer knows with
    * no board behind it is a screen full of year rows that open nothing, and

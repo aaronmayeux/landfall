@@ -407,7 +407,46 @@ export function createSeasonsBoardView({
    * arriving through the header. Wrapping here rather than teaching forty call
    * sites about a second render keeps that impossible to forget. */
   const { rosterHtml } = painter;
-  const render = () => { painter.render(); yearStep.render(); };
+
+  /* --- the heading catching up ---------------------------------------------
+   * ==> THE HEADER SAID `Past storms` UNTIL THE READER STEPPED A YEAR. <==
+   * Aaron on glass, 2026-08-28, on the first build of §57.39a. The header is
+   * the DRAWER's, drawn once when the view is entered — and on entry the index
+   * has not landed, so there is no basin yet to name and `titleFor` correctly
+   * falls back. Nothing then redrew it: `onIndexReady` renders the BODY, and
+   * the only thing that had ever refreshed the header was `onWhere` re-pushing
+   * the view on a year change. So the fallback sat there, looking like the
+   * answer, until the reader happened to press `+`.
+   *
+   * ==> IT IS ASKED FOR ONLY WHEN THE ANSWER CHANGES, WHICH IS WHAT MAKES IT
+   * SAFE TO PUT ON THE RENDER PATH. <== `render` runs on every poll, every
+   * filter change and every tick of the roster, and rebuilding the drawer's
+   * whole header that often would throw away the Back button and the X on a
+   * surface the reader may have focused. The basin changes at most once a
+   * visit, so this fires once and then never again.
+   * ---------------------------------------------------------------------- */
+
+  /** The drawer's `refreshChrome`, injected by `seasons/index.js`. The two live
+   *  drawers take the same hook for the same reason — a view cannot redraw
+   *  furniture it does not own. Null until wired, and calling it is optional
+   *  everywhere: a board mounted by a harness with no drawer must still work. */
+  let requestChrome = null;
+
+  /** What the header is showing right now, as far as this view knows. Compared
+   *  rather than recomputed-and-hoped: `titleFor` is the only thing that
+   *  actually writes it, so it is also the only thing that may claim it. */
+  let headingShown = null;
+
+  const headingNow = () => {
+    const label = basin ? seasons.basinLabel(loading.index(), basin) : null;
+    return label || 'Past storms';
+  };
+
+  const render = () => {
+    painter.render();
+    yearStep.render();
+    if (headingNow() !== headingShown) requestChrome?.();
+  };
 
   /* --- input --------------------------------------------------------------
    * ONE DELEGATED LISTENER PER EVENT TYPE, on the scroller, so a wholesale
@@ -699,8 +738,22 @@ export function createSeasonsBoardView({
      *  cannot name a basin the index has not described yet. An empty heading
      *  reads as a broken screen rather than as a wait. */
     titleFor: () => {
-      const label = basin ? seasons.basinLabel(loading.index(), basin) : null;
-      return label || 'Past storms';
+      /* ==> THIS IS THE ONE PLACE THE HEADING IS WRITTEN, SO IT IS THE ONE
+       * PLACE THAT RECORDS WHAT IT SAYS. <== `render` compares against this to
+       * decide whether the drawer needs asking to redraw its header at all.
+       * Setting it anywhere else would be a second opinion about a string only
+       * this function produces, and the two would drift the first time the
+       * fallback was reached. */
+      headingShown = headingNow();
+      return headingShown;
+    },
+
+    /** The drawer's own `refreshChrome`, handed in by `seasons/index.js`. Same
+     *  hook and same reason as the home dashboard's and the storm panel's: the
+     *  header belongs to `ui/drawer.js`, so a view whose title can change while
+     *  it is already open has to be able to ask for it back. */
+    setChromeRefresh(fn) {
+      requestChrome = fn;
     },
 
     /** ==> THE BUTTON POINTING BACK HERE NAMES THE YEAR, NOT THE BASIN. <==
