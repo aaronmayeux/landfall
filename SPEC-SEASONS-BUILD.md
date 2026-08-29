@@ -5110,3 +5110,319 @@ than crossings.
 themselves rather than against a typed number, so arithmetic that drifts fails
 it too. Switching the cell back to crossings turns
 `tools/test-seasons-board.mjs` red (29 against 16 on the season it opens on).
+
+---
+
+### 57.40 Naming a place — as built
+
+**Every spot the archive names carries its region and its country.** Aaron's
+call, 2026-08-29: *"People need to know if you mean Bloomington Ohio or
+Bloomington South Carolina. Or Turks and Caicos or Port-au-Prince."* A bare town
+name is not a shorter answer, it is a wrong one.
+
+`tools/gazetteer.mjs` is the whole of it. **Runner only**, in `tools/` for the
+same reason `tools/land-raster.mjs` is: `lib/` ships to every visitor and
+`tools/` does not. It loads 135,233 towns and 4,596 admin-1 polygons — about
+58 MB — uses them, and throws them away. What reaches a phone is one short
+string per landfall.
+
+**The town list is the one the app already ships.** `all-the-cities`, a
+packaging of GeoNames, is the same source `tools/build-population.mjs` builds
+`assets/hazards/population-towns.json` from. That shipped file is stripped to
+`[lon, lat, pop]` to save bytes; the names are still in the source. One source
+means the place named beside a landfall and the dot on the population layer can
+never disagree about where a town is.
+
+**==> THE REGION IS LOOKED UP FROM THE TOWN, NOT FROM THE STORM'S POINT, AND
+THAT IS THE ONE IDEA IN THIS FILE. <==** A landfall position sits exactly ON the
+coastline by construction, and Natural Earth's admin-1 coast is drawn from a
+different generalisation than the `ne_10m_land` outline the landfall walk
+crosses. Measured 2026-08-29 over fifteen real landfalls:
+
+| Point tested against admin-1 | Inside a polygon | Country code agreed |
+|---|---|---|
+| The landfall position | 9 of 15 | — |
+| The nearest town | 15 of 15 | 15 of 15, zero disagreements |
+
+A town is inland by definition, so it does not sit on the boundary that is in
+dispute. Testing it instead is not a workaround; it is the correct question.
+
+**Where the two sources disagree, neither wins.** GeoNames says which country a
+town is in and Natural Earth says which polygon contains it. When those differ
+the region is dropped and the country falls back to GeoNames' code. Two sources
+agreeing is evidence; two sources disagreeing is not a tiebreak.
+
+**Two caps, and they are different questions.** `SEASONS.placeNearKm` (60 km)
+governs a landfall, which claims to be AT a place — beyond it the answer is no
+name and the panel falls back to coordinates, because *"came ashore near
+Nouakchott"* for a point 400 km down an empty coast reads as a fact and is not
+one. `SEASONS.placeFarKm` (400 km) governs genesis and stalls, which only claim
+a bearing and always print the distance alongside.
+
+**Three assembly rules in `placeLabel`,** each of which is a bug one repetition
+away:
+
+1. A region equal to its country is said once — `Crane, Barbados`, never
+   `Crane, Barbados, Barbados`.
+2. A region equal to the town is dropped — `Maunabo, Puerto Rico`.
+3. The country name comes from admin-0's `NAME_LONG`, not admin-1's `admin`.
+   They are different fields with different jobs: `admin` is the sovereignty
+   label and reads `United States of America`, `NAME_LONG` is the plain form and
+   reads `United States`. This goes in a sentence, so the plain form wins.
+   `NAME` is not used at all — it is abbreviated for map labels
+   (`St. Vin. and Gren.`, `Dominican Rep.`) and those are label-box
+   contractions, not words.
+
+**`ISO_A2_EH` is asked before `ISO_A2`,** because Natural Earth answers `-99`
+for France, Norway and a handful of others where the sovereignty question is
+contested. `_EH` is the field that answers.
+
+**The pin is imported from `tools/seasons-landfall.mjs`, not restated.** If the
+two ever diverge a landfall can be computed against one coastline and named
+against another.
+
+**Measured answers, 2026-08-29** — every one independently correct against the
+storm's own history:
+
+| Point | Answer |
+|---|---|
+| Harvey's Texas landfall | Fulton, Texas, United States (11 km) |
+| Harvey's Louisiana landfall | Cameron, Louisiana, United States (18 km) |
+| Katrina's Louisiana landfall | Port Sulphur, Louisiana, United States (22 km) |
+| Maria's Puerto Rico landfall | Maunabo, Puerto Rico (1 km) |
+| Michael's Florida landfall | Tyndall Air Force Base, Florida, United States (9 km) |
+| Wilma's Mexico landfall | Cozumel, Quintana Roo, Mexico (7 km) |
+| Dorian's stall centre | High Rock, Bahamas (1 km) |
+
+Load time is 4.4 seconds on the sandbox, once per run.
+
+**`npm install all-the-cities` is required** and is the same ad-hoc dependency
+`tools/build-population.mjs` already asks for. `.gitignore` already blocks the
+root `package.json` and `node_modules/` it creates — verified clean on
+2026-08-29, nothing leaked into the tree.
+
+---
+
+### 57.41 The storm's life, in a paragraph — DESIGNED, NOT BUILT
+
+**Aaron's ask, 2026-08-29:** a short paragraph at the top of the archive drawer
+summarising the storm's life — *"almost like a summary of all the stats we will
+present further down."*
+
+**==> IT IS ASSEMBLED FROM THE NUMBERS. NO MODEL WRITES IT. <==** Every clause is
+backed by a figure computed from the storm's own rows, and a clause with no
+figure behind it is DROPPED rather than softened. That keeps it offline,
+instant, and incapable of inventing a fact. A generated sentence in a hurricane
+archive that turns out to be wrong is the all-clear-during-an-outage bug wearing
+better prose.
+
+**It sits directly under the honesty line and above `STRONGEST`.** Aaron's call.
+The honesty line qualifies it, so nothing can be read before that sentence.
+
+**Aaron's four calls on the voice, 2026-08-29:**
+
+1. **Length is variable** — longer when the storm earns it. A six-sentence
+   paragraph is the floor, not the target.
+2. **The repetitive `It … It … It …` stays.** Varied templates are where
+   assembled prose starts sounding written, and sounding written is how a reader
+   stops checking it. Plain and slightly repetitive is the correct trade.
+3. **The paragraph must know about its own edge cases and say so** — see the
+   extratropical rule below.
+4. **Placement** as above.
+
+**The clause order,** each independently droppable:
+
+| # | Clause | Dropped when |
+|---|---|---|
+| 1 | Where and when it was first seen | never — every storm has a first row |
+| 2 | How long to hurricane strength | first fix was already ≥34 kt |
+| 3 | Peak wind, date, category | no wind was ever recorded |
+| 4 | Landfalls, and the hardest one | it never came ashore (said explicitly) |
+| 5 | The stall | no window meets §57.41's threshold |
+| 6 | How and when it ended, and lifespan | never |
+
+**==> CLAUSE 2 IS ONLY MEANINGFUL WHEN WE WATCHED IT FORM. <==** The first
+version reported dozens of 1851 storms tied at "0 hours to hurricane", because
+their first record was ALREADY a hurricane. That is not a fast-forming storm; it
+is a storm nobody saw until it was big — the same observational undercount
+`seasonFacts.undercountLikely` flags at season level, at the size of one storm.
+The clause is shown only when the first fix is below 34 kt, and the alternative
+sentence is *"It was already a hurricane when it was first spotted, so nobody
+saw it form."* Filtering drops the population from 3,204 storms to a set where
+the number means something.
+
+**The comparison clause** reads off `SEASONS.medianHoursToHurricane` (60,
+measured over the mirrored archive) and fires only past 0.6× and 2× that figure.
+Between those it says nothing, because "slightly above average" is not a fact
+worth a reader's attention.
+
+**==> THE STALL IS MEASURED FROM THE WINDOW'S OWN CENTRE, NOT FROM ITS FIRST
+FIX. <==** This is the single most valuable line in the paragraph and the
+obvious implementation misses it entirely. Harvey went inland near Rockport,
+back out over the Gulf, and ashore again near Cameron; every one of those legs
+breaks a window anchored on its own first point, so **the storm whose entire
+reputation is that it stopped moving reported no stall at all.** Measured as the
+longest window whose fixes all sit inside `SEASONS.stallRadiusKm` of their
+centroid, it reports three days in the Victoria, Texas area. Dorian reports two
+days at High Rock, Bahamas — which is the fact about Dorian.
+
+**A stall with no town inside `placeFarKm` says "out over open water"** rather
+than dropping the clause, because *"it barely moved for two days"* with no
+anchor tells a reader nothing they can picture.
+
+**==> THE EXTRATROPICAL LANDFALL RULE NEEDS ITS OWN SENTENCE, AND SANDY IS
+WHY. <==** Aaron's call 3. This app does not count a landfall by a system that
+has already gone extratropical — §57.7a, and it is the same rule
+`agreementWithNoaa` reports separately. So Sandy 2012's Jamaica and Cuba
+landfalls appear and **its New Jersey landfall does not**, because Sandy was
+extratropical by then. Sandy's entire reputation is the New Jersey landfall. Its
+absence will read as a bug to every reader who knows the storm, and a correct
+rule that looks like a fault is worse than no rule. When a storm ends
+extratropical AND has an `L` marker in NOAA's record that we declined, the
+paragraph says so in plain words.
+
+**Counts are words, not digits** — `came ashore four times`, not `4 times` —
+and the singular case has its own sentence rather than reading `one times`.
+
+**==> A NUMBER HARDCODED INTO PROSE WILL DRIFT FROM THE CONSTANT THAT PRODUCED
+IT. <==** The prototype's stall sentence said `within 100 km` while
+`stallRadiusKm` was 150. It read as a measurement and was a leftover. Every
+figure in the paragraph interpolates its constant; none is typed.
+
+**When some landfalls have a town inside the cap and some do not, the name list
+is dropped entirely** and only the count and the hardest one are given. Andrew
+1992 came ashore four times with three names available, and printing four
+alongside three reads as a miscount.
+
+**Where it goes when built:** `lib/season-story.js`, pure, no DOM and no clock,
+driven by `stormFacts` plus the places sidecar. Rendered by
+`ui/season-detail-markup.js`. It is shipped code, unlike §57.40's gazetteer,
+because the season in progress has no runner pass and must assemble its own
+paragraph on the phone.
+
+**Prototype output, verified 2026-08-29 against the real archive files** — this
+is what was shown to Aaron and accepted:
+
+> Harvey was first seen on August 16, 2017 over open water. It reached hurricane
+> strength 9 days later — far longer than a storm usually takes. It peaked at
+> 132 mph on August 26, a Category 4. It came ashore four times — Crane, Biabou,
+> Seadrift, Cameron, hardest near Seadrift on August 26 as a Category 4. It
+> barely moved for 3 days, staying within 150 km of Bloomington. It lost its
+> tropical structure on September 2, 17 days after it was first seen.
+
+It degrades cleanly to 1856. The prototype is `/tmp` scratch and did not survive
+the session; the algorithm above is the record of it.
+
+---
+
+### 57.42 The archive backlog — Tier 1 and Tier 2, each buildable alone
+
+**Aaron asked for all of this on 2026-08-29 and asked that it be written down so
+nothing is lost between chats.** Every item below is sized, has its cost
+measured or its measurement named, and can be picked up cold. **Nothing here is
+started.** Take one, build it, delete its entry, and write what IS in its place.
+
+**The order below is not a priority order.** Aaron picks.
+
+**TIER 1 — FREE. Arithmetic on rows `lib/hurdat.js` already parses.**
+
+No new data, no runner job, no bytes on the phone. All of these land in
+`lib/season-facts.js` and `ui/season-detail-markup.js`.
+
+| # | Fact | Note |
+|---|---|---|
+| 1 | **Distance travelled** | sum of great-circle legs |
+| 2 | **Fastest and slowest forward speed** | a storm that crawled ashore is a flood story; one that sprinted is a wind story |
+| 3 | **How much it weakened before the coast** | peak category minus landfall category. Katrina peaked Cat 5 and landed Cat 3 — the gap is a fact people get wrong constantly |
+| 4 | **The comeback** | dropped below 34 kt and returned to 64 kt |
+| 5 | **The loop** | the track crosses itself. Jeanne 2004 did a full circle |
+| 6 | **Out of season** | formed before Jun 1 or after Nov 30 |
+| 7 | **Northernmost / southernmost reach, and where it died** | |
+| 8 | **Cape Verde or home-grown** | genesis east of 30°W and south of 20°N. Changes how a reader reads the whole track |
+| 9 | **Rank within its season** | strongest? longest-lived? the only major? |
+| 10 | **How many other storms were running the same day** | |
+
+**Item 11 — archive-wide rankings — is the research feature and is worth its own
+pass.** Every figure in the drawer carries its rank: *"937 mb — 41st lowest of
+3,266 storms on record."* And the inverse: *"Only 34 storms since 1851 have gone
+from tropical storm to Category 4 in 24 hours. This is one."* Nobody else puts
+this on a phone.
+
+**==> AND IT NEEDS A COUNT NOBODY HAS VERIFIED YET. <==** A scratch walk on
+2026-08-29 visited **6,532 storm entries against 3,266 unique ids** — an exact
+2× duplication that was **not explained before the session ended**. The 3,266
+matches `seasons/reports.json` exactly, so that figure is sound; the walk is
+not. **Every ranking in this item is a claim about a denominator, so the first
+job of that pass is finding the doubling, not building the table.** Do not quote
+an archive-wide count until it is found.
+
+The ranking table itself is a runner artifact — a few KB of thresholds per
+statistic, not the storms — so the phone compares against a small file rather
+than loading the archive.
+
+**TIER 2 — ONE RUNNER JOB EACH. Heavy data stays on the runner.**
+
+The pattern §57.7a already established: 119 MB of mask on a runner, a small JSON
+on the phone.
+
+**1. The places sidecar.** §57.40's gazetteer exists and is tested; nothing
+writes its answers to a file yet. Needs `tools/seasons-places.mjs` writing
+`seasons/data/{basin}-places-{revision}.json` — per storm, the genesis place,
+one place per landfall in order, and the stall centre. **Its own file rather
+than a field in the landfall sidecar**, so two jobs never write one file and so
+a places failure degrades to coordinates without taking landfalls down with it.
+Cost measured: the landfall sidecars are 255 KB and 36 KB raw, 37 KB gzipped;
+names add roughly 12–15 KB gzipped across 2,537 marks.
+
+**2. People in the path.** `lib/population-count.js` already counts towns inside
+a polygon. Run it against each storm's wind swath on the runner:
+*"At least 4.1 million people lived inside the 64-knot footprint."*
+**Two hard limits that must be on screen, not in a comment.** Wind radii do not
+exist in HURDAT2 before **2004** — measured, first year with any radii is 2004 —
+so this covers twenty years of a 175-year archive and everything older needs the
+§57.25 rule 2 sentence saying why. And the town list is a known undercount
+(about 3.04 bn against a real 8.1 bn), so the figure is `at least`, never a
+census.
+
+**3. Countries and states affected.** Every admin-1 unit the track passed within
+100 km of, as a list. Uses §57.40's polygons. **Works for all 175 years**, unlike
+item 2 — this is the one to build first of the three.
+
+**4. Land area under hurricane-force wind.** Square miles. 2004+ only, same
+cliff as item 2.
+
+**5. Retired names.** Already wanted as a wall chip and blocked on a list that
+does not exist in this repo (`NOW.md`, §57.36a). A runner job can fetch ~120
+names once and ship them; `seasons/wall.json` already carries the storm names.
+Unblocks the chip AND a drawer sentence: *"The name Harvey was retired after
+this storm and will never be used again."*
+
+**TIER 3 — DEATHS, DAMAGE, RAINFALL. NOT ACCEPTED. Read this before starting.**
+
+**None of it is in HURDAT2.** The record holds position, wind, pressure and wind
+radii. That is all.
+
+The only authoritative source is NOAA's Tropical Cyclone Reports, and
+`seasons/reports.json` already indexes them: **1,524 reports for 3,266 storms**,
+47%, none before 1958. *(The comment in `ui/season-detail-markup.js` saying
+"roughly a sixth" is wrong and should be corrected to 47% next time that file is
+open.)*
+
+They are **PDFs of human prose.** Extracting *"60.58 inches at Nederland,
+Texas"* means parsing free text, which works most of the time and fails silently
+the rest — and a silent failure here means the app states a wrong death toll.
+That is the worst failure this app can have.
+
+Three routes, and the recommendation is the third:
+
+1. **Parse the PDFs.** Highest payoff, highest risk, several sessions, and
+   nothing ships until a few hundred storms are hand-checked against source.
+2. **A third-party database** (EM-DAT, Wikipedia). Faster, and it means shipping
+   numbers we cannot defend from sources that disagree with each other. Against
+   the rule the whole archive is built on.
+3. **Curate the famous ones by hand.** Fifty or sixty storms — Galveston 1900,
+   Labor Day 1935, Camille, Andrew, Katrina, Harvey, Maria, Ian — each a short
+   paragraph and a figure with its NOAA report cited beside it. A hundred storms
+   covers most of what anyone searches for; everything else gets the honest
+   absence line the drawer already knows how to write. Incremental, defensible,
+   and a storm can be added any time.
