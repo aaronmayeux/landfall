@@ -35,7 +35,7 @@ import { stormDisplayName } from '../lib/season-names.js';
  * `categoryShortLabel` says "Cat 3", which is right for a list row and wrong
  * inside a sentence. Two spellings of the same grading is how a panel comes to
  * disagree with its own paragraph four lines further up. */
-import { categoryPhrase } from '../lib/season-story.js';
+import { categoryPhrase, countWord } from '../lib/season-story.js';
 /* ==> `formatDistance` RATHER THAN ARITHMETIC HERE. <== §57.45. It is the one
  * function in the app that turns a stored nautical mile into the miles or
  * kilometres the reader chose in Settings, and the choice arrives as the
@@ -216,6 +216,30 @@ export function lifeHtml(facts) {
 export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, places = null }) {
   const list = facts?.landfalls || [];
 
+  /* ==> WHAT THE WALK TURNED DOWN GETS A SENTENCE, BECAUSE SILENCE IS NEVER
+   * THE ANSWER. <== §5, §57.7e. 135 real coast crossings across the archive
+   * are not landfalls: 86 were under the wind floor, 38 carried a code that is
+   * not a former cyclone, 11 happened before the system had become one. For 26
+   * storms that is EVERY crossing they have, so this panel said "this storm
+   * did not come ashore" over a track that plainly touched land.
+   *
+   * ==> ONE SENTENCE, AND IT DOES NOT NAME THE THREE REASONS. <== They are
+   * three ways of saying the system was not a tropical cyclone at the moment
+   * it crossed, which is the part a reader needs. Splitting them would put a
+   * paragraph of vocabulary under a list of places, and the storm's own dates
+   * and winds are already on screen for anyone who wants to work out which.
+   *
+   * `null` is the fourth state and is deliberately silent: the walk did not
+   * run, so there is nothing to disclose and nothing to claim. */
+  const refused = Number.isFinite(facts?.crossingsDeclined) ? facts.crossingsDeclined : 0;
+  const refusedNote = refused > 0
+    ? absenceHtml(
+      `Its track crossed a coast ${refused === 1 ? 'one other time' : `${countWord(refused)} other times`} `
+      + 'while it was not a tropical cyclone. This archive does not count that as '
+      + 'coming ashore.'
+    )
+    : '';
+
   if (!list.length) {
     /* ==> SINCE §57.7a AN EMPTY LIST USUALLY MEANS WHAT IT SAYS, AND THE
      * SENTENCE HAS TO KNOW WHICH KIND OF EMPTY IT IS. <== We compute landfalls
@@ -224,7 +248,11 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
      * for exactly the case it was written for — the computed file not being
      * on screen, which `landfallSource` is the only honest way to detect. */
     if (facts?.landfallSource === 'computed') {
-      return absenceHtml('This storm did not come ashore.');
+      /* ==> AND ON 26 STORMS THIS SENTENCE ALONE WAS THE MISLEADING PART. <==
+       * §57.7e. "This storm did not come ashore" is true by this app's rule and
+       * reads as "it stayed at sea", which for these is false. The refusal
+       * sentence is what makes the two agree, so it is not optional here. */
+      return absenceHtml('This storm did not come ashore.') + refusedNote;
     }
 
     const inHole = Number.isFinite(facts?.year)
@@ -284,7 +312,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
    * once was, because Katrina peaked at Cat 5 over water and came ashore at
    * Cat 3.
    * The panel and the globe must agree, or one of them is lying. */
-  return `<ul class="season-landfalls">${items}</ul>`;
+  return `<ul class="season-landfalls">${items}</ul>${refusedNote}`;
 }
 
 /** Fastest intensification, and how it ended. §57.15. */

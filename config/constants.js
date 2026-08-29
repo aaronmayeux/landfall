@@ -6700,8 +6700,40 @@ export const SEASONS = Object.freeze({
    *  HURDAT2 HAS ONE CODE FOR TWO DIFFERENT THINGS, which is the whole reason
    *  a threshold is needed at all: `EX` covers Sandy at 70 kt over Brigantine
    *  AND a decayed remnant drifting over Newfoundland five days later. NOAA's
-   *  own vocabulary separates them; the file format does not. */
-  postTropicalStatuses: Object.freeze(['EX']),
+   *  own vocabulary separates them; the file format does not.
+   *
+   *  ==> `LO` IS HERE BECAUSE THE RECORD PUTS DORIAN OVER HALIFAX UNDER IT.
+   *  <== §57.7d, measured 2026-08-29. `EX` alone was chosen from Sandy, and
+   *  Sandy is only half the shape. HURDAT2 codes Dorian's 2019 Nova Scotia
+   *  crossing — 80 kt, 44.64N 63.30W, the storm Canada remembers — as `LO`,
+   *  not `EX`, and the walk was refusing it for the same reason it once
+   *  refused Sandy.
+   *
+   *  ==> AND `LO` AFTER A CYCLONE IS POST-TROPICAL BY NWS'S OWN DEFINITION,
+   *  NOT BY OURS. <== NWS Instruction 10-604 makes the extratropical cyclone
+   *  and the remnant low TWO CLASSES OF ONE THING, both post-tropical, and it
+   *  draws the line between them at exactly 34 knots: a non-frontal system
+   *  above that "cannot be designated a remnant low" and "is merely described
+   *  as post-tropical". So `postTropicalLandfallMinKt` is not a threshold this
+   *  project invented that happens to sit at the tropical-storm floor — it is
+   *  the published boundary, and adding `LO` above it adds exactly the systems
+   *  NWS itself calls post-tropical.
+   *
+   *  ==> `PT` AND `PTC` ARE DELIBERATELY ABSENT AND THAT IS A MEASUREMENT.
+   *  <== `lib/track-point.js` names them as NHC's other spellings and
+   *  `spec-parameter.md` §29.3 marks them `[UNVERIFIED]`. Every ATCF b-deck
+   *  this project has ever held — 18 storms across AL, EP and CP in 2026, off
+   *  the `seasons-live` capture branch — carries only `DB`, `LO`, `TD`, `TS`
+   *  and `HU`. Zero `EX`, zero `PT`, zero `PTC`. Adding a code nothing has
+   *  ever produced is a guess wearing a constant's clothes.
+   *
+   *  ==> `DB` AND `WV` STAY OUT, AND SO DOES EVERY CROSSING THEY WOULD ADD.
+   *  <== A disturbance and a wave have no closed circulation, so they are not
+   *  a former cyclone in any state — they are the thing §57.7a was right to
+   *  refuse. Measured: they would add four crossings, every one of them at
+   *  exactly 35 kt in the Lesser Antilles, where a 0.1°-rounded position and a
+   *  5 kt-rounded wind are doing all the deciding. */
+  postTropicalStatuses: Object.freeze(['EX', 'LO']),
 
   /** How strong a post-tropical system must still be at the coast to count as
    *  having come ashore. 34 kt is `namedStormKt` — the tropical-storm floor,
@@ -6709,8 +6741,16 @@ export const SEASONS = Object.freeze({
    *  here because the two are the same number for different reasons and a
    *  future change to one must not silently move the other.
    *
+   *  ==> AND IT IS ALSO NWS'S OWN LINE BETWEEN A REMNANT LOW AND A
+   *  POST-TROPICAL CYCLONE. <== Instruction 10-604, quoted at
+   *  `postTropicalStatuses` above. That is what makes this floor safe to lean
+   *  on as hard as `LO` now leans on it: it is not our taste, it is the
+   *  definition.
+   *
    *  MEASURED 2026-08-29 over all 3,266 storms: the walk finds 404 crossings
-   *  while extratropical. 352 are at or above this floor and 52 below it. */
+   *  while extratropical. 352 are at or above this floor and 52 below it. Of
+   *  the 47 `LO` crossings the walk finds after a storm had been a cyclone,
+   *  only 5 clear it — the floor, not the code list, is what does the work. */
   postTropicalLandfallMinKt: 34,
 
   /** ==> THE SHAPE OF THE TWO GENERATED SIDECARS, AND THE OTHER HALF OF THEIR
@@ -6723,9 +6763,14 @@ export const SEASONS = Object.freeze({
    *
    *  BUMP THESE WHENEVER THE FILE'S CONTENT RULES CHANGE, not only when its
    *  shape does. The test is "would a phone holding yesterday's file be
-   *  wrong", and for a changed landfall rule the answer is yes. */
-  landfallsSchema: 'v2',
-  placesSchema: 'v2',
+   *  wrong", and for a changed landfall rule the answer is yes.
+   *
+   *  ==> v3, 2026-08-29: §57.7d added `LO` to `postTropicalStatuses`. <== Five
+   *  landfalls appear that were not in v2, one storm moves from "stayed at sea"
+   *  to "came ashore", and the places arrays are index-aligned against the
+   *  landfall lists so both files move together or the names silently detach. */
+  landfallsSchema: 'v3',
+  placesSchema: 'v3',
 
   /** ==> HOW FAR A TOWN CAN BE AND STILL NAME THE SPOT. <== §57.40. Beyond
    *  this the answer is no name at all and the panel falls back to

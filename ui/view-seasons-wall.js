@@ -213,7 +213,13 @@ export function createSeasonsWallView({
     if (liveBasin !== forBasin || liveStatus !== 'ok') return;
 
     for (const storm of storms) {
-      storm.landfallsComputed = landfallsFor(storm.points || [], mask.isLand);
+      /* ==> THE RUNNING SEASON RECORDS ITS REFUSALS TOO. <== §57.7e. The whole
+       * point of walking on the device is that 2026 answers the same question
+       * 1851 does; a panel that discloses a refused crossing on a settled year
+       * and stays silent on this one would be two apps in one column. */
+      const declined = [];
+      storm.landfallsComputed = landfallsFor(storm.points || [], mask.isLand, { declined });
+      storm.crossingsDeclined = declined.length;
     }
     liveFacts = storms.map(stormFacts).filter(Boolean);
     render();

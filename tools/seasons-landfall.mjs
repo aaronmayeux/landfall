@@ -126,18 +126,33 @@ export const landfallFile = (basin, revision) => `seasons/data/${landfallFileNam
 export function basinLandfalls(text, isLand) {
   const parsed = parseHurdat2(String(text ?? ''));
   const out = {};
+  const refused = {};
   let storms = 0;
   let events = 0;
   let ashore = 0;
+  let declinedEvents = 0;
   for (const storm of parsed?.storms || []) {
     storms++;
-    const list = landfallsFor(storm.points, isLand);
+    /* ==> THE REFUSALS COME OUT OF THE SAME WALK, NOT A SECOND ONE. <== §57.7e.
+     * `lib/landfall.js` fills this array at the one point where a real coast
+     * crossing stops being a landfall. Counting them from outside would be a
+     * second opinion about the same question. */
+    const declined = [];
+    const list = landfallsFor(storm.points, isLand, { declined });
+    /* ==> A COUNT RATHER THAN THE RECORDS, AND THAT IS A SIZE DECISION. <== The
+     * panel says one sentence about these; it never lists them. Shipping 135
+     * position records to say "one more crossing did not count" would be bytes
+     * on every phone for a number. */
+    if (declined.length) {
+      refused[storm.id] = declined.length;
+      declinedEvents += declined.length;
+    }
     if (!list.length) continue;
     ashore++;
     events += list.length;
     out[storm.id] = list;
   }
-  return { landfalls: out, storms, events, ashore };
+  return { landfalls: out, declined: refused, storms, events, ashore, declinedEvents };
 }
 
 /**
@@ -239,7 +254,7 @@ export async function main(argv = []) {
     const text = readFileSync(path, 'utf8');
 
     const t = Date.now();
-    const { landfalls, storms, events, ashore } = basinLandfalls(text, mask.isLand);
+    const { landfalls, declined, storms, events, ashore, declinedEvents } = basinLandfalls(text, mask.isLand);
     const walkMs = Date.now() - t;
 
     const ag = agreementWithNoaa(text, mask.isLand);
@@ -261,9 +276,17 @@ export async function main(argv = []) {
        * ours rather than NOAA's. */
       source: 'computed',
       storms: landfalls,
+      /* ==> A SIBLING MAP RATHER THAN A FIELD INSIDE EACH ENTRY. <== §57.7e.
+       * `storms` is keyed id -> array-of-landfalls and four readers index it
+       * that way. Turning each value into an object would move all four for a
+       * number that belongs to the STORM rather than to any one landfall — and
+       * the 26 storms that most need this have an empty array to hang it on.
+       * A key absent here means zero, not unknown: the walk ran for every
+       * storm in this file, which is what `source: 'computed'` above states. */
+      declined,
     };
 
-    console.log(`  ${basin}: ${storms} storms, ${ashore} came ashore, ${events} landfalls, walked in ${walkMs} ms`);
+    console.log(`  ${basin}: ${storms} storms, ${ashore} came ashore, ${events} landfalls, ${declinedEvents} crossings refused, walked in ${walkMs} ms`);
 
     if (!check) {
       const r = syncLandfalls(root, basin, entry.revision, payload);

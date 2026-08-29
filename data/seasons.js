@@ -194,7 +194,18 @@ export function loadSeason(index, basin, year) {
        * detail panel and the globe all get our answer without one of them
        * learning that a second file exists. A seam anywhere further in would
        * mean every consumer taking a new argument. */
-      if (marks) for (const storm of storms) storm.landfallsComputed = marks[storm.id] || [];
+      if (marks) {
+        for (const storm of storms) {
+          storm.landfallsComputed = marks.storms[storm.id] || [];
+          /* ==> A NUMBER MEANS THE WALK RAN; `null` MEANS NOBODY LOOKED. <==
+           * §5, §57.7e, the same distinction `places` makes one line below. A
+           * key absent from a sidecar that DID arrive is a real zero, so it
+           * reads 0 rather than null. Collapsing the two would print "one
+           * crossing did not count" as silence on the day this file 404'd,
+           * which is the exact silence this was built to end. */
+          storm.crossingsDeclined = marks.declined[storm.id] || 0;
+        }
+      }
       /* ==> `null` AND `{}` MEAN DIFFERENT THINGS HERE AND THE PARAGRAPH READS
        * BOTH. <== §5, §57.41. `null` is "the sidecar is not on screen, so
        * nobody looked" and the story then says nothing about where the storm
@@ -246,7 +257,13 @@ export function loadLandfalls(index, basin) {
     if (!res.ok) throw new Error(`landfalls answered ${res.status}`);
     return res.json();
   })
-    .then((payload) => payload?.storms || null)
+    /* ==> BOTH MAPS, OR NEITHER. <== §57.7e. The refusal counts are written by
+     * the same walk in the same file, so they arrive and fail together. Keeping
+     * them in one return means no caller can end up holding landfalls the walk
+     * produced beside refusals it did not. */
+    .then((payload) => (payload?.storms
+      ? { storms: payload.storms, declined: payload.declined || {} }
+      : null))
     .catch(() => null);
 }
 
