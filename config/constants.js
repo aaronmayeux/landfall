@@ -6763,6 +6763,35 @@ export const SEASONS = Object.freeze({
    *  wearing a number. The panel says the storm was barely moving instead. */
   trackSpeedFloorKt: 1,
 
+  /** ==> THE DISTANCE BELOW WHICH THE RECORD CANNOT TELL A SHORT TRACK FROM NO
+   *  TRACK AT ALL. <== §57.45. Same arithmetic as `trackSpeedFloorKt` one
+   *  measurement up: every position in the archive is written to 0.1°, about
+   *  6 nautical miles, so a whole track summing to less than one of those
+   *  steps is indistinguishable from a storm the record placed once and never
+   *  moved.
+   *
+   *  MEASURED 2026-08-29 over both mirrored basins: **exactly 3 of 3,234
+   *  storms** fall under this, and the count is the SAME THREE at 1 nm, at
+   *  3 nm, at 6 nm and at 12 nm — so nothing delicate rests on the number.
+   *  AL051851 is the shape: sixteen consecutive fixes at 32.5N 73.5W, four
+   *  days at 50 kt without the record moving it once. Those three would print
+   *  `0 mi`, which is the dashed-row shrug §57.25 forbids wearing a number. */
+  trackDistanceFloorNm: 6,
+
+  /** ==> WHEN THE PANEL PRINTS A SECOND DISTANCE FOR THE CYCLONE ALONE. <==
+   *  §57.45. The whole-track figure counts every leg the globe draws, which
+   *  includes the miles covered as a wave, a low or an extratropical storm.
+   *  For most storms those are nothing; for some they are most of the track.
+   *
+   *  MEASURED 2026-08-29: **1,097 of 3,234 storms** are under this, and the
+   *  spread is what argues for a threshold rather than for always showing
+   *  both. Mitch 1998 ran 6,449 nm and was a cyclone for 2,262 of them, 35%;
+   *  Harvey 2017 is 53%; Andrew 1992 and Katrina are 100%. Above a tenth of
+   *  the track the second figure is the dying tail of a storm and the total
+   *  describes it fairly, so the row would be a qualifier firing everywhere —
+   *  which §57.44 already paid for once with `Tied`. */
+  trackDistanceCycloneShareMax: 0.9,
+
   /** ==> THE ARCHIVE'S MIDDLE, FOR THE ONE COMPARISON THE STORY MAKES. <==
    *  §57.41. Hours from a storm's first fix to hurricane strength, median over
    *  every storm first seen BELOW tropical-storm strength — the filter is the

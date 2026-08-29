@@ -288,6 +288,11 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
     floorKt: SEASONS.trackSpeedFloorKt,
     maxLegHours: SEASONS.trackSpeedMaxLegHours,
+    /* ==> §57.45. `system` two arguments up is what puts the distance in the
+     * reader's own miles or kilometres; these two only decide WHICH figures
+     * get printed, never their units. */
+    distanceFloorNm: SEASONS.trackDistanceFloorNm,
+    cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
   }))}
       ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,

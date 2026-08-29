@@ -36,130 +36,25 @@ import { stormDisplayName } from '../lib/season-names.js';
  * inside a sentence. Two spellings of the same grading is how a panel comes to
  * disagree with its own paragraph four lines further up. */
 import { categoryPhrase } from '../lib/season-story.js';
-import { formatWind, formatPressure, formatSpeed } from '../lib/units.js';
-/* Every "…" in this app pulses through one helper, so a waiting line reads as
- * thinking rather than as a full stop that lost its way.
- * `tools/test-loading-dots.mjs` fails the build on a stray one — it caught this
- * file's report line, and stayed red on `main` for the whole time step 7 was
- * reverted. */
-import { dotted } from './loading-dots.js';
-
-export const esc = (s) =>
-  String(s).replace(/[&<>"']/g, (c) =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-/* ---------------------------------------------------------------------------
- * SMALL FORMATTERS
+/* ==> `formatDistance` RATHER THAN ARITHMETIC HERE. <== §57.45. It is the one
+ * function in the app that turns a stored nautical mile into the miles or
+ * kilometres the reader chose in Settings, and the choice arrives as the
+ * `system` argument every renderer on this panel already takes. A conversion
+ * written here would be a second opinion about the reader's preference, and
+ * `auto` — which follows the device — is exactly the value it would get
+ * wrong. It also scales its own precision, so a track and a 0.4 mi hop print
+ * sensibly from one call. */
+import { formatWind, formatPressure, formatSpeed, formatDistance } from '../lib/units.js';
+/* ==> THE PIECES EVERY SECTION BELOW IS BUILT OUT OF LIVE NEXT DOOR. <==
+ * SPEC.md §12, §57.45. Escaping, the four small formatters, the definition
+ * list and the note paragraph went to `ui/season-markup-bits.js` when this
+ * file crossed the ceiling again. Nothing in that file knows what a storm is;
+ * everything in this one does, and that is the line between them.
  *
- * ==> EVERY ONE OF THESE RETURNS null RATHER THAN A DASH. <== The caller then
- * omits the row entirely, which is the rule the live panel already follows and
- * the reason it never shows an empty pair. A dash is a value that means
- * nothing; no row means no claim.
- * ------------------------------------------------------------------------ */
-
-/** UTC, always, and it says so. ==> THE STORM'S OWN TIME ZONE IS NOT
- *  KNOWABLE AND THE READER'S IS THE WRONG ONE. <== HURDAT2 is stamped in UTC;
- *  rendering an 1893 Louisiana landfall in the reader's local clock would put
- *  a Gulf hurricane ashore at a time nobody in Louisiana experienced, and
- *  worse, the offset would depend on where the reader happens to be sitting.
- *  The live app shows local time because a live storm is about the reader's
- *  next few hours. History is not. */
-const UTC = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'UTC',
-  year: 'numeric', month: 'short', day: 'numeric',
-  hour: 'numeric', minute: '2-digit', hour12: true,
-});
-
-export function utcStamp(ms) {
-  if (!Number.isFinite(ms)) return null;
-  return `${UTC.format(new Date(ms))} UTC`;
-}
-
-const UTC_DAY = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'UTC', year: 'numeric', month: 'short', day: 'numeric',
-});
-
-export function utcDay(ms) {
-  if (!Number.isFinite(ms)) return null;
-  return UTC_DAY.format(new Date(ms));
-}
-
-/** `23.1, -75.1` → `23.1°N 75.1°W`. Hemisphere letters rather than signs,
- *  because a minus sign in front of a longitude is a programmer's convention
- *  and this panel is read by a person. */
-export function coords(lat, lon) {
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  const ns = lat >= 0 ? 'N' : 'S';
-  const ew = lon >= 0 ? 'E' : 'W';
-  return `${Math.abs(lat).toFixed(1)}°${ns} ${Math.abs(lon).toFixed(1)}°${ew}`;
-}
-
-/**
- * Hours as a phrase a person would say.
- *
- * Days once it is past a day, because "138 hours at hurricane strength" is a
- * number the reader has to divide, and the thing they want to know is that it
- * was most of a week.
- */
-export function spanWords(hours) {
-  if (!Number.isFinite(hours) || hours <= 0) return null;
-  if (hours < 24) {
-    const h = Math.round(hours);
-    return `${h} hour${h === 1 ? '' : 's'}`;
-  }
-  const days = hours / 24;
-  const whole = Math.floor(days);
-  const rest = Math.round(hours - whole * 24);
-  if (rest === 0) return `${whole} day${whole === 1 ? '' : 's'}`;
-  return `${whole} day${whole === 1 ? '' : 's'}, ${rest} hour${rest === 1 ? '' : 's'}`;
-}
-
-/** Wind in the reader's units with the knots beside it, the same shape the
- *  live Vitals row uses — knots are the number the record is actually in, and
- *  a reader comparing against NOAA's own page needs to see it. */
-export function windWords(kt, system) {
-  if (!Number.isFinite(kt)) return null;
-  return `${formatWind(kt, system)} (${Math.round(kt)} kt)`;
-}
-
-/* ---------------------------------------------------------------------------
- * ROWS
- * ------------------------------------------------------------------------ */
-
-/**
- * A definition list, or '' when there is nothing to say.
- *
- * ==> ROWS ARRIVE AS PAIRS AND THE VALUE IS ESCAPED HERE. <== The same rule
- * and the same reason as the live panel's `detail-vitals`: a row never hands
- * over raw HTML, so a storm name reaching this one refactor from now cannot
- * be treated as markup.
- */
-export function rowsHtml(rows) {
-  const real = (rows || []).filter(([, v]) => v != null && v !== '');
-  if (!real.length) return '';
-  return `<dl class="detail-vitals">${real
-    .map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`)
-    .join('')}</dl>`;
-}
-
-/**
- * A §57.25 rule 2 sentence — the record is silent and here is why. Styled as
- * a note rather than as an error, because it is neither a failure nor a
- * warning: it is a fact about 1851.
- *
- * ==> THE DOTS ARE APPLIED HERE, AFTER THE ESCAPE, AND THAT ORDER IS THE
- * WHOLE POINT. <== The first version of this panel called
- * `absenceHtml(dotted('Checking…'))`, which handed a `<span class="dots">` to
- * `esc()` — so the waiting line would have rendered with visible angle
- * brackets on screen. It was never seen, because step 7 was reverted before
- * anybody opened the panel. Doing it in here means no call site can get the
- * order wrong, and `loading-dots.js`'s own rule makes it safe: escaping never
- * produces a `…`, and a trailing `…` in this app means "still working" and
- * nothing else.
- */
-export function absenceHtml(text) {
-  return text ? `<p class="detail-note">${dotted(esc(text))}</p>` : '';
-}
+ * `dotted` went with `absenceHtml`, which was its only caller here. */
+import {
+  absenceHtml, coords, esc, rowsHtml, spanWords, utcDay, utcStamp, windWords,
+} from './season-markup-bits.js';
 
 /* ---------------------------------------------------------------------------
  * THE HEADER
@@ -507,7 +402,20 @@ export function coastalWeakeningWords(cw, system) {
 }
 
 /**
- * How fast the centre was travelling, at its quickest and its slowest. §57.43.
+ * How far the storm went and how fast it was travelling. §57.43, §57.45.
+ *
+ * ==> FOUR ROWS AT MOST AND EACH HALF STANDS ALONE. <== Distance travelled,
+ * the same distance as a cyclone when those differ, then the fastest and
+ * slowest six hours. The distance half and the speed half are computed by
+ * different walks over the same fixes and either can be absent without the
+ * other, which is why nothing here reads one to decide the other.
+ *
+ * ==> THE FIGURES ARE ALL IN THE READER'S OWN UNITS AND NOT ONE OF THEM IS
+ * CONVERTED HERE. <== `formatDistance` and `formatSpeed` both take `system`,
+ * which `ui/view-season-detail.js` resolves per render from the Settings
+ * preference — so `auto` goes on following the device and a reader who
+ * changes miles to kilometres sees this section change with everything else
+ * on the panel rather than a beat later.
  *
  * ==> THE SLOW END IS THE HALF WORTH HAVING, WHICH IS THE OPPOSITE OF WHAT THE
  * SECTION LOOKS LIKE. <== A storm that sprints is a wind story and the peak
@@ -520,46 +428,137 @@ export function coastalWeakeningWords(cw, system) {
  * and a reader comparing against an advisory's instantaneous "moving NW at 12
  * mph" is entitled to know which of those they are looking at.
  */
-export function movementHtml(facts, system, { floorKt, maxLegHours }) {
+export function movementHtml(facts, system, {
+  floorKt, maxLegHours, distanceFloorNm, cycloneShareMax,
+}) {
   const s = facts?.forwardSpeed;
-  if (!s || !Number.isFinite(s.fastestKt)) {
-    /* No pair of consecutive synoptic fixes, which is 32 storms in the
-     * archive — one observation and then nothing. §57.25 rule 2: name the
-     * reason rather than leaving the section blank. */
-    return absenceHtml('This storm was never seen twice on the six-hourly clock, '
-      + 'so there is no distance between two fixes to measure a speed over.');
+  const d = facts?.trackDistance;
+  const hasSpeed = !!s && Number.isFinite(s.fastestKt);
+  const hasDistance = !!d && Number.isFinite(d.totalNm);
+
+  if (!hasSpeed && !hasDistance) {
+    /* No pair of consecutive fixes at all, which is 32 storms in the archive —
+     * one observation and then nothing. §57.25 rule 2: name the reason rather
+     * than leaving the section blank.
+     *
+     * ==> THE TWO HALVES ARE CHECKED SEPARATELY EVEN THOUGH TODAY THEY ALWAYS
+     * AGREE. <== Counted 2026-08-29, every one of the 3,234 storms with a
+     * distance also has a speed and the same 32 have neither, because
+     * HURDAT2's clock is regular. That is a fact about this file, not a
+     * property of the pair, and step 13's basins come from other agencies. */
+    return absenceHtml('This storm was never seen twice, '
+      + 'so there is no distance between two fixes to measure.');
   }
 
-  /* ==> BELOW THE FLOOR IT IS WORDS, NOT A NUMBER, AND THE FLOOR IS THE
-   * RECORD'S OWN PRECISION RATHER THAN A JUDGEMENT. <== Positions are written
-   * to a tenth of a degree, which over six hours is a knot, so anything under
-   * that is indistinguishable from stationary. 100 storms in the archive would
-   * otherwise print `Slowest 0 mph`, which is the dash §57.25 forbids wearing
-   * a number. */
-  const slow = s.slowestKt < floorKt ? 'barely moving' : formatSpeed(s.slowestKt, system);
+  const rows = [];
 
-  /* The leg's START day. A leg spans two stamps and naming both would be three
-   * quarters of a row spent on punctuation; the day it set off is the one a
-   * reader can find on the track. */
-  const rows = [
-    ['Fastest', `${formatSpeed(s.fastestKt, system)} on ${utcDay(s.fastestFromTime)}`],
-    ['Slowest', `${slow} on ${utcDay(s.slowestFromTime)}`],
-  ];
+  /* ==> DISTANCE LEADS, BECAUSE IT IS THE FIGURE THE LINE ON THE GLOBE IS
+   * ALREADY SHOWING. <== §57.45. A reader looking at a track wants its length
+   * before its pace, and this is the number that makes the two speed rows
+   * below mean something — 19 mph is a different fact on a 300-mile track
+   * than on a 5,000-mile one. */
+  let belowDistanceFloor = false;
+  /* ==> ONE BOOLEAN DECIDES BOTH THE ROW AND THE SENTENCE THAT EXPLAINS IT.
+   * <== Written twice they can drift, and the failure is silent and
+   * asymmetric: a sentence explaining a gap between two figures, printed on a
+   * panel showing one. */
+  let showsCycloneRow = false;
+  if (hasDistance) {
+    /* Same shape and same reason as `barely moving` below: under one 0.1°
+     * step the record cannot tell a short track from no track, and three
+     * storms in the archive would otherwise print `0 mi`. §57.25. */
+    belowDistanceFloor = d.totalNm < distanceFloorNm;
+    rows.push(['Distance travelled', belowDistanceFloor
+      ? 'no movement recorded'
+      : formatDistance(d.totalNm, system)]);
 
-  /* ==> EVERY FIGURE IN THIS SENTENCE INTERPOLATES THE CONSTANT THAT PRODUCED
-   * IT. <== A typed "six hours" beside a `trackSpeedMaxLegHours` somebody later
-   * moves is a sentence that reads perfectly and describes a different
-   * measurement from the one above it. `CLAUDE.md`'s rule, and §57.41 already
-   * paid for breaking it once. */
-  const note = `Measured between the ${maxLegHours}-hourly observations, so each figure `
-    + `is an average over ${maxLegHours} hours rather than a top speed.`
-    + (s.slowestKt < floorKt
-      ? ' Every position in the record is rounded to a tenth of a degree, which over '
-        + `${maxLegHours} hours is about ${floorKt} knot, so a storm slower than that `
-        + 'cannot be told apart from one sitting still.'
-      : '');
+    /* ==> THE SECOND ROW IS THE STORM ALONE, AND IT APPEARS ONLY WHEN THE TWO
+     * FIGURES TELL DIFFERENT STORIES. <== Mitch 1998 ran 6,449 nm and was a
+     * cyclone for 2,262 of them; Andrew 1992 was a cyclone for every mile of
+     * its 4,014. Showing both on Andrew would be a qualifier that fires
+     * everywhere and therefore qualifies nothing, which is the `Tied` lesson
+     * §57.44 already paid for. */
+    showsCycloneRow = !belowDistanceFloor && Number.isFinite(d.cycloneNm)
+      && d.cycloneNm < d.totalNm * cycloneShareMax;
+    if (showsCycloneRow) {
+      rows.push(['As a tropical cyclone', formatDistance(d.cycloneNm, system)]);
+    }
+  }
 
-  return rowsHtml(rows) + absenceHtml(note);
+  /* ==> WHEN EVEN THE FASTEST LEG IS UNDER THE FLOOR THERE IS NO RANGE TO
+   * SHOW, AND THIS WAS A LIVE FAULT ON `main` UNTIL §57.45. <== §57.43 put
+   * the floor on the slowest row alone, so the three storms the record never
+   * moves — AL051851, AL031857, AL041864, measured 2026-08-29 — have been
+   * printing `Fastest 0 mph` beside `Slowest barely moving`. The zero is the
+   * dashed shrug §57.25 forbids wearing a number, and it only became obvious
+   * once the distance row above it started saying `no movement recorded`.
+   *
+   * Both rows go rather than both reading `barely moving`: two rows exist to
+   * show a range between two ends, and printing one phrase twice under two
+   * different dates invites the reader to hunt for a difference that is not
+   * there. The sentence below says it once, plainly. */
+  const neverMoved = hasSpeed && s.fastestKt < floorKt;
+
+  if (hasSpeed && !neverMoved) {
+    /* ==> BELOW THE FLOOR IT IS WORDS, NOT A NUMBER, AND THE FLOOR IS THE
+     * RECORD'S OWN PRECISION RATHER THAN A JUDGEMENT. <== Positions are
+     * written to a tenth of a degree, which over six hours is a knot, so
+     * anything under that is indistinguishable from stationary. 100 storms in
+     * the archive would otherwise print `Slowest 0 mph`. */
+    const slow = s.slowestKt < floorKt ? 'barely moving' : formatSpeed(s.slowestKt, system);
+
+    /* The leg's START day. A leg spans two stamps and naming both would be
+     * three quarters of a row spent on punctuation; the day it set off is the
+     * one a reader can find on the track. */
+    rows.push(['Fastest', `${formatSpeed(s.fastestKt, system)} on ${utcDay(s.fastestFromTime)}`]);
+    rows.push(['Slowest', `${slow} on ${utcDay(s.slowestFromTime)}`]);
+  }
+
+  /* ==> EVERY FIGURE IN THESE SENTENCES INTERPOLATES THE CONSTANT THAT
+   * PRODUCED IT. <== A typed "six hours" beside a `trackSpeedMaxLegHours`
+   * somebody later moves is a sentence that reads perfectly and describes a
+   * different measurement from the one above it. `CLAUDE.md`'s rule, and
+   * §57.41 already paid for breaking it once. */
+  const parts = [];
+
+  if (showsCycloneRow) {
+    parts.push('The first figure is the whole track drawn on the globe. The gap between '
+      + 'the two is ground it covered before it became a tropical cyclone or after it '
+      + 'stopped being one, as a wave, a low or an extratropical storm.');
+  }
+
+  /* ==> THE TWO FLOORS TRIP TOGETHER AND MUST NOT BOTH SPEAK. <== A storm
+   * whose whole track is under one 0.1° step is also a storm with no
+   * measurable leg, so both branches fire on exactly the same three storms
+   * today. The precision sentence below is the stronger and more useful claim
+   * and it already accounts for the missing speed rows, so this one stands
+   * down rather than saying the same thing in front of it. */
+  if (neverMoved && !belowDistanceFloor) {
+    parts.push('The record never shows it moving between two observations, at either end '
+      + 'of its life, so there is no fastest or slowest to give.');
+  } else if (hasSpeed && !neverMoved) {
+    parts.push(`The speeds are measured between the ${maxLegHours}-hourly observations, `
+      + `so each is an average over ${maxLegHours} hours rather than a top speed.`);
+  }
+
+  /* ==> ONE PRECISION SENTENCE, NEVER TWO, AND THE DISTANCE WORDING WINS. <==
+   * A storm whose whole track is under one 0.1° step is also a storm whose
+   * slowest leg is zero, so both floors trip together on exactly those three
+   * storms. Printing both would say the same thing twice in adjacent
+   * sentences; the distance version is the stronger claim and it subsumes the
+   * other. */
+  if (belowDistanceFloor) {
+    parts.push('Every position in the record is written to a tenth of a degree, about '
+      + `${distanceFloorNm} nautical miles, and this storm\u2019s whole track adds up to less `
+      + 'than one of those steps. The record cannot show whether it moved at all, so '
+      + 'there is no speed to give either.');
+  } else if (hasSpeed && s.slowestKt < floorKt) {
+    parts.push('Every position in the record is rounded to a tenth of a degree, which over '
+      + `${maxLegHours} hours is about ${floorKt} knot, so a storm slower than that `
+      + 'cannot be told apart from one sitting still.');
+  }
+
+  return rowsHtml(rows) + absenceHtml(parts.join(' '));
 }
 
 /**
