@@ -95,6 +95,10 @@ const seasonOf = (basin, year) => parseHurdat2(
 
 const atl2005 = seasonOf('atlantic', 2005);
 const atl1851 = seasonOf('atlantic', 1851);
+/* Sandy's season. She is the only storm in reach whose distance rank differs
+ * between miles and kilometres, which makes her the one probe that can catch a
+ * panel reading the wrong ladder. §57.46. */
+const atl2012 = seasonOf('atlantic', 2012);
 const katrina = atl2005.find((s) => s.id === 'AL122005');
 const oldOne = atl1851[0];
 
@@ -928,6 +932,40 @@ function mount({
     /distanceFloorNm:\s*SEASONS\.trackDistanceFloorNm/.test(src));
     ok('and `cycloneShareMax` from the constants, never a number typed at the '
       + 'call site', /cycloneShareMax:\s*SEASONS\.trackDistanceCycloneShareMax/.test(src));
+  }
+
+  /* ==> AND SANDY IS MOUNTED IN BOTH UNIT SYSTEMS, BECAUSE THE RANK ROW IS
+   * THE ONE PLACE THE PREFERENCE CAN GO MISSING WITHOUT LOOKING WRONG. <==
+   * §57.46. Distance ranks against two ladders — one rounded to miles, one to
+   * kilometres — because a rung has to be the number the row above it prints,
+   * and `rankStorm` needs the reader's system to pick. A mutation dropping
+   * that argument from the view survived every other assertion here: the row
+   * still appears, still carries the right label, and simply ranks against the
+   * wrong ladder.
+   *
+   * ==> SANDY IS THE PROBE AND SHE IS THE ONLY FIXTURE THAT IS. <== She is
+   * 609th longest track in the Atlantic by miles and 610th by kilometres —
+   * every other storm in `samples/seasons/storms/` gives the same number in
+   * both, which is exactly why a spot check on Katrina or Harvey proves
+   * nothing here. Measured against the shipped table, not chosen. */
+  {
+    ok('==> AND THE SHIPPED TABLE IS REALLY LOADED, OR THE TWO BELOW PROVE '
+      + 'NOTHING. <== A missing table draws no rank section at all, and an '
+      + 'assertion on an absent row is an assertion on nothing',
+    RANK_TABLE !== null);
+    for (const [system, want] of [['imperial', '609th'], ['metric', '610th']]) {
+      const m = mount({
+        storms: atl2012,
+        units: () => system,
+        archive: () => ({ table: RANK_TABLE, basin: 'atlantic' }),
+      });
+      m.view.onEnter('AL182012');
+      const panel = flat(m.html());
+      ok(`==> SANDY\u2019S DISTANCE RANK FOLLOWS THE ${system.toUpperCase()} `
+        + `READER TO ${want} IN THE ATLANTIC. <== The label is identical either `
+        + 'way, so only the number can catch the wrong ladder',
+      panel.includes(`${want} longest track in the Atlantic`));
+    }
   }
 
   /* --- THE WHOLE PANEL, STILL NEVER A DASH ------------------------------- */

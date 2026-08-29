@@ -37,6 +37,7 @@ const {
   eraCaveat, meetsFloor, countsAgree,
 } = await import('../lib/rankings.js');
 const { archiveRankHtml, eraCaveatWords } = await import('../ui/season-rank-markup.js');
+const { formatDistance } = await import('../lib/units.js');
 
 const TABLE_FILE = 'seasons/data/rankings-02272026.json';
 const table = existsSync(TABLE_FILE) ? JSON.parse(readFileSync(TABLE_FILE, 'utf8')) : null;
@@ -264,8 +265,137 @@ section('QUANTIZING — two storms showing the same number share a rank');
     'and the arithmetic it replaced genuinely disagrees, so this is a real guard');
   ok(toRung('nope', 5) === null && toRung('round', NaN) === null,
     'an unknown quantizer or an unreadable value is null rather than a throw');
-  ok(Object.keys(QUANTIZERS).length === 2,
-    'two quantizers today, and a third statistic printed a third way needs a third');
+  /* ==> THIS TRIPWIRE FIRED WHEN DISTANCE LANDED, EXACTLY AS INTENDED. <==
+   * §57.46. It read `=== 2` and went red the moment a statistic needed a
+   * rounding the list did not have, which is the whole reason it is here. Four
+   * now: whole units, one decimal, and one per display unit for distance. */
+  ok(Object.keys(QUANTIZERS).length === 4,
+    'four quantizers today, and a statistic printed a fifth way needs a fifth');
+}
+
+/* ------------------------------------------------------------------------- */
+section('==> DISTANCE — THE ONE STATISTIC WHOSE PRINTED FIGURE DEPENDS ON THE '
+  + 'READER — §57.46 <==');
+{
+  /* ==> THE CENTRAL ASSERTION, AND IT IS A SWEEP RATHER THAN A SPOT CHECK.
+   * <== The rung must be the number `formatDistance` prints. Reproducing that
+   * function's logic here and comparing the two would be the builder marking
+   * its own homework; instead the RUNG is fed back through the real renderer
+   * and must come out as the same string as the raw value. Any drift — a
+   * dropped decimal branch, a conversion ratio copied and later diverged, a
+   * `Math.round` where the panel uses `toFixed` — turns this red.
+   *
+   * The sweep is dense across the whole range the archive occupies, plus the
+   * floor's own neighbourhood where the decimal branch lives. */
+  const sweep = [];
+  for (let nm = SEASONS.trackDistanceFloorNm; nm < 40; nm += 0.07) sweep.push(nm);
+  for (let nm = 40; nm < 9400; nm += 3.13) sweep.push(nm);
+
+  /* ==> THE RUNG IS COMPARED AGAINST THE NUMBER THE RENDERER ACTUALLY PRINTS,
+   * PULLED OUT OF ITS OWN OUTPUT. <== Not against this suite's idea of what
+   * that number should be, which would be the builder marking its own
+   * homework. `formatDistance` takes NAUTICAL miles and returns display units
+   * with a unit word and thousands separators; the rung is already in display
+   * units. The first version of this check fed the rung back in as if it were
+   * nautical miles and converted it a second time — every one of 6,954 values
+   * disagreed, which is how a test that is wrong announces itself. */
+  const printedNumber = (nm, system) => Number(
+    formatDistance(nm, system).replace(/[^0-9.]/g, ''),
+  );
+
+  let drift = 0;
+  let firstDrift = null;
+  for (const nm of sweep) {
+    for (const [quantize, system] of [['miles', 'imperial'], ['km', 'metric']]) {
+      const rung = toRung(quantize, nm);
+      const shown = printedNumber(nm, system);
+      if (rung !== shown) {
+        drift += 1;
+        firstDrift = firstDrift || `${nm.toFixed(3)} nm rungs at ${rung} but `
+          + `prints "${formatDistance(nm, system)}"`;
+      }
+    }
+  }
+  ok(drift === 0,
+    `==> EVERY RUNG RENDERS AS THE FIGURE IT CAME FROM, IN BOTH UNITS. <== `
+    + `${sweep.length * 2} conversions checked, ${drift} disagreed. ${firstDrift || ''}`);
+  ok(sweep.length > 3000,
+    `and the sweep really covers the archive's range, so it is not vacuous. `
+    + `${sweep.length} values from ${SEASONS.trackDistanceFloorNm} nm up`);
+
+  /* ==> AND THE REASON THERE ARE TWO LADDERS AT ALL, KEPT AS A REGRESSION.
+   * <== A rung of whole NAUTICAL miles is the obvious single answer and it is
+   * wrong: measured over both mirrored basins, 575 storms print the identical
+   * mile figure while sitting on different whole-nm rungs, so they would show
+   * `1,014 mi` at ranks one apart. That is §57.44's rung rule broken by a
+   * statistic it did not anticipate. These three are real archive values —
+   * AL061851, AL111886 and AL162021, all printing 1,014 mi. */
+  const trio = [881.53, 880.83, 881.10];
+  ok(new Set(trio.map((nm) => formatDistance(nm, 'imperial'))).size === 1,
+    'three real storms print the same distance in miles');
+  ok(new Set(trio.map((nm) => Math.round(nm))).size > 1,
+    '==> AND A WHOLE-NAUTICAL-MILE RUNG WOULD SPLIT THEM. <== This is the '
+    + 'assertion that stops a later session "simplifying" the two ladders into '
+    + 'one stored in the unit the data happens to arrive in');
+  ok(new Set(trio.map((nm) => toRung('miles', nm))).size === 1,
+    'while the shipped rung keeps all three on one rank');
+
+  /* ==> ONE FACT, TWO ENTRIES, AND THE READER SEES EXACTLY ONE ROW. <== */
+  ok(RANK_STATS.trackDistanceMi.system === 'imperial'
+    && RANK_STATS.trackDistanceKm.system === 'metric',
+  'the two distance entries each declare which reader they are for');
+  ok(RANK_STATS.trackDistanceMi.label === RANK_STATS.trackDistanceKm.label,
+    'and they carry one label between them, because they are one fact');
+  ok(!RANK_STATS.peakWindKt.system && !RANK_STATS.lowestPressureMb.system
+    && !RANK_STATS.lifespanHours.system && !RANK_STATS.ace.system,
+  '==> WHILE A UNIT-FREE STATISTIC DECLARES NOTHING. <== Wind prints its '
+    + 'knots in brackets, pressure is millibars everywhere, lifespan is hours');
+
+  if (table) {
+    const harvey = stormFacts(oneStorm('al092017'));
+    for (const [system, want, avoid] of [['imperial', 'miles', 'km'], ['metric', 'km', 'miles']]) {
+      const ranked = rankStorm(harvey, table, 'atlantic', system);
+      const distanceRows = ranked.rows.filter((r) => r.key.startsWith('trackDistance'));
+      ok(distanceRows.length === 1,
+        `a ${system} reader gets exactly one distance row, not two. Got `
+        + `${distanceRows.length}`);
+      ok(distanceRows[0]?.def.quantize === want,
+        `and it is the ${want} ladder. Got ${distanceRows[0]?.def.quantize}`);
+      ok(!ranked.rows.some((r) => r.def.quantize === avoid),
+        `and the ${avoid} ladder never reaches this reader at all`);
+    }
+
+    /* ==> THE ROW CAP COUNTS ROWS, AND ENTRIES STOPPED BEING ROWS HERE. <==
+     * Eight entries in `RANK_STATS`, seven rows on a panel. A cap read as an
+     * entry count would silently drop the last real row. */
+    const ranked = rankStorm(harvey, table, 'atlantic', 'imperial');
+    ok(Object.keys(RANK_STATS).length === 8,
+      `eight entries. Got ${Object.keys(RANK_STATS).length}`);
+    ok(ranked.rows.length <= SEASONS.rankingsMaxRows,
+      `and no more rows than the cap allows (${SEASONS.rankingsMaxRows}). Got `
+      + `${ranked.rows.length}`);
+    ok(archiveRankHtml(ranked, { year: 2017 }).includes('Distance travelled'),
+      '==> AND THE DISTANCE ROW SURVIVES THE CAP. <== It is the last entry in '
+      + '`RANK_STATS`, so an off-by-one in the slice removes exactly this one');
+  }
+
+  /* ==> A STORM UNDER THE ARCHIVE'S DISTANCE FLOOR IS NOT RANKED LAST. <== The
+   * same rule `hoursAtMajor` applies to a storm that never became a major.
+   * `movementHtml` prints `no movement recorded` for these three storms
+   * precisely because the figure is not a measurement of a short track, so a
+   * rank beside it would be taken on a number the panel has just declined to
+   * state. */
+  const stuck = { trackDistance: { totalNm: 0, cycloneNm: 0, legs: 3 } };
+  ok(RANK_STATS.trackDistanceMi.read(stuck) === null
+    && RANK_STATS.trackDistanceKm.read(stuck) === null,
+  'a storm the record never moves gets no distance rank in either unit');
+  const justOver = { trackDistance: { totalNm: SEASONS.trackDistanceFloorNm, cycloneNm: 0, legs: 3 } };
+  ok(RANK_STATS.trackDistanceMi.read(justOver) === SEASONS.trackDistanceFloorNm,
+    '==> AND A STORM EXACTLY AT THE FLOOR IS RANKED, SO THE BOUNDARY IS NOT '
+    + 'OFF BY ONE. <== The floor is the shortest track the record can state, '
+    + 'not the shortest it refuses');
+  ok(RANK_STATS.trackDistanceMi.read({}) === null,
+    'and a storm with no track at all is null rather than zero');
 }
 
 /* ------------------------------------------------------------------------- */
