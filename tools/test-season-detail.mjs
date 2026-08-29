@@ -315,6 +315,35 @@ function mount({
     + 'rather than an absence',
   !decaying.includes('Fastest strengthening'));
   ok('and how it ended is still said', decaying.includes('Dissipated'));
+
+  /* ==> `How it changed` IS A CHRONOLOGY AND THE COMEBACK HAS TO LAND INSIDE
+   * IT. <== §57.48. The section runs strengthening, then what the storm gave
+   * up at the coast, then the comeback, then how it finished. The sentence is
+   * handed in as an argument rather than appended by the view for exactly this
+   * reason: appended, it sits under `Dissipated. The record simply stops.` and
+   * describes a hurricane coming back afterwards.
+   *
+   * ==> A MUTATION RUN IS WHY THIS IS ASSERTED. <== Moving the slot to the end
+   * of the return left both this suite and `test-storm-shape.mjs` green — the
+   * ordering was a comment and nothing else. §12. */
+  const ordered = M.changeHtml(
+    { ending: 'dissipated', year: 2004 },
+    sys,
+    {
+      windowHours: SEASONS.intensificationWindowHours,
+      comebackHtml: '<p class="detail-note">COMEBACK-MARKER</p>',
+    },
+  );
+  ok('==> THE COMEBACK IS PRINTED BEFORE THE ENDING, NOT AFTER IT. <== A storm '
+    + 'that fell apart and came back did so while it was still alive',
+  ordered.indexOf('COMEBACK-MARKER') > -1
+    && ordered.indexOf('COMEBACK-MARKER') < ordered.indexOf('Dissipated'));
+
+  const noComeback = M.changeHtml({ ending: 'dissipated', year: 2004 }, sys,
+    { windowHours: SEASONS.intensificationWindowHours });
+  ok('and the argument is optional, because 14 storms in 3,266 have a comeback '
+    + 'and the other 3,252 must not gain an empty slot',
+  noComeback.includes('Dissipated'));
 }
 
 /* ---------------------------------------------------------------------------

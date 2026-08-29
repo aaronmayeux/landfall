@@ -392,18 +392,22 @@ section('==> DISTANCE — THE ONE STATISTIC WHOSE PRINTED FIGURE DEPENDS ON THE 
         `and the ${avoid} ladder never reaches this reader at all`);
     }
 
-    /* ==> THE ROW CAP COUNTS ROWS, AND ENTRIES STOPPED BEING ROWS HERE. <==
-     * Eight entries in `RANK_STATS`, seven rows on a panel. A cap read as an
-     * entry count would silently drop the last real row. */
+    /* ==> EIGHT ENTRIES, SEVEN ROWS, AND EVERY ONE OF THE SEVEN IS PRINTED.
+     * <== The row cap was deleted on 2026-08-29 (§57.48), so the assertion is
+     * now equality rather than a ceiling: a statistic added to `RANK_STATS`
+     * must reach the panel on its own. Distance ships as two entries and
+     * `rankStorm` drops the one that is not the reader's, which is why the two
+     * numbers differ. */
     const ranked = rankStorm(harvey, table, 'atlantic', 'imperial');
     ok(Object.keys(RANK_STATS).length === 8,
       `eight entries. Got ${Object.keys(RANK_STATS).length}`);
-    ok(ranked.rows.length <= SEASONS.rankingsMaxRows,
-      `and no more rows than the cap allows (${SEASONS.rankingsMaxRows}). Got `
-      + `${ranked.rows.length}`);
+    const printed = (archiveRankHtml(ranked, { year: 2017 }).match(/<dt>/g) || []).length;
+    ok(printed === ranked.rows.length,
+      '==> EVERY RANKED ROW REACHES THE PANEL. <== A truncation here would drop '
+      + `the last statistic silently. Ranked ${ranked.rows.length}, printed ${printed}`);
     ok(archiveRankHtml(ranked, { year: 2017 }).includes('Distance travelled'),
-      '==> AND THE DISTANCE ROW SURVIVES THE CAP. <== It is the last entry in '
-      + '`RANK_STATS`, so an off-by-one in the slice removes exactly this one');
+      'and the last entry in `RANK_STATS` is among them, which is the one any '
+      + 'reintroduced slice would remove first');
   }
 
   /* ==> A STORM UNDER THE ARCHIVE'S DISTANCE FLOOR IS NOT RANKED LAST. <== The
@@ -584,10 +588,12 @@ section('THE SENTENCE — what actually reaches the screen');
     ok(archiveRankHtml(null) === '', 'no ranking means no section');
     ok(archiveRankHtml({ scopes: [], rows: [] }) === '', 'and neither does an empty one');
 
-    /* Six statistics, and the constant is what stops a seventh arriving free. */
+    /* ==> AND NOTHING CAPS HOW MANY ROWS REACH THE PANEL. <== §57.48. Every
+     * statistic this storm could be ranked on is printed; a reintroduced
+     * `.slice()` shows up here as a count that stops short of the ladders the
+     * table actually holds. */
     const rows = (html.match(/<dt>/g) || []).length;
-    ok(rows <= SEASONS.rankingsMaxRows,
-      `at most ${SEASONS.rankingsMaxRows} rank rows reach the panel. Got ${rows}`);
+    ok(rows > 0, `the panel prints its rank rows. Got ${rows}`);
   }
 }
 
