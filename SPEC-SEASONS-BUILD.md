@@ -5896,14 +5896,40 @@ are all already in it. **This panel had been rendering a `<div>` into that
 recipe and getting only the type rules**, so its heads were unreachable by Tab
 and did nothing on Enter. A real `<button>` buys all of it back for free.
 
-**The state is held for one storm and is not persisted.** The live panel writes
-a reader's folds to storage because a live storm is one thing they come back to
-over days; an archive storm is opened, read and left. It must survive a
-re-render, though, and that is the silent failure: this panel redraws when
-NOAA's report arrives a beat after it paints, so a fold living only in the DOM
-would spring open under the reader a second after they made it — **and only on
-the storms that have a report**, which is 47% of the archive and the half
-nobody would think to test.
+**THE TWO RANK SECTIONS OPEN AND THE OTHER SEVEN FOLD.** Nine sections is more
+than a phone shows, and a reader stepping through the archive wants to know
+where a storm SITS before they want its arithmetic. Everything else is one tap
+away with its heading still on screen, which is the difference between folded
+and absent. **The constant is the OPEN list rather than the closed one**, so a
+section added later defaults to folded — an unfamiliar section arriving already
+open pushes eight known ones off the screen, and a closed list would have made
+that the failure by omission.
+
+**THE FOLDS PERSIST, exactly as the live panel's do.** The first version of
+this pass did not, on the reasoning that an archive storm is opened, read and
+left. **That reasoning is wrong and Aaron said so the same day:** a reader
+stepping through 1851 to 2025 is doing the same thing over and over, and
+re-folding seven sections on every storm is the tax it missed.
+
+**They must also survive a RE-RENDER, and that is the silent half.** This panel
+redraws when NOAA's report arrives a beat after it paints, so a fold living
+only in the DOM would spring back under the reader a second after they made it
+— **and only on the storms that have a report**, which is 47% of the archive
+and the half nobody would think to test. `section()` reads the record on every
+paint, which covers the redraw and the reload by the same road.
+
+**THE KEYS ARE NAMESPACED `season:`, BECAUSE THE RECORD IS SHARED AND FLAT.**
+`lib/section-state.js` owns one storage key, which is right — the parsing rules
+and the private-mode failure behaviour should have one owner. But two panels
+putting a bare `wind` in one flat record would fold each other's sections, and
+it would read as the app forgetting a choice rather than as a collision. **No
+id collides today**, and that is exactly the state in which a prefix is cheap:
+added later it would also have to migrate whatever readers had already written.
+
+**AND `lib/section-state.js`'s `hasChoice` IS WHAT MAKES A DEFAULT POSSIBLE AT
+ALL.** "Never touched" and "deliberately opened" are both falsy and would
+collapse into one answer if the record were read as a boolean, so a reader who
+opened `Landfalls` would find it folded again on the next storm.
 
 **IT IS ONE SECTION RATHER THAN SIX RANKS GLUED ONTO SIX EXISTING ROWS.** The
 scope sentence would otherwise have to be repeated six times or left off, and

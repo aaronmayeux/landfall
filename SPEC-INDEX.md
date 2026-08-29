@@ -346,7 +346,7 @@ real home is the other row carrying the same section number.
 | `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5316-5489 |
 | `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5490-5603 |
 | `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 5604-5615 |
-| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 5797-5990 |
+| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 5797-6016 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -362,7 +362,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 280,502 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 345,816 | 69 |
+| `SPEC-SEASONS-BUILD.md` | 347,505 | 69 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 189,811 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

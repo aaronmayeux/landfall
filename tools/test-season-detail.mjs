@@ -43,6 +43,22 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { installMarkupDocument } from './markup-dom.mjs';
 
+/* ==> A localStorage STAND-IN, BECAUSE WITHOUT ONE THE PERSISTENCE TESTS PASS
+ * ON NOTHING. <== §57.44. `lib/section-state.js` wraps every call in a
+ * try/catch and degrades to "nothing is collapsed" on a throw, which is the
+ * right behaviour for private-mode Safari and exactly the wrong behaviour for
+ * a suite: with no `localStorage` at all, every read returns `{}` and every
+ * write is swallowed, so a test asserting a fold was remembered would go green
+ * against a panel that had remembered nothing. This is the only thing that
+ * makes those assertions mean anything. */
+const STORE = new Map();
+globalThis.localStorage = {
+  getItem: (k) => (STORE.has(k) ? STORE.get(k) : null),
+  setItem: (k, v) => { STORE.set(k, String(v)); },
+  removeItem: (k) => { STORE.delete(k); },
+  clear: () => STORE.clear(),
+};
+
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(HERE, '..');
 
@@ -796,10 +812,11 @@ function mount({
 }
 
 /* ---------------------------------------------------------------------------
- * 9. THE SECTIONS FOLD, AND THE ORDER PUTS THE COMPARISON FIRST — Aaron's
- *    call 2026-08-29
+ * 9. THE SECTIONS FOLD, THEY REMEMBER, AND THE ORDER PUTS THE COMPARISON
+ *    FIRST — Aaron's calls, 2026-08-29
  * ------------------------------------------------------------------------ */
 {
+  STORE.clear();
   const p = mount({
     storms: atl2005,
     loadReport: async () => ({ state: 'none' }),
@@ -825,6 +842,16 @@ function mount({
     order('life') < order('landfalls') && order('landfalls') < order('change')
     && order('change') < order('movement'));
 
+  /* ==> THE TWO RANK SECTIONS OPEN AND THE REST FOLD. <== The panel has nine
+   * sections; a reader wants where a storm SITS before its arithmetic. */
+  const shutQ = (id) => p.body()
+    .querySelector(`.detail-section[data-section="${id}"]`).dataset.collapsed === 'true';
+  ok('a fresh reader gets `In its season` open', !shutQ('rank-season'));
+  ok('and `Where it ranks` open', !shutQ('rank-archive'));
+  ok('and every other section folded, heading still on screen',
+    shutQ('peak') && shutQ('life') && shutQ('landfalls') && shutQ('change')
+    && shutQ('movement') && shutQ('windfield') && shutQ('report'));
+
   /* ==> THE HEAD IS A REAL BUTTON, WHICH IS WHAT BUYS THE KEYBOARD. <== §13.
    * A `<div>` with a click handler is unreachable by Tab and does nothing on
    * Enter, and this panel rendered exactly that until now. Nothing about the
@@ -833,36 +860,33 @@ function mount({
   ok('every section head is a <button>, not a div with a click handler',
     !/<div class="detail-section-head"/.test(p.html())
     && /<button class="detail-section-head" type="button"/.test(p.html()));
-  ok('and each one announces its state to a screen reader',
-    p.html().includes('aria-expanded="true"'));
   ok('the chevron is hidden from the reader, being decoration',
     p.html().includes('<span class="detail-chevron" aria-hidden="true">'));
-  ok('nothing starts folded — an archive storm is opened to be read',
-    !p.html().includes('data-collapsed="true"'));
 
-  /* Pressing a head folds it, and pressing again unfolds it. */
+  const ariaOf = (id) => p.body()
+    .querySelector(`.detail-section[data-section="${id}"] .detail-section-head`)
+    .attrs['aria-expanded'];
+  ok('an open section announces itself expanded', ariaOf('rank-season') === 'true');
+  ok('and a folded one announces itself collapsed', ariaOf('peak') === 'false');
+
+  /* Pressing a head opens it, and pressing again folds it. */
   p.press('.detail-section[data-section="peak"] .detail-section-head');
-  const shut = p.body().querySelector('.detail-section[data-section="peak"]');
-  ok('pressing a head folds that section',
-    shut && shut.dataset.collapsed === 'true');
-  ok('and says so to a screen reader',
-    p.body().querySelector('.detail-section[data-section="peak"] .detail-section-head')
-      .attrs['aria-expanded'] === 'false');
-  ok('==> AND ONLY THAT SECTION. <== Folding one must not fold its neighbours',
-    p.body().querySelector('.detail-section[data-section="life"]').dataset.collapsed !== 'true');
+  ok('pressing a folded head opens that section', !shutQ('peak'));
+  ok('and says so to a screen reader', ariaOf('peak') === 'true');
+  ok('==> AND ONLY THAT SECTION. <== Opening one must not open its neighbours',
+    shutQ('life'));
 
   p.press('.detail-section[data-section="peak"] .detail-section-head');
-  ok('pressing it again unfolds it',
-    p.body().querySelector('.detail-section[data-section="peak"]')
-      .dataset.collapsed !== 'true');
+  ok('pressing it again folds it', shutQ('peak'));
 }
 
 /* ==> A FOLD MUST SURVIVE THE REPORT ARRIVING, AND THIS IS THE SILENT FAILURE.
  * <== The panel re-renders when NOAA's report lands, a beat after it paints.
- * If the fold lived only in the DOM, the reader's section would spring open
- * under them a second after they closed it — and only on the storms that have
- * a report, which is the half of the archive nobody would test. */
+ * If the state lived only in the DOM, the reader's section would spring shut
+ * under them a second after they opened it — and only on the storms that have
+ * a report, which is 47% of the archive and the half nobody would test. */
 {
+  STORE.clear();
   let release;
   const held = new Promise((r) => { release = r; });
   const p = mount({
@@ -873,26 +897,68 @@ function mount({
   await settle();
 
   p.press('.detail-section[data-section="landfalls"] .detail-section-head');
-  ok('a section is folded while the report is still in the air',
-    p.body().querySelector('.detail-section[data-section="landfalls"]')
-      .dataset.collapsed === 'true');
+  const open = () => p.body()
+    .querySelector('.detail-section[data-section="landfalls"]').dataset.collapsed !== 'true';
+  ok('a section is opened while the report is still in the air', open());
 
   release();
   await settle();
-  ok('==> AND IT IS STILL FOLDED AFTER THE REPORT ARRIVES AND THE PANEL '
-    + 'REDRAWS. <== The state is held in the view, not read back off the DOM',
-  p.body().querySelector('.detail-section[data-section="landfalls"]')
-    .dataset.collapsed === 'true');
+  ok('==> AND IT IS STILL OPEN AFTER THE REPORT ARRIVES AND THE PANEL REDRAWS.'
+    + ' <== The state is read from the record on every paint, never off the DOM', open());
   ok('and the report section itself drew, so the redraw really happened',
     p.html().includes('data-section="report"'));
 
-  /* ==> BUT IT MUST NOT SURVIVE A SECOND STORM. <== A fold made on Katrina
-   * arriving pre-applied on a storm from 1851 — which has half as many
-   * sections and no reason for any to be shut — would look like a bug. */
+  /* ==> AND IT MUST NOW SURVIVE A SECOND STORM, WHICH IS THE REVERSE OF WHAT
+   * THIS PANEL DID THIS MORNING. <== A reader stepping through 1851 to 2025 is
+   * doing the same thing over and over, and re-folding six sections on every
+   * storm is a tax the old "opened, read and left" reasoning missed. */
   p.view.onEnter('AL252005');
   await settle();
-  ok('opening a second storm gives every section back',
-    !p.html().includes('data-collapsed="true"'));
+  ok('opening a second storm keeps the reader\u2019s choice', open());
+}
+
+/* ==> AND IT SURVIVES THE APP BEING CLOSED, WHICH IS THE POINT OF PERSISTING
+ * IT AT ALL. <== A whole new view instance, reading the record back off
+ * storage exactly as a reload does. */
+{
+  STORE.clear();
+  const withTable = { table: RANK_TABLE, basin: 'atlantic' };
+  const first = mount({ storms: atl2005, archive: () => withTable });
+  first.view.onEnter('AL122005');
+  await settle();
+  first.press('.detail-section[data-section="rank-season"] .detail-section-head');
+  ok('the reader folds a section that is open by default',
+    first.body().querySelector('.detail-section[data-section="rank-season"]')
+      .dataset.collapsed === 'true');
+  ok('and something was actually written, rather than swallowed by a stub',
+    STORE.size > 0);
+
+  const second = mount({ storms: atl2005, archive: () => withTable });
+  second.view.onEnter('AL122005');
+  await settle();
+  ok('==> A FRESH VIEW READS IT BACK. <== The default is overridden by the '
+    + 'reader\u2019s own choice, which is what `hasChoice` in lib/section-state.js '
+    + 'exists to tell apart from "never touched"',
+  second.body().querySelector('.detail-section[data-section="rank-season"]')
+    .dataset.collapsed === 'true');
+  ok('and a section the reader never touched still gets its default',
+    second.body().querySelector('.detail-section[data-section="peak"]')
+      .dataset.collapsed === 'true'
+    && second.body().querySelector('.detail-section[data-section="rank-archive"]')
+      .dataset.collapsed !== 'true');
+
+  /* ==> THE KEYS ARE NAMESPACED, BECAUSE THE RECORD IS SHARED WITH THE LIVE
+   * PANEL AND IS FLAT. <== Two panels writing a bare `wind` would fold each
+   * other's sections, and it would read as the app forgetting a choice rather
+   * than as a collision. */
+  const keys = JSON.parse(STORE.get([...STORE.keys()][0]));
+  ok('every key this panel writes is namespaced',
+    Object.keys(keys).length > 0
+    && Object.keys(keys).every((k) => k.startsWith('season:')));
+  ok('and none of them is a bare id the live panel could also write',
+    !Object.keys(keys).some((k) => ['wind', 'vitals', 'ww', 'home', 'advisory',
+      'environment', 'flooding', 'people', 'rainfall'].includes(k)));
+  STORE.clear();
 }
 
 /* ------------------------------------------------------------------------ */
