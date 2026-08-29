@@ -5503,16 +5503,20 @@ No new data, no runner job, no bytes on the phone. All of these land in
 
 | # | Fact | Note |
 |---|---|---|
-| 1 | **Distance travelled** | sum of great-circle legs |
-| 2 | **Fastest and slowest forward speed** | a storm that crawled ashore is a flood story; one that sprinted is a wind story |
-| 3 | **How much it weakened before the coast** | peak category minus landfall category. Katrina peaked Cat 5 and landed Cat 3 — the gap is a fact people get wrong constantly |
+| 1 | **Distance travelled** | sum of great-circle legs. `distanceNm` in `lib/season-facts.js` already exists for item 2 |
 | 4 | **The comeback** | dropped below 34 kt and returned to 64 kt |
 | 5 | **The loop** | the track crosses itself. Jeanne 2004 did a full circle |
 | 6 | **Out of season** | formed before Jun 1 or after Nov 30 |
-| 7 | **Northernmost / southernmost reach, and where it died** | |
+| 7 | **Northernmost / southernmost reach, and where it died** | lands in `How it moved` beside item 2 |
 | 8 | **Cape Verde or home-grown** | genesis east of 30°W and south of 20°N. Changes how a reader reads the whole track |
-| 9 | **Rank within its season** | strongest? longest-lived? the only major? |
-| 10 | **How many other storms were running the same day** | |
+| 10 | **How many other storms were running the same day** | lands in `In its season` beside item 9 |
+
+**==> ITEMS 2, 3 AND 9 ARE BUILT. §57.43 IS THE AS-BUILT ACCOUNT. <==** Forward
+speed, the weakening before the coast, and the rank within the season. Their
+rows are deleted from the table above rather than ticked, per this file's own
+rule — **the numbers stay as permanent addresses and nothing renumbers.** Two of
+the remaining seven now have a home named for them, which is the one thing that
+pass changed about the rest of this list.
 
 **Item 11 — archive-wide rankings — is the research feature and is worth its own
 pass.** Every figure in the drawer carries its rank: *"937 mb — 41st lowest of
@@ -5520,13 +5524,18 @@ pass.** Every figure in the drawer carries its rank: *"937 mb — 41st lowest of
 from tropical storm to Category 4 in 24 hours. This is one."* Nobody else puts
 this on a phone.
 
-**==> AND IT NEEDS A COUNT NOBODY HAS VERIFIED YET. <==** A scratch walk on
-2026-08-29 visited **6,532 storm entries against 3,266 unique ids** — an exact
-2× duplication that was **not explained before the session ended**. The 3,266
-matches `seasons/reports.json` exactly, so that figure is sound; the walk is
-not. **Every ranking in this item is a claim about a denominator, so the first
-job of that pass is finding the doubling, not building the table.** Do not quote
-an archive-wide count until it is found.
+**==> AND THE COUNT THAT BLOCKED IT HAS BEEN EXPLAINED. <==** A scratch walk on
+2026-08-29 visited **6,532 storm entries against 3,266 unique ids**, an exact 2×
+that stopped the pass before it started. The cause is the directory, not the
+data: **`seasons/data/` holds the per-season slices AND the two whole-basin
+`hurdat2-*.txt` files**, so a glob over `*.txt` reads every storm twice. Counted
+2026-08-29: per-season headers 3,266, whole-basin headers 3,266, both together
+6,532. Both sets agree with `seasons/reports.json`.
+
+**So the denominator is sound and this item is unblocked** — the walk simply has
+to pick one set. The whole-basin files are the right one for an archive-wide
+pass, since they are what §57.35 FIX 12 kept for exactly this kind of reader.
+Do not quote a count taken over `seasons/data/*.txt` unfiltered.
 
 The ranking table itself is a runner artifact — a few KB of thresholds per
 statistic, not the storms — so the phone compares against a small file rather
@@ -5591,3 +5600,188 @@ Three routes, and the recommendation is the third:
    covers most of what anyone searches for; everything else gets the honest
    absence line the drawer already knows how to write. Incremental, defensible,
    and a storm can be added any time.
+
+### 57.43 Speed, the coast, and the season — three Tier 1 facts, as built
+
+**§57.42 Tier 1 items 2, 3 and 9, built 2026-08-29.** Arithmetic over rows
+`lib/hurdat.js` already parses: no new data, no runner job, no bytes on the
+phone. `lib/season-facts.js` computes, `ui/season-detail-markup.js` writes the
+sentences, `ui/view-season-detail.js` mounts two new sections.
+
+**==> EVERY FIGURE IN THIS SECTION WAS COUNTED OFF THE MIRRORED ARCHIVE, AND
+THREE OF THEM CHANGED THE DESIGN. <==** They are recorded with the numbers
+attached because each one is the reason a rule exists, and a rule with its
+reason deleted is a rule the next session simplifies away.
+
+#### The panel
+
+| Section | What it says |
+|---|---|
+| `How it changed` | gains a sentence about the weakening before the coast, under the intensification rows |
+| `How it moved` | **new.** Fastest and slowest forward speed, with a note about what is being averaged |
+| `In its season` | **new.** Strength rank, lifespan rank, and the only-major sentence |
+
+Katrina reads *"It had been a Category 5 before its hardest landfall and came
+ashore a Category 3, 46 mph weaker."*, `Fastest 19 mph on Aug 30`,
+`Slowest 6 mph on Aug 25`, and `3rd strongest of 31` /
+`Tied 14th longest-lived of 31`. Every one of those was printed by the shipped
+code against the real 2005 file before it was written here.
+
+#### How much it weakened before the coast
+
+`coastalWeakening` on `stormFacts`. Peak wind **at or before the hardest
+landfall**, against the wind at that landfall, plus the Saffir-Simpson gap.
+
+**==> THE ANCHOR IS THE PEAK BEFORE THAT LANDFALL, NEVER THE STORM'S OVERALL
+PEAK, AND 17% OF THE ARCHIVE IS WHY. <==** Measured over both mirrored basins:
+of **1,341 storms with a gradeable landfall, 226 reached their overall peak
+AFTER it.** For those the overall peak describes a storm that went back out to
+sea and got stronger, so subtracting it reports a weakening that never happened.
+**Ophelia 2005 is the case in the suite:** she brushed land as a 25 kt
+depression and only later reached 75 kt at sea. Anchored on her overall peak the
+panel would announce a 50 kt collapse at a coast she touched as a depression —
+fluent, wrong, and nothing about it inviting a second look.
+
+**==> THE LANDFALL'S OWN WIND IS INSIDE THE WINDOW, AND LEAVING IT OUT PRODUCED
+84 NEGATIVE WEAKENINGS. <==** `lib/landfall.js` interpolates the wind at the
+coastline crossing between the two fixes either side and rounds it (§57.7a), so
+a storm still strengthening as it hits can be marginally stronger at the coast
+than at any fix at or before it. With the landfall in, the drop cannot be
+negative by construction.
+
+**==> AND THAT RULE WAS UNTESTABLE FROM ANY FIXTURE IN THE REPO. <==** Every
+sample under `samples/seasons/` uses NOAA's own `L` markers, which sit ON a row
+— so the landfall wind is always some fix's wind and the window contains it
+whether or not anybody put it there. **A mutation removing the rule left the
+whole suite green.** The case is driven directly instead, with a computed
+landfall between a 60 kt fix and an 80 kt one. This is §12's failure caught by
+mutation rather than by reading, and it is the second time in two passes that
+`ui/season-detail-markup.js` has produced one.
+
+**The landfall picked is the hardest one**, which is the same choice
+`lib/season-story.js` makes. Two surfaces on one panel naming different
+landfalls as the important one would read as a contradiction.
+
+**A drop of zero is a real measurement and gets its own sentence.** 703 of those
+1,341 storms came ashore at their strongest — the plurality, and the most
+alarming thing the section can say. §57.25 bans a value cell reading `0`; it
+does not ban the fact. A third wording exists for the case where wind was lost
+but no category was (150 kt to 140 kt is still a Category 5 at the coast), since
+naming the same category twice in one sentence reads as a misprint.
+
+#### Fastest and slowest forward speed
+
+`forwardSpeed` on `stormFacts`. Great-circle distance between consecutive fixes
+over the time between them, in knots, through `formatSpeed`.
+
+**==> SYNOPTIC ROWS ONLY, AND THE WALK BRIDGES THE OTHERS RATHER THAN TRIPPING
+OVER THEM. <==** NOAA inserts extra records at landfalls and peaks, off the
+six-hour clock — Ida's Louisiana landfall is stamped 1655Z. Measured:
+**2,250 of 71,941 raw legs are shorter than six hours**, some as short as
+thirty minutes, and every position in the file is rounded to 0.1° (about 6 nm).
+Half an hour of travel divided by that rounding produced legs reading **49 kt on
+storms that were crawling**. Walking the synoptic cyclone rows gives one clean
+12:00 → 18:00 leg instead of a 4h55m and a 1h05m one.
+
+**==> A GAP IS NOT A SLOW LEG. `SEASONS.trackSpeedMaxLegHours` IS 6. <==**
+Bridging can join the two sides of a hole: **70,772 of the 70,841 bridged legs
+are exactly six hours, and 63 of the other 69 run longer than a day**, because
+the storm spent the middle of them as a wave or a low and nobody wrote synoptic
+rows. AL062023 has a 228-hour one at 3.1 kt. Dividing that distance by that time
+measures the record's silence, and it would become the "slowest" figure on
+exactly the storms it is least true of. Longer legs are dropped, not divided.
+
+**==> AND `SEASONS.trackSpeedFloorKt` IS 1 BECAUSE THE FILE'S OWN PRECISION SAYS
+SO. <==** 0.1° over six hours is one knot, so anything under that is
+indistinguishable from stationary. **185 of 3,234 storms have a slowest leg
+under 1 kt and 100 come out at exactly zero** — those hundred would print
+`Slowest 0 mph`, which is the dash §57.25 forbids wearing a number. Below the
+floor the panel says *barely moving* and adds a sentence naming the precision.
+Above it, that sentence does not appear, so it is not boilerplate.
+
+**Non-cyclone fixes are excluded**, the same rule `stallWindow` and ACE already
+apply: a remnant low sprinting northeast in the westerlies is the atmosphere
+moving, not the storm.
+
+**==> THE DATE LINE IS SAFE FOR FREE HERE, AND THAT IS MEASURED RATHER THAN
+DESIGNED. <==** Haversine takes `sin(Δλ/2)`, which is periodic, so 359.1° of raw
+longitude difference and 0.9° of real travel give the identical answer — checked
+against Della (CP011957) at record 34, where passing the published `lon` instead
+of `lonU` changes nothing to every decimal place. **The protection belongs to the
+formula, not to the data**, so a later session swapping in flat-plane arithmetic
+for speed would lose it silently. `lonU` is passed anyway and the suite asserts
+Della's fastest leg stays sane, so that swap goes red.
+
+**The note under the rows says what is being averaged.** These are means over a
+six-hour leg, not top speeds, and a reader comparing against an advisory's
+instantaneous *"moving NW at 12 mph"* is entitled to know which they have. Every
+figure in it interpolates the constant that produced it.
+
+#### Rank within its season
+
+`rankInSeason(facts, allFacts)` — an exported function taking the season, not a
+field on `stormFacts`.
+
+**==> A RANK IS NOT A PROPERTY OF A STORM. <==** Katrina's peak wind is hers
+forever; her being third strongest is a fact about 2005. `stormFacts` describes
+a storm from its own rows and is stable forever, and folding a comparison in
+would make a memoised fact depend on what else happened to be loaded. The view
+computes it per render off `entries()`, for the same reason `entries` is a
+function: a rank captured on first paint would go on describing last year's
+roster under this year's heading.
+
+**==> RANKS SHARE A PLACE, AND TIES ARE NOT AN EDGE CASE. <==** HURDAT2 writes
+wind in five-knot steps, so seasons draw at the top constantly: **54 of 294
+seasons have a tied strongest storm** and 12 have a tie for longest-lived.
+Standard competition ranking — two storms tied at 4th are both 4th and the next
+is 6th — with a `tied` count so the panel says *Tied strongest* rather than
+putting the same outright claim on two different storms' panels. **An outright
+winner reads `Strongest of 31`, not `1st strongest`**, because nobody says a
+storm came first out of thirty-one.
+
+**==> THE DENOMINATOR IS THE STORMS CARRYING THE FIGURE, AND 2005 CANNOT SHOW
+IT. <==** Every storm in the mirrored archive has a peak wind, so a mutation
+replacing the graded filter with the whole list left the suite green. The case
+is real all the same — the season still running arrives from ATCF b-decks
+(§57.11), where a fix can carry no wind at all — and counting an unmeasured
+storm into "of 31" quietly makes every other rank a claim about a different set.
+Driven directly.
+
+**A one-storm season gets no ranking at all.** `1st strongest of 1` tells the
+reader nothing while looking like it told them something, and **24 seasons in
+the archive are that shape**.
+
+**`onlyMajor` names one storm, not a season.** It checks the id, so a season with
+one major does not put *"It was the only major hurricane of its season"* on the
+other twenty storms in it. **67 seasons had exactly one major**; 2005 had seven.
+
+#### What the gates are, and the one that was missing
+
+`tools/test-season-facts.mjs` and `tools/test-season-detail.mjs`. **Sixteen
+mutations were run and all sixteen bite.** Two of them found holes in tests that
+had already been written and had already gone green — the interpolated-landfall
+case above, and this one:
+
+**==> DELETING THE ENTIRE `How it moved` SECTION FROM THE VIEW LEFT EVERY MARKUP
+ASSERTION PASSING. <==** That is the `fastest24h` fault's exact shape (§57.42,
+`ui/season-detail-markup.js`): markup that is correct, tested, and never called,
+which ran unseen for a month across 175 years of storms until Aaron read a panel
+on glass. **Testing a markup function proves the function; only mounting proves
+the panel.** `test-season-detail.mjs` now mounts the drawer and asserts all three
+figures reach the screen, and that assertion is the one that goes red for a
+section nobody wired up.
+
+#### What has NOT been judged
+
+**Nothing here has been seen on glass.** Two new sections is the visible change
+and whether they earn their place on the panel is Aaron's call, along with:
+
+1. **Two new collapsible sections at once.** The panel now has seven. Whether
+   that reads as a research tool or as a wall is the question.
+2. **`How it moved` on a storm that did nothing interesting.** Katrina's 19/6
+   split is a story; a fish storm that ran at a steady 12 kt for a week gives two
+   nearly equal numbers, and the section may not earn its line on those.
+3. **The `barely moving` wording**, on one of the 100 storms that reach it.
+4. **`Tied 14th longest-lived of 31`** — whether a rank that deep is a fact or
+   filler. The strength rank on a famous storm is clearly worth having; the
+   lifespan rank on a middling one may not be.

@@ -405,9 +405,27 @@ build it, delete its entry, write what IS in its place. Tier 3 is recorded as
 NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
 **What already landed:** the gazetteer (§57.40), the places sidecar it feeds
-(§57.40a) and the storm-life paragraph (§57.41). **Read those three, not this.**
-Tier 2 item 1 is done and deleted from §57.42; Tier 1 and the other four Tier 2
-items are untouched.
+(§57.40a), the storm-life paragraph (§57.41) and **Tier 1 items 2, 3 and 9
+(§57.43)**. **Read those four, not this.** Tier 2 item 1 is done and deleted
+from §57.42; seven Tier 1 items and four Tier 2 items are untouched.
+
+**==> THE COUNT THAT BLOCKED THE ARCHIVE-WIDE RANKINGS IS EXPLAINED, AND THE
+ITEM IS UNBLOCKED. <==** The 6,532-against-3,266 walk was reading
+`seasons/data/*.txt`, which holds the per-season slices AND the two whole-basin
+`hurdat2-*.txt` files. Counted 2026-08-29: 3,266 each, 6,532 together. Nothing
+is wrong with the archive — the walk has to pick one set, and for an
+archive-wide pass that is the whole-basin files. §57.42 carries it.
+
+**==> AND SPEED, THE COAST AND THE SEASON RANK HAVE NOT BEEN SEEN ON GLASS.
+THEY ADD TWO NEW SECTIONS TO A PANEL THAT NOW HAS SEVEN. <==** §57.43 is the
+as-built account and holds every measured number; four things are open and they
+are listed there rather than here. The two most likely to come back wrong:
+
+1. **Two new collapsible sections at once.** Does the panel read as a research
+   tool or as a wall.
+2. **`How it moved` on a storm that did nothing.** Katrina's 19 mph against
+   6 mph is a story; a fish storm that ran at a steady 12 kt for a week gives
+   two nearly equal numbers and the section may not earn its line.
 
 **==> THE PARAGRAPH HAS NOT BEEN SEEN ON GLASS. IT IS THE FIRST NEW THING ON
 THAT PANEL SINCE STEP 7. <==** It sits between the honesty line and
@@ -460,19 +478,12 @@ forecasters call rapid intensification"* — two ways of saying one duration,
 reading as two measurements. It is hours now. Nobody had ever seen those two
 lines together.
 
-**AND ONE MEASURED NUMBER WORTH A DECISION.** The places file is **38.5 KB
+**==> AND ONE MEASURED NUMBER WORTH A DECISION.** The places file is **38.5 KB
 gzipped** on the Atlantic, against §57.42's estimate of 12–15 KB — the estimate
 counted the 2,537 landfall marks and not the genesis place on all 3,266 storms.
 It loads alongside the season text on the first year opened. §57.40a names the
 lever if that is too much: defer it until a storm panel opens. **Nothing is
 blocked on this; it is a cost worth knowing rather than a fault.**
-
-**==> AND ONE COUNT IS UNEXPLAINED, WHICH BLOCKS THE RANKINGS. <==** A scratch
-walk over the mirrored archive on 2026-08-29 visited **6,532 storm entries
-against 3,266 unique ids** — an exact 2×, never chased down. The 3,266 agrees
-with `seasons/reports.json`, so the archive is fine and the WALK is not. Every
-ranking in §57.42 Tier 1 item 11 is a claim about a denominator, so **find the
-doubling before building the table.** Nothing else depends on it.
 
 **==> THE BOARD'S CUT IS TAKEN — TWICE — AND `SPEC.md` §12 HAS THE AS-BUILT ROW.
 <==** 2026-08-26, 1,064 -> 823. `ui/seasons-board-selection.js` took the ticks,
