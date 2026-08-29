@@ -1090,9 +1090,27 @@ html[data-seasons="on"] #status {
 
 .season-landfall:last-child { border-bottom: 0; }
 
-.season-landfall-when {
+/* ==> THE PLACE NAME IS THE HEADLINE OF A LANDFALL AND THE TIMESTAMP DEMOTES
+   UNDER IT. <== Aaron on glass, 2026-08-29. "Port Sulphur, Louisiana, United
+   States" is what a reader scans a landfall list for; the UTC stamp and the
+   coordinates are the supporting detail that proves it. The name takes primary
+   colour and the two lines under it stay as they were. Absent when there is no
+   town inside `placeNearKm`, in which case the timestamp line leads exactly as
+   it did before this existed.
+
+   ==> AND THE TIMESTAMP DEMOTES UNCONDITIONALLY, INCLUDING ON THE STORMS THAT
+   GET NO NAME. <== A rule that only applied when a name was present would mean
+   two landfalls in the same list — one named, one 80 km down an empty coast —
+   set at two different sizes, which reads as a fault rather than as a
+   hierarchy. One shape for every row; the name is what varies. */
+.season-landfall-where {
   font-size: var(--type-body);
   color: var(--text-primary);
+}
+
+.season-landfall-when {
+  font-size: var(--type-small);
+  color: var(--text-secondary);
 }
 
 .season-landfall-what {

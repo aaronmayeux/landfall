@@ -147,6 +147,7 @@ export function createSeasonDetailView({ entries, loadReport, units, onOpen }) {
       ${section('Landfalls', landfallsHtml(facts, system, {
     markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
     markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: storm.places ?? null,
   }))}
       ${section('How it changed', changeHtml(facts, system, {
     windowHours: SEASONS.intensificationWindowHours,
