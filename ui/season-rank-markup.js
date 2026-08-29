@@ -139,7 +139,15 @@ export function archiveRankHtml(ranked, { year = null } = {}) {
   };
 
   const rows = [];
-  for (const row of ranked.rows.slice(0, SEASONS.rankingsMaxRows)) {
+  /* ==> EVERY RANKED ROW IS PRINTED. THIS USED TO BE
+   * `.slice(0, SEASONS.rankingsMaxRows)` AND AARON DELETED THE CAP ON
+   * 2026-08-29. <== The truncation made adding a statistic to `RANK_STATS` a
+   * glass call about crowding rather than a free addition, and it cut the last
+   * rows away with nothing on screen saying so — §5's silence, on a section
+   * whose whole job is telling the reader where a figure stands. If this
+   * section ever reads as too long the lever is which statistics are worth
+   * ranking, decided in `RANK_STATS` where a reader of the code can see it. */
+  for (const row of ranked.rows) {
     const parts = [];
     for (const { scope, place } of row.places) {
       if (scope.key === 'all') {
