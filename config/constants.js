@@ -6691,6 +6691,56 @@ export const SEASONS = Object.freeze({
    *  It changes only the COUNT, never whether a storm came ashore at all. */
   landfallSeparationKm: 50,
 
+  /** ==> HOW FAR A TOWN CAN BE AND STILL NAME THE SPOT. <== §57.40. Beyond
+   *  this the answer is no name at all and the panel falls back to
+   *  coordinates, because "came ashore near Nouakchott" for a point 400 km
+   *  down an empty coast reads as a fact and is not one.
+   *
+   *  60 km, from the measured distribution rather than from taste: across
+   *  fifteen hand-checked landfalls on 2026-08-29 the worst genuine answer was
+   *  Hard Bargain at 42 km for Dorian's second Bahamas crossing, and every
+   *  answer inside 25 km was independently correct against the storm's own
+   *  history. 60 leaves headroom over the worst real case without reaching
+   *  into open country. */
+  placeNearKm: 60,
+
+  /** ==> AND HOW FAR FOR A SPOT THAT IS NOT A LANDFALL. <== Genesis and a
+   *  stall happen wherever they happen, usually at sea, and "about 380 km from
+   *  Rocky Point" is a useful orientation in a way that the same phrase about
+   *  a landfall would not be — a landfall claims to be AT a place, these only
+   *  claim a bearing. The distance is always printed with the name, so the
+   *  reader is never told a storm was somewhere it was not. */
+  placeFarKm: 400,
+
+  /** ==> A STALL IS THE LONGEST WINDOW WHOSE FIXES ALL SIT INSIDE THIS RADIUS
+   *  OF THEIR OWN CENTRE. <== §57.41.
+   *
+   *  ==> MEASURING DRIFT FROM THE FIRST FIX INSTEAD IS THE OBVIOUS VERSION AND
+   *  IT MISSES HARVEY. <== Harvey went inland near Rockport, back out over the
+   *  Gulf, and ashore again near Cameron. Every one of those legs breaks a
+   *  window anchored on its own first point, so the storm whose entire
+   *  reputation is that it stopped moving reported no stall at all. Measured
+   *  from the window's centre it reports three days near Bloomington, Texas.
+   *
+   *  150 km is a little over a day's travel for a storm at the archive's
+   *  median forward speed, so a system inside it is not going anywhere. */
+  stallRadiusKm: 150,
+
+  /** How long inside `stallRadiusKm` before it is worth saying. Two days,
+   *  because a slow-moving storm is ordinary and a parked one is the story —
+   *  and the difference between them is the flooding. */
+  stallMinHours: 48,
+
+  /** ==> THE ARCHIVE'S MIDDLE, FOR THE ONE COMPARISON THE STORY MAKES. <==
+   *  §57.41. Hours from a storm's first fix to hurricane strength, median over
+   *  every storm first seen BELOW tropical-storm strength — the filter is the
+   *  whole point, see §57.41. Measured over the mirrored archive 2026-08-29.
+   *
+   *  It is a constant rather than a computed figure because the story sentence
+   *  runs on a phone that holds one season, not the archive. Regenerate it
+   *  with `node tools/seasons-story-stats.mjs` when the mirror gains a year. */
+  medianHoursToHurricane: 60,
+
   /** ==> WHERE THE PREBUILT MASK LIVES, AND WHY THE PIN IS IN THE NAME. <==
    *  §57.7b. The archive gets its landfalls from the runner; the season in
    *  progress has no runner pass, so the phone answers for it and needs this
