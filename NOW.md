@@ -1394,6 +1394,17 @@ a calm ocean — and `tools/test-genesis.mjs` drives exactly that, verified by
 reintroducing the bug. **When a real busy ABIO lands in `history/`, replace
 the fixture with it.** The 72-hour window rolls, so check rather than assume.
 
+**==> THE WIND BANDS DO NOT NEST ON A STORM THAT LOOPS. DEFERRED UNTIL THE
+SEASONS BUILD IS FINISHED, AARON'S CALL 2026-08-29. <==** 26.2% of Jeanne
+2004's 64 kt outline is drawn outside her 34 kt band; Katrina and Harvey are
+0%. **`SPEC-MAP.md` §7.12 is the whole account** — the measured table, the
+three causes already ruled out, the reproduction case
+(`samples/seasons/storms/al112004.txt`, already in the repo) and the two routes
+out. A second defect is recorded there with it: the final polish creates a
+self-crossing after the only check that could catch it. **Not started. Do not
+start it inside a seasons pass** — `lib/windswath.js` is shared with the live
+globe.
+
 ## HELD FOR WEATHER
 
 **Everything here is BUILT AND DEPLOYED and cannot be judged until the named

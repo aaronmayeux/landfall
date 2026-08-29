@@ -2110,6 +2110,72 @@ absent: a megabyte, and the fault reproduces without it. **Do not normalize
 these coordinates onto one branch.** The point of the fixture is that they are
 not on one, and normalizing them stops it testing anything.
 
+#### OPEN — a looping track breaks the bands' nesting, and Jeanne 2004 is the case
+
+**==> NOT STARTED. MEASURED 2026-08-29, DEFERRED BY AARON UNTIL THE SEASONS
+BUILD IS FINISHED. <==** Reported off glass on the archive's storm panel.
+
+**THE FAULT: the inner bands are drawn outside the outer ones.** Anywhere that
+saw 64 kt necessarily saw 50 and 34, so the three bands must nest. On a storm
+that loops they do not. Counted by testing every vertex of the inner band
+against the outer band's polygons:
+
+| Storm | 64 kt outside 50 kt | 64 kt outside 34 kt | 50 kt outside 34 kt |
+|---|---|---|---|
+| **Jeanne 2004** | **31.5%** | **26.2%** | 4.8% |
+| Katrina 2005 | 0% | 0% | 0% |
+| Harvey 2017 | 0% | 0% | 0% |
+
+**`samples/seasons/storms/al112004.txt` IS THE REPRODUCTION CASE and it is
+already in the repo** — it was added for §57.48 and needs nothing new. Katrina
+and Harvey are the controls, both already fixtures. Build the swath with
+`buildSeasonSwath` and ray-cast the inner ring's vertices against the outer
+ring; the figures above come back.
+
+**THREE THINGS ARE RULED OUT, so nobody re-walks them.**
+
+1. **It is not the data.** No row in Jeanne's record carries a 64 kt ring
+   without a 34 kt ring. Her bands split into 3, 2 and 2 runs, and those gaps
+   are genuinely published and nest correctly in time.
+2. **It is not mainly the loop cutting.** Disabling `cutLoop` entirely moves
+   the 64-outside-34 figure from 26.2% to 20.0%. It contributes about a fifth.
+3. **A first reading that the run splits were manufactured by the builder was
+   WRONG** and is recorded so it is not repeated: that check tested a quads
+   object for truthiness where `sweepTimeline` tests `anyRadius`, and an
+   all-zero group is truthy. The 3/2/2 split is real.
+
+**THE LIKELY CAUSE IS A HYPOTHESIS AND IS LABELLED AS ONE.** A corridor traced
+as two offset walls can only describe a swept region while the track does not
+overlap itself. On a loop the inner wall swings past the loop's centre and the
+traced boundary stops enclosing the area actually covered. **The wider the band,
+the earlier that breaks** — Jeanne's loop is 68 nm in radius, her 34 kt radii
+run well past that and her 64 kt radii do not — so the widest band loses the
+most area, which is backwards from what nesting needs and predicts the direction
+observed. **It has not been proven to account for the whole 20%.**
+
+**AND A SECOND, SEPARATE DEFECT WAS FOUND IN THE SAME PASS.** One of Jeanne's
+34 kt rings comes out self-crossing. The loop cutting is not at fault — it ran
+0 and 2 cuts against a budget of 8 and never exhausted it, which is why the
+warning above never fired. Probing the ring by stage: clean after cutting (144
+vertices), clean after the uniform resample (282), **crossing in the final
+output (283).** The crossing is created by the FINAL POLISH, and `firstCrossing`
+is only ever asked before that stage — **so the "expect a fin" warning is
+structurally incapable of firing for a crossing the polish makes.** That half is
+worth fixing on its own merits and is smaller than the nesting question.
+
+**THE ROUTE RECOMMENDED, AND THE ONE NOT PRICED.** Breaking every threshold's
+run at the track's own self-crossings — `trackLoop`'s geometry, §57.49 — leaves
+each piece a corridor that never overlaps itself, so the walls are valid again
+and the bands nest piece by piece. Small, and it reuses what is already shipped.
+**The risk to weigh on glass is that it means more overlapping translucent
+polygons, and whether they double-darken is unmeasured.** The alternative is a
+true polygon union of the wind roses, correct by construction, with no library
+in this repo to lean on and no build step to add one; it has not been priced.
+
+**THIS FILE IS SHARED WITH THE LIVE GLOBE.** Whatever lands here lands in
+hurricane season, so it goes in as its own pass with its own revert point and
+is never folded into a seasons change.
+
 ### 7.13 A wind ring is placed at its own centre
 
 `lib/windswath.js` `centreOfRadiiRing`, called from the forecast tier of
