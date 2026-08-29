@@ -5771,17 +5771,25 @@ the panel.** `test-season-detail.mjs` now mounts the drawer and asserts all thre
 figures reach the screen, and that assertion is the one that goes red for a
 section nobody wired up.
 
-#### What has NOT been judged
+#### Judged on glass, 2026-08-29
 
-**Nothing here has been seen on glass.** Two new sections is the visible change
-and whether they earn their place on the panel is Aaron's call, along with:
+**Aaron: "all looks great."** Confirmed on a phone with nothing sent back: the
+weakening sentence on Katrina, both new sections, and the panel at seven
+sections.
 
-1. **Two new collapsible sections at once.** The panel now has seven. Whether
-   that reads as a research tool or as a wall is the question.
-2. **`How it moved` on a storm that did nothing interesting.** Katrina's 19/6
-   split is a story; a fish storm that ran at a steady 12 kt for a week gives two
-   nearly equal numbers, and the section may not earn its line on those.
-3. **The `barely moving` wording**, on one of the 100 storms that reach it.
-4. **`Tied 14th longest-lived of 31`** — whether a rank that deep is a fact or
-   filler. The strength rank on a famous storm is clearly worth having; the
-   lifespan rank on a middling one may not be.
+**==> THE PLACEMENT IS SETTLED BY ACCEPTANCE AND SHOULD NOT BE REOPENED WITHOUT
+NEW EVIDENCE. <==** Two new collapsible sections landing at once was the one
+real risk in this pass and it was named in writing before glass rather than
+discovered after. It reads as a research tool. `How it moved` and
+`In its season` stay where they are, and §57.42 Tier 1 items 1, 7 and 10 land
+in them rather than growing a third and fourth section.
+
+**Three things were never seen, because no storm on screen could show them.**
+They are not open questions, only unwitnessed branches — each has a driven test
+and none is waiting on anybody:
+
+1. **The `barely moving` value**, on one of the 100 storms slow enough to reach
+   the floor.
+2. **The precision sentence** that appears with it.
+3. **The never-seen-twice line**, on one of the 32 storms with a single
+   synoptic fix.

@@ -416,16 +416,11 @@ ITEM IS UNBLOCKED. <==** The 6,532-against-3,266 walk was reading
 is wrong with the archive — the walk has to pick one set, and for an
 archive-wide pass that is the whole-basin files. §57.42 carries it.
 
-**==> AND SPEED, THE COAST AND THE SEASON RANK HAVE NOT BEEN SEEN ON GLASS.
-THEY ADD TWO NEW SECTIONS TO A PANEL THAT NOW HAS SEVEN. <==** §57.43 is the
-as-built account and holds every measured number; four things are open and they
-are listed there rather than here. The two most likely to come back wrong:
-
-1. **Two new collapsible sections at once.** Does the panel read as a research
-   tool or as a wall.
-2. **`How it moved` on a storm that did nothing.** Katrina's 19 mph against
-   6 mph is a story; a fish storm that ran at a steady 12 kt for a week gives
-   two nearly equal numbers and the section may not earn its line.
+**==> AND SPEED, THE COAST AND THE SEASON RANK ARE CONFIRMED ON GLASS,
+2026-08-29. AARON: "ALL LOOKS GREAT." NOTHING HERE IS WAITING ON HIM. <==**
+§57.43 is the as-built account — read that, not this. The two new sections on a
+panel that now has seven were the risk and they were accepted; do not reopen
+the placement without new evidence.
 
 **==> THE PARAGRAPH HAS NOT BEEN SEEN ON GLASS. IT IS THE FIRST NEW THING ON
 THAT PANEL SINCE STEP 7. <==** It sits between the honesty line and
