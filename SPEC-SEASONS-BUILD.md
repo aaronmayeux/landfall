@@ -5793,3 +5793,174 @@ and none is waiting on anybody:
 2. **The precision sentence** that appears with it.
 3. **The never-seen-twice line**, on one of the 32 storms with a single
    synoptic fix.
+
+### 57.44 Where a storm stands in the whole archive — as built
+
+**§57.42 Tier 1 item 11, built 2026-08-29.** Every figure on the archive's
+storm panel now carries its place in the record: *"9th lowest in the Atlantic,
+11th of 2,008 overall."* `tools/seasons-rankings.mjs` builds the table on a
+runner, `lib/rankings.js` is shared by the runner and the phone,
+`ui/season-rank-markup.js` writes the sentences, `ui/view-season-detail.js`
+mounts one new section.
+
+**==> EVERY FIGURE BELOW WAS COUNTED OFF THE MIRRORED ARCHIVE, AND FOUR OF THEM
+CHANGED THE DESIGN. <==** They are recorded with their numbers attached because
+each one is the reason a rule exists.
+
+**THE FILE IS DISTINCT VALUES AND COUNTS, NOT STORMS.** A rank is "how many
+storms are better than mine, plus one", and answering that needs only the
+sorted distinct values and how many storms sit on each. **14,389 bytes raw,
+3,846 gzipped** for all three scopes and six statistics — measured, not
+estimated. It loads in the same `Promise.all` as the season text and `once()`
+holds it for the session, so it is one round trip on the first year a reader
+opens and free on the other 174.
+
+**TWO SCOPES REACH THE PANEL AND THE BASIN LEADS.** Aaron's call. One basin is
+one agency, one set of instruments and one span of coverage, so it is the
+comparison that is honest without qualification; the cross-basin figure is the
+one a reader actually wants and the one carrying the caveats, so it earns its
+place but not the front of the sentence. A storm is never shown another basin's
+rank.
+
+**NOTHING ON SCREEN EVER SAYS "ON RECORD".** The set behind `overall` is two
+NHC basins today and will be most of the planet after step 13. A reader who saw
+*"3rd lowest on record"* this year and *"31st lowest on record"* next year,
+about the same storm, would reasonably conclude the app broke. The count is in
+the row and the membership is in the note, so both widen when the data does.
+
+**THE DENOMINATORS, MEASURED 2026-08-29.** Each statistic is ranked only
+against the storms that have it, which is why they differ:
+
+| | Atlantic | East and Central Pacific | Overall |
+|---|---|---|---|
+| Storms | 2,004 | 1,262 | 3,266 |
+| Peak wind | 2,004 | 1,262 | 3,266 |
+| Lowest pressure | **1,254** | **754** | **2,008** |
+| Lifespan | 2,004 | 1,262 | 3,266 |
+| At major strength | 342 | 260 | 602 |
+| ACE | 1,773 | 1,154 | 2,927 |
+| Fastest 24 hours | 1,848 | 1,074 | 2,922 |
+
+**Only 2,008 of 3,266 storms carry a pressure reading at all.** Ranking against
+3,266 would be a claim about a set that does not exist, and it would be wrong
+by a third.
+
+**A RUNG IS THE NUMBER THE PANEL PRINTS, PRODUCED BY THE OPERATION THE PANEL
+PRINTS IT WITH.** Two storms showing `12.4` must not show different ranks. The
+first version quantized with `Math.round(v / step) * step`, which is the
+obvious way and is **wrong for a decimal step**: `(6.55).toFixed(1)` is `6.5`
+and `Math.round(6.55 / 0.1) * 0.1` is `6.6`. **Five real storms printed one ACE
+and ranked at another** — the exact fault the rule was written to prevent,
+arriving through the rule's own implementation. Each statistic now names its
+renderer's rounding in `QUANTIZERS`, both sides call the same one, and the name
+travels in the file so an older ladder still says how to read it.
+
+**FOUR THINGS ARE NEVER RANKED, AND EACH REFUSAL IS A SENTENCE THE PANEL WOULD
+OTHERWISE GET WRONG.**
+
+1. **A storm from the season still running.** Its figures come off an
+   operational b-deck NOAA has not reviewed and will move. The ladder would
+   place it perfectly happily, because this morning's 968 mb is a value the
+   archive holds, and the reader would get *"141st lowest"* printed in exactly
+   the same voice as a figure from 1935. Refused in `rankStorm` rather than at
+   the call site, because the roster and the wall are both obvious next readers.
+2. **A storm that never reached major strength.** It did not come last at being
+   one; it never was one. Ranking the 2,664 storms that never got there would
+   make *"1,900th of 3,266"* the ordinary answer and say nothing.
+3. **A weakening storm's best 24 hours.** A loss is not a slow gain.
+4. **A value the ladder has never seen.** No rank rather than an interpolated
+   one.
+
+**A WIND RANK IS DECLINED IN ANY SCOPE THAT SAYS ITS WINDS ARE NOT COMPARABLE,
+AND THIS IS THE ONE THING STEP 13 MUST NOT FORGET.** Both basins in the archive
+today are NHC's, so every wind in this file is a one-minute sustained average
+and `windComparable` is true everywhere. **IBTrACS carries twelve agencies'
+separate opinions of the same storm (§57.31), and most of the world reports a
+ten-minute average, which reads lower for the identical storm.** Mixed into one
+ladder, every typhoon quietly sinks below hurricanes it actually beat. The flag
+is written into the file rather than assumed by the reader, so the day a scope
+carries mixed averaging periods it says so and the row simply does not appear
+there. **Pressure is unaffected: a millibar is a millibar everywhere.**
+
+**IT IS ONE SECTION RATHER THAN SIX RANKS GLUED ONTO SIX EXISTING ROWS.** The
+scope sentence would otherwise have to be repeated six times or left off, and
+it is the sentence that stops the whole thing being misread. `Lowest pressure`
+would also become a row running to two lines on a 390px phone.
+
+**NO ROW SAYS "TIED", AND SIX OF SIX DID BEFORE GLASS-ADJACENT INSPECTION.**
+`seasonRankHtml` one section up marks ties and is right to: inside a 28-storm
+season a shared place is unusual. Against 3,266 storms it is the norm — winds
+are recorded in 5 kt steps and lifespans in whole hours, so Katrina's panel came
+back with `Tied` on every row. A qualifier that fires everywhere qualifies
+nothing and reads as hedging. The fact is stated once, in the note.
+
+**THE PRE-SATELLITE SENTENCE IS ABOUT THE DENOMINATOR AND SAYS WHICH WAY IT
+LEANS.** A pre-1966 storm is ranked against the storms somebody wrote down; the
+ones that stayed at sea are missing from the count, so **its place would be
+lower in a complete record, not higher.** Saying only "the record is thin"
+leaves the reader unable to use the number, and calling the figure unreliable
+would be wrong — it is an accurate rank in a smaller set.
+
+**THE FILENAME IS DERIVED ON BOTH SIDES AND CARRIES EVERY CONTRIBUTING BASIN'S
+REVISION.** `rankings-02272026.json` today. §57.40a's rule: two jobs must never
+write one file, so `index.json` is not edited to name it. One basin's revision
+cannot name a file spanning several, and the file is `immutable` for a year, so
+a stamp that failed to move when NOAA revised one basin would leave a stale
+ladder on every returning phone until 2027. Revised separately it becomes
+`rankings-02272026-05142026.json`. `_headers` needs no edit: `/seasons/data/*`
+already covers it and the stamp is the cache bust.
+
+**LOSING THE TABLE COSTS THIS SECTION AND NOTHING ELSE.** It resolves to `null`
+on a failed fetch, on a 200 carrying the wrong shape, and on an index with no
+revision. The section simply does not draw. That is deliberate rather than a §5
+silence: a rank is a comparison the app offers, not a fact about the storm, and
+every figure it would have ranked is already on screen above with its own
+units. Nothing wrong is left behind by its absence.
+
+**THE COUNT THAT BLOCKED THIS ITEM IS NOW ASSERTED RATHER THAN REMEMBERED.**
+`countsAgree` fails the build unless the per-season slices and the two
+cumulative files report the same 3,266 storms. **And `cat`-ing the two
+cumulative files together loses one:** the Atlantic file has no trailing
+newline, so its last data row glues onto the East Pacific's first header and
+EP011949 disappears, giving 3,265. Each file is read and parsed on its own.
+
+**TWENTY-FOUR MUTATIONS WERE RUN AND FIVE SURVIVED THE FIRST PASS.** All five
+are closed and the fixes are worth more than the count:
+
+1. **`meetsFloor` and `countsAgree` were inline comparisons.** Both are guards
+   whose condition is FALSE against the current archive — the thinnest ladder
+   is 754 and the two counts agree — so deleting either changed not one byte of
+   output and no assertion could see it. **A rule that cannot be caught being
+   deleted is a rule that will be deleted.** Both are functions in
+   `lib/rankings.js` now and are driven directly.
+2. **Three wiring mutations survived because nothing drove the road between the
+   library and the renderer.** A table that never arrives, or arrives under the
+   wrong basin, fails silently rather than loudly. `tools/test-rankings.mjs`
+   now drives `loadSeason` with a stubbed fetch and `createSeasonsBoardLoading`
+   with stubbed facades.
+3. **One survivor was the code being wrong, not the test.**
+   `rankingsBasin = rankings ? basin : null` guarded nothing, because
+   `rankStorm` bails on a missing table before it looks at the basin. Deleted
+   rather than tested (§12, retire cleanly).
+
+**THE CENTRAL ASSERTION IS A BRUTE-FORCE CROSS-CHECK AGAINST THE REAL ARCHIVE.**
+A ladder written by hand in the suite would be the builder's arithmetic marking
+its own homework. `tools/test-rankings.mjs` sorts all 3,266 storms the obvious
+slow way and demands the shipped table agree, rank for rank and tie for tie,
+across **14,991 ranks** — a figure the suite computes rather than carries. It
+also checks the archive's published extremes: Patricia's 872 mb and 185 kt
+first overall, Wilma's 882 mb first in the Atlantic and second overall.
+
+**`ui/season-detail-markup.js` WENT OVER §12's CEILING AND THE CUT WAS TAKEN IN
+THE SAME PASS.** It entered at 698 and reached 824. `NOW.md` records
+`ui/view-seasons-board.js` crossing that ceiling on five consecutive passes with
+the cut promised each time and taken later at a bigger size, so this one was
+taken immediately: `ui/season-rank-markup.js` holds `ordinal`, `seasonRankHtml`
+and `archiveRankHtml`, which are the only renderers on the panel that take a
+comparison rather than a fact and the only ones needing `ordinal`. **651 and 202
+lines, no behaviour change**, so a break can only be the move.
+
+**THE PANEL NOW HAS NINE SECTIONS AND THAT IS THE RISK IN THIS PASS.** §57.43
+put two on a panel that had seven and Aaron accepted the crowding as the thing
+he was accepting; this adds a ninth. `SEASONS.rankingsMaxRows` exists so a
+seventh statistic has to be a glass call rather than a free addition.

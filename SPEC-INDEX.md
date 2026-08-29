@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 329 numbered headings.
+Covering 11 files, 330 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -92,17 +92,17 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 4203-4226 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 4227-4248 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1273-1292 |
-| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1688-1718 |
-| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1719-1753 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1754-1755 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2320-2326 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2327-2333 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1689-1719 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1720-1754 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1755-1756 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2321-2327 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2328-2334 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1088-1089 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2334 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2335 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1724-1904 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1905-2252 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2340 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2341 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
@@ -257,7 +257,7 @@ real home is the other row carrying the same section number.
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2032-2064 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2065-2101 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
-| `55` | Known and accepted | `SPEC.md` | 2348-2487 |
+| `55` | Known and accepted | `SPEC.md` | 2349-2488 |
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
@@ -346,6 +346,7 @@ real home is the other row carrying the same section number.
 | `57.41` | &nbsp;&nbsp;The storm's life, in a paragraph — as built | `SPEC-SEASONS-BUILD.md` | 5316-5489 |
 | `57.42` | &nbsp;&nbsp;The archive backlog — Tier 1 and Tier 2, each buildable alone | `SPEC-SEASONS-BUILD.md` | 5490-5603 |
 | `57.43` | &nbsp;&nbsp;Speed, the coast, and the season — three Tier 1 facts, as built | `SPEC-SEASONS-BUILD.md` | 5604-5615 |
+| `57.44` | &nbsp;&nbsp;Where a storm stands in the whole archive — as built | `SPEC-SEASONS-BUILD.md` | 5797-5967 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -361,8 +362,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 280,502 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 333,998 | 68 |
+| `SPEC-SEASONS-BUILD.md` | 344,330 | 69 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 188,212 | 15 |
+| `SPEC.md` | 189,811 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
