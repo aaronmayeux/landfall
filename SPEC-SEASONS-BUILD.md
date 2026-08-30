@@ -8971,3 +8971,51 @@ once the floor moved to 27. It reads the floor off the rendered path instead.
 
 **106 assertions. Four mutation runs across §57.56 and this section, all
 biting.**
+
+### 57.65 A one-pixel seam between the bar's columns
+
+**Aaron, 2026-08-30, having accepted §57.64 on glass: *"Lets put a single pixel
+space between bars."*** He had rejected the mockup's gapped columns earlier the
+same day, and **the two requests are not in conflict** — that is the whole
+point of this section. The mockup drew separated BARS at a fixed width, which
+reads as a row of tallies. **A hairline seam keeps the silhouette continuous
+enough to follow across the bar and only lets the eye count the steps.**
+
+**==> IT IS APPROXIMATELY ONE PIXEL, NOT EXACTLY ONE, AND THAT IS INHERENT
+RATHER THAN A COMPROMISE. <==** `preserveAspectRatio="none"` stretches the
+100-unit viewBox to whatever the panel is wide, so one viewBox unit is
+`100 / panelWidth` pixels and **there is no width-independent answer.**
+`COLUMN_GAP` is **0.28**, which is one device pixel at 358px — the panel's
+width inside a 390px phone, and the size this was judged at. Measured
+2026-08-30:
+
+| Ladder | Bins | Pitch | Seam at 358px | Seam at 719px | Share of a column |
+|---|---|---|---|---|---|
+| `fastest24hGainKt` | 18 | 5.56 | **0.99px** | 1.98px | 5.0% |
+| `peakWindKt` | 29 | 3.45 | **1.00px** | 2.00px | 8.1% |
+| `trackDistanceMi` | 40 | 2.50 | **1.00px** | 2.01px | 11.2% |
+
+**==> A NON-SCALING STROKE WOULD HOLD IT AT EXACTLY ONE PIXEL EVERYWHERE AND IS
+WORSE. <==** It would have to be painted in the panel's background colour to
+read as a gap, which turns a hole into an opaque overlay — wrong the moment
+anything is ever drawn behind the bar. **A narrower column is a real gap.**
+
+**THE SEAM IS TAKEN HALF FROM EACH SIDE, SO A COLUMN STAYS CENTRED ON ITS OWN
+BIN.** Shaving it off one edge would walk every column a half-gap off the value
+it represents — and the mark is placed from that same value, so **the mark
+would drift out of its own column at one end of the bar and not the other.**
+
+**THE RISK IS THE NARROW PITCH, NOT THE WIDE ONE.** A fixed gap eats a
+different share of each ladder, and a gap that ever reached the pitch would
+silently delete the bar. The narrowest pitch possible is 2.50 units at
+`spineBins`' cap of 40, so the seam is at most 11% of a column and cannot close
+one. The suite asserts both halves across every ladder in the shipped file.
+
+**MUTATION-CHECKED.** Closing the seam turns the width assertions red; shaving
+it off one edge turns the centring assertions red.
+
+**ONE TEST NOTE WORTH KEEPING.** The centring assertions first ran at a 1e-6
+tolerance and failed at 0.140 against 0.139. **Every coordinate in the path is
+written with `toFixed(2)`, so the real floor is half a hundredth, not float
+dust.** A geometry assertion tighter than its own markup's precision tests the
+rounding rather than the geometry.

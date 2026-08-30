@@ -495,7 +495,9 @@ failing and only sepia is ever drawn, so nobody had looked. **§57.64** — the
 styling, restyled to the mockup: a baseline with end ticks, the mark running
 the full height, and the storm's own figure printed on the bar under it.
 **Aaron rejected the mockup's gapped columns; the continuous silhouette stays
-and must not be reintroduced.**
+and must not be reintroduced.** **§57.65** then added a one-pixel seam between
+columns at his ask — not the same thing as the mockup's separated bars, and
+§57.65 says why in as many words.
 
 **==> WHAT TO LOOK AT, IN ORDER. <==**
 

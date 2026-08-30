@@ -384,6 +384,56 @@ section('CONTRAST \u2014 the mark against the panel it is drawn on');
 }
 
 /* ---------------------------------------------------------------------------
+ * 6c. THE SEAM — one pixel, and it must never close a column
+ * ------------------------------------------------------------------------ */
+section('THE SEAM \u2014 a hairline between columns, at every bin count');
+{
+  /* ==> AARON REJECTED THE MOCKUP'S WIDE GAPS AND THEN ASKED FOR A SINGLE
+   * PIXEL. <== §57.65. The risk is not the wide case, it is the narrow one: a
+   * fixed gap subtracted from a pitch that varies from 5.56 units (18 bins) to
+   * 2.50 (the `spineBins` cap of 40) eats a different share of each, and a gap
+   * that ever reached the pitch would silently delete the bar. */
+  const geom = (key) => {
+    const ladder = TABLE.scopes.atlantic.stats[key];
+    const html = spineHtml(ladder, 'round', ladder.values[0], { axis: (v) => `${v}` });
+    const d = html.match(/d="([^"]+)"/)[1];
+    const segs = [...d.matchAll(/M([\d.]+) [\d.]+h([\d.]+)/g)].map((m) => [+m[1], +m[2]]);
+    const bins = binLadder(ladder).bins.length;
+    return { pitch: 100 / bins, width: segs[0][1], starts: segs.map((x) => x[0]), bins };
+  };
+
+  for (const key of Object.keys(TABLE.scopes.atlantic.stats)) {
+    const g = geom(key);
+    const gap = g.pitch - g.width;
+    /* One device pixel at 358px, which is the panel's width inside a 390px
+     * phone — the size this was judged at. */
+    ok(`${key}: the seam is one pixel at phone width. Got ${(gap * 3.58).toFixed(2)}px`,
+      Math.abs(gap * 3.58 - 1) < 0.05);
+    ok(`${key}: and it never eats the column it separates \u2014 seam is `
+      + `${((gap / g.pitch) * 100).toFixed(1)}% of a ${g.pitch.toFixed(2)}-unit pitch`,
+    g.width > 0 && gap / g.pitch < 0.25);
+  }
+
+  /* ==> THE SEAM IS TAKEN HALF FROM EACH SIDE, SO A COLUMN STAYS CENTRED ON
+   * ITS OWN BIN. <== Shaving it off one edge only would walk every column a
+   * half-gap off the value it represents, and the mark is placed from that
+   * same value — so the mark would drift out of its own column at one end of
+   * the bar and not the other. Asserted on the coarse ladder, where a half-gap
+   * is the most visible. */
+  const g = geom('peakWindKt');
+  /* ==> THE TOLERANCE IS THE PATH'S OWN ROUNDING, NOT FLOAT DUST. <== Every
+   * coordinate is written with `toFixed(2)`, so a check at 1e-6 fails on the
+   * hundredth rather than on the geometry — it did, first run, at 0.140
+   * against 0.139. Half a hundredth is the real floor here. */
+  const NEAR = 0.011;
+  ok(`the first column is inset by half a seam, not a whole one or none. `
+    + `Got ${g.starts[0].toFixed(3)}`,
+  Math.abs(g.starts[0] - (g.pitch - g.width) / 2) < NEAR);
+  ok('and every column sits centred on its own pitch',
+    g.starts.every((x, i) => Math.abs((x + g.width / 2) - (i + 0.5) * g.pitch) < NEAR));
+}
+
+/* ---------------------------------------------------------------------------
  * 7. THE WHOLE ARCHIVE — no ladder in the shipped file refuses to draw
  * ------------------------------------------------------------------------ */
 section('EVERY LADDER IN THE SHIPPED FILE DRAWS');

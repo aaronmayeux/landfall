@@ -78,6 +78,34 @@ const MARK_INSET = 0.5;
 const FIGURE_EDGE = 0.2;
 
 /**
+ * The hairline between one column and the next, in viewBox units.
+ *
+ * ==> AARON ASKED FOR A SINGLE PIXEL ON 2026-08-30, HAVING REJECTED THE
+ * MOCKUP'S WIDE GAPS THE SAME DAY. <== §57.65. The two are different requests
+ * and the difference is the whole point: the mockup drew separated BARS, which
+ * reads as a row of tallies; this is a continuous silhouette with a seam, so
+ * the eye can still follow the shape across the bar but can count the steps
+ * where it wants to.
+ *
+ * ==> IT IS APPROXIMATELY ONE PIXEL, NOT EXACTLY ONE, AND THAT IS INHERENT.
+ * <== `preserveAspectRatio="none"` stretches this 100-unit box to whatever the
+ * panel is wide, so one viewBox unit is 100/panelWidth pixels and there is no
+ * fixed answer. 0.28 is one device pixel at 358px, which is the panel's width
+ * inside a 390px phone — the size this is judged at. It grows to about two
+ * pixels at the 719px top of the narrow layout and sits near one again at the
+ * wide layout's `clamp(340px, 36vw, 440px)`.
+ *
+ * ==> THE ALTERNATIVE WAS A NON-SCALING STROKE AND IT IS WORSE HERE. <== That
+ * would hold the seam at exactly one pixel everywhere, and it would have to be
+ * painted in the panel's background colour to read as a gap — which turns a
+ * hole into an opaque overlay that is wrong the moment anything is drawn
+ * behind the bar. A narrower column is a real gap.
+ *
+ * The narrowest pitch this can eat into is 2.5 units, at the `spineBins` cap
+ * of 40, so the seam is at most 11% of a column and never closes one.
+ */
+const COLUMN_GAP = 0.28;
+/**
  * Bin a ladder into columns.
  *
  * ==> THE BINS ARE LAID OUT ALONG THE VALUE, NOT ALONG THE RANK. <== A bar
@@ -184,14 +212,22 @@ function pathFor(bins) {
     if (bins[i] <= 0) continue;
     const scaled = Math.sqrt(bins[i] / tallest);
     const h = Math.max(SEASONS.spineMinColumn, scaled) * PLOT;
-    const x = i * step;
-    /* ==> THE COLUMNS TOUCH, AND AARON REJECTED THE ALTERNATIVE ON GLASS. <==
-     * §57.64. The mockup drew them as separated bars at a fixed width; the
-     * continuous silhouette is the shape he kept. Do not reintroduce gaps.
+    /* ==> THE SEAM IS TAKEN HALF FROM EACH SIDE, SO THE COLUMN STAYS CENTRED
+     * ON ITS OWN BIN. <== Shaving it off one edge only would walk every column
+     * a half-gap off the value it represents, and the mark is placed from that
+     * same value — so the mark would drift out of its own column at one end of
+     * the bar and not the other. */
+    const x = i * step + COLUMN_GAP / 2;
+    const w = step - COLUMN_GAP;
+    /* ==> A HAIRLINE SEAM, NOT SEPARATED BARS. <== §57.64, §57.65. Aaron
+     * rejected the mockup's wide fixed-width gaps and then asked for a single
+     * pixel between columns. The silhouette is still continuous enough to
+     * follow across the bar; the seam only lets the eye count the steps.
+     * `COLUMN_GAP` carries the reasoning and the measurement.
      *
      * Drawn from the baseline up, so a short column sits ON the floor rather
      * than floating in the middle of the bar. */
-    parts.push(`M${x.toFixed(2)} ${floor}h${step.toFixed(2)}v${(-h).toFixed(2)}h${(-step).toFixed(2)}z`);
+    parts.push(`M${x.toFixed(2)} ${floor}h${w.toFixed(2)}v${(-h).toFixed(2)}h${(-w).toFixed(2)}z`);
   }
   return parts.length ? parts.join('') : null;
 }
