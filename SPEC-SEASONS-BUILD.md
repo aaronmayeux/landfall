@@ -8533,3 +8533,48 @@ footnote says which is which, and that may not be enough — a bar and a number
 in the same row describing two different populations is exactly the kind of
 quiet mismatch this panel has produced before. **The alternative is barring the
 `all` ladder instead, and it is a glass call rather than a rewrite.**
+
+### 57.55 Step 1 — the two live faults on `main` — as built
+
+**§57.54k step 1. Two faults found while reading the panel for the rebuild,
+neither caused by that work, both fixed before it as their own commits** —
+§12's rule that a bug fix on a shared file never rides inside feature work.
+The two are unrelated to each other and land separately for the same reason.
+
+#### 57.55a The rapid-intensification sentence left the value column
+
+**IT WAS PUSHED AS A ROW WITH NO LABEL.** `changeHtml` did
+`rows.push(['', 'That meets the 30 kt in 24 hours…'])`, and
+`ui/season-markup-bits.js`'s `rowsHtml` drops a row on its VALUE being empty
+and never looks at the key. So the pair survived into
+`<dt></dt><dd>the whole sentence</dd>`, and `.detail-vitals` is
+`grid-template-columns: auto 1fr` — **the sentence rendered inside the value
+column, indented behind whatever width `Fastest strengthening` had already
+claimed.** At 390px that is a full sentence in a half-width gutter.
+
+**MEASURED ACROSS ALL 3,266 STORMS: 945 (28.9%) CARRIED THE EMPTY LABEL.**
+It reached the screen on 2026-08-29, when §57.43's `fastest24h` fix made the
+block render for the first time in the panel's life.
+
+**THE SENTENCE BECAME A `.detail-note`, WHICH IS WHERE IT ALWAYS BELONGED.**
+That style's own stated rule is *a caveat about the figure beside it, quieter
+than the numbers* — an exact description of what this sentence is about the
+row directly above it. It prints first among the section's sentences, ahead of
+the coastal-weakening line, because §57.48 orders this section by when things
+happened and the strengthening came first.
+
+**==> `rowsHtml` WAS DELIBERATELY NOT CHANGED TO DROP LABEL-LESS ROWS. <==**
+The obvious guard is one more filter, and it is the wrong one: a label-less
+pair is a programming mistake rather than a data state, and filtering it here
+would turn a visible layout fault into content that silently disappears. The
+guard is a suite sweep instead. `tools/test-season-detail.mjs` now renders
+every storm-facing renderer across a spread of real storms and fails on an
+empty `<dt>`, the mirror of the empty-`<dd>` rule that was already there.
+
+**==> AND THE OLD SWEEP RAN ON AN 1851 STORM, WHICH IS WHY IT COULD NEVER HAVE
+CAUGHT THIS. <==** That storm has no wind, no pressure, no wind field and no
+rapid intensification, so §57.25's dash sweep was proving the absence sentences
+and nothing else. The spread now also drives Katrina (a Category 5, three
+landfalls, a 50 kt gain that clears the threshold) and Sandy. **Mutation-checked
+2026-08-30: pushing the sentence back into `rows` turns three assertions red.**
+

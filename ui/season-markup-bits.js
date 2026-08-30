@@ -149,6 +149,17 @@ export function windWords(kt, system) {
  * and the same reason as the live panel's `detail-vitals`: a row never hands
  * over raw HTML, so a storm name reaching this one refactor from now cannot
  * be treated as markup.
+ *
+ * ==> A ROW MUST HAVE A LABEL, AND THIS FUNCTION DOES NOT ENFORCE IT ON
+ * PURPOSE. <== §57.55. The filter below drops a row on its VALUE being
+ * empty and never looks at the key, which is how a full sentence pushed as
+ * `['', 'That meets…']` ended up rendered inside the value column on 945
+ * storms. The fix went to the call site, because a label-less pair is a
+ * programming mistake rather than a data state, and dropping it here would
+ * turn a visible layout fault into content that silently vanishes — the one
+ * thing this app never does. The guard is a suite sweep instead:
+ * `tools/test-season-detail.mjs` renders every storm-facing renderer and
+ * fails on an empty `<dt>`.
  */
 export function rowsHtml(rows) {
   const real = (rows || []).filter(([, v]) => v != null && v !== '');

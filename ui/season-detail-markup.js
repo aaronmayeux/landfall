@@ -318,6 +318,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
 /** Fastest intensification, and how it ended. §57.15. */
 export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
   const rows = [];
+  let riNote = null;
   /* ==> `fastest24h`, NOT `fastest`, AND THIS ONE WORD MEANT THE SECTION HAD
    * NEVER RENDERED. <== `lib/season-facts.js` writes `fastest24h`; this file
    * asked for `fastest` and got `undefined` on every storm since step 7, so
@@ -363,11 +364,27 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
     rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${Math.round(f.hours)} hours`]);
     rows.push(['Began', utcStamp(f.fromTime)]);
     /* Rapid intensification has an agreed threshold, and naming it is the
-     * difference between a number and a fact the reader can place. */
-    if (f.gainKt >= SEASONS.rapidIntensificationKt && f.hours <= windowHours) {
-      rows.push(['', `That meets the ${SEASONS.rapidIntensificationKt} kt in `
-        + `${windowHours} hours that forecasters call rapid intensification.`]);
-    }
+     * difference between a number and a fact the reader can place.
+     *
+     * ==> IT IS A SENTENCE AND IT LEFT THE ROW LIST, BECAUSE A ROW WITH NO
+     * LABEL IS NOT A ROW. <== §57.55. It was pushed as `['', 'That meets…']`,
+     * and `rowsHtml` drops a row on its VALUE being empty and never looks at
+     * the key — so the pair survived into `<dt></dt><dd>the whole
+     * sentence</dd>`. `.detail-vitals` is `grid-template-columns: auto 1fr`,
+     * so the sentence rendered inside the value column, indented behind
+     * whatever width `Fastest strengthening` had already claimed. At 390px
+     * that is a full sentence in a half-width gutter, on 945 of the 3,266
+     * storms in the archive. On screen since 2026-08-29, when the
+     * `fastest24h` fix above made this block render for the first time.
+     *
+     * `.detail-note` is the right home rather than a workaround: the style's
+     * own rule is a caveat about the figure beside it, quieter than the
+     * numbers, and that is exactly what this sentence is about the row
+     * directly above it. */
+    riNote = (f.gainKt >= SEASONS.rapidIntensificationKt && f.hours <= windowHours)
+      ? `That meets the ${SEASONS.rapidIntensificationKt} kt in ${windowHours} `
+        + 'hours that forecasters call rapid intensification.'
+      : null;
   }
 
   const ENDINGS = {
@@ -383,8 +400,13 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
    * comeback, then how it finished. It arrives already built rather than being
    * computed here, because this file was 19 lines under §12's ceiling — see
    * `ui/season-shape-markup.js`. An empty string is the ordinary case: 14
-   * storms in 3,266 have a comeback. */
+   * storms in 3,266 have a comeback.
+   *
+   * The rapid-intensification sentence goes first among the sentences because
+   * it belongs to the strengthening figures immediately above it, and the
+   * order here is the order things happened. */
   return rowsHtml(rows)
+    + absenceHtml(riNote)
     + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
     + comebackHtml
     + (ending ? absenceHtml(ending) : '');

@@ -241,6 +241,38 @@ function mount({
   ok('it says why there is no wind field, naming the year rather than shrugging',
     M.windFieldHtml(facts, { firstSeason: SEASONS.windFieldFirstSeason })
       .includes(String(SEASONS.windFieldFirstSeason)));
+
+  /* ==> AND THE SAME TWO RULES SWEPT ACROSS REAL STORMS FROM BOTH ENDS OF THE
+   * RECORD, BECAUSE 1851 ALONE REACHES ALMOST NO BRANCHES. <== §57.55. An
+   * 1851 storm has no wind, no pressure, no wind field and no rapid
+   * intensification, so the sweep above was proving the absence sentences and
+   * nothing else — the empty `<dt>` fault lived for a day and a half inside a
+   * branch it could not reach. These storms are picked to light up the
+   * opposite: a Cat 5 with three landfalls and a 50 kt gain, a post-tropical
+   * landfall, and a storm from the twelve-year landfall hole. */
+  const spread = [oldOne, katrina, atl2012.find((s) => s.id === 'AL182012')]
+    .filter(Boolean)
+    .map((s) => {
+      const ff = stormFacts(s);
+      return [
+        M.peakHtml(ff, system),
+        M.lifeHtml(ff),
+        M.landfallsHtml(ff, system, {
+          markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+          markerHoleTo: SEASONS.landfallMarkerHoleTo,
+        }),
+        M.changeHtml(ff, system, { windowHours: SEASONS.intensificationWindowHours }),
+        M.windFieldHtml(ff, { firstSeason: SEASONS.windFieldFirstSeason }),
+      ].join('');
+    })
+    .join('');
+  ok('==> NO PANEL IN THE SPREAD HAS AN EMPTY LABEL CELL. <== `.detail-vitals` '
+    + 'is `grid-template-columns: auto 1fr`, so a row with no label puts its '
+    + 'whole value in the right-hand column, indented behind whatever width the '
+    + 'row above it claimed. On a phone that reads as broken layout',
+  !/<dt>\s*<\/dt>/.test(spread));
+  ok('and none of them shows a dash where a figure belongs',
+    !spread.includes('>\u2014<') && !spread.includes('\u2014</dd>'));
 }
 
 /* ---------------------------------------------------------------------------
@@ -302,6 +334,26 @@ function mount({
     + 'forecasters call rapid intensification" reads as two measurements',
   real.includes(`${Math.round(katrinaFacts.fastest24h.hours)} hours`)
     && !/kt in 1 day/.test(real));
+
+  /* ==> THE RAPID-INTENSIFICATION SENTENCE IS A SENTENCE, NOT A ROW WITH NO
+   * LABEL. <== §57.55. It was pushed as `['', 'That meets…']`, `rowsHtml`
+   * filters on the value and never the key, and `.detail-vitals` is
+   * `grid-template-columns: auto 1fr` — so a full sentence rendered inside the
+   * value column, indented behind the width `Fastest strengthening` had
+   * claimed. At 390px that is a sentence in a half-width gutter, on 945 of the
+   * 3,266 storms. Nothing crashed and nothing was missing; it simply read as
+   * broken, which is the whole shape of what this suite exists to catch.
+   *
+   * Mutation-checked: pushing the sentence back into `rows` turns both of
+   * these red. */
+  ok('the sentence is a note paragraph, sitting under the figures it explains',
+    /<p class="detail-note">That meets the/.test(real));
+  ok('==> AND THE PANEL CARRIES NO EMPTY LABEL CELL. <== The mirror of the '
+    + '"no empty value cell" rule above, and the half that was missing',
+  !/<dt>\s*<\/dt>/.test(real));
+  ok('and it is printed before what the storm gave up at the coast, because it '
+    + 'belongs to the strengthening figures above it',
+  real.indexOf('rapid intensification') < real.indexOf('came ashore a Category 3'));
 
   const decaying = M.changeHtml(
     { fastest24h: { gainKt: -15, fromTime: Date.UTC(2005, 7, 1), toTime: Date.UTC(2005, 7, 2), hours: 24 },
