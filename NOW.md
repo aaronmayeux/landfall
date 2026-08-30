@@ -486,18 +486,22 @@ storms, prototyped against the real files, and judged by Aaron on 2026-08-30
 **IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
 in order.
 
-**==> STEPS 1, 2 AND 3 ARE BUILT. STEPS 1 AND 2 ARE ON GLASS AND ACCEPTED;
-STEP 3 IS NOT, AND IT IS THE GO / NO-GO. <==** As-built at **§57.55** (the two
-live faults), **§57.56** (the distribution bar), **§57.63** (the bar's mark
-failed contrast), **§57.64** (restyled to the mockup), **§57.65** (the
-one-pixel seam) and **§57.57** (the merged row).
+**==> STEPS 1, 2 AND 3 ARE DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
+IS WAITING ON AARON. <==** As-built at **§57.55** (the two live faults),
+**§57.56** (the distribution bar), **§57.63** (the bar's mark failed contrast),
+**§57.64** (restyled to the mockup), **§57.65** (the one-pixel seam) and
+**§57.57** (the merged row).
 
-**==> STEP 3 IS WAITING ON AARON AND NOTHING ELSE IS. <==** `Where it ranks` is
-deleted; every ranked figure now carries its rank and its bar in the row that
-already printed it. **§57.57 holds the five things to judge and the first one
-decides whether steps 5 to 7 happen at all** — if label, figure, rank and bar
-read as four things rather than one, the plan changes. Read that section, not
-this.
+**==> THE GO / NO-GO IS ANSWERED AND THE ANSWER IS GO. <==** Aaron on a phone,
+2026-08-30: *"It works."* §57.54k made steps 5 to 7 conditional on the merged
+row reading as ONE fact rather than four, and it does. **Steps 4 to 7 are
+cleared to build and the plan does not change.**
+
+**THREE THINGS ARE SETTLED BY THAT ACCEPTANCE AND SHOULD NOT BE REOPENED
+WITHOUT NEW EVIDENCE.** The label / figure / rank / bar row itself. `Strongest`
+opening by default in the slot `Where it ranks` gave up. And the footnote
+sitting outside every section at the foot of the panel, where it cannot be
+folded away.
 
 **ONE MEASUREMENT FROM STEP 3 IS WORTH CARRYING FORWARD RATHER THAN
 RE-DERIVING, BECAUSE IT LOOKS LIKE A REGRESSION AND IS NOT.** The panel got
@@ -525,12 +529,13 @@ which reverses what §57.56e decided one step earlier. The reversal is
 deliberate and §57.57b says why — that rule was about the call sites, and step
 3 changed them. **Do not "restore" the drop.**
 
-**ONE THING FLAGGED IN ADVANCE THAT HAS NOT COME BACK YET:** the bar shows the
-BASIN ladder while the rank text beside it cites the basin AND the overall
-count. §57.56h. It survived glass inside `Where it ranks`; **it is now sitting
-directly under the figure, which is a harder test of the same thing.** If it
-ever reads as a mismatch the lever is barring the `all` ladder instead — a
-swap, not a rewrite.
+**ONE THING FLAGGED IN ADVANCE TWICE AND IT HAS NOW SURVIVED THE HARDER TEST:**
+the bar shows the BASIN ladder while the rank text beside it cites the basin
+AND the overall count. §57.56h. It survived glass inside `Where it ranks` and
+has now survived sitting directly under the figure it describes, which is where
+a mismatch would read loudest. **Settled by acceptance.** If it ever does read
+as a mismatch the lever is barring the `all` ladder instead — a swap, not a
+rewrite.
 
 **`ui/season-detail-markup.js` IS AT 563 LINES AND HAS ROOM AGAIN.** §57.57a
 took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
@@ -538,9 +543,28 @@ took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
 all write into this file; whichever one crosses 700 takes the next cut in the
 pass that causes it**, not the pass after.
 
-**STEP 4 IS NEXT — ACE in plain English — AND IT IS GATED ON STEP 3'S GLASS
-CALL.** Nothing after step 3 is worth building against a row shape Aaron has
-not accepted.
+**==> STEP 4 IS NEXT — ACE IN PLAIN ENGLISH — AND §57.54k CALLS IT TIER 1,
+WHICH IS WRONG. <==** Measured against the shipped code rather than taken from
+the table: §57.54e's wording is one row (*"Power and stamina score — 20.0 from
+24 readings"*) where `lifeHtml` currently pushes **two**, `ACE` and `From`. A
+row that stops existing is a behaviour change, so **step 4 is Tier 2 and needs
+a mutation-verified test**, not a copy edit. It also lands in a row that now
+carries a rank and a bar under it, so the row is the tallest thing in
+`Its life` before the gloss is added.
+
+**==> AND IT SHOULD RIDE WITH STEP 6, NOT WITH STEP 5. <==** The pairing rule
+is that two changes may share a push only when a fault on glass points
+unambiguously at one of them. Step 4's whole glass question is whether ~290
+characters on 2,927 storms earns its room — a LENGTH question. Step 5 is the
+chart, the single biggest addition in the build, and §57.54k already says it
+lands alone. Together, "the panel is too long" names neither. **Step 6 is
+`Landfalls`, a different section from `Its life`, so a fault in either is
+attributable on sight.** Step 7 is worse than step 5 for this: it is the step
+that decides the panel's length and section set, so a gloss added inside it
+could never be judged separately from the merge.
+
+**Step 4 alone, immediately, is the other honest option** and costs one review
+cycle. It is Aaron's call which.
 
 **NOTHING ELSE IS BUILT.** The prototype was a throwaway under `tools/`,
 deliberately never committed and deleted at the end of the session; §57.54

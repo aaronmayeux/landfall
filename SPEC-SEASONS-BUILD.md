@@ -8836,6 +8836,13 @@ commit, which is what §57.54k required.
 
 ### 57.57 Step 3 — the merged row — as built
 
+**==> CONFIRMED ON GLASS AND ACCEPTED, 2026-08-30. AARON: *"IT WORKS."* <==**
+§57.54k made this the go / no-go: if label, figure, rank and bar read as four
+things rather than one, steps 5 to 7 were not to start and the plan changed.
+They read as one. **The row shape, `Strongest` opening by default, and the
+footnote sitting outside every section are all settled by that acceptance and
+should not be reopened without new evidence.**
+
 **§57.54k step 3.** Every ranked figure now lives in exactly one place on the
 panel: the row that already printed it. `Where it ranks` is deleted as a
 section, its rank sentences and its distribution bars drop under the figures
