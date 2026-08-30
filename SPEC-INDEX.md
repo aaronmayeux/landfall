@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 358 numbered headings.
+Covering 11 files, 359 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -374,7 +374,8 @@ real home is the other row carrying the same section number.
 | `57.54j` | &nbsp;&nbsp;&nbsp;&nbsp;The globe tether — scoped, not planned in detail | `SPEC-SEASONS-BUILD.md` | 8447-8472 |
 | `57.54k` | &nbsp;&nbsp;&nbsp;&nbsp;The build order — reserved section numbers | `SPEC-SEASONS-BUILD.md` | 8473-8536 |
 | `57.55` | &nbsp;&nbsp;Step 1 — the two live faults on `main` — as built | `SPEC-SEASONS-BUILD.md` | 8537-8543 |
-| `57.55a` | &nbsp;&nbsp;&nbsp;&nbsp;The rapid-intensification sentence left the value column | `SPEC-SEASONS-BUILD.md` | 8544-8581 |
+| `57.55a` | &nbsp;&nbsp;&nbsp;&nbsp;The rapid-intensification sentence left the value column | `SPEC-SEASONS-BUILD.md` | 8544-8580 |
+| `57.55b` | &nbsp;&nbsp;&nbsp;&nbsp;The em dash left the markup file, and the sweep widened to reach it | `SPEC-SEASONS-BUILD.md` | 8581-8631 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -390,7 +391,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 490,446 | 97 |
+| `SPEC-SEASONS-BUILD.md` | 493,320 | 98 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 190,800 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

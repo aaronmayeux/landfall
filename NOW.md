@@ -467,8 +467,21 @@ storms, prototyped against the real files, and judged by Aaron on 2026-08-30
 (*"I love it. It looks great."*).
 
 **IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
-in order. **Step 1 is the two live faults in §57.54h and lands as two separate
-commits before any feature work.** Step 2 puts the new distribution bar inside
+in order.
+
+**==> STEP 1 IS DONE AND IS AS-BUILT AT §57.55. <== NEEDS AARON'S EYES ON
+GLASS.** The two live faults, as two separate commits. The
+rapid-intensification sentence had been rendering inside the value column on
+**945 of 3,266 storms** (28.9%) since 2026-08-29; it is a `.detail-note` now.
+And the em dash left the markup file — **four decorative ones, not the one
+§57.54h named**, the ending sentence alone on 804 storms (24.6%). Both counts
+read **zero** across the whole archive now. **What to look at: open Katrina and
+check that `That meets the 30 kt in 24 hours…` sits full width under the two
+figures rather than indented behind them, and that the last line reads
+`Became extratropical. It lost its tropical structure…`** Nothing else on the
+panel moved.
+
+**STEP 2 IS NEXT.** It puts the new distribution bar inside
 the OLD section on purpose, so the one new drawing primitive gets judged on
 glass alone before anything is restructured.
 
@@ -477,7 +490,7 @@ bar — reads as four things rather than one, **steps 5 to 7 do not start** and
 the plan changes. Nothing after step 3 is worth building against a row shape
 Aaron has not accepted.
 
-**NOTHING IS BUILT AND NOTHING HERE IS WAITING ON AARON.** The prototype was a throwaway under
+**NOTHING ELSE IS BUILT.** The prototype was a throwaway under
 `tools/`, deliberately never committed and deleted at the end of the session;
 §57.54 carries every figure it produced.
 

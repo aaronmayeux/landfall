@@ -8578,3 +8578,53 @@ and nothing else. The spread now also drives Katrina (a Category 5, three
 landfalls, a 50 kt gain that clears the threshold) and Sandy. **Mutation-checked
 2026-08-30: pushing the sentence back into `rows` turns three assertions red.**
 
+#### 57.55b The em dash left the markup file, and the sweep widened to reach it
+
+**§57.41 BANS THE CHARACTER AS A GUARD RATHER THAN AS TYPOGRAPHY.**
+`lib/units.js` returns a bare `—` as its MISSING sentinel, so an em dash in
+rendered text is the cheapest available signal that a figure failed to resolve
+and was printed anyway. **That guard only works if nothing uses one
+decoratively**, and `tools/test-season-story.mjs` swept only
+`lib/season-story.js`. `ui/season-detail-markup.js` was outside the net.
+
+**IT WAS FOUR SENTENCES, NOT ONE.** §57.54h named the ending sentence; reading
+the file for the sweep found three more. All four were reworded, and none lost
+anything:
+
+| Where | Was | Now |
+|---|---|---|
+| the extratropical ending | `Became extratropical — it lost…` | `Became extratropical. It lost…` |
+| no wind ever recorded | `…19th century — the record holds…` | `…19th century. The record holds…` |
+| the 1971-1982 landfall hole | `…come ashore — the record simply…` | `…come ashore. The record simply…` |
+| NOAA has a report | `…on this storm — the full account…` | `…on this storm: the full account…` |
+
+The ending now matches the shape of its own siblings, `Dissipated. The record
+simply stops.` and `Weakened to a remnant low.` The report line takes a colon,
+which is §57.41's own answer for the landfall roll-call and the same
+construction here.
+
+**COVERAGE: THE ENDING SENTENCE ALONE WAS ON 804 STORMS (24.6%)** — every
+extratropical storm in the archive. Endings measured 2026-08-30: 1,949
+dissipated, 804 extratropical, 502 remnant low, 11 unknown.
+
+**==> THE NEW SWEEP READS SOURCE, NOT OUTPUT, AND THAT IS THE POINT. <==** A
+rendered sweep only sees the branches a fixture happens to reach, which is
+exactly how this survived — the ending sentence rendered on a quarter of the
+archive and no test looked at it. The sweep strips comments from every file in
+the season family and fails on any em dash that is left, with one exception:
+the bare string `'—'`, which is the sentinel being COMPARED against rather
+than printed (`shortLabel !== '—'`). A sentinel that reaches the screen as a
+value is caught by the separate rendered dash sweep in §57.55a, so the two
+nets have different holes on purpose.
+
+**EVERY OTHER FILE IN THE FAMILY WAS ALREADY CLEAN.** Verified 2026-08-30
+across `lib/season-*.js`, `ui/season-*.js` and `ui/view-season-detail.js`:
+`ui/season-detail-markup.js` held all six occurrences, two of them the
+legitimate sentinel comparisons.
+
+**MUTATION-CHECKED 2026-08-30.** Putting the ending sentence's em dash back
+turns the sweep red on the exact string that shipped. The suite's twelve
+season-family files all pass with it in place.
+
+**AND THE FAULT COUNTS READ ZERO AFTER BOTH COMMITS.** Rendered across all
+3,266 storms: **0 empty `<dt>`, 0 em dashes**, against 945 and 804 before.

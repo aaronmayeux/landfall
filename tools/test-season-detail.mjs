@@ -1389,6 +1389,63 @@ function mount({
   STORE.clear();
 }
 
+/* ---------------------------------------------------------------------------
+ * 12. THE EM DASH, SWEPT AT SOURCE — §57.41, §57.55b
+ * ------------------------------------------------------------------------ */
+{
+  /* ==> §57.41 BANS THE CHARACTER AS A GUARD, NOT AS TYPOGRAPHY. <==
+   * `lib/units.js` returns a bare em dash as its MISSING sentinel, so one in
+   * rendered text is the cheapest available signal that a figure failed to
+   * resolve and got printed anyway. **That guard only works if nothing uses
+   * the character decoratively**, and until 2026-08-30 nothing checked: the
+   * sweep in `tools/test-season-story.mjs` reads `lib/season-story.js` and
+   * stops there, so `ui/season-detail-markup.js` carried four decorative em
+   * dashes, one of them on 804 storms.
+   *
+   * ==> THIS READS SOURCE RATHER THAN OUTPUT, AND THAT IS THE POINT. <== A
+   * rendered sweep only sees the branches some fixture happens to reach, which
+   * is exactly how the ending sentence survived — it rendered on a quarter of
+   * the archive and no assertion ever looked at it. Reading the file reaches
+   * every branch, including ones no storm in the record can produce.
+   *
+   * The rendered sweep in section 2 stays: it catches a SENTINEL that reached
+   * the screen, which source cannot see. Two nets, different holes, on
+   * purpose. */
+  const FAMILY = [
+    'ui/season-detail-markup.js', 'ui/season-markup-bits.js',
+    'ui/season-rank-markup.js', 'ui/season-shape-markup.js',
+    'ui/view-season-detail.js', 'lib/season-story.js', 'lib/season-facts.js',
+    'lib/season-company.js', 'lib/season-names.js', 'lib/season-nature.js',
+    'lib/season-years.js', 'lib/season-windswath.js',
+  ];
+  for (const rel of FAMILY) {
+    const src = readFileSync(join(ROOT, rel), 'utf8');
+    /* Comments are where this project explains itself and they are not
+     * rendered. The bare string `'\u2014'` is the sentinel being COMPARED
+     * against rather than printed (`shortLabel !== '\u2014'`), which is the
+     * one legitimate use and the only exemption. */
+    const code = src
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '')
+      .split("'\u2014'").join('SENTINEL');
+    const hit = code.match(/.{0,60}\u2014.{0,60}/);
+    ok(`${rel} prints no em dash. \u00A7 57.41 keeps the character free so a `
+      + 'failed unit conversion reaching the screen is unmistakable, and a '
+      + `decorative one makes that signal useless.${hit ? ` Got: ${hit[0].trim()}` : ''}`,
+    !hit);
+  }
+
+  /* ==> AND THE SWEEP IS PROVED TO BITE. <== §12: a test that never could go
+   * red is decoration. This is the exact string that shipped on 804 storms. */
+  const wouldFail = "const s = 'Became extratropical \u2014 it lost its structure.';"
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split("'\u2014'").join('SENTINEL');
+  ok('the sweep\u2019s own rule catches the sentence that shipped, and does not '
+    + 'catch the sentinel comparison beside it',
+  /\u2014/.test(wouldFail)
+    && !/\u2014/.test("if (cat !== '\u2014') return cat;".split("'\u2014'").join('SENTINEL')));
+}
+
 /* ------------------------------------------------------------------------ */
 
 if (fails.length) {

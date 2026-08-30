@@ -140,7 +140,7 @@ export function peakHtml(facts, system) {
   if (facts?.missing?.wind) {
     return absenceHtml(
       'No wind speed was ever recorded for this storm. That is ordinary for the '
-      + '19th century — the record holds where it went, not how strong it was.'
+      + '19th century. The record holds where it went, not how strong it was.'
     );
   }
   return rowsHtml([
@@ -260,7 +260,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
     if (inHole) {
       return absenceHtml(
         `NOAA did not mark landfalls in the best track between ${markerHoleFrom} `
-        + `and ${markerHoleTo}. This storm may well have come ashore — the record `
+        + `and ${markerHoleTo}. This storm may well have come ashore. The record `
         + 'simply does not flag the moment it did.'
       );
     }
@@ -388,7 +388,7 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
   }
 
   const ENDINGS = {
-    extratropical: 'Became extratropical — it lost its tropical structure and '
+    extratropical: 'Became extratropical. It lost its tropical structure and '
       + 'carried on as an ordinary storm system.',
     dissipated: 'Dissipated. The record simply stops.',
     remnant_low: 'Weakened to a remnant low.',
@@ -683,7 +683,7 @@ export function reportHtml(report, year, firstYear) {
 
   if (report.state === 'has') {
     return `<p class="detail-note">NOAA published a written report on this
-        storm — the full account, with the meteorology and the damage.</p>
+        storm: the full account, with the meteorology and the damage.</p>
         <a class="season-report-link" href="${esc(report.url)}"
            target="_blank" rel="noopener noreferrer">
           Read NOAA's report<span class="season-report-ext" aria-hidden="true"></span>
