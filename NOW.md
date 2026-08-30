@@ -543,33 +543,25 @@ took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
 all write into this file; whichever one crosses 700 takes the next cut in the
 pass that causes it**, not the pass after.
 
-**==> STEP 4 IS BUILT AND SHIPPED. NOBODY HAS SEEN IT. <==** ACE in plain
-English. Aaron chose to land it on its own rather than pairing it with step 6.
-**§57.58 is the as-built account — read that, not this.** `ACE 20.0 × 10⁴ kt²`
-over `From 24 six-hourly observations` is now one row reading **`Power and
-stamina score  20.0 from 24 readings`** with a 286-character gloss under it.
+**==> STEPS 1 TO 4 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
+IS WAITING ON AARON. <==** Step 4 is ACE in plain English, judged on a phone
+2026-08-30 (*"Looks good"*). **§57.58 is the as-built account — read that, not
+this.** `ACE 20.0 × 10⁴ kt²` over `From 24 six-hourly observations` is one row
+reading **`Power and stamina score  20.0 from 24 readings`** with a
+286-character gloss under it.
 
-**WHAT TO JUDGE, AND THE FIRST IS THE WHOLE QUESTION:**
-
-1. **DOES THE GLOSS EARN 286 CHARACTERS ON 2,927 OF 3,266 STORMS?** It is a net
-   addition — deleting the `From` row gives back about 30 — so `Its life` is
-   longer on nine storms in ten. **The lever if it is too much is putting it
-   BEHIND the row rather than under it** (§57.54e), which is a glass call
-   rather than a rewrite. **Do not shorten the sentence first:** the clause
-   that looks most trimmable is the only one that says what the statistic is
-   for.
-2. **The row is the tallest thing in `Its life` before the gloss is added**,
-   because step 3 put a rank and a bar under it. Katrina, then a thin storm.
-3. **`Power and stamina score` as a label.** Longer than every other label in
-   the section, so it is the one that decides the label column's width.
-4. **A storm with no ACE** — `AL102005`, `AL192005` or `AL232005` — gets
-   neither the row nor the gloss. Does `Its life` read as complete without it.
+**FOUR THINGS ARE SETTLED BY THAT ACCEPTANCE:** the gloss under the row rather
+than behind it, the label wording, the reading count riding in the value, and
+the deletion of the unit. **The cost was accepted with open eyes** — it is a
+net addition of about 256 characters on 2,927 of 3,266 storms, and §57.54e's
+lever (moving it behind the row) stays available without being an open
+question.
 
 **§57.54k CALLED STEP 4 TIER 1 AND IT WAS TIER 2**, because §57.54e's wording
 is one row where `lifeHtml` pushed two. §57.58a records it. **The tiers in that
 table are estimates made before the code was read** — the same table also had
-this file at 688 lines when it was 711 — so the next step should price itself
-against the file rather than against the row in the plan.
+`ui/season-detail-markup.js` at 688 lines when it was 711 — so **step 5 should
+price itself against the file rather than against the row in the plan.**
 
 **ONE MEASURED THING WORTH NOT RE-DERIVING:** the storms carrying no ACE are
 MODERN, not old. Every 1851 storm has one; three 2005 storms do not. ACE needs
@@ -577,7 +569,16 @@ a synoptic record at 34 kt, so what disqualifies a storm is never reaching
 tropical-storm force rather than being thinly observed. **A test fixture built
 on the obvious guess went red.** §57.58d.
 
-**NOTHING ELSE IS BUILT.** The prototype was a throwaway under `tools/`,
+**==> STEP 5 IS NEXT — THE LIFE CHART — AND §57.54k SAYS IT LANDS ALONE. <==**
+It is the biggest single addition in the build, so it is built, shipped and
+judged on its own before step 6 moves the landfall list under it. **Two things
+§57.54d requires BEFORE any shipping code is written:** count how many storms
+have landfalls close enough that their discs collide at 358px wide (nobody has),
+and check the day axis on `Storm 3 1899`, the longest track in the archive at
+786 hours. `ui/season-detail-markup.js` is at 606 with 94 lines of headroom, and
+the chart gets its own file regardless — §57.54k names it.
+
+**NOTHING AFTER STEP 5 IS BUILT.** The prototype was a throwaway under `tools/`,
 deliberately never committed and deleted at the end of the session; §57.54
 carries every figure it produced.
 

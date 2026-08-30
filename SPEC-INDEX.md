@@ -389,20 +389,20 @@ real home is the other row carrying the same section number.
 | `57.57a` | &nbsp;&nbsp;&nbsp;&nbsp;The cut came first, and it was the whole first commit | `SPEC-SEASONS-BUILD.md` | 8876-8912 |
 | `57.57b` | &nbsp;&nbsp;&nbsp;&nbsp;The merged row — one figure, one place | `SPEC-SEASONS-BUILD.md` | 8913-9013 |
 | `57.57c` | &nbsp;&nbsp;&nbsp;&nbsp;The scope sentence becomes one footnote, and it has to name itself | `SPEC-SEASONS-BUILD.md` | 9014-9055 |
-| `57.58` | &nbsp;&nbsp;Step 4 — ACE in plain English — as built | `SPEC-SEASONS-BUILD.md` | 9056-9072 |
-| `57.58a` | &nbsp;&nbsp;&nbsp;&nbsp;It was Tier 2, not the Tier 1 §57.54k promised | `SPEC-SEASONS-BUILD.md` | 9073-9085 |
-| `57.58b` | &nbsp;&nbsp;&nbsp;&nbsp;The count moved into the value rather than being deleted | `SPEC-SEASONS-BUILD.md` | 9086-9101 |
-| `57.58c` | &nbsp;&nbsp;&nbsp;&nbsp;Every number in the sentence is computed, and one of them is a constant | `SPEC-SEASONS-BUILD.md` | 9102-9117 |
-| `57.58d` | &nbsp;&nbsp;&nbsp;&nbsp;What a storm with no ACE gets, and where the obvious guess was wrong | `SPEC-SEASONS-BUILD.md` | 9118-9130 |
-| `57.58e` | &nbsp;&nbsp;&nbsp;&nbsp;The cost, measured, and the lever if it is too much | `SPEC-SEASONS-BUILD.md` | 9131-9154 |
-| `57.58f` | &nbsp;&nbsp;&nbsp;&nbsp;One statistic, one name | `SPEC-SEASONS-BUILD.md` | 9155-9162 |
-| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 9163-9217 |
-| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 9218-9227 |
-| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 9228-9247 |
-| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 9248-9273 |
-| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 9274-9285 |
-| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9286-9300 |
-| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9301-9348 |
+| `57.58` | &nbsp;&nbsp;Step 4 — ACE in plain English — as built | `SPEC-SEASONS-BUILD.md` | 9056-9080 |
+| `57.58a` | &nbsp;&nbsp;&nbsp;&nbsp;It was Tier 2, not the Tier 1 §57.54k promised | `SPEC-SEASONS-BUILD.md` | 9081-9093 |
+| `57.58b` | &nbsp;&nbsp;&nbsp;&nbsp;The count moved into the value rather than being deleted | `SPEC-SEASONS-BUILD.md` | 9094-9109 |
+| `57.58c` | &nbsp;&nbsp;&nbsp;&nbsp;Every number in the sentence is computed, and one of them is a constant | `SPEC-SEASONS-BUILD.md` | 9110-9125 |
+| `57.58d` | &nbsp;&nbsp;&nbsp;&nbsp;What a storm with no ACE gets, and where the obvious guess was wrong | `SPEC-SEASONS-BUILD.md` | 9126-9138 |
+| `57.58e` | &nbsp;&nbsp;&nbsp;&nbsp;The cost, measured, and the lever if it is too much | `SPEC-SEASONS-BUILD.md` | 9139-9162 |
+| `57.58f` | &nbsp;&nbsp;&nbsp;&nbsp;One statistic, one name | `SPEC-SEASONS-BUILD.md` | 9163-9170 |
+| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 9171-9225 |
+| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 9226-9235 |
+| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 9236-9255 |
+| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 9256-9281 |
+| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 9282-9293 |
+| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9294-9308 |
+| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9309-9356 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -418,7 +418,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 533,725 | 125 |
+| `SPEC-SEASONS-BUILD.md` | 534,231 | 125 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 191,036 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

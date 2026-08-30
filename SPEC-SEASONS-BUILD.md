@@ -9055,6 +9055,14 @@ deleted section.
 
 ### 57.58 Step 4 — ACE in plain English — as built
 
+**==> CONFIRMED ON GLASS AND ACCEPTED, 2026-08-30. AARON: *"LOOKS GOOD."* <==**
+**Four things are settled by that acceptance and should not be reopened without
+new evidence:** the gloss sitting UNDER the row rather than behind it, the
+label wording, the reading count riding in the value, and the deletion of the
+`× 10⁴ kt²` unit. §57.54e's lever — moving the gloss behind the row if it ever
+reads as too much — is still available and is still a glass call, but it is not
+an open question today.
+
 **§57.54k step 4.** The panel printed `ACE 20.0 × 10⁴ kt²` over `From 24
 six-hourly observations`: two pieces of jargon, a unit nobody can picture, and
 no meaning. Aaron asked for it to be explained. **The label is words, the two
