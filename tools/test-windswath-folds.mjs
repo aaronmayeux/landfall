@@ -475,6 +475,166 @@ section('a break never leaves a stub');
     'and the two pieces SHARE the point they meet at, so no gap opens between them');
 }
 
+/* ===========================================================================
+ * THE PIECES MERGE BACK INTO ONE SHAPE
+ *
+ * ==> THE SPLIT ABOVE FIXED THE DATA AND BROKE THE PICTURE. <== Aaron off
+ * glass, 2026-08-30: the bands overlapped and drew edges inside their own
+ * colour. A band was several polygons, the line layer outlines every one of
+ * them including the cap at a cut, and the fill double-darkened where two met.
+ * Measured: 12.2% of Jeanne's outline and 17.7% of Nadine's was boundary
+ * buried inside a sibling piece, against 0% before the split.
+ * ======================================================================== */
+
+const { unionRings, pointInRing } = await import('../lib/polyunion.js');
+
+/** What share of these features' outline is buried inside a sibling of the
+ *  same threshold — the thing Aaron saw. Zero is the only good answer. */
+function buriedPct(features) {
+  const by = new Map();
+  for (const f of features) {
+    const k = f.properties.radii;
+    if (!by.has(k)) by.set(k, []);
+    by.get(k).push(f);
+  }
+  let total = 0;
+  let buried = 0;
+  for (const [, gs] of by) {
+    for (let a = 0; a < gs.length; a++) {
+      for (const v of gs[a].geometry.coordinates[0]) {
+        total += 1;
+        if (gs.some((g, b) => b !== a && inRing(v, g.geometry.coordinates[0]))) buried += 1;
+      }
+    }
+  }
+  return total ? (100 * buried) / total : 0;
+}
+
+section('no band draws an edge inside its own colour');
+{
+  /* ==> THE SYMPTOM IS ASSERTED TO EXIST FIRST, same as the nesting section.
+   * `warnOnUnionFallback` is off here only to keep the suite's output clean;
+   * the fallback itself is exercised below. */
+  const noMerge = { ...WIND_SWEEP, mergePieces: false };
+  ok(buriedPct(buildSeasonSwath(jeanne, noMerge)) > 5,
+    'WITHOUT the merge, Jeanne buries part of her own outline inside a sibling '
+    + `piece (${buriedPct(buildSeasonSwath(jeanne, noMerge)).toFixed(1)}%) — what Aaron saw`);
+  ok(buriedPct(buildSeasonSwath(jeanne)) === 0,
+    'WITH it, not one vertex of her outline is buried');
+
+  /* And the merge must not have undone the thing it was merging for. */
+  ok(outsidePct(buildSeasonSwath(jeanne), 64, 34) === 0,
+    'and her bands still nest — the merge did not give back the area the '
+    + 'split recovered');
+  ok(buildSeasonSwath(jeanne).length < buildSeasonSwath(jeanne, noMerge).length,
+    'she draws in fewer polygons than she did unmerged');
+}
+
+section('a no-wind break never heals, however much the runs overlap');
+{
+  /* ==> THE TWO KINDS OF BREAK ARE NOT THE SAME FACT, AND A SUITE ALREADY
+   * CAUGHT THIS ONCE. <== A loop break is the builder's own doing and the
+   * ground either side is continuously swept, so it heals. A break between
+   * runs is the AGENCY publishing no ring for that hour. The first version of
+   * the merge healed both, and `test-season-swath.mjs`'s zero-row assertion
+   * went red — §5, sweeping across an hour NOAA published ring-free would
+   * claim wind NOAA did not. */
+  const zeroRows = katrina.points.filter(
+    (p) => p.radii.r34 && Object.values(p.radii.r34).every((v) => v === 0)
+  );
+  ok(zeroRows.length > 0,
+    'Katrina carries genuine zero rows — a measurement of no storm-force wind');
+
+  /* Harvey's 34 kt field stops and restarts — he crossed the Yucatan as a
+   * remnant low and regenerated in the Gulf. The two runs must stay two
+   * shapes, and his 50 kt field, which never stopped, must stay one. */
+  const hf = buildSeasonSwath(harvey);
+  ok(hf.filter((f) => f.properties.radii === 34).length === 2,
+    'Harvey\'s 34 kt footprint stays in two pieces — the gap between them is '
+    + 'NOAA\'s statement about his remnant days, not a seam to heal');
+  ok(hf.filter((f) => f.properties.radii === 50).length === 1,
+    'and his 50 kt field, which never stopped, is one shape');
+
+  /* Nadine loops four times and her 50 kt field stops twice. Both facts have
+   * to survive the merge at once: the loop breaks heal, the run breaks do
+   * not. */
+  const nadine2 = seasonFile('atlantic', '2012').find((s) => s.id === 'AL142012');
+  const nf = buildSeasonSwath(nadine2);
+  ok(nf.filter((f) => f.properties.radii === 34).length === 1,
+    'Nadine\'s 34 kt field never stopped and her four loops heal into ONE shape');
+  ok(nf.filter((f) => f.properties.radii === 50).length === 3,
+    'while her 50 kt field, which stopped twice, stays in three');
+}
+
+section('the union refuses rather than guessing');
+{
+  const square = (x, y, w) => [[x, y], [x + w, y], [x + w, y + w], [x, y + w]];
+
+  const u = unionRings([square(0, 0, 10), square(5, 5, 10)]);
+  ok(u !== null, 'two properly overlapping squares merge');
+  const areaOf = (r) => {
+    let s = 0;
+    for (let i = 0; i < r.length; i++) {
+      const p = r[i];
+      const q = r[(i + 1) % r.length];
+      s += p[0] * q[1] - q[0] * p[1];
+    }
+    return Math.abs(s / 2);
+  };
+  ok(Math.abs(areaOf(u) - 175) < 0.01,
+    `and the merged area is the union's, not either input's (${areaOf(u).toFixed(1)}, want 175)`);
+
+  /* ==> A CONTACT THAT IS ONLY VERTEX-ON-EDGE IS REFUSED, DELIBERATELY. <==
+   * Two axis-aligned squares sharing a face touch at each other's corners and
+   * never PROPERLY cross, and handling that class is how a small union grows
+   * into a fragile general clipper. Refusing it costs nothing here: the real
+   * inputs are smooth swept corridors, and across all 752 storms with a wind
+   * field the walk never once fell back. The refusal is asserted so nobody
+   * reads the null as a bug and 'fixes' it. */
+  ok(unionRings([square(0, 0, 10), square(5, 0, 10)]) === null,
+    'squares that only touch corner-to-edge are refused rather than guessed at');
+
+  ok(areaOf(unionRings([square(0, 0, 10), square(2, 2, 3)])) === 100,
+    'a square wholly inside another contributes nothing and is dropped');
+
+  /* ==> DISJOINT PIECES MUST NOT BE STITCHED. <== The caller groups by overlap
+   * before it gets here, but a union that invented a bridge between two
+   * separate shapes would be drawing wind across ground nothing reached. */
+  ok(unionRings([square(0, 0, 10), square(100, 100, 10)]) === null,
+    '==> TWO SQUARES THAT NEVER MEET ANSWER null, NOT ONE OF THEM. <== The walk '
+    + 'goes once round the first ring and closes on a perfectly good polygon '
+    + 'that has silently DROPPED the second. This assertion caught exactly that, '
+    + 'and it is a band losing ground it covered');
+
+  ok(unionRings([]) === null && unionRings([square(0, 0, 10)]).length === 4,
+    'nothing and one thing are both handled without a walk');
+
+  ok(!pointInRing([0, 0], square(0, 0, 10)),
+    'a point exactly ON the boundary reads as OUTSIDE — every intersection sits '
+    + 'there by construction, and calling them inside unravels the walk');
+  ok(pointInRing([5, 5], square(0, 0, 10)), 'and a point genuinely inside reads inside');
+}
+
+section('a shape the union cannot model still draws');
+{
+  /* ==> IT FALLS BACK TO EXACTLY WHAT SHIPPED BEFORE THE MERGE. <== The worst
+   * case has to be the map Aaron already has, never a missing band (§5). */
+  const seen = [];
+  const realWarn = console.warn;
+  console.warn = (...m) => seen.push(m.join(' '));
+  let out;
+  try {
+    /* A step budget of 0 starves the walk, which is the one failure mode that
+     * cannot be constructed out of geometry alone. */
+    out = buildSeasonSwath(jeanne, { ...WIND_SWEEP, unionStepBudget: 0 });
+  } finally {
+    console.warn = realWarn;
+  }
+  ok(out.length > 0, 'a band whose pieces will not merge is still drawn');
+  ok(seen.some((m) => /could not merge/.test(m)),
+    'and it says so — silence on a known-imperfect shape is the §5 failure');
+}
+
 /* ------------------------------------------------------------------------- */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
 for (const f of failures) console.log(`    FAIL  ${f}`);
