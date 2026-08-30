@@ -69,6 +69,23 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> `tools/test-genesis.mjs` HANGS AND IT IS NOT A LANDFALL BUG. <== Found
+2026-08-30 while sweeping all 141 suites; 140 pass.** It stalls in its
+`a broken NHC half is an OUTAGE, never an empty sky` section, which is the one
+that makes every relay call throw, and it never returns rather than failing an
+assertion.
+
+**IT IS PRE-EXISTING AND THAT WAS VERIFIED RATHER THAN ASSUMED** — a clean
+worktree of `ada4164`, the commit before that day's feature work, hangs at the
+identical line with byte-identical output. **Nothing in §57.55 to §57.65
+touches genesis, the relay or `data/genesis.js`.**
+
+**A HANG IS WORSE THAN A FAILURE HERE**, because the pre-push hook and CI both
+run the suites: a suite that never returns holds the gate open forever rather
+than reporting red, so it has to be either fixed or timed out. **Nobody has
+looked at the cause yet.** Its own pass, and the first question is whether a
+`throw: true` relay stub leaves an await with nothing to settle it.
+
 **==> POST-TROPICAL LANDFALLS, THE REFUSAL SENTENCE AND THE DOT GRADING ARE ALL
 CONFIRMED ON GLASS, 2026-08-29. AARON: "IT LOOKS FUCKING GOOD." <==** Four
 sections shipped in one day and every one has been seen on a phone. **§57.7d,
@@ -469,57 +486,37 @@ storms, prototyped against the real files, and judged by Aaron on 2026-08-30
 **IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
 in order.
 
-**==> STEP 1 IS DONE AND IS AS-BUILT AT §57.55. <== NEEDS AARON'S EYES ON
-GLASS.** The two live faults, as two separate commits. The
-rapid-intensification sentence had been rendering inside the value column on
-**945 of 3,266 storms** (28.9%) since 2026-08-29; it is a `.detail-note` now.
-And the em dash left the markup file — **four decorative ones, not the one
-§57.54h named**, the ending sentence alone on 804 storms (24.6%). Both counts
-read **zero** across the whole archive now. **What to look at: open Katrina and
-check that `That meets the 30 kt in 24 hours…` sits full width under the two
-figures rather than indented behind them, and that the last line reads
-`Became extratropical. It lost its tropical structure…`** Nothing else on the
-panel moved.
+**==> STEPS 1 AND 2 ARE DONE, ON GLASS, AND ACCEPTED. <==** Aaron judged both
+on a phone on 2026-08-30 (*"Looks great"*). Nothing in either is waiting on
+him. As-built at **§57.55** (the two live faults), **§57.56** (the distribution
+bar), **§57.63** (the bar's mark failed contrast and two of three themes were
+under the floor), **§57.64** (restyled to the mockup) and **§57.65** (the
+one-pixel seam between columns).
 
-**STEP 2 IS DONE AND IS AS-BUILT AT §57.56. NEEDS AARON'S EYES ON GLASS, AND
-IT IS THE FIRST OF THE TWO STEPS THAT CAN CHANGE THE PLAN.** The distribution
-bar, wired into the EXISTING `Where it ranks` section on purpose, so the one
-new drawing primitive is judged against a layout nobody changed. Every ranked
-row now carries a bar showing the whole archive's spread, with this storm's
-mark on it and the real extremes at both ends.
+**TWO STANDING INSTRUCTIONS OUT OF THOSE FIVE SECTIONS, because both are things
+a later pass would otherwise undo by accident:**
 
-**==> AARON JUDGED IT ON GLASS AND IT CAME BACK TWICE. <==** Both rounds are
-landed and pushed. **§57.63** — the mark failed contrast at 2.19:1, a deep
-brown on the archive's near-black brown panel; two of the three themes were
-failing and only sepia is ever drawn, so nobody had looked. **§57.64** — the
-styling, restyled to the mockup: a baseline with end ticks, the mark running
-the full height, and the storm's own figure printed on the bar under it.
-**Aaron rejected the mockup's gapped columns; the continuous silhouette stays
-and must not be reintroduced.** **§57.65** then added a one-pixel seam between
-columns at his ask — not the same thing as the mockup's separated bars, and
-§57.65 says why in as many words.
+- **The bar's columns are a CONTINUOUS SILHOUETTE with a one-pixel seam.**
+  Aaron rejected the mockup's separated fixed-width bars and then asked for the
+  hairline. They are different requests and §57.65 spells out the difference.
+  **Do not reintroduce gapped columns.**
+- **The mark is the theme's own `textPrimary`, in all three themes.** It is not
+  a per-theme colour choice any more, because reasoning about a theme's NAME
+  instead of reading its panel colour is exactly what shipped a mark at 2.19:1.
+  A suite assertion computes the ratio and fails under 3:1. §57.63.
 
-**==> WHAT TO LOOK AT, IN ORDER. <==**
+**ONE THING FLAGGED IN ADVANCE THAT HAS NOT COME BACK YET:** the bar shows the
+BASIN ladder while the rank text beside it cites the basin AND the overall
+count. §57.56h. It survived glass; **if it ever reads as a mismatch the lever
+is barring the `all` ladder instead — a swap, not a rewrite.**
 
-1. **Does a histogram under a row read as information or as decoration?** That
-   is §57.54k's stated risk for this step and it is the whole question.
-2. **Is the mark findable at both extremes?** Open Katrina — her wind mark sits
-   at 89% (far right) and her pressure mark at 15% (far left), and her figure
-   label pins to that end at each. The mark is inset so a first-place storm is
-   not drawn half outside the bar, and it now clears 3:1 in every theme with a
-   suite assertion holding it there.
-3. **The basin / overall mismatch, flagged in advance.** The bar shows the
-   BASIN ladder while the text beside it cites the basin AND the overall count.
-   §57.56h. **If that reads as a mismatch the lever is barring the `all` ladder
-   instead — a swap, not a rewrite.**
-4. **Pressure is the one bar that runs backwards** and says so in words:
-   `882 mb (strongest)` on the left, `1016 mb (weakest)` on the right. No other
-   bar carries a note, deliberately.
-
-**ONE THING CARRIED FORWARD RATHER THAN RE-DERIVED:** `ui/season-detail-markup.js`
-is at **711 lines**, over §12's ceiling, from §57.55a's comments. Step 2 does
-not touch that file, so it is not blocking — but **the cut §57.54k already
-scheduled inside step 3 has to happen before anything else lands there.**
+**==> `ui/season-detail-markup.js` IS AT 711 LINES, OVER §12's CEILING. <==**
+It crossed on §57.55a's comments. Nothing since has touched it, so it is not
+blocking — but **the cut §57.54k already schedules inside step 3 must be the
+first commit of that step, before any restructuring lands there.** `NOW.md`
+records `ui/view-seasons-board.js` crossing the same ceiling on five
+consecutive passes with the cut promised each time and taken later at a bigger
+size. Do not make this the sixth.
 
 **STEP 3 IS NEXT, AND IT IS THE GO / NO-GO.** If the merged row — label,
 figure, rank, bar — reads as four things rather than one, **steps 5 to 7 do not
