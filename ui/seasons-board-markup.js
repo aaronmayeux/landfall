@@ -21,6 +21,10 @@
 import { SEASONS } from '../config/constants.js';
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
 import { stormDisplayName } from '../lib/season-names.js';
+/* The retired-names join (§57.52). Under `data/` because `lib/` may not import
+ * that directory; `ui/` may, so the row asks it directly rather than having a
+ * boolean threaded down from the view. */
+import { retirementFor } from '../data/retired-lookup.js';
 import {
   NEAR_HOME_FILTER, approachNoteHtml, entriesNearHome, nearHomeFilters,
 } from './seasons-near-home.js';
@@ -297,18 +301,38 @@ export function rowHtml({ storm, facts, on, active = false, near = null, home = 
     ? `${displayName(storm)} is still happening — it is on the live globe, not this one`
     : `Draw ${displayName(storm)} on the globe`;
 
-  /* The landfall mark. §57.21a took the pin off the globe, so this row is now
-   * the ONLY place a landfall surfaces — which is why it moved to the left of
-   * the dates rather than trailing them. It names itself in words for a screen
-   * reader rather than leaving a glyph to carry meaning on its own (§13). A
-   * provisional season simply has none, which is the absence `scoreHtml`
-   * explains rather than one to explain again on every row. */
-  const lf = facts.landfalls.length
-    ? '<span class="seasons-lf" aria-hidden="true">▲</span>'
+  /* ==> THE MARKS RIDE ON THE DOT, NOT IN THE TEXT LINE. <== §57.53, Aaron on
+   * glass 2026-08-30. The landfall mark was a `▲` glyph in the right-hand meta
+   * line beside the dates; it is an attribute on the swatch now, drawn as a
+   * `::after` under it, and the retired bar is the `::before` above. That is
+   * the Wall of Years' own grammar (§57.52) and the point is that it is the
+   * SAME grammar: a reader who learns what a triangle under a dot means on the
+   * wall reads the same mark the same way one tap later.
+   *
+   * ==> AN ATTRIBUTE RATHER THAN TWO MORE SPANS, FOR THE WALL'S REASON. <== A
+   * mark that IS its dot cannot drift from it, and there is no second element
+   * to keep in step when the swatch is retuned. It also takes the glyph out of
+   * `.seasons-row-meta`, which was a flex line holding a fixed-width date
+   * range — the one place on this row where a third item could have clipped.
+   *
+   * Both name themselves in words for a screen reader rather than leaving a
+   * shape to carry meaning on its own (§13). A provisional season simply has
+   * no landfalls, which is the absence `scoreHtml` explains rather than one to
+   * explain again on every row. */
+  const ashore = facts.landfalls.length;
+  const lfMark = ashore ? ' data-lf' : '';
+  const lfLabel = ashore
+    ? `, made ${ashore === 1 ? 'landfall' : `${ashore} landfalls`}`
     : '';
-  const lfLabel = facts.landfalls.length
-    ? `, made ${facts.landfalls.length === 1 ? 'landfall' : `${facts.landfalls.length} landfalls`}`
-    : '';
+
+  /* ==> A RUNNING SEASON'S STORM CAN NEVER CARRY THIS, AND THAT IS NOT AN
+   * OVERSIGHT. <== §57.52. A name is withdrawn at the WMO session the
+   * following spring, so nothing on this year's roster can hold a retired one.
+   * The lookup answers null and no bar draws, which is the right answer rather
+   * than a suppressed one. */
+  const retired = !!retirementFor(storm.name, storm.year, storm.basin);
+  const retMark = retired ? ' data-ret' : '';
+  const retLabel = retired ? ', name later retired' : '';
 
   return `
       <li class="seasons-row" data-row="${esc(storm.id)}" ${active ? 'data-active="true"' : ''}>
@@ -319,13 +343,12 @@ export function rowHtml({ storm, facts, on, active = false, near = null, home = 
           <span class="check-box" aria-hidden="true"></span>
         </label>
         <button class="seasons-open" type="button" data-open="${esc(storm.id)}"
-                aria-label="Open ${esc(displayName(storm))}, ${esc(strength)}${lfLabel}">
-          <span class="row-swatch" style="--swatch: ${esc(color)}" aria-hidden="true"></span>
+                aria-label="Open ${esc(displayName(storm))}, ${esc(strength)}${lfLabel}${retLabel}">
+          <span class="row-swatch" style="--swatch: ${esc(color)}"${lfMark}${retMark} aria-hidden="true"></span>
           <span class="seasons-row-text">
             <span class="seasons-name">${esc(displayName(storm))}</span>
             <span class="row-badge">${esc(strength)}</span>
             <span class="seasons-row-meta">
-              ${lf}
               <span class="seasons-when">${esc(dateRange(facts, active))}</span>
             </span>
             ${approachNoteHtml(near, home, system)}

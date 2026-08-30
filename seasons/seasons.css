@@ -40,23 +40,41 @@ html[data-seasons="on"] {
      forty of these at row height would drown the years that carry storms. */
   --seasons-wall-hair-h: 18px;
 
+  /* ==> THE MARK RATIOS ARE SHARED, BECAUSE THERE ARE TWO DOTS NOW. <== §57.53.
+     The Wall of Years sizes its dot after layout (4px to 14px); the season
+     board's roster swatch is a fixed 12px from `ui/panels.css`. The MARKS on
+     them have to be the same shape or the same fact reads as two different
+     ones two taps apart, so the ratios live here once and each surface applies
+     them to its own dot. §12 — a pattern used twice is extracted before the
+     second use, and this is the second use.
+
+     The values are the mockup's, which is the version Aaron judged: the
+     triangle is a little under three-quarters of the dot wide and a little
+     under three-quarters of its own width tall, and the bar is a sixteenth of
+     the dot. */
+  --mark-w-ratio: 0.72;
+  --mark-lf-h-ratio: 0.72;
+  --mark-ret-h-ratio: 0.16;
+
+  /* Clear of the dot's edge without floating free of it. Both marks, both
+     surfaces. */
+  --mark-gap: 1.5px;
+
   /* ==> THE LANDFALL TRIANGLE IS SIZED OFF THE DOT, NEVER OFF A PIXEL COUNT.
      <== §57.30 step 14 sub-step 4. `--wall-dot` is measured after layout and
      ranges from `SEASONS.wallDotMin` (4) to `wallDotMax` (14) depending on how
      busy the basin's widest season is, so a fixed triangle would be a speck
-     against a 14px dot and wider than a 4px one. The two ratios are the
-     mockup's, which is the version Aaron judged: the triangle is a little under
-     three-quarters of the dot wide, and a little under three-quarters of its
-     own width tall.
+     against a 14px dot and wider than a 4px one.
 
      The floors exist because at `wallDotMin` the arithmetic gives 2.88px by
      2.07px, and below about 3px a triangle stops reading as a triangle and
      starts reading as dirt on the screen. */
-  --wall-lf-w: max(3px, calc(var(--wall-dot, 7px) * 0.72));
-  --wall-lf-h: max(2.5px, calc(var(--wall-lf-w) * 0.72));
+  --wall-lf-w: max(3px, calc(var(--wall-dot, 7px) * var(--mark-w-ratio)));
+  --wall-lf-h: max(2.5px, calc(var(--wall-lf-w) * var(--mark-lf-h-ratio)));
 
-  /* Clear of the dot's edge without floating free of it. */
-  --wall-lf-gap: 1.5px;
+  /* Kept as its own name because `--wall-strip-pad` below does arithmetic on
+     it and cannot read a percentage off an element it does not own. */
+  --wall-lf-gap: var(--mark-gap);
 
   /* ==> THE RETIRED BAR. A LINE, AND DELIBERATELY NOT A DOT. <== §57.52.
      Aaron asked for a small dot above the storm dot, same ink and size as the
@@ -79,8 +97,8 @@ html[data-seasons="on"] {
      neutral ink for the same reason it is neutral down there: retirement is a
      fact about the NAME, and strength is what the dot already says. */
   --wall-ret-w: var(--wall-lf-w);
-  --wall-ret-h: max(1px, calc(var(--wall-dot, 7px) * 0.16));
-  --wall-ret-gap: var(--wall-lf-gap);
+  --wall-ret-h: max(1px, calc(var(--wall-dot, 7px) * var(--mark-ret-h-ratio)));
+  --wall-ret-gap: var(--mark-gap);
 
   /* ==> THE STRIP'S BREATHING ROOM ANSWERS TO WHICHEVER MARK NEEDS MORE. <==
      The slot clips, so both the glow bleeding outward and the triangle hanging
@@ -801,6 +819,54 @@ html[data-seasons="on"] #status {
 .seasons-open .row-swatch,
 .seasons-check .row-swatch { margin-top: 0; }
 
+/* ==> THE ROSTER'S MARKS MOVED ONTO THE DOT, THE WAY THE WALL'S ALREADY WERE.
+   <== §57.53, Aaron on glass 2026-08-30. The landfall mark was a `▲` glyph
+   sitting in the right-hand meta line beside the dates; it is a `::after` on
+   the swatch now, and the retirement bar is the `::before` above it. Two
+   screens, one grammar: a reader who learns what a triangle under a dot means
+   on the Wall of Years reads the same mark the same way one tap later.
+
+   ==> THE SWATCH IS SHARED WITH THE LIVE STORM LIST, SO THIS IS SCOPED. <==
+   `.row-swatch` is `ui/panels.css`'s and the live list uses it too. Scoping to
+   `.seasons-open` keeps the archive's marks off a live storm, which has no
+   settled landfall record and no retired name to carry.
+
+   ==> THE GEOMETRY IS A PERCENTAGE RATHER THAN A COPY OF THE WALL'S NUMBERS.
+   <== The wall's dot is measured after layout and this one is a fixed 12px, so
+   a shared pixel token would be wrong on one of them. A percentage resolves
+   against the dot it is drawn on, so both surfaces read the same ratios off
+   `--mark-*` above and neither needs to know the other's size. It also means
+   this cannot drift if `.row-swatch` is ever retuned.
+
+   The floors are the wall's, for the wall's reason — they never bite at 12px
+   and are written the same way so the two rules stay comparable at a glance. */
+.seasons-open .row-swatch { position: relative; }
+
+.seasons-open .row-swatch[data-lf]::after {
+  content: '';
+  position: absolute;
+  top: calc(100% + var(--mark-gap));
+  left: 50%;
+  width: max(3px, calc(var(--mark-w-ratio) * 100%));
+  height: max(2.5px, calc(var(--mark-w-ratio) * var(--mark-lf-h-ratio) * 100%));
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  opacity: 0.8;
+  clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+.seasons-open .row-swatch[data-ret]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + var(--mark-gap));
+  left: 50%;
+  width: max(3px, calc(var(--mark-w-ratio) * 100%));
+  height: max(1px, calc(var(--mark-ret-h-ratio) * 100%));
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  opacity: 0.8;
+}
+
 /* --- the master box ------------------------------------------------------ */
 
 /* ==> THE MASTER BOX SITS IN THE SAME COLUMN THE ROWS CENTRE THEIRS IN. <==
@@ -988,12 +1054,6 @@ html[data-seasons="on"] #status {
   font-size: var(--type-small);
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-}
-
-.seasons-lf {
-  flex: 0 0 auto;
-  color: var(--text-secondary);
-  font-size: var(--type-small);
 }
 
 /* ==> WIDE ENOUGH FOR ONE LINE, SO ONE LINE. <== The number is where a name,
