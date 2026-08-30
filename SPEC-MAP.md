@@ -2210,96 +2210,85 @@ polish-made crossing ran before the polish, so `cutAllLoops` is now a function
 and runs on both sides of it. On every ring measured the second pass finds
 nothing.
 
-#### Fault 4b — the split fixed the data and broke the picture
+#### Fault 4b — and the split had to be sewn back up
 
-**Aaron off glass, 2026-08-30: the bands overlapped and drew edges inside their
-own colour.** Breaking a band at the track's loops makes it several polygons.
-The line layer outlines every one of them, cut caps included, and the fill
-double-darkens where two meet — `swathFillOpacity` 0.14 over 0.14 reads as 0.26.
+Breaking a band at the track's loops makes it several polygons. The line layer
+outlines every one of them, cut caps included, and the fill double-darkens where
+two meet — `swathFillOpacity` 0.14 over 0.14 reads as 0.26. **Aaron off glass,
+2026-08-30: the bands overlapped and drew edges inside their own colour.**
+Measured: 12.2% of Jeanne 2004's outline and 17.7% of Nadine 2012's was
+boundary buried inside a sibling piece, against 0% before the split.
 
-| | outline buried inside a sibling piece |
-|---|---|
-| Jeanne 2004, before the split | 0% |
-| Jeanne 2004, split, unmerged | 12.2% |
-| **Jeanne 2004, merged** | **0%** |
-| Nadine 2012, split, unmerged | 17.7% |
-| Katrina 2005 | 0% throughout |
-
-**THE FIX IS THAT A BAND *IS* ONE REGION AND SHOULD BE ONE SHAPE.**
-`lib/polyunion.js` `unionRings` merges a band's pieces back together: insert the
-crossings, drop the arcs buried inside a sibling, walk the outside. Storms
-drawing any buried edge fall from 27 to 2.
+**A BAND IS ONE REGION AND IS DRAWN AS ONE SHAPE.** `lib/polyunion.js`
+`unionRings` merges a band's pieces: cut every ring into ARCS at its crossings,
+keep an arc when its MIDPOINT is outside every other ring, chain the survivors.
+**One interior point settles a whole arc** — an arc between two crossings is
+entirely inside another ring or entirely outside it, because changing sides is
+what a crossing IS — so no direction, winding or entry/exit bookkeeping exists
+anywhere in the file. Storms drawing any buried edge fall from 27 to 2.
 
 **IT IS A UNION OF A HANDFUL OF PIECES, NOT A GENERAL CLIPPER.** The inputs are
 consecutive stretches of one corridor, each already simple, and consecutive
-pieces share a track point so they properly overlap. There is no build step
-here and no library to lean on, and a general clipper is a great deal of code
-to carry for a shape this constrained.
+pieces share a track point so they properly overlap. There is no build step here
+and no library to lean on.
 
-**IT ONLY MERGES INSIDE ONE RUN, AND A SUITE CAUGHT THAT.** A loop break is
-this file's own doing and the ground either side is continuously swept, so it
-heals. A break BETWEEN runs is the agency saying it published no ring for that
-hour, and healing across it would claim wind nobody recorded (§5) — even where
-the two runs overlap on the map. The first version merged both and
-`tools/test-season-swath.mjs`'s zero-row assertion went red. Harvey 2017's
-34 kt footprint stays in two pieces across his remnant days; Nadine 2012's
-four loops heal into one 34 kt shape while her 50 kt field, which stopped
-twice, stays in three.
+**IT ONLY MERGES INSIDE ONE RUN.** A loop break is this file's own doing and the
+ground either side is continuously swept, so it heals. A break BETWEEN runs is
+the agency saying it published no ring for that hour, and healing across it
+would claim wind nobody recorded (§5) — even where the two runs overlap on the
+map. Harvey 2017's 34 kt footprint stays in two pieces across his remnant days;
+Nadine 2012's four loops heal into one 34 kt shape while her 50 kt field, which
+stopped twice, stays in three. `tools/test-season-swath.mjs`'s zero-row
+assertion is what enforces it.
 
-**IT FAILS BY GIVING UP, NOT BY GUESSING, AND TWO GUARDS DO IT.** Any anomaly
-returns null and the caller draws the separate pieces — the shape that shipped
-on 2026-08-29, so the worst case is a map already seen and never a missing
-band. `unionStepBudget` bounds the walk, because a walk that does not terminate
-is the one failure here that would freeze a phone rather than merely draw
-something wrong. **The containment check is the one that earns its place:** the
-result must contain every input. Without it, two pieces that never touch walk
-once round the first ring and close on a perfectly good polygon that has
-silently DROPPED the second — found by a constructed test on two squares a
-hundred units apart, which returned one of them.
+**A LOOP'S CENTRE IS A TRUE HOLE.** A storm that circles a patch of ocean
+without its wind field ever reaching the middle leaves ground that saw no
+storm-force wind, and it comes back as a GeoJSON hole rather than being filled.
+Same rule as the one above: filling it would claim wind the record does not
+carry.
 
-**A CONTACT THAT IS ONLY VERTEX-ON-EDGE IS REFUSED DELIBERATELY.** Two
-axis-aligned squares sharing a face touch at each other's corners and never
-properly cross. Handling that class is how a small union grows into a fragile
-general clipper, and it costs nothing here because the real inputs are smooth
-swept corridors.
+**TWO DEGENERACIES ARE HANDLED AND BOTH WERE FOUND BY RUNNING THE ARCHIVE.** A
+crossing landing on an existing vertex MARKS that vertex rather than being
+dropped — skipping it spliced the meeting into one ring and omitted it from the
+other, whose vertex it sat on, and the two then disagreed about where they met.
+And arc ends are matched by proximity, never by a rounded grid key: the same
+crossing is solved twice, once from each ring's segment, and the two answers
+differ in the last bits.
 
-**THE MERGE IS ARC-BASED, AND THE FIRST VERSION WAS NOT.** The first walked
-vertex to vertex, deciding at each crossing which ring to hop to by looking at
-whether the next vertex was inside anything. That is a direction heuristic, and
-on Wanda 2021 — whose two 34 kt pieces cross each other **30 times** — it
-guessed wrong and lost area. What ships now cuts every ring into ARCS at its
-crossings and keeps an arc if its MIDPOINT is outside every other ring. An arc
-between two crossings is entirely inside another ring or entirely outside it,
-because changing sides is what a crossing IS, so one interior point settles it
-and no direction, winding or entry/exit bookkeeping is needed anywhere. Aaron
-confirmed Grace and Wanda on glass as the only two that read wrong; both are at
-0% buried outline now.
+**IT FAILS BY GIVING UP, NOT BY GUESSING.** Three guards, and each catches
+something different. `unionStepBudget` bounds the chain, because a walk that
+does not terminate is the one failure here that would freeze a phone rather than
+merely draw something wrong. Every outside arc must appear in the answer, or a
+piece of boundary went missing. And the answer must CONTAIN every input — without
+that, two pieces that never touch close on a perfectly good polygon that has
+silently DROPPED the second, which a constructed test on two squares a hundred
+units apart caught. A group that will not merge whole still merges in pairs;
+every pairwise step is a full `unionRings` call with all its guards. Anything
+still unmerged is drawn as separate pieces with a console warning — a slightly
+wrong band beats a missing one (§5).
 
-**A CROSSING THAT LANDS ON AN EXISTING VERTEX MARKS IT RATHER THAN BEING
-DROPPED.** Skipping it spliced the same meeting into one ring as a new point
-and silently omitted it from the other, whose vertex it sat on; the two then
-disagreed about where they met and the chain ran off the end. Found on Danielle
-2022. Arc ends are matched by proximity rather than by a rounded grid key for
-the same reason: the same crossing is solved twice, once from each ring's
-segment, and the two answers differ in the last bits.
+**TWO STORMS IN 175 YEARS STILL DRAW A SEAM AND ARE NAMED: Hanna 2008 (50 kt,
+6.5% of its outline buried) and Danielle 2022 (64 kt, 10.8%).** Both refuse on a
+piece that overlaps another without producing a proper crossing. **Danielle's is
+a sliver of 0.078 nm²** — a quarter of a nautical mile across, under a tenth of
+HURDAT2's own position precision — which points at the sweep having produced a
+piece that was never a band, rather than at the union. **The fix to try first is
+therefore upstream in `breakRun`, not more clipper work.** Aaron accepted this
+on 2026-08-30 having looked at every affected storm: *"I'm just gonna have to
+live with this."*
 
-**A GROUP THAT WILL NOT MERGE WHOLE STILL MERGES IN PAIRS.** Refusing the whole
-group over one awkward pair left four polygons where two would do. Every
-pairwise step is a full `unionRings` call with all its guards, so this can only
-reduce the count and can never produce a shape the union would have rejected.
+**`WIND_SWEEP.mergePieces: false` draws the unmerged pieces**, which is the one
+line that returns the map to a known state without a revert.
 
-**TWO STORMS STILL FALL BACK AND ARE NAMED: Hanna 2008 (50 kt, 6.5% of its
-outline buried) and Danielle 2022 (64 kt, 10.8%).** Both refuse on a piece that
-overlaps another without producing a proper crossing — Danielle's is a sliver
-of 0.078 nm², under a tenth of the data's own precision and almost certainly an
-artefact of the sweep rather than a real band. **These two merged under the old
-vertex walk, so this is a trade rather than a clean win**, and it is recorded as
-one. The unexamined lead is that the sliver should never have been swept as a
-separate piece at all, which would be an upstream fix in `breakRun` rather than
-more clipper work.
-
-**THIS FILE IS SHARED WITH THE LIVE GLOBE.** It landed as its own pass with its
-own revert point and was never folded into a seasons change.
+**THIS FILE IS SHARED WITH THE LIVE GLOBE, AND FAULTS 4 AND 4b REACH IT.**
+`buildFullTrack` joins NHC's separate layers and then hands off to the same
+`sweepTimeline`, so a live storm that stalls and circles is split and merged
+exactly as an archived one is. It fires rarely there — a live track is a few
+days of past plus a 5-day forecast and that window seldom holds a whole 50 nm
+loop — but it is the same code and a live band can carry a hole. GDACS storms
+do not reach it at all: that feed publishes no quadrant radii. Both faults
+landed as their own passes with their own revert points and neither was folded
+into a seasons change.
 
 ### 7.13 A wind ring is placed at its own centre
 

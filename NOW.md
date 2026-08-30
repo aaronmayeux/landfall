@@ -1419,64 +1419,6 @@ a calm ocean — and `tools/test-genesis.mjs` drives exactly that, verified by
 reintroducing the bug. **When a real busy ABIO lands in `history/`, replace
 the fixture with it.** The 72-hour window rolls, so check rather than assume.
 
-**==> THE WIND BANDS NEST ON A LOOPING STORM NOW. SHIPPED 2026-08-29, NOT YET
-JUDGED ON GLASS. <==** Jeanne 2004's 64 kt outline went from 26.2% outside her
-34 kt band to **0%**. Across all 752 storms with a wind field the mean worst
-nesting error falls 2.043% -> 1.529% with **zero regressions** and 45 extra
-polygons in 175 years. **`SPEC-MAP.md` §7.12 fault 4 is the as-built account —
-read that, not this.**
-
-**==> AND THE EDGES AARON SAW ARE GONE. FAULT 4b, SHIPPED 2026-08-30, NOT YET
-JUDGED ON GLASS. <==** He looked at the first version and said the bands
-overlapped and drew edges inside their own colour. He was right and it was all
-new: 12.2% of Jeanne's outline and 17.7% of Nadine's was boundary buried inside
-a sibling piece, against 0% before the split. `lib/polyunion.js` merges a
-band's pieces back into one shape. **Jeanne is at 0% and the storms drawing any
-buried edge fall from 27 to 2.**
-
-**WHAT TO LOOK AT ON A PHONE.** Jeanne 2004 and Nadine 2012 should now read as
-single continuous bands with no line crossing the interior and no darker lobe.
-Katrina and Harvey are the comparison — Harvey's 34 kt footprint is still
-deliberately TWO shapes, because NOAA published no ring across his remnant
-days, and that gap is a fact rather than a seam.
-
-**==> AARON CONFIRMED ON GLASS 2026-08-30: EVERY STORM READ WELL EXCEPT GRACE
-2009 AND WANDA 2021. BOTH ARE FIXED. <==** The merge was rewritten from a
-vertex walk with a direction heuristic to an arc-based union that makes no
-directional guesses. Grace and Wanda are both at 0% buried outline now.
-
-**==> BUT IT IS A TRADE AND HE HAS NOT SEEN THE OTHER SIDE OF IT. <== HANNA
-2008 AND DANIELLE 2022 NOW SHOW A SEAM WHERE THEY DID NOT.** 6.5% and 10.8% of
-their outline buried. Both refuse on a piece that overlaps another without
-producing a proper crossing; Danielle's is a sliver of 0.078 nm², under a tenth
-of HURDAT2's own position precision and almost certainly a sweep artefact
-rather than a real band. **The unexamined lead is that the sliver should never
-have been swept as a separate piece** — an upstream fix in `breakRun`, not more
-clipper work. Look at those two before deciding whether the trade was worth it;
-`WIND_SWEEP.mergePieces: false` still puts the map back to unmerged pieces in
-one line.
-
-**AND THE MERGE NOW RETURNS TRUE HOLES.** A storm that circles a patch of ocean
-without its wind field reaching the middle leaves ground that saw no
-storm-force wind, and that comes back as a GeoJSON hole rather than being
-filled. **Nobody has judged whether an unfilled donut centre reads as honest or
-as a rendering bug.** Grace's loop centre is the one to look at.
-
-**TWO RESIDUES ARE KNOWN, MEASURED, AND LEFT.** Neither is the reported bug.
-The first is hairline — about forty storms a few percent outside at 1 to 8 nm
-against bands over 100 nm wide, which is `ringSmoothPasses`' own documented
-bound. The second is real and is a DIFFERENT fault: where a track passes close
-to itself WITHOUT crossing, no break fires and the walls interleave. Nadine
-2012 improves 31.7% -> 8.1% and the remainder is 135 nm at worst; Rebekah 2019
-is the same thing at 23 nm. §7.12 records both with their numbers.
-
-**AND A FINDING RECORDED IN §7.12 ON 2026-08-29 WAS WRONG.** It claimed the
-final polish made a self-crossing in one of Jeanne's 34 kt rings. Re-measured
-at that exact stage, twice, with two different crossing tests: all seven of her
-final rings are simple. The spec now says so. The structural hole behind it was
-real — the only check that could catch a polish-made crossing ran before the
-polish — and is closed regardless.
-
 ## HELD FOR WEATHER
 
 **Everything here is BUILT AND DEPLOYED and cannot be judged until the named
