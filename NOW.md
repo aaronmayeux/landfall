@@ -458,6 +458,37 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**==> THE ARCHIVE STORM DRAWER IS BEING REBUILT AND THE WHOLE PLAN IS §57.54.
+READ THAT, NOT THIS. <==** Aaron's ask, 2026-08-30: the panel had become a
+disjointed mess — the same figure stated up to four times, and one section
+(`Where it ranks`) is **33% of the panel** while every row in it duplicates a
+label from three to five sections away. The plan was measured against all 3,266
+storms, prototyped against the real files, and judged by Aaron on 2026-08-30
+(*"I love it. It looks great."*).
+
+**IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
+in order. **Step 1 is the two live faults in §57.54h and lands as two separate
+commits before any feature work.** Step 2 puts the new distribution bar inside
+the OLD section on purpose, so the one new drawing primitive gets judged on
+glass alone before anything is restructured.
+
+**==> STEP 3 IS THE GO / NO-GO. <==** If the merged row — label, figure, rank,
+bar — reads as four things rather than one, **steps 5 to 7 do not start** and
+the plan changes. Nothing after step 3 is worth building against a row shape
+Aaron has not accepted.
+
+**NOTHING IS BUILT AND NOTHING HERE IS WAITING ON AARON.** The prototype was a throwaway under
+`tools/`, deliberately never committed and deleted at the end of the session;
+§57.54 carries every figure it produced.
+
+**ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
+version fed the distribution bar the RAW value instead of the rung, and because
+§57.46's distance ladders store display units while `read()` returns nautical
+miles, **Katrina's mark sat at 16.9% of a bar where she belongs at 19.5% with
+the correct `2,106 mi` printed beside it the whole time.** `toRung` is the only
+conversion that speaks a ladder's own units. §57.54c.
+
+
 **==> THE ARCHIVE BACKLOG IS EMPTY. §57.42 HAS NOTHING LEFT IN IT. <==**
 Aaron's ask on 2026-08-29 was to make the past-storm drawer the thing people go
 to for research, and §57.42 held the whole plan. **Tier 1 is finished** —

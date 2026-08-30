@@ -8087,3 +8087,449 @@ was simply unmarked would prove nothing.
 `.seasons-lf` is deleted from `seasons/seasons.css` rather than left behind. A
 rule that still matched the old glyph would draw the mark twice the day someone
 reintroduced the span.
+
+### 57.54 The storm panel, rebuilt — the plan
+
+**Aaron's ask, 2026-08-30: the archive's storm drawer had become a disjointed
+mess.** Good prose at the top, as few sections as necessary, the raw numbers
+carried inside the rankings rather than beside them, one or two charts that
+combine data points, and important facts optionally tethered to their exact
+place on the globe. **This section is the PLAN and the measurements behind it.**
+Each step lands its own `— as built` section at the reserved number below.
+
+**==> NOTHING IN THIS SECTION IS BUILT. <==** It is a plan, and it is written
+here rather than in `NOW.md` because it is longer than four paragraphs and
+`NOW.md`'s own rule sends anything that size into the spec. `NOW.md` carries a
+pointer and nothing else.
+
+**A working prototype exists and every figure below came out of it.**
+A throwaway script under `tools/`, never committed and deleted at the end of
+the session, rendered the current panel through the real renderers and the
+proposed one beside it, from the real files in `seasons/data/`. **It was kept
+out of the repo on purpose** — it imports nothing the
+app imports back, it would be a second author for markup that has one, and its
+whole purpose was answered the moment Aaron judged it. A future session that
+wants it back rebuilds it from this section.
+
+#### 57.54a What was actually wrong — measured, not asserted
+
+**THE PANEL IS NINE SECTIONS ON EVERY STORM IN THE ARCHIVE.** Counted across
+all 3,266: **3,265 draw nine and one draws eight.** There is no automatic
+relief anywhere in it, because §57.25 rule 2 turns every absence into a
+sentence rather than a missing block. **So "as few sections as necessary" is a
+design cut and can never be a data-driven one** — a future session must not go
+looking for sections that fall away on their own.
+
+**MEAN PANEL: 2,454 visible characters** (markup stripped). Median 2,284,
+p95 3,063, longest 4,041 on `Storm 5 1910`.
+
+**AND ONE SECTION IS A THIRD OF IT.** Mean characters per section, measured
+across the whole archive:
+
+| Section | Mean chars | Share of panel |
+|---|---|---|
+| **Where it ranks** | **815** | **33.2%** |
+| How it moved | 347 | 14.2% |
+| the prose paragraph | 294 | 12.0% |
+| How it changed | 177 | 7.2% |
+| Its life | 135 | 5.5% |
+| Strongest | 133 | 5.4% |
+| In its season | 120 | 4.9% |
+| the header | 116 | 4.7% |
+| Landfalls | 106 | 4.3% |
+| Wind footprint | 105 | 4.3% |
+| NOAA's report | 105 | 4.3% |
+
+**==> `Where it ranks` IS A SHADOW COPY OF THE WHOLE PANEL, AND THAT IS THE
+DISJOINTEDNESS AARON SAW. <==** Every one of its seven rows names a statistic
+that already appears in a different section, three to five sections away. The
+duplication counted on Katrina:
+
+| Fact | Stated in | Times |
+|---|---|---|
+| Peak / Cat 5 | header, prose, Where it ranks, Strongest | **4** |
+| Lifespan | prose, In its season, Where it ranks, Its life | **4** |
+| Landfall count and the hardest one | prose, Landfalls, How it changed | **3** |
+| How it ended | prose, How it changed (near-verbatim) | 2 |
+| Lowest pressure | Strongest, Where it ranks | 2 |
+| ACE, At major, Fastest strengthening, Distance | own section, and again in Where it ranks | 2 each |
+
+**AND THE SPLIT PRODUCED A VISIBLE CONTRADICTION.** The prose says Katrina
+lived *"8 days"* while `Its life` says *"7 days, 12 hours"* — one duration,
+two spellings, one screen. That is what a figure separated from its own
+sentence eventually does.
+
+**THE FIXED SCOPE SENTENCE IS 12.2% OF THE PANEL AND IS REPRINTED ON EVERY
+STORM.** ~300 characters explaining what `overall` means, on all 3,266.
+
+**THE PRE-SATELLITE CAVEAT FIRES ON 1,144 STORMS (35.0%) AT 258 CHARACTERS.**
+
+#### 57.54b The decision — one row carries the figure, the rank AND the spread
+
+**==> THIS REVERSES §57.44's CENTRAL CHOICE, DELIBERATELY, AND BOTH OF ITS
+OBJECTIONS DIE ON MEASUREMENT. <==** That section refused to fold ranks into
+existing rows for two stated reasons, and they are answered rather than
+ignored:
+
+1. *"The scope sentence would have to be repeated six times or left off
+   entirely."* It is neither. **It moves to a single footnote at the foot of
+   the panel**, where it correctly governs every rank on screen at once. That
+   is stronger than six copies and stronger than one copy inside one section.
+2. *"`Lowest pressure` would become a row whose value ran to two lines on a
+   390px phone."* **It already does.** `NOW.md` recorded that each rank row
+   wraps to THREE lines at 390px. Folding removes the duplicate label, so it
+   saves height rather than costing it.
+
+**THE ROW IS FOUR PARTS AND LIVES IN EXACTLY ONE PLACE:**
+
+```
+PEAK WINDS                         <- the label, once
+173 mph (150 kt) on Aug 28, 2005   <- the figure, in the reader's units
+11th strongest in the Atlantic · 15th of 3,266   <- where it stands
+[====== distribution bar, marked ======]         <- what the spread is
+29 mph                                    190 mph
+```
+
+**`Where it ranks` IS DELETED AS A SECTION.** Its content does not move — it
+dissolves into the rows that already owned each figure.
+
+#### 57.54c The distribution bar — the spread costs zero new bytes
+
+**==> `rankings-v2` ALREADY SHIPS THE WHOLE DISTRIBUTION AND NOBODY NOTICED.
+<==** It stores `values` (every distinct rung, sorted best-first) and `counts`
+(how many storms sit on each), per statistic, per scope. **That is a complete
+histogram, already on every phone that has opened the archive.** Aaron asked
+for the shortest and the longest; the file has been carrying the entire shape
+between them since §57.44.
+
+Rungs per statistic, Atlantic scope, measured:
+
+| Statistic | Rungs | Range |
+|---|---|---|
+| Peak wind | 29 | 25 to 165 kt |
+| Lowest pressure | 114 | 882 to 1016 mb |
+| Lifespan | 93 | 0 to 786 h |
+| At major strength | 45 | 3 to 276 h |
+| ACE | 344 | 0.1 to 73.6 |
+| Fastest 24 hours | 18 | 5 to 95 kt |
+| Distance (miles) | 1,583 | 34 to 10,646 mi |
+| Distance (km) | 1,730 | 55 to 17,133 km |
+
+**SPELLING THE EXTREMES OUT IN PROSE WAS COSTED AND REJECTED.** "The shortest
+was 34 mi and the longest 10,646 mi" is one extra line per figure, seven
+figures, seven lines — worse than the section it replaces. **A bar costs zero
+lines and says more**, because it shows the shape between the ends rather than
+only the ends.
+
+**==> AARON COULD NOT TELL WHICH END WAS WHICH IN THE FIRST MOCKUP, AND THE FIX
+IS AN AXIS RATHER THAN A BIGGER BAR. <==** Both ends carry the real extreme
+value and the marker carries the storm's own figure. Full panel width, and
+about three times the first height.
+
+**==> AND THE ONE STATISTIC WHERE LOW IS STRONG SAYS SO IN WORDS. <==**
+Pressure runs `882 mb (strongest)` to `1016 mb (weakest)`. Every other bar
+reads low-to-high left-to-right and needs no note; adding one everywhere would
+make the pressure case invisible again.
+
+**==> THE BAR MUST BE FED THE RUNG, NEVER THE RAW VALUE, AND THE PROTOTYPE GOT
+THIS WRONG FIRST. <==** §57.46's two distance ladders store **display units**
+(miles or kilometres) while `RANK_STATS.read()` returns **nautical miles**.
+Handing the raw figure to the bar put Katrina's mark at **16.9%** of a bar
+where she belongs at **19.5%** — and the label printed beside it read the
+correct `2,106 mi` the entire time. **The axis was also inflated by the same
+ratio, reading `39 mi` to `12,251 mi` for a ladder that runs 34 to 10,646.**
+
+That is `CLAUDE.md`'s fluent-wrong-number failure with a chart under it, and
+nothing about it invited a second look. **`toRung(def.quantize, raw)` is the
+only conversion guaranteed to speak the ladder's own units, because it is what
+built them.** The suite must drive the distance row in both unit systems and
+assert the marker's fractional position against the ladder directly.
+
+#### 57.54d The life chart — the one hero
+
+**Wind at every recorded fix against time.** Saffir-Simpson bands behind it so
+no conversion is needed, the line coloured by grade at each step, the peak
+marked, each landfall a numbered disc on the axis with a dashed line up
+through the plot.
+
+**IT COLLAPSES SEVEN FACTS CURRENTLY SPREAD ACROSS FOUR SECTIONS** into one
+picture: peak, when the peak was, lifespan, time at each strength, the
+intensification arc, the landfall timing, and how it ended.
+
+**THE TIME AXIS IS DAY NUMBERS, NOT TWO END LABELS.** Aaron's call. A tick at
+every UTC midnight; the label is the day number, with the month spelled out
+only where it changes and at the left end. **The labels thin themselves out
+rather than colliding** — every day up to 10, every second to 20, every third
+to 34, every fifth beyond. `Storm 3 1899` is the longest track in the archive
+at 786 hours (32 days, 18 hours) and is the case that must be checked.
+
+**THE LANDFALL DISCS ARE NUMBER-MATCHED TO THE LIST DIRECTLY UNDER THE CHART.**
+Aaron's call, and it is the reason the landfall list moves up the panel: a
+numbered mark whose list is four sections away is not a reference, it is a
+puzzle.
+
+**==> ONE UNMEASURED RISK, AND IT IS THE FIRST THING TO MEASURE BEFORE WRITING
+SHIPPING CODE. <==** Two landfalls six hours apart put two discs on top of each
+other. Nothing in the archive guarantees that does not happen and **nobody has
+counted how many storms have landfalls close enough to collide at 358px wide.**
+Count it first; the lever is either a minimum separation with a shared disc or
+stacking the second disc on a lower row.
+
+**A CHART IS NOT AN ACCESSIBLE ANSWER.** `ui/chart-home.js` already states this
+rule in as many words and it applies unchanged: every fact the chart carries is
+also written in the sections below it, and the `aria-label` is a summary rather
+than a substitute.
+
+#### 57.54e ACE, in plain English — the panel currently teaches nothing
+
+**Today the panel prints `ACE 20.0 × 10⁴ kt²` and `From 24 six-hourly
+observations`.** That is two pieces of jargon and no meaning, and Aaron asked
+for it to be explained. **The label stops being an acronym and one gloss sits
+under the row.**
+
+**==> WHAT ACE ACTUALLY MEASURES WAS CHECKED RATHER THAN ASSUMED. <==**
+Correlations across the 2,927 storms that carry one:
+
+| ACE against | r |
+|---|---|
+| **hours at hurricane strength** | **0.943** |
+| peak wind | 0.803 |
+| lifespan | 0.745 |
+
+So it is genuinely a strength-times-time score, and the sentence can say so
+without hedging.
+
+**THE WORDING, AND EVERY FIGURE IN IT IS EXACT:**
+
+> **Power and stamina score** — 20.0 from 24 readings
+>
+> One score for strength and staying power together. It adds up the wind every
+> 6 hours the storm was at least a tropical storm, counting stronger winds far
+> more heavily: double the wind and those hours count four times as much. A
+> brief violent storm can score less than a long steady one.
+
+**"Four times as much" is exact rather than approximate** — the sum is of wind
+squared, so 40 kt gives 0.160 per reading and 80 kt gives 0.640. **No em dash**,
+per §57.41. **Digits for the duration and no acronym anywhere.**
+
+**THE ANCHOR A BARE 20.0 CANNOT GIVE IS THE BAR UNDERNEATH IT.** Median ACE in
+the archive is **4.5** (`HERMINE 1980`); the highest is **85.3** (`IOKE 2006`).
+
+**==> AND THE ILLUSTRATION IS HELD IN RESERVE RATHER THAN SHIPPED. <==**
+**Katrina and Andrew both peaked at 150 kt. Andrew scored 28.4 and Katrina
+20.0**, because Andrew was a hurricane longer. It is the whole point of the
+statistic in one comparison and it was NOT built, because it needs a second
+storm's name on a panel about one storm. Available and accurate; a product
+call, not a technical one.
+
+**THE COST IS REAL AND IS NOT PRETENDED AWAY.** The gloss is about 290
+characters and lands on every storm carrying an ACE — 2,927 of 3,266.
+**It is what turns the thin storms LONGER rather than shorter** (see the
+measurement below). Kept visible anyway: a score nobody can interpret is worse
+than no score. **If it ever reads as too much on glass the lever is putting it
+behind the row rather than under it**, and that is a glass call rather than a
+rewrite.
+
+#### 57.54f The sections — nine become six, and the order is a narrative
+
+**The top of the panel is orientation; the bottom is detail.**
+
+| # | Section | Icon | Open by default | Was |
+|---|---|---|---|---|
+| — | the prose paragraph | — | always | unchanged |
+| — | **the life chart** | — | always | new |
+| 1 | **Landfalls** | `pin` | yes | was 5th |
+| 2 | **In its season** | `calendar` | yes | was 1st |
+| 3 | **How hard it blew** | `gauge` | yes | `Strongest` + `How it changed` |
+| 4 | **How long it lasted** | `clock` | no | `Its life` + the ending |
+| 5 | **Where it went** | `track` | no | `How it moved` + `Wind footprint` |
+| 6 | **NOAA's report** | `doc` | no | unchanged |
+
+**`In its season` KEEPS ITS NAME AND MOVES UP.** Aaron rejected `Among the
+others` on 2026-08-30 and asked for it near the top. **Do not rename it again.**
+
+**LANDFALLS LEAD BECAUSE THEY ARE NUMBER-MATCHED TO THE CHART ABOVE THEM.**
+That adjacency is the whole reason the numbering works, and it is not a
+placement preference that a later pass may quietly undo.
+
+**EVERY SECTION FOLDS AND THE FOLD PERSISTS**, through `lib/section-state.js`
+under the existing `season:` prefix (`ui/view-season-detail.js`'s `storeKey`).
+The heads are real `<button>`s with the 44px target, the chevron, the focus
+ring and `aria-expanded` — `ui/panels.css`'s `.detail-section-head` recipe,
+already in use on this panel.
+
+**==> THE DEFAULT-OPEN SET IS AN ALLOW-LIST, AND THAT DIRECTION IS DELIBERATE.
+<==** The reasoning `ui/view-season-detail.js` already records for
+`OPEN_BY_DEFAULT` stands unchanged: a section added later then defaults to
+FOLDED, which is the safe direction. A closed list would make every new section
+open by omission.
+
+**ICONS COME FROM `ui/section-icon.js` AND ALL SIX ALREADY EXIST.** No new
+glyph is needed. `podium` and `trend` lose their only callers when
+`Where it ranks` and `How it changed` go, and **they stay in the set** — the
+file's own rule is one name one shape, and deleting a glyph because its caller
+moved would be a second decision riding on the first.
+
+#### 57.54g What this is worth — measured on the prototype
+
+Reading text with markup and chart furniture stripped, so a chart cannot
+flatter its own side:
+
+| Storm | Today | Proposed | Change |
+|---|---|---|---|
+| HARVEY 2017 | 3,769 | 3,546 | **−223** |
+| SANDY 2012 | 3,505 | 3,274 | **−231** |
+| KATRINA 2005 | 3,155 | 3,180 | +25 |
+| `Storm 1` 1851 | 2,425 | 2,580 | +155 |
+
+**SHORTER ON REAL STORMS AND SLIGHTLY LONGER ON THIN ONES, WHILE GAINING a
+chart, seven distribution bars and the ACE explanation.** The thin storms grow
+because the ACE gloss is a fixed cost that a short panel cannot amortise
+(§57.54e). **That is the honest trade and it was accepted rather than hidden.**
+
+#### 57.54h Two live faults on `main`, found while reading the panel
+
+**Neither is caused by this work and both are fixed first, as their own
+commits** — §12's rule that a bug fix on a shared file never rides inside
+feature work.
+
+1. **THE RAPID-INTENSIFICATION SENTENCE RENDERS INTO A `<dd>` WITH AN EMPTY
+   `<dt>`.** `changeHtml` pushes `['', 'That meets the 30 kt in 24 hours…']`
+   and `rowsHtml` filters on the VALUE being non-empty, never the key. So the
+   row survives, and `.detail-vitals` is `grid-template-columns: auto 1fr` —
+   **a full sentence is squeezed into the value column, indented behind
+   whatever width `Fastest strengthening` claimed.** At 390px that is a
+   sentence in a half-width gutter. It has been on screen since 2026-08-29,
+   when the `fastest24h` fix made the block render for the first time.
+2. **`changeHtml`'s ending sentence carries an em dash.** *"Became
+   extratropical — it lost its tropical structure…"*. `lib/units.js` returns a
+   bare em dash as its MISSING sentinel and §57.41 bans the character for that
+   reason, but `tools/test-season-story.mjs` only sweeps `lib/season-story.js`.
+   **The markup file is outside the net.** Fix the sentence AND widen the
+   sweep, or the next one lands the same way.
+
+#### 57.54i Three things this archive holds and does not use
+
+**1. STORM SIZE IS PARSED AND READ BY NOTHING.** Every fix carries `rmwNm` and
+twelve wind-radii columns. `lib/season-facts.js` computes `missing.rmw` and
+**no renderer anywhere reads it** — verified by grep across `ui/`, `map/`,
+`lib/`, `data/` and `app/`. Coverage, measured: **376 storms (11.5%) carry a
+radius of maximum wind; 826 (25.3%) carry any wind radii at all.** Size is the
+one headline this panel is silent on and it is the entire reason Sandy was
+Sandy. **Not in this build. Its own pass, and 11.5% coverage is the number to
+argue with first.**
+
+**2. THE PERCENTILE PROFILE IS A FACT NOBODY HAS SEEN.** Katrina is top 0.5%
+on wind and pressure and top 32% on lifespan, 35% on distance. Seven ordinals
+scattered down a section hide that; seven bars in one column make it read
+instantly as *extreme in strength, ordinary in duration.* **This build delivers
+it as a side effect of the bars and states no new sentence about it.**
+
+**3. ONE STALE SIZE CLAIM SURVIVES IN A CODE COMMENT, AND THE SPEC IS ALREADY
+RIGHT.** `data/seasons.js:184` says the rankings file *"is 3.8 KB gzipped"*.
+Measured 2026-08-30: **26,294 bytes gzipped**, 84,707 raw. Stripping the two
+distance ladders gives **3,843 bytes** — the comment is the pre-§57.46 figure
+and it never moved when the distance rank landed. **The two distance ladders
+cost 22,451 gzipped bytes between them**, because they carry 1,583 and 1,730
+rungs against 18 to 344 for everything else.
+
+**==> §57.46 ALREADY FOUND THIS, ANALYSED IT PROPERLY AND NAMED THE LEVER, AND
+THIS ENTRY EXISTS ONLY TO CORRECT THE COMMENT. <==** Andy first wrote this up
+as an undocumented 6.8x surprise and as a claim that `NOW.md` carried the stale
+figure. **Both halves were wrong**: §57.46 records `14,389 raw / 3,846 gzipped
+became 84,708 raw / 26,297 gzipped` with the cause, the scale comparison
+against §57.40a's 38.5 KB places sidecar, and delta-encoding as the lever;
+`NOW.md` has never mentioned the file's size at all. **Read §57.46 before
+touching the size of this file, and do not re-derive it as a new finding.**
+§57.44's own figure is historically correct for what §57.44 built and reads as
+current — leave it, and let §57.46 be the answer.
+
+#### 57.54j The globe tether — scoped, not planned in detail
+
+**Aaron's ask: a dark charcoal text block on the globe, tethered to the exact
+spot an event happened, using the home glyph's tether.**
+
+**THE MACHINERY GENUINELY TRANSFERS.** `map/marker-home-geometry.js` is pure
+sphere-to-screen maths that does not know a marker exists —
+`surfaceNormalScreen`, `altitudeInRadii`, `measureGlobeRadiusPx`, `isOccluded`.
+`map/marker-home.js` is a DOM overlay positioned from MapLibre's projection on
+transform and opacity only, valid at every zoom because MapLibre owns the one
+camera both engines mirror. `map/chrome-avoid.js` already keeps an overlay
+clear of the UI.
+
+**WHAT DOES NOT TRANSFER IS COLLISION.** There is exactly one home. Katrina has
+three landfalls plus a peak plus a genesis, and five tethered blocks is a
+label-placement problem the home marker never had to solve — which is why the
+archive globe uses MapLibre symbol layers and `map/layers/name-placement.js`
+for its existing labels.
+
+**==> ANDY'S RECOMMENDATION IS ONE BLOCK AT A TIME, DRIVEN BY THE ROW THE
+READER TAPS. <==** Tap the peak row and the block flies to the peak; tap
+landfall 2 and it moves there. That makes it an inspection tool rather than a
+label layer, sidesteps collision entirely, and gives every row on the panel a
+globe action it does not have today. **Aaron has not chosen. Do not build
+before he has.**
+
+#### 57.54k The build order — reserved section numbers
+
+**Each step lands its own `— as built` section at the number below.** They are
+reserved here so a session picking up mid-build knows where to write and never
+renumbers. **A step that dies is a recorded deletion at its number, per
+§57.30's handling of step 8.**
+
+| Step | What | As-built § | Tier |
+|---|---|---|---|
+| 1 | The two faults in §57.54h, as two separate commits | §57.55 | 2 |
+| 2 | `ui/season-spine.js` — the bar, wired into the EXISTING `Where it ranks` rows | §57.56 | 2 |
+| 3 | The merged row; `Where it ranks` deleted; the scope note becomes a panel footnote | §57.57 | 2 |
+| 4 | ACE in plain English | §57.58 | 1 |
+| 5 | `ui/season-life-chart.js` — the chart and its day axis | §57.59 | 2 |
+| 6 | Numbered landfalls, matched to the chart, moved under it | §57.60 | 2 |
+| 7 | The section merge, the order, the icons, the default-open set | §57.61 | 2 |
+| 8 | The globe tether, if Aaron wants it | §57.62 | 3 |
+
+**==> STEP 2 WIRES THE BAR INTO THE OLD SECTION ON PURPOSE, AND THAT IS THE
+MOST IMPORTANT SEQUENCING DECISION HERE. <==** `CLAUDE.md`'s rule is that a
+change nobody can bisect is a change nobody can debug, and the bar is the one
+new drawing primitive in the whole build. Landing it inside the section that
+already exists means **the bar gets judged on glass on its own**, against a
+layout nobody has changed — so if it reads badly, the finding is about the bar
+rather than about seven other things that moved in the same push. Step 3 then
+restructures against a primitive Aaron has already accepted.
+
+**STEP 5 COMES AFTER STEP 3 AND BEFORE STEP 6 FOR THE SAME REASON.** The chart
+is the biggest single addition; it lands alone, is judged alone, and only then
+does the landfall list move to sit under it.
+
+**==> `ui/season-detail-markup.js` IS 688 LINES AGAINST §12's ~700 CEILING AND
+STEP 3 CANNOT FIT IN IT. <==** Measured 2026-08-30. The cut is part of the
+step's cost rather than a surprise inside it, and the seam is already visible:
+the FIGURE ROW — label, value, rank, bar — is one renderer with one job and is
+what steps 2, 3 and 4 all write into. **It goes into `ui/season-figure-row.js`
+and `ui/season-spine.js` from day one**, the way `ui/season-detail-markup.js`
+itself was split from the view on day one rather than at the ceiling.
+
+`ui/view-season-detail.js` is 506 and has room. `lib/rankings.js` is 477 and
+should gain nothing: the bar reads a ladder it already exports.
+
+**WHAT MUST BE VERIFIED ON GLASS, PER STEP, AND THE FIRST IS THE RISK IN EACH:**
+
+- **Step 2** — does a histogram under a row read as information or as
+  decoration; is the marker findable at both extremes of the bar.
+- **Step 3** — does label / figure / rank / bar read as ONE fact or as four.
+  **If it reads as four, the whole plan changes** and steps 5 to 7 should not
+  start.
+- **Step 4** — does the gloss earn 290 characters on every storm.
+- **Step 5** — the day labels on the longest track in the archive
+  (`Storm 3 1899`, 32 days 18 hours) and on a two-day storm.
+- **Step 6** — colliding landfall discs, counted before the code is written.
+- **Step 7** — whether three sections open by default is right, and whether
+  `Where it went` reads as an orphan at the bottom.
+
+**ONE THING ANDY EXPECTS TO COME BACK WRONG**, flagged in advance so its
+return is a data point rather than a surprise: **the bar shows the BASIN ladder
+while the rank text beside it cites the basin AND the overall count.** The
+footnote says which is which, and that may not be enough — a bar and a number
+in the same row describing two different populations is exactly the kind of
+quiet mismatch this panel has produced before. **The alternative is barring the
+`all` ladder instead, and it is a glass call rather than a rewrite.**

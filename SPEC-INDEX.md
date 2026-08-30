@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 344 numbered headings.
+Covering 11 files, 356 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -361,6 +361,18 @@ real home is the other row carrying the same section number.
 | `57.51` | &nbsp;&nbsp;The retired names, derived — as built | `SPEC-SEASONS-BUILD.md` | 7592-7624 |
 | `57.52` | &nbsp;&nbsp;The retired names on screen — as built | `SPEC-SEASONS-BUILD.md` | 7770-7781 |
 | `57.53` | &nbsp;&nbsp;One mark grammar across both screens — as built | `SPEC-SEASONS-BUILD.md` | 7995-8008 |
+| `57.54` | &nbsp;&nbsp;The storm panel, rebuilt — the plan | `SPEC-SEASONS-BUILD.md` | 8091-8113 |
+| `57.54a` | &nbsp;&nbsp;&nbsp;&nbsp;What was actually wrong — measured, not asserted | `SPEC-SEASONS-BUILD.md` | 8114-8166 |
+| `57.54b` | &nbsp;&nbsp;&nbsp;&nbsp;The decision — one row carries the figure, the rank AND the spread | `SPEC-SEASONS-BUILD.md` | 8167-8195 |
+| `57.54c` | &nbsp;&nbsp;&nbsp;&nbsp;The distribution bar — the spread costs zero new bytes | `SPEC-SEASONS-BUILD.md` | 8196-8247 |
+| `57.54d` | &nbsp;&nbsp;&nbsp;&nbsp;The life chart — the one hero | `SPEC-SEASONS-BUILD.md` | 8248-8282 |
+| `57.54e` | &nbsp;&nbsp;&nbsp;&nbsp;ACE, in plain English — the panel currently teaches nothing | `SPEC-SEASONS-BUILD.md` | 8283-8332 |
+| `57.54f` | &nbsp;&nbsp;&nbsp;&nbsp;The sections — nine become six, and the order is a narrative | `SPEC-SEASONS-BUILD.md` | 8333-8372 |
+| `57.54g` | &nbsp;&nbsp;&nbsp;&nbsp;What this is worth — measured on the prototype | `SPEC-SEASONS-BUILD.md` | 8373-8389 |
+| `57.54h` | &nbsp;&nbsp;&nbsp;&nbsp;Two live faults on `main`, found while reading the panel | `SPEC-SEASONS-BUILD.md` | 8390-8410 |
+| `57.54i` | &nbsp;&nbsp;&nbsp;&nbsp;Three things this archive holds and does not use | `SPEC-SEASONS-BUILD.md` | 8411-8446 |
+| `57.54j` | &nbsp;&nbsp;&nbsp;&nbsp;The globe tether — scoped, not planned in detail | `SPEC-SEASONS-BUILD.md` | 8447-8472 |
+| `57.54k` | &nbsp;&nbsp;&nbsp;&nbsp;The build order — reserved section numbers | `SPEC-SEASONS-BUILD.md` | 8473-8536 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -376,7 +388,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 464,297 | 83 |
+| `SPEC-SEASONS-BUILD.md` | 487,814 | 95 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 190,800 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
