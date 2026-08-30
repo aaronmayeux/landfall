@@ -2210,6 +2210,66 @@ polish-made crossing ran before the polish, so `cutAllLoops` is now a function
 and runs on both sides of it. On every ring measured the second pass finds
 nothing.
 
+#### Fault 4b — the split fixed the data and broke the picture
+
+**Aaron off glass, 2026-08-30: the bands overlapped and drew edges inside their
+own colour.** Breaking a band at the track's loops makes it several polygons.
+The line layer outlines every one of them, cut caps included, and the fill
+double-darkens where two meet — `swathFillOpacity` 0.14 over 0.14 reads as 0.26.
+
+| | outline buried inside a sibling piece |
+|---|---|
+| Jeanne 2004, before the split | 0% |
+| Jeanne 2004, split, unmerged | 12.2% |
+| **Jeanne 2004, merged** | **0%** |
+| Nadine 2012, split, unmerged | 17.7% |
+| Katrina 2005 | 0% throughout |
+
+**THE FIX IS THAT A BAND *IS* ONE REGION AND SHOULD BE ONE SHAPE.**
+`lib/polyunion.js` `unionRings` merges a band's pieces back together: insert the
+crossings, drop the arcs buried inside a sibling, walk the outside. Storms
+drawing any buried edge fall from 27 to 2.
+
+**IT IS A UNION OF A HANDFUL OF PIECES, NOT A GENERAL CLIPPER.** The inputs are
+consecutive stretches of one corridor, each already simple, and consecutive
+pieces share a track point so they properly overlap. There is no build step
+here and no library to lean on, and a general clipper is a great deal of code
+to carry for a shape this constrained.
+
+**IT ONLY MERGES INSIDE ONE RUN, AND A SUITE CAUGHT THAT.** A loop break is
+this file's own doing and the ground either side is continuously swept, so it
+heals. A break BETWEEN runs is the agency saying it published no ring for that
+hour, and healing across it would claim wind nobody recorded (§5) — even where
+the two runs overlap on the map. The first version merged both and
+`tools/test-season-swath.mjs`'s zero-row assertion went red. Harvey 2017's
+34 kt footprint stays in two pieces across his remnant days; Nadine 2012's
+four loops heal into one 34 kt shape while her 50 kt field, which stopped
+twice, stays in three.
+
+**IT FAILS BY GIVING UP, NOT BY GUESSING, AND TWO GUARDS DO IT.** Any anomaly
+returns null and the caller draws the separate pieces — the shape that shipped
+on 2026-08-29, so the worst case is a map already seen and never a missing
+band. `unionStepBudget` bounds the walk, because a walk that does not terminate
+is the one failure here that would freeze a phone rather than merely draw
+something wrong. **The containment check is the one that earns its place:** the
+result must contain every input. Without it, two pieces that never touch walk
+once round the first ring and close on a perfectly good polygon that has
+silently DROPPED the second — found by a constructed test on two squares a
+hundred units apart, which returned one of them.
+
+**A CONTACT THAT IS ONLY VERTEX-ON-EDGE IS REFUSED DELIBERATELY.** Two
+axis-aligned squares sharing a face touch at each other's corners and never
+properly cross. Handling that class is how a small union grows into a fragile
+general clipper, and it costs nothing here because the real inputs are smooth
+swept corridors.
+
+**TWO STORMS IN 175 YEARS STILL FALL BACK AND ARE NAMED.** Grace 2009 (50 kt)
+and Wanda 2021 (34 and 50 kt). Wanda's two 34 kt pieces cross each other **30
+times** — the corridor genuinely weaves through itself — and the walk lost area,
+which the containment check caught and refused. Both draw as separate pieces
+with a visible seam and a console warning. Hardening the walk for that case is
+real clipper work and is not priced.
+
 **THIS FILE IS SHARED WITH THE LIVE GLOBE.** It landed as its own pass with its
 own revert point and was never folded into a seasons change.
 

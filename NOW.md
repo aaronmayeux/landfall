@@ -1426,15 +1426,26 @@ nesting error falls 2.043% -> 1.529% with **zero regressions** and 45 extra
 polygons in 175 years. **`SPEC-MAP.md` §7.12 fault 4 is the as-built account —
 read that, not this.**
 
-**WHAT TO LOOK AT ON A PHONE, AND IT IS ONE QUESTION.** A broken band draws as
-two overlapping translucent polygons instead of one, at `swathFillOpacity` 0.14
-and `swathLineOpacity` 0.55. **Does the overlap double-darken, and does the cut
-edge read as an outline drawn through the middle of the band?** That was
-flagged as the unmeasured risk before the work started and it is still
-unmeasured — no tooling substitutes. Jeanne 2004, Hanna 2008 and Nadine 2012
-are the storms to look at; Katrina and Harvey are unchanged and are the
-comparison. If it reads badly the answer is a polygon union of the pieces,
-which is real work and has not been priced.
+**==> AND THE EDGES AARON SAW ARE GONE. FAULT 4b, SHIPPED 2026-08-30, NOT YET
+JUDGED ON GLASS. <==** He looked at the first version and said the bands
+overlapped and drew edges inside their own colour. He was right and it was all
+new: 12.2% of Jeanne's outline and 17.7% of Nadine's was boundary buried inside
+a sibling piece, against 0% before the split. `lib/polyunion.js` merges a
+band's pieces back into one shape. **Jeanne is at 0% and the storms drawing any
+buried edge fall from 27 to 2.**
+
+**WHAT TO LOOK AT ON A PHONE.** Jeanne 2004 and Nadine 2012 should now read as
+single continuous bands with no line crossing the interior and no darker lobe.
+Katrina and Harvey are the comparison — Harvey's 34 kt footprint is still
+deliberately TWO shapes, because NOAA published no ring across his remnant
+days, and that gap is a fact rather than a seam.
+
+**TWO STORMS STILL SHOW A SEAM AND THEY ARE NAMED: Grace 2009 and Wanda 2021.**
+Wanda's two 34 kt pieces cross each other 30 times, the union walk lost area,
+and the containment guard refused it rather than shipping a band missing
+ground. They draw as separate pieces with a console warning. Hardening the walk
+for that is real clipper work and is not priced — **worth a look on glass to
+decide whether two storms in 175 years is worth it.**
 
 **TWO RESIDUES ARE KNOWN, MEASURED, AND LEFT.** Neither is the reported bug.
 The first is hairline — about forty storms a few percent outside at 1 to 8 nm
