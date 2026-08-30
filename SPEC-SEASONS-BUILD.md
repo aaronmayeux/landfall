@@ -5929,10 +5929,11 @@ nothing is lost between chats.** Every item below is sized, has its cost
 measured or its measurement named, and can be picked up cold. Take one, build
 it, delete its entry, and write what IS in its place.
 
-**==> TIER 1 IS FINISHED. WHAT IS LEFT HERE IS FOUR TIER 2 ITEMS AND A REJECTED
-TIER 3. <==** Every Tier 1 item is built or deleted, with an as-built section
-each: §57.43, §57.44, §57.45, §57.46, §57.48, §57.49, §57.50. Read those rather
-than this list for anything already done.
+**==> WHAT IS LEFT OF THIS WHOLE BACKLOG IS ONE ITEM: TIER 2 NUMBER 5, THE
+RETIRED NAMES. <==** Every Tier 1 item is built or deleted, with an as-built
+section each: §57.43, §57.44, §57.45, §57.46, §57.48, §57.49, §57.50. Tier 2
+items 2, 3 and 4 are deleted (Aaron, 2026-08-29) and Tier 3 was never accepted.
+Read those sections rather than this list for anything already done.
 
 **The order below is not a priority order.** Aaron picks.
 
@@ -6054,24 +6055,49 @@ than loading the archive.
 The pattern §57.7a already established: 119 MB of mask on a runner, a small JSON
 on the phone.
 
+**==> ONE ITEM IS LEFT IN THIS TIER AND IT IS NUMBER 5. <==** Item 1 is built;
+items 2, 3 and 4 are deleted, each with its reason below.
+
 **1. The places sidecar — BUILT. §57.40a is the as-built account.**
 
-**2. People in the path.** `lib/population-count.js` already counts towns inside
-a polygon. Run it against each storm's wind swath on the runner:
-*"At least 4.1 million people lived inside the 64-knot footprint."*
-**Two hard limits that must be on screen, not in a comment.** Wind radii do not
-exist in HURDAT2 before **2004** — measured, first year with any radii is 2004 —
-so this covers twenty years of a 175-year archive and everything older needs the
-§57.25 rule 2 sentence saying why. And the town list is a known undercount
-(about 3.04 bn against a real 8.1 bn), so the figure is `at least`, never a
-census.
+**==> ITEMS 2, 3 AND 4 ARE DELETED. AARON'S CALL, 2026-08-29. <==** People in
+the path, countries and states affected, and land area under hurricane-force
+wind. **Their rows are deleted rather than ticked and the numbers 2, 3 and 4
+stay permanent addresses.** Two different reasons, and both are recorded because
+the items read perfectly on paper and will otherwise be proposed again cold.
 
-**3. Countries and states affected.** Every admin-1 unit the track passed within
-100 km of, as a list. Uses §57.40's polygons. **Works for all 175 years**, unlike
-item 2 — this is the one to build first of the three.
+**ITEM 2 WAS REFUSED ON A MEASUREMENT, AND IT IS THE ONE WORTH READING.** Aaron
+asked whether the headcount would use the population at the time of the storm.
+It would not, and the file is worse than that: `assets/hazards/population-towns.json`
+is a flat `[lon, lat, population]` array with **no year attached to any figure
+anywhere**, in the file, in `tools/build-population.mjs`, or in the GeoNames
+packaging behind it. Those figures are whatever census each country last filed,
+so they are of **unknown and mixed vintage** and there is nothing to age-adjust
+from even if somebody wanted to.
 
-**4. Land area under hurricane-force wind.** Square miles. 2004+ only, same
-cliff as item 2.
+**That stacks two errors on one number.** The vintage is undated and the drift
+is not uniform — coastal Florida and the Texas Gulf have grown far faster than
+any average, which is exactly where the storms are. And the list is already only
+a **37% count**: about 3.04 bn against a real 8.1 bn, because it holds only
+named places of 1,000 or more, and the gap is widest in rural Louisiana and the
+Bay of Bengal deltas. *"4.1 million people"* would be a floor of unknown depth
+and a snapshot of unknown date, printed in the voice of a census. Nothing about
+it would invite a second look.
+
+**AND ITS SIZING IN THIS SECTION WAS WRONG.** It was filed as one runner job.
+Doing it honestly means historical gridded population with epochs covering 2004
+onward, which is a raster rather than a town list — the *"expensive accurate
+answer"* `lib/population-count.js` already names in its own comments as a
+separate decision. Nothing in the sandbox can reach such a product to size it,
+so nothing about its viability is claimed here.
+
+**ITEMS 3 AND 4 WERE REFUSED ON JUDGEMENT, NOT ON A MEASUREMENT.** Aaron,
+2026-08-29: they do not bring enough to the app to be worth the weight. Neither
+had a technical fault — item 3 worked for all 175 years off polygons already in
+the repo, and item 4 shared item 2's 2004 cliff but none of its honesty problem,
+since square miles of ground carry no population in them. **They are recorded as
+a product call so that a later session does not re-derive their feasibility and
+mistake it for a reason to build them.**
 
 **5. Retired names.** Already wanted as a wall chip and blocked on a list that
 does not exist in this repo (`NOW.md`, §57.36a). A runner job can fetch ~120

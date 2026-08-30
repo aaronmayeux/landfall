@@ -462,18 +462,27 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> THE ARCHIVE'S NEXT WAVE IS WRITTEN DOWN IN FULL. START AT §57.42. <==**
-Aaron's ask, 2026-08-29: make the past-storm drawer the thing people go to for
-research. **§57.42 is the whole backlog** — Tier 1 (free arithmetic) and Tier 2
-(one runner job each), every item sized and independently buildable. Take ONE,
-build it, delete its entry, write what IS in its place. Tier 3 is recorded as
-NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
+**==> THE ARCHIVE BACKLOG IS DOWN TO ONE ITEM: §57.42 TIER 2 NUMBER 5, THE
+RETIRED NAMES. <==** Aaron's ask on 2026-08-29 was to make the past-storm drawer
+the thing people go to for research, and §57.42 held the whole plan. **Tier 1 is
+finished** — as-built at §57.43, §57.44, §57.45, §57.46, §57.48, §57.49 and
+§57.50, read those rather than this. **Tier 2 item 1 is built (§57.40a), items
+2, 3 and 4 are deleted, and Tier 3 was never accepted.**
 
-**==> TIER 1 IS FINISHED. EVERY ITEM IN IT IS BUILT OR DELETED. <==** The
-as-built sections are §57.43, §57.44, §57.45, §57.46, §57.48, §57.49 and
-§57.50 — **read those, not this.** Tier 2 item 1 is also done. **What is left
-of §57.42 is four Tier 2 items, each one runner job, and a Tier 3 recorded as
-NOT ACCEPTED.**
+**==> ITEMS 2, 3 AND 4 WERE DROPPED ON 2026-08-29 AND §57.42 CARRIES THE
+REASONING FOR EACH. <==** In one line: **item 2, people in the path, was refused
+on a measurement** — the town file carries no year on any figure, so a headcount
+would be a 37% floor of unknown vintage printed in the voice of a census — while
+**items 3 and 4 were refused on judgement**, Aaron's call that they did not
+bring enough to the app. Neither of those two had a technical fault, which is
+exactly why the product call is written down: a later session that re-derives
+their feasibility must not mistake that for a reason to build them.
+
+**THE ONE REMAINING ITEM IS BLOCKED ON A LIST, NOT ON CODE.** The ~120 retired
+storm names do not exist anywhere in this repo, and §57.17 rejects scraping
+NHC's page for them because a restyle would silently empty the feature.
+**Aaron can paste a list, or a runner job can fetch one.** It unblocks the wall
+chip §57.36a holds back AND a drawer sentence.
 
 **==> AND THE GROUPING'S OWN PREDICTION ABOUT GROUP C WAS WRONG ABOUT BOTH
 ITEMS, WHICH IS THE PART WORTH CARRYING FORWARD. <==** It said Group C's two
@@ -490,13 +499,6 @@ deleted, along with the `.slice()` it fed and both assertions enforcing it.
 **An eighth rank is no longer a glass call** — a statistic added to
 `RANK_STATS` lands on the panel by itself. §57.48 holds the reasoning, and four
 spec sections that described the cap as current behaviour were corrected.
-
-**==> AND ITEM 7 IS NOT THE CHEAP ONE IT LOOKS LIKE. <==** Northernmost and
-southernmost reach are free arithmetic, but *where it died* would print bare
-coordinates — the exact fault glass sent back on the `Landfalls` list — and
-§57.40a's places sidecar names only genesis and landfalls. Naming a death
-point is a runner pass, which moves item 7 out of Tier 1 in everything but the
-table it sits in.
 
 **==> ITEM 11 IS BUILT AND CONFIRMED ON GLASS, 2026-08-29. AARON: "LOOKS
 GREAT." NOTHING HERE IS WAITING ON HIM. <==** Every figure on the archive's
