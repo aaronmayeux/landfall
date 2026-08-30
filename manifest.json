@@ -1,25 +1,26 @@
 {
-  "runAt": "2026-08-30T17:36:34.805Z",
+  "runAt": "2026-08-30T21:14:28.531Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 23,
+      "listed": 24,
       "eligible": 18,
-      "stored": 2,
-      "unchanged": 16,
+      "stored": 3,
+      "unchanged": 15,
       "failed": 0,
       "skipped": [
         "bal952026.dat — invest — number is reused within a season",
         "bal962026.dat — invest — number is reused within a season",
         "bal972026.dat — invest — number is reused within a season",
         "bep932026.dat — invest — number is reused within a season",
-        "bep942026.dat — invest — number is reused within a season"
+        "bep942026.dat — invest — number is reused within a season",
+        "bep952026.dat — invest — number is reused within a season"
       ],
       "files": {
         "btk/2026/bal012026.dat": "unchanged (304)",
         "btk/2026/bal022026.dat": "unchanged (304)",
         "btk/2026/bal032026.dat": "unchanged (304)",
-        "btk/2026/bal042026.dat": "unchanged (304)",
+        "btk/2026/bal042026.dat": "stored 6119 bytes",
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
         "btk/2026/bep012026.dat": "unchanged (304)",
@@ -32,18 +33,18 @@
         "btk/2026/bep082026.dat": "unchanged (304)",
         "btk/2026/bep092026.dat": "unchanged (304)",
         "btk/2026/bep102026.dat": "unchanged (304)",
-        "btk/2026/bep112026.dat": "stored 7415 bytes",
-        "btk/2026/bep122026.dat": "stored 4391 bytes"
+        "btk/2026/bep112026.dat": "stored 8063 bytes",
+        "btk/2026/bep122026.dat": "stored 4607 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
       "storms": 4,
-      "linesAdded": 4,
+      "linesAdded": 1,
       "files": {
-        "jtwc/2026/ep1126.jsonl": "+1",
-        "jtwc/2026/ep1226.jsonl": "+1",
-        "jtwc/2026/wp2026.jsonl": "+1",
+        "jtwc/2026/ep1126.jsonl": "already held",
+        "jtwc/2026/ep1226.jsonl": "already held",
+        "jtwc/2026/wp2026.jsonl": "already held",
         "jtwc/2026/wp2126.jsonl": "+1"
       },
       "faults": []
