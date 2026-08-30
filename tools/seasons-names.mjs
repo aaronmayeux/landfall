@@ -45,7 +45,7 @@
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 import { parseNamesPage } from './seasons-names-parse.mjs';
@@ -56,6 +56,16 @@ const USER_AGENT =
 const TIMEOUT_MS = 45_000;
 
 const OUT_FILE = join('lib', 'season-names-data.js');
+
+/**
+ * ==> THE CENTRAL PACIFIC LISTS GO IN `tools/`, NOT `lib/`, AND THAT IS §12.
+ * <== Every import in `lib/` ships to every visitor. Nothing the app draws
+ * reads these 48 names — they exist so `tools/seasons-retired.mjs` can tell a
+ * name still in service from a name withdrawn (§57.51). Putting them beside
+ * the rosters would post 48 names to every phone to answer a question only a
+ * runner ever asks.
+ */
+const CP_FILE = join('tools', 'cpacific-lists.mjs');
 
 const ROOT = resolve(process.argv[2] || '.');
 const REPORT = resolve(process.argv[3] || '/tmp/names-report');
@@ -265,6 +275,55 @@ ${body.join('\n')}
 `;
 }
 
+function renderCpacific(lists) {
+  const blocks = lists.map((names, i) => {
+    const rows = [];
+    let line = '';
+    for (const n of names) {
+      const piece = `'${n}', `;
+      if (line.length + piece.length > 68) { rows.push(line.trimEnd()); line = ''; }
+      line += piece;
+    }
+    if (line.trim()) rows.push(line.trimEnd().replace(/,$/, ''));
+    return `  /* List ${i + 1} */\n  [\n${rows.map((l) => `    ${l}`).join('\n')}\n  ],`;
+  });
+
+  return `/**
+ * cpacific-lists.mjs — GENERATED. DO NOT EDIT BY HAND.
+ *
+ * The four Central Pacific name lists currently in service, written by
+ * \`tools/seasons-names.mjs\` from NHC's own names page:
+ *   ${SOURCE}
+ *
+ * ==> THIS IS NOT A ROSTER AND MUST NEVER BECOME ONE. <== §57.12. CPHC runs
+ * these four lists one after another across season boundaries — when the
+ * bottom of one is reached the next name is the top of the next — so "the
+ * names for 2026" is a question with no answer in this basin. What IS well
+ * defined, and all this file claims, is the flat set of names in service.
+ *
+ * ==> IT LIVES IN tools/ BECAUSE NOTHING THE APP DRAWS READS IT. <== §12: an
+ * import in \`lib/\` is bytes on every phone. \`tools/seasons-retired.mjs\` is the
+ * only reader — a name still in service somewhere cannot be a retired name,
+ * and without this set every Central Pacific name that ever crossed into the
+ * east Pacific best-track record falls out of that subtraction looking
+ * retired. Measured: Ela, Ulika, Lana and Akoni all do.
+ *
+ * ==> REPLACED WHOLE ON EVERY RUN, NEVER MERGED. <== A withdrawn name has to
+ * be able to LEAVE this file, or the job that reads it can never see a
+ * Central Pacific retirement happen.
+ *
+ * Generated ${new Date().toISOString()}.
+ */
+
+export const CPACIFIC_LISTS = Object.freeze([
+${blocks.join('\n')}
+].map(Object.freeze));
+
+/** Every Central Pacific name in service, flattened. */
+export const CPACIFIC_IN_SERVICE = Object.freeze(CPACIFIC_LISTS.flat());
+`;
+}
+
 /* ---------------------------------------------------------------------------
  * 5. Run.
  * ------------------------------------------------------------------------ */
@@ -278,12 +337,13 @@ const html = await fetchPage();
 let written = null;
 
 if (html) {
-  const { rosters, faults: parseFaults } = parseNamesPage(html);
+  const { rosters, cpacific, faults: parseFaults } = parseNamesPage(html);
   faults.push(...parseFaults);
 
   const counted = Object.entries(rosters)
     .map(([b, y]) => `${b}: ${Object.keys(y).length} years`).join(', ');
   notes.push(`parsed ${counted || 'nothing'}`);
+  notes.push(`cpacific: ${cpacific.length} lists, ${cpacific.flat().length} names in service`);
 
   const used = await usedNamesFromMirror();
   /* The current season, taken from the earliest year the page publishes — it
@@ -311,6 +371,32 @@ if (html) {
         written = merged;
         decision = 'commit';
       }
+
+      /* ==> THE CENTRAL PACIFIC FILE IS REPLACED, NEVER MERGED, AND THAT IS
+       * THE OPPOSITE RULE FROM THE ROSTERS ABOVE. <== A roster is keyed on a
+       * year, so an old year is still true and losing it loses history. These
+       * four lists have no year on them: they are the names in service NOW,
+       * and merging would keep a withdrawn name in service forever — which is
+       * exactly the silent mask §57.51 exists to avoid. The shape gates in the
+       * parser are what stand in for the merge's protection. */
+      const cpPath = join(ROOT, CP_FILE);
+      const cpText = renderCpacific(cpacific);
+      /* ==> MAKE THE DIRECTORY FIRST. <== `writeFile` into a directory that
+       * does not exist throws, and an unhandled throw here kills the script
+       * BEFORE it writes its summary — so the runner shows a stack trace, no
+       * report, and a failure indistinguishable from the network being down.
+       * That is the same trap `usedNamesFromMirror` already guards against,
+       * and this hit it the first time the job wrote a second file. */
+      await mkdir(dirname(cpPath), { recursive: true });
+      const cpBefore = existsSync(cpPath) ? await readFile(cpPath, 'utf8') : '';
+      const cpStrip = (s) => s.slice(s.indexOf('export const CPACIFIC_LISTS'));
+      if (cpBefore && cpStrip(cpBefore) === cpStrip(cpText)) {
+        notes.push('the Central Pacific lists are unchanged');
+      } else {
+        await writeFile(cpPath, cpText, 'utf8');
+        notes.push(`wrote ${CP_FILE}`);
+        decision = 'commit';
+      }
     }
   }
 }
@@ -335,9 +421,20 @@ await writeFile(join(REPORT, 'summary.md'), summary.join('\n') + '\n', 'utf8');
 await writeFile(join(REPORT, 'decision.txt'), decision + '\n', 'utf8');
 
 if (decision === 'commit') {
-  const years = Object.values(written).flatMap((y) => Object.keys(y).map(Number));
+  /* ==> EITHER FILE CAN MOVE ON ITS OWN. <== The rosters and the Central
+   * Pacific lists come off one page but change on different occasions, so the
+   * subject line has to be built from what actually moved rather than
+   * assuming the rosters did. Reading `written` unconditionally threw here
+   * the first time the Central Pacific file was created against unchanged
+   * rosters. */
+  const years = written
+    ? Object.values(written).flatMap((y) => Object.keys(y).map(Number))
+    : [];
+  const subject = years.length
+    ? `Name rosters refreshed from NHC (${Math.min(...years)}\u2013${Math.max(...years)})`
+    : 'Central Pacific name lists refreshed from NHC';
   await writeFile(join(REPORT, 'commit-message.txt'),
-    `Name rosters refreshed from NHC (${Math.min(...years)}\u2013${Math.max(...years)})\n\n` +
+    `${subject}\n\n` +
     `Generated by tools/seasons-names.mjs from ${SOURCE}.\n` +
     `Verified position for position against samples/seasons-live/.\n`, 'utf8');
 }

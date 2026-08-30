@@ -41,7 +41,7 @@ const eq = (what, got, want) => ok(
 const scratch = [];
 
 /** A throwaway repo root carrying only what the job touches. */
-function makeRoot(html, existingData = null) {
+function makeRoot(html, existingData = null, existingCp = null) {
   const dir = mkdtempSync(join(tmpdir(), 'names-job-'));
   scratch.push(dir);
   mkdirSync(join(dir, 'lib'), { recursive: true });
@@ -52,6 +52,12 @@ function makeRoot(html, existingData = null) {
   cpSync(join(ROOT, 'config'), join(dir, 'config'), { recursive: true });
   rmSync(join(dir, 'lib', 'season-names-data.js'), { force: true });
   if (existingData) writeFileSync(join(dir, 'lib', 'season-names-data.js'), existingData, 'utf8');
+  /* ==> THE JOB WRITES TWO FILES NOW AND THE "NO NEWS" CASE NEEDS BOTH. <==
+   * Seeding only the rosters left the Central Pacific file missing, so the
+   * second run legitimately had something to write and asked to commit —
+   * which read as the no-news rule having rotted when it had not. */
+  mkdirSync(join(dir, 'tools'), { recursive: true });
+  if (existingCp) writeFileSync(join(dir, 'tools', 'cpacific-lists.mjs'), existingCp, 'utf8');
   cpSync(join(ROOT, 'samples', 'seasons-live'), join(dir, 'samples', 'seasons-live'),
     { recursive: true });
   writeFileSync(join(dir, 'page.shtml'), html, 'utf8');
@@ -78,6 +84,9 @@ function run(dir) {
     data: existsSync(join(dir, 'lib', 'season-names-data.js'))
       ? readFileSync(join(dir, 'lib', 'season-names-data.js'), 'utf8')
       : null,
+    cp: existsSync(join(dir, 'tools', 'cpacific-lists.mjs'))
+      ? readFileSync(join(dir, 'tools', 'cpacific-lists.mjs'), 'utf8')
+      : null,
   };
 }
 
@@ -98,6 +107,21 @@ ok('and it is marked generated',
 ok('the mirror check ran and matched',
   r1.summary.includes('spent names match the page position for position'));
 
+/* ==> THE CENTRAL PACIFIC LISTS COME OFF THE SAME PAGE AND LAND IN tools/.
+ * <== §12: nothing the app draws reads them, so shipping them beside the
+ * rosters would post 48 names to every phone to answer a question only a
+ * runner asks. `tools/seasons-retired.mjs` is the only reader. */
+ok('and writes the Central Pacific lists', typeof r1.cp === 'string');
+{
+  const mod = await import(join(first, 'tools', 'cpacific-lists.mjs'));
+  eq('four lists', mod.CPACIFIC_LISTS.length, 4);
+  eq('twelve names on each', mod.CPACIFIC_LISTS.map((l) => l.length), [12, 12, 12, 12]);
+  eq('forty-eight names in service', mod.CPACIFIC_IN_SERVICE.length, 48);
+  ok('and they are frozen', Object.isFrozen(mod.CPACIFIC_LISTS));
+  ok('the asterisk marking this season\'s first name is stripped',
+    mod.CPACIFIC_IN_SERVICE.includes('LALA') && !mod.CPACIFIC_IN_SERVICE.some((n) => n.includes('*')));
+}
+
 /* The generated file must be a module the app can actually import. */
 {
   const mod = await import(join(first, 'lib', 'season-names-data.js'));
@@ -117,7 +141,7 @@ ok('the mirror check ran and matched',
  * of thing that rots quietly.
  * ------------------------------------------------------------------------ */
 
-const second = makeRoot(HTML, r1.data);
+const second = makeRoot(HTML, r1.data, r1.cp);
 const r2 = run(second);
 eq('the same page a month later exits clean', r2.code, 0);
 eq('and does NOT ask to commit', r2.decision, 'skip');

@@ -37,17 +37,29 @@
  * a column and we silently shifted every list by one year" and a loud failure.
  * If a cell's `headers` does not name a header we found, this refuses.
  *
- * ==> CENTRAL PACIFIC IS PARSED AND THEN DISCARDED. <== §57.12. Its four lists
- * run one after another across season boundaries, so "the names for 2026" has
- * no answer there and a roster with ghosts on it would invent a structure the
- * basin does not have. It is read only so a fault in that table is visible
- * rather than mistaken for a missing section.
+ * ==> CENTRAL PACIFIC IS PARSED AS FOUR FLAT LISTS AND NEVER AS A ROSTER.
+ * <== §57.12 still stands: its four lists run one after another across season
+ * boundaries, so "the names for 2026" has no answer there and a per-year
+ * roster would invent a structure the basin does not have. What IS well
+ * defined is the flat set of 48 names currently in service, and §57.51 needs
+ * exactly that — a name in service somewhere cannot be a retired name, and
+ * without this set every Central Pacific name that ever crossed into the east
+ * Pacific record falls out of the subtraction looking retired.
  */
 
 /** Atlantic skips Q, U, X, Y and Z — 21 names. */
 export const ATLANTIC_LETTERS = 'ABCDEFGHIJKLMNOPRSTVW';
 /** East Pacific skips only Q and U — 24 names. */
 export const EPACIFIC_LETTERS = 'ABCDEFGHIJKLMNOPRSTVWXYZ';
+/**
+ * Central Pacific uses Hawaiian names on twelve letters, in this order, on
+ * every one of its four lists. Measured off the real page 2026-08-24, not
+ * assumed — the sequence is not alphabetical past the first few and there is
+ * no rule to derive it from.
+ */
+export const CPACIFIC_LETTERS = 'AEHIKLMNOPUW';
+/** Four lists, twelve names each. Both figures are gates, not descriptions. */
+export const CPACIFIC_LIST_COUNT = 4;
 
 /** Anchor name on the page -> the basin key `seasons/index.json` uses. */
 const SECTIONS = Object.freeze([
@@ -181,12 +193,99 @@ export function parseNamesPage(html) {
     faults.push(...r.faults);
   }
 
-  /* Central Pacific: presence only. §57.12 — we never build a roster from it,
-   * but if that section vanishes the page has changed enough to look at. */
-  const cnp = sectionOf(String(html || ''), 'cnp');
-  if (!cnp || !firstTable(cnp)) {
+  const cp = parseCentralPacific(String(html || ''));
+  faults.push(...cp.faults);
+
+  return { rosters, cpacific: cp.lists, faults };
+}
+
+/**
+ * The four Central Pacific lists, in page order.
+ *
+ * ==> THE COLUMNS ARE HEADED "List 1".."List 4", NOT YEARS. <== That is the
+ * whole difference from the two rosters above and it is why this cannot reuse
+ * `parseTable`: there is no year to key on and no year to sanity-check, so the
+ * gates have to be the shape instead — four columns, twelve names each, the
+ * measured initial sequence, and no name appearing on two lists.
+ *
+ * @param {string} html  the exact bytes of aboutnames.shtml
+ * @returns {{ lists: string[][], faults: string[] }}
+ */
+export function parseCentralPacific(html) {
+  const faults = [];
+  const section = sectionOf(String(html || ''), 'cnp');
+  if (!section) {
     faults.push('the Central Pacific section is missing — the page has been restructured');
+    return { lists: [], faults };
+  }
+  const table = firstTable(section);
+  if (!table) {
+    faults.push('the Central Pacific section has no table');
+    return { lists: [], faults };
   }
 
-  return { rosters, faults };
+  /* Same id-not-position rule the rosters use: a column is matched to its
+   * header by `headers=`, so a column added or reordered fails loudly instead
+   * of shifting a whole list one place along. */
+  const heads = new Map();
+  for (const m of table.matchAll(/<th\s+([^>]*)>([\s\S]*?)<\/th>/gi)) {
+    const id = /id=["']([^"']+)["']/i.exec(m[1])?.[1];
+    if (!id) { faults.push('cpacific: a header cell has no id'); continue; }
+    heads.set(id, stripTags(m[2]));
+  }
+
+  const byLabel = new Map();
+  for (const m of table.matchAll(/<td\s+([^>]*)>([\s\S]*?)<\/td>/gi)) {
+    const key = /headers=["']([^"']+)["']/i.exec(m[1])?.[1];
+    if (!key) { faults.push('cpacific: a name column has no headers= attribute'); continue; }
+    if (!heads.has(key)) {
+      faults.push(`cpacific: column "${key}" names a header that does not exist`);
+      continue;
+    }
+    const label = heads.get(key);
+    const n = /^List\s+(\d+)$/i.exec(label);
+    if (!n) {
+      faults.push(`cpacific: column "${key}" is headed "${label}", which is not a list number`);
+      continue;
+    }
+    /* The asterisk marks the name this season starts on. It is page furniture
+     * and is stripped by the same rule the rosters use. */
+    const names = m[2].split(/<br\s*\/?>/i)
+      .map((c) => stripTags(c).replace(/\*+$/, '').trim())
+      .filter(Boolean)
+      .map((s) => s.toUpperCase());
+
+    const idx = Number(n[1]);
+    if (byLabel.has(idx)) faults.push(`cpacific: list ${idx} appears twice`);
+    byLabel.set(idx, names);
+
+    if (names.length !== CPACIFIC_LETTERS.length) {
+      faults.push(`cpacific list ${idx}: ${names.length} names, expected ${CPACIFIC_LETTERS.length}`);
+    }
+    const initials = names.map((s) => s[0]).join('');
+    if (initials !== CPACIFIC_LETTERS.slice(0, initials.length)) {
+      faults.push(`cpacific list ${idx}: initials read "${initials}", expected "${CPACIFIC_LETTERS}"`);
+    }
+    for (const s of names) {
+      if (!/^[A-Z][A-Z'-]*$/.test(s)) faults.push(`cpacific list ${idx}: "${s}" is not a name`);
+    }
+  }
+
+  const nums = [...byLabel.keys()].sort((a, b) => a - b);
+  if (nums.length !== CPACIFIC_LIST_COUNT) {
+    faults.push(`cpacific: ${nums.length} lists, expected ${CPACIFIC_LIST_COUNT}`);
+  }
+  for (let i = 0; i < nums.length; i++) {
+    if (nums[i] !== i + 1) { faults.push(`cpacific: the lists are numbered ${nums.join(', ')}`); break; }
+  }
+
+  const lists = nums.map((i) => byLabel.get(i));
+  /* One name on two lists would be a misread column, and it would also make
+   * the "in service" set smaller than it looks. */
+  const flat = lists.flat();
+  if (new Set(flat).size !== flat.length) {
+    faults.push('cpacific: the same name appears on more than one list');
+  }
+
+  return { lists, faults };
 }

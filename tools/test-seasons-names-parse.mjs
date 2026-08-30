@@ -140,13 +140,76 @@ ok('nor does anything else', Object.keys(good.rosters).length === 2);
     complained(r.faults, 'epacific: no <a name="enp">'));
 }
 
+/* ---------------------------------------------------------------------------
+ * THE CENTRAL PACIFIC TABLE.
+ *
+ * ==> IT USED TO BE CHECKED FOR PRESENCE ONLY AND IS NOW PARSED. <== §57.51
+ * needs the 48 names in service, because a Central Pacific name recorded under
+ * an east Pacific id falls out of the retired-names subtraction looking
+ * retired without them. So it gets the same treatment as the two rosters: the
+ * shape is the gate, since there is no year here to sanity-check against.
+ * ------------------------------------------------------------------------ */
+
 {
-  /* Central Pacific removed — not used, but its absence means the page has
-   * been restructured enough that nothing here should be trusted. */
+  /* Central Pacific removed. Nothing here should be trusted after that. */
   const broken = HTML.replace('<a name="cnp"></a>', '');
   const r = parseNamesPage(broken);
   ok('losing the Central Pacific section is reported',
     complained(r.faults, 'the page has been restructured'));
+  eq('and no lists come back', r.cpacific, []);
+}
+
+{
+  const r = parseNamesPage(HTML);
+  eq('the real page yields four Central Pacific lists', r.cpacific.length, 4);
+  eq('of twelve names each', r.cpacific.map((l) => l.length), [12, 12, 12, 12]);
+  eq('starting AKONI, AKA, ALIKA, ANA', r.cpacific.map((l) => l[0]),
+    ['AKONI', 'AKA', 'ALIKA', 'ANA']);
+  ok('with the season-start asterisk stripped off LALA',
+    r.cpacific[0].includes('LALA') && !r.cpacific.flat().some((n) => n.includes('*')));
+}
+
+{
+  /* A name lost from a list. The count is the only thing that can see it —
+   * there is no year and no full alphabet to check against. */
+  const broken = HTML.replace('Ema<br>', '');
+  const r = parseNamesPage(broken);
+  ok('a missing Central Pacific name is caught by the count',
+    complained(r.faults, 'cpacific list 1: 11 names'));
+}
+
+{
+  /* A whole list gone. */
+  const broken = HTML.replace('<th id="c4">List 4</th>', '');
+  const r = parseNamesPage(broken);
+  ok('losing a whole list is refused', complained(r.faults, 'cpacific: 3 lists, expected 4'));
+}
+
+{
+  /* A column headed something that is not a list number. */
+  const broken = HTML.replace('<th id="c2">List 2</th>', '<th id="c2">Reserve</th>');
+  const r = parseNamesPage(broken);
+  ok('a column headed something else is refused',
+    complained(r.faults, 'is headed "Reserve"'));
+}
+
+{
+  /* ==> THE SAME NAME ON TWO LISTS. <== It would be a misread column, and it
+   * would also make the set of names in service smaller than it looks — which
+   * turns the missing name into a false retirement downstream. */
+  const broken = HTML.replace('Aka<br>', 'Akoni<br>');
+  const r = parseNamesPage(broken);
+  ok('a name on two lists is refused',
+    complained(r.faults, 'appears on more than one list'));
+}
+
+{
+  /* The initial sequence is not alphabetical past the first few, so it is
+   * measured rather than derived — and a shifted column breaks it. */
+  const broken = HTML.replace('Hone<br>', 'Bone<br>');
+  const r = parseNamesPage(broken);
+  ok('a Central Pacific name on the wrong initial is refused',
+    complained(r.faults, 'cpacific list 1: initials read'));
 }
 
 {
