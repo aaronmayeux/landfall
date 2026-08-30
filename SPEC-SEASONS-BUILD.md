@@ -8781,10 +8781,14 @@ the pair by a wide margin.
 keyboard user tabbing a panel that already has cyan strokes drawn into it
 cannot tell which one moved.
 
-**THE SEPIA VALUES ARE THE ONES THAT MATTER.** The archive globe is sepia and
-is the only place this bar is drawn today. Its mark is a deep ink rather than a
-brighter parchment, because on a warm light panel the readable direction is
-DOWN.
+**THE MARK IS THE THEME'S OWN `textPrimary`, IN ALL THREE.** The ink that theme
+already trusts against its own panel.
+
+**==> THE FIRST VERSION OF THIS PARAGRAPH WAS WRONG AND SHIPPED A MARK AT
+2.19:1. SEE §57.57. <==** It claimed the sepia mark should be a deep ink
+*"because on a warm light panel the readable direction is DOWN"*, and the sepia
+panel is not light. That sentence is deleted rather than annotated, per this
+file's own rule.
 
 #### 57.56g Three mutation runs, and one of them found a hole in the suite
 
@@ -8821,3 +8825,58 @@ is barring the `all` ladder instead, and it is a swap rather than a rewrite.**
 §57.55a's comments. Step 2 does not touch that file so it is not blocking, but
 **the cut §57.54k scheduled inside step 3 now has to happen before anything
 else lands there.**
+
+### 57.57 The distribution bar's mark failed contrast on the archive panel
+
+**A BUG FIX ON §57.56's TOKENS, LANDED AS ITS OWN COMMIT** — §12's rule that a
+bug fix never rides inside the feature work that follows it. Found by Aaron on
+glass, 2026-08-30, the day §57.56 shipped.
+
+**==> THE MARK WAS A DEEP BROWN ON A NEAR-BLACK BROWN PANEL. <== 2.19:1,
+against WCAG 2.1 SC 1.4.11's 3:1 floor for a non-text graphic** — on the one
+element the whole bar exists to make findable. Nothing crashed and nothing was
+missing. It simply could not be seen.
+
+**AND SEPIA WAS NOT THE ONLY ONE. TWO OF THE THREE THEMES FAILED** — light was
+at 2.32:1 and nobody had looked, because the archive only ever draws this bar
+in sepia and the other two were reasoned about rather than measured.
+
+| Theme | Panel (`ocean`) | Mark that shipped | Mark now | Was | Is |
+|---|---|---|---|---|---|
+| SEPIA | `#1C1409` | `#7A3E12` | `#F3E7D2` | **2.19:1** | **14.89:1** |
+| DARK | `#070D18` | `#F0B23C` | `#E8F1F8` | 10.32:1 | **17.01:1** |
+| LIGHT | `#C2C6CA` | `#B4700C` | `#15181B` | **2.32:1** | **10.37:1** |
+
+**==> THE CAUSE WAS REASONING FROM THE THEME'S NAME INSTEAD OF READING ITS
+PANEL COLOUR. <==** §57.56f justified the sepia value with *"on a warm light
+panel the readable direction is DOWN"*. Sepia is not a light theme.
+`config/tokens.js` says so in the token's own trailing comment — *"the
+parchment's SHADOW, not a night sky"* — and that comment was never opened.
+**`CLAUDE.md`'s rule about never presenting an unverified inference as a
+confirmed fact, with a colour under it.** The claim was written into the spec
+in the same confident voice as the measured figures beside it, which is what
+made it survive review.
+
+**THE RULE THAT REPLACED THE GUESS IS THE SAME IN EVERY THEME: the mark is the
+ink that theme already trusts against its own panel** — its `textPrimary`. It
+cannot go wrong per-theme because it is not a per-theme decision any more.
+
+**AND THE GUARD IS A COMPUTED RATIO RATHER THAN A REVIEWED HEX.**
+`tools/test-season-spine.mjs` reads `ocean` and `spineMark` out of all three
+theme objects, computes the WCAG ratio, and fails under 3:1. **The panel colour
+is read from the token rather than typed into the test** — a hardcoded
+background would be a second copy free to go stale, which is how this was born.
+**Mutation-checked: restoring `#7A3E12` turns it red at 2.19:1.**
+
+**==> THE FILL IS DELIBERATELY NOT HELD TO 3:1, AND THAT IS STATED RATHER THAN
+QUIETLY SKIPPED. <==** Composited over its panel the sepia fill measures about
+**2.1:1**. Raising it enough to clear the floor would change a look Aaron
+judged and accepted. It is allowed to sit under because **it carries no fact of
+its own**: the two extremes are printed as words at the ends of the bar and the
+rank is printed above it, so a reader who cannot make out the silhouette at all
+loses nothing. `ui/chart-home.js` already sets that rule — a picture is never
+the accessible answer. The MARK is the graphic that has to be seen.
+
+**AARON REJECTED GAPPED COLUMNS ON 2026-08-30.** The mockup drew the histogram
+as separated bars at a fixed width; the shipped contiguous silhouette stays.
+**Do not reintroduce them.**

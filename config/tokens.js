@@ -604,11 +604,18 @@ export const DARK = Object.freeze({
    *
    *  ==> THE MARK IS NOT `focusRing` EVEN THOUGH IT WANTS THE SAME BRIGHTNESS.
    *  <== A keyboard user tabbing a panel that already has cyan strokes drawn
-   *  into it cannot tell which one moved. Warm against the cool chrome in the
-   *  dark theme, and the contrast is with the fill rather than with the panel:
-   *  a mark at the far left of the bar has fill on one side only. */
-  spineFill:        'rgba(120, 190, 225, 0.24)',
-  spineMark:        '#F0B23C',
+   *  into it cannot tell which one moved.
+   *
+   *  ==> IT IS THE THEME'S OWN `textPrimary`, AND THAT RULE REPLACED A GUESS
+   *  THAT SHIPPED AT 2.19:1. <== §57.57. The first version reasoned about each
+   *  theme's NAME rather than reading its panel colour, and put a deep brown
+   *  mark on the sepia archive's near-black `ocean` — below the 3:1 floor for
+   *  a non-text graphic, on the one element the whole bar exists to make
+   *  findable. The rule now is the same in every theme: the mark is the ink
+   *  that theme already trusts against its own panel.
+   *  `tools/test-season-spine.mjs` computes the ratio and fails under 3:1. */
+  spineFill:        'rgba(120, 190, 225, 0.30)',
+  spineMark:        '#E8F1F8',
 
   /** THE POINTER HOVER WASH ON A LIST ROW.
    *
@@ -1322,8 +1329,8 @@ export const LIGHT = Object.freeze({
 
   /** See DARK.spineFill. Neutral ink at low alpha, because the light theme's
    *  panel is near-white and a tinted fill would read as a highlight. */
-  spineFill:        'rgba(28, 32, 36, 0.20)',
-  spineMark:        '#B4700C',
+  spineFill:        'rgba(28, 32, 36, 0.30)',
+  spineMark:        '#15181B',
 
   /** THE POINTER HOVER WASH — see the long note on `DARK.hover`.
    *
@@ -1754,11 +1761,15 @@ export const SEPIA = Object.freeze({
 
   /** See DARK.spineFill. ==> THE SEPIA VALUES ARE THE ONES THAT MATTER, AND
    *  THE OTHER TWO THEMES ARE THE FALLBACK. <== The archive is the only place
-   *  this bar is drawn today and the archive globe is sepia. The mark is a
-   *  deep ink rather than a brighter parchment, because on a warm light panel
-   *  the readable direction is DOWN. */
-  spineFill:        'rgba(122, 96, 52, 0.26)',
-  spineMark:        '#7A3E12',
+   *  this bar is drawn today and the archive globe is sepia.
+   *
+   *  ==> SEPIA IS NOT A LIGHT THEME AND ASSUMING IT WAS PUT A DARK MARK ON A
+   *  DARK PANEL. <== §57.57. `ocean` here is `#1C1409` — parchment's SHADOW,
+   *  as its own comment says, not parchment. The mark is `textPrimary`, which
+   *  is 14.89:1 against it; the guess it replaced was 2.19:1. Measured
+   *  2026-08-30 and asserted in the suite. */
+  spineFill:        'rgba(138, 107, 58, 0.60)',
+  spineMark:        '#F3E7D2',
   hover:            'rgba(199, 154, 78, 0.12)',
   dim:              'rgba(243, 231, 210, 0.38)',
 

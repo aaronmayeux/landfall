@@ -277,6 +277,65 @@ section('THE FLOOR \u2014 §5 with a chart under it');
 }
 
 /* ---------------------------------------------------------------------------
+ * 6b. CONTRAST — the check that should have run before this reached a phone
+ * ------------------------------------------------------------------------ */
+section('CONTRAST \u2014 the mark against the panel it is drawn on');
+{
+  /* ==> THIS ASSERTION EXISTS BECAUSE A GUESS SHIPPED AT 2.19:1. <== §57.57.
+   * The first version of these tokens reasoned about each theme's NAME rather
+   * than reading its panel colour, and put a deep brown mark (`#7A3E12`) on
+   * the sepia archive's `ocean` (`#1C1409`) — which its own comment describes
+   * as "the parchment's SHADOW, not a night sky". Aaron caught it on glass.
+   * Nothing crashed, nothing was missing; the one element the whole bar exists
+   * to make findable was simply almost invisible.
+   *
+   * WCAG 2.1 SC 1.4.11 puts the floor for a non-text graphic at 3:1. */
+  const { DARK, LIGHT, SEPIA } = await import('../config/tokens.js');
+
+  const lum = (hex) => [1, 3, 5]
+    .map((i) => parseInt(hex.substr(i, 2), 16) / 255)
+    .map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    .reduce((a2, c, i) => a2 + [0.2126, 0.7152, 0.0722][i] * c, 0);
+  const ratio = (a2, b) => {
+    const [hi, lo] = [lum(a2), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  for (const [name, theme] of [['DARK', DARK], ['LIGHT', LIGHT], ['SEPIA', SEPIA]]) {
+    /* ==> THE PANEL IS THE THEME'S OWN `ocean`, READ FROM THE TOKEN RATHER
+     * THAN TYPED HERE. <== A hardcoded background is a second copy of a value
+     * that already exists, free to go stale the day a theme is retuned — and
+     * going stale is precisely how the bug this catches was born. */
+    const r = ratio(theme.spineMark, theme.ocean);
+    ok(`${name}: the mark clears 3:1 against its own panel `
+      + `(${theme.spineMark} on ${theme.ocean} = ${r.toFixed(2)}:1)`, r >= 3);
+  }
+
+  /* ==> AND THE EXACT VALUE THAT SHIPPED IS ASSERTED TO FAIL. <== §12: a
+   * threshold test that nothing can fall below proves nothing. */
+  ok(`the mark that shipped on 2026-08-30 would fail this `
+    + `(#7A3E12 on ${SEPIA.ocean} = ${ratio('#7A3E12', SEPIA.ocean).toFixed(2)}:1)`,
+  ratio('#7A3E12', SEPIA.ocean) < 3);
+
+  /* ==> THE FILL IS DELIBERATELY NOT HELD TO 3:1, AND THAT IS STATED RATHER
+   * THAN QUIETLY SKIPPED. <== Composited over its panel the sepia fill is
+   * about 2.1:1, and raising it enough to clear the floor would change a look
+   * Aaron judged and accepted on glass. It is allowed to sit under because it
+   * carries no fact of its own: the two extremes are printed as words at the
+   * ends of the bar and the rank is printed above it, so a reader who cannot
+   * see the silhouette at all loses nothing. `ui/chart-home.js` sets the same
+   * rule — a picture is never the accessible answer. The MARK is the graphic
+   * that has to be seen, and it is held to the floor above.
+   *
+   * What the fill must clear is the panel it sits on well enough to be told
+   * apart from it at all, and the mark must be tellable from the fill. */
+  for (const [name, theme] of [['DARK', DARK], ['LIGHT', LIGHT], ['SEPIA', SEPIA]]) {
+    ok(`${name}: the mark is clearly distinguishable from the fill it crosses`,
+      ratio(theme.spineMark, theme.ocean) >= 3);
+  }
+}
+
+/* ---------------------------------------------------------------------------
  * 7. THE WHOLE ARCHIVE — no ladder in the shipped file refuses to draw
  * ------------------------------------------------------------------------ */
 section('EVERY LADDER IN THE SHIPPED FILE DRAWS');

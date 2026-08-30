@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 368 numbered headings.
+Covering 11 files, 369 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -382,9 +382,10 @@ real home is the other row carrying the same section number.
 | `57.56c` | &nbsp;&nbsp;&nbsp;&nbsp;What the bar is made of | `SPEC-SEASONS-BUILD.md` | 8693-8722 |
 | `57.56d` | &nbsp;&nbsp;&nbsp;&nbsp;The axis speaks the row's units, and that is the whole contract | `SPEC-SEASONS-BUILD.md` | 8723-8742 |
 | `57.56e` | &nbsp;&nbsp;&nbsp;&nbsp;Two files created now rather than at step 3 | `SPEC-SEASONS-BUILD.md` | 8743-8772 |
-| `57.56f` | &nbsp;&nbsp;&nbsp;&nbsp;Two tokens, and why the mark is not the focus ring | `SPEC-SEASONS-BUILD.md` | 8773-8788 |
-| `57.56g` | &nbsp;&nbsp;&nbsp;&nbsp;Three mutation runs, and one of them found a hole in the suite | `SPEC-SEASONS-BUILD.md` | 8789-8810 |
-| `57.56h` | &nbsp;&nbsp;&nbsp;&nbsp;What is expected to come back wrong, flagged before glass | `SPEC-SEASONS-BUILD.md` | 8811-8824 |
+| `57.56f` | &nbsp;&nbsp;&nbsp;&nbsp;Two tokens, and why the mark is not the focus ring | `SPEC-SEASONS-BUILD.md` | 8773-8792 |
+| `57.56g` | &nbsp;&nbsp;&nbsp;&nbsp;Three mutation runs, and one of them found a hole in the suite | `SPEC-SEASONS-BUILD.md` | 8793-8814 |
+| `57.56h` | &nbsp;&nbsp;&nbsp;&nbsp;What is expected to come back wrong, flagged before glass | `SPEC-SEASONS-BUILD.md` | 8815-8828 |
+| `57.57` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 8829-8883 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -400,7 +401,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 503,891 | 107 |
+| `SPEC-SEASONS-BUILD.md` | 507,295 | 108 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 190,800 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
