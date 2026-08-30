@@ -574,9 +574,18 @@ mutations.
 **WHAT TO JUDGE, AND THE FIRST IS §57.54k's OWN NAMED RISK FOR THIS STEP:**
 
 1. **THE DAY LABELS ON THE LONGEST TRACK.** `Storm 3 1899`, 32 days 18 hours,
-   thins 33 ticks to 11 labels at a 10.93px day pitch. **`Aug 30` is missing on
-   purpose** — it sat two days before the month change between two wide labels
-   and the month won. Then a two-day storm at the other end.
+   draws 10 labels at a 10.93px day pitch. **Two are missing on purpose** —
+   `Aug 30` sat two days before the month change and the month won; `6` was
+   dropped by the edge clamp pushing `Aug 3` inboard. Then a two-day storm at
+   the other end.
+
+**==> GLASS ALREADY FOUND ONE FAULT AND IT IS FIXED. <==** Aaron, 2026-08-30,
+on the first storm he opened: `Aug 3` rendered as `g 3`. The left-end label
+always carries its month, so the widest label on every axis is the one nearest
+the edge, and centred on a tick at x=4 half of it fell outside the box.
+**1,556 of the 3,234 chartable storms were drawing a clipped label — 48.1%.**
+§57.59h is the account. Nothing threw, and a shorn month reads as a deliberate
+abbreviation, which is why no rendered assertion saw it.
 2. **DOES THE FIXED WIND SCALE MAKE A WEAK STORM LOOK BROKEN.** The axis runs 0
    to `max(140 kt, this storm's peak)`, so the bands sit in the same place on
    3,231 of 3,266 storms — which is the whole reason there is no wind scale

@@ -9247,8 +9247,9 @@ tidies a constant and moves the plot has to argue with the thing he looked at.
 | the first disc row | cy 148, radius 8 |
 
 Katrina renders her tropical-storm band at `y=71.9` 21.6 tall, her peak at
-`237.3, 10.0`, her first landfall disc at `x=19.8` and her first day label
-`Aug 24` at `x=15.7`. Every one of those matches the prototype exactly.
+`237.3, 10.0` and her first landfall disc at `x=19.8`. Every one of those
+matches the prototype exactly. **Her first day LABEL sits at `x=19.0` against
+a tick at `15.7`, and that is §57.59h rather than a drift.**
 
 **==> THE WIND AXIS RUNS 0 TO `max(140, this storm's peak)`, WHICH WAS NOT THE
 OBVIOUS DESIGN AND IS THE BETTER ONE. <==** It was derived from the prototype's
@@ -9412,15 +9413,62 @@ stacked silently on top of each other and the results were garbage; it was
 caught only because one run's failures looked like the previous one's. **Mutate
 a new file from a saved pristine copy, not from git.**
 
+#### 57.59h The first day label was clipped on half the archive
+
+**==> AARON ON GLASS, 2026-08-30, ON THE FIRST STORM HE OPENED: `Aug 3`
+RENDERED AS `g 3`. <==** `Storm 3 1899`. Its first tick sits at the plot's left
+edge and the label there is always the widest kind on the axis — the month is
+spelled out at the left end by design — so a label centred on that tick had
+half of itself outside the box and the SVG's own boundary sheared it.
+
+**IT WAS 1,556 OF THE 3,234 CHARTABLE STORMS, NOT ONE.** Measured after the
+fix, by removing it again: **48.1% of the archive drew a clipped label**, worst
+overhang 11.0 units on `AL011851`. It is near-universal because the left-end
+label always carries its month, so the widest label on every axis is the one
+closest to the edge. **Nothing threw, and a chart with a sheared month reads as
+a deliberate abbreviation** — which is why a rendered assertion did not catch
+it and a browser one would have.
+
+**THE CLAMP IS THE SMALLER OF THE TWO AVAILABLE MOVES.** `ui/season-spine.js`
+pins its figure label's own end to the mark (§57.56, three anchors); doing that
+here would shift a label by half its width even when it overhung by three
+units. `axisLabelBox` clamps the CENTRE instead, so each label moves by exactly
+as much as it must and the axis keeps one anchor throughout. Katrina's `Aug 24`
+overhung by 3.3 and moved 3.3, from 15.7 to 19.0. **The tick itself never
+moves.**
+
+**==> AND THE FIX ON ITS OWN CREATED A COLLISION, WHICH IS WHY THE TWO RULES
+RUN IN ONE PASS. <==** The widest label is the one that moves furthest and it
+moves TOWARD its neighbour: clamping alone put fresh overlaps on `AL051856`,
+`AL031871`, `AL051880` and others. `axisLayout` lays the boxes out left to
+right and drops any label that still lands inside the previous one, **25 labels
+across the whole archive**. The earlier label wins because it is the one
+carrying the month, which agrees with `axisTicks`'s own month-evicts-a-neighbour
+rule rather than fighting it.
+
+**`Storm 3 1899` LOSES ITS `6` TO THIS, BY 0.2 UNITS.** `Aug 3` clamps 15 units
+inboard to clear the edge and its box ends at 34.0 where `6` begins at 33.8.
+Marginal, and the conservative direction is the right one: a sparse axis is a
+smaller fault than a shorn one, and `MONTH_W` is a deliberate over-estimate
+because nothing in a renderer can measure text. **It draws 10 labels, not the
+11 `axisTicks` produces** — both counts are true at their own level and the
+suite asserts each.
+
+**`axisLayout` IS THE ONLY THING THAT MAY DRAW A DAY LABEL.** It guarantees by
+construction what the suite then verifies across all 3,234: nothing clipped,
+nothing overlapping. Two mutations, both biting — removing the clamp, and
+removing the de-confliction.
+
 #### 57.59g What to judge on glass, and the first is step 5's own risk
 
 1. **THE DAY LABELS ON THE LONGEST TRACK IN THE ARCHIVE.** §57.54k names this
    as step 5's glass question. `Storm 3 1899` runs 32 days 18 hours and thins
-   33 ticks to **11 labels** at a 10.93px day pitch: `Aug 3 · 6 · 9 · 12 · 15 ·
-   18 · 21 · 24 · 27 · Sep 1 · 4`. **`Aug 30` is absent on purpose** — it sat
-   two days before the month change between two 30-unit labels and the month
-   won. Then a two-day storm, where every day is labelled and there may be only
-   one.
+   33 ticks to **10 drawn labels** at a 10.93px day pitch: `Aug 3 · 9 · 12 ·
+   15 · 18 · 21 · 24 · 27 · Sep 1 · 4`. **Two are absent on purpose.**
+   `Aug 30` sat two days before the month change between two 30-unit labels and
+   the month won; `6` was dropped by §57.59h's edge clamp pushing `Aug 3`
+   inboard. Then a two-day storm, where every day is labelled and there may be
+   only one.
 2. **DOES THE FIXED WIND SCALE MAKE A WEAK STORM LOOK BROKEN.** 1,664 storms
    never reach hurricane strength, so their line lives in the bottom third of
    the box under four empty bands. That is TRUE and it is the price of

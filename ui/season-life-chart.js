@@ -89,6 +89,16 @@ const BOTTOM_PAD = 12;
  *  `tools/type-scale-check.mjs` reads stylesheets, so these are deliberately
  *  out of its reach — the gate that covers them is the browser check. */
 const AXIS_SIZE = 9.5;
+
+/** How wide a day label is, in viewBox units.
+ *
+ *  ==> AN UPPER BOUND RATHER THAN A MEASUREMENT, BECAUSE NOTHING HERE CAN
+ *  MEASURE TEXT. <== The axis is `AXIS_SIZE` in the numeric face, so a digit is
+ *  about 0.63 of that and a month label like `Sep 1` runs to about 30. Both are
+ *  generous on purpose: this feeds the edge rule below, and over-estimating
+ *  costs a label a few units of nudge while under-estimating clips it. */
+const DIGIT_W = 6;
+const MONTH_W = 30;
 const BAND_SIZE = 8.5;
 const DISC_SIZE = 10;
 
@@ -191,6 +201,64 @@ function everyNth(days) {
     if (days <= maxDays) return step;
   }
   return 1;
+}
+
+/**
+ * Where a day label is drawn.
+ *
+ * ==> A LABEL CENTRED ON A TICK AT THE EDGE OF THE PLOT LOSES HALF OF ITSELF.
+ * <== Found on glass, 2026-08-30, on `Storm 3 1899`: its first tick sits at
+ * x=4 and its label is the widest kind there is, so `Aug 3` rendered as `g 3`
+ * with the month sheared off by the SVG's own boundary. The chart's time axis
+ * was mislabelled at the one end a reader starts from, nothing threw, and it
+ * looked deliberate.
+ *
+ * ==> IT CLAMPS THE CENTRE RATHER THAN PINNING TO AN EDGE, WHICH IS THE
+ * SMALLER MOVE OF THE TWO. <== Pinning the label's own end to its tick is what
+ * `ui/season-spine.js` does, and here it would shift a label by half its width
+ * even when it overhung by three units. Clamping moves each one by exactly as
+ * much as it has to and leaves one anchor for every label on the axis.
+ *
+ * @returns {{x:number, left:number, right:number}}
+ */
+export function axisLabelBox(label, tickX, width = W) {
+  const w = label.includes(' ') ? MONTH_W : label.length * DIGIT_W;
+  const lo = PAD_X + w / 2;
+  const hi = width - PAD_X - w / 2;
+  const x = hi < lo ? width / 2 : Math.min(hi, Math.max(lo, tickX));
+  return { x, left: x - w / 2, right: x + w / 2 };
+}
+
+/**
+ * The labels the axis actually draws, laid out and de-conflicted.
+ *
+ * ==> CLAMPING A LABEL INWARDS CAN PUSH IT INTO ITS NEIGHBOUR, SO THE TWO
+ * RULES HAVE TO RUN TOGETHER. <== Measured 2026-08-30: fixing the clipped
+ * `Aug 3` on its own put a fresh collision on `AL051856`, `AL031871`,
+ * `AL051880` and others, because the widest label on the axis is the one that
+ * moves furthest and it moves toward the next one.
+ *
+ * ==> AND WHEN TWO STILL COLLIDE, THE EARLIER ONE WINS. <== It is the one
+ * carrying the month, at the end of the axis a reader starts from. That agrees
+ * with `axisTicks`'s own month-evicts-a-neighbour rule rather than fighting
+ * it — both say the more informative label keeps its place.
+ *
+ * This is the only thing that should draw a day label. It guarantees by
+ * construction what `tools/test-season-life-chart.mjs` then verifies across
+ * the archive: nothing clipped, nothing overlapping.
+ */
+export function axisLayout(facts, geo) {
+  if (!geo) return [];
+  const out = [];
+  let prevRight = -Infinity;
+  for (const t of axisTicks(facts)) {
+    if (!t.label) continue;
+    const box = axisLabelBox(t.label, geo.xOf(t.time));
+    if (box.left < prevRight) continue;
+    prevRight = box.right;
+    out.push({ time: t.time, label: t.label, ...box });
+  }
+  return out;
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -371,17 +439,19 @@ export function lifeChartHtml(facts, { summary = '' } = {}) {
   }
 
   /* --- the day axis ---------------------------------------------------- */
+  /* Every midnight gets a tick; only some get a label. The ticks are what
+   * carry the real duration, so thinning the labels never thins the grid. */
   for (const t of axisTicks(facts)) {
     const x = f1(geo.xOf(t.time));
     parts.push(
       `<line class="lifec-tick" x1="${x}" y1="${PLOT_BOTTOM}" x2="${x}" y2="${TICK_BOTTOM}"/>`,
     );
-    if (t.label) {
-      parts.push(
-        `<text class="lifec-axis" x="${x}" y="${TICK_LABEL_Y}" `
-        + `font-size="${AXIS_SIZE}" text-anchor="middle">${esc(t.label)}</text>`,
-      );
-    }
+  }
+  for (const l of axisLayout(facts, geo)) {
+    parts.push(
+      `<text class="lifec-axis" x="${f1(l.x)}" y="${TICK_LABEL_Y}" `
+      + `font-size="${AXIS_SIZE}" text-anchor="middle">${esc(l.label)}</text>`,
+    );
   }
   parts.push(
     `<line class="lifec-baseline" x1="${PAD_X}" y1="${PLOT_BOTTOM}" `

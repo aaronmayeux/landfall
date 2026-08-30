@@ -35,7 +35,7 @@ const { SEASONS, CATEGORY_THRESHOLD_KT } = await import('../config/constants.js'
 const { CATEGORY_COLOR } = await import('../config/tokens.js');
 const {
   axisTicks, chartPoints, discRows, lifeChartAbsenceWords, lifeChartHtml,
-  lifeChartSummary, plotGeometry, LIFE_CHART_WIDTH, PLOT_BOTTOM,
+  lifeChartSummary, plotGeometry, axisLabelBox, axisLayout, LIFE_CHART_WIDTH, PLOT_BOTTOM,
 } = await import('../ui/season-life-chart.js');
 
 const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
@@ -87,8 +87,13 @@ ok('the tropical-storm band sits at y=71.9, 21.6 tall',
   kHtml.includes('y="71.9" width="350" height="21.6"'));
 ok('the peak dot is at 237.3, 10.0', kHtml.includes('cx="237.3" cy="10.0" r="3.8"'));
 ok('the first landfall disc is at x=19.8', kHtml.includes('cx="19.8" cy="148"'));
-ok('the first day label is `Aug 24` at x=15.7',
-  kHtml.includes('x="15.7" y="133" font-size="9.5" text-anchor="middle">Aug 24<'));
+/* ==> HER FIRST LABEL IS AT 19.0 AND NOT ON ITS TICK AT 15.7, WHICH IS THE
+ * EDGE RULE AND NOT A DRIFT. <== Centred on 15.7 a 30-unit label starts at 0.7
+ * and the plot begins at 4, so it overhung by 3.3 and would have been shaved.
+ * The clamp moves it by exactly that much. The tick itself is still at 15.7. */
+ok('the first day label is `Aug 24`, clamped inboard to x=19.0',
+  kHtml.includes('x="19.0" y="133" font-size="9.5" text-anchor="middle">Aug 24<')
+  && kHtml.includes('class="lifec-tick" x1="15.7"'));
 ok('the baseline is 0 kt', Math.abs(kGeo.yOf(0) - PLOT_BOTTOM) < 0.001);
 ok('the width the geometry is quoted at is the box width', LIFE_CHART_WIDTH === 358);
 
@@ -181,25 +186,28 @@ ok('a graded segment does carry one',
  * ------------------------------------------------------------------------- */
 section('5. the day axis never puts two labels on top of each other');
 
-/* An upper bound on a label's width rather than a render: nothing in node can
- * measure text. The axis is 9.5 user units in the numeric face, so a digit is
- * about 6 units and `Sep 1` about 30. Both are generous. */
-const DIGIT = 6;
 const MONTH = 30;
-const labelW = (s) => (s.includes(' ') ? MONTH : s.length * DIGIT);
+
+/* ==> THE BOXES COME OUT OF THE RENDERER'S OWN EDGE RULE. <== A label at
+ * either end is PINNED rather than centred (`axisLabelBox`), so a sweep that
+ * assumed centring would measure a layout the chart does not draw — and would
+ * have gone on passing through the clipped `Aug 3` that reached glass. */
+const boxes = (facts) => axisLayout(facts, plotGeometry(facts));
 
 function overlaps(facts) {
-  const g = plotGeometry(facts);
-  if (!g) return 0;
+  const bs = boxes(facts);
   let n = 0;
-  let prevRight = -Infinity;
-  for (const t of axisTicks(facts).filter((x) => x.label)) {
-    const w = labelW(t.label);
-    const x = g.xOf(t.time);
-    if (x - w / 2 < prevRight) n++;
-    prevRight = x + w / 2;
-  }
+  for (let i = 1; i < bs.length; i++) if (bs[i].left < bs[i - 1].right) n++;
   return n;
+}
+
+/* ==> AND NOTHING MAY BE DRAWN OUTSIDE THE PLOT, WHICH IS THE FAULT GLASS
+ * FOUND. <== `Storm 3 1899` rendered `Aug 3` as `g 3`: its first tick sits at
+ * the plot's left edge and the widest label there is was centred on it, so the
+ * SVG's own boundary sheared the month off. Nothing threw and the chart looked
+ * deliberate. */
+function clipped(facts) {
+  return boxes(facts).filter((b) => b.left < 0 || b.right > LIFE_CHART_WIDTH).length;
 }
 
 const charted = ALL.map(withPoints).filter((f) => plotGeometry(f));
@@ -207,9 +215,31 @@ const clashing = charted.filter((f) => overlaps(f) > 0);
 ok(`0 of ${charted.length} storms have overlapping day labels. Offenders: `
   + `${clashing.slice(0, 3).map((f) => f.id).join(', ') || 'none'}`, clashing.length === 0);
 
+const cut = charted.filter((f) => clipped(f) > 0);
+ok(`and no label is drawn outside the plot on any of them. Clipped: `
+  + `${cut.slice(0, 3).map((f) => f.id).join(', ') || 'none'}`, cut.length === 0);
+/* ==> THE FAULT GLASS FOUND, NAMED. <== `Storm 3 1899` rendered `Aug 3` as
+ * `g 3`. Its tick is at the plot's left edge and the widest label there is was
+ * centred on it, so the SVG's own boundary sheared the month off. */
+{
+  const g = plotGeometry(LONGEST);
+  const firstTick = axisTicks(LONGEST).find((t) => t.label);
+  ok('the longest track\u2019s first tick really does sit at the plot edge',
+    g.xOf(firstTick.time) < MONTH / 2);
+  ok('and its label is clamped inboard rather than left to clip',
+    axisLabelBox(firstTick.label, g.xOf(firstTick.time)).left >= 0);
+  ok('a label with room is not moved at all',
+    axisLabelBox('15', 180).x === 180);
+}
+
 const longTicks = axisTicks(LONGEST);
 ok('the longest track in the archive thins 33 ticks down to 11 labels',
   longTicks.length === 33 && longTicks.filter((t) => t.label).length === 11);
+/* ==> AND THE LAYOUT DROPS ONE MORE, WHICH IS THE TWO RULES MEETING. <==
+ * `Aug 3` clamps inboard by 15 units to clear the edge and lands 0.2 units
+ * into `6`. The earlier label wins, so ten are drawn. */
+ok('and the layout draws 10 of those 11 once the edge clamp is applied',
+  axisLayout(LONGEST, plotGeometry(LONGEST)).length === 10);
 /* ==> `Aug 30` IS MISSING FROM THIS SET ON PURPOSE AND IT IS THE EVICTION
  * WORKING. <== It sat two days before the month change at 10.93 units a day,
  * which is 21.9 units between two 30-unit labels. The month is the more
@@ -243,9 +273,9 @@ ok('a month change re-anchors the count rather than interrupting it',
   ok('no two wide labels ever land within one width of each other',
     crossers.every((f) => {
       const g = plotGeometry(f);
-      const wide = axisTicks(f).filter((t) => t.label && t.label.includes(' '));
-      return wide.every((t, i) => i === 0
-        || g.xOf(t.time) - g.xOf(wide[i - 1].time) >= MONTH);
+      const wide = axisTicks(f).filter((t) => t.label && t.label.includes(' '))
+        .map((t) => axisLabelBox(t.label, g.xOf(t.time)));
+      return wide.every((b, i) => i === 0 || b.left >= wide[i - 1].right);
     }));
 }
 
