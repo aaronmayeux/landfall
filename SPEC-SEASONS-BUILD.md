@@ -1385,9 +1385,14 @@ all**, because they ran out of names entirely.
 picture.
 
 Each row: name, dates, a category dot for peak strength, a mark if it made
-landfall, a mark if the name was retired. **Retired names are the most
-emotionally loaded thing on the screen** and cost only a small static list to
-maintain.
+landfall.
+
+**==> THERE IS NO RETIRED-NAME MARK ON THIS ROW. AARON'S CALL, 2026-08-30.
+<==** This section asked for one from the day it was written, it was never
+built, and nobody had ruled on it for four sessions running. It is ruled on
+now and the answer is no. §57.52 carries the retired names on the two surfaces
+that do have them: a switch and a bar on the Wall of Years, and a sentence on
+the storm panel.
 
 **The same name repeats across years** — Ida 2021 and Ida 2009 are different
 storms. The year travels with the name everywhere, including in shared links.
@@ -4778,17 +4783,17 @@ a cheaper one. Names are carried though nothing filters on them yet, because
 they are half that cost and regenerating the file is a monthly-runner round
 trip.
 
-**Three of §57.36's controls are not built, and none of the three is an
-oversight.** The near-home slider needs track geometry the wall never loads:
-filtering 175 seasons by distance means the 0.93 MB whole-basin file, whose
-phone cost is unmeasured. **The retired-names chip is no longer blocked on the list** — §57.51 derives
-it and `data/retired-names.js` is in the repo — but the chip itself is not
-built, and that is the next pass rather than this one: the names are in
-`wall.json` already, so it is wiring rather than a rebuild. And a filter chosen
-on the wall does NOT survive a tap into a year: the
-wall is seven independent chips plus toggles and the board is one pill at a
+**Two of §57.36's controls are not built, and neither is an oversight.** The
+near-home slider needs track geometry the wall never loads: filtering 175
+seasons by distance means the 0.93 MB whole-basin file, whose phone cost is
+unmeasured. And a filter chosen on the wall does NOT survive a tap into a year:
+the wall is seven independent chips plus toggles and the board is one pill at a
 time, so most wall states have no pill to become. Reconciling them means
 changing a board already confirmed on glass, and that is its own pass.
+
+**The retired-names chip WAS the third and it is built — §57.52.** It is a
+switch at the head of the collapsed group, and every storm whose name went
+carries a bar above its dot.
 
 **Filter first, then sort what survives.** `keepFor` builds the predicate,
 `rowsFor` applies it and recomputes every per-row figure over what is left, and
@@ -7766,3 +7771,229 @@ do not understand, so the BEHAVIOUR is asserted whichever rule is carrying it.
 **NOTHING ON SCREEN CHANGED IN THIS PASS, DELIBERATELY.** The wall chip
 §57.36a holds back and the drawer sentence are the next pass, so a break here
 can only be data and a break there can only be layout.
+
+### 57.52 The retired names on screen — as built
+
+Pass 2 of §57.51, built 2026-08-30. §57.51 derived the data and deliberately
+changed no pixel; this is the pixels. **Two surfaces, not three** — see the
+roster decision below.
+
+**Where the join lives:** `data/retired-lookup.js`. It is the only place in the
+app that turns `[NAME, YEAR]` pairs into an answer about a storm, and it lives
+under `data/` rather than `lib/` because §12 forbids `lib/` importing that
+directory. Both consumers take it as an injected argument, so the pure modules
+stay pure and there is exactly one join to be wrong.
+
+#### The join is name plus year, and the numbers say why
+
+**MEASURED against the shipped `seasons/wall.json`, 2026-08-30.** Joining on the
+name alone is the plausible wrong implementation and it reads perfectly:
+
+| | Atlantic | Pacific | Total |
+|---|---|---|---|
+| Name + year (shipped) | **100** | **22** | **122** |
+| Name only | 249 | 75 | 324 |
+| Storms wrongly marked | **149** | 53 | **202** |
+
+Ida 2021 is retired; Ida 2009 is not. **Two of the Atlantic cases run
+BACKWARDS** — Carol 1965 and Edna 1968 carry names withdrawn for the 1954
+storms — so "it was retired later" is not a safe reading of a miss either, and
+no wording may imply one.
+
+#### The Pacific is one pool, and the storm panel cannot split it
+
+`seasons/wall.json` has two buckets and CPHC storms live in the east Pacific
+one. The panel was built keying on `storm.basin`, on the argument that one
+storm can be asked a sharper question. **Real bytes refused:** `IWA` is
+`CP041982`, `IOKE` is `CP012006`, `PAKA` is `CP051997` — and `INIKI` is
+`EP181992`. Iniki is the most destructive storm in Hawaii's history and its own
+basin prefix gave it nothing.
+
+So both surfaces union `EP` and `CP`. **No `NAME|YEAR` appears in both Pacific
+lists**, which is what makes the union safe rather than convenient, and the
+suite asserts it. The Atlantic stays alone: a name retired in one ocean is
+routinely still in service in the other.
+
+**One mutation could not be killed by data and is asserted on the shape.**
+Narrowing the `CP` pool back to `['CP']` changes no answer about any storm that
+exists today, because every central Pacific retirement currently sits in
+`RETIRED_CPACIFIC`. The direction it breaks is the mirror of the INIKI fault,
+which did happen, so `BASIN_POOL.CP` is asserted equal to `BASIN_POOL.EP`.
+
+#### Nothing ever answers "not retired"
+
+**§5, and it is the design rather than an omission.** `retirementFor` returns a
+fact or `null`, and there is no negative sentence anywhere. Below a basin's
+derivation floor the frozen historic block answers (§57.51) and nothing in the
+data separates *"no name from this year was withdrawn"* from *"this era was
+never assessed"*. Silence makes those two identical on screen because neither
+is spoken about at all — **the reader is never told something false, and the
+only thing lost is a sentence that would have said nothing.** The suite asserts
+the shape: over the whole archive every answer is `null`, `name:boolean` or
+`description:boolean`, and no fourth shape exists to carry a negative.
+
+The same rule is why the wall row's spoken label says *"3 later retired"* when
+there are some and says nothing when there are none, while the landfall clause
+beside it says *"none made landfall"* out loud. Landfall has a computed answer
+for every settled season (§57.7a), so nought there is a real measurement.
+Retirement has no such guarantee.
+
+**A storm whose NAME was retired for a DIFFERENT storm gets nothing.** 202
+storms are in that position. A sentence about them is available and accurate
+and was not built; that is a product call, not a technical one.
+
+#### The sentence, and its three shapes
+
+Clause 7 of §57.41's paragraph, after the ending. Real output, off the shipped
+archive:
+
+> It lost its tropical structure on August 31, 8 days after it was first seen.
+> The name KATRINA was retired after this storm and will never be used again.
+
+**The Greek pair takes two sentences and Aaron chose the accurate longer
+version** (2026-08-30) over the short wrong one:
+
+> ETA was retired after this storm. The Greek alphabet is no longer used for
+> storm names, so what was recorded is the storm and its year rather than the
+> letter.
+
+*"The name Eta was retired"* is false twice over — §57.51 has the WMO's own
+account. `RETIRED_BY_DESCRIPTION` is checked before any ordinary match, so a
+future generator folding the pair into `RETIRED_ATLANTIC` still gets the true
+sentence.
+
+**An uncertain year drops the clause carrying it rather than hedging it.**
+§57.41's rule applied to a fact instead of a figure. `RETIRED_UNSURE` flags
+three entries where the withdrawal is settled but which storm earned it is not
+— Carol and Edna were each retired, brought back and retired again, and NOAA
+lists the later year. *"After this storm"* is the part that might be wrong, so
+it is the part that goes: *"The name CAROL was retired and will never be used
+again."* Nothing is softened in its place, and the suite asserts no hedging
+word appears.
+
+**No clause uses an em dash** (§57.41), asserted across all three branches
+rather than only the one a fixture happens to take.
+
+#### The wall: a switch, and a bar above the dot
+
+The switch reads `Name was retired` and leads the COLLAPSED group above the
+three sliders, which is where §57.36 put it. The wording matches `Made
+landfall` beside it so the two read as one set. **It counts Eta and Iota** — a
+filter has no sentence to get wrong and the WMO counts them itself.
+
+**It obeys FILTER FIRST, THEN RECOMPUTE (§57.36a)**, and the pinned live row
+obeys it too. That row carries no bar and never can: a name is withdrawn at the
+WMO session the following spring, so no storm in the season still running can
+hold a retired one.
+
+**==> `list.filter(keep)` WAS A BUG WAITING TO HAPPEN AND IS NOW IMPOSSIBLE.
+<==** A storm row is a bare array of seven values and carries no year; the year
+is the key it was found under. `Array.filter` calls its predicate with
+`(element, index, array)`, so the bare form hands the retired test an ARRAY
+INDEX where it expects a year. Nothing throws, indexes 0 to 30 are all finite
+years, they simply match nothing, and the chip would have returned an empty
+wall in silence. Both call sites name the year in an arrow, and the mutation is
+verified.
+
+#### The mark is a bar, and a dot was measured and rejected
+
+Aaron asked for a small dot above the storm dot, same ink and size as the
+landfall triangle. **It was measured before it was built and the measurement
+said no.** Both basins are 31 storms wide at their busiest:
+
+| | dot | triangle |
+|---|---|---|
+| 390px phone | **6-7px** | 4.32 x 3.11px |
+| 390px with a sort column | **4px** | 3.00 x 2.50px (both floors) |
+| Desktop side rail | **4px** | 3.00 x 2.50px |
+
+A circle at the triangle's WIDTH is 4.32px above a 6px dot — 72% of the storm
+dot and 2.2x the triangle's ink — which reads as a second storm. A circle at
+the triangle's INK is 2.92px, falling to 2.19px with a sort column up, under
+the 3px floor where §57.36a already found a mark stops reading as a mark.
+**There is no diameter that is both legible and not mistakable for another
+dot.** The triangle works because it is a different shape from the thing it
+annotates.
+
+**And the both-marks case is the norm:** 109 of the 122 retired storms also
+came ashore (98 of the Atlantic's 100, 11 of the Pacific's 22), so almost every
+barred dot wears the triangle too. That argues for maximum contrast in shape.
+
+So: a bar. `--wall-ret-w` is the triangle's width so the two marks share a
+column; `--wall-ret-h` is `max(1px, dot * 0.16)`, because a line survives the
+small sizes by only having to hold 1px in one dimension. Neutral ink at 0.8,
+for the reason the triangle is neutral — coming ashore and being withdrawn are
+facts about land and about a committee, and strength is what the dot already
+says. No `border-radius`: at 1px a cap eats the bar and at 2px it becomes the
+lozenge this mark exists to avoid.
+
+**It is a `::before` on the dot itself**, the free half of the pseudo-element
+pair the triangle already uses. One attribute on 122 dots rather than 3,266
+extra nodes down a 175-row scroll, and it cannot drift from its dot because it
+IS its dot. Out of flow, so no row grows. The bar is in `--wall-strip-pad`'s
+`max()` even though the triangle wins at every dot size in the range — the slot
+clips, and a retune nobody traced back to that line would cut the mark off with
+nothing on screen saying why.
+
+#### Measured in a real browser at 390px, 2026-08-30
+
+Not the node suites — a chromium at phone width, because §57.36a's `18 of 3`
+bug is invisible to `textContent`.
+
+- 175 rows unfiltered, **52 after the switch** (52 Atlantic seasons hold a
+  retired storm; 20 Pacific ones do).
+- **Every row 44px in both states.** The bar moves nothing.
+- **`scrollWidth - clientWidth` is 0 on every strip in both states.** Nothing
+  clips.
+- 100 bars in the Atlantic DOM, matching the computed figure exactly.
+- Bar 5.03 x 1.11px against a 7px dot, in `--text-primary`.
+- The `More filters` disclosure survives the tap, `aria-checked` flips, and
+  focus returns to the switch.
+
+**==> `tools/seasons-wall-check.mjs` COULD NOT BE RUN, AND IT FAILS IDENTICALLY
+ON CLEAN `main`. <==** It times out waiting for `#seasons-wall-body .wall-row`
+to be visible in this sandbox. Verified by stashing the whole pass and running
+it against an unmodified checkout: same timeout, same selector. **It is an
+environment fault rather than a regression**, and the measurements above were
+taken directly instead. Worth someone's time; it is the only browser gate the
+Wall of Years has and it is not in the pre-push hook.
+
+#### The roster row mark is CUT, and §57.18 was corrected
+
+§57.18 has said since it was written that each roster row carries *"a mark if
+the name was retired"*. It was never built and nobody had decided on it.
+**Aaron's call, 2026-08-30: no mark on the roster row.** The clause is deleted
+from §57.18 rather than left as a permanent unbuilt promise — a design
+sentence nobody has ruled on gets rediscovered and re-asked every few sessions,
+which is what happened here for four.
+
+The roster row is also a different shape from the wall: it has a coloured
+swatch and a `▲` glyph in a flex meta line beside the dates, not a dot with a
+triangle under it, so "a bar above the dot" does not transfer to it.
+
+#### Where the code is
+
+- `data/retired-lookup.js` — the join, the basin pools, the four cases. The
+  only reader of `data/retired-names.js` in shipped code.
+- `lib/wall-filter.js` — `retired` on the filter, and `keepFor(f, { isRetired })`
+  taking the index injected.
+- `lib/wall-index.js` — `rowsFor` names the year; `rowLabel` speaks the count.
+- `lib/season-story.js` — `retirementClauses`, clause 7, pure and fact-driven.
+- `ui/seasons-wall-controls.js`, `ui/seasons-wall-markup.js`,
+  `ui/view-seasons-wall.js`, `ui/view-season-detail.js`, `seasons/seasons.css`.
+- `tools/test-retired-lookup.mjs` — 70 checks against the real archive.
+  **Ten mutations run; two survived the first pass** and both were real: the
+  `CP` pool (now a shape assertion) and the `!!name` shortcut (a deliberate
+  redundancy, recorded rather than tidied — the behaviour is asserted whichever
+  rule carries it).
+- `tools/test-wall-filter.mjs` sections 11 and 12, `tools/test-season-story.mjs`.
+  **Twelve further mutations, all twelve bite**, including the
+  `list.filter(keep)` reversion and the bar written onto every dot.
+
+**`data/retired-names.js` AND ITS HISTORIC SIBLING COST 12.4 KB RAW, 5.2 KB
+GZIPPED, ACROSS TWO MODULES — AND NONE OF IT IS ON THE BOOT PATH.** The whole
+seasons feature is behind `await import('./seasons/index.js')`, so this loads
+only when a reader opens the archive. Measured rather than estimated, because
+§57.40a's places sidecar came in at 38.5 KB against a 12-15 KB guess. **No
+`_headers` line is needed:** `/data/*` is already a wildcard, unlike `seasons/`
+where each file is listed by hand (§57.16a).

@@ -175,17 +175,14 @@ threshold sliders behind `More filters`, five sort buttons that reverse when
 pressed again, the collapsed tail off a timeline, and the pre-satellite
 undercount line.
 
-**Three of §57.36's controls are deliberately NOT built.** Each is a real open
-item, not a leftover, and §57.36a records the reasoning:
+**Two of §57.36's controls are deliberately NOT built.** Each is a real open
+item, not a leftover, and §57.36a records the reasoning. **The third was the
+retired-names chip and it is built — §57.52.**
 
 1. **The near-home slider.** The wall never loads track data, so filtering 175
    years by distance needs the whole-basin pass, 0.93 MB, phone cost unmeasured.
    It gets its own pass once that number exists.
-2. **The retired-names chip.** **No longer blocked — the list is derived and in
-   the repo (§57.51), and nobody maintains it.** What is left is wiring:
-   `seasons/wall.json` carries the storm names already. Its own pass, so that a
-   break in the data and a break in the layout cannot arrive together.
-3. **A filter carrying through when a year is tapped.** The wall is seven
+2. **A filter carrying through when a year is tapped.** The wall is seven
    independent chips plus toggles; the board is one pill at a time. Most wall
    states have no pill to become, so honouring this means bringing both screens
    onto one model — which changes a board already confirmed on glass. **Its own
@@ -484,19 +481,51 @@ is removal from the active lists, so the answer is the record minus the names
 still in service, and both halves already refresh themselves monthly. Nothing
 fetches a list. **§57.51 is the as-built account — read that, not this.**
 
-**NO PIXEL CHANGED, DELIBERATELY, SO THERE IS NOTHING TO JUDGE ON GLASS YET.**
-The wall chip §57.36a holds back and the drawer sentence are the next pass.
-**Two things from §57.51 land on that pass and both are wording rather than
-code:**
+**==> PASS 2 IS BUILT AND SHIPPED. THE RETIRED NAMES ARE ON SCREEN AND NOBODY
+HAS SEEN THEM. <==** §57.52 is the as-built account — read that, not this. Two
+surfaces: a `Name was retired` switch at the head of `More filters` on the Wall
+of Years with a bar above every retired storm's dot, and a closing sentence on
+the archive's storm panel. **122 storms across the archive, joined on name AND
+year** — Ida 2021 carries it and Ida 2009 does not.
 
-1. **The obvious sentence is wrong for two storms.** *"The name Eta was retired
-   and will never be used again"* is false twice over — the Greek letters were
-   retired by DESCRIPTION rather than by name, and the retirement attaches to
-   the storm and its year. Eta and Iota are exported separately so a caller has
-   to opt in; they must not be folded into the ordinary list.
-2. **A pre-floor storm is "we could not look", not "not retired".** §5. The
-   derivation is silent below 1979 in the Atlantic and 1995 in the Pacific, and
-   the frozen historic block answers there instead.
+**WHAT TO JUDGE ON GLASS, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK
+WRONG:**
+
+1. **THE BAR ITSELF.** Aaron asked for a small dot above the storm dot and the
+   measurement refused it: at 6px there is no diameter that reads as a mark
+   rather than as a second storm. §57.52 has the table. A bar was the answer,
+   and **109 of the 122 retired storms also came ashore**, so almost every
+   barred dot wears the landfall triangle too — the question is whether the two
+   marks read as two facts or as one busy dot. The levers are `--wall-ret-h`
+   (currently `dot * 0.16`, floored at 1px) and `--wall-ret-w`.
+2. **The switch's wording.** `Name was retired`, chosen to match `Made landfall`
+   beside it so the two read as one set rather than as a control and a category.
+3. **The sentence closing the paragraph.** *"The name KATRINA was retired after
+   this storm and will never be used again."* It is the last thing on the
+   paragraph and the most emotionally loaded thing on the panel.
+4. **ETA OR IOTA, WHICH ARE THE ONLY TWO STORMS THAT TAKE THE LONG VERSION.**
+   Aaron chose the accurate wording over the short wrong one. Whether two
+   sentences about the Greek alphabet earn their length on a panel is his call
+   and nothing else in the archive can show it.
+
+**MEASURED IN A REAL BROWSER AT 390px, so these are not open questions:** 175
+rows become 52 with the switch on, every row stays 44px, and
+`scrollWidth - clientWidth` is 0 on every strip in both states. Nothing clips
+and no row grows.
+
+**==> AND `tools/seasons-wall-check.mjs` CANNOT RUN IN THE CLOUD SANDBOX. <==**
+It times out waiting for `#seasons-wall-body .wall-row` to be visible.
+**Verified as NOT a regression** by stashing this whole pass and running it
+against clean `main`: identical timeout, identical selector. The measurements
+above were taken directly instead. It is the only browser gate the Wall of
+Years has, it is not in the pre-push hook, and it is now also unrunnable here —
+worth a session's attention, and nothing is blocked on it.
+
+**ONE THING WAS DECIDED WITHOUT AARON AND IS EASY TO REVERSE.** A storm whose
+NAME was retired for a DIFFERENT storm gets no sentence at all — 202 storms are
+in that position, Ida 2009 and Florence 1953 among them. Silence is what the
+name+year join gives and it states nothing false. A sentence for them is
+available and accurate and was not built.
 
 **==> AND THE GROUPING'S OWN PREDICTION ABOUT GROUP C WAS WRONG ABOUT BOTH
 ITEMS, WHICH IS THE PART WORTH CARRYING FORWARD. <==** It said Group C's two
