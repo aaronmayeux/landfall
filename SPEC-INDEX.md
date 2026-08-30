@@ -378,6 +378,6 @@ real home is the other row carrying the same section number.
 | `SPEC-OPS.md` | 105,155 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 464,297 | 83 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 190,557 | 15 |
+| `SPEC.md` | 190,800 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
