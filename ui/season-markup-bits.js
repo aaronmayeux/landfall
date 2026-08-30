@@ -62,9 +62,32 @@ const UTC = new Intl.DateTimeFormat('en-US', {
   hour: 'numeric', minute: '2-digit', hour12: true,
 });
 
+/**
+ * ==> A FINITE NUMBER IS NOT NECESSARILY A DATE, AND THE DIFFERENCE USED TO BE
+ * A CRASH. <== §57.50. `Number.isFinite` passes any number at all, and
+ * JavaScript's clock only runs to about ±8.64e15 ms — so a stamp that is
+ * arithmetically fine but out of range makes `Intl.format` throw a RangeError
+ * rather than return anything. Every section of this panel formats a date
+ * through here, so one corrupt stamp anywhere took the whole drawer down
+ * instead of costing one row.
+ *
+ * Found while mutation-testing `lib/season-company.js`: breaking its day
+ * arithmetic produced exactly such a stamp, and the suite died before it could
+ * report which assertion had caught it. **The bug was never in the mutation.**
+ * The same shape reaches production the day any upstream file carries a
+ * timestamp we do not expect.
+ *
+ * The rule is the one this file already states for every other formatter: a
+ * value that cannot be rendered returns null, and the caller omits the row.
+ * No row means no claim, and the panel around it still draws.
+ */
+const dayValue = (ms) => (Number.isFinite(ms) && Number.isFinite(new Date(ms).getTime())
+  ? new Date(ms) : null);
+
 export function utcStamp(ms) {
-  if (!Number.isFinite(ms)) return null;
-  return `${UTC.format(new Date(ms))} UTC`;
+  const d = dayValue(ms);
+  if (!d) return null;
+  return `${UTC.format(d)} UTC`;
 }
 
 const UTC_DAY = new Intl.DateTimeFormat('en-US', {
@@ -72,8 +95,9 @@ const UTC_DAY = new Intl.DateTimeFormat('en-US', {
 });
 
 export function utcDay(ms) {
-  if (!Number.isFinite(ms)) return null;
-  return UTC_DAY.format(new Date(ms));
+  const d = dayValue(ms);
+  if (!d) return null;
+  return UTC_DAY.format(d);
 }
 
 /** `23.1, -75.1` → `23.1°N 75.1°W`. Hemisphere letters rather than signs,
