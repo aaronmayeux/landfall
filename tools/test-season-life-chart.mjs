@@ -505,17 +505,24 @@ ok('the discs take their numbers from the same place',
     === discRows(NOEL, plotGeometry(NOEL)).map((d) => d.n).join(','));
 }
 
-/* ==> THE LIST'S BADGE IS THE CHART'S DISC AND CSS CANNOT IMPORT A CONSTANT.
- * <== §57.60. The two are meant to read as one object seen twice, so a reader
- * carries a number down from the plot to the row. A comment asking the next
- * person to keep them in step is the guard this project has already watched
- * fail (`tools/drawer-head-harness.html`), so the drift is a failure here. */
+/* ==> THE BADGE IS PINNED TO THE MOCKUP'S 20px AND DELIBERATELY NOT TO
+ * `SEASONS.lifeChartDiscPx`. <== §57.60c. The first version of this assertion
+ * tied the two together on the argument that the badge and the disc are one
+ * object seen twice. **The argument was wrong on measurement**: the chart is an
+ * SVG scaled to the panel, so its 16-unit disc renders 12.07px at a 320px
+ * viewport and 29.9px at 719 and matches a fixed badge at no width at all. A
+ * contract to a number that never described pixels on screen is the fluent
+ * wrong number this repo keeps catching, and it is asserted the other way now:
+ * the badge holds the figure Aaron looked at. */
 {
   const css = readFileSync(join(ROOT, 'seasons/seasons.css'), 'utf8');
   const declared = css.match(/--season-landfall-n:\s*(\d+(?:\.\d+)?)px/);
   ok('the landfall badge declares its own size in the stylesheet', !!declared);
-  ok(`and it is ${SEASONS.lifeChartDiscPx}px, the same as the chart's disc`,
-    !!declared && Number(declared[1]) === SEASONS.lifeChartDiscPx);
+  ok('and it is the mockup\u2019s 20px', !!declared && Number(declared[1]) === 20);
+  ok('==> AND IT IS NOT COUPLED TO THE CHART\u2019S DISC, WHICH HAS NO FIXED '
+    + 'PIXEL SIZE. <== A later pass that "restores" the coupling is reinstating '
+    + 'a contract measurement already refused',
+  Number(declared[1]) !== SEASONS.lifeChartDiscPx);
 }
 
 

@@ -405,7 +405,14 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
    * once was, because Katrina peaked at Cat 5 over water and came ashore at
    * Cat 3.
    * The panel and the globe must agree, or one of them is lying. */
-  return `<ul class="season-landfalls">${items}</ul>${refusedNote}`;
+  /* ==> AN `<ol>` RATHER THAN A `<ul>`, WHICH IS THE MOCKUP'S ELEMENT AND THE
+   * HONEST ONE. <== §57.60c. Since step 6 the order of these rows is load
+   * bearing — it is what the numbers on the chart above refer to — and that is
+   * the whole distinction between the two elements. The visually-hidden
+   * `Landfall n.` on each row stays: `list-style: none` makes some screen
+   * readers drop list semantics entirely, so the number cannot be left to the
+   * element to announce. */
+  return `<ol class="season-landfalls">${items}</ol>${refusedNote}`;
 }
 
 /** Fastest intensification, and how it ended. §57.15. */

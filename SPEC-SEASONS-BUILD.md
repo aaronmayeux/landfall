@@ -9609,19 +9609,51 @@ and the suite drives it by reversing Katrina's list.
 **THE SORT IS STABLE**, so two landfalls stamped at the identical minute keep
 the order the record put them in rather than swapping between renders.
 
-#### 57.60c The badge is the chart's disc, and CSS cannot import a constant
+#### 57.60c The layout is the mockup's, and the badge is NOT the chart's disc
 
-The number in the list is drawn as the chart's disc: same diameter, same
-`textPrimary` fill, same `textInverse` numeral. **They are meant to read as one
-object seen twice**, so a reader can carry a number down from the plot to the
-row. A badge at a different size or a different fill reads as a coincidence.
+**Every measurement here is read off `drawer-redesign-preview.html`**, the
+prototype Aaron accepted on 2026-08-30, whose column is the same 358px wide as
+the app's own panel. Same rule §57.59b states for the chart: a later pass that
+tidies a number and moves the badge has to argue with the thing he looked at.
 
-**`SEASONS.lifeChartDiscPx` IS 16 AND THE STYLESHEET RESTATES IT, WHICH IS A
-DRIFT WAITING TO HAPPEN.** `tools/test-season-life-chart.mjs` reads the
-declared `--season-landfall-n` out of `seasons/seasons.css` and fails if it is
-not the constant. A comment asking the next person to keep the two in step is
-the guard this project has already watched fail — `tools/drawer-head-harness.html`
-drifted from the app for two commits under exactly that comment.
+| the badge | 20px circle, `textPrimary` fill, `textInverse` numeral |
+| the gap | 10px in the mockup, **12px shipped** |
+| the row | `8px 0`, the badge in its own grid column |
+| the nudge | `margin-block-start: 1px` on the badge |
+| the element | **`<ol>`**, not `<ul>` |
+
+**THE GAP IS THE ONE DEPARTURE AND IT IS THE SAME ONE §57.59c MADE.** This app's
+spacing scale is 4 / 8 / 12 / 16 and the mockup has no scale — it also sets type
+at 13.5px and 11.5px. **The geometry comes off the mockup; the scale stays the
+app's own**, so 10 becomes the nearest step at 12.
+
+**==> THE BADGE IS 20px AND THE CHART'S DISC IS 16 UNITS, AND THE FIRST VERSION
+OF THIS SECTION GOT THAT WRONG IN THE MOST INSTRUCTIVE WAY. <==** It shipped
+16px, pinned to `SEASONS.lifeChartDiscPx`, with a suite assertion enforcing the
+coupling and a comment arguing the badge and the disc are one object seen twice.
+**That argument was reasoning rather than measurement, and measurement killed
+it.** The chart is an SVG scaled to the panel, so its disc has no fixed pixel
+size at all:
+
+| viewport | the disc renders at |
+|---|---|
+| 320px | 12.07px |
+| 390px | **15.19px** |
+| 440px | 17.43px |
+| 719px | 29.90px |
+
+**There is no width where a fixed badge matches it, and it did not match even
+at the 390px phone the 16 was reasoned about** — the panel is 340px inside the
+drawer's padding rather than the 358 the arithmetic assumed. **A contract to a
+number that never described pixels on screen is exactly `CLAUDE.md`'s fluent
+wrong number**, and it had a passing test under it. The assertion now runs the
+other way: the badge holds 20 and is asserted NOT to equal the constant, so a
+later pass restoring the coupling fails.
+
+**WHAT THE TWO ACTUALLY SHARE IS A SHAPE AND AN INK** — a filled circle in the
+panel's own text colour with the background punched out of it. That is what
+carries a number from the plot to the row, and it survives the disc changing
+size with the panel.
 
 **THE BADGE IS ITS OWN GRID COLUMN RATHER THAN SITTING IN THE FLOW OF THE
 TEXT.** A `10` indenting its own row further than the `9` above it reads as a
@@ -9630,7 +9662,9 @@ fault rather than as a list.
 **AND IT IS HIDDEN FROM A SCREEN READER, WHICH IS READ `Landfall 1.` INSTEAD.**
 A bare digit announced ahead of a place name is a list index the reader cannot
 act on. Same rule as §57.59's `aria-label`: the picture is never the only place
-a fact lives.
+a fact lives. **The `<ol>` does not replace that sentence** — `list-style: none`
+makes some screen readers drop list semantics entirely, so the number cannot be
+left to the element to announce.
 
 #### 57.60d It was measured in a browser, because a badge is the `18 of 3` shape
 
@@ -9690,6 +9724,44 @@ one survivor that WAS a hole in the suite, and the two must not be confused.
    "did not come ashore" sentence earns the top of the panel is a placement
    question §57.54f settled on the storms that DID, and this is the other half
    of it.
+
+#### 57.60g Two faults the mockup pass found, and one of them had shipped
+
+**==> THE LANDFALL ROWS STACKED THE TEXT UNDER THE BADGE INSTEAD OF BESIDE IT,
+AND THAT WENT OUT ON `main`. <==** Found while measuring the mockup's geometry,
+not by any check.
+
+`--season-landfall-n` was declared on `.season-landfall-n`, the badge — so it
+was **out of scope for `.season-landfall`, the row**, whose
+`grid-template-columns: var(--season-landfall-n) 1fr` therefore held an
+unresolved `var()`. That is invalid at computed-value time and computes to
+`none`: one implicit column, two children, the text on the row below the badge.
+The browser reported `grid-template-columns: 372px` where the fixed layout
+reports `20px 340px`. **Nothing threw and nothing clipped.** The size is
+declared on the ROW now, which is the only element that has to read it.
+
+**==> AND THE CHECK WRITTEN TO CATCH THIS CLASS OF FAULT PASSED OVER IT, FOR
+THE REASON §12 CALLS WORSE THAN NO TEST. <==** `season-figure-check.mjs`
+asserted that *every row's text starts on the same left edge* — which is TRUE of
+a stacked layout, because everything stacked starts at the same left edge. **The
+assertion passed on the same wrong assumption as the bug.** The missing one is
+that the text sits to the RIGHT of the badge and shares its top, and it is
+mutation-verified against the exact shipped CSS.
+
+**THE SECOND FAULT IS THE HARNESS, AND IT EXISTED ONLY THERE.**
+`tools/season-figure-harness.html` linked `ui/panels.css` and
+`seasons/seasons.css` and not `ui/home.css` — which is where `.visually-hidden`
+is declared, and the numbered row emits one. Unstyled, that span is an in-flow
+grid item rather than an out-of-flow one, so it took the badge's column and
+pushed the whole row a column right. **A harness missing a stylesheet the app
+loads reports faults the app does not have and hides ones it does**, and this
+page did both in one run. It links index.html's sheets in index.html's order
+now.
+
+**ONE GAP LEFT OPEN RATHER THAN CLOSED.** `tools/token-check.mjs` did not flag
+the unresolved reference, because the property WAS declared somewhere in the
+file and the check does not model scope. Teaching it scope is a real piece of
+work and nothing is blocked on it; the browser assertion covers this instance.
 
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 

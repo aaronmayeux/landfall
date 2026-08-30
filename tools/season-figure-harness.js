@@ -23,6 +23,7 @@ import { stormFacts } from '../lib/season-facts.js';
 import { rankStorm, rankingsFileName } from '../lib/rankings.js';
 import { rankMarks, rankFootnoteHtml } from '../ui/season-rank-markup.js';
 import { peakHtml, lifeHtml, changeHtml, landfallsHtml } from '../ui/season-detail-markup.js';
+import { lifeChartHtml } from '../ui/season-life-chart.js';
 import { landfallFileName, placesFileName } from '../lib/seasons-sidecar.js';
 import { movementHtml } from '../ui/season-track-markup.js';
 import { SEASONS } from '../config/constants.js';
@@ -74,6 +75,12 @@ const placesFile = await (await fetch(`/seasons/data/${placesFileName('atlantic'
 
 const noelText = await (await fetch(`/seasons/data/${index.basins.atlantic.seasons['2007']}`)).text();
 
+const katrinaSrc = (() => {
+  const s2 = parseHurdat2(text).storms.find((x) => x.id === 'AL122005');
+  s2.landfallsComputed = marksFile.storms.AL122005 || [];
+  return s2;
+})();
+
 function landfallBlock(id, year) {
   const src = parseHurdat2(year === 2005 ? text : noelText).storms.find((s) => s.id === id);
   src.landfallsComputed = marksFile.storms[id] || [];
@@ -97,6 +104,7 @@ document.getElementById('body').innerHTML = [
     cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
   }, marks),
   rankFootnoteHtml(ranked, { year: 2005 }),
+  lifeChartHtml({ ...stormFacts(katrinaSrc), points: katrinaSrc.points }, { summary: 'x' }),
   `<div id="lf-katrina">${landfallBlock('AL122005', 2005)}</div>`,
   `<div id="lf-noel">${landfallBlock('AL162007', 2007)}</div>`,
 ].join('');

@@ -1190,10 +1190,14 @@ html[data-seasons="on"] #status {
      `none` — one implicit column, with the text stacked UNDER the badge instead
      of beside it. Nothing threw and nothing clipped. The row must be able to
      read it, so the row is where it lives. */
-  --season-landfall-n: 16px;
+  --season-landfall-n: 20px;
   display: grid;
   grid-template-columns: var(--season-landfall-n) 1fr;
-  column-gap: var(--space-snug);
+  /* The mockup's gap is 10px, which is not a step on this app's spacing scale
+     (4 / 8 / 12 / 16). 12 is the nearest, and the same call §57.59c made about
+     the mockup's palette: the geometry comes off the thing Aaron looked at, the
+     scale stays the app's own. */
+  column-gap: var(--space-base);
   align-items: start;
   padding: var(--space-snug) 0;
   border-bottom: 1px solid var(--glass-border);
@@ -1206,9 +1210,23 @@ html[data-seasons="on"] #status {
   min-width: 0;
 }
 
-/* ==> THE BADGE IS THE CHART'S DISC, AT THE CHART'S SIZE, IN THE CHART'S INK.
-   <== The two are meant to read as the same object seen twice, so a reader can
-   carry a number down from the plot to the row. */
+/* ==> 20px, WHICH IS THE MOCKUP'S FIGURE AND NOT THE CHART'S DISC. <== §57.60c.
+   The badge and the disc share a SHAPE and an INK — a filled circle in the
+   panel's own text colour with the panel's background punched out of it — and
+   that is what makes a reader carry a number down from the plot to the row.
+   They deliberately do not share a diameter.
+
+   ==> BECAUSE THE DISC DOES NOT HAVE ONE. <== Measured in a browser,
+   2026-08-30: the chart is an SVG scaled to the panel, so its 16-unit disc
+   renders at 12.07px at a 320px viewport, 15.19px at 390, 17.43px at 440 and
+   29.9px at 719. There is no width at which a fixed 16px badge matches it, and
+   it does not match even at the phone width this was first reasoned about.
+   **The first version of this rule pinned the badge to `SEASONS.lifeChartDiscPx`
+   and a suite assertion enforced it — a contract to a number that never
+   described pixels on screen.** Do not restore it.
+
+   Everything else here is read off the mockup Aaron accepted on 2026-08-30, in
+   a column that is the same 358px wide as the app's own panel. */
 .season-landfall-n {
   display: flex;
   align-items: center;
@@ -1222,6 +1240,10 @@ html[data-seasons="on"] #status {
   font-size: var(--type-micro);
   font-weight: 700;
   line-height: 1;
+  /* An optical nudge, off the mockup. `align-items: start` puts the badge's top
+     on the text block's top, and the first line's own leading sits the glyphs a
+     shade lower than that, so the circle reads high without it. */
+  margin-block-start: 1px;
 }
 
 .season-landfall:last-child { border-bottom: 0; }

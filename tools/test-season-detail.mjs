@@ -612,6 +612,14 @@ function mount({
     + 'size are still two lists, and `landfallSource` is the only honest test',
   !noaaSourced.includes('season-landfall-where'));
 
+  /* ==> THE ELEMENT ITSELF, BECAUSE A MUTATION SURVIVED WITHOUT THIS. <==
+   * §57.60c. Swapping the `<ol>` back to a `<ul>` left all 210 assertions
+   * green. The order of these rows is load bearing since step 6 — it is what
+   * the chart's numbers refer to — and that is the entire distinction between
+   * the two elements. */
+  ok('the numbered landfalls are an ordered list',
+    named.includes('<ol class="season-landfalls">') && named.includes('</ol>'));
+
   /* ==> EVERY ROW CARRIES THE NUMBER ITS DISC CARRIES ON THE CHART ABOVE. <==
    * §57.60, step 6. The chart's caption tells the reader the numbered marks are
    * the landfalls listed here, so a row without its number leaves a mark

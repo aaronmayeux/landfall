@@ -609,6 +609,20 @@ geometry and the nine mutations.
 5. **A storm that never came ashore** — 1,831 of them. `Landfalls` now leads
    the panel with one sentence saying it stayed at sea.
 
+**==> AND THE FIRST VERSION OF STEP 6 SHIPPED A BROKEN ROW, WHICH THE MOCKUP
+PASS FOUND AND NO CHECK DID. <==** The landfall text stacked UNDER its badge
+instead of beside it, because the badge's size was declared on the badge and
+the ROW's `grid-template-columns` could not read it. **The check written to
+catch exactly this class of fault passed over it** — it asserted every row's
+text starts on the same left edge, which is true of a stacked layout. §57.60g.
+Fixed, mutation-verified, and the missing assertion is in.
+
+**THE BADGE IS 20px AND IS DELIBERATELY NOT THE CHART'S DISC.** It first
+shipped at 16 pinned to `SEASONS.lifeChartDiscPx` on the argument that the two
+are one object seen twice. **Measured, the disc has no fixed pixel size** — it
+is an SVG scaled to the panel and renders 12.07px at 320 and 29.90px at 719.
+The suite now asserts the two are NOT coupled, so restoring it fails. §57.60c.
+
 **ONE MEASUREMENT WORTH NOT RE-DERIVING:** zero of 3,266 storms carry an
 out-of-order landfall list today, so the chart and the list already agreed —
 **by luck**, over a sidecar written in the order the coast walk meets the

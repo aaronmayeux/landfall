@@ -135,6 +135,10 @@ try {
         bars,
         list: box(document.querySelector('.detail-vitals')),
         landfalls,
+        disc: (() => {
+          const d = document.querySelector('.lifec-disc');
+          return d ? d.getBoundingClientRect().width : 0;
+        })(),
         foot: foot ? { ...box(foot), border: getComputedStyle(foot).borderTopWidth } : null,
       };
     });
@@ -259,9 +263,10 @@ try {
 
     /* And the badge stays a circle at its declared size rather than being
      * squeezed by the text column beside it. 20px is the mockup's figure and is
-     * the chart's disc size. */
-    ok(`${label}: every badge holds its size and stays round`,
-      seen.landfalls.every((l) => Math.abs(l.badge.width - 16) <= 0.5)
+     * deliberately NOT the chart's disc — see §57.60c and the disc measurement
+     * below, which is why. */
+    ok(`${label}: every badge holds its 20px and stays round`,
+      seen.landfalls.every((l) => Math.abs(l.badge.width - 20) <= 0.5)
       && seen.landfalls.every((l) => Math.abs(l.badge.width - l.badgeH) <= 0.5));
 
     /* ==> THE TEXT IS BESIDE THE BADGE, NOT UNDER IT, AND THIS IS THE
@@ -274,6 +279,14 @@ try {
     ok(`${label}: every row's text sits BESIDE its badge, not under it`,
       seen.landfalls.every((l) => l.detail.left >= l.badge.right - 0.5
         && Math.abs(l.detailTop - l.badgeTop) <= 6));
+
+    /* ==> THE DISC HAS NO FIXED PIXEL SIZE, AND THIS IS WHERE THAT IS ON THE
+     * RECORD. <== §57.60c. The chart is an SVG scaled to the panel, so a badge
+     * pinned to `SEASONS.lifeChartDiscPx` would match it at no width at all.
+     * Printed rather than asserted against a number: the point is the RANGE,
+     * and pinning it would only invite the same false contract back. */
+    ok(`${label}: the chart's disc renders at ${seen.disc.toFixed(2)}px here, `
+      + `against a fixed 20px badge`, seen.disc > 0);
 
     /* --- 4. the footnote --------------------------------------------------*/
 
