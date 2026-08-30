@@ -612,6 +612,37 @@ function mount({
     + 'size are still two lists, and `landfallSource` is the only honest test',
   !noaaSourced.includes('season-landfall-where'));
 
+  /* ==> EVERY ROW CARRIES THE NUMBER ITS DISC CARRIES ON THE CHART ABOVE. <==
+   * §57.60, step 6. The chart's caption tells the reader the numbered marks are
+   * the landfalls listed here, so a row without its number leaves a mark
+   * pointing at nothing. */
+  ok('every landfall row carries a number badge',
+    (named.match(/season-landfall-n"/g) || []).length === 3);
+  ok('and they read 1, 2, 3 down the page',
+    named.indexOf('>1<') < named.indexOf('>2<') && named.indexOf('>2<') < named.indexOf('>3<'));
+  ok('==> AND THE BADGE IS HIDDEN FROM A SCREEN READER, WHICH GETS A WORD. <== '
+    + 'A bare digit announced ahead of a place name reads as a list index the '
+    + 'reader cannot act on',
+  named.includes('<span class="visually-hidden">Landfall 1.</span>')
+    && named.includes('class="season-landfall-n" aria-hidden="true"'));
+
+  /* ==> A LIST THAT ARRIVES OUT OF TIME ORDER IS RENUMBERED, AND ITS NAMES GO
+   * WITH THEIR OWN MARKS. <== §57.60. No storm in the archive is out of order
+   * today, so the case is built by reversing Katrina's — the failure it guards
+   * is the same one the length check above guards from a different road:
+   * Port Sulphur printed beside a Florida landfall, reading perfectly. */
+  const reversed = M.landfallsHtml(
+    { ...computed, landfalls: computed.landfalls.slice().reverse() },
+    'imperial',
+    {
+      markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+      markerHoleTo: SEASONS.landfallMarkerHoleTo,
+      places: { ...placeFile.AL122005, landfalls: placeFile.AL122005.landfalls.slice().reverse() },
+    },
+  );
+  ok('a reversed landfall list renders in the same order as the sorted one',
+    flat(reversed) === flat(named));
+
   ok('and a landfall with no town inside the cap simply has no place line',
     !M.landfallsHtml(computed, 'imperial', {
       markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
@@ -1395,9 +1426,17 @@ function mount({
   const order = (id) => p.html().indexOf(`data-section="${id}"`);
   ok('`In its season` comes before `Strongest`',
     order('rank-season') !== -1 && order('rank-season') < order('peak'));
-  ok('everything else keeps its order — life, landfalls, change, movement',
-    order('life') < order('landfalls') && order('landfalls') < order('change')
-    && order('change') < order('movement'));
+  /* ==> `Landfalls` LEADS THE SECTIONS, DIRECTLY UNDER THE CHART. <== §57.60,
+   * step 6. The chart's discs are numbered and this list carries the matching
+   * numbers; four sections apart they are a puzzle rather than a reference.
+   * The chart is not a `section()`, so the assertion is that nothing else
+   * comes before this one. */
+  ok('`Landfalls` is the first section on the panel, under the chart',
+    order('landfalls') !== -1
+    && ['rank-season', 'peak', 'life', 'change', 'movement', 'windfield', 'report']
+      .every((id) => order(id) === -1 || order('landfalls') < order(id)));
+  ok('everything else keeps its order — season, peak, life, change, movement',
+    order('life') < order('change') && order('change') < order('movement'));
 
   /* ==> `In its season` AND `Strongest` OPEN, AND THE REST FOLD. <== §57.57b.
    * The seven distribution bars used to live in one section that opened; they
@@ -1409,8 +1448,14 @@ function mount({
   ok('a fresh reader gets `In its season` open', !shutQ('rank-season'));
   ok('and `Strongest` open, so the merged rows are on screen without a tap',
     !shutQ('peak'));
+  /* ==> AND `Landfalls` OPEN, BECAUSE FOLDED IT MAKES THE CHART LIE. <==
+   * §57.60. The chart's caption tells the reader the numbered marks are the
+   * landfalls listed below. Over a folded section that sentence points at a
+   * list that is not on screen. */
+  ok('and `Landfalls` open, so the numbered discs have their list under them',
+    !shutQ('landfalls'));
   ok('and every other section folded, heading still on screen',
-    shutQ('life') && shutQ('landfalls') && shutQ('change')
+    shutQ('life') && shutQ('change')
     && shutQ('movement') && shutQ('windfield') && shutQ('report'));
 
   /* ==> THE HEAD IS A REAL BUTTON, WHICH IS WHAT BUYS THE KEYBOARD. <== §13.
@@ -1468,7 +1513,7 @@ function mount({
   ok('pressing a folded head opens that section', !shutQ('life'));
   ok('and says so to a screen reader', ariaOf('life') === 'true');
   ok('==> AND ONLY THAT SECTION. <== Opening one must not open its neighbours',
-    shutQ('landfalls'));
+    shutQ('change'));
 
   p.press('.detail-section[data-section="life"] .detail-section-head');
   ok('pressing it again folds it', shutQ('life'));
@@ -1490,9 +1535,14 @@ function mount({
   p.view.onEnter('AL122005');
   await settle();
 
-  p.press('.detail-section[data-section="landfalls"] .detail-section-head');
+  /* ==> `How it moved` RATHER THAN `Landfalls`, WHICH NOW OPENS BY DEFAULT.
+   * <== §57.60. Pressing a section that already opened would test the fold
+   * surviving rather than the open, and the two are not the same assertion:
+   * the default is what a reader gets with no record at all, and this is about
+   * the record being read back. */
+  p.press('.detail-section[data-section="movement"] .detail-section-head');
   const open = () => p.body()
-    .querySelector('.detail-section[data-section="landfalls"]').dataset.collapsed !== 'true';
+    .querySelector('.detail-section[data-section="movement"]').dataset.collapsed !== 'true';
   ok('a section is opened while the report is still in the air', open());
 
   release();

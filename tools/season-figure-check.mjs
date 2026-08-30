@@ -109,6 +109,20 @@ try {
         figureLeft: b.figure ? b.figure.getBoundingClientRect().left : null,
         figureRight: b.figure ? b.figure.getBoundingClientRect().right : null,
       }));
+      /* ==> THE NUMBERED LANDFALL ROWS. <== §57.60. A badge in a fixed-width
+       * grid column beside text that wraps is the `18 of 3` shape one step
+       * later, and the two-digit case only exists on `NOEL 2007`. */
+      const landfalls = [...document.querySelectorAll('.season-landfall')].map((li) => ({
+        n: li.querySelector('.season-landfall-n')?.textContent.trim() ?? '',
+        badge: box(li.querySelector('.season-landfall-n')),
+        detail: box(li.querySelector('.season-landfall-detail')),
+        overflowX: li.scrollWidth - li.clientWidth,
+        badgeOverflowX: (() => {
+          const b = li.querySelector('.season-landfall-n');
+          return b ? b.scrollWidth - b.clientWidth : 0;
+        })(),
+        row: box(li),
+      }));
       const foot = document.querySelector('.season-detail-footnote');
       return {
         cells,
@@ -117,6 +131,7 @@ try {
         ranks,
         bars,
         list: box(document.querySelector('.detail-vitals')),
+        landfalls,
         foot: foot ? { ...box(foot), border: getComputedStyle(foot).borderTopWidth } : null,
       };
     });
@@ -210,6 +225,39 @@ try {
       && (b.figureLeft < seen.list.left - 1 || b.figureRight > seen.list.right + 1));
     ok(`${label}: no bar's own figure hangs off the panel (${stray.length} stray)`,
       stray.length === 0);
+
+    /* --- 3b. the numbered landfall rows ---------------------------------- */
+
+    /* ==> THIRTEEN ROWS ACROSS TWO STORMS, AND THE SECOND ONE IS WHY. <==
+     * Katrina takes three landfalls and `NOEL 2007` takes ten, so the badge has
+     * to hold a `10` as well as a `1`. One storm cannot show that. */
+    ok(`${label}: thirteen numbered landfall rows drew across the two storms`,
+      seen.landfalls.length === 13
+      && seen.landfalls.filter((l) => l.n === '10').length === 1);
+
+    ok(`${label}: no landfall row clips (worst overflow `
+      + `${Math.max(0, ...seen.landfalls.map((l) => l.overflowX)).toFixed(2)}px)`,
+    seen.landfalls.every((l) => l.overflowX <= 0.5));
+
+    /* ==> AND NO BADGE CLIPS ITS OWN DIGITS. <== A `10` inside a 16px circle is
+     * the case that would show it, and it is exactly the shape that read
+     * `18 of 3` on a phone while every node assertion agreed the DOM was fine. */
+    ok(`${label}: no badge clips its own number (worst `
+      + `${Math.max(0, ...seen.landfalls.map((l) => l.badgeOverflowX)).toFixed(2)}px)`,
+    seen.landfalls.every((l) => l.badgeOverflowX <= 0.5));
+
+    /* ==> EVERY ROW'S TEXT STARTS ON ONE LEFT EDGE. <== The badge is its own
+     * grid column for this reason: a `10` indenting its own row further than
+     * the `9` above it reads as a fault rather than as a list. */
+    const detailLefts = seen.landfalls.map((l) => l.detail.left);
+    ok(`${label}: every landfall's text starts on the same left edge `
+      + `(spread ${(Math.max(...detailLefts) - Math.min(...detailLefts)).toFixed(2)}px)`,
+    Math.max(...detailLefts) - Math.min(...detailLefts) <= 0.5);
+
+    /* And the badge stays a circle at its declared size rather than being
+     * squeezed by the text column beside it. */
+    ok(`${label}: every badge holds its size and stays round`,
+      seen.landfalls.every((l) => Math.abs(l.badge.width - 16) <= 0.5));
 
     /* --- 4. the footnote --------------------------------------------------*/
 

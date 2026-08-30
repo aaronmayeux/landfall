@@ -129,6 +129,14 @@ import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-s
  * new name (`How hard it blew`), so this is a move toward that set rather than
  * a reversal of anything.
  *
+ * ==> AND `Landfalls` JOINS THEM AT STEP 6, BECAUSE FOLDED IT MAKES THE CHART
+ * LIE. <== §57.60. The life chart's caption now says the numbered marks are
+ * the landfalls listed below, and the discs carry numbers whose only meaning
+ * is the row they match. A reader who met that caption over a folded section
+ * would be told to look at a list that is not on screen. §57.54f's step 7
+ * table already has this section open, so like `Strongest` above it this is a
+ * move toward that set rather than a decision taken early.
+ *
  * ==> IT IS THE OPEN LIST RATHER THAN THE CLOSED ONE, AND THAT IS DELIBERATE.
  * <== A new section added to this panel then defaults to FOLDED, which is the
  * safe direction: an unfamiliar section arriving already open pushes eight
@@ -136,7 +144,7 @@ import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-s
  * has to hunt for it. A closed list would have made the new section open by
  * omission, which is the failure mode nobody notices until it is on glass.
  */
-const OPEN_BY_DEFAULT = new Set(['rank-season', 'peak']);
+const OPEN_BY_DEFAULT = new Set(['landfalls', 'rank-season', 'peak']);
 
 /**
  * ==> THIS PANEL'S FOLDS SHARE ONE STORAGE RECORD WITH THE LIVE PANEL'S, SO
@@ -345,6 +353,23 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       });
       return chart || absenceHtml(lifeChartAbsenceWords(withPoints));
     })()}
+      ${/* ==> `Landfalls` SITS DIRECTLY UNDER THE CHART, AND THE ADJACENCY IS
+          * THE WHOLE REASON THE NUMBERING WORKS. <== §57.54d, §57.54f, §57.60.
+          * The chart draws a numbered disc per landfall and this list carries
+          * the matching numbers; four sections apart they are a puzzle rather
+          * than a reference, which is the sentence §57.54f uses and the reason
+          * it says this placement is not a preference a later pass may quietly
+          * undo.
+          *
+          * ==> IT MOVED UP FROM FIFTH RATHER THAN BEING ADDED HERE. <== The
+          * section is unchanged apart from its numbers; §57.54f's step 7 table
+          * already has it leading the six, so nothing about this ordering is
+          * temporary. */
+    section('landfalls', 'Landfalls', 'pin', landfallsHtml(facts, system, {
+      markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+      markerHoleTo: SEASONS.landfallMarkerHoleTo,
+      places: storm.places ?? null,
+    }))}
       ${/* ==> THE RANK IS COMPUTED HERE RATHER THAN CACHED WITH THE FACTS,
           * BECAUSE IT IS A FACT ABOUT THE SEASON AND THE SEASON IS WHAT THE
           * BOARD RELOADS. <== `entries()` is a function for exactly this
@@ -377,11 +402,6 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       + seasonWindowHtml(facts.seasonWindow))}
       ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system, marks))}
       ${section('life', 'Its life', 'clock', lifeHtml(facts, marks))}
-      ${section('landfalls', 'Landfalls', 'pin', landfallsHtml(facts, system, {
-    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
-    markerHoleTo: SEASONS.landfallMarkerHoleTo,
-    places: storm.places ?? null,
-  }))}
       ${section('change', 'How it changed', 'trend', changeHtml(facts, system, {
     windowHours: SEASONS.intensificationWindowHours,
     /* ==> §57.48. THE COMEBACK IS HANDED IN RATHER THAN APPENDED, BECAUSE THIS

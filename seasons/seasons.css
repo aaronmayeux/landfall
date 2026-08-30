@@ -1171,14 +1171,58 @@ html[data-seasons="on"] #status {
   list-style: none;
 }
 
-/* A landfall is two facts — when and where, then how hard — and they are two
-   lines rather than one so neither wraps into the other on a phone. */
+/* ==> THE ROW IS A NUMBER AND A BLOCK OF TEXT, AND THE NUMBER IS THE SAME ONE
+   ON THE CHART ABOVE. <== §57.60. The list sits directly under the life chart
+   so the two can be read together; a numbered mark whose list is four sections
+   away is a puzzle rather than a reference (§57.54d).
+
+   The badge is its own grid column rather than sitting inside the flow of the
+   text, so the three text lines all start on one left edge whatever number is
+   beside them — a `10` indenting its own row further than a `9` reads as a
+   fault. `align-items: start` keeps the badge level with the place name rather
+   than centred against a row whose height varies with how much the record
+   holds. */
 .season-landfall {
+  display: grid;
+  grid-template-columns: var(--season-landfall-n) 1fr;
+  column-gap: var(--space-snug);
+  align-items: start;
+  padding: var(--space-snug) 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.season-landfall-detail {
   display: flex;
   flex-direction: column;
   gap: var(--space-tight);
-  padding: var(--space-snug) 0;
-  border-bottom: 1px solid var(--glass-border);
+  min-width: 0;
+}
+
+/* ==> THE BADGE IS THE CHART'S DISC, AT THE CHART'S SIZE, IN THE CHART'S INK.
+   <== `SEASONS.lifeChartDiscPx` is 16 and the chart draws its discs at that
+   width in SVG user units, which is device pixels at the 358px panel width a
+   390px phone gives. The two are meant to read as the same object seen twice,
+   so a reader can carry a number down from the plot to the row; a badge at a
+   different size or a different fill reads as a coincidence instead.
+
+   ==> THE 16 IS RESTATED HERE BECAUSE CSS CANNOT IMPORT A CONSTANT, AND
+   `tools/test-season-life-chart.mjs` FAILS IF THE TWO EVER DISAGREE. <== A
+   comment asking the next person to keep them in step is the guard this
+   project has already watched fail (`tools/drawer-head-harness.html`). */
+.season-landfall-n {
+  --season-landfall-n: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--season-landfall-n);
+  block-size: var(--season-landfall-n);
+  border-radius: 50%;
+  background: var(--text-primary);
+  color: var(--text-inverse);
+  font-family: var(--font-numeric);
+  font-size: var(--type-micro);
+  font-weight: 700;
+  line-height: 1;
 }
 
 .season-landfall:last-child { border-bottom: 0; }

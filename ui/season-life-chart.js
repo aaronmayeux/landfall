@@ -354,6 +354,47 @@ export function axisTicks(facts) {
  * ------------------------------------------------------------------------ */
 
 /**
+ * The landfalls in the order they are numbered, with each one's place in
+ * `facts.landfalls` carried alongside it.
+ *
+ * ==> THIS IS THE ONE PLACE THE NUMBERS ARE DECIDED, AND THAT IS THE WHOLE
+ * POINT OF IT EXISTING. <== §57.60. The chart draws numbered discs and the
+ * list under it prints the same numbers, and until step 6 those were two
+ * independent walks over the same array: the chart sorted by time, the list
+ * did not. **Measured across all 3,266 storms, 2026-08-30: zero storms carry
+ * an out-of-order landfall list today**, so the two agreed — by luck, over a
+ * sidecar that is written in time order because that is how the coast walk
+ * meets the coast. Step 13 brings other agencies' tracks into the same
+ * renderer and nothing guarantees they arrive sorted.
+ *
+ * The failure that would follow is silent and symmetrical (§57.59e): the
+ * chart's discs and the list's numbers would each be internally consistent
+ * and point at different landfalls, and nothing on screen would look wrong.
+ * One function answers it for both.
+ *
+ * ==> `index` IS CARRIED BECAUSE THE PLACE NAMES ARE INDEX-ALIGNED TO THE
+ * UNSORTED LIST. <== §57.40a. `places.landfalls` is written against
+ * `facts.landfalls` in its own order, so a caller reading these in time order
+ * must look a name up by where the mark came from rather than by where it now
+ * sits. Reordering without that would print Port Sulphur beside a Florida
+ * landfall — the exact fault §57.40a's length guard exists to prevent.
+ *
+ * The sort is stable (ES2019), so two landfalls stamped at the identical
+ * minute keep the order the record put them in rather than swapping between
+ * renders.
+ *
+ * @param {object} facts  `stormFacts`
+ * @returns {Array<{mark: object, index: number, n: number}>} time order
+ */
+export function orderedLandfalls(facts) {
+  const list = Array.isArray(facts?.landfalls) ? facts.landfalls : [];
+  return list
+    .map((mark, index) => ({ mark, index }))
+    .sort((a, b) => a.mark.time - b.mark.time)
+    .map((e, i) => ({ mark: e.mark, index: e.index, n: i + 1 }));
+}
+
+/**
  * Which row each numbered disc sits on, greedy first fit.
  *
  * ==> STACKING RATHER THAN SHARING, AND THE MEASUREMENT IS WHAT DECIDED IT.
@@ -369,11 +410,11 @@ export function axisTicks(facts) {
  * below reads 1, 2, 3 down the page whatever the chart had to do to fit them.
  */
 export function discRows(facts, geo) {
-  const marks = (facts?.landfalls || []).slice().sort((a, b) => a.time - b.time);
+  const marks = orderedLandfalls(facts);
   if (!marks.length || !geo) return [];
   const placed = [];
   for (let i = 0; i < marks.length; i++) {
-    const x = geo.xOf(marks[i].time);
+    const x = geo.xOf(marks[i].mark.time);
     if (!Number.isFinite(x)) continue;
     let row = 0;
     while (
@@ -385,7 +426,7 @@ export function discRows(facts, geo) {
      * maximum — but losing a landfall off the bottom of the chart while the
      * list below still numbers it would be a silence with a contradiction
      * attached. */
-    placed.push({ n: i + 1, x, row, time: marks[i].time });
+    placed.push({ n: marks[i].n, x, row, time: marks[i].mark.time });
   }
   return placed;
 }

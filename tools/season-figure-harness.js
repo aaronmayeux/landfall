@@ -22,7 +22,8 @@ import { parseHurdat2 } from '../lib/hurdat.js';
 import { stormFacts } from '../lib/season-facts.js';
 import { rankStorm, rankingsFileName } from '../lib/rankings.js';
 import { rankMarks, rankFootnoteHtml } from '../ui/season-rank-markup.js';
-import { peakHtml, lifeHtml, changeHtml } from '../ui/season-detail-markup.js';
+import { peakHtml, lifeHtml, changeHtml, landfallsHtml } from '../ui/season-detail-markup.js';
+import { landfallFileName, placesFileName } from '../lib/seasons-sidecar.js';
 import { movementHtml } from '../ui/season-track-markup.js';
 import { SEASONS } from '../config/constants.js';
 
@@ -59,6 +60,30 @@ const system = 'imperial';
 const ranked = rankStorm(facts, TABLE, 'atlantic', system);
 const marks = rankMarks(ranked, { system });
 
+/* ==> AND THE NUMBERED LANDFALL LIST, WHICH IS THE SAME SHAPE ONE STEP LATER.
+ * <== §57.60. A badge in a fixed-width grid column beside text that wraps is
+ * precisely the `18 of 3` shape: `textContent` will read `Port Sulphur,
+ * Louisiana, United States` whatever the browser actually managed to paint.
+ *
+ * ==> TWO STORMS, BECAUSE THE SECOND ONE HAS A TWO-DIGIT NUMBER. <== Katrina
+ * takes three landfalls and `NOEL 2007` takes ten, so the badge column has to
+ * hold a `10` without indenting its own row further than the `9` above it. One
+ * storm cannot show that. */
+const marksFile = await (await fetch(`/seasons/data/${landfallFileName('atlantic', index.basins.atlantic.revision)}`)).json();
+const placesFile = await (await fetch(`/seasons/data/${placesFileName('atlantic', index.basins.atlantic.revision)}`)).json();
+
+const noelText = await (await fetch(`/seasons/data/${index.basins.atlantic.seasons['2007']}`)).text();
+
+function landfallBlock(id, year) {
+  const src = parseHurdat2(year === 2005 ? text : noelText).storms.find((s) => s.id === id);
+  src.landfallsComputed = marksFile.storms[id] || [];
+  return landfallsHtml(stormFacts(src), system, {
+    markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
+    markerHoleTo: SEASONS.landfallMarkerHoleTo,
+    places: placesFile.storms[id] ?? null,
+  });
+}
+
 /* The four sections that own a ranked figure, plus the footnote that governs
  * them — assembled the way `ui/view-season-detail.js` assembles them. */
 document.getElementById('body').innerHTML = [
@@ -72,6 +97,8 @@ document.getElementById('body').innerHTML = [
     cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
   }, marks),
   rankFootnoteHtml(ranked, { year: 2005 }),
+  `<div id="lf-katrina">${landfallBlock('AL122005', 2005)}</div>`,
+  `<div id="lf-noel">${landfallBlock('AL162007', 2007)}</div>`,
 ].join('');
 
 document.body.dataset.ready = 'true';

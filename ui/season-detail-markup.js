@@ -62,6 +62,12 @@ import {
  * a given storm happened to rank would put two `<dl>`s inside one section on
  * some storms and one on others. */
 import { figureRowsHtml } from './season-figure-row.js';
+/* ==> THE LIST TAKES ITS NUMBERS FROM THE CHART'S OWN MODULE RATHER THAN
+ * COUNTING AGAIN. <== §57.60. Two renderers counting the same array is how the
+ * discs and the list end up disagreeing with nobody able to see it. The import
+ * runs one way — the chart knows nothing about this file — so there is no
+ * cycle, and it is the same shape as `figureRowsHtml` above. */
+import { orderedLandfalls } from './season-life-chart.js';
 
 /* ---------------------------------------------------------------------------
  * THE HEADER
@@ -352,8 +358,14 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
     && Array.isArray(places.landfalls) && places.landfalls.length === list.length
     ? places.landfalls : null;
 
-  const items = list.map((lf, i) => {
-    const where = names?.[i]?.name || null;
+  /* ==> THE ROWS RUN IN THE CHART'S ORDER AND THE NAME IS LOOKED UP BY WHERE
+   * THE MARK CAME FROM. <== §57.60, §57.40a. `orderedLandfalls` sorts by time
+   * and hands back each mark's place in the unsorted list; the names sidecar is
+   * index-aligned to that unsorted list, so `index` is what reads it and `n` is
+   * what the reader sees. Using one for the other is the mislabelling the
+   * length guard above already refuses on a different road. */
+  const items = orderedLandfalls(facts).map(({ mark: lf, index, n }) => {
+    const where = names?.[index]?.name || null;
     const bits = [utcStamp(lf.time), coords(lf.lat, lf.lon)].filter(Boolean);
     const strength = [
       windWords(lf.windKt, system),
@@ -368,13 +380,22 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
      * rather than in a second one invented here. */
     const catRaw = categoryShortLabel(lf.category ?? null, lf.nature || 'tropical', null);
     const cat = catRaw && catRaw !== '—' ? catRaw : null;
+    /* ==> THE BADGE IS HIDDEN FROM A SCREEN READER AND A WORD IS READ IN ITS
+     * PLACE. <== A bare `1` announced ahead of a place name reads as a list
+     * index the reader cannot act on. `Landfall 1` says what the digit is FOR,
+     * which is the same thing the chart's caption tells a sighted reader —
+     * §57.59's rule that the picture is never the only place a fact lives. */
     return `
       <li class="season-landfall">
-        ${where ? `<span class="season-landfall-where">${esc(where)}</span>` : ''}
-        <span class="season-landfall-when">${esc(bits.join(' · '))}</span>
-        ${cat || strength.length
+        <span class="visually-hidden">Landfall ${n}.</span>
+        <span class="season-landfall-n" aria-hidden="true">${n}</span>
+        <span class="season-landfall-detail">
+          ${where ? `<span class="season-landfall-where">${esc(where)}</span>` : ''}
+          <span class="season-landfall-when">${esc(bits.join(' · '))}</span>
+          ${cat || strength.length
     ? `<span class="season-landfall-what">${esc([cat, ...strength].filter(Boolean).join(' · '))}</span>`
     : ''}
+        </span>
       </li>`;
   }).join('');
 

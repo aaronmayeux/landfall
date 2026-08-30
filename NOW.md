@@ -587,10 +587,37 @@ while the chart insets its plot by 4 at each end, so **the tool alone is
 optimistic by 2%** (§57.59e). And the storms that cannot be charted at all are
 **32**, single-observation entries that get a sentence rather than an empty box.
 
-**NOTHING AFTER STEP 5 IS BUILT.** Step 6 moves the landfall list under the
-chart and numbers it against `discRows`, which already exports the numbering.
-`ui/season-detail-markup.js` is at 606 and the chart took its own file, so
-step 6 lands with room.
+**==> STEP 6 IS BUILT AND DEPLOYED. NOBODY HAS SEEN IT. <==** The landfall
+list is numbered to match the chart's discs and has moved from fifth on the
+panel to first, directly under the chart, where it now opens by default.
+**§57.60 is the as-built account — read that, not this.** It holds the four
+measurements taken before the code, the one-owner argument, the browser
+geometry and the nine mutations.
+
+**FIVE THINGS TO JUDGE, AND THE FIRST IS THE ONE THAT CAN SEND THE DESIGN BACK:**
+
+1. **Does the number actually get you from a disc on the chart to the right row
+   in the list**, without counting. That is the whole of step 6.
+2. **A lone `1` on 747 storms** — every storm with exactly one landfall. The
+   chart draws a disc labelled 1 for them too, so the alternative is the two
+   surfaces speaking different grammars on 52% of the storms that came ashore.
+   **Flagged in advance as the most likely thing to come back as clutter.**
+3. **`NOEL 2007`** — ten discs in four rows over a ten-row list. The storm the
+   numbering exists for and the busiest it gets.
+4. **The panel's new first screen** is the paragraph, the chart and a landfall
+   list. `In its season` and `Strongest` are both below the fold on a phone.
+5. **A storm that never came ashore** — 1,831 of them. `Landfalls` now leads
+   the panel with one sentence saying it stayed at sea.
+
+**ONE MEASUREMENT WORTH NOT RE-DERIVING:** zero of 3,266 storms carry an
+out-of-order landfall list today, so the chart and the list already agreed —
+**by luck**, over a sidecar written in the order the coast walk meets the
+coast. Step 13's other agencies carry no such guarantee, and that is why the
+numbering has one owner rather than an assertion. §57.60a.
+
+**NOTHING AFTER STEP 6 IS BUILT.** Step 7 is the section merge, the order, the
+icons and the default-open set. `ui/season-detail-markup.js` is at 627 and
+`ui/season-life-chart.js` at 636, so step 7 lands with room in both.
 
 **ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
 version fed the distribution bar the RAW value instead of the rung, and because

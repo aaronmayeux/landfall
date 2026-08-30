@@ -9550,6 +9550,147 @@ assertions red.
    panel now and it is not foldable. On a phone it pushes `Landfalls` and
    `In its season` below the fold on every storm.
 
+### 57.60 Step 6 — the numbered landfalls — as built
+
+**§57.54k step 6, and it landed alone**, on top of a life chart Aaron had
+already accepted. **Every landfall on the chart carries a number and the list
+under the chart carries the same numbers**, and the list moved from fifth on
+the panel to first so the two sit together. §57.54f's sentence is the whole
+reason: a numbered mark whose list is four sections away is not a reference, it
+is a puzzle.
+
+**`Landfalls` NOW OPENS BY DEFAULT.** The chart's caption tells the reader the
+numbered marks are the landfalls listed below; over a folded section that
+sentence points at a list that is not on screen. §57.54f's step 7 table already
+has this section open, so it is a move toward that set rather than a decision
+taken early — the same argument §57.57b made for `Strongest`.
+
+#### 57.60a Four numbers came before the code, and all four said the same thing
+
+Measured through the shipped renderers against all 3,266 storms, 2026-08-30:
+
+| storms in the archive | 3,266 |
+| storms that came ashore | 1,435 |
+| **storms whose landfall list is out of time order** | **0** |
+| **storms with landfalls but no chart to number them against** | **0** |
+| **landfalls that fail to place a disc** | **0** |
+
+**==> SO THE CHART AND THE LIST ALREADY AGREED, AND THEY AGREED BY LUCK. <==**
+Before this step the chart sorted its marks by time and the list did not. The
+two matched on every storm in the archive because `tools/seasons-landfall.mjs`
+writes the sidecar in the order the coast walk meets the coast, which is time
+order. **Nothing asserted it and nothing required it.** Step 13 brings other
+agencies' tracks through the same renderer and no such guarantee comes with
+them.
+
+**THE FAILURE THAT WOULD FOLLOW IS SILENT AND SYMMETRICAL** — §57.59e names it
+one step earlier about disc rows and it is the identical shape here. The chart
+and the list would each be internally consistent, would each number 1 to N
+without a gap, and would point at different landfalls. Nothing on screen would
+look wrong.
+
+#### 57.60b One function owns the numbers, and it carries two of them
+
+`orderedLandfalls(facts)` in `ui/season-life-chart.js` is the only place the
+numbering is decided. `discRows` reads it; `landfallsHtml` imports it. The
+import runs one way — the chart knows nothing about the markup file — so there
+is no cycle, and it is the same shape `figureRowsHtml` already has.
+
+Each entry carries **the mark, the number the reader sees, and the mark's
+index in the unsorted list**, and the third one is not decoration:
+
+**==> THE PLACE NAMES ARE INDEX-ALIGNED TO `facts.landfalls` IN ITS OWN ORDER,
+SO A ROW READ IN TIME ORDER MUST LOOK ITS NAME UP BY WHERE THE MARK CAME FROM.
+<==** §57.40a. Reading `places.landfalls[n - 1]` instead would print the tenth
+landfall's town beside the first, and read perfectly while doing it. That is
+the same fault §57.40a's length guard already refuses from a different road,
+and the suite drives it by reversing Katrina's list.
+
+**THE SORT IS STABLE**, so two landfalls stamped at the identical minute keep
+the order the record put them in rather than swapping between renders.
+
+#### 57.60c The badge is the chart's disc, and CSS cannot import a constant
+
+The number in the list is drawn as the chart's disc: same diameter, same
+`textPrimary` fill, same `textInverse` numeral. **They are meant to read as one
+object seen twice**, so a reader can carry a number down from the plot to the
+row. A badge at a different size or a different fill reads as a coincidence.
+
+**`SEASONS.lifeChartDiscPx` IS 16 AND THE STYLESHEET RESTATES IT, WHICH IS A
+DRIFT WAITING TO HAPPEN.** `tools/test-season-life-chart.mjs` reads the
+declared `--season-landfall-n` out of `seasons/seasons.css` and fails if it is
+not the constant. A comment asking the next person to keep the two in step is
+the guard this project has already watched fail — `tools/drawer-head-harness.html`
+drifted from the app for two commits under exactly that comment.
+
+**THE BADGE IS ITS OWN GRID COLUMN RATHER THAN SITTING IN THE FLOW OF THE
+TEXT.** A `10` indenting its own row further than the `9` above it reads as a
+fault rather than as a list.
+
+**AND IT IS HIDDEN FROM A SCREEN READER, WHICH IS READ `Landfall 1.` INSTEAD.**
+A bare digit announced ahead of a place name is a list index the reader cannot
+act on. Same rule as §57.59's `aria-label`: the picture is never the only place
+a fact lives.
+
+#### 57.60d It was measured in a browser, because a badge is the `18 of 3` shape
+
+**==> `textContent` CANNOT SEE A CLIP, AND THIS IS THE SECOND TIME THAT LESSON
+HAS APPLIED TO THIS EXACT LIST. <==** `NOW.md` records the landfall sort
+reading `18 of 3` on a phone while every node assertion in the repo agreed the
+DOM said `18 of 31`. A fixed-width badge beside text that wraps is the same
+shape one step later.
+
+`tools/season-figure-harness.js` now renders **Katrina's three landfalls and
+`NOEL 2007`'s ten**, and `tools/season-figure-check.mjs` measures them at
+320px, 390px and 719px. **Ten is why the second storm is there** — the badge
+has to hold two digits and one storm cannot show it.
+
+Measured clean at all three widths: no row overflows, no badge clips its own
+digits, every row's text starts on one left edge, every badge holds 16px.
+**It is not in the pre-push hook** for the reason the rest of that file is not:
+it is one section of one panel, run by hand after a change to the figure row,
+the bar, `.detail-vitals` or this list.
+
+#### 57.60e Nine mutations, eight bite, and the ninth is honest rather than a hole
+
+Biting: the numbering losing its sort; the name read by the display number
+instead of the index; the badge size drifting off `lifeChartDiscPx`;
+`Landfalls` returning to folded; the section moving back down the panel; the
+badge losing `aria-hidden`; and — in the browser — the badge sizing itself to
+its digits, which fails at all three widths.
+
+**==> THE NINTH DOES NOT BITE AND IT IS NOT A MISSING ASSERTION. <==** Putting
+`i + 1` back inside `discRows` produces the identical number, because the array
+it now walks is already sorted. **The reason to read the shared function is the
+coupling, not a behaviour difference**, and no assertion can catch a change
+that computes the same answer. Recorded rather than papered over: §57.59f had
+one survivor that WAS a hole in the suite, and the two must not be confused.
+
+#### 57.60f What to judge on glass
+
+1. **DOES THE NUMBER ACTUALLY GET THE READER FROM THE CHART TO THE ROW.** That
+   is the whole of step 6 and it is the only question that can send the design
+   back. Open Katrina, find disc 3 on the plot, and see whether the eye lands
+   on the right row without counting.
+2. **A LONE `1` ON 747 STORMS.** Every storm with exactly one landfall gets a
+   badge that numbers a list of one. The chart draws a disc labelled 1 for
+   them too, so the alternative is the two surfaces speaking different
+   grammars on 52% of the storms that came ashore. **Flagged in advance as the
+   most likely thing to come back as clutter**, and the lever is suppressing
+   the badge at a length of one on BOTH surfaces, never on one.
+3. **`NOEL 2007`, WHERE THE NUMBERS ARE WORTH THE MOST AND COST THE MOST.** Ten
+   discs in four rows over a ten-row list. It is the storm the numbering exists
+   for and the storm where a list of ten badges is busiest.
+4. **THE PANEL'S NEW FIRST SECTION.** `Landfalls` open under an unfoldable
+   chart means the first screen of the panel is now the paragraph, the chart
+   and a landfall list. `In its season` and `Strongest` are both below the fold
+   on a phone where step 5 already put them one lower.
+5. **A STORM THAT NEVER CAME ASHORE.** The section leads the panel and, on
+   1,831 storms, its content is one sentence saying so. Whether a
+   "did not come ashore" sentence earns the top of the panel is a placement
+   question §57.54f settled on the storms that DID, and this is the other half
+   of it.
+
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 
 **A BUG FIX ON §57.56's TOKENS, LANDED AS ITS OWN COMMIT** — §12's rule that a

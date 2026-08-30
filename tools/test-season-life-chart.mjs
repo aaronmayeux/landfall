@@ -35,7 +35,8 @@ const { SEASONS, CATEGORY_THRESHOLD_KT } = await import('../config/constants.js'
 const { CATEGORY_COLOR } = await import('../config/tokens.js');
 const {
   axisTicks, chartPoints, discRows, lifeChartAbsenceWords, lifeChartHtml,
-  lifeChartSummary, plotGeometry, axisLabelBox, axisLayout, LIFE_CHART_WIDTH, PLOT_BOTTOM,
+  lifeChartSummary, orderedLandfalls, plotGeometry, axisLabelBox, axisLayout,
+  LIFE_CHART_WIDTH, PLOT_BOTTOM,
 } = await import('../ui/season-life-chart.js');
 
 const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
@@ -446,6 +447,77 @@ const src = readFileSync(join(ROOT, 'ui/season-life-chart.js'), 'utf8')
 ok('no em dash survives in the shipped strings of this file', !src.includes('\u2014'));
 ok('nor in anything it renders',
   [KATRINA, SANDY, NOEL, LONGEST].every((f) => !lifeChartHtml(f, { summary: 'x' }).includes('\u2014')));
+
+/* ---------------------------------------------------------------------------
+ * 10. ONE OWNER FOR THE NUMBERS — step 6, §57.60
+ * ------------------------------------------------------------------------- */
+section('10. the chart and the list cannot disagree about which landfall is which');
+
+/* ==> THE FAILURE THIS GUARDS IS SILENT AND SYMMETRICAL. <== §57.59e. Two
+ * renderers walking the same array — the chart sorting by time, the list not —
+ * would each be internally consistent and point at different landfalls, and
+ * nothing on screen would look wrong. `orderedLandfalls` is the one answer both
+ * of them read. */
+ok('every storm numbers its landfalls 1..N in time order',
+  ALL.map(withPoints).every((f) => {
+    const o = orderedLandfalls(f);
+    return o.every((e, i) => e.n === i + 1)
+      && o.every((e, i) => i === 0 || e.mark.time >= o[i - 1].mark.time);
+  }));
+
+/* ==> AND EVERY ENTRY POINTS BACK AT ITS OWN MARK IN THE UNSORTED LIST. <==
+ * §57.40a. The place names sidecar is index-aligned to `facts.landfalls` in its
+ * own order, so a renderer reading these in time order looks a name up by
+ * `index`. If that ever stopped identifying the same object, the panel would
+ * print one landfall's town beside another's coordinates and read perfectly. */
+ok('and each entry points back at its own mark in the unsorted list',
+  ALL.map(withPoints).every((f) => orderedLandfalls(f)
+    .every((e) => f.landfalls[e.index] === e.mark)));
+
+ok('the discs take their numbers from the same place',
+  ALL.map(withPoints).filter((f) => plotGeometry(f)).every((f) => {
+    const o = orderedLandfalls(f);
+    const d = discRows(f, plotGeometry(f));
+    return d.length === o.length && d.every((x, i) => x.n === o[i].n && x.time === o[i].mark.time);
+  }));
+
+/* ==> THE ARCHIVE CANNOT SUPPLY AN OUT-OF-ORDER LIST TODAY, SO ONE IS BUILT.
+ * <== Measured 2026-08-30: zero of 3,266 storms carry landfalls out of time
+ * order, because the coast walk writes them in the order it meets the coast.
+ * That is the whole reason the old code agreed with itself — by luck, over a
+ * sidecar that happens to be sorted. Step 13 brings other agencies' tracks
+ * into this renderer and nothing guarantees the same. Built by reversing a REAL
+ * storm's list rather than by inventing landfalls, so the shape stays honest. */
+{
+  const shuffled = { ...NOEL, landfalls: NOEL.landfalls.slice().reverse() };
+  const o = orderedLandfalls(shuffled);
+  ok('a reversed landfall list is renumbered by TIME, not by array position',
+    o.map((e) => e.n).join(',') === '1,2,3,4,5,6,7,8,9,10'
+    && o.every((e, i) => i === 0 || e.mark.time >= o[i - 1].mark.time));
+  ok('and landfall 1 is the same MARK it was before the shuffle',
+    o[0].mark === orderedLandfalls(NOEL)[0].mark);
+  ok('==> AND ITS `index` FOLLOWS THE SHUFFLE, WHICH IS WHAT KEEPS A PLACE '
+    + 'NAME WITH ITS OWN LANDFALL. <== Reading the name by `n` instead would '
+    + 'print the tenth landfall\u2019s town beside the first',
+  o[0].index === shuffled.landfalls.length - 1);
+  ok('the discs follow the same order on the shuffled list',
+    discRows(shuffled, plotGeometry(shuffled)).map((d) => d.n).join(',')
+    === discRows(NOEL, plotGeometry(NOEL)).map((d) => d.n).join(','));
+}
+
+/* ==> THE LIST'S BADGE IS THE CHART'S DISC AND CSS CANNOT IMPORT A CONSTANT.
+ * <== §57.60. The two are meant to read as one object seen twice, so a reader
+ * carries a number down from the plot to the row. A comment asking the next
+ * person to keep them in step is the guard this project has already watched
+ * fail (`tools/drawer-head-harness.html`), so the drift is a failure here. */
+{
+  const css = readFileSync(join(ROOT, 'seasons/seasons.css'), 'utf8');
+  const declared = css.match(/--season-landfall-n:\s*(\d+(?:\.\d+)?)px/);
+  ok('the landfall badge declares its own size in the stylesheet', !!declared);
+  ok(`and it is ${SEASONS.lifeChartDiscPx}px, the same as the chart's disc`,
+    !!declared && Number(declared[1]) === SEASONS.lifeChartDiscPx);
+}
+
 
 /* ------------------------------------------------------------------------- */
 console.log(`\n  ${pass} passed, ${fails.length} failed`);
