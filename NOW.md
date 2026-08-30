@@ -543,28 +543,39 @@ took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
 all write into this file; whichever one crosses 700 takes the next cut in the
 pass that causes it**, not the pass after.
 
-**==> STEP 4 IS NEXT — ACE IN PLAIN ENGLISH — AND §57.54k CALLS IT TIER 1,
-WHICH IS WRONG. <==** Measured against the shipped code rather than taken from
-the table: §57.54e's wording is one row (*"Power and stamina score — 20.0 from
-24 readings"*) where `lifeHtml` currently pushes **two**, `ACE` and `From`. A
-row that stops existing is a behaviour change, so **step 4 is Tier 2 and needs
-a mutation-verified test**, not a copy edit. It also lands in a row that now
-carries a rank and a bar under it, so the row is the tallest thing in
-`Its life` before the gloss is added.
+**==> STEP 4 IS BUILT AND SHIPPED. NOBODY HAS SEEN IT. <==** ACE in plain
+English. Aaron chose to land it on its own rather than pairing it with step 6.
+**§57.58 is the as-built account — read that, not this.** `ACE 20.0 × 10⁴ kt²`
+over `From 24 six-hourly observations` is now one row reading **`Power and
+stamina score  20.0 from 24 readings`** with a 286-character gloss under it.
 
-**==> AND IT SHOULD RIDE WITH STEP 6, NOT WITH STEP 5. <==** The pairing rule
-is that two changes may share a push only when a fault on glass points
-unambiguously at one of them. Step 4's whole glass question is whether ~290
-characters on 2,927 storms earns its room — a LENGTH question. Step 5 is the
-chart, the single biggest addition in the build, and §57.54k already says it
-lands alone. Together, "the panel is too long" names neither. **Step 6 is
-`Landfalls`, a different section from `Its life`, so a fault in either is
-attributable on sight.** Step 7 is worse than step 5 for this: it is the step
-that decides the panel's length and section set, so a gloss added inside it
-could never be judged separately from the merge.
+**WHAT TO JUDGE, AND THE FIRST IS THE WHOLE QUESTION:**
 
-**Step 4 alone, immediately, is the other honest option** and costs one review
-cycle. It is Aaron's call which.
+1. **DOES THE GLOSS EARN 286 CHARACTERS ON 2,927 OF 3,266 STORMS?** It is a net
+   addition — deleting the `From` row gives back about 30 — so `Its life` is
+   longer on nine storms in ten. **The lever if it is too much is putting it
+   BEHIND the row rather than under it** (§57.54e), which is a glass call
+   rather than a rewrite. **Do not shorten the sentence first:** the clause
+   that looks most trimmable is the only one that says what the statistic is
+   for.
+2. **The row is the tallest thing in `Its life` before the gloss is added**,
+   because step 3 put a rank and a bar under it. Katrina, then a thin storm.
+3. **`Power and stamina score` as a label.** Longer than every other label in
+   the section, so it is the one that decides the label column's width.
+4. **A storm with no ACE** — `AL102005`, `AL192005` or `AL232005` — gets
+   neither the row nor the gloss. Does `Its life` read as complete without it.
+
+**§57.54k CALLED STEP 4 TIER 1 AND IT WAS TIER 2**, because §57.54e's wording
+is one row where `lifeHtml` pushed two. §57.58a records it. **The tiers in that
+table are estimates made before the code was read** — the same table also had
+this file at 688 lines when it was 711 — so the next step should price itself
+against the file rather than against the row in the plan.
+
+**ONE MEASURED THING WORTH NOT RE-DERIVING:** the storms carrying no ACE are
+MODERN, not old. Every 1851 storm has one; three 2005 storms do not. ACE needs
+a synoptic record at 34 kt, so what disqualifies a storm is never reaching
+tropical-storm force rather than being thinly observed. **A test fixture built
+on the obvious guess went red.** §57.58d.
 
 **NOTHING ELSE IS BUILT.** The prototype was a throwaway under `tools/`,
 deliberately never committed and deleted at the end of the session; §57.54

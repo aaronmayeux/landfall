@@ -9053,6 +9053,113 @@ ranked is still on screen in its own row with its own units** — which is more
 true after this step than before it, since the figures never lived in the
 deleted section.
 
+### 57.58 Step 4 — ACE in plain English — as built
+
+**§57.54k step 4.** The panel printed `ACE 20.0 × 10⁴ kt²` over `From 24
+six-hourly observations`: two pieces of jargon, a unit nobody can picture, and
+no meaning. Aaron asked for it to be explained. **The label is words, the two
+rows are one row, and a gloss sits under it.**
+
+**KATRINA'S ROW AS IT RENDERS**, read off the shipped renderer rather than
+written here:
+
+> **Power and stamina score** 20.0 from 24 readings
+>
+> One score for strength and staying power together. It adds up the wind every
+> 6 hours the storm was at least a tropical storm, counting stronger winds far
+> more heavily: double the wind and those hours count four times as much. A
+> brief violent storm can score less than a long steady one.
+
+#### 57.58a It was Tier 2, not the Tier 1 §57.54k promised
+
+**==> A ROW STOPS EXISTING, AND THAT IS A BEHAVIOUR CHANGE RATHER THAN A COPY
+EDIT. <==** §57.54k's build-order table marks this step Tier 1 — words only, no
+new test. Measured against the shipped code before any was written: §57.54e's
+wording is **one** row where `lifeHtml` pushed **two**, `ACE` and `From`. So it
+took `CLAUDE.md`'s Tier 2 treatment, including mutation-verified tests.
+
+**The tier in that table is an estimate made before the code was read, and this
+is the second figure in §57.54 that did not survive contact with the file.**
+§57.54k also predicted `ui/season-detail-markup.js` at 688 lines; it was 711 by
+the time step 3 opened it.
+
+#### 57.58b The count moved into the value rather than being deleted
+
+**IT IS THE ONE THING ON THAT ROW THAT IS ABOUT THE RECORD INSTEAD OF THE
+STORM.** ACE counts synoptic records only, so a thinly observed storm scores
+low for a reason that is not the weather. Two rows for one figure is what made
+it read as arithmetic; the fact is worth keeping, so it rides in the value
+where it qualifies the number beside it: `20.0 from 24 readings`.
+
+**==> AND THE UNIT WENT, DELIBERATELY. <==** `× 10⁴ kt²` is exact and
+unreadable, and nothing a reader does with this figure needs it. **The anchor a
+bare 20.0 never had is the distribution bar under the row**, which step 3 put
+there — median ACE in the archive is **4.5**, the highest **85.3**.
+
+**44 STORMS CARRY EXACTLY ONE READING**, measured 2026-08-30, so the singular
+branch is a real case rather than a defensive one and the suite drives it.
+
+#### 57.58c Every number in the sentence is computed, and one of them is a constant
+
+**THE CADENCE IS DERIVED FROM THE CONSTANT THAT PRODUCED THE FIGURE.**
+`SEASONS.aceSynopticHours` is the list of hours ACE counts and is evenly spaced
+by definition, so the gap is `24 / aceSynopticHours.length`. A typed *"6
+hours"* beside a constant somebody later moves is a sentence that reads
+perfectly and describes a different measurement from the one above it — §57.41
+paid for that once already. **The suite derives it the same way rather than
+asserting on a 6**, so moving the constant moves the sentence and the check
+together.
+
+**"FOUR TIMES AS MUCH" IS EXACT RATHER THAN APPROXIMATE.** `lib/season-facts.js`
+sums wind SQUARED, so doubling the wind quadruples the contribution: 40 kt gives
+0.160 per reading and 80 kt gives 0.640. `aceDivisor` is linear and does not
+touch the ratio.
+
+#### 57.58d What a storm with no ACE gets, and where the obvious guess was wrong
+
+**339 OF THE ARCHIVE'S 3,266 CARRY NO ACE AT ALL** and get neither the row nor
+the gloss. A 286-character explanation of a figure that is not on screen would
+be the worst version of this change.
+
+**==> THE STORMS WITHOUT ONE ARE MODERN, NOT OLD, AND THE FIRST TEST FIXTURE
+GOT THAT BACKWARDS. <==** It reached for an 1851 storm on the assumption that a
+thin record means no ACE, and went red: **every 1851 storm carries one.** ACE
+needs a synoptic record at 34 kt or more, so what disqualifies a storm is never
+reaching tropical-storm force — a depression — rather than being old. The three
+in 2005 are `AL102005`, `AL192005` and `AL232005`, and the suite uses those.
+
+#### 57.58e The cost, measured, and the lever if it is too much
+
+**THE GLOSS IS 286 CHARACTERS AND LANDS ON 2,927 OF 3,266 STORMS (89.6%).**
+Every figure §57.54e predicted reproduces off the shipped renderer: 2,927
+storms with an ACE, median 4.5, highest 85.3.
+
+**IT IS A NET ADDITION AND THAT IS NOT PRETENDED AWAY.** Deleting the `From`
+row gives back about 30 characters against 286 added, so `Its life` is longer
+on nine storms in ten. **Kept anyway: a score nobody can interpret is worse
+than no score.** §57.54g already recorded that the thin storms grow rather than
+shrink and that this gloss is why.
+
+**==> IF IT READS AS TOO MUCH ON GLASS THE LEVER IS PUTTING IT BEHIND THE ROW
+RATHER THAN UNDER IT. <==** A glass call, not a rewrite. **Do not reach for
+shortening the sentence first** — every clause in it is doing work, and the one
+that looks most trimmable (*"a brief violent storm can score less than a long
+steady one"*) is the only line that says what the statistic is FOR.
+
+**==> AND THE KATRINA-AND-ANDREW ILLUSTRATION IS STILL HELD IN RESERVE. <==**
+§57.54e: both peaked at 150 kt, Andrew scored 28.4 and Katrina 20.0, because
+Andrew was a hurricane longer. It is the whole point of the statistic in one
+comparison and it is **not built**, because it needs a second storm's name on a
+panel about one storm. Available and accurate; a product call.
+
+#### 57.58f One statistic, one name
+
+**`RANK_STATS.ace.label` WAS `'ACE'` AND IS NOW THE PANEL'S WORDING.** Nothing
+renders that string today — the section supplies its own label and the rank
+sentence uses `superlative` — so it is documentation. **A wrong one would be
+believed by the first renderer that reached for it**, which is exactly how a
+panel comes to spell one thing two ways.
+
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 
 **A BUG FIX ON §57.56's TOKENS, LANDED AS ITS OWN COMMIT** — §12's rule that a

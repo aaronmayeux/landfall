@@ -298,6 +298,95 @@ function mount({
   !html.includes('At hurricane strength'));
   ok('but its lifespan is still there', html.includes('Lifespan'));
 
+  /* -------------------------------------------------------------------------
+   * ACE, IN PLAIN ENGLISH — §57.58, §57.54e
+   *
+   * ==> THE PANEL TAUGHT NOTHING AND THAT WAS THE WHOLE COMPLAINT. <== It
+   * printed `ACE 20.0 × 10⁴ kt²` over `From 24 six-hourly observations`: two
+   * pieces of jargon, a unit nobody can picture, and no meaning. Every
+   * assertion here is driven off REAL `stormFacts` output rather than a
+   * hand-built facts object — §12's rule, and the one that let the `fastest24h`
+   * bug hide in this very file for a month.
+   * --------------------------------------------------------------------- */
+  {
+    const kat = stormFacts(atl2005.find((st) => st.id.toLowerCase() === 'al122005'));
+    const life = M.lifeHtml(kat);
+
+    ok('==> NO ACRONYM ANYWHERE ON THE ROW. <== `ACE` is the thing being '
+      + 'explained; a panel that still prints it has explained nothing',
+    !/\bACE\b/.test(life));
+    ok('the row is labelled in words a reader already owns',
+      life.includes('<dt>Power and stamina score</dt>'));
+
+    /* ==> ONE ROW, NOT TWO, AND THE COUNT RIDES IN THE VALUE. <== The `From`
+     * row is what made this read as arithmetic. The count itself is the one
+     * thing on the row that is about the RECORD rather than the storm — a
+     * thinly observed 1885 storm scores low for a reason that is not weather —
+     * so it is kept, next to the number it qualifies. */
+    ok('Katrina reads `20.0 from 24 readings` as ONE value',
+      life.includes('20.0 from 24 readings'));
+    ok('and the `From` row is gone rather than reworded',
+      !life.includes('<dt>From</dt>'));
+    ok('==> AND THE UNIT WENT WITH IT. <== `× 10⁴ kt²` is exact and unreadable, '
+      + 'and the bar under the row is the anchor a bare 20.0 never had',
+    !life.includes('kt²') && !life.includes('10⁴'));
+
+    /* ==> THE CADENCE IS INTERPOLATED FROM THE CONSTANT THAT PRODUCED THE
+     * FIGURE. <== `CLAUDE.md`: a number in prose is computed, never typed. The
+     * assertion derives it the same way rather than hardcoding 6, so moving
+     * `aceSynopticHours` moves the sentence and this check together. */
+    const hours = 24 / SEASONS.aceSynopticHours.length;
+    ok(`the gloss says every ${hours} hours, derived from aceSynopticHours`,
+      life.includes(`every ${hours} hours`));
+    ok('and it names the floor in words rather than in knots',
+      life.includes('at least a tropical storm'));
+    ok('==> "FOUR TIMES AS MUCH" IS EXACT, BECAUSE THE SUM IS OF WIND SQUARED. '
+      + '<== 40 kt gives 0.160 a reading and 80 kt gives 0.640',
+    life.includes('four times as much'));
+    ok('and it says the thing the statistic exists to say: a brief violent '
+      + 'storm can score less than a long steady one',
+    life.includes('A brief violent storm can score less than a long steady one'));
+
+    /* ==> THE GLOSS IS UNDER THE ROW, NOT ABOVE IT OR ELSEWHERE IN THE
+     * SECTION. <== §57.54e. An explanation the reader meets before the figure
+     * it explains is a paragraph they have no reason to read yet. */
+    ok('the gloss follows the row it explains',
+      life.indexOf('Power and stamina score') < life.indexOf('One score for strength'));
+    ok('and it is a quiet note rather than another value',
+      /<p class="detail-note">One score for strength/.test(life));
+
+    /* ==> A STORM WITH ONE READING SAYS `reading`, NOT `readings`. <== 44
+     * storms in the archive have exactly one, measured 2026-08-30, so this is
+     * a real branch rather than a defensive one. */
+    const single = [];
+    for (const st of atl2005) {
+      const f = stormFacts(st);
+      if (f?.aceRecords === 1) single.push(f);
+    }
+    ok('a one-reading storm is singular, not `1 readings`',
+      single.length === 0 || M.lifeHtml(single[0]).includes('from 1 reading<'));
+
+    /* ==> AND A STORM WITH NO ACE GETS NO ROW AND NO GLOSS. <== 339 of the
+     * archive's 3,266 carry none. A 286-character explanation of a figure that
+     * is not on screen is the worst version of this change.
+     *
+     * ==> IT IS FOUND IN 2005, NOT IN 1851, AND THAT IS THE OPPOSITE OF THE
+     * OBVIOUS GUESS. <== Measured 2026-08-30: every 1851 storm carries an ACE,
+     * and three 2005 storms do not (`AL102005`, `AL192005`, `AL232005`). ACE
+     * needs a synoptic record at 34 kt or more, so what disqualifies a storm is
+     * never reaching tropical-storm force — a modern depression — rather than
+     * being old. The first draft of this assertion reached for 1851 on the
+     * assumption that thin records mean no ACE, and it went red. */
+    const noAce = atl2005.map(stormFacts).find((f) => !(f?.aceRecords > 0));
+    ok('2005 supplies a storm with no ACE at all', !!noAce);
+    if (noAce) {
+      const bare = M.lifeHtml(noAce);
+      ok('it carries neither the row nor the gloss',
+        !bare.includes('Power and stamina score')
+        && !bare.includes('One score for strength'));
+    }
+  }
+
   /* ==> A STORM THAT ONLY EVER WEAKENED, BUILT BY HAND BECAUSE THE RECORD
    * HOLDS NONE. <== Measured 2026-08-25 across all 3,266 mirrored storms: not
    * one has a best 24-hour window that is a loss, so this branch cannot be

@@ -207,21 +207,64 @@ export function lifeHtml(facts, marks = null) {
   if (hur) rows.push({ label: 'At hurricane strength', value: hur });
   if (maj) rows.push({ key: 'hoursAtMajor', label: 'At major strength', value: maj });
 
-  /* ACE, and it is stated with its own caveat rather than as a bare number.
-   * ==> IT IS COMPUTED FROM SYNOPTIC RECORDS ONLY AND A STORM WITH FEW OF
-   * THEM HAS A LOW FIGURE FOR A REASON THAT IS NOT ABOUT THE STORM. <== The
-   * count is shown so the reader can see the difference between a quiet storm
-   * and a thinly observed one, which is the whole difference between 1885 and
-   * 2005. */
+  /* ==> ACE IS NOT AN ACRONYM ON THIS PANEL AND IT IS NOT TWO ROWS. <== §57.58,
+   * §57.54e. It printed `ACE 20.0 × 10⁴ kt²` over `From 24 six-hourly
+   * observations`: two pieces of jargon, a unit nobody can picture, and no
+   * meaning. Aaron asked for it to be explained.
+   *
+   * ==> THE COUNT MOVED INTO THE VALUE RATHER THAN BEING DROPPED. <== It is
+   * the one thing on this row that is about the RECORD instead of the storm:
+   * ACE is computed from synoptic records only, so a thinly observed 1885
+   * storm scores low for a reason that is not about the weather. Two rows for
+   * one figure was the thing making it read as arithmetic; the fact itself is
+   * worth keeping, so it rides in the value where it qualifies the number it
+   * is next to.
+   *
+   * ==> THE UNIT IS GONE AND THAT IS DELIBERATE. <== `× 10⁴ kt²` is exact and
+   * unreadable. Nothing a reader can do with this figure needs it: the bar
+   * under the row places the storm against the whole archive, which is the
+   * anchor a bare 20.0 never had. */
+  let aceNote = null;
   if (Number.isFinite(facts.ace) && facts.aceRecords > 0) {
-    rows.push({ key: 'ace', label: 'ACE', value: `${facts.ace.toFixed(1)} × 10⁴ kt²` });
     rows.push({
-      label: 'From',
-      value: `${facts.aceRecords} six-hourly observation${facts.aceRecords === 1 ? '' : 's'}`,
+      key: 'ace',
+      label: 'Power and stamina score',
+      value: `${facts.ace.toFixed(1)} from ${facts.aceRecords} reading`
+        + `${facts.aceRecords === 1 ? '' : 's'}`,
     });
+
+    /* ==> THE CADENCE IS DERIVED FROM THE CONSTANT THAT PRODUCED THE FIGURE,
+     * NEVER TYPED. <== `CLAUDE.md`'s rule. `aceSynopticHours` is the list of
+     * hours ACE counts and it is evenly spaced by definition — synoptic
+     * observation times — so the gap is 24 divided by how many there are. A
+     * typed "6 hours" beside a constant somebody later moves is a sentence
+     * that reads perfectly and describes a different measurement from the one
+     * above it, which is the fault §57.41 already paid for once.
+     *
+     * ==> "FOUR TIMES AS MUCH" IS EXACT, NOT APPROXIMATE. <== The sum is of
+     * wind SQUARED (`lib/season-facts.js`), so doubling the wind quadruples
+     * the contribution: 40 kt gives 0.160 per reading and 80 kt gives 0.640.
+     * The divisor is linear and does not touch the ratio.
+     *
+     * ==> AND IT IS A `.detail-note`, WHICH IS WHERE AN EXPLANATION BELONGS AS
+     * WELL AS AN ABSENCE. <== §57.55a settled this for the
+     * rapid-intensification sentence: that style's own rule is a caveat about
+     * the figure beside it, quieter than the numbers, and a gloss under the
+     * row it explains is exactly that shape. */
+    const hours = 24 / SEASONS.aceSynopticHours.length;
+    aceNote = 'One score for strength and staying power together. It adds up the '
+      + `wind every ${hours} hours the storm was at least a tropical storm, `
+      + 'counting stronger winds far more heavily: double the wind and those '
+      + 'hours count four times as much. A brief violent storm can score less '
+      + 'than a long steady one.';
   }
 
-  return figureRowsHtml(rows, marks);
+  /* The gloss sits UNDER the row, which is where it can be reached without
+   * hunting. ACE is pushed last, so nothing separates the two. §57.54e names
+   * the lever if it ever reads as too much on glass — putting it BEHIND the
+   * row rather than under it — and that is a glass call rather than a
+   * rewrite. */
+  return figureRowsHtml(rows, marks) + absenceHtml(aceNote);
 }
 
 /**
