@@ -9992,9 +9992,9 @@ as §57.57a's cut: a move and a change in one push means a break could be
 either.
 
 **AND IT WAS PROVED BY RUNNING IT RATHER THAN BY READING IT.** A throwaway
-script imported the pre-commit file beside the new one and rendered every storm
-in `seasons/data/` through both, in both unit systems: **13,064 of 13,064
-renders byte-identical.**
+script imported the pre-commit file beside the new one and rendered all 3,266
+storms through both, in both unit systems: **6,532 of 6,532 renders
+byte-identical.**
 
 **THREE MUTATIONS, ALL THREE BITE.** Moving the comeback above the coastal
 sentence, making an unknown ending fall back to a real one, and putting the
@@ -10003,16 +10003,16 @@ ending back inside `changeHtml` each turn `tools/test-season-detail.mjs` red.
 **==> AND THE MEASUREMENT CORRECTED A COMMENT THAT WOULD HAVE SHIPPED WRONG.
 <==** The assertion covering an ending code the panel has no words for was
 written as a guard against a hypothetical fourth code. It is not hypothetical.
-Counted across all **6,532** storms in `seasons/data/`, 2026-08-30:
+Counted across all **3,266** storms, 2026-08-30:
 
 | Ending | Storms |
 |---|---|
-| `dissipated` | 3,898 |
-| `extratropical` | 1,608 |
-| `remnant_low` | 1,004 |
-| `unknown` | **22** |
+| `dissipated` | 1,949 |
+| `extratropical` | 804 |
+| `remnant_low` | 502 |
+| `unknown` | **11** |
 
-The 22 are storms whose last record is `DB` (20 of them) or `WV` (2) — they ran
+The 11 are storms whose last record is `DB` (10 of them) or `WV` (1) — they ran
 down into a disturbance or a wave rather than into any of the three endings
 `lib/season-facts.js` names. **They printed nothing before the extraction and
 print nothing after it**, so the behaviour is unchanged and was never wrong;
@@ -10020,9 +10020,138 @@ what was wrong was a comment calling the case imaginary. `CLAUDE.md`'s rule
 that a figure in prose is computed rather than typed is what caught it, and the
 suite drives the real `unknown` value rather than an invented code.
 
-**==> WHETHER THOSE 22 DESERVE THEIR OWN SENTENCE IS OPEN AND NOBODY HAS
+**==> AND THE FIRST VERSION OF THAT TABLE WAS EXACTLY DOUBLE, WHICH IS THE
+PART WORTH KEEPING. <==** It said 6,532 storms and 22 unknowns, because the
+count globbed every `.txt` in `seasons/data/` — and that directory holds two
+whole-basin `hurdat2-atlantic-2025-*.txt` and `hurdat2-epacific-2025-*.txt`
+files carrying **every storm a second time**, alongside the 252 per-season
+files §57.35 FIX 12 cuts. **Only the `basin-YYYY-` files are one storm each,
+and anything counting this directory must filter to them.**
+
+It read perfectly and nothing in the sentence invited a second look, which is
+`CLAUDE.md`'s fluent-wrong-number failure exactly. **The tell was inside the
+figure**: 6,532 is twice 3,266, and 3,266 is the denominator this very panel
+prints in its own rank footnote. It surfaced only because a later measurement
+in the same session printed a storm count next to a number already known.
+
+**==> WHETHER THOSE 11 DESERVE THEIR OWN SENTENCE IS OPEN AND NOBODY HAS
 DECIDED IT. <==** Silence is defensible under §5 — nothing on the section
 claims to say how every storm ended, `Last seen` and `Lifespan` are both
 printed above it, and a fourth sentence would be this panel wording a status
 HURDAT2 recorded and we chose not to. **It is a product call rather than a
 gap, and it is not blocking anything.**
+
+#### 57.61b The merge itself — six call sites, no rewritten renderer
+
+**§57.54k said the merges change `ui/view-season-detail.js`'s call sites rather
+than the markup functions, and that held.** Every renderer on this panel is
+byte-for-byte what it was before step 7, apart from `changeHtml` losing the
+ending sentence in §57.61a's own commit. The three merged sections are
+concatenations at the call site, in the order the two halves already appeared
+on the panel:
+
+| Section | Composed from |
+|---|---|
+| `How hard it blew` | `peakHtml` then `changeHtml` |
+| `How long it lasted` | `lifeHtml` then `endingHtml` |
+| `Where it went` | `movementHtml`, `loopHtml`, `originHtml`, `windFieldHtml` |
+
+**THE SEAM UNDER `Where it went` WAS DRAWN THREE STEPS EARLY.** §57.57a moved
+`movementHtml` and `windFieldHtml` to `ui/season-track-markup.js` on exactly
+this boundary — neither reads a wind speed and neither knows a category exists
+— so the merge is the call sites agreeing with a split the file system had
+already made.
+
+**WHAT IT COST AND WHAT IT BOUGHT, MEASURED ACROSS ALL 3,266 STORMS:**
+
+| | Before | After |
+|---|---|---|
+| Sections per panel | 8 | **6** |
+| Mean visible characters | 1,903.6 | **1,891.6** |
+| `KATRINA 2005` | 2,565 | 2,553 |
+| `HARVEY 2017` | 3,026 | 3,014 |
+| `SANDY 2012` | 2,775 | 2,763 |
+| `Storm 1` 1851 | 1,852 | 1,840 |
+
+**==> IT SAVES TWELVE CHARACTERS AND THAT IS THE FINDING A LATER SESSION MUST
+NOT MISREAD. <==** Twelve, on every storm, because the only text that left is
+the difference between five old headings and three new ones. **The merge does
+not shorten the panel and was never going to** — every row, sentence and bar
+inside those sections is still on screen. **What it buys is two fewer headings
+to scan and an order that reads as a narrative**, which is what §57.54f asked
+for. This is the same shape as §57.57b's finding one step earlier: the
+restructuring is about duplication and shape, not about length.
+
+#### 57.61c The fold record resets once, and that is a decision
+
+**FIVE IDS STOPPED EXISTING** — `peak`, `life`, `change`, `movement` and
+`windfield` — so `season:peak` and its four siblings in `lib/section-state.js`
+now name nothing, and every reader's folds for this panel fall back to
+§57.54f's default set the first time they open a storm after this deploy.
+
+**A MIGRATION WAS CONSIDERED AND REFUSED BECAUSE IT HAS NO HONEST ANSWER.**
+Three of the merges take two sections into one, so a reader with `Strongest`
+open and `How it changed` folded gives **no answer at all** for
+`How hard it blew` — whichever side won would be the view guessing at an intent
+the reader never expressed. And a fold is a statement about a section somebody
+has read; three of the six are new subjects under new names that nobody has.
+**The cost is one reset, once, landing every reader on the set the plan
+designed.**
+
+**THE FIVE DEAD KEYS ARE LEFT IN THE RECORD RATHER THAN SWEPT.** Nothing reads
+them, a sweep means touching shared storage machinery for a cosmetic gain, and
+the five names are **permanently retired** — a later section must not re-use
+one and inherit a stale fold.
+
+#### 57.61d Six mutations, and the sixth found a real hole
+
+Each was applied to `ui/view-season-detail.js` alone and
+`tools/test-season-detail.mjs` re-run:
+
+| Mutation | Result |
+|---|---|
+| Swap `How long it lasted` and `Where it went` | 3 red |
+| `How hard it blew` folds by default | 2 red |
+| Leave `Strongest` as the merged heading | 3 red |
+| Give `Where it went` the `gauge` icon | 2 red |
+| Keep `Wind footprint` as its own section | 7 red |
+| **Drop `endingHtml` from the call site** | **green — a hole** |
+
+**==> THE SIXTH LEFT ALL 221 ASSERTIONS GREEN, AND IT IS THE `fastest24h`
+FAULT ARRIVING THROUGH A DIFFERENT DOOR. <==** `endingHtml` was thoroughly
+covered as a function and **nothing asserted that anything CALLED it**. Deleted
+from the view, the sentence vanished from every storm in 175 years and the
+suite said nothing — which is precisely how `How it changed` rendered nothing
+at all for a month until Aaron read Katrina's panel (§57.54h).
+
+Three assertions close it, all driven through the **mounted** panel rather than
+the renderer: the ending is drawn, it is drawn inside `How long it lasted`, and
+it is the last thing that section says. **Katrina's ending is read off her own
+facts rather than typed**, so the assertion cannot drift from what
+`lib/season-facts.js` computes. The mutation was re-run and now turns two of
+the three red.
+
+**THE RULE THIS RESTATES:** testing a markup function proves the function. Only
+mounting proves the panel. **Every section this step moved is a call site, so
+every one of them is exactly the shape that mutation exploits.**
+
+#### 57.61e What to judge on glass
+
+**§57.54k names the two risks for this step and they are the first two here.**
+
+1. **IS THREE SECTIONS OPEN BY DEFAULT RIGHT?** `Landfalls`, `In its season`
+   and `How hard it blew` all open, under a chart and a paragraph that are
+   always open. That is more above the fold than this panel has ever had, and
+   at 390px it is the thing most likely to come back as too much.
+2. **DOES `Where it went` READ AS AN ORPHAN AT THE BOTTOM?** It is fifth of
+   six, folded, and it carries the distance, the forward speed, the loop, the
+   birthplace and the footprint sentence — the most content of any folded
+   section.
+3. **DO THE THREE NEW HEADINGS READ AS PLAIN ENGLISH?** `How hard it blew`,
+   `How long it lasted` and `Where it went` are the first headings on this
+   panel that are sentences rather than labels.
+4. **THE FOLDS RESET, AND THAT WILL LOOK LIKE A BUG IF IT IS NOT EXPECTED.**
+   §57.61c. Any storm opened after this deploy shows the default set, whatever
+   was folded before.
+5. **AN 1851 STORM.** Six sections where several are a single sentence — does
+   the panel read as calm or as sparse.

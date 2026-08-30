@@ -525,20 +525,27 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }, ma
  * and lifespan figures it actually belongs to.
  *
  * ==> AN ENDING THIS PANEL HAS NO WORDS FOR SAYS NOTHING, AND THAT IS NOT
- * HYPOTHETICAL. <== Measured across all 6,532 storms in `seasons/data/`,
- * 2026-08-30: 3,898 dissipated, 1,608 extratropical, 1,004 remnant low, and
- * **22 fall through to `unknown`** — 20 whose last record is `DB` and 2 whose
+ * HYPOTHETICAL. <== Counted across all 3,266 storms in `seasons/data/`,
+ * 2026-08-30: 1,949 dissipated, 804 extratropical, 502 remnant low, and
+ * **11 fall through to `unknown`** — 10 whose last record is `DB` and 1 whose
  * last record is `WV`, storms that ran down into a disturbance or a wave
  * rather than into any of the three endings `lib/season-facts.js` names. They
  * printed nothing before this extraction and they print nothing after it.
+ *
+ * ==> THE FIRST VERSION OF THIS COMMENT SAID 6,532 STORMS AND 22 UNKNOWNS,
+ * AND BOTH WERE EXACTLY DOUBLE. <== The count read every `.txt` in
+ * `seasons/data/`, which also holds two whole-basin `hurdat2-*.txt` files
+ * carrying every storm a second time. **Only the `basin-YYYY-` files are one
+ * storm each.** The tell was in the figure itself: 6,532 is twice 3,266, and
+ * 3,266 is the denominator this panel prints in its own footnote.
  *
  * ==> SILENCE IS THE RIGHT ANSWER HERE AND §5 IS WHY, NOT DESPITE IT. <== The
  * rule bans an absence a reader would misread as a fact. Nothing on this
  * section claims to say how every storm ended, `Last seen` and `Lifespan` are
  * both still printed above it, and inventing a fourth sentence would be this
  * panel guessing at a status HURDAT2 did record and we chose not to word.
- * **Whether those 22 deserve their own sentence is a product call nobody has
- * made** — §57.61 records it as open rather than as a gap.
+ * **Whether those 11 deserve their own sentence is a product call nobody has
+ * made** — §57.61a records it as open rather than as a gap.
  *
  * @returns {string} HTML, or '' when the record does not say
  */

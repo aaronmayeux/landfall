@@ -622,36 +622,59 @@ the unresolved reference either, because the property was declared somewhere in
 the file and the check does not model scope.** That gap is open and nothing is
 blocked on it.
 
-**==> STEP 7 IS THE LAST ONE, AND IT IS THE BIGGEST SINGLE CHANGE TO THIS
-PANEL. <==** §57.54f holds the table, and §57.54k reserves its as-built
-number — the one after step 6's. **Do not take the next free number instead.**
-**Nine sections become six**, and four of the six are merges rather than
-renames:
+**==> STEPS 1 TO 7 ARE ALL DONE. THE REBUILD IS FINISHED AND STEP 7 HAS NOT
+BEEN SEEN ON GLASS. <==** Nine sections are six. **§57.61 is the as-built
+account — read that, not this**, and §57.61e is the glass list.
 
-- `Strongest` + `How it changed` become **`How hard it blew`**
-- `Its life` + the ending sentence become **`How long it lasted`**
-- `How it moved` + `Wind footprint` become **`Where it went`**
-- `Landfalls`, `In its season` and `NOAA's report` keep their names
+**WHAT LANDED, IN TWO COMMITS SO A BREAK CAN ONLY BE ONE OF THEM.** First
+`endingHtml` came out of `changeHtml` with the panel byte-identical — proved by
+rendering all 3,266 storms through the old file and the new one in both unit
+systems, 6,532 of 6,532 identical. Then the merge: `Strongest` + `How it
+changed` became `How hard it blew`, `Its life` + the ending became `How long it
+lasted`, `How it moved` + `Wind footprint` became `Where it went`. Landfalls,
+In its season and How hard it blew open; the other three fold. No renderer was
+rewritten and no new icon was drawn.
 
-Landfalls, In its season and How hard it blew open by default; the other three
-fold. **All six icons already exist in `ui/section-icon.js`** — no new glyph.
-`podium` and `trend` lose their last callers and **stay in the set**, because
-deleting a glyph for that reason is a second decision riding on the first.
+**==> THE MERGE SAVES TWELVE CHARACTERS AND THAT NUMBER IS NOT A DISAPPOINTMENT
+TO BE RE-DERIVED. <==** Measured before and after across all 3,266 storms:
+1,903.6 mean visible characters becomes 1,891.6, and eight sections become six.
+The only text that left is the difference between five old headings and three
+new ones. **The merge was never going to shorten the panel** — every row,
+sentence and bar inside those sections is still on screen. It buys two fewer
+headings and a narrative order. Same shape as §57.57b's finding one step
+earlier.
 
-**THREE THINGS TO KNOW BEFORE STARTING IT.** Two sections currently open by
-default (`In its season`, `Strongest`) plus Landfalls become three, which is
-what §57.54f asks for and is a glass call in its own right. The merges change
-`ui/view-season-detail.js`'s call sites rather than the renderers, so the
-markup functions can stay as they are and be composed. And **the fold record is
-keyed on section id** — `peak`, `life`, `change`, `movement`, `windfield` all
-disappear as ids, so every reader's stored folds for this panel silently stop
-matching. Decide deliberately whether that is a reset or a migration; §57.54f
-does not say.
+**THE FOLD RECORD RESETS ONCE AND THAT IS A DECISION, NOT A BUG.** §57.61c.
+Five ids stopped existing, a migration has no honest answer where two sections
+merged into one, and three of the six are new subjects nobody has read. **If
+Aaron opens a storm and his folds are the defaults, that is expected.**
 
-**BOTH FILES HAVE ROOM.** `ui/season-detail-markup.js` is at 627 and
-`ui/season-life-chart.js` at 636 against §12's ~700 ceiling. Step 7 is the pass
-most likely to cross it, and §57.54k's rule is that whichever step crosses
-takes the cut in the pass that causes it.
+**==> AND ONE MUTATION FOUND A REAL HOLE THAT HAD SHIPPED SHAPE BEFORE. <==**
+Deleting `endingHtml` from the view's call site left all 221 assertions green:
+the renderer was covered and nothing asserted anything CALLED it. That is the
+`fastest24h` fault through a different door — markup correct, tested, and never
+reached. Three mounted-panel assertions close it. **Every section this step
+moved is a call site, so every one was that shape.** §57.61d.
+
+**==> A NUMBER WENT INTO THE SPEC WRONG AND WAS CAUGHT BEFORE THE PUSH. WORTH
+KEEPING BECAUSE IT WILL HAPPEN AGAIN. <==** The ending tally was written as
+6,532 storms and 22 unknowns. Both were exactly double: the count globbed every
+`.txt` in `seasons/data/`, and that directory holds **two whole-basin
+`hurdat2-*.txt` files carrying every storm a second time** alongside the 252
+per-season files. **Only `basin-YYYY-` is one storm each — anything counting
+that directory must filter to them.** The real figures are 1,949 dissipated,
+804 extratropical, 502 remnant low, 11 unknown. The tell was inside the figure:
+6,532 is twice 3,266, and 3,266 is the denominator this panel prints in its own
+footnote.
+
+**ONE THING IS OPEN AND NOTHING IS BLOCKED ON IT.** The 11 storms whose last
+record is `DB` or `WV` get no closing sentence while every other storm does.
+Silence states nothing false and `Last seen` and `Lifespan` are right above it.
+Whether they deserve their own words is Aaron's call. §57.61a.
+
+**STEP 8 — THE GLOBE TETHER — IS THE ONLY STEP LEFT AND AARON HAS NOT ASKED
+FOR IT.** §57.54j scoped it and recommends one block at a time driven by the
+row the reader taps. **Do not build before he has chosen.**
 
 **ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
 version fed the distribution bar the RAW value instead of the rung, and because

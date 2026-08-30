@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 406 numbered headings.
+Covering 11 files, 410 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -422,7 +422,11 @@ real home is the other row carrying the same section number.
 | `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9899-9913 |
 | `57.61` | &nbsp;&nbsp;Step 7 — nine sections become six — as built | `SPEC-SEASONS-BUILD.md` | 9962-9976 |
 | `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9914-9961 |
-| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9977-10029 |
+| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9977-10043 |
+| `57.61b` | &nbsp;&nbsp;&nbsp;&nbsp;The merge itself — six call sites, no rewritten renderer | `SPEC-SEASONS-BUILD.md` | 10044-10084 |
+| `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10085-10105 |
+| `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10106-10137 |
+| `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10138-10158 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -438,8 +442,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 571,922 | 145 |
+| `SPEC-SEASONS-BUILD.md` | 578,677 | 149 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 191,036 | 15 |
+| `SPEC.md` | 191,688 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

@@ -112,39 +112,33 @@ import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-s
  *   extended one screen further.
  */
 /**
- * ==> `In its season` AND `Strongest` OPEN, AND THE REST FOLD. <== Aaron's
- * call 2026-08-29 was that the two RANK sections open, because a reader
- * stepping through the archive is looking for where a storm SITS before they
- * want its arithmetic. §57.57b deleted one of those two — `Where it ranks` is
- * gone and its ranks live under the figures themselves — so the same intent
- * now points at `Strongest`, which is where the peak wind and the pressure
- * ranks landed.
+ * ==> THREE SECTIONS OPEN AND THREE FOLD, WHICH IS §57.54f's SET EXACTLY. <==
+ * §57.61. `Landfalls`, `In its season` and `How hard it blew` are what a
+ * reader stepping through the archive came for; `How long it lasted`,
+ * `Where it went` and `NOAA's report` are the detail under them. The panel
+ * runs orientation at the top and detail at the bottom, and the fold line is
+ * drawn in the same place.
  *
- * ==> IT IS NOT A COSMETIC SWAP: WITHOUT IT EVERY BAR ON THE PANEL OPENS
- * FOLDED. <== The seven distribution bars were all inside one section that
- * opened; they are now spread across four that do not. A reader who opened a
- * storm would see no rank and no bar anywhere until they tapped, and step 3's
- * whole glass question — does label, figure, rank and bar read as ONE fact —
- * could not be asked. §57.54f's step 7 table keeps this section open under its
- * new name (`How hard it blew`), so this is a move toward that set rather than
- * a reversal of anything.
+ * ==> `blew` IS THE SECTION `peak` WAS, AND KEEPING IT OPEN IS NOT COSMETIC.
+ * <== §57.57b. The seven distribution bars used to live inside one section
+ * that opened; step 3 spread them across four that did not, and `Strongest`
+ * took the open slot `Where it ranks` gave up so a reader would see a rank and
+ * a bar without tapping anything. `How hard it blew` inherits that job along
+ * with the rows.
  *
- * ==> AND `Landfalls` JOINS THEM AT STEP 6, BECAUSE FOLDED IT MAKES THE CHART
- * LIE. <== §57.60. The life chart's caption now says the numbered marks are
- * the landfalls listed below, and the discs carry numbers whose only meaning
- * is the row they match. A reader who met that caption over a folded section
- * would be told to look at a list that is not on screen. §57.54f's step 7
- * table already has this section open, so like `Strongest` above it this is a
- * move toward that set rather than a decision taken early.
+ * ==> AND `Landfalls` STAYS OPEN BECAUSE FOLDED IT MAKES THE CHART LIE. <==
+ * §57.60. The life chart's caption says the numbered marks are the landfalls
+ * listed below. Over a folded section that sentence points at a list which is
+ * not on screen.
  *
  * ==> IT IS THE OPEN LIST RATHER THAN THE CLOSED ONE, AND THAT IS DELIBERATE.
  * <== A new section added to this panel then defaults to FOLDED, which is the
- * safe direction: an unfamiliar section arriving already open pushes eight
- * known ones off a phone screen, and the reader who was looking for `Landfalls`
- * has to hunt for it. A closed list would have made the new section open by
+ * safe direction: an unfamiliar section arriving already open pushes the known
+ * ones off a phone screen, and the reader who was looking for `Landfalls` has
+ * to hunt for it. A closed list would have made the new section open by
  * omission, which is the failure mode nobody notices until it is on glass.
  */
-const OPEN_BY_DEFAULT = new Set(['landfalls', 'rank-season', 'peak']);
+const OPEN_BY_DEFAULT = new Set(['landfalls', 'rank-season', 'blew']);
 
 /**
  * ==> THIS PANEL'S FOLDS SHARE ONE STORAGE RECORD WITH THE LIVE PANEL'S, SO
@@ -158,6 +152,23 @@ const OPEN_BY_DEFAULT = new Set(['landfalls', 'rank-season', 'peak']);
  * `advisory`, `environment`, `flooding`, `people` and `rainfall`) and that is
  * exactly the state in which a prefix is cheap. Added later, it would also
  * have to migrate whatever readers had already written.
+ *
+ * ==> STEP 7 RETIRED FIVE IDS AND EVERY READER'S FOLDS FOR THIS PANEL RESET
+ * ONCE. THAT IS A DECISION, NOT AN OVERSIGHT. <== §57.61b. `peak`, `life`,
+ * `change`, `movement` and `windfield` stopped existing when §57.54f merged
+ * nine sections into six, so `season:peak` and its four siblings now name
+ * nothing. They are left in the record rather than swept: nothing reads them,
+ * a sweep would mean touching shared storage machinery for a cosmetic gain,
+ * and the five names are permanently retired so they cannot be re-used by a
+ * later section and pick up a stale fold.
+ *
+ * ==> A MIGRATION WAS CONSIDERED AND REFUSED BECAUSE IT HAS NO HONEST ANSWER.
+ * <== Three of the merges are two-into-one, so a reader with `Strongest` open
+ * and `How it changed` folded gives no answer at all for `How hard it blew` —
+ * whichever side won would be this file guessing at an intent the reader never
+ * expressed. And a fold is a statement about a section somebody has read;
+ * three of the six are new subjects under new names that nobody has. The cost
+ * is one reset, once, landing every reader on the set §57.54f designed.
  */
 const storeKey = (id) => `season:${id}`;
 
@@ -400,50 +411,83 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
        * about a section headed `In its season` and would push the comparison
        * the heading promises down the screen. */
       + seasonWindowHtml(facts.seasonWindow))}
-      ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system, marks))}
-      ${section('life', 'Its life', 'clock', lifeHtml(facts, marks))}
-      ${section('change', 'How it changed', 'trend', changeHtml(facts, system, {
-    windowHours: SEASONS.intensificationWindowHours,
-    /* ==> §57.48. THE COMEBACK IS HANDED IN RATHER THAN APPENDED, BECAUSE THIS
-     * SECTION IS IN CHRONOLOGICAL ORDER AND APPENDING WOULD BREAK IT. <== The
-     * section runs strengthening, then the weakening before the coast, then
-     * how the storm finished. A comeback happened before it finished, so a
-     * sentence stuck on the end would sit under `Dissipated. The record simply
-     * stops.` and describe a hurricane coming back afterwards. The other two
-     * §57.48 sentences ARE appended, because neither joins an ordered list. */
-    comebackHtml: comebackHtml(facts.comeback),
-  }, marks)
-    /* ==> THE ENDING IS APPENDED HERE SO THIS COMMIT CHANGES NO PIXEL. <==
-     * §57.61. It came out of `changeHtml` as its own commit, ahead of the
-     * section merge that needs it somewhere else, because a move and a change
-     * in one push means a break could be either — `CLAUDE.md`'s slicing rule
-     * at the size of one sentence. Step 7 moves this line to `How long it
-     * lasted`; today it sits exactly where it always has. */
-    + endingHtml(facts))}
-      ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
-    floorKt: SEASONS.trackSpeedFloorKt,
-    maxLegHours: SEASONS.trackSpeedMaxLegHours,
-    /* ==> §57.45. `system` two arguments up is what puts the distance in the
-     * reader's own miles or kilometres; these two only decide WHICH figures
-     * get printed, never their units. */
-    distanceFloorNm: SEASONS.trackDistanceFloorNm,
-    cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
-  }, marks)
-    /* ==> §57.48, §57.49. BOTH SENTENCES ARE APPENDED, AND THAT IS SAFE HERE
-     * IN A WAY IT WAS NOT IN `How it changed`. <== That section is a
-     * chronology; this one is a set of facts about the track with no order to
-     * break.
-     *
-     * ==> THE LOOP GOES ABOVE THE BIRTHPLACE BECAUSE IT IS THE RARE ONE.
-     * <== Aaron's call, 2026-08-29. The origin sentence fires on 1,993 of the
-     * 2,004 Atlantic storms, so it reads as background; the loop fires on 120
-     * of 3,266 and is the reason a reader stops. A rare fact printed under a
-     * near-universal one is a rare fact nobody sees. */
-    + loopHtml(facts.loop, system)
-    + originHtml(facts.origin))}
-      ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
-    firstSeason: SEASONS.windFieldFirstSeason,
-  }))}
+      ${/* ==> `Strongest` AND `How it changed` ARE ONE SECTION NOW. <==
+          * §57.54f, §57.61. Both answer the same question — how hard did this
+          * thing blow — and split, the panel put the peak wind in one section
+          * and the fastest gain in wind three sections later, which is exactly
+          * the disjointedness §57.54a measured.
+          *
+          * ==> THE TWO RENDERERS ARE COMPOSED, NOT REWRITTEN. <== §57.54k said
+          * the merges change this file's call sites rather than the markup
+          * functions, and that held for both of these: `peakHtml` and
+          * `changeHtml` are byte-for-byte what they were, concatenated in the
+          * order they already appeared on the panel. The figures come first
+          * and the chronology follows them, which is what each was already
+          * written to assume.
+          *
+          * ==> AND `trend` LOSES ITS LAST CALLER HERE. <== §57.54f keeps the
+          * glyph in `ui/section-icon.js` rather than deleting it: the file's
+          * rule is one name one shape, and removing a glyph because its caller
+          * moved is a second decision riding on the first. `gauge` is the icon
+          * because the merged section leads with the peak. */
+    section('blew', 'How hard it blew', 'gauge', peakHtml(facts, system, marks)
+      + changeHtml(facts, system, {
+        windowHours: SEASONS.intensificationWindowHours,
+        /* ==> §57.48. THE COMEBACK IS HANDED IN RATHER THAN APPENDED, BECAUSE
+         * THIS BLOCK IS IN CHRONOLOGICAL ORDER AND APPENDING WOULD BREAK IT.
+         * <== It runs strengthening, then the weakening before the coast, then
+         * the comeback. A comeback happened on the way, so a sentence stuck on
+         * the end would sit under whatever came next. The other §57.48
+         * sentences ARE appended, because neither joins an ordered list. */
+        comebackHtml: comebackHtml(facts.comeback),
+      }, marks))}
+      ${/* ==> `Its life` AND THE ENDING SENTENCE ARE ONE SECTION NOW. <==
+          * §57.54f, §57.61. How long a storm ran and how it stopped running
+          * are the same story, and the ending had been sitting under the
+          * strengthening figures since step 7 of the original build. It is
+          * `endingHtml` since §57.61a precisely so it could land here.
+          *
+          * ==> AND IT GOES LAST, UNDER THE LIFESPAN FIGURES AND UNDER THE ACE
+          * GLOSS. <== The section reads first seen, last seen, how long, how
+          * much of that at strength, the power-and-stamina score, and then how
+          * it finished. That is chronological and it puts the last thing that
+          * happened in the last place on the section. */
+    section('lasted', 'How long it lasted', 'clock',
+      lifeHtml(facts, marks) + endingHtml(facts))}
+      ${/* ==> `How it moved` AND `Wind footprint` ARE ONE SECTION NOW, AND
+          * THIS SEAM WAS DRAWN BEFORE IT WAS NEEDED. <== §57.54f, §57.57a.
+          * Both renderers moved to `ui/season-track-markup.js` at step 3 on
+          * exactly this boundary — neither reads a wind speed and neither
+          * knows a category exists — so the merge is the call sites agreeing
+          * with a split the file system already made. */
+    section('went', 'Where it went', 'track', movementHtml(facts, system, {
+      floorKt: SEASONS.trackSpeedFloorKt,
+      maxLegHours: SEASONS.trackSpeedMaxLegHours,
+      /* ==> §57.45. `system` two arguments up is what puts the distance in the
+       * reader's own miles or kilometres; these two only decide WHICH figures
+       * get printed, never their units. */
+      distanceFloorNm: SEASONS.trackDistanceFloorNm,
+      cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
+    }, marks)
+      /* ==> §57.48, §57.49. BOTH SENTENCES ARE APPENDED, AND THAT IS SAFE HERE
+       * IN A WAY IT WAS NOT IN THE STRENGTH BLOCK. <== That one is a
+       * chronology; this is a set of facts about the track with no order to
+       * break.
+       *
+       * ==> THE LOOP GOES ABOVE THE BIRTHPLACE BECAUSE IT IS THE RARE ONE.
+       * <== Aaron's call, 2026-08-29. The origin sentence fires on 1,993 of
+       * the 2,004 Atlantic storms, so it reads as background; the loop fires
+       * on 120 of 3,266 and is the reason a reader stops. A rare fact printed
+       * under a near-universal one is a rare fact nobody sees. */
+      + loopHtml(facts.loop, system)
+      + originHtml(facts.origin)
+      /* ==> THE FOOTPRINT SENTENCE COMES LAST AND IT IS THE ONLY PART OF THIS
+       * SECTION ABOUT THE GLOBE RATHER THAN ABOUT THE RECORD. <== It was its
+       * own section and it was one sentence; §57.54a measured it at 4.3% of
+       * the panel for a heading, a chevron and a line of text. Under `Where it
+       * went` it is the last thing said about the ground the storm covered,
+       * which is what it is about. */
+      + windFieldHtml(facts, { firstSeason: SEASONS.windFieldFirstSeason }))}
       ${section('report', "NOAA's report", 'doc', reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}
       ${/* ==> THE SCOPE NOTE IS ONE FOOTNOTE AT THE FOOT OF THE PANEL, AND IT
           * IS NOT A SECTION. <== §57.54b, §57.57c. It governs every rank on

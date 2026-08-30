@@ -78,6 +78,12 @@ const { rankingsFileName, rankStorm, RANK_STATS } = await import('../lib/ranking
 const { landfallFileName, placesFileName } = await import('../lib/seasons-sidecar.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
+/* ==> THE ICON SET IS IMPORTED SO THE PANEL'S GLYPHS CAN BE COMPARED TO THE
+ * REAL SHAPES RATHER THAN TO EACH OTHER. <== §57.61. Counting six distinct
+ * glyphs would pass over a call site asking for the wrong one of them, which
+ * is the mistake a merge that renames five sections is most likely to make. */
+const { iconSvg } = await import('../ui/section-icon.js');
+const ICON_BODY = (name) => iconSvg(name).replace(/^<svg[^>]*>|<\/svg>$/g, '');
 /* ==> THREE MODULES BEHIND ONE HANDLE, BECAUSE THE PANEL'S RENDERERS HAVE MOVED
  * TWICE AND THE ASSERTIONS ABOUT THEM DID NOT NEED TO. <== SPEC.md §12,
  * §57.44, §57.57. The archive ranking section put `season-detail-markup.js`
@@ -469,14 +475,18 @@ function mount({
     M.endingHtml({ ending: 'dissipated' }).includes('Dissipated'));
   ok('and it is a note paragraph, the same shape it had inside the old section',
     /^<p class="detail-note">Dissipated\./.test(M.endingHtml({ ending: 'dissipated' })));
-  /* ==> AN ENDING CODE THIS PANEL HAS NO WORDS FOR PRINTS NOTHING, AND 22
-   * STORMS ARE ALREADY IN THAT STATE. <== Measured across all 6,532 storms in
-   * `seasons/data/`, 2026-08-30: 3,898 dissipated, 1,608 extratropical, 1,004
-   * remnant low, 22 `unknown` — 20 ending on a `DB` record and 2 on a `WV`.
+  /* ==> AN ENDING CODE THIS PANEL HAS NO WORDS FOR PRINTS NOTHING, AND 11
+   * STORMS ARE ALREADY IN THAT STATE. <== Counted across all 3,266 storms in
+   * `seasons/data/`, 2026-08-30: 1,949 dissipated, 804 extratropical, 502
+   * remnant low, 11 `unknown` — 10 ending on a `DB` record and 1 on a `WV`.
    * This was written first as a guard against a hypothetical fourth code and
    * the measurement said it is not hypothetical, which is why the real value
-   * is the one driven here rather than an invented one. */
-  ok('the 22 storms whose ending has no words print nothing at all',
+   * is the one driven here rather than an invented one.
+   *
+   * ==> AND THE FIRST COUNT WAS EXACTLY DOUBLE. <== It globbed every `.txt` in
+   * `seasons/data/`, which also holds two whole-basin `hurdat2-*.txt` files
+   * carrying every storm again. Only `basin-YYYY-` is one storm each. */
+  ok('the 11 storms whose ending has no words print nothing at all',
     M.endingHtml({ ending: 'unknown' }) === ''
     && M.endingHtml({}) === '' && M.endingHtml(null) === '');
   ok('and `changeHtml` no longer says anything about the ending',
@@ -856,7 +866,8 @@ function mount({
   p.view.onEnter('AL122005');
   await settle();
   ok('the panel names the storm', p.html().includes('KATRINA'));
-  ok('and draws its sections', p.html().includes('Strongest') && p.html().includes('Landfalls'));
+  ok('and draws its sections',
+    p.html().includes('How hard it blew') && p.html().includes('Landfalls'));
   /* ==> THE DRAWER'S TITLE CONTRACT, ASSERTED THE WAY THE DRAWER READS IT.
    * <== `ui/drawer.js` does `def.titleFor ? def.titleFor(arg) : def.title` and
    * then puts the answer on screen ONLY if it is a string or a node. The first
@@ -1271,7 +1282,7 @@ function mount({
     const m = mount({ storms: atl2005 });
     m.view.onEnter('AL122005');
     const panel = flat(m.html());
-    ok('the panel really carries a `How it moved` section', panel.includes('How it moved'));
+    ok('the panel really carries a `Where it went` section', panel.includes('Where it went'));
     ok('and an `In its season` section', panel.includes('In its season'));
     ok('with Katrina\u2019s measured rank inside it, so the view is passing the '
       + 'whole season and not an empty list', panel.includes('3rd strongest of 31'));
@@ -1456,6 +1467,10 @@ function mount({
   p.view.onEnter('AL122005');
   await settle();
 
+  /* Read off her own record rather than typed, so the assertion below cannot
+   * drift from what `lib/season-facts.js` actually computes. */
+  const katrinaEnding = stormFacts(atl2005.find((s) => s.id === 'AL122005')).ending;
+
   /* ==> `Where it ranks` IS GONE AND ITS ABSENCE IS ASSERTED RATHER THAN
    * ASSUMED. <== §57.57b. A section deleted from the view but still reachable
    * through some other path would print every ranked figure twice, which is
@@ -1465,44 +1480,92 @@ function mount({
   ok('and `Where it ranks` no longer exists as a section',
     !p.html().includes('data-section="rank-archive"'));
 
-  /* ==> `In its season` STILL SITS ABOVE `Strongest`. <== The reader is given
-   * the comparison against the season before the storm's own numbers. The
-   * archive-wide comparison used to sit between them and is now inside the
-   * rows themselves. */
+  /* ==> THE PANEL IS SIX SECTIONS, IN §57.54f's ORDER, AND THE ORDER IS A
+   * NARRATIVE RATHER THAN A PREFERENCE. <== §57.61. Landfalls under the chart
+   * it is numbered against, then where the storm came among its season, then
+   * how hard it blew, how long it lasted, where it went, and what NOAA wrote.
+   * Orientation at the top, detail at the bottom.
+   *
+   * ==> ASSERTED AS A WHOLE SEQUENCE, NOT AS A HANDFUL OF PAIRS. <== The old
+   * version checked three relationships between seven ids and a merge could
+   * satisfy all three while dropping a section entirely. This drives the
+   * rendered order out of the markup and compares it to the list. */
   const order = (id) => p.html().indexOf(`data-section="${id}"`);
-  ok('`In its season` comes before `Strongest`',
-    order('rank-season') !== -1 && order('rank-season') < order('peak'));
-  /* ==> `Landfalls` LEADS THE SECTIONS, DIRECTLY UNDER THE CHART. <== §57.60,
-   * step 6. The chart's discs are numbered and this list carries the matching
-   * numbers; four sections apart they are a puzzle rather than a reference.
-   * The chart is not a `section()`, so the assertion is that nothing else
-   * comes before this one. */
+  const SECTIONS = ['landfalls', 'rank-season', 'blew', 'lasted', 'went', 'report'];
+  const drawn = [...p.html().matchAll(/data-section="([^"]+)"/g)].map((m) => m[1]);
+  ok('==> NINE SECTIONS ARE SIX. <== §57.54f, step 7',
+    drawn.length === 6);
+  ok(`and they are in the planned order — ${SECTIONS.join(', ')}`,
+    drawn.join(',') === SECTIONS.join(','));
+
+  /* ==> THE FIVE RETIRED IDS ARE ASSERTED ABSENT RATHER THAN ASSUMED GONE.
+   * <== §57.61b. A section still reachable through some other path would print
+   * every figure in it twice, which is the fault this whole rebuild exists to
+   * remove — and it is exactly how `Where it ranks` would have failed at step
+   * 3 had its deletion not been asserted. */
+  ok('and `peak`, `life`, `change`, `movement` and `windfield` are gone as ids',
+    ['peak', 'life', 'change', 'movement', 'windfield']
+      .every((id) => order(id) === -1));
+
+  /* ==> `Landfalls` LEADS, DIRECTLY UNDER THE CHART. <== §57.60, step 6. The
+   * chart's discs are numbered and this list carries the matching numbers;
+   * sections apart they are a puzzle rather than a reference. The chart is not
+   * a `section()`, so the assertion is that nothing else comes before this
+   * one. */
   ok('`Landfalls` is the first section on the panel, under the chart',
     order('landfalls') !== -1
-    && ['rank-season', 'peak', 'life', 'change', 'movement', 'windfield', 'report']
-      .every((id) => order(id) === -1 || order('landfalls') < order(id)));
-  ok('everything else keeps its order — season, peak, life, change, movement',
-    order('life') < order('change') && order('change') < order('movement'));
+    && SECTIONS.slice(1).every((id) => order('landfalls') < order(id)));
 
-  /* ==> `In its season` AND `Strongest` OPEN, AND THE REST FOLD. <== §57.57b.
-   * The seven distribution bars used to live in one section that opened; they
-   * are now spread across four that do not, so `Strongest` takes the open slot
-   * `Where it ranks` gave up. Without it a reader sees no rank and no bar
-   * anywhere on the panel until they tap something. */
+  /* ==> THE MERGED HEADINGS ARE ON SCREEN AND THE OLD ONES ARE NOT. <== An id
+   * is stable and a title is copy, so both are asserted: a merge that moved
+   * the ids but left `Strongest` printed above the rows would pass every
+   * assertion above this one. */
+  for (const [id, title] of [['blew', 'How hard it blew'],
+    ['lasted', 'How long it lasted'], ['went', 'Where it went']]) {
+    ok(`\`${title}\` is the heading on \`${id}\``,
+      new RegExp(`data-section="${id}"[\\s\\S]*?<span>${title}</span>`).test(p.html()));
+  }
+  ok('and no heading the merge replaced survives anywhere on the panel',
+    ['Strongest', 'How it changed', 'Its life', 'How it moved', 'Wind footprint']
+      .every((t) => !p.html().includes(`<span>${t}</span>`)));
+
+  /* ==> THREE OPEN AND THREE FOLDED, WHICH IS §57.54f's SET. <== §57.61. The
+   * seven distribution bars are spread across three sections since step 3, so
+   * `How hard it blew` carries the open slot `Where it ranks` gave up —
+   * without it a reader sees no rank and no bar anywhere until they tap. */
   const shutQ = (id) => p.body()
     .querySelector(`.detail-section[data-section="${id}"]`).dataset.collapsed === 'true';
   ok('a fresh reader gets `In its season` open', !shutQ('rank-season'));
-  ok('and `Strongest` open, so the merged rows are on screen without a tap',
-    !shutQ('peak'));
+  ok('and `How hard it blew` open, so the merged rows are on screen without a tap',
+    !shutQ('blew'));
   /* ==> AND `Landfalls` OPEN, BECAUSE FOLDED IT MAKES THE CHART LIE. <==
    * §57.60. The chart's caption tells the reader the numbered marks are the
    * landfalls listed below. Over a folded section that sentence points at a
    * list that is not on screen. */
   ok('and `Landfalls` open, so the numbered discs have their list under them',
     !shutQ('landfalls'));
-  ok('and every other section folded, heading still on screen',
-    shutQ('life') && shutQ('change')
-    && shutQ('movement') && shutQ('windfield') && shutQ('report'));
+  ok('and the other three folded, heading still on screen',
+    shutQ('lasted') && shutQ('went') && shutQ('report'));
+
+  /* ==> THE ENDING SENTENCE IS ON THE PANEL, INSIDE `How long it lasted`, AND
+   * A MUTATION SAID THIS WAS MISSING BEFORE A READING DID. <== §57.61b.
+   * Deleting `endingHtml(facts)` from the view's call site left all 221
+   * assertions green: `endingHtml` itself was covered, and nothing checked
+   * that anything CALLED it. That is the `fastest24h` fault exactly — markup
+   * that was correct, tested and never reached, running unseen across 175
+   * years of storms until Aaron read a panel. Katrina became extratropical,
+   * which is read off her own facts rather than typed. */
+  const lasted = p.html().slice(order('lasted'), order('went'));
+  ok('==> KATRINA\u2019S ENDING IS DRAWN, AND IT IS DRAWN INSIDE `How long it '
+    + 'lasted`. <== Testing the renderer proves the renderer; only the mounted '
+    + 'panel proves the call site',
+  lasted.includes(M.endingHtml({ ending: katrinaEnding }).replace(/^<p[^>]*>|<\/p>$/g, ''))
+    && M.endingHtml({ ending: katrinaEnding }) !== '');
+  ok('and it is the last thing that section says, after the lifespan figures '
+    + 'and the score, because it is the last thing that happened',
+  lasted.lastIndexOf('Power and stamina score') < lasted.indexOf('Became extratropical'));
+  ok('and nothing about the ending is left in `How hard it blew`',
+    !p.html().slice(order('blew'), order('lasted')).includes('Became extratropical'));
 
   /* ==> THE HEAD IS A REAL BUTTON, WHICH IS WHAT BUYS THE KEYBOARD. <== §13.
    * A `<div>` with a click handler is unreachable by Tab and does nothing on
@@ -1521,10 +1584,11 @@ function mount({
    * costs the glyph silently and the heading just looks slightly wrong. This
    * counts them instead. */
   const heads = p.body().querySelectorAll('.detail-section-head');
-  /* ==> EIGHT, NOT NINE, SINCE §57.57b DELETED `Where it ranks`. <== That was
-   * 33.2% of the panel measured across all 3,266 storms, and every row in it
-   * duplicated a label three to five sections away. */
-  ok('eight sections are on the panel', heads.length === 8);
+  /* ==> SIX, NOT NINE. <== §57.57b deleted `Where it ranks` — 33.2% of the
+   * panel measured across all 3,266 storms, every row of it duplicating a
+   * label three to five sections away — and §57.61 merged the eight that were
+   * left into six. */
+  ok('six sections are on the panel', heads.length === 6);
   ok('and every one of them drew an icon, so no call site has a typo in the name',
     (p.html().match(/class="sect-ico"/g) || []).length === heads.length);
   ok('the icon is hidden from a screen reader, the heading beside it being the name',
@@ -1539,30 +1603,37 @@ function mount({
    * (§57.57b) and the rule still holds for the six that remain. */
   const glyphs = [...p.html().matchAll(/data-section="([^"]+)"[\s\S]*?<svg class="sect-ico"[^>]*>(.*?)<\/svg>/g)]
     .map((m) => m[2]);
-  ok('every section drew a distinguishable glyph', glyphs.length === 8);
+  ok('every section drew a distinguishable glyph', glyphs.length === 6);
   ok('and no two neighbours share one',
     glyphs.every((g, i) => i === 0 || g !== glyphs[i - 1]));
-  ok('==> AND ALL EIGHT ARE DIFFERENT, WHICH IS STRICTER THAN THE RULE NEEDS '
+  ok('==> AND ALL SIX ARE DIFFERENT, WHICH IS STRICTER THAN THE RULE NEEDS '
     + 'AND IS THE STATE WORTH DEFENDING. <== Nothing on this panel is the same '
     + 'idea as anything else on it',
-  new Set(glyphs).size === 8);
+  new Set(glyphs).size === 6);
+  /* ==> AND NO NEW GLYPH WAS DRAWN FOR STEP 7. <== §57.54f. All six existed
+   * before the merge; `podium` and `trend` lost their last callers and stay in
+   * `ui/section-icon.js`, because deleting a shape because its caller moved is
+   * a second decision riding on the first. */
+  ok('the six are the six §57.54f named, taken from the existing set',
+    ['pin', 'calendar', 'gauge', 'clock', 'track', 'doc']
+      .every((n) => glyphs.includes(ICON_BODY(n))));
 
   const ariaOf = (id) => p.body()
     .querySelector(`.detail-section[data-section="${id}"] .detail-section-head`)
     .attrs['aria-expanded'];
   ok('an open section announces itself expanded', ariaOf('rank-season') === 'true');
-  ok('and a folded one announces itself collapsed', ariaOf('life') === 'false');
+  ok('and a folded one announces itself collapsed', ariaOf('lasted') === 'false');
 
-  /* Pressing a head opens it, and pressing again folds it. `Its life` rather
-   * than `Strongest`, which now opens by default (§57.57b). */
-  p.press('.detail-section[data-section="life"] .detail-section-head');
-  ok('pressing a folded head opens that section', !shutQ('life'));
-  ok('and says so to a screen reader', ariaOf('life') === 'true');
+  /* Pressing a head opens it, and pressing again folds it. `How long it
+   * lasted` rather than `How hard it blew`, which opens by default (§57.61). */
+  p.press('.detail-section[data-section="lasted"] .detail-section-head');
+  ok('pressing a folded head opens that section', !shutQ('lasted'));
+  ok('and says so to a screen reader', ariaOf('lasted') === 'true');
   ok('==> AND ONLY THAT SECTION. <== Opening one must not open its neighbours',
-    shutQ('change'));
+    shutQ('went'));
 
-  p.press('.detail-section[data-section="life"] .detail-section-head');
-  ok('pressing it again folds it', shutQ('life'));
+  p.press('.detail-section[data-section="lasted"] .detail-section-head');
+  ok('pressing it again folds it', shutQ('lasted'));
 }
 
 /* ==> A FOLD MUST SURVIVE THE REPORT ARRIVING, AND THIS IS THE SILENT FAILURE.
@@ -1581,14 +1652,14 @@ function mount({
   p.view.onEnter('AL122005');
   await settle();
 
-  /* ==> `How it moved` RATHER THAN `Landfalls`, WHICH NOW OPENS BY DEFAULT.
-   * <== §57.60. Pressing a section that already opened would test the fold
+  /* ==> `Where it went` RATHER THAN `Landfalls`, WHICH OPENS BY DEFAULT. <==
+   * §57.60. Pressing a section that already opened would test the fold
    * surviving rather than the open, and the two are not the same assertion:
    * the default is what a reader gets with no record at all, and this is about
    * the record being read back. */
-  p.press('.detail-section[data-section="movement"] .detail-section-head');
+  p.press('.detail-section[data-section="went"] .detail-section-head');
   const open = () => p.body()
-    .querySelector('.detail-section[data-section="movement"]').dataset.collapsed !== 'true';
+    .querySelector('.detail-section[data-section="went"]').dataset.collapsed !== 'true';
   ok('a section is opened while the report is still in the air', open());
 
   release();
@@ -1632,12 +1703,12 @@ function mount({
   second.body().querySelector('.detail-section[data-section="rank-season"]')
     .dataset.collapsed === 'true');
   /* One default of each kind, so a stored choice for one section cannot be
-   * mistaken for the defaults still working. `Its life` folds by default and
-   * `Strongest` opens (§57.57b). */
+   * mistaken for the defaults still working. `How long it lasted` folds by
+   * default and `How hard it blew` opens (§57.61). */
   ok('and a section the reader never touched still gets its default',
-    second.body().querySelector('.detail-section[data-section="life"]')
+    second.body().querySelector('.detail-section[data-section="lasted"]')
       .dataset.collapsed === 'true'
-    && second.body().querySelector('.detail-section[data-section="peak"]')
+    && second.body().querySelector('.detail-section[data-section="blew"]')
       .dataset.collapsed !== 'true');
 
   /* ==> THE KEYS ARE NAMESPACED, BECAUSE THE RECORD IS SHARED WITH THE LIVE
