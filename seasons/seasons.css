@@ -1183,6 +1183,14 @@ html[data-seasons="on"] #status {
    than centred against a row whose height varies with how much the record
    holds. */
 .season-landfall {
+  /* ==> THE SIZE IS DECLARED ON THE ROW, NOT ON THE BADGE, AND THAT IS A BUG
+     FIX RATHER THAN A TIDY-UP. <== §57.60g. Declared on `.season-landfall-n` it
+     was out of scope for this rule, so `grid-template-columns` held an
+     unresolved `var()`, which is invalid at computed-value time and computes to
+     `none` — one implicit column, with the text stacked UNDER the badge instead
+     of beside it. Nothing threw and nothing clipped. The row must be able to
+     read it, so the row is where it lives. */
+  --season-landfall-n: 16px;
   display: grid;
   grid-template-columns: var(--season-landfall-n) 1fr;
   column-gap: var(--space-snug);
@@ -1199,18 +1207,9 @@ html[data-seasons="on"] #status {
 }
 
 /* ==> THE BADGE IS THE CHART'S DISC, AT THE CHART'S SIZE, IN THE CHART'S INK.
-   <== `SEASONS.lifeChartDiscPx` is 16 and the chart draws its discs at that
-   width in SVG user units, which is device pixels at the 358px panel width a
-   390px phone gives. The two are meant to read as the same object seen twice,
-   so a reader can carry a number down from the plot to the row; a badge at a
-   different size or a different fill reads as a coincidence instead.
-
-   ==> THE 16 IS RESTATED HERE BECAUSE CSS CANNOT IMPORT A CONSTANT, AND
-   `tools/test-season-life-chart.mjs` FAILS IF THE TWO EVER DISAGREE. <== A
-   comment asking the next person to keep them in step is the guard this
-   project has already watched fail (`tools/drawer-head-harness.html`). */
+   <== The two are meant to read as the same object seen twice, so a reader can
+   carry a number down from the plot to the row. */
 .season-landfall-n {
-  --season-landfall-n: 16px;
   display: flex;
   align-items: center;
   justify-content: center;

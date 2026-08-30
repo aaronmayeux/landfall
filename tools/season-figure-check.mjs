@@ -115,7 +115,10 @@ try {
       const landfalls = [...document.querySelectorAll('.season-landfall')].map((li) => ({
         n: li.querySelector('.season-landfall-n')?.textContent.trim() ?? '',
         badge: box(li.querySelector('.season-landfall-n')),
+        badgeH: li.querySelector('.season-landfall-n').getBoundingClientRect().height,
+        badgeTop: li.querySelector('.season-landfall-n').getBoundingClientRect().top,
         detail: box(li.querySelector('.season-landfall-detail')),
+        detailTop: li.querySelector('.season-landfall-detail').getBoundingClientRect().top,
         overflowX: li.scrollWidth - li.clientWidth,
         badgeOverflowX: (() => {
           const b = li.querySelector('.season-landfall-n');
@@ -255,9 +258,22 @@ try {
     Math.max(...detailLefts) - Math.min(...detailLefts) <= 0.5);
 
     /* And the badge stays a circle at its declared size rather than being
-     * squeezed by the text column beside it. */
+     * squeezed by the text column beside it. 20px is the mockup's figure and is
+     * the chart's disc size. */
     ok(`${label}: every badge holds its size and stays round`,
-      seen.landfalls.every((l) => Math.abs(l.badge.width - 16) <= 0.5));
+      seen.landfalls.every((l) => Math.abs(l.badge.width - 16) <= 0.5)
+      && seen.landfalls.every((l) => Math.abs(l.badge.width - l.badgeH) <= 0.5));
+
+    /* ==> THE TEXT IS BESIDE THE BADGE, NOT UNDER IT, AND THIS IS THE
+     * ASSERTION THAT WAS MISSING. <== §57.60g. `grid-template-columns` held an
+     * unresolved `var()` for a whole push, so it computed to `none` and the two
+     * children stacked into one column. Nothing threw, nothing clipped, and the
+     * "every row's text starts on the same left edge" check below PASSED —
+     * because stacked rows all start at the same left edge. A test that passes
+     * on the same wrong assumption as the bug is worse than no test. */
+    ok(`${label}: every row's text sits BESIDE its badge, not under it`,
+      seen.landfalls.every((l) => l.detail.left >= l.badge.right - 0.5
+        && Math.abs(l.detailTop - l.badgeTop) <= 6));
 
     /* --- 4. the footnote --------------------------------------------------*/
 

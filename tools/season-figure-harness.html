@@ -12,6 +12,16 @@
   real storm and the real rankings file.
 -->
 <link rel="stylesheet" href="/ui/panels.css">
+<!--
+  ==> `ui/home.css` IS LOADED BECAUSE THE APP LOADS IT, AND LEAVING IT OUT MADE
+  THIS PAGE LIE. <== §57.60g. It is where `.visually-hidden` is declared, and
+  the numbered landfall row emits one. Without the rule that span is an in-flow
+  grid item rather than an out-of-flow one, so it took the badge's column and
+  pushed the whole row a column right — a layout fault that exists only on this
+  page. A harness missing a stylesheet the app has reports faults the app does
+  not have and hides ones it does. The order here is index.html's order.
+-->
+<link rel="stylesheet" href="/ui/home.css">
 <link rel="stylesheet" href="/seasons/seasons.css">
 <style>
   /* The drawer box the panel lives inside, and nothing else. */
