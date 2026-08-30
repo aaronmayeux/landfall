@@ -29,7 +29,7 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { stampFirst } = await import('../map/layers/points-forecast.js');
+const { bornAtByStorm, stampFirst } = await import('../map/layers/points-forecast.js');
 
 /** A forecast point as NHC publishes one, reduced to the fields that matter
  *  here. `basin` + `stormnum` is the stable pair stormKey() prefers. */
@@ -174,6 +174,84 @@ section('The two ring inks are theme-independent, because one file bakes them');
   ok(DARK.geo.pointStroke === LIGHT.geo.pointStroke,
      'pointStroke is the same in both themes, for the same reason');
 }
+
+/* ------------------------------------------------------------------ */
+section('Genesis, per storm — the same trap the ring fell into');
+
+/* ==> THIS IS THE RING BUG'S TWIN, AND IT IS WHY THE TEST LIVES IN THIS FILE.
+ * <== §57.7g. The ambient source carries EVERY live storm's points in one
+ * FeatureCollection. `stampFirst` once read `features[0]` and marked one dot
+ * across the whole set; `bornAtByStorm` would make the identical mistake by
+ * taking the earliest cyclone fix in the collection and applying it to all of
+ * them — so a young storm's pre-genesis disturbance would be graded against an
+ * older storm's birthday and come out post-tropical, full size, lettered.
+ *
+ * On glass that is a plausible grey dot in a plausible place. Indistinguishable
+ * from a correct one unless you already know the answer. Exactly the failure
+ * this file exists for.
+ *
+ * `dtg` is NHC's past-point time, a NUMBER shaped YYYYMMDDHH. Real values:
+ * Lowell's first `TS` is 2026082718 and she carries an `LO` at 2026082618,
+ * measured off the archive branch 2026-08-30. */
+const born = (basin, stormnum, stormtype, dtg) =>
+  pt(basin, stormnum, null, { stormtype, dtg });
+
+{
+  /* AL 2 formed on the 25th. EP 11 formed on the 27th and has a disturbance
+   * on the 26th — AFTER AL 2's genesis and BEFORE its own. A collection-wide
+   * genesis would call that `DB` a post-tropical remnant. */
+  const fs = [
+    born('AL', 2, 'TS', 2026082500),
+    born('AL', 2, 'TS', 2026082512),
+    born('EP', 11, 'DB', 2026082600),
+    born('EP', 11, 'TS', 2026082700),
+  ];
+  const m = bornAtByStorm(fs);
+  ok(m.get('AL2') === Date.UTC(2026, 7, 25, 0),
+     'AL 2 is born at its OWN first cyclone fix');
+  ok(m.get('EP11') === Date.UTC(2026, 7, 27, 0),
+     'EP 11 is born at ITS own first cyclone fix, two days later — not at AL 2\'s');
+  ok(m.get('EP11') > Date.UTC(2026, 7, 26, 0),
+     'so EP 11\'s disturbance falls BEFORE its genesis, which is what makes it small and blank');
+}
+
+{
+  /* A storm that never became a cyclone at all — every fix a wave. Null, not
+   * zero: `natureAt` treats a non-finite genesis as "never a storm", and a 0
+   * would make every fix read as after it. */
+  const fs = [born('AL', 5, 'WV', 2026082500), born('AL', 5, 'DB', 2026082512)];
+  ok(bornAtByStorm(fs).get('AL5') === null,
+     'a system that never became a cyclone has NO genesis — null, never 0');
+}
+
+{
+  /* THE EARLIEST, NOT THE LATEST. §57.7c: a storm that goes extratropical and
+   * re-intensifies has two cyclone runs, and anchoring on the last one would
+   * make its own middle read as pre-genesis. Fed out of order on purpose. */
+  const fs = [
+    born('AL', 9, 'HU', 2026082900),
+    born('AL', 9, 'TS', 2026082600),
+    born('AL', 9, 'EX', 2026082712),
+  ];
+  ok(bornAtByStorm(fs).get('AL9') === Date.UTC(2026, 7, 26, 0),
+     'genesis is the EARLIEST cyclone fix, whatever order the features arrive in');
+}
+
+{
+  /* An unattributable point gets no genesis, the same way it gets no ring.
+   * It must not join another storm's group and must not crash the grouping. */
+  const orphan = { type: 'Feature', geometry: { type: 'Point', coordinates: [0, 0] },
+    properties: { stormtype: 'LO', dtg: 2026082600 } };
+  const fs = [born('AL', 2, 'TS', 2026082500), orphan];
+  const m = bornAtByStorm(fs);
+  ok(m.size === 1 && m.has('AL2'),
+     'a point we cannot tie to a storm forms no group and joins no other one');
+}
+
+/* ==> MUTATIONS, RUN: computing one genesis across the whole collection
+ * (`bornAtOf(features)` for every key) fails the EP 11 assertion; taking the
+ * LAST cyclone fix instead of the first fails the re-intensification one;
+ * returning 0 instead of null fails the never-a-cyclone one. */
 
 /* ------------------------------------------------------------------ */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
