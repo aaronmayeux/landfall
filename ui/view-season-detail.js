@@ -49,6 +49,9 @@ import { isCollapsed, readSections, writeSections } from '../lib/section-state.j
 import { iconSvg } from './section-icon.js';
 import { stormDisplayName } from '../lib/season-names.js';
 import { storyClauses } from '../lib/season-story.js';
+/* The retired-names join. Under `data/` because `lib/` may not import that
+ * directory (§12), so the pure story module takes the answer as an argument. */
+import { retirementFor } from '../data/retired-lookup.js';
 import {
   changeHtml, headHtml, landfallsHtml, lifeHtml, movementHtml, noStormHtml,
   peakHtml, reportHtml, storyHtml, windFieldHtml,
@@ -253,6 +256,15 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       points: storm.points,
       places: storm.places ?? null,
       system,
+      /* ==> KEYED ON `storm.basin`, WHICH IS EXACT PER STORM, RATHER THAN ON
+       * THE WALL'S TWO BUCKETS. <== §57.52. The wall has `atlantic` and
+       * `epacific` and the second of those holds CPHC storms as well —
+       * `CP012006` IOKE is in the east Pacific file — so the wall's Pacific
+       * predicate has to union two lists. A panel is looking at ONE storm and
+       * the parser already knows whether it is `AL`, `EP` or `CP`, so it asks
+       * the precise question. A name retired in one basin is often still in
+       * service in another, and this is the surface where that matters. */
+      retirement: retirementFor(stormDisplayName(storm), storm.year, storm.basin),
     });
 
     bodyEl.innerHTML = `
