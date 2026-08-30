@@ -22,7 +22,7 @@
  */
 
 import { categoryColor, categoryShortLabel } from '../lib/category.js';
-import { CAT, LANDFALL, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
+import { CAT, LANDFALL, NAME, rowLabel, SATELLITE_ERA_FROM } from '../lib/wall-index.js';
 import { isTimeline, sortFigure } from '../lib/wall-filter.js';
 import { esc } from './seasons-board-markup.js';
 import { dotted } from './loading-dots.js';
@@ -114,7 +114,7 @@ export const catProse = (cat) => {
  * dot sitting directly beneath the dot, which reads as a smudge rather than as
  * a mark. `seasons/seasons.css` carries the geometry.
  */
-export function stripHtml(list) {
+export function stripHtml(list, isRetired = null) {
   if (!list.length) return '';
   let parts = '';
   for (const storm of list) {
@@ -122,7 +122,13 @@ export function stripHtml(list) {
      * §57.7a. It briefly carried a real landfall count and Aaron reverted that
      * on glass: the wall asks whether a storm touched land, not how often. */
     const ashore = storm[LANDFALL] ? ' data-lf' : '';
-    parts += `<i style="--wall-swatch:${dotColor(storm[CAT])}"${ashore}></i>`;
+    /* ==> A SECOND ATTRIBUTE ON THE SAME DOT, NOT A SECOND ELEMENT. <== §57.52.
+     * The triangle is an `::after` for a reason that applies twice over here:
+     * 2005 alone is 31 dots across a 175-row scroll, and a mark that IS its dot
+     * cannot drift from it when `dotSizeFor` rescales the strip. `::before` was
+     * free, so the bar costs nothing but an attribute on 122 of 3,266 dots. */
+    const ret = isRetired && isRetired(storm[NAME]) ? ' data-ret' : '';
+    parts += `<i style="--wall-swatch:${dotColor(storm[CAT])}"${ashore}${ret}></i>`;
   }
   return `<span class="wall-strip" aria-hidden="true">${parts}</span>`;
 }
@@ -135,8 +141,12 @@ export function stripHtml(list) {
  * `total` are always equal and the small half is omitted. The SHAPE is right
  * now so that step 3 fills a slot rather than changing every row on the wall.
  */
-export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
-  const label = rowLabel(row, { catLabel });
+export function rowHtml(row, { filtered = false, sortKey = 'year', isRetired = null } = {}) {
+  /* Bound to THIS row's year before it reaches the strip. A storm row carries
+   * no year of its own and the retired join is name PLUS year — see
+   * `data/retired-lookup.js`. */
+  const retiredHere = isRetired ? (name) => isRetired(name, row.year) : null;
+  const label = rowLabel(row, { catLabel, isRetired: retiredHere });
   /* ==> ON THE LANDFALL SORT THE COUNT COLUMN CARRIES THE RATIO. <== Aaron on
    * glass, 2026-08-28: he liked the filtered column's `8 of 18` and wanted the
    * same for this sort. Putting it in a column of its own gave `18 of 31` next
@@ -188,7 +198,7 @@ export function rowHtml(row, { filtered = false, sortKey = 'year' } = {}) {
   return `<button class="wall-row" type="button" data-year="${row.year}"${row.pre ? ' data-pre="1"' : ''}${fig ? ' data-figure="1"' : ''}${ratio ? ' data-ratio="1"' : ''}
       aria-label="${esc(spoken)}">
       <span class="wall-year">${row.year}${row.pre ? '<b class="wall-star">*</b>' : ''}</span>
-      <span class="wall-strip-slot">${stripHtml(row.shown)}</span>
+      <span class="wall-strip-slot">${stripHtml(row.shown, retiredHere)}</span>
       ${figure}
       <span class="wall-count">${count}</span>
     </button>`;
@@ -239,7 +249,14 @@ export function liveRowHtml(row) {
   return `<button class="wall-row wall-row-live" type="button" data-year="${row.year}" data-live="1"
       aria-label="${esc(`${row.year}, this season — ${drawn}, ${note}`)}">
       <span class="wall-year">${row.year}</span>
-      <span class="wall-strip-slot">${stripHtml(row.shown)}</span>
+      <span class="wall-strip-slot">${/* ==> NO RETIRED PREDICATE HERE, AND IT
+          IS NOT AN OVERSIGHT. <== §57.52. A name is withdrawn at the WMO
+          session the following spring, so no storm in the season still running
+          can carry a retired name — the rotation it was drawn from contains
+          none. Passing a predicate would be machinery that can never fire. The
+          row still OBEYS the chip: with the switch on this row empties, which
+          is the honest answer. */
+        stripHtml(row.shown)}</span>
       <span class="wall-live-note">${esc(note)}</span>
       <span class="wall-count">${n}</span>
     </button>`;
@@ -365,9 +382,13 @@ export function tallyHtml(live, empty) {
  * @param {number} opts.size
  * @param {number} opts.gap
  * @param {boolean} [opts.filtered]
+ * @param {(name:string, year:number) => boolean} [opts.isRetired]  injected by
+ *   the view and bound to the basin on screen. Absent, no dot carries a bar —
+ *   which is what a caller with no index gets, rather than a wrong one.
  */
 export function wallHtml(rows, {
   size, gap, filtered = false, sortKey = 'year', sortDir = 'desc', phrase = '',
+  isRetired = null,
 } = {}) {
   const live = rows.filter((r) => r.shown.length > 0).length;
   const empty = rows.length - live;
@@ -403,7 +424,7 @@ export function wallHtml(rows, {
 
     html += row.shown.length === 0
       ? hairlineHtml(row, { filtered, phrase })
-      : rowHtml(row, { filtered, sortKey });
+      : rowHtml(row, { filtered, sortKey, isRetired });
   }
 
   return `${html}</div>${tailHtml(tail, { filtered, phrase })}`;

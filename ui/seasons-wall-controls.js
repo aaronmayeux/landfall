@@ -17,10 +17,9 @@
  * ==> WHAT IS DELIBERATELY NOT HERE. <== The near-home slider, which §57.36
  * lists among these controls and which is held back to its own pass: the wall
  * never loads track data, so filtering 175 years by distance needs the
- * whole-basin file — 0.93 MB — whose phone cost is unmeasured. And the retired
- * -names chip, which needs a list of ~120 retired names that does not exist in
- * this repo and which §57.17 forbids scraping. `seasons/wall.json` carries the
- * storm NAMES already, so that chip is a list away rather than a rebuild away.
+ * whole-basin file — 0.93 MB — whose phone cost is unmeasured. That is now the
+ * ONLY one of §57.36's controls still missing; the retired-names switch landed
+ * with §57.52.
  */
 
 import { SEASONS } from '../config/constants.js';
@@ -78,6 +77,22 @@ export function landfallToggleHtml(on) {
   return `<button class="switch-row wall-switch" type="button" role="switch"
       data-landfall aria-checked="${String(!!on)}">
       <span>Made landfall</span>
+      <span class="switch-track" aria-hidden="true"></span>
+    </button>`;
+}
+
+/**
+ * The retired-names switch. §57.36 puts it in the COLLAPSED group.
+ *
+ * ==> IT COUNTS ETA AND IOTA EVEN THOUGH THE STORM PANEL HAS TO WORD THEM
+ * DIFFERENTLY. <== §57.51. A filter has no sentence to get wrong, and the WMO
+ * counts the Greek pair among its own retirements. `data/retired-lookup.js`
+ * holds that decision so this control does not have an opinion of its own.
+ */
+export function retiredToggleHtml(on) {
+  return `<button class="switch-row wall-switch" type="button" role="switch"
+      data-retired aria-checked="${String(!!on)}">
+      <span>Name was retired</span>
       <span class="switch-track" aria-hidden="true"></span>
     </button>`;
 }
@@ -143,7 +158,19 @@ function thresholdHtml({ id, label, value, min, max, step, words, invert = false
  * reader's thumb.
  */
 export function moreFiltersHtml(f, open) {
-  const rows = thresholdHtml({
+  /* ==> THE RETIRED SWITCH LEADS THE COLLAPSED GROUP, ABOVE THE THREE
+   * SLIDERS. <== §57.36 lists it first among the collapsed filters, and it is
+   * the only one of the four that is a yes/no rather than a threshold — so it
+   * takes the same `switch-row` the landfall toggle uses above the fold and
+   * sits before the sliders rather than among them. A switch dropped between
+   * two sliders reads as a slider that lost its track.
+   *
+   * ==> "WAS RETIRED" RATHER THAN "RETIRED NAMES", AND THAT MATCHES THE
+   * LANDFALL SWITCH BESIDE IT. <== Both controls ask a question about the
+   * storm in the same grammar — `Made landfall`, `Name was retired` — so the
+   * two read as one set. `Retired names` is a category of thing rather than a
+   * test a storm passes, and it invited the reader to expect a list. */
+  const rows = `${retiredToggleHtml(f.retired)}` + thresholdHtml({
     id: 'days',
     label: 'Lasted at least',
     value: f.minDays,

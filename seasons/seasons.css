@@ -58,15 +58,48 @@ html[data-seasons="on"] {
   /* Clear of the dot's edge without floating free of it. */
   --wall-lf-gap: 1.5px;
 
+  /* ==> THE RETIRED BAR. A LINE, AND DELIBERATELY NOT A DOT. <== §57.52.
+     Aaron asked for a small dot above the storm dot, same ink and size as the
+     landfall triangle, and it was measured before it was built. At 390px the
+     busiest basin draws a 6px dot, falling to 4px whenever a sort column is
+     showing or on the desktop side rail. A circle matching the triangle's
+     WIDTH is 4.32px sitting above a 6px dot — 72% of the storm dot itself and
+     2.2x the triangle's ink — which reads as a second storm rather than as a
+     mark on one. A circle matching the triangle's INK is 2.92px, and 2.19px
+     once a sort column is up, which is under the 3px floor where the triangle
+     already found that a mark stops reading as a mark. There is no diameter
+     that is both legible and not mistakable for another dot.
+
+     A line survives the small sizes because it only has to hold 1px in one
+     dimension, and it is the shape furthest from both the dot and the
+     triangle — which matters because 109 of the 122 retired storms in the
+     record also came ashore, so almost every barred dot wears the triangle too.
+
+     Same width as the triangle so the two marks share a column, and the same
+     neutral ink for the same reason it is neutral down there: retirement is a
+     fact about the NAME, and strength is what the dot already says. */
+  --wall-ret-w: var(--wall-lf-w);
+  --wall-ret-h: max(1px, calc(var(--wall-dot, 7px) * 0.16));
+  --wall-ret-gap: var(--wall-lf-gap);
+
   /* ==> THE STRIP'S BREATHING ROOM ANSWERS TO WHICHEVER MARK NEEDS MORE. <==
      The slot clips, so both the glow bleeding outward and the triangle hanging
      below have to fit inside this padding or they are cut off. The glow wins at
      small dot sizes and the triangle wins at large ones — at `wallDotMax` the
      triangle reaches 9.8px against the glow's 8px — so it is a `max()` rather
      than a number, and neither can be starved by a change to the other. */
+  /* ==> THE BAR IS IN THE `max()` EVEN THOUGH IT NEVER WINS TODAY. <== §57.52.
+     The padding is applied top AND bottom off one value, and the triangle
+     below is 0.52 of the dot tall against the bar's 0.16 — so the triangle
+     wins at every dot size in the range and the bar fits inside the room it
+     already asks for. It is listed anyway for the reason the other two are:
+     the slot CLIPS, so a retune of the bar that nobody thought to trace back
+     to this line would cut the mark off at the top with nothing on screen
+     saying why. Neither mark can be starved by a change to the other. */
   --wall-strip-pad: max(
     var(--dot-glow-blur),
-    calc(var(--wall-lf-gap) + var(--wall-lf-h) + 1px)
+    calc(var(--wall-lf-gap) + var(--wall-lf-h) + 1px),
+    calc(var(--wall-ret-gap) + var(--wall-ret-h) + 1px)
   );
 }
 
@@ -1369,6 +1402,35 @@ html[data-seasons="on"] #status {
   background: var(--text-primary);
   opacity: 0.8;
   clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+
+/* ==> A BAR ABOVE THE DOT WHOSE NAME WAS RETIRED. <== §57.52. The `::after`
+   below the dot was already the landfall triangle, so this takes the `::before`
+   that was free — a second attribute on one element rather than a second span
+   per storm, which at 31 dots a row down a 175-row scroll is the difference
+   between an attribute on 122 dots and 3,266 extra nodes. It cannot drift from
+   its dot because it IS its dot: no second coordinate system and nothing to
+   re-measure when `dotSizeFor` rescales the strip.
+
+   ==> IT HANGS ABOVE AND MOVES NOTHING, THE SAME AS THE TRIANGLE. <== Out of
+   flow, so a year with five retired storms is exactly as tall as a year with
+   none and the 44px row rhythm holds. The wall is a comparison BETWEEN rows,
+   and a row growing to fit its own marks would break that on the years most
+   worth comparing.
+
+   No `border-radius`: at 1px tall on the busiest basin a rounded cap eats the
+   whole bar, and at 2px it turns a line into a lozenge, which is the dot shape
+   this mark exists to avoid. */
+.wall-strip i[data-ret]::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + var(--wall-ret-gap));
+  left: 50%;
+  width: var(--wall-ret-w);
+  height: var(--wall-ret-h);
+  transform: translateX(-50%);
+  background: var(--text-primary);
+  opacity: 0.8;
 }
 
 .wall-count {

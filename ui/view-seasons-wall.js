@@ -46,6 +46,10 @@ import {
   emptyFilter, eraSplit, filterPhrase, isFiltered, isTimeline, keepFor, sortRows,
 } from '../lib/wall-filter.js';
 import { stormFacts } from '../lib/season-facts.js';
+/* The join between a storm and the retired-names list. It lives under `data/`
+ * because `lib/` may not import that directory (§12), so the wall's pure
+ * filter takes this as an injected predicate rather than reaching for it. */
+import { retiredPredicateFor } from '../data/retired-lookup.js';
 import { loadLandMask } from '../lib/land-mask.js';
 import { landfallsFor } from '../lib/landfall.js';
 import { esc } from './seasons-board-markup.js';
@@ -336,7 +340,7 @@ export function createSeasonsWallView({
     const { size, gap } = dotSizeFor(wall, basin, stripPx());
 
     /* ==> FILTER, THEN RECOMPUTE, THEN SORT. IN THAT ORDER. <== §57.36. */
-    const keep = keepFor(filter);
+    const keep = keepFor(filter, { isRetired: retiredPredicateFor(basin) });
     const rows = sortRows(rowsFor(wall, basin, keep), sortKey, sortDir);
 
     const filtered = isFiltered(filter);
@@ -373,7 +377,7 @@ export function createSeasonsWallView({
      * A chip or a sort press still redraws the lot: those replace no node the
      * reader is mid-gesture on. */
     return basinsHtml() + controls
-      + `<div class="wall-results-slot">${resultsHtml(keep, rows, { size, gap, filtered, sortKey, sortDir, phrase })}</div>`;
+      + `<div class="wall-results-slot">${resultsHtml(keep, rows, { size, gap, filtered, sortKey, sortDir, phrase, isRetired: retiredPredicateFor(basin) })}</div>`;
   }
 
   /** The honesty line, the pinned row and the wall itself — everything a
@@ -408,7 +412,12 @@ export function createSeasonsWallView({
      * different fact from the strongest storm of the year. `total` is left
      * alone — it is the season's real size and it is what the count column's
      * small half is for. */
-    const shown = keep ? row.shown.filter(keep) : row.shown;
+    /* ==> THE YEAR IS NAMED HERE FOR THE SAME REASON `rowsFor` NAMES IT. <==
+     * `filter(keep)` hands the predicate an array index as the year. The
+     * settled rows and this one must ask the retired chip the same question,
+     * and the running season's year is `liveYear` rather than a position in a
+     * list. */
+    const shown = keep ? row.shown.filter((s) => keep(s, liveYear)) : row.shown;
     return liveRowHtml(shown === row.shown ? row : { ...row, shown, ...aggregate(shown), landfalls: 0 });
   }
 
@@ -529,7 +538,7 @@ export function createSeasonsWallView({
     const slot = bodyEl?.querySelector('.wall-results-slot');
     if (!slot) { changed(); return; }
     const { size, gap } = dotSizeFor(wall, basin, stripPx());
-    const keep = keepFor(filter);
+    const keep = keepFor(filter, { isRetired: retiredPredicateFor(basin) });
     const rows = sortRows(rowsFor(wall, basin, keep), sortKey, sortDir);
     slot.innerHTML = resultsHtml(keep, rows, {
       size,
@@ -538,6 +547,7 @@ export function createSeasonsWallView({
       sortKey,
       sortDir,
       phrase: filterPhrase(filter, { catLabel: catProse }),
+      isRetired: retiredPredicateFor(basin),
     });
     settleDotSize();
   }
@@ -565,6 +575,19 @@ export function createSeasonsWallView({
       filter.landfall = !filter.landfall;
       changed();
       refocus('[data-landfall]');
+      return;
+    }
+
+    /* ==> `changed()` RATHER THAN `repaintResults()`, THE SAME AS THE LANDFALL
+     * SWITCH. <== The sliders repaint only the results because a drag must not
+     * rebuild the control under the thumb. A switch is one press and its own
+     * `aria-checked` has to change with it, so it goes through the full render
+     * and `refocus` puts the reader back on the control they just pressed. */
+    const retired = e.target.closest('[data-retired]');
+    if (retired) {
+      filter.retired = !filter.retired;
+      changed();
+      refocus('[data-retired]');
       return;
     }
 
