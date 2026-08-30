@@ -99,15 +99,26 @@ not be reopened without new evidence.**
 
 **THREE THINGS ARE LEFT AND ONLY ONE OF THEM IS WORK.**
 
-**1. THE LIVE GLOBE STILL DRAWS A PRE-GENESIS FIX IN THE OLD TEAL, AND THAT IS
-THE ONE REAL ITEM.** Aaron's call, option 3 of three: judge the grey on 175
-years of settled archive where nothing is urgent, then move the live globe in
-its own pass. **The grey is now judged and accepted, so the condition is met.**
-§57.7g holds the reasoning. It is small — `map/layers/points-forecast.js` and
-its siblings read `PREGENESIS_COLOR` the same way the archive did — but it is a
-glass call on a day with real storms on screen, which is why it was not folded
-in. **Until it lands the two globes answer one question two different ways, and
-that is exactly the split that produced §57.7f's bug.**
+**1. THE LIVE GLOBE'S GREY IS SHIPPED AND UNJUDGED. §57.7h IS THE AS-BUILT
+ACCOUNT — READ THAT, NOT THIS.** The port landed 2026-08-30. Both globes now ask
+one function what kind of system a fix was, so the split that produced §57.7f's
+bug is closed. **What is waiting on Aaron is one glass call: the SIZE.**
+
+On the archive a shrunken tail sits on a finished track. On the live globe it
+sits beside a moving forecast cone, and a thinned past may read as unimportant
+exactly where the reader is judging where the storm came from. **Karina is the
+storm to look at — 11 of her 20 past points are `DB`, so more than half her
+history is now small grey dots.** Lowell is the second look: she carries a
+single `LO` a day before her first `TS`, which should draw small and blank
+while her `EX` tail, if she gets one, draws full size and lettered.
+
+**The lever is one number.** `STORM_GEO.remnantPointRadius` set to `10` retires
+the size split and leaves the grey and the letters alone. Nothing else moves.
+
+**Not reachable by this pass, and worth knowing before it looks like a bug:
+GDACS and JTWC storms are unchanged.** Measured on Dolly's live payload — her
+track points carry no status column at all, only one event-level severity string
+repeated on every fix. There is nothing to read. §57.7h has the measurement.
 
 **2. THE FIRST FIX'S WIDE WHITE RING ON A SMALL DOT — NOTICED, NEVER LOOKED AT.**
 Dorian 2013 opens on a pre-genesis `LO`, so his earliest dot is 6 px wearing a
