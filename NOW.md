@@ -69,22 +69,18 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> `tools/test-genesis.mjs` HANGS AND IT IS NOT A LANDFALL BUG. <== Found
-2026-08-30 while sweeping all 141 suites; 140 pass.** It stalls in its
-`a broken NHC half is an OUTAGE, never an empty sky` section, which is the one
-that makes every relay call throw, and it never returns rather than failing an
-assertion.
+**==> `tools/test-genesis.mjs` DOES NOT HANG. IT IS SLOW, AND THIS ENTRY WAS
+WRONG FOR THE SECOND TIME. <==** Run to completion under
+`node tools/run-suites.mjs` on 2026-08-30 it finishes **green in 195 seconds**,
+and all 142 suites pass with it. The 2026-08-30 sweep that recorded it as
+hanging killed it early, which is the identical mistake `§48.21 item 4` below
+already records being made and corrected on 2026-08-28.
 
-**IT IS PRE-EXISTING AND THAT WAS VERIFIED RATHER THAN ASSUMED** — a clean
-worktree of `ada4164`, the commit before that day's feature work, hangs at the
-identical line with byte-identical output. **Nothing in §57.55 to §57.65
-touches genesis, the relay or `data/genesis.js`.**
-
-**A HANG IS WORSE THAN A FAILURE HERE**, because the pre-push hook and CI both
-run the suites: a suite that never returns holds the gate open forever rather
-than reporting red, so it has to be either fixed or timed out. **Nobody has
-looked at the cause yet.** Its own pass, and the first question is whether a
-`throw: true` relay stub leaves an await with nothing to settle it.
+**THE FILE HAS NOW MISDIAGNOSED THIS SUITE TWICE AND THAT IS THE FINDING.**
+`CLAUDE.md` says a killed suite is an unanswered question rather than a failure,
+and says to use the runner rather than a shell loop precisely because a loop
+kills genesis. Both times the entry was written after a hand-run loop. **Do not
+record this suite as broken again without a `run-suites.mjs` run behind it.**
 
 **==> POST-TROPICAL LANDFALLS, THE REFUSAL SENTENCE AND THE DOT GRADING ARE ALL
 CONFIRMED ON GLASS, 2026-08-29. AARON: "IT LOOKS FUCKING GOOD." <==** Four
