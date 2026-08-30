@@ -1402,6 +1402,79 @@ const text = (body) => body.innerHTML;
 }
 
 
+/* ---------------------------------------------------------------------------
+ * 13. THE MARKS RIDE ON THE DOT, AND ONLY ON THE STORMS THAT EARNED THEM.
+ *
+ * ==> THIS EXISTS BECAUSE THE WALL'S EQUIVALENT SHIPPED HALF-WRITTEN AND 72
+ * ASSERTIONS PASSED OVER IT. <== §57.36a: `data-lf` went onto EVERY dot rather
+ * than the flagged ones and no suite noticed, because none of them read the
+ * strip's markup. §57.53 moves the same two marks onto this row, so the same
+ * check has to exist here before the same bug can.
+ * ------------------------------------------------------------------------- */
+{
+  const { retirementFor } = await import('../data/retired-lookup.js');
+  const { body } = await board({ year: 2005 });
+  const swatches = body.querySelectorAll('.seasons-open .row-swatch');
+  const rowsNow = rows(body);
+
+  ok('every row has a swatch', swatches.length === rowsNow.length && swatches.length > 0);
+
+  /* ==> THE OLD GLYPH IS GONE, NOT HIDDEN. <== It was a `▲` span in the meta
+   * line. A rule that still matched it would draw the mark twice. */
+  eq('no row still carries the old glyph span',
+    body.querySelectorAll('.seasons-lf').length, 0);
+  ok('and no row renders a bare triangle character', !/▲/.test(text(body)));
+
+  const marked = swatches.filter((e) => e.attrs['data-lf'] !== undefined).length;
+  const barred = swatches.filter((e) => e.attrs['data-ret'] !== undefined).length;
+
+  /* Counted off the same facts the row was built from, so a drift in either
+   * direction turns this red rather than a typed number going stale. */
+  const spoken = body.querySelectorAll('.seasons-open')
+    .filter((b) => /made(\s+\d+)?\s+landfall/.test(b.attrs['aria-label'] || '')).length;
+  eq('a triangle for every storm that came ashore, and no others', marked, spoken);
+  ok('and marks are SOME of the dots rather than all of them',
+    marked > 0 && marked < swatches.length);
+
+  /* ==> 2005 IS THE WORST SEASON ON RECORD FOR RETIREMENTS AND THAT IS WHY IT
+   * IS THE FIXTURE. <== Five names went: Dennis, Katrina, Rita, Stan, Wilma.
+   * §57.51's delta-cap gate is set at six for the same reason. */
+  /* ==> READ THROUGH THE OPEN BUTTON'S LABEL, NOT THROUGH `.seasons-name`.
+   * <== `tools/markup-dom.mjs` has a documented history of not seeing what a
+   * real browser sees, and every other assertion in this file reads the label
+   * for that reason. The swatch is a CHILD of the button, so one lookup finds
+   * both the name and the mark. */
+  const named = (host, re) => host.querySelectorAll('.seasons-open')
+    .find((b) => re.test(b.attrs['aria-label'] || ''));
+  const names = body.querySelectorAll('.seasons-open')
+    .filter((b) => b.querySelectorAll('[data-ret]').length > 0)
+    .map((b) => (b.attrs['aria-label'] || '').replace(/^Open ([A-Z]+),.*$/, '$1'))
+    .sort();
+  eq('2005 bars exactly its five retired storms', names,
+    ['DENNIS', 'KATRINA', 'RITA', 'STAN', 'WILMA']);
+  eq('and the attribute count agrees with the rows', barred, 5);
+
+  /* ==> THE JOIN IS NAME PLUS YEAR HERE TOO. <== The row asks the lookup with
+   * the storm's own year, so a roster cannot mark a storm the wall would not.
+   * Ida 2009 is the case: her name is retired, for a different storm. */
+  const { body: ida09 } = await board({ year: 2009 });
+  const idaRow = named(ida09, /^Open IDA,/);
+  ok('2009 lists Ida', !!idaRow);
+  eq('and does not bar her', idaRow.querySelectorAll('[data-ret]').length, 0);
+  ok('though she did come ashore, so the row is not simply unmarked',
+    idaRow.querySelectorAll('[data-lf]').length === 1);
+  ok('while the lookup agrees she is not retired',
+    retirementFor('IDA', 2009, 'AL') === null && !!retirementFor('IDA', 2021, 'AL'));
+
+  /* ==> AND THE MARK IS SAID OUT LOUD. <== §13. The swatch is `aria-hidden`,
+   * so a shape drawn on it that is not also in the button's label does not
+   * exist for a reader who cannot see it. */
+  const dennis = named(body, /^Open DENNIS,/);
+  ok('a barred row says so in its label', /name later retired/.test(dennis.attrs['aria-label']));
+  const arlene = named(body, /^Open ARLENE,/);
+  ok('and an unbarred one does not', !/retired/.test(arlene.attrs['aria-label']));
+}
+
 /* ------------------------------------------------------------------------ */
 
 if (fails.length) {

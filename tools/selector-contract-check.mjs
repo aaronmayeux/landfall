@@ -90,6 +90,12 @@ const PROVEN_ABSENT = new Map([
     'headless-check.mjs asserts the storm-list scope filter STAYS out of the DOM ' +
       '(removed in 538f6a3) — a match is the failure',
   ],
+  [
+    'seasons-lf',
+    'test-seasons-board.mjs section 13 asserts the roster\'s old landfall GLYPH stays gone '
+      + '(§57.53 moved the mark onto the swatch as a ::after) — a match is the failure, '
+      + 'because a surviving span would draw the triangle twice',
+  ],
 ]);
 
 const files = walk('.');
