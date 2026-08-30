@@ -9961,6 +9961,17 @@ rounding rather than the geometry.
 
 ### 57.61 Step 7 — nine sections become six — as built
 
+**==> CONFIRMED ON GLASS AND ACCEPTED, 2026-08-30. AARON: *"WORKS GREAT."*
+<==** The section merge, the order, the icons and the three-open default set
+are all settled by that acceptance and should not be reopened without new
+evidence. **§57.61e's glass list is answered** — three sections open by default
+is right, `Where it went` does not read as an orphan, and the three sentence
+headings read as plain English.
+
+**==> AND THE REBUILD IS FINISHED WITH IT. <==** Steps 1 to 7 of §57.54k are
+all built, seen on a phone and accepted. Step 8, the globe tether, is scoped in
+§57.54j and Aaron has not asked for it.
+
 **§57.54k step 7, and it is the last step of the rebuild.** §57.54f's table is
 the plan and it did not change: four of the six sections are merges rather than
 renames, three open by default, and all six icons already existed.
@@ -10157,6 +10168,12 @@ every one of them is exactly the shape that mutation exploits.**
    the panel read as calm or as sparse.
 
 ### 57.66 A figure block is divided from the one above it
+
+**==> BUILT, CONFIRMED ON GLASS AND ACCEPTED THE SAME DAY, 2026-08-30. AARON:
+*"LOOKS GREAT."* <==** The hairline reads as grouping rather than as a ledger,
+which was the one risk. **§57.66c's three dials were not needed and stay
+available** — the space, the rule itself, and the room under the axis — but the
+values as shipped are settled by acceptance.
 
 **==> AARON ON GLASS, 2026-08-30, ON `How long it lasted`: *"all the data runs
 together and I can't tell what belongs with what."* <==** Step 7 shipped and

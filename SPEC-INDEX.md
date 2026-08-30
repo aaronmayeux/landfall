@@ -420,17 +420,17 @@ real home is the other row carrying the same section number.
 | `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 9861-9886 |
 | `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 9887-9898 |
 | `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9899-9913 |
-| `57.61` | &nbsp;&nbsp;Step 7 — nine sections become six — as built | `SPEC-SEASONS-BUILD.md` | 9962-9976 |
+| `57.61` | &nbsp;&nbsp;Step 7 — nine sections become six — as built | `SPEC-SEASONS-BUILD.md` | 9962-9987 |
 | `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9914-9961 |
-| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9977-10043 |
-| `57.61b` | &nbsp;&nbsp;&nbsp;&nbsp;The merge itself — six call sites, no rewritten renderer | `SPEC-SEASONS-BUILD.md` | 10044-10084 |
-| `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10085-10105 |
-| `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10106-10137 |
-| `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10138-10158 |
-| `57.66` | &nbsp;&nbsp;A figure block is divided from the one above it | `SPEC-SEASONS-BUILD.md` | 10159-10179 |
-| `57.66a` | &nbsp;&nbsp;&nbsp;&nbsp;The rule goes above the label, and the label spans | `SPEC-SEASONS-BUILD.md` | 10180-10212 |
-| `57.66b` | &nbsp;&nbsp;&nbsp;&nbsp;Measured, because the fault was a distance | `SPEC-SEASONS-BUILD.md` | 10213-10243 |
-| `57.66c` | &nbsp;&nbsp;&nbsp;&nbsp;The dials, if it reads wrong on glass | `SPEC-SEASONS-BUILD.md` | 10244-10256 |
+| `57.61a` | &nbsp;&nbsp;&nbsp;&nbsp;The ending sentence left `changeHtml` first, as its own commit | `SPEC-SEASONS-BUILD.md` | 9988-10054 |
+| `57.61b` | &nbsp;&nbsp;&nbsp;&nbsp;The merge itself — six call sites, no rewritten renderer | `SPEC-SEASONS-BUILD.md` | 10055-10095 |
+| `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10096-10116 |
+| `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10117-10148 |
+| `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10149-10169 |
+| `57.66` | &nbsp;&nbsp;A figure block is divided from the one above it | `SPEC-SEASONS-BUILD.md` | 10170-10196 |
+| `57.66a` | &nbsp;&nbsp;&nbsp;&nbsp;The rule goes above the label, and the label spans | `SPEC-SEASONS-BUILD.md` | 10197-10229 |
+| `57.66b` | &nbsp;&nbsp;&nbsp;&nbsp;Measured, because the fault was a distance | `SPEC-SEASONS-BUILD.md` | 10230-10260 |
+| `57.66c` | &nbsp;&nbsp;&nbsp;&nbsp;The dials, if it reads wrong on glass | `SPEC-SEASONS-BUILD.md` | 10261-10273 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -446,7 +446,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 584,036 | 153 |
+| `SPEC-SEASONS-BUILD.md` | 585,016 | 153 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 191,688 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

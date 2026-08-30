@@ -471,235 +471,50 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> THE ARCHIVE STORM DRAWER IS BEING REBUILT AND THE WHOLE PLAN IS §57.54.
-READ THAT, NOT THIS. <==** Aaron's ask, 2026-08-30: the panel had become a
-disjointed mess — the same figure stated up to four times, and one section
-(`Where it ranks`) is **33% of the panel** while every row in it duplicates a
-label from three to five sections away. The plan was measured against all 3,266
-storms, prototyped against the real files, and judged by Aaron on 2026-08-30
-(*"I love it. It looks great."*).
+**==> THE ARCHIVE STORM DRAWER REBUILD IS FINISHED. ALL SEVEN STEPS ARE BUILT,
+ON GLASS AND ACCEPTED, AND NOTHING IN IT IS WAITING ON AARON. <==** The plan was
+§57.54; the as-built account is **§57.55 through §57.61** plus **§57.63**,
+**§57.64**, **§57.65** and **§57.66**. Read those, not this. Nine sections are
+six, every ranked figure lives in exactly one place with its own distribution
+bar, the life chart is the panel's hero, the landfalls are numbered against it,
+and ACE is in plain English.
 
-**IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
-in order.
+**STEP 8 — THE GLOBE TETHER — IS THE ONLY THING LEFT AND AARON HAS NOT ASKED
+FOR IT.** §57.54j scoped it and recommends one block at a time, driven by the
+row the reader taps, which sidesteps label collision entirely. **Do not build
+before he has chosen.**
 
-**==> STEPS 1, 2 AND 3 ARE DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
-IS WAITING ON AARON. <==** As-built at **§57.55** (the two live faults),
-**§57.56** (the distribution bar), **§57.63** (the bar's mark failed contrast),
-**§57.64** (restyled to the mockup), **§57.65** (the one-pixel seam) and
-**§57.57** (the merged row).
-
-**==> THE GO / NO-GO IS ANSWERED AND THE ANSWER IS GO. <==** Aaron on a phone,
-2026-08-30: *"It works."* §57.54k made steps 5 to 7 conditional on the merged
-row reading as ONE fact rather than four, and it does. **Steps 4 to 7 are
-cleared to build and the plan does not change.**
-
-**THREE THINGS ARE SETTLED BY THAT ACCEPTANCE AND SHOULD NOT BE REOPENED
-WITHOUT NEW EVIDENCE.** The label / figure / rank / bar row itself. `Strongest`
-opening by default in the slot `Where it ranks` gave up. And the footnote
-sitting outside every section at the foot of the panel, where it cannot be
-folded away.
-
-**ONE MEASUREMENT FROM STEP 3 IS WORTH CARRYING FORWARD RATHER THAN
-RE-DERIVING, BECAUSE IT LOOKS LIKE A REGRESSION AND IS NOT.** The panel got
-**56 characters shorter** on Katrina, Harvey and Sandy, and not at all on an
-1851 storm. §57.54g's table promises **−223 on Harvey** and that figure is for
-the WHOLE rebuild: the rank sentences moved rather than shrank, so all step 3
-saves is the duplicate labels, and the footnote spends most of it back naming
-itself. **What it bought is the duplication — 18,222 restated labels across the
-archive, a mean of 5.58 per storm — not length.** §57.57b.
-
-**TWO STANDING INSTRUCTIONS OUT OF THE BAR'S FIVE SECTIONS, because both are
-things a later pass would otherwise undo by accident:**
-
-- **The bar's columns are a CONTINUOUS SILHOUETTE with a one-pixel seam.**
-  Aaron rejected the mockup's separated fixed-width bars and then asked for the
-  hairline. They are different requests and §57.65 spells out the difference.
-  **Do not reintroduce gapped columns.**
-- **The mark is the theme's own `textPrimary`, in all three themes.** It is not
-  a per-theme colour choice any more, because reasoning about a theme's NAME
-  instead of reading its panel colour is exactly what shipped a mark at 2.19:1.
-  A suite assertion computes the ratio and fails under 3:1. §57.63.
-
-**AND A THIRD, NEW WITH STEP 3:** `figureRowsHtml` KEEPS a label-less row,
-which reverses what §57.56e decided one step earlier. The reversal is
-deliberate and §57.57b says why — that rule was about the call sites, and step
-3 changed them. **Do not "restore" the drop.**
-
-**ONE THING FLAGGED IN ADVANCE TWICE AND IT HAS NOW SURVIVED THE HARDER TEST:**
-the bar shows the BASIN ladder while the rank text beside it cites the basin
-AND the overall count. §57.56h. It survived glass inside `Where it ranks` and
-has now survived sitting directly under the figure it describes, which is where
-a mismatch would read loudest. **Settled by acceptance.** If it ever does read
-as a mismatch the lever is barring the `all` ladder instead — a swap, not a
-rewrite.
-
-**`ui/season-detail-markup.js` IS AT 563 LINES AND HAS ROOM AGAIN.** §57.57a
-took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
-(219) as step 3's first commit, which is what §57.54k required. **Steps 4 to 7
-all write into this file; whichever one crosses 700 takes the next cut in the
-pass that causes it**, not the pass after.
-
-**==> STEPS 1 TO 4 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
-IS WAITING ON AARON. <==** Step 4 is ACE in plain English, judged on a phone
-2026-08-30 (*"Looks good"*). **§57.58 is the as-built account — read that, not
-this.** `ACE 20.0 × 10⁴ kt²` over `From 24 six-hourly observations` is one row
-reading **`Power and stamina score  20.0 from 24 readings`** with a
-286-character gloss under it.
-
-**FOUR THINGS ARE SETTLED BY THAT ACCEPTANCE:** the gloss under the row rather
-than behind it, the label wording, the reading count riding in the value, and
-the deletion of the unit. **The cost was accepted with open eyes** — it is a
-net addition of about 256 characters on 2,927 of 3,266 storms, and §57.54e's
-lever (moving it behind the row) stays available without being an open
-question.
-
-**§57.54k CALLED STEP 4 TIER 1 AND IT WAS TIER 2**, because §57.54e's wording
-is one row where `lifeHtml` pushed two. §57.58a records it. **The tiers in that
-table are estimates made before the code was read** — the same table also had
-`ui/season-detail-markup.js` at 688 lines when it was 711 — so **step 5 should
-price itself against the file rather than against the row in the plan.**
-
-**ONE MEASURED THING WORTH NOT RE-DERIVING:** the storms carrying no ACE are
-MODERN, not old. Every 1851 storm has one; three 2005 storms do not. ACE needs
-a synoptic record at 34 kt, so what disqualifies a storm is never reaching
-tropical-storm force rather than being thinly observed. **A test fixture built
-on the obvious guess went red.** §57.58d.
-
-**==> STEPS 1 TO 5 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
-IS WAITING ON AARON. <==** Step 5 is the life chart, judged on a phone
-2026-08-30 (*"it all looks good"*). **§57.59 is the as-built account — read
-that, not this.** It holds the two measurements §57.54d required first, the
-geometry read off the mockup, the palette argument and the eleven mutations.
-
-**FIVE THINGS ARE SETTLED BY THAT ACCEPTANCE** and §57.59 lists them: the wind
-axis at `max(140 kt, peak)` and the squashed weak storms it implies, the real
-`CATEGORY_COLOR` rather than the mockup's warmed ramp, the grey on an ungraded
-system, four rows of discs on NOEL, and the chart not folding.
-
-**GLASS FOUND TWO FAULTS AND BOTH ARE FIXED AND ACCEPTED.** `Aug 3` rendered as
-`g 3` on 48.1% of the archive (§57.59h), and NOEL's ninth disc was drawn
-through the year stamp (§57.59i). Neither is open.
-
-**TWO FIGURES WORTH NOT RE-DERIVING.** The disc-stacking counts are
-**1,199 / 201 / 33 / 2**, off the renderer — `tools/seasons-life-chart-measure.mjs`
-reads 1,208 / 196 / 29 / 1 because it spreads discs over the full 358 units
-while the chart insets its plot by 4 at each end, so **the tool alone is
-optimistic by 2%** (§57.59e). And the storms that cannot be charted at all are
-**32**, single-observation entries that get a sentence rather than an empty box.
-
-**==> STEPS 1 TO 6 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF
-THEM IS WAITING ON AARON. <==** Step 6 is the numbered landfalls, judged on a
-phone 2026-08-30 (*"Looks and works great"*). **§57.60 is the as-built account
-— read that, not this.** The list is numbered to match the chart's discs and
-has moved from fifth on the panel to first, directly under the chart, where it
-opens by default.
-
-**FOUR THINGS ARE SETTLED BY THAT ACCEPTANCE** and should not be reopened
-without new evidence: the numbers getting a reader from a disc to a row; the
-lone `1` on the 747 storms with exactly one landfall, which was flagged in
-advance as the most likely thing to come back as clutter; `Landfalls` leading
-the panel, including on the 1,831 storms where it is one sentence saying the
-storm stayed at sea; and the 20px badge.
-
-**TWO MEASUREMENTS WORTH NOT RE-DERIVING.** Zero of 3,266 storms carry an
-out-of-order landfall list, so the chart and the list already agreed — **by
-luck**, over a sidecar written in the order the coast walk meets the coast.
-That is why the numbering has one owner rather than an assertion (§57.60a).
-And **the chart's disc has no fixed pixel size**: it is an SVG scaled to the
-panel and renders 12.07px at a 320px viewport, 15.19 at 390, 17.43 at 440 and
-29.90 at 719. **The badge is deliberately NOT coupled to
-`SEASONS.lifeChartDiscPx` and the suite fails if a later pass re-couples them**
-(§57.60c).
-
-**==> AND THE LESSON FROM THIS STEP IS ABOUT THE CHECK, NOT THE ROW. <==** The
-first version shipped green and wrong: the landfall text stacked UNDER its
-badge instead of beside it, because the row's `grid-template-columns` held a
-`var()` declared out of its scope. **The browser check written for exactly this
-class of fault passed over it** — it asserted every row's text starts on the
-same left edge, which is TRUE of a stacked layout. §57.60g. The missing
-assertion is in and mutation-verified. **`tools/token-check.mjs` did not catch
-the unresolved reference either, because the property was declared somewhere in
-the file and the check does not model scope.** That gap is open and nothing is
-blocked on it.
-
-**==> STEPS 1 TO 7 ARE ALL DONE. THE REBUILD IS FINISHED AND STEP 7 HAS NOT
-BEEN SEEN ON GLASS. <==** Nine sections are six. **§57.61 is the as-built
-account — read that, not this**, and §57.61e is the glass list.
-
-**WHAT LANDED, IN TWO COMMITS SO A BREAK CAN ONLY BE ONE OF THEM.** First
-`endingHtml` came out of `changeHtml` with the panel byte-identical — proved by
-rendering all 3,266 storms through the old file and the new one in both unit
-systems, 6,532 of 6,532 identical. Then the merge: `Strongest` + `How it
-changed` became `How hard it blew`, `Its life` + the ending became `How long it
-lasted`, `How it moved` + `Wind footprint` became `Where it went`. Landfalls,
-In its season and How hard it blew open; the other three fold. No renderer was
-rewritten and no new icon was drawn.
-
-**==> THE MERGE SAVES TWELVE CHARACTERS AND THAT NUMBER IS NOT A DISAPPOINTMENT
-TO BE RE-DERIVED. <==** Measured before and after across all 3,266 storms:
-1,903.6 mean visible characters becomes 1,891.6, and eight sections become six.
-The only text that left is the difference between five old headings and three
-new ones. **The merge was never going to shorten the panel** — every row,
-sentence and bar inside those sections is still on screen. It buys two fewer
-headings and a narrative order. Same shape as §57.57b's finding one step
-earlier.
-
-**THE FOLD RECORD RESETS ONCE AND THAT IS A DECISION, NOT A BUG.** §57.61c.
-Five ids stopped existing, a migration has no honest answer where two sections
-merged into one, and three of the six are new subjects nobody has read. **If
-Aaron opens a storm and his folds are the defaults, that is expected.**
-
-**==> AND ONE MUTATION FOUND A REAL HOLE THAT HAD SHIPPED SHAPE BEFORE. <==**
-Deleting `endingHtml` from the view's call site left all 221 assertions green:
-the renderer was covered and nothing asserted anything CALLED it. That is the
-`fastest24h` fault through a different door — markup correct, tested, and never
-reached. Three mounted-panel assertions close it. **Every section this step
-moved is a call site, so every one was that shape.** §57.61d.
-
-**==> A NUMBER WENT INTO THE SPEC WRONG AND WAS CAUGHT BEFORE THE PUSH. WORTH
-KEEPING BECAUSE IT WILL HAPPEN AGAIN. <==** The ending tally was written as
-6,532 storms and 22 unknowns. Both were exactly double: the count globbed every
-`.txt` in `seasons/data/`, and that directory holds **two whole-basin
-`hurdat2-*.txt` files carrying every storm a second time** alongside the 252
-per-season files. **Only `basin-YYYY-` is one storm each — anything counting
-that directory must filter to them.** The real figures are 1,949 dissipated,
-804 extratropical, 502 remnant low, 11 unknown. The tell was inside the figure:
-6,532 is twice 3,266, and 3,266 is the denominator this panel prints in its own
-footnote.
-
-**ONE THING IS OPEN AND NOTHING IS BLOCKED ON IT.** The 11 storms whose last
-record is `DB` or `WV` get no closing sentence while every other storm does.
-Silence states nothing false and `Last seen` and `Lifespan` are right above it.
+**ONE OPEN QUESTION, BLOCKING NOTHING.** The 11 storms whose last record is
+`DB` or `WV` get no closing sentence while every other storm does. Silence
+states nothing false and `Last seen` and `Lifespan` sit right above it.
 Whether they deserve their own words is Aaron's call. §57.61a.
 
-**==> AND GLASS FOUND ONE FAULT, WHICH IS FIXED AND NOT YET SEEN AGAIN. <==**
-Aaron on `How long it lasted`, 2026-08-30: *"all the data runs together and I
-can't tell what belongs with what."* **§57.66 is the as-built account — read
-that, not this.**
+**AND THREE THINGS FROM THE REBUILD ARE WORTH NOT RE-DERIVING**, because each
+one looks like something it is not:
 
-**THE CAUSE WAS ONE NUMBER AND IT PRE-DATED THE MERGE.** `.detail-vitals` puts
-a 4px `gap` between every row. A marked figure is FIVE stacked lines, so the
-space between two facts was identical to the space between two lines inside one
-fact. The merge did not cause it — it put three marked rows adjacent for the
-first time, which is what made it readable. **A hairline and real space now sit
-above each figure block**, and a second fault went with it: the marked label
-had been widening the label column for every plain row on the panel by
-107.53px.
+1. **`seasons/data/` HOLDS EVERY STORM TWICE.** Two whole-basin
+   `hurdat2-*.txt` files sit alongside the 252 per-season ones. **Anything
+   counting that directory must filter to `basin-YYYY-`** or it reports 6,532
+   storms against the real 3,266 — which is exactly what happened, read
+   perfectly, and reached the spec before a second measurement caught it.
+   §57.61a.
+2. **THE RESTRUCTURING NEVER SHORTENED THE PANEL AND WAS NOT MEANT TO.** Step
+   3 saved 56 characters and step 7 saved 12. What both bought is duplication
+   removed and shape gained — 18,222 restated labels gone across the archive,
+   nine sections down to six. §57.57b, §57.61b.
+3. **A CHECK WRITTEN AGAINST YESTERDAY'S LAYOUT REPORTS TODAY'S FIX AS A
+   REGRESSION.** §57.66b: two assertions in `season-figure-check.mjs` measured
+   every label assuming it sat in the `auto` column and reported 327.44px of
+   drift on a layout that had just improved. **Re-read the check; do not undo
+   the fix.**
 
-**GLASS, and it is one look at any storm:** does the division read as grouping
-or as a ledger. **§57.66c holds three one-line dials** — the space, the rule
-itself, and the room under the axis — and none of them touches the markup.
-
-**STEP 8 — THE GLOBE TETHER — IS THE ONLY STEP LEFT AND AARON HAS NOT ASKED
-FOR IT.** §57.54j scoped it and recommends one block at a time driven by the
-row the reader taps. **Do not build before he has chosen.**
-
-**ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
-version fed the distribution bar the RAW value instead of the rung, and because
-§57.46's distance ladders store display units while `read()` returns nautical
-miles, **Katrina's mark sat at 16.9% of a bar where she belongs at 19.5% with
-the correct `2,106 mi` printed beside it the whole time.** `toRung` is the only
-conversion that speaks a ladder's own units. §57.54c.
+**AND ONE MEASUREMENT WORTH KEEPING**, because the fluent-wrong-number version
+of it shipped in the prototype: the distribution bar must be fed the RUNG,
+never the raw value. §57.46's distance ladders store display units while
+`read()` returns nautical miles, so the raw figure put Katrina's mark at 16.9%
+of a bar where she belongs at 19.5% — **with the correct `2,106 mi` printed
+beside it the whole time.** `toRung` is the only conversion that speaks a
+ladder's own units. §57.54c.
 
 
 **==> THE ARCHIVE BACKLOG IS EMPTY. §57.42 HAS NOTHING LEFT IN IT. <==**
