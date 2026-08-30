@@ -3959,6 +3959,49 @@ export const WIND_SWEEP = Object.freeze({
    *  rounding-precision argument behind it rather than a curve-fit, and
    *  regresses nothing. */
   loopMinWidthNm: 50,
+
+  /** ==> WHETHER A BAND'S PIECES ARE MERGED BACK INTO ONE SHAPE. <== §7.12
+   *  fault 4's second half.
+   *
+   *  Breaking a band at the track's loops fixed the nesting and broke the
+   *  picture. **Aaron off glass, 2026-08-30: the bands overlapped and drew
+   *  edges inside their own colour.** A band was several polygons, so the line
+   *  layer outlined every one of them including the cap at a cut, and the fill
+   *  double-darkened where two met — `swathFillOpacity` 0.14 over 0.14 reads
+   *  as 0.26. Measured: 12.2% of Jeanne 2004's outline and 17.7% of Nadine
+   *  2012's was boundary buried inside a sibling piece, against 0% before the
+   *  split. With the merge Jeanne is at 0%, and the storms drawing any buried
+   *  edge at all fall from 27 to 2 (Grace 2009 and Wanda 2021, both refused by
+   *  the union's own containment check rather than merged wrongly).
+   *
+   *  ==> IT ONLY MERGES INSIDE ONE RUN. <== A loop break is the builder's own
+   *  doing and heals; a break BETWEEN runs is the agency saying it published
+   *  no ring for that hour, and healing across it would claim wind nobody
+   *  recorded (§5). `tools/test-season-swath.mjs` caught exactly that when the
+   *  first version merged everything in sight.
+   *
+   *  False draws the unmerged pieces — the shape that shipped on 2026-08-29.
+   *  It exists because this is new geometry in a file shared with the live
+   *  globe in hurricane season, and one line should be able to put the map
+   *  back to a known state without a revert. */
+  mergePieces: true,
+
+  /** ==> HOW MANY STEPS THE UNION WALK MAY TAKE PER VERTEX BEFORE IT GIVES UP.
+   *  <== A walk that does not terminate is the one failure here that would
+   *  freeze a phone rather than merely draw something wrong, so it is bounded
+   *  rather than trusted.
+   *
+   *  Two. A correct walk visits each vertex at most once and the crossings add
+   *  a handful; double that is far above any real trace and far below a hang.
+   *  MEASURED across all 752 storms with a wind field: **the budget is never
+   *  what stops a walk.** The two storms that do fall back (Grace 2009 and
+   *  Wanda 2021) are refused by the containment check instead, which is a
+   *  different guard catching a different thing.
+   *
+   *  It is a GUARD, not a dial. Exhausting it means the shape is outside what
+   *  `lib/polyunion.js` models, and the answer is to draw the pieces
+   *  separately and say so — never to raise this until the warning stops. */
+  unionStepBudget: 2,
 });
 
 /* ---------------------------------------------------------------------------
