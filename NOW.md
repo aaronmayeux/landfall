@@ -1419,16 +1419,37 @@ a calm ocean — and `tools/test-genesis.mjs` drives exactly that, verified by
 reintroducing the bug. **When a real busy ABIO lands in `history/`, replace
 the fixture with it.** The 72-hour window rolls, so check rather than assume.
 
-**==> THE WIND BANDS DO NOT NEST ON A STORM THAT LOOPS. DEFERRED UNTIL THE
-SEASONS BUILD IS FINISHED, AARON'S CALL 2026-08-29. <==** 26.2% of Jeanne
-2004's 64 kt outline is drawn outside her 34 kt band; Katrina and Harvey are
-0%. **`SPEC-MAP.md` §7.12 is the whole account** — the measured table, the
-three causes already ruled out, the reproduction case
-(`samples/seasons/storms/al112004.txt`, already in the repo) and the two routes
-out. A second defect is recorded there with it: the final polish creates a
-self-crossing after the only check that could catch it. **Not started. Do not
-start it inside a seasons pass** — `lib/windswath.js` is shared with the live
-globe.
+**==> THE WIND BANDS NEST ON A LOOPING STORM NOW. SHIPPED 2026-08-29, NOT YET
+JUDGED ON GLASS. <==** Jeanne 2004's 64 kt outline went from 26.2% outside her
+34 kt band to **0%**. Across all 752 storms with a wind field the mean worst
+nesting error falls 2.043% -> 1.529% with **zero regressions** and 45 extra
+polygons in 175 years. **`SPEC-MAP.md` §7.12 fault 4 is the as-built account —
+read that, not this.**
+
+**WHAT TO LOOK AT ON A PHONE, AND IT IS ONE QUESTION.** A broken band draws as
+two overlapping translucent polygons instead of one, at `swathFillOpacity` 0.14
+and `swathLineOpacity` 0.55. **Does the overlap double-darken, and does the cut
+edge read as an outline drawn through the middle of the band?** That was
+flagged as the unmeasured risk before the work started and it is still
+unmeasured — no tooling substitutes. Jeanne 2004, Hanna 2008 and Nadine 2012
+are the storms to look at; Katrina and Harvey are unchanged and are the
+comparison. If it reads badly the answer is a polygon union of the pieces,
+which is real work and has not been priced.
+
+**TWO RESIDUES ARE KNOWN, MEASURED, AND LEFT.** Neither is the reported bug.
+The first is hairline — about forty storms a few percent outside at 1 to 8 nm
+against bands over 100 nm wide, which is `ringSmoothPasses`' own documented
+bound. The second is real and is a DIFFERENT fault: where a track passes close
+to itself WITHOUT crossing, no break fires and the walls interleave. Nadine
+2012 improves 31.7% -> 8.1% and the remainder is 135 nm at worst; Rebekah 2019
+is the same thing at 23 nm. §7.12 records both with their numbers.
+
+**AND A FINDING RECORDED IN §7.12 ON 2026-08-29 WAS WRONG.** It claimed the
+final polish made a self-crossing in one of Jeanne's 34 kt rings. Re-measured
+at that exact stage, twice, with two different crossing tests: all seven of her
+final rings are simple. The spec now says so. The structural hole behind it was
+real — the only check that could catch a polish-made crossing ran before the
+polish — and is closed regardless.
 
 ## HELD FOR WEATHER
 

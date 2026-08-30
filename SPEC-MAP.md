@@ -1891,7 +1891,7 @@ its own timeline and had the same stale hours folding it back. Fixed there
 separately, because the swath never reads this module's output.
 
 
-### 7.12 The wind swath's two folds — the timeline, and the walls
+### 7.12 The wind swath's four folds — the timeline, the walls, the seam, the spine
 
 `lib/windswath.js`, built at parse time in `data/nhc-mapserver.js`. It never
 reads the smoothed track (§7.4) — it is assembled from NHC's published quadrant
@@ -1899,6 +1899,9 @@ polygons and the centres they hang on.
 
 **Aaron on glass, 2026-08-21: the bands carried fins, spurs and slivers instead
 of reading as continuous corridors.** One symptom, two causes, proven separate.
+A third and a fourth fault were found later and are recorded below them: the
+corridor swept the long way round the world at the dateline, and — on a storm
+that loops — the spine folded and the bands stopped nesting.
 
 #### Fault 1 — the timeline folded back on itself
 
@@ -2110,71 +2113,105 @@ absent: a megabyte, and the fault reproduces without it. **Do not normalize
 these coordinates onto one branch.** The point of the fixture is that they are
 not on one, and normalizing them stops it testing anything.
 
-#### OPEN — a looping track breaks the bands' nesting, and Jeanne 2004 is the case
+#### Fault 4 — the spine folded, and the bands stopped nesting
 
-**==> NOT STARTED. MEASURED 2026-08-29, DEFERRED BY AARON UNTIL THE SEASONS
-BUILD IS FINISHED. <==** Reported off glass on the archive's storm panel.
-
-**THE FAULT: the inner bands are drawn outside the outer ones.** Anywhere that
-saw 64 kt necessarily saw 50 and 34, so the three bands must nest. On a storm
-that loops they do not. Counted by testing every vertex of the inner band
-against the outer band's polygons:
+**Aaron off glass on the archive's storm panel: the inner bands were drawn
+outside the outer ones.** Anywhere that saw 64 kt necessarily saw 50 and 34, so
+the three bands must nest. On a storm that loops they did not. Counted by
+testing every vertex of the inner band against the outer band's polygons:
 
 | Storm | 64 kt outside 50 kt | 64 kt outside 34 kt | 50 kt outside 34 kt |
 |---|---|---|---|
-| **Jeanne 2004** | **31.5%** | **26.2%** | 4.8% |
-| Katrina 2005 | 0% | 0% | 0% |
-| Harvey 2017 | 0% | 0% | 0% |
+| Jeanne 2004, before | 31.5% | 26.2% | 4.8% |
+| **Jeanne 2004, now** | **1.9%** | **0%** | **0%** |
+| Katrina 2005, Harvey 2017 | 0% | 0% | 0% |
 
-**`samples/seasons/storms/al112004.txt` IS THE REPRODUCTION CASE and it is
-already in the repo** — it was added for §57.48 and needs nothing new. Katrina
-and Harvey are the controls, both already fixtures. Build the swath with
-`buildSeasonSwath` and ray-cast the inner ring's vertices against the outer
-ring; the figures above come back.
+**THE CAUSE IS THE SPINE, NOT THE WALLS, AND THAT WAS MEASURED BEFORE IT WAS
+BELIEVED.** A corridor traced as two offset walls only describes a swept region
+while the track does not overlap itself. On a loop the inner wall swings past
+the loop's centre and the traced boundary stops enclosing the ground covered.
+The wider the band, the sooner it breaks — Jeanne's loop is 69 nm in radius,
+her 34 kt radii run well past that and her 64 kt radii do not — so the widest
+band loses the most area, which is backwards from what nesting needs.
+Disabling `cutLoop` entirely moved the figure only from 26.2% to 20.0%: faults
+2 and 4 are separate and the wall cutter was doing its job.
 
-**THREE THINGS ARE RULED OUT, so nobody re-walks them.**
+**THE FIX: every band is broken where the TRACK crosses itself.** Each piece is
+then a corridor that never overlaps itself, so its walls are meaningful again.
+`pathCrossings` and `splitIndices` in `lib/unloop.js`, applied by
+`trackSplitPoints` and `breakRun` in `lib/windswath.js`. Pieces SHARE the point
+they meet at, so no gap opens.
 
-1. **It is not the data.** No row in Jeanne's record carries a 64 kt ring
-   without a 34 kt ring. Her bands split into 3, 2 and 2 runs, and those gaps
-   are genuinely published and nest correctly in time.
-2. **It is not mainly the loop cutting.** Disabling `cutLoop` entirely moves
-   the 64-outside-34 figure from 26.2% to 20.0%. It contributes about a fifth.
-3. **A first reading that the run splits were manufactured by the builder was
-   WRONG** and is recorded so it is not repeated: that check tested a quads
-   object for truthiness where `sweepTimeline` tests `anyRadius`, and an
-   all-zero group is truthy. The 3/2/2 split is real.
+**THE CROSSINGS ARE READ ONCE OFF THE WHOLE TIMELINE, NOT OFF EACH THRESHOLD'S
+RUN.** Looping is a fact about the track and does not change with the wind
+speed being drawn. Solving it per run split the 34 kt band at a crossing its
+50 kt band never saw, the two were then smoothed over different sub-spines, and
+they drifted apart at the edges: it put 2.8% of Harvey 2017's 50 kt outline
+outside his 34 kt outline, a fault he did not have. One set of cut points for
+all three bands returns him to 0%.
 
-**THE LIKELY CAUSE IS A HYPOTHESIS AND IS LABELLED AS ONE.** A corridor traced
-as two offset walls can only describe a swept region while the track does not
-overlap itself. On a loop the inner wall swings past the loop's centre and the
-traced boundary stops enclosing the area actually covered. **The wider the band,
-the earlier that breaks** — Jeanne's loop is 68 nm in radius, her 34 kt radii
-run well past that and her 64 kt radii do not — so the widest band loses the
-most area, which is backwards from what nesting needs and predicts the direction
-observed. **It has not been proven to account for the whole 20%.**
+**A CROSSING IS NOT AUTOMATICALLY A LOOP.** HURDAT2 stores position to 0.1°,
+about 6 nm, so a stalling storm jittering inside its own rounding manufactures
+crossings that never happened. **Harvey has one — 8 nm across over twelve
+hours, which is Harvey sitting still over Texas.** `WIND_SWEEP.loopMinWidthNm`
+is the floor that refuses it, measured as the diameter of the circle enclosing
+the same area, the same call `lib/storm-shape.js` makes for §57.49's sentence —
+which measured the same 8 nm independently. Jeanne's loop is 138 nm across.
 
-**AND A SECOND, SEPARATE DEFECT WAS FOUND IN THE SAME PASS.** One of Jeanne's
-34 kt rings comes out self-crossing. The loop cutting is not at fault — it ran
-0 and 2 cuts against a budget of 8 and never exhausted it, which is why the
-warning above never fired. Probing the ring by stage: clean after cutting (144
-vertices), clean after the uniform resample (282), **crossing in the final
-output (283).** The crossing is created by the FINAL POLISH, and `firstCrossing`
-is only ever asked before that stage — **so the "expect a fin" warning is
-structurally incapable of firing for a crossing the polish makes.** That half is
-worth fixing on its own merits and is smaller than the nesting question.
+**50 IS NOT THE BOTTOM OF THE CURVE AND THAT IS DELIBERATE.** Swept over 752
+storms, worst nesting error per storm: off 2.043%, 75 nm 1.533%, **50 nm
+1.529%**, 40 nm 1.519%, 30 nm 1.501%, 20 nm 1.465%, 10 nm 1.315%. But 30 and 20
+each regress **Ophelia 2005 from 21.5% to 48.2%**, and 10 quietly repairs her
+again. A dial that is not monotonic in the thing it is meant to improve is not
+a dial to turn on a hunch. 50 buys almost all of the gain, has the
+rounding-precision argument behind it rather than a curve fit, and regresses
+nothing.
 
-**THE ROUTE RECOMMENDED, AND THE ONE NOT PRICED.** Breaking every threshold's
-run at the track's own self-crossings — `trackLoop`'s geometry, §57.49 — leaves
-each piece a corridor that never overlaps itself, so the walls are valid again
-and the bands nest piece by piece. Small, and it reuses what is already shipped.
-**The risk to weigh on glass is that it means more overlapping translucent
-polygons, and whether they double-darken is unmeasured.** The alternative is a
-true polygon union of the wind roses, correct by construction, with no library
-in this repo to lean on and no build step to add one; it has not been priced.
+**A PIECE TOO SHORT TO BE A CORRIDOR IS NOT ONE.** A break landing on the
+second-to-last fix of a run leaves a stub of two near-coincident points, and
+sweeping that produced a 73-vertex polygon carrying 18 zero-length edges on
+Ida 2021 — on the map, a small circle OUTLINED inside the band, covering
+nothing the neighbouring piece's end cap did not already cover. `breakRun`
+drops any piece under one resample step and never breaks on a run's first or
+last point. **`test-season-swath.mjs`'s axis-aligned-edge assertion is what
+caught this**, while looking for something else entirely.
 
-**THIS FILE IS SHARED WITH THE LIVE GLOBE.** Whatever lands here lands in
-hurricane season, so it goes in as its own pass with its own revert point and
-is never folded into a seasons change.
+**MEASURED ACROSS THE WHOLE ARCHIVE, 752 storms with a wind field: mean worst
+nesting error 2.043% -> 1.529%, ZERO regressions, 45 extra polygons in 175
+years.** Only 27 storms change at all. Hanna 2008 goes 100% -> 0%, Wanda 2021
+63.3% -> 0%, Grace 2009 68.8% -> 1.1%, Jose 2017 13.1% -> 0.3%.
+
+**WHAT IS STILL OPEN, WITH ITS NUMBER.** Two residues remain and they are
+different things:
+
+1. **Hairline, and it is the polish's own documented bound.** About forty
+   storms show a few percent of vertices marginally outside, at 1 to 8 nm
+   against bands over 100 nm wide — Ike 2008 worst 1.4 nm, Jeanne's own
+   remaining 64-against-50 residue nine vertices at worst 1.7 nm. That is
+   `ringSmoothPasses` nudging concave vertices outward, already bounded and
+   already recorded. Not worth chasing.
+2. **Near-approach without crossing, and Nadine 2012 is the case.** She
+   improves from 31.7% to 8.1% but the remainder is real: 126 vertices of her
+   50 kt outline outside her 34 kt, worst 135 nm. Where two far-apart stretches
+   of one piece's spine pass within about a band width of each other, the walls
+   interleave and `cutLoop` trims real area believing it is a fold. No crossing
+   fires, so no break does. **Rebekah 2019 is the same fault at 23 nm.** This
+   needs either a near-approach criterion or a true polygon union of the wind
+   roses; neither is priced.
+
+**A SECOND DEFECT RECORDED HERE ON 2026-08-29 DOES NOT REPRODUCE.** It claimed
+one of Jeanne's 34 kt rings went into the final polish clean at 282 vertices
+and came out crossing at 283. Re-measured at exactly that stage with
+`firstCrossing`, and again with a looser test that counts even a touch: all
+seven of her final rings are simple, strictly and loosely. The finding was
+wrong or has since been fixed by something else. **The structural hole behind
+it was real and is closed anyway** — the only check that could catch a
+polish-made crossing ran before the polish, so `cutAllLoops` is now a function
+and runs on both sides of it. On every ring measured the second pass finds
+nothing.
+
+**THIS FILE IS SHARED WITH THE LIVE GLOBE.** It landed as its own pass with its
+own revert point and was never folded into a seasons change.
 
 ### 7.13 A wind ring is placed at its own centre
 
