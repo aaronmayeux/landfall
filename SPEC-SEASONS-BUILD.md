@@ -9958,3 +9958,71 @@ tolerance and failed at 0.140 against 0.139. **Every coordinate in the path is
 written with `toFixed(2)`, so the real floor is half a hundredth, not float
 dust.** A geometry assertion tighter than its own markup's precision tests the
 rounding rather than the geometry.
+
+### 57.61 Step 7 — nine sections become six — as built
+
+**§57.54k step 7, and it is the last step of the rebuild.** §57.54f's table is
+the plan and it did not change: four of the six sections are merges rather than
+renames, three open by default, and all six icons already existed.
+
+| # | Section | Id | Icon | Open | Was |
+|---|---|---|---|---|---|
+| 1 | Landfalls | `landfalls` | `pin` | yes | unchanged |
+| 2 | In its season | `rank-season` | `calendar` | yes | unchanged |
+| 3 | How hard it blew | `blew` | `gauge` | yes | `Strongest` + `How it changed` |
+| 4 | How long it lasted | `lasted` | `clock` | no | `Its life` + the ending |
+| 5 | Where it went | `went` | `track` | no | `How it moved` + `Wind footprint` |
+| 6 | NOAA's report | `report` | `doc` | no | unchanged |
+
+#### 57.61a The ending sentence left `changeHtml` first, as its own commit
+
+**§57.54k said the merges change the view's call sites rather than the
+renderers, and that is true of five of the six. The sixth needed one
+extraction first**, because §57.54f splits `How it changed` in two: the
+strengthening figures go to `How hard it blew` and the ending sentence goes to
+`How long it lasted`, and one renderer cannot be composed into two sections
+while it emits both.
+
+**SO `endingHtml` CAME OUT AHEAD OF THE MERGE, IN A COMMIT THAT CHANGED NO
+PIXEL.** `changeHtml` now ends with the comeback and says nothing about how a
+storm finished; the view appended `endingHtml(facts)` immediately after it, in
+the same section, so the panel was byte-identical across the commit. This is
+`CLAUDE.md`'s slicing rule at the size of one sentence and it is the same shape
+as §57.57a's cut: a move and a change in one push means a break could be
+either.
+
+**AND IT WAS PROVED BY RUNNING IT RATHER THAN BY READING IT.** A throwaway
+script imported the pre-commit file beside the new one and rendered every storm
+in `seasons/data/` through both, in both unit systems: **13,064 of 13,064
+renders byte-identical.**
+
+**THREE MUTATIONS, ALL THREE BITE.** Moving the comeback above the coastal
+sentence, making an unknown ending fall back to a real one, and putting the
+ending back inside `changeHtml` each turn `tools/test-season-detail.mjs` red.
+
+**==> AND THE MEASUREMENT CORRECTED A COMMENT THAT WOULD HAVE SHIPPED WRONG.
+<==** The assertion covering an ending code the panel has no words for was
+written as a guard against a hypothetical fourth code. It is not hypothetical.
+Counted across all **6,532** storms in `seasons/data/`, 2026-08-30:
+
+| Ending | Storms |
+|---|---|
+| `dissipated` | 3,898 |
+| `extratropical` | 1,608 |
+| `remnant_low` | 1,004 |
+| `unknown` | **22** |
+
+The 22 are storms whose last record is `DB` (20 of them) or `WV` (2) — they ran
+down into a disturbance or a wave rather than into any of the three endings
+`lib/season-facts.js` names. **They printed nothing before the extraction and
+print nothing after it**, so the behaviour is unchanged and was never wrong;
+what was wrong was a comment calling the case imaginary. `CLAUDE.md`'s rule
+that a figure in prose is computed rather than typed is what caught it, and the
+suite drives the real `unknown` value rather than an invented code.
+
+**==> WHETHER THOSE 22 DESERVE THEIR OWN SENTENCE IS OPEN AND NOBODY HAS
+DECIDED IT. <==** Silence is defensible under §5 — nothing on the section
+claims to say how every storm ended, `Last seen` and `Lifespan` are both
+printed above it, and a fourth sentence would be this panel wording a status
+HURDAT2 recorded and we chose not to. **It is a product call rather than a
+gap, and it is not blocking anything.**

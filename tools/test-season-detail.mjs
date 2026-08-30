@@ -459,36 +459,74 @@ function mount({
     + 'contradicts itself, and showing it as zero would imply a measurement '
     + 'rather than an absence',
   !decaying.includes('Fastest strengthening'));
-  ok('and how it ended is still said', decaying.includes('Dissipated'));
+  /* ==> HOW A STORM ENDED IS ITS OWN RENDERER SINCE STEP 7, AND THIS BLOCK
+   * FOLLOWED IT. <== §57.54f, §57.61. The sentence belongs under `How long it
+   * lasted` next to the lifespan figures rather than under the strengthening
+   * ones, and a renderer cannot be composed into two sections while it emits
+   * both. `changeHtml` no longer says anything about the ending at all, so
+   * asserting through it would assert nothing. */
+  ok('and how it ended is still said, by its own renderer',
+    M.endingHtml({ ending: 'dissipated' }).includes('Dissipated'));
+  ok('and it is a note paragraph, the same shape it had inside the old section',
+    /^<p class="detail-note">Dissipated\./.test(M.endingHtml({ ending: 'dissipated' })));
+  /* ==> AN ENDING CODE THIS PANEL HAS NO WORDS FOR PRINTS NOTHING, AND 22
+   * STORMS ARE ALREADY IN THAT STATE. <== Measured across all 6,532 storms in
+   * `seasons/data/`, 2026-08-30: 3,898 dissipated, 1,608 extratropical, 1,004
+   * remnant low, 22 `unknown` — 20 ending on a `DB` record and 2 on a `WV`.
+   * This was written first as a guard against a hypothetical fourth code and
+   * the measurement said it is not hypothetical, which is why the real value
+   * is the one driven here rather than an invented one. */
+  ok('the 22 storms whose ending has no words print nothing at all',
+    M.endingHtml({ ending: 'unknown' }) === ''
+    && M.endingHtml({}) === '' && M.endingHtml(null) === '');
+  ok('and `changeHtml` no longer says anything about the ending',
+    !decaying.includes('Dissipated'));
 
-  /* ==> `How it changed` IS A CHRONOLOGY AND THE COMEBACK HAS TO LAND INSIDE
-   * IT. <== §57.48. The section runs strengthening, then what the storm gave
-   * up at the coast, then the comeback, then how it finished. The sentence is
-   * handed in as an argument rather than appended by the view for exactly this
-   * reason: appended, it sits under `Dissipated. The record simply stops.` and
-   * describes a hurricane coming back afterwards.
+  /* ==> THIS BLOCK IS A CHRONOLOGY AND THE COMEBACK HAS TO LAND INSIDE IT.
+   * <== §57.48. It runs strengthening, then what the storm gave up at the
+   * coast, then the comeback. The sentence is handed in as an argument rather
+   * than appended by the view for exactly this reason: appended, it would sit
+   * under whatever the view puts next and describe a hurricane coming back
+   * afterwards.
    *
-   * ==> A MUTATION RUN IS WHY THIS IS ASSERTED. <== Moving the slot to the end
-   * of the return left both this suite and `test-storm-shape.mjs` green — the
-   * ordering was a comment and nothing else. §12. */
+   * ==> A MUTATION RUN IS WHY THIS IS ASSERTED. <== Moving the slot left both
+   * this suite and `test-storm-shape.mjs` green — the ordering was a comment
+   * and nothing else. §12.
+   *
+   * ==> IT IS ASSERTED AGAINST THE COASTAL SENTENCE AND AGAINST BEING LAST,
+   * BECAUSE THE ENDING IS NO LONGER HERE TO BE ASSERTED AGAINST. <== §57.61.
+   * The comeback being the final thing this renderer emits is what guarantees
+   * anything the view appends after it — the ending, until step 7 moved it to
+   * another section — lands the right way round. */
   const ordered = M.changeHtml(
-    { ending: 'dissipated', year: 2004 },
+    {
+      year: 2004,
+      /* Zero drop, which is the one coastal case that needs no category
+       * lookup: `It came ashore at its strongest.` The sentence being present
+       * is what this assertion is about; which of the three it is, is
+       * `coastalWeakeningWords`'s own business and is covered elsewhere. */
+      coastalWeakening: { dropKt: 0, peakWindKt: 150 },
+    },
     sys,
     {
       windowHours: SEASONS.intensificationWindowHours,
       comebackHtml: '<p class="detail-note">COMEBACK-MARKER</p>',
     },
   );
-  ok('==> THE COMEBACK IS PRINTED BEFORE THE ENDING, NOT AFTER IT. <== A storm '
-    + 'that fell apart and came back did so while it was still alive',
+  ok('==> THE COMEBACK IS PRINTED AFTER WHAT THE STORM GAVE UP AT THE COAST. '
+    + '<== A storm that fell apart and came back did so on its way there',
   ordered.indexOf('COMEBACK-MARKER') > -1
-    && ordered.indexOf('COMEBACK-MARKER') < ordered.indexOf('Dissipated'));
+    && ordered.indexOf('ashore') > -1
+    && ordered.indexOf('ashore') < ordered.indexOf('COMEBACK-MARKER'));
+  ok('and it is the last thing the block says, so anything the view appends '
+    + 'after it lands the right way round',
+  ordered.trimEnd().endsWith('COMEBACK-MARKER</p>'));
 
-  const noComeback = M.changeHtml({ ending: 'dissipated', year: 2004 }, sys,
+  const noComeback = M.changeHtml({ year: 2004 }, sys,
     { windowHours: SEASONS.intensificationWindowHours });
   ok('and the argument is optional, because 14 storms in 3,266 have a comeback '
     + 'and the other 3,252 must not gain an empty slot',
-  noComeback.includes('Dissipated'));
+  !noComeback.includes('COMEBACK-MARKER') && !/<p class="detail-note">\s*<\/p>/.test(noComeback));
 }
 
 /* ---------------------------------------------------------------------------

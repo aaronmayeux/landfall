@@ -492,29 +492,64 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }, ma
       : null;
   }
 
+  /* ==> THE SECTION IS IN TIME ORDER AND `comebackHtml` HAS TO LAND INSIDE IT.
+   * <== §57.48. Strengthening, then what it gave up at the coast, then the
+   * comeback. It arrives already built rather than being computed here,
+   * because this file was 19 lines under §12's ceiling — see
+   * `ui/season-shape-markup.js`. An empty string is the ordinary case: 14
+   * storms in 3,266 have a comeback.
+   *
+   * The rapid-intensification sentence goes first among the sentences because
+   * it belongs to the strengthening figures immediately above it, and the
+   * order here is the order things happened.
+   *
+   * ==> THE ENDING SENTENCE USED TO CLOSE THIS AND IT IS `endingHtml` NOW.
+   * <== §57.54f, §57.61. Step 7 merges this block into `How hard it blew` and
+   * puts the ending under `How long it lasted`, where a storm's finish belongs
+   * next to how long it ran. A renderer cannot be composed into two different
+   * sections while it emits both, so the sentence was lifted out first, as its
+   * own commit with the panel byte-identical. */
+  return figureRowsHtml(rows, marks)
+    + absenceHtml(riNote)
+    + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
+    + comebackHtml;
+}
+
+/**
+ * How the storm finished. §57.15, §57.54f, §57.61.
+ *
+ * ==> IT IS ITS OWN RENDERER BECAUSE IT ANSWERS A DIFFERENT QUESTION FROM THE
+ * ROWS IT USED TO SIT UNDER. <== `changeHtml` is about how hard a storm blew
+ * and how fast it got there; this is the last thing that happened to it, and
+ * §57.54f puts it under `How long it lasted` beside the first-seen, last-seen
+ * and lifespan figures it actually belongs to.
+ *
+ * ==> AN ENDING THIS PANEL HAS NO WORDS FOR SAYS NOTHING, AND THAT IS NOT
+ * HYPOTHETICAL. <== Measured across all 6,532 storms in `seasons/data/`,
+ * 2026-08-30: 3,898 dissipated, 1,608 extratropical, 1,004 remnant low, and
+ * **22 fall through to `unknown`** — 20 whose last record is `DB` and 2 whose
+ * last record is `WV`, storms that ran down into a disturbance or a wave
+ * rather than into any of the three endings `lib/season-facts.js` names. They
+ * printed nothing before this extraction and they print nothing after it.
+ *
+ * ==> SILENCE IS THE RIGHT ANSWER HERE AND §5 IS WHY, NOT DESPITE IT. <== The
+ * rule bans an absence a reader would misread as a fact. Nothing on this
+ * section claims to say how every storm ended, `Last seen` and `Lifespan` are
+ * both still printed above it, and inventing a fourth sentence would be this
+ * panel guessing at a status HURDAT2 did record and we chose not to word.
+ * **Whether those 22 deserve their own sentence is a product call nobody has
+ * made** — §57.61 records it as open rather than as a gap.
+ *
+ * @returns {string} HTML, or '' when the record does not say
+ */
+export function endingHtml(facts) {
   const ENDINGS = {
     extratropical: 'Became extratropical. It lost its tropical structure and '
       + 'carried on as an ordinary storm system.',
     dissipated: 'Dissipated. The record simply stops.',
     remnant_low: 'Weakened to a remnant low.',
   };
-  const ending = ENDINGS[facts?.ending] || null;
-
-  /* ==> THE SECTION IS IN TIME ORDER AND `comebackHtml` HAS TO LAND INSIDE IT.
-   * <== §57.48. Strengthening, then what it gave up at the coast, then the
-   * comeback, then how it finished. It arrives already built rather than being
-   * computed here, because this file was 19 lines under §12's ceiling — see
-   * `ui/season-shape-markup.js`. An empty string is the ordinary case: 14
-   * storms in 3,266 have a comeback.
-   *
-   * The rapid-intensification sentence goes first among the sentences because
-   * it belongs to the strengthening figures immediately above it, and the
-   * order here is the order things happened. */
-  return figureRowsHtml(rows, marks)
-    + absenceHtml(riNote)
-    + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
-    + comebackHtml
-    + (ending ? absenceHtml(ending) : '');
+  return absenceHtml(ENDINGS[facts?.ending] || null);
 }
 
 /**

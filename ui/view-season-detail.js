@@ -53,7 +53,7 @@ import { storyClauses } from '../lib/season-story.js';
  * directory (§12), so the pure story module takes the answer as an argument. */
 import { retirementFor } from '../data/retired-lookup.js';
 import {
-  changeHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml,
+  changeHtml, endingHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml,
   peakHtml, reportHtml, storyHtml,
 } from './season-detail-markup.js';
 /* The chart's absence sentence uses the panel's own note style, and its
@@ -412,7 +412,14 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
      * stops.` and describe a hurricane coming back afterwards. The other two
      * §57.48 sentences ARE appended, because neither joins an ordered list. */
     comebackHtml: comebackHtml(facts.comeback),
-  }, marks))}
+  }, marks)
+    /* ==> THE ENDING IS APPENDED HERE SO THIS COMMIT CHANGES NO PIXEL. <==
+     * §57.61. It came out of `changeHtml` as its own commit, ahead of the
+     * section merge that needs it somewhere else, because a move and a change
+     * in one push means a break could be either — `CLAUDE.md`'s slicing rule
+     * at the size of one sentence. Step 7 moves this line to `How long it
+     * lasted`; today it sits exactly where it always has. */
+    + endingHtml(facts))}
       ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
     floorKt: SEASONS.trackSpeedFloorKt,
     maxLegHours: SEASONS.trackSpeedMaxLegHours,
