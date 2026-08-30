@@ -29,7 +29,9 @@ const section = (t) => console.log(`\n  ${t}\n`);
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { rankStorm, rankingsFileName, RANK_STATS, toRung } = await import('../lib/rankings.js');
-const { archiveRankHtml } = await import('../ui/season-rank-markup.js');
+const { rankMarks } = await import('../ui/season-rank-markup.js');
+const { peakHtml, lifeHtml, changeHtml } = await import('../ui/season-detail-markup.js');
+const { movementHtml } = await import('../ui/season-track-markup.js');
 const { binLadder, markFraction, spineHtml } = await import('../ui/season-spine.js');
 const { figureRowsHtml } = await import('../ui/season-figure-row.js');
 const { SEASONS } = await import('../config/constants.js');
@@ -172,9 +174,27 @@ section('THE ENDS \u2014 first place is drawn inside the bar, not half outside i
  * ------------------------------------------------------------------------ */
 section('THE AXIS \u2014 the same units as the row above it');
 {
-  const html = (system) => archiveRankHtml(
-    rankStorm(katrina, TABLE, 'atlantic', system), { year: 2005, system }
-  );
+  /* ==> THE BARS ARE READ OUT OF THE REAL SECTIONS, NOT OUT OF A STAND-IN
+   * LIST. <== §57.57b deleted `Where it ranks`, so there is no single renderer
+   * that draws all seven any more — each one lands in the section that already
+   * printed its figure. Building a row list here to hold them would be this
+   * suite agreeing with itself: a key misspelled in `peakHtml` would silently
+   * lose a bar on the panel and this file would never know. It drives the four
+   * shipped renderers instead, which is exactly what the panel assembles. */
+  const html = (system) => {
+    const marks = rankMarks(rankStorm(katrina, TABLE, 'atlantic', system), { system });
+    return peakHtml(katrina, system, marks)
+      + lifeHtml(katrina, marks)
+      + changeHtml(katrina, system, {
+        windowHours: SEASONS.intensificationWindowHours,
+      }, marks)
+      + movementHtml(katrina, system, {
+        floorKt: SEASONS.trackSpeedFloorKt,
+        maxLegHours: SEASONS.trackSpeedMaxLegHours,
+        distanceFloorNm: SEASONS.trackDistanceFloorNm,
+        cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
+      }, marks);
+  };
   const imp = html('imperial');
   const met = html('metric');
 
@@ -262,10 +282,21 @@ section('THE AXIS \u2014 the same units as the row above it');
   ok('and carries a tick at each end of its range',
     (imp.match(/season-spine-tick/g) || []).length === plots * 2);
 
-  /* Every ranked row gets a bar, and the section is one `<dl>` as it was. */
+  /* ==> A BAR PER MARKED ROW, NOT PER ROW. <== §57.57b. Before step 3 every
+   * row in `Where it ranks` was a ranked figure, so bars and `<dt>`s matched
+   * one for one. The four sections these come from also carry dates,
+   * coordinates and `As a tropical cyclone`, none of which ranks — so the
+   * count to hold is against the MARKS, and a row that is not a figure must
+   * still draw in the plain two-column shape. */
   const bars = (imp.match(/season-spine-plot/g) || []).length;
   const dts = (imp.match(/<dt>/g) || []).length;
-  ok(`every ranked row carries a bar \u2014 ${dts} rows, ${bars} bars`, bars === dts && bars >= 7);
+  const marked = (imp.match(/class="has-rank"/g) || []).length;
+  ok(`every marked row carries a bar \u2014 ${marked} marked, ${bars} bars`,
+    bars === marked && bars >= 7);
+  ok(`and the unranked rows are still printed \u2014 ${dts} rows against ${marked} marked`,
+    dts > marked);
+  ok('a row with no mark keeps the plain two-column cell',
+    imp.includes('<dt>Reached</dt><dd>'));
 }
 
 /* ---------------------------------------------------------------------------
@@ -286,13 +317,21 @@ section('SILENCE \u2014 nothing half-drawn, and the row survives without a bar')
 
   /* ==> AND THE ROW IS STILL PRINTED. <== §5. The rank is the fact; the bar is
    * context. A missing bar must not take the figure down with it. */
-  const rows = figureRowsHtml([{ label: 'Peak winds', value: '11th strongest' }]);
-  ok('a row with no bar renders as the ordinary two-column pair it always was',
-    rows.includes('<dt>Peak winds</dt>') && rows.includes('<dd>11th strongest</dd>')
-      && !rows.includes('has-spine'));
-  ok('and a row with no label prints nothing at all, because a ranked figure '
-    + 'always has one and a missing one means the table failed to load',
-  figureRowsHtml([{ label: '', value: 'orphan' }]) === '');
+  const rows = figureRowsHtml([{ label: 'Peak winds', value: '173 mph' }]);
+  ok('a row with no mark renders as the ordinary two-column pair it always was',
+    rows.includes('<dt>Peak winds</dt>') && rows.includes('<dd>173 mph</dd>')
+      && !rows.includes('has-rank'));
+  ok('a keyed row whose statistic did not rank draws the same way',
+    figureRowsHtml([{ key: 'peakWindKt', label: 'Peak winds', value: '173 mph' }], new Map())
+      === rows);
+  /* ==> A LABEL-LESS ROW IS KEPT, WHICH REVERSES WHAT THIS FILE ASSERTED AT
+   * STEP 2. <== §57.56e dropped it because this renderer had one shape of
+   * caller, a ranked statistic, which always has a label. Step 3 gave it the
+   * panel's ordinary rows, so §57.55a's rule is the one that applies now: a
+   * label-less pair is a programming mistake, and dropping it here would turn
+   * a visible layout fault into content that silently vanishes. */
+  ok('and a row with no label is PRINTED, so the fault stays visible',
+    figureRowsHtml([{ label: '', value: 'orphan' }]).includes('<dt></dt><dd>orphan</dd>'));
   ok('the value is escaped here exactly as `rowsHtml` escapes it',
     figureRowsHtml([{ label: 'A', value: '<b>x</b>' }]).includes('&lt;b&gt;'));
 }

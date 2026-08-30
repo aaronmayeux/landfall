@@ -74,7 +74,7 @@ const eq = (what, got, want) => ok(
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts, rankInSeason } = await import('../lib/season-facts.js');
-const { rankingsFileName } = await import('../lib/rankings.js');
+const { rankingsFileName, rankStorm, RANK_STATS } = await import('../lib/rankings.js');
 const { landfallFileName, placesFileName } = await import('../lib/seasons-sidecar.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
@@ -87,6 +87,7 @@ const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
  * same reason. Merging them here keeps this suite's subject "everything the
  * panel draws" rather than "one file", which is what it was always testing —
  * and it is why neither move needed a single assertion rewritten. */
+const { rankMarks } = await import('../ui/season-rank-markup.js');
 const M = {
   ...await import('../ui/season-detail-markup.js'),
   ...await import('../ui/season-track-markup.js'),
@@ -1199,6 +1200,67 @@ function mount({
     }
   }
 
+  /* ==> EVERY RANKED STATISTIC REACHES A ROW, AND THIS IS THE ONLY GATE THAT
+   * CAN SEE A MISSPELLED KEY. <== §57.57b. Since step 3 a section says only
+   * *this row is the peak wind figure* by naming its `RANK_STATS` key, and
+   * `figureRowsHtml` does the lookup. A typo in that key costs the rank and
+   * the bar SILENTLY: the row still prints, still carries the right label,
+   * still shows the right figure, and simply has nothing under it. Nothing
+   * throws and nothing looks broken.
+   *
+   * ==> SO THE ASSERTION IS AGAINST `rankMarks`, NOT AGAINST A LIST WRITTEN
+   * HERE. <== A list of expected keys in this file would be a second copy of
+   * `RANK_STATS`, free to go stale in the same direction as the bug. This
+   * mounts Katrina — who ranks on every statistic the archive has — and
+   * demands that every mark the lookup produced is claimed by exactly one row
+   * in the panel it drew. */
+  {
+    ok('==> AND THE SHIPPED TABLE IS LOADED, OR THE COVERAGE CHECK BELOW '
+      + 'PROVES NOTHING. <== No table means no marks, and "zero marks all '
+      + 'reached a row" is true and worthless',
+    RANK_TABLE !== null);
+    if (RANK_TABLE) {
+      const kat = mount({
+        storms: atl2005,
+        archive: () => ({ table: RANK_TABLE, basin: 'atlantic' }),
+      });
+      kat.view.onEnter('AL122005');
+      const drawn = flat(kat.html());
+      const marks = rankMarks(
+        rankStorm(stormFacts(katrina), RANK_TABLE, 'atlantic', 'imperial'),
+        { system: 'imperial' },
+      );
+      /* The alias is one fact under two names (§57.46) and would double-count. */
+      const keys = [...marks.keys()].filter((k) => k !== 'trackDistance');
+      ok(`Katrina ranks on every statistic the archive holds \u2014 ${keys.length} `
+        + `marks against ${Object.keys(RANK_STATS).length} entries, the distance `
+        + 'pair being one fact',
+      keys.length === Object.keys(RANK_STATS).length - 1);
+
+      const missing = keys.filter((k) => !drawn.includes(marks.get(k).rank));
+      ok('==> EVERY ONE OF THEM REACHES A ROW ON THE PANEL. <== A key '
+        + `misspelled in a section loses its rank and its bar in silence. `
+        + `Unclaimed: ${missing.join(', ') || 'none'}`,
+      missing.length === 0);
+
+      const cells = (drawn.match(/class="has-rank"/g) || []).length;
+      ok(`and each one lands in exactly ONE cell, never two \u2014 ${cells} `
+        + `marked cells against ${keys.length} marks`,
+      cells === keys.length);
+
+      /* ==> AND THE BAR GOES WITH THE RANK, NOT SOMEWHERE ELSE ON THE PANEL.
+       * <== §57.54b's whole claim is that label, figure, rank and bar are one
+       * fact. A bar drawn outside a marked cell would be the disjointedness
+       * this build exists to remove, wearing the new markup. */
+      const bars = (drawn.match(/season-spine-plot/g) || []).length;
+      ok(`every marked cell carries its bar \u2014 ${bars} bars`, bars === cells);
+
+      ok('==> AND `Where it ranks` STATES NOTHING TWICE. <== The section is '
+        + 'deleted, so no figure on this panel carries its rank in two places',
+      !drawn.includes('Where it ranks'));
+    }
+  }
+
   /* --- THE WHOLE PANEL, STILL NEVER A DASH ------------------------------- */
 
   const oldFacts = stormFacts(oldOne);
@@ -1228,31 +1290,38 @@ function mount({
   p.view.onEnter('AL122005');
   await settle();
 
-  ok('the archive ranking section needs its table to draw at all, and has one here',
-    RANK_TABLE !== null && p.html().includes('data-section="rank-archive"'));
+  /* ==> `Where it ranks` IS GONE AND ITS ABSENCE IS ASSERTED RATHER THAN
+   * ASSUMED. <== §57.57b. A section deleted from the view but still reachable
+   * through some other path would print every ranked figure twice, which is
+   * the exact fault this step exists to remove. */
+  ok('the rankings table is loaded here, so an archive rank can be drawn at all',
+    RANK_TABLE !== null);
+  ok('and `Where it ranks` no longer exists as a section',
+    !p.html().includes('data-section="rank-archive"'));
 
-  /* ==> BOTH RANK SECTIONS SIT ABOVE `Strongest`. <== The reader is given the
-   * comparison before the storm's own numbers, so a peak wind arrives already
-   * placed. The two are moved TOGETHER because they answer one question at two
-   * sizes (§57.44); splitting them leaves the wide one orphaned mid-panel with
-   * nothing leading into it. */
+  /* ==> `In its season` STILL SITS ABOVE `Strongest`. <== The reader is given
+   * the comparison against the season before the storm's own numbers. The
+   * archive-wide comparison used to sit between them and is now inside the
+   * rows themselves. */
   const order = (id) => p.html().indexOf(`data-section="${id}"`);
   ok('`In its season` comes before `Strongest`',
     order('rank-season') !== -1 && order('rank-season') < order('peak'));
-  ok('and `Where it ranks` stays directly with it, narrow comparison then wide',
-    order('rank-archive') > order('rank-season') && order('rank-archive') < order('peak'));
   ok('everything else keeps its order — life, landfalls, change, movement',
     order('life') < order('landfalls') && order('landfalls') < order('change')
     && order('change') < order('movement'));
 
-  /* ==> THE TWO RANK SECTIONS OPEN AND THE REST FOLD. <== The panel has nine
-   * sections; a reader wants where a storm SITS before its arithmetic. */
+  /* ==> `In its season` AND `Strongest` OPEN, AND THE REST FOLD. <== §57.57b.
+   * The seven distribution bars used to live in one section that opened; they
+   * are now spread across four that do not, so `Strongest` takes the open slot
+   * `Where it ranks` gave up. Without it a reader sees no rank and no bar
+   * anywhere on the panel until they tap something. */
   const shutQ = (id) => p.body()
     .querySelector(`.detail-section[data-section="${id}"]`).dataset.collapsed === 'true';
   ok('a fresh reader gets `In its season` open', !shutQ('rank-season'));
-  ok('and `Where it ranks` open', !shutQ('rank-archive'));
+  ok('and `Strongest` open, so the merged rows are on screen without a tap',
+    !shutQ('peak'));
   ok('and every other section folded, heading still on screen',
-    shutQ('peak') && shutQ('life') && shutQ('landfalls') && shutQ('change')
+    shutQ('life') && shutQ('landfalls') && shutQ('change')
     && shutQ('movement') && shutQ('windfield') && shutQ('report'));
 
   /* ==> THE HEAD IS A REAL BUTTON, WHICH IS WHAT BUYS THE KEYBOARD. <== §13.
@@ -1272,7 +1341,10 @@ function mount({
    * costs the glyph silently and the heading just looks slightly wrong. This
    * counts them instead. */
   const heads = p.body().querySelectorAll('.detail-section-head');
-  ok('nine sections are on the panel', heads.length === 9);
+  /* ==> EIGHT, NOT NINE, SINCE §57.57b DELETED `Where it ranks`. <== That was
+   * 33.2% of the panel measured across all 3,266 storms, and every row in it
+   * duplicated a label three to five sections away. */
+  ok('eight sections are on the panel', heads.length === 8);
   ok('and every one of them drew an icon, so no call site has a typo in the name',
     (p.html().match(/class="sect-ico"/g) || []).length === heads.length);
   ok('the icon is hidden from a screen reader, the heading beside it being the name',
@@ -1281,34 +1353,36 @@ function mount({
   /* ==> NO TWO ADJACENT SECTIONS SHARE A GLYPH. <== The icons exist for
    * SCANNING — a shape at the left edge is what the eye uses to find its place
    * — and two neighbours wearing the same mark is the one arrangement that
-   * defeats it. It is a live risk here: `In its season` and `Where it ranks`
-   * are the same idea at two scales, which "one name, one shape" would
-   * otherwise argue into one glyph. */
+   * defeats it. It was a live risk while `In its season` and `Where it ranks`
+   * sat adjacent — the same idea at two scales, which "one name, one shape"
+   * would otherwise have argued into one glyph. The second of those is gone
+   * (§57.57b) and the rule still holds for the six that remain. */
   const glyphs = [...p.html().matchAll(/data-section="([^"]+)"[\s\S]*?<svg class="sect-ico"[^>]*>(.*?)<\/svg>/g)]
     .map((m) => m[2]);
-  ok('every section drew a distinguishable glyph', glyphs.length === 9);
+  ok('every section drew a distinguishable glyph', glyphs.length === 8);
   ok('and no two neighbours share one',
     glyphs.every((g, i) => i === 0 || g !== glyphs[i - 1]));
-  ok('==> AND ALL NINE ARE DIFFERENT, WHICH IS STRICTER THAN THE RULE NEEDS '
+  ok('==> AND ALL EIGHT ARE DIFFERENT, WHICH IS STRICTER THAN THE RULE NEEDS '
     + 'AND IS THE STATE WORTH DEFENDING. <== Nothing on this panel is the same '
     + 'idea as anything else on it',
-  new Set(glyphs).size === 9);
+  new Set(glyphs).size === 8);
 
   const ariaOf = (id) => p.body()
     .querySelector(`.detail-section[data-section="${id}"] .detail-section-head`)
     .attrs['aria-expanded'];
   ok('an open section announces itself expanded', ariaOf('rank-season') === 'true');
-  ok('and a folded one announces itself collapsed', ariaOf('peak') === 'false');
+  ok('and a folded one announces itself collapsed', ariaOf('life') === 'false');
 
-  /* Pressing a head opens it, and pressing again folds it. */
-  p.press('.detail-section[data-section="peak"] .detail-section-head');
-  ok('pressing a folded head opens that section', !shutQ('peak'));
-  ok('and says so to a screen reader', ariaOf('peak') === 'true');
+  /* Pressing a head opens it, and pressing again folds it. `Its life` rather
+   * than `Strongest`, which now opens by default (§57.57b). */
+  p.press('.detail-section[data-section="life"] .detail-section-head');
+  ok('pressing a folded head opens that section', !shutQ('life'));
+  ok('and says so to a screen reader', ariaOf('life') === 'true');
   ok('==> AND ONLY THAT SECTION. <== Opening one must not open its neighbours',
-    shutQ('life'));
+    shutQ('landfalls'));
 
-  p.press('.detail-section[data-section="peak"] .detail-section-head');
-  ok('pressing it again folds it', shutQ('peak'));
+  p.press('.detail-section[data-section="life"] .detail-section-head');
+  ok('pressing it again folds it', shutQ('life'));
 }
 
 /* ==> A FOLD MUST SURVIVE THE REPORT ARRIVING, AND THIS IS THE SILENT FAILURE.
@@ -1372,10 +1446,13 @@ function mount({
     + 'exists to tell apart from "never touched"',
   second.body().querySelector('.detail-section[data-section="rank-season"]')
     .dataset.collapsed === 'true');
+  /* One default of each kind, so a stored choice for one section cannot be
+   * mistaken for the defaults still working. `Its life` folds by default and
+   * `Strongest` opens (§57.57b). */
   ok('and a section the reader never touched still gets its default',
-    second.body().querySelector('.detail-section[data-section="peak"]')
+    second.body().querySelector('.detail-section[data-section="life"]')
       .dataset.collapsed === 'true'
-    && second.body().querySelector('.detail-section[data-section="rank-archive"]')
+    && second.body().querySelector('.detail-section[data-section="peak"]')
       .dataset.collapsed !== 'true');
 
   /* ==> THE KEYS ARE NAMESPACED, BECAUSE THE RECORD IS SHARED WITH THE LIVE

@@ -66,7 +66,9 @@ import { movementHtml, windFieldHtml } from './season-track-markup.js';
 /* ==> THE TWO RANK SECTIONS LIVE NEXT DOOR. <== SPEC.md §12. They are the only
  * renderers on this panel that take a comparison rather than a fact, and they
  * were the 126 lines that put `season-detail-markup.js` over the ceiling. */
-import { archiveRankHtml, seasonRankHtml, seasonCompanyHtml } from './season-rank-markup.js';
+import {
+  rankMarks, rankFootnoteHtml, seasonRankHtml, seasonCompanyHtml,
+} from './season-rank-markup.js';
 /* ==> §57.48. THREE SENTENCES THAT JOIN THREE SECTIONS THAT ALREADY EXIST.
  * <== They are appended to the markup those sections are built from rather
  * than given headings of their own, which is Aaron's call: the panel is at
@@ -97,12 +99,22 @@ import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-s
  *   extended one screen further.
  */
 /**
- * ==> THE TWO RANK SECTIONS OPEN AND THE REST FOLD. <== Aaron's call,
- * 2026-08-29. The panel has nine sections and a reader stepping through the
- * archive is looking for where a storm SITS before they want its arithmetic,
- * so the comparison is what the panel opens on. Everything else is one tap
- * away and its heading is still on screen, which is the difference between
- * folded and absent.
+ * ==> `In its season` AND `Strongest` OPEN, AND THE REST FOLD. <== Aaron's
+ * call 2026-08-29 was that the two RANK sections open, because a reader
+ * stepping through the archive is looking for where a storm SITS before they
+ * want its arithmetic. §57.57b deleted one of those two — `Where it ranks` is
+ * gone and its ranks live under the figures themselves — so the same intent
+ * now points at `Strongest`, which is where the peak wind and the pressure
+ * ranks landed.
+ *
+ * ==> IT IS NOT A COSMETIC SWAP: WITHOUT IT EVERY BAR ON THE PANEL OPENS
+ * FOLDED. <== The seven distribution bars were all inside one section that
+ * opened; they are now spread across four that do not. A reader who opened a
+ * storm would see no rank and no bar anywhere until they tapped, and step 3's
+ * whole glass question — does label, figure, rank and bar read as ONE fact —
+ * could not be asked. §57.54f's step 7 table keeps this section open under its
+ * new name (`How hard it blew`), so this is a move toward that set rather than
+ * a reversal of anything.
  *
  * ==> IT IS THE OPEN LIST RATHER THAN THE CLOSED ONE, AND THAT IS DELIBERATE.
  * <== A new section added to this panel then defaults to FOLDED, which is the
@@ -111,7 +123,7 @@ import { comebackHtml, seasonWindowHtml, originHtml, loopHtml } from './season-s
  * has to hunt for it. A closed list would have made the new section open by
  * omission, which is the failure mode nobody notices until it is on glass.
  */
-const OPEN_BY_DEFAULT = new Set(['rank-season', 'rank-archive']);
+const OPEN_BY_DEFAULT = new Set(['rank-season', 'peak']);
 
 /**
  * ==> THIS PANEL'S FOLDS SHARE ONE STORAGE RECORD WITH THE LIVE PANEL'S, SO
@@ -274,6 +286,22 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       retirement: retirementFor(stormDisplayName(storm), storm.year, storm.basin),
     });
 
+    /* ==> THE ARCHIVE-WIDE RANK IS COMPUTED ONCE AND READ TWICE, AND SINCE
+     * STEP 3 IT IS NOT A SECTION AT ALL. <== §57.54b, §57.57b. `rankMarks`
+     * turns it into a lookup the figure rows read, and `rankFootnoteHtml`
+     * turns it into the one sentence at the foot of the panel that qualifies
+     * them all. Two renderers over one `rankStorm` call rather than two calls,
+     * because the second would be free to disagree with the first the day a
+     * `read` gains a floor.
+     *
+     * ==> `system` IS AN ARGUMENT FOR THE SAME REASON IT IS ONE EVERYWHERE
+     * ELSE ON THIS PANEL. <== §57.46. The distance rank ships as two ladders,
+     * one rounded to miles and one to kilometres, because a rung has to be the
+     * number the row above it prints. Handing the preference down is what keeps
+     * the rank, the bar and the figure agreeing when a reader switches units. */
+    const ranked = rankStorm(facts, archiveTable(), archiveBasin(), system);
+    const marks = rankMarks(ranked, { system });
+
     bodyEl.innerHTML = `
       ${headHtml({ storm, facts, provisional: !!facts.provisional })}
       ${storyHtml(story)}
@@ -307,34 +335,8 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
        * about a section headed `In its season` and would push the comparison
        * the heading promises down the screen. */
       + seasonWindowHtml(facts.seasonWindow))}
-      ${/* ==> IT SITS DIRECTLY UNDER `In its season`, NARROW COMPARISON THEN
-          * WIDE. <== §57.44. The two rank sections answer the same question at
-          * two sizes, and a reader who has just read "3rd strongest of 28"
-          * reads "11th strongest in the Atlantic" as the next sentence rather
-          * than as a contradiction. Separated by anything else they read as
-          * two unrelated facts about ranking.
-          *
-          * ==> AND IT DRAWS NOTHING AT ALL WHEN THE TABLE DID NOT ARRIVE. <==
-          * `section()` returns '' for empty markup, so a 404 on a 4 KB
-          * companion costs this section and nothing else. That is deliberate
-          * rather than a §5 silence: a rank is a comparison the app offers,
-          * not a fact about the storm, and every figure it would have ranked
-          * is already on screen above with its own units. There is no wrong
-          * impression left behind by its absence. */
-    section('rank-archive', 'Where it ranks', 'podium', archiveRankHtml(
-      /* ==> `system` IS AN ARGUMENT HERE FOR THE SAME REASON IT IS ONE
-       * EVERYWHERE ELSE ON THIS PANEL. <== §57.46. The distance rank ships as
-       * two ladders, one rounded to miles and one to kilometres, because a
-       * rung has to be the number the row above it prints. Handing the
-       * preference down is what keeps the rank and the figure agreeing when a
-       * reader switches units. */
-      rankStorm(facts, archiveTable(), archiveBasin(), system),
-      /* §57.56 — the distribution bar's end labels are in the reader's units
-       * too, for the same reason the rung is. */
-      { year: storm.year, system },
-    ))}
-      ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system))}
-      ${section('life', 'Its life', 'clock', lifeHtml(facts))}
+      ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system, marks))}
+      ${section('life', 'Its life', 'clock', lifeHtml(facts, marks))}
       ${section('landfalls', 'Landfalls', 'pin', landfallsHtml(facts, system, {
     markerHoleFrom: SEASONS.landfallMarkerHoleFrom,
     markerHoleTo: SEASONS.landfallMarkerHoleTo,
@@ -350,7 +352,7 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
      * stops.` and describe a hurricane coming back afterwards. The other two
      * §57.48 sentences ARE appended, because neither joins an ordered list. */
     comebackHtml: comebackHtml(facts.comeback),
-  }))}
+  }, marks))}
       ${section('movement', 'How it moved', 'track', movementHtml(facts, system, {
     floorKt: SEASONS.trackSpeedFloorKt,
     maxLegHours: SEASONS.trackSpeedMaxLegHours,
@@ -359,7 +361,7 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
      * get printed, never their units. */
     distanceFloorNm: SEASONS.trackDistanceFloorNm,
     cycloneShareMax: SEASONS.trackDistanceCycloneShareMax,
-  })
+  }, marks)
     /* ==> §57.48, §57.49. BOTH SENTENCES ARE APPENDED, AND THAT IS SAFE HERE
      * IN A WAY IT WAS NOT IN `How it changed`. <== That section is a
      * chronology; this one is a set of facts about the track with no order to
@@ -375,7 +377,23 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
       ${section('windfield', 'Wind footprint', 'wind', windFieldHtml(facts, {
     firstSeason: SEASONS.windFieldFirstSeason,
   }))}
-      ${section('report', "NOAA's report", 'doc', reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}`;
+      ${section('report', "NOAA's report", 'doc', reportHtml(report, storm.year, SEASONS.reportsFirstSeason))}
+      ${/* ==> THE SCOPE NOTE IS ONE FOOTNOTE AT THE FOOT OF THE PANEL, AND IT
+          * IS NOT A SECTION. <== §57.54b, §57.57c. It governs every rank on
+          * screen at once, which is what §57.44 said could not be done without
+          * repeating the sentence six times — and it is outside `section()` on
+          * purpose, because a sentence that stops the figures above it being
+          * misread must not be something a reader folds away once and then
+          * reads the panel without. Same rule the honesty line follows.
+          *
+          * ==> AND IT SAYS NOTHING AT ALL WHEN THE TABLE DID NOT ARRIVE. <==
+          * A 404 on a 26 KB companion costs the ranks and the footnote and
+          * nothing else. That is deliberate rather than a §5 silence: a rank
+          * is a comparison the app offers, not a fact about the storm, and
+          * every figure it would have ranked is still on screen in its own
+          * row with its own units. There is no wrong impression left behind by
+          * its absence. */
+    rankFootnoteHtml(ranked, { year: storm.year })}`;
   }
 
   async function lookUpReport() {

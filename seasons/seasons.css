@@ -1930,26 +1930,72 @@ html[data-seasons="on"] #status {
 
 /* --- the distribution bar under a ranked figure (§57.56) ------------------ */
 
-/* ==> THE VALUE CELL CARRYING A BAR TAKES THE WHOLE ROW, AND THE LABEL SITS
+/* ==> THE VALUE CELL CARRYING A RANK TAKES THE WHOLE ROW, AND THE LABEL SITS
    ABOVE IT. <== `.detail-vitals` is `grid-template-columns: auto 1fr`, which is
-   right for `173 mph (150 kt)` and wrong for a distribution across 3,266
-   storms: the bar would be drawn in whatever the longest label left over, and
-   on `Fastest strengthening` at 390px that is under half the panel. Spanning
-   both columns gives every bar the same width on every row, which is the only
-   way the seven of them can be read down a column as a profile.
+   right for `173 mph (150 kt)` and wrong for a rank sentence that wraps to
+   three lines and a distribution across 3,266 storms: both would be drawn in
+   whatever the longest label left over, and on `Fastest strengthening` at 390px
+   that is under half the panel. Spanning both columns gives every bar the same
+   width on every row, which is the only way the seven of them can be read down
+   a column as a profile.
+
+   ==> THE CLASS IS `has-rank` RATHER THAN `has-spine` SINCE §57.57b. <== The
+   cell spans whenever it carries a MARK, and a mark is a rank sentence and
+   usually — but not always — a bar. A class named after one of its two reasons
+   is the kind that goes stale.
 
    ==> IT IS `grid-column: 1 / -1` RATHER THAN A SECOND GRID. <== The rows
-   without a bar keep the exact two-column shape they have today, so the
-   section this is being wired into is unchanged everywhere the bar is absent.
-   §57.54k's whole reason for landing the bar inside the OLD section. */
-.detail-vitals dd.has-spine {
+   without a mark keep the exact two-column shape they always had, which is most
+   rows on the panel: dates, coordinates, `As a tropical cyclone`. */
+.detail-vitals dd.has-rank {
   grid-column: 1 / -1;
 }
 
-/* ==> AND THE FIGURE STAYS ON ITS OWN LINE ABOVE THE BAR. <== The value is
-   still the thing being read; the bar is the context under it. */
+/* ==> WHERE THE FIGURE STANDS, DIRECTLY UNDER THE FIGURE. <== §57.54b. This is
+   the sentence `Where it ranks` used to carry three to five sections away from
+   the number it was about, and moving it here is the whole of step 3. It is
+   quieter than the value above it and louder than the axis below it, which is
+   the order the reader should read them in: what it was, where that puts it,
+   what the spread looks like. */
+.detail-figure-rank {
+  display: block;
+  margin-top: var(--space-tight);
+  font-size: var(--type-small);
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* ==> AND THE BAR STAYS ON ITS OWN LINE UNDER BOTH. <== The value is still the
+   thing being read; the rank places it and the bar is the context under that. */
 .season-spine {
   margin-top: var(--space-tight);
+}
+
+/* ==> THE ONE FOOTNOTE THAT GOVERNS EVERY RANK ON THE PANEL. <== §57.54b,
+   §57.57c. It replaces the scope sentence that used to sit inside
+   `Where it ranks`, and it is outside every section so it cannot be folded
+   away. The rule above it is what separates it from `NOOA's report` — without
+   one it reads as another paragraph of that section rather than as a note
+   about the whole panel.
+
+   ==> `--glass-border` RATHER THAN A NEW RULE COLOUR. <== It is what every
+   other horizontal rule in this stylesheet is drawn in — the roster's row
+   separators, the drawer's own edges — and a second opinion about what a
+   dividing line looks like is exactly the drift `tools/text-role-check.mjs`
+   exists to stop one category up. The first draft of this rule reached for a
+   `--hairline` token that does not exist anywhere in the repo, which would
+   have rendered as no border at all with nothing throwing. */
+.season-detail-footnote {
+  display: block;
+  margin-top: var(--space-comfy);
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* The first note in the footnote has the rule above it doing the separating,
+   so it does not need its own top margin as well. */
+.season-detail-footnote .detail-note:first-child {
+  margin-top: 0;
 }
 
 .season-spine-plot {

@@ -486,15 +486,30 @@ storms, prototyped against the real files, and judged by Aaron on 2026-08-30
 **IT IS EIGHT STEPS AND §57.54k RESERVES A SECTION NUMBER FOR EACH.** Take them
 in order.
 
-**==> STEPS 1 AND 2 ARE DONE, ON GLASS, AND ACCEPTED. <==** Aaron judged both
-on a phone on 2026-08-30 (*"Looks great"*). Nothing in either is waiting on
-him. As-built at **§57.55** (the two live faults), **§57.56** (the distribution
-bar), **§57.63** (the bar's mark failed contrast and two of three themes were
-under the floor), **§57.64** (restyled to the mockup) and **§57.65** (the
-one-pixel seam between columns).
+**==> STEPS 1, 2 AND 3 ARE BUILT. STEPS 1 AND 2 ARE ON GLASS AND ACCEPTED;
+STEP 3 IS NOT, AND IT IS THE GO / NO-GO. <==** As-built at **§57.55** (the two
+live faults), **§57.56** (the distribution bar), **§57.63** (the bar's mark
+failed contrast), **§57.64** (restyled to the mockup), **§57.65** (the
+one-pixel seam) and **§57.57** (the merged row).
 
-**TWO STANDING INSTRUCTIONS OUT OF THOSE FIVE SECTIONS, because both are things
-a later pass would otherwise undo by accident:**
+**==> STEP 3 IS WAITING ON AARON AND NOTHING ELSE IS. <==** `Where it ranks` is
+deleted; every ranked figure now carries its rank and its bar in the row that
+already printed it. **§57.57 holds the five things to judge and the first one
+decides whether steps 5 to 7 happen at all** — if label, figure, rank and bar
+read as four things rather than one, the plan changes. Read that section, not
+this.
+
+**ONE MEASUREMENT FROM STEP 3 IS WORTH CARRYING FORWARD RATHER THAN
+RE-DERIVING, BECAUSE IT LOOKS LIKE A REGRESSION AND IS NOT.** The panel got
+**56 characters shorter** on Katrina, Harvey and Sandy, and not at all on an
+1851 storm. §57.54g's table promises **−223 on Harvey** and that figure is for
+the WHOLE rebuild: the rank sentences moved rather than shrank, so all step 3
+saves is the duplicate labels, and the footnote spends most of it back naming
+itself. **What it bought is the duplication — 18,222 restated labels across the
+archive, a mean of 5.58 per storm — not length.** §57.57b.
+
+**TWO STANDING INSTRUCTIONS OUT OF THE BAR'S FIVE SECTIONS, because both are
+things a later pass would otherwise undo by accident:**
 
 - **The bar's columns are a CONTINUOUS SILHOUETTE with a one-pixel seam.**
   Aaron rejected the mockup's separated fixed-width bars and then asked for the
@@ -505,27 +520,31 @@ a later pass would otherwise undo by accident:**
   instead of reading its panel colour is exactly what shipped a mark at 2.19:1.
   A suite assertion computes the ratio and fails under 3:1. §57.63.
 
+**AND A THIRD, NEW WITH STEP 3:** `figureRowsHtml` KEEPS a label-less row,
+which reverses what §57.56e decided one step earlier. The reversal is
+deliberate and §57.57b says why — that rule was about the call sites, and step
+3 changed them. **Do not "restore" the drop.**
+
 **ONE THING FLAGGED IN ADVANCE THAT HAS NOT COME BACK YET:** the bar shows the
 BASIN ladder while the rank text beside it cites the basin AND the overall
-count. §57.56h. It survived glass; **if it ever reads as a mismatch the lever
-is barring the `all` ladder instead — a swap, not a rewrite.**
+count. §57.56h. It survived glass inside `Where it ranks`; **it is now sitting
+directly under the figure, which is a harder test of the same thing.** If it
+ever reads as a mismatch the lever is barring the `all` ladder instead — a
+swap, not a rewrite.
 
-**==> `ui/season-detail-markup.js` IS AT 711 LINES, OVER §12's CEILING. <==**
-It crossed on §57.55a's comments. Nothing since has touched it, so it is not
-blocking — but **the cut §57.54k already schedules inside step 3 must be the
-first commit of that step, before any restructuring lands there.** `NOW.md`
-records `ui/view-seasons-board.js` crossing the same ceiling on five
-consecutive passes with the cut promised each time and taken later at a bigger
-size. Do not make this the sixth.
+**`ui/season-detail-markup.js` IS AT 563 LINES AND HAS ROOM AGAIN.** §57.57a
+took `movementHtml` and `windFieldHtml` out to `ui/season-track-markup.js`
+(219) as step 3's first commit, which is what §57.54k required. **Steps 4 to 7
+all write into this file; whichever one crosses 700 takes the next cut in the
+pass that causes it**, not the pass after.
 
-**STEP 3 IS NEXT, AND IT IS THE GO / NO-GO.** If the merged row — label,
-figure, rank, bar — reads as four things rather than one, **steps 5 to 7 do not
-start** and the plan changes. Nothing after step 3 is worth building against a
-row shape Aaron has not accepted.
+**STEP 4 IS NEXT — ACE in plain English — AND IT IS GATED ON STEP 3'S GLASS
+CALL.** Nothing after step 3 is worth building against a row shape Aaron has
+not accepted.
 
-**NOTHING ELSE IS BUILT.** The prototype was a throwaway under
-`tools/`, deliberately never committed and deleted at the end of the session;
-§57.54 carries every figure it produced.
+**NOTHING ELSE IS BUILT.** The prototype was a throwaway under `tools/`,
+deliberately never committed and deleted at the end of the session; §57.54
+carries every figure it produced.
 
 **ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
 version fed the distribution bar the RAW value instead of the rung, and because

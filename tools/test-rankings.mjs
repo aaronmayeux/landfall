@@ -37,7 +37,21 @@ const {
   scopeOrder,
   eraCaveat, meetsFloor, countsAgree,
 } = await import('../lib/rankings.js');
-const { archiveRankHtml, eraCaveatWords } = await import('../ui/season-rank-markup.js');
+const { rankMarks, rankFootnoteHtml, eraCaveatWords } = await import('../ui/season-rank-markup.js');
+
+/* ==> THE RANK SENTENCES A READER SEES, JOINED. <== §57.57b. `archiveRankHtml`
+ * used to hand back a whole `Where it ranks` section and these assertions read
+ * its markup. That section is deleted: the rank now lands inside the row that
+ * already printed the figure, so what this suite is checking is the WORDING
+ * rather than a `<dl>`. `tools/test-season-detail.mjs` mounts the real panel
+ * and asserts the wording reaches it — this one asks what the words are. The
+ * distance alias is skipped so a figure is not counted twice. */
+const rankWords = (ranked, opts = {}) => {
+  const marks = rankMarks(ranked, opts);
+  return [...marks.entries()]
+    .filter(([k]) => k !== 'trackDistance')
+    .map(([, m]) => m.rank).join(' | ');
+};
 const { formatDistance } = await import('../lib/units.js');
 
 /* ==> THE NAME IS DERIVED, NOT TYPED, AND THAT IS §57.47's LESSON APPLIED TO
@@ -401,13 +415,19 @@ section('==> DISTANCE — THE ONE STATISTIC WHOSE PRINTED FIGURE DEPENDS ON THE 
     const ranked = rankStorm(harvey, table, 'atlantic', 'imperial');
     ok(Object.keys(RANK_STATS).length === 8,
       `eight entries. Got ${Object.keys(RANK_STATS).length}`);
-    const printed = (archiveRankHtml(ranked, { year: 2017 }).match(/<dt>/g) || []).length;
+    const marked = rankMarks(ranked, { system: 'imperial' });
+    const printed = [...marked.keys()].filter((k) => k !== 'trackDistance').length;
     ok(printed === ranked.rows.length,
-      '==> EVERY RANKED ROW REACHES THE PANEL. <== A truncation here would drop '
-      + `the last statistic silently. Ranked ${ranked.rows.length}, printed ${printed}`);
-    ok(archiveRankHtml(ranked, { year: 2017 }).includes('Distance travelled'),
+      '==> EVERY RANKED ROW GETS A MARK. <== A truncation here would drop '
+      + `the last statistic silently. Ranked ${ranked.rows.length}, marked ${printed}`);
+    ok(marked.has('trackDistanceMi'),
       'and the last entry in `RANK_STATS` is among them, which is the one any '
       + 'reintroduced slice would remove first');
+    /* ==> AND THE DISTANCE PAIR ANSWERS TO ONE ALIAS. <== §57.57b. `rankStorm`
+     * has already picked the reader's unit; `movementHtml` asks for
+     * `trackDistance` so it cannot pick a second time and disagree. */
+    ok(marked.get('trackDistance') === marked.get('trackDistanceMi'),
+      'the alias is the same mark object, not a copy free to drift');
   }
 
   /* ==> A STORM UNDER THE ARCHIVE'S DISTANCE FLOOR IS NOT RANKED LAST. <== The
@@ -543,9 +563,10 @@ section('THE SENTENCE — what actually reaches the screen');
 {
   if (table) {
     const katrina = stormFacts(oneStorm('al122005'));
-    const html = archiveRankHtml(rankStorm(katrina, table, 'atlantic'), { year: 2005 });
+    const ranked2005 = rankStorm(katrina, table, 'atlantic');
+    const html = rankWords(ranked2005) + rankFootnoteHtml(ranked2005, { year: 2005 });
 
-    ok(html.includes('Lowest pressure'), 'the pressure row is there');
+    ok(rankMarks(ranked2005).has('lowestPressureMb'), 'the pressure row is marked');
     ok(/\d+(st|nd|rd|th) lowest in the Atlantic/.test(html),
       `the basin rank leads and names the basin. Got: ${html.slice(0, 200)}`);
     ok(/of [\d,]+ overall/.test(html),
@@ -585,15 +606,18 @@ section('THE SENTENCE — what actually reaches the screen');
 
     /* ==> AN EMPTY OR MISSING TABLE DRAWS NOTHING, RATHER THAN A HEADING WITH
      * A SHRUG UNDER IT. <== */
-    ok(archiveRankHtml(null) === '', 'no ranking means no section');
-    ok(archiveRankHtml({ scopes: [], rows: [] }) === '', 'and neither does an empty one');
+    ok(rankMarks(null).size === 0, 'no ranking means no marks');
+    ok(rankMarks({ scopes: [], rows: [] }).size === 0, 'and neither does an empty one');
+    ok(rankFootnoteHtml(null) === '', 'and no footnote either');
+    ok(rankFootnoteHtml({ scopes: [], rows: [] }) === '',
+      'and an empty table draws no footnote, rather than a rule with nothing under it');
 
     /* ==> AND NOTHING CAPS HOW MANY ROWS REACH THE PANEL. <== §57.48. Every
      * statistic this storm could be ranked on is printed; a reintroduced
      * `.slice()` shows up here as a count that stops short of the ladders the
      * table actually holds. */
-    const rows = (html.match(/<dt>/g) || []).length;
-    ok(rows > 0, `the panel prints its rank rows. Got ${rows}`);
+    const rows = rankMarks(ranked2005).size;
+    ok(rows > 0, `the panel marks its ranked figures. Got ${rows}`);
   }
 }
 
@@ -621,12 +645,12 @@ section('THE PRE-SATELLITE SENTENCE — about the denominator, not about the sto
 
   if (table) {
     const labor = stormFacts(oneStorm('al031935'));
-    const html = archiveRankHtml(rankStorm(labor, table, 'atlantic'), { year: 1935 });
+    const html = rankFootnoteHtml(rankStorm(labor, table, 'atlantic'), { year: 1935 });
     ok(/lower in a complete record/.test(html),
-      'a 1935 storm carries the sentence on its panel');
+      'a 1935 storm carries the sentence in its panel footnote');
 
     const katrina = stormFacts(oneStorm('al122005'));
-    const modern = archiveRankHtml(rankStorm(katrina, table, 'atlantic'), { year: 2005 });
+    const modern = rankFootnoteHtml(rankStorm(katrina, table, 'atlantic'), { year: 2005 });
     ok(!/lower in a complete record/.test(modern),
       'and a 2005 storm does not');
   }
@@ -685,11 +709,9 @@ section('THE WIRING — how the table reaches the panel, and what happens when i
 
   /* A storm the panel would actually draw, end to end through the real road. */
   const katrina = res.storms.find((st) => st.name === 'KATRINA');
-  const endToEnd = archiveRankHtml(
-    rankStorm(stormFacts(katrina), res.rankings, 'atlantic'), { year: 2005 },
-  );
+  const endToEnd = rankWords(rankStorm(stormFacts(katrina), res.rankings, 'atlantic'));
   ok(/lowest in the Atlantic/.test(endToEnd),
-    'and a rank reaches the markup off the fetched table rather than off a fixture');
+    'and a rank reaches the wording off the fetched table rather than off a fixture');
 
   /* ==> LOSING A 4 KB COMPANION MUST NOT LOSE THE YEAR. <== §5, and the same
    * rule the landfalls and the places already follow. A rank is the least
@@ -704,8 +726,10 @@ section('THE WIRING — how the table reaches the panel, and what happens when i
     `==> AND IT ARRIVES AS null RATHER THAN AS AN EMPTY SHAPE. <== A hollow `
     + `{scopes:{}} would reach the renderer and draw a heading with nothing under it. `
     + `Got ${JSON.stringify(res.rankings)}`);
-  ok(archiveRankHtml(rankStorm(stormFacts(res.storms[0]), res.rankings, 'atlantic')) === '',
-    'so the section draws nothing at all, rather than a shrug');
+  ok(rankMarks(rankStorm(stormFacts(res.storms[0]), res.rankings, 'atlantic')).size === 0,
+    'so no row carries a rank or a bar, rather than a shrug');
+  ok(rankFootnoteHtml(rankStorm(stormFacts(res.storms[0]), res.rankings, 'atlantic')) === '',
+    'and the footnote that governs them says nothing either');
   ok(res.storms.some((st) => (st.landfallsComputed || []).length > 0),
     'and the landfalls, a different file and a different job, are unaffected');
 
@@ -730,7 +754,7 @@ section('THE WIRING — how the table reaches the panel, and what happens when i
   ), null);
   ok(withBasin.scopes.length === 2 && noBasin.scopes.length === 1,
     'a table handed over without its basin loses the basin rank silently');
-  ok(!/in the Atlantic/.test(archiveRankHtml(noBasin, { year: 2005 })),
+  ok(!/in the Atlantic/.test(rankWords(noBasin)),
     'and the sentence a reader most wants is the one that disappears');
 
   /* ==> A 200 CARRYING THE WRONG SHAPE IS NOT A 404, AND ONLY ONE OF THE TWO

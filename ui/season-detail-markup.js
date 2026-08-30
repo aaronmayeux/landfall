@@ -53,8 +53,15 @@ import { formatWind, formatPressure } from '../lib/units.js';
  *
  * `dotted` went with `absenceHtml`, which was its only caller here. */
 import {
-  absenceHtml, coords, esc, rowsHtml, spanWords, utcDay, utcStamp, windWords,
+  absenceHtml, coords, esc, spanWords, utcDay, utcStamp, windWords,
 } from './season-markup-bits.js';
+/* ==> EVERY ROW ON THIS PANEL GOES THROUGH `figureRowsHtml` SINCE STEP 3, NOT
+ * ONLY THE ONES CARRYING A BAR. <== §57.57b. A row names its `RANK_STATS` key
+ * when it prints a ranked figure and says nothing otherwise, and that renderer
+ * does the lookup. Splitting the sections between two row renderers on whether
+ * a given storm happened to rank would put two `<dl>`s inside one section on
+ * some storms and one on others. */
+import { figureRowsHtml } from './season-figure-row.js';
 
 /* ---------------------------------------------------------------------------
  * THE HEADER
@@ -136,32 +143,46 @@ export function storyHtml(clauses) {
  * ------------------------------------------------------------------------ */
 
 /** Peak intensity, when and where. §57.15. */
-export function peakHtml(facts, system) {
+export function peakHtml(facts, system, marks = null) {
   if (facts?.missing?.wind) {
     return absenceHtml(
       'No wind speed was ever recorded for this storm. That is ordinary for the '
       + '19th century. The record holds where it went, not how strong it was.'
     );
   }
-  return rowsHtml([
-    ['Peak winds', windWords(facts.peakWindKt, system)],
-    ['Reached', utcStamp(facts.peakTime)],
-    ['Where', coords(facts.peakLat, facts.peakLon)],
-    ['Lowest pressure', Number.isFinite(facts.lowestPressureMb)
-      ? formatPressure(facts.lowestPressureMb) : null],
-    ['Measured', Number.isFinite(facts.lowestPressureMb)
-      ? utcStamp(facts.lowestPressureTime) : null],
-  ]) + (facts?.missing?.pressure
+  /* ==> TWO OF THESE FIVE ROWS NAME A `RANK_STATS` KEY AND THE OTHER THREE DO
+   * NOT. <== §57.57b. A key is this row saying *I am the peak wind figure*,
+   * and nothing more: `figureRowsHtml` does the lookup, so this function never
+   * learns what a rank sentence reads like or that a bar exists. `Reached`,
+   * `Where` and `Measured` are stamps rather than figures — there is no
+   * ladder of dates and no sense in ranking one — so they carry no key and
+   * draw in the two-column shape they always had. */
+  return figureRowsHtml([
+    { key: 'peakWindKt', label: 'Peak winds', value: windWords(facts.peakWindKt, system) },
+    { label: 'Reached', value: utcStamp(facts.peakTime) },
+    { label: 'Where', value: coords(facts.peakLat, facts.peakLon) },
+    {
+      key: 'lowestPressureMb',
+      label: 'Lowest pressure',
+      value: Number.isFinite(facts.lowestPressureMb)
+        ? formatPressure(facts.lowestPressureMb) : null,
+    },
+    {
+      label: 'Measured',
+      value: Number.isFinite(facts.lowestPressureMb)
+        ? utcStamp(facts.lowestPressureTime) : null,
+    },
+  ], marks) + (facts?.missing?.pressure
     ? absenceHtml('No pressure reading survives for this storm.')
     : '');
 }
 
 /** Lifespan and time at strength. §57.15. */
-export function lifeHtml(facts) {
+export function lifeHtml(facts, marks = null) {
   const rows = [
-    ['First seen', utcDay(facts.firstTime)],
-    ['Last seen', utcDay(facts.lastTime)],
-    ['Lifespan', spanWords(facts.lifespanHours)],
+    { label: 'First seen', value: utcDay(facts.firstTime) },
+    { label: 'Last seen', value: utcDay(facts.lastTime) },
+    { key: 'lifespanHours', label: 'Lifespan', value: spanWords(facts.lifespanHours) },
   ];
   /* ==> ZERO HOURS AT HURRICANE STRENGTH IS OMITTED, NOT SHOWN AS ZERO. <==
    * A tropical storm that never became a hurricane is not "0 days at hurricane
@@ -170,16 +191,21 @@ export function lifeHtml(facts) {
    *
    * ==> AND THESE TWO GUARDS ARE BELT-AND-BRACES RATHER THAN THE MECHANISM.
    * <== Written down because a mutation run on 2026-08-25 proved it: removing
-   * them changes nothing, because `spanWords` answers null for zero and
-   * `rowsHtml` already drops any row whose value is null. The rule is enforced
-   * once, in `rowsHtml`, for every row on this panel. These stay as the
-   * clearer statement of intent at the call site — but nobody should believe
-   * they are load-bearing, and a comment implying they were would be worse
-   * than no comment. */
+   * them changes nothing, because `spanWords` answers null for zero and the
+   * row renderer already drops any row whose value is null. The rule is
+   * enforced once, in `figureRowsHtml`, for every row on this panel. These
+   * stay as the clearer statement of intent at the call site — but nobody
+   * should believe they are load-bearing, and a comment implying they were
+   * would be worse than no comment.
+   *
+   * ==> `At hurricane strength` CARRIES NO KEY BECAUSE NOTHING RANKS IT. <==
+   * `RANK_STATS` holds `hoursAtMajor` and not its hurricane sibling, and a key
+   * naming a statistic the table does not have would look like a bar that had
+   * failed to draw. A row with no mark is the ordinary case, not a fault. */
   const hur = spanWords(facts.hoursAtHurricane);
   const maj = spanWords(facts.hoursAtMajor);
-  if (hur) rows.push(['At hurricane strength', hur]);
-  if (maj) rows.push(['At major strength', maj]);
+  if (hur) rows.push({ label: 'At hurricane strength', value: hur });
+  if (maj) rows.push({ key: 'hoursAtMajor', label: 'At major strength', value: maj });
 
   /* ACE, and it is stated with its own caveat rather than as a bare number.
    * ==> IT IS COMPUTED FROM SYNOPTIC RECORDS ONLY AND A STORM WITH FEW OF
@@ -188,11 +214,14 @@ export function lifeHtml(facts) {
    * and a thinly observed one, which is the whole difference between 1885 and
    * 2005. */
   if (Number.isFinite(facts.ace) && facts.aceRecords > 0) {
-    rows.push(['ACE', `${facts.ace.toFixed(1)} × 10⁴ kt²`]);
-    rows.push(['From', `${facts.aceRecords} six-hourly observation${facts.aceRecords === 1 ? '' : 's'}`]);
+    rows.push({ key: 'ace', label: 'ACE', value: `${facts.ace.toFixed(1)} × 10⁴ kt²` });
+    rows.push({
+      label: 'From',
+      value: `${facts.aceRecords} six-hourly observation${facts.aceRecords === 1 ? '' : 's'}`,
+    });
   }
 
-  return rowsHtml(rows);
+  return figureRowsHtml(rows, marks);
 }
 
 /**
@@ -316,7 +345,7 @@ export function landfallsHtml(facts, system, { markerHoleFrom, markerHoleTo, pla
 }
 
 /** Fastest intensification, and how it ended. §57.15. */
-export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
+export function changeHtml(facts, system, { windowHours, comebackHtml = '' }, marks = null) {
   const rows = [];
   let riNote = null;
   /* ==> `fastest24h`, NOT `fastest`, AND THIS ONE WORD MEANT THE SECTION HAD
@@ -361,14 +390,19 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
      *
      * Only visible from 2026-08-29: the whole block had never rendered (see
      * `fastest24h` above), so nobody had ever seen these two lines together. */
-    rows.push(['Fastest strengthening', `${Math.round(f.gainKt)} kt in ${Math.round(f.hours)} hours`]);
-    rows.push(['Began', utcStamp(f.fromTime)]);
+    rows.push({
+      key: 'fastest24hGainKt',
+      label: 'Fastest strengthening',
+      value: `${Math.round(f.gainKt)} kt in ${Math.round(f.hours)} hours`,
+    });
+    rows.push({ label: 'Began', value: utcStamp(f.fromTime) });
     /* Rapid intensification has an agreed threshold, and naming it is the
      * difference between a number and a fact the reader can place.
      *
      * ==> IT IS A SENTENCE AND IT LEFT THE ROW LIST, BECAUSE A ROW WITH NO
      * LABEL IS NOT A ROW. <== §57.55. It was pushed as `['', 'That meets…']`,
-     * and `rowsHtml` drops a row on its VALUE being empty and never looks at
+     * and the row renderer drops a row on its VALUE being empty and never
+     * looks at
      * the key — so the pair survived into `<dt></dt><dd>the whole
      * sentence</dd>`. `.detail-vitals` is `grid-template-columns: auto 1fr`,
      * so the sentence rendered inside the value column, indented behind
@@ -405,7 +439,7 @@ export function changeHtml(facts, system, { windowHours, comebackHtml = '' }) {
    * The rapid-intensification sentence goes first among the sentences because
    * it belongs to the strengthening figures immediately above it, and the
    * order here is the order things happened. */
-  return rowsHtml(rows)
+  return figureRowsHtml(rows, marks)
     + absenceHtml(riNote)
     + absenceHtml(coastalWeakeningWords(facts?.coastalWeakening, system))
     + comebackHtml

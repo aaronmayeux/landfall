@@ -144,18 +144,18 @@ export function seasonCompanyHtml(c) {
 }
 
 /**
- * Where this storm stands against the whole archive. §57.44, §57.42 Tier 1
- * item 11.
+ * Where this storm stands against the whole archive. §57.44, §57.57.
  *
- * ==> IT IS ONE SECTION RATHER THAN SIX RANKS GLUED ONTO SIX EXISTING ROWS.
- * <== The obvious build is to append "(3rd lowest on record)" to the pressure
- * row, the wind row and four others. Two things make that wrong. The scope
- * sentence would have to be repeated six times or left off entirely, and it is
- * the sentence that stops the whole section being misread. And `Lowest
- * pressure` would become a row whose value ran to two lines on a 390px phone,
- * which is what `Strongest` looks like before anyone has decided it should.
- * One section states the scope once and the panel's existing rows are
- * untouched.
+ * ==> §57.44 BUILT THIS AS ONE SECTION AND STEP 3 REVERSED THAT, ON
+ * MEASUREMENT RATHER THAN ON TASTE. <== It refused to glue ranks onto the
+ * existing rows for two stated reasons, and §57.54b answers both. *"The scope
+ * sentence would have to be repeated six times or left off entirely"* — it is
+ * neither: it is one footnote at the foot of the panel, governing every rank
+ * on screen at once, which is stronger than six copies. *"`Lowest pressure`
+ * would become a row whose value ran to two lines on a 390px phone"* — it
+ * already did. `NOW.md` recorded each rank row wrapping to THREE lines at
+ * 390px, and folding removes the duplicate label, so it saves height rather
+ * than costing it.
  *
  * ==> THE BASIN COMES FIRST IN EVERY SENTENCE AND THE ARCHIVE SECOND. <==
  * Aaron's call, 2026-08-29. One basin is one agency, one set of instruments
@@ -168,9 +168,10 @@ export function seasonCompanyHtml(c) {
  * `overall` is two NHC basins today and will be most of the planet after step
  * 13. A reader who saw "3rd lowest on record" this year and "31st lowest on
  * record" next year, about the same storm, would reasonably conclude the app
- * broke. The count is in the row and the membership is in the note, so both
- * widen when the data does and neither ever silently changes meaning.
+ * broke. The count is in the row and the membership is in the footnote, so
+ * both widen when the data does and neither ever silently changes meaning.
  */
+
 /* ---------------------------------------------------------------------------
  * THE AXIS — what the two ends of a distribution bar say
  * ------------------------------------------------------------------------ */
@@ -269,20 +270,51 @@ function spineFor(row, system) {
   });
 }
 
-export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
-  if (!ranked?.rows?.length) return '';
+/**
+ * Where this storm stands, one entry per ranked statistic, ready for the row
+ * that already prints the figure. §57.57b.
+ *
+ * ==> IT RETURNS A LOOKUP RATHER THAN A SECTION, AND THAT IS THE WHOLE OF
+ * STEP 3. <== §57.54b. This function used to be `archiveRankHtml` and it built
+ * a `Where it ranks` section: seven rows, each naming a statistic that already
+ * appeared somewhere else on the panel. Measured across all 3,266 storms that
+ * section was **33.2% of the panel**, and every row in it duplicated a label
+ * three to five sections away. It is deleted. What it knew — how to word a
+ * rank and how to draw a bar — is unchanged and now hangs off the figures
+ * themselves.
+ *
+ * ==> THE KEY IS THE `RANK_STATS` KEY, NOT THE LABEL. <== Two entries carry
+ * the label `Distance travelled` and a label is copy: a heading reworded at
+ * step 7 would silently drop a bar and nothing would look broken. The key is a
+ * stable name.
+ *
+ * ==> AND THE DISTANCE PAIR GETS ONE ALIAS, SO THE CALLER NEVER RE-MAKES A
+ * CHOICE THAT HAS ALREADY BEEN MADE. <== §57.46 ships `trackDistanceMi` and
+ * `trackDistanceKm` — one fact rounded two ways — and `rankStorm` has already
+ * picked the reader's one before this function sees it. `movementHtml` asking
+ * for whichever of the two matched would be a second reader of the units
+ * preference, free to disagree with the first. It asks for `trackDistance` and
+ * gets whichever arrived.
+ *
+ * @param {object|null} ranked  from `rankStorm`
+ * @param {object} [opts]
+ * @param {string} [opts.system]  the reader's measurement preference
+ * @returns {Map<string, {rank:string, spine:string}>}  empty when nothing ranks
+ */
+export function rankMarks(ranked, { system = null } = {}) {
+  const marks = new Map();
+  if (!ranked?.rows?.length) return marks;
 
   const n = (v) => Number(v).toLocaleString();
 
   /* ==> NO ROW SAYS "TIED", AND THAT IS A SCALE DECISION RATHER THAN A LOSS
-   * OF HONESTY. <== `seasonRankHtml` one section up marks ties, and it is
-   * right to: inside a 28-storm season a shared place is unusual and therefore
-   * worth pointing at. Against 3,266 storms it is the NORM — winds are
-   * recorded in 5 kt steps and lifespans in whole hours, so Katrina's panel
-   * came back with `Tied` on six rows out of six. A qualifier that fires
-   * everywhere qualifies nothing and reads as hedging. The fact itself is not
-   * dropped: it is stated once, in the note, where it applies to every row at
-   * once.
+   * OF HONESTY. <== `seasonRankHtml` marks ties, and it is right to: inside a
+   * 28-storm season a shared place is unusual and therefore worth pointing at.
+   * Against 3,266 storms it is the NORM — winds are recorded in 5 kt steps and
+   * lifespans in whole hours, so Katrina's panel came back with `Tied` on six
+   * rows out of six. A qualifier that fires everywhere qualifies nothing and
+   * reads as hedging. The fact itself is not dropped: it is stated once, in
+   * the footnote, where it applies to every rank on screen at once.
    *
    * ==> AND THE SUPERLATIVE IS SAID ONCE PER ROW, NOT TWICE. <== The first
    * draft read `11th strongest in the Atlantic, 15th strongest of 3,266`. The
@@ -296,23 +328,14 @@ export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
       : `${ord} ${superlative}`;
   };
 
-  const rows = [];
-  /* ==> EVERY RANKED ROW IS PRINTED. THIS USED TO BE
-   * `.slice(0, SEASONS.rankingsMaxRows)` AND AARON DELETED THE CAP ON
-   * 2026-08-29. <== The truncation made adding a statistic to `RANK_STATS` a
-   * glass call about crowding rather than a free addition, and it cut the last
-   * rows away with nothing on screen saying so — §5's silence, on a section
-   * whose whole job is telling the reader where a figure stands. If this
-   * section ever reads as too long the lever is which statistics are worth
-   * ranking, decided in `RANK_STATS` where a reader of the code can see it. */
   for (const row of ranked.rows) {
     const parts = [];
     for (const { scope, place } of row.places) {
       if (scope.key === 'all') {
-        /* ==> THE DENOMINATOR IS ON THE ROW AND THE MEMBERSHIP IS IN THE NOTE.
-         * <== They differ per statistic — 2,008 storms carry a pressure
-         * reading against 3,266 carrying a wind — so one number in the note
-         * could only ever be right for one row. */
+        /* ==> THE DENOMINATOR IS ON THE ROW AND THE MEMBERSHIP IS IN THE
+         * FOOTNOTE. <== They differ per statistic — 2,008 storms carry a
+         * pressure reading against 3,266 carrying a wind — so one number in
+         * the footnote could only ever be right for one row. */
         const ord = ordinal(place.rank);
         if (ord) parts.push(`${ord} of ${n(place.of)} overall`);
         continue;
@@ -320,16 +343,39 @@ export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
       const w = words(place, row.def.superlative);
       if (w) parts.push(`${w} in ${scope.inWords}`);
     }
-    if (parts.length) {
-      rows.push({
-        label: row.def.label,
-        value: parts.join(', '),
-        spine: spineFor(row, system),
-      });
-    }
+    if (!parts.length) continue;
+
+    const mark = { rank: parts.join(', '), spine: spineFor(row, system) };
+    marks.set(row.key, mark);
+    if (row.def.system) marks.set('trackDistance', mark);
   }
 
-  if (!rows.length) return '';
+  return marks;
+}
+
+/**
+ * The two sentences that govern every rank on the panel at once. §57.54b,
+ * §57.57c.
+ *
+ * ==> ONE FOOTNOTE AT THE FOOT OF THE PANEL, NOT A SENTENCE INSIDE EVERY ROW.
+ * <== §57.44 refused to fold ranks into existing rows partly because *"the
+ * scope sentence would have to be repeated six times or left off entirely"*.
+ * It is neither. Down here it correctly qualifies all seven ranks, which is
+ * stronger than six copies and stronger than one copy inside one section.
+ *
+ * ==> IT IS NOT A `section()` AND THEREFORE CANNOT BE FOLDED AWAY. <== Same
+ * rule the honesty line in the header follows: a sentence that stops the rest
+ * of the panel being misread must not be something a reader collapses once and
+ * then reads the figures without.
+ *
+ * @param {object|null} ranked  from `rankStorm`
+ * @param {object} [opts]
+ * @param {number} [opts.year]  the storm's year, for the pre-satellite sentence
+ */
+export function rankFootnoteHtml(ranked, { year = null } = {}) {
+  if (!ranked?.rows?.length) return '';
+
+  const n = (v) => Number(v).toLocaleString();
 
   /* ==> THE MEMBERSHIP IS READ OFF THE TABLE'S OWN `parts` AND NOT REBUILT
    * FROM THE SCOPES THAT REACHED THIS FUNCTION. <== §57.44, and this was a
@@ -340,16 +386,22 @@ export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
    * *"15th of 3,266"*. The builder writes the roll-call, so it is always the
    * whole set and it widens on the day a basin is added with no edit here. */
   const all = ranked.scopes.find((s) => s.key === 'all');
-  const roll = Array.isArray(all?.parts) && all.parts.length
-    ? all.parts.map((p) => `${n(p.storms)} ${p.label}`).join(' and ')
-    : (all ? n(all.storms) : null);
+  if (!all) return '';
 
-  const scopeNote = all
-    ? `Overall means every storm in the settled record: ${roll}, back to `
-      + `${all.firstSeason}. Each figure is ranked only against the storms that `
-      + `have it, which is why the totals differ from row to row. Storms sharing `
-      + `a figure share a place, so several storms can be 11th.`
-    : null;
+  const roll = Array.isArray(all.parts) && all.parts.length
+    ? all.parts.map((p) => `${n(p.storms)} ${p.label}`).join(' and ')
+    : n(all.storms);
+
+  /* ==> IT NAMES ITSELF, BECAUSE IT NO LONGER SITS UNDER A HEADING THAT DID.
+   * <== Under `Where it ranks` the reader had just read the section title, so
+   * *"Overall means…"* had an antecedent. At the foot of the panel, several
+   * screens below the last bar, it does not — so the first clause says which
+   * lines it is about. */
+  const scopeNote = `The rankings above compare this storm with every other in `
+    + `the settled record. Overall means ${roll}, back to ${all.firstSeason}. `
+    + `Each figure is ranked only against the storms that have it, which is why `
+    + `the totals differ from row to row. Storms sharing a figure share a place, `
+    + `so several storms can be 11th.`;
 
   /* ==> THE PRE-SATELLITE SENTENCE IS ABOUT THE DENOMINATOR, NOT ABOUT THIS
    * STORM. <== The wall and the board both already say that a quiet-looking
@@ -360,13 +412,13 @@ export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
    * unreliable, and saying which way it leans is the useful half. */
   const era = eraCaveatWords(year);
 
-  return figureRowsHtml(rows)
-    + (scopeNote ? absenceHtml(scopeNote) : '')
-    + (era ? absenceHtml(era) : '');
+  return `<footer class="season-detail-footnote">${absenceHtml(scopeNote)}`
+    + `${era ? absenceHtml(era) : ''}</footer>`;
 }
 
-/** The pre-satellite sentence for the ranking section. Its own function so the
- *  suite can drive it on both sides of the boundary without building a table. */
+/** The pre-satellite sentence in the panel's rank footnote. Its own function so
+ *  the suite can drive it on both sides of the boundary without building a
+ *  table. */
 export function eraCaveatWords(year) {
   if (!Number.isFinite(year) || year >= SEASONS.satelliteEraFrom) return null;
   return `Before ${SEASONS.satelliteEraFrom} nobody was watching from orbit, so `

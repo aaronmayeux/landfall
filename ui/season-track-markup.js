@@ -35,7 +35,11 @@
  * reader's preference, and `auto` — which follows the device — is exactly the
  * value it would get wrong. */
 import { formatDistance, formatSpeed } from '../lib/units.js';
-import { absenceHtml, rowsHtml, utcDay } from './season-markup-bits.js';
+import { absenceHtml, utcDay } from './season-markup-bits.js';
+/* ==> EVERY ROW ON THIS PANEL GOES THROUGH `figureRowsHtml` SINCE STEP 3. <==
+ * §57.57b. `Distance travelled` is the one row here that ranks, and it names
+ * its statistic rather than being handed a finished rank sentence. */
+import { figureRowsHtml } from './season-figure-row.js';
 
 /**
  * How far the storm went and how fast it was travelling. §57.43, §57.45.
@@ -66,7 +70,7 @@ import { absenceHtml, rowsHtml, utcDay } from './season-markup-bits.js';
  */
 export function movementHtml(facts, system, {
   floorKt, maxLegHours, distanceFloorNm, cycloneShareMax,
-}) {
+}, marks = null) {
   const s = facts?.forwardSpeed;
   const d = facts?.trackDistance;
   const hasSpeed = !!s && Number.isFinite(s.fastestKt);
@@ -104,9 +108,22 @@ export function movementHtml(facts, system, {
      * step the record cannot tell a short track from no track, and three
      * storms in the archive would otherwise print `0 mi`. §57.25. */
     belowDistanceFloor = d.totalNm < distanceFloorNm;
-    rows.push(['Distance travelled', belowDistanceFloor
-      ? 'no movement recorded'
-      : formatDistance(d.totalNm, system)]);
+    /* ==> IT ASKS FOR `trackDistance`, NOT FOR A UNIT. <== §57.57b. §57.46
+     * ships `trackDistanceMi` and `trackDistanceKm` — one fact rounded two
+     * ways — and `rankStorm` has already picked the reader's one before a
+     * mark reaches this function. Naming either here would be a second reader
+     * of the units preference, free to disagree with the first, and the
+     * failure is silent: the bar simply does not appear for half the readers.
+     *
+     * ==> AND THE KEY IS TAGGED EVEN WHEN THE ROW SAYS `no movement
+     * recorded`. <== `RANK_STATS` already declines a track under the
+     * archive's distance floor, so no mark exists for those three storms and
+     * the lookup misses. A guard here would be the same rule written twice. */
+    rows.push({
+      key: 'trackDistance',
+      label: 'Distance travelled',
+      value: belowDistanceFloor ? 'no movement recorded' : formatDistance(d.totalNm, system),
+    });
 
     /* ==> THE SECOND ROW IS THE STORM ALONE, AND IT APPEARS ONLY WHEN THE TWO
      * FIGURES TELL DIFFERENT STORIES. <== Mitch 1998 ran 6,449 nm and was a
@@ -117,7 +134,7 @@ export function movementHtml(facts, system, {
     showsCycloneRow = !belowDistanceFloor && Number.isFinite(d.cycloneNm)
       && d.cycloneNm < d.totalNm * cycloneShareMax;
     if (showsCycloneRow) {
-      rows.push(['As a tropical cyclone', formatDistance(d.cycloneNm, system)]);
+      rows.push({ label: 'As a tropical cyclone', value: formatDistance(d.cycloneNm, system) });
     }
   }
 
@@ -146,8 +163,11 @@ export function movementHtml(facts, system, {
     /* The leg's START day. A leg spans two stamps and naming both would be
      * three quarters of a row spent on punctuation; the day it set off is the
      * one a reader can find on the track. */
-    rows.push(['Fastest', `${formatSpeed(s.fastestKt, system)} on ${utcDay(s.fastestFromTime)}`]);
-    rows.push(['Slowest', `${slow} on ${utcDay(s.slowestFromTime)}`]);
+    rows.push({
+      label: 'Fastest',
+      value: `${formatSpeed(s.fastestKt, system)} on ${utcDay(s.fastestFromTime)}`,
+    });
+    rows.push({ label: 'Slowest', value: `${slow} on ${utcDay(s.slowestFromTime)}` });
   }
 
   /* ==> EVERY FIGURE IN THESE SENTENCES INTERPOLATES THE CONSTANT THAT
@@ -194,7 +214,7 @@ export function movementHtml(facts, system, {
       + 'cannot be told apart from one sitting still.');
   }
 
-  return rowsHtml(rows) + absenceHtml(parts.join(' '));
+  return figureRowsHtml(rows, marks) + absenceHtml(parts.join(' '));
 }
 
 /**

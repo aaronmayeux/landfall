@@ -8845,6 +8845,27 @@ panel.
 **==> THIS IS THE GO / NO-GO STEP AND §57.54k SAYS SO. <==** If the merged row
 reads as four things rather than one, steps 5 to 7 do not start.
 
+**WHAT TO JUDGE ON GLASS, AND THE FIRST IS THE WHOLE QUESTION:**
+
+1. **DOES LABEL, FIGURE, RANK AND BAR READ AS ONE FACT OR AS FOUR?** Open
+   Katrina and look at `Peak winds` in `Strongest`. Four lines are now stacked
+   in one cell where there used to be a figure on its own. If they read as four
+   things, the plan changes and steps 5 to 7 do not start.
+2. **THE ROW WITHOUT A MARK, DIRECTLY UNDER ONE WITH.** `Peak winds` spans the
+   whole panel and `Reached` immediately below it is back in two columns. That
+   alternation is by design (§57.57b) and it is the thing most likely to read
+   as a layout fault rather than as a hierarchy.
+3. **`Strongest` OPENS AND `Where it ranks` IS GONE.** A reader who had
+   previously folded `Strongest` keeps it folded — folds persist — so judge
+   this on a storm opened fresh, or after clearing the panel's stored folds.
+4. **THE FOOTNOTE AT THE BOTTOM.** It sits under `NOAA's report` behind a rule.
+   Does it read as a note about the whole panel, or as one more paragraph of
+   that section? An 1851 storm carries the longer version, with the
+   pre-satellite sentence.
+5. **A STORM WITH FEW RANKS.** 1 storm in the archive carries only two marks
+   and 71 carry three, so most of the panel is unmarked rows. Does a panel with
+   two bars on it look sparse or calm.
+
 #### 57.57a The cut came first, and it was the whole first commit
 
 **§57.54k required the cut to be the FIRST commit of this step rather than
@@ -8881,6 +8902,149 @@ handle, because its subject was always *everything the panel draws* rather than
 one file — so the whole cut cost that suite three lines of import and **184
 assertions passed on both sides of it without one of them being rewritten.**
 That merge was made for §57.44's cut and paid for itself here.
+
+#### 57.57b The merged row — one figure, one place
+
+**`Where it ranks` IS DELETED.** Its content did not move to a new home; it
+dissolved into the rows that already owned each figure. `archiveRankHtml` is
+gone and two functions stand in its place: `rankMarks`, which returns a lookup
+keyed by `RANK_STATS` key, and `rankFootnoteHtml` (§57.57c).
+
+**MEASURED ACROSS ALL 3,266 STORMS, 2026-08-30: 18,222 duplicate labels stop
+being printed**, a mean of **5.58 per storm**. Every storm in the archive
+carries at least two ranked figures and **499 carry all seven**. The
+distribution: 1 storm with 2 marks, 71 with 3, 434 with 4, 788 with 5, 1,473
+with 6, 499 with 7.
+
+**==> AND THE PANEL BARELY GOT SHORTER, WHICH IS THE FINDING A LATER SESSION
+MUST NOT MISREAD. <==** Visible characters with markup and chart furniture
+stripped, measured against a worktree of the commit before this step:
+
+| Storm | Before | After | Change |
+|---|---|---|---|
+| KATRINA 2005 | 2,759 | 2,703 | **−56** |
+| HARVEY 2017 | 3,090 | 3,034 | **−56** |
+| SANDY 2012 | 2,962 | 2,906 | **−56** |
+| `Storm 1` 1851 | 1,995 | 1,995 | **0** |
+
+**§57.54g PROMISED −223 ON HARVEY AND THAT FIGURE IS FOR THE WHOLE REBUILD,
+NOT FOR THIS STEP.** The saving here is exactly the duplicate labels — 117
+characters on a seven-mark storm — offset by the footnote having to name
+itself now that it has no heading above it (§57.57c). **The rank SENTENCES did
+not shrink; they moved.** A session measuring this step against §57.54g's table
+and concluding something is broken would be reading the wrong row.
+
+**WHAT THIS STEP ACTUALLY BOUGHT IS THE THING AARON ASKED FOR**, and it is not
+length: a figure is no longer stated in two places three to five sections
+apart. §57.54a counted Katrina's peak stated **four times** and her lifespan
+**four times**. Both are down by one, and the split that produced §57.54a's
+visible contradiction — the prose saying *"8 days"* while `Its life` said
+*"7 days, 12 hours"* — has one fewer place to happen.
+
+**==> A SECTION NAMES ITS STATISTIC'S KEY AND LEARNS NOTHING ELSE. <==** A row
+says `{ key: 'peakWindKt', label: 'Peak winds', value: … }` and
+`figureRowsHtml` does the lookup. Not one of the four sections that own a
+ranked figure learns what a rank sentence reads like or that a bar exists, so
+the day the bar changes shape there is one file to edit rather than four.
+
+**AND IT IS THE ONLY ARRANGEMENT IN WHICH A MISSPELLED KEY IS FINDABLE.** A
+typo costs the rank and the bar **silently**: the row still prints, still
+carries the right label, still shows the right figure, and simply has nothing
+under it. Nothing throws and nothing looks broken.
+`tools/test-season-detail.mjs` mounts Katrina — the storm that ranks on every
+statistic the archive holds — and demands that **every mark the lookup produced
+is claimed by exactly one cell on the panel it drew.** The expected set is read
+off `RANK_STATS`, never listed in the suite: a list written there would be a
+second copy free to go stale in the same direction as the bug.
+
+**==> THE DISTANCE PAIR ANSWERS TO ONE ALIAS, SO THE UNIT CHOICE IS NEVER MADE
+TWICE. <==** §57.46 ships `trackDistanceMi` and `trackDistanceKm` — one fact
+rounded two ways — and `rankStorm` has already picked the reader's one before a
+mark exists. `movementHtml` asks for `trackDistance` and gets whichever
+arrived. Naming either unit at the call site would be a second reader of the
+Settings preference, free to disagree with the first, and **the failure is
+silent and affects exactly half the readers.** The suite asserts the alias is
+the same object rather than a copy.
+
+**==> `figureRowsHtml` NOW KEEPS A LABEL-LESS ROW, WHICH REVERSES §57.56e. <==**
+That section dropped it, and its reasoning was explicitly about the call sites:
+this renderer had exactly one shape of caller, a ranked statistic, which always
+has a label from `RANK_STATS`. **Step 3 changed the call sites.** It is the
+panel's ordinary row renderer now, with the same callers `rowsHtml` has, so
+§57.55a's rule is the one that governs: a label-less pair is a programming
+mistake rather than a data state, and dropping it here would turn a visible
+layout fault into content that silently vanishes. The guard is the suite's
+empty-`<dt>` sweep, unchanged.
+
+**THE CELL SPANS ON `has-rank`, NOT ON `has-spine`.** It takes the whole row
+whenever it carries a MARK, and a mark is a rank sentence plus — usually, not
+always — a bar. A class named after one of its two reasons is the kind that
+goes stale. A rank sentence indented behind whatever width
+`Fastest strengthening` claimed would be a paragraph in a half-width gutter,
+which is §57.55a's fault arriving through a different door.
+
+**`Strongest` JOINS THE DEFAULT-OPEN SET, AND IT IS NOT COSMETIC.** The seven
+bars used to live in one section that opened; they are now spread across four
+that do not. Without this change a reader opening a storm would see **no rank
+and no bar anywhere on the panel** until they tapped something, and step 3's
+own glass question could not be asked. §57.54f's step 7 table keeps this
+section open under its new name (`How hard it blew`), so it is a move toward
+that set rather than a reversal of anything.
+
+**NINE SECTIONS BECAME EIGHT** and the icon set is unchanged: `podium` loses
+its only caller and stays, per §57.54f's rule that one name is one shape and
+deleting a glyph because its caller moved would be a second decision riding on
+the first.
+
+**SIX MUTATION RUNS, ALL SIX BITING.** A misspelled key (names the unclaimed
+statistic); the distance alias deleted (fails in three suites, including
+Sandy's two-unit probe); a section stopped being handed its marks (names all
+three keys it lost); §57.56e's label rule restored; the spanning rule renamed
+(`css-orphan-check` reports it both ways); and the pre-satellite sentence
+suppressed. **190 assertions on the panel, 159 on the rankings, 127 on the
+bar.**
+
+#### 57.57c The scope sentence becomes one footnote, and it has to name itself
+
+**§57.44 REFUSED THIS MERGE PARTLY BECAUSE *"THE SCOPE SENTENCE WOULD HAVE TO
+BE REPEATED SIX TIMES OR LEFT OFF ENTIRELY"*.** It is neither. One footnote at
+the foot of the panel governs every rank on screen at once, which is stronger
+than six copies and stronger than one copy inside one section.
+
+**IT IS NOT A `section()` AND THEREFORE CANNOT BE FOLDED AWAY.** The same rule
+the honesty line in the header follows: a sentence that stops the figures above
+it being misread must not be something a reader collapses once and then reads
+the panel without.
+
+**==> IT HAD TO GAIN AN OPENING CLAUSE, AND THAT IS THE ONE REAL COST. <==**
+Under a heading reading `Where it ranks`, the sentence *"Overall means every
+storm in the settled record…"* had an antecedent one line above it. At the foot
+of the panel, several screens below the last bar, it has none — so it now opens
+*"The rankings above compare this storm with every other in the settled
+record."* **That is the ~50 characters that cancel most of §57.57b's label
+saving**, and it is spent rather than saved deliberately: a note whose subject
+the reader has to guess is a note nobody reads.
+
+**MEASURED 2026-08-30: 334 characters on Katrina, 593 on an 1851 storm**, the
+difference being the pre-satellite sentence, which fires on 1,144 storms
+(35.0%) and is about the DENOMINATOR rather than about the storm.
+
+**A RULE SEPARATES IT FROM `NOAA's report`.** Without one it reads as another
+paragraph of that section rather than as a note about the whole panel. It is
+drawn in `--glass-border`, which is what every other horizontal rule in
+`seasons/seasons.css` uses. **The first draft reached for a `--hairline` token
+that exists nowhere in the repo**, which would have rendered as no border at
+all with nothing throwing — found by grep rather than by glass, and worth
+recording because a `var()` naming nothing is the one CSS mistake this project
+has no gate for.
+
+**IT SAYS NOTHING AT ALL WHEN THE TABLE DID NOT ARRIVE.** A 404 on the 26 KB
+rankings companion costs every rank, every bar and the footnote, and nothing
+else. That is deliberate rather than a §5 silence: a rank is a comparison the
+app offers rather than a fact about the storm, and **every figure it would have
+ranked is still on screen in its own row with its own units** — which is more
+true after this step than before it, since the figures never lived in the
+deleted section.
 
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en" data-theme="sepia">
+<head>
+<meta charset="utf-8">
+<title>the merged figure row — geometry harness</title>
+<!--
+  ==> NO FIXTURE TOKENS AND NO FIXTURE MARKUP. <== The same rule
+  `tools/seasons-row-harness.html` states and for the same reason:
+  `tools/drawer-head-harness.html` copied its token values and drifted from the
+  app for two commits under a comment asking it not to. This page loads the
+  SHIPPED stylesheets and builds its rows with the SHIPPED renderers, off a
+  real storm and the real rankings file.
+-->
+<link rel="stylesheet" href="/ui/panels.css">
+<link rel="stylesheet" href="/seasons/seasons.css">
+<style>
+  /* The drawer box the panel lives inside, and nothing else. */
+  html, body { margin: 0; background: #1C1409; }
+  #drawer { width: 100%; }
+</style>
+</head>
+<body>
+<div id="drawer"><div class="drawer-body" id="body"></div></div>
+<script type="module" src="/tools/season-figure-harness.js"></script>
+</body>
+</html>
