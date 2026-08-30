@@ -488,8 +488,23 @@ of Years with a bar above every retired storm's dot, and a closing sentence on
 the archive's storm panel. **122 storms across the archive, joined on name AND
 year** — Ida 2021 carries it and Ida 2009 does not.
 
+**==> AND THE ROSTER NOW WEARS THE SAME TWO MARKS. §57.53, AARON ON GLASS THE
+SAME DAY. <==** The season board's landfall mark was a `▲` glyph in the
+right-hand meta line; it is a triangle under the storm's dot now, with the
+retirement bar above it, which is the wall's own construction. **One grammar
+across both screens.** It reverses his earlier call against a roster mark, and
+§57.52 records why both answers were right. **Not yet seen on glass.**
+
 **WHAT TO JUDGE ON GLASS, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK
 WRONG:**
+
+0. **THE ROSTER'S TRIANGLE IS BIGGER THAN THE WALL'S, BECAUSE ITS DOT IS.**
+   The ratios are shared, so a 12px swatch gives an 8.63 x 6.22px triangle
+   against the wall's 5.03 x 3.63px at a 7px dot. That is correct and
+   consistent and it may still read as chunky in a 44px row. **The lever is
+   `--mark-w-ratio`, and it moves BOTH screens** — which is the trade the
+   shared ratios buy. If only the roster should shrink, it needs its own ratio
+   and the grammar argument weakens.
 
 1. **THE BAR ITSELF.** Aaron asked for a small dot above the storm dot and the
    measurement refused it: at 6px there is no diameter that reads as a mark

@@ -1384,15 +1384,10 @@ all**, because they ran out of names entirely.
 **Nobody should ever "tidy up" by hiding unused names.** That is the whole
 picture.
 
-Each row: name, dates, a category dot for peak strength, a mark if it made
-landfall.
-
-**==> THERE IS NO RETIRED-NAME MARK ON THIS ROW. AARON'S CALL, 2026-08-30.
-<==** This section asked for one from the day it was written, it was never
-built, and nobody had ruled on it for four sessions running. It is ruled on
-now and the answer is no. §57.52 carries the retired names on the two surfaces
-that do have them: a switch and a bar on the Wall of Years, and a sentence on
-the storm panel.
+Each row: name, dates, a category dot for peak strength, a triangle under the
+dot if it made landfall, and a bar above the dot if the name was retired.
+**Both marks ride on the dot itself and both are the Wall of Years' own —
+§57.53.**
 
 **The same name repeats across years** — Ida 2021 and Ida 2009 are different
 storms. The year travels with the name everywhere, including in shared links.
@@ -7958,18 +7953,17 @@ environment fault rather than a regression**, and the measurements above were
 taken directly instead. Worth someone's time; it is the only browser gate the
 Wall of Years has and it is not in the pre-push hook.
 
-#### The roster row mark is CUT, and §57.18 was corrected
+#### The roster row was cut here and reinstated in §57.53
 
-§57.18 has said since it was written that each roster row carries *"a mark if
-the name was retired"*. It was never built and nobody had decided on it.
-**Aaron's call, 2026-08-30: no mark on the roster row.** The clause is deleted
-from §57.18 rather than left as a permanent unbuilt promise — a design
-sentence nobody has ruled on gets rediscovered and re-asked every few sessions,
-which is what happened here for four.
+Asked and answered twice on 2026-08-30, and the reversal is worth reading
+before anyone re-derives either half. Aaron first ruled **no mark on the roster
+row**, on being asked whether §57.18's long-standing unbuilt promise was in
+scope. He then saw the wall's marks on glass and asked for the same two on the
+roster, in the same construction. **§57.53 is what shipped.**
 
-The roster row is also a different shape from the wall: it has a coloured
-swatch and a `▲` glyph in a flex meta line beside the dates, not a dot with a
-triangle under it, so "a bar above the dot" does not transfer to it.
+What changed between the two answers was not the decision but the QUESTION: the
+first was about adding a mark to a text line, and the second is about moving
+the marks this pass had just made legible onto the dot they belong to.
 
 #### Where the code is
 
@@ -7997,3 +7991,99 @@ only when a reader opens the archive. Measured rather than estimated, because
 §57.40a's places sidecar came in at 38.5 KB against a 12-15 KB guess. **No
 `_headers` line is needed:** `/data/*` is already a wildcard, unlike `seasons/`
 where each file is listed by hand (§57.16a).
+
+### 57.53 One mark grammar across both screens — as built
+
+**Aaron on glass, 2026-08-30**, having just seen §57.52's bar on the Wall of
+Years: *"move the triangle from the right side column and put it underneath the
+storm, the same way we do on the year list, and we can also put the retirement
+bar above the dot."*
+
+**==> IT REVERSES THE CALL HE MADE EARLIER THE SAME DAY, AND BOTH CALLS WERE
+RIGHT. <==** He had ruled out a retired-name mark on the roster row when it was
+put to him as §57.18's unbuilt promise. What changed is the question rather
+than the answer: the first was about ADDING a mark to a text line, and this is
+about MOVING marks that already exist onto the dot they describe. §57.52
+records the reversal so a later session does not re-derive half of it.
+
+#### What moved
+
+The roster row's landfall mark was a `▲` glyph in `.seasons-row-meta`, the
+right-hand flex line it shared with the date range. It is now an attribute on
+`.row-swatch`, drawn as a `::after` under the dot, with the retirement bar as
+the `::before` above it. **Exactly the construction §57.52 built for the wall,
+for exactly the reasons recorded there:** a mark that IS its dot cannot drift
+from it, there is no second element to keep in step, and the marks are out of
+flow so no row grows.
+
+**The point is that it is the SAME grammar.** A reader learns what a triangle
+under a dot means on the Wall of Years and reads the identical mark the
+identical way one tap later, on the screen the wall leads to. Two constructions
+for one fact was the real cost of the old glyph, and the fact that the glyph
+also sat in the only fixed-width line on the row was a second one.
+
+#### The ratios are shared; the sizes cannot be
+
+**The wall's dot is measured after layout and ranges 4px to 14px. The roster's
+swatch is a fixed 12px** from `ui/panels.css`, which the live storm list also
+uses. A shared pixel token would therefore be wrong on one of the two, and a
+copied number would drift the first time either was retuned.
+
+So `--mark-w-ratio`, `--mark-lf-h-ratio`, `--mark-ret-h-ratio` and `--mark-gap`
+live once in `seasons/seasons.css`, and each surface applies them to its own
+dot. The wall keeps its `--wall-lf-*` and `--wall-ret-*` tokens because
+`--wall-strip-pad` does arithmetic on them and cannot read a percentage off an
+element it does not own. **The roster uses percentages instead**, which resolve
+against the dot the mark is drawn on, so that rule needs no size token at all
+and cannot go stale if `.row-swatch` changes.
+
+**THE WALL'S GEOMETRY IS UNCHANGED AND THAT IS MEASURED, NOT REASONED.**
+Extracting the ratios rewrote the tokens the wall reads, so the marks were
+re-measured in chromium against §57.52's recorded figures: bar
+**5.03125 x 1.10938px**, triangle **5.03125 x 3.625px**, both identical to the
+digit.
+
+**The rule is scoped to `.seasons-open`,** because `.row-swatch` belongs to
+`ui/panels.css` and the live storm list draws it too. A live storm has no
+settled landfall record and no retired name, and the archive's marks must not
+appear on one.
+
+#### Measured in a real browser at 390px, 2005 Atlantic
+
+- **31 rows, 17 triangles, 5 bars.** The five are Dennis, Katrina, Rita, Stan
+  and Wilma, which is the worst season on record for retirements and the reason
+  §57.51's delta-cap gate sits at six.
+- Triangle **8.625 x 6.219px**, bar **8.625 x 1.906px**, on a 12px swatch.
+- **Row heights are 44px and 45px, and that is the 1px separator rather than
+  the marks.** The first row has no `border-top`; every row after it does.
+  Dennis carries BOTH marks and is 45px like its neighbours, which is the
+  assertion that matters: the marks add no height.
+- **No line clips.** `scrollWidth - clientWidth` is 0 on every
+  `.seasons-row-meta` and `.seasons-row-text`. Taking the glyph out of the meta
+  line removed the one place on this row where a third item could have.
+
+#### The marks are said out loud
+
+§13. The swatch is `aria-hidden`, so a shape drawn on it that is not in the
+button's label does not exist for a reader who cannot see it. The open button
+already carried *"made 3 landfalls"*; it now also carries *", name later
+retired"*. **The negative is not spoken**, for §57.52's reason: there is no
+"not retired" sentence anywhere in this app, because below a basin's floor
+nothing separates that from "never assessed".
+
+#### The gates
+
+`tools/test-seasons-board.mjs` section 13, **six mutations, all six bite** —
+including writing either mark onto every swatch, joining on the name alone, and
+bringing the old glyph back. It reads the marks through the open button's
+`aria-label` rather than through `.seasons-name`, because
+`tools/markup-dom.mjs` has a documented history of not seeing what a browser
+sees and every other assertion in that file already reads the label.
+
+**Ida 2009 is the fixture that proves the join.** Her name is retired, for a
+different storm, so her row carries the triangle and not the bar — a row that
+was simply unmarked would prove nothing.
+
+`.seasons-lf` is deleted from `seasons/seasons.css` rather than left behind. A
+rule that still matched the old glyph would draw the mark twice the day someone
+reintroduced the span.
