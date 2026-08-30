@@ -78,6 +78,41 @@ The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
 list; a refused crossing gets a sentence instead of silence; and a dot is graded
 from the status column rather than from the wind.
 
+**==> §57.50 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. TIER 1 OF §57.42 IS
+NOW FINISHED. <==** How many other storms were running beside this one, in
+`In its season`. **§57.50 is the as-built account; read that, not this.** It
+fires on 1,999 of 3,266 storms and is silent on the 1,267 that were alone.
+
+**FOUR THINGS TO JUDGE, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK
+WRONG.**
+
+1. **THE SENTENCE SAYS "IN THE SAME BASIN" RATHER THAN "IN THE ATLANTIC."**
+   Naming the basin would mean plumbing a label out of `seasons/index.json`
+   into a markup function; *"the same basin"* is the wording the two §57.48
+   sentences already in that section use, and it stays correct when step 13
+   adds basins nobody has labelled. **If it reads as evasive on a phone, that
+   is the change, and it is one argument rather than one word.**
+2. **KATRINA 2005 AND ANY 1971 ATLANTIC STORM ARE THE TWO TO OPEN.** Katrina
+   gets three others; the 1971 storms get six, which is the archive's ceiling
+   and the longest the sentence ever gets. Fourteen storms hit six.
+3. **IT SITS BETWEEN THE TWO RANK ROWS AND THE SEASON WINDOW.** On a storm
+   that gets all of them, `In its season` is now two rows and three sentences.
+   That section was already accepted at two sentences; whether a third is one
+   too many is glass.
+4. **IT DOES NOT NAME THE OTHER STORMS.** 1,351 of 3,266 archive storms have
+   no name, so a third of any list would read *"Ginger, Edith and two unnamed
+   storms."* If you want them named anyway, that is a real option and §57.50
+   records what it costs.
+
+**==> AND ONE FIX RODE ALONG THAT IS NOT ABOUT THIS FEATURE. <==**
+`utcDay` and `utcStamp` in `ui/season-markup-bits.js` returned `null` for a
+non-finite stamp but **threw a RangeError for a finite out-of-range one.**
+Every section of the archive's storm panel formats dates through those two
+functions, so one corrupt timestamp from any upstream file would have taken the
+whole drawer down rather than costing one row. Both return `null` now. **No
+storm in the archive can currently produce such a stamp**, so there is nothing
+to look at — it was found by mutation-testing and is recorded in §57.50.
+
 **==> §57.49 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. GROUP B OF §57.42 IS
 NOW CLOSED. <==** The loop — a track that turned a full circle and crossed
 itself — in `How it moved`. **§57.49 is the as-built account; read that, not
@@ -491,33 +526,20 @@ research. **§57.42 is the whole backlog** — Tier 1 (free arithmetic) and Tier
 build it, delete its entry, write what IS in its place. Tier 3 is recorded as
 NOT ACCEPTED with the reasoning; do not reopen it without new evidence.
 
-**What already landed:** the gazetteer (§57.40), the places sidecar it feeds
-(§57.40a), the storm-life paragraph (§57.41), **Tier 1 items 2, 3 and 9
-(§57.43)**, **Tier 1 item 11, the archive-wide rankings (§57.44)**, **Tier 1
-item 1, distance travelled (§57.45, ranked in §57.46)** **Tier 1 items 4, 6
-and 8 (§57.48)** and **Tier 1 item 5, the loop (§57.49)**. **Read those eight,
-not this.** Tier 2 item 1 is done and deleted from §57.42; **two Tier 1 items
-(7, 10) and four Tier 2 items are untouched.**
+**==> TIER 1 IS FINISHED. EVERY ITEM IN IT IS BUILT OR DELETED. <==** The
+as-built sections are §57.43, §57.44, §57.45, §57.46, §57.48, §57.49 and
+§57.50 — **read those, not this.** Tier 2 item 1 is also done. **What is left
+of §57.42 is four Tier 2 items, each one runner job, and a Tier 3 recorded as
+NOT ACCEPTED.**
 
-**==> §57.42 NOW CARRIES A GROUPING — A, B AND C — AND GROUP A IS BUILT. <==**
-Aaron asked on 2026-08-29 that the groups be written into the spec so a new
-chat picks one up cold. They are grouped by SHAPE OF RISK, not by subject.
-**Group A (items 4, 6, 8 — the comeback, out of season, Cape Verde) shipped as
-§57.48, and Group B (item 5, the loop) shipped as §57.49.** **Group C — items 7
-and 10, both figures — is all that is left of Tier 1.**
-
-**==> AND GROUP B'S JUDGEMENT TURNED OUT TO BE ONE CONSTANT, NOT A HEURISTIC.
-<==** The grouping warned that the loop needed a meander-versus-loop call the
-other items did not. It did, and the answer is that **a crossing is already
-proof of a full circle**, so the only open question was size —
-`SEASONS.loopMinWidthNm`, measured. Worth knowing before Group C: the expensive
-part of that item was the measuring, not the geometry.
-
-**TWO TIER 1 ITEMS REMAIN: 7 AND 10.** Any of them added to `RANK_STATS`
-gets an archive-wide rank for free — one table entry rather than a feature.
-**A statistic printed in the reader's units costs two entries rather than one**
-(§57.46), plus a `RANKINGS_SCHEMA` bump so the new table actually reaches a
-phone (§57.47).
+**==> AND THE GROUPING'S OWN PREDICTION ABOUT GROUP C WAS WRONG ABOUT BOTH
+ITEMS, WHICH IS THE PART WORTH CARRYING FORWARD. <==** It said Group C's two
+items were figures and would therefore rank for free. Item 10 **cannot** be
+ranked without changing `rankStorm`'s signature — it reads one storm's own
+facts and this is a fact about the season. Item 7 was **deleted** before the
+question arose. §57.50 holds both accounts. The rule that survives: a figure
+ranks freely only when it can be read off one storm's own rows AND the
+resulting leaderboard means something.
 
 **==> AND THE ROW CAP IS GONE. <==** Aaron, 2026-08-29: *"I don't care about a
 rankings row cap. There should be no cap."* `SEASONS.rankingsMaxRows` is

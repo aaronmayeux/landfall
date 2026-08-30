@@ -5926,8 +5926,13 @@ Aaron's, and it has not been seen on a phone.
 
 **Aaron asked for all of this on 2026-08-29 and asked that it be written down so
 nothing is lost between chats.** Every item below is sized, has its cost
-measured or its measurement named, and can be picked up cold. **Nothing here is
-started.** Take one, build it, delete its entry, and write what IS in its place.
+measured or its measurement named, and can be picked up cold. Take one, build
+it, delete its entry, and write what IS in its place.
+
+**==> TIER 1 IS FINISHED. WHAT IS LEFT HERE IS FOUR TIER 2 ITEMS AND A REJECTED
+TIER 3. <==** Every Tier 1 item is built or deleted, with an as-built section
+each: §57.43, §57.44, §57.45, §57.46, §57.48, §57.49, §57.50. Read those rather
+than this list for anything already done.
 
 **The order below is not a priority order.** Aaron picks.
 
@@ -5940,7 +5945,7 @@ take a whole group in one pass and a break can only be one kind of thing.
 |---|---|---|---|
 | **A — yes/no facts** | 4 comeback, 6 out of season, 8 Cape Verde | Each reads straight off rows already parsed and answers a question with a sentence rather than a figure. One new lib module, one new markup module, one suite, one mutation run. None of them adds a number to `RANK_STATS`. | **BUILT, §57.48** |
 | **B — geometry** | 5 the loop | Segment intersection over the track, plus a judgement the other items do not need: what counts as a loop rather than a meander. A different kind of risk, and it wants its own bisect. | **BUILT, §57.49** |
-| **C — figures** | 7 reach, 10 season-mates | Both produce a number, so both are candidates for `RANK_STATS` and both land beside an existing figure rather than on their own. Item 7 is also half a runner job — see below. | Not started |
+| **C — figures** | 7 reach, 10 season-mates | Both produce a number. **The grouping's reasoning was wrong about both of them and the measuring is what showed it:** item 10 cannot go in `RANK_STATS` at all, because `rankStorm` reads only one storm's own rows and this is a fact about the season; and item 7 was dropped outright once its rows were rendered against real storms. | **CLOSED. Item 10 built, §57.50. Item 7 dropped, §57.50.** |
 
 **WHY THE GROUPING IS WORTH KEEPING RATHER THAN RE-DERIVING.** The obvious cut
 is by panel section, and it is the wrong one: it puts the comeback with the
@@ -5952,19 +5957,42 @@ be judged on glass together as one change.
 **A NOTE ON GROUP C THAT WAS TRUE WHEN THIS WAS WRITTEN AND IS NOT NOW.** The
 grouping originally warned that a figure added to `RANK_STATS` would push
 against `SEASONS.rankingsMaxRows` and therefore be a glass call rather than a
-free addition. **Aaron deleted that cap on 2026-08-29** (§57.48). Group C's
-figures now rank freely; what remains true is that they are figures and the
-Group A items were not.
+free addition. **Aaron deleted that cap on 2026-08-29** (§57.48), so that
+warning is void.
+
+**==> AND THE REPLACEMENT WARNING IS SHARPER: NEITHER GROUP C ITEM RANKED IN
+THE END, FOR TWO DIFFERENT REASONS. <==** §57.50. Item 10 **cannot** be ranked
+without changing `rankStorm`'s signature, because that function is handed one
+storm's own facts and this is a fact about the season. Item 7 was **deleted**
+before the question arose. **The lesson worth keeping is that "it is a figure,
+so it ranks for free" was wrong about both of the items it was written for** —
+a figure ranks freely only when it can be read off one storm's own rows and the
+resulting leaderboard means something.
 
 **TIER 1 — FREE. Arithmetic on rows `lib/hurdat.js` already parses.**
 
 No new data, no runner job, no bytes on the phone. All of these land in
 `lib/season-facts.js` and `ui/season-detail-markup.js`.
 
+**==> TIER 1 IS EMPTY. EVERY ITEM IN IT IS BUILT OR DELETED. <==** The table
+below is kept with no rows because the numbers are permanent addresses and code
+comments cite them; nothing renumbers and nothing is ticked.
+
 | # | Fact | Note |
 |---|---|---|
-| 7 | **Northernmost / southernmost reach, and where it died** | lands in `How it moved` beside item 2 |
-| 10 | **How many other storms were running the same day** | lands in `In its season` beside item 9 |
+
+**==> ITEMS 7 AND 10 ARE THE LAST TO GO, AND THEY WENT DIFFERENT WAYS. §57.50
+IS THE AS-BUILT ACCOUNT FOR BOTH. <==** Item 10, how many other storms were
+running the same day, is **built** and sits in `In its season` between the two
+rank rows and the season window. Item 7, northernmost and southernmost reach,
+is **deleted** — Aaron's call 2026-08-29 after the rows were rendered against
+real storms rather than described. Three measurements killed it: the farthest
+north is an extratropical corpse on 776 storms and on every one of the top
+twelve, a cyclone-only figure disagrees with the drawn track on 1,166 storms,
+and the southernmost point is simply the birth latitude on 82% of the archive.
+**No tombstone beyond §57.50's account, and the number 7 stays a permanent
+address.** If reach is ever wanted the surviving shape is a sentence — *"it was
+still a hurricane at 41.9°N"* — and that is a new item rather than this one.
 
 **==> ITEM 5 IS BUILT AND GROUP B IS CLOSED. §57.49 IS THE AS-BUILT ACCOUNT.
 <==** The loop, in `How it moved` above the birthplace sentence. **Its row is
@@ -5973,7 +6001,7 @@ permanent address.** It answered the loop-versus-meander judgement with one
 constant — `SEASONS.loopMinWidthNm` at 50, measured — rather than a heuristic,
 and it is **deliberately not in `RANK_STATS`**; §57.49 holds the reasoning.
 
-**TWO TIER 1 ITEMS REMAIN, 7 AND 10, AND THEY ARE GROUP C.**
+**NOTHING REMAINS OF TIER 1. GROUP C CLOSED IT.**
 
 **==> ITEMS 4, 6 AND 8 ARE BUILT. §57.48 IS THE AS-BUILT ACCOUNT. <==** The
 comeback, the season window and the origin — Group A of the grouping below.
@@ -5991,13 +6019,12 @@ pass changed about the rest of this list.
 travelled, in `How it moved` beside the speeds. **Its row is deleted from the
 table above and the number 1 stays a permanent address.**
 
-**==> ITEM 7 IS THE ONE THAT IS MIS-FILED, AND THAT IS WORTH KNOWING BEFORE
-SOMEBODY PICKS IT FOR BEING FREE. <==** Northernmost and southernmost reach are
-arithmetic on rows already parsed. *Where it died* is not: it would print bare
-coordinates, which is the fault glass sent back on the `Landfalls` list before
-§57.40a, and the places sidecar names only genesis points and landfalls. Naming
-a death point is a runner pass over 3,266 new positions, so item 7 is Tier 1 in
-its first half and Tier 2 in its second.
+**==> ITEM 7 IS DELETED AND §57.50 IS THE ACCOUNT. <==** One half of it is
+worth carrying forward rather than losing with the rest: *where it died* would
+print bare coordinates, which is the fault glass sent back on the `Landfalls`
+list before §57.40a, and §57.40a's places sidecar names only genesis points and
+landfalls. **Naming a death point is a runner pass over 3,266 new positions**,
+so anyone proposing it again is proposing Tier 2 work, not free arithmetic.
 
 **Item 11 — archive-wide rankings — is the research feature and is worth its own
 pass.** Every figure in the drawer carries its rank: *"937 mb — 41st lowest of
@@ -7351,3 +7378,153 @@ per unit) and a `RANKINGS_SCHEMA` bump (§57.47) over a statistic that exists fo
 thing is a different kind of row from every other rank on that panel**, which
 compares against the whole archive. Not started, and it is a decision rather
 than an omission.
+
+### 57.50 How many other storms were running — as built
+
+**§57.42 Tier 1 item 10, built 2026-08-29. The whole of Group C that got
+built.** How many other storms were on the ocean beside this one, in
+`In its season`. `lib/season-company.js` computes, `ui/season-rank-markup.js`
+writes the sentence, and it joins a section that already existed. No new data,
+no runner job, not one byte on the phone.
+
+*"Five other storms in the same basin were running at the same time, on Sep 13,
+1971."*
+
+**==> ITEM 7 WAS DROPPED RATHER THAN DEFERRED, AND THE MEASUREMENT IS WHY.
+<==** Aaron's call, 2026-08-29, after seeing the rendered rows. Northernmost
+and southernmost reach are free arithmetic and they were built as a scratch
+render before any code was written. Three findings killed them, and they are
+recorded because the item read perfectly on paper:
+
+- **The northernmost point is usually the corpse.** 776 of 3,266 storms reach
+  their farthest north as an `EX` extratropical low, and every one of the top
+  twelve in the archive is one. Faith 1966 tops the list at **83°N** — north of
+  Svalbard, in the ice, as a 35-knot dead low. Katrina's farthest north is
+  40.1°N at 25 knots over the Great Lakes; Harvey's is a 15-knot remnant.
+- **Filtering to cyclone fixes disagrees with the globe on 1,166 storms**, over
+  a third, because `map/layers/season-tracks.js` draws every recorded position
+  with no status filter.
+- **Southernmost is the birth latitude on 2,678 storms, 82%.** Only 276 dip
+  more than a whole degree below where they formed, and on some of those — Katia
+  2023 — the dip happens *after* the farthest north, so the row reads as though
+  the storm went south when it had already finished going north.
+
+**And underneath all three, a bare latitude does not convert into anything a
+reader holds.** Every other figure on that panel becomes miles, mph, knots or
+days; `48.8°N` stays a coordinate, and the places sidecar (§57.40a) names only
+genesis points and landfalls. **Item 7's row is deleted from §57.42's table and
+the number 7 stays a permanent address.** If reach is ever wanted, the shape
+that survives the measurement is a sentence rather than a row — *"it was still
+a hurricane at 41.9°N"*, which is true of 262 storms — and that is a new item
+rather than this one.
+
+#### The window is the whole record, and the panel decides it
+
+The two stamps read are `firstTime` and `lastTime` from `stormFacts`, which are
+exactly the two `lifeHtml` prints as `First seen` and `Last seen` two rows away.
+A narrower window would be a sentence disagreeing with two rows on the same
+screen with nothing to tell the reader which half was wrong.
+
+**It is a real choice and not a default.** Measured 2026-08-29: taking the
+window from cyclone fixes only would silence **1,439 storms rather than 1,267**,
+so 172 storms turn on it.
+
+#### Days, not moments
+
+Two storms whose records overlap by two hours were running on the same day, and
+that is what the sentence claims. **Counting moments instead would silence 1,330
+storms rather than 1,267** — 63 storms turn on the word "day".
+
+#### The count is the peak on one day, not the whole life
+
+**482 storms, 15% of the archive, met more storms across their life than were
+ever running at once.** For those this reports the smaller and truer number. Two
+figures in one sentence was the alternative, and §57.44 already paid for what a
+second figure costs on the panel with the least room.
+
+**==> THAT FIGURE WAS FIRST PUT AT 170 BY SUBTRACTING TWO DISTRIBUTIONS RATHER
+THAN COUNTING, AND IT WAS WRONG BY A FACTOR OF THREE. <==** `CLAUDE.md`'s rule
+earning itself again: both distributions were correct and the arithmetic between
+them answered a different question. It is asserted storm by storm now.
+
+#### What the archive says
+
+| Others running at once | Storms |
+|---|---|
+| none | 1,243 measured, plus 24 one-storm seasons that answer `null` |
+| one | 1,193 |
+| two | 566 |
+| three | 177 |
+| four | 48 |
+| five | 1 |
+| six | 14 |
+
+**The sentence appears on 1,999 of 3,266 storms, 61%**, and is silent on the
+1,267 that were alone. **A measured zero and a `null` render identically and
+mean opposite things** — one storm was looked at and was alone, the other could
+not be looked at — and they are asserted separately so they cannot collapse into
+each other. The same §5 distinction `crossingsDeclined` already protects.
+
+#### It is not in `RANK_STATS`, and it cannot cheaply be
+
+§57.42 grouped this with the reach item and called both candidates for an
+archive-wide rank. **That is half wrong.** `rankStorm` is handed `facts` and
+nothing else, so a figure that cannot be read off one storm's own rows cannot be
+ranked without changing that signature. Recorded here rather than left to be
+rediscovered.
+
+#### "In the same basin", not "in the Atlantic"
+
+The archive loads one basin at a time, so an unqualified count would be a claim
+about the whole planet and would be false — the East Pacific was busy on most of
+these days too. Naming the basin means plumbing a label from `seasons/index.json`
+down to a markup function; *"the same basin"* is the wording the two §57.48
+sentences in this same section already use, costs no plumbing, and stays correct
+on the day step 13 adds basins nobody has labelled yet. **A one-word glass call
+if Aaron wants the name.**
+
+#### It does not lead with "It was not alone"
+
+That was the first wording and it lands directly under `seasonRankHtml`'s *"It
+was the only major hurricane of its season"* on the storms that get both. Two
+adjacent sentences opening `only` and `not alone` read as an argument even
+though they are about different things. Leading with the count removes the
+collision.
+
+#### It does not name the other storms
+
+**1,351 of the archive's 3,266 storms have no name at all**, so about a third of
+any list would read *"Ginger, Edith and two unnamed storms"*, and at six others
+the sentence runs longer than everything else in the section put together. The
+roster is one tap away and already lists them.
+
+#### A crash is not a caught bug, and fixing that fixed a real fault
+
+Mutation-testing the day arithmetic produced a stamp that was arithmetically
+fine and outside JavaScript's ±8.64e15 ms clock. `utcDay` in
+`ui/season-markup-bits.js` returned `null` for a non-finite stamp but **threw a
+RangeError for a finite out-of-range one** — so the suite died before it could
+report which assertion had caught the mutation.
+
+**The bug was never in the mutation.** Every section of the archive's storm
+panel formats a date through that one function, so a single corrupt stamp from
+any upstream file would have taken the whole drawer down rather than costing one
+row. Both formatters now return `null` on an unrenderable date, which is the
+rule that file already stated for every other formatter: no row means no claim,
+and the panel around it still draws.
+
+#### The gate
+
+`tools/test-season-company.mjs`, 42 assertions, walking the whole mirrored
+archive. Ten mutations were run and **all ten bite by assertion** — the seeded
+first day, a zero collapsed into `null`, a cumulative count in place of the
+peak, ties going to the later day, an exclusive day edge, a one-day window, the
+day granularity, a digit instead of a word, the basin clause deleted, and the
+singular collapsed into the plural.
+
+**One assertion is deliberately not a gate and says so in the file.** The
+archive-wide 1,330 figure is computed straight off the facts rather than through
+`seasonCompany`, so it cannot see the rule change; the synthetic case above it
+is what catches that. Both are kept and the division of labour is written down,
+because a suite that looks like it covers a rule and does not is §12's worst
+outcome.
