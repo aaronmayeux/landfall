@@ -66,7 +66,7 @@ import { DIVE, MESH_TRACK } from '../config/constants.js';
 import { lonLatToVec3 } from '../lib/geo.js';
 import { categoryColor, representativeKt } from '../lib/category.js';
 import { noCurrentReading, stormSwatch } from '../lib/lifecycle.js';
-import { bornAtOf, trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
+import { trackPointReading, windKtOf, timeMsOf } from '../lib/track-point.js';
 import { sevFromKt } from './heightfield.js';
 
 const HOUR_MS = 3600 * 1000;
@@ -311,15 +311,6 @@ function trackPoints(s, bundle, nowMs) {
    * derived path at all. */
   const peakKt = Number.isFinite(s?.peakWindKt) ? s.peakWindKt : null;
 
-  /* ==> COMPUTED ACROSS THE WHOLE TRACK, BEFORE THE WINDOW THROWS ANY OF IT
-   * AWAY. <== The loop below drops everything outside `MESH_TRACK.pastHours`,
-   * and a storm's genesis is very often outside it — Lowell formed a day
-   * before the `LO` fix that needs grading against it. Reading genesis inside
-   * the loop would therefore see `null` for exactly the storms this matters
-   * for, and their pre-genesis tail would grade as post-tropical. `feats` is
-   * ONE storm's features, which is the contract `bornAtOf` needs. */
-  const bornAt = bornAtOf(feats);
-
   const out = [];
   for (const f of feats) {
     if (f?.geometry?.type !== 'Point') continue;
@@ -343,7 +334,7 @@ function trackPoints(s, bundle, nowMs) {
     if (deltaHours < -MESH_TRACK.pastHours) continue;
     if (deltaHours > MESH_TRACK.forecastHours) continue;
 
-    const reading = trackPointReading(p, bornAt);
+    const reading = trackPointReading(p);
     /* Measured knots when the source published them — NHC at every position,
      * and GDACS wherever a JTWC forecast hour lines up (data/gdacs-points.js).
      * A measurement always wins and is never capped. */

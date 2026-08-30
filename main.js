@@ -1136,26 +1136,6 @@ function boot() {
    * `subscribeThemeChange`, which existed with none. */
   subscribeThemeChange(() => layersView.refresh());
 
-  /* ==> AND THE TRACK DOTS, BECAUSE ONE OF THEIR COLOURS IS NOW THEMED. <==
-   * §57.7g. `map/layers/points-forecast.js` BAKES `_color` onto each feature
-   * when the data lands, which was free while every value it could bake was
-   * theme-independent: Saffir-Simpson is fixed by §6, and the two hues the
-   * ported grey replaced were plain module constants.
-   *
-   * `palette().stormEnded` is not. It is bone on the night globe, near-black
-   * on the greyscale light one. Baked once and never rebuilt, a flip to light
-   * would leave every disturbance dot glowing pale on a pale sea until the
-   * next poll happened to bring fresh data — up to fifteen minutes of it.
-   *
-   * The repush is two `setData` calls on geometry already in memory. It is not
-   * `installOnStyle` and it does not touch the layer list. Every route to a
-   * palette change comes through here, including entering and leaving
-   * Seasons. */
-  subscribeThemeChange(() => {
-    pipeline.repushSelected();
-    pipeline.repushAmbient();
-  });
-
   /* Layer state drives the map, the home marker, and the detail view's
    * shortcut summary. One subscription, fired immediately at registration,
    * so the initial state applies without a separate boot call. */

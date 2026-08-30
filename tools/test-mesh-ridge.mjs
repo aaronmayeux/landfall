@@ -53,8 +53,7 @@ globalThis.THREE = {
 };
 
 const { DIVE, MESH_TRACK } = await import('../config/constants.js');
-const { CATEGORY_COLOR, HURRICANE_UNKNOWN_COLOR, PREGENESIS_COLOR } = await import('../config/tokens.js');
-const { palette } = await import('../config/theme.js');
+const { CATEGORY_COLOR, PREGENESIS_COLOR } = await import('../config/tokens.js');
 const { GENESIS_COLOR } = await import('../config/tokens.js');
 const { categoryColor } = await import('../lib/category.js');
 const { _normalizeNhcStorm } = await import('../data/nhc.js');
@@ -110,97 +109,28 @@ for (const code of ['PT', 'PTC', 'EX', 'LO', 'DB', 'WV']) {
   ok(categoryIndexOf({ stormtype: code }) === null,
      `${code} is not a Saffir-Simpson class and must stay ungraded`);
 }
-ok(trackPointReading({ stormtype: 'EX' }).index === null,
-   'an extratropical position stays ungraded — the hue it draws in is section 1c');
+ok(trackPointReading({ stormtype: 'EX' }).color === CATEGORY_COLOR.GENERIC,
+   'an extratropical position keeps the generic hue rather than borrowing one');
 
 /* ------------------------------------------------------------------ */
-section('1b. Nothing gradeable draws in ONE grey, and SIZE says which kind');
+section('1b. The START of a track is the quietest thing on it, not the loudest');
 
-/* ==> THE PALETTE AARON REJECTED ON GLASS, AND IT WAS STILL ON THE LIVE GLOBE.
- * <== §57.7g. Until 2026-08-30 this section asserted the opposite: `EX`/`PT`
- * in the brick `CATEGORY_COLOR.GENERIC` and everything else in the teal
- * `PREGENESIS_COLOR`. Both were judged wrong on the archive globe the day
- * before — the teal reads as the `TD` blue, the brick reads as a strong storm
- * — and the live globe kept them for another day. Neither system has a
- * severity to claim, so neither gets a hue that implies one.
- *
- * MEASURED on the live feed when this was written: Karina 11 `DB` of 20 past
- * points, Lowell 7 `DB` and 1 `LO` of 17. */
-const GREY = palette().stormEnded;
-
-for (const code of ['LO', 'DB', 'WV', 'PC', 'PTC', 'ZZ']) {
-  const r = trackPointReading({ stormtype: code });
-  ok(r.color === GREY, `${code} draws in the one grey, not a hue that claims a severity`);
-  ok(r.small === true, `${code} with no genesis behind it draws SMALL — it was never a storm`);
-  ok(r.code === '', `${code} with no genesis behind it draws BLANK`);
+/* THE SECOND HALF OF THE SAME BUG. Grading the codes correctly still left every
+ * PRE-CYCLONE position in the brick GENERIC — hotter than the TD blue the storm
+ * gets the moment it IS graded, so a track ran hot-to-cool in the wrong
+ * direction. Reverting the PREGENESIS branch in trackPointReading fails these. */
+for (const code of ['LO', 'DB', 'WV', 'PC', 'PTC']) {
+  ok(trackPointReading({ stormtype: code }).color === PREGENESIS_COLOR,
+     `${code} draws in the pre-genesis hue, not the brick that outshouts a depression`);
 }
-ok(trackPointReading({ stormtype: 'ZZ' }).small === true,
-   'and a code we cannot read defaults to the QUIET, SMALL reading — guessing upward is the failure that matters');
+ok(trackPointReading({ stormtype: 'ZZ' }).color === PREGENESIS_COLOR,
+   'and a code we cannot read defaults QUIET — guessing upward is the failure that matters');
 
-/* ==> MUTATION, RUN: replacing `palette().stormEnded` in trackPointReading with
- * `CATEGORY_COLOR.GENERIC` fails the colour assertions; deleting the
- * `nature === 'remnant'` test fails every `small` assertion above AND the
- * post-tropical ones below, because both rows then read the same. */
-
-/* ------------------------------------------------------------------ */
-section("1c. A former cyclone is FULL SIZE and wears the record's own letters");
-
-/* Ida did her worst after this transition and Sandy crossed New Jersey at
- * 80 kt as an `EX`. Full size is the whole point: shrinking them would say the
- * dangerous part of the storm's life was the unimportant part.
- *
- * Both spellings, because the two NHC tiers speak differently — and BOTH tiers
- * turn out to carry `stormtype`, measured on the archive branch 2026-08-30
- * (Karina's tau 48 is `stormtype: "MH"` AND `tcdvlp: "Major Hurricane"`). */
-for (const p of [{ stormtype: 'EX' }, { stormtype: 'PT' }, { tcdvlp: 'Post-Tropical Cyclone' }]) {
-  const r = trackPointReading(p, 0);
-  ok(r.color === GREY, 'a post-tropical position is grey like every other non-cyclone');
-  ok(r.small === false, 'a post-tropical position is FULL SIZE — it was a storm, and often still lethal');
-  ok(r.code === 'EX', "and it wears the record's own two letters");
-}
-
-/* ==> `LO` IS ON BOTH ROWS, WHICH IS WHY THE SPLIT IS BY SEQUENCE AND NOT BY
- * CODE. <== Lowell, live 2026-08-30, carries an `LO` fix at 18Z on 26 August,
- * a full day BEFORE her first `TS`. Graded without a genesis time she would
- * wear post-tropical letters on a system that had never been a storm. */
-const loPt = (dtg) => ({ stormtype: 'LO', dtg });
-const bornMs = Date.UTC(2026, 7, 27, 18);
-ok(trackPointReading(loPt(2026082618), bornMs).small === true,
-   'an LO from BEFORE genesis is small and blank — Lowell, measured');
-ok(trackPointReading(loPt(2026082618), bornMs).code === '',
-   'and it says nothing, because there is nothing to say about it');
-ok(trackPointReading(loPt(2026083000), bornMs).small === false,
-   'an LO from AFTER genesis is full size — it is a remnant of something');
-ok(trackPointReading(loPt(2026083000), bornMs).code === 'LO',
-   'and it wears LO');
-ok(trackPointReading(loPt(2026083000)).small === true,
-   'with NO genesis known, an LO reads small — quiet is the right way to be wrong');
-
-/* ==> MUTATION, RUN: passing `bornAt` through as a constant `null` in
- * points-forecast.js leaves the two after-genesis assertions failing; hard-
- * coding it to `0` leaves the two before-genesis ones failing. A test that
- * only checked the code table would have passed both mutations. */
-
-/* ------------------------------------------------------------------ */
-section('1d. A hurricane that did not grade is still a hurricane');
-
-/* ==> THE ONE WAY THE PORT COULD HAVE PUT A GREY DOT ON A MAJOR HURRICANE.
- * <== `MH` is measured live (spec-parameter §29.3; Karina tau 48 and 60,
- * 2026-08-30) and it always ships with `ssnum`, so `categoryIndexOf` answers
- * first and this branch never runs today. It exists for the day one stops.
- * Without the `isCycloneStatus` gate in trackPointReading, an `HU` or `MH`
- * with no `ssnum` falls into the grey below it and a Cat 3 draws as a remnant. */
-for (const code of ['HU', 'MH', 'TY', 'ST']) {
-  const r = trackPointReading({ stormtype: code });
-  ok(r.color === HURRICANE_UNKNOWN_COLOR,
-     `${code} with no ssnum is hurricane-strength-unknown, NOT grey`);
-  ok(r.small === false, `${code} is never drawn small`);
-}
-ok(trackPointReading({ stormtype: 'MH', ssnum: 3 }).color === categoryColor(4, 'tropical'),
-   'and an MH that DOES carry its number grades normally, as every live one does');
-
-/* ==> MUTATION, RUN: deleting the `isCycloneStatus` gate turns all eight
- * assertions above grey-and-small. */
+/* The exception, and it is the one that matters most: Ida did her worst after
+ * this transition. Both spellings, because the two layers speak differently. */
+ok(trackPointReading({ stormtype: 'PT' }).color === CATEGORY_COLOR.GENERIC &&
+   trackPointReading({ tcdvlp: 'Post-Tropical Cyclone' }).color === CATEGORY_COLOR.GENERIC,
+   'a post-tropical cyclone keeps the hue that holds the eye, in code AND in words');
 
 /* ONE VALUE, TWO NAMES. The pre-genesis hue IS the genesis outlook's middle
  * step, assigned rather than retyped, so the app cannot end up with two answers

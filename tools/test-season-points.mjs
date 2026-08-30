@@ -135,7 +135,7 @@ const fixesOf = (map) => map.data().features.filter((f) => f.properties.kind ===
    * stops being `pointRadius` the two globes have drifted, whatever the other
    * arm says. */
   eq('a fix is a forecast dot\'s radius', fix['circle-radius'], [
-    'case', ['get', '_small'], STORM_GEO.remnantPointRadius, STORM_GEO.pointRadius,
+    'case', ['get', '_small'], ARCHIVE_GEO.remnantPointRadius, STORM_GEO.pointRadius,
   ]);
   ok('and the expression reads feature data only, never global state — rule 1b',
     !JSON.stringify(fix['circle-radius']).includes('global-state'));

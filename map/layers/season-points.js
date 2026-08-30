@@ -417,7 +417,7 @@ export function ensureSeasonPoints(map, beforeId) {
          * rule 1b forbids. A system that was never a storm draws small and
          * blank; a cyclone and a post-tropical system both draw full size. */
         'circle-radius': [
-          'case', ['get', '_small'], STORM_GEO.remnantPointRadius, STORM_GEO.pointRadius,
+          'case', ['get', '_small'], ARCHIVE_GEO.remnantPointRadius, STORM_GEO.pointRadius,
         ],
         'circle-color': ['get', 'color'],
         /* NO FOCUS EXPRESSION ON THESE, and it is not an omission. A fix only

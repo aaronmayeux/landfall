@@ -857,7 +857,7 @@ why, and the lever is a second dimmer token rather than the size.
 
 **==> SIZE CARRIES "WAS THIS EVER A STORM". <== Aaron's call.**
 
-| never a cyclone — `DB`, `WV`, `LO` before genesis | `STORM_GEO.remnantPointRadius`, **blank** |
+| never a cyclone — `DB`, `WV`, `LO` before genesis | `ARCHIVE_GEO.remnantPointRadius`, **blank** |
 | was a cyclone — `EX`, `LO` after genesis | `STORM_GEO.pointRadius`, **lettered** |
 
 **`LO` IS ON BOTH ROWS AND THAT IS THE WHOLE REASON THE SPLIT IS NOT BY CODE.**
@@ -899,98 +899,14 @@ feature data only and a test asserts there is no `global-state` in it.
 grey, the two sizes and the letters are all accepted, on the sepia archive globe
 and at phone width. Do not reopen the colour or the split without new evidence.
 
-**THE LIVE GLOBE FOLLOWED IN §57.7h**, the next day. Both globes now answer this
-question with one function.
-
-### 57.7h The same grey on the live globe
-
-**Aaron, 2026-08-30, after asking whether §57.7f and §57.7g needed porting:
-*"Just do the gray dot port."*** They did. The live globe was running the exact
-palette he had rejected on glass the day before.
-
-**==> THIS WAS NOT A COSMETIC GAP. <==** `lib/track-point.js` painted `EX` and
-`PT` in the brick `CATEGORY_COLOR.GENERIC` and every other ungradeable code in
-the teal `PREGENESIS_COLOR` — the two hues §57.7g exists to replace. **Measured
-off the archive branch the morning of the port: Karina carried 11 `DB` fixes of
-20 past points, Lowell 7 `DB` and 1 `LO` of 17.** More than half of one live
-storm's drawn history was in the rejected teal.
-
-**WHAT MOVED.** `trackPointReading` now translates the live feeds' vocabulary
-into the record's and asks `lib/season-nature.js` — the same `natureAt` the
-archive globe asks. The three readings, the one grey, the two sizes and the
-letters are §57.7f and §57.7g unchanged; only the road in is new.
-
-| never a cyclone — `DB`, `WV`, `PTC`, `LO` before genesis | `STORM_GEO.remnantPointRadius`, **blank** |
-| was a cyclone — `EX`, `PT`, `LO` after genesis | `STORM_GEO.pointRadius`, **lettered** |
-| hurricane with no `ssnum` — `HU`, `MH`, `TY`, `ST` | `HURRICANE_UNKNOWN_COLOR`, full size |
-
-**THE THIRD ROW IS THE ONE THAT COULD HAVE PUT A GREY DOT ON A MAJOR
-HURRICANE.** Grading falls through to the nature test only when the source
-published no Saffir-Simpson number, and without an `isCycloneStatus` gate an
-`HU` would land in the grey below it. No live feed omits `ssnum` today. The gate
-is there for the day one does.
-
-**==> `bornAt` IS A WHOLE-TRACK FACT AND BOTH LIVE CALLERS COMPUTE IT BEFORE
-THEY FILTER ANYTHING. <==** `LO` sits on two rows, so the split is by sequence.
-**Lowell is the live proof: an `LO` fix at 18Z on 26 August, a full day before
-her first `TS`.** `map/storm-mesh.js` computes it before its time window drops
-the storm's early life, and `map/layers/points-forecast.js` computes it **per
-storm** — the ambient source holds every live storm in one FeatureCollection,
-and a collection-wide genesis would grade a young storm's disturbance against an
-older storm's birthday. That is `stampFirst`'s original bug in a second costume,
-and it is tested in the suite that owns it.
-
-**==> THE PORT ADDED THE FIRST THEME-DEPENDENT COLOUR THIS READING HAS EVER
-PRODUCED, AND THAT NEEDED A WIRE. <==** `points-forecast.js` bakes `_color` onto
-each feature when data lands. That was free while every bakeable value was
-theme-independent — Saffir-Simpson is fixed by §6, and the two replaced hues
-were module constants. `palette().stormEnded` is bone on the night globe and
-near-black on the greyscale light one. **`main.js` now repushes both point
-sources on `subscribeThemeChange`**, or a flip to light would leave every
-disturbance dot glowing pale on a pale sea until the next poll — up to fifteen
-minutes.
-
-**`remnantPointRadius` MOVED FROM `ARCHIVE_GEO` TO `STORM_GEO`.** It is 60% of
-`pointRadius` and it is the same claim about the same kind of dot on both
-globes. Two copies is how a live remnant and an archive one come to be different
-sizes for no reason anyone remembers.
-
-**WHAT THE PORT DOES NOT REACH: GDACS AND JTWC STORMS.** Measured on Dolly's
-live GDACS payload, 2026-08-30 — her seven track points carry **no status column
-at all**, only a `severitydata.severitytext`, and **all seven carry the same
-value**. GDACS stamps one event-level severity across a whole track and grades
-no individual fix. There is nothing for `recordStatusOf` to read, so a GDACS
-pre-genesis point is unchanged by this pass. That is a data limit, not an
-omission, and no amount of porting closes it.
-
-**TWO CORRECTIONS THE PORT'S AUDIT TURNED UP.**
-
-1. **NHC's forecast points carry `stormtype` as a code, not only `tcdvlp` as
-   words.** Karina's tau 48 is `stormtype: "MH"` *and* `tcdvlp: "Major
-   Hurricane"` on one feature. `lib/track-point.js` preferred the words on the
-   belief the forecast tier had nothing else; it prefers the code now, so one
-   exact-match table answers both tiers and the word search is a fallback.
-2. **`PTC` is *Potential* Tropical Cyclone — pre-genesis, the opposite of
-   post-tropical.** `config/constants.js` `postTropicalStatuses` called `PT` and
-   `PTC` "NHC's other spellings" of one thing. Nothing shipped wrong from it,
-   because `PTC` was unlisted either way and fell through to the correct answer,
-   but it is the kind of wrong note that gets acted on later. Corrected in both
-   files.
-
-**`SEASONS.cycloneStatuses` AND `postTropicalStatuses` WERE NOT WIDENED, AND
-THAT IS DELIBERATE.** They are the archive's constants and the landfall walk
-reads them. **Measured: HURDAT2 contains exactly nine status codes across all
-3,266 storms — `TS`, `HU`, `TD`, `EX`, `LO`, `SS`, `DB`, `SD`, `WV` — and no
-others.** Adding live-only codes there would have been provably inert on the
-archive and still wrong in kind: the live side translates on the way in instead,
-and the rule downstream stays one rule.
-
-**NOT YET CONFIRMED ON GLASS.** The size split is the open question: on the
-archive a shrunken tail sits on a finished track, and on the live globe it sits
-beside a moving forecast cone, where a thinned past may read as unimportant
-exactly where the reader is judging where the storm came from. **The lever is
-one number — `STORM_GEO.remnantPointRadius` set to `10` retires the size split
-without touching anything else.**
+**THE LIVE GLOBE DOES NOT MOVE THIS PASS. Aaron's call — option 3 of three.**
+Its pre-genesis fixes keep `PREGENESIS_COLOR`, so the two globes now answer one
+question two ways, which is precisely the split that produced §57.7f's bug.
+**That was deliberate and it is temporary**: judging a new grey against 175
+years of settled archive costs nothing, and moving the live globe is a second
+glass call on a day with real storms on it. **The grey is now judged, so the
+condition is met and the second pass is unblocked** — it is under `NOW.md` as
+the one piece of real work left behind this feature.
 
 ### 57.8 What HURDAT2 does not contain, at all
 
