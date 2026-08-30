@@ -78,15 +78,18 @@ const { rankingsFileName } = await import('../lib/rankings.js');
 const { landfallFileName, placesFileName } = await import('../lib/seasons-sidecar.js');
 const { SEASONS } = await import('../config/constants.js');
 const { createSeasonDetailView } = await import('../ui/view-season-detail.js');
-/* ==> TWO MODULES BEHIND ONE HANDLE, BECAUSE THE RANK SECTIONS MOVED AND THE
- * ASSERTIONS ABOUT THEM DID NOT NEED TO. <== SPEC.md §12, §57.44. The archive
- * ranking section put `season-detail-markup.js` 124 lines over the ceiling, so
- * `ordinal`, `seasonRankHtml` and `archiveRankHtml` were lifted into
- * `season-rank-markup.js` with no behaviour change. Merging them here keeps
- * this suite's subject "everything the panel draws" rather than "one file",
- * which is what it was always testing. */
+/* ==> THREE MODULES BEHIND ONE HANDLE, BECAUSE THE PANEL'S RENDERERS HAVE MOVED
+ * TWICE AND THE ASSERTIONS ABOUT THEM DID NOT NEED TO. <== SPEC.md §12,
+ * §57.44, §57.57. The archive ranking section put `season-detail-markup.js`
+ * 124 lines over the ceiling, so `ordinal`, `seasonRankHtml` and the rank
+ * renderers were lifted into `season-rank-markup.js`; §57.57 then took
+ * `movementHtml` and `windFieldHtml` out to `season-track-markup.js` for the
+ * same reason. Merging them here keeps this suite's subject "everything the
+ * panel draws" rather than "one file", which is what it was always testing —
+ * and it is why neither move needed a single assertion rewritten. */
 const M = {
   ...await import('../ui/season-detail-markup.js'),
+  ...await import('../ui/season-track-markup.js'),
   ...await import('../ui/season-rank-markup.js'),
 };
 

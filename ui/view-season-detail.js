@@ -53,9 +53,16 @@ import { storyClauses } from '../lib/season-story.js';
  * directory (§12), so the pure story module takes the answer as an argument. */
 import { retirementFor } from '../data/retired-lookup.js';
 import {
-  changeHtml, headHtml, landfallsHtml, lifeHtml, movementHtml, noStormHtml,
-  peakHtml, reportHtml, storyHtml, windFieldHtml,
+  changeHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml,
+  peakHtml, reportHtml, storyHtml,
 } from './season-detail-markup.js';
+/* ==> `Where it went` LIVES NEXT DOOR. <== SPEC.md §12, §57.57.
+ * `ui/season-detail-markup.js` was 711 lines against the ~700 ceiling and
+ * §57.54k required the cut before any of step 3's restructuring landed there.
+ * The seam is the subject §57.54f already drew: everything left in the old
+ * file is about how strong a storm was, and these two are about the ground it
+ * covered. */
+import { movementHtml, windFieldHtml } from './season-track-markup.js';
 /* ==> THE TWO RANK SECTIONS LIVE NEXT DOOR. <== SPEC.md §12. They are the only
  * renderers on this panel that take a comparison rather than a fact, and they
  * were the 126 lines that put `season-detail-markup.js` over the ceiling. */

@@ -8829,10 +8829,58 @@ agency, one set of instruments, one span of coverage — and it is what the row
 states first, so the bar follows the front of the sentence. **The alternative
 is barring the `all` ladder instead, and it is a swap rather than a rewrite.**
 
-**`ui/season-detail-markup.js` IS AT 711 LINES**, over §12's ceiling, from
-§57.55a's comments. Step 2 does not touch that file so it is not blocking, but
-**the cut §57.54k scheduled inside step 3 now has to happen before anything
-else lands there.**
+**`ui/season-detail-markup.js` WENT INTO STEP 3 AT 711 LINES**, over §12's
+ceiling, from §57.55a's comments. Step 2 did not touch that file, so it was
+never blocking — and §57.57a records the cut being taken as step 3's first
+commit, which is what §57.54k required.
+
+### 57.57 Step 3 — the merged row — as built
+
+**§57.54k step 3.** Every ranked figure now lives in exactly one place on the
+panel: the row that already printed it. `Where it ranks` is deleted as a
+section, its rank sentences and its distribution bars drop under the figures
+they describe, and the scope note becomes one footnote governing the whole
+panel.
+
+**==> THIS IS THE GO / NO-GO STEP AND §57.54k SAYS SO. <==** If the merged row
+reads as four things rather than one, steps 5 to 7 do not start.
+
+#### 57.57a The cut came first, and it was the whole first commit
+
+**§57.54k required the cut to be the FIRST commit of this step rather than
+something promised inside it**, and `NOW.md` records exactly why: it names
+`ui/view-seasons-board.js` crossing §12's ceiling on five consecutive passes
+with the cut promised each time and taken later at a bigger size.
+`ui/season-detail-markup.js` went into this step at **711 lines** against the
+~700 ceiling, having crossed it on §57.55a's comments.
+
+**==> THE SEAM WAS ALREADY DRAWN BY THE PLAN, WHICH IS WHY IT DID NOT HAVE TO
+BE ARGUED. <==** §57.54f's step 7 table merges `How it moved` and
+`Wind footprint` into one section called `Where it went`. So `movementHtml` and
+`windFieldHtml` moved together, to `ui/season-track-markup.js` (219 lines),
+leaving 529 behind.
+
+**THE BOUNDARY IS THE SUBJECT, NOT THE LINE COUNT.** Everything left in
+`ui/season-detail-markup.js` is about how STRONG a storm was and what it did —
+its peak, its life, its landfalls, how it changed, what NOAA wrote. The two
+that left are about the GROUND it covered: how far, how fast, and how much of
+it ever felt tropical-storm wind. **Neither of them reads a wind speed and
+neither knows a category exists**, which is the test that made the cut obvious
+rather than arguable. `formatDistance` and `formatSpeed` went with them and are
+imported nowhere else on the panel.
+
+**==> AND IT WAS TAKEN AHEAD OF THE STEP THAT NEEDED IT, NOT INSIDE IT. <==**
+`movementHtml` gains a rank and a bar in the very next commit. Moving a file
+and changing what it says in one push means a break could be either, which is
+`CLAUDE.md`'s slicing rule at the size of one function. The move carried no
+behaviour, deliberately.
+
+**THE PROOF THAT IT CARRIED NONE IS THAT NO ASSERTION MOVED WITH IT.**
+`tools/test-season-detail.mjs` merges the panel's markup modules behind one
+handle, because its subject was always *everything the panel draws* rather than
+one file — so the whole cut cost that suite three lines of import and **184
+assertions passed on both sides of it without one of them being rewritten.**
+That merge was made for §57.44's cut and paid for itself here.
 
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 

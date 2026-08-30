@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 375 numbered headings.
+Covering 11 files, 377 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -385,13 +385,15 @@ real home is the other row carrying the same section number.
 | `57.56f` | &nbsp;&nbsp;&nbsp;&nbsp;Two tokens, and why the mark is not the focus ring | `SPEC-SEASONS-BUILD.md` | 8781-8800 |
 | `57.56g` | &nbsp;&nbsp;&nbsp;&nbsp;Three mutation runs, and one of them found a hole in the suite | `SPEC-SEASONS-BUILD.md` | 8801-8822 |
 | `57.56h` | &nbsp;&nbsp;&nbsp;&nbsp;What is expected to come back wrong, flagged before glass | `SPEC-SEASONS-BUILD.md` | 8823-8836 |
-| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 8837-8891 |
-| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 8892-8901 |
-| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 8902-8921 |
-| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 8922-8947 |
-| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 8948-8959 |
-| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 8960-8974 |
-| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 8975-9022 |
+| `57.57` | &nbsp;&nbsp;Step 3 — the merged row — as built | `SPEC-SEASONS-BUILD.md` | 8837-8847 |
+| `57.57a` | &nbsp;&nbsp;&nbsp;&nbsp;The cut came first, and it was the whole first commit | `SPEC-SEASONS-BUILD.md` | 8848-8884 |
+| `57.63` | &nbsp;&nbsp;The distribution bar's mark failed contrast on the archive panel | `SPEC-SEASONS-BUILD.md` | 8885-8939 |
+| `57.64` | &nbsp;&nbsp;The distribution bar, restyled to the mockup | `SPEC-SEASONS-BUILD.md` | 8940-8949 |
+| `57.64a` | &nbsp;&nbsp;&nbsp;&nbsp;The baseline and its end ticks were the substance of it | `SPEC-SEASONS-BUILD.md` | 8950-8969 |
+| `57.64b` | &nbsp;&nbsp;&nbsp;&nbsp;The storm's own figure, printed on the bar | `SPEC-SEASONS-BUILD.md` | 8970-8995 |
+| `57.64c` | &nbsp;&nbsp;&nbsp;&nbsp;What was taken from the mockup and what was not | `SPEC-SEASONS-BUILD.md` | 8996-9007 |
+| `57.64d` | &nbsp;&nbsp;&nbsp;&nbsp;Two assertions moved with the geometry, and one of them mattered | `SPEC-SEASONS-BUILD.md` | 9008-9022 |
+| `57.65` | &nbsp;&nbsp;A one-pixel seam between the bar's columns | `SPEC-SEASONS-BUILD.md` | 9023-9070 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -407,8 +409,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 515,034 | 114 |
+| `SPEC-SEASONS-BUILD.md` | 517,740 | 116 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 190,800 | 15 |
+| `SPEC.md` | 190,785 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 
