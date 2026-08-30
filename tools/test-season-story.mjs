@@ -402,6 +402,91 @@ section('EVERY STORM IN THE ARCHIVE GETS A PARAGRAPH, INCLUDING 1851');
 }
 
 /* ------------------------------------------------------------------------- */
+section('THE NAME — §57.52, and it speaks only when the answer is yes');
+{
+  const { retirementClauses } = (await import('../lib/season-story.js')).__internals;
+  const { retirementFor } = await import('../data/retired-lookup.js');
+
+  /* Driven through the REAL lookup on a real fixture, so the join and the
+   * wording are proven together rather than each against a stub of the other. */
+  const ida = one('al092021');
+  const idaPara = para('al092021', { retirement: retirementFor(ida.name, ida.year, ida.basin) });
+  ok(/The name IDA was retired after this storm and will never be used again\.$/.test(idaPara),
+    `Ida 2021 closes on its retirement. Got: ${idaPara}`);
+
+  /* ==> AND THE PARAGRAPH IS UNCHANGED WITHOUT IT. <== The clause is the last
+   * thing in the paragraph and every other clause has to be identical with and
+   * without it, or this pass moved something it was not asked to move. */
+  const without = story('al092021');
+  const withIt = story('al092021', { retirement: retirementFor(ida.name, ida.year, ida.basin) });
+  ok(withIt.length === without.length + 1, `exactly one clause is added. Got ${withIt.length} vs ${without.length}`);
+  ok(without.every((s, i) => s === withIt[i]), 'and nothing above it changed');
+
+  /* ==> A STORM WHOSE NAME IS STILL IN SERVICE SAYS NOTHING. <== §5. There is
+   * no negative sentence and there must not be one: below a basin's floor
+   * nothing separates "not retired" from "never assessed", so silence is what
+   * keeps the app from stating a thing it cannot stand behind. */
+  const hugo = one('al111989');
+  const sandy = one('al182012');
+  ok(retirementClauses(null, 'ANYNAME').length === 0, 'no retirement, no clause');
+  /* ==> JEANNE 2004 IS RETIRED AND STILL GETS NOTHING WITHOUT A LOOKUP. <==
+   * The clause is driven ENTIRELY by the injected fact, never by the storm —
+   * which is what keeps `lib/season-story.js` pure and keeps one join in one
+   * place. A story module that reached for the list itself would be a second
+   * join to drift. */
+  ok(!/retired/.test(para('al112004')), 'a storm with no retirement passed in says nothing');
+  ok(!!retirementFor('JEANNE', 2004, 'AL'), 'even though Jeanne 2004 is genuinely retired');
+  ok(!!retirementFor(hugo.name, hugo.year, hugo.basin), 'Hugo 1989 IS retired (control)');
+  ok(!!retirementFor(sandy.name, sandy.year, sandy.basin), 'Sandy 2012 IS retired (control)');
+
+  /* ==> THE GREEK PAIR. TWO SENTENCES, AND NEITHER SAYS THE NAME WAS RETIRED.
+   * <== §57.51. No Eta or Iota fixture exists, so the shape is driven directly
+   * — the join itself is proven against the real archive in
+   * `tools/test-retired-lookup.mjs`. */
+  const greek = retirementClauses({ kind: 'description', datedToThisStorm: true }, 'ETA');
+  ok(greek.length === 2, `the Greek case is two sentences. Got ${greek.length}`);
+  ok(/^ETA was retired after this storm\.$/.test(greek[0]), `first sentence. Got: ${greek[0]}`);
+  ok(!/The name ETA was retired/.test(greek.join(' ')),
+    '==> AND IT MUST NOT SAY THE NAME WAS RETIRED. <== The letter was not '
+    + 'withdrawn as a name; the alphabet was abolished. §57.51.');
+  ok(/no longer used for storm names/.test(greek[1]) && /the storm and its year/.test(greek[1]),
+    `second sentence explains why. Got: ${greek[1]}`);
+  ok(!/never be used again/.test(greek.join(' ')),
+    'and it never borrows the ordinary sentence, which is false for these two');
+
+  /* ==> AN UNCERTAIN YEAR DROPS THE CLAUSE CARRYING IT RATHER THAN HEDGING.
+   * <== §57.41's rule applied to a fact. Carol was retired, brought back and
+   * retired again; the name IS withdrawn and WHICH storm earned it is not
+   * settled, so `after this storm` goes and nothing is softened in its place. */
+  const unsure = retirementClauses({ kind: 'name', datedToThisStorm: false }, 'CAROL');
+  ok(unsure.length === 1 && /^The name CAROL was retired and will never be used again\.$/.test(unsure[0]),
+    `the undated version. Got: ${unsure[0]}`);
+  ok(!/after this storm/.test(unsure[0]), 'the year clause is dropped');
+  ok(!/(probably|possibly|may have|thought to|appears)/i.test(unsure[0]),
+    '==> AND NOT SOFTENED. <== §57.41 drops a clause it cannot back; it does not hedge it.');
+
+  /* An unnamed storm cannot have had a name withdrawn, and the paragraph's
+   * `This storm` fallback must never end up inside this sentence as if it were
+   * a name. */
+  ok(retirementClauses({ kind: 'name', datedToThisStorm: true }, null).length === 0,
+    'no name, no clause');
+  ok(retirementClauses({ kind: 'name', datedToThisStorm: true }, '').length === 0,
+    'and an empty name is the same answer');
+
+  /* ==> THE EM DASH BAN REACHES THE NEW CLAUSE TOO. <== §57.41. Every branch,
+   * not just the one a fixture happens to take. */
+  const branches = [
+    retirementClauses({ kind: 'name', datedToThisStorm: true }, 'KATRINA'),
+    retirementClauses({ kind: 'name', datedToThisStorm: false }, 'CAROL'),
+    retirementClauses({ kind: 'description', datedToThisStorm: true }, 'IOTA'),
+  ].flat();
+  ok(branches.length === 4, `all three branches produce sentences. Got ${branches.length}`);
+  ok(!branches.some((s) => /[—–]|undefined|NaN|null/.test(s)),
+    `no clause carries an em dash or an unresolved figure. Got: ${branches.join(' ')}`);
+  ok(branches.every((s) => /\.$/.test(s.trim())), 'and every one ends as a sentence');
+}
+
+/* ------------------------------------------------------------------------- */
 console.log(`\n  ${pass} passed, ${failures.length} failed`);
 for (const f of failures) console.log(`    FAIL  ${f}`);
 process.exit(failures.length ? 1 : 0);

@@ -20,7 +20,8 @@
 import { readFileSync } from 'node:fs';
 
 import { SEASONS } from '../config/constants.js';
-import { ACE, CAT, DAYS, LANDFALL, PRESSURE_MB, aggregate, rowsFor, stormRow } from '../lib/wall-index.js';
+import { ACE, CAT, DAYS, LANDFALL, NAME, PRESSURE_MB, aggregate, rowsFor, stormRow } from '../lib/wall-index.js';
+import { retiredPredicateFor } from '../data/retired-lookup.js';
 import {
   CATEGORY_INDEXES, categoriesNarrowed, emptyFilter, eraSplit, filterPhrase,
   isFiltered, isTimeline, keepFor, sortFigure, sortRows, sortValue,
@@ -89,7 +90,16 @@ section('2. Each filter selects what it says it selects');
 const atl = wall.basins.atlantic.years;
 const allStorms = Object.values(atl).flat();
 
-const survives = (f) => allStorms.filter(keepFor(f) || (() => true));
+/* ==> THE YEAR IS PASSED EXPLICITLY, EVEN WHERE NO FILTER READS IT. <==
+ * `allStorms` is flattened across seasons and `Array.filter` would hand the
+ * predicate an ARRAY INDEX as the second argument — which is the exact bug the
+ * retired chip would have shipped with. Nothing here uses the year, and it is
+ * still passed as `null` rather than left to chance, so this helper cannot
+ * quietly model the wrong call shape for the next person who copies it. */
+const survives = (f) => {
+  const keep = keepFor(f);
+  return keep ? allStorms.filter((s) => keep(s, null)) : allStorms.slice();
+};
 
 eq('Category 5 selects exactly the Cat 5 storms',
   survives(catFilter(CAT5)).length,
@@ -442,6 +452,120 @@ for (const basin of Object.keys(wall.basins)) {
    * asserted too — some storms came ashore and some did not. */
   ok(`${basin}: marks are some of the dots rather than all of them (${marks} of ${dots})`,
     marks > 0 && marks < dots);
+}
+
+
+/* ---------------------------------------------------------------------------
+ * 11. THE RETIRED CHIP. §57.52
+ *
+ * MUTATION RUN: `rowsFor` reverted to `list.filter(keep)`, which hands the
+ * predicate an array index where it expects a year. Red — the chip matched a
+ * handful of storms at random instead of 100.
+ * ------------------------------------------------------------------------- */
+section('11. The retired chip joins on name AND year, or it marks the wrong storms');
+
+const RETIRED = { ...emptyFilter(), retired: true };
+
+ok('the retired chip alone counts as filtered', isFiltered(RETIRED));
+ok('and an empty filter has it off', emptyFilter().retired === false);
+
+/* ==> WITH NO INDEX INJECTED THE CHIP MATCHES NOTHING. <== §12 keeps this file
+ * out of `data/`, so the join arrives from the view. The honest failure for a
+ * missing index is an empty wall — loud — rather than every storm marked. */
+{
+  const keep = keepFor(RETIRED);
+  eq('no index means no matches, rather than everything',
+    Object.entries(atl).flatMap(([y, l]) => l.filter((s) => keep(s, Number(y)))).length, 0);
+}
+
+/* Against the real archive, both basins, through the real lookup. */
+for (const [basin, want] of [['atlantic', 100], ['epacific', 22]]) {
+  const isRetired = retiredPredicateFor(basin);
+  const keep = keepFor(RETIRED, { isRetired });
+  const years = wall.basins[basin].years;
+
+  const hits = Object.entries(years).flatMap(([y, l]) => l.filter((s) => keep(s, Number(y))));
+  eq(`${basin}: the chip selects ${want} storms`, hits.length, want);
+  ok(`${basin}: and every one of them has a name`, hits.every((s) => !!s[NAME]));
+
+  /* ==> THE ASSERTION THAT ACTUALLY MATTERS. <== A name-only join is the
+   * plausible wrong implementation and it reads perfectly. This proves the two
+   * answers differ, so a regression to name-only cannot pass. */
+  const names = new Set(hits.map((s) => s[NAME]));
+  const nameOnly = Object.values(years).flat().filter((s) => s[NAME] && names.has(s[NAME]));
+  ok(`${basin}: a name-only join would take ${nameOnly.length}, not ${hits.length}`,
+    nameOnly.length > hits.length);
+
+  /* ==> AND THE ROWS OBEY FILTER-FIRST-THEN-RECOMPUTE. <== §57.36. Every
+   * per-row figure has to be derived over the retired storms alone, not over
+   * the season they came from. */
+  const rows = rowsFor(wall, basin, keep);
+  ok(`${basin}: every surviving row's figures are computed over the retired storms only`,
+    rows.every((r) => r.shown.length <= r.total
+      && r.landfalls === r.shown.filter((s) => s[LANDFALL]).length));
+  eq(`${basin}: and the rows hold exactly the ${want} storms`,
+    rows.reduce((n, r) => n + r.shown.length, 0), want);
+}
+
+/* ==> IDA IS THE WHOLE POINT, SO IT IS ASSERTED ON THE ROWS AND NOT ONLY IN
+ * THE LOOKUP'S OWN SUITE. <== 2021 in, 2009 out, on the screen that draws them. */
+{
+  const keep = keepFor(RETIRED, { isRetired: retiredPredicateFor('atlantic') });
+  const rows = rowsFor(wall, 'atlantic', keep);
+  const rowFor = (y) => rows.find((r) => r.year === y);
+  ok('2021 keeps Ida', rowFor(2021).shown.some((s) => s[NAME] === 'IDA'));
+  ok('and 2009 keeps nothing named Ida', !rowFor(2009).shown.some((s) => s[NAME] === 'IDA'));
+}
+
+/* ==> THE CHIP STACKS WITH THE OTHERS RATHER THAN REPLACING THEM. <== */
+{
+  const isRetired = retiredPredicateFor('atlantic');
+  const both = keepFor({ ...RETIRED, landfall: true }, { isRetired });
+  const hits = Object.entries(atl).flatMap(([y, l]) => l
+    .filter((s) => both(s, Number(y)))
+    .map((s) => [s, Number(y)]));
+  /* Computed off the shipped file, not carried over from the cross-basin
+   * figure: 98 of the Atlantic's 100 retired storms came ashore, and 11 of the
+   * Pacific's 22. Adding those gives the 109 of 122 that sized the mark, and
+   * putting the wrong one of the three here is exactly the fluent wrong number
+   * CLAUDE.md is about. */
+  eq('retired AND landfalling is 98 of the 100', hits.length, 98);
+  ok('and every one satisfies both filters',
+    hits.every(([s, y]) => s[LANDFALL] === 1 && isRetired(s[NAME], y)));
+}
+
+/* The words under the wall, which is the only thing that tells an over-filtered
+ * wall from a broken one. */
+eq('the phrase names the retired chip',
+  filterPhrase(RETIRED, { catLabel: catProse }), 'retired storm');
+eq('and reads as one clause with the landfall toggle',
+  filterPhrase({ ...RETIRED, landfall: true }, { catLabel: catProse }), 'retired landfalling storm');
+eq('and with a category and a threshold',
+  filterPhrase({ ...RETIRED, cats: new Set([CAT5]), minDays: 10 }, { catLabel: catProse }),
+  'retired Category 5 lasting 10 days or more');
+
+section('12. The retired bar is on the storms whose names went, and only those');
+
+/* ==> SAME LESSON AS THE LANDFALL TRIANGLE ABOVE: READ THE MARKUP. <== The
+ * triangle shipped written onto every dot and 72 assertions passed over it,
+ * because none of them looked at the strip. This looks. */
+for (const basin of Object.keys(wall.basins)) {
+  const isRetired = retiredPredicateFor(basin);
+  const rows = rowsFor(wall, basin);
+  let dots = 0; let bars = 0; let want = 0;
+  for (const row of rows) {
+    const html = stripHtml(row.shown, (n) => isRetired(n, row.year));
+    dots += (html.match(/<i /g) || []).length;
+    bars += (html.match(/ data-ret/g) || []).length;
+    want += row.shown.filter((s) => isRetired(s[NAME], row.year)).length;
+  }
+  eq(`${basin}: a bar for every retired storm, and no others`, bars, want);
+  ok(`${basin}: bars are some of the dots rather than all of them (${bars} of ${dots})`,
+    bars > 0 && bars < dots);
+  /* With no predicate at all, no dot carries a bar — the same honest failure
+   * the filter makes, on the surface that draws it. */
+  const bare = rows.map((r) => stripHtml(r.shown)).join('');
+  eq(`${basin}: no predicate, no bars`, (bare.match(/ data-ret/g) || []).length, 0);
 }
 
 console.log(`\ntest-wall-filter: ${passed} passed, ${failures.length} failed`);
