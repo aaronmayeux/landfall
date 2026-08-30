@@ -1440,12 +1440,27 @@ Katrina and Harvey are the comparison — Harvey's 34 kt footprint is still
 deliberately TWO shapes, because NOAA published no ring across his remnant
 days, and that gap is a fact rather than a seam.
 
-**TWO STORMS STILL SHOW A SEAM AND THEY ARE NAMED: Grace 2009 and Wanda 2021.**
-Wanda's two 34 kt pieces cross each other 30 times, the union walk lost area,
-and the containment guard refused it rather than shipping a band missing
-ground. They draw as separate pieces with a console warning. Hardening the walk
-for that is real clipper work and is not priced — **worth a look on glass to
-decide whether two storms in 175 years is worth it.**
+**==> AARON CONFIRMED ON GLASS 2026-08-30: EVERY STORM READ WELL EXCEPT GRACE
+2009 AND WANDA 2021. BOTH ARE FIXED. <==** The merge was rewritten from a
+vertex walk with a direction heuristic to an arc-based union that makes no
+directional guesses. Grace and Wanda are both at 0% buried outline now.
+
+**==> BUT IT IS A TRADE AND HE HAS NOT SEEN THE OTHER SIDE OF IT. <== HANNA
+2008 AND DANIELLE 2022 NOW SHOW A SEAM WHERE THEY DID NOT.** 6.5% and 10.8% of
+their outline buried. Both refuse on a piece that overlaps another without
+producing a proper crossing; Danielle's is a sliver of 0.078 nm², under a tenth
+of HURDAT2's own position precision and almost certainly a sweep artefact
+rather than a real band. **The unexamined lead is that the sliver should never
+have been swept as a separate piece** — an upstream fix in `breakRun`, not more
+clipper work. Look at those two before deciding whether the trade was worth it;
+`WIND_SWEEP.mergePieces: false` still puts the map back to unmerged pieces in
+one line.
+
+**AND THE MERGE NOW RETURNS TRUE HOLES.** A storm that circles a patch of ocean
+without its wind field reaching the middle leaves ground that saw no
+storm-force wind, and that comes back as a GeoJSON hole rather than being
+filled. **Nobody has judged whether an unfilled donut centre reads as honest or
+as a rendering bug.** Grace's loop centre is the one to look at.
 
 **TWO RESIDUES ARE KNOWN, MEASURED, AND LEFT.** Neither is the reported bug.
 The first is hairline — about forty storms a few percent outside at 1 to 8 nm

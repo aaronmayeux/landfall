@@ -571,7 +571,7 @@ section('the union refuses rather than guessing');
   const square = (x, y, w) => [[x, y], [x + w, y], [x + w, y + w], [x, y + w]];
 
   const u = unionRings([square(0, 0, 10), square(5, 5, 10)]);
-  ok(u !== null, 'two properly overlapping squares merge');
+  ok(u !== null && u.length === 1, 'two properly overlapping squares merge into one ring');
   const areaOf = (r) => {
     let s = 0;
     for (let i = 0; i < r.length; i++) {
@@ -581,20 +581,21 @@ section('the union refuses rather than guessing');
     }
     return Math.abs(s / 2);
   };
-  ok(Math.abs(areaOf(u) - 175) < 0.01,
-    `and the merged area is the union's, not either input's (${areaOf(u).toFixed(1)}, want 175)`);
+  ok(Math.abs(areaOf(u[0]) - 175) < 0.01,
+    `and the merged area is the union's, not either input's (${areaOf(u[0]).toFixed(1)}, want 175)`);
 
-  /* ==> A CONTACT THAT IS ONLY VERTEX-ON-EDGE IS REFUSED, DELIBERATELY. <==
-   * Two axis-aligned squares sharing a face touch at each other's corners and
-   * never PROPERLY cross, and handling that class is how a small union grows
-   * into a fragile general clipper. Refusing it costs nothing here: the real
-   * inputs are smooth swept corridors, and across all 752 storms with a wind
-   * field the walk never once fell back. The refusal is asserted so nobody
-   * reads the null as a bug and 'fixes' it. */
-  ok(unionRings([square(0, 0, 10), square(5, 0, 10)]) === null,
-    'squares that only touch corner-to-edge are refused rather than guessed at');
+  /* ==> A CROSSING THAT LANDS ON A VERTEX IS MARKED, NOT DROPPED, AND THIS IS
+   * THE CASE THAT PROVES IT. <== Two axis-aligned squares sharing a face meet
+   * only at each other's corners. The first version spliced that meeting into
+   * one ring as a new point and silently omitted it from the other, whose
+   * vertex it sat on; the two rings then disagreed about where they met and
+   * the chain ran off the end. Found for real on Danielle 2022. */
+  const flush2 = unionRings([square(0, 0, 10), square(5, 0, 10)]);
+  ok(flush2 && flush2.length === 1 && Math.abs(areaOf(flush2[0]) - 150) < 0.01,
+    'two squares sharing a face merge, meeting corner-to-edge '
+    + `(${flush2 ? areaOf(flush2[0]).toFixed(1) : 'null'}, want 150)`);
 
-  ok(areaOf(unionRings([square(0, 0, 10), square(2, 2, 3)])) === 100,
+  ok(areaOf(unionRings([square(0, 0, 10), square(2, 2, 3)])[0]) === 100,
     'a square wholly inside another contributes nothing and is dropped');
 
   /* ==> DISJOINT PIECES MUST NOT BE STITCHED. <== The caller groups by overlap
@@ -606,8 +607,24 @@ section('the union refuses rather than guessing');
     + 'that has silently DROPPED the second. This assertion caught exactly that, '
     + 'and it is a band losing ground it covered');
 
-  ok(unionRings([]) === null && unionRings([square(0, 0, 10)]).length === 4,
-    'nothing and one thing are both handled without a walk');
+  ok(unionRings([]) === null && unionRings([square(0, 0, 10)])[0].length === 4,
+    'nothing and one thing are both handled without a chain');
+
+  /* ==> A HOLE IS A RING AFTER THE FIRST, AND IT IS A TRUE HOLE. <== A storm
+   * that circles a patch of ocean without its wind field ever reaching the
+   * middle leaves ground that saw no storm-force wind. Filling it would claim
+   * wind the record does not carry (§5). Four bars around an empty middle. */
+  const donut = unionRings([
+    [[0, 0], [30, 0], [30, 10], [0, 10]],
+    [[0, 20], [30, 20], [30, 30], [0, 30]],
+    [[2, 5], [8, 5], [8, 25], [2, 25]],
+    [[22, 5], [28, 5], [28, 25], [22, 25]],
+  ]);
+  ok(donut && donut.length === 2,
+    'four bars round an empty middle come back as a shell AND a hole '
+    + `(got ${donut ? donut.length : 'null'} rings)`);
+  ok(donut && donut.length === 2 && Math.abs(areaOf(donut[1]) - 140) < 0.01,
+    `and the hole is the middle at its true size (${donut && donut[1] ? areaOf(donut[1]).toFixed(1) : '-'}, want 140)`);
 
   ok(!pointInRing([0, 0], square(0, 0, 10)),
     'a point exactly ON the boundary reads as OUTSIDE — every intersection sits '

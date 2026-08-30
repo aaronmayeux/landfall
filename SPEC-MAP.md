@@ -2263,12 +2263,40 @@ properly cross. Handling that class is how a small union grows into a fragile
 general clipper, and it costs nothing here because the real inputs are smooth
 swept corridors.
 
-**TWO STORMS IN 175 YEARS STILL FALL BACK AND ARE NAMED.** Grace 2009 (50 kt)
-and Wanda 2021 (34 and 50 kt). Wanda's two 34 kt pieces cross each other **30
-times** — the corridor genuinely weaves through itself — and the walk lost area,
-which the containment check caught and refused. Both draw as separate pieces
-with a visible seam and a console warning. Hardening the walk for that case is
-real clipper work and is not priced.
+**THE MERGE IS ARC-BASED, AND THE FIRST VERSION WAS NOT.** The first walked
+vertex to vertex, deciding at each crossing which ring to hop to by looking at
+whether the next vertex was inside anything. That is a direction heuristic, and
+on Wanda 2021 — whose two 34 kt pieces cross each other **30 times** — it
+guessed wrong and lost area. What ships now cuts every ring into ARCS at its
+crossings and keeps an arc if its MIDPOINT is outside every other ring. An arc
+between two crossings is entirely inside another ring or entirely outside it,
+because changing sides is what a crossing IS, so one interior point settles it
+and no direction, winding or entry/exit bookkeeping is needed anywhere. Aaron
+confirmed Grace and Wanda on glass as the only two that read wrong; both are at
+0% buried outline now.
+
+**A CROSSING THAT LANDS ON AN EXISTING VERTEX MARKS IT RATHER THAN BEING
+DROPPED.** Skipping it spliced the same meeting into one ring as a new point
+and silently omitted it from the other, whose vertex it sat on; the two then
+disagreed about where they met and the chain ran off the end. Found on Danielle
+2022. Arc ends are matched by proximity rather than by a rounded grid key for
+the same reason: the same crossing is solved twice, once from each ring's
+segment, and the two answers differ in the last bits.
+
+**A GROUP THAT WILL NOT MERGE WHOLE STILL MERGES IN PAIRS.** Refusing the whole
+group over one awkward pair left four polygons where two would do. Every
+pairwise step is a full `unionRings` call with all its guards, so this can only
+reduce the count and can never produce a shape the union would have rejected.
+
+**TWO STORMS STILL FALL BACK AND ARE NAMED: Hanna 2008 (50 kt, 6.5% of its
+outline buried) and Danielle 2022 (64 kt, 10.8%).** Both refuse on a piece that
+overlaps another without producing a proper crossing — Danielle's is a sliver
+of 0.078 nm², under a tenth of the data's own precision and almost certainly an
+artefact of the sweep rather than a real band. **These two merged under the old
+vertex walk, so this is a trade rather than a clean win**, and it is recorded as
+one. The unexamined lead is that the sliver should never have been swept as a
+separate piece at all, which would be an upstream fix in `breakRun` rather than
+more clipper work.
 
 **THIS FILE IS SHARED WITH THE LIVE GLOBE.** It landed as its own pass with its
 own revert point and was never folded into a seasons change.
