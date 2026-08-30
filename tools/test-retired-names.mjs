@@ -2,19 +2,29 @@
 /**
  * test-retired-names.mjs — every retired name points at a real storm.
  *
- * ==> THE SHELF LIST IS HAND-MAINTAINED AND HAND-MAINTAINED LISTS ROT. <==
- * §57.17 chose a typed file over a scraper on purpose: NOAA publishes this as
- * a web page and one restyle would silently empty the shelf. The cost of that
- * choice is a typo nobody notices, because a name that matches no storm just
- * quietly never shows a badge. That failure is INVISIBLE — the shelf still
- * renders, it is simply missing an entry — which is exactly the shape §5 says
- * to refuse.
+ * ==> THE LIST IS DERIVED NOW, AND THIS SUITE IS THE CHECK THE DERIVATION
+ * CANNOT DO ON ITSELF. <== §57.51. `tools/seasons-retired.mjs` computes the
+ * answer from the record and the lists in service, and its own gates are about
+ * that arithmetic. This is the outside opinion: does the answer agree with
+ * figures published by people who were in the room.
  *
- * ==> WRITING THIS CAUGHT TWO REAL ERRORS ON ITS FIRST RUN. <== KNUT was
- * entered as 1988 from NOAA's own table; HURDAT2 has KNUT in 1981 and 1987 and
- * nothing in 1988, so NOAA's page is wrong and the archive settled it. ISRAEL
- * 2001 matched nothing at all and moved to RETIRED_NEVER_USED. Neither would
- * have been visible on glass.
+ * ==> THE DECADE CHECKSUM SURVIVED THE MOVE FROM TRANSCRIPTION TO DERIVATION
+ * AND IS MORE VALUABLE THAN IT WAS. <== It used to catch a typing slip. It now
+ * catches the derivation drifting — a floor moved, an exclusion mis-set, an
+ * active list half-parsed — against numbers this repo did not compute. A check
+ * that only re-ran our own arithmetic would go green on our own mistake.
+ *
+ * ==> THE ATLANTIC SUMS COUNT THE GREEK PAIR. <== Eta and Iota are exported
+ * separately because the copy about them has to read differently (they were
+ * retired by description, not by name), but the WMO counts them among the
+ * Atlantic retirements and so must this. Leaving them out drops the 2020s from
+ * 10 to 8 and the total from 100 to 98.
+ *
+ * ==> WRITING THIS CAUGHT TWO REAL ERRORS ON ITS FIRST RUN, BACK WHEN THE LIST
+ * WAS TYPED. <== KNUT was entered as 1988 from NOAA's own table; HURDAT2 has
+ * KNUT in 1981 and 1987 and nothing in 1988, so NOAA's page is wrong and the
+ * archive settled it. ISRAEL 2001 matched nothing at all and moved to
+ * RETIRED_NEVER_USED. Neither would have been visible on glass.
  */
 
 import fs from 'node:fs';
@@ -22,7 +32,7 @@ import path from 'node:path';
 import { parseHurdat2 } from '../lib/hurdat.js';
 import {
   RETIRED_ATLANTIC, RETIRED_EPACIFIC, RETIRED_CPACIFIC,
-  RETIRED_UNSURE, RETIRED_NEVER_USED,
+  RETIRED_BY_DESCRIPTION, RETIRED_UNSURE, RETIRED_NEVER_USED,
 } from '../data/retired-names.js';
 import { ROOT } from './module-graph.mjs';
 
@@ -43,11 +53,15 @@ function keysFor(file) {
   return new Set(storms.map((s) => `${(s.name || '').toUpperCase()}|${s.year}`));
 }
 
+/** Every Atlantic retirement the WMO would count, including the Greek pair. */
+const ATLANTIC_ALL = [...RETIRED_ATLANTIC,
+  ...RETIRED_BY_DESCRIPTION.filter(([, , b]) => b === 'atlantic').map(([n, y]) => [n, y])];
+
 const atl = keysFor('hurdat2-atlantic-');
 const pac = keysFor('hurdat2-epacific-');
 
 /* 1. Every entry joins to a storm that actually exists. */
-for (const [label, list, have] of [['Atlantic', RETIRED_ATLANTIC, atl],
+for (const [label, list, have] of [['Atlantic', ATLANTIC_ALL, atl],
                                    ['E Pacific', RETIRED_EPACIFIC, pac],
                                    ['C Pacific', RETIRED_CPACIFIC, pac]]) {
   for (const [name, year] of list) {
@@ -57,18 +71,18 @@ for (const [label, list, have] of [['Atlantic', RETIRED_ATLANTIC, atl],
 
 /* 2. The decade checksum. */
 const dec = {};
-for (const [, y] of RETIRED_ATLANTIC) {
+for (const [, y] of ATLANTIC_ALL) {
   const k = y < 1960 ? '1954-59' : `${Math.floor(y / 10) * 10}s`;
   dec[k] = (dec[k] || 0) + 1;
 }
 for (const [k, want] of Object.entries(DECADES)) {
   if (dec[k] !== want) bad(`Atlantic ${k}: ${dec[k] || 0} entries, WMO publishes ${want}`);
 }
-if (RETIRED_ATLANTIC.length !== 100) bad(`Atlantic total is ${RETIRED_ATLANTIC.length}, published figure is 100`);
+if (ATLANTIC_ALL.length !== 100) bad(`Atlantic total is ${ATLANTIC_ALL.length}, published figure is 100`);
 
 /* 3. No duplicates — a name+year twice would double-count a decade and could
  *    mask a missing entry, leaving the checksum green while the list is wrong. */
-for (const [label, list] of [['Atlantic', RETIRED_ATLANTIC], ['E Pacific', RETIRED_EPACIFIC],
+for (const [label, list] of [['Atlantic', ATLANTIC_ALL], ['E Pacific', RETIRED_EPACIFIC],
                              ['C Pacific', RETIRED_CPACIFIC]]) {
   const seen = new Set();
   for (const [n, y] of list) {
@@ -79,7 +93,7 @@ for (const [label, list] of [['Atlantic', RETIRED_ATLANTIC], ['E Pacific', RETIR
 
 /* 4. A never-used name must NOT also appear in a basin list. Both states at
  *    once means somebody "fixed" an omission that was deliberate. */
-const all = [...RETIRED_ATLANTIC, ...RETIRED_EPACIFIC, ...RETIRED_CPACIFIC];
+const all = [...ATLANTIC_ALL, ...RETIRED_EPACIFIC, ...RETIRED_CPACIFIC];
 for (const n of RETIRED_NEVER_USED) {
   if (all.some(([x]) => x === n)) bad(`${n} is in RETIRED_NEVER_USED and also in a basin list`);
 }

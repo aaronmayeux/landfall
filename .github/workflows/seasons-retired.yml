@@ -1,0 +1,120 @@
+# seasons-retired.yml — keep the retired-names answer current with nobody
+# maintaining a list. SPEC-SEASONS-BUILD.md §57.51.
+#
+# WHY THIS EXISTS AT ALL
+# The list used to be ~120 rows transcribed by hand from NOAA's TCFAQ table and
+# topped up each spring. Aaron's call, 2026-08-30: that is not acceptable for a
+# thing meant to run unattended, same reasoning that replaced the hand-typed
+# name rosters in §57.18a.
+#
+# WHY THIS FETCHES NOTHING
+# §57.17 rejected scraping NHC's retired-names page and that objection still
+# stands. This does not overturn it, it sidesteps it: retirement IS removal
+# from the active lists, so the answer is every name the best-track record
+# shows was used minus every name still in service. Both halves are already in
+# the repo and both already refresh themselves — `seasons-hurdat` rewrites the
+# record, `seasons-names` rewrites the lists. This job reads files and does
+# arithmetic.
+#
+# AND THE FAILURE DIRECTION IS THE LOUD ONE, WHICH IS THE WHOLE ARGUMENT
+# §57.17's objection is that a restyle SILENTLY EMPTIES the feature — the
+# surface still renders, it is simply missing entries, which is exactly what §5
+# refuses. Reading the ACTIVE list inverts that: parse zero active names and
+# every name ever used looks retired. A flood, not a silence. Floods are
+# catchable and the gates below catch them; silence is not.
+#
+# WHY THE 9th
+# `seasons-hurdat` runs on the 3rd and `seasons-names` on the 5th, and this
+# reads what both of them write. The 9th leaves room for either to be re-run by
+# hand, and means the three never race for the same push to main.
+#
+# ==> IT COMMITS TO `main`, WHICH IS WHY IT COMMITS SO RARELY. <== A push to
+# main fires a Cloudflare Pages build, capped at 500 a month (§57.33 limit 2).
+# The decision is made inside the script, which compares the DATA and ignores
+# the generated timestamp — otherwise this would fire a build and churn the
+# service worker for every reader, monthly, on no news. In an ordinary year it
+# commits once or twice, in spring, after the WMO session.
+#
+# ==> AND IT CAN REFUSE. <== Any fault — a name that would UN-retire, more new
+# names than a committee could plausibly retire, a claimed name that no storm
+# matches or that was used again afterwards, an active list that did not parse
+# — and the script writes nothing and exits non-zero, so this job FAILS and the
+# last good answer stays exactly where it is. That is deliberate.
+
+name: seasons-retired
+
+on:
+  schedule:
+    # 05:10 UTC on the 9th. Off the hour and clear of seasons-hurdat (3rd) and
+    # seasons-names (5th), both of which write the files this one reads.
+    - cron: '10 5 9 * *'
+  # A fine-grained PAT can push but CANNOT dispatch a workflow (measured: HTTP
+  # 403 on the dispatches endpoint), so pushing this branch is the only way a
+  # cloud session can start a runner.
+  push:
+    branches: [seasons-retired]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: seasons-retired
+  cancel-in-progress: false
+
+jobs:
+  retired:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: derive, judge, and write
+        id: run
+        run: node tools/seasons-retired.mjs . /tmp/retired-report
+
+      # ==> THE SUITES RUN AGAINST THE FILE THIS JOB JUST WROTE. <== The
+      # script's own gates are about its arithmetic; these are about the repo
+      # the change lands in. `test-retired-names.mjs` in particular is the
+      # OUTSIDE opinion — it reconciles the Atlantic answer against decade
+      # counts published by people who were in the room, which a check that
+      # only re-ran our own arithmetic could never do.
+      - name: prove the new file against the suites
+        if: steps.run.outcome == 'success'
+        run: |
+          set -euo pipefail
+          node tools/check-syntax.mjs
+          node tools/test-seasons-retired.mjs
+          node tools/test-retired-names.mjs
+
+      # ==> COMMIT ONLY WHEN A NAME ACTUALLY MOVED. <== The decision is made
+      # inside the script, not here, because only it knows whether the answer
+      # changed or the arithmetic merely came out the same again.
+      - name: commit and push, if anything changed
+        if: always() && steps.run.outcome == 'success'
+        run: |
+          set -euo pipefail
+          DECISION="$(cat /tmp/retired-report/decision.txt 2>/dev/null || echo skip)"
+          echo "decision: $DECISION"
+          if [ "$DECISION" != "commit" ]; then
+            echo "nothing moved — no commit"
+            exit 0
+          fi
+          git config user.name  "Andy (Cowork)"
+          git config user.email "andy@getgravitate.app"
+          git add -A data/retired-names.js
+          if git diff --cached --quiet; then
+            echo "the script asked to commit but git sees no change — not committing"
+            exit 0
+          fi
+          git commit -q -F /tmp/retired-report/commit-message.txt
+          git push -q origin HEAD:main
+          echo "pushed $(git rev-parse --short HEAD)"
+
+      - name: summary
+        if: always()
+        run: cat /tmp/retired-report/summary.md >> "$GITHUB_STEP_SUMMARY" || echo 'the job wrote no report' >> "$GITHUB_STEP_SUMMARY"
