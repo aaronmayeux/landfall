@@ -24,7 +24,14 @@
  */
 
 import { SEASONS } from '../config/constants.js';
-import { absenceHtml, rowsHtml } from './season-markup-bits.js';
+/* ==> THE COUNT IS SPELLED OUT BY THE APP'S ONE OPINION ABOUT COUNTS, NOT BY
+ * A SECOND LIST HERE. <== §57.50. Aaron's rule is that counts are words and
+ * durations are digits, and `lib/season-story.js` already owns the words the
+ * storm-life paragraph says them with. A copy in this file would agree today
+ * and drift the moment either was touched, and the two sentences sit two
+ * sections apart on the same panel. */
+import { countWord } from '../lib/season-story.js';
+import { absenceHtml, rowsHtml, utcDay } from './season-markup-bits.js';
 
 /**
  * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
@@ -81,6 +88,55 @@ export function seasonRankHtml(rank) {
     : '';
 
   return rowsHtml(rows) + only;
+}
+
+/**
+ * How many other storms were running beside this one. §57.50, §57.42 Tier 1
+ * item 10.
+ *
+ * ==> IT IS A SENTENCE RATHER THAN A ROW, AND THE ROW VERSION IS WHY. <==
+ * `Storms at once — 5` is a value that carries no meaning without its label
+ * and still leaves out the date that makes it checkable. §57.25 bans exactly
+ * that shape, and the two §57.48 sentences in this same section already
+ * settled the question for facts of this kind.
+ *
+ * ==> IT SAYS NOTHING WHEN THE STORM WAS ALONE, WHICH IS 1,267 OF 3,266. <==
+ * Measured 2026-08-29 — 1,243 storms looked at and found alone, plus the 24
+ * one-storm seasons there is nothing to compare in. 38.8%. *"No other storm was running at
+ * the same time"* would be a non-event stated on four storms in ten, and the
+ * panel is already crowded at nine sections. Silence here is the ordinary
+ * case, not a gap — `seasonCompany` has already distinguished a real zero from
+ * a season it could not compare, and neither one has anything to say.
+ *
+ * ==> IT DOES NOT NAME THE OTHER STORMS. <== Considered and dropped: 1,351 of
+ * the archive's 3,266 storms have no name at all, so about a third of any list
+ * would read *"Ginger, Edith and two unnamed storms"*, and at the archive's
+ * busiest — six others at once, 13 September 1971 — the sentence runs longer
+ * than everything else in the section put together. The roster is one tap away
+ * and already lists them.
+ *
+ * ==> AND IT SAYS "IN THE SAME BASIN" RATHER THAN "IN THE ATLANTIC". <== The
+ * archive loads one basin at a time, so an unqualified count would be a claim
+ * about the whole planet and it would be wrong — the East Pacific was busy on
+ * most of these days too. Naming the basin would mean plumbing a label from
+ * `seasons/index.json` down to this function; saying *"the same basin"* is the
+ * wording the two §57.48 sentences in this section already use, costs no
+ * plumbing, and stays correct on the day step 13 adds basins nobody has
+ * labelled yet.
+ *
+ * @param {object|null} c  from `seasonCompany` in `lib/season-company.js`
+ * @returns {string}  HTML, or '' when the storm was alone or there was nothing
+ *   to compare it against
+ */
+export function seasonCompanyHtml(c) {
+  if (!Number.isFinite(c?.peak) || c.peak < 1) return '';
+  const day = utcDay(c.dayMs);
+  if (!day) return '';
+
+  return absenceHtml(c.peak === 1
+    ? `One other storm in the same basin was running at the same time, on ${day}.`
+    : `${countWord(c.peak).charAt(0).toUpperCase()}${countWord(c.peak).slice(1)} other `
+      + `storms in the same basin were running at the same time, on ${day}.`);
 }
 
 /**

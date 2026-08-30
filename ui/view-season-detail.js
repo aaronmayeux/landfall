@@ -43,6 +43,7 @@
 
 import { SEASONS } from '../config/constants.js';
 import { rankInSeason } from '../lib/season-facts.js';
+import { seasonCompany } from '../lib/season-company.js';
 import { rankStorm } from '../lib/rankings.js';
 import { isCollapsed, readSections, writeSections } from '../lib/section-state.js';
 import { iconSvg } from './section-icon.js';
@@ -55,7 +56,7 @@ import {
 /* ==> THE TWO RANK SECTIONS LIVE NEXT DOOR. <== SPEC.md §12. They are the only
  * renderers on this panel that take a comparison rather than a fact, and they
  * were the 126 lines that put `season-detail-markup.js` over the ceiling. */
-import { archiveRankHtml, seasonRankHtml } from './season-rank-markup.js';
+import { archiveRankHtml, seasonRankHtml, seasonCompanyHtml } from './season-rank-markup.js';
 /* ==> §57.48. THREE SENTENCES THAT JOIN THREE SECTIONS THAT ALREADY EXIST.
  * <== They are appended to the markup those sections are built from rather
  * than given headings of their own, which is Aaron's call: the panel is at
@@ -265,6 +266,21 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
           * pass over at most 31 storms, so rebuilding it per render is free. */
     section('rank-season', 'In its season', 'calendar',
       seasonRankHtml(rankInSeason(facts, seasonFacts()))
+      /* ==> §57.50. IT SITS BETWEEN THE RANKS AND THE CALENDAR BECAUSE IT IS
+       * THE THIRD THING THIS SECTION SAYS ABOUT THE OTHER STORMS. <== The two
+       * rank rows answer where it came among them and this answers how many
+       * of them were on the ocean at once, so the three read as one thought.
+       * The season window below is about the calendar and keeps the last
+       * place §57.48 gave it.
+       *
+       * ==> AND IT DELIBERATELY DOES NOT LEAD WITH "IT WAS NOT ALONE". <==
+       * That was the first wording and it lands directly under
+       * `seasonRankHtml`'s *"It was the only major hurricane of its season"*
+       * on the storms that get both. Two adjacent sentences opening `only`
+       * and `not alone` read as an argument even though they are about
+       * different things. Leading with the count removes the collision
+       * without weakening the sentence. */
+      + seasonCompanyHtml(seasonCompany(facts, seasonFacts()))
       /* ==> §57.48. IT GOES LAST, UNDER THE RANKS, BECAUSE IT IS ABOUT THE
        * CALENDAR RATHER THAN ABOUT THE OTHER STORMS. <== The two rank rows
        * answer "where did it come among them"; this answers "was it even
