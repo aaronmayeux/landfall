@@ -697,13 +697,18 @@ rows become 52 with the switch on, every row stays 44px, and
 `scrollWidth - clientWidth` is 0 on every strip in both states. Nothing clips
 and no row grows.
 
-**==> AND `tools/seasons-wall-check.mjs` CANNOT RUN IN THE CLOUD SANDBOX. <==**
-It times out waiting for `#seasons-wall-body .wall-row` to be visible.
-**Verified as NOT a regression** by stashing this whole pass and running it
-against clean `main`: identical timeout, identical selector. The measurements
-above were taken directly instead. It is the only browser gate the Wall of
-Years has, it is not in the pre-push hook, and it is now also unrunnable here —
-worth a session's attention, and nothing is blocked on it.
+**==> `tools/seasons-wall-check.mjs` RUNS IN THE CLOUD SANDBOX AFTER ALL, AND
+THIS ENTRY WAS WRONG. <==** It used to say the check timed out here waiting for
+`#seasons-wall-body .wall-row`. Run on 2026-08-30 as
+`bash tools/with-server.sh node tools/seasons-wall-check.mjs` it finishes
+**green in under a minute, 50 assertions, 0 failed.** The session that recorded
+it as unrunnable had almost certainly started the server as a background
+process, which the sandbox reaps between shell calls — `CLAUDE.md` already
+names that as the cause of a "connection refused" that cost a session, and a
+page that never loads times out on the first selector it waits for.
+
+**IT IS STILL THE ONLY BROWSER GATE THE WALL OF YEARS HAS AND IT IS STILL NOT
+IN THE PRE-PUSH HOOK.** Run it by hand after any change to that screen.
 
 **ONE THING WAS DECIDED WITHOUT AARON AND IS EASY TO REVERSE.** A storm whose
 NAME was retired for a DIFFERENT storm gets no sentence at all — 202 storms are
