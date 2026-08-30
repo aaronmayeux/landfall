@@ -85,6 +85,13 @@ try {
             text: dt.textContent.trim(),
             textWidth: r.getBoundingClientRect().width,
             overflowX: dt.scrollWidth - dt.clientWidth,
+            /* ==> A DIVIDED LABEL SPANS BOTH COLUMNS AND IS OUT OF THE `auto`
+             * TRACK ENTIRELY. <== §57.66. Reported so the column assertions
+             * below can be about the labels that are still IN that track,
+             * while the divider gets assertions of its own. */
+            marked: dt.classList.contains('has-rank'),
+            borderTop: parseFloat(getComputedStyle(dt).borderTopWidth) || 0,
+            paddingTop: parseFloat(getComputedStyle(dt).paddingTop) || 0,
             ...box(dt),
           };
         }),
@@ -165,9 +172,13 @@ try {
      * `auto` track out, EVERY unmarked row on the panel — dates, coordinates —
      * would have its value shoved right, on a panel where nothing about the
      * markup changed. */
+    /* ==> MEASURED OVER THE LABELS STILL IN THE `auto` TRACK. <== §57.66 moved
+     * a MARKED label to `grid-column: 1 / -1`, so its right edge is the panel
+     * edge by design and including it reported 327px of drift on a layout that
+     * had just been improved. The marked ones get their own assertions below. */
     const spreads = seen.lists.map((l) => {
-      const r = l.labels.map((x) => x.right);
-      return Math.max(...r) - Math.min(...r);
+      const r = l.labels.filter((x) => !x.marked).map((x) => x.right);
+      return r.length > 1 ? Math.max(...r) - Math.min(...r) : 0;
     });
     ok(`${label}: within each section the label column is sized by the labels, `
       + `not by the bars (worst spread ${Math.max(...spreads).toFixed(2)}px)`,
@@ -188,8 +199,12 @@ try {
      * value cell spans the full width anyway now that it carries a mark. A
      * threshold nobody measured is the fluent wrong number with a viewport
      * under it. */
-    const slack = seen.lists.map((l) => Math.max(...l.labels.map((x) => x.width))
-      - Math.max(...l.labels.map((x) => x.textWidth)));
+    const slack = seen.lists.map((l) => {
+      const plainLabels = l.labels.filter((x) => !x.marked);
+      if (!plainLabels.length) return 0;
+      return Math.max(...plainLabels.map((x) => x.width))
+        - Math.max(...plainLabels.map((x) => x.textWidth));
+    });
     ok(`${label}: and the track is sized to its widest label's glyphs, not to a `
       + `bar (worst slack ${Math.max(...slack).toFixed(2)}px)`,
     slack.every((sp) => sp <= 2));
@@ -211,6 +226,46 @@ try {
       + 'than its list',
     seen.lists.every((l) => l.cells.filter((c) => !c.marked)
       .every((c) => c.width < l.width - 1)));
+
+    /* --- 2b. the divider above a figure block, measured ------------------ */
+
+    /* ==> §57.66. THE FAULT AARON SAW WAS A DISTANCE, SO THE ASSERTION IS A
+     * DISTANCE. <== A marked figure is five stacked lines and the grid's row
+     * `gap` is 4px, so the space between two FACTS was identical to the space
+     * between two lines INSIDE one fact. Asserting the CSS exists would prove
+     * nothing — a rule the cascade overrides computes to zero and the markup
+     * still says `has-rank`. This measures what the browser actually drew.
+     *
+     * ==> AND IT IS THE ONE CLASS OF FAULT `textContent` CANNOT SEE. <==
+     * `NOW.md`'s `18 of 3` lesson: where a layout decides whether something
+     * reads correctly, the assertion has to be a measurement. */
+    const dividedLabels = seen.labels.filter((l) => l.marked);
+    ok(`${label}: every figure block carries a divided label `
+      + `(${dividedLabels.length} of ${seen.labels.length} labels)`,
+    dividedLabels.length === 7);
+
+    /* The first figure in a section takes no rule — the heading is already the
+     * boundary — so it is excluded rather than expected to carry one. */
+    const withRule = dividedLabels.filter((l) => l.borderTop > 0);
+    ok(`${label}: and the rule is really drawn, at a real width `
+      + `(${withRule.length} ruled, thinnest ${Math.min(1, ...withRule.map((l) => l.borderTop))}px)`,
+    withRule.length >= 4 && withRule.every((l) => l.borderTop >= 0.5));
+
+    /* ==> THE RULE SPANS THE SECTION, NOT THE LABEL. <== Left in the `auto`
+     * column the border would be as wide as the words `Lifespan` and would
+     * read as an underlined heading rather than as a division. */
+    ok(`${label}: and it spans its whole section rather than just the label`,
+      seen.lists.every((l) => l.labels.filter((x) => x.marked)
+        .every((x) => Math.abs(x.width - l.width) <= 1)));
+
+    /* ==> AND THE GAP BETWEEN TWO FACTS IS BIGGER THAN THE GAP INSIDE ONE.
+     * <== This is the fault stated as an inequality. `--space-tight` is 4px
+     * and the divider adds `--space-snug` above plus `--space-base` of
+     * padding, so a block's top edge clears its predecessor by more than the
+     * bare grid gap. Without a number the fix is an impression. */
+    ok(`${label}: a figure block is set off by more than the 4px row gap `
+      + `(worst ${Math.min(99, ...withRule.map((l) => l.paddingTop)).toFixed(2)}px of padding)`,
+    withRule.every((l) => l.paddingTop >= 8));
 
     /* --- 3. the bar and its axis are the same width ---------------------- */
 

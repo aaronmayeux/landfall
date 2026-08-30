@@ -237,8 +237,10 @@ section('THE AXIS \u2014 the same units as the row above it');
     const m = at < 0 ? null : html.slice(at).match(/season-spine-mark" x1="([\d.]+)"/);
     return m ? Number(m[1]) : null;
   };
-  const impMark = markOf(imp, '<dt>Distance travelled</dt>');
-  const metMark = markOf(met, '<dt>Distance travelled</dt>');
+  /* The label wears `has-rank` since §57.66, so the anchor is the class-bearing
+   * tag rather than a bare one. */
+  const impMark = markOf(imp, '<dt class="has-rank">Distance travelled</dt>');
+  const metMark = markOf(met, '<dt class="has-rank">Distance travelled</dt>');
   ok(`the distance mark is drawn at 19.8 of 100 for an imperial reader. Got ${impMark}`,
     impMark !== null && Math.abs(impMark - 19.8) < 0.3);
   ok(`and at the SAME place for a metric one, because it is the same storm on `
@@ -290,11 +292,22 @@ section('THE AXIS \u2014 the same units as the row above it');
    * still draw in the plain two-column shape. */
   const bars = (imp.match(/season-spine-plot/g) || []).length;
   const dts = (imp.match(/<dt>/g) || []).length;
-  const marked = (imp.match(/class="has-rank"/g) || []).length;
+  /* ==> COUNTED OFF THE VALUE CELL, BECAUSE THE LABEL WEARS THE CLASS TOO
+   * SINCE §57.66. <== A bare `class="has-rank"` sweep counts both halves of
+   * every figure and reported 14 against 7 bars — the assertion being wrong
+   * rather than the markup. The bar lives in the `<dd>`, so that is what a
+   * bar count has to be compared against. */
+  const marked = (imp.match(/<dd class="has-rank"/g) || []).length;
   ok(`every marked row carries a bar \u2014 ${marked} marked, ${bars} bars`,
     bars === marked && bars >= 7);
-  ok(`and the unranked rows are still printed \u2014 ${dts} rows against ${marked} marked`,
-    dts > marked);
+  ok(`and the unranked rows are still printed \u2014 ${dts} plain rows against `
+    + `${marked} marked`, dts > 0);
+  /* ==> AND A DIVIDED LABEL IS DRAWN FOR EVERY ONE OF THEM. <== §57.66. The
+   * rule that groups a figure starts at its label, so a marked value with a
+   * bare label would draw a block with no top edge. */
+  ok(`every marked row carries a divided label too \u2014 `
+    + `${(imp.match(/<dt class="has-rank"/g) || []).length} labels`,
+  (imp.match(/<dt class="has-rank"/g) || []).length === marked);
   ok('a row with no mark keeps the plain two-column cell',
     imp.includes('<dt>Reached</dt><dd>'));
 }

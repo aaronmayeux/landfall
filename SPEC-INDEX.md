@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 410 numbered headings.
+Covering 11 files, 414 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -427,6 +427,10 @@ real home is the other row carrying the same section number.
 | `57.61c` | &nbsp;&nbsp;&nbsp;&nbsp;The fold record resets once, and that is a decision | `SPEC-SEASONS-BUILD.md` | 10085-10105 |
 | `57.61d` | &nbsp;&nbsp;&nbsp;&nbsp;Six mutations, and the sixth found a real hole | `SPEC-SEASONS-BUILD.md` | 10106-10137 |
 | `57.61e` | &nbsp;&nbsp;&nbsp;&nbsp;What to judge on glass | `SPEC-SEASONS-BUILD.md` | 10138-10158 |
+| `57.66` | &nbsp;&nbsp;A figure block is divided from the one above it | `SPEC-SEASONS-BUILD.md` | 10159-10179 |
+| `57.66a` | &nbsp;&nbsp;&nbsp;&nbsp;The rule goes above the label, and the label spans | `SPEC-SEASONS-BUILD.md` | 10180-10212 |
+| `57.66b` | &nbsp;&nbsp;&nbsp;&nbsp;Measured, because the fault was a distance | `SPEC-SEASONS-BUILD.md` | 10213-10243 |
+| `57.66c` | &nbsp;&nbsp;&nbsp;&nbsp;The dials, if it reads wrong on glass | `SPEC-SEASONS-BUILD.md` | 10244-10256 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -442,7 +446,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 578,677 | 149 |
+| `SPEC-SEASONS-BUILD.md` | 584,036 | 153 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 191,688 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

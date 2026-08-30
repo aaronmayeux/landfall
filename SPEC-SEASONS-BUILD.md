@@ -10155,3 +10155,101 @@ every one of them is exactly the shape that mutation exploits.**
    was folded before.
 5. **AN 1851 STORM.** Six sections where several are a single sentence — does
    the panel read as calm or as sparse.
+
+### 57.66 A figure block is divided from the one above it
+
+**==> AARON ON GLASS, 2026-08-30, ON `How long it lasted`: *"all the data runs
+together and I can't tell what belongs with what."* <==** Step 7 shipped and
+the merge itself was accepted (*"works great"*); this is the fault it exposed.
+
+**IT IS NOT A MERGE FAULT AND IT WAS NOT NEW. IT IS ONE NUMBER.**
+`.detail-vitals` sets `gap: var(--space-tight)` — **4px** — between every row.
+A row with no mark is one line, so 4px reads correctly as the space between two
+facts. **A row WITH a mark is five stacked lines** — label, value, rank
+sentence, bar, axis (§57.57b) — and the 4px after it is identical to the 4px
+between its own lines. So the axis of one figure sat exactly as close to the
+next figure's label as `First seen` sits to `Last seen`, **and nothing on
+screen said which side of that gap anything belonged to.**
+
+**THE MERGE MADE IT VISIBLE RATHER THAN CAUSING IT.** Before step 7 the marked
+rows were spread thin across eight sections, mostly one or two to a section
+with a heading between them. `How long it lasted` puts **three** in a row with
+two plain rows interleaved, so for the first time the panel had enough of them
+adjacent for the ambiguity to be readable.
+
+#### 57.66a The rule goes above the label, and the label spans
+
+**`has-rank` NOW GOES ON THE `<dt>` AS WELL AS THE `<dd>`.** A divider that
+starts at the value would leave the label stranded on the far side of it, so
+the boundary has to begin at the label. It is deliberately the SAME class name
+on both halves: they are one figure, and a second name would let a later pass
+style one and forget the other.
+
+**==> BELOW-THE-BLOCK WAS CONSIDERED AND IS WRONG, WHICH IS WHY IT IS WRITTEN
+DOWN. <==** A `border-bottom` on `dd.has-rank` needs no markup change at all
+and is the obvious first reach. It would have **cut two glosses away from the
+figures they explain**: `Power and stamina score` is followed by its own
+286-character explanation (§57.58) and `Fastest strengthening` by the
+rapid-intensification sentence (§57.55a). Above the label the boundary is
+always in the one place a boundary belongs.
+
+**AND THE LABEL TAKES `grid-column: 1 / -1`, WHICH IS A SECOND FAULT FIXED
+RIDING ALONG.** Its `<dd>` has spanned since §57.56; the `<dt>` did not, so a
+long label like `Power and stamina score` **was widening the `auto` track for
+every unmarked row on the panel** — `Aug 23, 2005` was pushed right to make
+room for words on a different line. Measured by `tools/season-figure-check.mjs`
+with the span removed: the label track runs **107.53px wider** than its widest
+unmarked label's glyphs need. With it, under 2px. A full-width rule needed the
+span anyway; the column fix is free.
+
+**THE FIRST FIGURE IN A SECTION TAKES NO RULE.** The heading is already the
+boundary, and a hairline immediately under it reads as the heading being
+underlined. `.detail-vitals:first-child dt.has-rank:first-child`.
+
+**`--glass-border`, NOT A NEW COLOUR.** It is what every rule on this panel is
+already drawn in, including `.season-detail-footnote` twenty lines up in the
+same stylesheet.
+
+#### 57.66b Measured, because the fault was a distance
+
+**Both figures off a real browser at 390px**, the divider applied and then
+removed with an injected stylesheet so the two readings are the same page:
+
+| | Before | After |
+|---|---|---|
+| Whitespace between one figure's last line and the next figure's label | **4px** | **25px** |
+| Label track slack — how far every plain value was pushed right | 107.53px | under 2px |
+
+**==> ASSERTING THE CSS EXISTS WOULD HAVE PROVED NOTHING. <==** A rule the
+cascade overrides computes to zero and the markup still says `has-rank`. Twelve
+assertions were added to `tools/season-figure-check.mjs`, which runs in a real
+chromium at three viewports: the divider is drawn, at a real border width, it
+spans its whole section rather than just the label, and a figure block is set
+off by more than the bare 4px row gap. **This is `NOW.md`'s `18 of 3` lesson —
+where a layout decides whether something reads correctly, the assertion has to
+be a measurement.**
+
+**AND THE CHECK'S OWN COLUMN ASSERTIONS HAD TO BE SCOPED RATHER THAN
+SATISFIED.** Two of them measured every `<dt>` on the assumption that a label
+sits in the `auto` track, and reported **327.44px of drift** the moment marked
+labels started spanning — on a layout that had just been improved. They now
+measure the labels still in that track, and the marked ones have assertions of
+their own. **A check written against yesterday's layout will report today's fix
+as a regression, and the answer is to re-read the check rather than to undo the
+fix.**
+
+**THREE MUTATIONS, ALL THREE BITE:** removing the border, leaving the label in
+the `auto` column, and dropping the padding above the block.
+
+#### 57.66c The dials, if it reads wrong on glass
+
+Three, in the order worth trying:
+
+1. **`--space-base` padding above the label** and **`--space-snug` margin** —
+   how far the block is set off. Together they are the 25px.
+2. **The `border-top` itself.** Deleting it leaves the spacing and no ink,
+   which is the quieter answer if three hairlines in one section read as a
+   ledger.
+3. **`--space-snug` padding under the `dd`** — the room below the axis.
+
+**None of them changes the markup**, so all three are one-line glass calls.

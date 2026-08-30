@@ -103,6 +103,17 @@ export function figureRowsHtml(rows, marks = null) {
       ? `<dd class="has-rank">${esc(r.value)}`
         + `<span class="detail-figure-rank">${esc(mark.rank)}</span>${mark.spine}</dd>`
       : `<dd>${esc(r.value)}</dd>`;
-    return `<dt>${esc(r.label)}</dt>${cell}`;
+    /* ==> THE LABEL CARRIES THE CLASS TOO, AND THAT IS WHAT MAKES THE BLOCK A
+     * BLOCK. <== §57.66. A marked figure is five stacked lines — label, value,
+     * rank, bar, axis — and the grid's row `gap` is `--space-tight`, so the
+     * distance between two FACTS was the same 4px as the distance between two
+     * lines INSIDE one fact. Aaron on glass, 2026-08-30: *"all the data runs
+     * together and I can't tell what belongs with what."*
+     *
+     * The divider has to start at the label rather than at the value, so the
+     * class goes on the `<dt>`. It is the same name on both halves on purpose:
+     * they are one figure, and a second name would let a later pass style one
+     * and forget the other. */
+    return `<dt${mark ? ' class="has-rank"' : ''}>${esc(r.label)}</dt>${cell}`;
   }).join('')}</dl>`;
 }

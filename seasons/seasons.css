@@ -2016,6 +2016,61 @@ html[data-seasons="on"] #status {
   grid-column: 1 / -1;
 }
 
+/* ==> A FIGURE BLOCK IS DIVIDED FROM WHAT COMES BEFORE IT, BECAUSE WITHOUT ONE
+   THE PANEL HAS NO GROUPING AT ALL. <== §57.66. Aaron on glass, 2026-08-30:
+   *"all the data runs together and I can't tell what belongs with what."*
+
+   ==> THE CAUSE IS ONE NUMBER AND IT IS THE GRID'S OWN `gap`. <== `.detail-vitals`
+   sets `gap: var(--space-tight)`, 4px, between every row. A row carrying no
+   mark is one line, so 4px reads correctly as the space between two facts. A
+   row carrying a mark is FIVE stacked lines — label, value, rank sentence, bar,
+   axis — and the 4px after it is identical to the 4px between its own lines. So
+   the axis of one figure sat exactly as close to the next figure's label as
+   `First seen` sits to `Last seen`, and nothing on screen said which side of it
+   anything belonged to.
+
+   ==> THE RULE GOES ABOVE THE LABEL, NOT UNDER THE BAR. <== Below-the-block was
+   tried on paper and is wrong: `Power and stamina score` is followed by its own
+   gloss (§57.58) and `Fastest strengthening` by the rapid-intensification
+   sentence (§57.55a), and a rule under the bar would cut each of those away
+   from the figure it explains. Above the label the boundary is always in the
+   one place a boundary belongs.
+
+   ==> `--glass-border` RATHER THAN A NEW COLOUR. <== It is what every rule in
+   this panel is already drawn in, including `.season-detail-footnote` twenty
+   lines up, and a second opinion about what a dividing line looks like is the
+   drift `tools/text-role-check.mjs` exists to stop one category up.
+
+   ==> AND THE LABEL SPANS BOTH COLUMNS, WHICH IS A FIX RIDING ALONG. <== Its
+   `<dd>` already spans, but the `<dt>` sat in the `auto` column and so a long
+   label like `Power and stamina score` was widening that column for EVERY
+   unmarked row on the panel — pushing `Aug 23, 2005` right to make room for a
+   label on a different line. Spanning takes it out of the measurement, which is
+   the same reason §57.56 spans the value cell. A full-width rule needs it
+   anyway. */
+.detail-vitals dt.has-rank {
+  grid-column: 1 / -1;
+  margin-top: var(--space-snug);
+  padding-top: var(--space-base);
+  border-top: 1px solid var(--glass-border);
+}
+
+/* ==> THE FIRST FIGURE IN A SECTION TAKES NO RULE. <== The section heading is
+   already the boundary, and a hairline immediately under it reads as the
+   heading being underlined rather than as a division between two things. */
+.detail-vitals:first-child dt.has-rank:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* Room under the axis, so the block is bounded at both ends rather than only
+   at the top. Smaller than the space above, because the rule is doing most of
+   the work up there and this only has to stop the last line touching. */
+.detail-vitals dd.has-rank {
+  padding-bottom: var(--space-snug);
+}
+
 /* ==> WHERE THE FIGURE STANDS, DIRECTLY UNDER THE FIGURE. <== §57.54b. This is
    the sentence `Where it ranks` used to carry three to five sections away from
    the number it was about, and moving it here is the whole of step 3. It is

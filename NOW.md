@@ -672,6 +672,24 @@ record is `DB` or `WV` get no closing sentence while every other storm does.
 Silence states nothing false and `Last seen` and `Lifespan` are right above it.
 Whether they deserve their own words is Aaron's call. §57.61a.
 
+**==> AND GLASS FOUND ONE FAULT, WHICH IS FIXED AND NOT YET SEEN AGAIN. <==**
+Aaron on `How long it lasted`, 2026-08-30: *"all the data runs together and I
+can't tell what belongs with what."* **§57.66 is the as-built account — read
+that, not this.**
+
+**THE CAUSE WAS ONE NUMBER AND IT PRE-DATED THE MERGE.** `.detail-vitals` puts
+a 4px `gap` between every row. A marked figure is FIVE stacked lines, so the
+space between two facts was identical to the space between two lines inside one
+fact. The merge did not cause it — it put three marked rows adjacent for the
+first time, which is what made it readable. **A hairline and real space now sit
+above each figure block**, and a second fault went with it: the marked label
+had been widening the label column for every plain row on the panel by
+107.53px.
+
+**GLASS, and it is one look at any storm:** does the division read as grouping
+or as a ledger. **§57.66c holds three one-line dials** — the space, the rule
+itself, and the room under the axis — and none of them touches the markup.
+
 **STEP 8 — THE GLOBE TETHER — IS THE ONLY STEP LEFT AND AARON HAS NOT ASKED
 FOR IT.** §57.54j scoped it and recommends one block at a time driven by the
 row the reader taps. **Do not build before he has chosen.**

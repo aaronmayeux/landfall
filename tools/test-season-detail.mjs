@@ -1420,10 +1420,19 @@ function mount({
         + `Unclaimed: ${missing.join(', ') || 'none'}`,
       missing.length === 0);
 
-      const cells = (drawn.match(/class="has-rank"/g) || []).length;
-      ok(`and each one lands in exactly ONE cell, never two \u2014 ${cells} `
+      /* ==> A MARK CLAIMS EXACTLY ONE VALUE CELL AND EXACTLY ONE LABEL. <==
+       * §57.66 put the class on the `<dt>` as well, so the divider can start
+       * at the label and span the panel. The two are counted separately rather
+       * than as one total: a total would stay green if a mark produced two
+       * labels and no value, which is the arrangement that would draw a rule
+       * across nothing. */
+      const cells = (drawn.match(/<dd class="has-rank"/g) || []).length;
+      const labels = (drawn.match(/<dt class="has-rank"/g) || []).length;
+      ok(`and each one lands in exactly ONE value cell, never two \u2014 ${cells} `
         + `marked cells against ${keys.length} marks`,
       cells === keys.length);
+      ok(`and carries exactly one divided label \u2014 ${labels} labels`,
+        labels === keys.length);
 
       /* ==> AND THE BAR GOES WITH THE RANK, NOT SOMEWHERE ELSE ON THE PANEL.
        * <== §57.54b's whole claim is that label, figure, rank and bar are one
@@ -1431,6 +1440,12 @@ function mount({
        * this build exists to remove, wearing the new markup. */
       const bars = (drawn.match(/season-spine-plot/g) || []).length;
       ok(`every marked cell carries its bar \u2014 ${bars} bars`, bars === cells);
+
+      /* ==> AND AN UNMARKED ROW KEEPS ITS BARE LABEL. <== The divider is the
+       * boundary between figures; putting one above `Reached` or `Where`
+       * would divide a stamp from the figure it stamps. */
+      ok('a row with no mark carries no divided label',
+        /<dt>Reached<\/dt>/.test(drawn) && /<dt>Where<\/dt>/.test(drawn));
 
       ok('==> AND `Where it ranks` STATES NOTHING TWICE. <== The section is '
         + 'deleted, so no figure on this panel carries its rank in two places',
