@@ -587,51 +587,71 @@ while the chart insets its plot by 4 at each end, so **the tool alone is
 optimistic by 2%** (§57.59e). And the storms that cannot be charted at all are
 **32**, single-observation entries that get a sentence rather than an empty box.
 
-**==> STEP 6 IS BUILT AND DEPLOYED. NOBODY HAS SEEN IT. <==** The landfall
-list is numbered to match the chart's discs and has moved from fifth on the
-panel to first, directly under the chart, where it now opens by default.
-**§57.60 is the as-built account — read that, not this.** It holds the four
-measurements taken before the code, the one-owner argument, the browser
-geometry and the nine mutations.
+**==> STEPS 1 TO 6 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF
+THEM IS WAITING ON AARON. <==** Step 6 is the numbered landfalls, judged on a
+phone 2026-08-30 (*"Looks and works great"*). **§57.60 is the as-built account
+— read that, not this.** The list is numbered to match the chart's discs and
+has moved from fifth on the panel to first, directly under the chart, where it
+opens by default.
 
-**FIVE THINGS TO JUDGE, AND THE FIRST IS THE ONE THAT CAN SEND THE DESIGN BACK:**
+**FOUR THINGS ARE SETTLED BY THAT ACCEPTANCE** and should not be reopened
+without new evidence: the numbers getting a reader from a disc to a row; the
+lone `1` on the 747 storms with exactly one landfall, which was flagged in
+advance as the most likely thing to come back as clutter; `Landfalls` leading
+the panel, including on the 1,831 storms where it is one sentence saying the
+storm stayed at sea; and the 20px badge.
 
-1. **Does the number actually get you from a disc on the chart to the right row
-   in the list**, without counting. That is the whole of step 6.
-2. **A lone `1` on 747 storms** — every storm with exactly one landfall. The
-   chart draws a disc labelled 1 for them too, so the alternative is the two
-   surfaces speaking different grammars on 52% of the storms that came ashore.
-   **Flagged in advance as the most likely thing to come back as clutter.**
-3. **`NOEL 2007`** — ten discs in four rows over a ten-row list. The storm the
-   numbering exists for and the busiest it gets.
-4. **The panel's new first screen** is the paragraph, the chart and a landfall
-   list. `In its season` and `Strongest` are both below the fold on a phone.
-5. **A storm that never came ashore** — 1,831 of them. `Landfalls` now leads
-   the panel with one sentence saying it stayed at sea.
+**TWO MEASUREMENTS WORTH NOT RE-DERIVING.** Zero of 3,266 storms carry an
+out-of-order landfall list, so the chart and the list already agreed — **by
+luck**, over a sidecar written in the order the coast walk meets the coast.
+That is why the numbering has one owner rather than an assertion (§57.60a).
+And **the chart's disc has no fixed pixel size**: it is an SVG scaled to the
+panel and renders 12.07px at a 320px viewport, 15.19 at 390, 17.43 at 440 and
+29.90 at 719. **The badge is deliberately NOT coupled to
+`SEASONS.lifeChartDiscPx` and the suite fails if a later pass re-couples them**
+(§57.60c).
 
-**==> AND THE FIRST VERSION OF STEP 6 SHIPPED A BROKEN ROW, WHICH THE MOCKUP
-PASS FOUND AND NO CHECK DID. <==** The landfall text stacked UNDER its badge
-instead of beside it, because the badge's size was declared on the badge and
-the ROW's `grid-template-columns` could not read it. **The check written to
-catch exactly this class of fault passed over it** — it asserted every row's
-text starts on the same left edge, which is true of a stacked layout. §57.60g.
-Fixed, mutation-verified, and the missing assertion is in.
+**==> AND THE LESSON FROM THIS STEP IS ABOUT THE CHECK, NOT THE ROW. <==** The
+first version shipped green and wrong: the landfall text stacked UNDER its
+badge instead of beside it, because the row's `grid-template-columns` held a
+`var()` declared out of its scope. **The browser check written for exactly this
+class of fault passed over it** — it asserted every row's text starts on the
+same left edge, which is TRUE of a stacked layout. §57.60g. The missing
+assertion is in and mutation-verified. **`tools/token-check.mjs` did not catch
+the unresolved reference either, because the property was declared somewhere in
+the file and the check does not model scope.** That gap is open and nothing is
+blocked on it.
 
-**THE BADGE IS 20px AND IS DELIBERATELY NOT THE CHART'S DISC.** It first
-shipped at 16 pinned to `SEASONS.lifeChartDiscPx` on the argument that the two
-are one object seen twice. **Measured, the disc has no fixed pixel size** — it
-is an SVG scaled to the panel and renders 12.07px at 320 and 29.90px at 719.
-The suite now asserts the two are NOT coupled, so restoring it fails. §57.60c.
+**==> STEP 7 IS THE LAST ONE, AND IT IS THE BIGGEST SINGLE CHANGE TO THIS
+PANEL. <==** §57.54f holds the table, and §57.54k reserves its as-built
+number — the one after step 6's. **Do not take the next free number instead.**
+**Nine sections become six**, and four of the six are merges rather than
+renames:
 
-**ONE MEASUREMENT WORTH NOT RE-DERIVING:** zero of 3,266 storms carry an
-out-of-order landfall list today, so the chart and the list already agreed —
-**by luck**, over a sidecar written in the order the coast walk meets the
-coast. Step 13's other agencies carry no such guarantee, and that is why the
-numbering has one owner rather than an assertion. §57.60a.
+- `Strongest` + `How it changed` become **`How hard it blew`**
+- `Its life` + the ending sentence become **`How long it lasted`**
+- `How it moved` + `Wind footprint` become **`Where it went`**
+- `Landfalls`, `In its season` and `NOAA's report` keep their names
 
-**NOTHING AFTER STEP 6 IS BUILT.** Step 7 is the section merge, the order, the
-icons and the default-open set. `ui/season-detail-markup.js` is at 627 and
-`ui/season-life-chart.js` at 636, so step 7 lands with room in both.
+Landfalls, In its season and How hard it blew open by default; the other three
+fold. **All six icons already exist in `ui/section-icon.js`** — no new glyph.
+`podium` and `trend` lose their last callers and **stay in the set**, because
+deleting a glyph for that reason is a second decision riding on the first.
+
+**THREE THINGS TO KNOW BEFORE STARTING IT.** Two sections currently open by
+default (`In its season`, `Strongest`) plus Landfalls become three, which is
+what §57.54f asks for and is a glass call in its own right. The merges change
+`ui/view-season-detail.js`'s call sites rather than the renderers, so the
+markup functions can stay as they are and be composed. And **the fold record is
+keyed on section id** — `peak`, `life`, `change`, `movement`, `windfield` all
+disappear as ids, so every reader's stored folds for this panel silently stop
+matching. Decide deliberately whether that is a reset or a migration; §57.54f
+does not say.
+
+**BOTH FILES HAVE ROOM.** `ui/season-detail-markup.js` is at 627 and
+`ui/season-life-chart.js` at 636 against §12's ~700 ceiling. Step 7 is the pass
+most likely to cross it, and §57.54k's rule is that whichever step crosses
+takes the cut in the pass that causes it.
 
 **ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
 version fed the distribution bar the RAW value instead of the rung, and because

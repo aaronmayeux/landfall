@@ -9700,7 +9700,17 @@ coupling, not a behaviour difference**, and no assertion can catch a change
 that computes the same answer. Recorded rather than papered over: §57.59f had
 one survivor that WAS a hole in the suite, and the two must not be confused.
 
-#### 57.60f What to judge on glass
+#### 57.60f Confirmed on glass, and what was judged
+
+**==> CONFIRMED ON GLASS AND ACCEPTED, 2026-08-30. AARON: *"LOOKS AND WORKS
+GREAT."* <==** Every question below was put up and every one came back
+accepted, including the two flagged in advance as most likely to return wrong:
+the lone `1` on 747 storms, and `Landfalls` leading the panel on the 1,831
+storms where it is one sentence saying the storm stayed at sea. **Both are
+settled by acceptance and should not be reopened without new evidence**, and so
+are the 20px badge and the numbering itself.
+
+**WHAT WAS PUT UP:**
 
 1. **DOES THE NUMBER ACTUALLY GET THE READER FROM THE CHART TO THE ROW.** That
    is the whole of step 6 and it is the only question that can send the design
