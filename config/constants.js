@@ -3888,6 +3888,77 @@ export const WIND_SWEEP = Object.freeze({
    *  the loop pass spinning. Raising it to hide a warning would be treating
    *  the symptom. */
   maxLoopCuts: 8,
+
+  /** ==> HOW MANY TIMES ONE THRESHOLD'S RUN MAY BE BROKEN WHERE THE STORM
+   *  DROVE BACK ACROSS ITS OWN TRACK. <== §7.12.
+   *
+   *  A different fault from `maxLoopCuts` above, and the two are not
+   *  interchangeable. That one trims a WALL that folded. This one breaks the
+   *  SPINE, because a corridor traced as two offset walls only describes a
+   *  swept region while the path does not overlap itself — and once it does,
+   *  the wider the band the more ground the traced boundary loses. Measured on
+   *  Jeanne 2004: 26.2% of her 64 kt outline drawn outside her 34 kt outline,
+   *  which cannot be true of any real storm. Disabling the wall cutter moves
+   *  that figure only from 26.2% to 20.0%, which is what proved the spine was
+   *  the fault rather than the wall.
+   *
+   *  MEASURED 2026-08-29 across the whole mirrored archive, both basins, every
+   *  season carrying radii columns: 826 tracks have a wind field, and 781 of
+   *  them need NO break at all. 44 need one. **One track in 175 years needs
+   *  two — Nadine 2012, who crosses her own path five times.**
+   *
+   *  Eight, the same as the guard above, deliberately: two different numbers
+   *  spelling "this shape is past anything measured" would invite tuning one
+   *  of them. This is a GUARD, not a dial — every break is another translucent
+   *  polygon and another outline on the map, so hitting it means the track is
+   *  swept whole with the nesting fault it came with, and it says so on the
+   *  console. */
+  maxRunSplits: 8,
+
+  /** ==> HOW BIG A SELF-CROSSING HAS TO BE BEFORE THE CORRIDOR IS BROKEN AT
+   *  IT. <== Nautical miles, measured as the diameter of the circle enclosing
+   *  the same area as the loop — a hairpin that doubles straight back along
+   *  its own line encloses almost nothing however far it reached, and calling
+   *  that a wide loop would be a confident wrong answer.
+   *
+   *  ==> A CROSSING IS NOT AUTOMATICALLY A LOOP, AND THE COST OF PRETENDING
+   *  OTHERWISE IS MEASURED. <== HURDAT2 stores position to 0.1°, about 6 nm,
+   *  so a storm stalling inside its own rounding manufactures crossings that
+   *  never happened. **Harvey 2017 has one — 8 nm across over twelve hours,
+   *  which is Harvey sitting still over Texas.** Breaking his corridor there
+   *  bought nothing and cost accuracy: 2.8% of his 50 kt outline landed
+   *  outside his 34 kt outline, worst offender 10 nm, a fault he did not have
+   *  before. With this floor he is back to 0%. Jeanne 2004's loop, the one
+   *  this whole pass exists for, is 138 nm across.
+   *
+   *  ==> IT IS 50 TO MATCH `SEASONS.loopMinWidthNm`, AND IT IS A SEPARATE
+   *  CONSTANT ON PURPOSE. <== The same measurement stands behind both: over
+   *  all 3,266 mirrored storms, 224 cross their own track and the smallest is
+   *  3 nm, under a single rounding step. But they answer different questions —
+   *  that one decides whether a READER is told a storm looped, this one
+   *  decides whether a POLYGON is cut — and `lib/windswath.js` is shared with
+   *  the live globe and must not reach into a Seasons constant. Two names, one
+   *  number, and either can move without dragging the other.
+   *
+   *  ==> LOWER IS NOT BETTER, AND THAT WAS MEASURED RATHER THAN ASSUMED. <==
+   *  Swept over 752 storms with a wind field, worst nesting error per storm,
+   *  against today's unsplit build at 2.043% mean:
+   *
+   *    off  2.043%   56 storms over 5%    0 regressions
+   *    75   1.533%   47                   0
+   *    50   1.529%   47                   0
+   *    40   1.519%   46                   0
+   *    30   1.501%   46                   1  <== Ophelia 2005, 21.5% -> 48.2%
+   *    20   1.465%   45                   1  <== the same one
+   *    10   1.315%   45                   0
+   *
+   *  Below 40 the mean keeps creeping down while ONE storm gets twice as
+   *  wrong, and then quietly repairs itself again at 10. A dial that is not
+   *  monotonic in the thing it is supposed to improve is a dial nobody should
+   *  turn on a hunch. 50 buys almost all of the available improvement, has the
+   *  rounding-precision argument behind it rather than a curve-fit, and
+   *  regresses nothing. */
+  loopMinWidthNm: 50,
 });
 
 /* ---------------------------------------------------------------------------
