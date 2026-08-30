@@ -7478,6 +7478,43 @@ export const SEASONS = Object.freeze({
    */
   rankingsMinStorms: 30,
 
+  /* --- The distribution bar under a ranked figure (§57.56) ---------------- */
+
+  /**
+   * ==> HOW MANY COLUMNS THE DISTRIBUTION BAR IS DRAWN IN, AS A CEILING RATHER
+   * THAN A COUNT. <== §57.56. The real bin count is
+   * `min(spineBins, rungs on this ladder)`, and the cap is the whole reason
+   * that expression exists.
+   *
+   * FORTY, MEASURED 2026-08-30 ACROSS ALL EIGHT LADDERS IN BOTH SCOPES. The
+   * ladders are wildly different sizes — 18 rungs for `Fastest strengthening`
+   * against 1,730 for distance in kilometres — and a fixed 40 bins turns the
+   * coarse ones into a comb rather than a distribution: `fastest24hGainKt` is
+   * recorded on a 5 kt grid, so at 48 bins **30 of 48 came back empty** and at
+   * 40 bins 22 did. Capping at the rung count gives it 18 bins, all full, and
+   * leaves the fine ladders at 40.
+   *
+   * Forty rather than more because the bar is drawn full panel width and a
+   * 390px phone gives each column under 9 device pixels at 40. Fewer than
+   * about 30 and the fine ladders lose the shape they exist to show —
+   * pressure's 114 rungs read as a smooth hump at 40 and as three blocks at 12.
+   */
+  spineBins: 40,
+
+  /**
+   * ==> THE SHORTEST A COLUMN HOLDING AT LEAST ONE STORM MAY BE DRAWN, AS A
+   * FRACTION OF THE BAR'S HEIGHT. <== §5's silence rule with a chart under it:
+   * these distributions are steep enough that a bin holding one storm against
+   * a tallest bin holding two hundred rounds to nothing, and "no storms ever
+   * did this" and "one storm did" are different facts that must not share a
+   * blank column.
+   *
+   * The heights are drawn on a SQUARE ROOT scale for the same reason and it is
+   * not enough on its own — measured 2026-08-30, sqrt alone leaves the thinnest
+   * bins of the ACE ladder under a tenth of the tallest.
+   */
+  spineMinColumn: 0.08,
+
   /* ==> THERE IS NO CAP ON HOW MANY RANKS THE PANEL PRINTS, AND ITS ABSENCE IS
    * A DECISION RATHER THAN AN OVERSIGHT. <== `rankingsMaxRows` used to sit
    * here at 7 and truncate the list, so that adding a statistic to

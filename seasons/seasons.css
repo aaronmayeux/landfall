@@ -1927,3 +1927,70 @@ html[data-seasons="on"] #status {
 
 .wall-row[data-ratio] { grid-template-columns: 3.1em 1fr 4.6em; }
 .wall-row[data-figure][data-ratio] { grid-template-columns: 3.1em 1fr 2.6em 4.6em; }
+
+/* --- the distribution bar under a ranked figure (§57.56) ------------------ */
+
+/* ==> THE VALUE CELL CARRYING A BAR TAKES THE WHOLE ROW, AND THE LABEL SITS
+   ABOVE IT. <== `.detail-vitals` is `grid-template-columns: auto 1fr`, which is
+   right for `173 mph (150 kt)` and wrong for a distribution across 3,266
+   storms: the bar would be drawn in whatever the longest label left over, and
+   on `Fastest strengthening` at 390px that is under half the panel. Spanning
+   both columns gives every bar the same width on every row, which is the only
+   way the seven of them can be read down a column as a profile.
+
+   ==> IT IS `grid-column: 1 / -1` RATHER THAN A SECOND GRID. <== The rows
+   without a bar keep the exact two-column shape they have today, so the
+   section this is being wired into is unchanged everywhere the bar is absent.
+   §57.54k's whole reason for landing the bar inside the OLD section. */
+.detail-vitals dd.has-spine {
+  grid-column: 1 / -1;
+}
+
+/* ==> AND THE FIGURE STAYS ON ITS OWN LINE ABOVE THE BAR. <== The value is
+   still the thing being read; the bar is the context under it. */
+.season-spine {
+  margin-top: var(--space-tight);
+}
+
+.season-spine-plot {
+  display: block;
+  width: 100%;
+  /* Roughly three times the first mockup's height, which is what made the axis
+     legible rather than decorative. §57.54c. */
+  height: var(--spine-height);
+}
+
+.season-spine-fill {
+  fill: var(--spine-fill);
+}
+
+/* ==> THE MARK IS THE ONE THING ON THE BAR THE READER IS LOOKING FOR. <== Two
+   device pixels, held at that width by `vector-effect="non-scaling-stroke"` on
+   the element, because the plot is stretched by `preserveAspectRatio="none"`
+   and a scaled stroke would be a different thickness on every screen width. */
+.season-spine-mark {
+  stroke: var(--spine-mark);
+  stroke-width: 2;
+}
+
+/* The two real extremes, one at each end. `space-between` rather than a grid:
+   there are exactly two and they are pinned to the ends of the bar above. */
+.season-spine-axis {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-base);
+  margin: 2px 0 0;
+  /* `--type-small`, not `--type-micro`: the token block reserves micro for
+     uppercase section headings and kickers, and these are neither. */
+  font-size: var(--type-small);
+  font-family: var(--font-numeric);
+  color: var(--text-muted);
+}
+
+/* ==> THE RIGHT-HAND END IS RIGHT-ALIGNED SO IT ENDS WHERE THE BAR ENDS. <==
+   `32 days, 18 hours` is the longest label either end ever carries — the
+   lifespan ladder's top rung, `Storm 3 1899` — and left-aligned it would sit
+   under the middle of the bar and read as a mark. */
+.season-spine-axis span:last-child {
+  text-align: right;
+}

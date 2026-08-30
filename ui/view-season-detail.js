@@ -322,7 +322,9 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
        * preference down is what keeps the rank and the figure agreeing when a
        * reader switches units. */
       rankStorm(facts, archiveTable(), archiveBasin(), system),
-      { year: storm.year },
+      /* §57.56 — the distribution bar's end labels are in the reader's units
+       * too, for the same reason the rung is. */
+      { year: storm.year, system },
     ))}
       ${section('peak', 'Strongest', 'gauge', peakHtml(facts, system))}
       ${section('life', 'Its life', 'clock', lifeHtml(facts))}

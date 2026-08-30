@@ -31,7 +31,10 @@ import { SEASONS } from '../config/constants.js';
  * and drift the moment either was touched, and the two sentences sit two
  * sections apart on the same panel. */
 import { countWord } from '../lib/season-story.js';
-import { absenceHtml, rowsHtml, utcDay } from './season-markup-bits.js';
+import { formatDistance, formatPressure, formatWind } from '../lib/units.js';
+import { absenceHtml, rowsHtml, spanWords, utcDay } from './season-markup-bits.js';
+import { figureRowsHtml } from './season-figure-row.js';
+import { spineHtml } from './season-spine.js';
 
 /**
  * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
@@ -167,7 +170,96 @@ export function seasonCompanyHtml(c) {
  * broke. The count is in the row and the membership is in the note, so both
  * widen when the data does and neither ever silently changes meaning.
  */
-export function archiveRankHtml(ranked, { year = null } = {}) {
+/* ---------------------------------------------------------------------------
+ * THE AXIS — what the two ends of a distribution bar say
+ * ------------------------------------------------------------------------ */
+
+/**
+ * ==> THE AXIS LABELS LIVE HERE AND NOT IN `RANK_STATS`, AND §57.54k IS WHY.
+ * <== `lib/rankings.js` is at 477 lines and should gain nothing from this
+ * build: the bar reads a ladder that file already exports. More to the point,
+ * these are RENDERING decisions — which unit the reader sees, whether a
+ * duration is spelled in days — and `lib/` deciding them would put the panel's
+ * wording behind a data module.
+ *
+ * ==> EVERY ONE OF THEM PRINTS THE END IN THE SAME UNITS AS THE ROW ABOVE IT.
+ * <== That is the whole contract. A row reading `173 mph (150 kt)` over a bar
+ * whose ends said `25` and `165` would be two different measurements stacked
+ * on top of each other, which is the exact fault §57.54a found in the panel
+ * this build exists to fix.
+ *
+ * ==> AND THE LADDER'S OWN UNITS ARE NOT ALWAYS THE ROW'S UNITS. <== The wind
+ * ladders are in KNOTS and the row leads with mph or km/h, so the axis
+ * converts. The two distance ladders are already in miles and kilometres —
+ * §57.46 built them that way — so the axis must NOT convert, and handing a
+ * mile figure to `formatDistance` (which takes nautical miles) would inflate
+ * the far end by 15%. §57.54c records that exact fault happening to the marker
+ * on the prototype.
+ */
+const AXIS = Object.freeze({
+  peakWindKt: (kt, system) => formatWind(kt, system),
+  /* ==> PRESSURE IS THE ONE BAR WHERE LOW IS STRONG, AND IT SAYS SO IN WORDS.
+   * <== §57.54c. Every other bar reads low-to-high left-to-right and needs no
+   * note; adding one everywhere would make this case invisible again. */
+  lowestPressureMb: (mb) => formatPressure(mb),
+  /* `spanWords` returns null at or below zero, and the lifespan ladder starts
+   * at 0 hours — a storm with a single recorded fix. The end label is the
+   * ladder's real floor, so it is spelled rather than dropped. */
+  lifespanHours: (h) => (h > 0 ? spanWords(h) : '0 hours'),
+  hoursAtMajor: (h) => (h > 0 ? spanWords(h) : '0 hours'),
+  /* ACE has no unit and §57.54e is where it gets its plain-English name. Here
+   * it is the bare figure, printed the way `lifeHtml` prints it. */
+  ace: (v) => v.toFixed(1),
+  /* A GAIN, not a speed. `formatWind` would print it as mph, and "58 mph in 24
+   * hours" reads as how fast the storm travelled. Knots is what the row says. */
+  fastest24hGainKt: (kt) => `${Math.round(kt)} kt`,
+  trackDistanceMi: (mi) => `${Math.round(mi).toLocaleString()} mi`,
+  trackDistanceKm: (km) => `${Math.round(km).toLocaleString()} km`,
+});
+
+/** Words appended to an end label where the direction of the bar is not
+ *  obvious from the numbers alone. Pressure only, and §57.54c says why. */
+const AXIS_NOTES = Object.freeze({
+  lowestPressureMb: { low: '(strongest)', high: '(weakest)' },
+});
+
+/**
+ * The bar under one ranked row, or '' when it cannot be drawn.
+ *
+ * ==> IT IS DRAWN AGAINST THE BASIN LADDER, NOT THE ARCHIVE-WIDE ONE, AND
+ * §57.54k FLAGGED THIS IN ADVANCE AS THE THING MOST LIKELY TO COME BACK WRONG.
+ * <== The row's text cites the basin AND the overall count; the bar can only
+ * show one population. The basin is the honest comparison — one agency, one
+ * set of instruments, one span of coverage — and it is the one the row states
+ * first, so the bar follows the front of the sentence. **If it reads as a
+ * mismatch on glass the lever is barring the `all` ladder instead, and that is
+ * a glass call rather than a rewrite.**
+ */
+function spineFor(row, system) {
+  const axis = AXIS[row.key];
+  if (typeof axis !== 'function') return '';
+  const own = row.places.find((p) => p.scope.key !== 'all') || row.places[0];
+  const ladder = own?.scope?.stats?.[row.key];
+  if (!ladder) return '';
+
+  const raw = row.value;
+  if (!Number.isFinite(raw)) return '';
+
+  const notes = AXIS_NOTES[row.key] || {};
+  return spineHtml(ladder, row.def.quantize, raw, {
+    axis: (v) => axis(v, system),
+    lowNote: notes.low || '',
+    highNote: notes.high || '',
+    /* ==> THE SUMMARY IS THE PICTURE IN WORDS, BECAUSE THE PICTURE IS NOT AN
+     * ACCESSIBLE ANSWER. <== `ui/chart-home.js`'s rule. The rank itself is
+     * already in the row's own value and is not repeated here. */
+    summary: `Across ${own.scope.inWords}, this figure runs from `
+      + `${axis(Math.min(...ladder.values), system)} to `
+      + `${axis(Math.max(...ladder.values), system)}.`,
+  });
+}
+
+export function archiveRankHtml(ranked, { year = null, system = null } = {}) {
   if (!ranked?.rows?.length) return '';
 
   const n = (v) => Number(v).toLocaleString();
@@ -218,7 +310,13 @@ export function archiveRankHtml(ranked, { year = null } = {}) {
       const w = words(place, row.def.superlative);
       if (w) parts.push(`${w} in ${scope.inWords}`);
     }
-    if (parts.length) rows.push([row.def.label, parts.join(', ')]);
+    if (parts.length) {
+      rows.push({
+        label: row.def.label,
+        value: parts.join(', '),
+        spine: spineFor(row, system),
+      });
+    }
   }
 
   if (!rows.length) return '';
@@ -252,7 +350,7 @@ export function archiveRankHtml(ranked, { year = null } = {}) {
    * unreliable, and saying which way it leans is the useful half. */
   const era = eraCaveatWords(year);
 
-  return rowsHtml(rows)
+  return figureRowsHtml(rows)
     + (scopeNote ? absenceHtml(scopeNote) : '')
     + (era ? absenceHtml(era) : '');
 }

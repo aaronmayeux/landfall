@@ -593,6 +593,23 @@ export const DARK = Object.freeze({
   scrollThumb:      'rgba(120, 190, 225, 0.26)',
   scrollThumbHover: 'rgba(120, 190, 225, 0.46)',
 
+  /** THE DISTRIBUTION BAR UNDER A RANKED FIGURE (§57.56).
+   *
+   *  ==> TWO TOKENS, BECAUSE THE BAR IS TWO DIFFERENT KINDS OF THING. <==
+   *  `spineFill` is the shape of the whole archive behind the figure: context,
+   *  deliberately quiet, the same job and the same hue family as
+   *  `scrollThumb`. `spineMark` is where THIS storm sits, and it is the one
+   *  thing on the bar the reader is looking for, so it is the brightest value
+   *  in the pair by a wide margin.
+   *
+   *  ==> THE MARK IS NOT `focusRing` EVEN THOUGH IT WANTS THE SAME BRIGHTNESS.
+   *  <== A keyboard user tabbing a panel that already has cyan strokes drawn
+   *  into it cannot tell which one moved. Warm against the cool chrome in the
+   *  dark theme, and the contrast is with the fill rather than with the panel:
+   *  a mark at the far left of the bar has fill on one side only. */
+  spineFill:        'rgba(120, 190, 225, 0.24)',
+  spineMark:        '#F0B23C',
+
   /** THE POINTER HOVER WASH ON A LIST ROW.
    *
    *  ==> HOVER IN THE DARK THEME ADDS LIGHT. IT DOES NOT ADD PANEL. <==
@@ -1303,6 +1320,11 @@ export const LIGHT = Object.freeze({
   scrollThumb:      'rgba(28, 32, 36, 0.26)',
   scrollThumbHover: 'rgba(28, 32, 36, 0.46)',
 
+  /** See DARK.spineFill. Neutral ink at low alpha, because the light theme's
+   *  panel is near-white and a tinted fill would read as a highlight. */
+  spineFill:        'rgba(28, 32, 36, 0.20)',
+  spineMark:        '#B4700C',
+
   /** THE POINTER HOVER WASH — see the long note on `DARK.hover`.
    *
    *  INVERTED, AND IT HAS TO BE. Dark hover adds light; a light panel is
@@ -1729,6 +1751,14 @@ export const SEPIA = Object.freeze({
 
   scrollThumb:      'rgba(199, 154, 78, 0.26)',
   scrollThumbHover: 'rgba(199, 154, 78, 0.46)',
+
+  /** See DARK.spineFill. ==> THE SEPIA VALUES ARE THE ONES THAT MATTER, AND
+   *  THE OTHER TWO THEMES ARE THE FALLBACK. <== The archive is the only place
+   *  this bar is drawn today and the archive globe is sepia. The mark is a
+   *  deep ink rather than a brighter parchment, because on a warm light panel
+   *  the readable direction is DOWN. */
+  spineFill:        'rgba(122, 96, 52, 0.26)',
+  spineMark:        '#7A3E12',
   hover:            'rgba(199, 154, 78, 0.12)',
   dim:              'rgba(243, 231, 210, 0.38)',
 

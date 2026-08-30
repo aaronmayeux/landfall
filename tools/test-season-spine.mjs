@@ -1,0 +1,302 @@
+/**
+ * test-season-spine.mjs — the distribution bar. §57.54c, §57.56.
+ *
+ * ==> THE FAULT THIS SUITE EXISTS TO CATCH IS A BAR THAT DRAWS BEAUTIFULLY AND
+ * PUTS THE MARK IN THE WRONG PLACE. <== Nothing here is a crash. §57.46's two
+ * distance ladders store DISPLAY units — miles and kilometres — while
+ * `RANK_STATS.read()` returns nautical miles, so a bar handed the raw figure
+ * renders perfectly, with the correct number printed beside it, and lies about
+ * where the storm sits. The prototype did exactly that and nothing about it
+ * invited a second look.
+ *
+ * Driven against the real shipped rankings file and real mirrored storms.
+ *
+ * Zero dependencies, plain node.
+ */
+
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(HERE, '..');
+
+let pass = 0;
+const fails = [];
+const ok = (what, cond) => { cond ? pass++ : fails.push(what); };
+const section = (t) => console.log(`\n  ${t}\n`);
+
+const { parseHurdat2 } = await import('../lib/hurdat.js');
+const { stormFacts } = await import('../lib/season-facts.js');
+const { rankStorm, rankingsFileName, RANK_STATS, toRung } = await import('../lib/rankings.js');
+const { archiveRankHtml } = await import('../ui/season-rank-markup.js');
+const { binLadder, markFraction, spineHtml } = await import('../ui/season-spine.js');
+const { figureRowsHtml } = await import('../ui/season-figure-row.js');
+const { SEASONS } = await import('../config/constants.js');
+
+const index = JSON.parse(readFileSync(join(ROOT, 'seasons', 'index.json'), 'utf8'));
+const { file } = rankingsFileName(index.basins);
+const TABLE = JSON.parse(readFileSync(join(ROOT, 'seasons', 'data', file), 'utf8'));
+
+const seasonOf = (basin, year) => parseHurdat2(
+  readFileSync(join(ROOT, 'seasons', 'data', index.basins[basin].seasons[String(year)]), 'utf8')
+).storms;
+
+const katrina = stormFacts(seasonOf('atlantic', 2005).find((s) => s.id === 'AL122005'));
+
+/* ---------------------------------------------------------------------------
+ * 1. THE UNIT TRAP — the whole reason this file exists
+ * ------------------------------------------------------------------------ */
+section('THE UNIT TRAP \u2014 the rung, never the raw figure');
+{
+  /* ==> DRIVEN IN BOTH UNIT SYSTEMS, BECAUSE ONE OF THEM PASSES BY ACCIDENT.
+   * <== §57.54c. Six of the eight ladders are unit-free and would be green
+   * whichever number the bar was fed. The distance pair is the only place the
+   * fault can show, and it shows differently in each system. */
+  for (const [key, expect] of [['trackDistanceMi', 0.1952], ['trackDistanceKm', 0.1952]]) {
+    const def = RANK_STATS[key];
+    const ladder = TABLE.scopes.atlantic.stats[key];
+    const raw = def.read(katrina);
+    const got = markFraction(ladder, def.quantize, raw);
+    ok(`${key}: the mark is at ${(expect * 100).toFixed(1)}% of the ladder, which is `
+      + `where the printed figure belongs. Got ${(got * 100).toFixed(1)}%`,
+    Math.abs(got - expect) < 0.002);
+
+    /* ==> AND THE WRONG ANSWER IS ASSERTED TO BE DIFFERENT, SO THE TEST CANNOT
+     * PASS ON THE BUG. <== §12: a test green against both answers proves
+     * nothing. Handed the raw nautical miles, this ladder puts Katrina at
+     * 16.9% (miles) and 10.4% (kilometres). */
+    const min = Math.min(...ladder.values);
+    const max = Math.max(...ladder.values);
+    const naive = (raw - min) / (max - min);
+    ok(`${key}: and feeding it the RAW nautical miles gives a visibly different `
+      + `place (${(naive * 100).toFixed(1)}%), so this assertion has teeth`,
+    Math.abs(naive - expect) > 0.02);
+  }
+
+  /* The unit-free ladders, where rung and raw agree, asserted so a future
+   * change to `toRung` cannot quietly move them. */
+  for (const [key, expect] of [['peakWindKt', 0.8929], ['lowestPressureMb', 0.1493]]) {
+    const def = RANK_STATS[key];
+    const got = markFraction(TABLE.scopes.atlantic.stats[key], def.quantize, def.read(katrina));
+    ok(`${key}: ${(expect * 100).toFixed(1)}% of the ladder. Got ${(got * 100).toFixed(1)}%`,
+      Math.abs(got - expect) < 0.002);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 2. THE BINS — the comb, and the storm that must never vanish
+ * ------------------------------------------------------------------------ */
+section('THE BINS \u2014 capped by the ladder\u2019s own resolution');
+{
+  /* ==> THE CAP IS THE MEASUREMENT THAT PUT `spineBins` WHERE IT IS. <==
+   * `fastest24hGainKt` is recorded on a 5 kt grid and holds 18 rungs. Drawn in
+   * a fixed 40 columns, 22 come back empty and the bar is a comb. */
+  const coarse = TABLE.scopes.atlantic.stats.fastest24hGainKt;
+  const box = binLadder(coarse);
+  ok(`a ladder with ${coarse.values.length} rungs is drawn in ${coarse.values.length} `
+    + `columns, not ${SEASONS.spineBins}. Got ${box.bins.length}`,
+  box.bins.length === coarse.values.length);
+  ok('and every one of them holds storms, so the bar is a distribution rather '
+    + 'than a comb',
+  box.bins.every((b) => b > 0));
+
+  const fine = TABLE.scopes.atlantic.stats.trackDistanceMi;
+  ok(`a ladder with ${fine.values.length} rungs is capped at ${SEASONS.spineBins}`,
+    binLadder(fine).bins.length === SEASONS.spineBins);
+
+  /* ==> AND THE COMB IS ASSERTED AGAINST DIRECTLY, NOT ONLY VIA THE CAP. <== A
+   * mutation run is why: raising `spineBins` to 400 left every assertion above
+   * green, because they all read the constant they were meant to be checking.
+   * This one names the SHAPE instead. Measured 2026-08-30, the emptiest bar in
+   * the shipped file is `hoursAtMajor` at 9 of 40 columns (22.5%) — genuine
+   * gaps in a long tail, not an artifact of the binning. Half is a wide
+   * margin over that and a comb blows straight through it. */
+  for (const [scopeKey, scope] of Object.entries(TABLE.scopes)) {
+    for (const [key, ladder] of Object.entries(scope.stats)) {
+      const bins = binLadder(ladder).bins;
+      const empty = bins.filter((b) => b === 0).length;
+      ok(`${scopeKey}/${key}: reads as a distribution, not a comb \u2014 `
+        + `${empty} of ${bins.length} columns empty`,
+      empty / bins.length < 0.5);
+    }
+  }
+
+  /* ==> EVERY STORM ON THE LADDER IS DRAWN SOMEWHERE. <== A binning bug that
+   * dropped the top or bottom rung would be invisible on screen and would move
+   * every mark. The totals have to agree exactly. */
+  for (const [key, ladder] of Object.entries(TABLE.scopes.atlantic.stats)) {
+    const total = ladder.counts.reduce((a, b) => a + b, 0);
+    const drawn = binLadder(ladder).bins.reduce((a, b) => a + b, 0);
+    ok(`${key}: all ${total} storms land in a column. Got ${drawn}`, drawn === total);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * 3. THE ENDS — findable at both extremes, which is the glass question
+ * ------------------------------------------------------------------------ */
+section('THE ENDS \u2014 first place is drawn inside the bar, not half outside it');
+{
+  const ladder = TABLE.scopes.atlantic.stats.peakWindKt;
+  const strongest = Math.max(...ladder.values);
+  const weakest = Math.min(...ladder.values);
+
+  ok('the strongest storm in the archive sits at the far right of the wind bar',
+    Math.abs(markFraction(ladder, 'round', strongest) - 1) < 1e-9);
+  ok('and the weakest at the far left',
+    Math.abs(markFraction(ladder, 'round', weakest)) < 1e-9);
+
+  /* ==> AND NEITHER MARK IS DRAWN ON THE BOX EDGE. <== A 2px stroke centred on
+   * x=0 loses half of itself to the clip, so the record-holder would show the
+   * FAINTEST mark on the panel. §57.54k names "is the marker findable at both
+   * extremes" as step 2's glass risk; this is the half of it that geometry can
+   * answer without a phone. */
+  const at = (v) => {
+    const m = spineHtml(ladder, 'round', v, { axis: (x) => `${x}` })
+      .match(/x1="([\d.]+)"/);
+    return m ? Number(m[1]) : null;
+  };
+  ok(`first place is inset from the left edge. Got x=${at(weakest)}`, at(weakest) > 0);
+  ok(`and last place from the right edge. Got x=${at(strongest)}`, at(strongest) < 100);
+  ok('and the two are still at opposite ends of the bar',
+    at(strongest) - at(weakest) > 90);
+}
+
+/* ---------------------------------------------------------------------------
+ * 4. THE AXIS — the ends speak the row's units, and pressure says which way
+ * ------------------------------------------------------------------------ */
+section('THE AXIS \u2014 the same units as the row above it');
+{
+  const html = (system) => archiveRankHtml(
+    rankStorm(katrina, TABLE, 'atlantic', system), { year: 2005, system }
+  );
+  const imp = html('imperial');
+  const met = html('metric');
+
+  /* ==> THE WIND LADDER IS IN KNOTS AND THE ROW LEADS WITH mph. <== An axis
+   * reading 25 and 165 under a row reading 173 mph is two measurements stacked
+   * on one another, which is the fault §57.54a found in this panel. */
+  ok('the wind bar\u2019s ends are in mph for an imperial reader',
+    imp.includes('29 mph') && imp.includes('190 mph'));
+  ok('and in km/h for a metric one', met.includes('46 km/h') && met.includes('306 km/h'));
+
+  /* ==> AND THE DISTANCE LADDERS ARE ALREADY IN DISPLAY UNITS, SO THE AXIS
+   * MUST NOT CONVERT. <== Handing a mile figure to `formatDistance`, which
+   * takes nautical miles, would inflate the far end by 15% to 12,251 mi.
+   * §57.54c records that exact number happening on the prototype. */
+  ok('the distance bar\u2019s far end is the ladder\u2019s real top rung, 10,646 mi',
+    imp.includes('10,646 mi') && !imp.includes('12,251'));
+  ok('and 17,133 km for a metric reader', met.includes('17,133 km'));
+
+  /* ==> THE ONE BAR WHERE LOW IS STRONG SAYS SO IN WORDS. <== §57.54c. Adding
+   * a direction note to every bar would make this one invisible again. */
+  ok('pressure names which end is which, because it is the only bar that runs '
+    + 'backwards',
+  imp.includes('882 mb (strongest)') && imp.includes('1016 mb (weakest)'));
+  const notes = (imp.match(/\(strongest\)|\(weakest\)/g) || []).length;
+  ok(`and it is said exactly twice on the whole panel, not on every bar. Got ${notes}`,
+    notes === 2);
+
+  /* ==> AND THE MARK IN THE RENDERED PANEL IS CHECKED, NOT JUST `markFraction`
+   * IN ISOLATION. <== A mutation run is why. Section 1 calls `markFraction`
+   * with the right quantizer by hand, so swapping `row.def.quantize` for a
+   * hardcoded `'round'` at the call site — which is precisely the prototype's
+   * bug, one level up — left this whole suite green. The assertion has to
+   * follow the number all the way to the markup.
+   *
+   * Katrina belongs at 19.5% of the distance ladder. The bar insets the mark
+   * by half a stroke at each end, so 0.5 + 0.195 x 99 = 19.8 in viewBox units.
+   * The raw-nautical-miles answer is 17.2 (miles) and 10.8 (kilometres). */
+  const markOf = (html, after) => {
+    const at = html.indexOf(after);
+    const m = at < 0 ? null : html.slice(at).match(/season-spine-mark" x1="([\d.]+)"/);
+    return m ? Number(m[1]) : null;
+  };
+  const impMark = markOf(imp, '<dt>Distance travelled</dt>');
+  const metMark = markOf(met, '<dt>Distance travelled</dt>');
+  ok(`the distance mark is drawn at 19.8 of 100 for an imperial reader. Got ${impMark}`,
+    impMark !== null && Math.abs(impMark - 19.8) < 0.3);
+  ok(`and at the SAME place for a metric one, because it is the same storm on `
+    + `the same track. Got ${metMark}`,
+  metMark !== null && Math.abs(metMark - 19.8) < 0.3);
+
+  /* Every ranked row gets a bar, and the section is one `<dl>` as it was. */
+  const bars = (imp.match(/season-spine-plot/g) || []).length;
+  const dts = (imp.match(/<dt>/g) || []).length;
+  ok(`every ranked row carries a bar \u2014 ${dts} rows, ${bars} bars`, bars === dts && bars >= 7);
+}
+
+/* ---------------------------------------------------------------------------
+ * 5. SILENCE — a bar that cannot be drawn draws nothing
+ * ------------------------------------------------------------------------ */
+section('SILENCE \u2014 nothing half-drawn, and the row survives without a bar');
+{
+  const axis = (v) => `${v}`;
+  ok('no ladder, no bar', spineHtml(null, 'round', 5, { axis }) === '');
+  ok('a ladder whose values and counts disagree is refused rather than guessed at',
+    spineHtml({ values: [1, 2, 3], counts: [1, 1], of: 2 }, 'round', 2, { axis }) === '');
+  ok('a single-rung ladder has no spread to show',
+    spineHtml({ values: [5], counts: [9], of: 9 }, 'round', 5, { axis }) === '');
+  ok('and a ladder where every storm shares one value has no range',
+    binLadder({ values: [7, 7], counts: [1, 1], of: 2 }) === null);
+  ok('a figure the ladder cannot place produces no bar',
+    spineHtml(TABLE.scopes.atlantic.stats.peakWindKt, 'round', null, { axis }) === '');
+
+  /* ==> AND THE ROW IS STILL PRINTED. <== §5. The rank is the fact; the bar is
+   * context. A missing bar must not take the figure down with it. */
+  const rows = figureRowsHtml([{ label: 'Peak winds', value: '11th strongest' }]);
+  ok('a row with no bar renders as the ordinary two-column pair it always was',
+    rows.includes('<dt>Peak winds</dt>') && rows.includes('<dd>11th strongest</dd>')
+      && !rows.includes('has-spine'));
+  ok('and a row with no label prints nothing at all, because a ranked figure '
+    + 'always has one and a missing one means the table failed to load',
+  figureRowsHtml([{ label: '', value: 'orphan' }]) === '');
+  ok('the value is escaped here exactly as `rowsHtml` escapes it',
+    figureRowsHtml([{ label: 'A', value: '<b>x</b>' }]).includes('&lt;b&gt;'));
+}
+
+/* ---------------------------------------------------------------------------
+ * 6. THE FLOOR — one storm is never drawn as none
+ * ------------------------------------------------------------------------ */
+section('THE FLOOR \u2014 §5 with a chart under it');
+{
+  /* A deliberately brutal shape: one bin holding a thousand storms and one
+   * holding a single storm. On a linear scale the lone storm is 1/1000 of the
+   * height and invisible. */
+  const ladder = { values: [0, 100], counts: [1, 1000], of: 1001, direction: 'high' };
+  const html = spineHtml(ladder, 'round', 0, { axis: (v) => `${v}` });
+  const rects = html.match(/M[\d.]+ 24h[\d.]+v(-[\d.]+)/g) || [];
+  const heights = rects.map((r) => Math.abs(Number(r.match(/v(-[\d.]+)/)[1])));
+  ok(`both columns are drawn, and the thin one has real height. Got ${heights.join(', ')}`,
+    heights.length === 2 && Math.min(...heights) > 0);
+  ok('and the thin column is at least the floor, so one storm never reads as none',
+    Math.min(...heights) / 24 >= SEASONS.spineMinColumn - 1e-9);
+  ok('while the tall one is still visibly taller, so the floor did not flatten '
+    + 'the distribution into a block',
+  Math.max(...heights) > Math.min(...heights) * 2);
+}
+
+/* ---------------------------------------------------------------------------
+ * 7. THE WHOLE ARCHIVE — no ladder in the shipped file refuses to draw
+ * ------------------------------------------------------------------------ */
+section('EVERY LADDER IN THE SHIPPED FILE DRAWS');
+{
+  let drawn = 0;
+  let refused = [];
+  for (const [scopeKey, scope] of Object.entries(TABLE.scopes)) {
+    for (const [key, ladder] of Object.entries(scope.stats)) {
+      const box = binLadder(ladder);
+      if (!box) { refused.push(`${scopeKey}/${key}`); continue; }
+      drawn++;
+      ok(`${scopeKey}/${key}: no column is taller than the box`,
+        binLadder(ladder).bins.every((b) => b >= 0));
+    }
+  }
+  ok(`all ${drawn} ladders in the shipped table produce a bar. Refused: `
+    + `${refused.join(', ') || 'none'}`, refused.length === 0);
+}
+
+/* ------------------------------------------------------------------------- */
+console.log(`\n  ${pass} passed, ${fails.length} failed`);
+for (const f of fails) console.log(`    FAIL  ${f}`);
+process.exit(fails.length ? 1 : 0);

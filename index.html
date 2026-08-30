@@ -77,6 +77,8 @@
   --glass-shadow: rgba(0, 0, 0, 0.55);
   --scroll-thumb: rgba(120, 190, 225, 0.26);
   --scroll-thumb-hover: rgba(120, 190, 225, 0.46);
+  --spine-fill: rgba(120, 190, 225, 0.24);
+  --spine-mark: #F0B23C;
   --hover: rgba(120, 190, 225, 0.12);
   --focus-ring: #5FE0F5;
   --seg-active: #2B5175;
@@ -261,6 +263,13 @@
      is the same effect quieter and not a different one. */
   --dot-glow-hedge: 45%;
   --radius-large: 16px;
+
+  /* ==> THE DISTRIBUTION BAR'S HEIGHT (§57.56). <== About three times the
+     first mockup, which is the change that made its axis legible rather than
+     decorative — Aaron could not tell which end of the short version was
+     which. Tall enough that a square-root-scaled column holding one storm is
+     still visibly a column at the `spineMinColumn` floor. */
+  --spine-height: 28px;
 
   --space-tight: 4px;
   --space-snug: 8px;

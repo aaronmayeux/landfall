@@ -8628,3 +8628,196 @@ season-family files all pass with it in place.
 
 **AND THE FAULT COUNTS READ ZERO AFTER BOTH COMMITS.** Rendered across all
 3,266 storms: **0 empty `<dt>`, 0 em dashes**, against 945 and 804 before.
+
+### 57.56 Step 2 — the distribution bar — as built
+
+**§57.54k step 2.** The bar is wired into the EXISTING `Where it ranks` rows,
+which is the sequencing decision §57.54k calls the most important one in the
+build: **the one new drawing primitive gets judged on glass on its own**,
+against a layout nobody has changed. If it reads badly, the finding is about
+the bar rather than about seven other things that moved in the same push.
+
+**IT COSTS NO NEW BYTES ON THE WIRE.** `rankings-v2` has shipped `values` and
+`counts` per statistic per scope since §57.44 and nothing read them for
+anything but a single ordinal. This step draws them.
+
+#### 57.56a Three numbers decided the shape, and all three were measured
+
+**1. THE BIN COUNT IS CAPPED BY THE LADDER'S OWN RESOLUTION.** The eight
+ladders are wildly different sizes — 18 rungs for `Fastest strengthening`
+against 1,730 for distance in kilometres. Measured 2026-08-30, a fixed count
+turns the coarse ones into a comb: `fastest24hGainKt` is recorded on a 5 kt
+grid, so **at 48 columns 30 came back empty and at 40 columns 22 did.** The
+real count is `min(spineBins, rungs)`, which gives that ladder 18 full columns
+and leaves the fine ones at 40. `SEASONS.spineBins` is the ceiling, not the
+count, and the constant's comment says so.
+
+**2. HEIGHTS ARE ON A SQUARE ROOT SCALE, AND THAT IS A REAL COST STATED RATHER
+THAN HIDDEN.** Linear is the honest scale and it does not work here: measured
+across all eight ladders, **a linear ACE bar leaves 12 of its 31 occupied
+columns under a twentieth of the tallest** and therefore invisible. The bar's
+job is where this storm sits among the others; how many others there were is in
+the row above it, exactly. A scale that hides half the archive answers the
+question worse than one that compresses it.
+
+**3. A COLUMN HOLDING STORMS IS NEVER DRAWN AS EMPTY.** §5 with a chart under
+it. `spineMinColumn` is 0.08 of the bar's height, because sqrt alone is not
+enough — the thinnest bins of the ACE ladder still land under a tenth of the
+tallest. *"One storm did this"* and *"no storm ever did"* are different facts
+and must not share a blank column.
+
+#### 57.56b The unit trap, reproduced and then closed
+
+**==> THE FAULT §57.54c PREDICTED REPRODUCES EXACTLY, AND IT IS THE REASON
+`tools/test-season-spine.mjs` EXISTS. <==** §57.46's two distance ladders store
+**display units** while `RANK_STATS.read()` returns **nautical miles**.
+Measured 2026-08-30 on Katrina, against the shipped table:
+
+| Fed to the bar | Miles ladder | Kilometres ladder | Correct |
+|---|---|---|---|
+| the raw figure | 16.9% | 10.4% | — |
+| `toRung(quantize, raw)` | **19.5%** | **19.5%** | 19.5% |
+
+The label printed beside it reads the correct `2,106 mi` in every one of those
+cases. **`toRung` is the only conversion guaranteed to speak a ladder's own
+units, because it is what built them**, and `markFraction` is the only place
+the conversion happens.
+
+**`lib/rankings.js` GAINED ONE FIELD AND NO LOGIC.** §57.54k said that file
+should gain nothing; `rankStorm` now hands on `value: mine`, the figure it had
+already computed and was throwing away. A renderer calling `def.read(facts)`
+again would be a second reader of the same rule, free to drift the day an
+entry's `read` gains a floor — which `hoursAtMajor`, `ace` and both distance
+entries all already have.
+
+#### 57.56c What the bar is made of
+
+**ONE `<svg>` WITH TWO CHILDREN, AND THAT IS A PERFORMANCE DECISION.** The
+obvious build is a flex row of forty `<div>`s: eight ranked rows is **320
+elements per storm opened**, on a phone already running a globe. One `<path>`
+carries the whole silhouette, so a bar costs three nodes and the panel costs
+24.
+
+**THE MARK IS A `<line>` WITH `vector-effect="non-scaling-stroke"`.** The plot
+is stretched by `preserveAspectRatio="none"`, so a rect's width would be a
+different number of device pixels on every screen width and every orientation
+change. The stroke ignores the transform.
+
+**==> AND THE MARK IS INSET FROM BOTH ENDS BY HALF ITS OWN WIDTH. <==** A
+first-place storm sits at fraction 0, and a 2px stroke centred on x=0 loses
+half of itself to the clip — **the strongest storm in the archive would show
+the faintest mark on the panel.** §57.54k names *"is the marker findable at
+both extremes"* as step 2's glass risk; this is the half of it geometry can
+answer without a phone.
+
+**BINS ARE LAID OUT ALONG THE VALUE, NOT ALONG THE RANK.** A bar spaced by rank
+is a straight line by construction and every ladder would look identical.
+
+**LOW IS ALWAYS LEFT, WHICHEVER END IS FIRST PLACE.** The ladder's own `values`
+run best-first, so pressure runs 882 to 1016 and wind runs 165 to 25. Drawing
+in ladder order would flip half the bars. **The one statistic where low is
+strong says so in words instead** — `882 mb (strongest)` to
+`1016 mb (weakest)`, and only that one, because a direction note on every bar
+would make this case invisible again.
+
+#### 57.56d The axis speaks the row's units, and that is the whole contract
+
+**THE END LABELS LIVE IN `ui/season-rank-markup.js`, NOT IN `RANK_STATS`.**
+They are rendering decisions — which unit the reader sees, whether a duration
+is spelled in days — and `lib/` deciding them would put the panel's wording
+behind a data module.
+
+**==> THE LADDER'S UNITS ARE NOT ALWAYS THE ROW'S UNITS, AND EACH DIRECTION IS
+A DIFFERENT TRAP. <==** The wind ladders are in **knots** and the row leads
+with mph, so the axis converts: 25 to 165 kt prints as `29 mph` to `190 mph`,
+or `46 km/h` to `306 km/h`. The distance ladders are **already** in miles and
+kilometres, so the axis must NOT convert — handing a mile figure to
+`formatDistance`, which takes nautical miles, inflates the far end by 15% to
+`12,251 mi` for a ladder that tops out at 10,646. §57.54c recorded that exact
+number happening to the axis on the prototype.
+
+A row reading `173 mph (150 kt)` over a bar whose ends said `25` and `165`
+would be two measurements stacked on one another — **the same fault §57.54a
+found in this panel and this build exists to remove.**
+
+#### 57.56e Two files created now rather than at step 3
+
+**`ui/season-figure-row.js` AND `ui/season-spine.js` EXIST FROM DAY ONE**, as
+§57.54k required. `ui/season-detail-markup.js` is at the ceiling and the FIGURE
+ROW is the renderer steps 2, 3 and 4 all write into.
+
+**`figureRowsHtml` IS A SEPARATE RENDERER FROM `rowsHtml` BECAUSE IT TAKES
+TRUSTED MARKUP AND `rowsHtml` MUST NEVER.** `rowsHtml` escapes both halves of
+every row so a storm name reaching it cannot be treated as HTML, and that rule
+is worth more than the duplication saved by adding a third element to it. The
+label and the value are escaped identically here; the third slot only ever
+holds the string `ui/season-spine.js` just built.
+
+**==> AND IT DROPS A LABEL-LESS ROW, WHICH IS THE OPPOSITE OF WHAT §57.55a JUST
+DECIDED FOR `rowsHtml`. <==** The difference is the call sites. `rowsHtml` has
+callers that push prose, so a missing label there is a sentence in the wrong
+place and silently dropping it would hide a layout fault. This renderer has
+exactly one shape of caller — a ranked statistic, which always has a label from
+`RANK_STATS` — so a missing label means the table failed to load and there is
+nothing to print.
+
+**THE VALUE CELL CARRYING A BAR SPANS BOTH GRID COLUMNS.** `.detail-vitals` is
+`grid-template-columns: auto 1fr`, which is right for `173 mph (150 kt)` and
+wrong for a distribution: the bar would be drawn in whatever the longest label
+left over, and on `Fastest strengthening` at 390px that is under half the
+panel. Spanning gives every bar the same width on every row, which is the only
+way seven of them read down a column as a profile. **Rows without a bar keep
+the exact two-column shape they have today** — §57.54k's whole reason for
+landing this inside the old section.
+
+#### 57.56f Two tokens, and why the mark is not the focus ring
+
+**`spineFill` AND `spineMark` IN ALL THREE THEMES.** The fill is context and
+takes the same hue family and the same job as `scrollThumb`. The mark is the
+one thing on the bar the reader is looking for and is the brightest value in
+the pair by a wide margin.
+
+**==> IT IS NOT `focusRing`, EVEN THOUGH IT WANTS THE SAME BRIGHTNESS. <==** A
+keyboard user tabbing a panel that already has cyan strokes drawn into it
+cannot tell which one moved.
+
+**THE SEPIA VALUES ARE THE ONES THAT MATTER.** The archive globe is sepia and
+is the only place this bar is drawn today. Its mark is a deep ink rather than a
+brighter parchment, because on a warm light panel the readable direction is
+DOWN.
+
+#### 57.56g Three mutation runs, and one of them found a hole in the suite
+
+**==> SWAPPING `row.def.quantize` FOR A HARDCODED `'round'` AT THE CALL SITE
+LEFT ALL 65 ASSERTIONS GREEN. <==** That is the prototype's own bug moved one
+level up, and the suite could not see it because section 1 called
+`markFraction` by hand with the correct quantizer. **§12 exactly: a test that
+agrees with the bug is worse than no test.** The suite now follows the number
+all the way into the rendered markup and catches it at 17.25 and 10.79 against
+a correct 19.8.
+
+**==> AND RAISING `spineBins` FROM 40 TO 400 ALSO PASSED AT FIRST**, because
+every assertion about the cap read the constant it was meant to be checking.
+There is now an assertion on the SHAPE instead: no ladder in the shipped file
+may come back more than half empty. The emptiest real one is `hoursAtMajor` at
+**9 of 40 columns (22.5%)** — genuine gaps in a long tail rather than an
+artifact — and the mutation blows through the threshold at 147 of 258.
+
+The third run, deleting `spineMinColumn`'s floor, went red as written.
+
+**91 assertions, driven against the real shipped rankings file and real
+mirrored storms.**
+
+#### 57.56h What is expected to come back wrong, flagged before glass
+
+**==> THE BAR SHOWS THE BASIN LADDER WHILE THE ROW'S TEXT CITES THE BASIN AND
+THE OVERALL COUNT. <==** §57.54k flagged this in advance so its return is a
+data point rather than a surprise. The basin is the honest comparison — one
+agency, one set of instruments, one span of coverage — and it is what the row
+states first, so the bar follows the front of the sentence. **The alternative
+is barring the `all` ladder instead, and it is a swap rather than a rewrite.**
+
+**`ui/season-detail-markup.js` IS AT 711 LINES**, over §12's ceiling, from
+§57.55a's comments. Step 2 does not touch that file so it is not blocking, but
+**the cut §57.54k scheduled inside step 3 now has to happen before anything
+else lands there.**

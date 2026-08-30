@@ -481,14 +481,38 @@ figures rather than indented behind them, and that the last line reads
 `Became extratropical. It lost its tropical structure…`** Nothing else on the
 panel moved.
 
-**STEP 2 IS NEXT.** It puts the new distribution bar inside
-the OLD section on purpose, so the one new drawing primitive gets judged on
-glass alone before anything is restructured.
+**STEP 2 IS DONE AND IS AS-BUILT AT §57.56. NEEDS AARON'S EYES ON GLASS, AND
+IT IS THE FIRST OF THE TWO STEPS THAT CAN CHANGE THE PLAN.** The distribution
+bar, wired into the EXISTING `Where it ranks` section on purpose, so the one
+new drawing primitive is judged against a layout nobody changed. Every ranked
+row now carries a bar showing the whole archive's spread, with this storm's
+mark on it and the real extremes at both ends.
 
-**==> STEP 3 IS THE GO / NO-GO. <==** If the merged row — label, figure, rank,
-bar — reads as four things rather than one, **steps 5 to 7 do not start** and
-the plan changes. Nothing after step 3 is worth building against a row shape
-Aaron has not accepted.
+**==> WHAT TO LOOK AT, IN ORDER. <==**
+
+1. **Does a histogram under a row read as information or as decoration?** That
+   is §57.54k's stated risk for this step and it is the whole question.
+2. **Is the mark findable at both extremes?** Open Katrina — her wind mark sits
+   at 89% (far right) and her pressure mark at 15% (far left). The geometry
+   half of this is handled: the mark is inset so a first-place storm is not
+   drawn half outside the bar. The rest is colour and weight, which is glass.
+3. **The basin / overall mismatch, flagged in advance.** The bar shows the
+   BASIN ladder while the text beside it cites the basin AND the overall count.
+   §57.56h. **If that reads as a mismatch the lever is barring the `all` ladder
+   instead — a swap, not a rewrite.**
+4. **Pressure is the one bar that runs backwards** and says so in words:
+   `882 mb (strongest)` on the left, `1016 mb (weakest)` on the right. No other
+   bar carries a note, deliberately.
+
+**ONE THING CARRIED FORWARD RATHER THAN RE-DERIVED:** `ui/season-detail-markup.js`
+is at **711 lines**, over §12's ceiling, from §57.55a's comments. Step 2 does
+not touch that file, so it is not blocking — but **the cut §57.54k already
+scheduled inside step 3 has to happen before anything else lands there.**
+
+**STEP 3 IS NEXT, AND IT IS THE GO / NO-GO.** If the merged row — label,
+figure, rank, bar — reads as four things rather than one, **steps 5 to 7 do not
+start** and the plan changes. Nothing after step 3 is worth building against a
+row shape Aaron has not accepted.
 
 **NOTHING ELSE IS BUILT.** The prototype was a throwaway under
 `tools/`, deliberately never committed and deleted at the end of the session;
