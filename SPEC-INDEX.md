@@ -356,8 +356,8 @@ real home is the other row carrying the same section number.
 | `57.46` | &nbsp;&nbsp;Distance travelled, ranked against the archive — as built | `SPEC-SEASONS-BUILD.md` | 6764-6819 |
 | `57.47` | &nbsp;&nbsp;The rankings file needs a version of its own — as built | `SPEC-SEASONS-BUILD.md` | 6897-6950 |
 | `57.48` | &nbsp;&nbsp;The comeback, the calendar and the origin — as built | `SPEC-SEASONS-BUILD.md` | 7008-7020 |
-| `57.49` | &nbsp;&nbsp;The loop — as built | `SPEC-SEASONS-BUILD.md` | 7239-7252 |
-| `57.50` | &nbsp;&nbsp;How many other storms were running — as built | `SPEC-SEASONS-BUILD.md` | 7382-7420 |
+| `57.49` | &nbsp;&nbsp;The loop — as built | `SPEC-SEASONS-BUILD.md` | 7239-7260 |
+| `57.50` | &nbsp;&nbsp;How many other storms were running — as built | `SPEC-SEASONS-BUILD.md` | 7390-7435 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -373,7 +373,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 284,413 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 432,547 | 80 |
+| `SPEC-SEASONS-BUILD.md` | 433,516 | 80 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 190,373 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

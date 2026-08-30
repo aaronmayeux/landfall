@@ -78,72 +78,15 @@ The archive went from 1,343 storms ashore to 1,435 and from 2,537 landfalls to
 list; a refused crossing gets a sentence instead of silence; and a dot is graded
 from the status column rather than from the wind.
 
-**==> §57.50 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. TIER 1 OF §57.42 IS
-NOW FINISHED. <==** How many other storms were running beside this one, in
-`In its season`. **§57.50 is the as-built account; read that, not this.** It
-fires on 1,999 of 3,266 storms and is silent on the 1,267 that were alone.
-
-**FOUR THINGS TO JUDGE, AND THE FIRST IS THE ONE MOST LIKELY TO COME BACK
-WRONG.**
-
-1. **THE SENTENCE SAYS "IN THE SAME BASIN" RATHER THAN "IN THE ATLANTIC."**
-   Naming the basin would mean plumbing a label out of `seasons/index.json`
-   into a markup function; *"the same basin"* is the wording the two §57.48
-   sentences already in that section use, and it stays correct when step 13
-   adds basins nobody has labelled. **If it reads as evasive on a phone, that
-   is the change, and it is one argument rather than one word.**
-2. **KATRINA 2005 AND ANY 1971 ATLANTIC STORM ARE THE TWO TO OPEN.** Katrina
-   gets three others; the 1971 storms get six, which is the archive's ceiling
-   and the longest the sentence ever gets. Fourteen storms hit six.
-3. **IT SITS BETWEEN THE TWO RANK ROWS AND THE SEASON WINDOW.** On a storm
-   that gets all of them, `In its season` is now two rows and three sentences.
-   That section was already accepted at two sentences; whether a third is one
-   too many is glass.
-4. **IT DOES NOT NAME THE OTHER STORMS.** 1,351 of 3,266 archive storms have
-   no name, so a third of any list would read *"Ginger, Edith and two unnamed
-   storms."* If you want them named anyway, that is a real option and §57.50
-   records what it costs.
-
-**==> AND ONE FIX RODE ALONG THAT IS NOT ABOUT THIS FEATURE. <==**
-`utcDay` and `utcStamp` in `ui/season-markup-bits.js` returned `null` for a
-non-finite stamp but **threw a RangeError for a finite out-of-range one.**
-Every section of the archive's storm panel formats dates through those two
-functions, so one corrupt timestamp from any upstream file would have taken the
-whole drawer down rather than costing one row. Both return `null` now. **No
-storm in the archive can currently produce such a stamp**, so there is nothing
-to look at — it was found by mutation-testing and is recorded in §57.50.
-
-**==> §57.49 IS SHIPPED AND HAS NOT BEEN SEEN ON GLASS. GROUP B OF §57.42 IS
-NOW CLOSED. <==** The loop — a track that turned a full circle and crossed
-itself — in `How it moved`. **§57.49 is the as-built account; read that, not
-this.** It fires on 120 of 3,266 storms, so most panels are unchanged.
-
-**THREE THINGS TO JUDGE, AND THE SECOND IS THE ONE MOST LIKELY TO COME BACK
-WRONG.**
-
-1. **Jeanne 2004 is the storm to open.** *"It looped. Between Sep 20, 2004 and
-   Sep 24, 2004 its track crossed itself, turning a full circle about 157 mi
-   across."* Check it against her track on the globe — the whole reason the
-   sentence carries two dates and a width is so a reader can. Ivan 2004 is the
-   other end of the range at 684 nm.
-2. **THE FLOOR IS 50 NM AND SANDY 2012 MISSES IT BY 1.2.** She crosses her own
-   track at 48.8 nm and is told nothing; Ophelia 2017 at 41.9 likewise. Both
-   are real loops. **Any floor has a storm just underneath it and this is which
-   one** — it is recorded rather than discovered later. `SEASONS.loopMinWidthNm`
-   is the one-line dial: 30 nm brings in 152 storms, 75 nm cuts to 85. Harvey
-   2017 at 8.5 nm must stay out at any setting; that is him sitting still over
-   Texas inside HURDAT2's own 0.1° rounding.
-3. **THE LOOP SITS ABOVE THE BIRTHPLACE SENTENCE, WHICH REVERSES §57.48'S
-   PLACEMENT.** The reasoning is that origin fires on 1,993 of 2,004 Atlantic
-   storms and reads as background while the loop fires on 120 of 3,266. On
-   Jeanne's panel both sentences appear together, so it is one look: does the
-   rare fact leading read right, or does `How it moved` now bury its distance
-   rows.
-
-**NOTHING ELSE IS OPEN ON IT.** Nine mutations were run and the three that
-survived are all closed or corrected — §57.49 and the test commit hold the
-account. The loop is deliberately NOT ranked; that is a decision with its
-reasoning in §57.49, not a gap.
+**==> §57.49 AND §57.50 ARE BOTH CONFIRMED ON GLASS AND TIER 1 OF §57.42 IS
+FINISHED. AARON: "IT ALL WORKS." NOTHING HERE IS WAITING ON HIM. <==** The loop
+in `How it moved`, and how many other storms were running the same day in
+`In its season`. **§57.49 and §57.50 are the as-built accounts — read those,
+not this.** Every judgement each pass put up was accepted, including the two
+flagged as most likely to come back wrong: the loop leading above the birthplace
+sentence, and the season-mates sentence saying *"in the same basin"* rather than
+naming the basin. **Both are settled by acceptance and should not be reopened
+without new evidence.**
 
 **==> §57.48 IS CONFIRMED ON GLASS, 2026-08-29. AARON: "ALL WORKS." NOTHING
 HERE IS WAITING ON HIM. <==** The comeback, the season window and the origin —

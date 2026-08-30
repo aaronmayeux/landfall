@@ -7250,6 +7250,14 @@ ANY CODE WAS WRITTEN, AND THE COUNTS ARE WHAT SET THE ONE CONSTANT. <==**
 *"It looped. Between Sep 20, 2004 and Sep 24, 2004 its track crossed itself,
 turning a full circle about 157 mi across."* — Jeanne 2004.
 
+**==> CONFIRMED ON GLASS 2026-08-29. AARON: "IT ALL WORKS." <==** Including the
+item flagged as most likely to come back wrong: **the loop sentence leading
+above the birthplace sentence**, which reverses §57.48's placement because the
+loop fires on 120 of 3,266 storms while the origin fires on 1,993 of 2,004
+Atlantic ones. **That order is settled by acceptance.** `SEASONS.loopMinWidthNm`
+at 50 nm is settled with it — Sandy 2012 misses the floor by 1.2 nm and was
+judged correctly silent.
+
 #### The crossing is the proof of the circle, so nothing counts degrees of turn
 
 A closed piece of track is a closed curve, and a closed curve has turned through
@@ -7389,6 +7397,13 @@ no runner job, not one byte on the phone.
 
 *"Five other storms in the same basin were running at the same time, on Sep 13,
 1971."*
+
+**==> CONFIRMED ON GLASS 2026-08-29. AARON: "IT ALL WORKS." <==** Four things
+were put up for judgement and all four were accepted, including the one flagged
+as most likely to come back wrong: the sentence saying *"in the same basin"*
+rather than naming the basin. **Its wording, its placement between the two rank
+rows and the season window, and its silence on the 1,267 storms that were alone
+are settled by acceptance and should not be reopened without new evidence.**
 
 **==> ITEM 7 WAS DROPPED RATHER THAN DEFERRED, AND THE MEASUREMENT IS WHY.
 <==** Aaron's call, 2026-08-29, after seeing the rendered rows. Northernmost
