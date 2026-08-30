@@ -565,65 +565,27 @@ a synoptic record at 34 kt, so what disqualifies a storm is never reaching
 tropical-storm force rather than being thinly observed. **A test fixture built
 on the obvious guess went red.** §57.58d.
 
-**==> STEP 5 IS BUILT AND SHIPPED AND NOBODY HAS SEEN IT. IT IS THE ONE THING
-IN THIS FILE WAITING ON AARON. <==** The life chart. **§57.59 is the as-built
-account — read that, not this.** It holds the two measurements §57.54d required
-first, the geometry read off the mockup, the palette argument, and the nine
-mutations.
+**==> STEPS 1 TO 5 ARE ALL DONE, ON GLASS, AND ACCEPTED. NOTHING IN ANY OF THEM
+IS WAITING ON AARON. <==** Step 5 is the life chart, judged on a phone
+2026-08-30 (*"it all looks good"*). **§57.59 is the as-built account — read
+that, not this.** It holds the two measurements §57.54d required first, the
+geometry read off the mockup, the palette argument and the eleven mutations.
 
-**WHAT TO JUDGE, AND THE FIRST IS §57.54k's OWN NAMED RISK FOR THIS STEP:**
+**FIVE THINGS ARE SETTLED BY THAT ACCEPTANCE** and §57.59 lists them: the wind
+axis at `max(140 kt, peak)` and the squashed weak storms it implies, the real
+`CATEGORY_COLOR` rather than the mockup's warmed ramp, the grey on an ungraded
+system, four rows of discs on NOEL, and the chart not folding.
 
-1. **THE DAY LABELS ON THE LONGEST TRACK.** `Storm 3 1899`, 32 days 18 hours,
-   draws 10 labels at a 10.93px day pitch. **Two are missing on purpose** —
-   `Aug 30` sat two days before the month change and the month won; `6` was
-   dropped by the edge clamp pushing `Aug 3` inboard. Then a two-day storm at
-   the other end.
+**GLASS FOUND TWO FAULTS AND BOTH ARE FIXED AND ACCEPTED.** `Aug 3` rendered as
+`g 3` on 48.1% of the archive (§57.59h), and NOEL's ninth disc was drawn
+through the year stamp (§57.59i). Neither is open.
 
-**==> GLASS HAS FOUND TWO FAULTS SO FAR AND BOTH ARE FIXED. <==**
-
-**2. NOEL'S NINTH DISC WAS DRAWN THROUGH THE YEAR STAMP.** §57.59i. The stamp
-shared a baseline with the deepest disc ROW, and a disc hangs 8 units below its
-own baseline, so anything on that line is inside the disc rather than under it.
-It has its own line below everything now, at every depth of stack. **Every
-chart grew four units; a storm with no landfalls is four shorter.** The suite
-sweeps all 3,234 rather than checking Noel — the collision was a coincidence of
-one storm's timing and the next one would have been a different storm.
-
-**1.** Aaron, 2026-08-30,
-on the first storm he opened: `Aug 3` rendered as `g 3`. The left-end label
-always carries its month, so the widest label on every axis is the one nearest
-the edge, and centred on a tick at x=4 half of it fell outside the box.
-**1,556 of the 3,234 chartable storms were drawing a clipped label — 48.1%.**
-§57.59h is the account. Nothing threw, and a shorn month reads as a deliberate
-abbreviation, which is why no rendered assertion saw it.
-2. **DOES THE FIXED WIND SCALE MAKE A WEAK STORM LOOK BROKEN.** The axis runs 0
-   to `max(140 kt, this storm's peak)`, so the bands sit in the same place on
-   3,231 of 3,266 storms — which is the whole reason there is no wind scale
-   down the side. The cost is that **1,664 storms never reach hurricane
-   strength** and their line lives in the bottom third under four empty bands.
-   True, and the price of comparable bands. The lever is
-   `SEASONS.lifeChartTopKt`.
-3. **NOEL 2007 — ten numbered discs in four rows**, the only four-row stack in
-   the archive, under a 222-unit box. A sequence or a swarm.
-4. **THE GREY ON SANDY.** Her line climbs to 80 kt in bone at the end, above
-   the Cat 1 band, because an extratropical system has no grade to claim
-   (§57.7g). *Strong but no longer graded*, or *the chart lost its colour*.
-5. **IT IS NOT FOLDABLE AND IT IS SECOND ON THE PANEL**, so on a phone it
-   pushes `Landfalls` and `In its season` below the fold on every storm.
-
-**==> THE MOCKUP'S CHART PALETTE WAS NOT SHIPPED AND THAT IS THE ONE PLACE THIS
-DEPARTS FROM WHAT AARON APPROVED. <==** It carried a warmed sepia
-Saffir-Simpson ramp, which SPEC §6 forbids — and it contradicted itself proving
-it: Katrina's header dot is `#E05BE0` and her peak marker twenty pixels below
-was `#C93FA8`. Measured, the real colours cost nothing in the bands and are
-MORE legible as the line (Cat 5 goes 4.13:1 to 5.85:1). **§57.59c holds the
-table. It is one lookup to reverse if he wants the mockup's set back.**
-
-**ONE FIGURE THIS SESSION CORRECTED ABOUT ITSELF.** The disc-stacking counts
-are **1,199 / 201 / 33 / 2**, off the renderer. The measurement tool reads
-1,208 / 196 / 29 / 1 because it spreads discs over the full 358 units while the
-chart insets its plot by 4 at each end. §57.59e. **Do not re-derive this off
-the tool alone; it is optimistic by 2%.**
+**TWO FIGURES WORTH NOT RE-DERIVING.** The disc-stacking counts are
+**1,199 / 201 / 33 / 2**, off the renderer — `tools/seasons-life-chart-measure.mjs`
+reads 1,208 / 196 / 29 / 1 because it spreads discs over the full 358 units
+while the chart insets its plot by 4 at each end, so **the tool alone is
+optimistic by 2%** (§57.59e). And the storms that cannot be charted at all are
+**32**, single-observation entries that get a sentence rather than an empty box.
 
 **NOTHING AFTER STEP 5 IS BUILT.** Step 6 moves the landfall list under the
 chart and numbers it against `discRows`, which already exports the numbering.

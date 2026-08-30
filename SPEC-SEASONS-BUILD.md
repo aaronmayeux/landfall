@@ -9170,9 +9170,28 @@ panel comes to spell one thing two ways.
 
 ### 57.59 Step 5 — the life chart — as built
 
-**§57.54k step 5, and it lands alone.** It is the biggest single addition in
-the rebuild, so it is built, shipped and judged on its own before step 6 moves
-the landfall list under it. **NOT YET SEEN ON GLASS.**
+**==> CONFIRMED ON GLASS AND ACCEPTED, 2026-08-30. AARON: *"IT ALL LOOKS
+GOOD."* <==** Every one of §57.59g's five questions was put up and every one
+came back accepted, including the two flagged as most likely to return wrong.
+**Five things are settled by that acceptance and should not be reopened without
+new evidence:**
+
+1. **The wind axis at `max(140 kt, this storm's peak)`**, and therefore the
+   1,664 storms that never reach hurricane strength drawing in the bottom third
+   under four empty bands. That is the price of bands a reader can compare
+   across storms and it was accepted with the cost stated.
+2. **`CATEGORY_COLOR` rather than the mockup's warmed ramp** (§57.59c). The
+   departure from the approved prototype was flagged before glass and the real
+   palette was judged on the phone.
+3. **The grey on an ungraded system** — Sandy's line climbing to 80 kt in bone
+   above the Cat 1 band, §57.7g's decision arriving on a second surface.
+4. **Four rows of numbered discs on `NOEL 2007`.** The deepest stack in the
+   archive reads as a sequence.
+5. **The chart sitting second on the panel and not folding**, which pushes
+   `Landfalls` and `In its season` below the fold on a phone.
+
+**§57.54k step 5, and it landed alone**, before step 6 moves the landfall list
+under it.
 
 **Wind at every recorded fix, against time.** Saffir-Simpson bands behind it so
 no conversion is needed, the line coloured by grade at each step, the peak
