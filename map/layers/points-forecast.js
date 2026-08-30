@@ -107,7 +107,7 @@ import { palette } from '../../config/theme.js';
 import { gs } from '../theme-state.js';
 import { ZOOM, LABEL_PLACEMENT } from '../../config/constants.js';
 import { formatClockDay } from '../../lib/time.js';
-import { trackPointReading } from '../../lib/track-point.js';
+import { bornAtOf, trackPointReading } from '../../lib/track-point.js';
 import { placeSpokes } from './label-placement.js';
 import { placeName } from './name-placement.js';
 import { registerLayer } from './registry.js';
@@ -178,17 +178,52 @@ export function stampFirst(features) {
   for (const { f } of best.values()) f.properties._first = true;
 }
 
+/**
+ * Each storm's genesis time, keyed the way `stampFirst` keys its storms.
+ *
+ * ==> PER STORM, FOR THE SAME REASON THE WHITE RING IS. <== The ambient source
+ * carries every live storm's points in ONE FeatureCollection. A genesis time
+ * computed across the whole collection would be the earliest cyclone fix of
+ * whichever storm formed first, applied to all of them — so a young storm's
+ * pre-genesis disturbance would be graded against an older storm's birthday
+ * and come out post-tropical. Same collection, same trap, same fix.
+ *
+ * An UNATTRIBUTABLE point gets no genesis and reads `null`, which makes its
+ * `LO` a remnant rather than a former cyclone. Quiet is the right way to be
+ * wrong about a point we cannot even tie to a storm. `groupByStorm` already
+ * keeps orphans out of a shared bucket for the spoke placement's sake, and it
+ * is reused here rather than copied: a second grouping keyed the same way is
+ * how the ring and the genesis come to disagree about which storm a dot is on.
+ */
+export function bornAtByStorm(features) {
+  const { groups } = groupByStorm(features);
+  const out = new Map();
+  for (const [key, list] of groups) out.set(key, bornAtOf(list));
+  return out;
+}
+
 function decorated(fc) {
-  const features = (fc?.features || [])
-    .filter((f) => f.geometry?.type === 'Point')
+  const points = (fc?.features || []).filter((f) => f.geometry?.type === 'Point');
+  const bornAt = bornAtByStorm(points);
+  const features = points
     .map((f) => {
-        const { color, code } = trackPointReading(f.properties);
+        const key = stormKey(f.properties);
+        const { color, code, small } = trackPointReading(
+          f.properties,
+          key == null ? null : bornAt.get(key) ?? null
+        );
         return {
           ...f,
           properties: {
             ...f.properties,
             _color: color,
             _code: code,
+            /* ==> SMALL MEANS "NEVER A STORM", AND IT IS READ BY THE RADIUS
+             * EXPRESSION IN circleLayer. <== §57.7g. Stamped up front for the
+             * same reason `_first` and `_o` are: a `['get','_small']` reading
+             * undefined on the first paint falls to the `case` default by
+             * accident rather than by statement. */
+            _small: !!small,
             /* Placement fills these in. They must exist up front or the
              * first paint reads null through ['get', ...]. */
             /* [x, 0] in EMS, along the TEXT's own x axis — which rotates
@@ -647,7 +682,16 @@ function circleLayer(id, source) {
     source,
     paint: {
       'circle-color': ['get', '_color'],
-      'circle-radius': STORM_GEO.pointRadius,
+      /* ==> TWO RADII, AND THE EXPRESSION READS ONLY FEATURE DATA. <== §57.7g,
+       * the same shape `map/layers/season-points.js` already ships. Both
+       * values are literal numbers off `config/tokens.js`, so no `gs()` shares
+       * this expression with a `['get', ...]` — the shape rule 1b forbids and
+       * the one the `palette()` note below is entirely about. A system that
+       * was never a storm draws small and blank; a cyclone and a post-tropical
+       * system both draw full size. */
+      'circle-radius': [
+        'case', ['get', '_small'], STORM_GEO.remnantPointRadius, STORM_GEO.pointRadius,
+      ],
       /* THE EARLIEST POINT OF EACH STORM WEARS A WHITE, WIDER RING, and the
        * job it does is DIRECTION. A track reading 1 → 2 → 2 → 1 has no start
        * and no end to the eye, so without this the reader has to already know
