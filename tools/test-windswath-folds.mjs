@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 /**
- * test-windswath-folds.mjs — the wind swath's two fold faults
- * (lib/windswath.js).
+ * test-windswath-folds.mjs — the wind swath's fold faults (lib/windswath.js).
  *
  * ZERO DEPENDENCIES, plain `node tools/test-windswath-folds.mjs`, same as every
  * other suite here (§12 — this project has no toolchain by design).
  *
- * ==> TWO FAULTS, PROVEN SEPARATE. <== Aaron reported one symptom — fins and
- * spurs on the bands, 2026-08-21 — and there were two causes under it:
+ * ==> FAULTS THAT LOOK ALIKE AND ARE NOT. <== Aaron reported one symptom — fins
+ * and spurs on the bands, 2026-08-21 — and there were two causes under it. A
+ * fourth fault, the SPINE folding on a storm that loops, was found on
+ * 2026-08-29 and is asserted at the foot of this file. The first two:
  *
  *   1. THE TIMELINE FOLDED. Every forecast hour behind the storm was still
  *      being spliced in after the current position, so the corridor's spine
@@ -52,7 +53,7 @@ const failures = [];
 const ok = (c, m) => { c ? pass++ : failures.push(m); };
 const section = (n) => console.log(`\n  ${n}`);
 
-const { buildFullTrack } = await import('../lib/windswath.js');
+const { buildFullTrack, __internals } = await import('../lib/windswath.js');
 const { WIND_SWEEP } = await import('../config/constants.js');
 const { parseNhcValidtime } = await import('../lib/time.js');
 const { segCross, firstCrossing, cutLoop, ringArea2 } = await import('../lib/unloop.js');
@@ -214,6 +215,264 @@ section('the guard says so rather than spinning');
     'a ring left crossing must warn — silence on a known-wrong shape is the §5 failure');
   ok(spun.out.length > 0,
     'and it must still draw the band: a slightly wrong band beats a missing one');
+}
+
+/* ===========================================================================
+ * FAULT 3 — THE SPINE FOLDED, AND THE BANDS STOPPED NESTING
+ *
+ * ==> A DIFFERENT FAULT FROM THE TWO ABOVE, AND THE MEASUREMENT IS WHAT PROVES
+ * IT. <== Faults 1 and 2 are about a WALL going wrong. This one is about the
+ * track itself: a corridor traced as two offset walls only describes a swept
+ * region while the path does not overlap itself. On a storm that loops, the
+ * inner wall swings past the loop's centre and the traced boundary stops
+ * enclosing the ground the storm covered — and the WIDER the band the more it
+ * loses, which is backwards from what nesting needs.
+ *
+ * ==> NESTING IS THE ASSERTION BECAUSE IT IS THE ONE THING THAT CANNOT BE A
+ * MATTER OF TASTE. <== Anywhere that saw 64 kt necessarily saw 50 and 34. A
+ * band shape can be argued about; a 64 kt outline drawn outside the 34 kt one
+ * is simply false, whatever it looks like.
+ *
+ * Jeanne 2004 is the reproduction case and she is already in the repo, added
+ * for §57.48. Katrina and Harvey are the controls, and Harvey earns his place
+ * twice over — see the floor section below.
+ * ======================================================================== */
+
+const { parseHurdat2 } = await import('../lib/hurdat.js');
+const { buildSeasonSwath } = await import('../lib/season-windswath.js');
+const { pathCrossings, splitIndices } = await import('../lib/unloop.js');
+
+const seasonFile = (basin, year) => {
+  const idx = JSON.parse(readFileSync('seasons/index.json', 'utf8'));
+  return parseHurdat2(readFileSync(`seasons/data/${idx.basins[basin].seasons[year]}`, 'utf8')).storms;
+};
+const jeanne = parseHurdat2(
+  readFileSync('samples/seasons/storms/al112004.txt', 'utf8')
+).storms[0];
+const katrina = seasonFile('atlantic', '2005').find((s) => s.id === 'AL122005');
+const harvey = seasonFile('atlantic', '2017').find((s) => s.id === 'AL092017');
+
+/** Even-odd point-in-ring. Deliberately written here rather than imported: a
+ *  nesting test that shared its containment maths with the builder could pass
+ *  on the builder's own mistake (§12). */
+function inRing(pt, ring) {
+  let inside = false;
+  const [x, y] = pt;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** What share of the inner band's outline falls outside the outer band's, as
+ *  a percentage of its vertices. Zero is the only correct answer. */
+function outsidePct(features, innerKt, outerKt) {
+  const at = (kt) => features.filter((f) => f.properties.radii === kt);
+  const inner = at(innerKt);
+  const outer = at(outerKt);
+  if (!inner.length || !outer.length) return null;
+  let total = 0;
+  let out = 0;
+  for (const g of inner) {
+    for (const v of g.geometry.coordinates[0]) {
+      total += 1;
+      if (!outer.some((o) => inRing(v, o.geometry.coordinates[0]))) out += 1;
+    }
+  }
+  return total ? (100 * out) / total : 0;
+}
+
+/* Splitting turned off. This is EXACTLY the shipped behaviour before this
+ * pass, so every "before" figure below is the real fault and not a model of
+ * it — the mutation run is built into the suite rather than done once by hand
+ * and written up. */
+const NO_SPLIT = { ...WIND_SWEEP, loopMinWidthNm: Infinity };
+
+section('a looping storm: the bands nest, and did not before');
+{
+  const before = buildSeasonSwath(jeanne, NO_SPLIT);
+  const after = buildSeasonSwath(jeanne);
+
+  /* ==> THE BUG IS ASSERTED TO EXIST FIRST. <== A nesting test that only
+   * checked the fixed build would pass just as happily against a builder that
+   * had never had the fault, and would therefore not be guarding anything. */
+  ok(outsidePct(before, 64, 34) > 20,
+    'WITHOUT the spine split, Jeanne\'s 64 kt outline is largely outside her '
+    + `34 kt outline (${outsidePct(before, 64, 34).toFixed(1)}%) — the fault this section guards`);
+  ok(outsidePct(before, 64, 50) > 20,
+    'and outside her 50 kt outline too '
+    + `(${outsidePct(before, 64, 50).toFixed(1)}%)`);
+
+  ok(outsidePct(after, 64, 34) === 0,
+    'WITH it, not one vertex of her 64 kt outline falls outside her 34 kt band');
+  ok(outsidePct(after, 50, 34) === 0,
+    'nor one of her 50 kt outline');
+
+  /* ==> THE 64-AGAINST-50 PAIR IS NOT ZERO AND THE NUMBER IS WRITTEN DOWN
+   * RATHER THAN THE ASSERTION LOOSENED TO HIDE IT. <== Nine vertices, worst
+   * 1.7 nm outside, against bands over 100 nm wide. That is the ring polish's
+   * own documented bound (WIND_SWEEP.ringSmoothPasses), not a spine fault. If
+   * it ever climbs, this is what says so. */
+  ok(outsidePct(after, 64, 50) < 3,
+    'and her 64-against-50 residue stays inside the polish\'s own bound '
+    + `(${outsidePct(after, 64, 50).toFixed(1)}%, measured 1.9%)`);
+}
+
+section('a storm that never loops is not touched');
+{
+  for (const [name, storm] of [['Katrina 2005', katrina], ['Harvey 2017', harvey]]) {
+    const before = buildSeasonSwath(storm, NO_SPLIT);
+    const after = buildSeasonSwath(storm);
+    ok(before.length === after.length,
+      `${name} produces the same number of bands either way — the split must not `
+      + 'cut a storm it has nothing to fix');
+    for (const [inner, outer] of [[64, 50], [64, 34], [50, 34]]) {
+      ok((outsidePct(after, inner, outer) || 0) === 0,
+        `${name}: ${inner} kt stays inside ${outer} kt`);
+    }
+  }
+}
+
+section('a crossing is not automatically a loop');
+{
+  /* ==> HARVEY IS THE CASE, AND HE IS WHY THE FLOOR EXISTS. <== HURDAT2 stores
+   * position to 0.1°, about 6 nm. Harvey sat still over Texas and jittered
+   * inside his own rounding, manufacturing a crossing 8 nm across. Cutting his
+   * corridor there put 2.8% of his 50 kt outline outside his 34 kt — a fault
+   * he did not have. §57.49 measured the same 8 nm independently, for the
+   * sentence on the storm panel. */
+  const idx = JSON.parse(readFileSync('seasons/index.json', 'utf8'));
+  void idx;
+  const { timelineFor } = await import('../lib/season-windswath.js');
+  const { onOneBranch } = await import('../lib/windswath.js');
+  const br = onOneBranch(timelineFor(harvey));
+  const refLat = br.reduce((s, p) => s + p.lat, 0) / br.length;
+  const lonScale = 60 * Math.cos((refLat * Math.PI) / 180);
+  const lon0 = br[0].lon;
+  const plane = br.map((p) => [(p.lon - lon0) * lonScale, p.lat * 60]);
+  const found = pathCrossings(plane);
+
+  ok(found.length > 0,
+    'Harvey DOES cross his own track — so a test that only counted crossings '
+    + 'would have cut him');
+  ok(found.every((c) => c.width < WIND_SWEEP.loopMinWidthNm),
+    `and every one of them is under the floor (widest ${Math.max(...found.map((c) => c.width)).toFixed(0)} nm) — `
+    + 'which is what refuses him');
+
+  const jbr = onOneBranch(timelineFor(jeanne));
+  const jLat = jbr.reduce((s, p) => s + p.lat, 0) / jbr.length;
+  const jScale = 60 * Math.cos((jLat * Math.PI) / 180);
+  const jPlane = jbr.map((p) => [(p.lon - jbr[0].lon) * jScale, p.lat * 60]);
+  const jFound = pathCrossings(jPlane);
+  ok(jFound.some((c) => c.width >= WIND_SWEEP.loopMinWidthNm),
+    `Jeanne's loop clears it comfortably (${Math.max(...jFound.map((c) => c.width)).toFixed(0)} nm) — `
+    + 'the floor separates the two, it does not just refuse everything');
+}
+
+section('the fewest breaks that separate every crossing');
+{
+  /* Interval stabbing, checked on shapes chosen so a lazy rule gets them
+   * wrong. Breaking at index k puts segments up to k-1 in one piece and j>=k
+   * in the next, so a crossing (i, j) needs a break in [i+1, j]. */
+  ok(splitIndices([]).length === 0, 'no crossings, no breaks');
+  ok(splitIndices([{ i: 2, j: 9 }]).length === 1, 'one crossing, one break');
+
+  /* Three crossings whose spans all overlap at index 9. A rule that broke at
+   * both ends of each would return six. */
+  const nested = [{ i: 2, j: 9 }, { i: 3, j: 12 }, { i: 4, j: 14 }];
+  ok(splitIndices(nested).length === 1,
+    'three overlapping crossings need ONE break, not three and not six');
+  const cut = splitIndices(nested)[0];
+  ok(nested.every((c) => cut >= c.i + 1 && cut <= c.j),
+    'and that break genuinely separates all three');
+
+  /* Disjoint spans cannot share a break. */
+  ok(splitIndices([{ i: 1, j: 3 }, { i: 8, j: 11 }]).length === 2,
+    'two crossings that share no index need two breaks');
+
+  /* ==> AND NADINE IS THE REAL CASE. <== She crosses her own path five times,
+   * four of them real loops. A lazy rule would cut her eight ways; two breaks
+   * separate all four. */
+  const nadine = seasonFile('atlantic', '2012').find((s) => s.id === 'AL142012');
+  const { timelineFor: tf } = await import('../lib/season-windswath.js');
+  const { onOneBranch: ob } = await import('../lib/windswath.js');
+  const nbr = ob(tf(nadine));
+  const nLat = nbr.reduce((s, p) => s + p.lat, 0) / nbr.length;
+  const nScale = 60 * Math.cos((nLat * Math.PI) / 180);
+  const nPlane = nbr.map((p) => [(p.lon - nbr[0].lon) * nScale, p.lat * 60]);
+  const real = pathCrossings(nPlane).filter((c) => c.width >= WIND_SWEEP.loopMinWidthNm);
+  ok(real.length === 4 && splitIndices(real).length === 2,
+    `Nadine 2012's four real loops are separated by two breaks, not four `
+    + `(got ${real.length} loops, ${splitIndices(real).length} breaks)`);
+}
+
+section('a path\'s crossings, and what is not one');
+{
+  /* A figure-eight. One crossing, and the enclosed piece has real width. */
+  const eight = [[0, 0], [10, 10], [10, 0], [0, 10]];
+  const hits = pathCrossings(eight);
+  ok(hits.length === 1, 'a figure-eight crosses itself exactly once');
+  ok(hits[0].width > 4, `and encloses something of real width (${hits[0].width.toFixed(1)})`);
+
+  ok(pathCrossings([[0, 0], [10, 0], [20, 0], [30, 0]]).length === 0,
+    'a straight line crosses itself nowhere');
+  ok(pathCrossings([[0, 0], [10, 0], [0, 0], [10, 0]]).length === 0,
+    'and a path folded exactly back along itself encloses no area, so it is '
+    + 'not a loop — the same call storm-shape.js makes');
+  ok(pathCrossings([[0, 0], [1, 1]]).length === 0, 'too short to look');
+}
+
+
+section('a break never leaves a stub');
+{
+  /* ==> IDA 2021 IS THE CASE, AND SHE WAS FOUND BY A SUITE THAT WAS NOT
+   * LOOKING FOR THIS. <== Her loop break lands on the second-to-last fix of a
+   * run, leaving two near-coincident points. Swept, that became a 73-vertex
+   * polygon carrying 18 zero-length edges — on the map, a small circle
+   * OUTLINED inside the band, covering nothing the neighbouring piece's end
+   * cap did not already cover. `test-season-swath.mjs`'s axis-aligned-edge
+   * assertion caught it, which is the argument for keeping assertions that
+   * look at shape rather than at counts. */
+  const ida = seasonFile('atlantic', '2021').find((s) => s.id === 'AL092021');
+  const before = buildSeasonSwath(ida, NO_SPLIT);
+  const after = buildSeasonSwath(ida);
+
+  const zeroLen = (fs) => {
+    let n = 0;
+    for (const f of fs) {
+      const r = f.geometry.coordinates[0];
+      for (let i = 1; i < r.length; i++) {
+        if (Math.abs(r[i][0] - r[i - 1][0]) < 1e-12
+          && Math.abs(r[i][1] - r[i - 1][1]) < 1e-12) n += 1;
+      }
+    }
+    return n;
+  };
+  ok(zeroLen(after) === 0 && zeroLen(before) === 0,
+    'Ida gains no repeated vertex from being broken');
+  ok(after.length === before.length,
+    'and gains no band either — a piece too short to be a corridor is not one');
+
+  /* The rule, stated on constructed input so it is not hostage to Ida's
+   * particular geometry: a break at the very ends does not happen at all. */
+  const twoStub = [
+    { x: 0, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: false },
+    { x: 100, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: true },
+    { x: 100.2, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: false },
+  ];
+  ok(__internals.breakRun(twoStub, WIND_SWEEP).length === 1,
+    'a break that would leave a 0.2 nm stub is refused outright');
+  const evenly = [
+    { x: 0, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: false },
+    { x: 100, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: true },
+    { x: 200, y: 0, quad: { ne: 60, se: 60, sw: 60, nw: 60 }, brk: false },
+  ];
+  const split = __internals.breakRun(evenly, WIND_SWEEP);
+  ok(split.length === 2, 'a break with real track on both sides is taken');
+  ok(split[0][split[0].length - 1] === split[1][0],
+    'and the two pieces SHARE the point they meet at, so no gap opens between them');
 }
 
 /* ------------------------------------------------------------------------- */
