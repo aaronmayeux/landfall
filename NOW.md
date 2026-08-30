@@ -181,11 +181,10 @@ item, not a leftover, and §57.36a records the reasoning:
 1. **The near-home slider.** The wall never loads track data, so filtering 175
    years by distance needs the whole-basin pass, 0.93 MB, phone cost unmeasured.
    It gets its own pass once that number exists.
-2. **The retired-names chip.** Needs a list of ~120 retired names that does not
-   exist in this repo; §57.17 rejects scraping NHC for it and authoring it from
-   memory is how a wrong fact reaches the screen with nothing flagging it.
-   `seasons/wall.json` carries the storm names already, so this is a list away rather
-   than a rebuild away — **Aaron can paste one, or a runner job can fetch it.**
+2. **The retired-names chip.** **No longer blocked — the list is derived and in
+   the repo (§57.51), and nobody maintains it.** What is left is wiring:
+   `seasons/wall.json` carries the storm names already. Its own pass, so that a
+   break in the data and a break in the layout cannot arrive together.
 3. **A filter carrying through when a year is tapped.** The wall is seven
    independent chips plus toggles; the board is one pill at a time. Most wall
    states have no pill to become, so honouring this means bringing both screens
@@ -462,12 +461,13 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> THE ARCHIVE BACKLOG IS DOWN TO ONE ITEM: §57.42 TIER 2 NUMBER 5, THE
-RETIRED NAMES. <==** Aaron's ask on 2026-08-29 was to make the past-storm drawer
-the thing people go to for research, and §57.42 held the whole plan. **Tier 1 is
-finished** — as-built at §57.43, §57.44, §57.45, §57.46, §57.48, §57.49 and
-§57.50, read those rather than this. **Tier 2 item 1 is built (§57.40a), items
-2, 3 and 4 are deleted, and Tier 3 was never accepted.**
+**==> THE ARCHIVE BACKLOG IS EMPTY. §57.42 HAS NOTHING LEFT IN IT. <==**
+Aaron's ask on 2026-08-29 was to make the past-storm drawer the thing people go
+to for research, and §57.42 held the whole plan. **Tier 1 is finished** —
+as-built at §57.43, §57.44, §57.45, §57.46, §57.48, §57.49 and §57.50.
+**Tier 2 is finished too**: item 1 is built (§57.40a), items 2, 3 and 4 are
+deleted, and item 5, the retired names, is built (§57.51). **Tier 3 was never
+accepted.** Read those sections rather than this list.
 
 **==> ITEMS 2, 3 AND 4 WERE DROPPED ON 2026-08-29 AND §57.42 CARRIES THE
 REASONING FOR EACH. <==** In one line: **item 2, people in the path, was refused
@@ -478,11 +478,25 @@ bring enough to the app. Neither of those two had a technical fault, which is
 exactly why the product call is written down: a later session that re-derives
 their feasibility must not mistake that for a reason to build them.
 
-**THE ONE REMAINING ITEM IS BLOCKED ON A LIST, NOT ON CODE.** The ~120 retired
-storm names do not exist anywhere in this repo, and §57.17 rejects scraping
-NHC's page for them because a restyle would silently empty the feature.
-**Aaron can paste a list, or a runner job can fetch one.** It unblocks the wall
-chip §57.36a holds back AND a drawer sentence.
+**==> THE LAST ITEM IS BUILT AND §57.42 IS EMPTY. NOTHING HERE IS WAITING ON
+AARON. <==** The retired names are derived rather than maintained: retirement
+is removal from the active lists, so the answer is the record minus the names
+still in service, and both halves already refresh themselves monthly. Nothing
+fetches a list. **§57.51 is the as-built account — read that, not this.**
+
+**NO PIXEL CHANGED, DELIBERATELY, SO THERE IS NOTHING TO JUDGE ON GLASS YET.**
+The wall chip §57.36a holds back and the drawer sentence are the next pass.
+**Two things from §57.51 land on that pass and both are wording rather than
+code:**
+
+1. **The obvious sentence is wrong for two storms.** *"The name Eta was retired
+   and will never be used again"* is false twice over — the Greek letters were
+   retired by DESCRIPTION rather than by name, and the retirement attaches to
+   the storm and its year. Eta and Iota are exported separately so a caller has
+   to opt in; they must not be folded into the ordinary list.
+2. **A pre-floor storm is "we could not look", not "not retired".** §5. The
+   derivation is silent below 1979 in the Atlantic and 1995 in the Pacific, and
+   the frozen historic block answers there instead.
 
 **==> AND THE GROUPING'S OWN PREDICTION ABOUT GROUP C WAS WRONG ABOUT BOTH
 ITEMS, WHICH IS THE PART WORTH CARRYING FORWARD. <==** It said Group C's two

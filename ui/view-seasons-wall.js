@@ -33,7 +33,7 @@
  *
  * WHAT IS NOT HERE, ON PURPOSE: the near-home slider, held to its own pass
  * because filtering 175 years by distance needs the 0.93 MB whole-basin file;
- * the retired-names chip, which needs a list this repo does not hold (§57.17);
+ * the retired-names chip, whose list is now derived (§57.51) but not yet wired;
  * and the landfall triangles, which are step 4.
  *
  * Imports config/, lib/ and its own siblings. Never data/ or map/ — the fetch

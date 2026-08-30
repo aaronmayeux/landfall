@@ -1285,12 +1285,18 @@ Why it is the right rule rather than a hand-picked twelve:
    shelf built on retirement alone will look thin, and that is a fact about the
    world rather than a gap to paper over.
 
-**==> THE LIST IS HAND-MAINTAINED AND THAT IS A COST, NOT A FOOTNOTE. <==** NHC
-publishes retired names as a WEB PAGE, not as a data file — nothing about it is
-machine-readable, and nobody has confirmed otherwise. So this is roughly 120
-rows somebody types once and adds to each spring. Cheap, and it is a file with
-an owner. **Do not build a scraper for it**; a page NOAA restyles once would
-silently empty the shelf.
+**==> THE LIST IS DERIVED NOW AND NOBODY MAINTAINS IT. §57.51 IS THE AS-BUILT
+ACCOUNT. <==** It used to be roughly 120 rows somebody typed once and topped up
+each spring, on the argument that NHC publishes retired names as a web page and
+a scraper aimed at it would silently empty the shelf.
+
+**That objection is still correct and nothing scrapes that page.** What
+replaced the typing is the opposite subtraction: retirement IS removal from the
+active lists, so the answer is every name the record shows was used minus every
+name still in service — and both halves were already in this repo, both already
+refreshing themselves monthly. The failure direction inverts with them. A
+restyle now makes every name look retired, which is a flood a gate catches,
+rather than an empty shelf that still renders.
 
 **The shelf is ordered newest first, with the year in parentheses.** It is the
 front door because it is what people open the feature for, and it is **not** the
@@ -1533,8 +1539,9 @@ and East Pacific 1–9 are AMANDA through ISELLE, in order.
 `tools/test-season-names.mjs` re-runs that check position by position against
 `samples/seasons-live/`, so a mistyped name in the used range fails the suite.
 **It cannot check the unused tail** — nothing can, until a storm spends it, and
-that is what makes it a ghost. **Do not build a scraper**, same reasoning as
-§57.17's retired names.
+that is what makes it a ghost. **Do not build a runtime scraper**: the reason is
+the one §57.17 gave, and §57.51 explains why reading an ACTIVE list on a runner
+is a different question with the opposite failure direction.
 
 ### 57.18b The season in progress, as built
 
@@ -4774,10 +4781,11 @@ trip.
 **Three of §57.36's controls are not built, and none of the three is an
 oversight.** The near-home slider needs track geometry the wall never loads:
 filtering 175 seasons by distance means the 0.93 MB whole-basin file, whose
-phone cost is unmeasured. The retired-names chip needs a list of ~120 retired
-names that does not exist in this repo and which §57.17 rejects scraping for;
-the names are in `wall.json` now, so it is a list away rather than a rebuild
-away. And a filter chosen on the wall does NOT survive a tap into a year: the
+phone cost is unmeasured. **The retired-names chip is no longer blocked on the list** — §57.51 derives
+it and `data/retired-names.js` is in the repo — but the chip itself is not
+built, and that is the next pass rather than this one: the names are in
+`wall.json` already, so it is wiring rather than a rebuild. And a filter chosen
+on the wall does NOT survive a tap into a year: the
 wall is seven independent chips plus toggles and the board is one pill at a
 time, so most wall states have no pill to become. Reconciling them means
 changing a board already confirmed on glass, and that is its own pass.
@@ -6099,11 +6107,22 @@ since square miles of ground carry no population in them. **They are recorded as
 a product call so that a later session does not re-derive their feasibility and
 mistake it for a reason to build them.**
 
-**5. Retired names.** Already wanted as a wall chip and blocked on a list that
-does not exist in this repo (`NOW.md`, §57.36a). A runner job can fetch ~120
-names once and ship them; `seasons/wall.json` already carries the storm names.
-Unblocks the chip AND a drawer sentence: *"The name Harvey was retired after
-this storm and will never be used again."*
+**==> 5. RETIRED NAMES IS BUILT. §57.51 IS THE AS-BUILT ACCOUNT. <==** The row
+is deleted from this tier rather than ticked and the number 5 stays a permanent
+address. **No list is fetched**: retirement is removal from the active lists,
+so the answer is derived from the record and the lists in service, both of
+which the repo already refreshes monthly. 72 Atlantic, 12 east Pacific and 2
+central Pacific derived, on top of 34 frozen pre-floor entries.
+
+**==> AND THE TIER IS NOW EMPTY. <==** Item 1 is built (§57.40a), items 2, 3
+and 4 are deleted, and item 5 is built. Nothing remains of §57.42 at all.
+
+**WHAT IT UNBLOCKS IS NOT ITSELF BUILT.** The wall chip §57.36a holds back and
+the drawer sentence are a separate pass, deliberately, so a break in the data
+and a break in the layout cannot arrive together. **And the drawer sentence
+cannot be the obvious one for every storm:** *"The name Eta was retired and
+will never be used again"* is false twice over, because the Greek letters were
+retired by description rather than by name. §57.51 has the wording problem.
 
 **TIER 3 — DEATHS, DAMAGE, RAINFALL. NOT ACCEPTED. Read this before starting.**
 
@@ -7569,3 +7588,181 @@ archive-wide 1,330 figure is computed straight off the facts rather than through
 is what catches that. Both are kept and the division of labour is written down,
 because a suite that looks like it covers a rule and does not is §12's worst
 outcome.
+
+### 57.51 The retired names, derived — as built
+
+Tier 2 item 5 of §57.42, built 2026-08-30. **The shipped answer is
+`data/retired-names.js`, and it is GENERATED.** Read that file's header for
+what it holds; read this for why the method is what it is.
+
+**==> NOTHING FETCHES A LIST OF RETIRED NAMES, AND §57.17'S OBJECTION TO A
+SCRAPER IS NOT OVERTURNED. IT IS SIDESTEPPED. <==** §57.17 refused to scrape
+NHC's retired-names page because a restyle would SILENTLY EMPTY the feature —
+the surface still renders and is simply missing entries, which is the §5
+failure exactly. That reasoning still stands and nothing here scrapes that
+page.
+
+What this does instead is read the ACTIVE lists, which the repo already holds
+and already refreshes:
+
+```
+retired = every name the best-track record shows was used
+          minus every name still on an active list
+          minus the exclusions below
+```
+
+**THE FAILURE DIRECTION INVERTS, AND THAT IS THE WHOLE ARGUMENT.** Parse zero
+active names and every name ever used looks retired — a flood, not a silence.
+A flood trips a gate; a silence does not. Aaron's requirement was that he
+maintain nothing (2026-08-30), and this is the shape that meets it without
+reintroducing the failure §57.17 refused.
+
+**Both halves already refresh themselves.** `seasons-hurdat` rewrites the
+record on the 3rd; `seasons-names` rewrites the lists on the 5th;
+`seasons-retired` does the arithmetic on the 9th and commits only if a name
+moved. In an ordinary year it commits once, in spring, after the WMO session.
+
+#### The floors, and why each is where it is
+
+**MEASURED ON THE REAL FILES, 2026-08-30.** Below a basin's floor the
+subtraction stops meaning retirement, so it is not allowed to speak there.
+
+| Basin | Floor | What goes wrong below it |
+|---|---|---|
+| Atlantic | 1979 | Names were often DROPPED rather than formally retired, and the whole all-female list was replaced when men's names were added. A 1954 floor yields **184** candidates against a true figure near 100. A 1979 floor yields **81**, and every one is real. |
+| East Pacific | 1995 | List reorganisations and spelling drift in the record — DALILIA for DALILA, DELORES for DOLORES, plus LI. A 1979 floor puts **7** false names in; 1995 puts in none. |
+| Central Pacific | 1995 | Same shape: HANA, NELE, OKA, PEKE, ULEKI, WILA and HALI were dropped in reorganisations, not retired. A 1979 floor puts **7** false names in; 1995 puts in none. |
+
+**What the floors exclude lives in `data/retired-names-historic.js`, frozen and
+hand-written, and the job never writes it.** 26 Atlantic entries 1954-78, 6
+east Pacific and 2 central Pacific before 1995. **Nothing in it can ever gain a
+member** — those seasons are settled — so freezing it is honest rather than
+lazy, and it is not maintenance.
+
+**IT IS A SEPARATE FILE RATHER THAN A BLOCK INSIDE THE GENERATED ONE.** A
+generator that has to preserve a hand-written region of its own output is one
+bug away from deleting 34 storms nobody would notice were gone.
+
+#### Two things the obvious version gets wrong
+
+**==> ONLY THE SIX MOST RECENT ROSTER YEARS COUNT AS IN SERVICE. <==**
+`lib/season-names-data.js` merges forward and never drops a year, so it will
+eventually hold seasons already spent. A name retired after one of those
+seasons comes off the list it will next appear on, but the stale column keeps
+it — and a union over every year in the file would then report a genuinely
+retired name as still in service. Silently. Forever. **That is §57.17's failure
+arriving by a different door**, and `ACTIVE_LIST_COUNT` is what shuts it. The
+archive cannot demonstrate this yet, so the suite drives it with a fabricated
+seventh year holding KATRINA.
+
+**==> THE PACIFIC NEEDS THE CENTRAL PACIFIC NAMES AND THE ATLANTIC HAS TO
+CLAIM ITS OWN. <==** Two separate faults, both measured, neither obvious:
+
+1. **CPHC-named storms are recorded under east Pacific ids.** ELA, ULIKA, LANA
+   and AKONI all appear on `EP` rows, and CPHC has no annual roster, so without
+   the 48 names in service every one falls out looking retired.
+   `tools/cpacific-lists.mjs` is generated from the same NHC page the rosters
+   come off — §57.12's rule is untouched, because a flat set of names in
+   service is not a per-year roster and never becomes one.
+2. **Atlantic storms that cross into the Pacific carry their names with them.**
+   OTTO 2016, BONNIE 2022 and JULIA 2022 are all in the east Pacific record.
+   The basins are walked Atlantic first and the first one claims a name, so an
+   Atlantic retirement is not reported twice and an Atlantic name still in
+   service is not reported as an east Pacific retirement. **Measured with the
+   claim rule removed: exactly one name is claimed twice, OTTO, and both claims
+   are the same storm in the same year.** The suite asserts that, so a second
+   case turns it red rather than being quietly folded in — if one ever appears,
+   the rule needs a year in it.
+
+#### The Greek storms are retired by DESCRIPTION, not by name
+
+2020 spent its 21 names and ran into nine Greek letters. All nine fall out of
+the subtraction, because the 2021 WMO session ENDED the use of the alphabet and
+replaced it with a supplemental list. **The system was abolished; the letters
+were not each withdrawn.**
+
+**VERIFIED FROM THE SOURCE, NOT FROM MEMORY.** The WMO's announcement of 17
+March 2021 records the Hurricane Committee retiring Dorian (2019) and Laura,
+Eta and Iota (2020), and says plainly that impacts from Eta and Iota were
+severe enough that those names were formally retired while there had been no
+formal plan for retiring Greek names at all. **So: two of the nine.** Alpha,
+Beta, Gamma, Delta, Epsilon, Zeta and Theta were not, and neither were the six
+Greek names 2005 spent. Without the explicit exclusion those seven earn a
+confidently wrong sentence that reads perfectly.
+
+**AND THE COPY HAS TO DIFFER.** The same committee agreed it was not practical
+to retire a letter of the Greek alphabet into hurricane history, so where a
+Greek-designated storm is retired the YEAR OF OCCURRENCE and other details are
+recorded instead. *"The name Eta was retired and will never be used again"* is
+false twice over — the letter was not withdrawn as a name, and the retirement
+is attached to the storm and its year. Eta and Iota are therefore exported as
+`RETIRED_BY_DESCRIPTION` and are **deliberately not folded into
+`RETIRED_ATLANTIC`**, so a caller has to opt in rather than print the wrong
+sentence by default.
+
+#### The gates. Any failure keeps the committed answer and fails loudly
+
+1. **SHAPE.** Fewer than 250 names in service means the lists did not parse.
+   This catches the flood arriving; gate 2 only sees names leaving.
+2. **MONOTONIC.** Retirement is append-only. A name LEAVING the answer cannot
+   be legitimate, and it is the signature of a half-parsed active list — the
+   one failure that would otherwise be quiet.
+3. **DELTA CAP.** Six. The worst real season is 2005 with five.
+4. **CROSS-CHECK against the record.** Every claimed name joins a real storm in
+   the year claimed and never appears after it. Free — we own the data.
+5. **THE SUPPLEMENTAL GUARD.** We hold the six rotating lists but not the
+   supplemental list. A name spent past the end of a rotating list from 2021 on
+   could be a supplemental name in perfectly good standing, and nothing here
+   can tell. **§5: that is "we could not look", never "not retired"** — it is
+   dropped from the answer and said out loud in the report. No season has
+   triggered it yet, so the suite drives it invented, both ways.
+
+#### What it produced, and the check that is not our own arithmetic
+
+**72 Atlantic, 12 east Pacific, 2 central Pacific derived, plus the 34 frozen
+and the Greek pair.** The subtraction was re-derived independently of the
+transcribed list it replaced and **agreed with it exactly** — zero
+disagreements in either direction on the Atlantic since 1979.
+
+**`tools/test-retired-names.mjs` IS THE OUTSIDE OPINION AND IT MATTERS MORE
+THAN IT DID.** It used to catch a typing slip. It now reconciles the Atlantic
+answer against decade counts published by people who were in the room — 8, 11,
+9, 7, 15, 24, 16, 10, totalling 100 — and all eight sums hold against a list
+nobody typed. A check that only re-ran our own arithmetic would go green on our
+own mistake. **Its Atlantic set counts the Greek pair**, because the WMO does;
+leaving them out drops the 2020s from 10 to 8.
+
+**==> AND THE DERIVATION FOUND A BUG IN THE LIST IT REPLACED. <==** ISIS was
+filed under `RETIRED_NEVER_USED` while the same file's own comment recorded its
+last storm as 2004. The record agrees with the comment. **A hand list
+disagreed with itself and stayed green**, and that is the argument for deriving
+rather than transcribing, in one line.
+
+#### Where the code is
+
+- `tools/seasons-retired-derive.mjs` — every rule and every number. Pure: no
+  fetch, no fs, no clock, the same split `seasons-names-parse.mjs` uses, and
+  the reason the suite can drive invented edge cases without a network.
+- `tools/seasons-retired.mjs` — reads the files, applies the rules, writes the
+  module, reports. Holds no rule of its own; a second copy of a floor here is
+  how the two drift apart.
+- `tools/cpacific-lists.mjs` — GENERATED, and in `tools/` rather than `lib/`
+  because §12 makes an import in shipped code bytes on every phone and nothing
+  the app draws reads these 48 names.
+- `.github/workflows/seasons-retired.yml` — monthly on the 9th, clear of the
+  two jobs that write what it reads.
+- `tools/test-seasons-retired.mjs` — 1,026 checks. **Fifteen mutations run,
+  all fifteen bite.** Three only started biting after the invented cases were
+  added: the used-again cross-check and the two header-row guards were
+  invisible against a clean archive, which is §12's worst outcome exactly.
+
+**ONE REDUNDANCY IS DELIBERATE AND IS RECORDED RATHER THAN TIDIED.** Three
+rules reject a track row — the field count, the storm-id pattern and the basin
+prefix — and any one suffices, so deleting any one is invisible against real
+bytes. Deleting all three was invisible too, because a track row leads with a
+date. The suite drives the field count alone with a header carrying fields we
+do not understand, so the BEHAVIOUR is asserted whichever rule is carrying it.
+
+**NOTHING ON SCREEN CHANGED IN THIS PASS, DELIBERATELY.** The wall chip
+§57.36a holds back and the drawer sentence are the next pass, so a break here
+can only be data and a break there can only be layout.
