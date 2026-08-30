@@ -152,8 +152,13 @@ section('THE ENDS \u2014 first place is drawn inside the bar, not half outside i
    * extremes" as step 2's glass risk; this is the half of it that geometry can
    * answer without a phone. */
   const at = (v) => {
+    /* ==> ANCHORED ON THE MARK'S OWN CLASS. <== A bare `x1="..."` match used
+     * to work and stopped the day §57.64 added the baseline rule, whose own
+     * `x1="0"` sits earlier in the markup — so the assertion read the rule's
+     * left end and reported first place as uninset. It went red rather than
+     * silently green, which is the only reason it is worth writing down. */
     const m = spineHtml(ladder, 'round', v, { axis: (x) => `${x}` })
-      .match(/x1="([\d.]+)"/);
+      .match(/season-spine-mark" x1="([\d.]+)"/);
     return m ? Number(m[1]) : null;
   };
   ok(`first place is inset from the left edge. Got x=${at(weakest)}`, at(weakest) > 0);
@@ -220,6 +225,43 @@ section('THE AXIS \u2014 the same units as the row above it');
     + `the same track. Got ${metMark}`,
   metMark !== null && Math.abs(metMark - 19.8) < 0.3);
 
+  /* ==> THIS STORM'S OWN FIGURE IS PRINTED ON THE BAR, AND IT IS THE RUNG. <==
+   * §57.64. The axis formatters take a ladder's own units and `read()` returns
+   * nautical miles for both distance entries, so handing `raw` straight to the
+   * formatter would print `1,830 mi` under a mark placed correctly at the
+   * 2,106 mi rung — the mirror of §57.54c's fault, number wrong instead of
+   * position. Asserted in both unit systems, because six of the eight ladders
+   * would be green either way. */
+  ok('the distance bar prints the rung, not the raw nautical miles',
+    imp.includes('>2,106 mi<') && !imp.includes('>1,830 mi<'));
+  ok('and the kilometre ladder\u2019s own rung for a metric reader',
+    met.includes('>3,388 km<') && !met.includes('>1,830'));
+  ok('the wind bar prints the storm\u2019s figure in the reader\u2019s units',
+    imp.includes('>173 mph<') && met.includes('>278 km/h<'));
+
+  /* ==> THREE ANCHORS, AND THE RECORD-HOLDER IS WHY. <== A label centred on a
+   * mark at 2% hangs half of itself off the left edge of the panel. Katrina's
+   * own panel exercises all three: her wind sits at 89% (pinned right), her
+   * pressure at 15% (pinned left) and her ACE at 27% (centred). */
+  ok('a mark near the right end pins its figure to that end',
+    /season-spine-figure-end">173 mph/.test(imp));
+  ok('a mark near the left end pins its figure to that end',
+    /season-spine-figure-start">902 mb/.test(imp));
+  ok('and a mark in the middle is centred on it, carrying the position',
+    /season-spine-figure-mid" style="--spine-at: 27\.\d+%">20\.0/.test(imp));
+
+  /* ==> THE BASELINE AND ITS TWO END TICKS. <== §57.64. Without them the bar
+   * has no floor and no ends, and on the coarse ladders the outermost columns
+   * are one pixel tall — so where the range stops is not inferable from the
+   * ink. Aaron asked for the mockup's styling and this was the substance of
+   * it. */
+  const plots = (imp.match(/season-spine-plot/g) || []).length;
+  ok(`every bar stands on a rule \u2014 ${plots} bars, `
+    + `${(imp.match(/season-spine-rule/g) || []).length} rules`,
+  (imp.match(/season-spine-rule/g) || []).length === plots);
+  ok('and carries a tick at each end of its range',
+    (imp.match(/season-spine-tick/g) || []).length === plots * 2);
+
   /* Every ranked row gets a bar, and the section is one `<dl>` as it was. */
   const bars = (imp.match(/season-spine-plot/g) || []).length;
   const dts = (imp.match(/<dt>/g) || []).length;
@@ -265,12 +307,18 @@ section('THE FLOOR \u2014 §5 with a chart under it');
    * height and invisible. */
   const ladder = { values: [0, 100], counts: [1, 1000], of: 1001, direction: 'high' };
   const html = spineHtml(ladder, 'round', 0, { axis: (v) => `${v}` });
-  const rects = html.match(/M[\d.]+ 24h[\d.]+v(-[\d.]+)/g) || [];
+  /* The baseline's y, read off the rendered path rather than typed, so
+   * §57.64's move from 24 to 27 cannot silently empty this match again. */
+  const floorY = (html.match(/d="M[\d.]+ ([\d.]+)h/) || [])[1];
+  const rects = html.match(new RegExp(`M[\\d.]+ ${floorY}h[\\d.]+v(-[\\d.]+)`, 'g')) || [];
   const heights = rects.map((r) => Math.abs(Number(r.match(/v(-[\d.]+)/)[1])));
   ok(`both columns are drawn, and the thin one has real height. Got ${heights.join(', ')}`,
     heights.length === 2 && Math.min(...heights) > 0);
+  /* The plot area, not the viewBox: §57.64 made the box taller than the
+   * columns so the mark and the end ticks can cross the baseline. */
+  const plotH = Number(floorY) - 3;
   ok('and the thin column is at least the floor, so one storm never reads as none',
-    Math.min(...heights) / 24 >= SEASONS.spineMinColumn - 1e-9);
+    Math.min(...heights) / plotH >= SEASONS.spineMinColumn - 1e-9);
   ok('while the tall one is still visibly taller, so the floor did not flatten '
     + 'the distribution into a block',
   Math.max(...heights) > Math.min(...heights) * 2);
@@ -281,7 +329,7 @@ section('THE FLOOR \u2014 §5 with a chart under it');
  * ------------------------------------------------------------------------ */
 section('CONTRAST \u2014 the mark against the panel it is drawn on');
 {
-  /* ==> THIS ASSERTION EXISTS BECAUSE A GUESS SHIPPED AT 2.19:1. <== §57.57.
+  /* ==> THIS ASSERTION EXISTS BECAUSE A GUESS SHIPPED AT 2.19:1. <== §57.63.
    * The first version of these tokens reasoned about each theme's NAME rather
    * than reading its panel colour, and put a deep brown mark (`#7A3E12`) on
    * the sepia archive's `ocean` (`#1C1409`) — which its own comment describes

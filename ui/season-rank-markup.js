@@ -35,6 +35,7 @@ import { formatDistance, formatPressure, formatWind } from '../lib/units.js';
 import { absenceHtml, rowsHtml, spanWords, utcDay } from './season-markup-bits.js';
 import { figureRowsHtml } from './season-figure-row.js';
 import { spineHtml } from './season-spine.js';
+import { toRung } from '../lib/rankings.js';
 
 /**
  * `3` → `3rd`. The teens are the whole reason this is a function: 11, 12 and
@@ -246,8 +247,17 @@ function spineFor(row, system) {
   if (!Number.isFinite(raw)) return '';
 
   const notes = AXIS_NOTES[row.key] || {};
+  /* ==> THE FIGURE PRINTED ON THE BAR IS THE RUNG, NOT THE RAW VALUE, AND IT
+   * IS THE SAME TRAP AS THE MARK'S POSITION. <== §57.64. The axis formatters
+   * take a ladder's own units; `read()` returns nautical miles for both
+   * distance entries. Handing `raw` straight to `axis` here would print
+   * `1,830 mi` under a mark placed correctly at the 2,106 mi rung — the
+   * mirror image of §57.54c's fault, with the number wrong instead of the
+   * position. `toRung` is the one conversion that speaks the ladder's units. */
+  const figure = axis(toRung(row.def.quantize, raw), system);
   return spineHtml(ladder, row.def.quantize, raw, {
     axis: (v) => axis(v, system),
+    figure: figure == null ? '' : figure,
     lowNote: notes.low || '',
     highNote: notes.high || '',
     /* ==> THE SUMMARY IS THE PICTURE IN WORDS, BECAUSE THE PICTURE IS NOT AN

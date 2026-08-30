@@ -8488,6 +8488,14 @@ renumbers. **A step that dies is a recorded deletion at its number, per
 | 7 | The section merge, the order, the icons, the default-open set | §57.61 | 2 |
 | 8 | The globe tether, if Aaron wants it | §57.62 | 3 |
 
+**==> THESE EIGHT NUMBERS ARE RESERVED AND TWO OF THEM WERE BRIEFLY SQUATTED
+ON. <==** §57.63 records a bug fix that first landed as §57.57 and §57.64 a
+restyle that first landed as §57.58 — both numbers this table had already
+promised to steps 3 and 4. Caught by `tools/doc-check.mjs` before step 3
+started, and corrected. **Work that is not one of these eight steps takes the
+next free number ABOVE §57.62, never the next number after the last thing
+written.**
+
 **==> STEP 2 WIRES THE BAR INTO THE OLD SECTION ON PURPOSE, AND THAT IS THE
 MOST IMPORTANT SEQUENCING DECISION HERE. <==** `CLAUDE.md`'s rule is that a
 change nobody can bisect is a change nobody can debug, and the bar is the one
@@ -8785,7 +8793,7 @@ cannot tell which one moved.
 already trusts against its own panel.
 
 **==> THE FIRST VERSION OF THIS PARAGRAPH WAS WRONG AND SHIPPED A MARK AT
-2.19:1. SEE §57.57. <==** It claimed the sepia mark should be a deep ink
+2.19:1. SEE §57.63. <==** It claimed the sepia mark should be a deep ink
 *"because on a warm light panel the readable direction is DOWN"*, and the sepia
 panel is not light. That sentence is deleted rather than annotated, per this
 file's own rule.
@@ -8826,7 +8834,7 @@ is barring the `all` ladder instead, and it is a swap rather than a rewrite.**
 **the cut §57.54k scheduled inside step 3 now has to happen before anything
 else lands there.**
 
-### 57.57 The distribution bar's mark failed contrast on the archive panel
+### 57.63 The distribution bar's mark failed contrast on the archive panel
 
 **A BUG FIX ON §57.56's TOKENS, LANDED AS ITS OWN COMMIT** — §12's rule that a
 bug fix never rides inside the feature work that follows it. Found by Aaron on
@@ -8880,3 +8888,86 @@ the accessible answer. The MARK is the graphic that has to be seen.
 **AARON REJECTED GAPPED COLUMNS ON 2026-08-30.** The mockup drew the histogram
 as separated bars at a fixed width; the shipped contiguous silhouette stays.
 **Do not reintroduce them.**
+
+### 57.64 The distribution bar, restyled to the mockup
+
+**Aaron, 2026-08-30, on glass: *"It works, but I prefer the styling of the
+mockup better."*** The bar §57.56 shipped was correct and read as a smudge.
+This section is what changed and what deliberately did not.
+
+**==> THE GAPPED COLUMNS WERE THE ONE THING HE REJECTED. <==** The mockup drew
+the histogram as separated bars at a fixed width. **The continuous silhouette
+stays. Do not reintroduce gaps.**
+
+#### 57.64a The baseline and its end ticks were the substance of it
+
+**THE FIRST VERSION DREW COLUMNS AND NOTHING ELSE, SO THE BAR HAD NO FLOOR AND
+NO ENDS.** The reader had to work out where the range started and stopped from
+where the ink happened to run out — and on the coarse ladders the outermost
+columns are one pixel tall, so it is not workable-out at all.
+
+The box is now taller than the columns: `PLOT` is where the columns live and
+where the baseline sits, with `OVERSHOOT` above and below it. **The rule, the
+two end ticks and the mark all CROSS the baseline rather than stopping at it.**
+All three are `<line>` with `vector-effect="non-scaling-stroke"`, for the same
+reason the mark already was — `preserveAspectRatio="none"` stretches this
+100-unit box to whatever the panel is wide, so a shape's thickness would
+otherwise be a different number of device pixels on every screen.
+
+**THE MARK NOW RUNS THE FULL HEIGHT OF THE BOX.** It has to be findable when
+the column under it is one pixel tall, which is the ordinary case at the thin
+end of every one of these ladders. A mark that stopped at the top of its own
+column would be shortest exactly where the storm is rarest.
+
+#### 57.64b The storm's own figure, printed on the bar
+
+**WITHOUT IT THE MARK IS A POSITION WITH NO VALUE.** The reader could see that
+the storm sat four fifths of the way along and had to look back up to the row
+to learn what four fifths meant. The two extremes are already spelled at the
+ends, so the third number completes the sentence.
+
+**==> IT IS THE RUNG, NOT THE RAW FIGURE, AND THAT IS §57.54c's TRAP WEARING
+THE OTHER FACE. <==** The axis formatters take a ladder's own units and
+`read()` returns nautical miles for both distance entries, so handing `raw`
+straight to the formatter prints **`1,830 mi` under a mark placed correctly at
+the 2,106 mi rung** — the same fault with the number wrong instead of the
+position. Katrina now reads `2,106 mi` and `3,388 km`. Mutation-checked in both
+unit systems.
+
+**THREE ANCHORS, NOT ONE, AND THE RECORD-HOLDER IS WHY.** A label centred on a
+mark at 2% hangs half of itself off the left edge of the panel. Within
+`FIGURE_EDGE` of either end it pins to that end instead. Katrina's own panel
+exercises all three: wind at 89% pins right, pressure at 15% pins left, ACE at
+27% is centred.
+
+**THE CLASS NAMES ARE WRITTEN OUT IN FULL RATHER THAN BUILT FROM THE ANCHOR.**
+`class="is-${anchor}"` is shorter and `tools/css-orphan-check.mjs` cannot see
+it — it reported all three rules as dead CSS, which is the check working
+exactly as intended.
+
+#### 57.64c What was taken from the mockup and what was not
+
+**THE LABELS STAY IN HTML RATHER THAN MOVING INTO SVG `<text>`, AND THE
+DRAWER'S WIDTH IS WHY.** The mockup put all three inside a fixed `358 x 62`
+viewBox and scaled the whole SVG proportionally, which is exact at the 390px it
+was drawn for. **This panel runs from 320px to 719px before the wide layout
+pins it to `clamp(340px, 36vw, 440px)`** — so a proportionally scaled box would
+render its 9.5px axis text at nearly 18px on a tablet held in portrait. In HTML
+the labels take the panel's own type tokens and do not scale at all, and they
+still line up with the bar's ends because the SVG is exactly as wide as the
+paragraph under it.
+
+#### 57.64d Two assertions moved with the geometry, and one of them mattered
+
+**THE "FIRST PLACE IS INSET" CHECK WAS MATCHING THE WRONG ELEMENT.** It read a
+bare `x1="..."` out of the markup, and the new baseline rule's own `x1="0"`
+sits earlier — so it reported first place as uninset. **It went red rather than
+silently green**, which is the only reason it is worth writing down: a
+positional assertion anchored on nothing in particular is one element away from
+testing something else. It is anchored on `season-spine-mark` now.
+
+The minimum-column check read a literal baseline `y` of 24 and matched nothing
+once the floor moved to 27. It reads the floor off the rendered path instead.
+
+**106 assertions. Four mutation runs across §57.56 and this section, all
+biting.**

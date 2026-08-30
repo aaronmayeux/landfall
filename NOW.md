@@ -488,14 +488,24 @@ new drawing primitive is judged against a layout nobody changed. Every ranked
 row now carries a bar showing the whole archive's spread, with this storm's
 mark on it and the real extremes at both ends.
 
+**==> AARON JUDGED IT ON GLASS AND IT CAME BACK TWICE. <==** Both rounds are
+landed and pushed. **§57.63** — the mark failed contrast at 2.19:1, a deep
+brown on the archive's near-black brown panel; two of the three themes were
+failing and only sepia is ever drawn, so nobody had looked. **§57.64** — the
+styling, restyled to the mockup: a baseline with end ticks, the mark running
+the full height, and the storm's own figure printed on the bar under it.
+**Aaron rejected the mockup's gapped columns; the continuous silhouette stays
+and must not be reintroduced.**
+
 **==> WHAT TO LOOK AT, IN ORDER. <==**
 
 1. **Does a histogram under a row read as information or as decoration?** That
    is §57.54k's stated risk for this step and it is the whole question.
 2. **Is the mark findable at both extremes?** Open Katrina — her wind mark sits
-   at 89% (far right) and her pressure mark at 15% (far left). The geometry
-   half of this is handled: the mark is inset so a first-place storm is not
-   drawn half outside the bar. The rest is colour and weight, which is glass.
+   at 89% (far right) and her pressure mark at 15% (far left), and her figure
+   label pins to that end at each. The mark is inset so a first-place storm is
+   not drawn half outside the bar, and it now clears 3:1 in every theme with a
+   suite assertion holding it there.
 3. **The basin / overall mismatch, flagged in advance.** The bar shows the
    BASIN ladder while the text beside it cites the basin AND the overall count.
    §57.56h. **If that reads as a mismatch the lever is barring the `all` ladder

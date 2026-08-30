@@ -607,7 +607,7 @@ export const DARK = Object.freeze({
    *  into it cannot tell which one moved.
    *
    *  ==> IT IS THE THEME'S OWN `textPrimary`, AND THAT RULE REPLACED A GUESS
-   *  THAT SHIPPED AT 2.19:1. <== §57.57. The first version reasoned about each
+   *  THAT SHIPPED AT 2.19:1. <== §57.63. The first version reasoned about each
    *  theme's NAME rather than reading its panel colour, and put a deep brown
    *  mark on the sepia archive's near-black `ocean` — below the 3:1 floor for
    *  a non-text graphic, on the one element the whole bar exists to make
@@ -1764,7 +1764,7 @@ export const SEPIA = Object.freeze({
    *  this bar is drawn today and the archive globe is sepia.
    *
    *  ==> SEPIA IS NOT A LIGHT THEME AND ASSUMING IT WAS PUT A DARK MARK ON A
-   *  DARK PANEL. <== §57.57. `ocean` here is `#1C1409` — parchment's SHADOW,
+   *  DARK PANEL. <== §57.63. `ocean` here is `#1C1409` — parchment's SHADOW,
    *  as its own comment says, not parchment. The mark is `textPrimary`, which
    *  is 14.89:1 against it; the guess it replaced was 2.19:1. Measured
    *  2026-08-30 and asserted in the suite. */

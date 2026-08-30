@@ -38,7 +38,24 @@ import { esc } from './season-markup-bits.js';
  * stale against a stylesheet nobody edited at the same time.
  */
 const W = 100;
-const H = 24;
+
+/**
+ * The box is taller than the columns, and the extra room is the axis.
+ *
+ * ==> THE BASELINE RULE AND ITS END TICKS ARE WHAT MADE THIS READ AS
+ * INFORMATION RATHER THAN AS A SMUDGE. <== §57.64. The first version drew the
+ * columns and nothing else, so the bar had no floor and no ends — the reader
+ * had to infer where the range started and stopped from where the ink happened
+ * to run out. On the coarse ladders, where the last few columns are one pixel
+ * tall, that is not inferable at all.
+ *
+ * `PLOT` is where the columns live and where the baseline sits. `H` leaves
+ * `OVERSHOOT` above it for the mark and the same below for the mark and the
+ * end ticks, so all three cross the baseline rather than stopping at it.
+ */
+const PLOT = 24;
+const OVERSHOOT = 3;
+const H = PLOT + OVERSHOOT * 2;
 
 /**
  * How far in from each end the mark may be drawn, in viewBox units. The stroke
@@ -47,6 +64,18 @@ const H = 24;
  * at the narrowest width this panel is ever drawn at.
  */
 const MARK_INSET = 0.5;
+
+/**
+ * How close to an end the mark has to be before its figure label stops being
+ * centred on it and pins to that end instead.
+ *
+ * A FIFTH. The longest figure this label ever carries is a lifespan —
+ * `32 days, 18 hours` — which is about a third of the panel's width at 390px,
+ * so half of it overhangs by a sixth. A fifth clears that with room, and it is
+ * far enough from the middle that the pinned label still reads as belonging to
+ * a mark near the end rather than to the end itself.
+ */
+const FIGURE_EDGE = 0.2;
 
 /**
  * Bin a ladder into columns.
@@ -149,15 +178,20 @@ function pathFor(bins) {
 
   const n = bins.length;
   const step = W / n;
+  const floor = OVERSHOOT + PLOT;
   const parts = [];
   for (let i = 0; i < n; i++) {
     if (bins[i] <= 0) continue;
     const scaled = Math.sqrt(bins[i] / tallest);
-    const h = Math.max(SEASONS.spineMinColumn, scaled) * H;
+    const h = Math.max(SEASONS.spineMinColumn, scaled) * PLOT;
     const x = i * step;
-    /* Drawn from the baseline up, so a short column sits ON the floor rather
+    /* ==> THE COLUMNS TOUCH, AND AARON REJECTED THE ALTERNATIVE ON GLASS. <==
+     * §57.64. The mockup drew them as separated bars at a fixed width; the
+     * continuous silhouette is the shape he kept. Do not reintroduce gaps.
+     *
+     * Drawn from the baseline up, so a short column sits ON the floor rather
      * than floating in the middle of the bar. */
-    parts.push(`M${x.toFixed(2)} ${H}h${step.toFixed(2)}v${(-h).toFixed(2)}h${(-step).toFixed(2)}z`);
+    parts.push(`M${x.toFixed(2)} ${floor}h${step.toFixed(2)}v${(-h).toFixed(2)}h${(-step).toFixed(2)}z`);
   }
   return parts.length ? parts.join('') : null;
 }
@@ -180,13 +214,14 @@ function pathFor(bins) {
  * @param {number} raw       this storm's figure, in whatever units `read` gave
  * @param {object} opts
  * @param {function} opts.axis   value -> the end label's text
+ * @param {string} [opts.figure] this storm's own figure, printed on the bar
  * @param {string} [opts.lowNote]   words appended to the LEFT label
  * @param {string} [opts.highNote]  words appended to the RIGHT label
  * @param {string} [opts.summary]   the `aria-label`; the row's own words
  * @returns {string} HTML, or '' when this ladder cannot be drawn
  */
 export function spineHtml(ladder, quantize, raw, {
-  axis, lowNote = '', highNote = '', summary = '',
+  axis, figure = '', lowNote = '', highNote = '', summary = '',
 } = {}) {
   const box = binLadder(ladder);
   if (!box || typeof axis !== 'function') return '';
@@ -206,6 +241,28 @@ export function spineHtml(ladder, quantize, raw, {
    * "findable at both extremes" question answered in the geometry rather than
    * left to glass. */
   const x = (MARK_INSET + f * (W - MARK_INSET * 2)).toFixed(2);
+  const top = OVERSHOOT + PLOT;
+  const bottom = (top + OVERSHOOT).toFixed(2);
+
+  /* ==> THE FIGURE IS PRINTED ON THE BAR, UNDER THE MARK, AND IT IS THE HALF
+   * THAT WAS MISSING. <== §57.64. Without it the mark is a position with no
+   * value: the reader can see that this storm sits four fifths of the way
+   * along and has to look back up to the row to learn what four fifths MEANS.
+   * The two extremes are already spelled at the ends, so the third number
+   * completes the sentence the bar is trying to say.
+   *
+   * ==> IT IS ANCHORED IN THREE POSITIONS RATHER THAN CENTRED ALWAYS. <== A
+   * label centred on a mark at 2% hangs half of itself off the left edge of
+   * the panel. Near either end it pins to that end instead, which is what the
+   * mockup did and the only thing that works for a record-holder. */
+  /* ==> THE CLASS NAMES ARE WRITTEN OUT IN FULL RATHER THAN BUILT FROM THE
+   * ANCHOR. <== `class="is-${anchor}"` is shorter and `tools/css-orphan-check.mjs`
+   * cannot see it — it reported all three rules as dead CSS, which is the
+   * check working exactly as intended. A class a tool cannot grep is a class
+   * nobody can find from the stylesheet either. */
+  const pin = f < FIGURE_EDGE
+    ? 'season-spine-figure-start'
+    : (f > 1 - FIGURE_EDGE ? 'season-spine-figure-end' : 'season-spine-figure-mid');
 
   /* ==> THE SVG IS `aria-hidden` AND THE WORDS ARE THE ANSWER. <== A screen
    * reader handed forty columns and a line reads a shape it cannot use. The
@@ -216,14 +273,40 @@ export function spineHtml(ladder, quantize, raw, {
     + `<svg class="season-spine-plot" viewBox="0 0 ${W} ${H}" `
     + 'preserveAspectRatio="none" aria-hidden="true" focusable="false">'
     + `<path class="season-spine-fill" d="${d}"/>`
-    /* ==> A LINE WITH `vector-effect="non-scaling-stroke"`, NOT A RECT. <==
-     * `preserveAspectRatio="none"` stretches this 100-unit box to whatever the
-     * panel is wide, so a rect's width would be a different number of device
-     * pixels on every screen and on every orientation change. The stroke
-     * ignores the transform and stays the width the stylesheet asked for. */
+    /* The floor the columns stand on, and a tick at each end of the range.
+     * Every one of these is a `<line>` with `vector-effect="non-scaling-stroke"`
+     * for the same reason the mark is: `preserveAspectRatio="none"` stretches
+     * this 100-unit box to whatever the panel is wide, so a shape's thickness
+     * would otherwise be a different number of device pixels on every screen
+     * and on every orientation change. */
+    + `<line class="season-spine-rule" x1="0" y1="${top}" x2="${W}" y2="${top}" `
+    + 'vector-effect="non-scaling-stroke"/>'
+    + `<line class="season-spine-tick" x1="${MARK_INSET}" y1="${top - OVERSHOOT}" `
+    + `x2="${MARK_INSET}" y2="${bottom}" vector-effect="non-scaling-stroke"/>`
+    + `<line class="season-spine-tick" x1="${W - MARK_INSET}" y1="${top - OVERSHOOT}" `
+    + `x2="${W - MARK_INSET}" y2="${bottom}" vector-effect="non-scaling-stroke"/>`
+    /* ==> THE MARK RUNS THE FULL HEIGHT OF THE BOX AND CROSSES THE BASELINE.
+     * <== It has to be findable when the column under it is one pixel tall,
+     * which is the ordinary case at the thin end of every one of these
+     * ladders. A mark that stopped at the top of its own column would be
+     * shortest exactly where the storm is rarest. */
     + `<line class="season-spine-mark" x1="${x}" y1="0" x2="${x}" y2="${H}" `
     + 'vector-effect="non-scaling-stroke"/>'
     + '</svg>'
+    /* ==> THE THREE LABELS ARE HTML, NOT SVG `<text>`, AND THE DRAWER'S WIDTH
+     * IS WHY. <== The mockup put them inside the box and scaled the whole SVG
+     * proportionally, which is exact at the 390px it was drawn for. This panel
+     * runs from 320px to 719px before the wide layout takes over and pins it
+     * to `clamp(340px, 36vw, 440px)`, so a proportionally scaled box would
+     * render its 9.5px axis text at nearly 18px on a tablet held in portrait.
+     * In HTML the labels take the panel's own type tokens and do not scale at
+     * all, and they still line up with the bar's ends because the SVG is
+     * exactly the same width as the paragraph under it. */
+    + (figure
+      ? `<p class="season-spine-figure"><span class="${pin}"`
+        + (pin.endsWith('mid') ? ` style="--spine-at: ${x}%"` : '')
+        + `>${esc(figure)}</span></p>`
+      : '')
     + '<p class="season-spine-axis">'
     + `<span>${esc(low)}${lowNote ? ` ${esc(lowNote)}` : ''}</span>`
     + `<span>${esc(high)}${highNote ? ` ${esc(highNote)}` : ''}</span>`

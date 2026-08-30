@@ -1964,6 +1964,18 @@ html[data-seasons="on"] #status {
   fill: var(--spine-fill);
 }
 
+/* ==> THE FLOOR THE COLUMNS STAND ON, AND A TICK AT EACH END OF THE RANGE.
+   <== §57.64. Without them the bar has no ends: the reader has to work out
+   where the range starts and stops from where the ink happens to run out, and
+   on the coarse ladders the last few columns are one pixel tall, so it is not
+   workable-out at all. Quieter than the mark and quieter than the fill's
+   tallest columns — this is furniture, not data. */
+.season-spine-rule,
+.season-spine-tick {
+  stroke: var(--spine-fill);
+  stroke-width: 1;
+}
+
 /* ==> THE MARK IS THE ONE THING ON THE BAR THE READER IS LOOKING FOR. <== Two
    device pixels, held at that width by `vector-effect="non-scaling-stroke"` on
    the element, because the plot is stretched by `preserveAspectRatio="none"`
@@ -1993,4 +2005,39 @@ html[data-seasons="on"] #status {
    under the middle of the bar and read as a mark. */
 .season-spine-axis span:last-child {
   text-align: right;
+}
+
+/* ==> THIS STORM'S OWN FIGURE, PRINTED ON THE BAR UNDER ITS MARK. <== §57.64.
+   Without it the mark is a position with no value — the reader can see the
+   storm sits four fifths along and has to look back up to the row to find out
+   what four fifths means. It is the brightest thing in this block after the
+   mark itself, because it is the one number here that is about THIS storm
+   rather than about the archive. */
+.season-spine-figure {
+  position: relative;
+  margin: 3px 0 0;
+  /* The absolutely positioned span is out of flow, so the paragraph would
+     collapse to nothing and the axis line would sit on top of it. One line's
+     worth of height, held open. */
+  height: 1.3em;
+  font-size: var(--type-small);
+  font-family: var(--font-numeric);
+  color: var(--text-primary);
+}
+
+.season-spine-figure span {
+  position: absolute;
+  top: 0;
+  white-space: nowrap;
+}
+
+/* ==> THREE ANCHORS, NOT ONE, AND THE RECORD-HOLDER IS WHY. <== A label
+   centred on a mark at 2% hangs half of itself off the left edge of the panel.
+   Near either end it pins to that end instead. `--spine-at` is only set on the
+   middle case, so the two pinned cases cannot be moved by a stale value. */
+.season-spine-figure-start { left: 0; }
+.season-spine-figure-end { right: 0; }
+.season-spine-figure-mid {
+  left: var(--spine-at);
+  transform: translateX(-50%);
 }
