@@ -54,6 +54,20 @@ export function applyTokens() {
   r.setProperty('--text-primary', P.textPrimary);
   r.setProperty('--text-secondary', P.textSecondary);
   r.setProperty('--text-muted', P.textMuted);
+  /* ==> BOTH OF THESE ARE PALETTE TOKENS THAT EXISTED IN ALL THREE THEMES AND
+   * HAD NEVER REACHED CSS. <== §57.59. The life chart is the first stylesheet
+   * to need them: `textInverse` punches the panel's own background out of a
+   * filled disc, and `stormEnded` is the grey §57.7g settled for a system with
+   * no severity to claim — a wave before genesis, an extratropical system
+   * after it. Both were previously read only from JavaScript.
+   *
+   * ==> A `var()` NAMING NOTHING RENDERS AS NOTHING AND THROWS NOTHING. <==
+   * §57.57c caught one of those by grep rather than by glass, and it is the
+   * one CSS mistake this repo has no gate for. Adding the rule without adding
+   * these two lines would have shipped an invisible line and a black-on-black
+   * number, silently. */
+  r.setProperty('--text-inverse', P.textInverse);
+  r.setProperty('--storm-ended', P.stormEnded);
   r.setProperty('--glass', P.glass);
   r.setProperty('--glass-raised', P.glassRaised);
   r.setProperty('--glass-border', P.glassBorder);

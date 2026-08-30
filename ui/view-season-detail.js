@@ -56,6 +56,11 @@ import {
   changeHtml, headHtml, landfallsHtml, lifeHtml, noStormHtml,
   peakHtml, reportHtml, storyHtml,
 } from './season-detail-markup.js';
+/* The chart's absence sentence uses the panel's own note style, and its
+ * `aria-label` prints the peak in the reader's units. Both come from the same
+ * two places every other renderer on this panel takes them from. */
+import { absenceHtml } from './season-markup-bits.js';
+import { formatWind } from '../lib/units.js';
 /* ==> `Where it went` LIVES NEXT DOOR. <== SPEC.md §12, §57.57.
  * `ui/season-detail-markup.js` was 711 lines against the ~700 ceiling and
  * §57.54k required the cut before any of step 3's restructuring landed there.
@@ -63,6 +68,14 @@ import {
  * file is about how strong a storm was, and these two are about the ground it
  * covered. */
 import { movementHtml, windFieldHtml } from './season-track-markup.js';
+/* ==> THE CHART LIVES IN ITS OWN FILE FROM DAY ONE, AS §57.54k REQUIRED. <==
+ * SPEC.md §12. It is the biggest single addition in the rebuild and the only
+ * one that draws rather than writes, so folding it into
+ * `ui/season-detail-markup.js` would have put that file back over the ceiling
+ * it was cut under three commits ago. */
+import {
+  lifeChartAbsenceWords, lifeChartHtml, lifeChartSummary,
+} from './season-life-chart.js';
 /* ==> THE TWO RANK SECTIONS LIVE NEXT DOOR. <== SPEC.md §12. They are the only
  * renderers on this panel that take a comparison rather than a fact, and they
  * were the 126 lines that put `season-detail-markup.js` over the ceiling. */
@@ -305,6 +318,33 @@ export function createSeasonDetailView({ entries, archive, loadReport, units, on
     bodyEl.innerHTML = `
       ${headHtml({ storm, facts, provisional: !!facts.provisional })}
       ${storyHtml(story)}
+      ${/* ==> THE CHART SITS UNDER THE PARAGRAPH AND IS NOT A SECTION. <==
+          * §57.54f puts it there and §57.59 keeps it out of `section()` for
+          * the reason the honesty line and the footnote are out of it: it is
+          * the panel's orientation, and step 6 is about to number the landfall
+          * list against it. A reader who folded it away once would then meet a
+          * list of numbered marks with nothing to match them to.
+          *
+          * ==> `points` COMES OFF THE STORM RATHER THAN OUT OF `stormFacts`.
+          * <== That object carries the peak, the landfalls and the arithmetic;
+          * it deliberately does not carry the 133 raw fixes, because it is
+          * computed once per storm when the board loads a season and held for
+          * as long as the year is open. The chart is the only thing on this
+          * panel that needs every fix, so it takes them as an argument.
+          *
+          * ==> AND 32 STORMS GET A SENTENCE INSTEAD. <== §5, §57.25 rule 2.
+          * A single-observation entry has no course of life to draw, and an
+          * empty box is the shrug that rule exists to forbid. */
+    (() => {
+      const withPoints = { ...facts, points: storm.points };
+      const chart = lifeChartHtml(withPoints, {
+        summary: lifeChartSummary(facts, {
+          peakWords: Number.isFinite(facts.peakWindKt)
+            ? formatWind(facts.peakWindKt, system) : '',
+        }),
+      });
+      return chart || absenceHtml(lifeChartAbsenceWords(withPoints));
+    })()}
       ${/* ==> THE RANK IS COMPUTED HERE RATHER THAN CACHED WITH THE FACTS,
           * BECAUSE IT IS A FACT ABOUT THE SEASON AND THE SEASON IS WHAT THE
           * BOARD RELOADS. <== `entries()` is a function for exactly this

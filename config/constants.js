@@ -7531,6 +7531,96 @@ export const SEASONS = Object.freeze({
    * statistic the archive declined to rank from one the panel simply stopped
    * before. Two different facts, one identical blank. */
 
+  /* --- The life chart (§57.54d, §57.59) ----------------------------------- */
+
+  /**
+   * ==> THE TOP OF THE CHART'S WIND AXIS IN KNOTS, AS A FLOOR RATHER THAN A
+   * CEILING. <== §57.59. The axis runs 0 to `max(lifeChartTopKt, this storm's
+   * peak)`, so almost every storm is drawn on one identical scale and the
+   * Saffir-Simpson bands sit in the same place from panel to panel — which is
+   * the whole reason the bands are there instead of a wind axis.
+   *
+   * 140, WHICH IS THREE KNOTS ABOVE THE CAT 5 FLOOR OF 137. That margin is the
+   * number doing the work: it leaves the Cat 5 band drawn as a real sliver on
+   * every storm, so the reader sees the top of the scale rather than inferring
+   * it. A flat 137 would collapse that band to nothing.
+   *
+   * ==> AND IT STRETCHES RATHER THAN CLIPS, ON 35 STORMS OF 3,266. <==
+   * Measured 2026-08-30 across both mirrored basins: 35 storms (1.07%) peak
+   * above 140 kt and the strongest in the archive is 185. Those get an axis
+   * topped at their own peak. Clipping instead would draw the record holders
+   * flat against the roof, which is the one place the chart must not lie.
+   */
+  lifeChartTopKt: 140,
+
+  /**
+   * ==> HOW MANY UTC DAYS THE AXIS LABELS BEFORE IT THINS ITSELF OUT, AS
+   * `[maxDays, everyNth]` PAIRS. <== §57.54d, Aaron's call: a tick at every
+   * midnight, and the label is the day number.
+   *
+   * MEASURED AGAINST THE LONGEST TRACK IN THE ARCHIVE. `Storm 3 1899` runs 786
+   * hours — 32 days 18 hours — which is 10.93 device pixels a day inside a
+   * 390px phone. Labelling every day there is 33 labels in 358px and they
+   * collide; this ladder plus the renderer's two collision rules leaves 11 and
+   * they do not.
+   *
+   * ==> THE LADDER ALONE IS NOT ENOUGH AND TWO MORE RULES LIVE IN THE
+   * RENDERER. <== A month change forces a label out of turn, and measured over
+   * the whole archive that produced 28 storms with overlapping labels — always
+   * the identical shape, a wide `Sep 1` beside a narrow `31`. The renderer
+   * re-anchors the count at a month change and lets the month label evict a
+   * crowded neighbour, and with both **0 of the 3,234 chartable storms
+   * overlap.**
+   * Neither rule belongs here: they are about collision, not about cadence.
+   */
+  lifeChartDayLadder: Object.freeze([
+    Object.freeze([10, 1]),
+    Object.freeze([20, 2]),
+    Object.freeze([34, 3]),
+    Object.freeze([Infinity, 5]),
+  ]),
+
+  /**
+   * ==> THE DIAMETER OF A NUMBERED LANDFALL DISC, IN THE CHART'S OWN VIEWBOX
+   * UNITS. <== The viewBox is 358 wide and is drawn at 358 device pixels
+   * inside a 390px phone, so at that width a unit is a pixel and this is 16px.
+   *
+   * IT IS ALSO THE COLLISION TEST, WHICH IS WHY IT IS ONE NUMBER AND NOT TWO.
+   * Two discs closer together than their own diameter overlap, so the same
+   * value that sizes a disc decides whether the next one drops to the row
+   * below. A separate spacing constant would be free to disagree with the
+   * size and the failure would be two discs quietly touching.
+   */
+  lifeChartDiscPx: 16,
+
+  /**
+   * ==> HOW MANY ROWS OF LANDFALL DISCS THE CHART WILL STACK BEFORE IT GIVES
+   * UP. <== §57.54d named two levers for colliding discs and the measurement
+   * killed the first: merging two landfalls into one shared mark breaks the
+   * 1:1 match to the numbered list below, which is the only reason the
+   * numbering exists. So they stack.
+   *
+   * FOUR, AND IT IS THE MEASURED MAXIMUM RATHER THAN A GUESS. Greedy first-fit
+   * through the shipped renderer at `lifeChartDiscPx`, 2026-08-30: **1,199
+   * storms fit on one row, 201 need two, 33 need three and 2 need four** —
+   * `NOEL 2007`, ten landfalls through the Antilles with two of them 1.7 hours
+   * apart, and one other. 84% of the storms that came ashore never leave the
+   * first row.
+   *
+   * ==> THOSE FIGURES ARE OFF THE RENDERER AND NOT OFF THE MEASUREMENT TOOL,
+   * WHICH READ 1,208 / 196 / 29 / 1. <== The tool spreads the discs over the
+   * full 358 units and the chart insets its plot by 4 at each end, so the real
+   * layout is 2% tighter and collides slightly more often. The renderer's
+   * numbers are the ones that describe what a reader sees.
+   *
+   * ==> IT IS A CEILING ON A MEASUREMENT, SO REACHING IT MEANS THE ARCHIVE
+   * CHANGED. <== Nothing today comes near it. If a basin arriving at step 13
+   * ever needs a fifth, the discs are still all drawn — the last row simply
+   * gets crowded — because losing a landfall off the bottom of a chart would
+   * be exactly the silence §5 forbids.
+   */
+  lifeChartMaxDiscRows: 4,
+
   /* --- The shape of a storm's life (§57.48) ------------------------------- */
 
   /**

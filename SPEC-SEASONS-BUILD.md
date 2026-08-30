@@ -9168,6 +9168,274 @@ sentence uses `superlative` — so it is documentation. **A wrong one would be
 believed by the first renderer that reached for it**, which is exactly how a
 panel comes to spell one thing two ways.
 
+### 57.59 Step 5 — the life chart — as built
+
+**§57.54k step 5, and it lands alone.** It is the biggest single addition in
+the rebuild, so it is built, shipped and judged on its own before step 6 moves
+the landfall list under it. **NOT YET SEEN ON GLASS.**
+
+**Wind at every recorded fix, against time.** Saffir-Simpson bands behind it so
+no conversion is needed, the line coloured by grade at each step, the peak
+marked, each landfall a numbered disc under the axis with a dashed line up
+through the plot. It collapses seven facts that were spread across four
+sections into one picture: peak, when the peak was, lifespan, time at each
+strength, the intensification arc, the landfall timing, and how it ended.
+
+**IT IS NOT A SECTION AND CANNOT BE FOLDED AWAY.** Same rule the honesty line
+and §57.57c's footnote follow. Step 6 is about to number the landfall list
+against the marks on this chart, and a reader who folded it away once would
+then meet a list of numbered marks with nothing to match them to.
+
+#### 57.59a Two measurements came before any shipping code, as §57.54d required
+
+**==> §57.54d NAMED BOTH AS UNMEASURED AND MADE THEM A PRECONDITION. <==**
+`tools/seasons-life-chart-measure.mjs` prints them and ships nothing, the same
+job `tools/near-home-size.mjs` and `tools/seasons-height-measure.mjs` do.
+**It deliberately imports nothing from `ui/season-life-chart.js`**: a
+measurement that ran through the renderer would be answering the question with
+the answer.
+
+**1. COLLIDING DISCS ARE COMMON, NOT RARE, AND THAT KILLED ONE OF THE TWO
+LEVERS.** Measured across all 3,266 storms at 358px, against the COMPUTED
+landfall list rather than NOAA's — the fallback finds a fraction of the marks
+(§57.7a), so measuring against it would have under-sized the problem by three
+quarters.
+
+| storms that came ashore | 1,435 |
+| landfall marks in total | 2,883 |
+| storms with two or more | 688 |
+| **storms with a pair closer than one disc width** | **206** |
+
+Closest-gap percentiles across the multi-landfall storms: p5 4.1px, p25
+11.5px, median 30.8px. The tightest pairs are all about 1.5 hours apart —
+`ALBERTO 2000` at 0.95px, `NOEL 2007` at 1.96px with ten landfalls.
+
+**==> SO §57.54d's FIRST LEVER — A SHARED DISC AT A MINIMUM SEPARATION — IS
+DEAD ON THESE NUMBERS. <==** Merging two landfalls into one mark on 206 storms
+breaks the 1:1 match to the numbered list, and that match is the only reason
+the numbering exists. **They stack instead**, greedy first fit.
+
+**2. THE DAY AXIS NEEDED TWO RULES THE LADDER DOES NOT CONTAIN.** §57.54d's
+thinning ladder alone leaves **28 storms with overlapping labels**, and every
+one of the 28 is the identical shape: a wide `Sep 1` beside a narrow `31`,
+because a month change forces a label out of the ladder's turn. Both fixes were
+found by reading the failures.
+
+- **A month change re-anchors the count.** Without it `Storm 3 1899` prints
+  `Aug 30 · Sep 1 · 2` — the forced label and then the ladder's own next tick,
+  one day and eleven pixels later. 28 becomes 21.
+- **A month label evicts a crowded neighbour.** The month change is the more
+  informative of the two. 21 becomes **0 of the 3,234 chartable storms.**
+
+**A THIRD THING NOBODY HAD COUNTED, AND IT IS A §5 CASE.** **32 storms carry
+exactly one fix with a wind and a zero-hour lifespan.** A chart needs two fixes
+to draw one segment. Those get a sentence about the record rather than an empty
+box — §57.25 rule 2, and 29 of them would also have drawn a completely blank
+axis.
+
+#### 57.59b The geometry is the mockup's, to the decimal
+
+**Aaron accepted a prototype on 2026-08-30 (*"I like this mockup"*) and every
+coordinate below is read off it rather than chosen here**, so a later pass that
+tidies a constant and moves the plot has to argue with the thing he looked at.
+`tools/test-season-life-chart.mjs` section 1 pins them.
+
+| the box | `viewBox 0 0 358 168` on a storm whose discs fit one row |
+| the plot | x 4 to 354, y 10 to 118 |
+| the baseline | y 118, and it is 0 kt |
+| day ticks | to y 123, labels at y 133 |
+| the first disc row | cy 148, radius 8 |
+
+Katrina renders her tropical-storm band at `y=71.9` 21.6 tall, her peak at
+`237.3, 10.0`, her first landfall disc at `x=19.8` and her first day label
+`Aug 24` at `x=15.7`. Every one of those matches the prototype exactly.
+
+**==> THE WIND AXIS RUNS 0 TO `max(140, this storm's peak)`, WHICH WAS NOT THE
+OBVIOUS DESIGN AND IS THE BETTER ONE. <==** It was derived from the prototype's
+band rectangles rather than described in it: Harvey at 115 kt, Sandy at 100 and
+`Storm 1 1851` at 80 all get an identical 0 to 140 scale, and only Katrina
+stretches it, to exactly her 150.
+
+**140 BECAUSE IT IS THREE KNOTS ABOVE THE CAT 5 SILL OF 137.** That margin is
+the number doing the work: it leaves the Cat 5 band drawn as a real sliver on
+every storm, so a reader sees the top of the scale rather than inferring it.
+**A fixed archive-wide ceiling was the plan before the mockup was read** and it
+would have squashed 1,664 storms that never reach hurricane strength into the
+bottom fifth of the box. **A floor that stretches on 35 storms of 3,266 (1.07%)
+keeps the bands comparable without ever clipping a record holder.**
+
+**==> IT IS PROPORTIONALLY SCALED, WHICH IS THE OPPOSITE OF
+`ui/season-spine.js` AND THE SAME AS `ui/chart-home.js`. <==** The spine sets
+`preserveAspectRatio="none"` and moves its labels to HTML, because it is a
+histogram where only x carries meaning. Here a circle must stay a circle and a
+dashed line must stay under its own disc, so the box scales whole and the text
+is sized in **user units as an SVG attribute**. `ui/panels.css` records Aaron
+judging `ui/chart-home.js`'s text on glass and the answer being to widen the
+rail rather than restructure the chart; **inventing a second answer for the
+second chart is what that comment exists to prevent.** It also puts these font
+sizes deliberately outside `tools/type-scale-check.mjs`, which reads
+stylesheets — the gate that covers them is the browser check.
+
+#### 57.59c The colours are the app's, and the mockup's were not
+
+**==> THE ACCEPTED MOCKUP CARRIED A SECOND SAFFIR-SIMPSON PALETTE AND SPEC §6
+FORBIDS ONE. <==** Its chart ran a warmed sepia ramp — `#C93FA8` for Cat 5,
+`#E24B37` for Cat 4, a cyan for tropical storm — while the app's are `#E05BE0`,
+`#FF4D6D` and a green.
+
+**THE MOCKUP CONTRADICTED ITSELF PROVING IT.** Katrina's header dot is the real
+`#E05BE0`. Her peak marker in the chart twenty pixels below was `#C93FA8`. Same
+storm, same grade, two colours, one screen.
+
+**IT WAS CHECKED RATHER THAN ARGUED, AND THE REAL COLOURS WIN ON BOTH COUNTS.**
+Measured 2026-08-30 against the sepia panel:
+
+- **The bands are indistinguishable either way.** Composited at 0.11 opacity
+  the two sets land within 2 to 15 of each other on a 442-point RGB scale.
+- **The line is measurably more legible with the real colours** — contrast
+  against the panel goes 4.13:1 to **5.85:1** on Cat 5, 4.59 to **5.67** on
+  Cat 4, and 4.68 to **7.04** on TD.
+
+So the rule-compliant version is also the better-looking one, which leaves no
+argument for the re-themed set. **A suite assertion reads every literal hex out
+of the rendered chart and demands it be a `CATEGORY_COLOR` value**, and the
+mutation restoring the mockup's palette turns it red on all three test storms.
+
+**TWO SMALLER COLOUR FAULTS IN THE MOCKUP, THE SAME CLASS.** It greyed
+Katrina's opening fixes, which are genuinely `TD` at 30 kt — a real grade with
+its own blue. And where grey IS right, at her extratropical tail, it invented a
+hex rather than using `stormEnded`.
+
+**==> A SYSTEM WITH NO GRADE TO CLAIM IS `stormEnded`, WHICH IS §57.7g's
+DECISION ARRIVING ON A SECOND SURFACE. <==** A wave before genesis and an
+extratropical system after it are both real measured winds and neither is a
+category. **Sandy crossed New Jersey at 80 kt as an `EX`: the line still climbs
+to 80 and only the ink changes**, so the height keeps saying the wind while the
+colour stops making a claim the agency withdrew.
+
+**§57.7g's SIZE SPLIT DOES NOT TRANSFER AND THAT IS DELIBERATE.** That section
+draws a never-was-a-storm fix small and blank and a was-a-storm fix full and
+lettered. **A line has no size to split**: both stretches are one stroke width,
+and the difference is already carried by WHERE they sit — before the colour
+starts or after it ends. A second grey would be a distinction the eye cannot
+use.
+
+#### 57.59d Two palette tokens reached CSS for the first time
+
+**`textInverse` AND `stormEnded` EXISTED IN ALL THREE PALETTES AND HAD NEVER
+BEEN EMITTED AS CUSTOM PROPERTIES.** Both were read only from JavaScript. This
+chart is the first stylesheet to need them: the first punches the panel's own
+background out of a filled disc, the second is the grey above.
+
+**==> A `var()` NAMING NOTHING RENDERS AS NOTHING AND THROWS NOTHING. <==**
+§57.57c caught one of those by grep rather than by glass and called it the one
+CSS mistake this repo has no gate for. Adding the rules without adding the two
+lines to `app/theme-switch.js` would have shipped an invisible line and a
+black-on-black number, silently. **The suite now closes that hole for this
+file**: it reads every `var()` out of the chart's own CSS rules and asserts the
+property is really emitted by the theme or declared in `index.html`.
+
+**THE BASELINE AND THE DAY TICKS TAKE `--spine-fill`.** It is the distribution
+bar's own furniture colour and this is the same job one panel further up, so
+the two charts' rules match rather than being two opinions about what a quiet
+line looks like.
+
+#### 57.59e The discs stack, and the number is the place in the LIST
+
+Measured through the shipped renderer at `SEASONS.lifeChartDiscPx`:
+
+| rows needed | storms |
+|---|---|
+| 1 | 1,199 |
+| 2 | 201 |
+| 3 | 33 |
+| 4 | 2 |
+
+**==> THOSE ARE NOT THE MEASUREMENT TOOL'S FIGURES AND THE DIFFERENCE IS REAL.
+<==** The tool reads 1,208 / 196 / 29 / 1 because it spreads the discs over the
+full 358 units while the chart insets its plot by 4 at each end. The real
+layout is 2% tighter. **The renderer's numbers are the ones that describe what
+a reader sees**, and a session re-deriving this off the tool alone will be
+slightly wrong in the optimistic direction.
+
+**THE NUMBER IS THE LANDFALL'S PLACE IN THE LIST AND NEVER ITS PLACE IN A ROW.**
+A disc that dropped to row 2 keeps the number it had, so the list below reads
+1, 2, 3 down the page whatever the chart had to do to fit them. The failure
+this prevents is silent and symmetrical: the chart and the list would each be
+internally consistent and disagree with each other.
+
+**`SEASONS.lifeChartMaxDiscRows` IS A CEILING ON A MEASUREMENT, SO REACHING IT
+MEANS THE ARCHIVE CHANGED.** Past the last row a disc is CROWDED rather than
+dropped — losing a landfall off the bottom of a chart while the list below
+still numbers it would be a §5 silence with a contradiction attached.
+
+#### 57.59f Nine mutations, and two of them found real holes
+
+**==> ONE OF THE NINE SURVIVED AND IT WAS A HOLE IN THE SUITE, NOT A REDUNDANT
+GUARD. <==** Deleting `lifeChartHtml`'s point-count refusal left all 49
+assertions green, which is §12's failure exactly. **Both guards refuse the
+identical 32 storms today** — measured: 0 refused by geometry alone, 0 by the
+point count alone, 32 by both — so the second is unreachable against this
+archive.
+
+**IT IS STILL WORTH KEEPING AND THE ASSERTION NOW DRIVES IT DIRECTLY.** The
+shape it protects against is a storm with a real lifespan and only one fix
+carrying a wind: impossible in HURDAT2, where a missing wind is `-999` on a row
+that still has a position, and entirely possible from the agencies step 13
+brings in. Without the guard that storm renders bands, an axis and **no line at
+all** — a silent empty box. The suite builds the case from a real storm with
+its winds stripped rather than waiting for the archive to supply one.
+
+**AND ONE MUTATION FOUND A BUG IN THE SHIPPING CODE RATHER THAN IN THE SUITE.**
+The month-label eviction looked one TICK back instead of one LABEL back.
+`CP051997` runs 23.75 days, so the ladder labels every third day: its ticks are
+`Nov 29` labelled, `Nov 30` blank, then the month change on `Dec 1`. Looking
+one tick back found the blank one, declined to evict anything, and printed two
+30-unit month labels 29.5 units apart. **Every unlabelled tick has to be
+stepped over, because a blank tick occupies no width.**
+
+The nine, all biting: a fixed wind ceiling instead of a floor; no re-anchor at
+a month change; the eviction stopping at the first blank tick; the mockup's
+re-themed palette; discs never stacking; an extratropical system graded as a
+hurricane; the missing refusal; the plot losing its end inset; and the
+`is-ungraded` compound selector (§57.56c's lesson one file over —
+`tools/css-orphan-check.mjs` cannot grep a class built from a flag, and it
+reported the rule as dead CSS, which is the check working).
+
+**52 assertions, driven against the real HURDAT2 files and the real computed
+landfall sidecar.** No hand-built fixture: §57.58d is why, and its first
+fixture encoded the obvious guess about which storms carry an ACE backwards.
+
+**==> ONE PROCESS NOTE, BECAUSE IT COST THE FIRST MUTATION RUN. <== `git
+checkout --` CANNOT RESTORE AN UNTRACKED FILE.** A new module's mutations
+stacked silently on top of each other and the results were garbage; it was
+caught only because one run's failures looked like the previous one's. **Mutate
+a new file from a saved pristine copy, not from git.**
+
+#### 57.59g What to judge on glass, and the first is step 5's own risk
+
+1. **THE DAY LABELS ON THE LONGEST TRACK IN THE ARCHIVE.** §57.54k names this
+   as step 5's glass question. `Storm 3 1899` runs 32 days 18 hours and thins
+   33 ticks to **11 labels** at a 10.93px day pitch: `Aug 3 · 6 · 9 · 12 · 15 ·
+   18 · 21 · 24 · 27 · Sep 1 · 4`. **`Aug 30` is absent on purpose** — it sat
+   two days before the month change between two 30-unit labels and the month
+   won. Then a two-day storm, where every day is labelled and there may be only
+   one.
+2. **DOES THE FIXED WIND SCALE MAKE A WEAK STORM LOOK BROKEN.** 1,664 storms
+   never reach hurricane strength, so their line lives in the bottom third of
+   the box under four empty bands. That is TRUE and it is the price of
+   comparable bands. **If it reads as a rendering fault rather than as a fact,
+   the lever is `SEASONS.lifeChartTopKt`** — and lowering it per storm is
+   exactly the design the mockup rejected.
+3. **NOEL 2007, THE ONLY FOUR-ROW STACK IN THE ARCHIVE.** Ten numbered discs in
+   four rows under a 222-unit box. Do they read as a sequence or as a swarm.
+4. **THE GREY STRETCHES ON SANDY.** Her line climbs to 80 kt in `stormEnded`
+   bone at the end, above the Cat 1 band. Does that read as *strong but no
+   longer graded*, or as *the chart lost its colour*.
+5. **THE CHART AGAINST THE PARAGRAPH ABOVE IT.** It is the second thing on the
+   panel now and it is not foldable. On a phone it pushes `Landfalls` and
+   `In its season` below the fold on every storm.
+
 ### 57.63 The distribution bar's mark failed contrast on the archive panel
 
 **A BUG FIX ON §57.56's TOKENS, LANDED AS ITS OWN COMMIT** — §12's rule that a

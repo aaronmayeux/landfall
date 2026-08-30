@@ -2087,3 +2087,107 @@ html[data-seasons="on"] #status {
   left: var(--spine-at);
   transform: translateX(-50%);
 }
+
+/* --- the life chart (§57.54d, §57.59) -------------------------------------
+   ==> WIND AT EVERY RECORDED FIX, AGAINST TIME, AND IT IS NOT A SECTION. <==
+   It sits directly under the paragraph, above the first fold, because step 6
+   numbers the landfall list against the marks on it — a reader who could fold
+   the chart away would then meet a numbered list with nothing to match.
+
+   ==> ONLY COLOURS AND STROKES ARE HERE. <== Every position, size and font
+   size lives in `ui/season-life-chart.js` in the SVG's own user units, so the
+   whole drawing scales with its container the way `ui/chart-home.js` does. A
+   rem-based type token would hold a label still while the tick under it moved.
+   ------------------------------------------------------------------------ */
+.lifec {
+  margin: 0;
+  padding: var(--space-base) var(--drawer-inset) var(--space-snug);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.lifec-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* ==> THE BANDS ARE THE REAL SAFFIR-SIMPSON COLOURS AT A LOW OPACITY, NOT A
+   RE-THEMED SET. <== SPEC §6: category colours are fixed and are not
+   themeable, so a Cat 4 stripe here is the same ink as the Cat 4 dot on the
+   roster and on the globe. Measured 2026-08-30, it costs nothing on the sepia
+   panel either — composited at this opacity the real colours land within 15 of
+   a warmed set on a 442-point scale. The `fill` is set per rect in the
+   renderer; only the opacity is a style decision. */
+.lifec-band { opacity: 0.11; }
+
+.lifec-band-label {
+  opacity: 0.85;
+  font-family: var(--font-numeric);
+}
+
+/* The floor and the day ticks are furniture: present enough to bound the plot,
+   quiet enough that the line is what the eye lands on. `--spine-fill` is the
+   distribution bar's own furniture colour and this is the same job one panel
+   further up, so the two charts' baselines match rather than being two
+   opinions about what a quiet rule looks like. */
+.lifec-baseline,
+.lifec-tick {
+  stroke: var(--spine-fill);
+  stroke-width: 1;
+  opacity: 0.7;
+}
+
+.lifec-axis {
+  fill: var(--text-muted);
+  font-family: var(--font-numeric);
+}
+
+/* ==> THE LINE IS 2.6 UNITS AND ROUND-CAPPED SO A ONE-FIX HOLD STILL DRAWS.
+   <== A storm that held one wind for six hours is a zero-length segment, and a
+   butt cap would render it as nothing at all. */
+.lifec-line {
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  fill: none;
+}
+
+/* ==> A SYSTEM WITH NO GRADE TO CLAIM IS GREY, WHICH IS §57.7g's DECISION
+   ARRIVING ON A SECOND SURFACE. <== A wave before genesis and an extratropical
+   system after it are both real measured winds and neither is a category.
+   Sandy crossed New Jersey at 80 kt as an `EX`: the line still climbs to 80
+   and only the ink changes, so the height keeps saying the wind while the
+   colour stops making a claim the agency withdrew. `stormEnded` is the token
+   that already means exactly this, in all three palettes. */
+.lifec-line-ungraded { stroke: var(--storm-ended); }
+
+/* The peak is already the highest point on the line. The dot is not new
+   information — it says WHICH hump the `Peak winds` row above is about. Its
+   fill is the grade it reached; the ring lifts it off a band of the same hue. */
+.lifec-peak {
+  stroke: var(--text-primary);
+  stroke-width: 1.5;
+}
+
+/* ==> THE DROP LINE IS DASHED AND QUIET BECAUSE IT IS A POINTER, NOT A
+   READING. <== It carries the eye from a numbered disc up to the moment on the
+   line, and nothing about the storm is measured along it. */
+.lifec-drop {
+  stroke: var(--text-primary);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.45;
+}
+
+/* ==> THE DISC IS THE PANEL'S OWN INK WITH THE PANEL'S OWN BACKGROUND PUNCHED
+   OUT OF IT. <== `textInverse` rather than a literal dark value: the number
+   has to stay legible if a theme ever moves, and a hardcoded hex is how a
+   filled badge ends up dark-on-dark. §57.63 is the same mistake one file over. */
+.lifec-disc { fill: var(--text-primary); }
+
+.lifec-disc-n {
+  fill: var(--text-inverse);
+  font-family: var(--font-numeric);
+  font-weight: 700;
+}
+
+.lifec figcaption { margin-top: var(--space-tight); }

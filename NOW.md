@@ -565,18 +565,51 @@ a synoptic record at 34 kt, so what disqualifies a storm is never reaching
 tropical-storm force rather than being thinly observed. **A test fixture built
 on the obvious guess went red.** §57.58d.
 
-**==> STEP 5 IS NEXT — THE LIFE CHART — AND §57.54k SAYS IT LANDS ALONE. <==**
-It is the biggest single addition in the build, so it is built, shipped and
-judged on its own before step 6 moves the landfall list under it. **Two things
-§57.54d requires BEFORE any shipping code is written:** count how many storms
-have landfalls close enough that their discs collide at 358px wide (nobody has),
-and check the day axis on `Storm 3 1899`, the longest track in the archive at
-786 hours. `ui/season-detail-markup.js` is at 606 with 94 lines of headroom, and
-the chart gets its own file regardless — §57.54k names it.
+**==> STEP 5 IS BUILT AND SHIPPED AND NOBODY HAS SEEN IT. IT IS THE ONE THING
+IN THIS FILE WAITING ON AARON. <==** The life chart. **§57.59 is the as-built
+account — read that, not this.** It holds the two measurements §57.54d required
+first, the geometry read off the mockup, the palette argument, and the nine
+mutations.
 
-**NOTHING AFTER STEP 5 IS BUILT.** The prototype was a throwaway under `tools/`,
-deliberately never committed and deleted at the end of the session; §57.54
-carries every figure it produced.
+**WHAT TO JUDGE, AND THE FIRST IS §57.54k's OWN NAMED RISK FOR THIS STEP:**
+
+1. **THE DAY LABELS ON THE LONGEST TRACK.** `Storm 3 1899`, 32 days 18 hours,
+   thins 33 ticks to 11 labels at a 10.93px day pitch. **`Aug 30` is missing on
+   purpose** — it sat two days before the month change between two wide labels
+   and the month won. Then a two-day storm at the other end.
+2. **DOES THE FIXED WIND SCALE MAKE A WEAK STORM LOOK BROKEN.** The axis runs 0
+   to `max(140 kt, this storm's peak)`, so the bands sit in the same place on
+   3,231 of 3,266 storms — which is the whole reason there is no wind scale
+   down the side. The cost is that **1,664 storms never reach hurricane
+   strength** and their line lives in the bottom third under four empty bands.
+   True, and the price of comparable bands. The lever is
+   `SEASONS.lifeChartTopKt`.
+3. **NOEL 2007 — ten numbered discs in four rows**, the only four-row stack in
+   the archive, under a 222-unit box. A sequence or a swarm.
+4. **THE GREY ON SANDY.** Her line climbs to 80 kt in bone at the end, above
+   the Cat 1 band, because an extratropical system has no grade to claim
+   (§57.7g). *Strong but no longer graded*, or *the chart lost its colour*.
+5. **IT IS NOT FOLDABLE AND IT IS SECOND ON THE PANEL**, so on a phone it
+   pushes `Landfalls` and `In its season` below the fold on every storm.
+
+**==> THE MOCKUP'S CHART PALETTE WAS NOT SHIPPED AND THAT IS THE ONE PLACE THIS
+DEPARTS FROM WHAT AARON APPROVED. <==** It carried a warmed sepia
+Saffir-Simpson ramp, which SPEC §6 forbids — and it contradicted itself proving
+it: Katrina's header dot is `#E05BE0` and her peak marker twenty pixels below
+was `#C93FA8`. Measured, the real colours cost nothing in the bands and are
+MORE legible as the line (Cat 5 goes 4.13:1 to 5.85:1). **§57.59c holds the
+table. It is one lookup to reverse if he wants the mockup's set back.**
+
+**ONE FIGURE THIS SESSION CORRECTED ABOUT ITSELF.** The disc-stacking counts
+are **1,199 / 201 / 33 / 2**, off the renderer. The measurement tool reads
+1,208 / 196 / 29 / 1 because it spreads discs over the full 358 units while the
+chart insets its plot by 4 at each end. §57.59e. **Do not re-derive this off
+the tool alone; it is optimistic by 2%.**
+
+**NOTHING AFTER STEP 5 IS BUILT.** Step 6 moves the landfall list under the
+chart and numbers it against `discRows`, which already exports the numbering.
+`ui/season-detail-markup.js` is at 606 and the chart took its own file, so
+step 6 lands with room.
 
 **ONE THING TO CARRY FORWARD RATHER THAN RE-DERIVE:** the prototype's first
 version fed the distribution bar the RAW value instead of the rung, and because
