@@ -77,8 +77,21 @@ const TICK_LABEL_Y = 133;
 const DISC_ROW_Y = 148;
 const DISC_ROW_PITCH = SEASONS.lifeChartDiscPx + 2;
 
-/** How far below the last disc row the box ends. */
-const BOTTOM_PAD = 12;
+/**
+ * The year stamp's own line, below everything else.
+ *
+ * ==> IT USED TO SHARE A BASELINE WITH THE DEEPEST DISC ROW AND `NOEL 2007`
+ * DREW ITS NINTH DISC STRAIGHT THROUGH IT. <== §57.59i. Found on glass,
+ * 2026-08-30. The stamp is anchored to the right-hand end and a disc lands
+ * wherever its landfall fell, so the collision is a coincidence of one storm's
+ * timing rather than anything the layout controlled — which is exactly why it
+ * gets a line of its own rather than a nudge.
+ *
+ * `STAMP_DROP` is the baseline's distance below the bottom of the last disc,
+ * and `STAMP_TAIL` is the descender plus a little air under it.
+ */
+const STAMP_DROP = 11;
+const STAMP_TAIL = 5;
 
 /** ==> TEXT INSIDE THIS SVG IS SIZED IN USER UNITS, AS AN ATTRIBUTE, WHICH IS
  *  WHY IT IS NOT ON THE `--type-*` SCALE. <== `ui/chart-home.js` does the same
@@ -513,15 +526,23 @@ export function lifeChartHtml(facts, { summary = '' } = {}) {
 
   /* The year and the clock, once, bottom right. Every date on the axis is a
    * day number, so the year has to be stated somewhere or the chart is the
-   * only thing on the panel that does not say when it happened. */
-  const stampY = discs.length ? DISC_ROW_Y + deepest * DISC_ROW_PITCH : DISC_ROW_Y - 4;
+   * only thing on the panel that does not say when it happened.
+   *
+   * ==> IT GETS A LINE BELOW EVERYTHING, AT EVERY DEPTH OF DISC STACK. <==
+   * §57.59i. The bottom of the drawing is the deepest disc row when there are
+   * discs and the day labels when there are none, and the stamp clears
+   * whichever it is. Placing it against a fixed y would put it back inside the
+   * stack the moment a storm needed one more row. */
+  const drawnBottom = discs.length
+    ? DISC_ROW_Y + deepest * DISC_ROW_PITCH + SEASONS.lifeChartDiscPx / 2
+    : TICK_LABEL_Y + 4;
+  const stampY = drawnBottom + STAMP_DROP;
   parts.push(
-    `<text class="lifec-axis" x="${W - PAD_X}" y="${stampY}" font-size="${AXIS_SIZE}" `
+    `<text class="lifec-axis" x="${W - PAD_X}" y="${f1(stampY)}" font-size="${AXIS_SIZE}" `
     + `text-anchor="end">${esc(String(facts.year ?? ''))} · UTC</text>`,
   );
 
-  const height = (discs.length ? DISC_ROW_Y + deepest * DISC_ROW_PITCH : DISC_ROW_Y - 4)
-    + SEASONS.lifeChartDiscPx / 2 + BOTTOM_PAD;
+  const height = stampY + STAMP_TAIL;
 
   return '<figure class="lifec">'
     + `<svg class="lifec-plot" viewBox="0 0 ${W} ${f1(height)}" role="img" `

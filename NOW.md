@@ -579,7 +579,17 @@ mutations.
    dropped by the edge clamp pushing `Aug 3` inboard. Then a two-day storm at
    the other end.
 
-**==> GLASS ALREADY FOUND ONE FAULT AND IT IS FIXED. <==** Aaron, 2026-08-30,
+**==> GLASS HAS FOUND TWO FAULTS SO FAR AND BOTH ARE FIXED. <==**
+
+**2. NOEL'S NINTH DISC WAS DRAWN THROUGH THE YEAR STAMP.** §57.59i. The stamp
+shared a baseline with the deepest disc ROW, and a disc hangs 8 units below its
+own baseline, so anything on that line is inside the disc rather than under it.
+It has its own line below everything now, at every depth of stack. **Every
+chart grew four units; a storm with no landfalls is four shorter.** The suite
+sweeps all 3,234 rather than checking Noel — the collision was a coincidence of
+one storm's timing and the next one would have been a different storm.
+
+**1.** Aaron, 2026-08-30,
 on the first storm he opened: `Aug 3` rendered as `g 3`. The left-end label
 always carries its month, so the widest label on every axis is the one nearest
 the edge, and centred on a tick at x=4 half of it fell outside the box.

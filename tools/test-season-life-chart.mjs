@@ -81,8 +81,8 @@ section('1. Katrina renders at the accepted geometry');
 const kHtml = lifeChartHtml(KATRINA, { summary: 'x' });
 const kGeo = plotGeometry(KATRINA);
 
-ok('the box is 358 wide and 168 tall on Katrina',
-  /viewBox="0 0 358 168(\.0)?"/.test(kHtml));
+ok('the box is 358 wide and 172 tall on Katrina',
+  /viewBox="0 0 358 172(\.0)?"/.test(kHtml));
 ok('the tropical-storm band sits at y=71.9, 21.6 tall',
   kHtml.includes('y="71.9" width="350" height="21.6"'));
 ok('the peak dot is at 237.3, 10.0', kHtml.includes('cx="237.3" cy="10.0" r="3.8"'));
@@ -192,6 +192,9 @@ const MONTH = 30;
  * either end is PINNED rather than centred (`axisLabelBox`), so a sweep that
  * assumed centring would measure a layout the chart does not draw — and would
  * have gone on passing through the clipped `Aug 3` that reached glass. */
+const DISC_ROW_Y = 148;
+const DISC_ROW_PITCH = SEASONS.lifeChartDiscPx + 2;
+
 const boxes = (facts) => axisLayout(facts, plotGeometry(facts));
 
 function overlaps(facts) {
@@ -337,7 +340,37 @@ ok('every storm numbers its discs against its own landfall list',
 
 /* The box grows for the rows it actually used, and only for those. */
 ok('Noel\u2019s box is taller than Katrina\u2019s by three disc rows',
-  /viewBox="0 0 358 222(\.0)?"/.test(lifeChartHtml(NOEL, { summary: 'x' })));
+  /viewBox="0 0 358 226(\.0)?"/.test(lifeChartHtml(NOEL, { summary: 'x' })));
+
+/* ==> THE YEAR STAMP CLEARS THE DISCS AT EVERY DEPTH, WHICH IS THE FAULT GLASS
+ * FOUND ON `NOEL 2007`. <== §57.59i. It used to share a baseline with the
+ * deepest disc row, and Noel's ninth landfall lands near the right-hand end
+ * where the stamp is anchored, so the disc was drawn straight through the
+ * year. The sweep is over the whole archive rather than over Noel, because the
+ * collision is a coincidence of one storm's timing and the next storm to have
+ * it would be a different one. */
+{
+  const stampY = (html) => Number(html.match(/y="([\d.]+)" font-size="9\.5" text-anchor="end"/)[1]);
+  const hit = [];
+  for (const f of charted) {
+    const html = lifeChartHtml(f, { summary: 'x' });
+    if (!html) continue;
+    const y = stampY(html);
+    const discs = discRows(f, plotGeometry(f));
+    const bottom = discs.length
+      ? DISC_ROW_Y + Math.max(...discs.map((d) => d.row)) * DISC_ROW_PITCH
+        + SEASONS.lifeChartDiscPx / 2
+      : 0;
+    if (y <= bottom) hit.push(f.id);
+    /* And the box has to be tall enough to hold it. */
+    const box = Number(html.match(/viewBox="0 0 358 ([\d.]+)"/)[1]);
+    if (box <= y) hit.push(`${f.id} (clipped)`);
+  }
+  ok(`the year stamp clears every disc on all ${charted.length} storms. `
+    + `Colliding: ${hit.slice(0, 3).join(', ') || 'none'}`, hit.length === 0);
+  ok('and it drops as the stack deepens',
+    stampY(lifeChartHtml(NOEL, { summary: 'x' })) - stampY(kHtml) === 3 * DISC_ROW_PITCH);
+}
 
 /* ---------------------------------------------------------------------------
  * 7. A STORM THAT CANNOT BE CHARTED GETS A SENTENCE, NEVER AN EMPTY BOX

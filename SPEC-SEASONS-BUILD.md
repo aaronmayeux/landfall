@@ -9459,6 +9459,53 @@ construction what the suite then verifies across all 3,234: nothing clipped,
 nothing overlapping. Two mutations, both biting — removing the clamp, and
 removing the de-confliction.
 
+#### 57.59i The year stamp was drawn through by a disc on the fourth row
+
+**==> AARON ON GLASS, 2026-08-30, ON `NOEL 2007`: THE NINTH LANDFALL DISC SAT
+ON TOP OF `2007 · UTC`. <==** The stamp shared a baseline with the DEEPEST disc
+row, on the reasoning that the deepest row was the bottom of the drawing. It is
+not — a disc is 16 units across and hangs 8 below its own baseline, so anything
+sharing that line is inside the disc rather than under it.
+
+**IT WAS A COINCIDENCE OF ONE STORM'S TIMING AND THAT IS THE POINT.** The stamp
+is anchored to the right-hand end; a disc lands wherever its landfall fell.
+Noel's ninth is a Nova Scotia crossing on November 5, near the end of a
+thirteen-day track, and it is the only storm in the archive with a fourth row
+deep enough and late enough to reach the stamp. **A fix that nudged the stamp
+left would have been fitted to that one storm**, and the next collision would
+have been a different storm at a different depth.
+
+**SO IT GETS A LINE OF ITS OWN, BELOW EVERYTHING, AT EVERY DEPTH.** The bottom
+of the drawing is the deepest disc row plus the disc's own radius when there
+are discs, and the day labels when there are none; `STAMP_DROP` clears
+whichever it is and `STAMP_TAIL` closes the box under it. **The box grows with
+the stack rather than against a fixed number** — pinning the stamp to a
+constant y is the same fault again, waiting for the storm that needs one more
+row.
+
+Measured off the shipped renderer:
+
+| storm | disc rows | box | stamp baseline |
+|---|---|---|---|
+| KATRINA 2005 | 1 | 172 | 167 |
+| `Storm 3` 1899 | 2 | 190 | 185 |
+| NOEL 2007 | 4 | 226 | 221 |
+
+**EVERY CHART GREW BY FOUR UNITS AND THAT WAS ACCEPTED RATHER THAN OPTIMISED
+AWAY.** The stamp had been riding in space the discs already occupied, so
+giving it a line costs real height on all 3,234 charts. A storm with no
+landfalls at all is now four units SHORTER, because its stamp is measured off
+the day labels instead of off a disc row that does not exist.
+
+**THE SUITE SWEEPS THE WHOLE ARCHIVE RATHER THAN CHECKING NOEL.** It reads the
+stamp's baseline out of the rendered markup, computes the bottom of the deepest
+disc from `discRows`, and fails if the stamp is at or above it — on any storm.
+It also asserts the viewBox is taller than the baseline, because a stamp
+correctly placed outside the box is still a stamp nobody sees. Two mutations,
+both biting: restoring the shared baseline names `AL011851`, `AL041851` and
+`AL061851` among others, and ending the box at the baseline turns the height
+assertions red.
+
 #### 57.59g What to judge on glass, and the first is step 5's own risk
 
 1. **THE DAY LABELS ON THE LONGEST TRACK IN THE ARCHIVE.** §57.54k names this
