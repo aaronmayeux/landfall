@@ -297,6 +297,139 @@ html[data-seasons="on"] {
    drawer, not a replacement for this pill, and on a wide screen the two are
    now both available. */
 
+/* --- the season clock: the FAB and the scrubber. §57.67 slice C ----------- */
+
+/* ==> THE PLAY CONTROL IS A CLUSTER BUTTON WITH ONE EXTRA RULE, NOT A SIXTH
+   KIND OF FLOATING CONTROL. <== It carries `.control` from index.html, so the
+   44px target, the glass, the shadow, the focus ring, the press scale and the
+   hover-capability rule all arrive with it. `seasons/clock-control.js`
+   prepends it to `#controls`, which is a column flex container where DOM order
+   is both the visual order and the tab order — so it lands at the TOP of the
+   stack and first in the keyboard walk together (Aaron's call 1, 2026-08-31:
+   above the location button).
+
+   ==> `[hidden]` HAS TO BE SAID OUT LOUD, AND THIS IS THE THIRD TIME. <==
+   `.control` declares `display: grid`, and the browser's own `[hidden]` rule
+   is a bare attribute selector that loses to it — so setting the property in
+   JavaScript would do nothing visually and the button would sit there over an
+   empty globe. `#seasons-status-pill[hidden]` above carries the same note,
+   from glass on 2026-08-28. Every `display` an id or class rule declares needs
+   this beside it. */
+#btn-season-clock[hidden] { display: none; }
+
+/* Engaged. Brighter ink and the hover fill, both already published — no new
+   token for a state that is \"this button is currently doing its thing\", and
+   nothing that could disagree with the sepia palette because both values are
+   custom properties `applyTokens` resolves. */
+#btn-season-clock[data-on] {
+  color: var(--text-primary);
+  background: var(--hover);
+}
+
+/* Both marks are stacked in the same grid cell and cross-faded, which is
+   `.control-view`'s pattern and is there for a measured reason: swapping the
+   SVG's contents would be a parse and a layer promotion on every press.
+   Opacity on two static children costs nothing (§9). */
+   It is TWO whole `<svg>` elements rather than one holding two shapes, because
+   the stacking is grid on the BUTTON and grid does not lay out the children of
+   an `<svg>` — `grid-area` on a path is inert. `.control` is already
+   `display: grid`, so this costs no extra box. */
+#btn-season-clock > svg {
+  grid-area: 1 / 1;
+  transition: opacity var(--duration-instant) var(--ease-swap);
+}
+#btn-season-clock .clock-stop { opacity: 0; }
+#btn-season-clock[data-on] .clock-play { opacity: 0; }
+#btn-season-clock[data-on] .clock-stop { opacity: 1; }
+
+/* ==> THE SCRUBBER IS A THIRD PILL AND IT TAKES THE CAPTION'S SLOT. <==
+   `#seasons-status-pill` is a `<button>` — pressing it toggles the drawer — and
+   a range input cannot live inside a button at all, so the scrubber could
+   never have been that element wearing a slider. It sits on the same edge with
+   the same glass and the same centring, and the caption steps aside for it
+   below.
+
+   ==> IT IS WIDER THAN THE OTHER TWO, WHICH IS THE ONE DELIBERATE BREAK FROM
+   THEM. <== They are lozenges sized to their words and `--pill-inset` (60px a
+   side) keeps them from touching the screen edges. This is a CONTROL, and on
+   the 390px phone this app is judged on that inset would leave a 270px pill
+   holding a date and a slider — the slider would get barely a hundred pixels.
+   `--space-comfy` a side gives it 358px there instead. */
+#seasons-clock-pill {
+  position: fixed;
+  transform: translateX(-50%);
+  bottom: var(--safe-bottom);
+  left: 50%;
+  width: calc(100vw - 2 * var(--space-comfy));
+  max-width: 520px;
+  /* Same rung as the caption it replaces: UNDER the drawer, so an open sheet
+     covers it rather than being painted through. See the note on
+     `#seasons-status-pill` — that was a glass fault, not a preference. */
+  z-index: 20;
+  padding: var(--space-snug) var(--space-comfy);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+  background: var(--glass-raised);
+  backdrop-filter: blur(var(--glass-blur-raised));
+  -webkit-backdrop-filter: blur(var(--glass-blur-raised));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-large);
+  box-shadow: 0 4px 20px var(--glass-shadow);
+}
+
+/* `display: flex` above beats the browser's own `[hidden]`, same as the FAB. */
+#seasons-clock-pill[hidden] { display: none; }
+
+/* The moment, in words. ==> TABULAR FIGURES, AND THAT IS NOT A DETAIL. <== The
+   date changes on every step of a drag; with proportional digits a `1` is
+   narrower than a `0` and the whole line shivers sideways under the thumb,
+   which is the single thing that makes a scrubber feel cheap. `.slider-value`
+   in `ui/panels.css` carries the same rule for the same reason. */
+.seasons-clock-date {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-small);
+  color: var(--text-secondary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==> IT REUSES `.slider` AND CHANGES EXACTLY TWO THINGS. <== The track, the
+   thumb, the coarse-pointer thumb size, the focus ring and the grab cursor are
+   all already decided in `ui/panels.css` and this is the second use of that
+   pattern, not a second version of it.
+
+   The two changes are both about where this one lives:
+
+   1. **The track IS a hit area here.** `.slider` sets `cursor: default`
+      because `ui/slider-grab.js` refuses any press that misses the thumb —
+      the right rule for a slider inside a sheet you scroll past, where a
+      finger travelling over one would otherwise change a setting nobody
+      touched. This pill is fixed over the globe with nothing to scroll past
+      it, and a press on the track jumping to that moment is what a scrubber is
+      FOR. So it is not armed, and the cursor says so.
+   2. **`touch-action: none`.** `.slider` says `pan-y` so a sideways drag
+      inside the drawer is not stolen by the scroll container. There is no
+      scroll container here, and `none` is what stops the browser deciding
+      mid-gesture that a slightly-off-axis drag was a page gesture instead. */
+.seasons-clock-range {
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* ==> AND THE CAPTION STEPS ASIDE, RATHER THAN THE TWO STACKING. <== They are
+   the same slot on the same edge. `display: none` and not opacity, for the
+   reason every other suppression in this file uses it: the caption is a button
+   and it has to leave the TAB ORDER too, or a keyboard user tabs into a
+   control they cannot see (§13).
+
+   SPECIFICITY. `#seasons-status-pill` above is (1,0,0); this is (1,0,1) and
+   wins regardless of source order. */
+html[data-seasons-clock="on"] #seasons-status-pill { display: none; }
+
 /* --- getting the live chrome out of the archive --------------------------------- */
 
 /* ==> THE CLUSTER SITS WHERE IT ALWAYS DID NOW. <== It used to be pushed up by

@@ -39,8 +39,15 @@ const DOCS = [
   'SPEC-NEXT.md', 'SPEC-HOME-PLAN.md', 'SPEC-FLOOD-PLAN.md', 'spec-parameter.md',
 ];
 
+/* ==> `seasons` WAS MISSING HERE TOO, AND IT IS THE SAME OMISSION IN THE OTHER
+ * DIRECTION. <== Found 2026-08-31 with the ceiling walk below. Without it,
+ * every function, constant and filename that lives in `seasons/` reads as "not
+ * in the source" — so a spec sentence naming one was reported as a stale
+ * reference, and, far worse, a spec sentence naming a `seasons/` identifier
+ * that had actually been DELETED would never have been reported at all. Both
+ * lists now cover the same tree. */
 const SRC_DIRS = [
-  'app', 'config', 'data', 'lib', 'map', 'ui',
+  'app', 'config', 'data', 'lib', 'map', 'ui', 'seasons',
   'functions', 'worker', 'replay', 'surge', 'tools', 'mockups',
 ];
 
@@ -275,7 +282,15 @@ const walkCount = (d) => {
     else if (/\.(js|css)$/.test(e.name)) countable.push(p);
   }
 };
-for (const d of ['app', 'config', 'data', 'lib', 'map', 'ui', 'functions', 'worker', 'replay', 'surge']) {
+/* ==> `seasons` WAS MISSING FROM THIS LIST AND THE OMISSION WAS SILENT, WHICH
+ * IS THE EXACT FAILURE THIS CHECK EXISTS TO STOP. <== Found on 2026-08-31 while
+ * §57.67 slice C added 84 lines to `seasons/index.js`. That file has been over
+ * the 700-line ceiling since step 5 and `seasons/seasons.css` is 2,446 lines,
+ * and neither had ever been counted — so the gate reported a clean table while
+ * two files sat over the line with no row and no inventory. A directory list is
+ * a place to forget a directory; anything under the repo root holding shipped
+ * `.js` or `.css` belongs here. */
+for (const d of ['app', 'config', 'data', 'lib', 'map', 'ui', 'seasons', 'functions', 'worker', 'replay', 'surge']) {
   if (fs.existsSync(d)) walkCount(d);
 }
 countable.push('main.js');

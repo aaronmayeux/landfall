@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 421 numbered headings.
+Covering 11 files, 424 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -92,17 +92,17 @@ real home is the other row carrying the same section number.
 | `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 4383-4406 |
 | `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 4407-4428 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1273-1292 |
-| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1689-1719 |
-| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1720-1754 |
-| `13` | Inherited hard-won rules | `SPEC.md` | 1755-1756 |
-| `14` | Roadmap — RETIRED | `SPEC.md` | 2321-2327 |
-| `15` | Open decisions — RETIRED | `SPEC.md` | 2328-2334 |
+| `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1691-1721 |
+| `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1722-1756 |
+| `13` | Inherited hard-won rules | `SPEC.md` | 1757-1758 |
+| `14` | Roadmap — RETIRED | `SPEC.md` | 2323-2329 |
+| `15` | Open decisions — RETIRED | `SPEC.md` | 2330-2336 |
 | `16` | Screen architecture | `SPEC-UI.md` | 1088-1089 |
-| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2335 |
+| `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2337 |
 | `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1724-1904 |
 | `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1905-2252 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
-| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2341 |
+| `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2343 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
 | `17.2` | &nbsp;&nbsp;The inspect routes are gated | `SPEC-OPS.md` | 152-164 |
 | `17.3` | &nbsp;&nbsp;No third party on the critical path | `SPEC-OPS.md` | 165-206 |
@@ -257,7 +257,7 @@ real home is the other row carrying the same section number.
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2032-2064 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2065-2101 |
 | `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
-| `55` | Known and accepted | `SPEC.md` | 2349-2488 |
+| `55` | Known and accepted | `SPEC.md` | 2351-2490 |
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
 | `56.2` | &nbsp;&nbsp;What was measured, before any of this was designed | `SPEC-FLOOD-PLAN.md` | 43-111 |
@@ -438,6 +438,9 @@ real home is the other row carrying the same section number.
 | `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10409-10436 |
 | `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10437-10542 |
 | `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10543-10602 |
+| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10697 |
+| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10698-10737 |
+| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10738-10799 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -453,8 +456,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 605,193 | 160 |
+| `SPEC-SEASONS-BUILD.md` | 617,773 | 163 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 192,638 | 15 |
+| `SPEC.md` | 194,909 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

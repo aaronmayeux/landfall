@@ -10599,3 +10599,200 @@ vertices are the same one and the answer is the end of the curve either way.
 **Measured over 172 ended storms from 1851 to 2025: zero differences.** It is
 kept for the same reason and on the same terms as slice A's zero-length-leg
 guard, and both the code and this section say plainly that nothing exercises it.
+
+#### 57.67g Slice C — as built
+
+**The FAB and the scrubber, with no motion.** `seasons/clock-control.js`, plus
+the styles in `seasons/seasons.css`, a handful of wiring lines in
+`seasons/index.js`, and the cut reaching the third archive layer. **There is no
+timer in this slice and no animation loop anywhere in it** — slice D adds those,
+driving the same position this one proves.
+
+**==> AARON'S CALL, 2026-08-31, MOVES ONE THING OUT OF §57.67a. <==** The play
+control lives in the FAB and **only** the scrubber goes in the pill. Call 2 had
+put both in the pill; a 390px pill holding a play button, a slider and a date is
+three things fighting over one lozenge, and the slider is the one that needs the
+width.
+
+**So in slice C the FAB is an on/off switch — ▶ off, ■ on — because there is
+nothing yet to pause.** Slice D turns that same button into ▶/⏸ and moves
+"leave the clock" to a control in the pill. That is one button changing meaning
+once, in the commit that introduces motion; the alternative was shipping a FAB
+here that does nothing after its first press. **The suite asserts the slice-C
+answer explicitly — stop then start begins again rather than resuming — so the
+change is visible in slice D's diff rather than silent.**
+
+**==> THE SCRUBBER IS A THIRD PILL AND IT COULD NEVER HAVE BEEN THE SECOND ONE.
+<==** `#seasons-status-pill` is a `<button>`; a range input cannot live inside a
+button at all. So the scrubber takes the caption's slot on the same edge and the
+caption steps aside, driven by `data-seasons-clock` on the root element. It is
+**wider than the other two pills**, which is the one deliberate break from them:
+`--pill-inset` is 60px a side, which on a 390px phone would leave a 270px lozenge
+holding a date and a slider, and the slider would get barely a hundred pixels.
+`--space-comfy` a side gives it 358px there.
+
+**The FAB is a `.control`, not a sixth kind of floating button.** The five
+cluster buttons already are floating action buttons — same 44px target, same
+glass, same focus ring, same hover-capability rule — and this one has to sit in
+that stack anyway. It is `prepend`ed, and `#controls` is a column flex container
+where DOM order is both the visual order and the tab order, so one call puts it
+at the top of the stack and first in the keyboard walk together. It is `hidden`
+whenever nothing is ticked (call 1), and `hidden` rather than faded because it
+has to leave the tab order too.
+
+**`SEASONS.clockScrubSteps: 1000`** is the one new constant. It is a resolution,
+not a pace: the pill is capped at the window width, so the track is under 350 CSS
+pixels on the phone this app is judged on, and a thousand steps is already finer
+than the display. At the other end it is finer than the record — a three-month
+season over a thousand steps is about two and a half hours a step, against a
+record written every six. It also decides what one arrow-key press moves, which
+is why it is not larger.
+
+**==> THE SLIDER HOLDS A FRACTION, NEVER A MOMENT. <==** `clockSpan` answers the
+ticked storms' own window rather than the calendar year (§57.67c), so both ends
+move whenever anything is ticked. A slider holding a moment would then mean a
+different date with nothing having moved on screen. **A change to the ticked set
+resets the position to zero**, and that cost is real and was accepted rather than
+overlooked: ticking a fifth storm mid-scrub sends the reader back to the start.
+Carrying the position across is the only alternative and it is worse — the slider
+would sit still while the date under it jumped. A push that does *not* change the
+set leaves the position alone, which is one string compare standing between a
+repaint path added later and a scrubber that jumps home whenever anything
+repaints.
+
+**==> "ENGAGING EMPTIES THE GLOBE" IS AN OVERCLAIM AND THE FIRST DRAFT OF BOTH
+THE CODE AND THE SUITE MADE IT. <==** Measured 2026-08-31: `clockSpan`'s `from`
+**is** the earliest ticked storm's first fix, and `stormStateAt` calls a storm
+`unborn` only strictly before that fix. So at position 0 the storm which opens
+the timeline stands on its first recorded position and every other ticked storm
+is unborn and draws nothing. **That is left alone rather than adjusted** —
+backing the left end off would buy a genuinely blank globe at the price of a date
+nobody ever wrote down. §57.23's accumulation still reads: everything else fills
+in from there.
+
+**And it is not §5 silence.** The pill is on screen in the same instant naming
+the moment, so a nearly-empty globe is an answered question rather than an
+unanswered one. A moment `Intl` cannot format — which §57.50 records taking a
+whole drawer down once — says `Somewhere in this season` rather than nothing.
+
+**THE DATE IS NOT AN `aria-live` REGION.** It changes on every step of a drag, so
+a live region would queue a hundred announcements for one gesture. The slider
+carries the same words in `aria-valuetext`, which is announced once when the
+reader stops moving — which is the moment they want it.
+
+**THE SCRUBBER REUSES `.slider` AND CHANGES EXACTLY TWO THINGS**, both about
+where this one lives. It is **not** armed with `ui/slider-grab.js`: that rule
+refuses any press that misses the thumb, which is right for a slider inside a
+sheet you scroll past and wrong here, where a press on the track jumping to that
+moment is what a scrubber is for. And `touch-action` is `none` rather than
+`pan-y`, because there is no scroll container to protect.
+
+**One writer pushes the globe.** `pushGlobe()` in `seasons/index.js` reads the
+held ticked set and asks the clock for a cut. `map/layers/season-tracks.js`
+spends a paragraph on why the cut is an argument to the whole-set push rather
+than a call of its own; that guarantee only holds if this side has one expression
+for the pair too. **The clock is told about a tick BEFORE the cut is asked for**,
+or the globe would get a moment measured against the timeline the reader has just
+changed.
+
+#### 57.67h Slice C closes slice B's known gap — the swath takes the cut
+
+`map/layers/season-swath.js`. §57.67e named this a known gap rather than an
+oversight: slice B's scope was the tracks and the dots, and widening it would
+have put a third layer in one commit. **Slice C is the first slice where a reader
+can focus a storm mid-scrub**, so it is where the gap is paid. All three archive
+layers now read one moment or none of them do.
+
+**==> THE CUT IS TAKEN ON THE FIXES, NOT ON THE BANDS, AND THAT IS THE WHOLE
+TRAP. <==** `timelineFor` drops every record with no radii group — the landfall
+rows §57.26 exists for — so the timeline is a **fourth** fix list beside the
+clock's, the track's and the dot's, and `drawnFixes` is not a position in it.
+Truncating the storm's own `points` first and letting the builder filter what is
+left keeps everything in the one coordinate system §57.67e measured the other
+three agreeing in. **Measured on Katrina, who drops three rows: slicing the
+timeline by the same number instead puts the footprint's leading edge three fixes
+— about eighteen hours — ahead of the head**, and on every storm with nothing
+dropped it looks perfect.
+
+**==> AND IT REBUILDS ONLY WHEN A WHOLE FIX PASSES. <==** The footprint is swept
+*between* recorded points, so its shape depends on the whole fix count and on
+nothing else — `legFraction` is not an input. A memo keyed on the storm and that
+count is therefore **exact rather than an approximation**: it skips a rebuild
+that would have returned the same answer. **Measured in node on 2026-08-31: a
+rebuild averages 2.7–3.9 ms, and dragging across the whole of Harvey 2017 — 74
+fixes, so 74 rebuilds — is 249 ms of work spread over the entire drag.** Without
+it a 60 Hz pointermove would ask for that same work several hundred times.
+
+**The price, stated rather than hidden:** the footprint stops at the last
+completed fix, so it trails the head by up to one leg. That is honest — the sweep
+is between published points and there is no half-leg to sweep.
+
+**WHAT IS STILL NOT CUT, AND IT IS THE NEXT KNOWN GAP.** The 3D cage and the
+archive's hurricane glyphs (`buildSeasonMeshPoints` and `seasonGlyphs` in
+`main.js`) take no cut, so at the space floor a ticked season shows mountains for
+storms the clock has not reached. Same class as the gap this section closes, and
+left for the same reason: it is a different layer from the ones §57.67b assigns
+to slices C, D and E, and folding it in would widen this commit in exactly the
+way slice B refused to.
+
+#### 57.67i Slice C's gate
+
+`tools/test-season-clock-control.mjs`, **71 assertions**, zero dependencies,
+driving the real component against `tools/markup-dom.mjs`. Plus **14 new
+assertions in `tools/test-season-swath.mjs`**, taking it from 54 to 68.
+
+**What the suite can prove and what it cannot.** It can say what elements exist,
+where they were attached, what they are labelled, which of them is hidden, and
+what cut the globe would be handed at a given slider position. **It says nothing
+about layout, about whether a two-row pill fits a 390px phone, or about how a
+drag feels.** Those are Aaron's, on glass.
+
+**`tools/markup-dom.mjs` grew a `body`, a `documentElement`, `getElementById`,
+`createElementNS`, `appendChild`, `remove`, and `id`/`hidden` attribute
+reflection.** The clock is the first component these suites drive that reaches
+*out* of its own subtree. Every one of those was added because the stand-in threw
+or answered null on a real path — which reads as a broken component rather than
+as a thin scaffold, the fifth time that file has told that particular lie. Both
+existing consumers pass unchanged: 198 board assertions and 226 detail
+assertions.
+
+**TWENTY-THREE MUTATIONS WERE RUN AND TWENTY-TWO BITE** — fourteen against the
+control, seven against the swath, and two against the wiring in
+`seasons/index.js`, which `tools/test-archive-mode.mjs` now covers (93
+assertions to 99: the FAB is in the cluster and at the top of it, the pill is on
+the body, and all three plus the root flag are gone after `leave()`). On the control: showing the FAB with nothing ticked,
+answering a cut while off, appending the FAB instead of prepending it, keeping
+the old position across a set change, resetting on every push, staying engaged
+with nothing ticked, never setting the root flag, leaving it behind on unmount,
+not clamping the slider, saying nothing for an unformattable moment, dropping
+`aria-valuetext`, freezing the FAB's label, and not reusing `.slider`. On the
+swath: ignoring the cut, cutting the timeline instead of the fixes, forgetting
+the fix count in the memo key, adding `legFraction` to it, keeping the memo on
+the way out, and vanishing a storm the cut says nothing about. On the wiring:
+never mounting the clock, and never tearing it down.
+
+**==> ONE SURVIVED THE FIRST RUN AND IT WAS A FAULT IN THE TEST, WHICH IS THE
+SAME FINDING SLICES A AND B EACH MADE. <==** Deleting the position reset inside
+`engage` left the suite green, because **every test engaged a clock whose slider
+was already at zero** — the assertion compared a value with something it was
+never going to be anything else. Section 3b now stops the clock mid-season and
+starts it again, which is the only path that can see it.
+
+**==> AND THE FIRST DRAFT OF SECTION 6 NAMED THE WRONG STORM. <==** It used
+AL011851 on the strength of §57.67d calling it *"the thinnest entry in the
+record"*. **Measured: AL011851 is fourteen fixes over three days**, so it clears
+the two-day floor comfortably and the section was driving the ordinary path while
+claiming to drive the edge one. Both storms were then found by scanning rather
+than remembered: **across the whole shipped archive, 3,266 storms, 275 span less
+than two days and 32 are a single observation.** `AL021971` (five fixes, exactly
+one day) is already a sample; `AL021851` (one fix) is read out of the shipped
+1851 season file rather than copied into a new fixture.
+
+**One mutation survives and it is equivalent rather than uncovered.** Removing
+the `cutHidesStorm` guard in `drawFocused` changes nothing: an unborn storm's
+`drawnFixes` is zero, so the slice below it is `points.slice(0, 0)`, the timeline
+is empty and the builder returns no features anyway. It is kept on the same terms
+as slice A's zero-length-leg guard and slice B's `running` guard — it is the
+sentence the function is trying to say, and it is the early return that stops an
+unborn storm taking a memo slot and a pointless build on every step of a drag.
+Both the code and this section say plainly that nothing exercises it.

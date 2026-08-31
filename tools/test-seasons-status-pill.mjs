@@ -178,9 +178,18 @@ ok(`==> AND IT IS LAYERED BELOW THE DRAWER'S 30 (z=${z}) <==`, z > 0 && z < 30);
 
 const panels = readFileSync(join(ROOT, 'ui/panels.css'), 'utf8');
 
+/* ==> THE ARCHIVE HALF IS ANCHORED TO THE START OF A SELECTOR, AND THAT IS NOT
+ * PEDANTRY. <== §57.67 slice C added a REAL and deliberate hide of this
+ * element — `html[data-seasons-clock="on"] #seasons-status-pill { display:
+ * none; }` — because the scrubber takes the caption's slot on the same edge
+ * while the season clock is engaged. An unanchored search found that as a
+ * substring and reported the wide-screen rule as back, which is this check
+ * lying about a rule that had not moved. The thing being guarded is a BARE
+ * `#seasons-status-pill` hide; one qualified by an ancestor is a different
+ * statement about a different moment. */
 ok('==> NEITHER PILL IS HIDDEN ON A WIDE SCREEN ANY MORE <==',
   !/#storm-pill\s*\{\s*display:\s*none/.test(panels)
-  && !/#seasons-status-pill\s*\{\s*display:\s*none\s*;?\s*\}/.test(css));
+  && !/(^|[},])\s*#seasons-status-pill\s*\{\s*display:\s*none\s*;?\s*\}/m.test(css));
 
 /* ==> BOTH CENTRE ON THE WINDOW, THE SAME AS THE PILL AT THE TOP. <== A
  * version that shifted them right by half the rail so they centred on the

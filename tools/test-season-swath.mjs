@@ -47,8 +47,11 @@ const eq = (what, got, want) => ok(
 const { parseHurdat2 } = await import('../lib/hurdat.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { SEASONS } = await import('../config/constants.js');
+const { WIND_SWEEP } = await import('../config/constants.js');
 const { ARCHIVE_GEO } = await import('../config/tokens.js');
 const { buildSeasonSwath, timelineFor } = await import('../lib/season-windswath.js');
+const { sweepTimeline } = await import('../lib/windswath.js');
+const { clockFrameAt, stormStateAt } = await import('../lib/season-clock.js');
 const {
   ensureSeasonSwath, setSeasonSwathSet, setSeasonSwathFocus, clearSeasonSwath, __internals,
 } = await import('../map/layers/season-swath.js');
@@ -418,6 +421,164 @@ function fakeMap() {
   const seasonMs = Date.now() - t1;
   ok(`the whole 2005 season would cost ${seasonMs} ms for ${all} bands — the `
     + 'measurement behind drawing the focused storm only', all > 60);
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. THE CLOCK'S CUT — §57.67 slice C, closing slice B's named gap
+ *
+ * ==> SLICE B LEFT THIS LAYER UNCUT ON PURPOSE AND SAID SO. <== §57.67e: the
+ * tracks and the dots learned the cut, the footprint did not, because widening
+ * that commit would have put a third layer in it. The visible cost was a reader
+ * who focuses a storm mid-scrub getting its COMPLETE lifetime footprint under a
+ * track that is half drawn — which reads as broken geometry rather than as time
+ * passing. Slice C is the first slice where that can happen, so this is where
+ * it is paid.
+ * ------------------------------------------------------------------------ */
+{
+  const map = fakeMap();
+  ensureSeasonSwath(map);
+
+  const cutOf = (storm, t) => {
+    const frame = clockFrameAt([{ storm }], t);
+    const m = new Map();
+    for (const s of frame.storms) m.set(s.id, s.state);
+    return m;
+  };
+
+  const fixes = katrina.points;
+  const first = fixes[0].time;
+  const last = fixes[fixes.length - 1].time;
+
+  /* -- 9a. with no cut, nothing moved ------------------------------------ */
+
+  setSeasonSwathSet(map, [{ storm: katrina }]);
+  setSeasonSwathFocus(map, katrina.id);
+  const whole = JSON.stringify(map.data());
+
+  setSeasonSwathSet(map, [{ storm: katrina }], null);
+  eq('==> AN EXPLICIT NULL CUT IS BYTE-IDENTICAL TO NO CUT AT ALL. <== The '
+    + 'promise §57.67b makes for every layer the clock touches, compared as '
+    + 'strings rather than hoped for',
+  JSON.stringify(map.data()), whole);
+
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, last + 1));
+  eq('and a cut taken after the storm has ENDED draws the whole footprint '
+    + 'too — §57.67c rule 2, the trail persisting is the feature',
+  JSON.stringify(map.data()), whole);
+
+  /* -- 9b. an unborn storm has no footprint ------------------------------ */
+
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, first - 1));
+  eq('==> A STORM THE CLOCK HAS NOT REACHED DRAWS NOTHING, THE SAME WAY IT '
+    + 'DRAWS NO TRACK AND NO DOTS. <== §57.67c rule 1. A wind field standing '
+    + 'on empty ocean before its storm exists is the reverted build\'s sepia '
+    + 'sphere with marks on it, in one layer instead of three',
+  map.data().features.length, 0);
+
+  /* -- 9c. it grows, and it never overshoots ----------------------------- */
+
+  const vertsAt = (t) => {
+    setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, t));
+    return map.data().features.reduce(
+      (a, f) => a + f.geometry.coordinates[0].length, 0
+    );
+  };
+  const quarter = vertsAt(first + (last - first) * 0.25);
+  const half = vertsAt(first + (last - first) * 0.5);
+  const full = vertsAt(last);
+  ok(`the footprint accumulates rather than appearing whole — ${quarter} `
+    + `vertices a quarter of the way in, ${half} at half, ${full} at the end`,
+  quarter < half && half < full);
+
+  /* -- 9d. THE TRAP: the cut is on the FIXES, not on the timeline -------- */
+
+  /* ==> THIS IS THE ONE ASSERTION THIS SECTION EXISTS FOR. <== `timelineFor`
+   * DROPS every record with no radii group — Katrina's three landfall rows
+   * among them — so the timeline is a FOURTH fix list beside the clock's, the
+   * track's and the dot's, and `drawnFixes` is NOT a position in it. Slicing
+   * the timeline by a raw fix number puts the footprint's leading edge ahead of
+   * the head by however many rows were dropped behind it, and on every storm
+   * with no dropped rows it looks perfect.
+   *
+   * The naive answer is computed here rather than described, and the assertion
+   * is that ours is not it. */
+  const dropped = katrina.points.length - timelineFor(katrina).length;
+  ok(`Katrina drops ${dropped} rows from her timeline, so a fix index and a `
+    + 'timeline index genuinely disagree on her', dropped > 0);
+
+  /* A moment after the last dropped row, so the two indices have parted. */
+  const lastDropIdx = katrina.points.reduce(
+    (acc, p, i) => (p.radii && !(p.radii.r34 || p.radii.r50 || p.radii.r64) ? i : acc), -1
+  );
+  const probeIdx = lastDropIdx + 3;
+  const probeT = katrina.points[probeIdx].time;
+  const state = stormStateAt(katrina, probeT);
+  eq('the clock agrees that is a running moment with a fix count on it',
+    [state.phase, state.drawnFixes], ['running', probeIdx + 1]);
+
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, probeT));
+  const oursJson = JSON.stringify(map.data());
+
+  const rightWay = __internals.decorated(buildSeasonSwath(
+    { ...katrina, points: katrina.points.slice(0, state.drawnFixes) }
+  ));
+  eq('the cut is taken on the storm\'s own fixes and the builder then drops '
+    + 'the radii-less rows out of what is left, which keeps everything in the '
+    + 'one coordinate system §57.67e measured the other three lists agreeing in',
+  oursJson, JSON.stringify(rightWay));
+
+  const wrongWay = __internals.decorated(
+    sweepTimeline(timelineFor(katrina).slice(0, state.drawnFixes), WIND_SWEEP)
+      .map((f) => ({ ...f, properties: { ...f.properties, id: katrina.id } }))
+  );
+  ok('==> AND IT IS NOT THE TIMELINE SLICED BY THE SAME NUMBER, WHICH IS THE '
+    + 'ANSWER THAT LOOKS RIGHT ON EVERY STORM WITH NOTHING DROPPED. <== The '
+    + 'two payloads are different here, on a real storm, which is what makes '
+    + 'this assertion capable of failing',
+  oursJson !== JSON.stringify(wrongWay));
+
+  /* -- 9e. the memo is exact, not an approximation ----------------------- */
+
+  /* ==> IT IS KEYED ON A WHOLE FIX COUNT, AND THAT IS EXACT BECAUSE THE SWEEP
+   * RUNS BETWEEN RECORDED POINTS. <== `legFraction` is not an input to the
+   * shape at all, so two moments inside one six-hourly leg genuinely produce
+   * the identical footprint and skipping the rebuild returns the same answer
+   * rather than a stale one. Without the memo a 60 Hz drag would ask for that
+   * work several hundred times: measured in node 2026-08-31, a rebuild is
+   * 2.7-3.9 ms and a whole scrub across Harvey 2017's 74 fixes is 249 ms. */
+  const legA = katrina.points[probeIdx].time;
+  const legB = katrina.points[probeIdx + 1].time;
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, legA));
+  const keyEarly = __internals.memoKey();
+  const dataEarly = JSON.stringify(map.data());
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, legA + (legB - legA) * 0.9));
+  eq('two moments inside one leg share a memo key, because they share a shape',
+    __internals.memoKey(), keyEarly);
+  eq('and the shape they share is the one that was already built',
+    JSON.stringify(map.data()), dataEarly);
+
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, legB));
+  ok('crossing into the next fix takes a new key and a new shape',
+    __internals.memoKey() !== keyEarly && JSON.stringify(map.data()) !== dataEarly);
+
+  /* -- 9f. a storm the cut says nothing about draws WHOLE ---------------- */
+
+  /* §57.67e rule 2. `clockFrameAt` puts EVERY ticked storm in its answer, so a
+   * gap means the roster and the globe have drifted apart — a bug either way,
+   * and the only question is which failure a reader gets to see. A storm drawn
+   * whole while its neighbours grow points at the cause; one that quietly
+   * disappears is the reverted build's empty world. */
+  setSeasonSwathSet(map, [{ storm: katrina }], new Map());
+  eq('a cut with no entry for the focused storm draws its whole footprint '
+    + 'rather than vanishing it', JSON.stringify(map.data()), whole);
+
+  /* -- 9g. leaving takes the cut and the memo with it -------------------- */
+
+  setSeasonSwathSet(map, [{ storm: katrina }], cutOf(katrina, probeT));
+  clearSeasonSwath(map);
+  eq('leaving the archive drops the held cut', __internals.cut(), null);
+  eq('and the memo, so a later visit cannot be handed this visit\'s shapes',
+    __internals.memoKey(), null);
 }
 
 /* ------------------------------------------------------------------------ */

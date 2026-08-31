@@ -148,6 +148,25 @@ export class El {
 
   set className(v) { this.attrs.class = String(v); }
 
+  /* ==> `id` AND `hidden` REFLECT TO ATTRIBUTES FOR THE REASON `className` AND
+   *  `disabled` ABOVE DO, AND THEY TOLD THE SAME LIE. <== A component that
+   *  BUILDS its element writes the property — `el.id = 'btn-season-clock'`,
+   *  `el.hidden = true` — while markup parsed out of a template lands in
+   *  `attrs`. Unmapped, `id` set an own property nothing consults, so
+   *  `getElementById` found nothing and the suite reported a control that had
+   *  never mounted. That is the fifth time this stand-in has told that
+   *  particular lie; see every note on `matches`. */
+  get id() { return this.attrs.id || ''; }
+
+  set id(v) { this.attrs.id = String(v); }
+
+  get hidden() { return this.attrs.hidden !== undefined; }
+
+  set hidden(on) {
+    if (on) this.attrs.hidden = '';
+    else delete this.attrs.hidden;
+  }
+
   setAttribute(name, value) { this.attrs[name] = String(value); }
 
   removeAttribute(name) { delete this.attrs[name]; }
@@ -176,6 +195,32 @@ export class El {
    *  made readable here rather than worked around in the app. Nothing asserts
    *  on focus in `node`; where focus matters it is a real-browser check. */
   focus() {}
+
+  /** ==> ADDED FOR THE SEASON CLOCK, WHICH TEARS ITS OWN CONTROLS DOWN
+   *  (§57.67 slice C). <== That component mounts a button into `#controls` and
+   *  a pill onto the body and removes both on the way out of the archive, and
+   *  `unmount` is half of what its suite has to be able to check — a stand-in
+   *  without this threw inside the teardown, which reads as the COMPONENT
+   *  failing to unmount rather than as the scaffold being thin. Same rule as
+   *  every note above it: what this cannot do gets made readable here rather
+   *  than worked around in the app. */
+  /** ==> `appendChild` IS NOT A SYNONYM ANYBODY CHOSE, IT IS WHAT THE ARCHIVE'S
+   *  CHROME ALREADY CALLS. <== `seasons/pill.js`, `seasons/status-pill.js` and
+   *  the season clock all mount with `document.body.appendChild(el)`, which is
+   *  the older single-node form. Teaching the app to say `append` instead so a
+   *  stand-in could read it would be working around the scaffold in the app,
+   *  which is the one thing every note in this file says not to do. */
+  appendChild(kid) {
+    this.append(kid);
+    return kid;
+  }
+
+  remove() {
+    if (!this.parent) return;
+    const i = this.parent.children.indexOf(this);
+    if (i !== -1) this.parent.children.splice(i, 1);
+    this.parent = null;
+  }
 
   descendants() {
     const out = [];
@@ -309,10 +354,36 @@ export function parseHtml(html, parent) {
 /**
  * Install a global `document` these views can build against.
  *
+ * ==> IT GREW A `body`, A `documentElement`, `getElementById` AND
+ * `createElementNS` FOR THE SEASON CLOCK (§57.67 slice C). <== That component
+ * is the first one these suites drive that reaches OUT of its own subtree: it
+ * prepends its button into `#controls`, appends its pill to the body, and flags
+ * the root element so a stylesheet rule can take the archive's caption pill off
+ * screen. All four are real calls on a real path, and a document without them
+ * threw inside `mount` — which reads as a broken component rather than as a
+ * thin stand-in, the same lie every note on `El.matches` records.
+ *
+ * `getElementById` walks the body rather than consulting a registry, so a
+ * suite has to actually attach the host it expects the component to find. A
+ * registry would have let a component that looked up the wrong id pass.
+ *
  * @returns {() => void} remove it again
  */
 export function installMarkupDocument() {
   const had = globalThis.document;
-  globalThis.document = { createElement: (t) => new El(t) };
+  const body = new El('body');
+  const root = new El('html');
+  globalThis.document = {
+    body,
+    documentElement: root,
+    createElement: (t) => new El(t),
+    /* SVG elements are ordinary nodes here. Nothing in these suites asks a
+     * stand-in about namespaces, and a component building `<svg>` through
+     * `createElementNS` — which every one of ours does, because markup
+     * assigned as a string cannot be checked against its own file — needs the
+     * call to exist and return something with `setAttribute` on it. */
+    createElementNS: (_ns, t) => new El(t),
+    getElementById: (id) => body.descendants().find((n) => n.attrs.id === id) || null,
+  };
   return () => { globalThis.document = had; };
 }

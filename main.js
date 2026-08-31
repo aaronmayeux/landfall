@@ -1557,20 +1557,33 @@ function boot() {
   let seasonGlyphList = [];
 
   const archiveGlobe = {
-    setTracks(selected) {
+    /**
+     * @param {Array} selected the ticked storms
+     * @param {Map<string, object>|null} [cut] the season clock's answer for
+     *   each of them at one moment, from `clockFrameAt`. §57.67 slice C.
+     *   Omitted or null, every storm draws its whole life, which is what the
+     *   archive does whenever the clock is not engaged.
+     */
+    setTracks(selected, cut = null) {
       if (!styleReady) return;
-      setSeasonTracks(map, selected);
+      setSeasonTracks(map, selected, cut);
       /* ==> ONE CALL FROM THE ARCHIVE'S POINT OF VIEW, TWO SOURCES UNDERNEATH,
        * AND THAT SPLIT STAYS ON THIS SIDE OF THE INJECTION. <== The board
        * knows one thing: which storms are ticked. Handing it a `setPoints` of
        * its own would mean a second call it could forget to make, and a globe
        * showing tracks with no dot on a one-record storm is a silent wrong
        * answer rather than a visible one. */
-      setSeasonPoints(map, selected);
+      setSeasonPoints(map, selected, cut);
       /* THE FOOTPRINT ONLY REMEMBERS THE SET HERE; it draws nothing until
        * something is focused (§57.26a). Handed the same list for the same
-       * reason as the marks — one call the board cannot forget to make. */
-      setSeasonSwathSet(map, selected);
+       * reason as the marks — one call the board cannot forget to make.
+       *
+       * ==> AND THE CUT, WHICH IT DID NOT TAKE AT SLICE B. <== That was named
+       * a known gap at the time (§57.67e) because widening slice B would have
+       * put a third layer in one commit. Slice C is the first slice where a
+       * reader can focus a storm mid-scrub, so it is where the gap is paid: all
+       * three archive layers now read one moment or none of them do. */
+      setSeasonSwathSet(map, selected, cut);
       /* ==> AND THE 3D CAGE, WHICH IS THE ONE PIECE OF THIS THAT IS NOT
        * MAPLIBRE. §57.21c. <== The archive globe was flat until now: entering
        * calls `liveGlobe.hide()`, which flattens the ridge on purpose, and

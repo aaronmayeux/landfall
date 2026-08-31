@@ -59,6 +59,7 @@ import { getHome } from '../data/home.js';
 import { settingValue } from '../data/settings-prefs.js';
 import { createSeasonsStatusPill, pillDetail } from './status-pill.js';
 import { createSeasonsPill } from './pill.js';
+import { createSeasonClock } from './clock-control.js';
 import * as deepLink from './deep-link.js';
 
 /**
@@ -117,10 +118,39 @@ let currentArchiveGlobe = null;
  *  closing over the first one it ever saw. */
 let currentLiveRunningIds = null;
 
+/** What the board last said is ticked. §57.67 slice C.
+ *
+ *  ==> IT IS HELD BECAUSE THE GLOBE NOW HAS TWO REASONS TO BE REDRAWN AND ONLY
+ *  ONE OF THEM COMES FROM THE BOARD. <== Ticking a storm changes the SET;
+ *  dragging the scrubber changes the MOMENT. The board knows nothing about the
+ *  second and the clock knows nothing about the first, so neither of them holds
+ *  both halves of a push. This does. */
+let currentSelected = [];
+
 /** The one live session, or null. Module state, and the module is a singleton
  *  because a dynamic import is cached — a second `import()` returns this same
  *  namespace, which is what makes double entry detectable rather than a race. */
 let session = null;
+
+/**
+ * Push the whole ticked set and the clock's moment at once. §57.67 slice C.
+ *
+ * ==> ONE WRITER, AND BOTH ROADS RUN THROUGH IT. <== `map/layers/season-
+ * tracks.js` spends a paragraph on why the cut is an argument to the whole-set
+ * push rather than a call of its own: a moment that can be pushed separately is
+ * a moment that can be forgotten, and the globe would then show dots from one
+ * time under a line from another. That guarantee only holds if this side has
+ * one expression for the pair too — a second call site that read the set and
+ * forgot to ask for the cut would put the same bug back on this side of the
+ * injection.
+ *
+ * The clock is asked rather than checked. It answers null whenever it is not
+ * engaged, and `map/layers/season-cut.js` answers "all of it" to a null cut, so
+ * there is no branch here about whether a clock exists.
+ */
+function pushGlobe() {
+  currentArchiveGlobe?.setTracks?.(currentSelected, session?.clock?.cut?.() ?? null);
+}
 
 /**
  * Enter the archive.
@@ -181,6 +211,23 @@ export function openSeasons({
     onToggleBoard: () => safely(() => toggleDrawer()),
   });
 
+  /* ==> AND THE THIRD PIECE OF ARCHIVE FURNITURE IS THE CLOCK. <== §57.67
+   * slice C. It is a button in the control cluster and a slider in a pill that
+   * takes the caption's slot; `seasons/clock-control.js` owns both, including
+   * putting them on screen and taking them off again.
+   *
+   * ==> IT IS BUILT PER VISIT, LIKE THE TWO PILLS AND UNLIKE THE BOARD. <== The
+   * board is registered once for the page and outlives every entry. This holds
+   * a ticked set and a moment, both of which belong to ONE visit — carrying
+   * them across would mean re-entering the archive and finding last visit's
+   * season frozen at last visit's date. */
+  const clock = createSeasonClock({
+    /* The clock knows the moment and nothing else; this file knows who needs to
+     * be told. One writer for the globe, shared with the board's own tick
+     * handler — see `pushGlobe`. */
+    onScrub: () => safely(() => pushGlobe()),
+  });
+
   /** ==> ONE FUNCTION, TWO CONTROLS, AND THAT IS DELIBERATE. <== The bottom
    *  pill is hidden above 720px (`#storm-pill` sets that precedent and this
    *  follows it), so on a desktop the archive would otherwise have no way to
@@ -211,6 +258,13 @@ export function openSeasons({
     from,
     statusPill,
     pill,
+    /* ==> THE CLOCK IS ON THE SESSION FOR THE REASON `statusPill` IS. <==
+     * `ensureBoard` runs ONCE per page load and its callbacks outlive every
+     * visit, while this is rebuilt on each entry. A closure over the local
+     * would therefore hold visit one's control forever and scrub a detached
+     * element on every later visit — silently, because nothing throws. Same
+     * trap, same shape, same fix. */
+    clock,
     /* ==> WHY THE LINK'S VERDICT IS ON THE SESSION AND NOT A LOCAL. <== The
      * wall reads it back through a getter, and the wall is registered once per
      * page load while this object is rebuilt on every entry. Holding it here
@@ -290,6 +344,16 @@ export function openSeasons({
     safely(() => liveGlobe?.show());
     safely(() => statusPill.unmount());
     safely(() => pill.unmount());
+    /* ==> THE CLOCK COMES DOWN BEFORE `data-seasons` DOES, WHICH IS THE SAME
+     * ORDER THE PILLS FOLLOW. <== Its own `unmount` also drops
+     * `data-seasons-clock`, and that attribute hides the archive's caption
+     * pill — left on the document it would go on hiding a live-app surface
+     * from inside a world nobody is in any more. Two attributes, taken off in
+     * the order they went on. */
+    safely(() => clock.unmount());
+    /* And the held set with it. It is the ticked storms of a visit that has
+     * ended; a later push reading it would draw 2005 over the live globe. */
+    currentSelected = [];
     /* ==> THE LAYOUT ATTRIBUTE COMES OFF HERE, NOT INSIDE A COMPONENT. <==
      * Step 6, 2026-08-28. It used to ride on `bar.mount`/`unmount`, which was
      * only ever true by accident — the bar happened to be the first thing on
@@ -342,6 +406,14 @@ export function openSeasons({
      * a moment later. That is not §5 silence: the drawer is open on top of it
      * at that moment, saying in its own words that it is still loading. */
     statusPill.mount();
+    /* ==> AND THE CLOCK MOUNTS SILENT TOO, FOR A DIFFERENT REASON. <== Its FAB
+     * is `hidden` until storms are actually drawn (§57.67a call 1) and its pill
+     * is `hidden` until the reader presses it, so at this moment it is two
+     * elements nobody can see. It goes up here rather than on the first tick
+     * because the alternative is a control appearing mid-session from a code
+     * path that also has to know how to remove it — the pills settled that
+     * shape and this follows it. */
+    clock.mount();
 
     currentArchiveGlobe = archiveGlobe || null;
     currentLiveRunningIds = liveRunningIds || null;
@@ -626,8 +698,20 @@ function ensureBoard({ drawer, linkReason }) {
     live: seasonsLive,
 
     /* The globe redraws from the WHOLE ticked set on every change, so there is
-     * no add path and no remove path to drift apart. */
-    onSelection: (selected) => safely(() => currentArchiveGlobe?.setTracks?.(selected)),
+     * no add path and no remove path to drift apart.
+     *
+     * ==> IT NOW GOES THROUGH `pushGlobe` RATHER THAN CALLING THE FACADE, AND
+     * THE CLOCK IS TOLD FIRST. §57.67 slice C. <== The order is the whole of
+     * it: `setEntries` recomputes the timeline over the new set and resets the
+     * moment, so asking for a cut before it ran would hand the globe a moment
+     * measured against the timeline the reader just changed. §57.67c names that
+     * cost explicitly — the span is the ticked storms' own window, so ticking a
+     * fifth storm moves both of its ends. */
+    onSelection: (selected) => safely(() => {
+      currentSelected = Array.isArray(selected) ? selected : [];
+      safely(() => session?.clock?.setEntries(currentSelected));
+      pushGlobe();
+    }),
 
     /* ==> FOCUS IS A SECOND CALLBACK RATHER THAN A FIELD ON THE FIRST, AND
      * THAT IS ABOUT COST. <== §57.21 item 2. Ticking changes the DATA on the

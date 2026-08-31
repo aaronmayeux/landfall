@@ -7762,4 +7762,28 @@ export const SEASONS = Object.freeze({
    * the date readout honest about how little is known.
    */
   clockMinSpanDays: 2,
+
+  /**
+   * How many positions the scrubber has between the two ends of the timeline.
+   * §57.67 slice C.
+   *
+   * ==> IT IS A RESOLUTION, NOT A PACE. <== The slider's value is a whole
+   * number because `<input type="range">` deals in whole steps, and this is how
+   * many of them there are; the moment it maps to is the timeline's own span
+   * divided by it, so the same slider covers a three-month season and a
+   * two-day floor without either being quantised differently.
+   *
+   * **A THOUSAND, BECAUSE THE SCREEN CANNOT SHOW MORE.** The pill is capped at
+   * the window width, so on the 390px phone this app is judged on the track is
+   * under 350 CSS pixels — fewer than 350 positions a finger can distinguish.
+   * A thousand steps is therefore already finer than the display, and the drag
+   * reads as continuous rather than as notched. At the other end it is finer
+   * than the record: a three-month season over a thousand steps is about two
+   * and a half hours a step, against a record written every six.
+   *
+   * It also decides what the arrow keys do, which is the reason it is not
+   * larger. A keyboard reader nudging the slider moves one step, so a hundred
+   * thousand of them would make the arrows useless.
+   */
+  clockScrubSteps: 1000,
 });

@@ -105,11 +105,22 @@ const docEl = fakeEl('html');
  * discarded — section 7 asserts that it ran at all. */
 docEl.style = { props: {}, setProperty(k, v) { this.props[k] = v; } };
 const body = fakeEl('body');
+/* ==> THE CONTROL CLUSTER IS HERE BECAUSE THE SEASON CLOCK MOUNTS INTO IT
+ * (§57.67 slice C). <== It is the first piece of archive chrome that attaches
+ * itself to an element the live page owns rather than to the body, and a
+ * document with no `getElementById` threw inside `openSeasons` — which this
+ * suite reported as the archive failing to enter. Real, and findable by the id
+ * the component actually looks up: a lookup that always answered would let a
+ * component reaching for the wrong id pass. */
+const controls = fakeEl('nav');
+controls.attrs.id = 'controls';
+body.append(controls);
 globalThis.document = {
   documentElement: docEl,
   body,
   createElement: (t) => fakeEl(t),
   createElementNS: (_ns, t) => fakeEl(t),
+  getElementById: (id) => (id === 'controls' ? controls : null),
   querySelector: () => null,
 };
 globalThis.location = { search: '', pathname: '/', hash: '' };
@@ -348,6 +359,19 @@ ok(body.children.some((c) => c.id === 'seasons-status-pill'),
 
 const statusPill = body.children.find((c) => c.id === 'seasons-status-pill');
 
+/* ==> THE SEASON CLOCK GOES UP WITH THE REST OF THE CHROME AND STAYS SILENT.
+ * §57.67 slice C. <== Its button is `hidden` until storms are actually drawn
+ * and its pill is `hidden` until the reader presses it, so at entry it is two
+ * elements nobody can see. What this section can prove that the control's own
+ * suite cannot is the WIRING: that `openSeasons` builds one at all, puts it
+ * where the live page keeps its controls, and takes it down again. */
+const clockFab = controls.children.find((c) => c.id === 'btn-season-clock');
+ok(!!clockFab, '==> THE PLAY CONTROL IS IN THE CLUSTER <==');
+eq(controls.children[0]?.id, 'btn-season-clock',
+  'at the top of it, which is also the front of the tab order (Aaron\'s call 1)');
+ok(body.children.some((c) => c.id === 'seasons-clock-pill'),
+  'and its scrubber pill is on the body with the other two');
+
 /* ==> THE WAY OUT IS THE PILL AT THE TOP, AND IT IS THE ONLY ONE. <== Step 6,
  * §57.37. The bar used to carry a Leave button; the bar itself is gone now, and
  * `attachEscape` never leaves the archive — it steps the drawer back and then
@@ -483,6 +507,17 @@ eq(docEl.getAttribute('data-seasons'), null, 'the chrome attribute is gone');
 ok(!body.children.some((c) => c.id === 'seasons-status-pill'),
   'and so is the pill that said what was drawn');
 ok(!body.children.some((c) => c.id === 'seasons-pill'), 'and so is the pill');
+/* ==> AND THE CLOCK, INCLUDING ITS FLAG ON THE ROOT. §57.67 slice C. <== The
+ * button lives in the LIVE app's control cluster and the flag hides the
+ * archive's caption pill, so either one left behind is archive furniture
+ * outliving the archive — the button as a control the reader cannot use, the
+ * flag as a rule still suppressing a surface nobody is looking at. */
+ok(!controls.children.some((c) => c.id === 'btn-season-clock'),
+  '==> THE PLAY CONTROL IS OUT OF THE LIVE APP\'S CLUSTER <==');
+ok(!body.children.some((c) => c.id === 'seasons-clock-pill'),
+  'and the scrubber pill is off the body');
+eq(docEl.getAttribute('data-seasons-clock'), null,
+  'and the clock\'s own root flag came off with it');
 ok(opener.focused > 0, 'focus went back to the row that opened it (§13)');
 
 /* ==> AND THE STORMS BUTTON IS THE LIVE APP'S AGAIN. <== §57.38b. `main.js`

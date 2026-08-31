@@ -69,6 +69,39 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**==> THE SEASON CLOCK'S SCRUBBER IS ON GLASS FOR THE FIRST TIME. §57.67g IS THE
+AS-BUILT ACCOUNT — READ THAT, NOT THIS. <==** Slice C of step 10. Open the
+archive, tick a storm or four, and there is a ▶ at the top of the control
+cluster. Press it: the caption pill turns into a scrubber, and dragging it grows
+and shrinks the season under a date. Press ■ to put it all back. **No motion yet
+— slice D is the timer.**
+
+**Four things to judge, and the first two are the ones most likely to be
+wrong:**
+
+1. **The pill is two rows now — a date over a slider — and it is wider than the
+   other two pills.** A caption lozenge sized to its words would have left the
+   slider about a hundred pixels on a phone. If it reads as a panel rather than
+   as a pill, the lever is the date: dropping the year and the "UTC" would fit
+   it beside the slider on one row.
+2. **The ▶ sits at the TOP of the cluster, above recentre.** Aaron's call was
+   "above the location button" and in the archive the stack is recentre /
+   storms / settings, so that is where it went. If he meant below recentre it is
+   a one-line move.
+3. **At the far left the globe is nearly empty** — the storm that opens the
+   timeline stands on one dot and the rest have not happened. That is what the
+   record says and §57.67g explains why it was not adjusted, but it is the first
+   thing a reader sees after pressing play and it needs to not read as broken.
+4. **Focus a storm mid-scrub.** Its wind footprint now grows with it instead of
+   showing the whole lifetime shape under a half-drawn track. The footprint
+   trails the head by up to one leg, deliberately.
+
+**THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
+CLOCK.** Same class as the swath gap slice C just closed, and left out for the
+same reason — a different layer from the ones slices C, D and E own. §57.67h
+names it. It is only visible zoomed all the way out, so it may not be worth its
+own pass at all.
+
 **==> `tools/test-genesis.mjs` DOES NOT HANG. IT IS SLOW, AND THIS ENTRY WAS
 WRONG FOR THE SECOND TIME. <==** Run to completion under
 `node tools/run-suites.mjs` on 2026-08-30 it finishes **green in 195 seconds**,
