@@ -317,12 +317,15 @@ html[data-seasons="on"] {
    this beside it. */
 #btn-season-clock[hidden] { display: none; }
 
-/* Engaged. Brighter ink and the hover fill, both already published — no new
-   token for a state that is \"this button is currently doing its thing\", and
-   nothing that could disagree with the sepia palette because both values are
-   custom properties `applyTokens` resolves. */
+/* Engaged. ==> THE FILL ONLY, AND THE INK STAYS WHERE THE REST OF THE COLUMN'S
+   IS. <== This used to lift `color` to `--text-primary` as well, and on glass
+   (2026-08-31) that made the engaged button the brightest thing in the cluster
+   — a control shouting about its own state beside four that never do. The state
+   is already said twice without it: the mark changes from a triangle to a
+   square, and the scrubber pill is on screen. `--hover` is a published token,
+   so it goes sepia with everything else rather than being a colour this file
+   chose. */
 #btn-season-clock[data-on] {
-  color: var(--text-primary);
   background: var(--hover);
 }
 

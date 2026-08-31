@@ -10631,6 +10631,29 @@ caption steps aside, driven by `data-seasons-clock` on the root element. It is
 holding a date and a slider, and the slider would get barely a hundred pixels.
 `--space-comfy` a side gives it 358px there.
 
+**==> AND ITS TWO MARKS ARE STROKED LINE ART, WHICH IS A GLASS CORRECTION. <==**
+They shipped filled and Aaron rejected them on a phone the same day: they read
+as a different size AND a different colour from the four buttons under them,
+which is one cause rather than two — a solid shape at `--text-secondary` carries
+far more ink than 1.7px line art at the same colour, so it looks bigger and
+brighter while measuring smaller. `index.html` already says this outright about
+the rail and the first version ignored it: **the app's own spiral is the one
+filled icon there and it earns it**, because it is identity rather than an
+instruction. Play and stop are verbs. Both are now `fill="none"`, stroked at the
+cluster's own 1.7 with round joins, with their ink spanning 4.5–19.5 to match
+the band the others occupy (crosshair 2–22, home 4–20, layers 3.5–20.5, gear
+2.97–21.03, measured off `index.html`). **The play triangle was also off-centre**
+— its box ran 8.5 to 18, so its middle sat at 13.25 and it rode about a pixel
+right of every other glyph in the column. Both marks are centred on (12,12) now.
+The suite reads the expected weight out of `index.html` rather than typing it,
+so the clock follows the rail rather than being pinned beside it.
+
+**The engaged state is the background fill alone.** It also lifted `color` to
+`--text-primary`, which made the engaged button the brightest thing in the
+cluster — a control shouting about its own state beside four that never do. The
+state is already said twice: the mark changes from triangle to square, and the
+scrubber pill is on screen.
+
 **The FAB is a `.control`, not a sixth kind of floating button.** The five
 cluster buttons already are floating action buttons — same 44px target, same
 glass, same focus ring, same hover-capability rule — and this one has to sit in

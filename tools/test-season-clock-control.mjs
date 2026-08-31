@@ -174,6 +174,32 @@ section('2. where it mounts');
     + '`SEASONS.clockScrubSteps`, which is also what one arrow-key press moves',
   [range().min, range().max, range().step], ['0', String(STEPS), '1']);
 
+  /* ==> BOTH MARKS ARE DRAWN THE WAY THE REST OF THE CLUSTER IS, AND THIS IS A
+   * GLASS FAULT TURNED INTO A RULE. <== The first version filled them. On
+   * Aaron's phone, 2026-08-31, they read as a different size AND a different
+   * colour from the four buttons under them — one cause, not two: a solid shape
+   * at `--text-secondary` carries far more ink than 1.7px line art at the same
+   * colour, so it looks bigger and brighter while measuring smaller.
+   *
+   * The expected values are READ OUT OF index.html rather than typed, so this
+   * tracks the cluster instead of pinning a number beside it. If the rail ever
+   * moves to a different weight, this asks the clock to move with it rather
+   * than failing for having been left behind. */
+  {
+    const html = readFileSync(join(ROOT, 'index.html'), 'utf8');
+    const wanted = /stroke-width="([0-9.]+)"/.exec(
+      html.slice(html.indexOf('id="btn-home"'))
+    )?.[1];
+    ok(`the cluster draws its verbs at stroke-width ${wanted}`, wanted === '1.7');
+    for (const cls of ['clock-play', 'clock-stop']) {
+      const mark = fab().children.find((c) => c.classList.contains(cls));
+      eq(`.${cls} is stroked line art at the cluster's own weight, not a fill`,
+        [mark.getAttribute('fill'), mark.getAttribute('stroke'),
+          mark.getAttribute('stroke-width')],
+        ['none', 'currentColor', wanted]);
+    }
+  }
+
   clock.unmount();
   eq('unmounting takes the button out of the cluster',
     controls.children.map((c) => c.attrs.id), ['btn-recenter']);

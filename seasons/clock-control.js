@@ -155,26 +155,51 @@ export function createSeasonClock({ onScrub } = {}) {
    * lay out the children of an `<svg>` — SVG content is positioned by SVG's own
    * rules, so `grid-area` on a path is inert. `.control` is already
    * `display: grid`, so this costs no extra box. */
-  const playSvg = document.createElementNS(SVG_NS, 'svg');
-  playSvg.setAttribute('class', 'clock-play');
-  playSvg.setAttribute('viewBox', '0 0 24 24');
-  playSvg.setAttribute('aria-hidden', 'true');
+  /* ==> STROKED LINE ART AT 1.7, NOT A SOLID FILL, AND GLASS IS WHY. <== The
+   * first version filled both marks. On Aaron's phone, 2026-08-31, they read as
+   * a different SIZE and a different COLOUR from the four buttons under them,
+   * and that is one cause rather than two: a solid shape at `--text-secondary`
+   * carries far more ink than 1.7px line art at the same colour, so it looks
+   * both bigger and brighter while measuring smaller.
+   *
+   * index.html says this outright about the rail and the first version ignored
+   * it — the app's own spiral is THE ONE FILLED ICON THERE AND IT EARNS IT,
+   * because it is identity rather than an instruction. Play and stop are verbs,
+   * like recentre, home, layers and settings, so they are drawn the way verbs
+   * are drawn here. */
+  const stroked = (cls) => {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', cls);
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.7');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
+    return svg;
+  };
+
+  /* ==> AND BOTH ARE CENTRED ON (12,12), WHICH THE TRIANGLE WAS NOT. <== Its
+   * old bounding box ran 8.5 to 18, so its middle sat at 13.25 and it rode
+   * about a pixel right of every other glyph in the column. Round joins add the
+   * same margin on all four sides, so a symmetric box stays symmetric.
+   *
+   * The ink also spans 4.5 to 19.5 now rather than 5.5 to 18.5, which is the
+   * band the rest of the cluster occupies: crosshair 2-22, home 4-20, layers
+   * 3.5-20.5, gear 2.97-21.03. Measured off index.html rather than eyeballed. */
+  const playSvg = stroked('clock-play');
   const playMark = document.createElementNS(SVG_NS, 'path');
-  playMark.setAttribute('d', 'M8.5 5.5 L18 12 L8.5 18.5 Z');
-  playMark.setAttribute('fill', 'currentColor');
+  playMark.setAttribute('d', 'M6.5 4.5 L17.5 12 L6.5 19.5 Z');
   playSvg.append(playMark);
 
-  const stopSvg = document.createElementNS(SVG_NS, 'svg');
-  stopSvg.setAttribute('class', 'clock-stop');
-  stopSvg.setAttribute('viewBox', '0 0 24 24');
-  stopSvg.setAttribute('aria-hidden', 'true');
+  const stopSvg = stroked('clock-stop');
   const stopMark = document.createElementNS(SVG_NS, 'rect');
-  stopMark.setAttribute('x', '7');
-  stopMark.setAttribute('y', '7');
-  stopMark.setAttribute('width', '10');
-  stopMark.setAttribute('height', '10');
-  stopMark.setAttribute('rx', '1.5');
-  stopMark.setAttribute('fill', 'currentColor');
+  stopMark.setAttribute('x', '6');
+  stopMark.setAttribute('y', '6');
+  stopMark.setAttribute('width', '12');
+  stopMark.setAttribute('height', '12');
+  stopMark.setAttribute('rx', '2');
   stopSvg.append(stopMark);
 
   fab.append(playSvg, stopSvg);

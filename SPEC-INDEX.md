@@ -438,9 +438,9 @@ real home is the other row carrying the same section number.
 | `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10409-10436 |
 | `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10437-10542 |
 | `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10543-10602 |
-| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10697 |
-| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10698-10737 |
-| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10738-10799 |
+| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10720 |
+| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10721-10760 |
+| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10761-10822 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -456,7 +456,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 617,773 | 163 |
+| `SPEC-SEASONS-BUILD.md` | 619,379 | 163 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 194,909 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
