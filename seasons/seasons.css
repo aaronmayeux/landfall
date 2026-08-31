@@ -332,11 +332,23 @@ html[data-seasons="on"] {
 /* Both marks are stacked in the same grid cell and cross-faded, which is
    `.control-view`'s pattern and is there for a measured reason: swapping the
    SVG's contents would be a parse and a layer promotion on every press.
-   Opacity on two static children costs nothing (§9). */
+   Opacity on two static children costs nothing (§9).
+
    It is TWO whole `<svg>` elements rather than one holding two shapes, because
    the stacking is grid on the BUTTON and grid does not lay out the children of
    an `<svg>` — `grid-area` on a path is inert. `.control` is already
-   `display: grid`, so this costs no extra box. */
+   `display: grid`, so this costs no extra box.
+
+   ==> AND THIS RULE WAS SILENTLY DEAD FOR TWO COMMITS, WHICH IS WORTH MORE
+   THAN THE RULE. <== An edit left the paragraph above split by a stray
+   comment-close, so the prose after it became raw CSS. The parser does not
+   stop at that: it enters error recovery and discards everything up to and
+   including the NEXT rule block, which was this one. Nothing errored, nothing
+   logged, and both marks fell into their own grid rows — play against the top
+   edge of the button, stop against the bottom. Aaron on glass, 2026-08-31.
+   `tools/css-structure-check.mjs` is the gate that exists because of it, and
+   it caught a SECOND one written into this very paragraph while fixing the
+   first. Do not spell the delimiter out in prose. */
 #btn-season-clock > svg {
   grid-area: 1 / 1;
   transition: opacity var(--duration-instant) var(--ease-swap);

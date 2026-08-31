@@ -76,7 +76,7 @@ cluster. Press it: the caption pill turns into a scrubber, and dragging it grows
 and shrinks the season under a date. Press ■ to put it all back. **No motion yet
 — slice D is the timer.**
 
-**Four things to judge, and the first two are the ones most likely to be
+**Five things to judge, and items 1 and 3 are the ones most likely to be
 wrong:**
 
 1. **The pill is two rows now — a date over a slider — and it is wider than the
@@ -84,15 +84,21 @@ wrong:**
    slider about a hundred pixels on a phone. If it reads as a panel rather than
    as a pill, the lever is the date: dropping the year and the "UTC" would fit
    it beside the slider on one row.
-2. **The ▶ sits at the TOP of the cluster, above recentre.** Aaron's call was
+2. **The play/stop marks are fixed** — stroked line art at the cluster's own
+   1.7 weight, centred, and both in one grid cell. Two rounds of glass on this
+   one: wrong colour and size first, then not centred, and the second turned out
+   to be a comment in `seasons.css` closing early and silently eating the rule
+   that stacks them. Two new gates close that hole (§57.67g). Just confirm it
+   looks right now.
+3. **The ▶ sits at the TOP of the cluster, above recentre.** Aaron's call was
    "above the location button" and in the archive the stack is recentre /
    storms / settings, so that is where it went. If he meant below recentre it is
    a one-line move.
-3. **At the far left the globe is nearly empty** — the storm that opens the
+4. **At the far left the globe is nearly empty** — the storm that opens the
    timeline stands on one dot and the rest have not happened. That is what the
    record says and §57.67g explains why it was not adjusted, but it is the first
    thing a reader sees after pressing play and it needs to not read as broken.
-4. **Focus a storm mid-scrub.** Its wind footprint now grows with it instead of
+5. **Focus a storm mid-scrub.** Its wind footprint now grows with it instead of
    showing the whole lifetime shape under a half-drawn track. The footprint
    trails the head by up to one leg, deliberately.
 

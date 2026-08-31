@@ -263,6 +263,16 @@ if ! node tools/css-orphan-check.mjs; then
   fail=1
 fi
 
+printf 'pre-push: checking every stylesheet is structurally whole...\n'
+if ! node tools/css-structure-check.mjs; then
+  printf '\nA stylesheet parses but has quietly thrown a rule away. CSS error\n'
+  printf 'recovery discards everything up to the END of the next rule, so what\n'
+  printf 'goes missing is not the broken line -- it is the rule after it, which\n'
+  printf 'still reads as correct in every other check here. That shipped twice in\n'
+  printf 'two commits and it took a phone to see it.\n'
+  fail=1
+fi
+
 printf 'pre-push: checking every selector still names something...\n'
 if ! node tools/selector-contract-check.mjs; then
   printf '\nA check is querying a name nothing emits. That does not report the app is\n'
@@ -364,6 +374,14 @@ if [ -d node_modules/playwright ] && [ -n "${PLAYWRIGHT_BROWSERS_PATH:-}" ] && [
     printf 'Push refused.\n'
     fail=1
   fi
+  printf 'pre-push: checking the season clock'"'"'s marks share one cell...\n'
+  if ! bash tools/with-server.sh node tools/seasons-clock-check.mjs; then
+    printf '\nThe play and stop marks are not stacked in one grid cell, or are not\n'
+    printf 'centred in the button. The rule that stacks them was silently dead for\n'
+    printf 'two commits -- present in the file, correctly spelled, discarded by the\n'
+    printf 'parser -- and every text scan stayed green. Only geometry says it.\n'
+    fail=1
+  fi
   printf 'pre-push: checking the home setup panel in a browser...\n'
   if ! bash tools/with-server.sh node tools/home-setup-check.mjs; then
     printf '\nThe three ways to set a home must READ as peers — one shared style,\n'
@@ -378,7 +396,7 @@ fi
 exit $fail
 HOOK
 chmod +x "$REPO/.git/hooks/pre-push"
-ok "pre-push hook installed — 15 checks, 4 of them in a browser (see CLAUDE.md)"
+ok "pre-push hook installed — 17 checks, 5 of them in a browser (see CLAUDE.md)"
 
 # ------------------------------------------------------------ 6. orientation
 say ""

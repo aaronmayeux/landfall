@@ -10648,6 +10648,36 @@ right of every other glyph in the column. Both marks are centred on (12,12) now.
 The suite reads the expected weight out of `index.html` rather than typing it,
 so the clock follows the rail rather than being pinned beside it.
 
+**==> AND THE RULE THAT STACKS THEM WAS SILENTLY DEAD FOR TWO COMMITS, WHICH IS
+WORTH MORE THAN THE FEATURE. <==** Aaron, second look on glass: the play mark sat
+against the TOP edge of the button and, on tapping, the stop mark against the
+BOTTOM. Driven in the sandbox chromium: both marks reported `grid-area: auto`,
+so they were flowing into two implicit grid rows and each was centred inside its
+own. **The cause was a comment in `seasons/seasons.css` that closed early.** An
+edit left a stray delimiter mid-paragraph, the prose after it became live CSS,
+and **the parser's error recovery discarded everything up to the end of the next
+rule — which was the stacking rule.** Nothing errored, nothing logged, the sheet
+loaded, every other rule in it worked, and the rule itself was still sitting in
+the file correctly spelled.
+
+**==> NOTHING IN THE GATE CHAIN COULD SEE IT, AND THAT IS THE FINDING. <==**
+`css-orphan-check` asks whether a class has a rule and a class whose rule was
+EATEN still has one in the text; `type-scale-check` reads the declarations it
+finds; `selector-contract-check` is about names; `check-syntax` is JavaScript.
+**Measured by reintroducing the fault: all four stay green.** Two gates now
+close it. `tools/css-structure-check.mjs` catches the CAUSE — comments balanced,
+braces balanced, and nothing between rules that is prose rather than a selector —
+and `tools/seasons-clock-check.mjs` catches the EFFECT in a real browser, because
+a stylesheet can lose a rule for reasons that have nothing to do with a comment.
+Both were verified by putting the fault back; both turn red.
+
+**The lesson generalises past this button and is written into `CLAUDE.md`:** CSS
+has no equivalent of a `SyntaxError`, so what disappears is never the line you
+broke — it is the rule after it. **Never spell a comment delimiter out inside a
+comment.** The first attempt at the fix wrote one into the very paragraph
+explaining the fault and reintroduced it; the new gate caught that within a
+minute of existing.
+
 **The engaged state is the background fill alone.** It also lifted `color` to
 `--text-primary`, which made the engaged button the brightest thing in the
 cluster — a control shouting about its own state beside four that never do. The
