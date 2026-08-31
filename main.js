@@ -79,9 +79,6 @@ import {
 import {
   ensureSeasonSwath, setSeasonSwathSet, clearSeasonSwath, setSeasonSwathFocus,
 } from './map/layers/season-swath.js';
-import {
-  ensureSeasonHead, setSeasonHead, clearSeasonHead, setSeasonHeadFocus,
-} from './map/layers/season-head.js';
 /* The archive's ridge and its camera. Both are pure — one turns a ticked
  * season into cage points, the other into a flight — and both are reached only
  * through the `archiveGlobe` facade below, because `seasons/` never imports
@@ -787,13 +784,6 @@ function boot() {
      * fixes ON its track rather than under it, while leaving the name — the
      * thing that identifies which storm this is — on top of everything. */
     ensureSeasonPoints(map, map.getLayer('season-track-name') ? 'season-track-name' : archiveAnchor);
-    /* ==> THE CLOCK'S HEAD GOES IN LAST, SO IT IS THE TOP OF THE ARCHIVE'S OWN
-     * STACK. §57.67 slice E. <== Anchored back to `archiveAnchor` rather than to
-     * a season layer: MapLibre inserts directly beneath the layer it is given,
-     * so the last thing inserted before the same anchor sits above everything
-     * inserted before it. The head is the storm's position at the moment on
-     * screen and nothing in the archive has a better claim to be over it. */
-    ensureSeasonHead(map, archiveAnchor);
     applyLayerState();
 
     /* ==> THE MILTON SURGE FIXTURE, IF THIS PAGE ASKED FOR IT. <== Inert in
@@ -1576,12 +1566,7 @@ function boot() {
      */
     setTracks(selected, cut = null) {
       if (!styleReady) return;
-      /* ==> THE TIPS COME BACK OUT OF THE TRACKS AND GO STRAIGHT INTO THE HEAD.
-       * §57.67 slice E. <== The head stands on the last vertex of the drawn
-       * trail rather than on the clock's own interpolated position (§57.67e), so
-       * it needs an answer only the push that drew the trail has. Carried
-       * forward in one expression, it cannot be a step behind. */
-      const tips = setSeasonTracks(map, selected, cut);
+      setSeasonTracks(map, selected, cut);
       /* ==> ONE CALL FROM THE ARCHIVE'S POINT OF VIEW, TWO SOURCES UNDERNEATH,
        * AND THAT SPLIT STAYS ON THIS SIDE OF THE INJECTION. <== The board
        * knows one thing: which storms are ticked. Handing it a `setPoints` of
@@ -1599,11 +1584,6 @@ function boot() {
        * reader can focus a storm mid-scrub, so it is where the gap is paid: all
        * three archive layers now read one moment or none of them do. */
       setSeasonSwathSet(map, selected, cut);
-      /* ==> AND THE HEAD, WHICH DRAWS ONLY WHILE THE CLOCK IS ENGAGED. <== With
-       * no cut there is no current moment for a mark to stand at, so it pushes
-       * an empty set rather than branching here — the same shape every other
-       * call on this list keeps. */
-      setSeasonHead(map, selected, cut, tips);
       /* ==> AND THE 3D CAGE, WHICH IS THE ONE PIECE OF THIS THAT IS NOT
        * MAPLIBRE. §57.21c. <== The archive globe was flat until now: entering
        * calls `liveGlobe.hide()`, which flattens the ridge on purpose, and
@@ -1649,16 +1629,12 @@ function boot() {
        * interaction; the dots are forty features and cost less again. */
       setSeasonPointFocus(map, id);
       setSeasonSwathFocus(map, id);
-      /* A repaint, like the tracks — one paint property over a handful of
-       * features MapLibre already holds. */
-      setSeasonHeadFocus(map, id);
     },
     clearTracks() {
       if (!styleReady) return;
       clearSeasonTracks(map);
       clearSeasonPoints(map);
       clearSeasonSwath(map);
-      clearSeasonHead(map);
       /* ==> AND THE RIDGE COMES DOWN WITH THEM. §57.21c. <== `setTracks` put
        * it up and this is its mirror. Without it, leaving the archive keeps
        * 1935's mountains standing until `liveGlobe.show()`'s `refreshCage()`

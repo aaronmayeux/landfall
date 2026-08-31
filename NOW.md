@@ -69,31 +69,6 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> SLICE E OF THE SEASON CLOCK IS ON `main` AND IS WAITING ON A PHONE. <==**
-The last slice: the trail behind the head is coloured at the correct timestamps,
-and the head itself is the app's own spiral, graded and turning. **§57.67o and
-§57.67p are the as-built accounts — read those, not this.** A through D are all
-confirmed and settled; nothing under them is a suspect if this is wrong.
-
-**WHAT TO JUDGE, in the order it is most likely to come back wrong:**
-
-1. **The colours along a track.** Does a storm changing grade read as a story, or
-   as a rainbow? The argument for peak (§57.67c) says four finished storms on a
-   static globe read as four identical smears — this is the bet that one or two
-   storms growing at one moment do not.
-2. **Whether a storm keeps its name while the clock is engaged.** The label rides
-   only the first coloured piece of a track, so a storm whose opening run is
-   short can lose it. §57.67o names the dial and the price of the alternative.
-3. **The spin.** Six real seconds a revolution, and the mark has four arms, so it
-   reads as four turns. Cyclone or pinwheel? That is one constant either way.
-4. **Whether it still holds frame rate.** A fully ticked 2005 goes from 31 line
-   features to 198, ten times a second, plus a head layer. No sandbox number
-   means anything here.
-5. **The head at the space floor, where there ISN'T one.** Zoom all the way out
-   mid-playback: the tracks grow, the mountains and birthplace marks do not.
-   Accepted before the work started (§57.67o) — worth seeing once before it
-   stays accepted.
-
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
 same reason — a different layer from the ones slices C, D and E own. §57.67h
@@ -502,27 +477,6 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
-**==> `tools/seasons-smoke.mjs` IS RED ON `main` AND WAS RED BEFORE SLICE E. <==**
-Six of its 31 assertions fail — every one that counts what ticking a roster row
-puts on the globe (*"ticking a storm draws exactly one track"*, the second tick,
-the untick, both Space presses, and the round trip). **Measured on 2026-08-31 by
-stashing slice E and running it against clean `main`: identical six failures**,
-so it is not this pass and it is not the split.
-
-**What is known and what is NOT, stated rather than guessed.** The archive track
-source exists on the real map and holds a `_data` the check can read, and the
-rest of the file — the roster, the pill, leaving, the keyboard focus — is green.
-So it is the TICK or the count, not the globe being absent. **Nobody has
-diagnosed further than that.** It is not in the pre-push hook, which is why it
-has been able to sit red.
-
-**The first question to ask is whether the check is driving chrome that still
-exists**, because that is what the last two archive probes turned out to be
-doing — §57.67's own false alarm was a probe driving the bar and Leave button
-step 5 deleted, and it cost a session before anybody checked. A
-check that is red for a stale reason is worse than no check: it trains the next
-session to skip it.
-
 **==> THE ARCHIVE STORM DRAWER REBUILD IS FINISHED. ALL SEVEN STEPS ARE BUILT,
 ON GLASS AND ACCEPTED, AND NOTHING IN IT IS WAITING ON AARON. <==** The plan was
 §57.54; the as-built account is **§57.55 through §57.61** plus **§57.63**,
@@ -799,16 +753,57 @@ scaffolding (a mount carrying `home` and `system`), which is a piece of work
 rather than an assertion. **Not started. Aaron's call whether it is worth a
 pass.**
 
-**==> STEP 10, THE SEASON CLOCK, IS BUILT. ALL FIVE SLICES ARE ON `main` AND
-§57.67 IS THE ACCOUNT — READ THAT, NOT THIS. <==** A through D are confirmed on
-glass and settled; **slice E is the only part waiting on a phone**, and its item
-is under `IN FLIGHT` above.
+**==> STEP 10, THE SEASON CLOCK, IS OPEN AND IS BEING BUILT IN FIVE SLICES.
+§57.67 IS THE PLAN — READ THAT, NOT THIS. <==** Aaron's ask, 2026-08-31, and it
+adds four things to §57.23: a play FAB above the location button that appears
+only when storms are drawn, the bottom pill becoming the transport, the track
+Saffir-Simpson coloured at the correct timestamps, and the 3D hurricane glyph as
+the moving head. §57.67a records each as his call.
 
-**==> THIS BLOCK WAS STALE FOR TWO COMMITS AND SAID "NEXT IS SLICE C" WHILE C
-AND D WERE BOTH SHIPPED. <==** Both of those passes deleted their own `IN FLIGHT`
-item and neither noticed this one further down the file. **An item that describes
-what is NEXT has to die when it stops being next**, which is the same rule at the
-top of this file about landed work kept "until the next session reads it once".
+**SLICE A IS BUILT AND THERE IS NOTHING ON SCREEN TO LOOK AT.** `lib/season-
+clock.js` plus 88 assertions. It is deliberate and it is the exception to this
+project's usual rule, not a lapse: the point of slicing is that the arithmetic
+stops being a suspect before any pixel depends on it. **§57.67c and §57.67d are
+the as-built account.**
+
+**==> THE REVERT'S ONE OPEN QUESTION IS ANSWERED AND IT WAS A FALSE ALARM. <==**
+`73080ae` said a probe found the archive roster stalling on *"Reading the
+record…"* with zero storm rows, on the commit before the clock as well, and told
+whoever picked this up to explain it first. Driven against today's `main` in the
+sandbox chromium on 2026-08-31: **176 wall rows, 2005 opens with 31 storm rows,
+no page errors, no stall.** The old probe was written against `seasons/bar.js`
+and its `Leave` button, both deleted in step 5, so it was driving a screen that
+no longer exists. **Nothing is blocked; do not re-open it.**
+
+**SLICE B IS BUILT AND THERE IS STILL NOTHING ON SCREEN TO LOOK AT.** The cut
+lives in its own file, `map/layers/season-cut.js`; both season layers take an
+optional third argument; `lib/trackline.js` exports the fix-to-vertex map it
+always built internally. `main.js` was not touched, so every track still draws
+whole. **§57.67e and §57.67f are the as-built account.**
+
+**==> ONE THING IN SLICE B WOULD HAVE SHIPPED AND IS WORTH NOT RE-DERIVING.
+<==** `smoothPath` deduplicates before splining, and **130 of 3,266 storms lose
+at least one fix that way.** An index built over the deduped list puts those
+storms' heads up to nine fixes behind while every other storm looks perfect. It
+was caught by mutation, not by reading. §57.67e.
+
+**==> THE DATELINE AND THE PRIME MERIDIAN ARE MEASURED CLEAN, AND ONE LAYER IS
+KNOWINGLY NOT CUT. <==** 2,640 cuts across all 44 seam-crossing storms, zero
+wraps; the biggest longitude step a cut takes is the same as the biggest step
+the whole curve takes. **But `season-swath.js` takes no cut**, so a storm opened
+mid-playback will show its whole lifetime wind footprint under a half-drawn
+track. Known, scoped out of B on purpose, and it lands in whichever slice first
+lets a reader focus during playback. §57.67e.
+
+**NEXT IS SLICE C — the FAB and the scrubber, with no motion.** It is what
+first passes a cut, and it is **the first slice Aaron can feel.** Aaron's call,
+2026-08-31: C gets its own session.
+
+**==> AND IT MUST LAND IN ITS OWN FILE. <==** Every seasons pass has grown
+`ui/view-seasons-board.js` and every one has promised to cut next time. That
+promise has been broken five times and two cuts in one session do not buy a
+sixth. The clock owns its own creation and teardown; the wiring in that file and
+in `seasons/index.js` is a handful of lines and nothing else.
 
 **==> AND THE WHOLE-BASIN PASS'S PHONE COST IS UNMEASURED. <==** §57.19a used to
 state "two to three seconds on a phone" as a fact; nobody has run it on one, and

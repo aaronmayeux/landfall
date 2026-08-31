@@ -103,9 +103,8 @@ import { SEASONS, ZOOM } from '../../config/constants.js';
 import { categoryColor } from '../../lib/category.js';
 import { stormDisplayName } from '../../lib/season-names.js';
 import { smoothPathIndexed } from '../../lib/trackline.js';
-import { stormGrades } from '../../lib/season-clock.js';
 import { gs } from '../theme-state.js';
-import { cutCurve, cutSegments, cutStateFor } from './season-cut.js';
+import { cutCurve, cutStateFor } from './season-cut.js';
 import { focusOpacity } from './season-focus.js';
 
 const SOURCE = 'season-tracks';
@@ -144,14 +143,6 @@ const curves = new Map();
  * identical smears. Peak makes the strong ones legible from across the screen,
  * which is what §57.21 asks the archive globe to do. Per-segment belongs to the
  * detail panel, where there is room to read it.
- *
- * ==> AND TO THE CLOCK, WHICH IS THE ONE EXCEPTION AND DOES NOT REVERSE THIS.
- * <== §57.67a call 3. The argument above is about a STATIC globe holding four
- * finished storms side by side, and it still holds there. While the clock is
- * engaged the reader is watching one moment with one or two storms growing —
- * they are watching a storm change rather than comparing storms — so
- * `colorRuns` below takes over. Peak is the default; per-fix is what the clock
- * switches on; neither one has to be wrong.
  */
 function trackColor(facts) {
   /* `TROPICAL` is the nature every HURDAT2 storm has by construction — the
@@ -162,100 +153,29 @@ function trackColor(facts) {
 }
 
 /**
- * The same track, in the colours it actually wore. §57.67a call 3, slice E.
+ * One storm's line.
  *
- * ==> IT IS RUNS, NOT ONE PIECE PER FIX, AND THE DIFFERENCE IS MEASURED. <==
- * A storm holds a grade for hours at a time, so cutting at every fix would
- * emit a feature per six hours of every storm's life for no visible gain.
- * Merging neighbours that resolve to the same hex is the whole optimisation and
- * it is a big one: **measured across the entire shipped archive on 2026-08-31 —
- * 6,532 storms, 175,262 fixes — the average storm breaks into 4.93 pieces.
- * Median 4, 95th percentile 12, worst 24 (AL131967 in the 1967 Atlantic).** A
- * fully ticked 2005 Atlantic goes from 31 features to 198, with the same vertex
- * count plus one duplicated join point per cut — 167 of them.
- *
- * ==> IT ANSWERS FIX NUMBERS, NOT VERTEX NUMBERS. <== The caller owns the
- * fix-to-vertex map and the cut, and both of those change while the clock runs
- * where this does not — a storm's grades are a property of the finished record,
- * so this is computed once and memoised beside the curve.
- *
- * ==> AND IT READS `stormGrades`, WHICH IS THE SAME ARITHMETIC THE HEAD AND THE
- * DOTS USE. <== `lib/season-clock.js` grades a moment off the status column and
- * the wind together (§57.7f, §57.7g), so a trail that turns grey at the same
- * fix the dot turns grey is structural rather than a coincidence two files have
- * to keep up.
- *
- * @param {object} storm
- * @returns {Array<{fix:number, color:string}>} the fix each run STARTS at, and
- *   what colour it is. Always starts at fix 0 when there is anything at all.
- */
-function colorRuns(storm) {
-  const grades = stormGrades(storm);
-  const runs = [];
-  for (let i = 0; i < grades.length; i++) {
-    const color = categoryColor(grades[i].category, grades[i].nature, null);
-    if (!runs.length || runs[runs.length - 1].color !== color) {
-      runs.push({ fix: i, color });
-    }
-  }
-  return runs;
-}
-
-/**
- * One storm's line, or several of them.
- *
- * Answers nothing at all for a track too short to be a line. A single-point
- * storm is real — some 19th-century entries are one observation — and MapLibre
- * rejects a LineString with one coordinate, so it is dropped here with the
- * reason visible rather than thrown at the renderer. Step 6 gives it a dot.
+ * Returns null for a track too short to be a line. A single-point storm is
+ * real — some 19th-century entries are one observation — and MapLibre rejects
+ * a LineString with one coordinate, so it is dropped here with the reason
+ * visible rather than thrown at the renderer. Step 6 gives it a dot.
  *
  * ==> WITH A CLOCK STATE IN HAND IT DRAWS ONLY AS FAR AS THE HEAD. <== §57.67
  * slice B. The curve and its index are memoised together and neither is touched
  * by the cut — `cutCurve` slices the cached array and interpolates one final
  * vertex, so a season playing at ten steps a second re-splines nothing.
  *
- * ==> AND WITH A CLOCK STATE IN HAND IT IS SEVERAL LINES, ONE PER GRADE THE
- * STORM HELD. <== §57.67a call 3, slice E. Peak stays the answer on a static
- * globe and the reasons are in `trackColor` above; the clock is a different
- * screen, so the trail behind a moving head wears the colours the storm
- * actually wore. The runs are memoised with the curve because they are a
- * property of the finished record, and the boundaries are read through the same
- * fix-to-vertex map the cut uses — so a colour change lands on the vertex the
- * fix landed on rather than near it.
- *
- * ==> THE LABEL RIDES THE FIRST PIECE AND ONLY THE FIRST PIECE. <== The name is
- * set along the line by MapLibre off this same source (see the header), and a
- * label on all five pieces of a track would print the storm's name five times
- * where it printed it once. The first piece is the one chosen because it is the
- * one that stops changing earliest — its shape is fixed the moment the storm
- * first changes grade, so a playing season cannot make the name jitter — and
- * because it is the ORIGIN end, where §57.21a already puts the direction ring.
- * **The cost, stated rather than hidden: a storm whose opening run is short in
- * screen pixels can lose its name while the clock is engaged**, because
- * MapLibre will not set text along a line shorter than the word. If that reads
- * wrong on glass the dial is a sixth feature carrying the whole trail and the
- * label alone, at the price of pushing every storm's geometry twice.
- *
  * @param {object} storm
  * @param {object} facts
  * @param {object|null} [state] the clock's answer for this storm, or null for
- *   "no clock" — in which case the whole track draws as ONE feature in its peak
- *   colour, exactly as it always has
- * @returns {{features:Array<object>, tip:Array<number>|null}} the features to
- *   push, and the last coordinate of the drawn trail. **The tip is what the
- *   head stands on** (§57.67e): `lib/season-clock.js` also answers a lon/lat,
- *   interpolated straight between two fixes, and that point is NOT on the drawn
- *   curve — the curve bends between fixes and a lerp does not, so a head placed
- *   there floats off its own track on a recurve.
+ *   "no clock" — in which case the whole track draws, exactly as it always has
  */
-function trackFeatures(storm, facts, state = null) {
-  const none = { features: [], tip: null };
-
+function trackFeature(storm, facts, state = null) {
   const raw = (storm?.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lonU))
     .map((p) => [p.lonU, p.lat]);
 
-  if (raw.length < 2) return none;
+  if (raw.length < 2) return null;
 
   /* `smoothPathIndexed` returns fewer than three points UNCHANGED rather than
    * padded, so a two-fix storm stays the straight segment it genuinely is —
@@ -264,73 +184,28 @@ function trackFeatures(storm, facts, state = null) {
   let memo = curves.get(storm.id);
   if (!memo) {
     memo = smoothPathIndexed(raw, SEASONS.trackMaxVertices);
-    /* ==> THE RUNS ARE BUILT ONCE, HERE, WITH THE CURVE. <== They depend on the
-     * storm's record and on nothing else — not on the moment, not on the cut —
-     * so building them per push would be `stormGrades` over every fix of every
-     * ticked storm ten times a second for an answer that cannot have changed. */
-    memo.runs = colorRuns(storm);
     curves.set(storm.id, memo);
   }
 
   const coords = cutCurve(memo.curve, memo.index, state);
-  if (!coords) return none;
+  if (!coords) return null;
 
-  const tip = coords[coords.length - 1];
-
-  const props = () => ({
-    id: storm.id,
-    name: storm.name || null,
-    /* What the LABEL says, which is not always what NOAA wrote in the name
-     * column. §57.14: an unnamed storm is called by its number rather than
-     * left blank, and the rule is `lib/season-names.js`'s so that a track on
-     * the globe and its row in the roster can never disagree. `name` above
-     * stays the raw value — the suite reads it, and it is the honest answer
-     * to "did this storm have a name". */
-    label: stormDisplayName(storm),
-    color: trackColor(facts),
-  });
-
-  /* ==> NO CLOCK IS THE OLD PATH, UNTOUCHED, AND THAT IS ASSERTED RATHER THAN
-   * INTENDED. <== `tools/test-season-cut.mjs` pushes a season with the cut
-   * argument and without it and compares the two payloads as strings; slice E
-   * keeps that honest by not going anywhere near the split when there is no
-   * state to split on. */
-  if (!state || !memo.runs?.length) {
-    return {
-      features: [{
-        type: 'Feature',
-        geometry: { type: 'LineString', coordinates: coords },
-        properties: props(),
-      }],
-      tip,
-    };
-  }
-
-  /* The vertex each run after the first opens on. Run 0 opens the trail, so it
-   * is not a cut. `cutDrawnFixes` is not needed here — `cutSegments` clamps
-   * anything past the end of the drawn trail, which is most of them for most of
-   * a playthrough. */
-  const stops = memo.runs.slice(1).map((run) => memo.index[run.fix]);
-
-  const features = [];
-  const pieces = cutSegments(coords, stops);
-  for (let i = 0; i < pieces.length; i++) {
-    const piece = pieces[i];
-    /* `from` is the position in `stops`, and `stops` is `runs` minus its first
-     * entry — so the run is one further along. `-1` is the piece that starts at
-     * the beginning of the trail, which is run 0. */
-    const run = memo.runs[piece.from + 1] || memo.runs[0];
-    const p = props();
-    p.color = run.color;
-    if (i > 0) p.label = null;
-    features.push({
-      type: 'Feature',
-      geometry: { type: 'LineString', coordinates: piece.coords },
-      properties: p,
-    });
-  }
-
-  return { features, tip };
+  return {
+    type: 'Feature',
+    geometry: { type: 'LineString', coordinates: coords },
+    properties: {
+      id: storm.id,
+      name: storm.name || null,
+      /* What the LABEL says, which is not always what NOAA wrote in the name
+       * column. §57.14: an unnamed storm is called by its number rather than
+       * left blank, and the rule is `lib/season-names.js`'s so that a track on
+       * the globe and its row in the roster can never disagree. `name` above
+       * stays the raw value — the suite reads it, and it is the honest answer
+       * to "did this storm have a name". */
+      label: stormDisplayName(storm),
+      color: trackColor(facts),
+    },
+  };
 }
 
 /**
@@ -475,38 +350,20 @@ function nameOpacity(id) {
  * existed**, and `tools/test-season-cut.mjs` asserts exactly that by pushing a
  * season twice and comparing the two payloads as strings.
  *
- * ==> AND IT HANDS BACK WHERE EVERY TRAIL ENDS, WHICH IS WHAT THE HEAD STANDS
- * ON. <== §57.67 slice E. The head is a separate source in a separate file, and
- * it needs the last coordinate of the CUT CURVE rather than the clock's own
- * lon/lat — §57.67e measured why: the clock interpolates straight between two
- * fixes and the drawn curve bends between them, so a head placed at the clock's
- * point floats off its own track on a recurve.
- *
- * **It is a RETURN VALUE rather than a second module reading this one's memo,**
- * and that is the same argument the cut argument itself makes one paragraph up.
- * A `seasonTrackTips()` export would answer whatever the last push left behind,
- * so a caller that asked in the wrong order would get a head one step behind
- * the trail it stands on — with nothing to see but a mark that lags slightly,
- * which is the silent kind of wrong. Handed forward, it cannot be stale.
- *
  * @param {object} map
  * @param {Array<{storm:object, facts:object}>} selected
  * @param {Map<string, object>|null} [cut] storm id → the clock's state for it,
  *   as built from `clockFrameAt`. Omitted, every track draws whole.
- * @returns {Map<string, Array<number>>} storm id → the last drawn coordinate,
- *   in `lonU`. Empty when there is no source to push to.
  */
 export function setSeasonTracks(map, selected = [], cut = null) {
-  const tips = new Map();
   const src = map?.getSource?.(SOURCE);
-  if (!src) return tips;
+  if (!src) return;
 
   const features = [];
   const live = new Set();
   for (const entry of selected) {
-    const built = trackFeatures(entry?.storm, entry?.facts, cutStateFor(cut, entry?.storm?.id));
-    for (const f of built.features) features.push(f);
-    if (built.tip && entry?.storm?.id) tips.set(entry.storm.id, built.tip);
+    const f = trackFeature(entry?.storm, entry?.facts, cutStateFor(cut, entry?.storm?.id));
+    if (f) features.push(f);
     /* ==> THE MEMO IS KEYED ON WHAT WAS TICKED, NOT ON WHAT WAS DRAWN. <== A
      * storm the clock has not reached yet produces no feature, and pruning on
      * the features would throw its curve away and re-spline it the instant it
@@ -522,7 +379,6 @@ export function setSeasonTracks(map, selected = [], cut = null) {
   }
 
   src.setData({ type: 'FeatureCollection', features });
-  return tips;
 }
 
 /**
@@ -600,8 +456,7 @@ export function clearSeasonTracks(map) {
 
 export const __internals = {
   trackColor,
-  colorRuns,
-  trackFeatures,
+  trackFeature,
   nameOpacity,
   lineColor,
   focus: () => focusId,
