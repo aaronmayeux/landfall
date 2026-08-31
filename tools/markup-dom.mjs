@@ -373,9 +373,41 @@ export function installMarkupDocument() {
   const had = globalThis.document;
   const body = new El('body');
   const root = new El('html');
+
+  /* ==> AND IT GREW AN EVENT SYSTEM OF ITS OWN FOR §57.67 SLICE D. <== The
+   * season clock binds `keydown` on the DOCUMENT, because Space has to play and
+   * pause with focus anywhere — on the globe, on a roster row, on nothing —
+   * which is the same argument `attachEscape` in `map/globe.js` makes. A
+   * document without `addEventListener` threw inside `mount`, which is the
+   * sixth time this file has read as a broken component rather than as a thin
+   * stand-in.
+   *
+   * `visibilityState` is here for the same component and is deliberately
+   * `visible` and settable: the clock pauses itself when the page goes away,
+   * and a suite that could not put the page away could not check that it does. */
+  const listeners = new Map();
+
   globalThis.document = {
     body,
     documentElement: root,
+    visibilityState: 'visible',
+    addEventListener(type, fn) {
+      if (!listeners.has(type)) listeners.set(type, []);
+      listeners.get(type).push(fn);
+    },
+    removeEventListener(type, fn) {
+      const list = listeners.get(type);
+      if (!list) return;
+      const i = list.indexOf(fn);
+      if (i !== -1) list.splice(i, 1);
+    },
+    /* ==> NOT `dispatchEvent`, AND THE NAME IS THE POINT. <== `El.fire` is what
+     * every suite in here already calls, and a document that answered to a
+     * different verb for the same act would be one more thing to remember. */
+    fire(type, init = {}) {
+      const e = { target: null, preventDefault() {}, stopPropagation() {}, ...init };
+      for (const fn of [...(listeners.get(type) || [])]) fn(e);
+    },
     createElement: (t) => new El(t),
     /* SVG elements are ordinary nodes here. Nothing in these suites asks a
      * stand-in about namespaces, and a component building `<svg>` through

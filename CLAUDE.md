@@ -158,7 +158,7 @@ Wall of Years in a real browser. Run it by hand after any wall change:
 `bash tools/with-server.sh node tools/seasons-wall-check.mjs`.
 
 **Run the affected suites while working; run the FULL chain once, before the
-push.** Running all 117 after every edit buys nothing the pre-push run does not.
+push.** Running all 146 after every edit buys nothing the pre-push run does not.
 
 **==> A STYLESHEET CAN LOSE A RULE WITH NOTHING ANYWHERE SAYING SO. <==** CSS
 has no equivalent of a `SyntaxError`. A comment that closes early makes the
@@ -192,7 +192,7 @@ anything about a timed-out suite until it has been run on its own.
 **IF YOU DO REACH FOR A LOOP ANYWAY, DO NOT PUT A GUESSED NUMBER IN IT.** Three
 suites are slow on purpose, measured on a cloud sandbox 2026-08-24:
 `test-genesis.mjs` **195s**, `test-flood-fast.mjs` **68s**, `test-lifecycle.mjs`
-**65s**. Every other suite finishes in under four seconds, so the full 117 in
+**65s**. Every other suite finishes in under four seconds, so the full 146 in
 parallel costs a little over three minutes — bounded by genesis alone. CI uses
 no per-test timeout at all; the job has a 20-minute budget and that is the only
 ceiling.

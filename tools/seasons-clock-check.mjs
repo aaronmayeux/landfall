@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * seasons-clock-check.mjs — the season clock's two marks sit in ONE grid cell,
- * dead centre of the button. SPEC-SEASONS-BUILD.md §57.67g.
+ * dead centre of the button. SPEC-SEASONS-BUILD.md §57.67g, §57.67j.
  *
  * ==> ONLY GEOMETRY SAYS THIS, WHICH IS THE WHOLE REASON IT IS A BROWSER CHECK.
  * <== The rule that stacks them was silently DEAD for two commits. A comment in
@@ -12,8 +12,13 @@
  * spelled, doing nothing.
  *
  * What Aaron saw on his phone: the play triangle jammed against the TOP edge of
- * the button and, on tapping it, the stop square against the BOTTOM. Two marks
+ * the button and, on tapping it, the second mark against the BOTTOM. Two marks
  * in two implicit grid rows, each centred inside its own.
+ *
+ * ==> THE SECOND MARK IS A PAUSE NOW AND WAS A STOP SQUARE IN SLICE C. <== The
+ * geometry this file asserts is unchanged by that and that is the point: both
+ * marks span the same 4.5-19.5 band and both are centred on (12,12), so the
+ * column does not flicker between two sizes when the button is pressed.
  *
  * `tools/css-structure-check.mjs` is the cheap gate that catches the CAUSE and
  * runs on every push. This is the one that catches the EFFECT, and it is worth
@@ -71,11 +76,20 @@ try {
     };
     const tri = document.createElementNS(NS, 'path');
     tri.setAttribute('d', 'M6.5 4.5 L17.5 12 L6.5 19.5 Z');
-    const sq = document.createElementNS(NS, 'rect');
-    sq.setAttribute('x', '6'); sq.setAttribute('y', '6');
-    sq.setAttribute('width', '12'); sq.setAttribute('height', '12');
-    sq.setAttribute('rx', '2');
-    fab.append(mark('clock-play', tri), mark('clock-stop', sq));
+    /* Two bars in ONE svg, which is what the component builds — they are one
+     * mark and have to cross-fade together. */
+    const pause = document.createElementNS(NS, 'svg');
+    pause.setAttribute('class', 'clock-pause');
+    pause.setAttribute('viewBox', '0 0 24 24');
+    pause.setAttribute('fill', 'none');
+    pause.setAttribute('stroke', 'currentColor');
+    pause.setAttribute('stroke-width', '1.7');
+    for (const x of ['9', '15']) {
+      const bar = document.createElementNS(NS, 'path');
+      bar.setAttribute('d', `M${x} 4.5 V19.5`);
+      pause.append(bar);
+    }
+    fab.append(mark('clock-play', tri), pause);
     document.getElementById('controls').prepend(fab);
 
     const fr = fab.getBoundingClientRect();
@@ -136,4 +150,4 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`\n✓ ${pass} geometry assertions pass — the clock's two marks share `
-  + 'one cell, centred\n  (whether the ICONS read as play and stop is glass)');
+  + 'one cell, centred\n  (whether the ICONS read as play and pause is glass)');

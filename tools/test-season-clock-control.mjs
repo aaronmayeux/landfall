@@ -76,6 +76,12 @@ const single = seasonOf('atlantic', 1851).find((s) => s.id === 'AL021851');
 const entry = (storm) => ({ storm });
 const STEPS = SEASONS.clockScrubSteps;
 
+/** Where on the slider a given moment falls. The inverse of `momentAt`, and it
+ *  is here rather than in the app because nothing in the app needs it — a
+ *  suite that typed the expected positions instead would be agreeing with
+ *  whatever the code happened to do. */
+const momentFraction = (span, at) => ((at - span.from) / span.spanMs) * STEPS;
+
 /** A fresh document with a control cluster in it, the way the real page has
  *  one. Returned rather than shared, because these tests mount and unmount and
  *  a leftover button would make the next section's count wrong. */
@@ -99,6 +105,8 @@ const fab = () => globalThis.document.getElementById('btn-season-clock');
 const pill = () => globalThis.document.getElementById('seasons-clock-pill');
 const range = () => pill()?.querySelector('.seasons-clock-range') || null;
 const dateEl = () => pill()?.querySelector('.seasons-clock-date') || null;
+const leaveBtn = () => pill()?.querySelector('.seasons-clock-leave') || null;
+const press = (el) => el.fire('click', el);
 const rootFlag = () => globalThis.document.documentElement.getAttribute('data-seasons-clock');
 
 /** Move the slider the way a thumb or an arrow key would: set the value, then
@@ -111,13 +119,74 @@ function scrub(v) {
 }
 
 /* ---------------------------------------------------------------------------
+ * ==> THE SUITE OWNS THE CLOCK'S SENSE OF TIME, AND EVERY SECTION USES IT.
+ * §57.67 slice D. <==
+ *
+ * Two reasons, and the second is the one that would bite.
+ *
+ * FIRST: a playback loop asserted by waiting on a real timer is slow, flaky,
+ * and cannot say anything about what one second of storm time is worth — which
+ * is the exact arithmetic §57.67c records the reverted attempt getting wrong in
+ * a way nothing could see. Driving it is the only way to see it.
+ *
+ * SECOND: with a real `setTimeout`, every section that presses the FAB would
+ * leave a live wake-up behind holding this whole module alive, and it would
+ * fire AFTER `restore()` has taken the stand-in document away — a throw with no
+ * section name on it, in a suite that had already printed a pass. A clock that
+ * never moves unless this file moves it cannot do that.
+ * ------------------------------------------------------------------------ */
+function fakeTime() {
+  let t = 0;
+  let next = 1;
+  let lag = 0;
+  const queue = [];
+  return {
+    now: () => t,
+    setTimer: (fn, ms) => { const id = next++; queue.push({ id, at: t + ms, fn }); return id; },
+    clearTimer: (id) => {
+      const i = queue.findIndex((q) => q.id === id);
+      if (i !== -1) queue.splice(i, 1);
+    },
+
+    /** ==> THE NEXT WAKE-UP ARRIVES LATE, WHICH IS THE ORDINARY CASE AND NOT
+     *  THE EXOTIC ONE. <== A busy main thread, a mid-drag repaint, a phone in
+     *  a low-power mode: browser timers are a floor, never a promise. Without
+     *  a way to say so here, a loop that advanced by a constant per tick would
+     *  pass every assertion in this file and run the season slow on a real
+     *  device, with nothing on screen admitting it. */
+    lateNext(ms) { lag = ms; },
+
+    /** Real time passes, and whatever was due along the way happens in order. */
+    run(ms) {
+      const end = t + ms;
+      for (;;) {
+        const due = queue.filter((q) => q.at <= end).sort((a, b) => a.at - b.at)[0];
+        if (!due) break;
+        queue.splice(queue.indexOf(due), 1);
+        t = due.at + lag;
+        lag = 0;
+        due.fn();
+      }
+      t = Math.max(t, end);
+    },
+    pending: () => queue.length,
+    reset() { t = 0; next = 1; lag = 0; queue.length = 0; },
+  };
+}
+
+const time = fakeTime();
+const newClock = (opts = {}) => createSeasonClock({
+  ...opts, now: time.now, setTimer: time.setTimer, clearTimer: time.clearTimer,
+});
+
+/* ---------------------------------------------------------------------------
  * 1. WITH THE CLOCK OFF, THERE IS NO CUT — the assertion the slice earns
  * ------------------------------------------------------------------------ */
 section('1. the clock off');
 {
   stage();
   let pushes = 0;
-  const clock = createSeasonClock({ onScrub: () => { pushes++; } });
+  const clock = newClock({ onScrub: () => { pushes++; } });
   clock.mount();
 
   eq('==> A READER WHO HAS TICKED NOTHING NEVER SEES THE CONTROL. §57.67a call '
@@ -147,7 +216,7 @@ section('1. the clock off');
 section('2. where it mounts');
 {
   const { body, controls } = stage();
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
 
   eq('==> THE PLAY CONTROL IS FIRST IN THE CLUSTER, WHICH IS BOTH THE TOP OF '
@@ -191,7 +260,7 @@ section('2. where it mounts');
       html.slice(html.indexOf('id="btn-home"'))
     )?.[1];
     ok(`the cluster draws its verbs at stroke-width ${wanted}`, wanted === '1.7');
-    for (const cls of ['clock-play', 'clock-stop']) {
+    for (const cls of ['clock-play', 'clock-pause']) {
       const mark = fab().children.find((c) => c.classList.contains(cls));
       eq(`.${cls} is stroked line art at the cluster's own weight, not a fill`,
         [mark.getAttribute('fill'), mark.getAttribute('stroke'),
@@ -199,6 +268,17 @@ section('2. where it mounts');
         ['none', 'currentColor', wanted]);
     }
   }
+
+  /* ==> AND THE WAY OUT IS ITS OWN CONTROL NOW. §57.67 slice D. <== In slice C
+   * a second press of the FAB put the whole season back. The FAB is play/pause
+   * from here on, so without this the clock would be a mode with no door — the
+   * only way out would be unticking every storm. */
+  ok('the pill carries a leave control as well as the scrubber', leaveBtn() !== null);
+  eq('it is on the SCRUBBER\'s row rather than the date\'s, where `.slider` is '
+    + 'already 44px tall so it costs the pill no height at all',
+  leaveBtn().parent.className, 'seasons-clock-row');
+  eq('and it says what it does, because it is an icon',
+    leaveBtn().getAttribute('aria-label'), 'Leave the season clock');
 
   clock.unmount();
   eq('unmounting takes the button out of the cluster',
@@ -212,7 +292,7 @@ section('2. where it mounts');
 section('2b. leaving mid-clock');
 {
   stage();
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
   clock.setEntries([entry(katrina)]);
   fab().fire('click', fab());
@@ -234,7 +314,7 @@ section('3. engaging');
 {
   stage();
   let pushes = 0;
-  const clock = createSeasonClock({ onScrub: () => { pushes++; } });
+  const clock = newClock({ onScrub: () => { pushes++; } });
   clock.mount();
   clock.setEntries([entry(katrina)]);
 
@@ -248,14 +328,20 @@ section('3. engaging');
     + 'could never have been that element wearing a slider (§57.38b)',
   rootFlag(), 'on');
   eq('the globe is asked to redraw exactly once', pushes, 1);
+  eq('==> AND PRESSING IT STARTS THE CLOCK, NOT JUST THE PILL. §57.67 slice D. '
+    + '<== A play triangle that engaged a scrubber and then stood there would '
+    + 'be promising something it does not do', clock.playing(), true);
   eq('the button says what a second press would do',
     fab().getAttribute('aria-pressed'), 'true');
   eq('and its label changes with it, because a screen reader gets no icon',
-    fab().getAttribute('aria-label'), 'Stop the season clock');
-  eq('==> IN THIS SLICE IT IS AN ON/OFF SWITCH, NOT A PLAY/PAUSE. <== There is '
-    + 'nothing to pause yet — slice D adds the timer and turns this same '
-    + 'button into ▶/⏸. `data-on` is what the stop mark cross-fades on',
-  fab().getAttribute('data-on'), 'true');
+    fab().getAttribute('aria-label'), 'Pause the season clock');
+  eq('==> TWO FLAGS, BECAUSE THEY SAY TWO DIFFERENT THINGS. <== `data-on` is '
+    + '"the clock is on screen" and carries the background fill; '
+    + '`data-playing` is "the timer is running" and swaps the mark. '
+    + 'Engaged-and-paused is an ordinary state — it is what a reader is in the '
+    + 'whole time they are dragging — and one flag could not describe it',
+  [fab().getAttribute('data-on'), fab().getAttribute('data-playing')],
+  ['true', 'true']);
 
   const span = clockSpan([entry(katrina)]);
   const cut = clock.cut();
@@ -275,17 +361,36 @@ section('3. engaging');
     + 'reader is looking at an answered question rather than an unanswered one',
   dateEl().textContent, readoutFor(span.from));
 
-  fab().fire('click', fab());
-  eq('a second press puts everything back', clock.engaged(), false);
+  press(fab());
+  eq('==> A SECOND PRESS PAUSES. IT DOES NOT LEAVE. <== That is the one meaning '
+    + 'change slice D makes, and §57.67i asserted slice C\'s answer explicitly '
+    + 'so it would show up in this diff rather than slipping through',
+  clock.playing(), false);
+  eq('the clock is still engaged and the pill is still up',
+    [clock.engaged(), pill().hidden], [true, false]);
+  eq('the mark goes back to the triangle', fab().getAttribute('data-playing'), null);
+  eq('but the fill stays, because the clock has not gone anywhere',
+    fab().getAttribute('data-on'), 'true');
+  ok('and the cut is still there — a pause holds a moment', clock.cut() !== null);
+  eq('==> PAUSING DOES NOT PUSH THE GLOBE. <== The moment did not move, so a '
+    + 'push would be a full re-cut of every ticked storm for no change at all, '
+    + 'paid on the frame the reader is already asking the most of',
+  pushes, 1);
+
+  press(leaveBtn());
+  eq('==> THE ✕ IN THE PILL IS THE WAY OUT NOW. <== Without it the clock would '
+    + 'be a mode with no door', clock.engaged(), false);
   eq('the pill goes down', pill().hidden, true);
   eq('the flag comes off, so the caption returns', rootFlag(), null);
   eq('and the cut goes with it, which is what redraws the whole season',
     clock.cut(), null);
-  eq('both presses pushed the globe', pushes, 2);
+  eq('leaving pushed the globe once, because the moment DID move — back to all '
+    + 'of it', pushes, 2);
+  clock.unmount();
 }
 
 /* ---------------------------------------------------------------------------
- * 3b. STOPPING AND STARTING AGAIN
+ * 3b. PAUSING HOLDS, LEAVING STARTS OVER
  *
  * ==> THIS SECTION EXISTS BECAUSE A MUTATION SURVIVED WITHOUT IT. <== Deleting
  * the position reset inside `engage` left the suite green, because every test
@@ -294,26 +399,37 @@ section('3. engaging');
  * mutation, which is the third time in three slices that the thing the run
  * caught was a fault in the test rather than in the code (§57.67d, §57.67f).
  * ------------------------------------------------------------------------ */
-section('3b. stopping and starting again');
+section('3b. pausing holds, leaving starts over');
 {
   stage();
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
   clock.setEntries([entry(katrina)]);
 
-  fab().fire('click', fab());
+  press(fab());
   scrub(STEPS / 2);
-  ok('mid-season', clock.cut().get(katrina.id).drawnFixes > 1);
+  const midway = clock.cut().get(katrina.id).drawnFixes;
+  ok('mid-season', midway > 1);
 
-  fab().fire('click', fab());
-  fab().fire('click', fab());
-  eq('==> IN THIS SLICE THE BUTTON SAYS STOP, SO STARTING AGAIN STARTS OVER '
-    + 'RATHER THAN RESUMING. <== A control labelled `Stop the season clock` '
-    + 'that came back where it left off would be a pause wearing the wrong '
-    + 'word. Slice D introduces a real pause and that one has to resume — '
-    + 'which is why this is asserted now, so the change is visible then',
+  press(fab());
+  press(fab());
+  eq('==> A PAUSE HOLDS ITS PLACE, WHICH IS THE WHOLE DIFFERENCE BETWEEN THIS '
+    + 'BUTTON AND SLICE C\'s. <== A control drawn as ⏸ that came back at the '
+    + 'start would be a stop wearing the wrong mark. §57.67i asserted the '
+    + 'opposite answer while the button said STOP, so this line is where the '
+    + 'meaning change actually lands',
+  range().value, String(STEPS / 2));
+  eq('and the globe is exactly where it was left',
+    clock.cut().get(katrina.id).drawnFixes, midway);
+
+  press(leaveBtn());
+  press(fab());
+  eq('==> LEAVING AND PRESSING PLAY AGAIN IS A NEW RUN OF THE SEASON. <== The '
+    + 'FAB says ▶, and ▶ over a season that is not on screen can only mean '
+    + 'from the beginning. The pause button is what holds a position; the ✕ '
+    + 'puts the whole thing away',
   range().value, '0');
-  eq('and the globe is back at the first fix',
+  eq('so the globe is back at the first fix',
     clock.cut().get(katrina.id).drawnFixes, 1);
   clock.unmount();
 }
@@ -325,7 +441,7 @@ section('4. scrubbing');
 {
   stage();
   let pushes = 0;
-  const clock = createSeasonClock({ onScrub: () => { pushes++; } });
+  const clock = newClock({ onScrub: () => { pushes++; } });
   clock.mount();
   clock.setEntries([entry(katrina)]);
   fab().fire('click', fab());
@@ -373,6 +489,17 @@ section('4. scrubbing');
   ok('a position past either end is clamped to the timeline',
     momentAt(span, STEPS * 3) === span.from + span.spanMs
     && momentAt(span, -50) === span.from);
+
+  scrub(STEPS * 3);
+  eq('==> AND THE ELEMENT IS PUT BACK INSIDE THE RANGE RATHER THAN LEFT '
+    + 'SHOWING IT. <== Clamping the MOMENT and leaving the thumb off the end '
+    + 'would be the control and the globe disagreeing, which is the one '
+    + 'failure this whole screen is careful about — the date would stop at the '
+    + 'end of the season while the slider went on claiming there was more',
+  range().value, String(STEPS));
+  eq('and the globe is at the end with it',
+    clock.cut().get(katrina.id).phase, 'ended');
+  clock.unmount();
 }
 
 /* ---------------------------------------------------------------------------
@@ -381,7 +508,7 @@ section('4. scrubbing');
 section('5. the set changing');
 {
   stage();
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
   clock.setEntries([entry(katrina)]);
   fab().fire('click', fab());
@@ -442,7 +569,7 @@ section('5. the set changing');
 section('6. the shortest things in the record');
 {
   stage();
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
 
   const floorMs = SEASONS.clockMinSpanDays * 86_400_000;
@@ -503,13 +630,13 @@ section('7. failure paths');
    * ran too early would find. The pill still goes up and the clock is simply
    * unreachable, which is no worse than the archive without this slice. */
   globalThis.document.body.children = [];
-  const clock = createSeasonClock({});
+  const clock = newClock({});
   clock.mount();
   ok('a missing control cluster is not a crash', pill() !== null);
   clock.unmount();
 
   stage();
-  const c2 = createSeasonClock({});
+  const c2 = newClock({});
   c2.mount();
   /* `setEntries` before anything is ticked, and with junk. Both are reachable:
    * the board pushes an empty set on every year change (`ui/view-seasons-
@@ -532,6 +659,260 @@ section('7. failure paths');
   ok('unmounting twice is a no-op, not a throw', (() => { c2.unmount(); return true; })());
 }
 
+/* ---------------------------------------------------------------------------
+ * 8. PLAYBACK — a day a second, and it is measured rather than counted
+ *
+ * ==> THIS IS THE SECTION SLICE D EXISTS TO EARN, AND IT IS DRIVEN ON THE ONE
+ * STORM WHOSE TIMELINE IS A ROUND NUMBER. <== §57.67c records the reverted
+ * attempt pacing on real elapsed milliseconds and dividing by a storm-time step
+ * of 8,640,000, so it owed its first step after two and a half HOURS of
+ * somebody sitting there. Both quantities were milliseconds, the arithmetic was
+ * right in isolation, and nothing in the language, the tests or the console
+ * said a word.
+ *
+ * AL021971 is five fixes across exactly one day, so `clockMinSpanDays` widens
+ * it to exactly two — which makes one real second exactly half the timeline and
+ * turns the whole sentence into an integer a reader could check by eye. No
+ * tolerance, no rounding slack, no threshold anybody chose.
+ * ------------------------------------------------------------------------ */
+section('8. playback — a day a second');
+{
+  time.reset();
+  stage();
+  let pushes = 0;
+  const clock = newClock({ onScrub: () => { pushes++; } });
+  clock.mount();
+  clock.setEntries([entry(short)]);
+
+  const span = clockSpan([entry(short)]);
+  eq('AL021971 is under the floor, so her timeline is exactly two days and one '
+    + 'real second is exactly half of it', span.spanMs, 2 * 86_400_000);
+
+  press(fab());
+  eq('the FAB starts it, because that is what a play triangle promises',
+    clock.playing(), true);
+  pushes = 0;
+
+  time.run(1000);
+
+  eq('==> ONE REAL SECOND IS ONE STORM DAY. <== `SEASONS.clockDaysPerSecond`, '
+    + 'as the integer it works out to on this timeline. Reversing the division '
+    + 'inside `toStormMs` turns this line red, which is the whole reason that '
+    + 'ratio lives in one named place',
+  range().value, '500');
+  eq('and the readout is saying that same moment out loud',
+    dateEl().textContent, readoutFor(span.from + 86_400_000));
+  eq('==> IT STEPPED TEN TIMES, NOT SIXTY. §57.35 fault 3. <== `setData` is a '
+    + 'fresh parse and re-index in the map worker every time it is called, and '
+    + 'sixty of those a second will not hold frame rate on a phone. '
+    + '`clockStepsPerSecond` is the dial and this is it being spent',
+  pushes, 10);
+
+  /* -- 8b. a late wake-up does not slow the season ---------------------- */
+
+  press(leaveBtn());
+  press(fab());
+  pushes = 0;
+
+  /* One tick, delivered 400ms after it was due — five times its interval. */
+  time.lateNext(400);
+  time.run(100);
+
+  eq('==> THE SEASON IS PACED BY THE CLOCK, NOT BY THE TICK COUNT. <== One '
+    + 'wake-up arriving 400ms late has to be worth 500ms of storm time, '
+    + 'because a day a second is a promise about the WALL CLOCK. A loop adding '
+    + 'a constant per tick would put this at 50 and would run slow by however '
+    + 'late its wake-ups were, cumulatively, with nothing on screen saying so',
+  range().value, '250');
+  eq('and it was still one step, not five — the clock caught up, it did not '
+    + 'replay', pushes, 1);
+
+  /* -- 8c. the position is a float, and rounding it per tick is the trap -- */
+
+  press(leaveBtn());
+  clock.setEntries([entry(katrina)]);
+  const span2005 = clockSpan([entry(katrina)]);
+  press(fab());
+  time.run(1000);
+
+  const oneDay = span2005.from + 86_400_000;
+  eq('==> KATRINA\'s TIMELINE IS SEVEN AND A HALF DAYS, SO ONE REAL SECOND IS '
+    + 'NOT A WHOLE NUMBER OF STEPS. <== A step is 13.33 of them, and rounding '
+    + 'the position on every tick rather than only on the way to the slider '
+    + 'turns that into 13 — the season arrives 130 steps in instead of 133, '
+    + 'having run half a percent fast for no reason anybody could see',
+  range().value, String(Math.round(momentFraction(span2005, oneDay))));
+  eq('and the readout agrees, because the moment is derived from the position '
+    + 'rather than kept beside it', dateEl().textContent, readoutFor(oneDay));
+
+  /* -- 8d. and on a long timeline that same rounding freezes the clock ---- */
+
+  press(leaveBtn());
+  clock.setEntries([entry(katrina), entry(ida)]);
+  const wide = clockSpan([entry(katrina), entry(ida)]);
+  eq('Katrina is 2005 and Ida is 2021, so ticking the two together builds a '
+    + 'timeline sixteen years wide — which is the cost §57.67c names and '
+    + 'accepts', Math.round(wide.spanMs / 86_400_000), 5856);
+
+  press(fab());
+  time.run(60_000);
+
+  eq('==> AND THIS IS WHERE ROUNDING PER TICK STOPS BEING A HALF-PERCENT AND '
+    + 'STARTS BEING A DEAD CLOCK. <== One step of this timeline is 5.9 days, so '
+    + 'one tick of playback is 0.017 of a step. Rounded, every tick is zero and '
+    + 'the position NEVER LEAVES THE START — a full minute of pressing play and '
+    + 'watching an empty globe, with the button correctly showing ⏸ the whole '
+    + 'time. Held as a float it is where it should be',
+  range().value, String(Math.round(momentFraction(wide, wide.from + 60 * 86_400_000))));
+  ok('which is somewhere rather than nowhere', Number(range().value) > 0);
+
+  clock.unmount();
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. THE END OF THE TIMELINE — it stops there, and it does not loop
+ * ------------------------------------------------------------------------ */
+section('9. the end of the timeline');
+{
+  time.reset();
+  stage();
+  const clock = newClock({});
+  clock.mount();
+  clock.setEntries([entry(short)]);
+  press(fab());
+
+  /* Two real seconds is the whole two-day timeline. */
+  time.run(2000);
+
+  eq('==> IT PLAYS TO THE END AND STOPS THERE. IT DOES NOT LOOP. <== §57.23\'s '
+    + 'whole claim is that the season ACCUMULATES in front of you, so the last '
+    + 'frame — every ticked storm\'s complete track, drawn at once — is what '
+    + 'the run was spent earning. Wiping it back to an empty globe every three '
+    + 'minutes would throw that away, and §57.23 is explicit that motion which '
+    + 'never stops is a migraine for some readers',
+  [range().value, clock.playing()], ['1000', false]);
+  eq('the storm has ended and its whole track is drawn',
+    [clock.cut().get(short.id).phase, clock.cut().get(short.id).drawnFixes],
+    ['ended', short.points.length]);
+  eq('the clock is still engaged, so the reader is looking at a finished '
+    + 'season rather than at a globe that closed itself', clock.engaged(), true);
+  eq('==> AND NOTHING IS STILL SCHEDULED. <== A wake-up left pending after the '
+    + 'end would hold this whole closure alive and fire over whatever came '
+    + 'next', time.pending(), 0);
+
+  time.run(5000);
+  eq('so more time passing changes nothing at all', range().value, '1000');
+
+  press(fab());
+  eq('==> AND ▶ AT THE END STARTS THE SEASON OVER. <== There is nowhere else '
+    + 'for it to go, and a button that does nothing is worse than one that '
+    + 'does the obvious thing', [range().value, clock.playing()], ['0', true]);
+
+  clock.unmount();
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. SPACE — §57.23's keyboard line, and the three places it stands down
+ * ------------------------------------------------------------------------ */
+section('10. space plays and pauses');
+{
+  time.reset();
+  stage();
+  const clock = newClock({});
+  clock.mount();
+  clock.setEntries([entry(katrina)]);
+
+  /* On the DOCUMENT, not on the pill: Space has to work with focus anywhere —
+   * on the globe, on a roster row, on nothing at all — which is `attachEscape`'s
+   * argument in `map/globe.js` for the same reason. A listener on the pill
+   * would only work once the reader had already found the pill. */
+  const key = (init) => globalThis.document.fire('keydown', { target: new El('div'), ...init });
+
+  key({ key: ' ' });
+  eq('space plays', clock.playing(), true);
+  key({ key: ' ' });
+  eq('and space pauses, which is the same press as the button — one function '
+    + 'behind both, so the keyboard cannot drift into being a second, slightly '
+    + 'different clock', clock.playing(), false);
+
+  key({ key: 'k' });
+  eq('no other key does anything', clock.playing(), false);
+  key({ key: ' ', ctrlKey: true });
+  eq('and a modifier means somebody else\'s shortcut', clock.playing(), false);
+
+  key({ key: ' ', target: fab() });
+  eq('==> SPACE ON THE BUTTON ITSELF IS LEFT ALONE, AND THIS IS THE ONE THAT '
+    + 'WOULD HAVE BITTEN. <== Space on a focused `<button>` already fires a '
+    + 'click, so handling it here as well would toggle the clock twice for one '
+    + 'press and land back where it started — with the FAB the single most '
+    + 'likely thing to have focus, since pressing it is how the reader got here',
+  clock.playing(), false);
+
+  key({ key: ' ', target: range() });
+  eq('and a reader who has tabbed to the scrubber is driving it by hand; the '
+    + 'arrow keys are theirs and Space must not move what they are holding',
+    clock.playing(), false);
+
+  key({ key: ' ', target: new El('input') });
+  eq('==> AND A TEXT FIELD GETS A SPACE. <== `ui/home-search.js` has one, and a '
+    + 'reader typing a place name with two words in it must not start a season',
+  clock.playing(), false);
+
+  clock.unmount();
+  key({ key: ' ' });
+  eq('==> THE LISTENER COMES OFF WITH THE ARCHIVE. <== It is on the document, '
+    + 'so left bound it would go on answering Space from inside a world nobody '
+    + 'is in — over the LIVE globe, with no pill on screen to explain it',
+  clock.playing(), false);
+}
+
+/* ---------------------------------------------------------------------------
+ * 11. THE PAGE GOING AWAY, AND THE TIMER GOING WITH IT
+ * ------------------------------------------------------------------------ */
+section('11. the page going away');
+{
+  time.reset();
+  stage();
+  const clock = newClock({});
+  clock.mount();
+  clock.setEntries([entry(katrina)]);
+  press(fab());
+  eq('a wake-up is pending', time.pending(), 1);
+
+  globalThis.document.visibilityState = 'hidden';
+  globalThis.document.fire('visibilitychange');
+
+  eq('==> THE CLOCK PAUSES WHEN THE PAGE GOES AWAY, AND THAT IS THE PRICE OF '
+    + 'PACING ON REAL TIME. <== `advance` converts however long it has actually '
+    + 'been, which is right while somebody is watching and wrong the moment '
+    + 'they are not: a phone locked for five minutes is five storm-months, so '
+    + 'the reader unlocks it to find the season over and no idea why',
+  clock.playing(), false);
+  eq('and nothing is left ticking behind a screen nobody can see (§9)',
+    time.pending(), 0);
+  eq('but it has not LEFT — the pill is up and the moment is held, so coming '
+    + 'back is a press rather than a fresh start', pill().hidden, false);
+
+  globalThis.document.visibilityState = 'visible';
+  globalThis.document.fire('visibilitychange');
+  eq('==> AND IT DOES NOT RESUME BY ITSELF. <== Coming back to a clock standing '
+    + 'still with ▶ showing is a state the reader can see and undo; coming back '
+    + 'to one that silently restarted is a screen that did something while they '
+    + 'were gone', clock.playing(), false);
+
+  press(fab());
+  eq('it is running again', [clock.playing(), time.pending()], [true, 1]);
+
+  clock.unmount();
+  eq('==> UNMOUNTING KILLS THE TIMER, AND THAT IS THE ONE THING HERE THAT '
+    + 'OUTLIVES THE ELEMENTS. <== A pending wake-up holds the whole component '
+    + 'alive; left running it would fire after the reader had left the archive '
+    + 'and push a historical cut at a live globe that has been shown again. '
+    + 'Removing the button is not what stops the clock — this is',
+  time.pending(), 0);
+  eq('and the clock knows it is not running', clock.playing(), false);
+}
+
 /* ------------------------------------------------------------------------ */
 
 restore();
@@ -541,5 +922,5 @@ if (fails.length) {
   for (const f of fails) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log(`\n✓ ${pass} assertions pass — the season clock's FAB and scrubber, `
-  + 'and the moment it starts on');
+console.log(`\n✓ ${pass} assertions pass — the season clock's FAB, its scrubber, `
+  + 'and a day of storm time for every second of real time');

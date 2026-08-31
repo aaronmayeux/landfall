@@ -353,9 +353,17 @@ html[data-seasons="on"] {
   grid-area: 1 / 1;
   transition: opacity var(--duration-instant) var(--ease-swap);
 }
-#btn-season-clock .clock-stop { opacity: 0; }
-#btn-season-clock[data-on] .clock-play { opacity: 0; }
-#btn-season-clock[data-on] .clock-stop { opacity: 1; }
+
+/* ==> THE MARK SWAPS ON `data-playing` AND THE FILL STAYS ON `data-on`, AND
+   THOSE ARE TWO DIFFERENT FACTS. §57.67 slice D. <== In slice C there was one
+   flag, because the clock was either on screen or not and there was no timer
+   to be running. There is now, and engaged-while-paused is the ordinary state
+   — it is what a reader is in the whole time they are dragging the scrubber.
+   One attribute could not have described it: the button would have shown ⏸
+   over a clock that was standing still. */
+#btn-season-clock .clock-pause { opacity: 0; }
+#btn-season-clock[data-playing] .clock-play { opacity: 0; }
+#btn-season-clock[data-playing] .clock-pause { opacity: 1; }
 
 /* ==> THE SCRUBBER IS A THIRD PILL AND IT TAKES THE CAPTION'S SLOT. <==
    `#seasons-status-pill` is a `<button>` — pressing it toggles the drawer — and
@@ -434,6 +442,23 @@ html[data-seasons="on"] {
   cursor: pointer;
   touch-action: none;
 }
+
+/* ==> THE WAY OUT SITS ON THE SCRUBBER'S ROW, AND THAT IS FREE HEIGHT.
+   §57.67 slice D. <== `.slider` is already `--touch-target` tall, so a 44px
+   button beside it costs the pill nothing. On the date's line above it would
+   have turned a single line of small text into a 44px one and taken most of
+   thirty pixels of globe for a control that is pressed once.
+
+   The scrubber takes what is left, which on the 390px phone this app is judged
+   on is about 274 of the 326 the pill has inside its padding — still wider
+   than the 270 §57.67g rejected `--pill-inset` for, and that 270 had to hold
+   the date as well. */
+.seasons-clock-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-tight);
+}
+.seasons-clock-row .seasons-clock-range { flex: 1 1 auto; min-width: 0; }
 
 /* ==> AND THE CAPTION STEPS ASIDE, RATHER THAN THE TWO STACKING. <== They are
    the same slot on the same edge. `display: none` and not opacity, for the

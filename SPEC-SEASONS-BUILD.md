@@ -10614,13 +10614,13 @@ put both in the pill; a 390px pill holding a play button, a slider and a date is
 three things fighting over one lozenge, and the slider is the one that needs the
 width.
 
-**So in slice C the FAB is an on/off switch — ▶ off, ■ on — because there is
-nothing yet to pause.** Slice D turns that same button into ▶/⏸ and moves
-"leave the clock" to a control in the pill. That is one button changing meaning
-once, in the commit that introduces motion; the alternative was shipping a FAB
-here that does nothing after its first press. **The suite asserts the slice-C
+**In slice C the FAB was an on/off switch — ▶ off, ■ on — because there was
+nothing yet to pause.** §57.67j is where that changed: it is ▶/⏸ now, and
+"leave the clock" is a ✕ in the pill. That is one button changing meaning once,
+in the commit that introduced motion; the alternative was shipping a FAB here
+that did nothing after its first press. **Slice C's suite asserted the on/off
 answer explicitly — stop then start begins again rather than resuming — so the
-change is visible in slice D's diff rather than silent.**
+change landed as a visible edit to that assertion rather than silently.**
 
 **==> THE SCRUBBER IS A THIRD PILL AND IT COULD NEVER HAVE BEEN THE SECOND ONE.
 <==** `#seasons-status-pill` is a `<button>`; a range input cannot live inside a
@@ -10849,3 +10849,191 @@ as slice A's zero-length-leg guard and slice B's `running` guard — it is the
 sentence the function is trying to say, and it is the early return that stops an
 unborn storm taking a memo slot and a pointless build on every step of a drag.
 Both the code and this section say plainly that nothing exercises it.
+
+#### 57.67j Slice D — press play — as built
+
+**The timer and the play/pause control, driving the position slice C already
+proved.** `seasons/clock-playback.js` is new, `seasons/clock-control.js` grows
+the play state, and `seasons/seasons.css` plus `ui/panels.css` carry the two
+style changes. **No new constants** — `clockDaysPerSecond`, `clockStepsPerSecond`
+and `stepRealMs()` were all written in slice A against exactly this, and this is
+the commit that finally spends them.
+
+**==> THE FAB CHANGED MEANING EXACTLY ONCE AND THIS IS IT. <==** ▶/⏸ rather than
+▶/■. A press with the clock down engages it **and starts it**, because that is
+what a play triangle promises; a press while running pauses and holds the
+moment; a press at the end starts the season over, because there is nowhere else
+for it to go. **The way out is a ✕ in the pill**, which is not decoration — the
+FAB was the only door in slice C, and without a new one the clock would have
+been a mode a reader could not leave except by unticking every storm.
+
+**Two flags on the button, because they say two different things.** `data-on` is
+"the clock is on screen" and carries the background fill; `data-playing` is "the
+timer is running" and swaps the mark. **Engaged-and-paused is the ordinary
+state** — it is what a reader is in the whole time they are dragging the
+scrubber — and one flag could not have described it: the button would have shown
+⏸ over a clock standing still.
+
+**==> THE PACE IS MEASURED, NEVER COUNTED, AND THAT IS THE WHOLE ARCHITECTURE
+§57.67c BOUGHT. <==** Each tick asks how long it has actually been and converts
+that through `toStormMs`. A loop advancing by a constant per wake-up keeps the
+promise only while every wake-up is punctual, and browser timers are a floor
+rather than a promise — a busy main thread, a mid-drag repaint or a low-power
+mode all deliver a late one, and the season would then run slow by however late
+they were, cumulatively, with nothing on screen admitting it.
+
+**The position is a float and only the slider element rounds it.** Rounding on
+every tick is not a rounding error, it is a dead clock: one step of a
+sixteen-year timeline is 5.9 days, so one tick of playback is 0.017 of a step,
+`Math.round` makes that zero, and the position never leaves the start. Measured
+2026-08-31: a full real minute of playing Katrina and Ida together should reach
+step 10 and reaches 0 instead, with the button correctly showing ⏸ throughout.
+On Katrina alone — a 7.5-day timeline, so 13.33 steps a tick — the same fault is
+a half-percent rather than a freeze, which is the version nobody would catch.
+
+**IT PLAYS TO THE END AND STOPS THERE. IT DOES NOT LOOP.** §57.23's whole claim
+is that the season accumulates in front of you, so the last frame — every ticked
+storm's complete track drawn at once — is what the run was spent earning.
+Wiping it back to an empty globe every three minutes would throw that away, and
+§57.23 is explicit that motion which never stops is a migraine for some readers.
+
+**==> REDUCED MOTION IS RESPECTED BY NOT INVENTING ANYTHING, AND THAT IS A
+DECISION RATHER THAN AN OMISSION. <==** §57.23 asks for it and for a visible off
+switch. **Nothing here ever auto-plays**: motion only ever follows a press, and
+pause and ✕ are both on screen the entire time it is running. A half-speed mode
+would be a second pace nobody asked for, tuned against no measurement, and it
+would make the one thing the reader explicitly requested worse. If a reader who
+has set the preference presses play, they have asked for the season to move.
+
+**SPACE PLAYS AND PAUSES, THROUGH THE SAME FUNCTION THE BUTTON USES.** On the
+document, like `attachEscape` in `map/globe.js` and for the same reason: it has
+to work with focus anywhere. **It stands down on a `button`, `input`, `textarea`,
+`select` or anything contenteditable.** The button case is the one that would
+have bitten — Space on a focused `<button>` already fires a click, so handling it
+here as well would toggle twice for one press and land back where it started,
+with the FAB the single most likely thing to have focus since pressing it is how
+the reader got there. The scrubber is in that list deliberately too: a reader who
+has tabbed to it is driving by hand and the arrow keys are theirs.
+
+**==> THE CLOCK PAUSES WHEN THE PAGE GOES AWAY, AND THAT IS THE PRICE OF PACING
+ON REAL TIME. <==** Converting however long it has actually been is right while
+somebody is watching and wrong the moment they are not: a phone locked for five
+minutes is five storm-months, so the reader unlocks it to find the season over
+and no idea why. Browsers also throttle a hidden page's timers to about once a
+second, so the alternative is not smooth background playback — it is a slideshow
+nobody can see, spending battery on a globe that is not on screen (§9).
+**A pause rather than a catch-up cap**, because a cap needs a number nothing in
+this sandbox can measure and would only half-solve it — the season would still
+crawl forward while nobody watched. **There is no auto-resume**: coming back to a
+clock standing still with ▶ showing is a state the reader can see and undo.
+**If a real phone shows a jump this does not cover, the cap is the dial.**
+
+**The timer is what `unmount` kills, and it is the one thing here that outlives
+the elements.** A pending wake-up holds the whole component alive; left running
+it would fire after the reader had left the archive and push a historical cut at
+a live globe that has been shown again.
+
+#### 57.67k The loop is its own file, and a wrong sentence came out of it
+
+**`seasons/clock-playback.js`.** Adding playback took `clock-control.js` to 719
+lines and `doc-check` refused it. **The cut it forced was a real seam rather than
+an arbitrary one:** scheduling and position share exactly one number, they fail
+in completely different ways — a stuck timer against a season running at the
+wrong pace — and slice E adds a moving glyph to the position side without
+touching this side at all. 675 lines and 114.
+
+**A chain of `setTimeout`, never a `setInterval`.** Each tick ends in geometry
+being pushed into three MapLibre sources, and `setInterval` fires whether or not
+the last one has finished — so a device that cannot keep up accumulates work it
+will never catch up on. The next wake-up is scheduled only after the current
+tick's work is done, so a slow phone simply runs at fewer steps a second, which
+is §57.35 fault 3's own instruction: fewer steps, never a smaller feature.
+
+**==> AND THE ELAPSED TIME IS STAMPED BEFORE THE WORK, NOT AFTER IT. <==**
+`onTick` costs real milliseconds. Stamped afterwards, every one of them is
+dropped: the next tick reports only the gap between one piece of work ending and
+the next beginning, and the season runs SLOW by exactly the cost of drawing it —
+worst on the phones least able to afford it.
+
+**==> THE COMMENT ON THAT LINE ARGUED THE OPPOSITE DIRECTION, AND THAT IS THE
+PART WORTH KEEPING. <==** It said stamping afterwards would run the season FAST.
+It runs it slow. The code was right and its own explanation was backwards, which
+is worse than no comment — the next session to touch that line would have
+reasoned from it. **It was found by a mutation surviving, not by rereading**: the
+mutation that moved the stamp left both suites green, and working out why turned
+up the wrong sentence rather than only the missing test.
+
+#### 57.67l Slice D's gate
+
+**`tools/test-season-clock-playback.mjs` is new — 15 assertions, zero
+dependencies, no DOM at all.** `tools/test-season-clock-control.mjs` goes from
+71 assertions to 122. **`tools/seasons-clock-check.mjs` is unchanged in what it
+asserts** and updated for the pause mark: both marks still span 4.5–19.5, still
+sit centred on (12,12) in one grid cell, so the column cannot flicker between
+two sizes when the button is pressed. It passes in the sandbox chromium.
+
+**==> THE SUITE OWNS THE CLOCK'S SENSE OF TIME, IN BOTH FILES. <==** A playback
+loop asserted by waiting on a real timer is slow, flaky, and unable to say
+anything about what one second of storm time is worth — which is the exact
+arithmetic §57.67c records being got wrong invisibly. A second reason turned out
+to matter as much: with a real `setTimeout`, every section that pressed the FAB
+would leave a live wake-up behind, firing after the stand-in document had been
+taken away — a throw with no section name on it, in a suite that had already
+printed a pass.
+
+**THE HEADLINE ASSERTION IS AN INTEGER AND IT IS DRIVEN ON THE ONE STORM WHOSE
+TIMELINE IS A ROUND NUMBER.** AL021971 is five fixes across exactly one day, so
+`clockMinSpanDays` widens it to exactly two, which makes one real second exactly
+half the timeline. **One real second of playing must land the slider on exactly
+500 of 1000** — a day of storm time, no tolerance and no threshold anybody chose.
+Reversing the division inside `toStormMs` turns it red.
+
+**`tools/markup-dom.mjs` grew `addEventListener`, `removeEventListener`, `fire`
+and a settable `visibilityState` on the document.** The season clock is the first
+component these suites drive that binds an event outside its own subtree, and a
+document without them threw inside `mount` — the sixth time that file has read as
+a broken component rather than as a thin scaffold.
+
+**TWENTY-FIVE MUTATIONS WERE RUN AND ALL TWENTY-FIVE BITE.** Reversing the ratio,
+counting ticks instead of measuring them, scheduling before the work, stamping
+the elapsed time after the work, looping at the end, not stopping at the end,
+resuming at the end instead of starting over, the FAB going back to on/off,
+pause forgetting its place, pausing pushing the globe anyway, the mark keying on
+the wrong flag, the label freezing, Space swallowed on a button, Space ignoring
+modifiers, the keydown listener left bound, no pause when the page hides, an
+auto-resume when it returns, the timer surviving unmount, rounding the position
+per tick, the ✕ pausing instead of leaving, a second start moving the wake-up,
+rescheduling through a stop, trusting a backwards clock, `engage` not resetting,
+and the slider left unclamped.
+
+**==> FOUR SURVIVED THE FIRST RUN. ONE WAS A BAD MUTATION, ONE WAS A DEAD LINE
+OF CODE, AND TWO WERE A BLIND SPOT THE CONTROL'S SUITE COULD NOT SEE OUT OF.
+<==** Which is the fourth run in four slices where the thing the exercise caught
+was not in the code (§57.67d, §57.67f, §57.67i).
+
+1. **The `setInterval` mutation did not implement `setInterval`.** It moved the
+   scheduling above the work and left the trailing reschedule in place, and
+   since `schedule()` cancels first, the second call simply overwrote the first.
+   The behaviour was identical, so green was the correct answer. Rewritten to
+   remove the trailing call, it bites.
+2. **`disengage` reset the position and nothing could see it.** `engage` resets
+   too and is on the only road back in, and a position held while the clock is
+   DOWN is a position nothing can read — `cut()` answers null, the pill is
+   hidden, the slider is off screen. **Deleted rather than covered:** two owners
+   for "start over" is how the two drift apart later.
+3. **Scheduling before the work and stamping after it were both invisible to the
+   control's suite, and had to be.** That suite drives a clock the component
+   cannot move, so `onTick` takes exactly zero real time and "before the work"
+   and "after the work" are the same instant. A test that cannot express the
+   difference between two answers cannot say which one shipped. The playback
+   suite lets a tick CONSUME time — 80ms, which is what pushing three sources
+   costs on a phone that is struggling — and both then bite.
+
+**One assertion was fixed rather than added, and it had read perfectly.** The
+first version of "starting again while running is a no-op" checked that no
+second timer appeared. `schedule()` cancels, so a duplicate loop was never the
+risk and the assertion was of something that could not have gone wrong. **The
+risk is the wake-up MOVING:** a second start re-stamps the elapsed measurement
+and pushes the pending tick out by however long the first had already waited. It
+now asserts the wake-up is at the same instant it was, which is the only version
+that catches it.

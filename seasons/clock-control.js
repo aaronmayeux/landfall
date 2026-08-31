@@ -1,20 +1,23 @@
 /**
  * clock-control.js — the archive's season clock, as a control. §57.23,
- * §57.67 slice C.
+ * §57.67 slices C and D.
  *
- * ==> WHAT THIS SLICE IS AND, MORE IMPORTANTLY, WHAT IT IS NOT. <== It is a
- * button in the control cluster and a slider in the bottom pill. Drag the
- * slider and the season grows and shrinks under a date readout. **There is no
- * timer in this file and no animation loop anywhere in it.** Slice D adds
- * those, driving the same position this one already proves.
+ * ==> SLICE C BUILT THE POSITION. SLICE D MAKES IT MOVE ON ITS OWN. <== The
+ * button in the control cluster and the slider in the bottom pill are slice C
+ * and are unchanged in what they DRIVE: the moment goes to `lib/season-
+ * clock.js`, the cut goes to the globe, and dragging still works exactly as it
+ * did. What is new here is a timer that advances the same position, a
+ * play/pause control over it, and Space.
  *
  * That split is the whole reason step 10 is being built in slices. The
  * 2026-08-26 attempt put the engine, the controls, the globe cut, the colouring
  * and the keyboard into one commit, reached Aaron's phone as an empty world,
  * and went back whole — three defects with nothing to bisect. `lib/season-
- * clock.js` (slice A) and `map/layers/season-cut.js` (slice B) are each already
- * proven on their own with no browser. This is the first slice that can be
- * wrong on glass, and if it is, the two under it are not suspects.
+ * clock.js` (slice A) and `map/layers/season-cut.js` (slice B) are each proven
+ * on their own with no browser, and slice C's scrubber was confirmed on glass
+ * before a single line of timer was written. So if the clock is wrong now, the
+ * suspect is the twenty lines below that schedule and advance, and nothing
+ * underneath them.
  *
  * ==> AARON'S CALL, 2026-08-31, AND IT MOVES ONE THING OUT OF §57.67a. <== The
  * play control lives in the FAB and ONLY the scrubber goes in the pill. §57.67a
@@ -22,11 +25,13 @@
  * and a date is three things fighting over one lozenge, and the slider is the
  * one that needs the width.
  *
- * **So in this slice the FAB is an on/off switch — ▶ off, ■ on — because there
- * is nothing yet to pause.** Slice D turns that same button into ▶/⏸ and moves
- * "leave the clock" to a control in the pill. That is one button changing
- * meaning once, in the commit that introduces motion; the alternative was
- * shipping a FAB here that does nothing after its first press.
+ * ==> AND THE FAB CHANGES MEANING EXACTLY ONCE, WHICH IS HERE. <== In slice C
+ * it was an on/off switch — ▶ off, ■ on — because there was nothing to pause.
+ * It is now ▶/⏸, and "leave the clock" has moved to a ✕ in the pill beside the
+ * scrubber. §57.67g said this would happen in the commit that introduces
+ * motion, and `tools/test-season-clock-control.mjs` asserted slice C's answer
+ * explicitly so the change would show up in this diff rather than slipping
+ * through silently.
  *
  * ==> THE PILL IS A SECOND ELEMENT, NOT `#seasons-status-pill` WEARING A
  * SLIDER. <== That element is a `<button>` — pressing it toggles the archive's
@@ -42,12 +47,13 @@
  * handful of lines: build it, hand it the ticked set when that changes, ask it
  * for a cut, tear it down on the way out.
  *
- * Imports `config/`, `lib/season-clock.js` and one formatter. DOM only; no map,
- * no data, no network.
+ * Imports `config/`, `lib/season-clock.js`, `seasons/clock-playback.js` and one
+ * formatter. DOM only; no map, no data, no network.
  */
 
 import { SEASONS } from '../config/constants.js';
-import { clockSpan, clockFrameAt } from '../lib/season-clock.js';
+import { createPlayhead } from './clock-playback.js';
+import { clockSpan, clockFrameAt, toStormMs } from '../lib/season-clock.js';
 import { utcStamp } from '../ui/season-markup-bits.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -101,26 +107,54 @@ export function readoutFor(at) {
  * Build the control. Not mounted — the caller decides when it goes on screen,
  * exactly as the two pills do.
  *
+ * ==> THE CLOCK HAS EXACTLY TWO DEPENDENCIES ON THE WORLD OUTSIDE THIS FILE:
+ * WHAT TIME IT IS, AND BEING WOKEN LATER. <== Both are arguments with real
+ * defaults, so the app passes nothing and the suite passes a clock it controls.
+ * That is not testing scaffolding for its own sake — a playback loop asserted
+ * by waiting on a real timer is a suite that is slow, flaky, and unable to say
+ * anything about what one second of storm time is worth. §57.67c exists because
+ * the reverted attempt got that arithmetic wrong in a way nothing could see;
+ * the only way to see it is to drive it.
+ *
  * @param {object} opts
  * @param {() => void} opts.onScrub  the cut changed; push the globe again.
+ * @param {() => number} [opts.now]  monotonic real milliseconds.
+ * @param {(fn:Function, ms:number) => any} [opts.setTimer]
+ * @param {(handle:any) => void} [opts.clearTimer]
  * @returns {{
  *   mount:()=>void, unmount:()=>void,
  *   setEntries:(entries:Array)=>void,
  *   cut:()=>Map<string,object>|null,
- *   engaged:()=>boolean,
+ *   engaged:()=>boolean, playing:()=>boolean,
  * }}
  */
-export function createSeasonClock({ onScrub } = {}) {
+export function createSeasonClock({
+  onScrub,
+  /* `performance.now` rather than `Date.now`, because it is monotonic: a
+   * system clock correction mid-playback would otherwise hand the loop a
+   * negative or enormous elapsed time and jump the season. The fallback is for
+   * an environment without it, not for a browser. */
+  now = () => (typeof performance !== 'undefined' && performance.now
+    ? performance.now() : Date.now()),
+  setTimer = (fn, ms) => setTimeout(fn, ms),
+  clearTimer = (handle) => clearTimeout(handle),
+} = {}) {
   /** The ticked storms, as the board last reported them. */
   let entries = [];
   /** Their own window, from `clockSpan`, or null when none of them has a
    *  usable fix. */
   let span = null;
-  /** Whether the reader has pressed the FAB. */
+  /** Whether the clock is on screen at all — the pill up, a cut being handed
+   *  to the globe. Slice C's one flag; playing is now a separate question. */
   let on = false;
-  /** The slider's position, held as its own whole number so that re-resolving
-   *  it against a new span is the only thing that has to happen when the
-   *  ticked set changes. */
+  /** The slider's position, resolved against the current span into a moment.
+   *
+   *  ==> IT IS A FLOAT HERE AND A WHOLE NUMBER ON THE SLIDER, AND THAT IS
+   *  DELIBERATE. <== `<input type="range">` deals in whole steps, and rounding
+   *  the position itself on every tick would throw away the remainder ten times
+   *  a second — a season would run measurably slow, and slower on a longer
+   *  timeline than on a short one. The rounding happens once, on the way to the
+   *  element, where it costs nothing. */
   let value = 0;
   /** The ids the last `setEntries` carried, joined, so a push that did not
    *  actually change the set does not reset a reader's position. Every
@@ -169,7 +203,12 @@ export function createSeasonClock({ onScrub } = {}) {
    * are drawn here. */
   const stroked = (cls) => {
     const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('class', cls);
+    /* The class is optional because only the two cross-fading marks need one —
+     * they are addressed individually by the opacity rules. The ✕ is the only
+     * child of its button and is reached through that, so giving it a name
+     * would be a class with a rule nothing needs, which `css-orphan-check`
+     * treats as dead weight shipped to every visitor. */
+    if (cls) svg.setAttribute('class', cls);
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('fill', 'none');
     svg.setAttribute('stroke', 'currentColor');
@@ -193,16 +232,26 @@ export function createSeasonClock({ onScrub } = {}) {
   playMark.setAttribute('d', 'M6.5 4.5 L17.5 12 L6.5 19.5 Z');
   playSvg.append(playMark);
 
-  const stopSvg = stroked('clock-stop');
-  const stopMark = document.createElementNS(SVG_NS, 'rect');
-  stopMark.setAttribute('x', '6');
-  stopMark.setAttribute('y', '6');
-  stopMark.setAttribute('width', '12');
-  stopMark.setAttribute('height', '12');
-  stopMark.setAttribute('rx', '2');
-  stopSvg.append(stopMark);
+  /* ==> IT IS A PAUSE MARK NOW AND IT WAS A STOP SQUARE IN SLICE C, WHICH IS
+   * THE ONE MEANING CHANGE §57.67g BUDGETED FOR. <== A square says the clock
+   * goes away and the whole season comes back; two bars say the clock stands
+   * still where it is. In slice C the first was true because there was no
+   * timer to hold a position. Now the second is, and "the clock goes away"
+   * has its own control in the pill.
+   *
+   * Two `<path>` children of ONE svg rather than two svgs, because the grid
+   * stacking is on the BUTTON: these two bars are one mark and have to
+   * cross-fade together. Same geometry band as the triangle — the ink spans
+   * 4.5 to 19.5 and the pair is centred on x=12 — so the column does not
+   * flicker between two sizes when it is pressed. */
+  const pauseSvg = stroked('clock-pause');
+  for (const x of ['9', '15']) {
+    const bar = document.createElementNS(SVG_NS, 'path');
+    bar.setAttribute('d', `M${x} 4.5 V19.5`);
+    pauseSvg.append(bar);
+  }
 
-  fab.append(playSvg, stopSvg);
+  fab.append(playSvg, pauseSvg);
   fab.addEventListener('click', () => toggle());
 
   /* --------------------------------------------------------------- the pill */
@@ -251,7 +300,47 @@ export function createSeasonClock({ onScrub } = {}) {
     onScrub?.();
   });
 
-  pill.append(dateEl, range);
+  /* ==> "LEAVE THE CLOCK" IS ITS OWN CONTROL NOW, AND IT HAS TO BE. <== In
+   * slice C a second press of the FAB put the whole season back. The FAB is a
+   * play/pause button now, so without this there would be no way out of the
+   * clock at all except unticking every storm — a mode with no door.
+   *
+   * ==> IT REUSES `.drawer-close`'s TREATMENT RATHER THAN BEING A SEVENTH KIND
+   * OF BUTTON. <== That rule in `ui/panels.css` is already the app's answer to
+   * "a 44px icon button with no chrome": the target, the transparent
+   * background, the muted ink, the hover-capability rule and the focus ring are
+   * all decided there. `.seasons-clock-leave` is added to that selector group
+   * rather than copied out of it, so the two cannot drift.
+   *
+   * The ✕ path is the drawer header's own, character for character. Two glyphs
+   * meaning "close" that are drawn a pixel apart is the kind of difference a
+   * reader feels without being able to name. */
+  const leaveBtn = document.createElement('button');
+  leaveBtn.className = 'seasons-clock-leave';
+  leaveBtn.type = 'button';
+  leaveBtn.setAttribute('aria-label', 'Leave the season clock');
+  const leaveSvg = stroked();
+  const leaveMark = document.createElementNS(SVG_NS, 'path');
+  leaveMark.setAttribute('d', 'M6 6l12 12M18 6L6 18');
+  leaveSvg.append(leaveMark);
+  leaveBtn.append(leaveSvg);
+  leaveBtn.addEventListener('click', () => disengage());
+
+  /* ==> THE ✕ SITS ON THE SLIDER'S ROW, NOT THE DATE'S, AND THAT IS FREE
+   * HEIGHT. <== `.slider` is already `--touch-target` tall, so a 44px button
+   * beside it adds nothing to the pill. On the date's line it would have made
+   * a 16px line of text into a 44px one and taken 28px of globe for a button
+   * that is pressed once.
+   *
+   * It costs the track about 52px of the 326 the pill has inside its padding
+   * on a 390px phone, which leaves roughly 274 — still wider than the 270
+   * §57.67g rejected `--pill-inset` for, and that 270 had to hold the date as
+   * well. */
+  const row = document.createElement('div');
+  row.className = 'seasons-clock-row';
+  row.append(range, leaveBtn);
+
+  pill.append(dateEl, row);
 
   /* ------------------------------------------------------------------ state */
 
@@ -267,6 +356,12 @@ export function createSeasonClock({ onScrub } = {}) {
     return entries.length > 0 && !!span;
   }
 
+  /** What the slider element itself should be showing. The one place the
+   *  position stops being a float. */
+  function sliderValue() {
+    return String(Math.round(Math.max(0, Math.min(value, SEASONS.clockScrubSteps))));
+  }
+
   /** Redraw the control from the state. Never touches the globe — `onScrub` is
    *  the only thing that does, and only its callers decide when. */
   function paint() {
@@ -276,9 +371,17 @@ export function createSeasonClock({ onScrub } = {}) {
      * the TAB ORDER too — the same trap §13 records the closed drawer hitting
      * and the archive's two suppressed cluster buttons avoiding. */
     fab.hidden = !usable();
-    fab.setAttribute('aria-pressed', on ? 'true' : 'false');
-    fab.setAttribute('aria-label', on ? 'Stop the season clock' : 'Play the season');
+    /* ==> TWO FLAGS, BECAUSE THEY SAY TWO DIFFERENT THINGS. <== `data-on` is
+     * "the clock is on screen" and carries the background fill; `data-playing`
+     * is "the timer is running" and swaps the mark. Engaged-and-paused is an
+     * ordinary state — it is what a reader is in the whole time they are
+     * dragging the scrubber — and a single flag could not describe it. */
+    const running = playhead.running();
+    fab.setAttribute('aria-pressed', running ? 'true' : 'false');
+    fab.setAttribute('aria-label', running ? 'Pause the season clock' : 'Play the season');
     if (on) fab.setAttribute('data-on', 'true'); else fab.removeAttribute('data-on');
+    if (running) fab.setAttribute('data-playing', 'true');
+    else fab.removeAttribute('data-playing');
 
     pill.hidden = !on;
     if (!on) return;
@@ -288,8 +391,81 @@ export function createSeasonClock({ onScrub } = {}) {
     /* A bare "437" is the slider's own number and means nothing to anybody.
      * The same rule the roster's near-home slider already follows. */
     range.setAttribute('aria-valuetext', words);
-    if (range.value !== String(value)) range.value = String(value);
+    const shown = sliderValue();
+    if (range.value !== shown) range.value = shown;
   }
+
+  /* ---------------------------------------------------------- the playhead */
+
+  /**
+   * ==> THE POSITION MOVES BY REAL ELAPSED TIME, NOT BY A FIXED AMOUNT PER
+   * TICK. <== `seasons/clock-playback.js` owns the waking up and says how long
+   * it has actually been; this converts that through the one named ratio.
+   * `toStormMs` is the only function in the app permitted to apply it
+   * (`lib/season-clock.js`), which is the whole architecture the reverted
+   * attempt's unit conflation bought.
+   *
+   * @param {number} realMs  wall-clock milliseconds since the last tick
+   */
+  function advance(realMs) {
+    const steps = SEASONS.clockScrubSteps;
+    /* A timeline with no length cannot be advanced along. `clockSpan` floors
+     * the span at `clockMinSpanDays` precisely so this cannot happen, so this
+     * is a guard against the span going away underneath a running timer —
+     * every ticked storm unticked between two wake-ups — rather than against
+     * the arithmetic. */
+    if (!span || !(span.spanMs > 0)) { pause(); return; }
+
+    value = Math.min(steps, value + (toStormMs(realMs) / span.spanMs) * steps);
+
+    /* ==> IT PLAYS TO THE END AND STOPS THERE. IT DOES NOT LOOP. <== §57.23's
+     * whole claim is that the season ACCUMULATES in front of you, so the last
+     * frame — every ticked storm's complete track, drawn at once — is the
+     * thing the three minutes were spent earning. Wiping it back to an empty
+     * globe and starting again would throw that away every three minutes, and
+     * §57.23 is explicit that unstoppable motion is a migraine for some
+     * readers. The button goes back to ▶ and a press starts the season over.
+     */
+    if (value >= steps) {
+      value = steps;
+      /* `stop` before the paint, or the button would be drawn still saying
+       * ⏸ over a clock that has finished. */
+      playhead.stop();
+      paint();
+      onScrub?.();
+      return;
+    }
+
+    paint();
+    onScrub?.();
+  }
+
+  const playhead = createPlayhead({
+    onTick: advance, now, setTimer, clearTimer,
+  });
+
+  function play() {
+    if (!usable()) return;
+    if (!on) engage();
+    /* Pressing ▶ at the end of the timeline starts the season over, because
+     * there is nowhere else for it to go and a button that does nothing is
+     * worse than one that does the obvious thing. */
+    if (value >= SEASONS.clockScrubSteps) value = 0;
+    playhead.start();
+    paint();
+    onScrub?.();
+  }
+
+  function pause() {
+    if (!playhead.running()) return;
+    playhead.stop();
+    /* No `onScrub`. Pausing does not move the moment, so the globe is already
+     * showing the right thing and a push here would be a full re-cut of every
+     * ticked storm for no change at all. */
+    paint();
+  }
+
+  /* ------------------------------------------------------------- the state */
 
   function engage() {
     if (!usable()) return;
@@ -308,20 +484,95 @@ export function createSeasonClock({ onScrub } = {}) {
      * accumulation still reads: everything else fills in from there. */
     value = 0;
     document.documentElement.setAttribute(ROOT_FLAG, 'on');
-    paint();
-    onScrub?.();
+    /* ==> IT PAINTS NOTHING AND PUSHES NOTHING, WHICH IT DID IN SLICE C. <==
+     * Every road into the clock now goes through `play()`, and that one paints
+     * and pushes on its way out. Leaving them here as well would hand the
+     * globe two full re-cuts of every ticked storm for one press — invisible,
+     * because the second is identical to the first, and paid on the frame a
+     * reader is already asking the most of. */
   }
 
   function disengage() {
     if (!on) return;
+    pause();
     on = false;
+    /* ==> IT DOES NOT RESET THE POSITION, AND THAT IS NOT AN OMISSION. <==
+     * `engage` does, and `engage` is on the only road back in — `play` is the
+     * single entry point and it engages before it starts. A second reset here
+     * was written first and a mutation proved it dead: deleting it left every
+     * assertion green, because a position held while the clock is DOWN is a
+     * position nothing can read. `cut()` answers null, the pill is hidden, and
+     * the slider is off screen. Two owners for "start over" is how the two
+     * drift apart later. */
     document.documentElement.removeAttribute(ROOT_FLAG);
     paint();
     onScrub?.();
   }
 
+  /** The FAB. ==> IT IS PLAY/PAUSE NOW AND NOT ON/OFF. <== A press with the
+   *  clock down engages it AND starts it, because that is what a play triangle
+   *  promises; the way back out is the ✕ in the pill. */
   function toggle() {
-    if (on) disengage(); else engage();
+    if (playhead.running()) pause(); else play();
+  }
+
+  /* ------------------------------------------------------- outside the pill */
+
+  /**
+   * ==> SPACE PLAYS AND PAUSES, AND IT IS THE SAME PRESS AS THE BUTTON. §57.23.
+   * <== One function behind both, so the keyboard cannot drift into being a
+   * second, slightly different clock — the failure §57.37's two halves of the
+   * drawer toggle record.
+   *
+   * ==> IT STANDS DOWN WHEN THE READER IS ON A CONTROL OR IN A FIELD, AND BOTH
+   * HALVES OF THAT ARE REAL. <== Space on a focused `<button>` already fires a
+   * click, so handling it here as well would toggle the clock twice for one
+   * press and land back where it started — with the FAB itself being the most
+   * likely thing to have focus, since pressing it is how the reader got here.
+   * And `ui/home-search.js` has a text field: a reader typing a place name
+   * with two words must get a space rather than a season.
+   *
+   * The `<input type="range">` is deliberately in that list too. Space does
+   * nothing to a range natively, but a reader who has tabbed to the scrubber is
+   * driving the position by hand and the arrow keys are theirs — swallowing
+   * Space from under them to start playback would move the thing they are
+   * holding.
+   */
+  function onKeydown(e) {
+    if (!e) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (e.key !== ' ' && e.key !== 'Spacebar' && e.code !== 'Space') return;
+    const tag = String(e.target?.tagName || '').toLowerCase();
+    if (tag === 'button' || tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    if (e.target?.isContentEditable) return;
+    if (!usable()) return;
+    e.preventDefault?.();
+    toggle();
+  }
+
+  /**
+   * ==> THE CLOCK PAUSES WHEN THE PAGE GOES AWAY, AND THAT IS THE PRICE OF
+   * PACING ON REAL TIME. <== `advance` converts however long it has actually
+   * been, which is the right answer while somebody is watching and the wrong
+   * one the moment they are not: a phone locked for five minutes is five
+   * storm-months, so the reader unlocks it to find the season already over and
+   * no idea why. Browsers also throttle a hidden page's timers to about once a
+   * second, so the alternative is not smooth playback in the background — it is
+   * a slideshow nobody can see, spending battery on a globe that is not on
+   * screen (§9).
+   *
+   * ==> AND IT IS A PAUSE RATHER THAN A CATCH-UP CAP, ON PURPOSE. <== Capping
+   * how much one tick may advance would need a number nothing in this sandbox
+   * can measure, and it would half-solve the same problem: the season would
+   * still crawl forward while nobody watched. One mechanism, no magic figure.
+   * If a real phone shows a jump this does not cover, the cap is the dial.
+   *
+   * There is no auto-resume. Coming back to a clock that is standing still with
+   * ▶ showing is a state the reader can see and undo; coming back to one that
+   * silently restarted is a screen that did something while they were gone.
+   */
+  function onVisibility() {
+    if (document.visibilityState === 'hidden') pause();
   }
 
   return {
@@ -339,6 +590,17 @@ export function createSeasonClock({ onScrub } = {}) {
        * than the archive without this slice. */
       document.getElementById('controls')?.prepend(fab);
       document.body.appendChild(pill);
+      /* ==> BOTH OF THESE ARE ON THE DOCUMENT AND BOTH COME OFF IN `unmount`.
+       * <== Space has to work with focus anywhere — on the globe, on a roster
+       * row, on nothing at all — which is `attachEscape`'s argument in
+       * `map/globe.js` for exactly the same reason. A listener bound to the
+       * pill would only work once the reader had already found the pill.
+       *
+       * Optional-called because the archive's suites drive this against a
+       * stand-in document, and a component that threw on mount for want of an
+       * event system would read as broken rather than as unscaffolded. */
+      document.addEventListener?.('keydown', onKeydown);
+      document.addEventListener?.('visibilitychange', onVisibility);
       paint();
     },
 
@@ -349,6 +611,14 @@ export function createSeasonClock({ onScrub } = {}) {
        * hides the LIVE app's furniture. `seasons/index.js` tears this down
        * before it removes `data-seasons`, so the two come off in the order
        * they went on. */
+      /* ==> THE TIMER DIES FIRST, AND IT IS THE ONE THING HERE THAT OUTLIVES
+       * THE ELEMENTS. <== A pending `setTimeout` holds this whole closure
+       * alive; left running it would wake up after the reader had left the
+       * archive and push a historical cut at a live globe that has been shown
+       * again. Removing the button is not what stops the clock — this is. */
+      playhead.stop();
+      document.removeEventListener?.('keydown', onKeydown);
+      document.removeEventListener?.('visibilitychange', onVisibility);
       on = false;
       document.documentElement.removeAttribute(ROOT_FLAG);
       fab.remove();
@@ -406,6 +676,12 @@ export function createSeasonClock({ onScrub } = {}) {
 
     engaged() {
       return on;
+    },
+
+    /** Whether the timer is running. Separate from `engaged` because
+     *  engaged-and-paused is the state a reader is in while they drag. */
+    playing() {
+      return playhead.running();
     },
   };
 }

@@ -365,8 +365,20 @@
   white-space: nowrap;
 }
 
+/* ==> `.seasons-clock-leave` IS IN THESE GROUPS RATHER THAN COPYING THEM.
+   §57.67 slice D. <== The season clock's way out is the same object as the
+   drawer's: a 44px icon button with no chrome, muted ink, a hover rule and a
+   focus ring. Repeating those declarations under a seasons name would be two
+   answers to one question that look identical until one of them is edited.
+
+   It is a seasons class in the shared sheet, which is the one thing wrong with
+   it, and it is the lesser wrong — the alternative was renaming `.drawer-close`
+   across `ui/drawer.js`, this file and a harness inside a commit whose subject
+   is a play button. If a third caller ever wants this, that rename is the
+   right move and it belongs in its own commit. */
 .drawer-back,
-.drawer-close {
+.drawer-close,
+.seasons-clock-leave {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,6 +395,9 @@
   appearance: none;
 }
 .drawer-close { justify-self: end; width: var(--touch-target); }
+/* Not `justify-self` — it is a flex item on the scrubber's row, not a grid
+   cell in a header, and it must not stretch. */
+.seasons-clock-leave { flex: 0 0 var(--touch-target); width: var(--touch-target); }
 
 /* ==> THE BACK BUTTON CARRIES ITS DESTINATION IN WORDS. <== It was a bare
  * chevron sitting a thumb's width above the stepper's bare prev chevron —
@@ -400,13 +415,16 @@
 }
 
 .drawer-back svg,
-.drawer-close svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.drawer-close svg,
+.seasons-clock-leave svg { width: 18px; height: 18px; flex: 0 0 auto; }
 @media (hover: hover) {
   .drawer-back:hover,
-  .drawer-close:hover { color: var(--text-primary); }
+  .drawer-close:hover,
+  .seasons-clock-leave:hover { color: var(--text-primary); }
 }
 .drawer-back:focus-visible,
-.drawer-close:focus-visible {
+.drawer-close:focus-visible,
+.seasons-clock-leave:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
