@@ -747,9 +747,37 @@ scaffolding (a mount carrying `home` and `system`), which is a piece of work
 rather than an assertion. **Not started. Aaron's call whether it is worth a
 pass.**
 
-**==> STEP 10'S SEASON CLOCK MUST LAND IN ITS OWN FILE. <==** Every seasons pass
-has grown this view and every one has promised to cut next time. That promise has
-been broken five times and two cuts in one session do not buy a sixth.
+**==> STEP 10, THE SEASON CLOCK, IS OPEN AND IS BEING BUILT IN FIVE SLICES.
+§57.67 IS THE PLAN — READ THAT, NOT THIS. <==** Aaron's ask, 2026-08-31, and it
+adds four things to §57.23: a play FAB above the location button that appears
+only when storms are drawn, the bottom pill becoming the transport, the track
+Saffir-Simpson coloured at the correct timestamps, and the 3D hurricane glyph as
+the moving head. §57.67a records each as his call.
+
+**SLICE A IS BUILT AND THERE IS NOTHING ON SCREEN TO LOOK AT.** `lib/season-
+clock.js` plus 88 assertions. It is deliberate and it is the exception to this
+project's usual rule, not a lapse: the point of slicing is that the arithmetic
+stops being a suspect before any pixel depends on it. **§57.67c and §57.67d are
+the as-built account.**
+
+**==> THE REVERT'S ONE OPEN QUESTION IS ANSWERED AND IT WAS A FALSE ALARM. <==**
+`73080ae` said a probe found the archive roster stalling on *"Reading the
+record…"* with zero storm rows, on the commit before the clock as well, and told
+whoever picked this up to explain it first. Driven against today's `main` in the
+sandbox chromium on 2026-08-31: **176 wall rows, 2005 opens with 31 storm rows,
+no page errors, no stall.** The old probe was written against `seasons/bar.js`
+and its `Leave` button, both deleted in step 5, so it was driving a screen that
+no longer exists. **Nothing is blocked; do not re-open it.**
+
+**NEXT IS SLICE B — the optional cut on `setSeasonTracks`, byte-identical
+output when no cut is passed.** Still nothing visible. **Slice C is the first
+one Aaron can feel.**
+
+**==> AND IT MUST LAND IN ITS OWN FILE. <==** Every seasons pass has grown
+`ui/view-seasons-board.js` and every one has promised to cut next time. That
+promise has been broken five times and two cuts in one session do not buy a
+sixth. The clock owns its own creation and teardown; the wiring in that file and
+in `seasons/index.js` is a handful of lines and nothing else.
 
 **==> AND THE WHOLE-BASIN PASS'S PHONE COST IS UNMEASURED. <==** §57.19a used to
 state "two to three seconds on a phone" as a fact; nobody has run it on one, and

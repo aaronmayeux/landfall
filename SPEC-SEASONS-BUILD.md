@@ -10270,3 +10270,166 @@ Three, in the order worth trying:
 3. **`--space-snug` padding under the `dd`** — the room below the axis.
 
 **None of them changes the markup**, so all three are one-line glass calls.
+
+### 57.67 The season clock, in slices — the plan
+
+**==> STEP 10 HAS BEEN BUILT ONCE AND REVERTED WHOLE. THIS SECTION EXISTS SO IT
+IS NOT BUILT THAT WAY AGAIN. <==** §57.23 is the design and it is unchanged. The
+attempt of 2026-08-26 (`7fe1970`, `cf9d1bf`, reverted by `73080ae`) put the
+engine, the controls, the globe cut, the colouring and the keyboard into one
+commit. It reached Aaron's phone as an empty world, one round of fixes did not
+fix it, and the lot went back. **Three defects had landed together with nothing
+to bisect** — the same shape as the first flood attempt, and `CLAUDE.md`'s
+"ship it in slices somebody can feel" is the rule both of them wrote.
+
+**THE ONE THING THE REVERT LEFT OPEN IS NOW ANSWERED AND IT WAS A FALSE ALARM.**
+Its own message said a probe had found the archive roster stalling on
+*"Reading the record…"* with zero storm rows, on the commit before the clock as
+well as after it, and told whoever picked this up to explain that before writing
+a clock. **Driven in the sandbox chromium against today's `main` on 2026-08-31:
+176 wall rows, 2005 opens with 31 storm rows, no page errors and no stall.** The
+old probe was written against the chrome step 5 deleted — `seasons/bar.js` and
+its `Leave` button — so it was driving a UI that no longer existed. **Nothing is
+blocked. Do not re-open it.**
+
+#### 57.67a Aaron's four calls, 2026-08-31
+
+These change §57.23's shape and are the reason the slices are ordered as they
+are. Each is his, not derived.
+
+1. **A play button as a floating action button, above the location button.**
+   Not folded into a bar — there is no bar any more, and the reverted attempt's
+   plan to append controls after the `Leave` button describes furniture that was
+   deleted in step 5. **It shows only when storms are actually drawn on the
+   globe**, so a reader who has ticked nothing never sees a control that would
+   do nothing.
+2. **Pressing it turns the bottom pill into the transport.** The scrubber and
+   the play/pause live in the pill that is already there rather than in a second
+   horizontal strip — on a 390px phone a strip is globe the reader does not get
+   back, and that argument survived the revert intact.
+3. **The track is Saffir-Simpson coloured at the correct timestamps** while the
+   clock is engaged, rather than painted in one peak hue.
+4. **The head is the 3D globe's own hurricane glyph**, Saffir-Simpson coloured,
+   and it may rotate to match the storm's own rotation.
+
+**==> CALL 3 REVERSES A DECISION THAT IS STILL CORRECT, AND BOTH ANSWERS SURVIVE.
+<==** `map/layers/season-tracks.js` colours a whole track by its PEAK and its
+comment argues the case: per-segment is the truer picture and it is also a
+rainbow, because every storm starts blue and ends blue, so four of them on one
+globe read as four identical smears. **That argument is about a static globe
+comparing four finished storms.** The clock is a different screen — one moment,
+one or two storms growing, and the reader is watching a storm change rather than
+comparing storms. **Peak stays the default; per-fix is what the clock switches
+on.** Neither has to be wrong and neither should be deleted.
+
+#### 57.67b The slices
+
+**Each one lands as its own commit and can be reverted on its own.** A slice is
+not started until the one before it is on `main`.
+
+- **A — the engine.** `lib/season-clock.js` and
+  `tools/test-season-clock.mjs`. Pure arithmetic: given the ticked storms and a
+  moment, where each storm was, how strong, what it was being called, which way
+  it was travelling and how much of its track had happened. No timer, no DOM,
+  no map, no colour. **Nothing on screen changes and there is no glass call.**
+- **B — the cut on the globe.** `setSeasonTracks` learns an optional cut and
+  `setSeasonPoints` with it. With no cut the output is byte-identical to today
+  and a test says so. Still no controls. Nothing visible changes.
+- **C — the FAB and the scrubber, with no motion.** Call 1 and call 2's slider.
+  Drag it and the tracks grow and shrink, with a date readout. **No play
+  button and no animation loop** — this proves the engine, the cut and the
+  wiring together without any of the timing machinery that failed last time.
+  Arrows scrub. **The first slice Aaron can feel.**
+- **D — press play.** The timer and the play/pause control, driving the same
+  position slice C already proved. Discrete steps, never per frame (§57.35
+  fault 3). Space plays and pauses.
+- **E — the head and the colour.** Calls 3 and 4: the 3D glyph at each running
+  storm's position, graded and rotating, and the track behind it coloured per
+  fix. A separate small source from the trail, so moving a head never rewrites
+  a season.
+
+**THE CLOCK GETS ITS OWN FILE AND ITS OWN TEARDOWN.** `ui/view-seasons-board.js`
+is 1,004 lines and `seasons/index.js` is 882, both over §12's ceiling. Wiring
+between them is a handful of lines and nothing else, and slice C's control owns
+its own creation and removal.
+
+#### 57.67c Slice A — as built
+
+`lib/season-clock.js`. **It answers `nature` and `category`, never a colour** —
+the palette is forced sepia inside the archive and a hex resolved in this file
+would be resolved at the wrong time by the wrong file (`SPEC-MAP.md` rule 1b).
+**It answers in raw fix indices**, `drawnFixes` and `legFraction`, rather than
+in a fraction of the drawn curve: the track layer caches a smoothed curve of up
+to `SEASONS.trackMaxVertices` vertices and must not rebuild it per step (§57.35
+fault 3), and raw indices are the one coordinate system the fixes and the curve
+both agree on.
+
+**THE UNIT CONFLATION THAT CAUSED THE REVERT IS THE THING THIS SLICE IS
+ARCHITECTED AROUND.** The old loop paced on real elapsed milliseconds and
+divided by a storm-time step of 8,640,000, so a step was owed after two and a
+half hours. Both quantities were milliseconds and the arithmetic was right in
+isolation. So the conversion is **one named ratio**, `SEASONS.clockDaysPerSecond`
+applied in exactly two functions — `toStormMs` and `toRealMs` — and the suite
+asserts the round trip in both directions plus the consequence in the shape a
+reader would report it: **a storm day must not take a minute of real time.**
+
+**Three new constants**, each with its measurement beside it in
+`config/constants.js`: `clockDaysPerSecond: 1` (§57.23's pace),
+`clockStepsPerSecond: 10` (the middle of §57.35 fault 3's measured 8–12 band),
+and `clockMinSpanDays: 2`.
+
+**`clockMinSpanDays` is not an edge case.** A one-fix storm spans zero
+milliseconds and a timeline with no length divides by zero on the first drag,
+and single-observation entries run all through the 19th century — ticking one is
+an ordinary thing to do. The span is widened **around its own midpoint**, so the
+observation sits in the middle of the scrubber where it reads as one moment
+somebody wrote down, rather than pinned left where it would read as a storm that
+stopped being reported.
+
+**Three rules in it are worth not re-deriving:**
+
+1. **An unborn storm draws nothing at all** — no dot at its birthplace, no
+   one-vertex stub. §57.23's accumulation only means anything if the globe
+   genuinely starts empty, and the reverted build's empty world was partly this:
+   it handed the globe a two-point stub and three unborn storms.
+2. **An ended storm keeps its whole track and loses its head.** The trail
+   persisting is the feature; a head standing on the final fix says the storm is
+   still there.
+3. **Status never interpolates.** `HU` nine tenths of the way to `EX` is not a
+   thing — a status holds until the record changes it, so a head between two
+   fixes carries the earlier label while its wind slides toward the later
+   number. Wind and position do interpolate.
+
+**`spin` is `+1` north and `−1` south**, and it exists now rather than when it
+is needed because every storm in this archive is Atlantic or East Pacific, so a
+hardcoded direction would look correct until step 13 brings IBTrACS. A glyph
+spinning backwards over Australia is the kind of wrong only somebody who knows
+storms would catch.
+
+#### 57.67d Slice A's gate
+
+`tools/test-season-clock.mjs`, **88 assertions**, zero dependencies, every
+expectation computed off the real files in `samples/seasons/storms/` rather
+than typed. Katrina 2005, Ida 2021, Della CP011957 for the antimeridian, and
+AL011851 for the thinnest entry in the record.
+
+**TEN MUTATIONS WERE RUN AND NINE BITE.** Reversing the real-to-storm division,
+removing the minimum-span floor, interpolating raw `lon` across the seam,
+making every storm spin counter-clockwise, an off-by-one on `drawnFixes`, giving
+an unborn storm a stub, grading a non-cyclone with a Saffir-Simpson number,
+erasing the trail when a storm ends, and interpolating the status.
+
+**==> TWO SURVIVED THE FIRST RUN AND BOTH WERE FAULTS IN THE TEST, WHICH IS THE
+PART WORTH KEEPING. <==**
+
+1. **The status assertion was driven on Katrina's opening leg, which is `TD` to
+   `TD`** — so it compared a string to itself and stayed green with the rule
+   deleted. §12's failure exactly, and it read perfectly. The leg is now FOUND
+   by scanning for a real status change, so a revision to the file cannot turn
+   it back into a tautology.
+2. **The zero-length-leg guard is unreachable and no test covers it.** The scan
+   that picks the leg walks past every fix at or before the moment, so the fix
+   it stops on cannot share a timestamp with the next one. **Deleting the guard
+   leaves the suite green.** It is kept as a floor under step 13 and both the
+   code and the test now say plainly that nothing exercises it — a comment
+   claiming otherwise would be a false statement about coverage.

@@ -7714,4 +7714,52 @@ export const SEASONS = Object.freeze({
    * either way, measured the same day: 30 nm is 152 storms and 75 nm is 85.
    */
   loopMinWidthNm: 50,
+
+  /**
+   * ==> HOW MUCH STORM TIME ONE SECOND OF REAL TIME IS WORTH. §57.23, §57.67.
+   * <== A day a second, which is the pace §57.23 asked for: a full Atlantic
+   * season runs a little over three minutes at it, and a storm's six-hourly
+   * fixes arrive four times a second, which reads as movement rather than as a
+   * slideshow.
+   *
+   * ==> THIS NUMBER IS THE ONE THE FIRST ATTEMPT GOT WRONG, AND IT WAS WRONG IN
+   * A WAY NOTHING COULD SEE. <== Step 10 shipped on 2026-08-26 and was reverted
+   * whole. Its loop paced itself on real elapsed milliseconds and divided by a
+   * storm-time step of 8,640,000 — so it owed its first step after two and a
+   * half HOURS of somebody sitting there. Both quantities are milliseconds and
+   * the arithmetic is correct in isolation; only the UNITS disagreed, and
+   * nothing in the language, the tests or the console says so.
+   *
+   * So the conversion lives here as one named ratio rather than as a division
+   * written out at a call site, `lib/season-clock.js` is the only file allowed
+   * to apply it, and `tools/test-season-clock.mjs` asserts the round trip in
+   * both directions — one real second is one day of storm time, one day of
+   * storm time is one real second. Reversing the division turns that suite red.
+   */
+  clockDaysPerSecond: 1,
+
+  /**
+   * How many times a second the clock hands the map new geometry. §57.35 fault
+   * 3, which is a measurement rather than a preference: `setData` is a fresh
+   * parse and re-index in the map worker every time it is called, so sixty of
+   * them a second will not hold frame rate on a phone.
+   *
+   * Six-hourly data does not need sixty updates a second to read as smooth. Ten
+   * is the middle of fault 3's measured 8–12 band and it costs a sixth of what
+   * per-frame would. **If a real phone says no, this is the dial** — fault 3's
+   * own instruction is fewer steps, never a smaller feature.
+   */
+  clockStepsPerSecond: 10,
+
+  /**
+   * The shortest span the clock will lay a timeline over, in days.
+   *
+   * A one-fix storm has a span of zero and a timeline with no length divides by
+   * zero on the first drag. Ticking one short-lived storm is an ordinary thing
+   * to do — half the 19th-century record is two or three fixes — so this is the
+   * common case rather than an edge one. Two days is one day either side of a
+   * single observation, which gives the scrubber somewhere to travel and keeps
+   * the date readout honest about how little is known.
+   */
+  clockMinSpanDays: 2,
 });
