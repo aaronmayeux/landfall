@@ -260,13 +260,43 @@ section('2. where it mounts');
       html.slice(html.indexOf('id="btn-home"'))
     )?.[1];
     ok(`the cluster draws its verbs at stroke-width ${wanted}`, wanted === '1.7');
-    for (const cls of ['clock-play', 'clock-pause']) {
-      const mark = fab().children.find((c) => c.classList.contains(cls));
-      eq(`.${cls} is stroked line art at the cluster's own weight, not a fill`,
-        [mark.getAttribute('fill'), mark.getAttribute('stroke'),
-          mark.getAttribute('stroke-width')],
-        ['none', 'currentColor', wanted]);
-    }
+
+    const playMark = fab().children.find((c) => c.classList.contains('clock-play'));
+    eq('.clock-play is stroked line art at the cluster\'s own weight, not a fill',
+      [playMark.getAttribute('fill'), playMark.getAttribute('stroke'),
+        playMark.getAttribute('stroke-width')],
+      ['none', 'currentColor', wanted]);
+
+    /* ==> AND THE PAUSE MARK IS THE ONE EXCEPTION, WHICH IS AARON'S CALL ON
+     * GLASS RATHER THAN A DRIFT. <== §57.67n. It shipped as two stroked lines
+     * at 1.7 and he rejected them on a phone: "the two singular thin lines look
+     * cheap". Every other verb in the rail is a CLOSED outline, so its stroke
+     * draws a shape with an inside; two bare lines have no inside, and the same
+     * weight that reads as a glyph everywhere else reads as two hairs here.
+     * Outlining the bars instead does not work at 20px — a 4.5-unit bar is
+     * 3.75px wide and a 1.7-unit stroke eats 1.4px from each side. */
+    const pauseMark = fab().children.find((c) => c.classList.contains('clock-pause'));
+    eq('.clock-pause is filled and carries no stroke at all',
+      [pauseMark.getAttribute('fill'), pauseMark.getAttribute('stroke')],
+      ['currentColor', null]);
+    eq('==> BOTH MARKS STILL SPAN THE SAME 4.5-TO-19.5 BAND AND BOTH ARE '
+      + 'CENTRED ON x=12, SO THE COLUMN CANNOT JUMP BETWEEN TWO SIZES WHEN THE '
+      + 'BUTTON IS PRESSED. <== The bars are read off the element rather than '
+      + 'typed, so a later nudge to the geometry has to move both or turn this '
+      + 'red',
+    pauseMark.children.map((r) => [
+      Number(r.getAttribute('x')), Number(r.getAttribute('y')),
+      Number(r.getAttribute('x')) + Number(r.getAttribute('width')),
+      Number(r.getAttribute('y')) + Number(r.getAttribute('height')),
+    ]).reduce((a, b) => [
+      Math.min(a[0], b[0]), Math.min(a[1], b[1]),
+      Math.max(a[2], b[2]), Math.max(a[3], b[3]),
+    ]),
+    [6.25, 4.5, 17.75, 19.5]);
+    eq('and the ends are semicircular — half the width, which is a capsule '
+      + 'rather than a merely soft rectangle',
+    pauseMark.children.map((r) => Number(r.getAttribute('rx')) * 2
+      === Number(r.getAttribute('width'))), [true, true]);
   }
 
   /* ==> AND THE WAY OUT IS ITS OWN CONTROL NOW. §57.67 slice D. <== In slice C

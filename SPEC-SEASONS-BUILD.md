@@ -11086,3 +11086,44 @@ takes five more assertions to 13: the pill's right edge is left of the cluster's
 left edge, the gap is at least `--space-snug`, the leave control is entirely
 clear of it and still a 44px target, and the track is still worth dragging.
 **Verified by putting the fault back — three of the five turn red.**
+
+#### 57.67n The pause mark is filled, and it is the cluster's one exception
+
+**Aaron on glass, 2026-08-31, with a reference image: "the two singular thin
+lines look cheap".** They did, and this is the second time the clock's marks have
+come back from a phone (§57.67g was the first). It shipped as two `<path>`
+strokes at the cluster's own 1.7 and it is now two filled capsules — `<rect>`,
+4.5 wide, 15 tall, `rx` exactly half the width so the ends are semicircular
+rather than merely soft.
+
+**==> THE REASON THE SAME WEIGHT WORKS EVERYWHERE ELSE AND FAILS HERE IS
+GEOMETRY, NOT TASTE, AND IT IS WORTH MORE THAN THE MARK. <==** Every other verb
+in the rail is a CLOSED outline — a triangle, a house, a gear, a crosshair — so
+at 20px its stroke draws a shape with an INSIDE, and the eye reads the shape. Two
+bare lines have no inside to draw. The identical 1.7 that reads as a glyph on a
+closed path reads as two hairs on an open one. **§57.67g concluded that "play and
+stop are verbs, so they are drawn the way verbs are drawn here" and that rule
+survives** — it is about ink weight against the column, and it silently assumed
+every verb was a closed path. This is the exception it did not know it had.
+
+**Outlining the bars instead was the obvious middle road and it was measured and
+rejected.** The mark renders at 20px in a 44px button, so the 24-unit viewBox is
+0.83px a unit: a 4.5-unit bar is 3.75px wide and a 1.7-unit stroke takes 1.4px
+from each side, leaving under a pixel of hole. It would read as a smudge rather
+than as a capsule. A bar wide enough to outline cleanly would be wider than the
+whole mark should be.
+
+**==> THE COST IS STATED RATHER THAN HIDDEN. <==** This mark carries roughly 94
+square pixels of ink against the play triangle's 35. **That is the same
+imbalance §57.67g records getting the first filled pair rejected**, and the only
+thing that makes it acceptable here is that this one was judged on a phone and
+kept rather than reasoned about. **If it reads heavy in the column later, the
+dial is the bar WIDTH, not the fill** — going back to strokes puts the hairlines
+back.
+
+**Both marks still span 4.5 to 19.5 and both are still centred on x=12**, so the
+column cannot jump between two sizes when the button is pressed, and
+`tools/seasons-clock-check.mjs` still proves in a real browser that they share
+one grid cell. **The suite reads the bars' extent off the element and reduces it
+rather than typing it**, so a later nudge to the geometry has to move both bars
+or turn it red.

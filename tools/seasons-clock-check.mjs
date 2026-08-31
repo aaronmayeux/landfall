@@ -77,16 +77,19 @@ try {
     const tri = document.createElementNS(NS, 'path');
     tri.setAttribute('d', 'M6.5 4.5 L17.5 12 L6.5 19.5 Z');
     /* Two bars in ONE svg, which is what the component builds — they are one
-     * mark and have to cross-fade together. */
+     * mark and have to cross-fade together. FILLED, not stroked: Aaron's call
+     * on glass, 2026-08-31 (§57.67n). */
     const pause = document.createElementNS(NS, 'svg');
     pause.setAttribute('class', 'clock-pause');
     pause.setAttribute('viewBox', '0 0 24 24');
-    pause.setAttribute('fill', 'none');
-    pause.setAttribute('stroke', 'currentColor');
-    pause.setAttribute('stroke-width', '1.7');
-    for (const x of ['9', '15']) {
-      const bar = document.createElementNS(NS, 'path');
-      bar.setAttribute('d', `M${x} 4.5 V19.5`);
+    pause.setAttribute('fill', 'currentColor');
+    for (const x of ['6.25', '13.25']) {
+      const bar = document.createElementNS(NS, 'rect');
+      bar.setAttribute('x', x);
+      bar.setAttribute('y', '4.5');
+      bar.setAttribute('width', '4.5');
+      bar.setAttribute('height', '15');
+      bar.setAttribute('rx', '2.25');
       pause.append(bar);
     }
     fab.append(mark('clock-play', tri), pause);

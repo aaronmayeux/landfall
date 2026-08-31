@@ -203,11 +203,8 @@ export function createSeasonClock({
    * are drawn here. */
   const stroked = (cls) => {
     const svg = document.createElementNS(SVG_NS, 'svg');
-    /* The class is optional because only the two cross-fading marks need one —
-     * they are addressed individually by the opacity rules. The ✕ is the only
-     * child of its button and is reached through that, so giving it a name
-     * would be a class with a rule nothing needs, which `css-orphan-check`
-     * treats as dead weight shipped to every visitor. */
+    /* Optional: only the cross-fading marks need a name, because only they are
+     * addressed individually. Naming the ✕ would be a class with no rule. */
     if (cls) svg.setAttribute('class', cls);
     svg.setAttribute('viewBox', '0 0 24 24');
     svg.setAttribute('fill', 'none');
@@ -234,20 +231,36 @@ export function createSeasonClock({
 
   /* ==> IT IS A PAUSE MARK NOW AND IT WAS A STOP SQUARE IN SLICE C, WHICH IS
    * THE ONE MEANING CHANGE §57.67g BUDGETED FOR. <== A square says the clock
-   * goes away and the whole season comes back; two bars say the clock stands
-   * still where it is. In slice C the first was true because there was no
-   * timer to hold a position. Now the second is, and "the clock goes away"
-   * has its own control in the pill.
+   * goes away and the whole season comes back; two bars say it stands still
+   * where it is. Slice C had no timer to hold a position, so the first was
+   * true; now the second is, and "the clock goes away" has its own control.
    *
-   * Two `<path>` children of ONE svg rather than two svgs, because the grid
+   * ==> AND IT IS FILLED, WHICH IS THE CLUSTER'S ONE EXCEPTION AND IS AARON'S
+   * CALL ON GLASS, 2026-08-31. §57.67n HAS THE MEASUREMENTS. <== It shipped as
+   * two strokes at the cluster's own 1.7 and read as two hairs. Every other
+   * verb in the rail is a CLOSED outline, so its stroke draws a shape with an
+   * INSIDE; two bare lines have no inside, which is why the same weight works
+   * everywhere else and fails here. Outlining the bars does not survive 20px.
+   * **If it reads heavy in the column later, the dial is the bar WIDTH, not the
+   * fill** — going back to strokes puts the hairlines back.
+   *
+   * Two `<rect>` children of ONE svg rather than two svgs, because the grid
    * stacking is on the BUTTON: these two bars are one mark and have to
-   * cross-fade together. Same geometry band as the triangle — the ink spans
-   * 4.5 to 19.5 and the pair is centred on x=12 — so the column does not
-   * flicker between two sizes when it is pressed. */
-  const pauseSvg = stroked('clock-pause');
-  for (const x of ['9', '15']) {
-    const bar = document.createElementNS(SVG_NS, 'path');
-    bar.setAttribute('d', `M${x} 4.5 V19.5`);
+   * cross-fade together. Same 4.5-to-19.5 band as the triangle and centred on
+   * x=12, so the column does not jump between two sizes when it is pressed. */
+  const pauseSvg = document.createElementNS(SVG_NS, 'svg');
+  pauseSvg.setAttribute('class', 'clock-pause');
+  pauseSvg.setAttribute('viewBox', '0 0 24 24');
+  pauseSvg.setAttribute('fill', 'currentColor');
+  pauseSvg.setAttribute('aria-hidden', 'true');
+  for (const x of ['6.25', '13.25']) {
+    const bar = document.createElementNS(SVG_NS, 'rect');
+    bar.setAttribute('x', x);
+    bar.setAttribute('y', '4.5');
+    bar.setAttribute('width', '4.5');
+    bar.setAttribute('height', '15');
+    /* Half the width: a capsule, not a rounded rectangle. */
+    bar.setAttribute('rx', '2.25');
     pauseSvg.append(bar);
   }
 
