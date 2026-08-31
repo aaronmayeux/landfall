@@ -477,6 +477,18 @@ control for both — she should look unchanged.
 
 ## NEXT UP
 
+**THE HOME TIMELINE COLOURS EVERY ROW BY THE STORM'S PRESENT NATURE.** Found
+while fixing the now-ring (§7.11), not fixed with it — different file, own
+commit. `ui/countdown-home.js` builds each row as
+`categoryColor(row.category, dash.storm.nature)`, and `categoryColor` tests
+nature FIRST and returns early. So the moment a storm goes post-tropical every
+row in the timeline turns brick, and on a remnant every row turns the ungraded
+teal — including the "at its strongest" row, which is describing a moment when
+it was neither. `lib/track-point.js` documents refusing exactly this ("reading
+the STORM's present nature here would repaint a hurricane's whole history the
+moment it went post-tropical"); the timeline does it. Not firing today because
+Five is graded `TD`. Three call sites, all in `ui/countdown-home.js`.
+
 **==> THE ARCHIVE STORM DRAWER REBUILD IS FINISHED. ALL SEVEN STEPS ARE BUILT,
 ON GLASS AND ACCEPTED, AND NOTHING IN IT IS WAITING ON AARON. <==** The plan was
 §57.54; the as-built account is **§57.55 through §57.61** plus **§57.63**,
