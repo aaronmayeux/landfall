@@ -40,7 +40,11 @@ const { reanchorNow, __internals } = await import('../lib/forecast-now.js');
 const { FORECAST_NOW } = await import('../config/constants.js');
 const { parseNhcValidtime } = await import('../lib/time.js');
 const { smoothTracks } = await import('../lib/trackline.js');
-const { num, dLon, samePoint, newestPastPoint, readingFrom } = __internals;
+const { trackPointReading } = await import('../lib/track-point.js');
+const { CATEGORY_COLOR, PREGENESIS_COLOR } = await import('../config/tokens.js');
+const {
+  num, dLon, samePoint, newestPastPoint, readingFrom, readingFromStorm,
+} = __internals;
 
 /* The wall clock Aaron was looking at. Pinned — see the header. */
 const NOW = Date.parse('2026-08-22T00:39:00Z');
@@ -160,8 +164,11 @@ section('expired forecast hours are dropped and now moves to the storm');
     `the line's second vertex should be tau-24 at 29.8N, got ${l[1][1]}`);
 }
 
-section('the ring is coloured by the newest REPORTED fix, never a derived one');
+section('with no classification on the feed, the ring falls back to the record');
 {
+  /* LALA carries no `raw.classification` — the fixture predates the field
+   * being read here — so this is the fallback path, and it must still behave
+   * exactly as it did before the storm feed was given precedence. */
   const out = reanchorNow(bundle(), LALA, NOW, 'Lala');
   const p = ptsOf(out)[0].properties;
   /* lib/track-point.js reads `ssnum` before `ss`, so writing the record's `ss`
@@ -174,6 +181,84 @@ section('the ring is coloured by the newest REPORTED fix, never a derived one');
   ok(p.advdate === '200 AM HST Fri Aug 21 2026',
     'the advisory stamp itself rides through untouched — the UI displays the '
     + 'geometry\'s own identity (§4) and this dot is still 36A geometry');
+}
+
+/* ---------------------------------------------------------------------------
+ * THE STORM FEED WINS — Five, 2026-08-31
+ *
+ * The bug: the ring took its classification from the newest past fix, which
+ * still said `LO` six hours after the feed had graded the system `TD`. Teal
+ * dot, no letters, directly under a panel reading "Tropical Depression".
+ *
+ * FIVE below is the archived storm feed entry for al052026 verbatim, and
+ * FIVE_RECORD is the newest fix from that same run's pastPoints. If the record
+ * ever wins again, the first assertion here goes teal.
+ * ------------------------------------------------------------------------- */
+section('the ring is classified by the same feed that placed it');
+{
+  const FIVE = {
+    lon: -91, lat: 28, observedAt: '2026-08-31T18:00:00.000Z',
+    windKt: 30, category: 0, nature: 'tropical',
+    raw: { classification: 'TD' },
+  };
+  const r = readingFromStorm(FIVE);
+  ok(r.stormtype === 'TD', `stormtype should be the feed's TD, got ${r.stormtype}`);
+  ok(r.maxwind === 30, `maxwind should be the feed's 30 kt, got ${r.maxwind}`);
+  ok(r.tcdvlp === null, 'the stale advisory\'s words must not survive');
+
+  const read = trackPointReading(r);
+  ok(read.color === CATEGORY_COLOR.TD,
+    `a TD on the feed must draw TD blue, got ${read.color}`);
+  ok(read.code === 'TD',
+    `a TD on the feed must carry its letters, got "${read.code}"`);
+  ok(read.color !== PREGENESIS_COLOR,
+    'the ungraded hue is the exact bug this section exists to catch');
+
+  /* ==> THE MUTATION. <== The record's own words for that same moment, run
+   * through the same reader. If this did NOT come out teal and letterless the
+   * fixture would no longer reproduce the fault and the section above would be
+   * proving nothing. */
+  const FIVE_RECORD = { stormtype: 'LO', ss: 0, intensity: 30 };
+  const stale = trackPointReading(FIVE_RECORD);
+  ok(stale.color === PREGENESIS_COLOR && stale.code === '',
+    'the record\'s LO must still read as ungraded and letterless — if it does '
+    + 'not, this suite has stopped testing the bug it was written for');
+
+  /* ssnum is written even at 0. The template it lands on is a stale forecast
+   * hour carrying its own, and a key we decline to write is one that value
+   * keeps — which is how a depression would inherit a hurricane's number. */
+  ok(r.ssnum === 0, `ssnum must be written, not omitted, got ${r.ssnum}`);
+  const HURRICANE = { ...FIVE, windKt: 120, category: 5, raw: { classification: 'HU' } };
+  ok(readingFromStorm(HURRICANE).ssnum === 4,
+    'category 5 is Cat 4, and NHC\'s ssnum is the Saffir-Simpson number itself');
+  ok(trackPointReading(readingFromStorm(HURRICANE)).code === '4',
+    'a Cat 4 on the feed must draw its own number in the dot');
+
+  /* A source that states no classification hands the record back its job. */
+  ok(readingFromStorm({ ...FIVE, raw: {} }) === null,
+    'no classification on the feed → fall through to the record');
+  ok(readingFromStorm(null) === null, 'no storm at all → fall through');
+
+  /* ==> AND THE WIRING, WHICH IS THE PART THAT WAS ACTUALLY BROKEN. <==
+   * Everything above this proves `readingFromStorm` computes the right answer.
+   * None of it proves `reanchorNow` ASKS IT — the first draft of this section
+   * passed in full with the call site still reading the record, which is the
+   * §12 failure of a test agreeing with the bug. So: the Lala bundle, whose
+   * record says HU / ss 1 / 80 kt, handed a storm the feed has graded TD. The
+   * feed must win every field. */
+  const LALA_AS_TD = {
+    ...LALA, windKt: 30, category: 0, nature: 'tropical',
+    raw: { classification: 'TD' },
+  };
+  const wired = ptsOf(reanchorNow(bundle(), LALA_AS_TD, NOW, 'Lala'))[0].properties;
+  ok(wired.stormtype === 'TD',
+    `the feed's TD must beat the record's HU at the call site, got ${wired.stormtype}`);
+  ok(wired.ssnum === 0,
+    `the record's ss of 1 must not survive a depression, got ${wired.ssnum}`);
+  ok(wired.maxwind === 30,
+    `the feed's 30 kt must beat the record's 80, got ${wired.maxwind}`);
+  ok(trackPointReading(wired).code === 'TD',
+    `the wired ring must carry its letters, got "${trackPointReading(wired).code}"`);
 }
 
 /* ---------------------------------------------------------------------------

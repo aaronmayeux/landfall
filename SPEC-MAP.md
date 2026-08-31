@@ -1854,12 +1854,32 @@ position. Both the forecast line and the record then join there.
   BE the expired points (`FORECAST_NOW.matchEps`, a float-equality tolerance far
   smaller than NHC's ~0.1° position grid). A line and a point set from different
   advisories fail this and the whole re-anchor is abandoned.
-- **The new tau-0 takes its position from the feed and its classification from
-  the newest published past point** — reported, never derived (§4). The ring is
-  therefore coloured by the same fix that colours the last leg of the trail
-  behind it. Identity fields (`basin`, `stormnum`, `idp_source`, `advisnum`,
-  `_stormId`) ride through from the hour it replaces, so grouping, tap targets
-  and label placement are unchanged. It is stamped `_now: true`.
+- **The new tau-0 takes its position AND its classification from the same feed
+  — the storm feed** — reported, never derived (§4). It writes NHC's own
+  classification code onto the point (`stormtype`), the Saffir-Simpson number
+  behind it (`ssnum`, always written even at 0, or the stale forecast hour's own
+  number survives underneath it), the feed's wind (`maxwind`), and clears
+  `tcdvlp`, whose words describe an analysis hour the storm has left. The newest
+  published past point is the FALLBACK, for a source that publishes positions
+  and no classification with them. Identity fields (`basin`, `stormnum`,
+  `idp_source`, `advisnum`, `_stormId`) ride through from the hour it replaces,
+  so grouping, tap targets and label placement are unchanged. It is stamped
+  `_now: true`.
+- **Why the record lost that job (2026-08-31).** It held it until Five was drawn
+  in the Gulf as an ungraded teal dot with no letters, directly under a panel
+  reading "Tropical Depression". Both halves were reading NHC honestly and NHC
+  was saying two things: the storm feed had it classified `TD` at 30 kt at
+  18:00Z, while the newest best-track fix still said `stormtype: "LO"` — a low —
+  at 12:00Z with no classification words at all. The record's classification
+  lags its own positions, and this dot is not a record position: it is the
+  feed's, planted here because the feed is fresher. Colouring it from a layer
+  six hours behind its own coordinates was the mismatch. The panel reads
+  `storm.nature` and `storm.category`; the ring now reads the same two published
+  facts from the same hour, so the two can no longer disagree because one is
+  lagging. That is the whole claim: `categoryColor` and `trackPointReading`
+  still weigh those facts in opposite orders, and they part company only on
+  code/wind combinations that contradict each other — which NHC does not
+  publish. Left alone deliberately; see the file header.
 - **`FORECAST_NOW.expiryGraceMs` is one hour**, shorter than the shortest gap
   between published taus (12 h) so it can never keep two expired hours alive,
   and longer than any poll interval so the decision is stable across a refresh.
