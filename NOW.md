@@ -69,38 +69,24 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> THE SEASON CLOCK'S SCRUBBER IS ON GLASS FOR THE FIRST TIME. §57.67g IS THE
-AS-BUILT ACCOUNT — READ THAT, NOT THIS. <==** Slice C of step 10. Open the
-archive, tick a storm or four, and there is a ▶ at the top of the control
-cluster. Press it: the caption pill turns into a scrubber, and dragging it grows
-and shrinks the season under a date. Press ■ to put it all back. **No motion yet
-— slice D is the timer.**
+**==> SLICE C OF THE SEASON CLOCK IS CONFIRMED ON GLASS, 2026-08-31. AARON:
+"WORKS." NOTHING HERE IS WAITING ON HIM. <==** The FAB, the scrubber, the date
+readout, and the wind footprint growing with the storm it belongs to.
+**§57.67g, §57.67h and §57.67i are the as-built accounts — read those, not
+this.** Five things were put up for judgement and all five were accepted,
+including the three flagged as most likely to come back wrong: the two-row pill
+being wider than the other two, the play control sitting above recentre rather
+than below it, and the near-empty globe at the far left of the timeline.
+**All three are settled by acceptance and should not be reopened without new
+evidence.**
 
-**Five things to judge, and items 1 and 3 are the ones most likely to be
-wrong:**
-
-1. **The pill is two rows now — a date over a slider — and it is wider than the
-   other two pills.** A caption lozenge sized to its words would have left the
-   slider about a hundred pixels on a phone. If it reads as a panel rather than
-   as a pill, the lever is the date: dropping the year and the "UTC" would fit
-   it beside the slider on one row.
-2. **The play/stop marks are fixed** — stroked line art at the cluster's own
-   1.7 weight, centred, and both in one grid cell. Two rounds of glass on this
-   one: wrong colour and size first, then not centred, and the second turned out
-   to be a comment in `seasons.css` closing early and silently eating the rule
-   that stacks them. Two new gates close that hole (§57.67g). Just confirm it
-   looks right now.
-3. **The ▶ sits at the TOP of the cluster, above recentre.** Aaron's call was
-   "above the location button" and in the archive the stack is recentre /
-   storms / settings, so that is where it went. If he meant below recentre it is
-   a one-line move.
-4. **At the far left the globe is nearly empty** — the storm that opens the
-   timeline stands on one dot and the rest have not happened. That is what the
-   record says and §57.67g explains why it was not adjusted, but it is the first
-   thing a reader sees after pressing play and it needs to not read as broken.
-5. **Focus a storm mid-scrub.** Its wind footprint now grows with it instead of
-   showing the whole lifetime shape under a half-drawn track. The footprint
-   trails the head by up to one leg, deliberately.
+**THE PART WORTH KEEPING IS NOT THE BUTTON.** It took two rounds of glass, and
+the second was a comment in `seasons.css` closing early and silently eating the
+rule that centres the marks — with `css-orphan-check`, `type-scale-check`,
+`selector-contract-check` and `check-syntax` all staying green, measured by
+reintroducing the fault. `css-structure-check` and `seasons-clock-check` close
+that hole and the hook is 17 checks now. **CSS has no `SyntaxError`: what goes
+missing is never the line you broke, it is the rule after it.**
 
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
