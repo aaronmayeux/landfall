@@ -441,11 +441,11 @@ real home is the other row carrying the same section number.
 | `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10754 |
 | `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10755-10794 |
 | `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10795-10856 |
-| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10857-10939 |
-| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10940-10969 |
-| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10970-11044 |
-| `57.67m` | &nbsp;&nbsp;&nbsp;&nbsp;The scrubber pill ran under the control cluster | `SPEC-SEASONS-BUILD.md` | 11045-11089 |
-| `57.67n` | &nbsp;&nbsp;&nbsp;&nbsp;The pause mark is filled, and it is the cluster's one exception | `SPEC-SEASONS-BUILD.md` | 11090-11130 |
+| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10857-10947 |
+| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10948-10977 |
+| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10978-11052 |
+| `57.67m` | &nbsp;&nbsp;&nbsp;&nbsp;The scrubber pill ran under the control cluster | `SPEC-SEASONS-BUILD.md` | 11053-11097 |
+| `57.67n` | &nbsp;&nbsp;&nbsp;&nbsp;The pause mark is filled, and it is the cluster's one exception | `SPEC-SEASONS-BUILD.md` | 11098-11138 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -461,7 +461,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 639,123 | 168 |
+| `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 194,909 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

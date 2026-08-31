@@ -10856,6 +10856,14 @@ Both the code and this section say plainly that nothing exercises it.
 
 #### 57.67j Slice D — press play — as built
 
+**==> CONFIRMED ON GLASS, 2026-08-31. AARON: "EVERYTHING LOOKS AND WORKS
+GREAT." <==** Every item put up for judgement was accepted, including the three
+flagged as most likely to come back wrong: the pace at a day a second, the pill
+no longer being centred where the other two are (§57.67m), and the clock pausing
+rather than catching up when the page goes away. **All three are settled by
+acceptance and should not be reopened without new evidence.** The pause mark
+took a second round and §57.67n is that.
+
 **The timer and the play/pause control, driving the position slice C already
 proved.** `seasons/clock-playback.js` is new, `seasons/clock-control.js` grows
 the play state, and `seasons/seasons.css` plus `ui/panels.css` carry the two

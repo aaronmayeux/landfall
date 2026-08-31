@@ -69,34 +69,6 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**==> SLICE D OF THE SEASON CLOCK IS ON `main` AND IS WAITING ON A PHONE. <==**
-Press play and the season runs at a day a second. **§57.67j, §57.67k and §57.67l
-are the as-built accounts — read those, not this.** Slice C is confirmed and
-settled; nothing under this is a suspect if the clock is wrong.
-
-**WHAT TO JUDGE, in the order it is most likely to come back wrong:**
-
-1. **The pace.** A day a second, so a full season is about three minutes. Does it
-   read as movement or as a slideshow? §57.35 fault 3's dial is
-   `clockStepsPerSecond` and its instruction is fewer steps, never a smaller
-   feature.
-2. **Whether it holds frame rate on the phone at all.** Ten geometry pushes a
-   second across three archive layers. No sandbox number means anything here.
-3. **The pause mark.** Two bars where the stop square was. It should read the
-   same size and weight as the four buttons under it — that pairing was wrong
-   once already and took two rounds of glass.
-4. **The ✕ in the pill, and the pill's right edge.** It ran under the control
-   cluster on the first build and the gear was painted over the ✕; the pill now
-   stops 8px short of the cluster on every phone width and is no longer centred
-   (§57.67m). The other two pills still are — check the two do not read as
-   misaligned when the clock engages.
-5. **Space.** With focus on the globe, on a roster row, and on nothing.
-
-**AND THE ONE THING MOST LIKELY TO NEED A DIAL:** the clock pauses when the page
-goes away and does NOT resume by itself. Lock the phone mid-season and come back.
-If standing still is the wrong answer there, the alternative is a per-tick
-catch-up cap and §57.67j says so.
-
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
 same reason — a different layer from the ones slices C, D and E own. §57.67h
