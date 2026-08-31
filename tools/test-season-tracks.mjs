@@ -35,6 +35,8 @@ const eq = (what, got, want) => ok(
 );
 
 const { parseHurdat2 } = await import('../lib/hurdat.js');
+const { clockSpan, clockFrameAt, stormGrades } = await import('../lib/season-clock.js');
+const { categoryColor } = await import('../lib/category.js');
 const { stormFacts } = await import('../lib/season-facts.js');
 const { CATEGORY_COLOR, ARCHIVE_GEO } = await import('../config/tokens.js');
 const { SEASONS } = await import('../config/constants.js');
@@ -465,6 +467,174 @@ const seasonOf = (basin, year) => {
   clearSeasonTracks(bare);
   ok('pushing to a map with no source is a no-op, not a crash', true);
   pass++;
+}
+
+/* ---------------------------------------------------------------------------
+ * 9. ==> THE CLOCK COLOURS THE TRAIL PER FIX. §57.67 slice E, call 3. <==
+ *
+ * Peak is still the answer with no cut in hand, and that is asserted first,
+ * because the whole claim of this slice is that it did not reverse a decision
+ * that is still correct — it added an exception the clock switches on.
+ * ------------------------------------------------------------------------ */
+{
+  const al2005 = seasonOf('atlantic', 2005);
+  const katrina = al2005.find((st) => st.name === 'KATRINA');
+  const e = [entry(katrina)];
+  const span = clockSpan(e);
+  const cutAt = (t) => new Map(
+    clockFrameAt(e, t).storms.map((st) => [st.id, st.state])
+  );
+
+  const map = fakeMap();
+  ensureSeasonTracks(map, 'storm-dot-planet');
+
+  setSeasonTracks(map, e);
+  const uncut = map.data().features;
+  eq('with no clock, one storm is still exactly one line', uncut.length, 1);
+  eq('and it still wears its PEAK colour, which is the archive default',
+    uncut[0].properties.color,
+    __internals.trackColor(stormFacts(katrina)));
+
+  /* ==> THE RUNS ARE FOUND BY SCANNING THE REAL RECORD, NEVER TYPED. <== The
+   * point of the run merge is that it is fewer pieces than fixes, and a typed
+   * number would go stale the day the grading rule changes — which it did on
+   * 2026-08-29 when the dots started reading the status column (§57.7f). */
+  const runs = __internals.colorRuns(katrina);
+  const grades = stormGrades(katrina);
+  ok(`Katrina holds ${runs.length} grades across ${grades.length} fixes`,
+    runs.length > 1 && runs.length < grades.length);
+  eq('the first run opens on her first fix', runs[0].fix, 0);
+  ok('every run opens later than the one before it',
+    runs.every((r, i) => i === 0 || r.fix > runs[i - 1].fix));
+  ok('and no two neighbouring runs are the same colour, which is the whole '
+    + 'saving', runs.every((r, i) => i === 0 || r.color !== runs[i - 1].color));
+
+  /* ==> AND EVERY RUN'S COLOUR IS THE GRADE AT THE FIX IT OPENS ON. <== The
+   * assertion that would catch an off-by-one between the grade list and the fix
+   * list — a track wearing yesterday's category all the way down. */
+  let matched = 0;
+  for (const r of runs) {
+    const g = grades[r.fix];
+    if (r.color === categoryColor(g.category, g.nature, null)) matched++;
+  }
+  eq('every run wears the grade of the fix it opens on', matched, runs.length);
+
+  setSeasonTracks(map, e, cutAt(span.to));
+  const pieces = map.data().features;
+  eq('with the clock engaged she is drawn as one line per run',
+    pieces.length, runs.length);
+  eq('in the same order, in the same colours',
+    pieces.map((f) => f.properties.color), runs.map((r) => r.color));
+  ok('and every piece still carries her id, so focus and the tap test still '
+    + 'find her', pieces.every((f) => f.properties.id === katrina.id));
+
+  /* ==> THE PIECES MEET. <== A gap at a category change is exactly where the
+   * reader is looking, so each piece's last coordinate is the next one's
+   * first. Asserted on the coordinates rather than on the vertex numbers,
+   * because the coordinates are what MapLibre draws. */
+  let joins = 0;
+  for (let i = 1; i < pieces.length; i++) {
+    const before = pieces[i - 1].geometry.coordinates.at(-1);
+    const after = pieces[i].geometry.coordinates[0];
+    if (before[0] === after[0] && before[1] === after[1]) joins++;
+  }
+  eq('every piece starts exactly where the one before it ended',
+    joins, pieces.length - 1);
+
+  /* ==> THE LABEL RIDES THE FIRST PIECE AND ONLY THE FIRST. <== Otherwise
+   * MapLibre sets her name along all five of them and the globe says KATRINA
+   * five times where it said it once. */
+  eq('the first piece carries the label', pieces[0].properties.label, 'KATRINA');
+  eq('and not one of the others does',
+    pieces.slice(1).filter((f) => f.properties.label !== null).length, 0);
+
+  /* ==> A ONE-COLOUR STORM IS ONE PIECE, WHICH IS NOT A SPECIAL CASE. <== It
+   * falls out of the run merge, and it is worth an assertion because it is the
+   * shape the 19th-century record is full of: no wind readings at all, so no
+   * grade changes to cut at. */
+  const flat = seasonOf('atlantic', 1851).find((st) => st.points.length > 3);
+  const fe = [entry(flat)];
+  const fSpan = clockSpan(fe);
+  setSeasonTracks(map, fe, new Map(
+    clockFrameAt(fe, fSpan.to).storms.map((st) => [st.id, st.state])
+  ));
+  const flatRuns = __internals.colorRuns(flat);
+  eq(`${flat.id} holds one grade all the way through, so it is one line`,
+    map.data().features.length, flatRuns.length);
+  eq('and it kept its label', map.data().features[0].properties.label !== null, true);
+
+  clearSeasonTracks(map);
+}
+
+/* ---------------------------------------------------------------------------
+ * 10. ==> THE TIPS COME BACK OUT, WHICH IS WHAT THE HEAD STANDS ON. <==
+ * §57.67 slice E, and §57.67e is the measurement behind it.
+ * ------------------------------------------------------------------------ */
+{
+  const al2005 = seasonOf('atlantic', 2005);
+  const katrina = al2005.find((st) => st.name === 'KATRINA');
+  const e = [entry(katrina)];
+  const span = clockSpan(e);
+
+  const map = fakeMap();
+  ensureSeasonTracks(map, 'storm-dot-planet');
+
+  /* ==> THE MOMENT IS FOUND BY SCANNING, NOT PICKED, AND THE FIRST DRAFT OF
+   * THIS PROVED WHY. <== It was written on the halfway mark of her timeline,
+   * where the tip and the clock's own position happen to be the SAME POINT —
+   * so it compared a value with itself and would have stayed green with the
+   * whole rule deleted. That is §57.67d, §57.67f and §57.67i's finding for the
+   * fourth time, and the cure is the same one: scan for the moment that can
+   * actually tell the two answers apart. */
+  let at = span.from;
+  let off = 0;
+  for (let i = 0; i <= 200; i++) {
+    const t = span.from + (span.spanMs * i) / 200;
+    const st = clockFrameAt(e, t).storms[0].state;
+    if (!Number.isFinite(st.lon)) continue;
+    setSeasonTracks(map, e, new Map([[katrina.id, st]]));
+    const tip = map.data().features.at(-1)?.geometry.coordinates.at(-1);
+    if (!tip) continue;
+    const d = Math.hypot(tip[0] - st.lon, tip[1] - st.lat);
+    if (d > off) { off = d; at = t; }
+  }
+
+  const worst = new Map(clockFrameAt(e, at).storms.map((st) => [st.id, st.state]));
+  const tips = setSeasonTracks(map, e, worst);
+
+  ok('the push hands back a tip per drawn storm', tips.get(katrina.id) != null);
+
+  /* ==> IT IS THE LAST VERTEX OF THE DRAWN LINE, NOT THE CLOCK'S OWN POSITION.
+   * <== §57.67e: the clock interpolates straight between two fixes and the
+   * curve bends between them, so a head placed at the clock's point floats off
+   * its track on a recurve. This is the assertion that catches somebody
+   * "simplifying" it back. */
+  const drawn = map.data().features;
+  const lastPiece = drawn[drawn.length - 1].geometry.coordinates;
+  eq('and it is exactly where her drawn line ends',
+    tips.get(katrina.id), lastPiece.at(-1));
+
+  const state = worst.get(katrina.id);
+  ok(`==> AND THE TWO ANSWERS REALLY DO PART COMPANY — ${(off * 111).toFixed(1)} km `
+    + 'at the worst moment of Katrina\'s life, measured across 200 of them. <== '
+    + 'If they ever agree everywhere, the curve has stopped being a curve and '
+    + 'this whole rule is dead',
+    off > 0.01 && Math.hypot(
+      tips.get(katrina.id)[0] - state.lon,
+      tips.get(katrina.id)[1] - state.lat
+    ) === off);
+
+  /* An unborn storm draws no line, so it has no tip — and a head with no trail
+   * to stand on is exactly the case `season-head.js` falls back for. */
+  const early = new Map(clockFrameAt(e, span.from - 3_600_000).storms
+    .map((st) => [st.id, st.state]));
+  const noTips = setSeasonTracks(map, e, early);
+  eq('a storm that has not happened yet hands back no tip', noTips.size, 0);
+
+  eq('and pushing to a map with no source hands back an empty map, not null',
+    setSeasonTracks(fakeMap(), e).size, 0);
+
+  clearSeasonTracks(map);
 }
 
 /* ------------------------------------------------------------------------ */

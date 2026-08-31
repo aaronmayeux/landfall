@@ -112,6 +112,28 @@ const dotFixes = (s) => (s.points || []).filter((p) => Number.isFinite(p?.lat) &
 /** A cut built the way slice C will build it: one frame, keyed by id. */
 const cutAt = (entries, t) => new Map(clockFrameAt(entries, t).storms.map((s) => [s.id, s.state]));
 
+/* ==> A CUT TRACK IS SEVERAL FEATURES NOW, AND THESE TWO HELPERS ARE WHY THIS
+ * SUITE DID NOT HAVE TO BE REWRITTEN. §57.67 slice E. <== With a cut in hand
+ * `season-tracks.js` splits each storm into one line per Saffir-Simpson grade it
+ * held, so "the features" is no longer "the storms" and `features[0]` is no
+ * longer "the whole track". Every assertion below still means what it always
+ * meant — it just has to ask the question in these terms.
+ *
+ * `joined` puts a storm's pieces back together, dropping the vertex each piece
+ * SHARES with the one before it. That sharing is deliberate (`cutSegments`: a
+ * gap at a colour change is exactly where the reader is looking), so undoing it
+ * here is what makes the rejoined line comparable to an uncut one. */
+const idsIn = (data) => [...new Set(data.features.map((f) => f.properties.id))];
+const joined = (data, id) => {
+  const parts = data.features.filter((f) => f.properties.id === id);
+  const out = [];
+  for (const f of parts) {
+    const c = f.geometry.coordinates;
+    for (let i = out.length ? 1 : 0; i < c.length; i++) out.push(c[i]);
+  }
+  return out;
+};
+
 /* =========================================================================
  * 1. ==> NO CUT MEANS NOTHING MOVED. THE ONE ASSERTION SLICE B PROMISES. <==
  * ====================================================================== */
@@ -164,8 +186,31 @@ section('1. ==> WITH NO CUT THE PAYLOAD IS BYTE-IDENTICAL <==');
   const ended = JSON.stringify(a.data());
   clearSeasonTracks(a);
 
-  ok('a cut at the end of the season redraws every track whole, to the byte',
-    whole === ended);
+  /* ==> THE BYTES ARE NO LONGER IDENTICAL AND THAT IS SLICE E, NOT A
+   * REGRESSION. <== The geometry is untouched; the payload gained pieces,
+   * because a cut track wears the colours the storm actually wore (§57.67a call
+   * 3) and a MapLibre line carries one colour. So the assertion moved from
+   * "the same bytes" to the two things it was ever really claiming: the same
+   * storms, and the same line under them.
+   *
+   * **The byte-identity claim itself is NOT lost** — the block above still makes
+   * it, between no cut and a null cut, which is the case §57.67e's guarantee is
+   * actually about. */
+  const before = JSON.parse(whole);
+  const after = JSON.parse(ended);
+
+  eq('a cut at the end of the season still draws exactly the same storms',
+    idsIn(after).sort(), idsIn(before).sort());
+
+  let sameLine = 0;
+  for (const id of idsIn(before)) {
+    if (JSON.stringify(joined(after, id)) === JSON.stringify(joined(before, id))) sameLine++;
+  }
+  eq('and every one of their tracks rejoins to the identical line, vertex for '
+    + 'vertex — the split loses no geometry', sameLine, 6);
+
+  ok('and it really did split — the ended payload holds more features than storms',
+    after.features.length > before.features.length);
 }
 
 /* =========================================================================
@@ -325,8 +370,9 @@ section('3. ==> DEDUPE DROPS FIXES AND THE INDEX MUST NOT <==');
   const wholeTrack = JSON.stringify(map.data());
   clearSeasonTracks(map);
   setSeasonTracks(map, e, cutAt(e, span.to));
-  ok('at the last moment of his life KEONI draws his whole track',
-    JSON.stringify(map.data()) === wholeTrack);
+  eq('at the last moment of his life KEONI draws his whole track',
+    joined(map.data(), KEONI.id),
+    JSON.parse(wholeTrack).features[0].geometry.coordinates);
   clearSeasonTracks(map);
 }
 
@@ -341,9 +387,12 @@ section('4. A season accumulates — §57.23');
   const map = fakeMap('season-tracks');
   ensureSeasonTracks(map);
 
+  /* STORMS, not features — see `idsIn`. A storm drawn in four colours is still
+   * one storm on the globe, and counting features here would have made this
+   * assertion pass for the wrong reason the moment slice E landed. */
   const drawnAt = (t) => {
     setSeasonTracks(map, six, cutAt(six, t));
-    return map.data().features.length;
+    return idsIn(map.data()).length;
   };
 
   /* ==> BEFORE THE FIRST STORM THE GLOBE IS GENUINELY EMPTY. <== The reverted
@@ -366,8 +415,7 @@ section('4. A season accumulates — §57.23');
    * than a season being drawn. */
   const lenAt = (t) => {
     setSeasonTracks(map, [entry(KATRINA)], cutAt([entry(KATRINA)], t));
-    const f = map.data().features[0];
-    return f ? f.geometry.coordinates.length : 0;
+    return joined(map.data(), KATRINA.id).length;
   };
   const kSpan = clockSpan([entry(KATRINA)]);
   const lens = [];
@@ -376,9 +424,9 @@ section('4. A season accumulates — §57.23');
     lens.every((n, i) => i === 0 || n >= lens[i - 1]));
 
   setSeasonTracks(map, [entry(KATRINA)], cutAt([entry(KATRINA)], kSpan.from + kSpan.spanMs / 2));
-  const half = map.data().features[0].geometry.coordinates;
+  const half = joined(map.data(), KATRINA.id);
   setSeasonTracks(map, [entry(KATRINA)], cutAt([entry(KATRINA)], kSpan.to));
-  const full = map.data().features[0].geometry.coordinates;
+  const full = joined(map.data(), KATRINA.id);
   eq('and the half-drawn track starts exactly where the finished one does',
     half[0], full[0]);
   clearSeasonTracks(map);
@@ -628,13 +676,13 @@ section('8. ==> THE DATELINE AND THE PRIME MERIDIAN <==');
   ensureSeasonTracks(map);
 
   setSeasonTracks(map, e, cutAt(e, span.to));
-  const full = map.data().features[0].geometry.coordinates;
+  const full = joined(map.data(), KEONI.id);
   const crossed = full.findIndex((c) => c[0] < -180);
   ok(`KEONI's drawn line really does run past -180 (vertex ${crossed} of ${full.length})`,
     crossed > 0);
 
   setSeasonTracks(map, e, cutAt(e, span.from + span.spanMs * 0.8));
-  const late = map.data().features[0].geometry.coordinates;
+  const late = joined(map.data(), KEONI.id);
   ok('a cut taken after he crosses is past the seam too', late.at(-1)[0] < -180);
   eq('and it still starts exactly where the finished line starts', late[0], full[0]);
   ok('every vertex of it but the tip is the finished line, in order',

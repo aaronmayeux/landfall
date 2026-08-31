@@ -7786,4 +7786,75 @@ export const SEASONS = Object.freeze({
    * thousand of them would make the arrows useless.
    */
   clockScrubSteps: 1000,
+
+  /**
+   * The zoom the clock's head starts drawing at. §57.67 slice E.
+   *
+   * ==> IT IS THE ZOOM THE 3D MESH'S OWN SPIRAL HAS FINISHED FADING OUT AT, AND
+   * IT IS DERIVED FROM THAT RATHER THAN CHOSEN. <== `SPEC-MAP.md` §9.13 is
+   * blunt about this: ONE engine draws the spiral and it is the mesh. MapLibre's
+   * copy of it was deleted on 2026-07-24 because the two bands overlapped for
+   * 1.6 zoom levels and drew one mark twice, at slightly different projected
+   * positions and sizes — a smear that was structural rather than tunable.
+   *
+   * The clock's head is a MapLibre symbol, so it has to start ABOVE that band or
+   * the same fault comes back wearing a different hat: below this zoom the mesh
+   * is still stamping each archive storm's mark on its BIRTHPLACE, and a second
+   * spiral at the head would be two marks per storm meaning two different
+   * things with nothing on screen to tell them apart.
+   *
+   * `fade.nodes[1]` is where the sprite reaches zero opacity in dive PHASE, and
+   * phase is `(zoom − zSpace) / (zHandoff − zSpace)`, so this reads back as a
+   * zoom: 2.0 + 0.60 × 3.0 = 3.8. Written as the arithmetic and not as `3.8`,
+   * because a hand that retunes the dive band must move this with it.
+   *
+   * **THE COST IS STATED RATHER THAN HIDDEN:** out at the space floor a playing
+   * season has no head at all. The tracks still grow, but the cage's mountains
+   * and birthplace marks still show every ticked storm whole — the gap NOW.md
+   * already records against `buildSeasonMeshPoints`. Aaron's call, 2026-08-31:
+   * leave the cage alone this pass.
+   */
+  clockHeadMinZoom: DIVE.zSpace + (DIVE.zHandoff - DIVE.zSpace) * DIVE.fade.nodes[1],
+
+  /**
+   * How many REAL seconds the head takes to turn all the way round.
+   *
+   * ==> IT IS A LEGIBILITY NUMBER AND NOT A MEASUREMENT, WHICH IS WORTH SAYING
+   * OUT LOUD IN A FILE WHERE EVERY OTHER NUMBER IS MEASURED. <== A real
+   * hurricane's eyewall goes round in an hour or two, and the clock plays a
+   * storm day every real second — so an honest rotation would be twenty-odd
+   * turns a second, which is a strobe. The spin says "this is a live cyclone,
+   * and this is which way it turns"; it does not claim a rate.
+   *
+   * ==> THE MARK HAS FOUR ARMS, SO IT REPEATS EVERY 90° AND READS AS FOUR TURNS
+   * PER REVOLUTION. <== Six real seconds a revolution is therefore an arm
+   * passing every 1.5 seconds, which is slow enough to read as turning rather
+   * than as spinning. At `clockStepsPerSecond` 10 that is 6° a step.
+   *
+   * **It is spent in STORM time, not real time**, through `toStormMs` like every
+   * other conversion in the clock — so dragging the scrubber turns the head too,
+   * and the angle at a given moment is the same however the reader got there.
+   * Nothing spins while the clock is paused, because nothing is pushed.
+   *
+   * **This is the dial if it reads wrong on glass**, in either direction: larger
+   * is slower, and `lib/season-clock.js` answers `spinDeg` from it alone.
+   */
+  clockGlyphSpinSeconds: 6,
+
+  /**
+   * The head's texture, in pixels. §57.67 slice E.
+   *
+   * Smaller than `SIZE.glyphTexturePx` (256), which the 3D sprite uses, and the
+   * reason is that these live in MapLibre's sprite ATLAS rather than as one
+   * texture: there is one image per category colour per hemisphere, so the
+   * archive can ask for eight of them in a season. At 256 that is 2 MB of atlas
+   * for a mark that draws at `SIZE.stormDot3dPx` — 40 CSS pixels — and at 128 it
+   * is 512 KB.
+   *
+   * 128 into 40 is a 3.2× downscale, which is still above the 3× a phone screen
+   * asks for, so the mark arrives sharp. Below about 96 the arms start breaking
+   * up at the same downscale, which is the fault `SIZE.glyphArmWeight` exists to
+   * fix and this must not reintroduce.
+   */
+  clockHeadTexturePx: 128,
 });

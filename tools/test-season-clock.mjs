@@ -327,6 +327,44 @@ ok(stormStateAt(southern, 1000).spin === -1,
   'a southern-hemisphere storm spins clockwise');
 ok(__internals.spinSign(0) === 1, 'the equator resolves rather than returning nothing');
 
+/* ==> AND HOW FAR ROUND IT HAS TURNED. §57.67 slice E, Aaron's call 4. <== The
+ * head is the app's own spiral and it turns while the season plays. The angle
+ * is arithmetic over the moment and the sign, computed here because this is the
+ * only file that knows what time it is — `map/layers/season-head.js` is handed a
+ * state, never a moment. */
+const spun = stormStateAt(KATRINA, kPts[0].time);
+ok(spun.spinDeg === 0,
+  'a storm at its own first fix has not turned at all yet');
+
+/* ==> ONE PERIOD OF STORM TIME IS ONE FULL TURN, AND IT IS ASKED FOR THROUGH
+ * `toStormMs` RATHER THAN MULTIPLIED OUT HERE. <== The ratio is applied in one
+ * file and one file only, and the reverted build of 2026-08-26 is what a
+ * conversion written out by hand at a call site costs. */
+const turnMs = toStormMs(SEASONS.clockGlyphSpinSeconds * 1000);
+const afterOne = stormStateAt(KATRINA, kPts[0].time + turnMs);
+ok(Math.abs(afterOne.spinDeg - spun.spinDeg) < 1e-9,
+  `one turn is ${SEASONS.clockGlyphSpinSeconds} real seconds of storm time, and the mark comes back to where it started`);
+
+const quarter = stormStateAt(KATRINA, kPts[0].time + turnMs / 4);
+ok(Math.abs(quarter.spinDeg - 270) < 1e-9,
+  '==> A QUARTER TURN NORTH OF THE EQUATOR IS 270°, NOT 90°. <== `icon-rotate` '
+  + 'is degrees CLOCKWISE and a northern cyclone turns counter-clockwise, so '
+  + 'the angle runs DOWN — wrapped back inside one turn rather than left negative');
+
+ok(__internals.spinDegAt(turnMs / 4, 0, -1) === 90,
+  'and a southern one turns the other way, which is the whole reason `spin` exists');
+
+/* Every answer is inside one turn. A renderer handed 4,000° would draw it
+ * correctly and nothing reading a debug dump could tell it was fine. */
+const angles = [];
+for (let i = 0; i <= 40; i++) {
+  const st = stormStateAt(KATRINA, kPts[0].time + (turnMs * i) / 7);
+  if (Number.isFinite(st.spinDeg)) angles.push(st.spinDeg);
+}
+ok(angles.length > 30 && angles.every((d) => d >= 0 && d < 360),
+  `${angles.length} sampled angles and every one of them is inside 0–360`);
+ok(before.spinDeg === null, 'an unborn storm has no angle at all');
+
 /* ========================================================================= */
 section('8. Heading — which way the head is pointing');
 
