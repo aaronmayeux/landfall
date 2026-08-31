@@ -69,10 +69,20 @@
  * six-hourly fix. It takes the smaller `SEASONS.trackMaxVertices` budget: a
  * season can put thirty tracks on screen where the live globe has one.
  *
- * ==> AND THE RESULT IS MEMOISED PER STORM. <== Ticking is a whole-set push, so
- * without this every tick re-splines every storm already on the globe. The memo
- * is PRUNED to the ids in each push rather than grown, so browsing ten seasons
- * in one visit holds one season's curves, not ten.
+ * ==> AND THE RESULT IS MEMOISED PER STORM, WITH ITS FIX-TO-VERTEX MAP BESIDE
+ * IT. <== Ticking is a whole-set push, so without this every tick re-splines
+ * every storm already on the globe. The memo is PRUNED to the ids in each push
+ * rather than grown, so browsing ten seasons in one visit holds one season's
+ * curves, not ten.
+ *
+ * ==> THE SEASON CLOCK CUTS THAT CACHED CURVE AND NEVER REBUILDS IT. §57.67
+ * SLICE B. <== `setSeasonTracks` takes an optional cut — the clock's answer for
+ * every ticked storm — and draws each track only as far as the storm had got.
+ * The arithmetic is `season-cut.js`'s and it is shared with the dots next door,
+ * because a line and its dots disagreeing about what time it is reads as a
+ * rendering fault rather than as time passing. With no cut every track draws
+ * whole and the payload is byte-identical to what this file pushed before the
+ * clock existed; `tools/test-season-cut.mjs` compares the two as strings.
  *
  * ==> AND IT DRAWS `lonU`, NOT `lon`. <== `lib/hurdat.js` carries both on every
  * point: `lon` is what NOAA published, inside ±180, and `lonU` is the
@@ -92,8 +102,9 @@ import { palette } from '../../config/theme.js';
 import { SEASONS, ZOOM } from '../../config/constants.js';
 import { categoryColor } from '../../lib/category.js';
 import { stormDisplayName } from '../../lib/season-names.js';
-import { smoothPath } from '../../lib/trackline.js';
+import { smoothPathIndexed } from '../../lib/trackline.js';
 import { gs } from '../theme-state.js';
+import { cutCurve, cutStateFor } from './season-cut.js';
 import { focusOpacity } from './season-focus.js';
 
 const SOURCE = 'season-tracks';
@@ -111,10 +122,16 @@ const EMPTY = { type: 'FeatureCollection', features: [] };
  *  `clearSeasonTracks`, which is the leave path. */
 let focusId = null;
 
-/** Smoothed coordinates, keyed on storm id. See the header: ticking is a
- *  whole-set push, so this is what stops every tick re-splining every storm
- *  already on the globe. Pruned to the pushed set on every push, so it can
- *  never hold more than what is currently drawn. */
+/** Smoothed coordinates AND the fix-to-vertex map beside them, keyed on storm
+ *  id. See the header: ticking is a whole-set push, so this is what stops every
+ *  tick re-splining every storm already on the globe. Pruned to the pushed set
+ *  on every push, so it can never hold more than what is currently drawn.
+ *
+ *  ==> THE INDEX IS MEMOISED WITH THE CURVE BECAUSE IT IS THE SAME FACT. <==
+ *  §57.67 slice B. It says which vertex each recorded fix landed on, and the
+ *  clock reads it ten times a second to cut the curve at the head. Computed
+ *  once with the curve and stored beside it, so a running clock costs two array
+ *  reads per storm per step and never a re-spline (§57.35 fault 3). */
 const curves = new Map();
 
 /**
@@ -142,21 +159,36 @@ function trackColor(facts) {
  * real — some 19th-century entries are one observation — and MapLibre rejects
  * a LineString with one coordinate, so it is dropped here with the reason
  * visible rather than thrown at the renderer. Step 6 gives it a dot.
+ *
+ * ==> WITH A CLOCK STATE IN HAND IT DRAWS ONLY AS FAR AS THE HEAD. <== §57.67
+ * slice B. The curve and its index are memoised together and neither is touched
+ * by the cut — `cutCurve` slices the cached array and interpolates one final
+ * vertex, so a season playing at ten steps a second re-splines nothing.
+ *
+ * @param {object} storm
+ * @param {object} facts
+ * @param {object|null} [state] the clock's answer for this storm, or null for
+ *   "no clock" — in which case the whole track draws, exactly as it always has
  */
-function trackFeature(storm, facts) {
+function trackFeature(storm, facts, state = null) {
   const raw = (storm?.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lonU))
     .map((p) => [p.lonU, p.lat]);
 
   if (raw.length < 2) return null;
 
-  /* `smoothPath` returns fewer than three points UNCHANGED rather than padded,
-   * so a two-fix storm stays the straight segment it genuinely is. */
-  let coords = curves.get(storm.id);
-  if (!coords) {
-    coords = smoothPath(raw, SEASONS.trackMaxVertices);
-    curves.set(storm.id, coords);
+  /* `smoothPathIndexed` returns fewer than three points UNCHANGED rather than
+   * padded, so a two-fix storm stays the straight segment it genuinely is —
+   * and its index is the identity, which for an uncurved path is the truth
+   * rather than a fallback. */
+  let memo = curves.get(storm.id);
+  if (!memo) {
+    memo = smoothPathIndexed(raw, SEASONS.trackMaxVertices);
+    curves.set(storm.id, memo);
   }
+
+  const coords = cutCurve(memo.curve, memo.index, state);
+  if (!coords) return null;
 
   return {
     type: 'Feature',
@@ -306,18 +338,36 @@ function nameOpacity(id) {
  * behind it: the archive's storms are already downloaded, so an empty globe
  * cannot mean "the source failed".
  *
+ * ==> AND THE CLOCK RIDES THIS SAME CALL RATHER THAN GETTING ONE OF ITS OWN.
+ * <== §57.67 slice B. A separate `setSeasonTrackMoment` would be a second call
+ * the caller could forget, and forgetting it leaves the globe showing a whole
+ * season under a scrubber that says it is the 3rd of September — the silent
+ * wrong answer this file's whole-set rule exists to make impossible. The cut is
+ * an argument to the push, so the tracks and the moment arrive together or not
+ * at all.
+ *
+ * **With no cut the output is byte-for-byte what it was before the clock
+ * existed**, and `tools/test-season-cut.mjs` asserts exactly that by pushing a
+ * season twice and comparing the two payloads as strings.
+ *
  * @param {object} map
  * @param {Array<{storm:object, facts:object}>} selected
+ * @param {Map<string, object>|null} [cut] storm id → the clock's state for it,
+ *   as built from `clockFrameAt`. Omitted, every track draws whole.
  */
-export function setSeasonTracks(map, selected = []) {
+export function setSeasonTracks(map, selected = [], cut = null) {
   const src = map?.getSource?.(SOURCE);
   if (!src) return;
 
   const features = [];
   const live = new Set();
   for (const entry of selected) {
-    const f = trackFeature(entry?.storm, entry?.facts);
+    const f = trackFeature(entry?.storm, entry?.facts, cutStateFor(cut, entry?.storm?.id));
     if (f) features.push(f);
+    /* ==> THE MEMO IS KEYED ON WHAT WAS TICKED, NOT ON WHAT WAS DRAWN. <== A
+     * storm the clock has not reached yet produces no feature, and pruning on
+     * the features would throw its curve away and re-spline it the instant it
+     * was born — every storm, once per season, at the worst possible moment. */
     if (entry?.storm?.id) live.add(entry.storm.id);
   }
 

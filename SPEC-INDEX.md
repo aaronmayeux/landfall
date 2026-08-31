@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 419 numbered headings.
+Covering 11 files, 421 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -436,6 +436,8 @@ real home is the other row carrying the same section number.
 | `57.67b` | &nbsp;&nbsp;&nbsp;&nbsp;The slices | `SPEC-SEASONS-BUILD.md` | 10325-10355 |
 | `57.67c` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A — as built | `SPEC-SEASONS-BUILD.md` | 10356-10408 |
 | `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10409-10436 |
+| `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10437-10542 |
+| `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10543-10602 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -451,8 +453,8 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 594,710 | 158 |
+| `SPEC-SEASONS-BUILD.md` | 605,193 | 160 |
 | `SPEC-UI.md` | 243,428 | 18 |
-| `SPEC.md` | 191,891 | 15 |
+| `SPEC.md` | 192,638 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

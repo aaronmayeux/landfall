@@ -67,6 +67,7 @@ The newest is picked by the last season in the filename, never by sorting.
 |---|---|---|
 | `—` | nothing cut | No `-99` wind value anywhere in this file. |
 | `CP011957` | 48 rows | Carries an EAST longitude. A parser that assumes W and negates blindly puts this storm on the wrong side of the planet. |
+| `CP011993` | 83 rows | KEONI 1993 — reports the same position twice at five points EARLY in his track, so `dedupe()` in `lib/trackline.js` drops five fixes with 72 behind them. §57.67f: no other sample loses a fix that way, and a storm whose repeats are in its TAIL does not catch the bug. Cut 2026-08-31. |
 | `—` | nothing cut | No `R` record identifier in this file. |
 | `EP012021` | 17 rows | The first storm with a real radius of maximum wind (field 21). §57.6 puts that cliff at 2021. |
 

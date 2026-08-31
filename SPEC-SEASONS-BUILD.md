@@ -10433,3 +10433,169 @@ PART WORTH KEEPING. <==**
    leaves the suite green.** It is kept as a floor under step 13 and both the
    code and the test now say plainly that nothing exercises it — a comment
    claiming otherwise would be a false statement about coverage.
+
+#### 57.67e Slice B — as built
+
+**The cut arithmetic is its own file, `map/layers/season-cut.js`**, and it is
+the same argument `season-focus.js` makes next door about a different rule: the
+tracks and the dots are siblings that have to agree, and putting the rule in
+either would make the other import it. A line growing out from under a full set
+of dots reads as a rendering fault rather than as time passing.
+
+**`setSeasonTracks` and `setSeasonPoints` each take an optional third argument**
+— a `Map` of storm id to the clock's state, built from `clockFrameAt`. **It
+rides the whole-set push rather than getting a call of its own**, for the reason
+the set does: a moment that can be pushed separately is a moment that can be
+forgotten, and the globe would then show dots from one time under a line from
+another.
+
+**==> `lib/trackline.js` NOW EXPORTS `smoothPathIndexed`, WHICH IS THE MAP
+`smoothPath` ALREADY BUILT AND THREW AWAY. <==** `spline` has always returned an
+`index` beside its curve — `smoothTracks` needs it to cut the joined path at the
+forecast's first fix. The new export widens that map to cover the points the two
+filters drop and hands it out. `smoothPath` is now a one-line wrapper around it,
+so byte-identical output is structural rather than promised.
+
+**Searching the curve for a fix instead would have been a float comparison.** A
+centripetal Catmull-Rom passes through its knots in the maths; in `double` it
+passes through them to within a rounding error that varies with latitude,
+because `spline` scales longitude by `cos(lat)` going in and divides it back out
+coming out. Matching on equality would work on most storms and fail silently on
+some.
+
+**==> THE DEDUPE TRAP IS THE ONE THING IN THIS SLICE THAT WOULD HAVE SHIPPED.
+<==** `smoothPath` runs a storm's fixes through `dedupe()` before splining, which
+drops any fix sitting on top of the one before it. **Measured across the whole
+shipped archive: 130 of 3,266 storms lose at least one fix that way, up to nine
+in a single storm (AL061862).** An index built over the deduped list and read
+with a raw fix number puts those storms' heads up to nine fixes behind the
+truth, and every other storm on the globe looks perfect.
+
+**Three rules the cut follows, and all three trace back to the revert:**
+
+1. **An unborn storm draws nothing, and that now includes the one-record dot.**
+   This is the single place the clock overrules `season-points.js`'s §5
+   instinct, which argues at length that a standing dot is such a storm's entire
+   presence on the globe and withholding it is silence. A storm that has not
+   happened yet is not being silenced; it is being reported accurately. It
+   appears the moment the clock reaches it and never leaves.
+2. **A storm missing from the cut draws WHOLE, not not-at-all.** `clockFrameAt`
+   puts every ticked storm in its answer including ones with no usable fix, so a
+   gap means the roster and the globe have drifted apart — a bug either way, and
+   the only question is which failure a reader gets to see. A storm drawn whole
+   while its neighbours grow is visibly odd and points at the cause. A storm
+   that quietly disappears is the reverted build's empty world.
+3. **The trail's last vertex is interpolated, not rounded to.** At
+   `clockDaysPerSecond: 1` a six-hourly leg is a quarter of a real second and
+   can hold a dozen vertices, so a rounded tip would jump several at a time
+   while the clock ticked smoothly underneath. One lerp per storm per step is
+   the whole cost of not doing that, and the cached curve is untouched.
+
+**The head rides the CURVE, not the straight line between fixes.**
+`lib/season-clock.js` also answers a `lon`/`lat`, interpolated linearly between
+the two fixes either side of the moment, and that point is not on the drawn
+curve — the curve bends between fixes and a lerp does not. Cutting in vertex
+space keeps the end of the trail exactly on the line the reader can see. The two
+answers agree at every recorded fix, which is where the curve and the record
+touch. **Slice E has to choose one of them for the glyph and should choose the
+trail's own last vertex**, or the head will float off its track on a recurve.
+
+**==> THE THREE FIX LISTS AGREE, AND THAT IS MEASURED RATHER THAN ASSUMED. <==**
+`drawnFixes` is counted over the clock's filter (lat, `lonU` and time) and read
+as a position in the track's (lat and `lonU`) and the dot's (lat and `lon`).
+**Across the whole shipped archive — 6,532 storms, 175,262 fixes — the three
+never once differ.** The clamp in `cutDrawnFixes` therefore does nothing today;
+it is one comparison against step 13 filling those columns differently.
+
+**==> THE TWO SEAMS ARE CLEAN, AND THE REASON IS STRUCTURAL RATHER THAN
+LUCKY. <==** Aaron's ask, 2026-08-31: the antimeridian and the prime meridian
+have already broken geometry on the live globe once — `SPEC-MAP.md` §7.12 fault
+3, Lala's wind swath drawn as a green ring around the planet — and the cut is a
+new place for it to come back, because it INTERPOLATES, and interpolating across
+a ±180 jump puts the tip of the trail on the far side of the world.
+
+It does not come back, because nothing on the cut's path is ever a wrapped
+longitude: the memo holds a curve built from `lonU`, the index points into that
+curve, and the lerp is between two ADJACENT vertices of it. **Measured on
+2026-08-31 by driving the cut across every seam-crossing storm in the archive —
+44 of them, 26 across the dateline and 18 across the prime meridian, at 61
+moments each, 2,640 cuts. Zero wraps. The largest longitude step any cut curve
+takes is 2.17° (AL091951 HOW), which is exactly the largest step the UNCUT curve
+takes, so the cut introduces nothing.** The archive's seam storms are real and
+worth naming: `CP011993` KEONI runs 166°E to 144°W, and `AL091951` HOW crosses
+the prime meridian and carries on to 63°E.
+
+**==> AND ONE THING IS DELIBERATELY NOT CUT, WHICH SLICE C WILL SEE ON GLASS.
+<==** `map/layers/season-swath.js` draws the wind footprint of the FOCUSED storm
+and takes no cut, so a reader who opens a storm while the clock is running gets
+its complete lifetime footprint under a track that is half drawn. **This is a
+known gap, not an oversight** — slice B's scope is the tracks and the dots
+(§57.67b) and widening it would have put a third layer in the same commit, which
+is the shape of the thing being avoided. It belongs to whichever slice first
+lets a reader focus a storm mid-playback. The fix is small: the swath already
+holds its own set for the same reason the dots do, so it needs the same third
+argument and the same `cutDrawnFixes` call before it builds its bands.
+
+**Nothing on screen changed and there was no glass call.** `main.js` was not
+touched: the facade still calls both layers with two arguments and every track
+draws whole. Slice C is what first passes a cut.
+
+#### 57.67f Slice B's gate
+
+`tools/test-season-cut.mjs`, **58 assertions**, zero dependencies, every
+expectation computed off the real files rather than typed.
+
+**Section 1 is the assertion the slice exists to earn.** Six real 2005 storms
+are pushed with the cut argument and without it, and the two GeoJSON payloads
+are compared with `JSON.stringify`. A cut taken at the season's last moment —
+every storm `ended` — is compared the same way. Anything that moved turns it
+red.
+
+**`samples/seasons/storms/cp011993.txt` is a new fixture and the reason is a
+measurement.** No storm already in `samples/` loses a fix to dedupe, so a suite
+written against what was there could not see the trap at all. KEONI 1993 loses
+five, at fixes 4, 7, 8, 9 and 10, with 72 fixes behind them.
+
+**==> THE FIRST FIXTURE WAS DEAN 1995 AND IT WAS THE WRONG STORM, WHICH IS THE
+PART WORTH KEEPING. <==** She stalled over Texas and reported the same position
+six times running, so every one of her drops was in her TAIL — where a wrong
+index is covered by the forward fill and the last fix still lands on the last
+vertex. **The naive implementation survived the whole suite against her.** A
+drop in the MIDDLE shifts every fix after it, which is where the bug lives.
+
+**Section 8 is the seam**, driven on two real crossers rather than on a fixture:
+KEONI 1993 for the dateline and AL041932 for the prime meridian, each proved to
+cross by counting the wraps and hemisphere changes in its own published
+longitudes. **The assertion is comparative rather than a typed threshold** — no
+cut may take a bigger longitude step than the whole curve already takes — so it
+cannot be satisfied by a number somebody chose.
+
+**FOURTEEN MUTATIONS WERE RUN AND THIRTEEN BITE.** Building the index over the deduped
+list, rounding the tip instead of interpolating, giving an unborn storm a stub,
+showing an unborn one-record storm's dot, not cutting the dot list, forgetting
+the remembered cut on a focus change, an off-by-one reading `drawnFixes` as an
+index, not clamping it, vanishing a storm the cut says nothing about, and
+ignoring `legFraction` altogether. **Three of the fourteen are the seam**, and
+the first of them is the live globe's own fault reproduced here: drawing `lon`
+instead of `lonU`, lerping the tip the long way round the planet, and wrapping
+longitudes back inside ±180 before handing them to MapLibre. All three turn
+section 8 red.
+
+**==> TWO SURVIVED THE FIRST RUN AND BOTH WERE FAULTS IN THE TEST, WHICH IS THE
+SAME FINDING SLICE A MADE. <==**
+
+1. **The interpolation assertion was driven on a leg spanning an EVEN number of
+   vertices**, so half a leg landed exactly on a vertex, the interpolated answer
+   and the rounded answer were the same point, and deleting the interpolation
+   left the suite green. It compared a value with itself and it read perfectly.
+   The leg is now FOUND by scanning for the first odd-spanned one, which is the
+   only kind where half a leg cannot land on a vertex.
+2. **The dedupe assertion was driven on the wrong storm** — see DEAN above.
+
+**One mutation survives the fixed suite and it is equivalent rather than
+uncovered.** Removing the `phase !== 'running'` guard in `cutVertex` changes
+nothing: an ended storm's `drawnFixes` is its whole fix count, so the two bounding
+vertices are the same one and the answer is the end of the curve either way.
+**Measured over 172 ended storms from 1851 to 2025: zero differences.** It is
+kept for the same reason and on the same terms as slice A's zero-length-leg
+guard, and both the code and this section say plainly that nothing exercises it.

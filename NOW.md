@@ -769,9 +769,29 @@ no page errors, no stall.** The old probe was written against `seasons/bar.js`
 and its `Leave` button, both deleted in step 5, so it was driving a screen that
 no longer exists. **Nothing is blocked; do not re-open it.**
 
-**NEXT IS SLICE B — the optional cut on `setSeasonTracks`, byte-identical
-output when no cut is passed.** Still nothing visible. **Slice C is the first
-one Aaron can feel.**
+**SLICE B IS BUILT AND THERE IS STILL NOTHING ON SCREEN TO LOOK AT.** The cut
+lives in its own file, `map/layers/season-cut.js`; both season layers take an
+optional third argument; `lib/trackline.js` exports the fix-to-vertex map it
+always built internally. `main.js` was not touched, so every track still draws
+whole. **§57.67e and §57.67f are the as-built account.**
+
+**==> ONE THING IN SLICE B WOULD HAVE SHIPPED AND IS WORTH NOT RE-DERIVING.
+<==** `smoothPath` deduplicates before splining, and **130 of 3,266 storms lose
+at least one fix that way.** An index built over the deduped list puts those
+storms' heads up to nine fixes behind while every other storm looks perfect. It
+was caught by mutation, not by reading. §57.67e.
+
+**==> THE DATELINE AND THE PRIME MERIDIAN ARE MEASURED CLEAN, AND ONE LAYER IS
+KNOWINGLY NOT CUT. <==** 2,640 cuts across all 44 seam-crossing storms, zero
+wraps; the biggest longitude step a cut takes is the same as the biggest step
+the whole curve takes. **But `season-swath.js` takes no cut**, so a storm opened
+mid-playback will show its whole lifetime wind footprint under a half-drawn
+track. Known, scoped out of B on purpose, and it lands in whichever slice first
+lets a reader focus during playback. §57.67e.
+
+**NEXT IS SLICE C — the FAB and the scrubber, with no motion.** It is what
+first passes a cut, and it is **the first slice Aaron can feel.** Aaron's call,
+2026-08-31: C gets its own session.
 
 **==> AND IT MUST LAND IN ITS OWN FILE. <==** Every seasons pass has grown
 `ui/view-seasons-board.js` and every one has promised to cut next time. That

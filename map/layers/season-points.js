@@ -49,7 +49,14 @@
  * works. What is gone is the pin. Do not re-add it without a glass call saying
  * so; `geo.landfallRing` was retired with it and would have to come back too.
  *
- * Imports config/, lib/ and one sibling. Its own source, its own three layers.
+ * ==> AND THE SEASON CLOCK CUTS BOTH KINDS. §57.67 SLICE B. <== `setSeasonPoints`
+ * takes an optional cut, and it does two things: a selected storm's fixes stop
+ * at the head, so the dots end where the line ends, and a storm that has not
+ * happened yet draws nothing at all — including the one-record dot this file
+ * otherwise insists on. That last one is the single place the clock overrules
+ * the §5 instinct above, and the reason is in `pointsForStorm`.
+ *
+ * Imports config/, lib/ and two siblings. Its own source, its own four layers.
  */
 
 import { ARCHIVE_GEO, STORM_GEO } from '../../config/tokens.js';
@@ -59,6 +66,7 @@ import { categoryColor, categoryDotCode, categoryFromKt } from '../../lib/catego
 import { stormDisplayName } from '../../lib/season-names.js';
 import { firstCycloneTime, natureAt, statusDotCode } from '../../lib/season-nature.js';
 import { gs } from '../theme-state.js';
+import { cutDrawnFixes, cutHidesStorm, cutStateFor } from './season-cut.js';
 import { focusOpacity } from './season-focus.js';
 import { placeName } from './name-placement.js';
 
@@ -83,6 +91,17 @@ let focusId = null;
  *  the only way to build them without the board pushing twice is to keep the
  *  set. `season-swath.js` keeps its own for the identical reason. */
 let lastSet = [];
+
+/** The clock's answer for the whole ticked set, or null when no clock is
+ *  running. §57.67 slice B.
+ *
+ *  ==> IT IS REMEMBERED FOR THE SAME REASON `lastSet` IS, AND FORGETTING IT
+ *  WOULD BE WORSE. <== `setSeasonPointFocus` rebuilds the features from the
+ *  remembered set, and it fires on every tap. Without the moment held here,
+ *  opening a storm mid-playback would rebuild its dots against no clock at all
+ *  — so the one storm the reader just asked about would be the one showing its
+ *  whole future. */
+let lastCut = null;
 
 /**
  * One dot.
@@ -182,10 +201,19 @@ function gradeAt(windKt, status = null, bornAt = null, time = null) {
  * to be continuous with, so feeding it the published value means the dot is
  * where NOAA said it was, full stop.
  */
-function pointsForStorm(storm, selected) {
+function pointsForStorm(storm, selected, state = null) {
   const out = [];
   const id = storm?.id;
   if (!id) return out;
+
+  /* ==> AN UNBORN STORM DRAWS NOTHING, AND THAT INCLUDES THE ONE-RECORD DOT.
+   * <== §57.67c rule 1. This is the one place where the clock and this file's
+   * §5 instinct pull against each other and the clock has to win: a standing
+   * dot is a one-record storm's ENTIRE presence on the globe, so withholding it
+   * is exactly the silence the rest of this file argues against — except that a
+   * storm which has not happened yet is not being silenced, it is being told
+   * accurately. It appears the moment the clock reaches it and never leaves. */
+  if (cutHidesStorm(state)) return out;
 
   const drawable = (storm.points || [])
     .filter((p) => Number.isFinite(p?.lat) && Number.isFinite(p?.lon));
@@ -219,7 +247,13 @@ function pointsForStorm(storm, selected) {
 
   if (!selected) return out;
 
-  for (let i = 0; i < drawable.length; i++) {
+  /* ==> THE DOTS STOP WHERE THE TRACK STOPS. <== §57.67 slice B. `cutDrawnFixes`
+   * is the same answer `season-cut.js` gives the line next door, which is what
+   * stops a selected storm showing forty dots under a track two days long. With
+   * no clock it is `drawable.length` and this loop is unchanged. */
+  const limit = cutDrawnFixes(state, drawable.length);
+
+  for (let i = 0; i < limit; i++) {
     const p = drawable[i];
     const g = gradeAt(p.windKt, p.status, bornAt, p.time);
     out.push(pointFeature({
@@ -516,7 +550,11 @@ function push(map) {
   const features = [];
   for (const entry of lastSet) {
     const id = entry?.storm?.id;
-    features.push(...pointsForStorm(entry?.storm, Boolean(id) && id === focusId));
+    features.push(...pointsForStorm(
+      entry?.storm,
+      Boolean(id) && id === focusId,
+      cutStateFor(lastCut, id),
+    ));
   }
 
   stampName(map, features);
@@ -529,11 +567,21 @@ function push(map) {
  * Draw exactly these storms' dots and nothing else. Whole-set push, same
  * contract as the tracks — unticking is this call with a shorter list.
  *
+ * ==> THE CUT ARRIVES ON THIS CALL RATHER THAN ON ONE OF ITS OWN, FOR THE
+ * REASON THE SET DOES. <== §57.67 slice B, and `season-tracks.js` carries the
+ * same note: a moment that can be pushed separately from the storms is a moment
+ * that can be forgotten, and the globe would then show dots from one time under
+ * a line from another. Both layers take it as an argument to the whole-set push
+ * and `main.js`'s archive facade hands it to both in one call.
+ *
  * @param {object} map
  * @param {Array<{storm:object, facts:object}>} selected
+ * @param {Map<string, object>|null} [cut] storm id → the clock's state for it.
+ *   Omitted, every storm's dots draw whole.
  */
-export function setSeasonPoints(map, selected = []) {
+export function setSeasonPoints(map, selected = [], cut = null) {
   lastSet = Array.isArray(selected) ? selected : [];
+  lastCut = cut || null;
   push(map);
 }
 
@@ -563,6 +611,10 @@ export function setSeasonPointFocus(map, id = null) {
 export function clearSeasonPoints(map) {
   focusId = null;
   lastSet = [];
+  /* Goes with the set, for the same reason the focus does: a reader who leaves
+   * mid-playback and comes back to 1935 must not find that season frozen at
+   * whatever moment 2005 had reached. */
+  lastCut = null;
   map?.getSource?.(SOURCE)?.setData(EMPTY);
   if (map?.getLayer?.(LAYER_ONE)) {
     map.setPaintProperty(LAYER_ONE, 'circle-opacity', focusOpacity(null));
@@ -574,4 +626,5 @@ export const __internals = {
   gradeAt,
   focus: () => focusId,
   setSize: () => lastSet.length,
+  cut: () => lastCut,
 };
