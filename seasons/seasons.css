@@ -369,22 +369,43 @@ html[data-seasons="on"] {
    `#seasons-status-pill` is a `<button>` — pressing it toggles the drawer — and
    a range input cannot live inside a button at all, so the scrubber could
    never have been that element wearing a slider. It sits on the same edge with
-   the same glass and the same centring, and the caption steps aside for it
-   below.
+   the same glass, and the caption steps aside for it below.
 
-   ==> IT IS WIDER THAN THE OTHER TWO, WHICH IS THE ONE DELIBERATE BREAK FROM
-   THEM. <== They are lozenges sized to their words and `--pill-inset` (60px a
-   side) keeps them from touching the screen edges. This is a CONTROL, and on
-   the 390px phone this app is judged on that inset would leave a 270px pill
-   holding a date and a slider — the slider would get barely a hundred pixels.
-   `--space-comfy` a side gives it 358px there instead. */
+   ==> IT IS WIDER THAN THE OTHER TWO AND IT STOPS SHORT OF THE CLUSTER, AND
+   THOSE ARE THE SAME DECISION SEEN FROM TWO SIDES. <== They are lozenges sized
+   to their words, centred, and `--pill-inset` (60px a side) keeps them off both
+   screen edges. This is a CONTROL, and on the 390px phone this app is judged on
+   that inset would leave a 270px pill holding a date and a slider — the slider
+   would get barely a hundred pixels.
+
+   ==> SO IT IS INSET ASYMMETRICALLY, AND THAT IS A GLASS CORRECTION. <== The
+   first version took `--space-comfy` off both sides and centred itself, which
+   put its right edge 40px INSIDE the control cluster. `#controls` is z-index 40
+   against this pill's 20, so the FABs painted straight over it and 23 of the
+   leave button's 44 pixels sat under the settings gear — a control the reader
+   can see half of and cannot press. Aaron on a phone, 2026-08-31.
+
+   Measured at 390px rather than reasoned about: the cluster's left edge is at
+   x=334 and this pill's right edge was at 374. The right inset is the cluster's
+   own geometry now — its distance from the screen edge, plus its width, plus a
+   gap — so it follows a device whose safe area is wider than the 12px floor
+   instead of trusting a number that happens to work on one phone.
+   `--pill-inset`'s 60 is that same sum with `--safe-right` assumed to be at
+   that floor.
+
+   The pill goes from 358px to 310 and the slider track from 276 to 230, which
+   is still more than twice what a centred `--pill-inset` would have left it.
+
+   `margin-inline: auto` is what keeps it sane on a desktop: under 520px it
+   fills the space between the two insets, and over that it centres inside them
+   rather than growing into a metre of slider. */
 #seasons-clock-pill {
   position: fixed;
-  transform: translateX(-50%);
   bottom: var(--safe-bottom);
-  left: 50%;
-  width: calc(100vw - 2 * var(--space-comfy));
+  left: var(--space-comfy);
+  right: calc(var(--safe-right) + var(--touch-target) + var(--space-snug));
   max-width: 520px;
+  margin-inline: auto;
   /* Same rung as the caption it replaces: UNDER the drawer, so an open sheet
      covers it rather than being painted through. See the note on
      `#seasons-status-pill` — that was a glass fault, not a preference. */

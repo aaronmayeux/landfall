@@ -92,8 +92,44 @@ try {
     fab.append(mark('clock-play', tri), pause);
     document.getElementById('controls').prepend(fab);
 
+    /* ==> AND THE PILL, BECAUSE THE SECOND FAULT THIS FILE COVERS IS THE TWO
+     * PIECES COLLIDING RATHER THAN EITHER ONE BEING WRONG. <== Built from the
+     * same attributes `seasons/clock-control.js` sets, against the real
+     * stylesheet, with the archive's own root flags on. */
+    document.documentElement.setAttribute('data-seasons-clock', 'on');
+    const pill = document.createElement('div');
+    pill.id = 'seasons-clock-pill';
+    const date = document.createElement('span');
+    date.className = 'seasons-clock-date';
+    date.textContent = 'May 23, 2020, 12:12 AM UTC';
+    const row = document.createElement('div');
+    row.className = 'seasons-clock-row';
+    const range = document.createElement('input');
+    range.type = 'range';
+    range.className = 'slider seasons-clock-range';
+    range.min = '0'; range.max = '1000';
+    const leave = document.createElement('button');
+    leave.className = 'seasons-clock-leave';
+    leave.append(document.createElementNS(NS, 'svg'));
+    row.append(range, leave);
+    pill.append(date, row);
+    document.body.appendChild(pill);
+
+    const box = (el) => {
+      const b = el.getBoundingClientRect();
+      return {
+        l: +b.left.toFixed(1), r: +b.right.toFixed(1),
+        t: +b.top.toFixed(1), b: +b.bottom.toFixed(1),
+        w: +b.width.toFixed(1), h: +b.height.toFixed(1),
+      };
+    };
+
     const fr = fab.getBoundingClientRect();
     return {
+      controls: box(document.getElementById('controls')),
+      pill: box(pill),
+      range: box(range),
+      leave: box(leave),
       fab: { w: fr.width, h: fr.height, display: getComputedStyle(fab).display },
       marks: [...fab.children].map((s) => {
         const r = s.getBoundingClientRect();
@@ -140,6 +176,43 @@ try {
   const [a, b] = out.marks;
   ok(`the two marks occupy the same place (${a.left},${a.top} and ${b.left},${b.top})`,
     a.left === b.left && a.top === b.top);
+
+  /* ==> AND THE SCRUBBER PILL DOES NOT RUN UNDER THE CONTROL CLUSTER. <== The
+   * second fault this file exists for, and it shipped: the pill took
+   * `--space-comfy` off both sides and centred itself, which on a 390px phone
+   * put its right edge at 374 against a cluster starting at 334. `#controls` is
+   * z-index 40 and the pill is 20, so the FABs painted over it and 23 of the
+   * leave button's 44 pixels were underneath the settings gear — a control the
+   * reader can see half of and cannot press. Aaron on a phone, 2026-08-31.
+   *
+   * Every text scan stayed green on it, exactly as they did for the stacking
+   * rule above: both elements were correctly styled and correctly placed by
+   * their own rules, and only their two boxes together say anything is wrong. */
+  ok(`the pill stops short of the control cluster — its right edge is at `
+    + `${out.pill.r} and the cluster starts at ${out.controls.l}`,
+  out.pill.r < out.controls.l);
+
+  /* Not merely "not overlapping": two glass surfaces touching read as one
+   * broken surface. `--space-snug` is the gap the cluster already puts between
+   * its own buttons, so it is the app's own answer to "how far apart is
+   * separate" rather than a number chosen here. */
+  const gap = out.controls.l - out.pill.r;
+  ok(`and it clears it by a visible margin rather than merely missing it (${gap}px)`,
+    gap >= 8);
+
+  /* The leave button is the piece that was actually unreachable, so it is
+   * asserted on its own rather than trusted to the pill's edge. */
+  ok(`the leave control is entirely clear of the cluster (${out.leave.l}-${out.leave.r})`,
+    out.leave.r < out.controls.l);
+  ok(`and it is still a full 44px target (${out.leave.w}x${out.leave.h})`,
+    out.leave.w === 44 && out.leave.h === 44);
+
+  /* ==> THE SLIDER MUST STILL BE WORTH DRAGGING. <== §57.67g rejected a centred
+   * `--pill-inset` because it would have left the track "barely a hundred
+   * pixels". Whatever this pill gives up to clear the cluster, it may not give
+   * up so much that it lands back in the thing that argument refused. */
+  ok(`the scrubber still has a real track at ${VIEWPORT.width}px wide `
+    + `(${out.range.w}px)`, out.range.w >= 150);
 } finally {
   await browser.close();
 }
@@ -150,4 +223,5 @@ if (fails.length) {
   process.exit(1);
 }
 console.log(`\n✓ ${pass} geometry assertions pass — the clock's two marks share `
-  + 'one cell, centred\n  (whether the ICONS read as play and pause is glass)');
+  + 'one cell, and the pill clears the cluster\n  (whether the ICONS read as play '
+  + 'and pause is glass)');

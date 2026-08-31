@@ -13,7 +13,7 @@ To read one section, the Lines column is ready to paste:
 sed -n "442,713p" SPEC-OPS.md
 ```
 
-Covering 11 files, 427 numbered headings.
+Covering 11 files, 428 numbered headings.
 
 An arrow marks a signpost in `SPEC.md` rather than the content itself. The
 real home is the other row carrying the same section number.
@@ -438,12 +438,13 @@ real home is the other row carrying the same section number.
 | `57.67d` | &nbsp;&nbsp;&nbsp;&nbsp;Slice A's gate | `SPEC-SEASONS-BUILD.md` | 10409-10436 |
 | `57.67e` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B — as built | `SPEC-SEASONS-BUILD.md` | 10437-10542 |
 | `57.67f` | &nbsp;&nbsp;&nbsp;&nbsp;Slice B's gate | `SPEC-SEASONS-BUILD.md` | 10543-10602 |
-| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10750 |
-| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10751-10790 |
-| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10791-10852 |
-| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10853-10935 |
-| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10936-10965 |
-| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10966-11040 |
+| `57.67g` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C — as built | `SPEC-SEASONS-BUILD.md` | 10603-10754 |
+| `57.67h` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C closes slice B's known gap — the swath takes the cut | `SPEC-SEASONS-BUILD.md` | 10755-10794 |
+| `57.67i` | &nbsp;&nbsp;&nbsp;&nbsp;Slice C's gate | `SPEC-SEASONS-BUILD.md` | 10795-10856 |
+| `57.67j` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D — press play — as built | `SPEC-SEASONS-BUILD.md` | 10857-10939 |
+| `57.67k` | &nbsp;&nbsp;&nbsp;&nbsp;The loop is its own file, and a wrong sentence came out of it | `SPEC-SEASONS-BUILD.md` | 10940-10969 |
+| `57.67l` | &nbsp;&nbsp;&nbsp;&nbsp;Slice D's gate | `SPEC-SEASONS-BUILD.md` | 10970-11044 |
+| `57.67m` | &nbsp;&nbsp;&nbsp;&nbsp;The scrubber pill ran under the control cluster | `SPEC-SEASONS-BUILD.md` | 11045-11089 |
 | `58` | Seasons — how the historical record reaches the app | `SPEC-DATA.md` | 3274-3293 |
 | `58.1` | &nbsp;&nbsp;`/api/seasons/live` — which storms this year has so far | `SPEC-DATA.md` | 3294-3337 |
 | `58.2` | &nbsp;&nbsp;`/api/seasons/storm?id=al012026` — one storm's track, verbatim | `SPEC-DATA.md` | 3338-3364 |
@@ -459,7 +460,7 @@ real home is the other row carrying the same section number.
 | `SPEC-MAP.md` | 291,605 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
-| `SPEC-SEASONS-BUILD.md` | 633,702 | 166 |
+| `SPEC-SEASONS-BUILD.md` | 636,597 | 167 |
 | `SPEC-UI.md` | 243,428 | 18 |
 | `SPEC.md` | 194,909 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |

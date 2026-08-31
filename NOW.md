@@ -85,8 +85,11 @@ settled; nothing under this is a suspect if the clock is wrong.
 3. **The pause mark.** Two bars where the stop square was. It should read the
    same size and weight as the four buttons under it — that pairing was wrong
    once already and took two rounds of glass.
-4. **The ✕ in the pill.** It shares the slider's row, so the pill should be
-   exactly the height it was in slice C. The track loses about 52px.
+4. **The ✕ in the pill, and the pill's right edge.** It ran under the control
+   cluster on the first build and the gear was painted over the ✕; the pill now
+   stops 8px short of the cluster on every phone width and is no longer centred
+   (§57.67m). The other two pills still are — check the two do not read as
+   misaligned when the clock engages.
 5. **Space.** With focus on the globe, on a roster row, and on nothing.
 
 **AND THE ONE THING MOST LIKELY TO NEED A DIAL:** the clock pauses when the page

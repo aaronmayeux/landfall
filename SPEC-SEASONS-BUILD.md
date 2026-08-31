@@ -10629,7 +10629,11 @@ caption steps aside, driven by `data-seasons-clock` on the root element. It is
 **wider than the other two pills**, which is the one deliberate break from them:
 `--pill-inset` is 60px a side, which on a 390px phone would leave a 270px lozenge
 holding a date and a slider, and the slider would get barely a hundred pixels.
-`--space-comfy` a side gives it 358px there.
+
+**==> AND IT IS INSET ASYMMETRICALLY, WHICH §57.67m IS THE ACCOUNT OF. <==** Both
+sides at `--space-comfy` gave it 358px on that phone and put 40 of them
+underneath the control cluster. The left is `--space-comfy` still; the right is
+the cluster's own geometry.
 
 **==> AND ITS TWO MARKS ARE STROKED LINE ART, WHICH IS A GLASS CORRECTION. <==**
 They shipped filled and Aaron rejected them on a phone the same day: they read
@@ -11037,3 +11041,48 @@ risk is the wake-up MOVING:** a second start re-stamps the elapsed measurement
 and pushes the pending tick out by however long the first had already waited. It
 now asserts the wake-up is at the same instant it was, which is the only version
 that catches it.
+
+#### 57.67m The scrubber pill ran under the control cluster
+
+**Aaron on a phone, 2026-08-31, on the slice D build.** §57.67g gave the pill
+`--space-comfy` on both sides and centred it, which is 358px on a 390px screen —
+and the control cluster occupies the rightmost 56 of those. **`#controls` is
+z-index 40 and the pill is 20**, so the FABs painted straight over it: the pill's
+glass ran under the storms and settings buttons, and **23 of the leave control's
+44 pixels sat underneath the gear.** A control the reader can see half of and
+cannot press.
+
+**==> NOTHING IN THE GATE CHAIN COULD SEE IT, AND IT IS THE SAME FINDING §57.67g
+MADE ABOUT THE STACKING RULE. <==** Both elements were correctly styled, both
+were correctly placed by their own rules, and each on its own was right. Only
+their two boxes together say anything is wrong, and no text scan compares two
+boxes. `css-orphan-check`, `css-structure-check`, `selector-contract-check` and
+`type-scale-check` are all green on the faulty version.
+
+**MEASURED IN THE SANDBOX CHROMIUM AT 390px RATHER THAN REASONED ABOUT.** The
+cluster's left edge is at x=334; the pill's right edge was at 374; the leave
+button spanned 265–309 with the gear over it from 334.
+
+**The right inset is the cluster's own geometry** — `--safe-right` plus
+`--touch-target` plus `--space-snug` — rather than a literal. `--pill-inset`'s 60
+is that same sum with `--safe-right` assumed to be at its 12px floor, which is
+true on a phone held upright and false on one held sideways with a notch. The
+calc follows the safe area; the literal does not.
+
+**`margin-inline: auto` with both insets set is what holds the desktop case.**
+Under 520px the pill fills the space between them; over it, it centres inside
+them rather than growing into a metre of slider.
+
+**Measured across five viewports after the fix, and the clearance holds at every
+one: 8px on 320, 390 and 430; 130px in landscape at 844; 428px at 1440.** The
+slider track goes 276 → 230 on the 390px phone and is 158 at 320, against the
+"barely a hundred pixels" §57.67g refused. **The pill is no longer centred and
+the other two still are**, which is the honest trade: they are lozenges sized to
+their words and this one is a control bar that has to be as wide as the screen
+will let it.
+
+**`tools/seasons-clock-check.mjs` now builds the pill as well as the button** and
+takes five more assertions to 13: the pill's right edge is left of the cluster's
+left edge, the gap is at least `--space-snug`, the leave control is entirely
+clear of it and still a 44px target, and the track is still worth dragging.
+**Verified by putting the fault back — three of the five turn red.**
