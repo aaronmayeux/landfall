@@ -160,7 +160,9 @@ const kv = fakeKv();
    * + 2 SHIPS runs, one per NHC storm, which color the cone (§47)
    * + 1 national NWS flood list, added with §56.17 — the `Flooding` section
    *   renders on both screens for every reader now, so the first ask on a cold
-   *   edge must not be a round trip to weather.gov */
+   *   edge must not be a round trip to weather.gov
+   * + 1 peak storm surge list — ONE key for every storm, not one per storm,
+   *   because the service is queried whole and filtered on the client (§4.8) */
   ok('first cycle: nothing capped', summary.dropped === 0);
 
   /* The exact key set, frozen. Asserting the COUNT alone would pass while the
@@ -204,6 +206,16 @@ const kv = fakeKv();
      * refuses an empty answer because there "no areas" is more often a failed
      * parse than a quiet ocean. */
     'v1:nws/flood',
+    /* ONE KEY FOR ALL OF SURGE, AND THE SINGULARITY IS THE ASSERTION. Every
+     * other per-storm product below fans out to a key per storm. Surge does
+     * not, because the Peak Storm Surge service is queried whole and filtered
+     * on the client — a per-storm key here would have to be built from a
+     * POSITION, and a position is not a stable identifier: the storm moves
+     * between this cycle and the reader's tap, the two keys stop matching, and
+     * the warm loop runs forever writing bytes nobody reads while every count
+     * in this summary stays green. If a second surge key ever appears in this
+     * list, that is what has happened. */
+    'v1:nhc/surge',
     /* TWO KEYS FROM ONE DECK ID, and the pair is the assertion. The guidance
      * body and the analysed-history body come off the same upstream file and
      * must never share a key — a storm's past served as guidance would draw
