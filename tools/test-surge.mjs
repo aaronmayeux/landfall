@@ -19,6 +19,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { normalizeSurge, selectForStorm } from '../data/surge.js';
+import { surgeLegend } from '../lib/surge-legend.js';
 import { bandSelect } from '../map/coast-band.js';
 import { dimCoast } from '../map/layers/surge.js';
 import { OPACITY } from '../config/tokens.js';
@@ -375,6 +376,90 @@ ok('the surge corridor is narrower than watch/warning\'s',
   /* And the box must be a real filter, not a pass-through. Miami is 55° away. */
   const miami = selectForStorm(stripped, { lat: 25.8, lng: -80.2, stormId: null });
   eq('a storm in another ocean gets none of them', miami.fc.features.length, 0);
+}
+
+/* ---------------------------------------------------------------------------
+ * THE LEGEND — the deduped rows the Flooding section paints (§56.8).
+ *
+ * The mechanism is wwLegend's, so these are wwLegend's properties restated for
+ * a different product: only what is in force, severest first, one row each.
+ * ------------------------------------------------------------------------- */
+{
+  const load = (adv) =>
+    JSON.parse(
+      fs.readFileSync(path.join(ROOT, `samples/milton-al142024/surge/${adv}/peaksurge.geojson`), 'utf8')
+    );
+
+  /* --- ONLY THE ACTIVE ROWS. Aaron's call, 2026-09-01. --- */
+  const a017 = surgeLegend(load('017').features);
+  eq('Milton 017 reached every rung, so the legend has five rows', a017.length, 5);
+
+  /* ==> AND 008 IS THE ONE THAT PROVES IT. <== A legend that simply printed
+   * SURGE_RAMP would also pass the line above, because 017 happens to use all
+   * five. This advisory forecast nothing above 12 ft, so a fixed palette shows
+   * a purple row for a depth nobody forecast. MUTATION-TESTED: returning the
+   * whole ramp turns this red and leaves 017 green. */
+  const a008 = surgeLegend(load('008').features);
+  eq('Milton 008 never reached purple, so purple is not in its legend', a008.length, 4);
+  ok('and specifically no rung above red',
+     a008.every((r) => r.severity <= SURGE_RAMP.length - 2),
+     JSON.stringify(a008.map((r) => r.label)));
+
+  /* --- DEEPEST FIRST, the same direction wwLegend puts warnings above watches. --- */
+  const order = a017.map((r) => r.severity);
+  ok('the rows descend by severity', order.every((s2, i) => i === 0 || s2 < order[i - 1]),
+     JSON.stringify(order));
+  eq('so the top row is the deepest water', a017[0].severity, SURGE_RAMP.length - 1);
+
+  /* --- THE COLOUR IS THE RAMP'S, NEVER INVENTED. --- */
+  ok('every row wears its own rung of SURGE_RAMP',
+     a017.every((r) => r.color === SURGE_RAMP[r.severity].color),
+     JSON.stringify(a017.map((r) => r.color)));
+
+  /* --- THE LABEL RULE, BOTH BRANCHES, AGAINST REAL BYTES. --- */
+
+  /* Milton 017's yellow rung holds 2-4 ft AND 3-5 ft, so no single range is
+   * true of the rung and the whole list falls back to the ramp's wording. */
+  ok('a storm with a rung holding two ranges is labelled from the ramp',
+     a017.every((r) => r.label === SURGE_RAMP[r.severity].label),
+     JSON.stringify(a017.map((r) => r.label)));
+
+  /* Lala forecast 1-2 ft on every band — one rung, one range — so the reader
+   * gets NHC's precise words rather than the rounder "Up to 3 ft". This is the
+   * branch that matters on a small storm, which is most of them. */
+  const lalaRaw = JSON.parse(
+    fs.readFileSync(path.join(ROOT, 'samples/lala-cp012026/surge/peaksurge-polygons.geojson'), 'utf8')
+  );
+  const lala = surgeLegend(normalizeSurge(lalaRaw, { fromFixture: false }).fc.features);
+  eq('Lala is one rung, so it gets one row', lala.length, 1);
+  eq('labelled with NHC\'s own range, not the ramp\'s rounding', lala[0].label, '1-2 ft');
+  ok('which is NOT what the ramp would have said', lala[0].label !== SURGE_RAMP[0].label,
+     SURGE_RAMP[0].label);
+
+  /* ==> AND THE RULE IS ALL-OR-NOTHING ACROSS THE LIST. <== Deciding it per
+   * row stacked "8-12 ft" directly above "Up to 9 ft" on Milton 017 — two
+   * kinds of statement that read as overlapping depths in the wrong order. */
+  const mixed = surgeLegend([
+    { properties: { severity: 0, range: '1-3 ft' } },
+    { properties: { severity: 3, range: '8-12 ft' } },
+    { properties: { severity: 3, range: '6-10 ft' } },
+  ]);
+  ok('one ambiguous rung sends the WHOLE list to ramp wording',
+     mixed.every((r) => r.label === SURGE_RAMP[r.severity].label),
+     JSON.stringify(mixed.map((r) => r.label)));
+
+  /* --- WHAT IT REFUSES TO COUNT. A feature with no readable severity is not a
+   * row: guessing a rung is a coastline told the wrong depth. --- */
+  eq('an empty collection is an empty legend', surgeLegend([]).length, 0);
+  eq('and so is no collection at all', surgeLegend(undefined).length, 0);
+  eq('a feature with no severity makes no row',
+     surgeLegend([{ properties: { color: 'blue' } }]).length, 0);
+  eq('nor does a severity off the end of the ramp',
+     surgeLegend([{ properties: { severity: SURGE_RAMP.length } }]).length, 0);
+
+  /* The tally is per rung, not per collection — 017's yellow holds ten. */
+  eq('the count is the features on that rung',
+     a017.find((r) => r.severity === 1).count, 10);
 }
 
 /* ---------------------------------------------------------------------------- */
