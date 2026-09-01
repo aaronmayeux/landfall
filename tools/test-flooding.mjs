@@ -526,6 +526,31 @@ section('§56.8 — NHC’s own surge, in the section that keeps water');
   ok(!says(drawn, MODEL_NOT_THIS_BASIN),
     'and no sentence claiming a gap that these rows just filled');
 
+  /* ==> IT IS FIRST IN THE SECTION, AND THAT IS A GLASS CALL WITH A REASON.
+   * <== Aaron, 2026-09-01, looking at Edouard on a phone: six Flood Watches
+   * each carrying a full county roster had pushed the one surge row and its
+   * datum off the bottom of the screen — in the section a reader opens to find
+   * out how deep the water gets. It had also landed directly under
+   * NWS_NOT_ATTRIBUTED, so NWS's "may have another cause" caveat read as
+   * attached to NHC's forecast.
+   *
+   * Asserted by POSITION rather than by presence, because the version that
+   * shipped had it present and last, and every other assertion in this block
+   * passed on it. MUTATION-TESTED: restoring the old order fails both lines. */
+  const withRows = await renderStorm({
+    storm: nhcStorm,
+    nhcSurge: okSlot,
+    summary: corridorSummary(NATIONAL, overIndiana, LIVE, 300),
+  });
+  ok(withRows.includes('flood alert'),
+    'the corridor rows are still there to be ordered against');
+  ok(flat(withRows).indexOf('1-2 ft') !== -1
+     && flat(withRows).indexOf('1-2 ft') < flat(withRows).indexOf('flood alert'),
+    'the surge row comes before the alert list, not after it');
+  ok(flat(withRows).indexOf(flat(NHC_SURGE_PROVENANCE))
+     < flat(withRows).indexOf(flat(NWS_NOT_ATTRIBUTED)),
+    'and its datum is never left sitting under NWS’s not-attributed caveat');
+
   /* --- THE THREE STATES THAT ARE NOT ROWS, AND WHY THEY MUST DIFFER (§5). --- */
 
   const failed = await renderStorm({

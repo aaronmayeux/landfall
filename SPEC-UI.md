@@ -3918,6 +3918,17 @@ So: every rung carrying exactly one range means the list shows NHC's ranges
 throughout (Edouard's `3-5 ft`); any ambiguous rung sends the whole list to the
 ramp's wording. Neither is ever rewritten, re-rounded, or merged into a span.
 
+**IT IS FIRST IN THE SECTION.** Aaron's call on glass, 2026-09-01, and it
+shipped the other way round on the reasoning that the alert rows are orders
+somebody issued and this is the forecast underneath them. Edouard disproved that
+in one screenshot: six Flood Watches, each carrying a full county roster, put the
+single surge row and its datum off the bottom of a phone — in the section a
+reader opens to find out how deep the water gets. It had also landed directly
+beneath `NWS_NOT_ATTRIBUTED`, so that caveat about an alert possibly having
+another cause read as attached to NHC's forecast. **`tools/test-flooding.mjs`
+asserts the ORDER, not the presence**, because the shipped version was present
+and last and every other assertion passed on it.
+
 **NO FETCH OF ITS OWN.** The slot is read straight off the geometry bundle the
 map layer already has in flight. A second request would be two answers to one
 question landing at different moments, with the panel and the coastline able to

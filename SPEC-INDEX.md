@@ -219,7 +219,7 @@ real home is the other row carrying the same section number.
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2310-2395 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4143-4165 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4154-4176 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -267,8 +267,8 @@ real home is the other row carrying the same section number.
 | `56.6` | &nbsp;&nbsp;Tapping an alert — ==> SHIPPED AND CONFIRMED ON GLASS 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 728-913 |
 | `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3636-3671 |
 | `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3814-3854 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3953-4002 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4069-4142 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3964-4013 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4080-4153 |
 | `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 914-945 |
 | `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 946-1111 |
 | `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 1112-1129 |
@@ -462,7 +462,7 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 105,155 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |
-| `SPEC-UI.md` | 246,994 | 18 |
+| `SPEC-UI.md` | 247,746 | 18 |
 | `SPEC.md` | 195,025 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

@@ -428,12 +428,31 @@ export function createFloodingStorm({
    *  of a model last. See the header. */
   function html(storm) {
     if (!storm) return '';
-    /* ==> NHC's FORECAST JOINS THE ORDERS, ABOVE THE SEAM. <== It is a
-     * published product with a datum, not our reading of a simulation. See
-     * `nhcSurgeHtml`. It goes LAST inside that half because the two above it
-     * are alerts somebody has issued and this is the forecast underneath
-     * them — the warning first, then the depth it was issued for. */
-    const rows = `${corridorHtml(storm)}${capHtml(storm)}${nhcSurgeHtml(storm)}`;
+    /* ==> NHC's FORECAST JOINS THE ORDERS, ABOVE THE SEAM, AND IT GOES FIRST.
+     * <== It is a published product with a datum, not our reading of a
+     * simulation, so it belongs on this side of the hairline. See
+     * `nhcSurgeHtml`.
+     *
+     * ==> FIRST, AND THAT WAS AARON'S CALL ON GLASS, 2026-09-01. <== It shipped
+     * last, on the reasoning that the alerts above it are orders somebody has
+     * issued and this is the forecast underneath them. Measured on Edouard that
+     * reasoning was wrong for two reasons a screenshot makes obvious and a
+     * fixture never would.
+     *
+     * THE LIST ABOVE IT HAS NO CEILING. Six Flood Watches, each carrying a full
+     * county roster, put one surge row and its datum off the bottom of a phone
+     * — and this section is opened BY somebody wondering how deep the water
+     * gets. A row that answers the question is the wrong thing to make a reader
+     * scroll for.
+     *
+     * AND IT LANDED UNDER THE WRONG SENTENCE. `NWS_NOT_ATTRIBUTED` closes the
+     * corridor rows — "an alert near the track may have another cause" — so a
+     * surge dot immediately below it read as part of that caveat, attaching
+     * NWS's disclaimer to NHC's forecast. Ordering fixes that; a separator
+     * would only have made two blocks that still looked related.
+     *
+     * ONE ROW, ONE DATUM, THEN THE LONG LIST. */
+    const rows = `${nhcSurgeHtml(storm)}${corridorHtml(storm)}${capHtml(storm)}`;
     const model = modelHtml(storm);
     /* THE HAIRLINE ONLY WHEN BOTH HALVES ARE THERE. It exists so a reader can
      * SEE that an agency's order and our model reading are two answers rather
