@@ -69,6 +69,23 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
+**SURGE IS LIVE AGAIN AND HAS NEVER BEEN SEEN DRAWING ON A REAL STORM.** The
+ten commits backed out on 2026-08-17 are restored — relay route, warm key,
+client filter, Lala fixture, tests — with the archive capture deliberately left
+out (§4.8). What sent them back last time was NOT the plumbing: the relay served
+Lala's eleven bands correctly and the layer drew nothing because nothing was
+selected and ambient surge sits at `ZOOM.ambientGeometry`. That floor is
+UNCHANGED, because watch/warning has the same one and the coastal row has no
+per-row status message either — surge matches its row-mate rather than growing a
+mechanism of its own.
+
+**So the test is: select the storm.** Tap Edouard, Coastal -> Surge, and the
+Texas–Louisiana bands should draw once the map has flown in. If they draw only
+after the fly-in and not at globe zoom, that is CORRECT and matches
+watch/warning. If they never draw, read the console — `data/surge.js` prints
+which field the colour came from and how many features were dropped, and a run
+where everything drops looks exactly like a storm with no surge.
+
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
 same reason — a different layer from the ones slices C, D and E own. §57.67h
@@ -426,11 +443,6 @@ guards passing at 0 NM separation. **The break is on the device.**
 exactly like this. **WAITING ON AARON:** open `/api/jtwc/storms` on a device that
 shows the bug and read `fetchedAt` and the fix `at`. Nothing in the sandbox can
 reach the live app. Do not write a fix before that.
-
-**`data/surge.js` CALLS `/api/nhc/surge` AND THAT ROUTE DOES NOT EXIST.**
-`functions/api/nhc/` has no `surge.js`. Every NHC surge request is a 404 today,
-and `lib/surge-locations.js` already says so in a comment. Building it needs a
-real storm with surge data to verify against — see `HELD FOR WEATHER`.
 
 **THREE GLASS CALLS ON RADAR, AND ALL THREE WORK ON `?replay=ida` — NO WEATHER
 NEEDED.** Radar does not route through `ENDPOINT.relay`, so the replay draws
@@ -1696,16 +1708,6 @@ client-side; the app must be open.
 §49.12. Does *Was strongest* beside *When it was closest* read as one story in two
 tenses or two unrelated facts (Q6); is *It came closer earlier* enough, or does
 the past want its own vertical (Q5).
-
-**A US storm with surge watches in force — and this one is a BUILD, not a look.**
-`SPEC-DATA.md` §4.8, §51.5. **`/api/nhc/surge` does not exist**; `fetchSurgeLive()`
-calls it, gets a 404, and every NHC-basin storm shows `unavailable` today. Nothing
-fills it in from GDACS and nothing should (§51.5 settled, a test guards it), so
-this route is the only path to surge on an American storm. Held because the Peak
-Storm Surge service only answers while a watch is up and `SURGE.liveColorFields`
-is an ordered list of GUESSES at where the colour lives — against a storm half a
-planet away there is no telling a right answer from a plausible one. Build the
-route and surge-at-home together; they share one fetch-and-filter.
 
 **Several days of hourly snapshots — not a glass call** — `SPEC-DATA.md` §50.12.
 Each archive run writes a `countryMatch` block. A country in

@@ -676,22 +676,24 @@ Different inputs, same merged look, shared finishing pass (`lib/ringpolish.js`).
 
 ### 4.8 Surge
 
-**Built against Hurricane Milton's published archive; the live path is one
-adapter short.** `data/surge.js` normalizes both sources to one shape —
-`kind`, `color`, `severity`, `range`, `place` — and `map/layers/surge.js` draws
-it as segment B of the `coastal` pair. The fixture is
-`samples/milton-al142024/surge/`, 22 advisories, simplified at `SURGE.offsetDeg`
-to match what the relay asks ArcGIS to generalize to. `/?surge=milton&adv=017`
-shows it on the real globe.
+**Live.** `data/surge.js` normalizes both sources to one shape — `kind`,
+`color`, `severity`, `range`, `place` — and `map/layers/surge.js` draws it as
+segment B of the `coastal` pair. Two fixtures:
+`samples/milton-al142024/surge/` (22 advisories, already normalized, proves the
+RENDERER) and `samples/lala-cp012026/surge/` (raw service bytes with NHC's own
+attribute names, proves the READER). `/?surge=milton&adv=017` shows the first
+on the real globe.
 
-**What is NOT built: the relay route.** `fetchSurgeLive()` throws until it
-exists, which the caller surfaces as `unavailable` — never as an empty coast.
+**The relay route is `/api/nhc/surge`, and it takes no parameters.** It queries
+layers 1 and 2 whole, merges them into one FeatureCollection, and is warmed by
+the cron Worker under the single fixed key `nhc/surge`. The per-storm filter
+runs on the client. A position in the query would be a position in the cache
+key, and the Worker and the reader cannot be made to agree on one — the storm
+moves between the warm cycle and the tap, and the warm loop then runs forever
+writing bytes nobody reads while every count stays green.
 
-**==> THE LIVE SERVICE'S SHAPE WAS UNREADABLE AND IS NOT ANY MORE. READ
-2026-08-19, WITH NO STORM ACTIVE. <==** This section used to say the field
-names could not be read until a US storm had surge watches in effect. That
-conflated two different things: the FEATURES only publish during a watch, but
-the ArcGIS **directory** answers all year. Confirmed live, at
+**==> THE LIVE SERVICE'S SHAPE, READ FROM ITS DIRECTORY 2026-08-19 AND THEN
+CONFIRMED AGAINST REAL FEATURES ON LALA 2026-08-16. <==** At
 `mapservices.weather.noaa.gov/tropical/.../NHC_PeakStormSurge/MapServer`:
 
 - **Three layers** — Points (0), Lines (1), Polygons (2). Layer 0 has never
@@ -699,35 +701,48 @@ the ArcGIS **directory** answers all year. Confirmed live, at
 - **The polygon layer's fields**, verbatim: `objectid`, `name`, `folderpath`,
   `symbolid`, `altmode`, `base`, `clamped`, `extruded`, `snippet`, `popupinfo`,
   `shape`, `idp_source`, `idp_subset`, `idp_filedate`, `idp_ingestdate`, plus
-  the two `st_*` shape functions and `shape_leng`. **All four candidates in
-  `SURGE.liveColorFields` are real fields on the live service**, which is more
-  than was known before and still is not which one carries the colour.
-- **`symbolid` is `esriFieldTypeInteger` on the live service**, not just in the
-  archive — the trap below is confirmed against the thing we will actually
-  query.
+  the two `st_*` shape functions and `shape_leng`.
+- **`popupinfo` is the field that carries the colour, and this is now a
+  measurement rather than a bet.** `SURGE.liveColorFields` listed four
+  candidates in order; on every one of Lala's features the first answered, with
+  `{"peak_surge_range": "1-2 ft", "color": "blue"}`. The remaining three stay
+  in the list as fallbacks, not as open questions.
+- **`symbolid` is `esriFieldTypeInteger` on the live service** and was `0` on
+  every Lala feature — so the trap below is confirmed against the thing we
+  actually query, and against bytes that trigger it.
 - **The renderer publishes exactly `blue`, `yellow`, `orange`, `red`,
-  `purple`**, labelled up to 3, 6, 9 and 12 ft and above 12 ft. `SURGE.colors`
-  and `SURGE_RAMP` are now confirmed against the live service rather than
-  inferred from Milton.
+  `purple`**, labelled up to 3, 6, 9 and 12 ft and above 12 ft.
 - `altmode`, `clamped`, `extruded` and `folderpath` together are a KML
-  converter's fingerprint, which is the evidence behind the `popupinfo` bet
-  below.
+  converter's fingerprint, which was the evidence behind the `popupinfo` bet
+  before Lala settled it.
 
-**==> WHAT IS STILL UNKNOWN, AND IT IS THE ONE THAT MATTERS. <==** Which field
-the renderer keys on, and whether the service holds features right now. Both
-live only in the JSON view, and a session cannot reach it — SPEC-OPS.md §18.2
-records why. **So the colour field remains a bet, and the route must be built
-to fail honestly on it rather than to assume it right.**
+`fetchStormGeometry()` starts the surge fetch beside the nine MapServer layers
+and joins it as its own slot: `ok` with bands, `none` when the storm has none,
+`unavailable` when the fetch failed. Those three never look alike (§5).
 
-Rules below are inherited from the HA project and corrected where Milton's
-bytes disproved them.
+Rules below are inherited from the HA project and corrected where real bytes
+disproved them.
 
-- **The PeakStormSurge service is not per-storm and has no `stormid` field.** One
-  Points/Lines/Polygons trio serves every active storm. Filter spatially: ±12°
-  envelope around the current position, `spatialRel=esriSpatialRelIntersects`,
-  polygon layer 2. This breaks the per-(storm, advisory) cache assumption every
-  other layer relies on — **surge keys on position, not storm id.**
-- **Ask the server to generalize** (`maxAllowableOffset` ≈ 0.005°). A second
+- **==> THE SERVICE DOES PUBLISH A STORM ID, AND THIS SECTION SAID IT DID NOT.
+  <==** One Points/Lines/Polygons trio serves every active storm and there is no
+  field named `stormid` — which is where the old rule stopped looking. Measured
+  on Lala 2026-08-16: every feature carries `idp_subset: "cp012026"`, the app's
+  own storm id, same spelling and case, and `folderpath` carries it again
+  alongside the advisory number. **Match on `idp_subset` first.** The ±12°
+  envelope around the current position survives as the fallback for a feature
+  that states no id — losing a real band is worse than including a distant one.
+  Surge therefore keys on NOTHING: the route is unparameterized and the filter
+  is client-side.
+- **==> THE LAYER'S PUBLISHED `extent` IS NOT A MEASUREMENT OF ITS CONTENTS.
+  <==** ArcGIS stores it on the table definition and does not recompute it as
+  rows change, so it can describe the previous storm indefinitely. It was read
+  as proof this service held nothing near Hawaii while it was actively serving
+  eleven bands over Oahu and Kauai. **Only the features answer.** The hourly
+  archive does NOT currently snapshot this service — the capture was written
+  once, backed out with the rest of the surge work, and deliberately not
+  restored with it. `samples/lala-cp012026/surge/` is the pinned copy that
+  keeps the question answered.
+- **Ask the server to generalize** (`maxAllowableOffset` = `SURGE.offsetDeg`, 0.001°; 0.005° shipped once and was rejected on glass). A second
   always-on client-side pass on top deletes small rings and inland fingers;
   coarsen only a band that overruns its own budget.
 - **Allocate the point budget across bands** proportional to raw size, with a
@@ -748,9 +763,12 @@ bytes disproved them.
   `{"peak_surge_range": "8-12 ft", "color": "red"}`, verified against Milton's
   22 advisories. On the live service the field is most likely `popupinfo` —
   Esri's landing spot for a KML `<description>`, and this service is visibly a
-  KML import. `SURGE.liveColorFields` tries the candidates in order and
-  `data/surge.js` logs which one answered, so **the first live storm settles it
-  as a measurement rather than leaving it a guess.**
+  KML import. **The first live storm settled it: `popupinfo` is correct.** On
+  Lala's eleven features it reads
+  `{"peak_surge_range": "1-2 ft", "color": "blue"}` on every one, while
+  `symbolid` is `0` on every one. `SURGE.liveColorFields` still tries the
+  candidates in order and `data/surge.js` still logs which answered, because a
+  schema change must stay loud.
 - **The color is a BUCKET; the range is the forecast.** `SURGE_RAMP` labels red
   "Up to 12 ft"; the archive publishes 5-10, 6-10 *and* 8-12 ft as red. Show the
   published range, and the ramp label only when a feature has none.
@@ -764,7 +782,9 @@ bytes disproved them.
   and band onto the real coast the same way a watch/warning does; when there is
   no coast under one, it draws as the dashed chord of SPEC-MAP.md §7.10, not as
   a reach stroke.** The polygons are areas NHC drew itself — never chords, so
-  nothing about them is approximated and they are never dashed.
+  nothing about them is approximated and they are never dashed. **An empty
+  Lines layer is an ANSWER, not a failure** — Lala published none, and the
+  route must not treat that as an error.
 - **A "surge band" is not a surge WATCH/WARNING.** Surge watch/warning does not
   exist as a vector product anywhere in NHC's services. Layer 8's `tcww` carries wind codes only (HWA/HWR/TWA/TWR);
   NHC_Breakpoints is static reference points. **Surge is bands only.** Any design
