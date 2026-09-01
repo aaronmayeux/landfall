@@ -329,6 +329,32 @@ ok('the surge corridor is narrower than watch/warning\'s',
   eq('the storm id claims all 11 features', mine.byId, 11);
   eq('so the spatial box is never consulted', mine.byBox, 0);
 
+  /* ==> THE EDOUARD TEST. THIS FILE WAS GREEN THROUGH THE BUG BECAUSE IT ONLY
+   * EVER SENT THE BARE ID, WHICH IS NOT WHAT THE APP SENDS. <== `data/nhc.js`
+   * builds `nhc:cp012026`; the service publishes `cp012026`. On 2026-09-01 the
+   * caller passed the prefixed form, all six of Edouard's real features were
+   * rejected, and the coastal rows carry no per-row status so the map drew
+   * nothing AND said nothing under a live Storm Surge Warning.
+   *
+   * The old assertion could not fail on that, because it tested a value no
+   * caller produces. This one drives the selector with the string the app
+   * genuinely constructs, so reverting either half of the fix — the caller's
+   * `sourceId` or the prefix strip in `matchesStormId` — turns it red.
+   *
+   * MUTATION-TESTED: dropping the strip takes byId from 11 to 0 and fails
+   * both lines below. */
+  const appId = `nhc:${'cp012026'}`;
+  const prefixed = selectForStorm(merged, { ...LALA_POS, stormId: appId });
+  eq('the app\'s own prefixed id claims all 11 too', prefixed.byId, 11);
+  eq('and it does NOT quietly fall through to the box instead', prefixed.byBox, 0);
+
+  /* AND THE STRIP MUST NOT HAVE TURNED THE FILTER INTO A PASS-THROUGH. A
+   * different storm, prefixed the same way, still takes nothing — otherwise
+   * the fix for a blank coast would be a neighbour's bands on the wrong one. */
+  const otherPrefixed = selectForStorm(merged, { ...LALA_POS, stormId: 'nhc:ep092026' });
+  eq('a different storm\'s prefixed id still takes none of Lala\'s bands',
+     otherPrefixed.fc.features.length, 0);
+
   /* A DIFFERENT storm's id must take nothing, even standing in the same ocean
    * — this is the whole reason to prefer the id over a 12° box. */
   const other = selectForStorm(merged, { ...LALA_POS, stormId: 'ep092026' });
