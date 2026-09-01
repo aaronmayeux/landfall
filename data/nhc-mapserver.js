@@ -60,9 +60,7 @@
  * and only here — the storm feed never uses it and data/nhc.js deliberately
  * does not handle it.
  *
- * No DOM, ever. Imports: config/, lib/, and the one `data/` sibling named at
- * the import itself — surge lives on a different SERVICE and cannot ride the
- * layer-id loop, so it is fetched here and joined into the same bundle.
+ * No DOM, ever. Imports: config/, lib/ only.
  */
 
 import { ENDPOINT, MAPSERVER, GEOMETRY_LAG_THRESHOLD } from '../config/constants.js';
@@ -71,9 +69,6 @@ import { categoryFromKt } from '../lib/category.js';
 import { buildFullTrack } from '../lib/windswath.js';
 import { normalizePastPoints } from '../lib/track-point.js';
 import { stitchDatelineSplit } from '../lib/seam-stitch.js';
-/* SIBLING IMPORT, AND IT IS THE ONLY ONE IN THIS FILE. Both modules are
- * `data/` — the same layer, no cycle: surge.js imports config only (§12). */
-import { fetchSurgeLive } from './surge.js';
 
 /** Bin number: two letters and a digit (`AT2`, `EP1`, `CP1`). The same shape
  *  the relay validates before it reaches a WHERE clause. */
@@ -530,19 +525,6 @@ export async function fetchStormGeometry(storm) {
 
   const layers = {};
 
-  /* ==> SURGE STARTS HERE, BESIDE THE OTHERS, NOT AFTER THEM. <== It is a
-   * different SERVICE (NHC_PeakStormSurge) reached through a different relay
-   * route, so it cannot ride the layer-id loop below — but it is the same
-   * bundle, wanted at the same instant, and awaiting it afterwards would put a
-   * second serial round trip in front of every storm tap for a layer most
-   * readers never open. Kicked off now, joined below. A rejection here is
-   * caught at the join, never as an unhandled promise.
-   *
-   * NHC-ONLY, and the caller already guaranteed it: this whole function throws
-   * on a GDACS storm at the top. GDACS publishes no surge product at all
-   * (§14), which is a `none`, not a failure. */
-  const surgePromise = fetchSurgeLive(storm.lat, storm.lon, storm.id);
-
   await Promise.all(
     Object.entries(SUMMARY_LAYER).map(async ([key, layerId]) => {
       /* The `can` block distinguishes "this source never had it" from "the
@@ -570,40 +552,6 @@ export async function fetchStormGeometry(storm) {
       }
     })
   );
-
-  /* ---- SURGE, JOINED (SPEC-DATA.md §4.8). ----
-   * THREE OUTCOMES AND THEY MUST NOT LOOK ALIKE (§5). NHC answered and this
-   * storm has bands -> `ok`. NHC answered and there are none within the
-   * storm's envelope -> `none`, which is the honest common case: the product
-   * only exists while a US surge forecast is in effect, and for most storms in
-   * most oceans there never is one. The fetch failed -> `unavailable`, which
-   * is the one that must never render as a quiet coastline.
-   *
-   * ==> AN EMPTY `fc` WITH STATUS `ok` WOULD BE THE §5 BUG IN MINIATURE, so it
-   * is not reachable: zero features is `none`, exactly as the layer loop above
-   * treats an empty layer. */
-  try {
-    const { fc, dropped } = await surgePromise;
-    if (dropped) {
-      /* Loud, because this is the schema alarm. `SURGE.liveColorFields` is a
-       * list of candidates for where the colour word lives, and a feature with
-       * no recognizable colour is DROPPED rather than painted a default — a
-       * guessed severity is a coastline told the wrong depth. A run where
-       * everything drops looks identical to a storm with no surge, and this
-       * line is the only thing that tells them apart. */
-      console.warn(
-        `[landfall] surge: ${dropped} feature(s) dropped for no recognizable color`
-      );
-    }
-    layers.surge = {
-      status: fc.features.length ? 'ok' : 'none',
-      fc,
-      error: null,
-    };
-  } catch (e) {
-    console.warn('[landfall] surge failed:', e?.message || e);
-    layers.surge = { status: 'unavailable', fc: null, error: e?.message || 'failed' };
-  }
 
   /* ---- THE FULL-TRACK ENVELOPE (§4: three tiers, one swath). ----
    * The windSwath slot is REPLACED with the swept envelope built from all

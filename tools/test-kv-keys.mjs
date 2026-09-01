@@ -207,7 +207,6 @@ const READER_KEYS = [
   ['functions/api/seasons/live.js', 'seasons/live'],
   ['functions/api/tcgp/storms.js', 'tcgp/storms'],
   ['functions/api/nws/flood.js', 'nws/flood'],
-  ['functions/api/nhc/surge.js', 'nhc/surge'],
 ];
 
 /* ---------------------------------------------------------------------------
