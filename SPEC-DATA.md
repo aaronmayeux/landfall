@@ -726,13 +726,26 @@ disproved them.
 - **==> THE SERVICE DOES PUBLISH A STORM ID, AND THIS SECTION SAID IT DID NOT.
   <==** One Points/Lines/Polygons trio serves every active storm and there is no
   field named `stormid` — which is where the old rule stopped looking. Measured
-  on Lala 2026-08-16: every feature carries `idp_subset: "cp012026"`, the app's
-  own storm id, same spelling and case, and `folderpath` carries it again
-  alongside the advisory number. **Match on `idp_subset` first.** The ±12°
-  envelope around the current position survives as the fallback for a feature
-  that states no id — losing a real band is worse than including a distant one.
-  Surge therefore keys on NOTHING: the route is unparameterized and the filter
-  is client-side.
+  on Lala 2026-08-16: every feature carries `idp_subset: "cp012026"`, and
+  `folderpath` carries it again alongside the advisory number. **Match on
+  `idp_subset` first.** The ±12° envelope around the current position survives
+  as the fallback for a feature that states no id — losing a real band is worse
+  than including a distant one. Surge therefore keys on NOTHING: the route is
+  unparameterized and the filter is client-side.
+- **==> `idp_subset` IS THE *SOURCE* ID, NOT THIS APP'S STORM ID, AND THIS
+  SECTION USED TO SAY THEY WERE THE SAME. <==** They are one prefix apart:
+  `data/nhc.js` builds `nhc:al052026`, the service publishes `al052026`. On
+  Edouard, 2026-09-01, the caller passed `storm.id` and all six published
+  features were rejected on a comparison that could never succeed. **The
+  envelope did not save it**, and that is the durable lesson: the fallback only
+  runs when a feature states NO id, so a present-but-unmatched id returns a
+  confident `false` and disables its own backstop. The map drew nothing and,
+  because a coastal reach carries no per-row status, said nothing — under a live
+  Storm Surge Warning. Two guards now: the caller passes `storm.sourceId`, and
+  `matchesStormId` strips anything before a `:` before comparing.
+  `tools/test-surge.mjs` drives the selector with `nhc:cp012026` — the string
+  the app genuinely builds — and is mutation-tested against both the missing
+  strip and the tempting wrong fix of loosening the matcher into a fall-through.
 - **==> THE LAYER'S PUBLISHED `extent` IS NOT A MEASUREMENT OF ITS CONTENTS.
   <==** ArcGIS stores it on the table definition and does not recompute it as
   rows change, so it can describe the previous storm indefinitely. It was read

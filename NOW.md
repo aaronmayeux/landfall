@@ -69,22 +69,24 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**SURGE IS LIVE AGAIN AND HAS NEVER BEEN SEEN DRAWING ON A REAL STORM.** The
-ten commits backed out on 2026-08-17 are restored — relay route, warm key,
-client filter, Lala fixture, tests — with the archive capture deliberately left
-out (§4.8). What sent them back last time was NOT the plumbing: the relay served
-Lala's eleven bands correctly and the layer drew nothing because nothing was
-selected and ambient surge sits at `ZOOM.ambientGeometry`. That floor is
-UNCHANGED, because watch/warning has the same one and the coastal row has no
-per-row status message either — surge matches its row-mate rather than growing a
-mechanism of its own.
+**SURGE IS RESTORED WITH ITS BUG FIXED, AND HAS NEVER BEEN SEEN DRAWING ON A
+REAL STORM.** Everything backed out at 03:42 on 2026-09-01 is back — relay
+route, warm key, client filter, Lala fixture, archive capture, tests — plus the
+one-word fault that sent it back. The relay was never at fault either time: NHC
+published six real features for Edouard and `/api/nhc/surge` served all six. The
+client threw them away because it compared our `nhc:al052026` against the
+service's `al052026`. Fixed in two places (§4.8) and mutation-tested both ways.
 
-**So the test is: select the storm.** Tap Edouard, Coastal -> Surge, and the
-Texas–Louisiana bands should draw once the map has flown in. If they draw only
-after the fly-in and not at globe zoom, that is CORRECT and matches
-watch/warning. If they never draw, read the console — `data/surge.js` prints
-which field the colour came from and how many features were dropped, and a run
-where everything drops looks exactly like a storm with no surge.
+**WAITING ON AARON — SELECT THE STORM, DON'T JUST LOOK AT THE GLOBE.** Ambient
+surge sits at `ZOOM.ambientGeometry`, same floor as watch/warning, so nothing
+draws until a storm is selected and the map has flown in. Tap Edouard, Coastal
+-> Surge. Expect a yellow 3–5 ft reach from High Island, TX to the
+Vermilion/Cameron Parish Line, LA, plus bands around Sabine Lake, Calcasieu Lake
+and Vermilion Bay. Drawing only after the fly-in is CORRECT.
+
+If nothing draws, the console answers it in one line: `data/surge.js` prints the
+feature count, which field the colour came from, and how many were dropped. Zero
+features with no drops means the filter took nothing — the Edouard shape again.
 
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
