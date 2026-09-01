@@ -3890,6 +3890,64 @@ disclosures register their DOM ids during a render, and repainting one half
 alone used to wipe the other half's — which would have stopped those disclosures
 opening with nothing throwing.
 
+#### NHC's own peak surge is the American half of this section
+
+**==> IT IS HERE AND NOT IN `Watches and warnings`, WHICH IS WHERE A READER
+LOOKS FIRST. <==** Aaron's call, 2026-09-01, and it follows the same rule as the
+paragraph above: all water lives in one section. **NHC's watch/warning layer
+carries only WIND products** — measured on Edouard, four features, codes `HWA`
+and `TWR` and nothing else — so a Storm Surge Warning was never going to appear
+in that list whatever we did. The surge forecast is the thing this app can
+actually show, and it shows it under the heading that keeps water.
+
+**THE LEGEND IS `wwLegend`'s MECHANISM, REUSED RATHER THAN REDESIGNED.** Same
+`.detail-ww` list, same glowing `.row-swatch`, same severest-first order, and
+the same rule that a row exists only when the product behind it does — Milton
+advisory 008 forecast nothing above 12 ft and gets four rows, not five. A reader
+who has learned the watch list one section up already knows how to read this
+one. `lib/surge-legend.js` is the `lib/watchwarning.js` of this product, and
+`tools/test-flooding.mjs` asserts the CLASS NAMES so the two coastal legends
+cannot drift apart quietly.
+
+**THE LABEL RULE IS DECIDED FOR THE WHOLE LIST, NOT PER ROW.** §4.8 keeps both
+the colour bucket and NHC's published range; a rung holding several ranges can
+only be labelled from the ramp. Deciding that per row was tried and MEASURED
+against Milton 017, which produced `8-12 ft` stacked directly above `Up to
+9 ft` — two kinds of statement reading as overlapping depths in the wrong order.
+So: every rung carrying exactly one range means the list shows NHC's ranges
+throughout (Edouard's `3-5 ft`); any ambiguous rung sends the whole list to the
+ramp's wording. Neither is ever rewritten, re-rounded, or merged into a span.
+
+**NO FETCH OF ITS OWN.** The slot is read straight off the geometry bundle the
+map layer already has in flight. A second request would be two answers to one
+question landing at different moments, with the panel and the coastline able to
+disagree about the same storm.
+
+**FOUR STATES, ALL SPOKEN, AND TWO OF THEM ARE THE WHOLE POINT (§5).** An
+unmarked coast looks identical whether NHC published nothing or our fetch died —
+which is exactly what shipped on 2026-09-01, a blank shoreline under a live
+Storm Surge Warning that also said nothing, because a coastal reach carries no
+per-row status. `NHC_SURGE_NONE` and `NHC_SURGE_UNAVAILABLE` are separate
+sentences in `ui/flood-words.js` and a test asserts they never substitute for
+each other. A fifth case sits beside them: features arrived carrying no severity
+this app recognises, reported as unreadable rather than as an absence, so a
+schema change never becomes a statement about a coastline.
+
+**AND `MODEL_NOT_THIS_BASIN` STANDS DOWN WHEN THIS HALF SPEAKS.** That sentence
+says there is no figure here and that the gap is in what the app can show. Its
+own reasoning (§51.5) is that NHC's inundation forecast is the trusted product
+where NHC publishes one — so printed above these rows it contradicts them, and
+printed above `NHC_SURGE_NONE` it says the same thing twice about a different
+model. It remains the fallback for a drawer built with no surge surface wired,
+and a test holds that path open.
+
+**STILL OPEN: THE HOME DASHBOARD HAS NOT HAD THIS PASS.** `ui/flooding-home.js`
+still answers an NHC storm with `MODEL_NOT_THIS_BASIN` alone. Not wrong — that
+screen has no surge surface — but the two screens now say different things about
+the same storm, and the drawer's is better.
+
+---
+
 ---
 
 ### 56.9 The house gates on the corridor, and leaves the storm drawer

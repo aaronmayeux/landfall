@@ -77,6 +77,13 @@ published six real features for Edouard and `/api/nhc/surge` served all six. The
 client threw them away because it compared our `nhc:al052026` against the
 service's `al052026`. Fixed in two places (§4.8) and mutation-tested both ways.
 
+**AND THE SURGE LEGEND NOW LIVES IN `Flooding`, NOT `Watches and warnings`.**
+Aaron went looking for it in the watch list; it was never going to be there.
+NHC's watch/warning layer carries WIND products only — read off Edouard's real
+bytes, four features, `HWA` and `TWR`, no surge code exists in that layer. The
+forecast is now rendered in `Flooding` (SPEC-UI §56.8) using the watch list's own
+list, dot and severest-first order, with only the rungs actually forecast.
+
 **WAITING ON AARON — SELECT THE STORM, DON'T JUST LOOK AT THE GLOBE.** Ambient
 surge sits at `ZOOM.ambientGeometry`, same floor as watch/warning, so nothing
 draws until a storm is selected and the map has flown in. Tap Edouard, Coastal
@@ -84,9 +91,20 @@ draws until a storm is selected and the map has flown in. Tap Edouard, Coastal
 Vermilion/Cameron Parish Line, LA, plus bands around Sabine Lake, Calcasieu Lake
 and Vermilion Bay. Drawing only after the fly-in is CORRECT.
 
+Open `Flooding` in the same drawer while you are there: it should carry the same
+depths as coloured rows, with the sentence naming NHC and "above ground level".
+If the coast is bare, that section now says WHICH kind of bare it is — NHC has
+nothing out, or the fetch failed — and those are two different sentences.
+
 If nothing draws, the console answers it in one line: `data/surge.js` prints the
 feature count, which field the colour came from, and how many were dropped. Zero
 features with no drops means the filter took nothing — the Edouard shape again.
+
+**AND ONE THING DELIBERATELY NOT DONE:** the HOME dashboard's Flooding section
+still answers a US storm with "coastal flooding is not modelled in this basin"
+and nothing else. Not wrong, but the drawer now says something better about the
+same storm, and two screens disagreeing about one storm is the shape of problem
+this project keeps finding. Small pass, not started, needs Aaron's word.
 
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
