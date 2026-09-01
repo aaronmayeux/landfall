@@ -221,6 +221,64 @@ export const QUERIES = [
       'GROUP BY day, source ORDER BY day DESC, sessions DESC',
   },
   {
+    /* Added 2026-09-01. Nine engagement counters have been written on every
+       session since launch and NOT ONE query has ever read them, so "does
+       anybody actually use the layers, or do they just look at the globe" was
+       a question the database could already answer and had never been asked. */
+    name: 'feature-usage',
+    note:
+      'WHAT PEOPLE ACTUALLY TOUCH, by platform, all time. ' +
+      '==> READ THE `sessions_...` COLUMNS BEFORE THE `total_...` ONES. <== ' +
+      'A total is the sum of a counter across every visit, so ONE person ' +
+      'hammering a button outweighs a hundred people who each pressed it ' +
+      'once. The `sessions_...` columns count VISITS THAT USED THE FEATURE AT ' +
+      'ALL, which is the reach question and the one worth acting on. ' +
+      'NO `timings_ok` FILTER HERE, deliberately: a visit whose clock cannot ' +
+      'be trusted still pressed real buttons, and filtering it out would ' +
+      'undercount usage while looking like a clean number. ' +
+      '`sessions_losing_webgl` is the globe dying outright — if that is not ' +
+      'near zero on a platform, nothing else in this row matters.',
+    sql:
+      'SELECT platform, COUNT(*) AS sessions, ' +
+      'SUM(storm_select) AS total_storm_selects, ' +
+      'SUM(advisory_open) AS total_advisory_opens, ' +
+      'SUM(layer_toggle) AS total_layer_toggles, ' +
+      'SUM(model_toggle) AS total_model_toggles, ' +
+      'SUM(recenter) AS total_recenters, ' +
+      'SUM(CASE WHEN storm_select > 0 THEN 1 ELSE 0 END) AS sessions_selecting_a_storm, ' +
+      'SUM(CASE WHEN advisory_open > 0 THEN 1 ELSE 0 END) AS sessions_opening_an_advisory, ' +
+      'SUM(CASE WHEN layer_toggle > 0 THEN 1 ELSE 0 END) AS sessions_toggling_a_layer, ' +
+      'SUM(CASE WHEN layer_pair > 0 THEN 1 ELSE 0 END) AS sessions_pairing_layers, ' +
+      'SUM(CASE WHEN layer_reset > 0 THEN 1 ELSE 0 END) AS sessions_resetting_layers, ' +
+      'SUM(CASE WHEN model_toggle > 0 THEN 1 ELSE 0 END) AS sessions_toggling_models, ' +
+      'SUM(CASE WHEN recenter > 0 THEN 1 ELSE 0 END) AS sessions_recentering, ' +
+      'SUM(CASE WHEN home_set > 0 THEN 1 ELSE 0 END) AS sessions_setting_home, ' +
+      'SUM(CASE WHEN retry > 0 THEN 1 ELSE 0 END) AS sessions_pressing_retry, ' +
+      'SUM(CASE WHEN webgl_lost > 0 THEN 1 ELSE 0 END) AS sessions_losing_webgl ' +
+      'FROM sessions GROUP BY platform ORDER BY sessions DESC',
+  },
+  {
+    /* Added 2026-09-01 alongside feature-usage. `retry` only ever said HOW
+       MANY presses there were; the four buttons mean four completely
+       different failures and a bare count cannot tell them apart. */
+    name: 'retry-buttons',
+    note:
+      'WHICH Retry buttons got pressed — i.e. which part of the app broke ' +
+      'badly enough that somebody fought back. `retry_which` holds the button ' +
+      'NAMES for that visit, in a fixed order, so one row is a COMBINATION ' +
+      "and not a single button: a visit that retried two things appears once, " +
+      'under both names together. Do not sum this column as though each row ' +
+      'were one button. Empty values are excluded because they mean "no Retry ' +
+      'was pressed", which is the overwhelming majority and is not a finding. ' +
+      'The column was added 2026-08-18, so nothing here predates that date.',
+    sql:
+      'SELECT retry_which, COUNT(*) AS sessions, ' +
+      "DATE(MIN(ts), 'unixepoch') AS first_seen, " +
+      "DATE(MAX(ts), 'unixepoch') AS last_seen " +
+      "FROM sessions WHERE retry_which <> '' " +
+      'GROUP BY retry_which ORDER BY sessions DESC LIMIT 20',
+  },
+  {
     name: 'source-rollup',
     note: 'Per-source health. Which feeds are answering and which are not.',
     sql: 'SELECT * FROM source_rollup ORDER BY rowid DESC LIMIT 50',
