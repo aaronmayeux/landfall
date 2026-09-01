@@ -237,3 +237,50 @@ export const pastWindowWords = (hours) => {
   if (h === 24) return 'the last 24 hours';
   return `the last ${h} hours`;
 };
+
+/**
+ * Whose forecast the surge rows are, and what the depths are measured FROM.
+ *
+ * ==> THE DATUM IS THE HALF THAT CANNOT BE LEFT OUT. <== "5 ft" means five feet
+ * of water standing on top of normally dry ground, not a five-foot tide and not
+ * a sea level. A reader who takes it for a tide height concludes their raised
+ * house is fine. NHC says "above ground level" on its own legend for exactly
+ * this reason, so the phrase is theirs and it is kept.
+ *
+ * ==> AND IT NAMES THE FORECASTER, LIKE `GDACS_PROVENANCE` DOES. <== Both
+ * products can be on screen in one session, one in feet and one in metres, and
+ * the reader has to be able to see they are two different organisations
+ * answering two different questions rather than one answer disagreeing with
+ * itself.
+ */
+export const NHC_SURGE_PROVENANCE =
+  'Peak storm surge forecast by the National Hurricane Center, in feet above ' +
+  'ground level.';
+
+/**
+ * NHC has nothing out for this storm, and that is an ANSWER rather than a gap.
+ *
+ * ==> IT IS THE COMMON CASE AND IT IS STILL SAID OUT LOUD (§5). <== The Peak
+ * Storm Surge product exists only while a US surge forecast is in effect, which
+ * for most storms in most weeks it is not. Saying nothing here leaves an empty
+ * space that reads identically to the failure below it — and telling those two
+ * apart is the entire reason this section exists.
+ *
+ * ==> WORDED AS NHC'S SILENCE, NOT AS DRY GROUND. <== "No surge is forecast"
+ * would be us making a forecast. What we know is narrower: nobody has published
+ * one. A storm can be hours from a coast with the product not yet issued.
+ */
+export const NHC_SURGE_NONE =
+  'The National Hurricane Center has no peak storm surge forecast out for ' +
+  'this storm.';
+
+/**
+ * The fetch failed. ==> THE ONE STATE THAT MUST NEVER LOOK LIKE THE ONE ABOVE.
+ * <== On 2026-09-01 this layer drew nothing on a coast under a live Storm Surge
+ * Warning and said nothing either, because a coastal reach carries no per-row
+ * status of its own. An unmarked shoreline reads as "no surge forecast"; this
+ * sentence is the difference between that and "no answer".
+ */
+export const NHC_SURGE_UNAVAILABLE =
+  'The peak storm surge forecast didn’t load, so the coast may be unmarked. ' +
+  'That is not a forecast of no surge.';

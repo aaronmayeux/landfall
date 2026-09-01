@@ -318,6 +318,18 @@ export function createStormDetailView({
       retry: async () => { await capH.retry(storm); renderCapBody(); },
     },
     surge,
+    /* ==> READ OFF THE BUNDLE ALREADY IN FLIGHT, NEVER FETCHED AGAIN. <== The
+     * map layer and this section are two views of one answer; a second request
+     * would let the panel and the coast disagree about the same storm. Only an
+     * NHC storm has a surge slot at all — `fetchStormGeometry` throws on a
+     * GDACS storm — so a non-NHC storm reads as absent and this half of the
+     * section simply is not there for it. */
+    nhcSurge: {
+      read: (s2) =>
+        s2?.source === 'nhc'
+          ? { state: geo.state, slot: geo.state === 'ok' ? geo.bundle?.layers?.surge : null }
+          : null,
+    },
     units,
   });
 

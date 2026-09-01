@@ -2038,6 +2038,13 @@ button.drawer-identity:focus-visible {
 }
 .layer-legend .env-legend { margin-top: var(--space-tight); }
 
+/* ==> NAMED FOR ITS FIRST USER, SHARED WITH ITS SECOND, AND NOT RENAMED. <==
+ * The Flooding section paints NHC's peak surge legend with this exact list and
+ * this exact dot (§56.8, ui/flooding-storm.js) — Aaron's call, 2026-09-01: a
+ * reader who has learned the watch list one section up should not have to learn
+ * a second coastal legend. Renaming the class to something neutral would touch
+ * three files and two selector contracts to buy a tidier string nobody sees;
+ * the comment carries the fact instead. */
 .detail-ww {
   list-style: none;
   margin: 0;

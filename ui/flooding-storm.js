@@ -63,11 +63,13 @@
  */
 
 import { surgeOnStorm, gdacsEventIdOf } from '../lib/surge-locations.js';
+import { surgeLegend } from '../lib/surge-legend.js';
 import { formatDistance } from '../lib/units.js';
 import { DOTS } from './loading-dots.js';
 import { floodAlertRows, wireFloodAlertRows } from './rain-alerts.js';
 import {
   NWS_US_ONLY, MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE, NWS_NOT_ATTRIBUTED,
+  NHC_SURGE_PROVENANCE, NHC_SURGE_NONE, NHC_SURGE_UNAVAILABLE,
 } from './flood-words.js';
 
 export const FLOOD_SECTION = 'flooding';
@@ -110,12 +112,20 @@ export function spreadWords(arrivalHours, peakHours) {
  * @param {{ loadSurge:Function, retrySurge:Function }} [deps.surge] the GDACS
  *   model. The SAME facade the home dashboard is handed, so the two screens
  *   read one memoized answer per storm.
+ * @param {{ read:(storm:object)=>({state:string, slot:object|null}|null) }}
+ *   [deps.nhcSurge] NHC's peak surge, read straight off the storm's geometry
+ *   bundle. ==> NO FETCH OF ITS OWN, AND THAT IS THE POINT. <== The bundle is
+ *   already in flight for the map layer; a second request here would be a
+ *   second answer to one question, landing at a different moment, with the
+ *   panel and the coast able to disagree about the same storm. `read` reports
+ *   what the bundle holds and never asks for it.
  * @param {()=>string|null} [deps.units] the resolved unit system.
  */
 export function createFloodingStorm({
   flood = null,
   cap = null,
   surge = null,
+  nhcSurge = null,
   units = null,
   /** Open one alert's detail panel (§56.6). Absent, the rows still render and
    *  still say everything they said before — they simply do not open. */
@@ -288,6 +298,60 @@ export function createFloodingStorm({
    * THE FIGURE — our reading of a model, as prose, underneath
    * ---------------------------------------------------------------------- */
 
+  /**
+   * NHC's own peak storm surge forecast — the American half of this section.
+   * §56.8, SPEC-DATA.md §4.8.
+   *
+   * ==> IT SITS WITH THE ORDERS, NOT WITH THE MODEL. <== The header's rule is
+   * "somebody else's statement about water on top, our reading of a model
+   * last". This is a forecaster's published product carrying a datum and a
+   * range, issued alongside the Storm Surge Warning itself. It belongs above
+   * the seam with the agency rows, not below it with a simulation.
+   *
+   * ==> THE LEGEND IS `wwLegend`'s MECHANISM, DELIBERATELY (Aaron, 2026-09-01).
+   * <== Same `.detail-ww` list, same glowing `.row-swatch`, same
+   * severest-first order, same rule that a row exists only when the product
+   * behind it does. A reader who has learned to read the watch list one section
+   * up already knows how to read this one, and a second idea about coastal
+   * legends would have to be learned for no gain.
+   *
+   * FOUR STATES, ALL SPOKEN (§5). The bands on the map cannot say which of them
+   * they are in — an unmarked coast looks the same whether NHC published
+   * nothing or our fetch died — so every one of them is a sentence here.
+   */
+  function nhcSurgeHtml(storm) {
+    if (!nhcSurge?.read || !storm) return '';
+    const { state, slot } = nhcSurge.read(storm) || {};
+    if (!state) return '';
+
+    if (state === 'loading') {
+      return `<p class="detail-soft">Checking peak storm surge${DOTS}</p>`;
+    }
+    if (state === 'error' || slot?.status === 'unavailable') {
+      return `<p class="detail-soft">${esc(NHC_SURGE_UNAVAILABLE)}</p>`;
+    }
+    if (!slot || slot.status === 'none') {
+      return `<p class="flood-note">${esc(NHC_SURGE_NONE)}</p>`;
+    }
+
+    const legend = surgeLegend(slot.fc?.features);
+    /* ==> `ok` WITH AN UNREADABLE LEGEND IS NOT THE SAME AS `none`. <== The
+     * slot says features arrived; if none of them carried a severity this app
+     * recognises, the honest report is that we could not read them — never the
+     * all-clear sentence above, which would turn a schema change into a
+     * statement about the coast. */
+    if (!legend.length) {
+      return `<p class="detail-soft">The peak storm surge forecast came back in a
+        form this app could not read.</p>`;
+    }
+
+    return `<ul class="detail-ww">${legend
+      .map(
+        (e) => `<li><span class="row-swatch" style="--swatch:${e.color}"></span>${esc(e.label)}</li>`
+      )
+      .join('')}</ul><p class="flood-note">${esc(NHC_SURGE_PROVENANCE)}</p>`;
+  }
+
   function modelHtml(storm) {
     if (!storm) return '';
 
@@ -295,7 +359,18 @@ export function createFloodingStorm({
      * shows rows and no modelled figure, and that must not read as "no coastal
      * flooding expected" — it means this model does not cover this basin. */
     if (!modelApplies(storm)) {
-      return `<p class="flood-note">${esc(MODEL_NOT_THIS_BASIN)}</p>`;
+      /* ==> UNLESS NHC's OWN FORECAST IS ON SCREEN, IN WHICH CASE THE SENTENCE
+       * HAS STOPPED BEING TRUE. <== It says there is no figure here and that
+       * this is a gap in what the app can show. Printed under a list of NHC
+       * surge depths it contradicts the rows directly above it — and the
+       * sentence's own reasoning (§51.5) is that NHC's inundation forecast is
+       * the TRUSTED product where NHC publishes one. Where it does, the gap is
+       * filled and the disclaimer is furniture; where it does not,
+       * `NHC_SURGE_NONE` has already said so in this storm's own terms and
+       * this would say it a second time about a different model. */
+      return nhcSurgeHtml(storm)
+        ? ''
+        : `<p class="flood-note">${esc(MODEL_NOT_THIS_BASIN)}</p>`;
     }
 
     if (!isCurrent(storm) || state.phase === 'idle' || state.phase === 'loading') {
@@ -353,7 +428,12 @@ export function createFloodingStorm({
    *  of a model last. See the header. */
   function html(storm) {
     if (!storm) return '';
-    const rows = `${corridorHtml(storm)}${capHtml(storm)}`;
+    /* ==> NHC's FORECAST JOINS THE ORDERS, ABOVE THE SEAM. <== It is a
+     * published product with a datum, not our reading of a simulation. See
+     * `nhcSurgeHtml`. It goes LAST inside that half because the two above it
+     * are alerts somebody has issued and this is the forecast underneath
+     * them — the warning first, then the depth it was issued for. */
+    const rows = `${corridorHtml(storm)}${capHtml(storm)}${nhcSurgeHtml(storm)}`;
     const model = modelHtml(storm);
     /* THE HAIRLINE ONLY WHEN BOTH HALVES ARE THERE. It exists so a reader can
      * SEE that an agency's order and our model reading are two answers rather

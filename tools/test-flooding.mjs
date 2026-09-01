@@ -54,6 +54,7 @@ const { createFloodingStorm } = await import('../ui/flooding-storm.js');
 const { createFloodingHome } = await import('../ui/flooding-home.js');
 const {
   NWS_US_ONLY, MODEL_NOT_THIS_BASIN, GDACS_PROVENANCE, NWS_NOT_ATTRIBUTED,
+  NHC_SURGE_NONE, NHC_SURGE_UNAVAILABLE, NHC_SURGE_PROVENANCE,
   FLOOD_POINTER,
 } = await import('../ui/flood-words.js');
 const { floodAlertRows, wireFloodAlertRows } = await import('../ui/rain-alerts.js');
@@ -62,6 +63,7 @@ const { corridorSummary, trackChains, trackSamples } = await import('../lib/floo
 const { projectLocations } = await import('../functions/api/gdacs/surge.js');
 const { readAlerts, partitionSurge, alertsForStorm } = await import('../lib/cap.js');
 const { _normalizeGdacsEvent } = await import('../data/gdacs.js');
+const { normalizeSurge } = await import('../data/surge.js');
 const { createCapStorm } = await import('../ui/cap-storm.js');
 const { ICON_PATH, iconPathData } = await import('../ui/section-icon.js');
 
@@ -155,6 +157,11 @@ const nhcStorm = { id: 'n1', source: 'nhc', sourceId: 'cp012026' };
 async function renderStorm({
   storm = gdacsStorm, summary = null, surgePayload = null, surgeStatus = 'ok',
   cap = null,
+  /* NHC's own surge, off the geometry bundle (§56.8). Defaults to "wired, and
+   * NHC has nothing out" — the honest common case, and the same
+   * wired-but-quiet default every other dep here takes. Pass `nhcSurge: null`
+   * to test the section with the dep genuinely absent. */
+  nhcSurge = { state: 'ok', slot: { status: 'none', fc: null } },
 } = {}) {
   const c = createFloodingStorm({
     flood: { summaryFor: () => summary, retry: async () => {} },
@@ -165,6 +172,9 @@ async function renderStorm({
         : { status: surgeStatus }),
       retrySurge: async () => ({ status: 'unavailable' }),
     },
+    nhcSurge: nhcSurge
+      ? { read: (s2) => (s2?.source === 'nhc' ? nhcSurge : null) }
+      : null,
     units: () => 'imperial',
   });
   await c.ensure(storm, () => {});
@@ -243,11 +253,32 @@ section('§56.7 — the two coverage gaps');
     storm: nhcStorm,
     summary: corridorSummary(NATIONAL, overIndiana, LIVE, 300),
   });
-  ok(says(usStorm, MODEL_NOT_THIS_BASIN),
-    'an NHC storm says why there is no modelled figure');
+  /* ==> IT ANSWERS IN NHC'S TERMS NOW, NOT GDACS'S (§56.8, 2026-09-01). <== The
+   * old assertion here was MODEL_NOT_THIS_BASIN — "the global model does not
+   * cover this basin". That was the best available answer while an American
+   * storm had no surge surface at all. It now has one, so the honest sentence
+   * for a US storm is about the product that actually covers it: NHC has
+   * nothing out. The old sentence would sit under this one describing a gap
+   * that is filled. */
+  ok(says(usStorm, NHC_SURGE_NONE),
+    'an NHC storm says NHC has no surge forecast out');
+  ok(!says(usStorm, MODEL_NOT_THIS_BASIN),
+    'and does not also apologise for a different model that never covered it');
   ok(!flat(usStorm).includes('No coastal flooding is modelled for this storm'),
     'and it never states the all-clear it has not earned');
   ok(usStorm.includes('flood alert'), 'while still showing the rows it does have');
+
+  /* ==> THE OLD SENTENCE IS NOT DELETED, IT IS THE FALLBACK. <== With the dep
+   * genuinely absent — a drawer built without it — the section must still
+   * explain itself rather than going quiet, which is what it did before today
+   * and is still the right behaviour when there is no surge surface at all. */
+  const usNoDep = await renderStorm({
+    storm: nhcStorm,
+    summary: corridorSummary(NATIONAL, overIndiana, LIVE, 300),
+    nhcSurge: null,
+  });
+  ok(says(usNoDep, MODEL_NOT_THIS_BASIN),
+    'with no surge surface wired, the old coverage sentence still speaks');
 
   /* The other half: nothing matched the corridor. "No flood alerts within
    * 345 mi" is only an answer for a place NWS forecasts at all. */
@@ -457,6 +488,78 @@ section('§56.8 — Watches and warnings points at Flooding');
 /* =========================================================================
  * 8. THE HOME DASHBOARD'S HALF
  * ====================================================================== */
+section('§56.8 — NHC’s own surge, in the section that keeps water');
+
+{
+  /* The bytes a real advisory produces, through the real normalizer. */
+  const raw = JSON.parse(fs.readFileSync(
+    path.join(ROOT, 'samples/lala-cp012026/surge/peaksurge-polygons.geojson'), 'utf8'));
+  const fc = normalizeSurge(raw, { fromFixture: false }).fc;
+  const okSlot = { state: 'ok', slot: { status: 'ok', fc } };
+
+  const drawn = await renderStorm({ storm: nhcStorm, nhcSurge: okSlot });
+
+  /* ==> THE MECHANISM IS THE WATCH LIST'S, AND THE TEST SAYS SO IN MARKUP.
+   * <== Aaron's call, 2026-09-01. If a later pass grows this a bespoke list
+   * class or a swatch of its own, the two coastal legends have drifted apart
+   * and this goes red — which is the whole point of asserting on the class
+   * names rather than on the words. */
+  ok(drawn.includes('<ul class="detail-ww">'),
+    'the surge legend is the watch list’s list');
+  ok(drawn.includes('class="row-swatch"'),
+    'and the watch list’s glowing dot');
+  ok(drawn.includes('--swatch:#64B5F6'),
+    'wearing the ramp’s own blue, not an invented colour');
+
+  /* ONLY THE ACTIVE ROWS. Lala forecast 1-2 ft everywhere — one rung. A legend
+   * printing the palette would show five. */
+  ok((drawn.match(/<li>/g) || []).length === 1,
+    'one rung was forecast, so exactly one row is drawn — not the whole palette');
+  ok(flat(drawn).includes('1-2 ft'),
+    'labelled with NHC’s own range');
+  ok(says(drawn, NHC_SURGE_PROVENANCE),
+    'and the datum is stated — feet ABOVE GROUND, never a tide height');
+
+  /* ==> THE DISCLAIMER ABOUT THE OTHER MODEL MUST NOT SIT UNDER THIS. <== It
+   * says there is no figure and that this is a gap in what the app can show.
+   * Printed beneath a list of NHC depths it contradicts the rows above it. */
+  ok(!says(drawn, MODEL_NOT_THIS_BASIN),
+    'and no sentence claiming a gap that these rows just filled');
+
+  /* --- THE THREE STATES THAT ARE NOT ROWS, AND WHY THEY MUST DIFFER (§5). --- */
+
+  const failed = await renderStorm({
+    storm: nhcStorm,
+    nhcSurge: { state: 'ok', slot: { status: 'unavailable', fc: null } },
+  });
+  ok(says(failed, NHC_SURGE_UNAVAILABLE), 'a failed surge fetch says it failed');
+  ok(!says(failed, NHC_SURGE_NONE),
+    'and never the all-clear — this is the exact pair that shipped as one');
+
+  const loading = await renderStorm({
+    storm: nhcStorm, nhcSurge: { state: 'loading', slot: null },
+  });
+  ok(flat(loading).includes('Checking peak storm surge'), 'loading says it is loading');
+  ok(!says(loading, NHC_SURGE_NONE) && !says(loading, NHC_SURGE_UNAVAILABLE),
+    'and claims neither of the settled answers while it is still asking');
+
+  /* ==> `ok` WITH NOTHING READABLE IS ITS OWN STATE. <== Features arrived and
+   * none carried a severity this app knows. Reporting the all-clear there
+   * turns a schema change into a statement about a coastline. */
+  const unreadable = await renderStorm({
+    storm: nhcStorm,
+    nhcSurge: { state: 'ok', slot: { status: 'ok', fc: { features: [{ properties: {} }] } } },
+  });
+  ok(flat(unreadable).includes('could not read'),
+    'features with no readable severity are reported as unreadable');
+  ok(!says(unreadable, NHC_SURGE_NONE), 'and not as an absence of surge');
+
+  /* --- NOT A US STORM, NOT THIS HALF. --- */
+  const foreign = await renderStorm({ storm: gdacsStorm, nhcSurge: okSlot });
+  ok(!says(foreign, NHC_SURGE_PROVENANCE) && !flat(foreign).includes('1-2 ft'),
+    'a GDACS storm is never handed NHC’s forecast');
+}
+
 section('§56.7 — the same section, the house’s question');
 
 {
