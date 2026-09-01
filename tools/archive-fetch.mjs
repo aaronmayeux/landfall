@@ -149,6 +149,74 @@ const SOURCES = [
       'while sitting inside another. Kept archived so the decision can be ' +
       'revisited against real data rather than from memory.',
   },
+  /* ==> PEAK STORM SURGE. ADDED 2026-08-16, AND THE LESSON IS ABOUT TRUSTING
+   * A METADATA FIELD OVER THE ROWS. <== `data/surge.js` has shipped a full
+   * renderer and normalizer for a year against Milton's fixture, with the live
+   * fetch deliberately unwired because "there has been no such storm since the
+   * layer was built". Lala published surge over Oahu and Kauai and nobody
+   * noticed, because nothing was watching this service.
+   *
+   * WORSE: A SESSION CHECKED AND GOT IT BACKWARDS. The layer's published
+   * `extent` on the ArcGIS service page read as the Gulf of Mexico, and that
+   * was taken as proof the service held nothing near Hawaii. ArcGIS stores
+   * that extent as a property of the table DEFINITION and does not recompute
+   * it as rows change, so it can describe the previous storm indefinitely.
+   * Reading it as a measurement of current contents is the same error as
+   * reading a cached header as a live one. Only the FEATURES answer this, and
+   * the only way to hold the features is to archive them.
+   *
+   * NO SPATIAL FILTER HERE ON PURPOSE. The app queries an envelope around one
+   * storm (`SURGE.envelopeDeg`); the archive takes everything the service
+   * holds, so a snapshot answers "what is published anywhere right now"
+   * — which is the question the extent field lied about.
+   *
+   * `maxAllowableOffset` matches `SURGE.offsetDeg` (0.001) so these bytes are
+   * the same geometry the relay will ask for. A fixture generalized
+   * differently from production judges the renderer wrongly, which is already
+   * a written-down lesson in config/constants.js. */
+  {
+    name: 'nhc-peaksurge-polygons.geojson',
+    url:
+      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
+      'NHC_PeakStormSurge/MapServer/2/query' +
+      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326' +
+      '&maxAllowableOffset=0.001&f=geojson',
+    note:
+      'NHC Peak Storm Surge inundation bands, EVERY feature the service ' +
+      'holds, unfiltered. Settles which attribute carries the color word — ' +
+      'SURGE.liveColorFields in config/constants.js is a list of four GUESSES ' +
+      '(popupinfo, snippet, name, folderpath) and says so. The HA integration ' +
+      'next door reads `symbolid` instead, which the service declares as an ' +
+      'INTEGER; one of those two readings is wrong and these bytes say which.',
+  },
+  {
+    name: 'nhc-peaksurge-lines.geojson',
+    url:
+      'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/' +
+      'NHC_PeakStormSurge/MapServer/1/query' +
+      '?where=1%3D1&outFields=*&returnGeometry=true&outSR=4326' +
+      '&maxAllowableOffset=0.001&f=geojson',
+    note:
+      'The Lines folder beside the Polygons — coastal reaches like "Suwannee ' +
+      'River, FL to Yankeetown, FL...3-5 ft". Roughly half the product on ' +
+      'Milton. Archived separately because a renderer that draws only the ' +
+      'filled bands drops half the forecast, which is a §5 lie about a coast.',
+  },
+  {
+    name: 'relay-nhc-surge.json',
+    url: 'https://landfall.getgravitate.app/api/nhc/surge',
+    note:
+      'OUR OWN surge route. Added 2026-08-16 because the layer shipped and ' +
+      'drew nothing, and nothing inside a session can fetch this — so the ' +
+      'question "is the relay serving surge at all" could only be answered by ' +
+      'asking a person to read a console on a phone. Diff it against ' +
+      'nhc-peaksurge-polygons.geojson above: same features means the relay is ' +
+      'fine and the fault is in the client; a 502 or an empty collection ' +
+      'against a populated upstream means it is not. The headers carry ' +
+      'X-Landfall-Cache and X-Landfall-Surge-Features, which say WHICH of the ' +
+      'three cache levels answered — the single most useful fact about this ' +
+      'route and one no browser will show you.',
+  },
   {
     name: 'jtwc-abpw.txt',
     url: 'https://www.metoc.navy.mil/jtwc/products/abpwweb.txt',
