@@ -121,9 +121,9 @@ real home is the other row carrying the same section number.
 | `18.3` | &nbsp;&nbsp;The archive runner — EXACT BYTES | `SPEC-OPS.md` | 1247-1449 |
 | `18.4` | &nbsp;&nbsp;The Cloudflare MCP — OUR OWN NUMBERS | `SPEC-OPS.md` | 1450-1456 |
 | `18.5` | &nbsp;&nbsp;The order, and why getting it backwards is expensive | `SPEC-OPS.md` | 1457-1468 |
-| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1469-1522 |
-| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1523-1598 |
-| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1599-1712 |
+| `18.6` | &nbsp;&nbsp;The telemetry pull — THE SECOND ROAD TO OUR OWN NUMBERS | `SPEC-OPS.md` | 1469-1553 |
+| `18.7` | &nbsp;&nbsp;The seasons mirror — THE HOURS THAT ARE NOT COMING BACK | `SPEC-OPS.md` | 1554-1629 |
+| `18.8` | &nbsp;&nbsp;The HURDAT2 refresh — THE SETTLED RECORD, BROUGHT IN ONCE A YEAR | `SPEC-OPS.md` | 1630-1743 |
 | `27` | Snapshot conditions | `spec-parameter.md` | 24-50 |
 | `28` | The headline question: does GDACS give current wind? | `spec-parameter.md` | 51-55 |
 | `28.1` | &nbsp;&nbsp;The trap — `severitydata.severity` is NOT current wind | `spec-parameter.md` | 56-101 |
@@ -460,7 +460,7 @@ real home is the other row carrying the same section number.
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
 | `SPEC-MAP.md` | 293,083 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
-| `SPEC-OPS.md` | 105,155 | 23 |
+| `SPEC-OPS.md` | 107,097 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |
 | `SPEC-UI.md` | 247,746 | 18 |
 | `SPEC.md` | 195,025 | 15 |

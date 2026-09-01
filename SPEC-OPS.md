@@ -1507,16 +1507,47 @@ indistinguishable in the data. It is therefore labelled `(direct, same-site, or
 pre-2026-08-14)` and **must never be shortened to "(direct)"**, which would turn
 missing data into a finding.
 
-**Three answers, three queries** — `daily-devices` for how many people,
+**Who is out there** — `daily-devices` for how many people per day,
+`device-roster` for the regulars, `return-rate` for how many came back,
 `referrers` for where they come from all time, `referrers-daily` for the shape
-of a spike. The last is separate on purpose: the all-time table flattens one
+of a spike. That last is separate on purpose: the all-time table flattens one
 busy day and a steady trickle into the same row, and a spike is exactly what
 gets asked about. It is bounded by a `WHERE` on `ts` rather than a `LIMIT`,
 because a `LIMIT` on a two-column grouping drops the quietest sources on the
 busiest day, and those are the new arrivals worth seeing.
 
+**`device-roster` HAS A 5-DAY FLOOR AND AN 8-CHARACTER TRUNCATION, AND BOTH ARE
+PRIVACY CONTROLS.** The archive branch is public and a committed identifier
+cannot be recalled. Reporting every device would publish an id fragment plus a
+hardware profile for several hundred strangers; devices seen on five or more
+separate days are the ones the question is about. Neither the floor nor the
+truncation is a display preference — `tools/test-telemetry-queries.mjs` fails
+if either is removed, and no query anywhere may `SELECT` a whole `device`.
+
+**What they do with it** — `feature-usage` and `retry-buttons` read the ten
+engagement counters written on every session since launch, and `installs` reads
+`standalone`. Prefer the `sessions_…` columns over the `total_…` ones: a total
+lets one enthusiastic user outvote a hundred casual ones. Neither filters
+`timings_ok`, deliberately — a visit with an untrustworthy clock still pressed
+real buttons.
+
+**HOW FAST IT FEELS — AND THE ONE COLUMN THAT LIES.** `platform-rollup` reports
+`longtask_ms`, and **Safari does not implement the `longtask`
+PerformanceObserver**, so `lib/perf.js` never starts it on iOS and the column
+keeps its `0` default. That is indistinguishable from a genuinely unblocked
+visit, on the largest platform in the table, and it was read and quoted as iOS
+being flawless on 2026-09-01. It is not a third column birthday — the column is
+as old as the table — but it fails the same way: **a default that looks like an
+answer.**
+
+`interaction-stalls` is the companion built only from Event Timing and
+navigation metrics, which every engine implements. **If the two tables disagree
+about which platform is worst, believe `interaction-stalls`.** The test suite
+requires the caveat on any query reporting `longtask_ms` and requires
+`interaction-stalls` to exist and to use no `longtask` column.
+
 **Each query runs and reports independently.** One failing because a column
-moved must not cost the other nine, and a failure lands in the manifest as
+moved must not cost the other fifteen, and a failure lands in the manifest as
 `unavailable` with the reason rather than writing an empty file — an empty
 result reads as "no traffic", which is the conflation §5 exists to prevent.
 
