@@ -279,6 +279,58 @@ export const QUERIES = [
       'GROUP BY retry_which ORDER BY sessions DESC LIMIT 20',
   },
   {
+    /* Added 2026-09-01. `standalone` has been recorded since launch and never
+       read. For an app whose entire distribution story is "no app stores, it
+       installs to the home screen", how many people actually installed it is
+       close to the whole point and was not being counted. */
+    name: 'installs',
+    note:
+      'HOME-SCREEN INSTALLS, by platform. `standalone` is 1 when the visit ran ' +
+      'from an installed icon rather than a browser tab. ' +
+      '==> `installed_people` IS THE NUMBER THAT MEANS SOMETHING. <== ' +
+      'An installed user opens the app far more often than a tab visitor, so ' +
+      'counting SESSIONS makes installs look several times more common than ' +
+      'they are. ' +
+      'A device counts as installed if ANY of its visits ran standalone, so ' +
+      'somebody who installed it today is credited even though their earlier ' +
+      'tab visits are still in the table. People-counts ignore rows older ' +
+      'than the `device` column (2026-08-05); the session counts do not, so ' +
+      'the two columns cover different spans on purpose.',
+    sql:
+      'SELECT platform, COUNT(*) AS sessions, ' +
+      'SUM(CASE WHEN standalone = 1 THEN 1 ELSE 0 END) AS installed_sessions, ' +
+      `${PEOPLE_EXPR} AS people, ` +
+      "COUNT(DISTINCT CASE WHEN device <> '' AND standalone = 1 THEN device END) AS installed_people " +
+      'FROM sessions GROUP BY platform ORDER BY sessions DESC',
+  },
+  {
+    /* Added 2026-09-01. device-roster names the regulars; this one gives the
+       shape of the whole population behind them, which is the difference
+       between "somebody came back" and "how many stayed". */
+    name: 'return-rate',
+    note:
+      'HOW MANY PEOPLE CAME BACK — a histogram, not an average. Each row is ' +
+      '"this many people showed up on exactly this many separate days". ' +
+      'An average would hide the only interesting shape here, which is how ' +
+      'steep the drop is from one day to two. ' +
+      '==> THE LAST FEW DAYS ALWAYS DRAG THE LEFT EDGE UP. <== Somebody who ' +
+      'first arrived yesterday CANNOT yet be a two-day visitor, so the ' +
+      '1-day bucket permanently contains people who may well return. Read it ' +
+      'as a floor on churn, never as a count of people who left. ' +
+      'Rows predating the `device` column (2026-08-05) are excluded entirely ' +
+      'rather than piled into the 1-day bucket, where they would look like ' +
+      'the worst possible result.',
+    sql:
+      /* The inner query GROUPS BY device but does not SELECT it — the
+         identifier is the thing being counted, never a thing being reported.
+         Selecting it would put 637 raw ids in a file on a public branch for
+         no gain, since the outer query throws the column away anyway. */
+      'SELECT days_active, COUNT(*) AS people FROM (' +
+      "SELECT COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active " +
+      "FROM sessions WHERE device <> '' GROUP BY device" +
+      ') GROUP BY days_active ORDER BY days_active',
+  },
+  {
     name: 'source-rollup',
     note: 'Per-source health. Which feeds are answering and which are not.',
     sql: 'SELECT * FROM source_rollup ORDER BY rowid DESC LIMIT 50',
