@@ -176,6 +176,33 @@ export const LIST_FEEDS = [
    * directory listing that contained no `.dat` files at all, which is what a
    * redirect or an error page looks like. */
   { path: 'seasons/live', route: '/api/seasons/live' },
+
+  /* ==> PEAK STORM SURGE, AND IT IS A LIST FEED RATHER THAN A PER-STORM ONE
+   * ON PURPOSE. <== SPEC-DATA.md §4.8.
+   *
+   * The Peak Storm Surge service has no `stormid`, so every earlier plan for
+   * it — and the HA integration this app descends from — filtered by a spatial
+   * envelope around one storm's position. That would have made this a
+   * `nhcDerived` entry keyed on a latitude and a longitude, and it would have
+   * walked straight into the failure the three long comments in `nhcDerived`
+   * below are all about: a key the writer computes one way and the reader
+   * computes another. Only here it would be WORSE than those, because a
+   * position is not a stable identifier at all. The storm moves between the
+   * cron's cycle and the reader's tap, the two keys differ, the reader misses
+   * every entry this loop creates, and both sides stay green forever while
+   * nothing is ever served warm.
+   *
+   * `/api/nhc/surge` therefore takes no parameters and serves everything NHC
+   * publishes anywhere, in one payload, under one fixed key. The envelope
+   * moved to the client, where it is arithmetic over bytes already in memory.
+   * Measured before it was chosen: Milton, the worst case this product has,
+   * is ~300 KB an advisory at the generalization the route asks for.
+   *
+   * No gate. An empty surge answer is a real and common statement — most of
+   * the year NHC forecasts surge nowhere — unlike the genesis entry above,
+   * where empty and broken are byte-identical. The client separates
+   * `none_matched` from `unavailable` (§5); nothing here has to. */
+  { path: 'nhc/surge', route: '/api/nhc/surge' },
 ];
 
 /** Bin numbers are two letters and a digit (`AT2`) — the shape
