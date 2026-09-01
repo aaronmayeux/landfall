@@ -69,43 +69,6 @@ traded for.
 **Waiting on Aaron. Nothing here is waiting on weather — that is `HELD FOR
 WEATHER` below.**
 
-**SURGE IS RESTORED WITH ITS BUG FIXED, AND HAS NEVER BEEN SEEN DRAWING ON A
-REAL STORM.** Everything backed out at 03:42 on 2026-09-01 is back — relay
-route, warm key, client filter, Lala fixture, archive capture, tests — plus the
-one-word fault that sent it back. The relay was never at fault either time: NHC
-published six real features for Edouard and `/api/nhc/surge` served all six. The
-client threw them away because it compared our `nhc:al052026` against the
-service's `al052026`. Fixed in two places (§4.8) and mutation-tested both ways.
-
-**AND THE SURGE LEGEND NOW LIVES IN `Flooding`, NOT `Watches and warnings`.**
-Aaron went looking for it in the watch list; it was never going to be there.
-NHC's watch/warning layer carries WIND products only — read off Edouard's real
-bytes, four features, `HWA` and `TWR`, no surge code exists in that layer. The
-forecast is now rendered in `Flooding` (SPEC-UI §56.8) using the watch list's own
-list, dot and severest-first order, with only the rungs actually forecast.
-
-**WAITING ON AARON — SELECT THE STORM, DON'T JUST LOOK AT THE GLOBE.** Ambient
-surge sits at `ZOOM.ambientGeometry`, same floor as watch/warning, so nothing
-draws until a storm is selected and the map has flown in. Tap Edouard, Coastal
--> Surge. Expect a yellow 3–5 ft reach from High Island, TX to the
-Vermilion/Cameron Parish Line, LA, plus bands around Sabine Lake, Calcasieu Lake
-and Vermilion Bay. Drawing only after the fly-in is CORRECT.
-
-Open `Flooding` in the same drawer while you are there: it should carry the same
-depths as coloured rows, with the sentence naming NHC and "above ground level".
-If the coast is bare, that section now says WHICH kind of bare it is — NHC has
-nothing out, or the fetch failed — and those are two different sentences.
-
-If nothing draws, the console answers it in one line: `data/surge.js` prints the
-feature count, which field the colour came from, and how many were dropped. Zero
-features with no drops means the filter took nothing — the Edouard shape again.
-
-**AND ONE THING DELIBERATELY NOT DONE:** the HOME dashboard's Flooding section
-still answers a US storm with "coastal flooding is not modelled in this basin"
-and nothing else. Not wrong, but the drawer now says something better about the
-same storm, and two screens disagreeing about one storm is the shape of problem
-this project keeps finding. Small pass, not started, needs Aaron's word.
-
 **THE 3D CAGE STILL SHOWS EVERY TICKED STORM AT THE SPACE FLOOR, CLOCK OR NO
 CLOCK.** Same class as the swath gap slice C just closed, and left out for the
 same reason — a different layer from the ones slices C, D and E own. §57.67h
@@ -508,6 +471,18 @@ control for both — she should look unchanged.
 
 
 ## NEXT UP
+
+**THE HOME DASHBOARD STILL ANSWERS A US STORM ABOUT THE WRONG MODEL.** The storm
+drawer's Flooding section now carries NHC's own peak surge (SPEC-UI §56.8,
+confirmed on glass 2026-09-01); `ui/flooding-home.js` still answers the same
+storm with `MODEL_NOT_THIS_BASIN` alone — "coastal flooding is not modelled in
+this basin". Not wrong for that screen, which has no surge surface. But the two
+screens now say different things about one storm, and the sentence's own
+reasoning (§51.5) is that NHC's forecast is the trusted product where NHC
+publishes one. **The pieces already exist**: `lib/surge-legend.js` is pure and
+`ui/flood-words.js` holds the wording, so this is a wiring pass rather than a
+build — the only real question is where the home screen gets the slot from,
+since it has no geometry bundle of its own. Aaron's word not yet given.
 
 **THE HOME TIMELINE COLOURS EVERY ROW BY THE STORM'S PRESENT NATURE.** Found
 while fixing the now-ring (§7.11), not fixed with it — different file, own
