@@ -130,6 +130,37 @@ ok(/pre-2026-08-14/.test(NO_REFERRER_LABEL),
   'the no-referrer label names the date the column was added, so the caveat ' +
   'travels with the number into whatever reads it');
 
+/* --- the archive branch is public: no whole device id may be published --- */
+
+/* Every people-count above collapses `device` into a NUMBER. This is the rule
+   for the one query that reports devices as ROWS. The archive branch is a
+   public git branch; a raw 64-bit identifier committed there is permanent and
+   cannot be recalled. A prefix is enough to tell two rows apart, which is the
+   only thing the roster is for.
+
+   MUTATION-VERIFIED 2026-09-01: replacing `SUBSTR(device, 1, 8) AS
+   device_prefix` with a bare `device` turns this red. */
+for (const q of QUERIES) {
+  const selectsDeviceRows = /GROUP BY[\s\S]*\bdevice\b/i.test(q.sql);
+  if (!selectsDeviceRows) continue;
+  ok(!/SELECT\s+device\b/i.test(q.sql) && !/,\s*device\s+AS\b/i.test(q.sql),
+    `${q.name}: groups by device, so it must NOT select the whole id. The ` +
+    'archive branch is public and a committed identifier cannot be recalled. ' +
+    'Report SUBSTR(device, 1, 8) — enough to name a row, not enough to follow ' +
+    'a person');
+}
+
+const roster = QUERIES.find((q) => q.name === 'device-roster');
+ok(!!roster, 'device-roster query exists');
+if (roster) {
+  ok(/HAVING[\s\S]*>=\s*5/.test(roster.sql),
+    'device-roster keeps its 5-day floor. Lowering it publishes a hardware ' +
+    'profile plus an id fragment for several hundred strangers on a public ' +
+    'branch — the floor is the privacy control, not a display preference');
+  ok(/SUBSTR\(\s*device\s*,\s*1\s*,\s*8\s*\)/i.test(roster.sql),
+    'device-roster truncates the identifier to 8 characters');
+}
+
 /* --- both new answers are actually reachable ----------------------------- */
 
 for (const required of ['daily-devices', 'referrers', 'referrers-daily']) {

@@ -141,6 +141,46 @@ export const QUERIES = [
       'FROM sessions GROUP BY day ORDER BY day DESC LIMIT 21',
   },
   {
+    /* Added 2026-09-01. `daily-devices` says how many people; this says WHICH
+       ONES KEEP COMING BACK, which is what makes "how many users other than
+       me" answerable at all. Every previous query aggregated the device column
+       away, so the five machines in Aaron's own house were indistinguishable
+       from five strangers and could not be subtracted from any total. */
+    name: 'device-roster',
+    note:
+      'THE REGULARS. One row per device seen on 5 OR MORE SEPARATE DAYS, with ' +
+      'enough hardware description to recognise a machine you own. Screen ' +
+      'size, memory and core count are already in the table; they are ' +
+      'reported here only for this small set. ' +
+      '==> THE 5-DAY FLOOR IS A PRIVACY DECISION, NOT A TIDINESS ONE. <== ' +
+      'The archive branch is PUBLIC. A roster of every device would publish a ' +
+      'fragment of the identifier plus a hardware profile for several hundred ' +
+      'strangers, which is a real step down from what this branch has ever ' +
+      'carried. Devices that turn up on five different days are the ones the ' +
+      'question is actually about. Do not lower this floor to sweep in ' +
+      'more rows. ' +
+      '`device_prefix` is the FIRST 8 CHARACTERS ONLY — never the whole id. ' +
+      'It exists so two rows can be told apart and named in conversation, not ' +
+      'so anyone can be followed. ' +
+      'The descriptive columns use MAX() because a device that rotated its ' +
+      'phone or changed browser has more than one value; MAX is arbitrary but ' +
+      'DETERMINISTIC, which a bare column would not be.',
+    sql:
+      'SELECT SUBSTR(device, 1, 8) AS device_prefix, ' +
+      'MAX(platform) AS platform, MAX(engine) AS engine, ' +
+      'MAX(screen_w) AS screen_w, MAX(screen_h) AS screen_h, ' +
+      'MAX(dpr) AS dpr, MAX(mem_gb) AS mem_gb, MAX(cores) AS cores, ' +
+      'MAX(standalone) AS ever_installed, ' +
+      'COUNT(*) AS sessions, ' +
+      "COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active, " +
+      "DATE(MIN(ts), 'unixepoch') AS first_seen, " +
+      "DATE(MAX(ts), 'unixepoch') AS last_seen " +
+      "FROM sessions WHERE device <> '' " +
+      'GROUP BY device ' +
+      "HAVING COUNT(DISTINCT DATE(ts, 'unixepoch')) >= 5 " +
+      'ORDER BY days_active DESC, sessions DESC',
+  },
+  {
     /* Added 2026-08-20, the day a link went up on a forum and the archive
        could say traffic had doubled but not say why. */
     name: 'referrers',
