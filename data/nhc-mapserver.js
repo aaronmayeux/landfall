@@ -540,8 +540,15 @@ export async function fetchStormGeometry(storm) {
    *
    * NHC-ONLY, and the caller already guaranteed it: this whole function throws
    * on a GDACS storm at the top. GDACS publishes no surge product at all
-   * (§14), which is a `none`, not a failure. */
-  const surgePromise = fetchSurgeLive(storm.lat, storm.lon, storm.id);
+   * (§14), which is a `none`, not a failure.
+   *
+   * ==> `sourceId`, NOT `id`. <== NHC's surge features are labelled
+   * `al052026`; our own `storm.id` is `nhc:al052026`. Handing over the
+   * prefixed form rejected all six of Edouard's features on 2026-09-01 and
+   * drew an empty coast under a live Storm Surge Warning. `matchesStormId`
+   * now strips the prefix too, so this line is belt to that braces — but the
+   * right value to send is still the one the service actually publishes. */
+  const surgePromise = fetchSurgeLive(storm.lat, storm.lon, storm.sourceId);
 
   await Promise.all(
     Object.entries(SUMMARY_LAYER).map(async ([key, layerId]) => {

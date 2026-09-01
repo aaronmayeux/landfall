@@ -273,6 +273,24 @@ function withinEnvelope(feature, lat, lng, deg) {
  * at all still gets the spatial test rather than being silently dropped —
  * losing a real band is worse than including a distant one.
  *
+ * ==> THE PREFIX STRIP IS NOT TIDINESS. IT IS THE BUG THAT SHIPPED. <== This
+ * app names storms `source:sourceId` — `data/nhc.js` builds `nhc:al052026`
+ * while NHC publishes `al052026`. On Edouard, 2026-09-01, the caller handed
+ * over `storm.id` and every one of six real features was rejected on a string
+ * comparison that was never going to succeed. The layer drew nothing, and
+ * because a coastal reach carries no per-row status it also SAID nothing —
+ * the §5 lie, on a coast with a Storm Surge Warning in force.
+ *
+ * The fallback could not save it either, and that is the part worth
+ * remembering: the envelope only runs when a feature states NO id. Here the
+ * id was present and readable, so this returned a confident `false` and the
+ * safety net never armed. A wrong answer disabled its own backstop.
+ *
+ * The caller now passes `sourceId`, which is the primary fix. This strip is
+ * the second one: `nhc:al052026` and `al052026` name the same storm, so the
+ * comparison should not care which form it is handed. A `gdacs:1001316` never
+ * collides — the tail is a numeric event id no NHC subset string can equal.
+ *
  * @returns {boolean|null} true/false when the feature states an id, null when
  *   it states none and the caller should fall back to geometry.
  */
@@ -280,7 +298,9 @@ function matchesStormId(feature, stormId) {
   if (!stormId) return null;
   const sub = feature?.properties?.idp_subset;
   if (typeof sub !== 'string' || !sub.trim()) return null;
-  return sub.trim().toLowerCase() === String(stormId).trim().toLowerCase();
+  const want = String(stormId).trim().toLowerCase();
+  const bare = want.slice(want.indexOf(':') + 1);
+  return sub.trim().toLowerCase() === bare;
 }
 
 /**
