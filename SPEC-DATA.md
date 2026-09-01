@@ -737,11 +737,13 @@ disproved them.
   <==** ArcGIS stores it on the table definition and does not recompute it as
   rows change, so it can describe the previous storm indefinitely. It was read
   as proof this service held nothing near Hawaii while it was actively serving
-  eleven bands over Oahu and Kauai. **Only the features answer.** The hourly
-  archive does NOT currently snapshot this service — the capture was written
-  once, backed out with the rest of the surge work, and deliberately not
-  restored with it. `samples/lala-cp012026/surge/` is the pinned copy that
-  keeps the question answered.
+  eleven bands over Oahu and Kauai. **Only the features answer.**
+  `tools/archive-fetch.mjs` snapshots both layers unfiltered every hour, and
+  our own `/api/nhc/surge` response beside them, so the question is never
+  re-asked from metadata again — and so a report of "surge drew nothing" can be
+  split into a relay fault and a client fault without asking anyone to read a
+  console on a phone. `samples/lala-cp012026/surge/` is the pinned copy of the
+  run that settled the schema.
 - **Ask the server to generalize** (`maxAllowableOffset` = `SURGE.offsetDeg`, 0.001°; 0.005° shipped once and was rejected on glass). A second
   always-on client-side pass on top deletes small rings and inland fingers;
   coarsen only a band that overruns its own budget.
