@@ -161,6 +161,39 @@ if (roster) {
     'device-roster truncates the identifier to 8 characters');
 }
 
+/* --- a metric Safari does not implement must say so --------------------- */
+
+/* `longtask_ms` defaults to 0 and Safari never starts the observer that fills
+   it, so an iOS row shows the same 0 an unblocked visit would. That is not a
+   bug in the column — it is a column whose absence and whose good news look
+   identical, on the LARGEST platform in the table. It was read as good news
+   and quoted that way on 2026-09-01.
+
+   The rule: any query reporting longtask_ms must carry the caveat, and there
+   must be a second table built only from metrics that exist everywhere.
+
+   MUTATION-VERIFIED 2026-09-01: deleting the "NOT MEASURED" sentence from the
+   platform-rollup note, and removing the interaction-stalls query, each turn
+   this red. */
+for (const q of QUERIES) {
+  if (!/longtask_ms/.test(q.sql)) continue;
+  ok(/NOT\s+MEASURED/i.test(q.note),
+    `${q.name}: reports longtask_ms, so its note must state that 0 means NOT ` +
+    'MEASURED on Safari rather than not blocked. Without it the row reads as ' +
+    'iOS being flawless, which is how this was misreported');
+}
+
+const stalls = QUERIES.find((q) => q.name === 'interaction-stalls');
+ok(!!stalls,
+  'interaction-stalls exists — platform-rollup measures blocked time with an ' +
+  'observer Safari lacks, so it cannot be the only view of responsiveness');
+if (stalls) {
+  ok(!/longtask/.test(stalls.sql),
+    'interaction-stalls uses no longtask column. Its entire purpose is to be ' +
+    'trustworthy on the engine where longtask is missing; one such column ' +
+    'would put the same blind spot back');
+}
+
 /* --- both new answers are actually reachable ----------------------------- */
 
 for (const required of ['daily-devices', 'referrers', 'referrers-daily']) {

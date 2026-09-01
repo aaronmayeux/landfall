@@ -90,7 +90,20 @@ export const QUERIES = [
       'There is NO `blocked_ms` column — the first version of this query ' +
       'invented one and failed with SQLITE_ERROR. Blocked time is ' +
       '`longtask_ms`: main-thread long tasks, which is what a frozen globe ' +
-      'actually is. `worst_event_ms` is the single worst one.',
+      'actually is. ' +
+      '==> CORRECTED 2026-09-01. `avg_blocked_ms` = 0 ON iOS MEANS NOT ' +
+      'MEASURED, NOT NOT BLOCKED. <== This note previously read as though ' +
+      'iOS were flawless and it was quoted that way. Safari does not ' +
+      'implement the `longtask` PerformanceObserver, so lib/perf.js never ' +
+      'starts that observer there and the column keeps its 0 default — the ' +
+      'same 0 an unblocked visit would show. The two are indistinguishable ' +
+      'in this column and iOS is the LARGEST platform in the table, so the ' +
+      'mistake was load-bearing. ' +
+      'Safari DOES implement Event Timing, which is why `worst_single_' +
+      'event_ms` is real on iOS and was reading 18,152 ms on 2026-09-01 — ' +
+      'more than double the worst on any other platform, sitting in the same ' +
+      'row as the reassuring zero. Read `interaction-stalls` beside this ' +
+      'table; it exists because this one cannot be trusted alone.',
     sql:
       'SELECT platform, COUNT(*) AS clean_sessions, ' +
       'ROUND(AVG(longtask_ms)) AS avg_blocked_ms, ' +
@@ -102,6 +115,36 @@ export const QUERIES = [
       'ROUND(AVG(lcp_ms)) AS avg_lcp_ms ' +
       'FROM sessions WHERE timings_ok = 1 ' +
       'GROUP BY platform ORDER BY avg_blocked_ms DESC',
+  },
+  {
+    /* Added 2026-09-01, the companion `platform-rollup` needed and did not
+       have. That table measures blocked time with an observer Safari does not
+       implement, so its worst platform reports its best number. This one is
+       built entirely from metrics that exist EVERYWHERE. */
+    name: 'interaction-stalls',
+    note:
+      'HOW LONG A TAP TOOK TO DO ANYTHING, by platform. Built only from ' +
+      'Event Timing and navigation metrics, both of which every engine ' +
+      'implements — unlike `longtask_ms` in `platform-rollup`, which is ' +
+      'silently absent on Safari and reports 0 there. If those two tables ' +
+      'ever disagree about which platform is worst, BELIEVE THIS ONE. ' +
+      '`sessions_over_1s` and `sessions_over_5s` are the counts that matter: ' +
+      'an average is dragged down by the many visits where nothing was ' +
+      'tapped at all, and a maximum is one bad phone. How MANY visits had a ' +
+      'tap that hung is the question a user would recognise. ' +
+      '`avg_scripts_ms` is the vendored MapLibre and Three finishing — the ' +
+      'part of the load that is library rather than us, split out so a fix ' +
+      'aims at the right half.',
+    sql:
+      'SELECT platform, COUNT(*) AS clean_sessions, ' +
+      'ROUND(AVG(worst_event_ms)) AS avg_worst_interaction_ms, ' +
+      'MAX(worst_event_ms) AS worst_interaction_ms, ' +
+      'SUM(CASE WHEN worst_event_ms > 1000 THEN 1 ELSE 0 END) AS sessions_over_1s, ' +
+      'SUM(CASE WHEN worst_event_ms > 5000 THEN 1 ELSE 0 END) AS sessions_over_5s, ' +
+      'ROUND(AVG(t_scripts_ms)) AS avg_scripts_ms, ' +
+      'ROUND(AVG(visit_ms)) AS avg_visit_ms ' +
+      'FROM sessions WHERE timings_ok = 1 ' +
+      'GROUP BY platform ORDER BY sessions_over_1s DESC',
   },
   {
     name: 'recent-sessions',
