@@ -1,12 +1,12 @@
 {
-  "runAt": "2026-09-03T01:11:57.006Z",
+  "runAt": "2026-09-03T05:55:18.797Z",
   "sources": {
     "btk": {
       "status": "ok",
       "listed": 22,
       "eligible": 20,
-      "stored": 3,
-      "unchanged": 17,
+      "stored": 4,
+      "unchanged": 16,
       "failed": 0,
       "skipped": [
         "bal972026.dat — invest — number is reused within a season",
@@ -17,7 +17,7 @@
         "btk/2026/bal022026.dat": "unchanged (304)",
         "btk/2026/bal032026.dat": "unchanged (304)",
         "btk/2026/bal042026.dat": "unchanged (304)",
-        "btk/2026/bal052026.dat": "unchanged (304)",
+        "btk/2026/bal052026.dat": "stored 4823 bytes",
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
         "btk/2026/bep012026.dat": "unchanged (304)",
@@ -36,17 +36,12 @@
       }
     },
     "jtwc": {
-      "status": "ok",
-      "storms": 5,
+      "status": "unavailable",
+      "storms": 0,
       "linesAdded": 0,
-      "files": {
-        "jtwc/2026/ep1126.jsonl": "already held",
-        "jtwc/2026/ep1226.jsonl": "already held",
-        "jtwc/2026/ep1326.jsonl": "already held",
-        "jtwc/2026/wp1726.jsonl": "already held",
-        "jtwc/2026/wp2226.jsonl": "already held"
-      },
-      "faults": []
+      "files": {},
+      "faults": [],
+      "reason": "relay reported state \"partial\""
     }
   }
 }
