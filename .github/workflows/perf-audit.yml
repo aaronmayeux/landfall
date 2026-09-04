@@ -130,6 +130,15 @@ jobs:
       # `FAIL` line — and the run went GREEN having measured nothing at all.
       # A green tick on no data is worse than a red one, because nobody looks.
       # The measurement file is the proof the audit ran; no file, no pass.
+      #
+      # This gate then fired every night from 28 Aug to 4 Sep, and it was right:
+      # the third arm's navigation was being starved by the first two arms'
+      # contexts, which the tool never closed, until it crossed Playwright's
+      # silent 30s cutoff. The starvation is fixed in `tools/perf-audit.mjs`.
+      # The tool now also writes its partial numbers and prints `  FAIL
+      # audit-crash: ...` when an arm dies, so the budget grep below turns the
+      # job red and the evidence reaches the history branch — this gate stays
+      # as the backstop for node dying before it can write anything at all.
       - name: fail the job if the audit produced nothing
         if: always()
         run: |

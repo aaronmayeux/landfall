@@ -69,9 +69,23 @@ const AUDIT = Object.freeze({
   /* How far to pan when asking whether radar re-requests tiles. Roughly one
    * viewport at the zoom the storms sit at. */
   PAN_PX: 300,
+  /* How long to wait after the pan before counting tiles again. Long enough for
+   * a new viewport's tile requests to be issued and answered on a throttled
+   * run; it is a count, not a timing, so it only has to be generous. */
+  PAN_SETTLE_MS: 3000,
   /* A wave boundary. A gap larger than this between two module requests means
    * the second could not be known until the first was parsed. */
   WAVE_GAP_MS: 40,
+  /* ==> PLAYWRIGHT'S DEFAULT 30s IS NOT A CONSIDERED NUMBER, AND IT ATE FOUR
+   * NIGHTS OF THIS AUDIT. <== Measured on the runner across four recorded runs
+   * (perf-history, 21–27 Aug): the first arm reaches DOMContentLoaded in
+   * 2450–2750 ms every single time, throttled. Arms two and three ran 4.4–29.0s
+   * only because their predecessors' contexts were left open and starved them;
+   * with the contexts closed, every arm should sit near the first arm's number.
+   * So: twenty times the measured cold navigation. Wide enough that a slow
+   * runner is never mistaken for a hang, tight enough that a real hang still
+   * ends the run inside the job's 20-minute ceiling. */
+  NAV_TIMEOUT_MS: 60000,
 });
 
 const argv = process.argv.slice(2);
@@ -95,13 +109,33 @@ function flag(name) {
  * loads twice in the same context so the second visit meets the browser's own
  * caches exactly as a returning visitor does — which, for a PWA, is nearly
  * every visitor.
+ *
+ * ===> THE CONTEXT ALWAYS CLOSES HERE, AND THAT IS THE POINT. <=== This used to
+ * hand `page`, `ctx` and `wire` back so the radar probe could pan afterwards,
+ * which meant the first two arms' contexts stayed open for the whole run — two
+ * live copies of the app, globe animating, on a runner drawing WebGL in
+ * software. Measured (perf-history, 21–27 Aug): DOMContentLoaded went
+ * 2.5s → 4.4–11.7s → 10.9–29.0s across the three arms purely from that
+ * starvation, and from 28 Aug the third arm crossed Playwright's silent 30s
+ * navigation cutoff and the whole audit crashed before writing a number.
+ * Anything an arm needs to do while its page is still alive goes in `after`.
  */
-async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
+async function arm(browser, opts) {
   const ctx = await browser.newContext({
     viewport: AUDIT.VIEWPORT,
     deviceScaleFactor: AUDIT.DEVICE_SCALE,
-    serviceWorkers,
+    serviceWorkers: opts.serviceWorkers,
   });
+  try {
+    return await measure(ctx, opts);
+  } finally {
+    /* A failed arm closes its context too. The run that crashed on 28 Aug left
+     * everything open on the way out. */
+    await ctx.close();
+  }
+}
+
+async function measure(ctx, { name, warm, seedLayers = null, after = null }) {
   const page = await ctx.newPage();
   await page.addInitScript(INSTRUMENT);
 
@@ -132,13 +166,15 @@ async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
   const wire = [];
   page.on('request', (r) => wire.push(r.url()));
 
+  const nav = { waitUntil: 'domcontentloaded', timeout: AUDIT.NAV_TIMEOUT_MS };
+
   if (warm) {
-    await page.goto(AUDIT.URL, { waitUntil: 'domcontentloaded' });
+    await page.goto(AUDIT.URL, nav);
     await page.waitForTimeout(AUDIT.SETTLE_MS);
     wire.length = 0;
   }
 
-  await page.goto(AUDIT.URL, { waitUntil: 'domcontentloaded' });
+  await page.goto(AUDIT.URL, nav);
   await page.waitForTimeout(AUDIT.SETTLE_MS);
 
   const raw = await page.evaluate(() => {
@@ -189,7 +225,8 @@ async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
     radarTiles: wire.filter((u) => RADAR_RE.test(u)).length,
   };
 
-  return { out, page, ctx, wire };
+  const extra = after ? await after({ page, wire }) : null;
+  return extra ? { ...out, ...extra } : out;
 }
 
 /**
@@ -203,32 +240,32 @@ async function arm(browser, { name, serviceWorkers, warm, seedLayers = null }) {
  * new tiles. So: count on load, pan, count again.
  */
 async function radarProbe(browser) {
-  const { out, page, ctx, wire } = await arm(browser, {
+  return arm(browser, {
     name: 'radar',
     serviceWorkers: 'allow',
     warm: false,
     seedLayers: { imagery: 'radar' },
+    after: async ({ page, wire }) => {
+      const onLoad = wire.filter((u) => RADAR_RE.test(u)).length;
+
+      wire.length = 0;
+      await page.mouse.move(AUDIT.VIEWPORT.width / 2, AUDIT.VIEWPORT.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(AUDIT.VIEWPORT.width / 2 - AUDIT.PAN_PX, AUDIT.VIEWPORT.height / 2, { steps: 20 });
+      await page.mouse.up();
+      await page.waitForTimeout(AUDIT.PAN_SETTLE_MS);
+      const onPan = wire.filter((u) => RADAR_RE.test(u)).length;
+
+      /* Frame pacing while the globe sits still. `attachIdleRotation` calls
+       * setCenter per frame below DIVE.zHandoff, so "resting" is not resting. */
+      let frames = [];
+      try {
+        frames = await page.evaluate((ms) => window.__auditFrames(ms), AUDIT.FRAME_MS);
+      } catch (e) { frames = []; }
+
+      return { radarOnLoad: onLoad, radarOnPan: onPan, frames: framePacing(frames) };
+    },
   });
-
-  const onLoad = wire.filter((u) => RADAR_RE.test(u)).length;
-
-  wire.length = 0;
-  await page.mouse.move(AUDIT.VIEWPORT.width / 2, AUDIT.VIEWPORT.height / 2);
-  await page.mouse.down();
-  await page.mouse.move(AUDIT.VIEWPORT.width / 2 - AUDIT.PAN_PX, AUDIT.VIEWPORT.height / 2, { steps: 20 });
-  await page.mouse.up();
-  await page.waitForTimeout(3000);
-  const onPan = wire.filter((u) => RADAR_RE.test(u)).length;
-
-  /* Frame pacing while the globe sits still. `attachIdleRotation` calls
-   * setCenter per frame below DIVE.zHandoff, so "resting" is not resting. */
-  let frames = [];
-  try {
-    frames = await page.evaluate((ms) => window.__auditFrames(ms), AUDIT.FRAME_MS);
-  } catch (e) { frames = []; }
-
-  await ctx.close();
-  return { ...out, radarOnLoad: onLoad, radarOnPan: onPan, frames: framePacing(frames) };
 }
 
 /**
@@ -330,6 +367,10 @@ function checkBudget(results, radar) {
 
   const warm = results.find((r) => r.arm === budget.armUnderBudget) || results[0];
 
+  /* No arm survived. Saying "within budget" here would be the green tick on
+   * silence this file already refuses to give elsewhere. */
+  if (!warm) return { ok: false, notes: ['FAIL no arm completed — there is nothing to check against the budget'] };
+
   /* ==> A BUDGET THAT PASSES ON A RUN THAT MEASURED NOTHING IS A GREEN TICK
    * ON SILENCE. <== `report` has always printed "STYLE NEVER LOADED — map
    * numbers below are meaningless", and the budget then went on to check those
@@ -372,14 +413,25 @@ async function main() {
 
   const results = [];
   let radar = null;
+  /* ==> AN ARM THAT DIES MUST NOT TAKE THE ARMS THAT WORKED WITH IT. <== Four
+   * nights running, the third arm timed out and the tool threw from `main`,
+   * writing no file at all — so the two arms that HAD measured cleanly were
+   * thrown away, and the only record of why was in a runner log the sandbox
+   * cannot fetch (measured: the log endpoint redirects to a host outside the
+   * egress allowlist). Whatever survives gets written and pushed to the history
+   * branch, which is the one channel both the runner and the sandbox can read. */
+  let crash = null;
   try {
     /* ==> ARM ORDER IS THE POINT. <== `cold-nosw` reproduces what load-probe
      * has always measured. `warm-sw` is what a returning PWA user actually
      * gets, and is the path 98% of D1 sessions are on. The difference between
      * the two is the finding. */
-    results.push((await arm(browser, { name: 'cold-nosw', serviceWorkers: 'block', warm: false })).out);
-    results.push((await arm(browser, { name: 'warm-sw', serviceWorkers: 'allow', warm: true })).out);
+    results.push(await arm(browser, { name: 'cold-nosw', serviceWorkers: 'block', warm: false }));
+    results.push(await arm(browser, { name: 'warm-sw', serviceWorkers: 'allow', warm: true }));
     radar = await radarProbe(browser);
+  } catch (e) {
+    crash = String((e && e.message) || e).split('\n')[0];
+    console.error(e);
   } finally {
     await browser.close();
   }
@@ -394,12 +446,23 @@ async function main() {
     console.log('');
   }
 
+  /* Printed in the budget's own `  FAIL ` shape on purpose: the workflow greps
+   * for that one string to decide whether the job is red, so a crash lands in
+   * the same net without a second gate to keep in step with this one. */
+  if (crash) {
+    console.log('── crash');
+    console.log(`  FAIL audit-crash: ${crash}`);
+    console.log(`  ${results.length} of 3 arms measured before it died`);
+    console.log('');
+  }
+
   if (JSON_OUT) {
-    const payload = { at: new Date().toISOString(), url: AUDIT.URL, throttled: !FAST, results, radar, budget };
+    const payload = { at: new Date().toISOString(), url: AUDIT.URL, throttled: !FAST, crash, results, radar, budget };
     fs.writeFileSync(path.resolve(ROOT, JSON_OUT), JSON.stringify(payload, null, 2));
     console.log(`  wrote ${JSON_OUT}`);
   }
 
+  if (crash) process.exit(2);
   if (budget && !budget.ok) process.exit(1);
 }
 
