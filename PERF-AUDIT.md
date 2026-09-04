@@ -987,15 +987,22 @@ node tools/perf-audit.mjs --json out.json --budget
 ```
 
 Runs three arms — `cold-nosw` (what the old probes measured), `warm-sw` (what
-98% of real sessions get), and a radar arm that pans and re-counts. Thresholds
+98% of real sessions get), and a radar arm that pans and re-counts. Each arm
+closes its browser context before the next one opens; leaving them open starved
+the later arms until the third one could not finish loading at all. Thresholds
 live in `tools/perf-budget.json`; `.github/workflows/perf-audit.yml` runs it
-nightly, writes the run to a `perf-history` branch, and fails on a budget breach.
+nightly, writes the run to a `perf-history` branch, and fails on a budget breach
+or a crash.
 
-**It cannot run in the sandbox** — no chromium, no Playwright, and no route to
-the live app. Playwright is imported dynamically at `tools/perf-audit.mjs:344` so
-the tool exits with a message rather than crashing. **The branch is the only
-channel that reaches both the runner and the sandbox**, which is why the workflow
-writes one on every run rather than only on the nightly.
+**It cannot measure the live app from the sandbox** — the deploy is outside the
+egress allowlist. Where a sandbox has `/opt/pw-browsers` it CAN run against
+`http://127.0.0.1:8099`, which exercises the tool end to end even though the
+numbers mean nothing without the basemap and the real feeds. Playwright is
+imported dynamically at `tools/perf-audit.mjs:404` so a sandbox without it exits
+with a message rather than crashing. **The branch is the only channel that
+reaches both the runner and the sandbox** — runner logs redirect to a host the
+allowlist blocks — which is why the workflow writes one on every run rather than
+only on the nightly, and why a crashed run still writes its partial JSON.
 
 **The budget numbers in `perf-budget.json` are placeholders and say so.**
 Calibrate them from the first runner result, in a reviewed commit. A budget

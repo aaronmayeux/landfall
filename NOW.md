@@ -560,10 +560,15 @@ back first and the same cut landed at 762.
 - **`seasons-wall-check.mjs` runs fine here** — 50 assertions, under a minute.
   It is in CI but **NOT in the pre-push hook**. Run it by hand after any change
   to the Wall of Years.
-- **`perf-history` holds one file and nothing has been run since.** Actions →
-  perf-audit → Run workflow is the first move there; the sandbox cannot dispatch
-  it. Expect red — `colorNulls` is budgeted at 0 and that instrument is pointed
-  at the wrong thread. The JSON is written before the failure.
+- **`perf-history` holds four runs, the newest 27 Aug.** The nightly has run
+  every night since and recorded nothing, because the third arm crashed the tool
+  before it wrote a file; that is fixed, but no runner result proves it yet.
+  Actions → perf-audit → Run workflow is the first move there; the sandbox
+  cannot dispatch it (the PAT carries Contents only, not Actions). **Expect red
+  even when it works** — the last clean run failed four budget lines, including
+  `styleLoaded: false` on every arm, which means the map has never once built
+  during an audit and every map number it has printed is meaningless. That is
+  the next question, and it is not the crash.
 
 ---
 
