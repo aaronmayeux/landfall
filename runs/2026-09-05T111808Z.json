@@ -1,0 +1,194 @@
+{
+  "at": "2026-09-05T11:18:05.858Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "styleLoaded": false,
+      "storms": 3,
+      "ttfbMs": 117,
+      "fcpMs": 432,
+      "lcpMs": 432,
+      "dclMs": 2852,
+      "loadMs": 3890,
+      "bootMarks": {
+        "create": 2583,
+        "load": 7191.5,
+        "fullLoad": 7193.300000000003
+      },
+      "longTaskCount": 15,
+      "blockedMs": 16412,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 18,
+      "staircaseMs": 2018,
+      "firstModuleAtMs": 161,
+      "lastModuleAtMs": 2179,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 30,
+      "apiKB": 92,
+      "totalRequests": 250,
+      "transferKB": 2254,
+      "firstApiAtMs": 2814,
+      "data": {
+        "depth": 4,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2814
+          },
+          {
+            "url": "/api/nws/zone?ids=NMZ226",
+            "startMs": 4977
+          },
+          {
+            "url": "/api/nhc/surge",
+            "startMs": 5019
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP4&kind=TCP",
+            "startMs": 7062
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "styleLoaded": false,
+      "storms": 6,
+      "ttfbMs": 10,
+      "fcpMs": 948,
+      "lcpMs": 948,
+      "dclMs": 1700,
+      "loadMs": 1706,
+      "bootMarks": {
+        "create": 1519.3999999999942,
+        "load": 15006.600000000006
+      },
+      "longTaskCount": 18,
+      "blockedMs": 14068,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 3,
+      "staircaseMs": 662,
+      "firstModuleAtMs": 812,
+      "lastModuleAtMs": 1474,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 30,
+      "apiKB": 92,
+      "totalRequests": 250,
+      "transferKB": 92,
+      "firstApiAtMs": 1692,
+      "data": {
+        "depth": 4,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1692
+          },
+          {
+            "url": "/api/nws/zone?ids=NMZ226",
+            "startMs": 3361
+          },
+          {
+            "url": "/api/jtwc/storms",
+            "startMs": 3943
+          },
+          {
+            "url": "/api/nhc/advisory?bin=CP4&kind=TCP",
+            "startMs": 5787
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "styleLoaded": true,
+    "storms": 3,
+    "ttfbMs": 28,
+    "fcpMs": 336,
+    "lcpMs": 336,
+    "dclMs": 2741,
+    "loadMs": 3759,
+    "bootMarks": {
+      "create": 2464
+    },
+    "longTaskCount": 18,
+    "blockedMs": 15677,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 213,
+    "ourWaves": 16,
+    "staircaseMs": 1968,
+    "firstModuleAtMs": 89,
+    "lastModuleAtMs": 2057,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 30,
+    "apiKB": 87,
+    "totalRequests": 250,
+    "transferKB": 2249,
+    "firstApiAtMs": 2704,
+    "data": {
+      "depth": 4,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 2704
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3096
+        },
+        {
+          "url": "/api/nws/zone?ids=NMZ226",
+          "startMs": 4611
+        },
+        {
+          "url": "/api/jtwc/storms",
+          "startMs": 5219
+        }
+      ]
+    },
+    "radarTiles": 4,
+    "radarOnLoad": 4,
+    "radarOnPan": 5,
+    "frames": {
+      "frames": 3,
+      "medianMs": 1250,
+      "p95Ms": 1266.6,
+      "worstMs": 1266.6,
+      "droppedPct": 67,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": false,
+    "notes": [
+      "FAIL styleLoaded: the map never built on warm-sw — nothing below was measured",
+      "FAIL ourModules: 213 > 175",
+      "ok   ourWaves: 3 <= 8",
+      "ok   staircaseMs: 662 <= 3000",
+      "ok   dataSerialDepth: 4 <= 6",
+      "FAIL blockedMs: 14068 > 1200",
+      "ok   transferKB: 92 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 5 <= 120"
+    ]
+  }
+}
