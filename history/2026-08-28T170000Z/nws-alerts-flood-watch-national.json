@@ -1,0 +1,113 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc60418e12e1c4d75464d2b24bde4c6a37826a2b.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc60418e12e1c4d75464d2b24bde4c6a37826a2b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bc60418e12e1c4d75464d2b24bde4c6a37826a2b.001.1",
+                "areaDesc": "Yellowstone National Park; Absaroka Mountains; Teton and Gros Ventre Mountains; Jackson Hole; Wind River Mountains West; Star Valley; Salt River and Wyoming Ranges",
+                "geocode": {
+                    "SAME": [
+                        "016043",
+                        "056029",
+                        "056039",
+                        "030031",
+                        "056013",
+                        "056017",
+                        "056023",
+                        "056035"
+                    ],
+                    "UGC": [
+                        "WYZ001",
+                        "WYZ002",
+                        "WYZ012",
+                        "WYZ013",
+                        "WYZ014",
+                        "WYZ023",
+                        "WYZ024"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WYZ001",
+                    "https://api.weather.gov/zones/forecast/WYZ002",
+                    "https://api.weather.gov/zones/forecast/WYZ012",
+                    "https://api.weather.gov/zones/forecast/WYZ013",
+                    "https://api.weather.gov/zones/forecast/WYZ014",
+                    "https://api.weather.gov/zones/forecast/WYZ023",
+                    "https://api.weather.gov/zones/forecast/WYZ024"
+                ],
+                "references": [],
+                "sent": "2026-08-28T10:43:00-06:00",
+                "effective": "2026-08-28T10:43:00-06:00",
+                "onset": "2026-08-28T18:00:00-06:00",
+                "expires": "2026-08-29T06:00:00-06:00",
+                "ends": "2026-08-30T12:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Riverton WY",
+                "headline": "Flood Watch issued August 28 at 10:43AM MDT until August 30 at 12:00PM MDT by NWS Riverton WY",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of central, northwest, and west central Wyoming,\nincluding the following areas, in central Wyoming, Wind River\nMountains West. In northwest Wyoming, Absaroka Mountains, Jackson\nHole, Teton and Gros Ventre Mountains and Yellowstone National\nPark. In west central Wyoming, Salt River and Wyoming Ranges and\nStar Valley.\n\n* WHEN...From 6 PM MDT this evening through Sunday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Increased moisture from the Pacific will move across northwest\nWyoming through the weekend, bringing an extended chance for\nshowers and thunderstorms. The increased moisture will have the\npotential to produce locally heavy rainfall, providing excessive\nrunoff in flood-prone and low-lying areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFARIW"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KRIW 281643"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM 6 PM MDT THIS EVENING THROUGH SUNDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRIW.FA.A.0005.260829T0000Z-260830T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-30T12:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-08-28T17:17:59+00:00"
+}

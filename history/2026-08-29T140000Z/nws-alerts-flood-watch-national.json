@@ -1,0 +1,442 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.570e6afe9011b3cd343d50eeace1bc8a705a5f28.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.570e6afe9011b3cd343d50eeace1bc8a705a5f28.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.570e6afe9011b3cd343d50eeace1bc8a705a5f28.001.1",
+                "areaDesc": "Tohono O'odham Nation including Sells; Upper Santa Cruz River and Altar Valleys including Nogales; Tucson Metro Area including Tucson/Green Valley/Marana/Vail; South Central Pinal County including Eloy/Picacho Peak State Park; Southeast Pinal County including Kearny/Mammoth/Oracle; Upper San Pedro River Valley including Sierra Vista/Benson; Dragoon/Mule/Huachuca and Santa Rita Mountains including Bisbee/Canelo Hills/Madera Canyon; Santa Catalina and Rincon Mountains including Mount Lemmon/Summerhaven; Baboquivari Mountains including Kitt Peak",
+                "geocode": {
+                    "SAME": [
+                        "004019",
+                        "004021",
+                        "004023",
+                        "004003",
+                        "004009"
+                    ],
+                    "UGC": [
+                        "AZZ502",
+                        "AZZ503",
+                        "AZZ504",
+                        "AZZ505",
+                        "AZZ506",
+                        "AZZ507",
+                        "AZZ513",
+                        "AZZ514",
+                        "AZZ515"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ502",
+                    "https://api.weather.gov/zones/forecast/AZZ503",
+                    "https://api.weather.gov/zones/forecast/AZZ504",
+                    "https://api.weather.gov/zones/forecast/AZZ505",
+                    "https://api.weather.gov/zones/forecast/AZZ506",
+                    "https://api.weather.gov/zones/forecast/AZZ507",
+                    "https://api.weather.gov/zones/forecast/AZZ513",
+                    "https://api.weather.gov/zones/forecast/AZZ514",
+                    "https://api.weather.gov/zones/forecast/AZZ515"
+                ],
+                "references": [],
+                "sent": "2026-08-29T05:26:00-07:00",
+                "effective": "2026-08-29T05:26:00-07:00",
+                "onset": "2026-08-29T11:00:00-07:00",
+                "expires": "2026-08-29T17:00:00-07:00",
+                "ends": "2026-08-31T05:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flood Watch issued August 29 at 5:26AM MST until August 31 at 5:00AM MST by NWS Tucson AZ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Tucson Metro Area, Southeast Pinal County, Tohono O'odham\nNation, Upper San Pedro River Valley Upper Santa Cruz River\nValley/Altar Valley, Baboquivari Mountains, Catalina and Rincon\nMountains, Dragoon and Mule and Huachuca and Santa Rita Mountains.\n\n* WHEN...From 11 AM MST this morning through late Sunday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nLow-water crossings may be flooded. Flooding may occur in poor\ndrainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- An increase in moisture will bring scattered thunderstorms\nSaturday and Sunday. Rainfall rates in excess of 1 inch per hour\nare expected with the stronger storms with isolated areas having\nthe potential of 1-3 inches. Additional rainfall from the\nprevious day and overnight activity will result in faster\nresponses in normally dry washes, creeks and roadway dips.\n\n- Http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KTWC 291226"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 11 AM MST THIS MORNING THROUGH LATE SUNDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FA.A.0009.260829T1800Z-260831T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-31T05:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.01dbcaa52aa6c21d9efeae0fd7ee9259df5d690f.001.1,2026-08-28T13:58:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ade42f2b087fe163be03afeb59c65affcee76f0d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ade42f2b087fe163be03afeb59c65affcee76f0d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ade42f2b087fe163be03afeb59c65affcee76f0d.001.1",
+                "areaDesc": "Yellowstone National Park; Absaroka Mountains; Teton and Gros Ventre Mountains; Jackson Hole; Wind River Mountains West; Star Valley; Salt River and Wyoming Ranges",
+                "geocode": {
+                    "SAME": [
+                        "016043",
+                        "056029",
+                        "056039",
+                        "030031",
+                        "056013",
+                        "056017",
+                        "056023",
+                        "056035"
+                    ],
+                    "UGC": [
+                        "WYZ001",
+                        "WYZ002",
+                        "WYZ012",
+                        "WYZ013",
+                        "WYZ014",
+                        "WYZ023",
+                        "WYZ024"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WYZ001",
+                    "https://api.weather.gov/zones/forecast/WYZ002",
+                    "https://api.weather.gov/zones/forecast/WYZ012",
+                    "https://api.weather.gov/zones/forecast/WYZ013",
+                    "https://api.weather.gov/zones/forecast/WYZ014",
+                    "https://api.weather.gov/zones/forecast/WYZ023",
+                    "https://api.weather.gov/zones/forecast/WYZ024"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc60418e12e1c4d75464d2b24bde4c6a37826a2b.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.bc60418e12e1c4d75464d2b24bde4c6a37826a2b.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-28T10:43:00-06:00"
+                    }
+                ],
+                "sent": "2026-08-29T01:55:00-06:00",
+                "effective": "2026-08-29T01:55:00-06:00",
+                "onset": "2026-08-29T01:55:00-06:00",
+                "expires": "2026-08-29T18:00:00-06:00",
+                "ends": "2026-08-30T12:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Riverton WY",
+                "headline": "Flood Watch issued August 29 at 1:55AM MDT until August 30 at 12:00PM MDT by NWS Riverton WY",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of central, northwest, and west central Wyoming,\nincluding the following areas, in central Wyoming, Wind River\nMountains West. In northwest Wyoming, Absaroka Mountains, Jackson\nHole, Teton and Gros Ventre Mountains and Yellowstone National\nPark. In west central Wyoming, Salt River and Wyoming Ranges and\nStar Valley.\n\n* WHEN...Through Sunday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Increased moisture from the Pacific will move across northwest\nWyoming through the weekend, bringing an extended chance for\nshowers and thunderstorms. The increased moisture will have the\npotential to produce locally heavy rainfall, providing excessive\nrunoff in flood-prone and low-lying areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFARIW"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KRIW 290755"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SUNDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KRIW.FA.A.0005.000000T0000Z-260830T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-30T12:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e7151cf81f1ea3fed9f21c27356cc0f3a90dc89b.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e7151cf81f1ea3fed9f21c27356cc0f3a90dc89b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.e7151cf81f1ea3fed9f21c27356cc0f3a90dc89b.001.1",
+                "areaDesc": "Aguila Valley; Northwest Valley; Tonopah Desert; Buckeye/Avondale; Cave Creek/New River; Deer Valley; Central Phoenix; North Phoenix/Glendale; New River Mesa; Scottsdale/Paradise Valley; Rio Verde/Salt River; East Valley; Fountain Hills/East Mesa; South Mountain/Ahwatukee; Southeast Valley/Queen Creek; Superior; Northwest Pinal County; West Pinal County; Apache Junction/Gold Canyon; Tonto Basin; Mazatzal Mountains; Pinal/Superstition Mountains; Sonoran Desert Natl Monument; San Carlos; Dripping Springs; Globe/Miami; Southeast Gila County",
+                "geocode": {
+                    "SAME": [
+                        "004013",
+                        "004021",
+                        "004007"
+                    ],
+                    "UGC": [
+                        "AZZ534",
+                        "AZZ537",
+                        "AZZ538",
+                        "AZZ540",
+                        "AZZ541",
+                        "AZZ542",
+                        "AZZ543",
+                        "AZZ544",
+                        "AZZ545",
+                        "AZZ546",
+                        "AZZ547",
+                        "AZZ548",
+                        "AZZ549",
+                        "AZZ550",
+                        "AZZ551",
+                        "AZZ552",
+                        "AZZ553",
+                        "AZZ554",
+                        "AZZ555",
+                        "AZZ556",
+                        "AZZ557",
+                        "AZZ558",
+                        "AZZ559",
+                        "AZZ560",
+                        "AZZ561",
+                        "AZZ562",
+                        "AZZ563"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ534",
+                    "https://api.weather.gov/zones/forecast/AZZ537",
+                    "https://api.weather.gov/zones/forecast/AZZ538",
+                    "https://api.weather.gov/zones/forecast/AZZ540",
+                    "https://api.weather.gov/zones/forecast/AZZ541",
+                    "https://api.weather.gov/zones/forecast/AZZ542",
+                    "https://api.weather.gov/zones/forecast/AZZ543",
+                    "https://api.weather.gov/zones/forecast/AZZ544",
+                    "https://api.weather.gov/zones/forecast/AZZ545",
+                    "https://api.weather.gov/zones/forecast/AZZ546",
+                    "https://api.weather.gov/zones/forecast/AZZ547",
+                    "https://api.weather.gov/zones/forecast/AZZ548",
+                    "https://api.weather.gov/zones/forecast/AZZ549",
+                    "https://api.weather.gov/zones/forecast/AZZ550",
+                    "https://api.weather.gov/zones/forecast/AZZ551",
+                    "https://api.weather.gov/zones/forecast/AZZ552",
+                    "https://api.weather.gov/zones/forecast/AZZ553",
+                    "https://api.weather.gov/zones/forecast/AZZ554",
+                    "https://api.weather.gov/zones/forecast/AZZ555",
+                    "https://api.weather.gov/zones/forecast/AZZ556",
+                    "https://api.weather.gov/zones/forecast/AZZ557",
+                    "https://api.weather.gov/zones/forecast/AZZ558",
+                    "https://api.weather.gov/zones/forecast/AZZ559",
+                    "https://api.weather.gov/zones/forecast/AZZ560",
+                    "https://api.weather.gov/zones/forecast/AZZ561",
+                    "https://api.weather.gov/zones/forecast/AZZ562",
+                    "https://api.weather.gov/zones/forecast/AZZ563"
+                ],
+                "references": [],
+                "sent": "2026-08-29T00:06:00-07:00",
+                "effective": "2026-08-29T00:06:00-07:00",
+                "onset": "2026-08-29T17:00:00-07:00",
+                "expires": "2026-08-29T16:00:00-07:00",
+                "ends": "2026-08-30T05:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Phoenix AZ",
+                "headline": "Flood Watch issued August 29 at 12:06AM MST until August 30 at 5:00AM MST by NWS Phoenix AZ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of south central Arizona, including the Phoenix\nMetro, all of Gila and Pinal Counties, and much of Maricopa County.\n\n* WHEN...From Saturday afternoon through late Saturday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Increasing moisture and atmospheric instability will combine with\nan approaching weather system to promote scattered thunderstorms\ncapable of producing heavy rainfall from late Saturday afternoon\nthrough Saturday night. Training of storms could result in\nlocalized rainfall amounts of over two inches within the watch\narea.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPSR"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPSR 290706"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SATURDAY AFTERNOON THROUGH LATE SATURDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPSR.FA.A.0004.260830T0000Z-260830T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-30T05:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5dd2c83dad0e6660d9649c7833aa84cade70769d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5dd2c83dad0e6660d9649c7833aa84cade70769d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5dd2c83dad0e6660d9649c7833aa84cade70769d.001.1",
+                "areaDesc": "Yavapai County Mountains; Northern Gila County; Yavapai County Valleys and Basins; Oak Creek and Sycamore Canyons",
+                "geocode": {
+                    "SAME": [
+                        "004025",
+                        "004007",
+                        "004005"
+                    ],
+                    "UGC": [
+                        "AZZ008",
+                        "AZZ018",
+                        "AZZ037",
+                        "AZZ038"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ008",
+                    "https://api.weather.gov/zones/forecast/AZZ018",
+                    "https://api.weather.gov/zones/forecast/AZZ037",
+                    "https://api.weather.gov/zones/forecast/AZZ038"
+                ],
+                "references": [],
+                "sent": "2026-08-28T23:48:00-07:00",
+                "effective": "2026-08-28T23:48:00-07:00",
+                "onset": "2026-08-29T17:00:00-07:00",
+                "expires": "2026-08-29T17:15:00-07:00",
+                "ends": "2026-08-30T05:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flood Watch issued August 28 at 11:48PM MST until August 30 at 5:00AM MST by NWS Flagstaff AZ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...Northern Gila County, Yavapai County, and Oak Creek and\nSycamore Canyons.\n\n* WHEN...From Saturday afternoon through late Saturday night.\n\n* IMPACTS...Flash flooding will be possible in creeks, normally dry\nwashes, and swimming holes, and over recently burned areas.\nLow-water crossings could also become flooded, which would create\ndeadly travel conditions.\n\n* ADDITIONAL DETAILS...\n- Thunderstorms are expected to develop this afternoon and continue\nthrough much of the weekend. With deep monsoonal moisture in\nplace, any stronger storm will have the potential to produce\nheavy rainfall and cause flash flooding.\n- Additional information is available at weather.gov/flagstaff.",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KFGZ 290648"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SATURDAY AFTERNOON THROUGH LATE SATURDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGZ.FA.A.0006.260830T0000Z-260830T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-30T05:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-08-29T14:17:30+00:00"
+}

@@ -1,0 +1,474 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.925d6ea3f930bb166ec8a67b1d11dcc75a9f4c57.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.51,
+                            31.3
+                        ],
+                        [
+                            -83.63,
+                            31.14
+                        ],
+                        [
+                            -83.73,
+                            31.16
+                        ],
+                        [
+                            -83.83,
+                            31.17
+                        ],
+                        [
+                            -83.72,
+                            31.32
+                        ],
+                        [
+                            -83.63,
+                            31.32
+                        ],
+                        [
+                            -83.51,
+                            31.3
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.925d6ea3f930bb166ec8a67b1d11dcc75a9f4c57.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.925d6ea3f930bb166ec8a67b1d11dcc75a9f4c57.001.1",
+                "areaDesc": "Colquitt, GA",
+                "geocode": {
+                    "SAME": [
+                        "013071"
+                    ],
+                    "UGC": [
+                        "GAC071"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC071"
+                ],
+                "references": [],
+                "sent": "2026-08-28T20:59:00-04:00",
+                "effective": "2026-08-28T20:59:00-04:00",
+                "onset": "2026-08-28T20:59:00-04:00",
+                "expires": "2026-08-28T22:30:00-04:00",
+                "ends": "2026-08-28T22:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued August 28 at 8:59PM EDT until August 28 at 10:30PM EDT by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nNortheastern Colquitt County in south central Georgia...\n\n* Until 1030 PM EDT.\n\n* At 859 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMoultrie, Norman Park, Riverside, Pineboro, Cool Spring and\nCrosland.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 290059"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0024.260829T0059Z-260829T0230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T22:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ecc572d9792d0fd01fba7b88b95a4a86b007934c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.14,
+                            31.43
+                        ],
+                        [
+                            -83.15,
+                            31.46
+                        ],
+                        [
+                            -83.15,
+                            31.47
+                        ],
+                        [
+                            -83.12,
+                            31.47
+                        ],
+                        [
+                            -83.1,
+                            31.49
+                        ],
+                        [
+                            -83.07,
+                            31.49
+                        ],
+                        [
+                            -83.07,
+                            31.48
+                        ],
+                        [
+                            -83.06,
+                            31.48
+                        ],
+                        [
+                            -83.06,
+                            31.47
+                        ],
+                        [
+                            -83.04,
+                            31.46
+                        ],
+                        [
+                            -83.04,
+                            31.44
+                        ],
+                        [
+                            -83.03,
+                            31.44
+                        ],
+                        [
+                            -83.03,
+                            31.38
+                        ],
+                        [
+                            -83.04,
+                            31.34
+                        ],
+                        [
+                            -83.07,
+                            31.33
+                        ],
+                        [
+                            -83.08,
+                            31.35
+                        ],
+                        [
+                            -83.1,
+                            31.35
+                        ],
+                        [
+                            -83.12,
+                            31.39
+                        ],
+                        [
+                            -83.14,
+                            31.4
+                        ],
+                        [
+                            -83.14,
+                            31.43
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ecc572d9792d0fd01fba7b88b95a4a86b007934c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ecc572d9792d0fd01fba7b88b95a4a86b007934c.001.1",
+                "areaDesc": "Atkinson, GA; Coffee, GA",
+                "geocode": {
+                    "SAME": [
+                        "013003",
+                        "013069"
+                    ],
+                    "UGC": [
+                        "GAC003",
+                        "GAC069"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC003",
+                    "https://api.weather.gov/zones/county/GAC069"
+                ],
+                "references": [],
+                "sent": "2026-08-28T20:48:00-04:00",
+                "effective": "2026-08-28T20:48:00-04:00",
+                "onset": "2026-08-28T20:48:00-04:00",
+                "expires": "2026-08-28T23:45:00-04:00",
+                "ends": "2026-08-28T23:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flash Flood Warning issued August 28 at 8:48PM EDT until August 28 at 11:45PM EDT by NWS Jacksonville FL",
+                "description": "FFWJAX\n\nThe National Weather Service in Jacksonville has issued a\n\n* Flash Flood Warning for...\nNorthwestern Atkinson County in southeastern Georgia...\nSouthwestern Coffee County in southeastern Georgia...\n\n* Until 1145 PM EDT.\n\n* At 848 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWillacoochee.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KJAX 290048"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KJAX.FF.W.0022.260829T0048Z-260829T0345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T23:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b0874e5e28d6abfc850004a9f12707f626284416.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.73,
+                            31.38
+                        ],
+                        [
+                            -82.73,
+                            31.43
+                        ],
+                        [
+                            -82.69,
+                            31.47
+                        ],
+                        [
+                            -82.68,
+                            31.47
+                        ],
+                        [
+                            -82.68,
+                            31.48
+                        ],
+                        [
+                            -82.67,
+                            31.48
+                        ],
+                        [
+                            -82.67,
+                            31.49
+                        ],
+                        [
+                            -82.66,
+                            31.49
+                        ],
+                        [
+                            -82.66,
+                            31.5
+                        ],
+                        [
+                            -82.62,
+                            31.51
+                        ],
+                        [
+                            -82.62,
+                            31.52
+                        ],
+                        [
+                            -82.56,
+                            31.52
+                        ],
+                        [
+                            -82.54,
+                            31.51
+                        ],
+                        [
+                            -82.54,
+                            31.45
+                        ],
+                        [
+                            -82.57,
+                            31.43
+                        ],
+                        [
+                            -82.6,
+                            31.38
+                        ],
+                        [
+                            -82.62,
+                            31.37
+                        ],
+                        [
+                            -82.63,
+                            31.34
+                        ],
+                        [
+                            -82.7,
+                            31.35
+                        ],
+                        [
+                            -82.7,
+                            31.36
+                        ],
+                        [
+                            -82.73,
+                            31.38
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b0874e5e28d6abfc850004a9f12707f626284416.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b0874e5e28d6abfc850004a9f12707f626284416.001.1",
+                "areaDesc": "Atkinson, GA; Bacon, GA; Coffee, GA; Ware, GA",
+                "geocode": {
+                    "SAME": [
+                        "013003",
+                        "013005",
+                        "013069",
+                        "013299"
+                    ],
+                    "UGC": [
+                        "GAC003",
+                        "GAC005",
+                        "GAC069",
+                        "GAC299"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC003",
+                    "https://api.weather.gov/zones/county/GAC005",
+                    "https://api.weather.gov/zones/county/GAC069",
+                    "https://api.weather.gov/zones/county/GAC299"
+                ],
+                "references": [],
+                "sent": "2026-08-28T20:27:00-04:00",
+                "effective": "2026-08-28T20:27:00-04:00",
+                "onset": "2026-08-28T20:27:00-04:00",
+                "expires": "2026-08-28T23:30:00-04:00",
+                "ends": "2026-08-28T23:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flash Flood Warning issued August 28 at 8:27PM EDT until August 28 at 11:30PM EDT by NWS Jacksonville FL",
+                "description": "FFWJAX\n\nThe National Weather Service in Jacksonville has issued a\n\n* Flash Flood Warning for...\nNortheastern Atkinson County in southeastern Georgia...\nSouthwestern Bacon County in southeastern Georgia...\nSoutheastern Coffee County in southeastern Georgia...\nNorthwestern Ware County in southeastern Georgia...\n\n* Until 1130 PM EDT.\n\n* At 827 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2.5 and 3.5 inches of\nrain have fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBickley.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KJAX 290027"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KJAX.FF.W.0021.260829T0027Z-260829T0330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T23:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-08-29T01:39:28+00:00"
+}

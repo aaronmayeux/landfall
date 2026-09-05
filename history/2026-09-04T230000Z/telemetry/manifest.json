@@ -1,0 +1,141 @@
+{
+  "fetchedAt": "2026-09-04T23:57:04Z",
+  "database": "landfall-telemetry",
+  "databaseId": "dc08ce89-b597-40da-b5b5-7571a9b30d90",
+  "state": "ok",
+  "reason": null,
+  "accountId": "3df0609f13f206d922e4859543ac72d5",
+  "accountSource": "discovered (1 account(s) visible to this token)",
+  "ok": 16,
+  "total": 16,
+  "queries": [
+    {
+      "name": "schema",
+      "status": "ok",
+      "rows": 4,
+      "ms": 813,
+      "note": "Every table and its CREATE statement. Read this first — it is the ground truth for what the other queries can ask about.",
+      "sql": "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
+    },
+    {
+      "name": "table-counts",
+      "status": "ok",
+      "rows": 3,
+      "ms": 155,
+      "note": "Row count per table. A count that stops moving is the first sign the writer died.",
+      "sql": "SELECT 'events' AS table_name, COUNT(*) AS rows FROM events UNION ALL SELECT 'sessions', COUNT(*) FROM sessions UNION ALL SELECT 'source_rollup', COUNT(*) FROM source_rollup"
+    },
+    {
+      "name": "platform-rollup",
+      "status": "ok",
+      "rows": 5,
+      "ms": 140,
+      "note": "THE WINDOWS QUESTION. Windows was averaging 2,403 ms blocked against 0 ms on iOS as of 2026-08-08, worst case 29,604 ms. There is NO `blocked_ms` column — the first version of this query invented one and failed with SQLITE_ERROR. Blocked time is `longtask_ms`: main-thread long tasks, which is what a frozen globe actually is. ==> CORRECTED 2026-09-01. `avg_blocked_ms` = 0 ON iOS MEANS NOT MEASURED, NOT NOT BLOCKED. <== This note previously read as though iOS were flawless and it was quoted that way. Safari does not implement the `longtask` PerformanceObserver, so lib/perf.js never starts that observer there and the column keeps its 0 default — the same 0 an unblocked visit would show. The two are indistinguishable in this column and iOS is the LARGEST platform in the table, so the mistake was load-bearing. Safari DOES implement Event Timing, which is why `worst_single_event_ms` is real on iOS and was reading 18,152 ms on 2026-09-01 — more than double the worst on any other platform, sitting in the same row as the reassuring zero. Read `interaction-stalls` beside this table; it exists because this one cannot be trusted alone.",
+      "sql": "SELECT platform, COUNT(*) AS clean_sessions, ROUND(AVG(longtask_ms)) AS avg_blocked_ms, MAX(longtask_ms) AS worst_blocked_ms, MAX(worst_event_ms) AS worst_single_event_ms, ROUND(AVG(longtask_n)) AS avg_longtask_count, ROUND(AVG(t_globe_ms)) AS avg_veil_lift_ms, ROUND(AVG(t_storms_ms)) AS avg_storms_ms, ROUND(AVG(lcp_ms)) AS avg_lcp_ms FROM sessions WHERE timings_ok = 1 GROUP BY platform ORDER BY avg_blocked_ms DESC"
+    },
+    {
+      "name": "interaction-stalls",
+      "status": "ok",
+      "rows": 5,
+      "ms": 147,
+      "note": "HOW LONG A TAP TOOK TO DO ANYTHING, by platform. Built only from Event Timing and navigation metrics, both of which every engine implements — unlike `longtask_ms` in `platform-rollup`, which is silently absent on Safari and reports 0 there. If those two tables ever disagree about which platform is worst, BELIEVE THIS ONE. `sessions_over_1s` and `sessions_over_5s` are the counts that matter: an average is dragged down by the many visits where nothing was tapped at all, and a maximum is one bad phone. How MANY visits had a tap that hung is the question a user would recognise. `avg_scripts_ms` is the vendored MapLibre and Three finishing — the part of the load that is library rather than us, split out so a fix aims at the right half.",
+      "sql": "SELECT platform, COUNT(*) AS clean_sessions, ROUND(AVG(worst_event_ms)) AS avg_worst_interaction_ms, MAX(worst_event_ms) AS worst_interaction_ms, SUM(CASE WHEN worst_event_ms > 1000 THEN 1 ELSE 0 END) AS sessions_over_1s, SUM(CASE WHEN worst_event_ms > 5000 THEN 1 ELSE 0 END) AS sessions_over_5s, ROUND(AVG(t_scripts_ms)) AS avg_scripts_ms, ROUND(AVG(visit_ms)) AS avg_visit_ms FROM sessions WHERE timings_ok = 1 GROUP BY platform ORDER BY sessions_over_1s DESC"
+    },
+    {
+      "name": "recent-sessions",
+      "status": "ok",
+      "rows": 14,
+      "ms": 174,
+      "note": "Sessions per day for the last 14 days. ==> `ts` IS IN SECONDS, NOT MILLISECONDS. <== The first version of this query divided by 1000 and returned ONE row reading \"1970-01-21: 335 sessions\". It did not error. It came back looking entirely plausible and was completely wrong, which is worse than failing. Verified against the schema: sessions.ts = 1786208965 is 2026-08-08T17:09Z read as seconds, and 1970 read as milliseconds.",
+      "sql": "SELECT DATE(ts, 'unixepoch') AS day, COUNT(*) AS sessions FROM sessions GROUP BY day ORDER BY day DESC LIMIT 14"
+    },
+    {
+      "name": "daily-devices",
+      "status": "ok",
+      "rows": 21,
+      "ms": 171,
+      "note": "Visits AND people per day, last 21 days. `people` counts distinct devices; `sessions_without_device` is how many rows that count had to ignore because they predate the `device` column (added 2026-08-05). On any day where that number is not 0, `people` is a floor, not a total. 21 days, not 14, so the window always reaches back past the column's birthday and the ramp is visible rather than looking like a real change in traffic.",
+      "sql": "SELECT DATE(ts, 'unixepoch') AS day, COUNT(*) AS sessions, COUNT(DISTINCT CASE WHEN device <> '' THEN device END) AS people, SUM(CASE WHEN device = '' THEN 1 ELSE 0 END) AS sessions_without_device FROM sessions GROUP BY day ORDER BY day DESC LIMIT 21"
+    },
+    {
+      "name": "device-roster",
+      "status": "ok",
+      "rows": 40,
+      "ms": 155,
+      "note": "THE REGULARS. One row per device seen on 5 OR MORE SEPARATE DAYS, with enough hardware description to recognise a machine you own. Screen size, memory and core count are already in the table; they are reported here only for this small set. ==> THE 5-DAY FLOOR IS A PRIVACY DECISION, NOT A TIDINESS ONE. <== The archive branch is PUBLIC. A roster of every device would publish a fragment of the identifier plus a hardware profile for several hundred strangers, which is a real step down from what this branch has ever carried. Devices that turn up on five different days are the ones the question is actually about. Do not lower this floor to sweep in more rows. `device_prefix` is the FIRST 8 CHARACTERS ONLY — never the whole id. It exists so two rows can be told apart and named in conversation, not so anyone can be followed. The descriptive columns use MAX() because a device that rotated its phone or changed browser has more than one value; MAX is arbitrary but DETERMINISTIC, which a bare column would not be.",
+      "sql": "SELECT SUBSTR(device, 1, 8) AS device_prefix, MAX(platform) AS platform, MAX(engine) AS engine, MAX(screen_w) AS screen_w, MAX(screen_h) AS screen_h, MAX(dpr) AS dpr, MAX(mem_gb) AS mem_gb, MAX(cores) AS cores, MAX(standalone) AS ever_installed, COUNT(*) AS sessions, COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active, DATE(MIN(ts), 'unixepoch') AS first_seen, DATE(MAX(ts), 'unixepoch') AS last_seen FROM sessions WHERE device <> '' GROUP BY device HAVING COUNT(DISTINCT DATE(ts, 'unixepoch')) >= 5 ORDER BY days_active DESC, sessions DESC"
+    },
+    {
+      "name": "referrers",
+      "status": "ok",
+      "rows": 8,
+      "ms": 138,
+      "note": "WHERE VISITORS COME FROM, all time, by referring site. `ref_host` was added 2026-08-14, so every session before then buckets as \"(direct, same-site, or pre-2026-08-14)\" — that bucket is NOT proof of direct traffic and must never be reported as such. `first_seen`/`last_seen` are the honest way to tell a live source from one that sent a burst once: a host whose two dates are the same day was a single posting, not a channel.",
+      "sql": "SELECT CASE WHEN ref_host = '' THEN '(direct, same-site, or pre-2026-08-14)' ELSE ref_host END AS source, COUNT(*) AS sessions, COUNT(DISTINCT CASE WHEN device <> '' THEN device END) AS people, DATE(MIN(ts), 'unixepoch') AS first_seen, DATE(MAX(ts), 'unixepoch') AS last_seen FROM sessions GROUP BY source ORDER BY sessions DESC LIMIT 50"
+    },
+    {
+      "name": "referrers-daily",
+      "status": "ok",
+      "rows": 10,
+      "ms": 129,
+      "note": "Referring site per day for the last 7 days — the shape of a spike, which the all-time table flattens away. Bounded by a WHERE on `ts` rather than a LIMIT: a LIMIT on a two-column grouping silently drops the quietest sources on the busiest day, and those are exactly the new arrivals worth seeing.",
+      "sql": "SELECT DATE(ts, 'unixepoch') AS day, CASE WHEN ref_host = '' THEN '(direct, same-site, or pre-2026-08-14)' ELSE ref_host END AS source, COUNT(*) AS sessions, COUNT(DISTINCT CASE WHEN device <> '' THEN device END) AS people FROM sessions WHERE ts >= STRFTIME('%s', 'now') - (7 * 86400) GROUP BY day, source ORDER BY day DESC, sessions DESC"
+    },
+    {
+      "name": "feature-usage",
+      "status": "ok",
+      "rows": 5,
+      "ms": 146,
+      "note": "WHAT PEOPLE ACTUALLY TOUCH, by platform, all time. ==> READ THE `sessions_...` COLUMNS BEFORE THE `total_...` ONES. <== A total is the sum of a counter across every visit, so ONE person hammering a button outweighs a hundred people who each pressed it once. The `sessions_...` columns count VISITS THAT USED THE FEATURE AT ALL, which is the reach question and the one worth acting on. NO `timings_ok` FILTER HERE, deliberately: a visit whose clock cannot be trusted still pressed real buttons, and filtering it out would undercount usage while looking like a clean number. `sessions_losing_webgl` is the globe dying outright — if that is not near zero on a platform, nothing else in this row matters.",
+      "sql": "SELECT platform, COUNT(*) AS sessions, SUM(storm_select) AS total_storm_selects, SUM(advisory_open) AS total_advisory_opens, SUM(layer_toggle) AS total_layer_toggles, SUM(model_toggle) AS total_model_toggles, SUM(recenter) AS total_recenters, SUM(CASE WHEN storm_select > 0 THEN 1 ELSE 0 END) AS sessions_selecting_a_storm, SUM(CASE WHEN advisory_open > 0 THEN 1 ELSE 0 END) AS sessions_opening_an_advisory, SUM(CASE WHEN layer_toggle > 0 THEN 1 ELSE 0 END) AS sessions_toggling_a_layer, SUM(CASE WHEN layer_pair > 0 THEN 1 ELSE 0 END) AS sessions_pairing_layers, SUM(CASE WHEN layer_reset > 0 THEN 1 ELSE 0 END) AS sessions_resetting_layers, SUM(CASE WHEN model_toggle > 0 THEN 1 ELSE 0 END) AS sessions_toggling_models, SUM(CASE WHEN recenter > 0 THEN 1 ELSE 0 END) AS sessions_recentering, SUM(CASE WHEN home_set > 0 THEN 1 ELSE 0 END) AS sessions_setting_home, SUM(CASE WHEN retry > 0 THEN 1 ELSE 0 END) AS sessions_pressing_retry, SUM(CASE WHEN webgl_lost > 0 THEN 1 ELSE 0 END) AS sessions_losing_webgl FROM sessions GROUP BY platform ORDER BY sessions DESC"
+    },
+    {
+      "name": "retry-buttons",
+      "status": "ok",
+      "rows": 0,
+      "ms": 238,
+      "note": "WHICH Retry buttons got pressed — i.e. which part of the app broke badly enough that somebody fought back. `retry_which` holds the button NAMES for that visit, in a fixed order, so one row is a COMBINATION and not a single button: a visit that retried two things appears once, under both names together. Do not sum this column as though each row were one button. Empty values are excluded because they mean \"no Retry was pressed\", which is the overwhelming majority and is not a finding. The column was added 2026-08-18, so nothing here predates that date.",
+      "sql": "SELECT retry_which, COUNT(*) AS sessions, DATE(MIN(ts), 'unixepoch') AS first_seen, DATE(MAX(ts), 'unixepoch') AS last_seen FROM sessions WHERE retry_which <> '' GROUP BY retry_which ORDER BY sessions DESC LIMIT 20"
+    },
+    {
+      "name": "installs",
+      "status": "ok",
+      "rows": 5,
+      "ms": 160,
+      "note": "HOME-SCREEN INSTALLS, by platform. `standalone` is 1 when the visit ran from an installed icon rather than a browser tab. ==> `installed_people` IS THE NUMBER THAT MEANS SOMETHING. <== An installed user opens the app far more often than a tab visitor, so counting SESSIONS makes installs look several times more common than they are. A device counts as installed if ANY of its visits ran standalone, so somebody who installed it today is credited even though their earlier tab visits are still in the table. People-counts ignore rows older than the `device` column (2026-08-05); the session counts do not, so the two columns cover different spans on purpose.",
+      "sql": "SELECT platform, COUNT(*) AS sessions, SUM(CASE WHEN standalone = 1 THEN 1 ELSE 0 END) AS installed_sessions, COUNT(DISTINCT CASE WHEN device <> '' THEN device END) AS people, COUNT(DISTINCT CASE WHEN device <> '' AND standalone = 1 THEN device END) AS installed_people FROM sessions GROUP BY platform ORDER BY sessions DESC"
+    },
+    {
+      "name": "return-rate",
+      "status": "ok",
+      "rows": 18,
+      "ms": 142,
+      "note": "HOW MANY PEOPLE CAME BACK — a histogram, not an average. Each row is \"this many people showed up on exactly this many separate days\". An average would hide the only interesting shape here, which is how steep the drop is from one day to two. ==> THE LAST FEW DAYS ALWAYS DRAG THE LEFT EDGE UP. <== Somebody who first arrived yesterday CANNOT yet be a two-day visitor, so the 1-day bucket permanently contains people who may well return. Read it as a floor on churn, never as a count of people who left. Rows predating the `device` column (2026-08-05) are excluded entirely rather than piled into the 1-day bucket, where they would look like the worst possible result.",
+      "sql": "SELECT days_active, COUNT(*) AS people FROM (SELECT COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active FROM sessions WHERE device <> '' GROUP BY device) GROUP BY days_active ORDER BY days_active"
+    },
+    {
+      "name": "source-rollup",
+      "status": "ok",
+      "rows": 50,
+      "ms": 125,
+      "note": "Per-source health. Which feeds are answering and which are not.",
+      "sql": "SELECT * FROM source_rollup ORDER BY rowid DESC LIMIT 50"
+    },
+    {
+      "name": "recent-events",
+      "status": "ok",
+      "rows": 72,
+      "ms": 129,
+      "note": "The last 100 events, newest first. The raw trail behind everything above.",
+      "sql": "SELECT * FROM events ORDER BY rowid DESC LIMIT 100"
+    },
+    {
+      "name": "freshness",
+      "status": "ok",
+      "rows": 1,
+      "ms": 137,
+      "note": "How long ago the newest session landed. If `hours_since_newest` grows past a few hours while the app is live, telemetry is not arriving and every number above is stale WITHOUT LOOKING STALE. Read this before trusting anything else here. Timestamps are rendered as text too, because a bare integer is exactly how the seconds-vs-milliseconds bug got past review.",
+      "sql": "SELECT MAX(ts) AS newest_ts, MIN(ts) AS oldest_ts, COUNT(*) AS total, DATETIME(MAX(ts), 'unixepoch') AS newest_utc, DATETIME(MIN(ts), 'unixepoch') AS oldest_utc, ROUND((STRFTIME('%s','now') - MAX(ts)) / 3600.0, 1) AS hours_since_newest FROM sessions"
+    }
+  ]
+}

@@ -1,0 +1,187 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f90eef258c02ac53fa45f9942f982d2852cd335.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.24,
+                            30.87
+                        ],
+                        [
+                            -95.23,
+                            30.89
+                        ],
+                        [
+                            -95.25,
+                            30.91
+                        ],
+                        [
+                            -95.3,
+                            30.9
+                        ],
+                        [
+                            -95.33,
+                            30.95
+                        ],
+                        [
+                            -95.27,
+                            31.03
+                        ],
+                        [
+                            -95.32,
+                            31.13
+                        ],
+                        [
+                            -95.21,
+                            31.21
+                        ],
+                        [
+                            -94.94,
+                            31.32
+                        ],
+                        [
+                            -94.9,
+                            31.31
+                        ],
+                        [
+                            -94.88,
+                            31.28
+                        ],
+                        [
+                            -94.9,
+                            31.27
+                        ],
+                        [
+                            -94.9,
+                            31.26
+                        ],
+                        [
+                            -94.89,
+                            31.26
+                        ],
+                        [
+                            -94.87,
+                            31.23
+                        ],
+                        [
+                            -94.85,
+                            31.16
+                        ],
+                        [
+                            -94.86,
+                            31.15
+                        ],
+                        [
+                            -94.84,
+                            31.14
+                        ],
+                        [
+                            -94.93,
+                            31.03
+                        ],
+                        [
+                            -95.14,
+                            30.86
+                        ],
+                        [
+                            -95.24,
+                            30.87
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f90eef258c02ac53fa45f9942f982d2852cd335.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2f90eef258c02ac53fa45f9942f982d2852cd335.001.1",
+                "areaDesc": "Polk, TX; Trinity, TX",
+                "geocode": {
+                    "SAME": [
+                        "048373",
+                        "048455"
+                    ],
+                    "UGC": [
+                        "TXC373",
+                        "TXC455"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC373",
+                    "https://api.weather.gov/zones/county/TXC455"
+                ],
+                "references": [],
+                "sent": "2026-09-02T12:21:00-05:00",
+                "effective": "2026-09-02T12:21:00-05:00",
+                "onset": "2026-09-02T12:21:00-05:00",
+                "expires": "2026-09-02T14:45:00-05:00",
+                "ends": "2026-09-02T14:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Houston/Galveston TX",
+                "headline": "Flash Flood Warning issued September 2 at 12:21PM CDT until September 2 at 2:45PM CDT by NWS Houston/Galveston TX",
+                "description": "FFWHGX\n\nThe National Weather Service in Houston/Galveston has issued a\n\n* Flash Flood Warning for...\nNorthwestern Polk County in southeastern Texas...\nTrinity County in southeastern Texas...\n\n* Until 245 PM CDT.\n\n* At 1221 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 5 inches of rain\nhave fallen. The expected rainfall rate is 2 to 3 inches in 1 hour.\nAdditional rainfall amounts of 1 to 3 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nApple Springs, Groveton, Sebastopol, Centralia and Pennington.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHGX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHGX 021721"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KHGX.FF.W.0040.260902T1721Z-260902T1945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-02T14:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-02T18:32:36+00:00"
+}

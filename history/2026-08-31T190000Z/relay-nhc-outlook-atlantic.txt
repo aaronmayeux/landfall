@@ -1,0 +1,37 @@
+en Español
+
+000
+ABNT20 KNHC 311756
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 PM EDT Mon Aug 31 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on newly formed 
+Tropical Depression Five, located over the northern Gulf of America.
+
+Near Hispaniola (Remnants of Dolly):
+A surface trough of low pressure (the remnants of Tropical Storm 
+Dolly) is producing disorganized showers and thunderstorms near and 
+over portions of Hispaniola, Turks and Caicos, and the southeastern 
+Bahamas. Significant development of this system is no longer 
+expected while it moves west-northwestward at 15 to 20 mph over the 
+southwestern Atlantic. Regardless, the system could bring locally 
+heavy rains and gusty winds to portions of these areas during the 
+next couple of days.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+&&
+Public Advisories on Tropical Depression Five are issued under WMO 
+header WTNT35 KNHC and under AWIPS header MIATCPAT5.
+Forecast/Advisories on Tropical Depression Five are issued under WMO 
+header WTNT25 KNHC and under AWIPS header MIATCMAT5.
+
+$$
+Forecaster Reinhart
+  

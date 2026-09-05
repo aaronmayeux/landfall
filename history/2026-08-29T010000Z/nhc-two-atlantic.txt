@@ -1,0 +1,194 @@
+
+
+
+	<!-- This _public page copied by nhcWeb -->
+
+<!-- Used by archived advisories -->
+
+
+
+  
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Atlantic Tropical Weather Outlook (text)</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script async="" src="/assets/js/uswds-init.min.js"></script>
+  <link rel="preload" as="style" href="/assets/css/uswds-styles-22f6e7a4a2.min.css" />
+  <link rel="stylesheet" href="/assets/css/uswds-styles-22f6e7a4a2.min.css" type="text/css" />
+  
+  <meta http-equiv="Expires" content="Sun, 30 Aug 2026 11:36:52 +0000">
+  
+</head>
+<body class="bg-white nhc-text-only" onLoad="if (self != top) top.location = self.location">
+  <!-- BEGIN Google Analytics code -->
+<!-- We participate in the US government's analytics program. See the data at analytics.usa.gov. -->
+<script src="//dap.digitalgov.gov/Universal-Federated-Analytics-Min.js?agency=DOC&amp;subagency=NOAA" id="_fed_an_ua_tag"></script>
+<!-- END Google Analytics code -->
+
+  <div class="grid-container">
+
+      <h1 class="text-center">NATIONAL HURRICANE CENTER and<br>
+  CENTRAL PACIFIC HURRICANE CENTER</h1>
+  <div class="text-center font-sans-md">
+  <a href="/?text">HOME</a> | 
+  <a href="/data/?text">ARCHIVES</a> | 
+  <a href="/forecast_text.shtml">FORECASTS</a> | 
+  <a href="/satellite.shtml?text">IMAGERY</a> |
+  <a href="/aboutintro.shtml?text">ABOUT NHC</a> | 
+  <a href="/recon.php?text">RECONNAISSANCE</a>
+  </div>
+  <hr>
+
+  
+    <h2 align="center">Atlantic Tropical Weather Outlook (Text)</h2>
+    <hr>
+  
+
+  
+
+
+  <!-- This page created by nhcWeb -->
+<div class="textbackground"><div class="textproduct">
+  <pre><b><a href="/text/refresh/MIATWOSAT+shtml/282338_MIATWOSAT.shtml">en Español</a></b>
+
+000
+ABNT20 KNHC 282336
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 PM EDT Fri Aug 28 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+East of the Leeward Islands (Remnants of Dolly):
+A tropical wave, the remnants of Tropical Storm Dolly, are located 
+several hundred miles east of the Leeward Islands.  Redevelopment 
+of this system is unlikely while it moves westward to 
+west-northwestward near 25 mph.  The wave could bring locally heavy 
+rains and gusty winds to portions of the Leeward Islands, the 
+Virgin Islands and Puerto Rico over the next several days.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...10 percent.
+
+Northeastern and North-Central Gulf of America:
+Disorganized cloudiness and showers over portions of the 
+northeastern and north-central Gulf of America are associated with 
+a weak area of low pressure.  Development, if any, of this system 
+is expected to be slow while it remains nearly stationary for the 
+next several days.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...10 percent.
+
+$$
+Forecaster Pasch
+  </pre>
+  </div></div>
+
+  
+  <!-- Standard NHC menu (text) -->
+<center>
+<hr>
+<span class="hdr"><a id="standard-link" href="">Standard version of this page</a></span>
+<script>
+  document.getElementById('standard-link').href = window.location.pathname;
+</script>
+<hr>
+
+    <!-- Begin search code -->
+      <form method="get" action="http://search.usa.gov/search" style="margin-bottom:0; margin-top:0;">
+        <input type="hidden" name="v:project" value="firstgov" />
+        <label for="query">Search&nbsp;&nbsp;</label>
+        <input type="text" name="query" id="query" />
+        <input type="radio" name="affiliate" checked="checked" value="nws.noaa.gov" id="nws" />
+        <label for="nws">NWS</label>
+        <input type="radio" name="affiliate" value="noaa.gov" id="noaa" />
+        <label for="noaa">All NOAA</label>
+        <input type="submit" value="Go" />
+      </form>
+   <!-- End search code -->
+
+<hr><p class="reg">
+<b>Alternate Formats</b><br>
+<a href="/aboutalternate.shtml?text">About Alternates</a> -
+<a href="/signup.shtml?text">E-Mail Advisories</a> -
+<a href="/aboutrss.shtml?text">RSS Feeds</a>
+</p>
+
+<p class="reg">
+<b>Cyclone Forecasts</b><br>
+<a href="/cyclones/?text">Latest Advisory</a> -
+<a href="/archive/2011/?text">Past Advisories</a> -
+<a href="/aboutnhcprod.shtml?text">About Advisories</a>
+</p>
+
+<p class="reg">
+<b>Marine Forecasts</b><br>
+<a href="/marine/?text">Latest Products</a> -
+<a href="/abouttafbprod.shtml?text">About Marine Products</a>
+</p>
+
+<p class="reg">
+<b>Tools & Data</b><br>
+<a href="/satellite.shtml?text">Satellite Imagery</a> -
+<a href="http://radar.weather.gov/">US Weather Radar</a> -
+<a href="/recon.php?text">Aircraft Recon</a> -
+<a href="/data/?text">Local Data Archive</a> -
+<a href="/verification/?text">Forecast Verification</a> -
+<a href="/dcmi.shtml?text">Deadliest/Costliest/Most Intense</a>
+</p>
+
+<p class="reg">
+<b>Learn About Hurricanes</b><br>
+<a href="/aboutnames.shtml?text">Storm Names</a>
+<a href="/aboutsshws.php?text">Wind Scale</a> -
+<a href="/prepare/">Prepare</a> -
+<a href="/climo/?text">Climatology</a> -
+<a href="/aboutgloss.shtml?text">NHC Glossary</a> -
+<a href="/acronyms.shtml?text">NHC Acronyms</a> -
+<a href="http://www.aoml.noaa.gov/hrd/tcfaq/tcfaqHED.html">Frequently Asked Questions</a> -
+<a href="http://www.aoml.noaa.gov/hrd/">AOML Hurricane-Research Division</a>
+</p>
+
+<p class="reg">
+<b>About Us</b><br>
+<a href="/aboutintro.shtml?text">About NHC</a> -
+<a href="/mission.shtml?text">Mission/Vision</a> -
+<a href="http://www.ncep.noaa.gov">Other NCEP Centers</a> -
+<a href="/aboutstaff.shtml?text">NHC Staff</a> -
+<a href="/aboutvisitor.shtml?text">Visitor Information</a> -
+<a href="http://www.aoml.noaa.gov/general/lib/lib1/nhclib/">NHC Library</a>
+</p>
+
+<p class="reg">
+<b><a href="/contact.shtml?text">Contact Us</a></b><br>
+</p>
+<hr>
+<!-- End of Standard NHC menu (text) -->
+
+  <p class="gray">
+  <a href="http://www.noaa.gov/">NOAA/</a>
+  <a href="http://www.nws.noaa.gov/">National Weather Service</a><br>
+  <a href="http://www.ncep.noaa.gov/">National Centers for Environmental Prediction</a><br>
+  National Hurricane Center<br>
+  11691 SW 17th Street<br>
+  Miami, Florida, 33165-2149 USA<br>
+  <a href="mailto:nhcwebmaster@noaa.gov"><span class="gray">nhcwebmaster@noaa.gov</span></a>
+</p>
+<p class="gray">
+  <a href="http://www.weather.gov/disclaimer.php">Disclaimer</a> | 
+  <a href="http://www.weather.gov/privacy.php">Privacy Policy</a> | 
+  <a href="http://www.weather.gov/credits.php">Credits</a> | 
+  <a href="http://www.weather.gov/admin.php">About Us</a> | 
+  <a href="http://www.weather.gov/glossary/">Glossary</a> | 
+  <a href="http://www.weather.gov/careers.php">Career Opportunities</a>
+</p>
+    </div> 
+    <script async src="/assets/js/uswds.min.js"></script>
+</body>
+</html>
+
+
+

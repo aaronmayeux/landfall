@@ -1,0 +1,1564 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ac3c099d2672969f8a045497fd4262b95ec193fe.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.85,
+                            32.13
+                        ],
+                        [
+                            -111.89,
+                            32.14
+                        ],
+                        [
+                            -111.95,
+                            32.13
+                        ],
+                        [
+                            -111.89,
+                            32.05
+                        ],
+                        [
+                            -111.92,
+                            31.9
+                        ],
+                        [
+                            -111.75,
+                            31.9
+                        ],
+                        [
+                            -111.69,
+                            32
+                        ],
+                        [
+                            -111.85,
+                            32.13
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ac3c099d2672969f8a045497fd4262b95ec193fe.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ac3c099d2672969f8a045497fd4262b95ec193fe.001.1",
+                "areaDesc": "Pima, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019"
+                    ],
+                    "UGC": [
+                        "AZC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c87bc8f9518700dac9b74d59b56c2c93b4b3c053.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c87bc8f9518700dac9b74d59b56c2c93b4b3c053.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T18:19:00-07:00"
+                    }
+                ],
+                "sent": "2026-08-27T21:11:00-07:00",
+                "effective": "2026-08-27T21:11:00-07:00",
+                "onset": "2026-08-27T21:11:00-07:00",
+                "expires": "2026-08-27T21:21:00-07:00",
+                "ends": "2026-08-27T21:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued August 27 at 9:11PM MST until August 27 at 9:15PM MST by NWS Tucson AZ",
+                "description": "The heavy rain has ended. Flooding is no longer expected to pose a\nthreat. Please continue to heed remaining road closures.",
+                "instruction": null,
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 280411"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING WILL EXPIRE AT 915 PM MST THIS EVENING FOR CENTRAL PIMA COUNTY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXP.KTWC.FF.W.0158.000000T0000Z-260828T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-27T21:15:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dd28307cac66b4293a196ee78578376f2c1a710b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111,
+                            32.26
+                        ],
+                        [
+                            -110.97,
+                            32.19
+                        ],
+                        [
+                            -110.99,
+                            32.18
+                        ],
+                        [
+                            -111.06,
+                            32.18
+                        ],
+                        [
+                            -111.1,
+                            32.2
+                        ],
+                        [
+                            -111.11,
+                            32.24
+                        ],
+                        [
+                            -111.07,
+                            32.27
+                        ],
+                        [
+                            -111.06,
+                            32.31
+                        ],
+                        [
+                            -111.05,
+                            32.32
+                        ],
+                        [
+                            -111.01,
+                            32.28
+                        ],
+                        [
+                            -110.96,
+                            32.26
+                        ],
+                        [
+                            -111,
+                            32.26
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dd28307cac66b4293a196ee78578376f2c1a710b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.dd28307cac66b4293a196ee78578376f2c1a710b.001.1",
+                "areaDesc": "Pima, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019"
+                    ],
+                    "UGC": [
+                        "AZC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.81645668890a482d6ba7672abf861e9f38e72357.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.81645668890a482d6ba7672abf861e9f38e72357.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T18:15:00-07:00"
+                    }
+                ],
+                "sent": "2026-08-27T21:10:00-07:00",
+                "effective": "2026-08-27T21:10:00-07:00",
+                "onset": "2026-08-27T21:10:00-07:00",
+                "expires": "2026-08-27T21:20:00-07:00",
+                "ends": "2026-08-27T21:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued August 27 at 9:10PM MST until August 27 at 9:15PM MST by NWS Tucson AZ",
+                "description": "The heavy rain has ended. Flooding is no longer expected to pose a\nthreat. Please continue to heed remaining road closures.",
+                "instruction": null,
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 280410"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING WILL EXPIRE AT 915 PM MST THIS EVENING FOR EASTERN PIMA COUNTY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXP.KTWC.FF.W.0157.000000T0000Z-260828T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-27T21:15:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.da3b9ac2cc883fe7f5c0aab9608e891d15c43963.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -75.22,
+                            42.37
+                        ],
+                        [
+                            -75.23,
+                            42.39
+                        ],
+                        [
+                            -74.63,
+                            42.64
+                        ],
+                        [
+                            -74.63,
+                            42.63
+                        ],
+                        [
+                            -74.67,
+                            42.57
+                        ],
+                        [
+                            -74.71,
+                            42.52
+                        ],
+                        [
+                            -74.62,
+                            42.43
+                        ],
+                        [
+                            -75.16,
+                            42.29
+                        ],
+                        [
+                            -75.22,
+                            42.37
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.da3b9ac2cc883fe7f5c0aab9608e891d15c43963.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.da3b9ac2cc883fe7f5c0aab9608e891d15c43963.001.1",
+                "areaDesc": "Delaware, NY; Otsego, NY",
+                "geocode": {
+                    "SAME": [
+                        "036025",
+                        "036077"
+                    ],
+                    "UGC": [
+                        "NYC025",
+                        "NYC077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NYC025",
+                    "https://api.weather.gov/zones/county/NYC077"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.31946092ab0dff8f5a6fb4c2f3e8b36fa03102cb.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.31946092ab0dff8f5a6fb4c2f3e8b36fa03102cb.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T21:19:00-04:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2be935f8d915b2c627ee1c71197820e49e2b3af4.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.2be935f8d915b2c627ee1c71197820e49e2b3af4.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T22:17:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-28T00:08:00-04:00",
+                "effective": "2026-08-28T00:08:00-04:00",
+                "onset": "2026-08-28T00:08:00-04:00",
+                "expires": "2026-08-28T00:18:00-04:00",
+                "ends": "2026-08-28T00:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Binghamton NY",
+                "headline": "Flash Flood Warning issued August 28 at 12:08AM EDT until August 28 at 12:15AM EDT by NWS Binghamton NY",
+                "description": "The heavy rain has ended. Flooding is no longer expected to pose a\nthreat. Please continue to heed remaining road closures.",
+                "instruction": null,
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSBGM"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KBGM 280408"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING WILL EXPIRE AT 1215 AM EDT EARLY THIS MORNING FOR NORTHWESTERN DELAWARE AND SOUTHEASTERN OTSEGO COUNTIES"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXP.KBGM.FF.W.0048.000000T0000Z-260828T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T00:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1691e0fc647a26b64c5a939b5a916794bf202dd6.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.15,
+                            40.32
+                        ],
+                        [
+                            -75.94,
+                            40.37
+                        ],
+                        [
+                            -75.78,
+                            40.29
+                        ],
+                        [
+                            -75.95,
+                            40.19
+                        ],
+                        [
+                            -76.15,
+                            40.32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1691e0fc647a26b64c5a939b5a916794bf202dd6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1691e0fc647a26b64c5a939b5a916794bf202dd6.001.1",
+                "areaDesc": "Berks, PA",
+                "geocode": {
+                    "SAME": [
+                        "042011"
+                    ],
+                    "UGC": [
+                        "PAC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC011"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7dc40358e3fb617858dbdacd38ccdb707436646d.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.7dc40358e3fb617858dbdacd38ccdb707436646d.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T20:16:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-28T00:07:00-04:00",
+                "effective": "2026-08-28T00:07:00-04:00",
+                "onset": "2026-08-28T00:07:00-04:00",
+                "expires": "2026-08-28T00:17:00-04:00",
+                "ends": "2026-08-28T00:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued August 28 at 12:07AM EDT until August 28 at 12:15AM EDT by NWS Mount Holly NJ",
+                "description": "The heavy rain has ended. Flooding is no longer expected to pose a\nthreat. Please continue to heed remaining road closures.\n\nA Flood Watch remains in effect until 400 AM EDT for portions of New\nJersey and Pennsylvania.",
+                "instruction": null,
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 280407"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING WILL EXPIRE AT 1215 AM EDT EARLY THIS MORNING FOR SOUTH CENTRAL BERKS COUNTY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXP.KPHI.FF.W.0140.000000T0000Z-260828T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T00:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b759ee8abdab8775c751a8850c4d6fc87afab00f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.79,
+                            34.87
+                        ],
+                        [
+                            -80.88,
+                            34.87
+                        ],
+                        [
+                            -80.88,
+                            34.89
+                        ],
+                        [
+                            -80.88,
+                            34.9
+                        ],
+                        [
+                            -80.87,
+                            34.91
+                        ],
+                        [
+                            -80.87,
+                            34.92
+                        ],
+                        [
+                            -80.87,
+                            34.94
+                        ],
+                        [
+                            -80.87,
+                            34.95
+                        ],
+                        [
+                            -80.87,
+                            34.96
+                        ],
+                        [
+                            -80.88,
+                            34.96
+                        ],
+                        [
+                            -80.88,
+                            34.97
+                        ],
+                        [
+                            -80.89,
+                            34.99
+                        ],
+                        [
+                            -80.83,
+                            34.99
+                        ],
+                        [
+                            -80.79,
+                            34.94
+                        ],
+                        [
+                            -80.78,
+                            34.94
+                        ],
+                        [
+                            -80.79,
+                            34.87
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b759ee8abdab8775c751a8850c4d6fc87afab00f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b759ee8abdab8775c751a8850c4d6fc87afab00f.001.1",
+                "areaDesc": "Lancaster, SC",
+                "geocode": {
+                    "SAME": [
+                        "045057"
+                    ],
+                    "UGC": [
+                        "SCC057"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/SCC057"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4d3216989dca2d00794fd379524eb86299a53bbe.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4d3216989dca2d00794fd379524eb86299a53bbe.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T21:19:00-04:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c02bbdf793424d5ad25e2a9b1f44c6cbd10ee6cf.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c02bbdf793424d5ad25e2a9b1f44c6cbd10ee6cf.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T22:05:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-28T00:06:00-04:00",
+                "effective": "2026-08-28T00:06:00-04:00",
+                "onset": "2026-08-28T00:06:00-04:00",
+                "expires": "2026-08-28T00:16:00-04:00",
+                "ends": "2026-08-28T00:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Columbia SC",
+                "headline": "Flash Flood Warning issued August 28 at 12:06AM EDT until August 28 at 12:15AM EDT by NWS Columbia SC",
+                "description": "The heavy rain has ended. Flooding is no longer expected to pose a\nthreat. Please continue to heed remaining road closures.",
+                "instruction": null,
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSCAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS72 KCAE 280406"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING WILL EXPIRE AT 1215 AM EDT EARLY THIS MORNING FOR NORTHWESTERN LANCASTER COUNTY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXP.KCAE.FF.W.0026.000000T0000Z-260828T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T00:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d011b263616c92afea01d27dcf154eb8e43db32.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -79.54,
+                            34.94
+                        ],
+                        [
+                            -79.37,
+                            34.94
+                        ],
+                        [
+                            -79.36,
+                            34.93
+                        ],
+                        [
+                            -79.36,
+                            34.89
+                        ],
+                        [
+                            -79.35,
+                            34.89
+                        ],
+                        [
+                            -79.34,
+                            34.85
+                        ],
+                        [
+                            -79.36,
+                            34.82
+                        ],
+                        [
+                            -79.35,
+                            34.8
+                        ],
+                        [
+                            -79.38,
+                            34.78
+                        ],
+                        [
+                            -79.41,
+                            34.78
+                        ],
+                        [
+                            -79.41,
+                            34.77
+                        ],
+                        [
+                            -79.51,
+                            34.77
+                        ],
+                        [
+                            -79.54,
+                            34.79
+                        ],
+                        [
+                            -79.56,
+                            34.79
+                        ],
+                        [
+                            -79.57,
+                            34.82
+                        ],
+                        [
+                            -79.58,
+                            34.82
+                        ],
+                        [
+                            -79.59,
+                            34.84
+                        ],
+                        [
+                            -79.58,
+                            34.88
+                        ],
+                        [
+                            -79.57,
+                            34.88
+                        ],
+                        [
+                            -79.57,
+                            34.9
+                        ],
+                        [
+                            -79.54,
+                            34.94
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d011b263616c92afea01d27dcf154eb8e43db32.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1d011b263616c92afea01d27dcf154eb8e43db32.001.1",
+                "areaDesc": "Scotland, NC",
+                "geocode": {
+                    "SAME": [
+                        "037165"
+                    ],
+                    "UGC": [
+                        "NCC165"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC165"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ad2371b21cc245102bbff8e92279a6eda7de1b13.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.ad2371b21cc245102bbff8e92279a6eda7de1b13.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T20:38:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-27T23:42:00-04:00",
+                "effective": "2026-08-27T23:42:00-04:00",
+                "onset": "2026-08-27T23:42:00-04:00",
+                "expires": "2026-08-28T00:45:00-04:00",
+                "ends": "2026-08-28T00:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Raleigh NC",
+                "headline": "Flash Flood Warning issued August 27 at 11:42PM EDT until August 28 at 12:45AM EDT by NWS Raleigh NC",
+                "description": "FFWRAH\n\nThe National Weather Service in Raleigh has extended the\n\n* Flash Flood Warning for...\nCentral Scotland County in central North Carolina...\n\n* Until 1245 AM EDT.\n\n* At 1142 PM EDT, NCDOT reported that US Highway 15 and 501 is down\nto one lane after heavy rainfall occurred earlier this evening. Up\nto 6 inches of rain fell. Flooding impacts will continue, but no\nadditional rainfall is expected. Flash flooding is already\noccurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...State Officials and 911 Call Center reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLaurinburg, Wagram, East Laurinburg and Laurel Hill.\n\nThis includes the following frequently flooded locations...\nGum Swamp Creek & Dam and Richmond Mill Lake Dam.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRAH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KRAH 280342"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KRAH.FF.W.0036.000000T0000Z-260828T0445Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T00:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58d1e45b85b3e4994221b5b3aaca897458da8bcf.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -79.86,
+                            38.1
+                        ],
+                        [
+                            -79.8,
+                            38.1
+                        ],
+                        [
+                            -79.54,
+                            38.01
+                        ],
+                        [
+                            -79.56,
+                            37.98
+                        ],
+                        [
+                            -79.61,
+                            37.93
+                        ],
+                        [
+                            -79.65,
+                            37.87
+                        ],
+                        [
+                            -79.64,
+                            37.87
+                        ],
+                        [
+                            -79.62,
+                            37.86
+                        ],
+                        [
+                            -79.63,
+                            37.83
+                        ],
+                        [
+                            -79.65,
+                            37.81
+                        ],
+                        [
+                            -79.67,
+                            37.76
+                        ],
+                        [
+                            -79.83,
+                            37.8
+                        ],
+                        [
+                            -79.99,
+                            37.87
+                        ],
+                        [
+                            -80,
+                            37.93
+                        ],
+                        [
+                            -79.86,
+                            38.1
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58d1e45b85b3e4994221b5b3aaca897458da8bcf.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.58d1e45b85b3e4994221b5b3aaca897458da8bcf.001.1",
+                "areaDesc": "Alleghany, VA; Bath, VA",
+                "geocode": {
+                    "SAME": [
+                        "051005",
+                        "051017"
+                    ],
+                    "UGC": [
+                        "VAC005",
+                        "VAC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC005",
+                    "https://api.weather.gov/zones/county/VAC017"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2039ed56e70f178b51539a6343c6ce20d9e39646.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.2039ed56e70f178b51539a6343c6ce20d9e39646.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T20:32:00-04:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a52b211218d13d208e51baed32fd4d06dd06fb6a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a52b211218d13d208e51baed32fd4d06dd06fb6a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-27T21:48:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-27T23:24:00-04:00",
+                "effective": "2026-08-27T23:24:00-04:00",
+                "onset": "2026-08-27T23:24:00-04:00",
+                "expires": "2026-08-28T02:30:00-04:00",
+                "ends": "2026-08-28T02:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Blacksburg VA",
+                "headline": "Flash Flood Warning issued August 27 at 11:24PM EDT until August 28 at 2:30AM EDT by NWS Blacksburg VA",
+                "description": "At 1124 PM EDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1.5 and 4 inches of rain have\nfallen. Additional rainfall amounts up to 1 inch are possible in the\nwarned area. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nClifton Forge, Hot Springs, Warm Springs, Millboro, Iron Gate,\nDouthat State Park and Ingalls Field.\n\nThis includes the following streams and drainages...\nClaylick Run, Blue Suck Branch, Cedar Creek, Cabin Creek,\nCowpasture River, Chimney Run and Back Creek.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.\n\nWhen it is safe to do so, please send your reports of flooding,\nincluding mudslides or flooded roads, to the National Weather Service\nby calling toll free at 1...8 6 6...2 1 5...4 3 2 4. Reports and\npictures can also be shared on the National Weather Service\nBlacksburg Facebook page and on X.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSRNK"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KRNK 280324"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 230 AM EDT FRIDAY FOR NORTHEASTERN ALLEGHANY VA AND SOUTHERN BATH COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KRNK.FF.W.0036.000000T0000Z-260828T0630Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T02:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fa7fd3e60c22f0430f3f840c42c011ba45764e0b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.92,
+                            37.31
+                        ],
+                        [
+                            -80.99,
+                            37.4
+                        ],
+                        [
+                            -80.89,
+                            37.45
+                        ],
+                        [
+                            -80.86,
+                            37.43
+                        ],
+                        [
+                            -80.82,
+                            37.49
+                        ],
+                        [
+                            -80.72,
+                            37.54
+                        ],
+                        [
+                            -80.67,
+                            37.56
+                        ],
+                        [
+                            -80.56,
+                            37.44
+                        ],
+                        [
+                            -80.9,
+                            37.28
+                        ],
+                        [
+                            -80.92,
+                            37.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fa7fd3e60c22f0430f3f840c42c011ba45764e0b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.fa7fd3e60c22f0430f3f840c42c011ba45764e0b.001.1",
+                "areaDesc": "Giles, VA; Mercer, WV; Monroe, WV; Summers, WV",
+                "geocode": {
+                    "SAME": [
+                        "051071",
+                        "054055",
+                        "054063",
+                        "054089"
+                    ],
+                    "UGC": [
+                        "VAC071",
+                        "WVC055",
+                        "WVC063",
+                        "WVC089"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC071",
+                    "https://api.weather.gov/zones/county/WVC055",
+                    "https://api.weather.gov/zones/county/WVC063",
+                    "https://api.weather.gov/zones/county/WVC089"
+                ],
+                "references": [],
+                "sent": "2026-08-27T23:17:00-04:00",
+                "effective": "2026-08-27T23:17:00-04:00",
+                "onset": "2026-08-27T23:17:00-04:00",
+                "expires": "2026-08-28T02:15:00-04:00",
+                "ends": "2026-08-28T02:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Blacksburg VA",
+                "headline": "Flash Flood Warning issued August 27 at 11:17PM EDT until August 28 at 2:15AM EDT by NWS Blacksburg VA",
+                "description": "FFWRNK\n\nThe National Weather Service in Blacksburg has issued a\n\n* Flash Flood Warning for...\nNorthwestern Giles County in southwestern Virginia...\nEast Central Mercer County in southeastern West Virginia...\nSouthwestern Monroe County in southeastern West Virginia...\nSoutheastern Summers County in southeastern West Virginia...\n\n* Until 215 AM EDT.\n\n* At 1117 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 1 inch of rain has fallen.\nAdditional rainfall amounts of 1 to 2 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNarrows, Peterstown, Rich Creek, Glen Lyn, Bozoo, Red Sulphur\nSpring and Lindside.\n\nThis includes the following streams and drainages...\nDry Creek, Brush Creek, Blue Lick Creek, Hales Branch, Indian\nCreek, Back Creek, Adair Run, East River, Crooked Creek, Dixon\nBranch, Big Spring Branch and Hans Creek.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nWhen it is safe to do so, please send your reports of flooding,\nincluding mudslides or flooded roads, to the National Weather Service\nby calling toll free at 1...8 6 6...2 1 5...4 3 2 4. Reports and\npictures can also be shared on the National Weather Service\nBlacksburg Facebook page and on X.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRNK"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KRNK 280317"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRNK.FF.W.0037.260828T0317Z-260828T0615Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T02:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.793b9b4fd228c814c8cca0cb84baff828f25b9f4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -75.96,
+                            40.19
+                        ],
+                        [
+                            -75.78,
+                            40.29
+                        ],
+                        [
+                            -75.66,
+                            40.29
+                        ],
+                        [
+                            -75.52,
+                            40.24
+                        ],
+                        [
+                            -75.87,
+                            40.13
+                        ],
+                        [
+                            -75.88,
+                            40.14
+                        ],
+                        [
+                            -75.87,
+                            40.14
+                        ],
+                        [
+                            -75.88,
+                            40.15
+                        ],
+                        [
+                            -75.96,
+                            40.19
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.793b9b4fd228c814c8cca0cb84baff828f25b9f4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.793b9b4fd228c814c8cca0cb84baff828f25b9f4.001.1",
+                "areaDesc": "Berks, PA; Chester, PA; Montgomery, PA",
+                "geocode": {
+                    "SAME": [
+                        "042011",
+                        "042029",
+                        "042091"
+                    ],
+                    "UGC": [
+                        "PAC011",
+                        "PAC029",
+                        "PAC091"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC011",
+                    "https://api.weather.gov/zones/county/PAC029",
+                    "https://api.weather.gov/zones/county/PAC091"
+                ],
+                "references": [],
+                "sent": "2026-08-27T22:36:00-04:00",
+                "effective": "2026-08-27T22:36:00-04:00",
+                "onset": "2026-08-27T22:36:00-04:00",
+                "expires": "2026-08-28T01:30:00-04:00",
+                "ends": "2026-08-28T01:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued August 27 at 10:36PM EDT until August 28 at 1:30AM EDT by NWS Mount Holly NJ",
+                "description": "FFWPHI\n\nThe National Weather Service in Mount Holly has issued a\n\n* Flash Flood Warning for...\nSoutheastern Berks County in eastern Pennsylvania...\nNorth Central Chester County in southeastern Pennsylvania...\nWest Central Montgomery County in southeastern Pennsylvania...\n\n* Until 130 AM EDT.\n\n* At 1036 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 1 to 2 inches in 1 hour.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPottstown, Birdsboro, Elverson, New Morgan, Cedarville, Stowe,\nAmity Gardens, South Pottstown, Kenilworth, Halfway House,\nPottsgrove and Sanatoga.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KPHI 280236"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPHI.FF.W.0142.260828T0236Z-260828T0530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T01:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cf43dc80c7967f1109fe88cb699833c6151aaa45.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -78.69,
+                            37.74
+                        ],
+                        [
+                            -78.74,
+                            37.69
+                        ],
+                        [
+                            -78.82,
+                            37.64
+                        ],
+                        [
+                            -78.88,
+                            37.65
+                        ],
+                        [
+                            -78.93,
+                            37.67
+                        ],
+                        [
+                            -78.96,
+                            37.71
+                        ],
+                        [
+                            -78.9,
+                            37.77
+                        ],
+                        [
+                            -78.84,
+                            37.82
+                        ],
+                        [
+                            -78.8,
+                            37.86
+                        ],
+                        [
+                            -78.76,
+                            37.88
+                        ],
+                        [
+                            -78.73,
+                            37.88
+                        ],
+                        [
+                            -78.68,
+                            37.86
+                        ],
+                        [
+                            -78.66,
+                            37.85
+                        ],
+                        [
+                            -78.62,
+                            37.8
+                        ],
+                        [
+                            -78.69,
+                            37.74
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cf43dc80c7967f1109fe88cb699833c6151aaa45.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.cf43dc80c7967f1109fe88cb699833c6151aaa45.001.1",
+                "areaDesc": "Albemarle, VA; Nelson, VA",
+                "geocode": {
+                    "SAME": [
+                        "051003",
+                        "051125"
+                    ],
+                    "UGC": [
+                        "VAC003",
+                        "VAC125"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC003",
+                    "https://api.weather.gov/zones/county/VAC125"
+                ],
+                "references": [],
+                "sent": "2026-08-27T21:32:00-04:00",
+                "effective": "2026-08-27T21:32:00-04:00",
+                "onset": "2026-08-27T21:32:00-04:00",
+                "expires": "2026-08-28T00:30:00-04:00",
+                "ends": "2026-08-28T00:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Baltimore MD/Washington DC",
+                "headline": "Flash Flood Warning issued August 27 at 9:32PM EDT until August 28 at 12:30AM EDT by NWS Baltimore MD/Washington DC",
+                "description": "FFWLWX\n\nThe National Weather Service in Baltimore MD/Washington has issued a\n\n* Flash Flood Warning for...\nSouthwestern Albemarle County in central Virginia...\nSoutheastern Nelson County in central Virginia...\n\n* Until 1230 AM EDT.\n\n* At 932 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nShipman, Schuyler, Arrington, Lovingston, Elma, Rockfish, Faber and\nDamon.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLWX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KLWX 280132"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLWX.FF.W.0043.260828T0132Z-260828T0430Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T00:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5643bd7e2515e42e3e195f8d81a7c08ef2396a0a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.43,
+                            40.49
+                        ],
+                        [
+                            -76.34,
+                            40.52
+                        ],
+                        [
+                            -76.33,
+                            40.51
+                        ],
+                        [
+                            -76.31,
+                            40.52
+                        ],
+                        [
+                            -76.3,
+                            40.51
+                        ],
+                        [
+                            -76.27,
+                            40.52
+                        ],
+                        [
+                            -76.23,
+                            40.52
+                        ],
+                        [
+                            -76.26,
+                            40.39
+                        ],
+                        [
+                            -76.3,
+                            40.41
+                        ],
+                        [
+                            -76.43,
+                            40.49
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5643bd7e2515e42e3e195f8d81a7c08ef2396a0a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5643bd7e2515e42e3e195f8d81a7c08ef2396a0a.001.1",
+                "areaDesc": "Berks, PA",
+                "geocode": {
+                    "SAME": [
+                        "042011"
+                    ],
+                    "UGC": [
+                        "PAC011"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC011"
+                ],
+                "references": [],
+                "sent": "2026-08-27T21:21:00-04:00",
+                "effective": "2026-08-27T21:21:00-04:00",
+                "onset": "2026-08-27T21:21:00-04:00",
+                "expires": "2026-08-28T01:15:00-04:00",
+                "ends": "2026-08-28T01:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued August 27 at 9:21PM EDT until August 28 at 1:15AM EDT by NWS Mount Holly NJ",
+                "description": "FFWPHI\n\nThe National Weather Service in Mount Holly has issued a\n\n* Flash Flood Warning for...\nWest Central Berks County in eastern Pennsylvania...\n\n* Until 115 AM EDT.\n\n* At 921 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1.5 and 2.5 inches of\nrain have fallen. The expected rainfall rate is 1 to 2 inches in 1\nhour. Additional rainfall amounts of 1 to 2 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMainly rural areas of West Central Berks County.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KPHI 280121"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPHI.FF.W.0141.260828T0121Z-260828T0515Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T01:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-08-28T04:11:28+00:00"
+}

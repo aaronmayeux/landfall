@@ -1,0 +1,300 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04502db06b587ffa3468044b99ff457971c639de.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -102.08,
+                            35.18
+                        ],
+                        [
+                            -102.08,
+                            35.2
+                        ],
+                        [
+                            -102.04,
+                            35.27
+                        ],
+                        [
+                            -101.95,
+                            35.34
+                        ],
+                        [
+                            -101.8,
+                            35.37
+                        ],
+                        [
+                            -101.67,
+                            35.35
+                        ],
+                        [
+                            -101.58,
+                            35.27
+                        ],
+                        [
+                            -101.55,
+                            35.22
+                        ],
+                        [
+                            -101.58,
+                            35.19
+                        ],
+                        [
+                            -101.65,
+                            35.14
+                        ],
+                        [
+                            -101.74,
+                            35.1
+                        ],
+                        [
+                            -101.85,
+                            35.06
+                        ],
+                        [
+                            -101.94,
+                            35.04
+                        ],
+                        [
+                            -102.03,
+                            35.05
+                        ],
+                        [
+                            -102.08,
+                            35.1
+                        ],
+                        [
+                            -102.09,
+                            35.16
+                        ],
+                        [
+                            -102.08,
+                            35.18
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04502db06b587ffa3468044b99ff457971c639de.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.04502db06b587ffa3468044b99ff457971c639de.001.1",
+                "areaDesc": "Armstrong, TX; Carson, TX; Potter, TX; Randall, TX",
+                "geocode": {
+                    "SAME": [
+                        "048011",
+                        "048065",
+                        "048375",
+                        "048381"
+                    ],
+                    "UGC": [
+                        "TXC011",
+                        "TXC065",
+                        "TXC375",
+                        "TXC381"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC011",
+                    "https://api.weather.gov/zones/county/TXC065",
+                    "https://api.weather.gov/zones/county/TXC375",
+                    "https://api.weather.gov/zones/county/TXC381"
+                ],
+                "references": [],
+                "sent": "2026-08-25T20:35:00-05:00",
+                "effective": "2026-08-25T20:35:00-05:00",
+                "onset": "2026-08-25T20:35:00-05:00",
+                "expires": "2026-08-25T23:30:00-05:00",
+                "ends": "2026-08-25T23:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Amarillo TX",
+                "headline": "Flash Flood Warning issued August 25 at 8:35PM CDT until August 25 at 11:30PM CDT by NWS Amarillo TX",
+                "description": "FFWAMA\n\nThe National Weather Service in Amarillo has issued a\n\n* Flash Flood Warning for...\nNorthwestern Armstrong County in the panhandle of Texas...\nSouthwestern Carson County in the panhandle of Texas...\nSoutheastern Potter County in the panhandle of Texas...\nNorthern Randall County in the panhandle of Texas...\n\n* Until 1130 PM CDT.\n\n* At 835 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.5 and 1 inch of rain\nhas fallen. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nAmarillo, Mescalero Park and Bushland.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAMA"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KAMA 260135"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAMA.FF.W.0028.260826T0135Z-260826T0430Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-25T23:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.be08da510a35a20b92af915872ec61a8cc4e56f0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.88,
+                            31.04
+                        ],
+                        [
+                            -83.82,
+                            31.15
+                        ],
+                        [
+                            -83.64,
+                            31.09
+                        ],
+                        [
+                            -83.71,
+                            30.93
+                        ],
+                        [
+                            -83.81,
+                            30.81
+                        ],
+                        [
+                            -83.92,
+                            30.85
+                        ],
+                        [
+                            -83.92,
+                            30.96
+                        ],
+                        [
+                            -83.88,
+                            31.04
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.be08da510a35a20b92af915872ec61a8cc4e56f0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.be08da510a35a20b92af915872ec61a8cc4e56f0.001.1",
+                "areaDesc": "Brooks, GA; Colquitt, GA; Thomas, GA",
+                "geocode": {
+                    "SAME": [
+                        "013027",
+                        "013071",
+                        "013275"
+                    ],
+                    "UGC": [
+                        "GAC027",
+                        "GAC071",
+                        "GAC275"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC027",
+                    "https://api.weather.gov/zones/county/GAC071",
+                    "https://api.weather.gov/zones/county/GAC275"
+                ],
+                "references": [],
+                "sent": "2026-08-25T20:39:00-04:00",
+                "effective": "2026-08-25T20:39:00-04:00",
+                "onset": "2026-08-25T20:39:00-04:00",
+                "expires": "2026-08-25T23:45:00-04:00",
+                "ends": "2026-08-25T23:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued August 25 at 8:39PM EDT until August 25 at 11:45PM EDT by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nNorthwestern Brooks County in south central Georgia...\nSouth Central Colquitt County in south central Georgia...\nNortheastern Thomas County in south central Georgia...\n\n* Until 1145 PM EDT.\n\n* At 839 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMoultrie, Pavo, Coolidge, Barwick, Enon, Patten, Autreyville,\nHollis, Merrillville, Murphy, Moultrie Municipal A/P, Thomasville\nMunicipal A/P and Dillon.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 260039"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0020.260826T0039Z-260826T0345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-25T23:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-08-26T01:47:21+00:00"
+}

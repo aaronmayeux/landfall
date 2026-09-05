@@ -1,0 +1,551 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9db56788e639ea60b13e31510b3834cf102474d6.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9db56788e639ea60b13e31510b3834cf102474d6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9db56788e639ea60b13e31510b3834cf102474d6.001.1",
+                "areaDesc": "Schuylkill; Lebanon; Lancaster",
+                "geocode": {
+                    "SAME": [
+                        "042107",
+                        "042075",
+                        "042071"
+                    ],
+                    "UGC": [
+                        "PAZ058",
+                        "PAZ059",
+                        "PAZ066"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/PAZ058",
+                    "https://api.weather.gov/zones/forecast/PAZ059",
+                    "https://api.weather.gov/zones/forecast/PAZ066"
+                ],
+                "references": [],
+                "sent": "2026-08-27T02:55:00-04:00",
+                "effective": "2026-08-27T02:55:00-04:00",
+                "onset": "2026-08-27T12:00:00-04:00",
+                "expires": "2026-08-27T16:15:00-04:00",
+                "ends": "2026-08-28T02:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS State College PA",
+                "headline": "Flood Watch issued August 27 at 2:55AM EDT until August 28 at 2:00AM EDT by NWS State College PA",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of central Pennsylvania, including the following\ncounties, Lancaster, Lebanon and Schuylkill.\n\n* WHEN...From noon EDT today through late tonight.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Flooding may occur\nin poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Heavy thunderstorm downpours with rainfall rates of 1 to 2 inches\nper hour could produce scattered areas of flash flooding this\nafternoon into tonight.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFACTP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KCTP 270655"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM NOON EDT TODAY THROUGH LATE TONIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCTP.FA.A.0015.260827T1600Z-260828T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T02:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.002.1",
+                "areaDesc": "New Castle; Sussex; Morris; Hunterdon; Somerset; Middlesex; Western Monmouth; Mercer; Gloucester; Camden; Northwestern Burlington; Delaware; Philadelphia; Western Chester; Eastern Chester; Western Montgomery; Eastern Montgomery; Upper Bucks; Lower Bucks",
+                "geocode": {
+                    "SAME": [
+                        "010003",
+                        "034037",
+                        "034027",
+                        "034019",
+                        "034035",
+                        "034023",
+                        "034025",
+                        "034021",
+                        "034015",
+                        "034007",
+                        "034005",
+                        "042045",
+                        "042101",
+                        "042029",
+                        "042091",
+                        "042017"
+                    ],
+                    "UGC": [
+                        "DEZ001",
+                        "NJZ001",
+                        "NJZ008",
+                        "NJZ009",
+                        "NJZ010",
+                        "NJZ012",
+                        "NJZ013",
+                        "NJZ015",
+                        "NJZ017",
+                        "NJZ018",
+                        "NJZ019",
+                        "PAZ070",
+                        "PAZ071",
+                        "PAZ101",
+                        "PAZ102",
+                        "PAZ103",
+                        "PAZ104",
+                        "PAZ105",
+                        "PAZ106"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/DEZ001",
+                    "https://api.weather.gov/zones/forecast/NJZ001",
+                    "https://api.weather.gov/zones/forecast/NJZ008",
+                    "https://api.weather.gov/zones/forecast/NJZ009",
+                    "https://api.weather.gov/zones/forecast/NJZ010",
+                    "https://api.weather.gov/zones/forecast/NJZ012",
+                    "https://api.weather.gov/zones/forecast/NJZ013",
+                    "https://api.weather.gov/zones/forecast/NJZ015",
+                    "https://api.weather.gov/zones/forecast/NJZ017",
+                    "https://api.weather.gov/zones/forecast/NJZ018",
+                    "https://api.weather.gov/zones/forecast/NJZ019",
+                    "https://api.weather.gov/zones/forecast/PAZ070",
+                    "https://api.weather.gov/zones/forecast/PAZ071",
+                    "https://api.weather.gov/zones/forecast/PAZ101",
+                    "https://api.weather.gov/zones/forecast/PAZ102",
+                    "https://api.weather.gov/zones/forecast/PAZ103",
+                    "https://api.weather.gov/zones/forecast/PAZ104",
+                    "https://api.weather.gov/zones/forecast/PAZ105",
+                    "https://api.weather.gov/zones/forecast/PAZ106"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e407480f505f4590dd1f34caac1fff984aa5aa3d.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e407480f505f4590dd1f34caac1fff984aa5aa3d.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-26T14:31:00-04:00"
+                    }
+                ],
+                "sent": "2026-08-27T02:39:00-04:00",
+                "effective": "2026-08-27T02:39:00-04:00",
+                "onset": "2026-08-27T12:00:00-04:00",
+                "expires": "2026-08-27T18:00:00-04:00",
+                "ends": "2026-08-28T04:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flood Watch issued August 27 at 2:39AM EDT until August 28 at 4:00AM EDT by NWS Mount Holly NJ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of northern Delaware, including the following\narea, New Castle, New Jersey, including the following areas,\nCamden, Gloucester, Hunterdon, Mercer, Middlesex, Morris,\nNorthwestern Burlington, Somerset, Sussex and Western Monmouth,\nand southeast Pennsylvania, including the following areas,\nDelaware, Eastern Chester, Eastern Montgomery, Lower Bucks,\nPhiladelphia, Upper Bucks, Western Chester and Western Montgomery.\n\n* WHEN...From noon EDT today through late tonight.\n\n* IMPACTS...Flooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Showers and thunderstorms are expected to develop by mid-day\nThursday. Some of these showers and thunderstorms are\nexpected to produce very heavy rainfall. Rainfall totals of\n1-2 inches of rain can be expected with localized amounts of\n3-5 inches possible in the strongest storms. Rainfall rates\nwithin these thunderstorms may reach up to 1 to 3 inches per\nhour at times.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KPHI 270639"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM NOON EDT TODAY THROUGH LATE TONIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FA.A.0009.260827T1600Z-260828T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T04:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ce4b6379710e4fb8fddb2d3722885d068ead32fb.001.1",
+                "areaDesc": "Warren; Berks; Lehigh; Northampton",
+                "geocode": {
+                    "SAME": [
+                        "034041",
+                        "042011",
+                        "042077",
+                        "042095"
+                    ],
+                    "UGC": [
+                        "NJZ007",
+                        "PAZ060",
+                        "PAZ061",
+                        "PAZ062"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NJZ007",
+                    "https://api.weather.gov/zones/forecast/PAZ060",
+                    "https://api.weather.gov/zones/forecast/PAZ061",
+                    "https://api.weather.gov/zones/forecast/PAZ062"
+                ],
+                "references": [],
+                "sent": "2026-08-27T02:39:00-04:00",
+                "effective": "2026-08-27T02:39:00-04:00",
+                "onset": "2026-08-27T12:00:00-04:00",
+                "expires": "2026-08-27T18:00:00-04:00",
+                "ends": "2026-08-28T04:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flood Watch issued August 27 at 2:39AM EDT until August 28 at 4:00AM EDT by NWS Mount Holly NJ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of northern New Jersey, including the following\ncounty, Warren and east central Pennsylvania, including the\nfollowing counties, Berks, Lehigh and Northampton.\n\n* WHEN...From noon EDT today through late tonight.\n\n* IMPACTS...Flooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Showers and thunderstorms are expected to develop by mid-day\nThursday. Some of these showers and thunderstorms are\nexpected to produce very heavy rainfall. Rainfall totals of\n1-2 inches of rain can be expected with localized amounts of\n3-5 inches possible in the strongest storms. Rainfall rates\nwithin these thunderstorms may reach up to 1 to 3 inches per\nhour at times.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KPHI 270639"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM NOON EDT TODAY THROUGH LATE TONIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KPHI.FA.A.0009.260827T1600Z-260828T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-28T04:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.357baa14367b6df6ac27947c93aa276af003bb18.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.357baa14367b6df6ac27947c93aa276af003bb18.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.357baa14367b6df6ac27947c93aa276af003bb18.001.1",
+                "areaDesc": "Western Ulster; Eastern Ulster; Western Dutchess; Eastern Dutchess",
+                "geocode": {
+                    "SAME": [
+                        "036111",
+                        "036027"
+                    ],
+                    "UGC": [
+                        "NYZ063",
+                        "NYZ064",
+                        "NYZ065",
+                        "NYZ066"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NYZ063",
+                    "https://api.weather.gov/zones/forecast/NYZ064",
+                    "https://api.weather.gov/zones/forecast/NYZ065",
+                    "https://api.weather.gov/zones/forecast/NYZ066"
+                ],
+                "references": [],
+                "sent": "2026-08-27T01:24:00-04:00",
+                "effective": "2026-08-27T01:24:00-04:00",
+                "onset": "2026-08-27T12:00:00-04:00",
+                "expires": "2026-08-27T09:30:00-04:00",
+                "ends": "2026-08-27T23:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albany NY",
+                "headline": "Flood Watch issued August 27 at 1:24AM EDT until August 27 at 11:00PM EDT by NWS Albany NY",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...Dutchess and Ulster Counties in eastern New York.\n\n* WHEN...From noon EDT today through this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Scattered to numerous showers and thunderstorms are expected this\nafternoon into this evening.  Showers and thunderstorms will be\ncapable of producing heavy downpours, with rainfall rates\nreaching 1 to 2 inches per hour at times.  Rainfall of this\nintensity may lead to flash flooding, especially within urban and\nlow lying areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAALY"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KALY 270524"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM NOON EDT TODAY THROUGH THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KALY.FA.A.0006.260827T1600Z-260828T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-27T23:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.40fa29163a743f44548f571a49b3dcc7c328792e.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.40fa29163a743f44548f571a49b3dcc7c328792e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.40fa29163a743f44548f571a49b3dcc7c328792e.001.1",
+                "areaDesc": "Northern Fairfield; Southern Fairfield; Western Passaic; Eastern Passaic; Hudson; Western Bergen; Eastern Bergen; Western Essex; Eastern Essex; Western Union; Eastern Union; Orange; Putnam; Rockland; Northern Westchester; Southern Westchester; New York (Manhattan); Bronx; Richmond (Staten Is.); Kings (Brooklyn); Northern Queens; Northern Nassau; Southern Queens; Southern Nassau",
+                "geocode": {
+                    "SAME": [
+                        "009001",
+                        "034031",
+                        "034017",
+                        "034003",
+                        "034013",
+                        "034039",
+                        "036071",
+                        "036079",
+                        "036087",
+                        "036119",
+                        "036061",
+                        "036005",
+                        "036085",
+                        "036047",
+                        "036081",
+                        "036059"
+                    ],
+                    "UGC": [
+                        "CTZ005",
+                        "CTZ009",
+                        "NJZ002",
+                        "NJZ004",
+                        "NJZ006",
+                        "NJZ103",
+                        "NJZ104",
+                        "NJZ105",
+                        "NJZ106",
+                        "NJZ107",
+                        "NJZ108",
+                        "NYZ067",
+                        "NYZ068",
+                        "NYZ069",
+                        "NYZ070",
+                        "NYZ071",
+                        "NYZ072",
+                        "NYZ073",
+                        "NYZ074",
+                        "NYZ075",
+                        "NYZ176",
+                        "NYZ177",
+                        "NYZ178",
+                        "NYZ179"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/CTZ005",
+                    "https://api.weather.gov/zones/forecast/CTZ009",
+                    "https://api.weather.gov/zones/forecast/NJZ002",
+                    "https://api.weather.gov/zones/forecast/NJZ004",
+                    "https://api.weather.gov/zones/forecast/NJZ006",
+                    "https://api.weather.gov/zones/forecast/NJZ103",
+                    "https://api.weather.gov/zones/forecast/NJZ104",
+                    "https://api.weather.gov/zones/forecast/NJZ105",
+                    "https://api.weather.gov/zones/forecast/NJZ106",
+                    "https://api.weather.gov/zones/forecast/NJZ107",
+                    "https://api.weather.gov/zones/forecast/NJZ108",
+                    "https://api.weather.gov/zones/forecast/NYZ067",
+                    "https://api.weather.gov/zones/forecast/NYZ068",
+                    "https://api.weather.gov/zones/forecast/NYZ069",
+                    "https://api.weather.gov/zones/forecast/NYZ070",
+                    "https://api.weather.gov/zones/forecast/NYZ071",
+                    "https://api.weather.gov/zones/forecast/NYZ072",
+                    "https://api.weather.gov/zones/forecast/NYZ073",
+                    "https://api.weather.gov/zones/forecast/NYZ074",
+                    "https://api.weather.gov/zones/forecast/NYZ075",
+                    "https://api.weather.gov/zones/forecast/NYZ176",
+                    "https://api.weather.gov/zones/forecast/NYZ177",
+                    "https://api.weather.gov/zones/forecast/NYZ178",
+                    "https://api.weather.gov/zones/forecast/NYZ179"
+                ],
+                "references": [],
+                "sent": "2026-08-26T14:27:00-04:00",
+                "effective": "2026-08-26T14:27:00-04:00",
+                "onset": "2026-08-27T12:00:00-04:00",
+                "expires": "2026-08-27T23:00:00-04:00",
+                "ends": "2026-08-27T23:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Upton NY",
+                "headline": "Flood Watch issued August 26 at 2:27PM EDT until August 27 at 11:00PM EDT by NWS Upton NY",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of southern Connecticut, including the following\nareas, Northern Fairfield and Southern Fairfield, northeast New\nJersey, including the following areas, Eastern Bergen, Eastern\nEssex, Eastern Passaic, Eastern Union, Hudson, Western Bergen,\nWestern Essex, Western Passaic and Western Union, and southeast New\nYork, including the following areas, Bronx, Kings (Brooklyn), New\nYork (Manhattan), Northern Nassau, Northern Queens, Northern\nWestchester, Orange, Putnam, Richmond (Staten Island), Rockland,\nSouthern Nassau, Southern Queens and Southern Westchester.\n\n* WHEN...From Thursday afternoon through Thursday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Flooding may occur\nin poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Total rainfall amounts are around 1 to 1.5 inches in the watch\narea, but some areas could receive up to 3 inches with peak\nrainfall rates between 1.5 to 2.5 in/hr.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOKX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KOKX 261827"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM THURSDAY AFTERNOON THROUGH THURSDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOKX.FA.A.0009.260827T1600Z-260828T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-27T23:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-08-27T08:52:41+00:00"
+}

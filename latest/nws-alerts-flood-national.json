@@ -1,0 +1,186 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a0df59c7dc97d255917c7c5ad22973a8f5e94872.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.79,
+                            33.42
+                        ],
+                        [
+                            -105.75,
+                            33.43
+                        ],
+                        [
+                            -105.66,
+                            33.42
+                        ],
+                        [
+                            -105.63,
+                            33.44
+                        ],
+                        [
+                            -105.61,
+                            33.4
+                        ],
+                        [
+                            -105.62,
+                            33.38
+                        ],
+                        [
+                            -105.64,
+                            33.39
+                        ],
+                        [
+                            -105.64,
+                            33.34
+                        ],
+                        [
+                            -105.63,
+                            33.33
+                        ],
+                        [
+                            -105.56,
+                            33.36
+                        ],
+                        [
+                            -105.43,
+                            33.43
+                        ],
+                        [
+                            -105.43,
+                            33.41
+                        ],
+                        [
+                            -105.55,
+                            33.33
+                        ],
+                        [
+                            -105.59,
+                            33.31
+                        ],
+                        [
+                            -105.73,
+                            33.31
+                        ],
+                        [
+                            -105.73,
+                            33.39
+                        ],
+                        [
+                            -105.8,
+                            33.39
+                        ],
+                        [
+                            -105.81,
+                            33.4
+                        ],
+                        [
+                            -105.79,
+                            33.42
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a0df59c7dc97d255917c7c5ad22973a8f5e94872.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a0df59c7dc97d255917c7c5ad22973a8f5e94872.001.1",
+                "areaDesc": "Lincoln, NM",
+                "geocode": {
+                    "SAME": [
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMC027"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC027"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f42caef3892ffa206ca1f4203984d0eb9bffca79.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f42caef3892ffa206ca1f4203984d0eb9bffca79.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-05T11:00:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-05T11:52:00-06:00",
+                "effective": "2026-09-05T11:52:00-06:00",
+                "onset": "2026-09-05T11:52:00-06:00",
+                "expires": "2026-09-05T14:00:00-06:00",
+                "ends": "2026-09-05T14:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 5 at 11:52AM MDT until September 5 at 2:00PM MDT by NWS Albuquerque NM",
+                "description": "At 1152 AM MDT, Doppler radar indicated thunderstorms producing heavy\nrain over the South Fork Burn Scar. Between 0.5 and 1.25 inches of\nrain have fallen with the heaviest amounts on the northwest side of\nthe burn scar.  Additional rainfall amounts up to 0.25 inches are\npossible in the warned area. Flash flooding is ongoing or expected to\nbegin shortly.\n\nExcessive rainfall over the burn scar will impact Upper Canyon, Brady\nCanyon, and Perk Canyon as well as the Cedar Creek, Eagle Creek and\nRio Ruidoso drainages. Impacts will include but are not limited to\nall nearby reservoirs, bridges, culverts and roadways. Impacts to\nareas along the Rio Ruidoso may extend downstream of Ruidoso Downs.\nThe debris flow can consist of rock, mud, vegetation and other loose\nmaterials.\n\nHAZARD...Flash flooding caused by thunderstorms in and around the\nSouth Fork Burn Scar.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flooding of areas in and around the South Fork Burn Scar.\n\nSome locations that will experience flash flooding include...\nRuidoso, Ruidoso Downs, Alto, Glencoe and Hollywood.",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks, streams and ditches in\nthe South Fork Burn Scar. Severe debris flows can also be anticipated\nacross roads. Roads and driveways may be washed away in places. If\nyou encounter flood waters, climb to safety.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KABQ 051752"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING FOR THE SOUTH FORK BURN SCAR REMAINS IN EFFECT UNTIL 2 PM MDT THIS AFTERNOON FOR SOUTH CENTRAL LINCOLN COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FF.W.0124.000000T0000Z-260905T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T14:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-05T18:03:38+00:00"
+}

@@ -1,0 +1,586 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ226",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ226",
+                "@type": "wx:Zone",
+                "id": "NMZ226",
+                "type": "public",
+                "name": "South Central Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ414",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ414",
+                "@type": "wx:Zone",
+                "id": "NMZ414",
+                "type": "public",
+                "name": "West Slopes Sacramento Mountains Below 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSRR",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ415",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ415",
+                "@type": "wx:Zone",
+                "id": "NMZ415",
+                "type": "public",
+                "name": "Sacramento Mountains Above 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KALM",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ416",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ416",
+                "@type": "wx:Zone",
+                "id": "NMZ416",
+                "type": "public",
+                "name": "East Slopes Sacramento Mountains Below 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KALM",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ113",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ113",
+                "@type": "wx:Zone",
+                "id": "UTZ113",
+                "type": "public",
+                "name": "Wasatch Plateau/Book Cliffs",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/DSTU1",
+                    "https://api.weather.gov/stations/UTICS",
+                    "https://api.weather.gov/stations/UTSLD"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ114",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ114",
+                "@type": "wx:Zone",
+                "id": "UTZ114",
+                "type": "public",
+                "name": "Western Uinta Basin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/K74V",
+                    "https://api.weather.gov/stations/KU69",
+                    "https://api.weather.gov/stations/UTFRT",
+                    "https://api.weather.gov/stations/UTSTV"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ116",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ116",
+                "@type": "wx:Zone",
+                "id": "UTZ116",
+                "type": "public",
+                "name": "Eastern Juab/Millard Counties",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFOM",
+                    "https://api.weather.gov/stations/KU14",
+                    "https://api.weather.gov/stations/SBWU1",
+                    "https://api.weather.gov/stations/TT156"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ117",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ117",
+                "@type": "wx:Zone",
+                "id": "UTZ117",
+                "type": "public",
+                "name": "Central Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/GOUU1",
+                    "https://api.weather.gov/stations/JVAU1",
+                    "https://api.weather.gov/stations/UTSCI"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ118",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ118",
+                "@type": "wx:Zone",
+                "id": "UTZ118",
+                "type": "public",
+                "name": "Sanpete Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/K41U"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ119",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ119",
+                "@type": "wx:Zone",
+                "id": "UTZ119",
+                "type": "public",
+                "name": "Sevier Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRIF",
+                    "https://api.weather.gov/stations/UTSLA"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ120",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ120",
+                "@type": "wx:Zone",
+                "id": "UTZ120",
+                "type": "public",
+                "name": "Castle Country",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPUC"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ122",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ122",
+                "@type": "wx:Zone",
+                "id": "UTZ122",
+                "type": "public",
+                "name": "Southwest Utah",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/ENTU1",
+                    "https://api.weather.gov/stations/KCDC",
+                    "https://api.weather.gov/stations/KMLF",
+                    "https://api.weather.gov/stations/KU52"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ124",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ124",
+                "@type": "wx:Zone",
+                "id": "UTZ124",
+                "type": "public",
+                "name": "Zion National Park",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/ZIOU1",
+                    "https://api.weather.gov/stations/ZNP"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ125",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ125",
+                "@type": "wx:Zone",
+                "id": "UTZ125",
+                "type": "public",
+                "name": "Southern Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/BADU1",
+                    "https://api.weather.gov/stations/BHCU1",
+                    "https://api.weather.gov/stations/FLSU1",
+                    "https://api.weather.gov/stations/KLBU1",
+                    "https://api.weather.gov/stations/KU55",
+                    "https://api.weather.gov/stations/LVJU1",
+                    "https://api.weather.gov/stations/SURU1",
+                    "https://api.weather.gov/stations/YKEU1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ126",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ126",
+                "@type": "wx:Zone",
+                "id": "UTZ126",
+                "type": "public",
+                "name": "Upper Sevier River Valleys",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KU55"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ127",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ127",
+                "@type": "wx:Zone",
+                "id": "UTZ127",
+                "type": "public",
+                "name": "Bryce Canyon Country",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/ACRU1",
+                    "https://api.weather.gov/stations/BYCU1",
+                    "https://api.weather.gov/stations/KBCE"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/UTZ128",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/UTZ128",
+                "@type": "wx:Zone",
+                "id": "UTZ128",
+                "type": "public",
+                "name": "South Central Utah",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "UT",
+                "forecastOffice": "https://api.weather.gov/offices/SLC",
+                "gridIdentifier": "SLC",
+                "awipsLocationIdentifier": "SLC",
+                "cwa": [
+                    "SLC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SLC"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KKNB",
+                    "https://api.weather.gov/stations/TFRU1",
+                    "https://api.weather.gov/stations/TT441"
+                ],
+                "radarStation": null
+            }
+        }
+    ]
+}

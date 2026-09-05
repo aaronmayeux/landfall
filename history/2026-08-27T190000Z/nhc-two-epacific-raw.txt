@@ -1,0 +1,64 @@
+ABPZ20 KNHC 271752
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Thu Aug 27 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Lala, located several hundred miles north of Kure Atoll. 
+
+Central East Pacific (EP93):
+Showers and thunderstorms associated with a low pressure system 
+located about 900 miles south of the southern tip of the Baja 
+California peninsula are showing better signs of organization. 
+Recent satellite-derived wind data indicate that this system is 
+already producing winds of tropical-storm-force. If current trends 
+continue, advisories will be initiated on a tropical storm this 
+afternoon. This system is forecast to move generally northwestward 
+at 10 to 15 mph for the next several days, staying well offshore of 
+the coast of Mexico. For additional information on this system, 
+including Gale Warnings, please see the High Seas Forecast issued 
+by the National Weather Service. 
+* Formation chance through 48 hours...high...near 100 percent.
+* Formation chance through 7 days...high...near 100 percent.
+
+Western East Pacific (EP94):
+Showers and thunderstorms associated with a low pressure area 
+located well east-southeast of the Hawaiian Islands have continued 
+to become better organized. Environmental conditions appear 
+conducive for continued development, and a tropical depression is 
+likely to form within the next day or so while the system drifts to 
+the northeast, before turning westward this weekend.
+* Formation chance through 48 hours...high...80 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Well Offshore of Southwestern Mexico:
+An area of low pressure is forecast to form this weekend well to the 
+south of southwestern Mexico. Environmental conditions appear 
+favorable for gradual development of this system, and a tropical 
+depression is likely to form early next week while it moves 
+west-northwestward to northwestward at 10 to 15 mph. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...high...80 percent.
+
+Central Pacific:
+An area of low pressure could form well south or southwest of the 
+Hawaiian Islands over the weekend or early next week. Some gradual 
+development is possible thereafter while the system moves slowly 
+west-northwestward, well offshore of the Hawaiian Islands.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFEPI, WMO header FZPN02 
+KWBC, and on the web at ocean.weather.gov/shtml/NFDHSFEPI.php 
+
+$$
+Forecaster Zelinsky/Evans/Pierce
+
+

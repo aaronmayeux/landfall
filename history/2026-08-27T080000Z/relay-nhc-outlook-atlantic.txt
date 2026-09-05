@@ -1,0 +1,27 @@
+en Español
+
+000
+ABNT20 KNHC 270506
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Thu Aug 27 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Eastern Tropical Atlantic (AL96):
+Satellite imagery indicate that showers and thunderstorms associated 
+with an area of low pressure, located several hundred miles 
+west-southwest of the Cabo Verde Islands, have become better 
+organized tonight. If the current trends continue, advisories could 
+be initiated on a short-lived tropical depression or storm later 
+today. However, environmental conditions are expected to become 
+hostile beginning on Friday, likely ending its chances for 
+development.
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...70 percent.
+
+$$
+Forecaster Adams
+  

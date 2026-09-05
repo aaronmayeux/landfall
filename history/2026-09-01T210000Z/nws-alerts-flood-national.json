@@ -1,0 +1,426 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3b22843006337a06f73e20bd8b10f975530c2dde.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -94.12,
+                            30.16
+                        ],
+                        [
+                            -94.11,
+                            30.17
+                        ],
+                        [
+                            -94.09,
+                            30.16
+                        ],
+                        [
+                            -94.05,
+                            30.08
+                        ],
+                        [
+                            -94,
+                            30.03
+                        ],
+                        [
+                            -94.2,
+                            29.95
+                        ],
+                        [
+                            -94.28,
+                            30.16
+                        ],
+                        [
+                            -94.25,
+                            30.17
+                        ],
+                        [
+                            -94.22,
+                            30.17
+                        ],
+                        [
+                            -94.22,
+                            30.18
+                        ],
+                        [
+                            -94.19,
+                            30.19
+                        ],
+                        [
+                            -94.19,
+                            30.18
+                        ],
+                        [
+                            -94.18,
+                            30.19
+                        ],
+                        [
+                            -94.17,
+                            30.18
+                        ],
+                        [
+                            -94.17,
+                            30.17
+                        ],
+                        [
+                            -94.12,
+                            30.17
+                        ],
+                        [
+                            -94.12,
+                            30.16
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3b22843006337a06f73e20bd8b10f975530c2dde.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3b22843006337a06f73e20bd8b10f975530c2dde.001.1",
+                "areaDesc": "Jefferson, TX; Orange, TX",
+                "geocode": {
+                    "SAME": [
+                        "048245",
+                        "048361"
+                    ],
+                    "UGC": [
+                        "TXC245",
+                        "TXC361"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC245",
+                    "https://api.weather.gov/zones/county/TXC361"
+                ],
+                "references": [],
+                "sent": "2026-09-01T16:27:00-05:00",
+                "effective": "2026-09-01T16:27:00-05:00",
+                "onset": "2026-09-01T16:27:00-05:00",
+                "expires": "2026-09-01T19:30:00-05:00",
+                "ends": "2026-09-01T19:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lake Charles LA",
+                "headline": "Flash Flood Warning issued September 1 at 4:27PM CDT until September 1 at 7:30PM CDT by NWS Lake Charles LA",
+                "description": "FFWLCH\n\nThe National Weather Service in Lake Charles has issued a\n\n* Flash Flood Warning for...\nNorth Central Jefferson County in southeastern Texas...\nSouthwestern Orange County in southeastern Texas...\n\n* Until 730 PM CDT.\n\n* At 427 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 1 to 4 inches in 1 hour.\nAdditional rainfall amounts of 2 to 4 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBeaumont, Bevil Oaks and Rose City.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLCH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLCH 012127"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLCH.FF.W.0062.260901T2127Z-260902T0030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-01T19:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a362c5779dafbc189bc78d0e99bc99d6af3c177a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -113.11,
+                            37.32
+                        ],
+                        [
+                            -112.75,
+                            37.36
+                        ],
+                        [
+                            -112.7,
+                            37.16
+                        ],
+                        [
+                            -112.97,
+                            37.13
+                        ],
+                        [
+                            -113.11,
+                            37.32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a362c5779dafbc189bc78d0e99bc99d6af3c177a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a362c5779dafbc189bc78d0e99bc99d6af3c177a.001.1",
+                "areaDesc": "Kane, UT; Washington, UT",
+                "geocode": {
+                    "SAME": [
+                        "049025",
+                        "049053"
+                    ],
+                    "UGC": [
+                        "UTC025",
+                        "UTC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC025",
+                    "https://api.weather.gov/zones/county/UTC053"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d0d32d8a6b5f43033e7116556531fa82859d6260.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.d0d32d8a6b5f43033e7116556531fa82859d6260.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-01T12:44:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-01T14:36:00-06:00",
+                "effective": "2026-09-01T14:36:00-06:00",
+                "onset": "2026-09-01T14:36:00-06:00",
+                "expires": "2026-09-01T15:45:00-06:00",
+                "ends": "2026-09-01T15:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued September 1 at 2:36PM MDT until September 1 at 3:45PM MDT by NWS Salt Lake City UT",
+                "description": "At 236 PM MDT, River gauge reports indicated thunderstorms producing\nheavy rain across the warned area. Between 0.25 and 0.5 inches of\nrain have fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Gauges reported.\n\nIMPACT...Life threatening flash flooding of slot canyons, normally\ndry washes, streams, creeks and rivers.\n\nSome locations that will experience flash flooding include...\nZion National Park and Springdale including Parunuweap Canyon,\nKeyhole, Spry, Pine Slot Canyons, and the Narrows.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nRemain alert for flooding even in locations not receiving rain. Dry\nwashes, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KSLC 012036"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 345 PM MDT THIS AFTERNOON FOR WEST CENTRAL KANE AND EAST CENTRAL WASHINGTON COUNTIES"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KSLC.FF.W.0118.000000T0000Z-260901T2145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-01T15:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ba3bd2d0f99e951e235d91685e4cb725d0aa6812.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -94.1,
+                            29.71
+                        ],
+                        [
+                            -94.2,
+                            29.95
+                        ],
+                        [
+                            -94,
+                            30.03
+                        ],
+                        [
+                            -94,
+                            30.01
+                        ],
+                        [
+                            -93.99,
+                            30.02
+                        ],
+                        [
+                            -93.91,
+                            29.84
+                        ],
+                        [
+                            -93.92,
+                            29.79
+                        ],
+                        [
+                            -93.89,
+                            29.77
+                        ],
+                        [
+                            -93.89,
+                            29.75
+                        ],
+                        [
+                            -93.84,
+                            29.7
+                        ],
+                        [
+                            -93.83,
+                            29.68
+                        ],
+                        [
+                            -94.03,
+                            29.66
+                        ],
+                        [
+                            -94.1,
+                            29.71
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ba3bd2d0f99e951e235d91685e4cb725d0aa6812.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ba3bd2d0f99e951e235d91685e4cb725d0aa6812.001.1",
+                "areaDesc": "Jefferson, TX",
+                "geocode": {
+                    "SAME": [
+                        "048245"
+                    ],
+                    "UGC": [
+                        "TXC245"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC245"
+                ],
+                "references": [],
+                "sent": "2026-09-01T14:49:00-05:00",
+                "effective": "2026-09-01T14:49:00-05:00",
+                "onset": "2026-09-01T14:49:00-05:00",
+                "expires": "2026-09-01T17:45:00-05:00",
+                "ends": "2026-09-01T17:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lake Charles LA",
+                "headline": "Flash Flood Warning issued September 1 at 2:49PM CDT until September 1 at 5:45PM CDT by NWS Lake Charles LA",
+                "description": "FFWLCH\n\nThe National Weather Service in Lake Charles has issued a\n\n* Flash Flood Warning for...\nSoutheastern Jefferson County in southeastern Texas...\n\n* Until 545 PM CDT.\n\n* At 249 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. The expected rainfall rate is 2 to 4 inches in 1 hour.\nAdditional rainfall amounts of 2 to 4 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPort Arthur, Nederland, Central Gardens, Sabine Pass, Port Acres,\nSoutheast Texas Regional Airport, La Belle and Sea Rim State Park.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLCH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLCH 011949"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLCH.FF.W.0061.260901T1949Z-260901T2245Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-01T17:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-01T21:40:36+00:00"
+}

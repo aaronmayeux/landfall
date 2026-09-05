@@ -1,0 +1,36 @@
+ABNT20 KNHC 251152
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Tue Aug 25 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Central Subtropical Atlantic (AL95):
+An area of low pressure located a few hundred miles east-northeast 
+of Bermuda is moving northward to north-northeastward at 15 to 20 
+mph.  The associated shower activity remains disorganized and the 
+circulation is broad and elongated.  This system could still become 
+a short-lived tropical depression or storm later today before 
+encountering increasingly hostile conditions tonight and Wednesday, 
+likely ending its chances for development.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+Eastern Tropical Atlantic (AL96):
+An area of low pressure centered a few hundred miles south-southeast 
+of the Cabo Verde Islands is producing disorganized showers and 
+thunderstorms. Environmental conditions appear conducive for gradual 
+development, and this system is likely to become a tropical 
+depression during the next day or two while it moves westward to 
+west-northwestward across the eastern and central tropical Atlantic. 
+Environmental conditions could become less conducive for development 
+by the weekend.
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...70 percent.
+
+$$
+Forecaster Pasch
+
+

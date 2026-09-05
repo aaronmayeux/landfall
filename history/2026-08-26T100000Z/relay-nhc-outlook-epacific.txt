@@ -1,0 +1,58 @@
+en Español
+
+000
+ABPZ20 KNHC 260531
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 PM PDT Tue Aug 25 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Lala, located several hundred miles north of Kure Atoll, and 
+on Tropical Storm Iselle, located well to the west of the southern 
+tip of the Baja California Peninsula.
+
+Central East Pacific (EP93):
+Shower and thunderstorm activity has increased since yesterday in 
+association with a tropical wave located well to the south of 
+southwestern Mexico. Environmental conditions are expected to 
+support gradual development of this system, and a tropical 
+depression is likely to form during the next couple of days while it 
+moves west-northwestward at 10 to 15 mph, well offshore of Mexico.
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Western East Pacific:
+A weak, elongated area of low pressure located well to the 
+east-southeast of the Hawaiian Islands is producing disorganized 
+showers and thunderstorms. Environmental conditions appear conducive 
+for gradual development of this system, and a tropical depression is 
+likely to form late this week or early this weekend while the system 
+drifts to the northeast, then turns westward.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...high...70 percent.
+
+Well Offshore of Southwestern Mexico:
+An area of low pressure could form this weekend well to the south 
+of southwestern Mexico. Environmental conditions appear favorable 
+for some gradual development of this system, and a tropical 
+depression could form by early next week while it moves westward to 
+west-northwestward at 10 to 15 mph. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+Central Pacific:
+An area of low pressure could form well south of the Hawaiian 
+Islands late this week or over the weekend. Some gradual development 
+is possible by early next week while the system moves slowly 
+west-northwestward, well south-southwest of the Hawaiian Islands.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Reinhart
+  

@@ -1,0 +1,62 @@
+ABPZ20 KNHC 251154
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Tue Aug 25 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Lala, located several hundred miles north of Pearl and Hermes 
+Atoll, on Tropical Storm Iselle, located several hundred miles 
+west of the southern tip of the Baja California Peninsula, and on 
+recently upgraded Tropical Storm Julio, located well southwest of 
+the southern tip of Baja California Peninsula.  
+
+The National Hurricane Center has issued the last advisory on the 
+remnants of Tropical Depression Moke, located several hundred miles 
+east of Johnston Island,
+
+Central East Pacific:
+A tropical wave located well to the south of southern Mexico is 
+producing a large area of disorganized showers and thunderstorms. 
+Environmental conditions appear favorable for development of this 
+system, and a tropical depression is expected to form in a few days 
+while it moves generally west-northwestward at 10 to 15 mph, well 
+offshore of Mexico.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Western East Pacific:
+A trough of low pressure located well to the east-southeast of the 
+Hawaiian Islands is producing some disorganized showers and 
+thunderstorms. An area of low pressure is forecast to form along the 
+trough during the next couple of days, and environmental conditions 
+appear conducive for some gradual development thereafter. A tropical 
+depression could form during the latter part of the week or early 
+this weekend while the system drifts generally north-northeastward. 
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...medium...60 percent.
+
+Well Offshore of Southern Mexico:
+An area of low pressure could form well offshore of Central America 
+late this week or this weekend. Environmental conditions could 
+support some gradual development of this system, and a tropical 
+depression could form late this weekend or early next week while it 
+moves westward to west-northwestward at 10 to 15 mph well offshore 
+of southern Mexico.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+&&
+Public Advisories on Tropical Storm Julio are issued under 
+WMO header WTPZ35 NHC and under AWIPS header MIATCPEP5.  
+Forecast/Advisories on Tropical Storm Julio are issued under 
+WMO header WTPZ25 and under AWIPS header MIATCMEP5.
+
+$$
+Forecaster Blake
+
+

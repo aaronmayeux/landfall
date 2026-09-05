@@ -1,0 +1,288 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.20be325dfab8af7f878e6916daea099559c7041b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.78,
+                            40.47
+                        ],
+                        [
+                            -83.62,
+                            40.46
+                        ],
+                        [
+                            -83.36,
+                            40.4
+                        ],
+                        [
+                            -83.36,
+                            40.28
+                        ],
+                        [
+                            -83.41,
+                            40.22
+                        ],
+                        [
+                            -83.5,
+                            40.23
+                        ],
+                        [
+                            -83.55,
+                            40.23
+                        ],
+                        [
+                            -83.6,
+                            40.35
+                        ],
+                        [
+                            -83.77,
+                            40.45
+                        ],
+                        [
+                            -83.78,
+                            40.47
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.20be325dfab8af7f878e6916daea099559c7041b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.20be325dfab8af7f878e6916daea099559c7041b.001.1",
+                "areaDesc": "Logan, OH; Union, OH",
+                "geocode": {
+                    "SAME": [
+                        "039091",
+                        "039159"
+                    ],
+                    "UGC": [
+                        "OHC091",
+                        "OHC159"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC091",
+                    "https://api.weather.gov/zones/county/OHC159"
+                ],
+                "references": [],
+                "sent": "2026-09-05T04:52:00-04:00",
+                "effective": "2026-09-05T04:52:00-04:00",
+                "onset": "2026-09-05T04:52:00-04:00",
+                "expires": "2026-09-05T07:45:00-04:00",
+                "ends": "2026-09-05T07:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wilmington OH",
+                "headline": "Flash Flood Warning issued September 5 at 4:52AM EDT until September 5 at 7:45AM EDT by NWS Wilmington OH",
+                "description": "FFWILN\n\nThe National Weather Service in Wilmington has issued a\n\n* Flash Flood Warning for...\nNorthwestern Union County in central Ohio...\nEastern Logan County in west central Ohio...\n\n* Until 745 AM EDT.\n\n* At 452 AM EDT, radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n1.5 and 2.5 inches of rain have fallen. Additional rainfall amounts\nof 0.5 to 1 inch are possible. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that may experience flash flooding include...\nMarysville, West Mansfield, Rushsylvania, Raymond, East Liberty,\nPottersburg, Broadway and Somersville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nTo report flash flooding, go to our website at weather.gov/iln and\nsubmit your report via social media, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWILN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KILN 050852"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KILN.FF.W.0083.260905T0852Z-260905T1145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T07:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a71d86a69035a7d4553b8d83385401d6d650b667.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.95,
+                            40.52
+                        ],
+                        [
+                            -83.79,
+                            40.47
+                        ],
+                        [
+                            -83.68,
+                            40.4
+                        ],
+                        [
+                            -83.59,
+                            40.35
+                        ],
+                        [
+                            -83.55,
+                            40.23
+                        ],
+                        [
+                            -83.72,
+                            40.24
+                        ],
+                        [
+                            -83.78,
+                            40.25
+                        ],
+                        [
+                            -83.78,
+                            40.26
+                        ],
+                        [
+                            -83.79,
+                            40.26
+                        ],
+                        [
+                            -83.89,
+                            40.37
+                        ],
+                        [
+                            -84,
+                            40.48
+                        ],
+                        [
+                            -83.99,
+                            40.48
+                        ],
+                        [
+                            -83.99,
+                            40.49
+                        ],
+                        [
+                            -83.98,
+                            40.52
+                        ],
+                        [
+                            -83.95,
+                            40.52
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a71d86a69035a7d4553b8d83385401d6d650b667.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a71d86a69035a7d4553b8d83385401d6d650b667.001.1",
+                "areaDesc": "Logan, OH",
+                "geocode": {
+                    "SAME": [
+                        "039091"
+                    ],
+                    "UGC": [
+                        "OHC091"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC091"
+                ],
+                "references": [],
+                "sent": "2026-09-05T03:34:00-04:00",
+                "effective": "2026-09-05T03:34:00-04:00",
+                "onset": "2026-09-05T03:34:00-04:00",
+                "expires": "2026-09-05T06:30:00-04:00",
+                "ends": "2026-09-05T06:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wilmington OH",
+                "headline": "Flash Flood Warning issued September 5 at 3:34AM EDT until September 5 at 6:30AM EDT by NWS Wilmington OH",
+                "description": "FFWILN\n\nThe National Weather Service in Wilmington has issued a\n\n* Flash Flood Warning for...\nCentral Logan County in west central Ohio...\n\n* Until 630 AM EDT.\n\n* At 334 AM EDT, radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n1.5 and 2.5 inches of rain have fallen. Additional rainfall amounts\nof 0.5 to 1 inch are possible. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that may experience flash flooding include...\nBellefontaine, West Liberty, Russells Point, Lakeview, Huntsville,\nValley Hi, Zanesfield, Mcmorran, New Jerusalem, Pickrelltown,\nLewistown, East Liberty and Middleburg.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nTo report flash flooding, go to our website at weather.gov/iln and\nsubmit your report via social media, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWILN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KILN 050734"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KILN.FF.W.0082.260905T0734Z-260905T1030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T06:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-05T08:56:14+00:00"
+}

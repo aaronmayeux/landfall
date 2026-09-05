@@ -1,0 +1,36 @@
+ABNT20 KNHC 300505
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Sun Aug 30 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+East of the Leeward Islands (Remnants of Dolly):
+A strong tropical wave, the remnants of Tropical Storm Dolly, 
+continues to produce an area of showers and thunderstorms just east 
+of the northern Leeward Islands. Satellite data and surface 
+observations indicate that there are no signs of a closed surface 
+circulation, and redevelopment is unlikely while the wave moves 
+westward to west-northwestward at about 25 mph. The system could 
+bring locally heavy rains and gusty winds to portions of the 
+Leeward Islands, the Virgin Islands, and Puerto Rico over the next 
+couple of days.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...10 percent.
+
+Northern Gulf of America (AL97):
+A weak area of low pressure located about 100 miles south of 
+the coast of southeastern Louisiana continues to produce 
+disorganized showers and thunderstorms. Some slow development of 
+this system is possible during the next few days as it drifts 
+westward across the northern Gulf. Interests along the Louisiana 
+and Upper Texas coasts should monitor the progress of this system.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Cangialosi
+
+

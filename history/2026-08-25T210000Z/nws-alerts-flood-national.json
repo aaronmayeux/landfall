@@ -1,0 +1,180 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f2d9b168004b1be3360e25d30ec4787202055a93.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            144.61,
+                            13.42
+                        ],
+                        [
+                            144.64,
+                            13.42
+                        ],
+                        [
+                            144.66,
+                            13.39
+                        ],
+                        [
+                            144.66,
+                            13.41
+                        ],
+                        [
+                            144.63,
+                            13.43
+                        ],
+                        [
+                            144.64,
+                            13.43
+                        ],
+                        [
+                            144.67,
+                            13.42
+                        ],
+                        [
+                            144.68,
+                            13.43
+                        ],
+                        [
+                            144.88,
+                            13.46
+                        ],
+                        [
+                            144.81,
+                            13.41
+                        ],
+                        [
+                            144.79,
+                            13.27
+                        ],
+                        [
+                            144.76,
+                            13.23
+                        ],
+                        [
+                            144.69,
+                            13.22
+                        ],
+                        [
+                            144.65,
+                            13.21
+                        ],
+                        [
+                            144.63,
+                            13.22
+                        ],
+                        [
+                            144.63,
+                            13.25
+                        ],
+                        [
+                            144.65,
+                            13.27
+                        ],
+                        [
+                            144.61,
+                            13.34
+                        ],
+                        [
+                            144.63,
+                            13.4
+                        ],
+                        [
+                            144.61,
+                            13.42
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f2d9b168004b1be3360e25d30ec4787202055a93.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f2d9b168004b1be3360e25d30ec4787202055a93.001.1",
+                "areaDesc": "Guam, GU",
+                "geocode": {
+                    "SAME": [
+                        "066010"
+                    ],
+                    "UGC": [
+                        "GUC010"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GUC010"
+                ],
+                "references": [],
+                "sent": "2026-08-26T06:57:00+10:00",
+                "effective": "2026-08-26T06:57:00+10:00",
+                "onset": "2026-08-26T06:57:00+10:00",
+                "expires": "2026-08-26T08:30:00+10:00",
+                "ends": "2026-08-26T08:30:00+10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flash Flood Warning issued August 26 at 6:57AM ChST until August 26 at 8:30AM ChST by NWS Tiyan GU",
+                "description": "FFWGUM\n\nThe National Weather Service in Tiyan has issued a\n\n* Flash Flood Warning for...\nSouthwestern Guam...\n\n* Until 830 AM ChST.\n\n* At 657 AM ChST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 5 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMangilao, Chalan Pago-Ordot, Yona, Talofofo, Inarajan, Merizo,\nPiti, Santa Rita and Umatac.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY50 PGUM 252057"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PGUM.FF.W.0025.260825T2057Z-260825T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-26T08:30:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-08-25T21:36:54+00:00"
+}

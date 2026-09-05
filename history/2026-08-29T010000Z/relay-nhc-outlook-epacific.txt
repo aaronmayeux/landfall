@@ -1,0 +1,39 @@
+en Español
+
+000
+ABPZ20 KNHC 282337
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Fri Aug 28 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Karina, located well south-southwest of the southern tip of 
+the Baja California Peninsula, and on Tropical Storm Lowell, 
+located well east-southeast of the Hawaiian Islands. 
+
+Well Offshore of Southwestern Mexico:
+An area of disturbed weather, associated with a tropical wave, is 
+located well to the south of southwestern Mexico. Environmental 
+conditions appear favorable for gradual development of this system, 
+and a tropical depression is likely to form early next week while 
+it moves west-northwestward to northwestward at 10 to 15 mph. 
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...high...80 percent.
+
+Central Pacific:
+An area of low pressure could form well south or southwest of the 
+Hawaiian Islands in a few days. Some gradual development is possible 
+thereafter and a tropical depression could form during the middle 
+part of next week while the system moves slowly west-northwestward, 
+well offshore of the Hawaiian Islands.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+$$
+Forecaster Pasch
+  

@@ -1,0 +1,38 @@
+en Español
+
+000
+ABNT20 KNHC 260510
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Wed Aug 26 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Eastern Tropical Atlantic (AL96):
+An area of low pressure associated with a tropical wave, located a 
+few hundred miles south-southwest of the Cabo Verde Islands, is 
+producing showers and thunderstorms that are displaced to the 
+southwest of its center. Environmental conditions remain somewhat 
+favorable for development over the next couple of days, and a 
+tropical depression is likely to form over the next day or two as 
+the system moves westward to west-northwestward across the eastern 
+and central tropical Atlantic. Environmental conditions are forecast 
+to become less favorable by this weekend, potentially ending its 
+chances for development. 
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...70 percent.
+
+Central Subtropical Atlantic (AL95):
+A trough of low pressure located several hundred miles northeast of 
+Bermuda is producing disorganized showers and thunderstorms. Recent 
+scatterometer wind data indicate that the circulation remains 
+elongated and broad. Environmental conditions are becoming 
+increasingly hostile, and development is no longer expected. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+$$
+Forecaster Adams
+  

@@ -1,0 +1,28 @@
+en Español
+
+408 
+ABNT20 KNHC 272302
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 PM EDT Thu Aug 27 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Dolly, located over the central tropical Atlantic.
+
+Tropical cyclone formation is not expected during the next 7 days. 
+
+&&
+
+Public Advisories on Tropical Storm Dolly are issued under WMO 
+header WTNT34 KNHC and under AWIPS header MIATCPAT4. 
+Forecast/Advisories on Tropical Storm Dolly are issued under WMO 
+header WTNT24 KNHC and under AWIPS header MIATCMAT4.
+
+$$
+Forecaster Hagen
+  
