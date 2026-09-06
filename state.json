@@ -96,16 +96,16 @@
     "sha256": "cf7145817354da0fff20c5843dc9bd433e67e75b897a68705fa06078eb0c335e"
   },
   "btk/2026/bep112026.dat": {
-    "etag": "\"6077-65ad193d1c3d1\"",
-    "lastModified": "Sun, 06 Sep 2026 14:47:14 GMT",
-    "bytes": 24695,
-    "sha256": "e845be583208ef37f2ad2e1d84271e9627a247cbf640679fb6a6d986b35a861e"
+    "etag": "\"614f-65ad4ec84be26\"",
+    "lastModified": "Sun, 06 Sep 2026 18:46:47 GMT",
+    "bytes": 24911,
+    "sha256": "e39d7a5068fab9a211a92f5732f55c783e84d0d7b1b9e234a1084b21e27d75e3"
   },
   "btk/2026/bep122026.dat": {
-    "etag": "\"506f-65ad194ae0a82\"",
-    "lastModified": "Sun, 06 Sep 2026 14:47:29 GMT",
-    "bytes": 20591,
-    "sha256": "ca778b77554cf783172349c0aa109d73a7dbbe3cd10b8a3db636c7b1ede7ed14"
+    "etag": "\"52f7-65ad4f7b101a4\"",
+    "lastModified": "Sun, 06 Sep 2026 18:49:55 GMT",
+    "bytes": 21239,
+    "sha256": "cadad7623257f3abb6889ad9dc5af1971b04d562750c976c592db9ff3a4adc93"
   },
   "btk/2026/bal052026.dat": {
     "etag": "\"13af-65a8ff9479181\"",
@@ -114,9 +114,9 @@
     "sha256": "d37162d22c45f1f9e5f01e66b8f66f7fa36d181da74b4cdf815d281367c3a2d0"
   },
   "btk/2026/bep132026.dat": {
-    "etag": "\"39a7-65ad19c8fe964\"",
-    "lastModified": "Sun, 06 Sep 2026 14:49:41 GMT",
-    "bytes": 14759,
-    "sha256": "c0fd46bae8a610bea83b8f2c4a3689514ca30bec17cd400d8bd3247f93fc66ea"
+    "etag": "\"3c2f-65ad4f30bac81\"",
+    "lastModified": "Sun, 06 Sep 2026 18:48:37 GMT",
+    "bytes": 15407,
+    "sha256": "30bbcb3d4e00912c3c7d04a2a2d954ad5717e90e4897ac480458d03e2c4f4abd"
   }
 }
