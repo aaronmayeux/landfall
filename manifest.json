@@ -1,12 +1,12 @@
 {
-  "runAt": "2026-09-06T21:28:28.039Z",
+  "runAt": "2026-09-07T00:03:03.498Z",
   "sources": {
     "btk": {
       "status": "ok",
       "listed": 20,
       "eligible": 20,
-      "stored": 3,
-      "unchanged": 17,
+      "stored": 0,
+      "unchanged": 20,
       "failed": 0,
       "skipped": [],
       "files": {
@@ -27,9 +27,9 @@
         "btk/2026/bep082026.dat": "unchanged (304)",
         "btk/2026/bep092026.dat": "unchanged (304)",
         "btk/2026/bep102026.dat": "unchanged (304)",
-        "btk/2026/bep112026.dat": "stored 24911 bytes",
-        "btk/2026/bep122026.dat": "stored 21239 bytes",
-        "btk/2026/bep132026.dat": "stored 15407 bytes"
+        "btk/2026/bep112026.dat": "unchanged (304)",
+        "btk/2026/bep122026.dat": "unchanged (304)",
+        "btk/2026/bep132026.dat": "unchanged (304)"
       }
     },
     "jtwc": {
@@ -37,10 +37,10 @@
       "storms": 4,
       "linesAdded": 2,
       "files": {
-        "jtwc/2026/ep1126.jsonl": "already held",
-        "jtwc/2026/ep1226.jsonl": "+1",
-        "jtwc/2026/ep1326.jsonl": "already held",
-        "jtwc/2026/wp2226.jsonl": "+1"
+        "jtwc/2026/ep1126.jsonl": "+1",
+        "jtwc/2026/ep1226.jsonl": "already held",
+        "jtwc/2026/ep1326.jsonl": "+1",
+        "jtwc/2026/wp2226.jsonl": "already held"
       },
       "faults": []
     }
