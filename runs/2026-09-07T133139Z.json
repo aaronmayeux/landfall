@@ -1,0 +1,174 @@
+{
+  "at": "2026-09-07T13:31:37.318Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "styleLoaded": true,
+      "storms": 4,
+      "ttfbMs": 159,
+      "fcpMs": 460,
+      "lcpMs": 460,
+      "dclMs": 2777,
+      "loadMs": 3638,
+      "bootMarks": {
+        "create": 2546.800000000003
+      },
+      "longTaskCount": 20,
+      "blockedMs": 17382,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 14,
+      "staircaseMs": 1995,
+      "firstModuleAtMs": 205,
+      "lastModuleAtMs": 2200,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 30,
+      "apiKB": 197,
+      "totalRequests": 250,
+      "transferKB": 2361,
+      "firstApiAtMs": 2746,
+      "data": {
+        "depth": 2,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2746
+          },
+          {
+            "url": "/api/nws/zone?ids=HIZ001%2CHIZ003%2CHIZ004%2CHIZ006%2CHIZ007%2CHIZ009%2CH",
+            "startMs": 4293
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "styleLoaded": true,
+      "storms": 4,
+      "ttfbMs": 13,
+      "fcpMs": 716,
+      "lcpMs": 716,
+      "dclMs": 1325,
+      "loadMs": 1331,
+      "bootMarks": {
+        "create": 1146.1000000000058,
+        "load": 11797.5,
+        "fullLoad": 13842.800000000017
+      },
+      "longTaskCount": 22,
+      "blockedMs": 15658,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 5,
+      "staircaseMs": 519,
+      "firstModuleAtMs": 589,
+      "lastModuleAtMs": 1108,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 30,
+      "apiKB": 134,
+      "totalRequests": 250,
+      "transferKB": 134,
+      "firstApiAtMs": 1290,
+      "data": {
+        "depth": 2,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1290
+          },
+          {
+            "url": "/api/nhc/advisory?bin=EP3&kind=TCP",
+            "startMs": 2619
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "styleLoaded": false,
+    "storms": 4,
+    "ttfbMs": 33,
+    "fcpMs": 320,
+    "lcpMs": 320,
+    "dclMs": 2714,
+    "loadMs": 3540,
+    "bootMarks": {
+      "create": 2471.0999999999767,
+      "load": 13534.5,
+      "fullLoad": 14774.199999999983
+    },
+    "longTaskCount": 20,
+    "blockedMs": 14748,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 213,
+    "ourWaves": 16,
+    "staircaseMs": 2023,
+    "firstModuleAtMs": 85,
+    "lastModuleAtMs": 2108,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 30,
+    "apiKB": 106,
+    "totalRequests": 250,
+    "transferKB": 2269,
+    "firstApiAtMs": 2683,
+    "data": {
+      "depth": 3,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 2683
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 2995
+        },
+        {
+          "url": "/api/nhc/advisory?bin=EP3&kind=TCP",
+          "startMs": 4200
+        }
+      ]
+    },
+    "radarTiles": 5,
+    "radarOnLoad": 5,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 4,
+      "medianMs": 1016.6,
+      "p95Ms": 1033.3,
+      "worstMs": 1033.3,
+      "droppedPct": 75,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": false,
+    "notes": [
+      "FAIL ourModules: 213 > 175",
+      "ok   ourWaves: 5 <= 8",
+      "ok   staircaseMs: 519 <= 3000",
+      "ok   dataSerialDepth: 2 <= 6",
+      "FAIL blockedMs: 15658 > 1200",
+      "ok   transferKB: 134 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
