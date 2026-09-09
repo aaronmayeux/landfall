@@ -44,7 +44,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INSTRUMENT, summarise, serialDepth, splitBlocked, RADAR_RE } from './perf-instrument.mjs';
+import { INSTRUMENT, summarise, serialDepth, splitBlocked, mapBuildFromMarks, RADAR_RE } from './perf-instrument.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
@@ -59,10 +59,19 @@ const AUDIT = Object.freeze({
   RTT_MS: 40,
   DOWNLOAD_BPS: (10 * 1024 * 1024) / 8,
   UPLOAD_BPS: (3 * 1024 * 1024) / 8,
-  /* Long enough for the globe, both storm lists and the geometry fan-out to
-   * land on a throttled run. Measured: the last boot API call lands ~2.7s in
-   * unthrottled, so 4x of that plus headroom. */
-  SETTLE_MS: 14000,
+  /* ==> IT WAS GIVING UP BEFORE THE MAP HAD FINISHED. <== 14,000 ms was set
+   * from the last boot API call, which lands ~2.7s in unthrottled. But the MAP
+   * takes far longer than the data: measured on the runner 9 Sep, MapLibre's
+   * own `load` mark landed at 10,422 ms warm, 18,815 ms cold, and on the radar
+   * arm never inside the window at all. Two of three arms were therefore being
+   * recorded as "the map never built" when the truth was "the audit stopped
+   * watching first" — and the one arm that did pass had a second and a half of
+   * margin, so an ordinary slow night would have turned a healthy deploy red.
+   *
+   * 25,000 ms clears the slowest observed build with a third again on top. It
+   * costs about a minute of runner time across the three arms (the warm arm
+   * settles twice, once to prime its caches); the job ceiling is 20. */
+  SETTLE_MS: 25000,
   /* Frame sampling window. Two seconds is ~120 frames at 60Hz, enough for a
    * p95 to mean something without making the run drag. */
   FRAME_MS: 2000,
@@ -208,19 +217,12 @@ async function measure(ctx, { name, warm, seedLayers = null, after = null }) {
       workerConsoleWatched: window.__audit.workerConsoleWatched,
       colorSamples: window.__audit.errors.slice(0, 5),
       swControlled: !!navigator.serviceWorker.controller,
-      /* Did the map actually build? A hidden or throttled tab can finish
-       * "loading" with no style at all, and every map number below would then
-       * be a measurement of nothing. Reported so a zero can be told from a
-       * genuine zero.
-       *
-       * ==> LATCHED IN THE INSTRUMENT, NOT SAMPLED HERE. <== Asking
-       * isStyleLoaded() at this moment answers "is the map idle right now",
-       * which on a drifting globe is a coin toss — see the long note beside
-       * the latch in perf-instrument.mjs. The instantaneous read is kept
-       * alongside it because the gap between the two IS the evidence for why
-       * the latch exists; it is reported, never judged. */
-      styleLoaded: !!window.__audit.styleEverLoaded,
-      styleLoadedAtMs: window.__audit.styleLoadedAtMs,
+      /* ==> WHETHER THE MAP BUILT COMES OUT OF `boot`, NOT OUT OF A SAMPLE
+       * TAKEN HERE. <== MapLibre's own `load` mark is already in there; see
+       * mapBuildFromMarks in perf-instrument.mjs for why that is the only
+       * honest answer. The live isStyleLoaded() reading is kept beside it
+       * because the gap between the two IS the evidence — it is reported,
+       * never judged. */
       styleLoadedNow: !!(window.__landfall && window.__landfall.map
         && window.__landfall.map.isStyleLoaded && window.__landfall.map.isStyleLoaded()),
       storms: (() => {
@@ -234,8 +236,7 @@ async function measure(ctx, { name, warm, seedLayers = null, after = null }) {
   const out = {
     arm: name,
     swControlled: raw.swControlled,
-    styleLoaded: raw.styleLoaded,
-    styleLoadedAtMs: raw.styleLoadedAtMs,
+    ...mapBuildFromMarks(raw.boot),
     styleLoadedNow: raw.styleLoadedNow,
     storms: raw.storms,
     ttfbMs: raw.ttfb, fcpMs: raw.fcp, lcpMs: raw.lcp, dclMs: raw.dcl, loadMs: raw.load,
@@ -335,7 +336,9 @@ function report(results, radar) {
     if (!r.styleLoaded) {
       L.push('  !! STYLE NEVER LOADED — the map did not build. Map numbers below are meaningless.');
     }
-    L.push(line('map style built at', r.styleLoaded ? `${r.styleLoadedAtMs} ms` : 'never'));
+    L.push(line('map built at', r.styleLoaded ? `${r.mapLoadedAtMs} ms  (MapLibre load mark)`
+      : r.mapCreated ? `never — map created at ${r.mapCreatedAtMs} ms but never finished`
+      : 'never — the map was never even created'));
     L.push(line('first paint', `${r.fcpMs} ms`));
     L.push(line('LCP', `${r.lcpMs} ms`));
     L.push(line('DOMContentLoaded', `${r.dclMs} ms`));

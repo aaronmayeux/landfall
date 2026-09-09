@@ -23,17 +23,6 @@ export const VENDOR_RE = /\/vendor\//;
 export const API_RE = /\/api\//;
 export const RADAR_RE = /\/api\/imagery\/radar/;
 
-/* ==> THE STYLE LATCH'S OWN CONSTANTS (§ TUNING). <== They live out here rather
- * than as bare numbers inside the instrument string because that string is the
- * one place a reader cannot search for a magic number and find its definition.
- *
- * 250ms is a boolean read four times a second on a thread this same tool is
- * measuring for blocking; it is far below the 50ms a long task is made of and
- * the poller stops dead the moment it latches. The ceiling is longer than any
- * settle window the audit uses, so the poller is always the thing that ends
- * first — it never becomes a rAF loop that outlives the page's usefulness. */
-export const STYLE_POLL_MS = 250;
-export const STYLE_POLL_CEILING_MS = 60000;
 
 /**
  * Runs via `addInitScript`, i.e. before any page script, on every navigation.
@@ -55,10 +44,6 @@ window.__audit = {
   /* Stated as a fact about the instrument rather than left to be inferred from
    * a suspiciously round number. */
   workerConsoleWatched: false,
-  /* See the latch below. These answer "did the map ever build", which is a
-   * different question from "is the map quiet right now". */
-  styleEverLoaded: false,
-  styleLoadedAtMs: null,
 };
 
 /* ==> THE COLOUR-NULL COUNTER, AND ==> A ZERO FROM IT IS NOT A ZERO. <==
@@ -119,44 +104,6 @@ try {
     for (const e of l.getEntries()) window.__audit.boot[e.name] = e.startTime;
   }).observe({ type: 'mark', buffered: true });
 } catch (e) {}
-
-/* ==> "DID THE MAP BUILD" IS A LATCH, NOT A POLL, AND READING IT AS A POLL
- * FAILED THIS AUDIT EVERY NIGHT FOR THREE WEEKS. <==
- *
- * The audit used to answer this by calling map.isStyleLoaded() once, at the end
- * of the settle window. MapLibre 5.6.0's Style.loaded() returns false if ANY
- * source cache still has a tile in flight — and the globe drifts every frame at
- * planet zoom (map/globe.js attachIdleRotation), so it is pulling new tiles
- * more or less continuously. The single sample was therefore a coin toss on
- * whether the map happened to be momentarily idle at that exact instant.
- *
- * Recorded on the perf-history branch, 21 Aug to 8 Sep, warm-sw arm:
- *   false false false false false false TRUE false
- * The app was identical across all eight. The flag was measuring quiet, not
- * built — and the budget treats a false here as "nothing below was measured"
- * and fails the whole run, so a healthy deploy went red seven nights out of
- * eight.
- *
- * A latch cannot flap. The first time the style reports loaded, that fact is
- * recorded with its timestamp and the poller retires. A map that builds at
- * 900ms and is mid-tile-fetch at 14,000ms now reads as what it is: built. */
-(function () {
-  const started = performance.now();
-  let timer = null;
-  function look() {
-    try {
-      const m = window.__landfall && window.__landfall.map;
-      if (m && m.isStyleLoaded && m.isStyleLoaded()) {
-        window.__audit.styleEverLoaded = true;
-        window.__audit.styleLoadedAtMs = Math.round(performance.now());
-        clearInterval(timer);
-        return;
-      }
-    } catch (e) { /* a probe never breaks the page it measures */ }
-    if (performance.now() - started > ${STYLE_POLL_CEILING_MS}) clearInterval(timer);
-  }
-  timer = setInterval(look, ${STYLE_POLL_MS});
-})();
 
 /**
  * Frame pacing, sampled on demand.
@@ -221,6 +168,44 @@ export function summarise(res, { gapMs = 40 } = {}) {
      * this is the moment that clock starts. If it sits far past first paint the
      * module graph is what is holding the data back, not the feeds. */
     firstApiAtMs: api.length ? Math.round(Math.min(...api.map((r) => r.start))) : null,
+  };
+}
+
+/**
+ * Did the map build, and when — read from MapLibre's OWN timing marks.
+ *
+ * ==> THE LIBRARY ALREADY ANSWERS THIS, ONCE, AND WE WERE ASKING THE WRONG
+ * QUESTION INSTEAD. <== MapLibre 5.6.0 emits three performance marks of its
+ * own: `create` when the map object is constructed, `load` when the style is
+ * in and the first tiles for the opening view have drawn, and `fullLoad` when
+ * it has nothing left to do. The instrument's mark observer has been collecting
+ * all three into `__audit.boot` the whole time; nothing read them.
+ *
+ * Meanwhile the audit asked `map.isStyleLoaded()`, which is not an event but a
+ * live state — false whenever any source cache has a tile in flight. On a globe
+ * that drifts every frame at planet zoom, that is nearly always. Sampling it
+ * once at the end of the window failed 25 nightly runs; latching it by polling
+ * fixed the flapping but still measured "the first moment the map went quiet",
+ * which on 9 Sep landed at 11,776 ms against MapLibre's own `load` at 10,422 —
+ * a second and a half of margin that only existed by luck.
+ *
+ * `load` fires exactly once and cannot be missed by a sampler. Use it.
+ *
+ * `fullLoad` is deliberately NOT the signal: it requires the map to fall idle,
+ * which a permanently drifting globe may never do. That is the same trap as
+ * `isStyleLoaded`, one step further along.
+ */
+export function mapBuildFromMarks(boot) {
+  const marks = boot || {};
+  const created = typeof marks.create === 'number' ? Math.round(marks.create) : null;
+  const loaded = typeof marks.load === 'number' ? Math.round(marks.load) : null;
+  return {
+    /* The map object never even existed — a different failure from "built too
+     * slowly", and worth telling apart in a report. */
+    mapCreated: created !== null,
+    mapCreatedAtMs: created,
+    styleLoaded: loaded !== null,
+    mapLoadedAtMs: loaded,
   };
 }
 

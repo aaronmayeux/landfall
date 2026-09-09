@@ -23,9 +23,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
 import { fileURLToPath } from 'node:url';
-import { INSTRUMENT, splitBlocked } from './perf-instrument.mjs';
+import { splitBlocked, mapBuildFromMarks } from './perf-instrument.mjs';
 import { checkBudget } from './perf-audit.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -72,63 +71,48 @@ function ok(label, cond) {
 }
 
 /* --------------------------------------------------------------------------
- * the style latch
- *
- * The instrument is browser code and the sandbox has no browser, so it runs
- * here in `vm` against a fake map — which is enough, because the whole bug was
- * about WHEN the flag is read, not about anything the DOM does.
+ * mapBuildFromMarks
  * ------------------------------------------------------------------------ */
 
-/**
- * Run INSTRUMENT with a map whose `isStyleLoaded()` returns the given sequence,
- * one value per poll, exactly the way MapLibre flaps while tiles are in flight.
- * Returns the audit bag after every poll has been driven.
- */
-function runLatch(sequence) {
-  let clock = 0;
-  const timers = new Map();
-  let nextId = 1;
-
-  const sandbox = {
-    console: { error() {}, log() {} },
-    performance: { now: () => clock },
-    PerformanceObserver: class { observe() {} },
-    requestAnimationFrame: () => 0,
-    setInterval: (fn, ms) => { const id = nextId++; timers.set(id, { fn, ms }); return id; },
-    clearInterval: (id) => { timers.delete(id); },
-  };
-  sandbox.window = sandbox;
-  sandbox.globalThis = sandbox;
-  vm.createContext(sandbox);
-  vm.runInContext(INSTRUMENT, sandbox);
-
-  let i = 0;
-  sandbox.__landfall = { map: { isStyleLoaded: () => sequence[Math.min(i, sequence.length - 1)] } };
-  for (; i < sequence.length; i++) {
-    clock += 250;
-    for (const t of [...timers.values()]) t.fn();
-  }
-  return sandbox.__audit;
+{
+  /* MapLibre's real marks off the 9 Sep runner run. */
+  const warm = mapBuildFromMarks({ create: 1268.59, load: 10421.59 });
+  ok('a map that loaded is built', warm.styleLoaded === true);
+  ok('  ...at MapLibre\'s own load mark, rounded', warm.mapLoadedAtMs === 10422);
+  ok('  ...and its creation is reported too', warm.mapCreated === true && warm.mapCreatedAtMs === 1269);
 }
 
 {
-  /* ==> THE BUG, EXACTLY AS THE RUNNER SAW IT. <== The map builds, then goes
-   * back to reporting not-loaded because it is fetching tiles, and the final
-   * poll — the one the old code used as its single sample — reads false. */
-  const a = runLatch([false, false, true, false, false, false]);
-  ok('a map that built once stays built, even if the last read is false', a.styleEverLoaded === true);
-  ok('  ...and records when it built', a.styleLoadedAtMs === 750);
+  /* The radar arm, 9 Sep: created, never finished inside the window. */
+  const partial = mapBuildFromMarks({ create: 2559.89 });
+  ok('a map created but never loaded is NOT built', partial.styleLoaded === false);
+  ok('  ...and has no build time', partial.mapLoadedAtMs === null);
+  ok('  ...but is still known to have been created', partial.mapCreated === true);
 }
 
 {
-  const a = runLatch([false, false, false, false]);
-  ok('a map that never builds is never latched', a.styleEverLoaded === false);
-  ok('  ...and has no build time', a.styleLoadedAtMs === null);
+  const none = mapBuildFromMarks({});
+  ok('no marks at all is not built', none.styleLoaded === false);
+  ok('  ...and says the map was never created either', none.mapCreated === false);
+  ok('missing marks object does not crash', mapBuildFromMarks(undefined).styleLoaded === false);
 }
 
 {
-  const a = runLatch([true, false, false]);
-  ok('an immediate build latches on the first poll', a.styleEverLoaded === true && a.styleLoadedAtMs === 250);
+  /* ==> A BUILD AT TIME ZERO IS STILL A BUILD. <== `load: 0` is falsy, and a
+   * truthiness check here would report a map that built instantly as one that
+   * never built at all. */
+  const instant = mapBuildFromMarks({ create: 0, load: 0 });
+  ok('a mark of 0 is a real mark, not a missing one', instant.styleLoaded === true);
+  ok('  ...and reads as 0 ms, not null', instant.mapLoadedAtMs === 0);
+}
+
+{
+  /* ==> `fullLoad` IS NOT THE SIGNAL AND MUST NOT BECOME IT. <== It needs the
+   * map to fall idle, which a permanently drifting globe may never do — the
+   * same trap as isStyleLoaded, one step further along. A map that loaded but
+   * never went fully idle is built. */
+  const drifting = mapBuildFromMarks({ create: 1000, load: 9000 });
+  ok('a map that never falls idle is still built', drifting.styleLoaded === true);
 }
 
 /* --------------------------------------------------------------------------
@@ -140,6 +124,7 @@ function warmArm(over = {}) {
   return {
     arm: 'warm-sw',
     styleLoaded: true,
+    mapLoadedAtMs: 10422,
     ourModules: 213,
     ourWaves: 4,
     staircaseMs: 603,

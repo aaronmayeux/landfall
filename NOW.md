@@ -569,9 +569,11 @@ back first and the same cut landed at 762.
     the globe drifts every frame at planet zoom, so the sample was a coin toss:
     `false false false false false false TRUE false` across eight runs of an
     identical app. The budget reads a false there as "nothing was measured" and
-    fails the whole run. **It is now latched** in `perf-instrument.mjs` — first
-    time the style reports loaded, that fact and its timestamp are kept. A
-    genuine never-built still fails; a healthy deploy no longer does.
+    fails the whole run. Latching it by polling stopped the flapping but still
+    measured the first moment the map fell **quiet** (11,776 ms) rather than the
+    moment it was **built** (10,422 ms) — a pass with 1.5s of margin, i.e. luck.
+    **It now reads MapLibre's own `load` mark**, which fires exactly once and
+    cannot be missed by a sampler.
   - `blockedMs` summed long tasks across the **whole 14 s settle window**,
     twelve seconds of which is a drifting globe redrawn in software on a runner
     with no GPU at 4× throttle. It read 13,915–27,330 ms against a threshold of
@@ -590,9 +592,32 @@ back first and the same cut landed at 762.
   not a disabled check.** They measure and print and cannot fail, because the
   9 Sep change is the first run that will ever produce a `blockedLoadMs`. Read
   them off the next few nightlies and set real figures in a reviewed commit.
-- **`tools/test-perf-budget.mjs`** covers the split, the latch and the null
-  handling, and every case was verified to go red when the bug it guards is put
-  back. It is glob-discovered by CI; no workflow edit needed.
+- **MapLibre emits three timing marks of its own and we were ignoring them:**
+  `create`, `load`, `fullLoad`. The instrument's mark observer has collected
+  them into `bootMarks` all along; nothing read them. `load` is the map's own
+  "I am built" event — use it. **`fullLoad` is NOT the signal**: it needs the
+  map to fall idle, which a permanently drifting globe may never do. Same trap
+  as `isStyleLoaded`, one step further along.
+- **The audit was giving up before the map finished.** Measured 9 Sep, MapLibre
+  `load`: **10.4s warm, 18.8s cold, never on the radar arm** inside a 14s
+  window. So two of three arms were recorded as "the map never built" when the
+  truth was "the audit stopped watching first". `SETTLE_MS` is now **25,000**.
+  Costs ~1 min of runner time across three arms (warm settles twice, to prime
+  its caches); the job ceiling is 20 min.
+- **`tools/test-perf-budget.mjs`** covers the split, the map-build read and the
+  null handling, and every case was verified to go red when the bug it guards
+  is put back. It is glob-discovered by CI; no workflow edit needed.
+- **Two things the 9 Sep run showed that are NOT yet fixed:**
+  - **Idle frame pacing on the runner is meaningless** — 3 frames in 2s,
+    ~1 fps, 67% dropped. Software WebGL, no GPU, 4x throttle. The report prints
+    it unlabelled, which reads like the globe is broken. Label it or drop it.
+  - **`radarTilesOnPan` passed on no data** — 3 tiles on load, **0** after the
+    pan. Either the drag did not move the globe or radar is not drawing. A
+    green tick on an unmeasured check is the exact shape this file has been
+    burned by twice already.
+  - Also: the radar arm's data waterfall was **7 round trips deep** against a
+    ceiling of 6. It did not fail because the budget judges `warm-sw` only
+    (which was 4).
 - The sandbox **cannot dispatch the workflow** (the PAT carries Contents only,
   not Actions), so the first proof is either Actions → perf-audit → Run
   workflow, or tomorrow's 07:10 UTC nightly.
