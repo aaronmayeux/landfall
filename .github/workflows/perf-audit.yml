@@ -108,7 +108,16 @@ jobs:
           test -f perf-latest.json || exit 0
           git config user.name 'Andy (Cowork)'
           git config user.email 'andy@getgravitate.app'
-          git fetch origin perf-history --depth=1 || true
+          # ==> NOT `--depth=1`. <== `actions/checkout` leaves this a shallow
+          # clone, and a commit whose parent is a shallow boundary is what
+          # GitHub rejects with "shallow update not allowed" — which is the
+          # most likely reading of the 9 Sep run, where this step failed on its
+          # own while the audit either side of it succeeded. NOT CONFIRMED from
+          # a log: the runner serves those from a host the dev sandbox cannot
+          # reach, so this is the cheap fix for the likeliest cause, not a
+          # diagnosis. The branch is eight small JSON files; there is nothing to
+          # save by fetching it shallow.
+          git fetch origin perf-history || true
           if git rev-parse --verify origin/perf-history >/dev/null 2>&1; then
             git checkout -B perf-history origin/perf-history
           else
@@ -120,7 +129,15 @@ jobs:
           cp perf-latest.json "runs/$(date -u +%Y-%m-%dT%H%M%SZ).json"
           git add runs
           git commit -m "perf-audit $(date -u +%Y-%m-%dT%H:%M:%SZ)" || exit 0
-          git push origin perf-history
+          # One retry against the case this is simply a transient. Rebasing
+          # rather than force-pushing keeps the promise made above: nothing on
+          # this branch is ever lost.
+          git push origin perf-history || {
+            echo 'push rejected — refetching and retrying once'
+            git fetch origin perf-history
+            git rebase origin/perf-history
+            git push origin perf-history
+          }
 
       # ==> A CRASH MUST NOT LOOK LIKE A PASS. <== `continue-on-error` above is
       # there so a BUDGET failure still writes its numbers, and it also swallows

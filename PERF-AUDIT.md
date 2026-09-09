@@ -127,6 +127,11 @@ invalidate work already in this repo.**
    was deliberately left for the runner rather than guessed at. The boot and
    data findings do NOT depend on rendering and stand.
 
+   *(Not to be confused with the `styleLoaded: false` the nightly audit reported
+   from 21 Aug to 8 Sep. That one was spurious — a single sample of a flag that
+   flaps while tiles load — and is fixed by a latch in `perf-instrument.mjs`.
+   This one, a genuinely backgrounded tab, was real.)*
+
 3. **One hypothesis in this audit was WRONG and the control caught it.** The
    first read of the data said "the service worker is a serialised queue, remove
    it". The A/B — unregister the worker, keep the HTTP cache, reload — made the

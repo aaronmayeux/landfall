@@ -23,6 +23,18 @@ export const VENDOR_RE = /\/vendor\//;
 export const API_RE = /\/api\//;
 export const RADAR_RE = /\/api\/imagery\/radar/;
 
+/* ==> THE STYLE LATCH'S OWN CONSTANTS (§ TUNING). <== They live out here rather
+ * than as bare numbers inside the instrument string because that string is the
+ * one place a reader cannot search for a magic number and find its definition.
+ *
+ * 250ms is a boolean read four times a second on a thread this same tool is
+ * measuring for blocking; it is far below the 50ms a long task is made of and
+ * the poller stops dead the moment it latches. The ceiling is longer than any
+ * settle window the audit uses, so the poller is always the thing that ends
+ * first — it never becomes a rAF loop that outlives the page's usefulness. */
+export const STYLE_POLL_MS = 250;
+export const STYLE_POLL_CEILING_MS = 60000;
+
 /**
  * Runs via `addInitScript`, i.e. before any page script, on every navigation.
  *
@@ -43,6 +55,10 @@ window.__audit = {
   /* Stated as a fact about the instrument rather than left to be inferred from
    * a suspiciously round number. */
   workerConsoleWatched: false,
+  /* See the latch below. These answer "did the map ever build", which is a
+   * different question from "is the map quiet right now". */
+  styleEverLoaded: false,
+  styleLoadedAtMs: null,
 };
 
 /* ==> THE COLOUR-NULL COUNTER, AND ==> A ZERO FROM IT IS NOT A ZERO. <==
@@ -103,6 +119,44 @@ try {
     for (const e of l.getEntries()) window.__audit.boot[e.name] = e.startTime;
   }).observe({ type: 'mark', buffered: true });
 } catch (e) {}
+
+/* ==> "DID THE MAP BUILD" IS A LATCH, NOT A POLL, AND READING IT AS A POLL
+ * FAILED THIS AUDIT EVERY NIGHT FOR THREE WEEKS. <==
+ *
+ * The audit used to answer this by calling map.isStyleLoaded() once, at the end
+ * of the settle window. MapLibre 5.6.0's Style.loaded() returns false if ANY
+ * source cache still has a tile in flight — and the globe drifts every frame at
+ * planet zoom (map/globe.js attachIdleRotation), so it is pulling new tiles
+ * more or less continuously. The single sample was therefore a coin toss on
+ * whether the map happened to be momentarily idle at that exact instant.
+ *
+ * Recorded on the perf-history branch, 21 Aug to 8 Sep, warm-sw arm:
+ *   false false false false false false TRUE false
+ * The app was identical across all eight. The flag was measuring quiet, not
+ * built — and the budget treats a false here as "nothing below was measured"
+ * and fails the whole run, so a healthy deploy went red seven nights out of
+ * eight.
+ *
+ * A latch cannot flap. The first time the style reports loaded, that fact is
+ * recorded with its timestamp and the poller retires. A map that builds at
+ * 900ms and is mid-tile-fetch at 14,000ms now reads as what it is: built. */
+(function () {
+  const started = performance.now();
+  let timer = null;
+  function look() {
+    try {
+      const m = window.__landfall && window.__landfall.map;
+      if (m && m.isStyleLoaded && m.isStyleLoaded()) {
+        window.__audit.styleEverLoaded = true;
+        window.__audit.styleLoadedAtMs = Math.round(performance.now());
+        clearInterval(timer);
+        return;
+      }
+    } catch (e) { /* a probe never breaks the page it measures */ }
+    if (performance.now() - started > ${STYLE_POLL_CEILING_MS}) clearInterval(timer);
+  }
+  timer = setInterval(look, ${STYLE_POLL_MS});
+})();
 
 /**
  * Frame pacing, sampled on demand.
@@ -167,6 +221,37 @@ export function summarise(res, { gapMs = 40 } = {}) {
      * this is the moment that clock starts. If it sits far past first paint the
      * module graph is what is holding the data back, not the feeds. */
     firstApiAtMs: api.length ? Math.round(Math.min(...api.map((r) => r.start))) : null,
+  };
+}
+
+/**
+ * Split long-task time into the load window and everything after it.
+ *
+ * ==> ONE NUMBER WAS ANSWERING TWO QUESTIONS AND SO ANSWERED NEITHER. <== The
+ * audit summed every long task across a 14-second settle window and called it
+ * `blockedMs`. Most of that window is the globe drifting — MapLibre redrawing
+ * every frame, in software, on a runner with no GPU, at 4x CPU throttle. So the
+ * number sat near 100% of the window by construction, and was checked against a
+ * budget of 1,200 ms that clearly meant the load. It failed every night.
+ *
+ * Blocking while the app builds itself is a cost a real user pays. Blocking
+ * afterwards, here, is a fact about the runner. They are reported apart.
+ *
+ * A task is attributed to the window it STARTS in, and one that straddles the
+ * boundary counts whole against the load. That is the pessimistic split, which
+ * is the right way round for the half a budget defends.
+ */
+export function splitBlocked(longTasks, windowMs) {
+  const list = Array.isArray(longTasks) ? longTasks : [];
+  const inLoad = list.filter((t) => t.start < windowMs);
+  const afterLoad = list.filter((t) => t.start >= windowMs);
+  const sum = (l) => Math.round(l.reduce((a, t) => a + t.dur, 0));
+  return {
+    blockedMs: sum(list),
+    blockedLoadMs: sum(inLoad),
+    blockedLoadTaskCount: inLoad.length,
+    blockedAfterMs: sum(afterLoad),
+    blockedWindowMs: windowMs,
   };
 }
 

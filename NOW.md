@@ -560,15 +560,42 @@ back first and the same cut landed at 762.
 - **`seasons-wall-check.mjs` runs fine here** — 50 assertions, under a minute.
   It is in CI but **NOT in the pre-push hook**. Run it by hand after any change
   to the Wall of Years.
-- **`perf-history` holds four runs, the newest 27 Aug.** The nightly has run
-  every night since and recorded nothing, because the third arm crashed the tool
-  before it wrote a file; that is fixed, but no runner result proves it yet.
-  Actions → perf-audit → Run workflow is the first move there; the sandbox
-  cannot dispatch it (the PAT carries Contents only, not Actions). **Expect red
-  even when it works** — the last clean run failed four budget lines, including
-  `styleLoaded: false` on every arm, which means the map has never once built
-  during an audit and every map number it has printed is meaningless. That is
-  the next question, and it is not the crash.
+- **`perf-history` holds eight runs, the newest 8 Sep.** The crash is long
+  fixed and the tool now records every night. What was NOT fixed until 9 Sep is
+  that **the budget went red on all 25 runs and never once caught a real
+  regression.** Two causes, both in the instrument rather than the app:
+  - `styleLoaded` was **sampled once** at the end of the settle window.
+    MapLibre's `Style.loaded()` returns false while any tile is in flight, and
+    the globe drifts every frame at planet zoom, so the sample was a coin toss:
+    `false false false false false false TRUE false` across eight runs of an
+    identical app. The budget reads a false there as "nothing was measured" and
+    fails the whole run. **It is now latched** in `perf-instrument.mjs` — first
+    time the style reports loaded, that fact and its timestamp are kept. A
+    genuine never-built still fails; a healthy deploy no longer does.
+  - `blockedMs` summed long tasks across the **whole 14 s settle window**,
+    twelve seconds of which is a drifting globe redrawn in software on a runner
+    with no GPU at 4× throttle. It read 13,915–27,330 ms against a threshold of
+    1,200 that plainly meant the load. **Now split** at `LOAD_WINDOW_MS` (5 s)
+    into `blockedLoadMs` and `blockedAfterMs`; the total is kept so the branch
+    series stays continuous.
+- **The baseline, warm-sw arm, throttled, 8 Sep:** 213 modules in 4 waves,
+  603 ms staircase, serial depth 2, 206 KB over 250 requests, 3 radar tiles on
+  pan, 0 main-thread colour-nulls. `tools/perf-budget.json` is now calibrated
+  from those numbers instead of from a Chrome extension on a Mac.
+- **`ourModules` is the number that creeps: 179 → 189 → 204 → 209 → 213 in
+  three weeks.** No build step by design, so every module is a request every
+  visitor makes and the count only goes one way on its own. Ceiling is **240**.
+  When it trips, the answer is a look at the import graph, not a bigger number.
+- **`blockedLoadMs` and `blockedMs` are `null` in the budget — that is a debt,
+  not a disabled check.** They measure and print and cannot fail, because the
+  9 Sep change is the first run that will ever produce a `blockedLoadMs`. Read
+  them off the next few nightlies and set real figures in a reviewed commit.
+- **`tools/test-perf-budget.mjs`** covers the split, the latch and the null
+  handling, and every case was verified to go red when the bug it guards is put
+  back. It is glob-discovered by CI; no workflow edit needed.
+- The sandbox **cannot dispatch the workflow** (the PAT carries Contents only,
+  not Actions), so the first proof is either Actions → perf-audit → Run
+  workflow, or tomorrow's 07:10 UTC nightly.
 
 ---
 

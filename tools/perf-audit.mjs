@@ -44,7 +44,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { INSTRUMENT, summarise, serialDepth, RADAR_RE } from './perf-instrument.mjs';
+import { INSTRUMENT, summarise, serialDepth, splitBlocked, RADAR_RE } from './perf-instrument.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(HERE, '..');
@@ -66,6 +66,19 @@ const AUDIT = Object.freeze({
   /* Frame sampling window. Two seconds is ~120 frames at 60Hz, enough for a
    * p95 to mean something without making the run drag. */
   FRAME_MS: 2000,
+  /* ==> WHERE "LOADING" STOPS AND "SITTING THERE" STARTS. <== Blocking during
+   * these first seconds is the app building itself and is a real cost a user
+   * pays. Blocking after them is a drifting globe redrawn by a runner with no
+   * GPU at 4x CPU throttle, which is a fact about the runner. Summed together
+   * they were one number, `blockedMs`, and it read ~14,000 ms of a 14,000 ms
+   * window — 99% busy — against a budget of 1,200 that plainly meant the load.
+   * Two different questions wearing one name; split here so each gets its own.
+   *
+   * FIXED, NOT DERIVED FROM `loadEventEnd`, on purpose: a window that grows
+   * with the thing it measures makes a slower load look like less blocking.
+   * 5s clears every load event this tool has recorded on the runner (cold
+   * 3,869 / warm 1,203 / radar 3,736, 8 Sep) with headroom. */
+  LOAD_WINDOW_MS: 5000,
   /* How far to pan when asking whether radar re-requests tiles. Roughly one
    * viewport at the zoom the storms sit at. */
   PAN_PX: 300,
@@ -198,8 +211,17 @@ async function measure(ctx, { name, warm, seedLayers = null, after = null }) {
       /* Did the map actually build? A hidden or throttled tab can finish
        * "loading" with no style at all, and every map number below would then
        * be a measurement of nothing. Reported so a zero can be told from a
-       * genuine zero. */
-      styleLoaded: !!(window.__landfall && window.__landfall.map
+       * genuine zero.
+       *
+       * ==> LATCHED IN THE INSTRUMENT, NOT SAMPLED HERE. <== Asking
+       * isStyleLoaded() at this moment answers "is the map idle right now",
+       * which on a drifting globe is a coin toss — see the long note beside
+       * the latch in perf-instrument.mjs. The instantaneous read is kept
+       * alongside it because the gap between the two IS the evidence for why
+       * the latch exists; it is reported, never judged. */
+      styleLoaded: !!window.__audit.styleEverLoaded,
+      styleLoadedAtMs: window.__audit.styleLoadedAtMs,
+      styleLoadedNow: !!(window.__landfall && window.__landfall.map
         && window.__landfall.map.isStyleLoaded && window.__landfall.map.isStyleLoaded()),
       storms: (() => {
         try { return (window.__landfall.getState().storms || []).length; } catch (e) { return null; }
@@ -207,16 +229,21 @@ async function measure(ctx, { name, warm, seedLayers = null, after = null }) {
     };
   });
 
-  const blocked = raw.longTasks.reduce((a, t) => a + t.dur, 0);
+  const blocked = splitBlocked(raw.longTasks, AUDIT.LOAD_WINDOW_MS);
+
   const out = {
     arm: name,
     swControlled: raw.swControlled,
     styleLoaded: raw.styleLoaded,
+    styleLoadedAtMs: raw.styleLoadedAtMs,
+    styleLoadedNow: raw.styleLoadedNow,
     storms: raw.storms,
     ttfbMs: raw.ttfb, fcpMs: raw.fcp, lcpMs: raw.lcp, dclMs: raw.dcl, loadMs: raw.load,
     bootMarks: raw.boot,
     longTaskCount: raw.longTasks.length,
-    blockedMs: Math.round(blocked),
+    /* `blockedMs` survives inside this as the total, so the series on the
+     * perf-history branch stays continuous either side of the split. */
+    ...blocked,
     colorNullsMainThread: raw.colorNullsMainThread,
     workerConsoleWatched: raw.workerConsoleWatched,
     colorSamples: raw.colorSamples,
@@ -308,6 +335,7 @@ function report(results, radar) {
     if (!r.styleLoaded) {
       L.push('  !! STYLE NEVER LOADED — the map did not build. Map numbers below are meaningless.');
     }
+    L.push(line('map style built at', r.styleLoaded ? `${r.styleLoadedAtMs} ms` : 'never'));
     L.push(line('first paint', `${r.fcpMs} ms`));
     L.push(line('LCP', `${r.lcpMs} ms`));
     L.push(line('DOMContentLoaded', `${r.dclMs} ms`));
@@ -316,7 +344,14 @@ function report(results, radar) {
     L.push(line('first API call at', r.firstApiAtMs === null ? '(none)' : `${r.firstApiAtMs} ms`));
     L.push(line('data serial depth', `${r.data.depth} round trips`));
     L.push(line('API requests', `${r.apiCount}  (${r.apiKB} KB)`));
-    L.push(line('blocked on main thread', `${r.blockedMs} ms across ${r.longTaskCount} long tasks`));
+    L.push(line('blocked while loading', `${r.blockedLoadMs} ms across ${r.blockedLoadTaskCount} long tasks`
+      + `  (first ${r.blockedWindowMs} ms)`));
+    /* ==> THIS HALF IS A FACT ABOUT THE RUNNER, NOT ABOUT THE APP. <== The
+     * globe drifts every frame at planet zoom and the runner draws WebGL in
+     * software at 4x throttle, so it is near-continuously busy by construction.
+     * Labelled so nobody reads it as a phone number. */
+    L.push(line('blocked after that', `${r.blockedAfterMs} ms  — idle globe on a GPU-less runner, not a phone number`));
+    L.push(line('blocked, total', `${r.blockedMs} ms across ${r.longTaskCount} long tasks`));
     /* ==> IT SAYS WHAT IT CANNOT SEE, EVERY TIME, NOT ONLY WHEN IT IS ZERO.
      * <== A count printed without its blind spot was read as "fixed" once
      * already. */
@@ -358,10 +393,13 @@ function report(results, radar) {
  * `tools/perf-budget.json` so raising one is a reviewable diff rather than an
  * edit buried in a tool nobody reads.
  */
-function checkBudget(results, radar) {
-  const file = path.join(HERE, 'perf-budget.json');
-  if (!fs.existsSync(file)) return { ok: true, notes: ['no budget file — nothing to check'] };
-  const budget = JSON.parse(fs.readFileSync(file, 'utf8'));
+export function checkBudget(results, radar, budgetOverride = null) {
+  let budget = budgetOverride;
+  if (!budget) {
+    const file = path.join(HERE, 'perf-budget.json');
+    if (!fs.existsSync(file)) return { ok: true, notes: ['no budget file — nothing to check'] };
+    budget = JSON.parse(fs.readFileSync(file, 'utf8'));
+  }
   const notes = [];
   let ok = true;
 
@@ -388,6 +426,13 @@ function checkBudget(results, radar) {
       : key === 'radarTilesOnPan' ? (radar ? radar.radarOnPan : 0)
       : warm[key];
     if (typeof got !== 'number') { notes.push(`${key}: not measured, skipped`); continue; }
+    /* ==> null MEANS "MEASURED BUT NOT YET CALIBRATED", AND IT CANNOT FAIL.
+     * <== The same convention `tools/perf-budgets.json` already uses. It exists
+     * so a number can be watched from the night it is first collected without
+     * anyone inventing a threshold for it — inventing one is how this whole
+     * file came to fail every night for three weeks. A null is a promise to
+     * come back with a real figure, so every one of them prints. */
+    if (max === null) { notes.push(`--   ${key}: ${got} (no budget yet — reporting only)`); continue; }
     if (got > max) { ok = false; notes.push(`FAIL ${key}: ${got} > ${max}`); }
     else notes.push(`ok   ${key}: ${got} <= ${max}`);
   }
@@ -466,4 +511,11 @@ async function main() {
   if (budget && !budget.ok) process.exit(1);
 }
 
-main().catch((e) => { console.error(e); process.exit(2); });
+/* ==> ONLY RUN WHEN RUN. <== `checkBudget` is exported so `test-perf-budget.mjs`
+ * can prove it still fails on a real regression, and an import that launched a
+ * browser and reached for the live site would make that test impossible here —
+ * the sandbox has neither. Invoked from the command line, nothing changes. */
+const INVOKED_DIRECTLY = !!process.argv[1]
+  && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (INVOKED_DIRECTLY) main().catch((e) => { console.error(e); process.exit(2); });
