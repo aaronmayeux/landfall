@@ -1,0 +1,227 @@
+{
+  "at": "2026-09-09T20:12:53.825Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "styleLoaded": false,
+      "styleLoadedAtMs": null,
+      "styleLoadedNow": false,
+      "storms": 2,
+      "ttfbMs": 315,
+      "fcpMs": 620,
+      "lcpMs": 620,
+      "dclMs": 2997,
+      "loadMs": 3971,
+      "bootMarks": {
+        "create": 2738.7999999999884,
+        "load": 18815
+      },
+      "longTaskCount": 17,
+      "blockedMs": 17523,
+      "blockedLoadMs": 2703,
+      "blockedLoadTaskCount": 5,
+      "blockedAfterMs": 14820,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 15,
+      "staircaseMs": 2008,
+      "firstModuleAtMs": 358,
+      "lastModuleAtMs": 2365,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 22,
+      "apiKB": 144,
+      "totalRequests": 243,
+      "transferKB": 2306,
+      "firstApiAtMs": 2959,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2959
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 4758
+          },
+          {
+            "url": "/api/nws/zone?ids=HIZ023%2CHIZ026%2CHIZ027%2CHIZ028%2CHIZ051%2CHIZ052%2CH",
+            "startMs": 5332
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 9478
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=wp222026&carq=1",
+            "startMs": 15456
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "styleLoaded": true,
+      "styleLoadedAtMs": 11776,
+      "styleLoadedNow": false,
+      "storms": 2,
+      "ttfbMs": 77,
+      "fcpMs": 628,
+      "lcpMs": 628,
+      "dclMs": 1439,
+      "loadMs": 1446,
+      "bootMarks": {
+        "create": 1268.5999999999913,
+        "load": 10421.599999999991
+      },
+      "longTaskCount": 17,
+      "blockedMs": 13795,
+      "blockedLoadMs": 3798,
+      "blockedLoadTaskCount": 8,
+      "blockedAfterMs": 9997,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 213,
+      "ourWaves": 5,
+      "staircaseMs": 723,
+      "firstModuleAtMs": 506,
+      "lastModuleAtMs": 1229,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 22,
+      "apiKB": 144,
+      "totalRequests": 243,
+      "transferKB": 144,
+      "firstApiAtMs": 1431,
+      "data": {
+        "depth": 4,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1431
+          },
+          {
+            "url": "/api/nws/zone?ids=HIZ023%2CHIZ026%2CHIZ027%2CHIZ028%2CHIZ051%2CHIZ052%2CH",
+            "startMs": 2917
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 6286
+          },
+          {
+            "url": "/api/tcgp/adeck?storm=wp222026&carq=1",
+            "startMs": 10286
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "styleLoaded": false,
+    "styleLoadedAtMs": null,
+    "styleLoadedNow": false,
+    "storms": 2,
+    "ttfbMs": 144,
+    "fcpMs": 420,
+    "lcpMs": 420,
+    "dclMs": 2811,
+    "loadMs": 3753,
+    "bootMarks": {
+      "create": 2559.899999999994
+    },
+    "longTaskCount": 18,
+    "blockedMs": 15014,
+    "blockedLoadMs": 2640,
+    "blockedLoadTaskCount": 5,
+    "blockedAfterMs": 12374,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 213,
+    "ourWaves": 15,
+    "staircaseMs": 1999,
+    "firstModuleAtMs": 187,
+    "lastModuleAtMs": 2185,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 25,
+    "apiKB": 148,
+    "totalRequests": 246,
+    "transferKB": 2311,
+    "firstApiAtMs": 2777,
+    "data": {
+      "depth": 7,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 2777
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3135
+        },
+        {
+          "url": "/api/nws/zone?ids=HIZ023%2CHIZ026%2CHIZ027%2CHIZ028%2CHIZ051%2CHIZ052%2CH",
+          "startMs": 4583
+        },
+        {
+          "url": "/api/nhc/advisory?bin=CP4&kind=TCP",
+          "startMs": 5102
+        },
+        {
+          "url": "/api/tcgp/storms",
+          "startMs": 8019
+        },
+        {
+          "url": "/api/tcgp/adeck?storm=wp222026&carq=1",
+          "startMs": 13389
+        },
+        {
+          "url": "/api/imagery/radar-coverage?lat=28.10&lon=-162.30&z=5&px=512",
+          "startMs": 16741
+        }
+      ]
+    },
+    "radarTiles": 3,
+    "radarOnLoad": 3,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 3,
+      "medianMs": 1166.7,
+      "p95Ms": 1349.9,
+      "worstMs": 1349.9,
+      "droppedPct": 67,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 213 <= 240",
+      "ok   ourWaves: 5 <= 8",
+      "ok   staircaseMs: 723 <= 3000",
+      "ok   dataSerialDepth: 4 <= 6",
+      "--   blockedLoadMs: 3798 (no budget yet — reporting only)",
+      "--   blockedMs: 13795 (no budget yet — reporting only)",
+      "ok   transferKB: 144 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
