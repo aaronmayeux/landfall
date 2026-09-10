@@ -31,7 +31,7 @@
 
 import { formatDistance, formatWind, formatBearing, formatSpeed } from '../lib/units.js';
 import { formatUntil, formatClockDay } from '../lib/time.js';
-import { categoryColor, categoryShortLabel } from '../lib/category.js';
+import { categoryInk, categoryShortLabel } from '../lib/category.js';
 import { motionHeading } from '../lib/heading.js';
 import { APPROACH } from '../data/home-dashboard.js';
 import { WIND_LABEL, windColor, windDurationPhrase } from '../lib/wind.js';
@@ -361,11 +361,12 @@ export function countdownHtml(dash, sys, sectHead) {
       /* ==> THE PASS TAKES THE STORM'S OWN COLOR AT THAT MOMENT. <== Not
        * the wind threshold — this row is about the centre, not about what
        * reaches the house, and a Cat 4 arriving is a different fact from
-       * hurricane-force wind arriving. `categoryColor` returns the generic
-       * hue for a storm with no earned category, so a post-tropical low
-       * cannot borrow a Saffir-Simpson color it never had (§6). */
+       * hurricane-force wind arriving. `categoryInk` answers BONE for a
+       * reading with no earned category, so a post-tropical low cannot borrow
+       * a Saffir-Simpson color it never had (§6) and a pre-genesis fix cannot
+       * borrow the brick that reads as a strong storm (§57.7g). */
       at: Date.parse(dash.approach.time),
-      tone: categoryColor(dash.atClosest?.category, dash.storm.nature),
+      tone: categoryInk(dash.atClosest?.category, dash.storm.nature),
       key: 'true',
       lead: formatUntil(dash.approach.time, clock) || '',
       ev: `Closest pass — ${formatDistance(dash.approach.nm, sys())} ${formatBearing(dash.approach.bearing)} of you`,
@@ -405,7 +406,7 @@ export function countdownHtml(dash, sys, sectHead) {
     const kt = dash.atPassed?.windKt;
     rows.push({
       at: Date.parse(dash.passed.time),
-      tone: categoryColor(dash.atPassed?.category, dash.storm.nature),
+      tone: categoryInk(dash.atPassed?.category, dash.storm.nature),
       key: '',
       lead: formatUntil(dash.passed.time, clock) || '',
       ev: `Closest it came — ${formatDistance(dash.passed.nm, sys())} ${formatBearing(dash.passed.bearing)} of you`,
@@ -485,7 +486,7 @@ export function countdownHtml(dash, sys, sectHead) {
     }
     rows.push({
       at: m.at,
-      tone: categoryColor(m.category, dash.storm.nature),
+      tone: categoryInk(m.category, dash.storm.nature),
       key: '',
       lead: formatUntil(m.at, clock) || '',
       ev,

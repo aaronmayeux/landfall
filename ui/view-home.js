@@ -39,7 +39,7 @@
 import { HOME_DASH } from '../config/constants.js';
 import { formatDistance, formatWind, formatPressure, formatBearing, formatSpeed } from '../lib/units.js';
 import { formatAge, formatUntil, formatClockDay, formatTimeDay } from '../lib/time.js';
-import { categoryColor, categoryShortLabel } from '../lib/category.js';
+import { categoryInk, categoryShortLabel } from '../lib/category.js';
 import { isEnded, stormSwatch } from '../lib/lifecycle.js';
 import { motionHeading } from '../lib/heading.js';
 import { headingArrow } from './heading-arrow.js';
@@ -1494,7 +1494,7 @@ export function createHomeDashboardView({
         k: 'Now',
         v: formatWind(dash.storm.windKt, sys()),
         s: categoryShortLabel(dash.storm.category, nature),
-        color: categoryColor(dash.storm.category, nature),
+        color: categoryInk(dash.storm.category, nature),
       });
     }
 
@@ -1531,7 +1531,7 @@ export function createHomeDashboardView({
         k: past ? 'When it was closest' : 'When it’s closest',
         v: formatWind(at.windKt, sys()),
         s: categoryShortLabel(at.category, nature),
-        color: categoryColor(at.category, nature),
+        color: categoryInk(at.category, nature),
       });
     }
 
@@ -1597,7 +1597,7 @@ export function createHomeDashboardView({
          * is the opposite of the intent — every band shouting is every band
          * whispering, and here the loudest treatment had landed on the cell by
          * accident. Same call, same source, same rule as its neighbours. */
-        color: categoryColor(dash.peak.category, nature),
+        color: categoryInk(dash.peak.category, nature),
       });
     }
 

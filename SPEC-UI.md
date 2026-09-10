@@ -705,6 +705,36 @@ owns both the earliest-arrival hedge and the closing row. Hanging the hedge on
 `worst` put "wind could start this early" BELOW the arrival it hedges once the
 weaker rows existed.
 
+**==> A ROW WITH NOTHING TO GRADE DRAWS BONE, NOT BRICK. <==** The rail's dots
+take the reading's own colour, and a moment the source published a wind for and
+declined to classify — a pre-genesis fix, a low, a wave — used to come out in
+the brick `CATEGORY_COLOR.GENERIC` and read on a phone as a severe storm. §57.7g
+had already settled that state as `stormEnded`: a mark drained of its colour,
+still fully present, rather than the teal that reads as a depression or the
+brick that reads as a storm. Seen on the home rail 2026-09-10, fixed there.
+
+The dashboard therefore calls **`categoryInk`**, not `categoryColor`. The two
+are the same function for every reading that has a colour to earn — `categoryInk`
+delegates — and differ only on the ungraded ones, where it answers
+`var(--storm-ended)`.
+
+**The split exists because bone is palette-scoped and `categoryColor` is not
+only a CSS function.** It also feeds MapLibre features and Three.js materials,
+where a baked palette value is stale the moment the theme flips.
+`map/theme-state.js` rule 1b forbids the cheap way out — an expression reading
+both global state and feature data evaluates to black in the worker, silently,
+and there is a gate for it — so the map's only legal route is a feature re-push
+on every theme change, a list `main.js` caps at three. **So the map keeps the
+teal and the brick, deliberately** (Aaron's call, 2026-09-10: no brick has been
+seen on the live globe, and a globe repaint is its own pass to be judged on its
+own). `tools/test-category-ink.mjs` asserts that `categoryColor` has not moved,
+so a later session cannot bone the map by finishing a job nobody started.
+
+**`post-tropical` is not ungraded and keeps the louder hue on both functions.**
+The archive globe does draw it in bone, but there SIZE carries *was this ever a
+storm*; the dashboard has no size mechanism, so boning it would drop a
+distinction rather than unify one.
+
 **The last field to lift says "The wind is past you", never "All clear".** That
 phrase is the home chip's word for a *status* — nothing bearing down, both
 sources answered (§8's quiet path) — and spending it on a forecast moment
