@@ -79,18 +79,18 @@ real home is the other row carrying the same section number.
 | `9.10` | &nbsp;&nbsp;The home marker | `SPEC-MAP.md` | 3395-3573 |
 | `9.11` | &nbsp;&nbsp;The provisional pin | `SPEC-MAP.md` | 3574-3597 |
 | `9.12` | &nbsp;&nbsp;Icons — no pack, deliberately | `SPEC-MAP.md` | 3598-3625 |
-| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 3626-3760 |
-| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 3761-4003 |
-| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 4004-4094 |
-| `9.17` | &nbsp;&nbsp;The glass rim at the horizon | `SPEC-MAP.md` | 4095-4143 |
+| `9.13` | &nbsp;&nbsp;The storm glyph — 3D node mesh only | `SPEC-MAP.md` | 3626-3762 |
+| `9.14` | &nbsp;&nbsp;Storm light on the backdrop | `SPEC-MAP.md` | 3763-4005 |
+| `9.16` | &nbsp;&nbsp;Opening the Home drawer frames the house and the storm together | `SPEC-MAP.md` | 4006-4096 |
+| `9.17` | &nbsp;&nbsp;The glass rim at the horizon | `SPEC-MAP.md` | 4097-4145 |
 | `10` | Input — touch, mouse, keyboard all first-class | `SPEC.md` | 1200-1271 |
-| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 4224-4270 |
+| `11` | Basemap tiles — OpenFreeMap (OpenMapTiles), z8 by design | `SPEC-MAP.md` | 4226-4272 |
 | `11` | Basemap tiles | -> `SPEC-MAP.md` | SPEC.md:1272 |
-| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 4271-4293 |
-| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 4294-4390 |
-| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 4391-4431 |
-| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 4432-4455 |
-| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 4456-4477 |
+| `11.1` | &nbsp;&nbsp;The two schemas are not interchangeable | `SPEC-MAP.md` | 4273-4295 |
+| `11.2` | &nbsp;&nbsp;Administrative furniture — borders and place names | `SPEC-MAP.md` | 4296-4392 |
+| `11.3` | &nbsp;&nbsp;The name ladder — each rung overlaps the last | `SPEC-MAP.md` | 4393-4433 |
+| `11.4` | &nbsp;&nbsp;`to-number` on a missing property is 0, not null | `SPEC-MAP.md` | 4434-4457 |
+| `11.5` | &nbsp;&nbsp;Label collision order is free, and it is load-bearing | `SPEC-MAP.md` | 4458-4479 |
 | `12` | Code structure rules (summary — full rules live in project instructions) | `SPEC.md` | 1277-1296 |
 | `12.1` | &nbsp;&nbsp;The constants table of contents — the grouping, without the split | `SPEC.md` | 1695-1725 |
 | `12.2` | &nbsp;&nbsp;The relay mirrors — six facts written down twice | `SPEC.md` | 1726-1760 |
@@ -178,10 +178,10 @@ real home is the other row carrying the same section number.
 | `45.1` | &nbsp;&nbsp;Why this exists | `SPEC-DATA.md` | 1489-1516 |
 | `45.2` | &nbsp;&nbsp;Source — NHC, the two- and seven-day outlook | `SPEC-DATA.md` | 1517-1676 |
 | `45.3` | &nbsp;&nbsp;Source — JTWC, everywhere else | `SPEC-DATA.md` | 1677-1786 |
-| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 4478-4537 |
+| `45.4` | Genesis — what it draws on the globe | `SPEC-MAP.md` | 4480-4539 |
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1787-1873 |
-| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 4666-4683 |
-| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 4684-4692 |
+| `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 4668-4685 |
+| `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 4686-4694 |
 | `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2553-2744 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1874-2004 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 71-72 |
@@ -458,7 +458,7 @@ real home is the other row carrying the same section number.
 |---|---|---|
 | `SPEC-DATA.md` | 209,006 | 60 |
 | `SPEC-FLOOD-PLAN.md` | 83,011 | 16 |
-| `SPEC-MAP.md` | 295,389 | 43 |
+| `SPEC-MAP.md` | 295,549 | 43 |
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 107,097 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |

@@ -92,16 +92,7 @@ storm, which is all these need.
   heavy-rain magenta against the Saffir-Simpson cat-4 dot, and light-rain cyan
   against the coastline glow. The terms permit recolouring.
 
-**4. THE STAND-IN POSITION DOT HAS NEVER BEEN SEEN ON GLASS.** A live storm
-whose shapes have not been published gets a category-coloured dot with its code
-in it now, instead of a bare name over empty ocean (`SPEC-MAP.md` §9). Two
-looks, both needing a **storm in its first few advisories, at basin zoom**: does
-one dot with no track around it read as the storm, or as a stray marker — and
-when NHC's shapefiles land, does the real tau-0 dot arrive on top of it without
-a visible twitch. The positions agree to nine decimals in the bytes; what is
-unproven is whether the handoff is invisible at 60 fps on a phone.
-
-**5. FOUR WORDING QUESTIONS ON THE ARCHIVE PANEL, NONE BLOCKING ANYTHING.**
+**4. FOUR WORDING QUESTIONS ON THE ARCHIVE PANEL, NONE BLOCKING ANYTHING.**
 §57.7c. Whether `Post-Trop` reads as plain English on a landfall row; whether a
 paragraph carrying four full place names in one sentence earns its length
 (§57.41); whether *"by then a post-tropical storm"* lands as explanation or as

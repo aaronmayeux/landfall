@@ -3714,7 +3714,9 @@ every other icon's geometry is inline. The two move together by hand.
   glass 2026-09-10. It draws a forecast point with no forecast in it: forecast
   radius and stroke read off `STORM_GEO`, the storm's own §6 category colour, and
   its own two-character code in `storm-dot-position-code`. **No zoom floor**, same
-  as the mark below and for the same reason. Zoomed further out there was never a
+  as the mark below and for the same reason. **Confirmed on glass 2026-09-10** —
+  the dot reads as the storm on its own, and the handoff to the real tau-0 dot is
+  not visible when the shapefiles land. Zoomed further out there was never a
   hole — the 3D mesh builds heads from the storm list, not from geometry.
 - **The trigger is "nothing was drawn", never "NHC has not published".**
   `map/layers/drawn-points.js` holds the set of storm ids that currently have dots
