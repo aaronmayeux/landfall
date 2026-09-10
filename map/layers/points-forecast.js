@@ -111,6 +111,7 @@ import { trackPointReading } from '../../lib/track-point.js';
 import { placeSpokes } from './label-placement.js';
 import { placeName } from './name-placement.js';
 import { registerLayer } from './registry.js';
+import { noteDrawn } from './drawn-points.js';
 
 const SOURCE = 'sel-fpoints';
 const AMB_SOURCE = 'amb-fpoints';
@@ -736,6 +737,7 @@ registerLayer({
      * early on an empty collection — as the only writer, so the previous
      * storm's dots would stay on the map. */
     lastSelected = built?.features?.length ? built : null;
+    noteDrawn(SOURCE, lastSelected?.features);
     /* PLACED FIRST, THEN SET — one `setData` instead of two. The old order
      * wrote the unplaced collection, then wrote it again placed, which cost a
      * second source update and (now that labels default to hidden) would flash
@@ -746,12 +748,14 @@ registerLayer({
 
   clear(map) {
     lastSelected = null;
+    noteDrawn(SOURCE, null);
     map.getSource(SOURCE)?.setData(EMPTY);
     forgetNames(SOURCE);
   },
 
   updateAmbient(map, features) {
     lastAmbient = decorated({ features });
+    noteDrawn(AMB_SOURCE, lastAmbient.features);
     /* Dots and codes now, text when the timer fires. Nothing is withheld that
      * the user can act on — the label is a forecast HOUR, and an hour that
      * arrives a tenth of a second after its dot is not a §5 silence. */

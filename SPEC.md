@@ -927,6 +927,10 @@ less honest sentence.
   literal, so it tracks the cage's floor through any retune.
 - **Past beads keep their real severity colors and heights.** History is a
   record, only the future is a claim. A Cat 4 that ended was still a Cat 4.
+- **`storm-dot-position`**, the same idea for a **live** storm with no geometry
+  drawn — NHC publishes the advisory before the shapefiles, and a storm we know
+  the position of must never be invisible while we wait. Full contract in
+  `SPEC-MAP.md` §9.
 - **`storm-dot-last-known`**, a grey mark at the last known position of a
   storm nobody is publishing — ended OR silent — arriving on
   `ZOOM.ambientGeometry` with the rest of the storm picture. It exists because a

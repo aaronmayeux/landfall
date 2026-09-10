@@ -25,10 +25,14 @@ import { noCurrentReading } from '../lib/lifecycle.js';
 import { SIZE, STORM_GEO } from '../config/tokens.js';
 import { gs } from './theme-state.js';
 import { byZoom } from './style.js';
+import { categoryColor, categoryDotCode } from '../lib/category.js';
 import { onNamePlacement, namePlacementFor } from './layers/points-forecast.js';
+import { onForecastPointsDrawn, hasForecastPoints } from './layers/drawn-points.js';
 
 const SOURCE_ID = 'storms';
 const LAYER_DOT = 'storm-dot-planet';
+const LAYER_POSITION = 'storm-dot-position';
+const LAYER_POSITION_CODE = 'storm-dot-position-code';
 const LAYER_LAST_KNOWN = 'storm-dot-last-known';
 const LAYER_LAST_KNOWN_MARK = 'storm-dot-last-known-mark';
 const LAYER_NAME = 'storm-name';
@@ -126,8 +130,56 @@ const NAME_OFFSET_DEFAULT = Object.freeze([
  *
  * It fires only when a name actually moved, so a pan that changes nothing
  * costs nothing here. */
-let redrawNames = null;
-onNamePlacement(() => redrawNames?.());
+let redrawStorms = null;
+onNamePlacement(() => redrawStorms?.());
+
+/* The second publisher, subscribed here for the same reasons and with the
+ * same shape: forecast dots arriving or leaving decides whether a storm needs
+ * the stand-in position dot below, and only the module that draws them knows.
+ * It fires when the SET changes, not when the camera moves. */
+onForecastPointsDrawn(() => redrawStorms?.());
+
+/**
+ * The four properties that decide what mark a storm's own position gets.
+ *
+ * PURE, AND EXPORTED FOR THAT REASON — `hasPoints` is passed in rather than
+ * read from the layer module, so the rule can be tested without a map and so
+ * this file keeps one answer instead of two.
+ *
+ * ==> THREE STATES, AND EXACTLY ONE MARK EVER DRAWS. <==
+ *
+ *   - `lastKnown` — ended, or gone quiet. The grey X. Its own layers below,
+ *     and it WINS: a finished storm has no forecast points either, so without
+ *     the precedence both marks would stack on the same pixel.
+ *   - `noShapes` — live, and nothing was drawn for it. The stand-in dot: a
+ *     forecast point with no forecast in it, in the storm's own category
+ *     colour, carrying its own code. NHC publishes the advisory before the
+ *     shapefiles, so this is the normal state of a brand-new storm for its
+ *     first minutes to hours, and it is also where a dead geometry fetch
+ *     leaves a storm permanently.
+ *   - neither — the tau-0 forecast dot is on screen and IS the position
+ *     mark. Nothing extra draws, and the stand-in is written to match that
+ *     dot in every channel so the swap is invisible when NHC catches up.
+ *
+ * ==> THE COLOUR AND CODE ARE COMPUTED FOR EVERY STORM, NOT ONLY THE ONES
+ * THAT NEED THEM. <== A conditional would put `null` in a paint property on
+ * every other storm, and MapLibre's expression evaluator answers a null
+ * colour with a console error and a dropped feature rather than a fallback.
+ * `categoryColor` always returns a real colour, including for a system NHC
+ * declines to grade, so there is nothing to guard.
+ */
+export function positionMarkProps(storm, hasPoints) {
+  const lastKnown = noCurrentReading(storm);
+  return {
+    lastKnown,
+    noShapes: !lastKnown && !hasPoints,
+    _posColor: categoryColor(storm?.category, storm?.nature, storm?.categoryCode),
+    /* Empty string, never null: `text-field` takes a string, and a storm with
+     * no earned Saffir-Simpson reading draws a bare coloured dot rather than a
+     * guessed code (§6, the same rule the forecast dots follow). */
+    _posCode: categoryDotCode(storm?.category, storm?.nature),
+  };
+}
 
 function toFeatureCollection(storms) {
   return {
@@ -157,17 +209,19 @@ function toFeatureCollection(storms) {
          * expression. `category` above stays honest — null means unknown. */
         sizeRank: s.category
           ?? (s.categoryCode === 'HU' ? HURRICANE_RANK : NO_CATEGORY_RANK),
-        /* Drives the last-known-position dot below. A BOOLEAN, not the record:
-         * a style expression can filter on it, and the reasoning behind the
+        /* `lastKnown`, `noShapes` and the colour/code the second of them
+         * draws with — all four decided in one place, above, because they are
+         * one decision. BOOLEANS rather than the lifecycle record: a style
+         * expression can filter on a boolean, and the reasoning behind the
          * record belongs to lib/lifecycle.js rather than to a paint property.
          *
-         * ==> ENDED **OR** SILENT. <== A live storm's dot at this zoom is its
-         * tau-0 forecast point, and both states delete their forecast points
-         * (lib/future-slots.js). Filtering on `ended` alone left a silent storm
-         * as a past track running into empty ocean with nothing at the end of
-         * it — found on glass by Aaron. The two states differ in words, never
-         * in whether the storm has a position worth marking. */
-        lastKnown: noCurrentReading(s),
+         * ==> `lastKnown` IS ENDED **OR** SILENT. <== Both states delete their
+         * forecast points (lib/future-slots.js). Filtering on `ended` alone
+         * left a silent storm as a past track running into empty ocean with
+         * nothing at the end of it — found on glass by Aaron. The two states
+         * differ in words, never in whether the storm has a position worth
+         * marking. */
+        ...positionMarkProps(s, hasForecastPoints(s.id)),
       },
       };
     }),
@@ -175,7 +229,7 @@ function toFeatureCollection(storms) {
 }
 
 /**
- * Adds the storm source + three layers. Call once, after style load.
+ * Adds the storm source + its layers. Call once, after style load.
  * Layers go on top of the stack — draw order (SPEC §13) puts the storm dot
  * above every shape layer, and labels above the dot.
  *
@@ -233,6 +287,74 @@ export function addStormMarkers(map) {
        * tall no matter what the floor said. 44 px has to mean 44 px of screen,
        * which is what `viewport` measures. */
     },
+  });
+
+  /* ==> THE POSITION OF A LIVE STORM NOBODY HAS DRAWN A TRACK FOR. <==
+   *
+   * Sibling to the ended-storm mark below, and built on the identical idea:
+   * a forecast point with no forecast in it. Same radius, same stroke, same
+   * centred character. The difference is which fact it is standing in for —
+   * that one says "the last place anyone put it", this one says "here it is,
+   * we just have no shapes yet" — so this one keeps the storm's real
+   * category colour and its real code, because those ARE known. The advisory
+   * arrived; only the shapefiles are late.
+   *
+   * ==> IT MUST MATCH THE TAU-0 DOT EXACTLY, AND THAT IS MEASURED RATHER
+   * THAN AESTHETIC. <== On live NHC bytes (2026-09-10) a storm's reported
+   * position and its tau-0 forecast point agree to nine decimal places,
+   * because both are the same analysis. So when the shapefiles land, the real
+   * dot appears on the same pixel at the same size in the same colour and
+   * this one stops drawing — the reader sees a track grow out of a dot that
+   * did not move, rather than a dot appearing.
+   *
+   * NO ZOOM FLOOR, for the reason the ended mark has none: it arrives when a
+   * forecast dot would, which is when the MapLibre canvas fades in behind the
+   * cage. Zoomed further out the 3D mesh is already drawing this storm's head
+   * off the storm list, so there was never a hole there — the hole was here,
+   * at map zoom, where the geometry IS the storm and there was no geometry.
+   *
+   * `viewport` pitch alignment by omission, same as every other circle in
+   * this file: the disc faces the reader instead of foreshortening to a
+   * sliver out at the limb. */
+  map.addLayer({
+    id: LAYER_POSITION,
+    type: 'circle',
+    source: SOURCE_ID,
+    filter: ['==', ['get', 'noShapes'], true],
+    paint: {
+      'circle-color': ['get', '_posColor'],
+      /* READ OFF THE FORECAST POINT'S OWN TOKENS, never copied as numbers —
+       * the whole point is that the two are indistinguishable, and a
+       * duplicated literal is how that stops being true. */
+      'circle-radius': STORM_GEO.pointRadius,
+      'circle-stroke-width': STORM_GEO.pointStrokeWidth,
+      'circle-stroke-color': gs('geoPointStroke'),
+    },
+  });
+
+  /* The code inside it. Its own layer because MapLibre draws text and circles
+   * in different layer types, and `text-allow-overlap` / `text-ignore-placement`
+   * for the reason the forecast code carries them: it belongs to its dot and
+   * must never be moved or dropped by collision, or the dot shows up empty and
+   * reads as a rendering fault.
+   *
+   * `geoPointCodeColor` — the forecast dots' ink, not the ended mark's. This
+   * dot wears a §6 category colour that does not move between themes, which is
+   * exactly the condition that ink was chosen for. */
+  map.addLayer({
+    id: LAYER_POSITION_CODE,
+    type: 'symbol',
+    source: SOURCE_ID,
+    filter: ['==', ['get', 'noShapes'], true],
+    layout: {
+      'text-field': ['get', '_posCode'],
+      'text-font': ['Noto Sans Regular'],
+      'text-size': STORM_GEO.pointCodeSize,
+      'text-anchor': 'center',
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+    },
+    paint: { 'text-color': gs('geoPointCodeColor') },
   });
 
   /* Basin band and closer: the category-colored spiral. Always drawn —
@@ -429,8 +551,8 @@ export function addStormMarkers(map) {
     map.getSource(SOURCE_ID)?.setData(toFeatureCollection(lastStorms));
   };
 
-  /* Hand this pass's redraw to the one long-lived subscription below. */
-  redrawNames = draw;
+  /* Hand this pass's redraw to the two long-lived subscriptions above. */
+  redrawStorms = draw;
 
   return {
     update(storms) {

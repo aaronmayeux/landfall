@@ -3705,6 +3705,35 @@ every other icon's geometry is inline. The two move together by hand.
   `queryRenderedFeatures` (unlike `visibility: none`, which it excludes). If taps
   ever stop selecting, this is the first thing to re-check, and the fix is raising
   the opacity a hair — **not** restoring the MapLibre glyph.
+- **`storm-dot-position`** — the same hole from the other side: a **live** storm for
+  which no forecast points were drawn. NHC publishes an advisory minutes to hours
+  before it publishes the matching shapefiles, so a brand-new storm spends its first
+  advisories with a position, a name, a wind speed and no geometry at all — and at
+  map zoom, where the geometry IS the storm, that was a name floating over empty
+  ocean while the storm drawer said *the map has this storm's position*. Caught on
+  glass 2026-09-10. It draws a forecast point with no forecast in it: forecast
+  radius and stroke read off `STORM_GEO`, the storm's own §6 category colour, and
+  its own two-character code in `storm-dot-position-code`. **No zoom floor**, same
+  as the mark below and for the same reason. Zoomed further out there was never a
+  hole — the 3D mesh builds heads from the storm list, not from geometry.
+- **The trigger is "nothing was drawn", never "NHC has not published".**
+  `map/layers/drawn-points.js` holds the set of storm ids that currently have dots
+  on the map: `map/layers/points-forecast.js` writes it from what it actually drew
+  and `map/markers.js` subscribes. Its own module rather than a block inside the
+  layer, because that file is already past the §12 ceiling with a cut owed — and
+  because one module writes the set and a different one reads it, so it belongs to
+  neither (`map/layers/*` must never import `markers.js`). A storm
+  whose geometry fetch died outright is in the identical state on screen, so one
+  condition covers both causes and neither can be forgotten separately.
+- **It has to be indistinguishable from the tau-0 dot it stands in for**, and that
+  is a measurement rather than a preference: on live NHC bytes (Lowell, 2026-09-10)
+  the reported storm position and the tau-0 forecast point agree to nine decimal
+  places, because both are the same analysis. So when the shapefiles land the real
+  dot appears on the same pixel at the same size in the same colour and this layer
+  stops drawing — the reader sees a track grow out of a dot that did not move.
+  **`lastKnown` wins over `noShapes`** where both could apply: a finished storm has
+  no forecast points either, and without the precedence the grey X and a category
+  dot would stack on one pixel.
 - **`storm-dot-last-known`** — a live storm's map-zoom position dot is its tau-0 forecast
   point, and an ended storm has none. Without it you zoom in and find a track ending
   in empty ocean. Drawn as a forecast dot with no forecast in it: forecast radius and
