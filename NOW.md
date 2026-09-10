@@ -122,12 +122,21 @@ watched area since §45 is counted as nothing.
 
 **THE HOME TIMELINE COLOURS EVERY ROW BY THE STORM'S PRESENT NATURE.**
 `ui/countdown-home.js` builds each row as
-`categoryColor(row.category, dash.storm.nature)`, and `categoryColor` tests
-nature FIRST and returns early. So the moment a storm goes post-tropical every
-row in the timeline turns brick, and on a remnant every row turns the ungraded
-teal — including the "at its strongest" row, which describes a moment when it
-was neither. `lib/track-point.js` documents refusing exactly this; the timeline
-does it. **Three call sites, lines 368, 408 and 488, all in that one file.**
+`categoryInk(row.category, dash.storm.nature)`, and nature is tested FIRST and
+returns early. So the moment a storm goes post-tropical every row in the
+timeline turns brick, and on a remnant every row turns bone — including the "at
+its strongest" row, which describes a moment when it was neither.
+`lib/track-point.js` documents refusing exactly this; the timeline does it.
+**Three call sites, lines 369, 409 and 489, all in that one file.**
+
+**==> THE COLOUR HALF OF THIS IS FIXED AND THE NATURE HALF IS NOT. <==**
+2026-09-10 replaced `categoryColor` with `categoryInk` here, so an UNGRADED
+reading now draws bone instead of the brick that read as a severe storm
+(`SPEC-UI` §8, §57.7g). That was the visible bug; this one is the structural
+one under it, and it is untouched. **The fix is a per-row nature, and the row
+already has the field to build one from** — `atClosest` and `atPassed` both
+carry `stormType`. A milestone row is the awkward one: it is a class crossing,
+so its nature is by definition the graded one.
 
 **THE HOME DASHBOARD ANSWERS A US STORM ABOUT THE WRONG MODEL.** The storm
 drawer's Flooding section carries NHC's own peak surge (`SPEC-UI` §56.8);
