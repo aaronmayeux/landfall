@@ -2266,11 +2266,40 @@ button.drawer-identity:focus-visible {
  * one Retry. It had drifted into a near-copy — lighter weight, tighter
  * padding, no `appearance` reset, so iOS Safari was free to paint its own
  * chrome over it — which is exactly how two buttons doing the same job end up
- * looking like two different controls. */
+ * looking like two different controls.
+ *
+ * ==> IT FLOWS WITH THE SENTENCE, IT DOES NOT CLAIM A LINE. <== Aaron on
+ * glass, 2026-09-10. Every place this button appears, it answers a sentence
+ * sitting directly above it — "NHC hasn't published the shapes yet", "the
+ * forecast track didn't load" — and those sentences almost never fill their
+ * last line. As a block it took a whole row of its own anyway and left that
+ * gap sitting empty, which on a phone is a third of a notice's height spent
+ * on nothing.
+ *
+ * Inline-block, so it drops into the space after the last word when there is
+ * room and wraps onto its own line when there is not — the narrow case
+ * degrades to what it used to do, rather than to something broken.
+ * `vertical-align: middle` is what keeps it centred against the text rather
+ * than hanging off the baseline. The line box it lands in grows to the
+ * button's 44px; that height is the touch target and is not negotiable, so
+ * the line growing is the correct outcome, not a side effect to fight.
+ *
+ * ==> AND IT CARRIES NO MARGIN, DELIBERATELY. <== A `margin-left` looks right
+ * on the line where the button follows text and is wrong the moment it wraps:
+ * a leading margin survives the line break and indents the button off the
+ * paragraph's left edge by exactly that much. The word space between the
+ * sentence and the button is the gap, and it collapses at the start of a line
+ * the way a space is supposed to, so the wrapped button lands flush with the
+ * text above it. Vertical margins are out for the same class of reason — on
+ * an inline-block they apply on the inline line too, and would shove the
+ * button off the text it is sitting beside.
+ *
+ * `.retry` on the storms list stays a block — it stands alone under a status
+ * line rather than answering one, so it has no sentence to join. */
 .detail-retry {
-  display: block;
+  display: inline-block;
+  vertical-align: middle;
   min-height: var(--touch-target);
-  margin-top: var(--space-snug);
   padding: 0 var(--space-comfy);
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
