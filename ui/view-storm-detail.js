@@ -1158,10 +1158,15 @@ export function createStormDetailView({
    * Deleting the section wholesale would have taken the recovery with it and
    * left a storm quietly drawing nothing.
    *
-   * So it is now a BARE BLOCK PINNED ABOVE THE SECTIONS rather than a section
-   * of its own — an error must not sit behind a collapsed header that the user
+   * So it is now a BLOCK PINNED ABOVE THE SECTIONS rather than a section of
+   * its own — an error must not sit behind a collapsed header that the user
    * may have collapsed weeks ago. It renders to an empty string when there is
    * nothing wrong, which is most of the time.
+   *
+   * Being pinned means it lands directly in `.detail-body`, which carries no
+   * side padding, so it needs `.detail-geo-pinned` to supply its own inset and
+   * box — see panels.css. Every branch below emits that class, and
+   * tools/ended-check.mjs keys its "no map problem here" assertion on it.
    */
   function mapProblemHtml() {
     /* A SILENCED STORM HAS NO MAP PROBLEM. Its slots are empty because we
@@ -1180,7 +1185,7 @@ export function createStormDetailView({
       /* The detail line is our own short human-written message (never a
        * stack trace) — on a phone, this panel IS the console. */
       return `
-        <div class="detail-geo-error detail-geo-block">
+        <div class="detail-geo-error detail-geo-block detail-geo-pinned">
           Storm geometry unavailable — the map is missing this storm's cone and tracks.
           ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
           <button class="detail-retry" type="button">Retry</button>
@@ -1189,7 +1194,7 @@ export function createStormDetailView({
     const failed = failedLayerNames();
     if (failed.length) {
       return `
-        <div class="detail-geo-error detail-geo-block">
+        <div class="detail-geo-error detail-geo-block detail-geo-pinned">
           Unavailable on the map: ${esc(failed.join(', '))}.
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
@@ -1202,10 +1207,19 @@ export function createStormDetailView({
      * globe, and no explanation for the missing shapes (§5, never ship
      * silence on failure). It is a real state with a real cause — NOAA has
      * not published this advisory's geometry yet — so it says that, and it
-     * offers the retry. */
+     * offers the retry.
+     *
+     * ==> AND IT IS A NOTE, NOT AN ERROR. <== It rendered in `--error` red
+     * until 2026-09-10, which said "something is broken" about a gap NOAA
+     * opens on every single storm: the advisory lands, the shapefiles follow
+     * minutes to hours later. Nothing fetched, parsed or drawn has failed.
+     * It takes `--stale`, the same amber as the held-cone note directly
+     * below — the two are one fact told from either side ("no shapes yet" and
+     * "older shapes for now"), so they must not be two different colours. Red
+     * is left for the two blocks above, where a fetch actually died. */
     if (geo.state === 'ok' && geo.bundle?.layers && !hasAnyFeatures()) {
       return `
-        <div class="detail-geo-error detail-geo-block">
+        <div class="detail-geo-note detail-geo-block detail-geo-pinned">
           NHC hasn’t published this advisory’s cone and tracks yet — the map has
           this storm’s position but not its shapes.
           <button class="detail-retry" type="button">Retry</button>
@@ -1221,7 +1235,7 @@ export function createStormDetailView({
     if (geo.state === 'ok' && geo.held) {
       const gAdv = geo.bundle?.stamp?.advisnum;
       return `
-        <div class="detail-geo-note detail-geo-block">
+        <div class="detail-geo-note detail-geo-block detail-geo-pinned">
           Cone and tracks are from ${gAdv ? `advisory ${esc(gAdv)}` : 'an earlier advisory'} —
           NHC hasn’t published newer shapes yet.
           <button class="detail-retry" type="button">Retry</button>

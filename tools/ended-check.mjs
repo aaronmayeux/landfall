@@ -352,7 +352,14 @@ const panel = await page.evaluate(() => {
       document.querySelector('#drawer-title .drawer-identity-sub')?.textContent?.trim() || null,
     vitalsTitle: [...document.querySelectorAll('.detail-section-head h2')].map((h) => h.textContent.trim()),
     retries: document.querySelectorAll('.detail-retry').length,
-    problem: document.querySelector('.detail-geo-error')?.textContent?.trim() || null,
+    /* `.detail-geo-pinned`, NOT `.detail-geo-error`. This assertion is about
+     * the map-problem block existing at all for a finished storm, and one of
+     * the four things that block can say stopped being an error on
+     * 2026-09-10 (the not-yet-published notice went amber). Scoped to the
+     * error class, this check would have kept passing while the exact block
+     * it exists to forbid rendered in a different colour — a test agreeing
+     * with the bug. The pinned class is emitted by all four. */
+    problem: document.querySelector('.detail-geo-pinned')?.textContent?.trim() || null,
     body: document.querySelector('.detail-body')?.textContent?.replace(/\s+/g, ' ') || '',
   };
 });

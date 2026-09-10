@@ -2218,30 +2218,72 @@ button.drawer-identity:focus-visible {
   font-size: var(--type-body);
 }
 
+/* ==> THE PINNED NOTICE NEEDS ITS OWN BOX, AND ONLY THE PINNED ONE DOES. <==
+ *
+ * `.detail-geo-block` is emitted in two very different places. Inside a
+ * section body it is already inset — `.detail-section-body` carries
+ * `--drawer-inset` — and adding more here would double it. But the map-problem
+ * notice is PINNED ABOVE THE SECTIONS, straight into `.detail-body`, and
+ * `.detail-body` carries NO side padding on purpose (the section dividers are
+ * full-bleed hairlines). So that one, alone, rendered flush to both screen
+ * edges: red text touching the glass, and a Retry button hanging off the left
+ * margin. Aaron on glass, 2026-09-10.
+ *
+ * The box is the shape `.detail-ghost-note` already uses for a standing
+ * notice in this panel — hairline border, standard radius, inset to match the
+ * section headings above and below it, so the notice lines up with the app
+ * instead of floating outside it. */
+.detail-geo-pinned {
+  margin: var(--space-snug) var(--drawer-inset) var(--space-base);
+  padding: var(--space-snug) var(--space-base);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+}
+
 .detail-geo-error {
   color: var(--error);
 }
 
-/* NOT AN ERROR, AND IT MUST NOT LOOK LIKE ONE. Showing an earlier advisory's
- * cone is the app working correctly — the shapes are real and NOAA simply
- * hasn't published newer ones. It takes the STALE color, the same one the
- * timestamp band uses for older-than-expected data, so the two agree on what
- * "old but true" looks like. Painting this red would train the user to ignore
- * red, which is the color a genuinely missing layer needs. */
+/* NOT AN ERROR, AND IT MUST NOT LOOK LIKE ONE. Two states land here and they
+ * are the same fact twice: showing an earlier advisory's cone, and having no
+ * cone yet at all. Both are the app working correctly and NOAA simply not
+ * having published the shapes for this advisory — nothing fetched, parsed or
+ * rendered has failed. They take the STALE color, the same one the timestamp
+ * band uses for older-than-expected data, so the three agree on what "the
+ * source hasn't caught up" looks like.
+ *
+ * ==> THE SECOND ONE WAS RED UNTIL 2026-09-10 AND THAT WAS THIS RULE'S OWN
+ * WARNING COMING TRUE. <== Painting a routine publishing lag in `--error`
+ * trains the reader to ignore red, which is the color a genuinely dead feed
+ * needs — and on glass it read as a major problem with the app during a
+ * perfectly normal gap between advisory and geometry. Red stays for the two
+ * cases where something actually broke. */
 .detail-geo-note {
   color: var(--stale);
 }
+
+/* The same button as `.retry` on the storms list, and it has to be: one app,
+ * one Retry. It had drifted into a near-copy — lighter weight, tighter
+ * padding, no `appearance` reset, so iOS Safari was free to paint its own
+ * chrome over it — which is exactly how two buttons doing the same job end up
+ * looking like two different controls. */
 .detail-retry {
   display: block;
   min-height: var(--touch-target);
-  margin-top: var(--space-tight);
-  padding: 0 var(--space-base);
+  margin-top: var(--space-snug);
+  padding: 0 var(--space-comfy);
   background: var(--glass-raised);
   border: 1px solid var(--glass-border);
   border-radius: var(--radius);
   color: var(--text-primary);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+@media (hover: hover) {
+  .detail-retry:hover { border-color: var(--text-muted); }
 }
 .detail-retry:focus-visible {
   outline: 2px solid var(--focus-ring);
