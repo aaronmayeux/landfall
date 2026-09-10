@@ -232,7 +232,7 @@ error bar and signing NHC's name to it.
 
 **==> A STORM THAT CANNOT REACH THIS HOUSE GETS A DIFFERENT SCREEN. <==** Every
 block below — closest pass, strength at the pass, the arrival trend, the hero
-chart, the wind countdown, the near ring — is *approach machinery*, and pointed
+chart, the near ring — is *approach machinery*, and pointed
 at a cyclone on the other side of the planet it produces sentences that are each
 arithmetically true and collectively absurd. Measured on glass 2026-08-11
 against PEILOU-26 at 5,529 nm: "At the pass 23 mph" about a closest approach of
@@ -254,6 +254,30 @@ it is going — and names the **basin**, because that is the fact that explains
 the distance. "6,363 mi WNW" is a number; "the Northwest Pacific" is a place,
 and a reader who knows where that is needs no further sentence about whether it
 can reach them.
+
+**==> THE TIMELINE IS NOT PART OF THE FORK, AND WAS. <==** It carries two
+families of row, and only one of them is approach machinery. The house-relative
+rows — wind reaching you, both closest passes, the ring — are **each already
+gated** on the corridor or on `approach.relevant`, so on a far storm they
+cannot fire whatever the fork does. The other family is the storm's own class
+changes: *became a tropical storm*, *weakens to a depression*, *at its
+strongest*. Those mention no house, are true at any distance, and are what a
+reader stepping to a distant cyclone actually came to read. Cutting the whole
+section to stop the first family threw the second away for nothing.
+
+So a far storm's rail is its history plus the `now` divider, and nothing else
+can reach it. `countdownHtml` still returns empty by itself when there are no
+events at all, so a storm with a flat forecast and no history draws no section
+rather than an empty heading.
+
+**The inconsistency that surfaced it** is worth keeping, because it is the
+shape of the next one: a GDACS storm publishing no heading lands on
+`track-unknown` and never reaches the `far-off` rung, so it kept a full
+Timeline at 6,105 nm on the same day an NHC storm lost one at 1,640 nm. The
+rung order is deliberate and was left alone (`no heading` beats `not relevant`
+beats `receding`); the fix was to stop the Timeline forking at all. Aaron's
+call on glass, 2026-09-10. `tools/test-home-far.mjs` drives both homes against
+one advisory and is mutation-verified against the guard going back in.
 
 ### What the dashboard states
 
@@ -2095,8 +2119,8 @@ exempt rather than skipped.
 
 **The dashboard is a fixed height, not a content height.** Every other view in
 the sheet is longer than 60vh and therefore always exactly that; the dashboard
-is not, because the near layout carries a chart and a countdown the far layout
-drops. Stepping between a storm bearing down and one mid-ocean resized the sheet
+is not, because the near layout carries a chart and a fuller rail the far
+layout does not. Stepping between a storm bearing down and one mid-ocean resized the sheet
 under the reader's thumb. It also steadies the camera: the flyTo offset is
 measured from this height, so a variable sheet meant the same storm framed the
 same way landed differently depending on which storm you stepped from. The rule
@@ -2118,7 +2142,8 @@ not throw them off it.
 **The flight is measured after the render, never before.** The camera offset
 comes from the drawer's real height so the storm lands in the visible strip
 above the sheet; the dashboard's height changes with its own content, because
-the far layout drops the chart and the countdown.
+the far layout drops the chart and the headline and its rail carries fewer
+rows.
 
 **The chevron buttons are built once and never replaced**, and the stepper's
 `takeFocus()` returns the one just pressed, once. Stepping re-enters the view

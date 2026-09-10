@@ -97,10 +97,10 @@ real home is the other row carrying the same section number.
 | `13` | Inherited hard-won rules | `SPEC.md` | 1761-1762 |
 | `14` | Roadmap — RETIRED | `SPEC.md` | 2327-2333 |
 | `15` | Open decisions — RETIRED | `SPEC.md` | 2334-2340 |
-| `16` | Screen architecture | `SPEC-UI.md` | 1088-1089 |
+| `16` | Screen architecture | `SPEC-UI.md` | 1112-1113 |
 | `16` | Screen architecture | -> `SPEC-UI.md` | SPEC.md:2341 |
-| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1724-1904 |
-| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1905-2252 |
+| `16.4` | &nbsp;&nbsp;&nbsp;&nbsp;The heading arrow — one mark, three surfaces | `SPEC-UI.md` | 1748-1928 |
+| `16.5` | &nbsp;&nbsp;&nbsp;&nbsp;The storm stepper, and the header both drawers share | `SPEC-UI.md` | 1929-2277 |
 | `17` | Public operation | `SPEC-OPS.md` | 23-24 |
 | `17` | Public operation — hardening, scale, and the money question | -> `SPEC-OPS.md` | SPEC.md:2347 |
 | `17.1` | &nbsp;&nbsp;The disclaimer | `SPEC-OPS.md` | 37-151 |
@@ -182,7 +182,7 @@ real home is the other row carrying the same section number.
 | `45.5` | &nbsp;&nbsp;Failure behaviour | `SPEC-DATA.md` | 1787-1873 |
 | `45.6` | &nbsp;&nbsp;Which horizon goes on the globe | `SPEC-MAP.md` | 4668-4685 |
 | `45.7` | &nbsp;&nbsp;The standing visual risk | `SPEC-MAP.md` | 4686-4694 |
-| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2553-2744 |
+| `45.8` | Genesis — the drawer section | `SPEC-UI.md` | 2578-2769 |
 | `45.9` | &nbsp;&nbsp;The text outlook — the arbiter over layer 3 | `SPEC-DATA.md` | 1874-2004 |
 | `47` | The environment ribbon | `SPEC-NEXT.md` | 71-72 |
 | `47.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 73-89 |
@@ -193,7 +193,7 @@ real home is the other row carrying the same section number.
 | `47.6` | &nbsp;&nbsp;The coverage problem, stated plainly | `SPEC-NEXT.md` | 519-544 |
 | `47.7` | &nbsp;&nbsp;Performance | `SPEC-NEXT.md` | 545-592 |
 | `47.8` | &nbsp;&nbsp;The storm health paragraph | `SPEC-NEXT.md` | 593-994 |
-| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2763-2885 |
+| `47.9` | &nbsp;&nbsp;The layers row | `SPEC-UI.md` | 2788-2910 |
 | `47.10` | &nbsp;&nbsp;The fixtures | `SPEC-NEXT.md` | 995-1019 |
 | `47.11` | &nbsp;&nbsp;The legend | `SPEC-NEXT.md` | 1020-1139 |
 | `48` | Rainfall — the sources | `SPEC-DATA.md` | 2005-2006 |
@@ -204,22 +204,22 @@ real home is the other row carrying the same section number.
 | `48.5` | &nbsp;&nbsp;Coverage, and the two shapes of "no" | `SPEC-DATA.md` | 2135-2164 |
 | `48.6` | &nbsp;&nbsp;Flood warnings in force | `SPEC-DATA.md` | 2165-2208 |
 | `48.7` | &nbsp;&nbsp;The relay route | `SPEC-DATA.md` | 2209-2254 |
-| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2886-2951 |
-| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2952-2981 |
-| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 2982-3021 |
+| `48.8` | Rain — the home drawer's section | `SPEC-UI.md` | 2911-2976 |
+| `48.9` | &nbsp;&nbsp;Rainfall — the storm drawer's section | `SPEC-UI.md` | 2977-3006 |
+| `48.10` | &nbsp;&nbsp;The two numbers that disagree, and why both are right | `SPEC-UI.md` | 3007-3046 |
 | `48.11` | &nbsp;&nbsp;Acceptance cases | `SPEC-DATA.md` | 2255-2309 |
-| `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 3022-3046 |
+| `48.12` | &nbsp;&nbsp;The provenance line, on both paths | `SPEC-UI.md` | 3047-3071 |
 | `48.13` | &nbsp;&nbsp;The rainfall probe | `SPEC-OPS.md` | 1183-1202 |
 | `48.14` | &nbsp;&nbsp;Source — rainfall where NWS does not reach | `SPEC-DATA.md` | 2396-2432 |
 | `48.15` | &nbsp;&nbsp;The global relay route | `SPEC-DATA.md` | 2433-2465 |
 | `48.16` | &nbsp;&nbsp;Which source answered, and the two meanings of `alerts: null` | `SPEC-DATA.md` | 2466-2516 |
-| `48.19` | &nbsp;&nbsp;"Expected" means expected | `SPEC-UI.md` | 3047-3090 |
-| `48.21` | &nbsp;&nbsp;Flood alerts — the first drawn thing in §48 | `SPEC-UI.md` | 3091-3101 |
+| `48.19` | &nbsp;&nbsp;"Expected" means expected | `SPEC-UI.md` | 3072-3115 |
+| `48.21` | &nbsp;&nbsp;Flood alerts — the first drawn thing in §48 | `SPEC-UI.md` | 3116-3126 |
 | `49` | Time has a direction | `SPEC-NEXT.md` | 1140-1141 |
 | `49.1` | &nbsp;&nbsp;Why this exists | `SPEC-NEXT.md` | 1142-1197 |
 | `49.2` | &nbsp;&nbsp;The rule this section adds | `SPEC-NEXT.md` | 1198-1223 |
 | `49.3` | &nbsp;&nbsp;The observed track | `SPEC-DATA.md` | 2310-2395 |
-| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4154-4176 |
+| `49.4` | &nbsp;&nbsp;Relative time has a direction | `SPEC-UI.md` | 4179-4201 |
 | `49.5` | &nbsp;&nbsp;The closest pass, backwards | `SPEC-NEXT.md` | 1224-1276 |
 | `49.6` | &nbsp;&nbsp;Strongest means strongest, over the whole life | `SPEC-NEXT.md` | 1277-1328 |
 | `49.7` | &nbsp;&nbsp;The Timeline rail keeps the past | `SPEC-NEXT.md` | 1329-1447 |
@@ -256,7 +256,7 @@ real home is the other row carrying the same section number.
 | `51.8` | A marker on the deepest towns — approved, not built, second pass | `SPEC-NEXT.md` | 1965-2012 |
 | `52` | What a boot costs on each platform | `SPEC-NEXT.md` | 2032-2064 |
 | `53` | JTWC's `.tcw` — a better source than the product we parse | `SPEC-NEXT.md` | 2065-2101 |
-| `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2450-2471 |
+| `54` | People in the path — still coming, or already been through | `SPEC-UI.md` | 2475-2496 |
 | `55` | Known and accepted | `SPEC.md` | 2355-2494 |
 | `56` | Flood — the rebuild | `SPEC-FLOOD-PLAN.md` | 14-15 |
 | `56.1` | &nbsp;&nbsp;What is wrong with what shipped | `SPEC-FLOOD-PLAN.md` | 16-42 |
@@ -265,10 +265,10 @@ real home is the other row carrying the same section number.
 | `56.4` | &nbsp;&nbsp;Watches need their zone shapes — ==> SHIPPED AND CONFIRMED 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 142-155 |
 | `56.5` | &nbsp;&nbsp;The map | `SPEC-FLOOD-PLAN.md` | 678-727 |
 | `56.6` | &nbsp;&nbsp;Tapping an alert — ==> SHIPPED AND CONFIRMED ON GLASS 2026-08-23 <== | `SPEC-FLOOD-PLAN.md` | 728-913 |
-| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3636-3671 |
-| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3814-3854 |
-| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3964-4013 |
-| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4080-4153 |
+| `56.7` | &nbsp;&nbsp;Flooding — one section, both kinds of water | `SPEC-UI.md` | 3661-3696 |
+| `56.8` | &nbsp;&nbsp;Watches and warnings keeps its place, and gained one line | `SPEC-UI.md` | 3839-3879 |
+| `56.9` | &nbsp;&nbsp;The house gates on the corridor, and leaves the storm drawer | `SPEC-UI.md` | 3989-4038 |
+| `56.10` | &nbsp;&nbsp;The glyph | `SPEC-UI.md` | 4105-4178 |
 | `56.11` | &nbsp;&nbsp;What gets deleted | `SPEC-FLOOD-PLAN.md` | 914-945 |
 | `56.12` | &nbsp;&nbsp;The build order | `SPEC-FLOOD-PLAN.md` | 946-1111 |
 | `56.13` | &nbsp;&nbsp;Open, and not to be guessed at | `SPEC-FLOOD-PLAN.md` | 1112-1129 |
@@ -462,7 +462,7 @@ real home is the other row carrying the same section number.
 | `SPEC-NEXT.md` | 134,658 | 29 |
 | `SPEC-OPS.md` | 107,097 | 23 |
 | `SPEC-SEASONS-BUILD.md` | 639,634 | 168 |
-| `SPEC-UI.md` | 247,746 | 18 |
+| `SPEC-UI.md` | 249,307 | 18 |
 | `SPEC.md` | 195,282 | 15 |
 | `spec-parameter.md` | 59,622 | 50 |
 

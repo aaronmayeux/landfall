@@ -693,9 +693,23 @@ export function createHomeDashboardView({
    * FAR is short on purpose. Every one of those blocks is approach machinery,
    * and a storm that never comes near has no approach to run it on — the
    * results are each arithmetically true and collectively absurd. So the far
-   * layout drops the chart, the countdown, the closest-pass headline and the
-   * arrival trend, and keeps the four facts that remain honest: where it is,
-   * which ocean, how strong, which way it is going.
+   * layout drops the chart, the closest-pass headline and the arrival trend,
+   * and keeps the facts that remain honest: where it is, which ocean, how
+   * strong, which way it is going.
+   *
+   * ==> THE TIMELINE IS NOT PART OF THE FORK, AND THAT IS DELIBERATE. <== It
+   * was, and the fork was too blunt for it. That rail carries two families of
+   * row: house-relative ones (wind reaches you, closest pass, the ring) and
+   * the storm's own class changes, which are about the storm and mention no
+   * house at all. Every house-relative row is ALREADY gated on the corridor
+   * or on `approach.relevant`, so on a far storm they cannot fire — cutting
+   * the whole section to stop them threw away the storm's life story, which
+   * is honest at any distance and is the thing a reader stepping to a far
+   * cyclone actually came for. Aaron's call on glass, 2026-09-10.
+   *
+   * A far storm's rail is therefore its history plus the `now` divider, and
+   * `countdownHtml` returns '' by itself when there are no events at all — so
+   * a storm with a flat forecast and no history still draws nothing.
    *
    * THE FORK IS `dash.far` AND NOTHING ELSE. It is a single field computed
    * where the track is walked, so no part of this file re-derives "is it
@@ -733,7 +747,7 @@ export function createHomeDashboardView({
        * of the two sections was always empty. */
       floodSectHtml(threat),
       figuresHtml(dash),
-      dash.far ? '' : countdownHtml(dash, sys, sectHead),
+      countdownHtml(dash, sys, sectHead),
       homeRowHtml(home),
     ].join('');
   }
