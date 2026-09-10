@@ -948,7 +948,7 @@ export function createStormDetailView({
       html += `
         <div class="detail-kicker">Closest approach</div>
         <div class="detail-geo-error detail-geo-block">
-          The forecast track didn’t load, so there’s no approach figure.
+          <div class="detail-geo-say">The forecast track didn’t load, so there’s no approach figure.</div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     } else if (geo.state === 'ok') {
@@ -964,7 +964,7 @@ export function createStormDetailView({
           ? `
         <div class="detail-kicker">Closest approach</div>
         <div class="detail-geo-error detail-geo-block">
-          The forecast track didn’t load, so there’s no approach figure.
+          <div class="detail-geo-say">The forecast track didn’t load, so there’s no approach figure.</div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`
           : `
@@ -1186,8 +1186,10 @@ export function createStormDetailView({
        * stack trace) — on a phone, this panel IS the console. */
       return `
         <div class="detail-geo-error detail-geo-block detail-geo-pinned">
-          Storm geometry unavailable — the map is missing this storm's cone and tracks.
-          ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
+          <div class="detail-geo-say">
+            Storm geometry unavailable — the map is missing this storm's cone and tracks.
+            ${geo.error ? `<div class="detail-geo-detail">${esc(geo.error)}</div>` : ''}
+          </div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     }
@@ -1195,7 +1197,7 @@ export function createStormDetailView({
     if (failed.length) {
       return `
         <div class="detail-geo-error detail-geo-block detail-geo-pinned">
-          Unavailable on the map: ${esc(failed.join(', '))}.
+          <div class="detail-geo-say">Unavailable on the map: ${esc(failed.join(', '))}.</div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     }
@@ -1220,8 +1222,8 @@ export function createStormDetailView({
     if (geo.state === 'ok' && geo.bundle?.layers && !hasAnyFeatures()) {
       return `
         <div class="detail-geo-note detail-geo-block detail-geo-pinned">
-          NHC hasn’t published this advisory’s cone and tracks yet — the map has
-          this storm’s position but not its shapes.
+          <div class="detail-geo-say">NHC hasn’t published this advisory’s cone and tracks yet —
+            the map has this storm’s position but not its shapes.</div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     }
@@ -1236,8 +1238,8 @@ export function createStormDetailView({
       const gAdv = geo.bundle?.stamp?.advisnum;
       return `
         <div class="detail-geo-note detail-geo-block detail-geo-pinned">
-          Cone and tracks are from ${gAdv ? `advisory ${esc(gAdv)}` : 'an earlier advisory'} —
-          NHC hasn’t published newer shapes yet.
+          <div class="detail-geo-say">Cone and tracks are from ${gAdv ? `advisory ${esc(gAdv)}` : 'an earlier advisory'} —
+            NHC hasn’t published newer shapes yet.</div>
           <button class="detail-retry" type="button">Retry</button>
         </div>`;
     }
@@ -1355,8 +1357,10 @@ export function createStormDetailView({
 
     return `
       <div class="detail-geo-error detail-geo-block">
-        The advisory text didn’t load.
-        ${rec.detail ? `<div class="detail-geo-detail">${esc(rec.detail)}</div>` : ''}
+        <div class="detail-geo-say">
+          The advisory text didn’t load.
+          ${rec.detail ? `<div class="detail-geo-detail">${esc(rec.detail)}</div>` : ''}
+        </div>
         <button class="detail-retry" data-retry="advisory" type="button">Retry</button>
       </div>`;
   }

@@ -178,6 +178,15 @@
   --glass-blur-raised: 6px;
   --touch-target: 44px;
   --check-box: 14px;
+  /* HOW NARROW A GEOMETRY NOTICE'S MESSAGE MAY GET BEFORE ITS RETRY BUTTON
+     GIVES UP AND DROPS BELOW IT (`.detail-geo-block`, ui/panels.css).
+     Two columns side by side only read well while the sentence still gets
+     enough width to make real lines; past that it turns into a ribbon of two
+     or three words and the button has won an argument it should have lost.
+     180px is roughly a 24-character line at body size, which is where the
+     wrapping stops looking deliberate. Below it the button wraps under the
+     message and the message takes the full width. */
+  --geo-say-floor: 180px;
   /* The slider thumb's diameter, in ONE place, because two things need the
      same number and they are in different languages: panels.css draws the
      circle, and ui/slider-grab.js measures where that circle is to decide

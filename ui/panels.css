@@ -2213,9 +2213,42 @@ button.drawer-identity:focus-visible {
  * ONLY THE BOX IS SHARED. The COLOR is the whole point of the two rules below
  * and stays with them, because it is what separates "this layer failed" from
  * "this is an older cone, and that is fine". */
+/* ==> MESSAGE ON THE LEFT, BUTTON ON THE RIGHT, CENTRED AGAINST THE WHOLE
+ * MESSAGE. <== Aaron on glass, 2026-09-10, after two worse tries.
+ *
+ * The button was a block first, which took a full row of its own under a
+ * sentence that never filled its own last line. Then it was inline, which put
+ * it INSIDE one line of the paragraph — it joined line two and left line one
+ * alone, so the button read as belonging to half a sentence and the leading
+ * went ragged around it. Neither is what a notice with an action looks like.
+ *
+ * It is a flex row: the message is one column however many lines it takes,
+ * the button is the other, and `align-items: center` centres the button
+ * against the FULL height of the message rather than against any one line of
+ * it. That is the whole difference from the inline attempt.
+ *
+ * IT WRAPS RATHER THAN CRUSHING THE TEXT. `flex-wrap` plus a flex-basis floor
+ * on the message means that when the column would get narrower than that
+ * floor — a long message, a narrow phone, large type — the button drops to
+ * its own line underneath instead of squeezing the sentence into a
+ * two-words-per-line ribbon. The button never shrinks: its width is its label
+ * plus its padding, and its height is the 44px touch target. */
 .detail-geo-block {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-base);
   margin-top: var(--space-snug);
   font-size: var(--type-body);
+}
+
+/* The message column. `min-width: 0` because a flex item's default minimum is
+ * the width of its longest unbreakable word, and a long unbroken token in an
+ * error detail would otherwise push the button off the edge of the box rather
+ * than wrapping. */
+.detail-geo-say {
+  flex: 1 1 var(--geo-say-floor);
+  min-width: 0;
 }
 
 /* ==> THE PINNED NOTICE NEEDS ITS OWN BOX, AND ONLY THE PINNED ONE DOES. <==
@@ -2268,37 +2301,21 @@ button.drawer-identity:focus-visible {
  * chrome over it — which is exactly how two buttons doing the same job end up
  * looking like two different controls.
  *
- * ==> IT FLOWS WITH THE SENTENCE, IT DOES NOT CLAIM A LINE. <== Aaron on
- * glass, 2026-09-10. Every place this button appears, it answers a sentence
- * sitting directly above it — "NHC hasn't published the shapes yet", "the
- * forecast track didn't load" — and those sentences almost never fill their
- * last line. As a block it took a whole row of its own anyway and left that
- * gap sitting empty, which on a phone is a third of a notice's height spent
- * on nothing.
+ * IT IS THE SECOND COLUMN OF `.detail-geo-block`, so the only thing it has to
+ * say about its own layout is that it does not flex. `flex: 0 0 auto` keeps
+ * it at its label plus its padding: shrinking it would eat the padding first
+ * and then the word, and a Retry button that has been squeezed to "Retr" is
+ * worse than one that wrapped to the next line. The message column is what
+ * gives, and it is what should give.
  *
- * Inline-block, so it drops into the space after the last word when there is
- * room and wraps onto its own line when there is not — the narrow case
- * degrades to what it used to do, rather than to something broken.
- * `vertical-align: middle` is what keeps it centred against the text rather
- * than hanging off the baseline. The line box it lands in grows to the
- * button's 44px; that height is the touch target and is not negotiable, so
- * the line growing is the correct outcome, not a side effect to fight.
- *
- * ==> AND IT CARRIES NO MARGIN, DELIBERATELY. <== A `margin-left` looks right
- * on the line where the button follows text and is wrong the moment it wraps:
- * a leading margin survives the line break and indents the button off the
- * paragraph's left edge by exactly that much. The word space between the
- * sentence and the button is the gap, and it collapses at the start of a line
- * the way a space is supposed to, so the wrapped button lands flush with the
- * text above it. Vertical margins are out for the same class of reason — on
- * an inline-block they apply on the inline line too, and would shove the
- * button off the text it is sitting beside.
+ * NO MARGIN, in either direction. The gap between the two columns is the
+ * row's own `gap`, in one place, so the spacing cannot drift between the
+ * side-by-side case and the wrapped one.
  *
  * `.retry` on the storms list stays a block — it stands alone under a status
- * line rather than answering one, so it has no sentence to join. */
+ * line rather than sitting beside one. */
 .detail-retry {
-  display: inline-block;
-  vertical-align: middle;
+  flex: 0 0 auto;
   min-height: var(--touch-target);
   padding: 0 var(--space-comfy);
   background: var(--glass-raised);
