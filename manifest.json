@@ -1,15 +1,16 @@
 {
-  "runAt": "2026-09-11T11:32:43.170Z",
+  "runAt": "2026-09-11T16:36:24.304Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 22,
+      "listed": 23,
       "eligible": 21,
       "stored": 1,
       "unchanged": 20,
       "failed": 0,
       "skipped": [
-        "bep962026.dat — invest — number is reused within a season"
+        "bep962026.dat — invest — number is reused within a season",
+        "bep972026.dat — invest — number is reused within a season"
       ],
       "files": {
         "btk/2026/bal012026.dat": "unchanged (304)",
@@ -32,7 +33,7 @@
         "btk/2026/bep112026.dat": "unchanged (304)",
         "btk/2026/bep122026.dat": "unchanged (304)",
         "btk/2026/bep132026.dat": "unchanged (304)",
-        "btk/2026/bep142026.dat": "stored 3527 bytes"
+        "btk/2026/bep142026.dat": "stored 3959 bytes"
       }
     },
     "jtwc": {
