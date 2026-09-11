@@ -1,0 +1,237 @@
+{
+  "at": "2026-09-11T12:15:18.042Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2637,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 28115,
+      "styleLoadedNow": true,
+      "storms": 2,
+      "ttfbMs": 146,
+      "fcpMs": 444,
+      "lcpMs": 444,
+      "dclMs": 2913,
+      "loadMs": 2935,
+      "bootMarks": {
+        "create": 2636.699999999997,
+        "load": 28115.300000000003
+      },
+      "longTaskCount": 23,
+      "blockedMs": 26303,
+      "blockedLoadMs": 3062,
+      "blockedLoadTaskCount": 6,
+      "blockedAfterMs": 23241,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 17,
+      "staircaseMs": 2128,
+      "firstModuleAtMs": 180,
+      "lastModuleAtMs": 2308,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 21,
+      "apiKB": 72,
+      "totalRequests": 243,
+      "transferKB": 2241,
+      "firstApiAtMs": 2889,
+      "data": {
+        "depth": 5,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2889
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 5502
+          },
+          {
+            "url": "/api/jtwc/storms",
+            "startMs": 5926
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 12345
+          },
+          {
+            "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+            "startMs": 18897
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "mapCreated": true,
+      "mapCreatedAtMs": 1544,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 18247,
+      "styleLoadedNow": true,
+      "storms": 2,
+      "ttfbMs": 21,
+      "fcpMs": 1052,
+      "lcpMs": 1052,
+      "dclMs": 1716,
+      "loadMs": 1721,
+      "bootMarks": {
+        "create": 1543.8999999999942,
+        "load": 18246.5,
+        "fullLoad": 19546
+      },
+      "longTaskCount": 26,
+      "blockedMs": 27449,
+      "blockedLoadMs": 4638,
+      "blockedLoadTaskCount": 10,
+      "blockedAfterMs": 22811,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 4,
+      "staircaseMs": 604,
+      "firstModuleAtMs": 899,
+      "lastModuleAtMs": 1502,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 20,
+      "apiKB": 46,
+      "totalRequests": 242,
+      "transferKB": 46,
+      "firstApiAtMs": 1705,
+      "data": {
+        "depth": 4,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1705
+          },
+          {
+            "url": "/api/nhc/advisory?bin=EP4&kind=TCP",
+            "startMs": 3470
+          },
+          {
+            "url": "/api/jtwc/storms",
+            "startMs": 4085
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 9007
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "mapCreated": true,
+    "mapCreatedAtMs": 2467,
+    "styleLoaded": true,
+    "mapLoadedAtMs": 23752,
+    "styleLoadedNow": true,
+    "storms": 2,
+    "ttfbMs": 86,
+    "fcpMs": 356,
+    "lcpMs": 356,
+    "dclMs": 2745,
+    "loadMs": 3741,
+    "bootMarks": {
+      "create": 2467.100000000006,
+      "load": 23752.399999999994,
+      "fullLoad": 25311.199999999983
+    },
+    "longTaskCount": 24,
+    "blockedMs": 26524,
+    "blockedLoadMs": 2886,
+    "blockedLoadTaskCount": 5,
+    "blockedAfterMs": 23638,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 214,
+    "ourWaves": 14,
+    "staircaseMs": 1991,
+    "firstModuleAtMs": 122,
+    "lastModuleAtMs": 2112,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 24,
+    "apiKB": 74,
+    "totalRequests": 246,
+    "transferKB": 2244,
+    "firstApiAtMs": 2705,
+    "data": {
+      "depth": 7,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 2705
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3085
+        },
+        {
+          "url": "/api/nhc/advisory?bin=EP4&kind=TCP",
+          "startMs": 4642
+        },
+        {
+          "url": "/api/jtwc/storms",
+          "startMs": 5265
+        },
+        {
+          "url": "/api/tcgp/storms",
+          "startMs": 9949
+        },
+        {
+          "url": "/api/imagery/radar-coverage?lat=16.60&lon=-123.30&z=5&px=512",
+          "startMs": 14499
+        },
+        {
+          "url": "/api/gdacs/geometry?url=https%3A%2F%2Fwww.gdacs.org%2Fgdacsapi%2Fapi%2Fpolygons",
+          "startMs": 14506
+        }
+      ]
+    },
+    "radarTiles": 3,
+    "radarOnLoad": 3,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 3,
+      "medianMs": 1433.3,
+      "p95Ms": 1883.2,
+      "worstMs": 1883.2,
+      "droppedPct": 67,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 214 <= 240",
+      "ok   ourWaves: 4 <= 8",
+      "ok   staircaseMs: 604 <= 3000",
+      "ok   dataSerialDepth: 4 <= 6",
+      "--   blockedLoadMs: 4638 (no budget yet — reporting only)",
+      "--   mapLoadedAtMs: 18247 (no budget yet — reporting only)",
+      "--   blockedMs: 27449 (no budget yet — reporting only)",
+      "ok   transferKB: 46 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
