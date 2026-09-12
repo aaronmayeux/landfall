@@ -1,12 +1,12 @@
 {
-  "runAt": "2026-09-11T22:40:25.821Z",
+  "runAt": "2026-09-12T01:14:12.340Z",
   "sources": {
     "btk": {
       "status": "ok",
       "listed": 23,
       "eligible": 21,
-      "stored": 1,
-      "unchanged": 20,
+      "stored": 2,
+      "unchanged": 19,
       "failed": 0,
       "skipped": [
         "bep962026.dat — invest — number is reused within a season",
@@ -26,23 +26,23 @@
         "btk/2026/bep042026.dat": "unchanged (304)",
         "btk/2026/bep052026.dat": "unchanged (304)",
         "btk/2026/bep062026.dat": "unchanged (304)",
-        "btk/2026/bep072026.dat": "unchanged (304)",
+        "btk/2026/bep072026.dat": "stored 21204 bytes",
         "btk/2026/bep082026.dat": "unchanged (304)",
         "btk/2026/bep092026.dat": "unchanged (304)",
         "btk/2026/bep102026.dat": "unchanged (304)",
         "btk/2026/bep112026.dat": "unchanged (304)",
         "btk/2026/bep122026.dat": "unchanged (304)",
         "btk/2026/bep132026.dat": "unchanged (304)",
-        "btk/2026/bep142026.dat": "stored 4391 bytes"
+        "btk/2026/bep142026.dat": "stored 4823 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
       "storms": 2,
-      "linesAdded": 1,
+      "linesAdded": 0,
       "files": {
         "jtwc/2026/ep1226.jsonl": "already held",
-        "jtwc/2026/ep1426.jsonl": "+1"
+        "jtwc/2026/ep1426.jsonl": "already held"
       },
       "faults": []
     }
