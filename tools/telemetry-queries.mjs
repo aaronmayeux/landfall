@@ -374,6 +374,97 @@ export const QUERIES = [
       ') GROUP BY days_active ORDER BY days_active',
   },
   {
+    /* Added 2026-09-12. `return-rate` above answers the same question and
+       cannot answer it honestly: its 1-day bucket is permanently stuffed with
+       people who arrived this week and have not had the chance to return.
+       Reading 637-of-758 off it and calling it churn is wrong by an unknown
+       amount, and the amount changes every day traffic changes. */
+    name: 'return-cohort',
+    note:
+      'THE HONEST RETURN RATE. Only counts people whose FIRST visit was at ' +
+      'least 7 days ago, so everybody in here has had a week to come back. ' +
+      '==> THIS IS THE NUMBER TO QUOTE, NOT `return-rate`. <== That table is ' +
+      'a shape (how steep the drop from one day to two); this is a rate. ' +
+      'Quoting the raw 1-day bucket as churn counts yesterday\'s arrivals as ' +
+      'people who left, which overstates churn by however much traffic ' +
+      'arrived this week — a number that moves on its own. ' +
+      'Split by whether the device ever ran from a home-screen icon. ' +
+      '==> THAT SPLIT IS NOT A CAUSE. <== Installing happens AFTER somebody ' +
+      'decides they like it, so a higher return rate among installs is ' +
+      'mostly the decision showing up twice. It is worth watching as a ' +
+      'signal and is not evidence that pushing the install prompt would ' +
+      'make anybody return. ' +
+      '`people` in each row is already a floor: rows predating the `device` ' +
+      'column (2026-08-05) have no identity and are excluded entirely.',
+    sql:
+      'SELECT ' +
+      "CASE WHEN ever_installed = 1 THEN 'installed to home screen' " +
+      "ELSE 'browser tab only' END AS kind, " +
+      'COUNT(*) AS people, ' +
+      'SUM(CASE WHEN days_active > 1 THEN 1 ELSE 0 END) AS came_back, ' +
+      'SUM(CASE WHEN days_active >= 5 THEN 1 ELSE 0 END) AS came_back_5_plus_days, ' +
+      'ROUND(100.0 * SUM(CASE WHEN days_active > 1 THEN 1 ELSE 0 END) / COUNT(*), 1) ' +
+      'AS pct_came_back, ' +
+      "DATE(MIN(first_ts), 'unixepoch') AS earliest_arrival, " +
+      "DATE(MAX(first_ts), 'unixepoch') AS latest_arrival " +
+      'FROM (' +
+      'SELECT MIN(ts) AS first_ts, MAX(standalone) AS ever_installed, ' +
+      "COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active " +
+      "FROM sessions WHERE device <> '' GROUP BY device" +
+      ') ' +
+      /* The maturity window. 7 days is the shortest gap that still catches a
+         "I'll look again when the next storm comes up" visitor, and the same
+         cutoff every week so the number is comparable to itself. */
+      "WHERE first_ts < STRFTIME('%s', 'now') - (7 * 86400) " +
+      'GROUP BY kind ORDER BY people DESC',
+  },
+  {
+    /* Added 2026-09-12. A Linux/Blink device at exactly 1920x1080 with 87
+       visits across 27 days was counted as a returning PERSON in every people
+       number on this branch, and is near-certainly our own perf-audit runner
+       hitting the live site. */
+    name: 'never-touched-anything',
+    note:
+      'REGULARS WHO HAVE NEVER PRESSED A SINGLE THING — the robot check. ' +
+      'A device that loads the app on five or more separate days and has ' +
+      'never once selected a storm, opened an advisory, toggled a layer or a ' +
+      'model, recentred, set a home, or pressed Retry is far more likely to ' +
+      'be an automated browser than a reader. Our own perf-audit workflow ' +
+      'loads the live site on a schedule and reports telemetry like anybody ' +
+      'else, so it arrives in this table as a loyal returning visitor. ' +
+      '==> THIS IS A SUSPICION, NOT A VERDICT. <== A real person who opens ' +
+      'the globe, looks at it, and closes it lands here too, and that is a ' +
+      'genuine way to use this app. Use the hardware columns to recognise a ' +
+      'machine: a desktop resolution at dpr 1.0 that never installs and ' +
+      'never taps is the shape to distrust. Subtract these from a people ' +
+      'count deliberately and say you did — never silently. ' +
+      'THE REAL FIX IS A COLUMN, NOT THIS QUERY. An automated browser ' +
+      'announces itself (navigator.webdriver) and one boolean on the beacon ' +
+      'would settle it outright; that needs a schema change and a deploy. ' +
+      'This makes the problem VISIBLE in the meantime. ' +
+      'The 5-day floor and the 8-character prefix are the same privacy ' +
+      'controls `device-roster` uses and for the same reason — this branch ' +
+      'is public. Do not lower either.',
+    sql:
+      'SELECT SUBSTR(device, 1, 8) AS device_prefix, ' +
+      'MAX(platform) AS platform, MAX(engine) AS engine, ' +
+      'MAX(screen_w) AS screen_w, MAX(screen_h) AS screen_h, MAX(dpr) AS dpr, ' +
+      'MAX(standalone) AS ever_installed, ' +
+      'COUNT(*) AS sessions, ' +
+      "COUNT(DISTINCT DATE(ts, 'unixepoch')) AS days_active, " +
+      'MAX(visit_ms) AS longest_visit_ms, ' +
+      "DATE(MIN(ts), 'unixepoch') AS first_seen, " +
+      "DATE(MAX(ts), 'unixepoch') AS last_seen " +
+      "FROM sessions WHERE device <> '' " +
+      'GROUP BY device ' +
+      /* Every counter lib/usage.js keeps, summed. A miss here would let a
+         device that only ever pressed the missing button look untouched. */
+      "HAVING COUNT(DISTINCT DATE(ts, 'unixepoch')) >= 5 " +
+      'AND SUM(storm_select + advisory_open + layer_toggle + layer_pair + ' +
+      'layer_reset + model_toggle + recenter + home_set + retry) = 0 ' +
+      'ORDER BY sessions DESC LIMIT 30',
+  },
+  {
     name: 'source-rollup',
     note: 'Per-source health. Which feeds are answering and which are not.',
     sql: 'SELECT * FROM source_rollup ORDER BY rowid DESC LIMIT 50',
