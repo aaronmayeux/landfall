@@ -1,0 +1,218 @@
+{
+  "at": "2026-09-12T11:39:18.082Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2830,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 18343,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 422,
+      "fcpMs": 700,
+      "lcpMs": 700,
+      "dclMs": 3091,
+      "loadMs": 4208,
+      "bootMarks": {
+        "create": 2830.300000000003,
+        "load": 18342.600000000006,
+        "fullLoad": 19454.699999999997
+      },
+      "longTaskCount": 26,
+      "blockedMs": 26852,
+      "blockedLoadMs": 2770,
+      "blockedLoadTaskCount": 5,
+      "blockedAfterMs": 24082,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 15,
+      "staircaseMs": 2004,
+      "firstModuleAtMs": 460,
+      "lastModuleAtMs": 2465,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 21,
+      "apiKB": 206,
+      "totalRequests": 243,
+      "transferKB": 2376,
+      "firstApiAtMs": 3054,
+      "data": {
+        "depth": 3,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 3054
+          },
+          {
+            "url": "/api/nhc/advisory?bin=EP4&kind=TCP",
+            "startMs": 5734
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 9457
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "mapCreated": true,
+      "mapCreatedAtMs": 922,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 12282,
+      "styleLoadedNow": true,
+      "storms": 1,
+      "ttfbMs": 21,
+      "fcpMs": 460,
+      "lcpMs": 460,
+      "dclMs": 1092,
+      "loadMs": 1096,
+      "bootMarks": {
+        "create": 922,
+        "load": 12282.300000000017,
+        "fullLoad": 15725.5
+      },
+      "longTaskCount": 28,
+      "blockedMs": 25617,
+      "blockedLoadMs": 4738,
+      "blockedLoadTaskCount": 10,
+      "blockedAfterMs": 20879,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 4,
+      "staircaseMs": 555,
+      "firstModuleAtMs": 331,
+      "lastModuleAtMs": 886,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 21,
+      "apiKB": 206,
+      "totalRequests": 243,
+      "transferKB": 206,
+      "firstApiAtMs": 1085,
+      "data": {
+        "depth": 3,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 1085
+          },
+          {
+            "url": "/api/nws/zone?ids=CTZ007%2CCTZ008%2CCTZ009%2CCTZ010%2CCTZ011%2CCTZ012%2CD",
+            "startMs": 2492
+          },
+          {
+            "url": "/api/tcgp/storms",
+            "startMs": 4825
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "mapCreated": true,
+    "mapCreatedAtMs": 2432,
+    "styleLoaded": true,
+    "mapLoadedAtMs": 16217,
+    "styleLoadedNow": true,
+    "storms": 1,
+    "ttfbMs": 70,
+    "fcpMs": 332,
+    "lcpMs": 332,
+    "dclMs": 2672,
+    "loadMs": 3531,
+    "bootMarks": {
+      "create": 2431.5,
+      "load": 16217.100000000006,
+      "fullLoad": 17271.899999999994
+    },
+    "longTaskCount": 27,
+    "blockedMs": 25828,
+    "blockedLoadMs": 2807,
+    "blockedLoadTaskCount": 6,
+    "blockedAfterMs": 23021,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 214,
+    "ourWaves": 16,
+    "staircaseMs": 1993,
+    "firstModuleAtMs": 107,
+    "lastModuleAtMs": 2100,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 23,
+    "apiKB": 209,
+    "totalRequests": 245,
+    "transferKB": 2379,
+    "firstApiAtMs": 2637,
+    "data": {
+      "depth": 5,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 2637
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 2975
+        },
+        {
+          "url": "/api/nhc/advisory?bin=EP4&kind=TCP",
+          "startMs": 4282
+        },
+        {
+          "url": "/api/nws/zone?ids=CTZ007%2CCTZ008%2CCTZ009%2CCTZ010%2CCTZ011%2CCTZ012%2CD",
+          "startMs": 4830
+        },
+        {
+          "url": "/api/tcgp/storms",
+          "startMs": 7363
+        }
+      ]
+    },
+    "radarTiles": 2,
+    "radarOnLoad": 2,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 3,
+      "medianMs": 1050,
+      "p95Ms": 1133.3,
+      "worstMs": 1133.3,
+      "droppedPct": 67,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 214 <= 240",
+      "ok   ourWaves: 4 <= 8",
+      "ok   staircaseMs: 555 <= 3000",
+      "ok   dataSerialDepth: 3 <= 6",
+      "--   blockedLoadMs: 4738 (no budget yet — reporting only)",
+      "--   mapLoadedAtMs: 12282 (no budget yet — reporting only)",
+      "--   blockedMs: 25617 (no budget yet — reporting only)",
+      "ok   transferKB: 206 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
