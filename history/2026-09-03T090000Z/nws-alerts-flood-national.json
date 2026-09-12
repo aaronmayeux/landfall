@@ -1,0 +1,1140 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.21e26579b6b163bf607458aae715b8aee5fdbf69.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.28,
+                            31.2
+                        ],
+                        [
+                            -95.41,
+                            31.34
+                        ],
+                        [
+                            -95.48,
+                            31.57
+                        ],
+                        [
+                            -95.27,
+                            31.59
+                        ],
+                        [
+                            -95.21,
+                            31.57
+                        ],
+                        [
+                            -95.17,
+                            31.59
+                        ],
+                        [
+                            -95.14,
+                            31.56
+                        ],
+                        [
+                            -95.14,
+                            31.54
+                        ],
+                        [
+                            -95.1,
+                            31.52
+                        ],
+                        [
+                            -95.1,
+                            31.47
+                        ],
+                        [
+                            -95.07,
+                            31.47
+                        ],
+                        [
+                            -95.05,
+                            31.45
+                        ],
+                        [
+                            -95.01,
+                            31.44
+                        ],
+                        [
+                            -95.01,
+                            31.42
+                        ],
+                        [
+                            -94.95,
+                            31.38
+                        ],
+                        [
+                            -94.96,
+                            31.34
+                        ],
+                        [
+                            -94.9,
+                            31.32
+                        ],
+                        [
+                            -95.01,
+                            31.31
+                        ],
+                        [
+                            -95.13,
+                            31.22
+                        ],
+                        [
+                            -95.19,
+                            31.15
+                        ],
+                        [
+                            -95.28,
+                            31.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.21e26579b6b163bf607458aae715b8aee5fdbf69.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.21e26579b6b163bf607458aae715b8aee5fdbf69.001.1",
+                "areaDesc": "Houston, TX; Trinity, TX",
+                "geocode": {
+                    "SAME": [
+                        "048225",
+                        "048455"
+                    ],
+                    "UGC": [
+                        "TXC225",
+                        "TXC455"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC225",
+                    "https://api.weather.gov/zones/county/TXC455"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc9be170ba8359a795a4bc093033f9f98074dc69.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.bc9be170ba8359a795a4bc093033f9f98074dc69.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-03T00:41:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-03T03:29:00-05:00",
+                "effective": "2026-09-03T03:29:00-05:00",
+                "onset": "2026-09-03T03:29:00-05:00",
+                "expires": "2026-09-03T05:45:00-05:00",
+                "ends": "2026-09-03T05:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Houston/Galveston TX",
+                "headline": "Flash Flood Warning issued September 3 at 3:29AM CDT until September 3 at 5:45AM CDT by NWS Houston/Galveston TX",
+                "description": "FFWHGX\n\nThe National Weather Service in Houston/Galveston has extended the\n\n* Flash Flood Warning for...\nNortheastern Houston County in southeastern Texas...\nNortheastern Trinity County in southeastern Texas...\n\n* Until 545 AM CDT.\n\n* At 329 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 5 inches of rain\nhave fallen. The expected rainfall rate is 1 to 2 inches in 1 hour.\nAdditional rainfall amounts of 1 to 3 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nKennard, Weches and Pennington.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHGX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHGX 030829"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KHGX.FF.W.0049.000000T0000Z-260903T1045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T05:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8485088af067e49367b5e9704da4d5b81d9eb106.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -94.86,
+                            31.16
+                        ],
+                        [
+                            -94.94,
+                            31.09
+                        ],
+                        [
+                            -95.01,
+                            31.05
+                        ],
+                        [
+                            -95.09,
+                            31.06
+                        ],
+                        [
+                            -95.16,
+                            31.08
+                        ],
+                        [
+                            -95.19,
+                            31.15
+                        ],
+                        [
+                            -95.13,
+                            31.22
+                        ],
+                        [
+                            -95.01,
+                            31.31
+                        ],
+                        [
+                            -94.9,
+                            31.31
+                        ],
+                        [
+                            -94.89,
+                            31.29
+                        ],
+                        [
+                            -94.89,
+                            31.3
+                        ],
+                        [
+                            -94.88,
+                            31.28
+                        ],
+                        [
+                            -94.9,
+                            31.26
+                        ],
+                        [
+                            -94.88,
+                            31.25
+                        ],
+                        [
+                            -94.86,
+                            31.23
+                        ],
+                        [
+                            -94.86,
+                            31.22
+                        ],
+                        [
+                            -94.87,
+                            31.21
+                        ],
+                        [
+                            -94.85,
+                            31.17
+                        ],
+                        [
+                            -94.86,
+                            31.16
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8485088af067e49367b5e9704da4d5b81d9eb106.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8485088af067e49367b5e9704da4d5b81d9eb106.001.1",
+                "areaDesc": "Trinity, TX",
+                "geocode": {
+                    "SAME": [
+                        "048455"
+                    ],
+                    "UGC": [
+                        "TXC455"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC455"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.75ea06268e74fcd3e3e1d3c7a15f934c39105930.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.75ea06268e74fcd3e3e1d3c7a15f934c39105930.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-03T00:21:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-03T03:11:00-05:00",
+                "effective": "2026-09-03T03:11:00-05:00",
+                "onset": "2026-09-03T03:11:00-05:00",
+                "expires": "2026-09-03T05:30:00-05:00",
+                "ends": "2026-09-03T05:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Houston/Galveston TX",
+                "headline": "Flash Flood Warning issued September 3 at 3:11AM CDT until September 3 at 5:30AM CDT by NWS Houston/Galveston TX",
+                "description": "FFWHGX\n\nThe National Weather Service in Houston/Galveston has extended the\n\n* Flash Flood Warning for...\nNortheastern Trinity County in southeastern Texas...\n\n* Until 530 AM CDT.\n\n* At 311 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n4 and 6 inches of rain have fallen. The expected rainfall rate is\n0.5 to 1 inch in 1 hour. Additional rainfall amounts of 0.5 to 1\ninch are possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nApple Springs and Centralia.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHGX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHGX 030811"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KHGX.FF.W.0048.000000T0000Z-260903T1030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T05:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.673e4ea7f8b4b1db2520ce073168c0d4a7ff2331.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.93,
+                            40.35
+                        ],
+                        [
+                            -76.4,
+                            40.47
+                        ],
+                        [
+                            -75.88,
+                            40.14
+                        ],
+                        [
+                            -75.94,
+                            40.11
+                        ],
+                        [
+                            -75.93,
+                            40.04
+                        ],
+                        [
+                            -75.99,
+                            39.95
+                        ],
+                        [
+                            -75.99,
+                            39.87
+                        ],
+                        [
+                            -76.02,
+                            39.83
+                        ],
+                        [
+                            -76.04,
+                            39.83
+                        ],
+                        [
+                            -76.04,
+                            39.79
+                        ],
+                        [
+                            -76.1,
+                            39.72
+                        ],
+                        [
+                            -76.38,
+                            39.89
+                        ],
+                        [
+                            -76.39,
+                            39.91
+                        ],
+                        [
+                            -76.47,
+                            39.94
+                        ],
+                        [
+                            -76.53,
+                            40.05
+                        ],
+                        [
+                            -76.66,
+                            40.06
+                        ],
+                        [
+                            -76.74,
+                            40.13
+                        ],
+                        [
+                            -76.75,
+                            40.18
+                        ],
+                        [
+                            -76.83,
+                            40.2
+                        ],
+                        [
+                            -76.91,
+                            40.28
+                        ],
+                        [
+                            -76.93,
+                            40.35
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.673e4ea7f8b4b1db2520ce073168c0d4a7ff2331.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.673e4ea7f8b4b1db2520ce073168c0d4a7ff2331.001.1",
+                "areaDesc": "Dauphin, PA; Lancaster, PA; Lebanon, PA",
+                "geocode": {
+                    "SAME": [
+                        "042043",
+                        "042071",
+                        "042075"
+                    ],
+                    "UGC": [
+                        "PAC043",
+                        "PAC071",
+                        "PAC075"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC043",
+                    "https://api.weather.gov/zones/county/PAC071",
+                    "https://api.weather.gov/zones/county/PAC075"
+                ],
+                "references": [],
+                "sent": "2026-09-03T04:11:00-04:00",
+                "effective": "2026-09-03T04:11:00-04:00",
+                "onset": "2026-09-03T04:11:00-04:00",
+                "expires": "2026-09-03T08:00:00-04:00",
+                "ends": "2026-09-03T08:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS State College PA",
+                "headline": "Flash Flood Warning issued September 3 at 4:11AM EDT until September 3 at 8:00AM EDT by NWS State College PA",
+                "description": "FFWCTP\n\nThe National Weather Service in State College has issued a\n\n* Flash Flood Warning for...\nSouthern Dauphin County in south central Pennsylvania...\nLancaster County in south central Pennsylvania...\nLebanon County in south central Pennsylvania...\n\n* Until 800 AM EDT.\n\n* At 411 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLancaster, Harrisburg, Lebanon, Hershey, Ephrata, Colonial Park,\nElizabethtown, Columbia, Progress, Lititz, Middletown,\nMillersville, Willow Street, Mount Joy, Palmyra, Linglestown,\nSteelton, New Holland, Manheim and Annville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCTP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KCTP 030811"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCTP.FF.W.0091.260903T0811Z-260903T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T08:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8e0d78b8259c70c5f6c64d9428003b4139a5ae81.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -79.58,
+                            41.16
+                        ],
+                        [
+                            -79.49,
+                            41.31
+                        ],
+                        [
+                            -79.09,
+                            41.36
+                        ],
+                        [
+                            -79.09,
+                            41.34
+                        ],
+                        [
+                            -79.08,
+                            41.35
+                        ],
+                        [
+                            -79.02,
+                            41.35
+                        ],
+                        [
+                            -79,
+                            41.36
+                        ],
+                        [
+                            -78.96,
+                            41.37
+                        ],
+                        [
+                            -78.74,
+                            41.26
+                        ],
+                        [
+                            -78.74,
+                            41.23
+                        ],
+                        [
+                            -78.71,
+                            41.23
+                        ],
+                        [
+                            -78.71,
+                            41.2
+                        ],
+                        [
+                            -78.77,
+                            41.2
+                        ],
+                        [
+                            -78.8,
+                            41.13
+                        ],
+                        [
+                            -78.8,
+                            40.96
+                        ],
+                        [
+                            -78.85,
+                            40.96
+                        ],
+                        [
+                            -79,
+                            41.01
+                        ],
+                        [
+                            -79.58,
+                            41.16
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8e0d78b8259c70c5f6c64d9428003b4139a5ae81.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8e0d78b8259c70c5f6c64d9428003b4139a5ae81.001.1",
+                "areaDesc": "Clarion, PA; Forest, PA; Jefferson, PA",
+                "geocode": {
+                    "SAME": [
+                        "042031",
+                        "042053",
+                        "042065"
+                    ],
+                    "UGC": [
+                        "PAC031",
+                        "PAC053",
+                        "PAC065"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC031",
+                    "https://api.weather.gov/zones/county/PAC053",
+                    "https://api.weather.gov/zones/county/PAC065"
+                ],
+                "references": [],
+                "sent": "2026-09-03T03:05:00-04:00",
+                "effective": "2026-09-03T03:05:00-04:00",
+                "onset": "2026-09-03T03:05:00-04:00",
+                "expires": "2026-09-03T06:00:00-04:00",
+                "ends": "2026-09-03T06:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pittsburgh PA",
+                "headline": "Flash Flood Warning issued September 3 at 3:05AM EDT until September 3 at 6:00AM EDT by NWS Pittsburgh PA",
+                "description": "FFWPBZ\n\nThe National Weather Service in Pittsburgh has issued a\n\n* Flash Flood Warning for...\nSouth Central Forest County in northwestern Pennsylvania...\nNortheastern Clarion County in west central Pennsylvania...\nJefferson PA County in west central Pennsylvania...\n\n* Until 600 AM EDT.\n\n* At 305 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 1.5 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nClarion, Brookville, Knox, Reynoldsville, Brockway, Sykesville,\nFalls Creek, Big Run, Strattanville, Summerville, Limestone,\nShippenville, Corsica, Sigel, Fisher, Knox-Dale, Clear Creek State\nPark, Clarington, Cook Forest State Park and Anita.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPBZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KPBZ 030705"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPBZ.FF.W.0127.260903T0705Z-260903T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T06:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9ba576fa802f49d4ea274f7ecbb1ffd75afc35eb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -78.96,
+                            41.62
+                        ],
+                        [
+                            -79.25,
+                            41.63
+                        ],
+                        [
+                            -79.61,
+                            41.62
+                        ],
+                        [
+                            -79.61,
+                            42
+                        ],
+                        [
+                            -78.91,
+                            42
+                        ],
+                        [
+                            -78.92,
+                            41.99
+                        ],
+                        [
+                            -78.51,
+                            42
+                        ],
+                        [
+                            -78.4,
+                            41.82
+                        ],
+                        [
+                            -78.33,
+                            41.62
+                        ],
+                        [
+                            -78.48,
+                            41.62
+                        ],
+                        [
+                            -78.48,
+                            41.63
+                        ],
+                        [
+                            -78.64,
+                            41.63
+                        ],
+                        [
+                            -78.68,
+                            41.62
+                        ],
+                        [
+                            -78.96,
+                            41.62
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9ba576fa802f49d4ea274f7ecbb1ffd75afc35eb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9ba576fa802f49d4ea274f7ecbb1ffd75afc35eb.001.1",
+                "areaDesc": "McKean, PA; Warren, PA",
+                "geocode": {
+                    "SAME": [
+                        "042083",
+                        "042123"
+                    ],
+                    "UGC": [
+                        "PAC083",
+                        "PAC123"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC083",
+                    "https://api.weather.gov/zones/county/PAC123"
+                ],
+                "references": [],
+                "sent": "2026-09-03T02:56:00-04:00",
+                "effective": "2026-09-03T02:56:00-04:00",
+                "onset": "2026-09-03T02:56:00-04:00",
+                "expires": "2026-09-03T06:00:00-04:00",
+                "ends": "2026-09-03T06:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS State College PA",
+                "headline": "Flash Flood Warning issued September 3 at 2:56AM EDT until September 3 at 6:00AM EDT by NWS State College PA",
+                "description": "FFWCTP\n\nThe National Weather Service in State College has issued a\n\n* Flash Flood Warning for...\nMcKean County in north central Pennsylvania...\nWarren County in north central Pennsylvania...\n\n* Until 600 AM EDT.\n\n* At 256 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts up to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWarren, Bradford, Kane, Sheffield, Columbus, Youngsville,\nSmethport, Wetmore, Russell, Betula, James City, Spring Creek, Rew,\nKinzua Dam, Ludlow, Scandia, Warren South, Chapman State Park,\nWestline and Marshburg.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCTP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KCTP 030656"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCTP.FF.W.0090.260903T0656Z-260903T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T06:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5e06eec65a995287bcf57f15ccfc91416e76921.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -78.45,
+                            40.86
+                        ],
+                        [
+                            -78.41,
+                            40.98
+                        ],
+                        [
+                            -78.12,
+                            41.01
+                        ],
+                        [
+                            -78.06,
+                            40.93
+                        ],
+                        [
+                            -77.52,
+                            40.79
+                        ],
+                        [
+                            -77.37,
+                            40.84
+                        ],
+                        [
+                            -77.35,
+                            40.7
+                        ],
+                        [
+                            -77.04,
+                            40.68
+                        ],
+                        [
+                            -77,
+                            40.64
+                        ],
+                        [
+                            -76.94,
+                            40.65
+                        ],
+                        [
+                            -76.96,
+                            40.59
+                        ],
+                        [
+                            -76.99,
+                            40.56
+                        ],
+                        [
+                            -76.95,
+                            40.47
+                        ],
+                        [
+                            -77.01,
+                            40.43
+                        ],
+                        [
+                            -77.27,
+                            40.52
+                        ],
+                        [
+                            -77.61,
+                            40.51
+                        ],
+                        [
+                            -77.98,
+                            40.63
+                        ],
+                        [
+                            -78.15,
+                            40.72
+                        ],
+                        [
+                            -78.12,
+                            40.74
+                        ],
+                        [
+                            -78.21,
+                            40.74
+                        ],
+                        [
+                            -78.45,
+                            40.86
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5e06eec65a995287bcf57f15ccfc91416e76921.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f5e06eec65a995287bcf57f15ccfc91416e76921.001.1",
+                "areaDesc": "Centre, PA; Clearfield, PA; Huntingdon, PA; Juniata, PA; Mifflin, PA; Perry, PA",
+                "geocode": {
+                    "SAME": [
+                        "042027",
+                        "042033",
+                        "042061",
+                        "042067",
+                        "042087",
+                        "042099"
+                    ],
+                    "UGC": [
+                        "PAC027",
+                        "PAC033",
+                        "PAC061",
+                        "PAC067",
+                        "PAC087",
+                        "PAC099"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC027",
+                    "https://api.weather.gov/zones/county/PAC033",
+                    "https://api.weather.gov/zones/county/PAC061",
+                    "https://api.weather.gov/zones/county/PAC067",
+                    "https://api.weather.gov/zones/county/PAC087",
+                    "https://api.weather.gov/zones/county/PAC099"
+                ],
+                "references": [],
+                "sent": "2026-09-03T02:12:00-04:00",
+                "effective": "2026-09-03T02:12:00-04:00",
+                "onset": "2026-09-03T02:12:00-04:00",
+                "expires": "2026-09-03T06:00:00-04:00",
+                "ends": "2026-09-03T06:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS State College PA",
+                "headline": "Flash Flood Warning issued September 3 at 2:12AM EDT until September 3 at 6:00AM EDT by NWS State College PA",
+                "description": "FFWCTP\n\nThe National Weather Service in State College has issued a\n\n* Flash Flood Warning for...\nSouthwestern Centre County in central Pennsylvania...\nSoutheastern Clearfield County in central Pennsylvania...\nNortheastern Huntingdon County in central Pennsylvania...\nNorthern Juniata County in central Pennsylvania...\nMifflin County in central Pennsylvania...\nNortheastern Perry County in south central Pennsylvania...\n\n* Until 600 AM EDT.\n\n* At 212 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nState College, Lewistown, Park Forest Village, Boalsburg,\nPhilipsburg, Stormstown, Lemont, Burnham, Belleville, Houserville,\nWarriors Mark, Newport, Pine Grove Mills, Milroy, Highland Park,\nOsceola Mills, Yeagertown, Mcalisterville, Chester Hill and\nRamblewood.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCTP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KCTP 030612"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCTP.FF.W.0089.260903T0612Z-260903T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T06:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3091f9c283a6a3ae86bfb77c9ddc8864d093c9c5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.2,
+                            41.9
+                        ],
+                        [
+                            -79.61,
+                            41.91
+                        ],
+                        [
+                            -79.61,
+                            41.62
+                        ],
+                        [
+                            -79.64,
+                            41.62
+                        ],
+                        [
+                            -80.09,
+                            41.84
+                        ],
+                        [
+                            -80.2,
+                            41.9
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3091f9c283a6a3ae86bfb77c9ddc8864d093c9c5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3091f9c283a6a3ae86bfb77c9ddc8864d093c9c5.001.1",
+                "areaDesc": "Crawford, PA; Erie, PA",
+                "geocode": {
+                    "SAME": [
+                        "042039",
+                        "042049"
+                    ],
+                    "UGC": [
+                        "PAC039",
+                        "PAC049"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PAC039",
+                    "https://api.weather.gov/zones/county/PAC049"
+                ],
+                "references": [],
+                "sent": "2026-09-03T01:42:00-04:00",
+                "effective": "2026-09-03T01:42:00-04:00",
+                "onset": "2026-09-03T01:42:00-04:00",
+                "expires": "2026-09-03T05:45:00-04:00",
+                "ends": "2026-09-03T05:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Cleveland OH",
+                "headline": "Flash Flood Warning issued September 3 at 1:42AM EDT until September 3 at 5:45AM EDT by NWS Cleveland OH",
+                "description": "FFWCLE\n\nThe National Weather Service in Cleveland has issued a\n\n* Flash Flood Warning for...\nNortheastern Crawford County in northwestern Pennsylvania...\nSoutheastern Erie County in northwestern Pennsylvania...\n\n* Until 545 AM EDT.\n\n* At 142 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 0.5 to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nEdinboro, Union City, Riceville, Canadohta Lake, Lincolnville, Mill\nVillage, Spartansburg and Elgin.",
+                "instruction": "Be especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCLE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KCLE 030542"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCLE.FF.W.0031.260903T0542Z-260903T0945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T05:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-03T09:37:16+00:00"
+}

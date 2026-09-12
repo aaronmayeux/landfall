@@ -1,0 +1,62 @@
+[
+  {
+    "day": "2026-09-02",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 33,
+    "people": 26
+  },
+  {
+    "day": "2026-09-02",
+    "source": "teams.public.onecdn.static.microsoft",
+    "sessions": 1,
+    "people": 1
+  },
+  {
+    "day": "2026-09-01",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 77,
+    "people": 45
+  },
+  {
+    "day": "2026-09-01",
+    "source": "teams.public.onecdn.static.microsoft",
+    "sessions": 5,
+    "people": 3
+  },
+  {
+    "day": "2026-08-31",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 53,
+    "people": 25
+  },
+  {
+    "day": "2026-08-31",
+    "source": "teams.public.onecdn.static.microsoft",
+    "sessions": 2,
+    "people": 2
+  },
+  {
+    "day": "2026-08-30",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 47,
+    "people": 19
+  },
+  {
+    "day": "2026-08-29",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 36,
+    "people": 15
+  },
+  {
+    "day": "2026-08-28",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 45,
+    "people": 21
+  },
+  {
+    "day": "2026-08-27",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 20,
+    "people": 15
+  }
+]

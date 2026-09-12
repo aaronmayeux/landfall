@@ -1,0 +1,38 @@
+en Español
+
+000
+ABPZ20 KNHC 082330
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Tue Sep 8 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Lowell, located a couple of hundred miles north-northwest of the 
+Hawaiian Islands.
+
+Well South-Southwest of the Southern Tip of Baja California (EP96):
+Showers and thunderstorms associated with a broad area of low 
+pressure located several hundred miles south-southwest of the 
+southern tip of the Baja California Peninsula continue to show signs 
+of organization.  Gradual development of this system is likely, and 
+a tropical depression is expected to form later this week while it 
+moves generally west-northwestward at 10 to 15 mph.
+* Formation chance through 48 hours...medium...50 percent.
+* Formation chance through 7 days...high...80 percent.
+
+Well South of the Southern Tip of Baja California:
+An area of low pressure is forecast to develop several hundred miles 
+south of the southern tip of the Baja California Peninsula this 
+weekend or early next week. Some slow development is possible as 
+this system moves generally west-northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...30 percent.
+
+$$
+Forecaster Pasch
+  

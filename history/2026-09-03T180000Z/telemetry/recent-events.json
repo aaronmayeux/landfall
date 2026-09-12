@@ -1,0 +1,722 @@
+[
+  {
+    "id": 73,
+    "ts": 1788271269,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 72,
+    "ts": 1788228448,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 71,
+    "ts": 1787884333,
+    "kind": "error",
+    "app": "v3",
+    "country": "MX",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 70,
+    "ts": 1787884030,
+    "kind": "error",
+    "app": "v3",
+    "country": "MX",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 69,
+    "ts": 1787506520,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 68,
+    "ts": 1787166256,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+    "stack": "global code@/:1:16"
+  },
+  {
+    "id": 67,
+    "ts": 1787166256,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "ReferenceError: Can't find variable: __firefox__",
+    "stack": "global code@/:1:12"
+  },
+  {
+    "id": 66,
+    "ts": 1787166256,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 65,
+    "ts": 1787166256,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')",
+    "stack": "global code@/:1:19"
+  },
+  {
+    "id": 64,
+    "ts": 1786846760,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Uncaught TypeError: Failed to execute 'clientWaitSync' on 'WebGL2RenderingContext': parameter 1 is not of type 'WebGLSync'.",
+    "stack": "TypeError: Failed to execute 'clientWaitSync' on 'WebGL2RenderingContext': parameter 1 is not of type 'WebGLSync'. | at Wt._tryReadback (/vendor/maplibre-gl-5.6.0.js:46:230038) | at Wt.updateErrorLoop (/vendor/maplibre-gl-5.6.0.js:46:228662) | at Yt.updateGPUdependent (/vendor/maplibre-gl-5.6.0.js:46:232861) | at Jt.updateGPUdependent (/vendor/maplibre-gl-5.6.0.js:46:235988)"
+  },
+  {
+    "id": 63,
+    "ts": 1786837825,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Error: Could not compile fragment shader: ",
+    "stack": "Si@/vendor/maplibre-gl-5.6.0.js:46:302399 | useProgram@/vendor/maplibre-gl-5.6.0.js:46:382388 | ir@/vendor/maplibre-gl-5.6.0.js:46:341113 | renderLayer/<@/vendor/maplibre-gl-5.6.0.js:46:369867 | renderLayer@/vendor/maplibre-gl-5.6.0.js:46:370125"
+  },
+  {
+    "id": 62,
+    "ts": 1786813171,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 61,
+    "ts": 1786812951,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 60,
+    "ts": 1786812067,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Error: feature index out of bounds",
+    "stack": "@/vendor/maplibre-gl-5.6.0.js:42:242258 | loadMatchingFeature@/vendor/maplibre-gl-5.6.0.js:42:320236 | query@/vendor/maplibre-gl-5.6.0.js:42:319701 | j@/vendor/maplibre-gl-5.6.0.js:46:22632 | queryRenderedFeatures@/vendor/maplibre-gl-5.6.0.js:46:291446"
+  },
+  {
+    "id": 59,
+    "ts": 1786773385,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "message": "Error: feature index out of bounds",
+    "stack": "@/vendor/maplibre-gl-5.6.0.js:42:242258 | loadMatchingFeature@/vendor/maplibre-gl-5.6.0.js:42:320236 | query@/vendor/maplibre-gl-5.6.0.js:42:319701 | j@/vendor/maplibre-gl-5.6.0.js:46:22632 | queryRenderedFeatures@/vendor/maplibre-gl-5.6.0.js:46:291446"
+  },
+  {
+    "id": 58,
+    "ts": 1786759896,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 57,
+    "ts": 1786757502,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 56,
+    "ts": 1786741109,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 55,
+    "ts": 1786731724,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 54,
+    "ts": 1786731448,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 53,
+    "ts": 1786731212,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 52,
+    "ts": 1786730388,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Error: feature index out of bounds",
+    "stack": "@/vendor/maplibre-gl-5.6.0.js:42:242258 | loadMatchingFeature@/vendor/maplibre-gl-5.6.0.js:42:320236 | query@/vendor/maplibre-gl-5.6.0.js:42:319701 | j@/vendor/maplibre-gl-5.6.0.js:46:22632 | queryRenderedFeatures@/vendor/maplibre-gl-5.6.0.js:46:291446"
+  },
+  {
+    "id": 51,
+    "ts": 1786729019,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 50,
+    "ts": 1786728312,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 49,
+    "ts": 1786727704,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 48,
+    "ts": 1786727566,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 47,
+    "ts": 1786727498,
+    "kind": "error",
+    "app": "v3",
+    "country": "IT",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 46,
+    "ts": 1786726501,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 45,
+    "ts": 1786726218,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 44,
+    "ts": 1786723903,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 43,
+    "ts": 1786722815,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+    "stack": "global code@/:1:16"
+  },
+  {
+    "id": 42,
+    "ts": 1786722815,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "ReferenceError: Can't find variable: __firefox__",
+    "stack": "global code@/:1:12"
+  },
+  {
+    "id": 41,
+    "ts": 1786722815,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 40,
+    "ts": 1786722815,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')",
+    "stack": "global code@/:1:19"
+  },
+  {
+    "id": 39,
+    "ts": 1786721806,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 38,
+    "ts": 1786720939,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 37,
+    "ts": 1786720913,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 36,
+    "ts": 1786719861,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 35,
+    "ts": 1786718666,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 34,
+    "ts": 1786718563,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 33,
+    "ts": 1786718341,
+    "kind": "error",
+    "app": "v3",
+    "country": "KR",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 32,
+    "ts": 1786717393,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 31,
+    "ts": 1786716516,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 30,
+    "ts": 1786714946,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 29,
+    "ts": 1786663000,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 28,
+    "ts": 1786501677,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 27,
+    "ts": 1786500872,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Uncaught TypeError: Failed to execute 'clientWaitSync' on 'WebGL2RenderingContext': parameter 1 is not of type 'WebGLSync'.",
+    "stack": "TypeError: Failed to execute 'clientWaitSync' on 'WebGL2RenderingContext': parameter 1 is not of type 'WebGLSync'. | at Wt._tryReadback (/vendor/maplibre-gl-5.6.0.js:46:230038) | at Wt.updateErrorLoop (/vendor/maplibre-gl-5.6.0.js:46:228662) | at Yt.updateGPUdependent (/vendor/maplibre-gl-5.6.0.js:46:232861) | at Jt.updateGPUdependent (/vendor/maplibre-gl-5.6.0.js:46:235988)"
+  },
+  {
+    "id": 26,
+    "ts": 1786500872,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Uncaught Error: Could not compile fragment shader: ",
+    "stack": "Error: Could not compile fragment shader: | at new Si (/vendor/maplibre-gl-5.6.0.js:46:302399) | at Mr.useProgram (/vendor/maplibre-gl-5.6.0.js:46:382388) | at Mr.clearStencil (/vendor/maplibre-gl-5.6.0.js:46:357429) | at Mr.render (/vendor/maplibre-gl-5.6.0.js:46:362571)"
+  },
+  {
+    "id": 25,
+    "ts": 1786473088,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 24,
+    "ts": 1786405600,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 23,
+    "ts": 1786365129,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 22,
+    "ts": 1786365018,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 21,
+    "ts": 1786323703,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 20,
+    "ts": 1786321205,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 19,
+    "ts": 1786313389,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 18,
+    "ts": 1786302032,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 17,
+    "ts": 1786251491,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 16,
+    "ts": 1786221678,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 1,
+    "message": "Uncaught Error: feature index out of bounds",
+    "stack": "Error: feature index out of bounds | at e.feature (/vendor/maplibre-gl-5.6.0.js:42:242249) | at Ch.loadMatchingFeature (/vendor/maplibre-gl-5.6.0.js:42:320229) | at Ch.query (/vendor/maplibre-gl-5.6.0.js:42:319682) | at re.queryRenderedFeatures (/vendor/maplibre-gl-5.6.0.js:46:51991)"
+  },
+  {
+    "id": 15,
+    "ts": 1786217433,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Uncaught Error: feature index out of bounds",
+    "stack": "Error: feature index out of bounds | at e.feature (/vendor/maplibre-gl-5.6.0.js:42:242249) | at Ch.loadMatchingFeature (/vendor/maplibre-gl-5.6.0.js:42:320229) | at Ch.query (/vendor/maplibre-gl-5.6.0.js:42:319682) | at re.queryRenderedFeatures (/vendor/maplibre-gl-5.6.0.js:46:51991)"
+  },
+  {
+    "id": 14,
+    "ts": 1785962881,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 13,
+    "ts": 1785962533,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 12,
+    "ts": 1785962389,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 11,
+    "ts": 1785919488,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 10,
+    "ts": 1785919488,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+    "stack": "global code@/:1:16"
+  },
+  {
+    "id": 9,
+    "ts": 1785860374,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.ethereum.selectedAddress = undefined')",
+    "stack": "global code@/:1:16"
+  },
+  {
+    "id": 8,
+    "ts": 1785860374,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "ReferenceError: Can't find variable: __firefox__",
+    "stack": "global code@/:1:12"
+  },
+  {
+    "id": 7,
+    "ts": 1785860374,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 6,
+    "ts": 1785860374,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "TypeError: undefined is not an object (evaluating 'window.__firefox__.reader')",
+    "stack": "global code@/:1:19"
+  },
+  {
+    "id": 5,
+    "ts": 1785860373,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "ReferenceError: Can't find variable: DarkReader",
+    "stack": "global code@/:1:11"
+  },
+  {
+    "id": 4,
+    "ts": 1785613947,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": "third-party (cross-origin, blanked)"
+  },
+  {
+    "id": 3,
+    "ts": 1785375420,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": ""
+  },
+  {
+    "id": 2,
+    "ts": 1785372468,
+    "kind": "error",
+    "app": "v3",
+    "country": "US",
+    "standalone": 0,
+    "message": "Script error.",
+    "stack": ""
+  }
+]

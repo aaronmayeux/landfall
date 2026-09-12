@@ -1,0 +1,1521 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ007",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ007",
+                "@type": "wx:Zone",
+                "id": "CTZ007",
+                "type": "public",
+                "name": "Northern Middlesex",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMMK",
+                    "https://api.weather.gov/stations/KHFD",
+                    "https://api.weather.gov/stations/KHVN",
+                    "https://api.weather.gov/stations/KSNC"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ008",
+                "@type": "wx:Zone",
+                "id": "CTZ008",
+                "type": "public",
+                "name": "Northern New London",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIJD",
+                    "https://api.weather.gov/stations/KGON",
+                    "https://api.weather.gov/stations/KHFD",
+                    "https://api.weather.gov/stations/KSNC",
+                    "https://api.weather.gov/stations/KWST"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ009",
+                "@type": "wx:Zone",
+                "id": "CTZ009",
+                "type": "public",
+                "name": "Southern Fairfield",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBDR",
+                    "https://api.weather.gov/stations/KHPN",
+                    "https://api.weather.gov/stations/KHVN",
+                    "https://api.weather.gov/stations/KNYC"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ010",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ010",
+                "@type": "wx:Zone",
+                "id": "CTZ010",
+                "type": "public",
+                "name": "Southern New Haven",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHVN",
+                    "https://api.weather.gov/stations/KBDR",
+                    "https://api.weather.gov/stations/KGON",
+                    "https://api.weather.gov/stations/KMMK",
+                    "https://api.weather.gov/stations/KSNC"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ011",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ011",
+                "@type": "wx:Zone",
+                "id": "CTZ011",
+                "type": "public",
+                "name": "Southern Middlesex",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHVN",
+                    "https://api.weather.gov/stations/KGON",
+                    "https://api.weather.gov/stations/KMMK",
+                    "https://api.weather.gov/stations/KSNC"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CTZ012",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CTZ012",
+                "@type": "wx:Zone",
+                "id": "CTZ012",
+                "type": "public",
+                "name": "Southern New London",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CT",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGON",
+                    "https://api.weather.gov/stations/KBID",
+                    "https://api.weather.gov/stations/KHVN",
+                    "https://api.weather.gov/stations/KSNC",
+                    "https://api.weather.gov/stations/KWST"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/DEZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/DEZ001",
+                "@type": "wx:Zone",
+                "id": "DEZ001",
+                "type": "public",
+                "name": "New Castle",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "DE",
+                "forecastOffice": "https://api.weather.gov/offices/PHI",
+                "gridIdentifier": "PHI",
+                "awipsLocationIdentifier": "PHI",
+                "cwa": [
+                    "PHI"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PHI"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KILG",
+                    "https://api.weather.gov/stations/K33N",
+                    "https://api.weather.gov/stations/KACY",
+                    "https://api.weather.gov/stations/KBWI",
+                    "https://api.weather.gov/stations/KDOV",
+                    "https://api.weather.gov/stations/KGED",
+                    "https://api.weather.gov/stations/KLNS",
+                    "https://api.weather.gov/stations/KMIV",
+                    "https://api.weather.gov/stations/KMTN",
+                    "https://api.weather.gov/stations/KPHL",
+                    "https://api.weather.gov/stations/KPTW",
+                    "https://api.weather.gov/stations/KVAY",
+                    "https://api.weather.gov/stations/KWWD"
+                ],
+                "radarStation": "DOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ044",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ044",
+                "@type": "wx:Zone",
+                "id": "KYZ044",
+                "type": "public",
+                "name": "Fleming",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ052",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ052",
+                "@type": "wx:Zone",
+                "id": "KYZ052",
+                "type": "public",
+                "name": "Rowan",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSYM",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ097",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ097",
+                "@type": "wx:Zone",
+                "id": "KYZ097",
+                "type": "public",
+                "name": "Bracken",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/ILN",
+                "gridIdentifier": "ILN",
+                "awipsLocationIdentifier": "ILN",
+                "cwa": [
+                    "ILN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ILN"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDAY",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KHAO",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KLUK",
+                    "https://api.weather.gov/stations/KSDF"
+                ],
+                "radarStation": "ILN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ098",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ098",
+                "@type": "wx:Zone",
+                "id": "KYZ098",
+                "type": "public",
+                "name": "Robertson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/ILN",
+                "gridIdentifier": "ILN",
+                "awipsLocationIdentifier": "ILN",
+                "cwa": [
+                    "ILN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ILN"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDAY",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KHAO",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLUK",
+                    "https://api.weather.gov/stations/KSDF"
+                ],
+                "radarStation": "ILN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ099",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ099",
+                "@type": "wx:Zone",
+                "id": "KYZ099",
+                "type": "public",
+                "name": "Mason",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/ILN",
+                "gridIdentifier": "ILN",
+                "awipsLocationIdentifier": "ILN",
+                "cwa": [
+                    "ILN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ILN"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDAY",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KHAO",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KLUK",
+                    "https://api.weather.gov/stations/KSDF"
+                ],
+                "radarStation": "ILN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ100",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ100",
+                "@type": "wx:Zone",
+                "id": "KYZ100",
+                "type": "public",
+                "name": "Lewis",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/ILN",
+                "gridIdentifier": "ILN",
+                "awipsLocationIdentifier": "ILN",
+                "cwa": [
+                    "ILN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ILN"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDAY",
+                    "https://api.weather.gov/stations/KFFT",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KSDF"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ101",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ101",
+                "@type": "wx:Zone",
+                "id": "KYZ101",
+                "type": "public",
+                "name": "Greenup",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/RLX",
+                "gridIdentifier": "RLX",
+                "awipsLocationIdentifier": "RLX",
+                "cwa": [
+                    "RLX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/RLX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KI43",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KPMH",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ102",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ102",
+                "@type": "wx:Zone",
+                "id": "KYZ102",
+                "type": "public",
+                "name": "Carter",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/RLX",
+                "gridIdentifier": "RLX",
+                "awipsLocationIdentifier": "RLX",
+                "cwa": [
+                    "RLX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/RLX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/K3I2",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KI43",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KPMH",
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ103",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ103",
+                "@type": "wx:Zone",
+                "id": "KYZ103",
+                "type": "public",
+                "name": "Boyd",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/RLX",
+                "gridIdentifier": "RLX",
+                "awipsLocationIdentifier": "RLX",
+                "cwa": [
+                    "RLX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/RLX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KI43",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KPMH",
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "RLX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ104",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ104",
+                "@type": "wx:Zone",
+                "id": "KYZ104",
+                "type": "public",
+                "name": "Elliott",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSYM",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KSJS"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ105",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ105",
+                "@type": "wx:Zone",
+                "id": "KYZ105",
+                "type": "public",
+                "name": "Lawrence",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/RLX",
+                "gridIdentifier": "RLX",
+                "awipsLocationIdentifier": "RLX",
+                "cwa": [
+                    "RLX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/RLX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/K3I2",
+                    "https://api.weather.gov/stations/K6L4",
+                    "https://api.weather.gov/stations/KCMH",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/KPMH",
+                    "https://api.weather.gov/stations/KSJS"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ106",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ106",
+                "@type": "wx:Zone",
+                "id": "KYZ106",
+                "type": "public",
+                "name": "Morgan",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSYM",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KCVG",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KFGX",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KILN",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KSJS"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ107",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ107",
+                "@type": "wx:Zone",
+                "id": "KYZ107",
+                "type": "public",
+                "name": "Johnson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/K6L4",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KLNP",
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ109",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ109",
+                "@type": "wx:Zone",
+                "id": "KYZ109",
+                "type": "public",
+                "name": "Magoffin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KLNP",
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ110",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ110",
+                "@type": "wx:Zone",
+                "id": "KYZ110",
+                "type": "public",
+                "name": "Floyd",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/K6L4",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KIOB",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLEX",
+                    "https://api.weather.gov/stations/KLNP",
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ119",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ119",
+                "@type": "wx:Zone",
+                "id": "KYZ119",
+                "type": "public",
+                "name": "Martin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/K6LV",
+                    "https://api.weather.gov/stations/K6V3",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KI16",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLNP",
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/KSYM"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/KYZ120",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/KYZ120",
+                "@type": "wx:Zone",
+                "id": "KYZ120",
+                "type": "public",
+                "name": "Pike",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "KY",
+                "forecastOffice": "https://api.weather.gov/offices/JKL",
+                "gridIdentifier": "JKL",
+                "awipsLocationIdentifier": "JKL",
+                "cwa": [
+                    "JKL"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/JKL"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPBX",
+                    "https://api.weather.gov/stations/K6V3",
+                    "https://api.weather.gov/stations/KBKW",
+                    "https://api.weather.gov/stations/KCRW",
+                    "https://api.weather.gov/stations/KDWU",
+                    "https://api.weather.gov/stations/KHTS",
+                    "https://api.weather.gov/stations/KI16",
+                    "https://api.weather.gov/stations/KJKL",
+                    "https://api.weather.gov/stations/KLNP",
+                    "https://api.weather.gov/stations/KSJS",
+                    "https://api.weather.gov/stations/KSYM",
+                    "https://api.weather.gov/stations/KTRI"
+                ],
+                "radarStation": "JKL"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ017",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ017",
+                "@type": "wx:Zone",
+                "id": "MAZ017",
+                "type": "public",
+                "name": "Northern Bristol",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KTAN",
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KPVD",
+                    "https://api.weather.gov/stations/KSFZ"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ018",
+                "@type": "wx:Zone",
+                "id": "MAZ018",
+                "type": "public",
+                "name": "Western Plymouth",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KTAN",
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KPYM"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ019",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ019",
+                "@type": "wx:Zone",
+                "id": "MAZ019",
+                "type": "public",
+                "name": "Eastern Plymouth",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPYM",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KTAN"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ020",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ020",
+                "@type": "wx:Zone",
+                "id": "MAZ020",
+                "type": "public",
+                "name": "Southern Bristol",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KPVD",
+                    "https://api.weather.gov/stations/KPYM",
+                    "https://api.weather.gov/stations/KUUU"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ021",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ021",
+                "@type": "wx:Zone",
+                "id": "MAZ021",
+                "type": "public",
+                "name": "Southern Plymouth",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KHYA",
+                    "https://api.weather.gov/stations/KPYM",
+                    "https://api.weather.gov/stations/KTAN"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ022",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ022",
+                "@type": "wx:Zone",
+                "id": "MAZ022",
+                "type": "public",
+                "name": "Barnstable",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHYA",
+                    "https://api.weather.gov/stations/KCQX",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KMVY",
+                    "https://api.weather.gov/stations/KPVC"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ023",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ023",
+                "@type": "wx:Zone",
+                "id": "MAZ023",
+                "type": "public",
+                "name": "Dukes",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMVY",
+                    "https://api.weather.gov/stations/KACK",
+                    "https://api.weather.gov/stations/KCQX",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KHYA"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ024",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ024",
+                "@type": "wx:Zone",
+                "id": "MAZ024",
+                "type": "public",
+                "name": "Nantucket",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KACK",
+                    "https://api.weather.gov/stations/KCQX",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KHYA",
+                    "https://api.weather.gov/stations/KMVY"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MDZ501",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MDZ501",
+                "@type": "wx:Zone",
+                "id": "MDZ501",
+                "type": "public",
+                "name": "Extreme Western Allegany",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MD",
+                "forecastOffice": "https://api.weather.gov/offices/LWX",
+                "gridIdentifier": "LWX",
+                "awipsLocationIdentifier": "LWX",
+                "cwa": [
+                    "LWX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LWX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHGR",
+                    "https://api.weather.gov/stations/KEKN",
+                    "https://api.weather.gov/stations/KJST",
+                    "https://api.weather.gov/stations/KMGW",
+                    "https://api.weather.gov/stations/KMRB",
+                    "https://api.weather.gov/stations/KOKV",
+                    "https://api.weather.gov/stations/KW99"
+                ],
+                "radarStation": "LWX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MDZ509",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MDZ509",
+                "@type": "wx:Zone",
+                "id": "MDZ509",
+                "type": "public",
+                "name": "Western Garrett",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MD",
+                "forecastOffice": "https://api.weather.gov/offices/LWX",
+                "gridIdentifier": "LWX",
+                "awipsLocationIdentifier": "LWX",
+                "cwa": [
+                    "LWX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LWX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MDZ510",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MDZ510",
+                "@type": "wx:Zone",
+                "id": "MDZ510",
+                "type": "public",
+                "name": "Eastern Garrett",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MD",
+                "forecastOffice": "https://api.weather.gov/offices/LWX",
+                "gridIdentifier": "LWX",
+                "awipsLocationIdentifier": "LWX",
+                "cwa": [
+                    "LWX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LWX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NJZ002",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NJZ002",
+                "@type": "wx:Zone",
+                "id": "NJZ002",
+                "type": "public",
+                "name": "Western Passaic",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NJ",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/K12N",
+                    "https://api.weather.gov/stations/KCDW",
+                    "https://api.weather.gov/stations/KMMU",
+                    "https://api.weather.gov/stations/KNYC"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NJZ004",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NJZ004",
+                "@type": "wx:Zone",
+                "id": "NJZ004",
+                "type": "public",
+                "name": "Eastern Passaic",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NJ",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCDW",
+                    "https://api.weather.gov/stations/KEWR",
+                    "https://api.weather.gov/stations/KMMU",
+                    "https://api.weather.gov/stations/KNYC",
+                    "https://api.weather.gov/stations/KTEB"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NJZ006",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NJZ006",
+                "@type": "wx:Zone",
+                "id": "NJZ006",
+                "type": "public",
+                "name": "Hudson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NJ",
+                "forecastOffice": "https://api.weather.gov/offices/OKX",
+                "gridIdentifier": "OKX",
+                "awipsLocationIdentifier": "OKX",
+                "cwa": [
+                    "OKX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/OKX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KEWR",
+                    "https://api.weather.gov/stations/KCDW",
+                    "https://api.weather.gov/stations/KLGA",
+                    "https://api.weather.gov/stations/KNYC",
+                    "https://api.weather.gov/stations/KTEB"
+                ],
+                "radarStation": "OKX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NJZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NJZ008",
+                "@type": "wx:Zone",
+                "id": "NJZ008",
+                "type": "public",
+                "name": "Morris",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NJ",
+                "forecastOffice": "https://api.weather.gov/offices/PHI",
+                "gridIdentifier": "PHI",
+                "awipsLocationIdentifier": "PHI",
+                "cwa": [
+                    "PHI"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PHI"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCDW",
+                    "https://api.weather.gov/stations/K12N",
+                    "https://api.weather.gov/stations/KABE",
+                    "https://api.weather.gov/stations/KEWR",
+                    "https://api.weather.gov/stations/KFWN",
+                    "https://api.weather.gov/stations/KMMU",
+                    "https://api.weather.gov/stations/KMPO",
+                    "https://api.weather.gov/stations/KNYC",
+                    "https://api.weather.gov/stations/KSMQ",
+                    "https://api.weather.gov/stations/KTEB",
+                    "https://api.weather.gov/stations/KTTN"
+                ],
+                "radarStation": "DIX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NJZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NJZ009",
+                "@type": "wx:Zone",
+                "id": "NJZ009",
+                "type": "public",
+                "name": "Hunterdon",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NJ",
+                "forecastOffice": "https://api.weather.gov/offices/PHI",
+                "gridIdentifier": "PHI",
+                "awipsLocationIdentifier": "PHI",
+                "cwa": [
+                    "PHI"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PHI"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KSMQ",
+                    "https://api.weather.gov/stations/K12N",
+                    "https://api.weather.gov/stations/KABE",
+                    "https://api.weather.gov/stations/KDYL",
+                    "https://api.weather.gov/stations/KEWR",
+                    "https://api.weather.gov/stations/KFWN",
+                    "https://api.weather.gov/stations/KMPO",
+                    "https://api.weather.gov/stations/KNXX",
+                    "https://api.weather.gov/stations/KNYC",
+                    "https://api.weather.gov/stations/KPHL",
+                    "https://api.weather.gov/stations/KPNE",
+                    "https://api.weather.gov/stations/KRDG",
+                    "https://api.weather.gov/stations/KTTN"
+                ],
+                "radarStation": "DIX"
+            }
+        }
+    ]
+}

@@ -1,0 +1,41 @@
+en Español
+
+000
+ABPZ20 KNHC 102317
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Thu Sep 10 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Lowell, located well northwest of the Hawaiian Islands, and on 
+Tropical Storm Norbert, located several hundred miles west- 
+southwest of the southern tip of the Baja California Peninsula.
+
+Well Southeast of the Hawaiian Islands:
+Disorganized showers and thunderstorms located more than 500 miles 
+to the southeast of the Hawaiian Islands are associated with a broad 
+trough of low pressure. Some gradual development of this system is 
+possible over the next few days into the weekend while it moves 
+generally northward and then meanders to the southeast of the 
+Hawaiian Islands.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...30 percent.
+
+Central and Western East Pacific:
+Showers and thunderstorms associated with a broad area of low 
+pressure are located several hundred miles southwest of the 
+southwestern coast of Mexico. Gradual development of this system is 
+anticipated, and a tropical depression is likely to form by early 
+next week while it moves generally west-northwestward to westward 
+over the central and western portions of the East Pacific.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...high...80 percent.
+
+$$
+Forecaster Papin
+  

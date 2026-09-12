@@ -1,0 +1,283 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.77012f5aeb1c0300f08e44b2e0d51763669214ac.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.33,
+                            39.11
+                        ],
+                        [
+                            -80.29,
+                            39.18
+                        ],
+                        [
+                            -79.99,
+                            39.15
+                        ],
+                        [
+                            -79.82,
+                            39.12
+                        ],
+                        [
+                            -79.78,
+                            39.08
+                        ],
+                        [
+                            -79.78,
+                            39.04
+                        ],
+                        [
+                            -79.79,
+                            39.04
+                        ],
+                        [
+                            -79.59,
+                            38.99
+                        ],
+                        [
+                            -79.86,
+                            39
+                        ],
+                        [
+                            -80.14,
+                            39.05
+                        ],
+                        [
+                            -80.33,
+                            39.11
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.77012f5aeb1c0300f08e44b2e0d51763669214ac.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.77012f5aeb1c0300f08e44b2e0d51763669214ac.001.1",
+                "areaDesc": "Barbour, WV; Harrison, WV; Randolph, WV; Upshur, WV",
+                "geocode": {
+                    "SAME": [
+                        "054001",
+                        "054033",
+                        "054083",
+                        "054097"
+                    ],
+                    "UGC": [
+                        "WVC001",
+                        "WVC033",
+                        "WVC083",
+                        "WVC097"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/WVC001",
+                    "https://api.weather.gov/zones/county/WVC033",
+                    "https://api.weather.gov/zones/county/WVC083",
+                    "https://api.weather.gov/zones/county/WVC097"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6cc42d7a4acd310a15e53a3f7bb602bf9b877f6f.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.6cc42d7a4acd310a15e53a3f7bb602bf9b877f6f.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-04T15:23:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-04T16:50:00-04:00",
+                "effective": "2026-09-04T16:50:00-04:00",
+                "onset": "2026-09-04T16:50:00-04:00",
+                "expires": "2026-09-04T18:30:00-04:00",
+                "ends": "2026-09-04T18:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston WV",
+                "headline": "Flash Flood Warning issued September 4 at 4:50PM EDT until September 4 at 6:30PM EDT by NWS Charleston WV",
+                "description": "At 450 PM EDT, doppler radar indicated prior thunderstorms had\nproduced heavy rain across the warned area. Between 1.5 and 2.5\ninches of rain has fallen. Flooding impacts will continue, but no\nadditional rainfall is expected. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by prior thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nPhilippi, Audra State Park, Belington, Montrose, Volga, Century and\nKerens.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nReport flooding to the National Weather Service by calling toll free,\n800 401 9535, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSRLX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KRLX 042050"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 630 PM EDT THIS EVENING FOR CENTRAL BARBOUR, NORTH CENTRAL RANDOLPH, NORTHEASTERN UPSHUR AND SOUTHEASTERN HARRISON COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KRLX.FF.W.0190.000000T0000Z-260904T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-04T18:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.abd224c8012b560eca75b78ae406e86376439d80.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.32,
+                            36.42
+                        ],
+                        [
+                            -76.31,
+                            36.42
+                        ],
+                        [
+                            -76.06,
+                            36.29
+                        ],
+                        [
+                            -76.11,
+                            36.24
+                        ],
+                        [
+                            -76.14,
+                            36.22
+                        ],
+                        [
+                            -76.32,
+                            36.31
+                        ],
+                        [
+                            -76.39,
+                            36.4
+                        ],
+                        [
+                            -76.32,
+                            36.42
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.abd224c8012b560eca75b78ae406e86376439d80.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.abd224c8012b560eca75b78ae406e86376439d80.001.1",
+                "areaDesc": "Camden, NC; Pasquotank, NC",
+                "geocode": {
+                    "SAME": [
+                        "037029",
+                        "037139"
+                    ],
+                    "UGC": [
+                        "NCC029",
+                        "NCC139"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC029",
+                    "https://api.weather.gov/zones/county/NCC139"
+                ],
+                "references": [],
+                "sent": "2026-09-04T16:49:00-04:00",
+                "effective": "2026-09-04T16:49:00-04:00",
+                "onset": "2026-09-04T16:49:00-04:00",
+                "expires": "2026-09-04T19:45:00-04:00",
+                "ends": "2026-09-04T19:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 4 at 4:49PM EDT until September 4 at 7:45PM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nWest Central Camden County in northeastern North Carolina...\nCentral Pasquotank County in northeastern North Carolina...\n\n* Until 745 PM EDT.\n\n* At 449 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 1.5 inches of rain\nhave fallen. The expected rainfall rate is 2 to 3 inches in 1 hour.\nAdditional rainfall amounts of 1 to 2 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nElizabeth City, Camden, Elizabeth City State University, Whitehall\nShores, Shiloh, Spences Corner, Burnt Mills, Taylors Beach and\nBartlett.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 042049"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0086.260904T2049Z-260904T2345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-04T19:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-04T21:22:16+00:00"
+}

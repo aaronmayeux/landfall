@@ -1,0 +1,317 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eef58e3a22e0c1563d3babc1ca8844e150abd9ea.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            144.6,
+                            13.43
+                        ],
+                        [
+                            144.62,
+                            13.44
+                        ],
+                        [
+                            144.65,
+                            13.41
+                        ],
+                        [
+                            144.66,
+                            13.39
+                        ],
+                        [
+                            144.66,
+                            13.41
+                        ],
+                        [
+                            144.62,
+                            13.45
+                        ],
+                        [
+                            144.7,
+                            13.49
+                        ],
+                        [
+                            144.75,
+                            13.5
+                        ],
+                        [
+                            144.79,
+                            13.55
+                        ],
+                        [
+                            144.8,
+                            13.51
+                        ],
+                        [
+                            144.8,
+                            13.54
+                        ],
+                        [
+                            144.9,
+                            13.47
+                        ],
+                        [
+                            144.81,
+                            13.41
+                        ],
+                        [
+                            144.79,
+                            13.31
+                        ],
+                        [
+                            144.63,
+                            13.35
+                        ],
+                        [
+                            144.63,
+                            13.34
+                        ],
+                        [
+                            144.65,
+                            13.33
+                        ],
+                        [
+                            144.65,
+                            13.32
+                        ],
+                        [
+                            144.61,
+                            13.33
+                        ],
+                        [
+                            144.63,
+                            13.4
+                        ],
+                        [
+                            144.6,
+                            13.43
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.eef58e3a22e0c1563d3babc1ca8844e150abd9ea.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.eef58e3a22e0c1563d3babc1ca8844e150abd9ea.001.1",
+                "areaDesc": "Guam, GU",
+                "geocode": {
+                    "SAME": [
+                        "066010"
+                    ],
+                    "UGC": [
+                        "GUC010"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GUC010"
+                ],
+                "references": [],
+                "sent": "2026-09-06T19:15:00+10:00",
+                "effective": "2026-09-06T19:15:00+10:00",
+                "onset": "2026-09-06T19:15:00+10:00",
+                "expires": "2026-09-06T20:45:00+10:00",
+                "ends": "2026-09-06T20:45:00+10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flash Flood Warning issued September 6 at 7:15PM ChST until September 6 at 8:45PM ChST by NWS Tiyan GU",
+                "description": "FFWGUM\n\nThe National Weather Service in Tiyan has issued a\n\n* Flash Flood Warning for...\nSouthwestern Guam...\n\n* Until 845 PM ChST.\n\n* At 715 PM ChST, Doppler radar indicated heavy showers, with the\npotential for thunderstorms, producing heavy rain across the warned\narea. Between 2 and 3 inches of rain have fallen. Additional\nrainfall amounts of 1 to 3 inches are possible in the warned area.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy showers and possible\nthunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways and streets, as well as other poor drainage and\nlow-lying areas.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nReport flooding to law enforcement.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY50 PGUM 060915"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PGUM.FF.W.0028.260906T0915Z-260906T1045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T20:45:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.96f256f4ae799b32e7361c7c86d3fcec7f0ab199.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.02,
+                            35.75
+                        ],
+                        [
+                            -85.03,
+                            35.85
+                        ],
+                        [
+                            -84.96,
+                            35.88
+                        ],
+                        [
+                            -84.95,
+                            35.88
+                        ],
+                        [
+                            -84.82,
+                            35.85
+                        ],
+                        [
+                            -84.84,
+                            35.8
+                        ],
+                        [
+                            -84.88,
+                            35.78
+                        ],
+                        [
+                            -84.91,
+                            35.77
+                        ],
+                        [
+                            -84.92,
+                            35.76
+                        ],
+                        [
+                            -84.92,
+                            35.77
+                        ],
+                        [
+                            -84.93,
+                            35.77
+                        ],
+                        [
+                            -85.02,
+                            35.75
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.96f256f4ae799b32e7361c7c86d3fcec7f0ab199.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.96f256f4ae799b32e7361c7c86d3fcec7f0ab199.001.1",
+                "areaDesc": "Cumberland, TN",
+                "geocode": {
+                    "SAME": [
+                        "047035"
+                    ],
+                    "UGC": [
+                        "TNC035"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TNC035"
+                ],
+                "references": [],
+                "sent": "2026-09-06T03:05:00-05:00",
+                "effective": "2026-09-06T03:05:00-05:00",
+                "onset": "2026-09-06T03:05:00-05:00",
+                "expires": "2026-09-06T06:00:00-05:00",
+                "ends": "2026-09-06T06:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Nashville TN",
+                "headline": "Flash Flood Warning issued September 6 at 3:05AM CDT until September 6 at 6:00AM CDT by NWS Nashville TN",
+                "description": "FFWOHX\n\nThe National Weather Service in Nashville has issued a\n\n* Flash Flood Warning for...\nSouth Central Cumberland County in Middle Tennessee...\n\n* Until 600 AM CDT.\n\n* At 305 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2.5 and 3 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMainly rural areas of South Central Cumberland County.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOHX 060805"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOHX.FF.W.0072.260906T0805Z-260906T1100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T06:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-06T09:17:25+00:00"
+}

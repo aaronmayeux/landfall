@@ -1,0 +1,431 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bf1200a10d7e8b1fcc71f71dad6c49fd8b311d9c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -159.63,
+                            22.2
+                        ],
+                        [
+                            -159.56,
+                            22.25
+                        ],
+                        [
+                            -159.53,
+                            22.24
+                        ],
+                        [
+                            -159.52,
+                            22.25
+                        ],
+                        [
+                            -159.38,
+                            22.25
+                        ],
+                        [
+                            -159.34,
+                            22.23
+                        ],
+                        [
+                            -159.32,
+                            22.21
+                        ],
+                        [
+                            -159.3,
+                            22.17
+                        ],
+                        [
+                            -159.29,
+                            22.17
+                        ],
+                        [
+                            -159.27,
+                            22.15
+                        ],
+                        [
+                            -159.27,
+                            22.13
+                        ],
+                        [
+                            -159.32,
+                            22.04
+                        ],
+                        [
+                            -159.31,
+                            21.99
+                        ],
+                        [
+                            -159.32,
+                            21.96
+                        ],
+                        [
+                            -159.61,
+                            21.99
+                        ],
+                        [
+                            -159.63,
+                            22.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bf1200a10d7e8b1fcc71f71dad6c49fd8b311d9c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bf1200a10d7e8b1fcc71f71dad6c49fd8b311d9c.001.1",
+                "areaDesc": "Kauai, HI",
+                "geocode": {
+                    "SAME": [
+                        "015007"
+                    ],
+                    "UGC": [
+                        "HIC007"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC007"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3782caedde409c2a79af4140da479e9efc11a52d.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.3782caedde409c2a79af4140da479e9efc11a52d.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-07T11:11:00-10:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6be4edb49caf36f7be62e327cf5585594c2cde35.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.6be4edb49caf36f7be62e327cf5585594c2cde35.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-07T12:51:00-10:00"
+                    }
+                ],
+                "sent": "2026-09-07T13:56:00-10:00",
+                "effective": "2026-09-07T13:56:00-10:00",
+                "onset": "2026-09-07T13:56:00-10:00",
+                "expires": "2026-09-07T17:00:00-10:00",
+                "ends": "2026-09-07T17:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued September 7 at 1:56PM HST until September 7 at 5:00PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has extended the\n\n* Flash Flood Warning for...\nThe island of Kauai in Kauai County\n\n* Until 500 PM HST.\n\n* At 156 PM HST, emergency management reported Kuhio Highway near the\nHanalei River bridge is still closed, along with water over several\nother roadways. Stream levels are trending down, but remain\nelevated. Additional areas of moderate rain are expected to move\nover the area over the next few hours and could result in\nadditional flooding impacts.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Emergency management reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLihue, Kapaa, Princeville, Kilauea, North Fork Wailua Trails,\nWailua Homesteads, Hanalei, Wailua, Moloaa, Wainiha, and Anahola.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 072356"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.PHFO.FF.W.0050.000000T0000Z-260908T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T17:00:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0a81b655954a9d2084a4b421a3c6ba9b207a50be.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.84,
+                            32.98
+                        ],
+                        [
+                            -107.84,
+                            32.97
+                        ],
+                        [
+                            -107.83,
+                            32.97
+                        ],
+                        [
+                            -107.83,
+                            32.96
+                        ],
+                        [
+                            -107.8,
+                            32.96
+                        ],
+                        [
+                            -107.79,
+                            32.95
+                        ],
+                        [
+                            -107.78,
+                            32.95
+                        ],
+                        [
+                            -107.77,
+                            32.91
+                        ],
+                        [
+                            -107.78,
+                            32.9
+                        ],
+                        [
+                            -107.78,
+                            32.89
+                        ],
+                        [
+                            -107.84,
+                            32.88
+                        ],
+                        [
+                            -107.86,
+                            32.87
+                        ],
+                        [
+                            -107.87,
+                            32.88
+                        ],
+                        [
+                            -107.87,
+                            32.92
+                        ],
+                        [
+                            -107.88,
+                            32.96
+                        ],
+                        [
+                            -107.84,
+                            32.98
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0a81b655954a9d2084a4b421a3c6ba9b207a50be.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0a81b655954a9d2084a4b421a3c6ba9b207a50be.001.1",
+                "areaDesc": "Grant, NM",
+                "geocode": {
+                    "SAME": [
+                        "035017"
+                    ],
+                    "UGC": [
+                        "NMC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC017"
+                ],
+                "references": [],
+                "sent": "2026-09-07T17:22:00-06:00",
+                "effective": "2026-09-07T17:22:00-06:00",
+                "onset": "2026-09-07T17:22:00-06:00",
+                "expires": "2026-09-07T19:15:00-06:00",
+                "ends": "2026-09-07T19:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 7 at 5:22PM MDT until September 7 at 7:15PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nEastern Grant County in southwestern New Mexico...\n\n* Until 715 PM MDT.\n\n* At 522 PM MDT, Slow moving thunderstorms near Emory Pass have\nproduced around an inch of rain upstream of several campgrounds on\nHighway 152, west of the Pass. Additional thunderstorms are\nexpected to move over the area.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, highways, as\nwell as other poor drainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHighway 152 west of Emory Pass, Iron Creek Campground, Railroad\nCampround, and Upper Gallinas Campground.",
+                "instruction": "Be aware of your surroundings and do not drive on flooded roads.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 072322"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0122.260907T2322Z-260908T0115Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T19:15:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5ad348ec128aa8aafad66a32cdf7583e2f34f38c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.03,
+                            48.8
+                        ],
+                        [
+                            -96.8,
+                            48.96
+                        ],
+                        [
+                            -96.66,
+                            48.88
+                        ],
+                        [
+                            -96.91,
+                            48.72
+                        ],
+                        [
+                            -97.03,
+                            48.8
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5ad348ec128aa8aafad66a32cdf7583e2f34f38c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5ad348ec128aa8aafad66a32cdf7583e2f34f38c.001.1",
+                "areaDesc": "Kittson, MN",
+                "geocode": {
+                    "SAME": [
+                        "027069"
+                    ],
+                    "UGC": [
+                        "MNC069"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC069"
+                ],
+                "references": [],
+                "sent": "2026-09-07T18:07:00-05:00",
+                "effective": "2026-09-07T18:07:00-05:00",
+                "onset": "2026-09-07T18:07:00-05:00",
+                "expires": "2026-09-07T23:00:00-05:00",
+                "ends": "2026-09-07T23:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Forks ND",
+                "headline": "Flash Flood Warning issued September 7 at 6:07PM CDT until September 7 at 11:00PM CDT by NWS Grand Forks ND",
+                "description": "FFWFGF\n\nThe National Weather Service in Grand Forks has issued a\n\n* Flash Flood Warning for...\nCentral Kittson County in northwestern Minnesota...\n\n* Until 1100 PM CDT.\n\n* At 607 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHallock and Lancaster.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KFGF 072307"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGF.FF.W.0006.260907T2307Z-260908T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T23:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-08T00:11:52+00:00"
+}

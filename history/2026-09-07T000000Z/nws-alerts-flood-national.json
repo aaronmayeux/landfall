@@ -1,0 +1,516 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4c82b12d7f5f633eb3fab474623a9ea35b9800d0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -157.96,
+                            21.71
+                        ],
+                        [
+                            -157.96,
+                            21.72
+                        ],
+                        [
+                            -157.91,
+                            21.67
+                        ],
+                        [
+                            -157.82,
+                            21.55
+                        ],
+                        [
+                            -157.82,
+                            21.47
+                        ],
+                        [
+                            -157.81,
+                            21.47
+                        ],
+                        [
+                            -157.8,
+                            21.48
+                        ],
+                        [
+                            -157.79,
+                            21.48
+                        ],
+                        [
+                            -157.79,
+                            21.49
+                        ],
+                        [
+                            -157.73,
+                            21.49
+                        ],
+                        [
+                            -157.71,
+                            21.47
+                        ],
+                        [
+                            -157.7,
+                            21.44
+                        ],
+                        [
+                            -157.71,
+                            21.41
+                        ],
+                        [
+                            -157.68,
+                            21.36
+                        ],
+                        [
+                            -157.67,
+                            21.31
+                        ],
+                        [
+                            -157.81,
+                            21.28
+                        ],
+                        [
+                            -157.96,
+                            21.39
+                        ],
+                        [
+                            -158.01,
+                            21.55
+                        ],
+                        [
+                            -157.96,
+                            21.71
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4c82b12d7f5f633eb3fab474623a9ea35b9800d0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4c82b12d7f5f633eb3fab474623a9ea35b9800d0.001.1",
+                "areaDesc": "Oahu in Honolulu, HI",
+                "geocode": {
+                    "SAME": [
+                        "015003"
+                    ],
+                    "UGC": [
+                        "HIC003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC003"
+                ],
+                "references": [],
+                "sent": "2026-09-06T14:47:00-10:00",
+                "effective": "2026-09-06T14:47:00-10:00",
+                "onset": "2026-09-06T14:47:00-10:00",
+                "expires": "2026-09-06T17:30:00-10:00",
+                "ends": "2026-09-06T17:30:00-10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued September 6 at 2:47PM HST until September 6 at 5:30PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has issued a\n\n* Flash Flood Warning for...\nThe island of Oahu in Honolulu County\n\n* Until 530 PM HST.\n\n* At 247 PM HST, Doppler radar indicated moderate to locally heavy\nshowers over windward Oahu, with the heaviest rain falling at a\nrate of 1 to 3 inches per hour over the central Koolau Mountains.\nRapid rises in water levels in the Waiahole and Waikane Streams\nindicate that flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHonolulu, Kahaluu, Waiahole, Ahuimanu, Waikane, Kaneohe, Kaaawa,\nAiea, Kaneohe Marine Base, Halawa, Moanalua and Pearl City.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 070047"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PHFO.FF.W.0048.260907T0047Z-260907T0330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T17:30:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f8720d2b63dd5bafb892e363820e630a44183fc9.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.66,
+                            40.31
+                        ],
+                        [
+                            -95.69,
+                            40.31
+                        ],
+                        [
+                            -95.71,
+                            40.33
+                        ],
+                        [
+                            -95.69,
+                            40.37
+                        ],
+                        [
+                            -95.64,
+                            40.36
+                        ],
+                        [
+                            -95.63,
+                            40.36
+                        ],
+                        [
+                            -95.62,
+                            40.35
+                        ],
+                        [
+                            -95.62,
+                            40.34
+                        ],
+                        [
+                            -95.63,
+                            40.33
+                        ],
+                        [
+                            -95.65,
+                            40.32
+                        ],
+                        [
+                            -95.66,
+                            40.32
+                        ],
+                        [
+                            -95.66,
+                            40.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f8720d2b63dd5bafb892e363820e630a44183fc9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f8720d2b63dd5bafb892e363820e630a44183fc9.001.1",
+                "areaDesc": "Nemaha, NE",
+                "geocode": {
+                    "SAME": [
+                        "031127"
+                    ],
+                    "UGC": [
+                        "NEC127"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NEC127"
+                ],
+                "references": [],
+                "sent": "2026-09-06T19:02:00-05:00",
+                "effective": "2026-09-06T19:02:00-05:00",
+                "onset": "2026-09-06T19:02:00-05:00",
+                "expires": "2026-09-06T23:00:00-05:00",
+                "ends": "2026-09-06T23:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Omaha/Valley NE",
+                "headline": "Flash Flood Warning issued September 6 at 7:02PM CDT until September 6 at 11:00PM CDT by NWS Omaha/Valley NE",
+                "description": "FFWOAX\n\nThe National Weather Service in Omaha/Valley has issued a\n\n* Flash Flood Warning for...\nSoutheastern Nemaha County in southeastern Nebraska...\n\n* Until 1100 PM CDT.\n\n* At 702 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNemaha.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KOAX 070002"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOAX.FF.W.0037.260907T0002Z-260907T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T23:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5d08cd88caeccff5c4e3572d53161b054572b10.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.61,
+                            46.31
+                        ],
+                        [
+                            -95.86,
+                            46.53
+                        ],
+                        [
+                            -96.24,
+                            46.35
+                        ],
+                        [
+                            -96.08,
+                            46.16
+                        ],
+                        [
+                            -95.61,
+                            46.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f5d08cd88caeccff5c4e3572d53161b054572b10.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f5d08cd88caeccff5c4e3572d53161b054572b10.001.1",
+                "areaDesc": "Otter Tail, MN",
+                "geocode": {
+                    "SAME": [
+                        "027111"
+                    ],
+                    "UGC": [
+                        "MNC111"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC111"
+                ],
+                "references": [],
+                "sent": "2026-09-06T18:37:00-05:00",
+                "effective": "2026-09-06T18:37:00-05:00",
+                "onset": "2026-09-06T18:37:00-05:00",
+                "expires": "2026-09-07T00:30:00-05:00",
+                "ends": "2026-09-07T00:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Forks ND",
+                "headline": "Flash Flood Warning issued September 6 at 6:37PM CDT until September 7 at 12:30AM CDT by NWS Grand Forks ND",
+                "description": "FFWFGF\n\nThe National Weather Service in Grand Forks has issued a\n\n* Flash Flood Warning for...\nSouthwestern Otter Tail County in west central Minnesota...\n\n* Until 1230 AM CDT.\n\n* At 637 PM CDT, the public reported thunderstorms producing heavy\nrain in Multiple reports of reports of stalled vehicles and flooded\nroads. Between 3 and 4 inches of rain have fallen. Additional\nrainfall amounts of 1 to 2 inches are possible in the warned area.\nFlash flooding is already occurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Public reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFergus Falls, southwestern Ottertail Lake, Battle Lake,\nsouthwestern Star Lake, Underwood, Elizabeth, southeastern\nMaplewood State Park, Carlisle, Amor, Phelps, Edwards, Maplewood,\nGlendalough and Fergus Falls Airport.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KFGF 062337"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGF.FF.W.0004.260906T2337Z-260907T0530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T00:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5a6c0695e9a7d1aea078929ca6665be4f2a17c12.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.28,
+                            46.39
+                        ],
+                        [
+                            -95.56,
+                            46.69
+                        ],
+                        [
+                            -95.86,
+                            46.51
+                        ],
+                        [
+                            -95.63,
+                            46.31
+                        ],
+                        [
+                            -95.28,
+                            46.39
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5a6c0695e9a7d1aea078929ca6665be4f2a17c12.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5a6c0695e9a7d1aea078929ca6665be4f2a17c12.001.1",
+                "areaDesc": "Otter Tail, MN",
+                "geocode": {
+                    "SAME": [
+                        "027111"
+                    ],
+                    "UGC": [
+                        "MNC111"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC111"
+                ],
+                "references": [],
+                "sent": "2026-09-06T17:49:00-05:00",
+                "effective": "2026-09-06T17:49:00-05:00",
+                "onset": "2026-09-06T17:49:00-05:00",
+                "expires": "2026-09-07T00:00:00-05:00",
+                "ends": "2026-09-07T00:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Forks ND",
+                "headline": "Flash Flood Warning issued September 6 at 5:49PM CDT until September 7 at 12:00AM CDT by NWS Grand Forks ND",
+                "description": "FFWFGF\n\nThe National Weather Service in Grand Forks has issued a\n\n* Flash Flood Warning for...\nCentral Otter Tail County in west central Minnesota...\n\n* Until midnight CDT Tonight.\n\n* At 549 PM CDT, local law enforcement reported thunderstorms\nproducing heavy rain across the warned area. Between 3 and 4 inches\nof rain have fallen. Additional rainfall amounts of 1 to 2 inches\nare possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPerham, Ottertail Lake, Ottertail, Star Lake, Deer Creek, Dent,\nRichville, Amor and Glendalough.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KFGF 062249"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGF.FF.W.0003.260906T2249Z-260907T0500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T00:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-07T00:49:15+00:00"
+}

@@ -1,0 +1,46 @@
+ABPZ20 KNHC 121130
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Sat Sep 12 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Norbert, located well west-southwest of the southern tip of 
+the Baja California Peninsula.
+
+Central and Western East Pacific (EP97):
+Earlier satellite-derived winds indicate that the surface 
+circulation associated with an area of low pressure located 
+several hundred miles southwest of the southwestern coast of Mexico 
+remains poorly defined.  Environmental conditions still appear 
+conducive for development, however, and a tropical depression is 
+expected to form during the next couple of days while it moves 
+generally west-northwestward to westward over the central and 
+western portions of the eastern Pacific basin.  For more 
+information, including gale warnings, please see the High Seas 
+Forecast issued by the National Weather Service. 
+* Formation chance through 48 hours...high...80 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Well Southeast of the Hawaiian Islands:
+A broad area of low pressure located several hundred miles 
+southeast of Hilo, Hawaii, is producing disorganized showers and 
+thunderstorms.  Development of this system is becoming less likely 
+while it drifts generally west-northwestward.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+&&
+
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFEPI, WMO header FZPN02 
+KWBC, and on the web at ocean.weather.gov/shtml/NFDHSFEPI.php
+
+$$
+Forecaster Roberts
+
+

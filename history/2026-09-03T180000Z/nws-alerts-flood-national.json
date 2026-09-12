@@ -1,0 +1,440 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5e28f588048a74faf17f559844d4ac2821dad544.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.32,
+                            31.37
+                        ],
+                        [
+                            -95.87,
+                            31.58
+                        ],
+                        [
+                            -95.74,
+                            31.51
+                        ],
+                        [
+                            -95.75,
+                            31.49
+                        ],
+                        [
+                            -95.73,
+                            31.48
+                        ],
+                        [
+                            -95.75,
+                            31.46
+                        ],
+                        [
+                            -95.72,
+                            31.46
+                        ],
+                        [
+                            -95.71,
+                            31.39
+                        ],
+                        [
+                            -95.66,
+                            31.33
+                        ],
+                        [
+                            -95.73,
+                            31.27
+                        ],
+                        [
+                            -95.73,
+                            31.23
+                        ],
+                        [
+                            -95.75,
+                            31.22
+                        ],
+                        [
+                            -95.75,
+                            31.18
+                        ],
+                        [
+                            -95.73,
+                            31.16
+                        ],
+                        [
+                            -95.78,
+                            31.14
+                        ],
+                        [
+                            -95.77,
+                            31.1
+                        ],
+                        [
+                            -95.97,
+                            31.09
+                        ],
+                        [
+                            -96.05,
+                            31.07
+                        ],
+                        [
+                            -96.32,
+                            31.26
+                        ],
+                        [
+                            -96.31,
+                            31.34
+                        ],
+                        [
+                            -96.32,
+                            31.37
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5e28f588048a74faf17f559844d4ac2821dad544.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5e28f588048a74faf17f559844d4ac2821dad544.001.1",
+                "areaDesc": "Leon, TX",
+                "geocode": {
+                    "SAME": [
+                        "048289"
+                    ],
+                    "UGC": [
+                        "TXC289"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC289"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10072bf66b8d2d5530d201ad5b1668062077923e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.10072bf66b8d2d5530d201ad5b1668062077923e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-03T11:08:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-03T12:50:00-05:00",
+                "effective": "2026-09-03T12:50:00-05:00",
+                "onset": "2026-09-03T12:50:00-05:00",
+                "expires": "2026-09-03T15:00:00-05:00",
+                "ends": "2026-09-03T15:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Fort Worth TX",
+                "headline": "Flash Flood Warning issued September 3 at 12:50PM CDT until September 3 at 3:00PM CDT by NWS Fort Worth TX",
+                "description": "FFWFWD\n\nThe National Weather Service in Fort Worth has extended the\n\n* Flash Flood Warning for...\nLeon County in central Texas...\n\n* Until 300 PM CDT.\n\n* At 1250 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 5 inches of rain have\nfallen. Additional rainfall amounts up to 2 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBuffalo, Centerville, Fort Boggy State Park, Corinth, Jewett,\nRedland, Marquez, Leona, Pleasant Springs, Flo, Eunice, Robbins,\nCenterview and Flynn.\n\nThis includes Interstate 45 between mile markers 152 and 180.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFWD"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KFWD 031750"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFWD.FF.W.0083.000000T0000Z-260903T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T15:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.3a2fd5ab9e5b815b5ed0064131c21e5d8ae1b969.001.1,2026-09-03T09:16:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8525b2ad248961d183c02320a20226926a4b2dc0.001.1,2026-09-03T08:37:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.faae2f400f8571fc165bbcdd645e8541f490417b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -94.6,
+                            30.75
+                        ],
+                        [
+                            -94.39,
+                            30.79
+                        ],
+                        [
+                            -94.19,
+                            30.82
+                        ],
+                        [
+                            -94.2,
+                            30.68
+                        ],
+                        [
+                            -94.25,
+                            30.53
+                        ],
+                        [
+                            -94.55,
+                            30.53
+                        ],
+                        [
+                            -94.56,
+                            30.58
+                        ],
+                        [
+                            -94.57,
+                            30.65
+                        ],
+                        [
+                            -94.59,
+                            30.72
+                        ],
+                        [
+                            -94.6,
+                            30.75
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.faae2f400f8571fc165bbcdd645e8541f490417b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.faae2f400f8571fc165bbcdd645e8541f490417b.001.1",
+                "areaDesc": "Tyler, TX",
+                "geocode": {
+                    "SAME": [
+                        "048457"
+                    ],
+                    "UGC": [
+                        "TXC457"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC457"
+                ],
+                "references": [],
+                "sent": "2026-09-03T10:55:00-05:00",
+                "effective": "2026-09-03T10:55:00-05:00",
+                "onset": "2026-09-03T10:55:00-05:00",
+                "expires": "2026-09-03T14:00:00-05:00",
+                "ends": "2026-09-03T14:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lake Charles LA",
+                "headline": "Flash Flood Warning issued September 3 at 10:55AM CDT until September 3 at 2:00PM CDT by NWS Lake Charles LA",
+                "description": "FFWLCH\n\nThe National Weather Service in Lake Charles has issued a\n\n* Flash Flood Warning for...\nSouthern Tyler County in southeastern Texas...\n\n* Until 200 PM CDT.\n\n* At 1055 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. The expected rainfall rate is 1 to 2 inches per hour.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWoodville, Warren, Ivanhoe and Hillister.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLCH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLCH 031555"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLCH.FF.W.0073.260903T1555Z-260903T1900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T14:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ac09e6e199bd4622d1523f459f9188478d921cfa.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.13,
+                            31.98
+                        ],
+                        [
+                            -96.1,
+                            31.99
+                        ],
+                        [
+                            -96.09,
+                            31.87
+                        ],
+                        [
+                            -96.1,
+                            31.73
+                        ],
+                        [
+                            -96.15,
+                            31.71
+                        ],
+                        [
+                            -96.42,
+                            31.69
+                        ],
+                        [
+                            -96.4,
+                            31.84
+                        ],
+                        [
+                            -96.29,
+                            31.9
+                        ],
+                        [
+                            -96.13,
+                            31.98
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ac09e6e199bd4622d1523f459f9188478d921cfa.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ac09e6e199bd4622d1523f459f9188478d921cfa.001.1",
+                "areaDesc": "Freestone, TX",
+                "geocode": {
+                    "SAME": [
+                        "048161"
+                    ],
+                    "UGC": [
+                        "TXC161"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC161"
+                ],
+                "references": [],
+                "sent": "2026-09-03T10:55:00-05:00",
+                "effective": "2026-09-03T10:55:00-05:00",
+                "onset": "2026-09-03T10:55:00-05:00",
+                "expires": "2026-09-03T14:00:00-05:00",
+                "ends": "2026-09-03T14:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Fort Worth TX",
+                "headline": "Flash Flood Warning issued September 3 at 10:55AM CDT until September 3 at 2:00PM CDT by NWS Fort Worth TX",
+                "description": "FFWFWD\n\nThe National Weather Service in Fort Worth has issued a\n\n* Flash Flood Warning for...\nNorthwestern Freestone County in central Texas...\n\n* Until 200 PM CDT.\n\n* At 1055 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 3 inches of rain have\nfallen. Additional rainfall amounts up to 2 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFairfield, Richland-Chambers Reservoir, Streetman, Kirvin and\nStewards Mill.\n\nThis includes Interstate 45 between mile markers 198 and 212.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFWD"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KFWD 031555"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFWD.FF.W.0084.260903T1555Z-260903T1900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-03T14:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-03T18:28:06+00:00"
+}

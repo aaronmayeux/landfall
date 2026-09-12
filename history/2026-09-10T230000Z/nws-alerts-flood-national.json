@@ -1,0 +1,287 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aac822db09397348a54526374fadc83e9e6c1396.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -101.63,
+                            34.93
+                        ],
+                        [
+                            -101.64,
+                            34.8
+                        ],
+                        [
+                            -101.78,
+                            34.86
+                        ],
+                        [
+                            -101.8,
+                            34.93
+                        ],
+                        [
+                            -101.79,
+                            35.01
+                        ],
+                        [
+                            -101.82,
+                            35.07
+                        ],
+                        [
+                            -101.82,
+                            35.11
+                        ],
+                        [
+                            -101.76,
+                            35.11
+                        ],
+                        [
+                            -101.7,
+                            35.08
+                        ],
+                        [
+                            -101.69,
+                            35.06
+                        ],
+                        [
+                            -101.63,
+                            34.99
+                        ],
+                        [
+                            -101.63,
+                            34.93
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aac822db09397348a54526374fadc83e9e6c1396.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.aac822db09397348a54526374fadc83e9e6c1396.001.1",
+                "areaDesc": "Randall, TX",
+                "geocode": {
+                    "SAME": [
+                        "048381"
+                    ],
+                    "UGC": [
+                        "TXC381"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC381"
+                ],
+                "references": [],
+                "sent": "2026-09-10T18:20:00-05:00",
+                "effective": "2026-09-10T18:20:00-05:00",
+                "onset": "2026-09-10T18:20:00-05:00",
+                "expires": "2026-09-10T21:15:00-05:00",
+                "ends": "2026-09-10T21:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Amarillo TX",
+                "headline": "Flash Flood Warning issued September 10 at 6:20PM CDT until September 10 at 9:15PM CDT by NWS Amarillo TX",
+                "description": "FFWAMA\n\nThe National Weather Service in Amarillo has issued a\n\n* Flash Flood Warning for...\nEastern Randall County in the panhandle of Texas...\n\n* Until 915 PM CDT.\n\n* At 620 PM CDT, trained weather spotters reported thunderstorms\nproducing heavy rain in Flooding reported in Lake Tanglewood.\nBetween 2 and 3 inches of rain have fallen. The expected rainfall\nrate is 1.5 to 2 inches in 1 hour. Additional rainfall amounts of 1\nto 2 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Trained spotters reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLake Tanglewood and Palo Duro Canyon.\n\n2 Feet of fast moving water reported in Lake Tanglewood area with\nsome roads closed.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAMA"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KAMA 102320"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAMA.FF.W.0029.260910T2320Z-260911T0215Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-10T21:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7e24c6ccfc6453be3296e545fa6a44625c16578.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.76,
+                            39.21
+                        ],
+                        [
+                            -82.75,
+                            39.31
+                        ],
+                        [
+                            -82.27,
+                            39.29
+                        ],
+                        [
+                            -82.29,
+                            39.25
+                        ],
+                        [
+                            -82.21,
+                            39.05
+                        ],
+                        [
+                            -82.41,
+                            39.03
+                        ],
+                        [
+                            -82.44,
+                            39.04
+                        ],
+                        [
+                            -82.44,
+                            39.03
+                        ],
+                        [
+                            -82.8,
+                            39
+                        ],
+                        [
+                            -82.79,
+                            39.17
+                        ],
+                        [
+                            -82.77,
+                            39.17
+                        ],
+                        [
+                            -82.76,
+                            39.21
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d7e24c6ccfc6453be3296e545fa6a44625c16578.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d7e24c6ccfc6453be3296e545fa6a44625c16578.001.1",
+                "areaDesc": "Jackson, OH; Meigs, OH; Vinton, OH",
+                "geocode": {
+                    "SAME": [
+                        "039079",
+                        "039105",
+                        "039163"
+                    ],
+                    "UGC": [
+                        "OHC079",
+                        "OHC105",
+                        "OHC163"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC079",
+                    "https://api.weather.gov/zones/county/OHC105",
+                    "https://api.weather.gov/zones/county/OHC163"
+                ],
+                "references": [],
+                "sent": "2026-09-10T19:12:00-04:00",
+                "effective": "2026-09-10T19:12:00-04:00",
+                "onset": "2026-09-10T19:12:00-04:00",
+                "expires": "2026-09-11T00:15:00-04:00",
+                "ends": "2026-09-11T00:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston WV",
+                "headline": "Flash Flood Warning issued September 10 at 7:12PM EDT until September 11 at 12:15AM EDT by NWS Charleston WV",
+                "description": "FFWRLX\n\nThe National Weather Service in Charleston has issued a\n\n* Flash Flood Warning for...\nNorthern Jackson County in southeastern Ohio...\nNorthwestern Meigs County in southeastern Ohio...\nVinton County in southeastern Ohio...\n\n* Until 1215 AM EDT.\n\n* At 712 PM EDT, Doppler radar indicated heavy rain across the warned\narea. Between 0.5 and 1 inch of rain has fallen. Additional\nrainfall amounts of 0.5 to 1.5 inches are possible in the warned\narea. Flash flooding is expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nJackson, Wellston, Mcarthur, Hamden, Coalton, Zaleski, Wilkesville,\nByer, Allensville, Radcliffe and Salem Center.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.\n\nReport flooding to the National Weather Service by calling toll free,\n800 401 9535, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRLX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KRLX 102312"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRLX.FF.W.0197.260910T2312Z-260911T0415Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-11T00:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-10T23:57:39+00:00"
+}

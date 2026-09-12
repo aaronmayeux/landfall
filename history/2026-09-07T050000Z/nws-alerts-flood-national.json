@@ -1,0 +1,360 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f94d864e67888fbfed756a5e0f1841058de7e377.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.76,
+                            48.55
+                        ],
+                        [
+                            -110.82,
+                            48.41
+                        ],
+                        [
+                            -110.86,
+                            48.61
+                        ],
+                        [
+                            -110.96,
+                            48.99
+                        ],
+                        [
+                            -110.48,
+                            49
+                        ],
+                        [
+                            -110.6,
+                            48.41
+                        ],
+                        [
+                            -110.75,
+                            48.56
+                        ],
+                        [
+                            -110.76,
+                            48.55
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f94d864e67888fbfed756a5e0f1841058de7e377.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f94d864e67888fbfed756a5e0f1841058de7e377.001.1",
+                "areaDesc": "Hill, MT; Liberty, MT",
+                "geocode": {
+                    "SAME": [
+                        "030041",
+                        "030051"
+                    ],
+                    "UGC": [
+                        "MTC041",
+                        "MTC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MTC041",
+                    "https://api.weather.gov/zones/county/MTC051"
+                ],
+                "references": [],
+                "sent": "2026-09-06T22:04:00-06:00",
+                "effective": "2026-09-06T22:04:00-06:00",
+                "onset": "2026-09-06T22:04:00-06:00",
+                "expires": "2026-09-07T01:00:00-06:00",
+                "ends": "2026-09-07T01:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Great Falls MT",
+                "headline": "Flash Flood Warning issued September 6 at 10:04PM MDT until September 7 at 1:00AM MDT by NWS Great Falls MT",
+                "description": "FFWTFX\n\nThe National Weather Service in Great Falls has issued a\n\n* Flash Flood Warning for...\nNorthwestern Hill County in north central Montana...\nNortheastern Liberty County in north central Montana...\n\n* Until 100 AM MDT.\n\n* At 1004 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 2 inches of rain have\nfallen. The expected rainfall rate is 2 inches in 1 hour. Flash\nflooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by slow moving heavy thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nInverness and Joplin.\n\nExpect thunderstorms to repeatedly move over the same areas, which\nwill contribute to flash flooding.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTFX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTFX 070404"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTFX.FF.W.0008.260907T0404Z-260907T0700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T01:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6556e63d6b1d865f4f3af1267691ba15addf9cd3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.83,
+                            48.22
+                        ],
+                        [
+                            -110.87,
+                            48.23
+                        ],
+                        [
+                            -110.75,
+                            48.57
+                        ],
+                        [
+                            -110.5,
+                            48.31
+                        ],
+                        [
+                            -110.63,
+                            48.31
+                        ],
+                        [
+                            -110.63,
+                            48.22
+                        ],
+                        [
+                            -110.83,
+                            48.22
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6556e63d6b1d865f4f3af1267691ba15addf9cd3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6556e63d6b1d865f4f3af1267691ba15addf9cd3.001.1",
+                "areaDesc": "Hill, MT; Liberty, MT",
+                "geocode": {
+                    "SAME": [
+                        "030041",
+                        "030051"
+                    ],
+                    "UGC": [
+                        "MTC041",
+                        "MTC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MTC041",
+                    "https://api.weather.gov/zones/county/MTC051"
+                ],
+                "references": [],
+                "sent": "2026-09-06T21:51:00-06:00",
+                "effective": "2026-09-06T21:51:00-06:00",
+                "onset": "2026-09-06T21:51:00-06:00",
+                "expires": "2026-09-07T00:45:00-06:00",
+                "ends": "2026-09-07T00:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Great Falls MT",
+                "headline": "Flash Flood Warning issued September 6 at 9:51PM MDT until September 7 at 12:45AM MDT by NWS Great Falls MT",
+                "description": "FFWTFX\n\nThe National Weather Service in Great Falls has issued a\n\n* Flash Flood Warning for...\nSouthwestern Hill County in north central Montana...\nSoutheastern Liberty County in north central Montana...\n\n* Until 1245 AM MDT.\n\n* At 951 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 1.25 inches in 1 hour.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMainly rural areas of Southwestern Hill and Southeastern Liberty\nCounties.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTFX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTFX 070351"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTFX.FF.W.0007.260907T0351Z-260907T0645Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T00:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e0831f89b6ee5c9ebc674a431b17ad0538a7c7a4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.99,
+                            48.82
+                        ],
+                        [
+                            -96.98,
+                            48.66
+                        ],
+                        [
+                            -96.49,
+                            48.67
+                        ],
+                        [
+                            -96.63,
+                            48.84
+                        ],
+                        [
+                            -96.8,
+                            48.9
+                        ],
+                        [
+                            -96.99,
+                            48.82
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e0831f89b6ee5c9ebc674a431b17ad0538a7c7a4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.e0831f89b6ee5c9ebc674a431b17ad0538a7c7a4.001.1",
+                "areaDesc": "Kittson, MN",
+                "geocode": {
+                    "SAME": [
+                        "027069"
+                    ],
+                    "UGC": [
+                        "MNC069"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC069"
+                ],
+                "references": [],
+                "sent": "2026-09-06T19:57:00-05:00",
+                "effective": "2026-09-06T19:57:00-05:00",
+                "onset": "2026-09-06T19:57:00-05:00",
+                "expires": "2026-09-07T01:00:00-05:00",
+                "ends": "2026-09-07T01:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Forks ND",
+                "headline": "Flash Flood Warning issued September 6 at 7:57PM CDT until September 7 at 1:00AM CDT by NWS Grand Forks ND",
+                "description": "FFWFGF\n\nThe National Weather Service in Grand Forks has issued a\n\n* Flash Flood Warning for...\nCentral Kittson County in northwestern Minnesota...\n\n* Until 100 AM CDT.\n\n* At 757 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n3 and 4 inches of rain have fallen. Additional rainfall amounts of\n1 to 2 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHallock, Lancaster and Lake Bronson.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KFGF 070057"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGF.FF.W.0005.260907T0057Z-260907T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T01:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-07T05:53:08+00:00"
+}

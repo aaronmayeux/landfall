@@ -1,0 +1,237 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.42fba40f6a624cbbf942fa377f987a25b184f2db.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -87.9,
+                            35.01
+                        ],
+                        [
+                            -87.89,
+                            35.06
+                        ],
+                        [
+                            -87.72,
+                            35.09
+                        ],
+                        [
+                            -87.72,
+                            35
+                        ],
+                        [
+                            -87.9,
+                            35.01
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.42fba40f6a624cbbf942fa377f987a25b184f2db.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.42fba40f6a624cbbf942fa377f987a25b184f2db.001.1",
+                "areaDesc": "Wayne, TN",
+                "geocode": {
+                    "SAME": [
+                        "047181"
+                    ],
+                    "UGC": [
+                        "TNC181"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TNC181"
+                ],
+                "references": [],
+                "sent": "2026-09-08T13:53:00-05:00",
+                "effective": "2026-09-08T13:53:00-05:00",
+                "onset": "2026-09-08T13:53:00-05:00",
+                "expires": "2026-09-08T17:00:00-05:00",
+                "ends": "2026-09-08T17:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Nashville TN",
+                "headline": "Flash Flood Warning issued September 8 at 1:53PM CDT until September 8 at 5:00PM CDT by NWS Nashville TN",
+                "description": "FFWOHX\n\nThe National Weather Service in Nashville has issued a\n\n* Flash Flood Warning for...\nSouth Central Wayne County in Middle Tennessee...\n\n* Until 500 PM CDT.\n\n* At 153 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nCypress Inn.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOHX 081853"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOHX.FF.W.0073.260908T1853Z-260908T2200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-08T17:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.974a5c751cd6645197cc4a168d8ddbead012feaa.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -87.81,
+                            35.01
+                        ],
+                        [
+                            -87.72,
+                            35
+                        ],
+                        [
+                            -87.74,
+                            34.92
+                        ],
+                        [
+                            -87.92,
+                            34.94
+                        ],
+                        [
+                            -87.92,
+                            34.95
+                        ],
+                        [
+                            -87.91,
+                            34.96
+                        ],
+                        [
+                            -87.9,
+                            35.01
+                        ],
+                        [
+                            -87.81,
+                            35.01
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.974a5c751cd6645197cc4a168d8ddbead012feaa.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.974a5c751cd6645197cc4a168d8ddbead012feaa.001.1",
+                "areaDesc": "Lauderdale, AL",
+                "geocode": {
+                    "SAME": [
+                        "001077"
+                    ],
+                    "UGC": [
+                        "ALC077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/ALC077"
+                ],
+                "references": [],
+                "sent": "2026-09-08T13:50:00-05:00",
+                "effective": "2026-09-08T13:50:00-05:00",
+                "onset": "2026-09-08T13:50:00-05:00",
+                "expires": "2026-09-08T16:45:00-05:00",
+                "ends": "2026-09-08T16:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Huntsville AL",
+                "headline": "Flash Flood Warning issued September 8 at 1:50PM CDT until September 8 at 4:45PM CDT by NWS Huntsville AL",
+                "description": "FFWHUN\n\nThe National Weather Service in Huntsville has issued a\n\n* Flash Flood Warning for...\nNorth Central Lauderdale County in northwestern Alabama...\n\n* Until 445 PM CDT.\n\n* At 150 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain along the Alabama Tennessee\nborder in Northern Lauderdale County. Between 1.5 and 2.5 inches of\nrain have fallen. The expected rainfall rate is 3 to 4 inches in 1\nhour. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nThreet.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHUN 081850"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KHUN.FF.W.0033.260908T1850Z-260908T2145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-08T16:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-08T19:47:24+00:00"
+}

@@ -1,0 +1,928 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5967f4bcb92029fd66f6662095df79035c9d78f0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -66.09,
+                            18.06
+                        ],
+                        [
+                            -66.06,
+                            18.08
+                        ],
+                        [
+                            -66.05,
+                            18.11
+                        ],
+                        [
+                            -66.02,
+                            18.1
+                        ],
+                        [
+                            -66.01,
+                            18.08
+                        ],
+                        [
+                            -65.99,
+                            18.09
+                        ],
+                        [
+                            -65.93,
+                            18.09
+                        ],
+                        [
+                            -65.93,
+                            18.12
+                        ],
+                        [
+                            -65.91,
+                            18.13
+                        ],
+                        [
+                            -65.88,
+                            18.11
+                        ],
+                        [
+                            -65.85,
+                            18.12
+                        ],
+                        [
+                            -65.83,
+                            18.08
+                        ],
+                        [
+                            -65.8,
+                            18.07
+                        ],
+                        [
+                            -65.84,
+                            18.05
+                        ],
+                        [
+                            -65.83,
+                            18.02
+                        ],
+                        [
+                            -65.94,
+                            17.97
+                        ],
+                        [
+                            -66.02,
+                            17.98
+                        ],
+                        [
+                            -66.06,
+                            17.96
+                        ],
+                        [
+                            -66.07,
+                            18
+                        ],
+                        [
+                            -66.09,
+                            18.02
+                        ],
+                        [
+                            -66.09,
+                            18.06
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5967f4bcb92029fd66f6662095df79035c9d78f0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5967f4bcb92029fd66f6662095df79035c9d78f0.001.1",
+                "areaDesc": "Arroyo, PR; Maunabo, PR; Patillas, PR; Yabucoa, PR",
+                "geocode": {
+                    "SAME": [
+                        "072015",
+                        "072095",
+                        "072109",
+                        "072151"
+                    ],
+                    "UGC": [
+                        "PRC015",
+                        "PRC095",
+                        "PRC109",
+                        "PRC151"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PRC015",
+                    "https://api.weather.gov/zones/county/PRC095",
+                    "https://api.weather.gov/zones/county/PRC109",
+                    "https://api.weather.gov/zones/county/PRC151"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a027102de1c0a8039a778171a95e992367ae1869.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a027102de1c0a8039a778171a95e992367ae1869.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-01T00:21:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-01T00:47:00-04:00",
+                "effective": "2026-09-01T00:47:00-04:00",
+                "onset": "2026-09-01T00:47:00-04:00",
+                "expires": "2026-09-01T03:15:00-04:00",
+                "ends": "2026-09-01T03:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Flash Flood Warning issued September 1 at 12:47AM AST until September 1 at 3:15AM AST by NWS San Juan PR",
+                "description": "At 1247 AM AST, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2 and 4 inches of rain have\nfallen. Additional rainfall amounts of 2 to 3 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WGCA72 TJSJ 010447"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 315 AM AST EARLY THIS MORNING FOR ARROYO, MAUNABO, PATILLAS AND YABUCOA COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.TJSJ.FF.W.0028.000000T0000Z-260901T0715Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-01T03:15:00-04:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 3:15 AM AST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 3:15 AM AST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c53211af1f7b3553d5be62d850c3bee8a435b295.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -66.21,
+                            17.93
+                        ],
+                        [
+                            -66.2,
+                            17.94
+                        ],
+                        [
+                            -66.2,
+                            18.02
+                        ],
+                        [
+                            -66.17,
+                            18.03
+                        ],
+                        [
+                            -66.17,
+                            18.05
+                        ],
+                        [
+                            -66.13,
+                            18.04
+                        ],
+                        [
+                            -66.13,
+                            18.09
+                        ],
+                        [
+                            -66.06,
+                            18.1
+                        ],
+                        [
+                            -66.09,
+                            18.06
+                        ],
+                        [
+                            -66.08,
+                            18.03
+                        ],
+                        [
+                            -66.09,
+                            18.02
+                        ],
+                        [
+                            -66.07,
+                            17.97
+                        ],
+                        [
+                            -66.09,
+                            17.97
+                        ],
+                        [
+                            -66.15,
+                            17.93
+                        ],
+                        [
+                            -66.15,
+                            17.94
+                        ],
+                        [
+                            -66.17,
+                            17.93
+                        ],
+                        [
+                            -66.17,
+                            17.95
+                        ],
+                        [
+                            -66.18,
+                            17.95
+                        ],
+                        [
+                            -66.21,
+                            17.93
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c53211af1f7b3553d5be62d850c3bee8a435b295.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c53211af1f7b3553d5be62d850c3bee8a435b295.001.1",
+                "areaDesc": "Guayama, PR",
+                "geocode": {
+                    "SAME": [
+                        "072057"
+                    ],
+                    "UGC": [
+                        "PRC057"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/PRC057"
+                ],
+                "references": [],
+                "sent": "2026-09-01T00:34:00-04:00",
+                "effective": "2026-09-01T00:34:00-04:00",
+                "onset": "2026-09-01T00:34:00-04:00",
+                "expires": "2026-09-01T03:15:00-04:00",
+                "ends": "2026-09-01T03:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Juan PR",
+                "headline": "Flash Flood Warning issued September 1 at 12:34AM AST until September 1 at 3:15AM AST by NWS San Juan PR",
+                "description": "FFWSJU\n\nThe National Weather Service in San Juan has issued a\n\n* Flash Flood Warning for...\nGuayama County in Puerto Rico...\n\n* Until 315 AM AST.\n\n* At 1234 AM AST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSJU"
+                    ],
+                    "WMOidentifier": [
+                        "WGCA52 TJSJ 010434"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.TJSJ.FF.W.0029.260901T0434Z-260901T0715Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-01T03:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f43e0ba906a630535ff44de2606284ed094951.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.68,
+                            37.96
+                        ],
+                        [
+                            -111.62,
+                            37.99
+                        ],
+                        [
+                            -111.61,
+                            37.86
+                        ],
+                        [
+                            -111.57,
+                            37.8
+                        ],
+                        [
+                            -111.48,
+                            37.8
+                        ],
+                        [
+                            -111.46,
+                            37.76
+                        ],
+                        [
+                            -111.58,
+                            37.77
+                        ],
+                        [
+                            -111.59,
+                            37.78
+                        ],
+                        [
+                            -111.65,
+                            37.86
+                        ],
+                        [
+                            -111.68,
+                            37.96
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f43e0ba906a630535ff44de2606284ed094951.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f43e0ba906a630535ff44de2606284ed094951.001.1",
+                "areaDesc": "Garfield, UT",
+                "geocode": {
+                    "SAME": [
+                        "049017"
+                    ],
+                    "UGC": [
+                        "UTC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC017"
+                ],
+                "references": [],
+                "sent": "2026-08-31T21:44:00-06:00",
+                "effective": "2026-08-31T21:44:00-06:00",
+                "onset": "2026-08-31T21:44:00-06:00",
+                "expires": "2026-08-31T23:45:00-06:00",
+                "ends": "2026-08-31T23:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued August 31 at 9:44PM MDT until August 31 at 11:45PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nCentral Garfield County in southern Utah...\n\n* Until 1145 PM MDT.\n\n* At 944 PM MDT, the gauge on the Escalante River at Escalante is\nstill reporting flows in excess of 2000 cfs, leading to high flows\nwithin the Upper Escalante River Canyon. These high flows stem from\nearlier heavy rainfall from thunderstorms. Flash flooding is\nalready occurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Gauge reported.\n\nIMPACT...Life threatening flash flooding of creeks, streams, slot\ncanyons, and normally dry washes.\n\n* Some locations that will experience flash flooding include...\nPine Creek Box Canyon and Upper Escalante River Canyon.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nMove to higher ground now. Act quickly to protect your life.\n\nRemain alert for flooding even in locations not receiving rain. Dry\nwashes, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 010344"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0110.000000T0000Z-260901T0545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-31T23:45:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8c287179daddf63e940d7bfc31c191182e15e96b.001.1,2026-08-31T20:43:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.616c32e0eb6b89db736527021d4546ba21adbcbd.001.1,2026-08-31T18:21:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.3bedb6db37f6cd1cfd815cd43a23a2a67f6c1b3a.001.1,2026-08-31T16:12:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.66cf4378c3154880c434e99c0a2e5bf1dcc5a1df.001.1,2026-08-31T15:08:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.00480a9d299700370265bde4d411022be0008544.001.1,2026-08-31T13:48:00-06:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:45 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:45 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.812d75c123948445326e95f93ff2f17b6434c85a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.58,
+                            37.77
+                        ],
+                        [
+                            -111.57,
+                            37.75
+                        ],
+                        [
+                            -111.75,
+                            37.72
+                        ],
+                        [
+                            -111.86,
+                            37.83
+                        ],
+                        [
+                            -111.65,
+                            37.86
+                        ],
+                        [
+                            -111.58,
+                            37.77
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.812d75c123948445326e95f93ff2f17b6434c85a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.812d75c123948445326e95f93ff2f17b6434c85a.001.1",
+                "areaDesc": "Garfield, UT",
+                "geocode": {
+                    "SAME": [
+                        "049017"
+                    ],
+                    "UGC": [
+                        "UTC017"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC017"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a72d3e5c221d56ffd7c61535112c8703c9161c0e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a72d3e5c221d56ffd7c61535112c8703c9161c0e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-31T20:43:00-06:00"
+                    }
+                ],
+                "sent": "2026-08-31T21:42:00-06:00",
+                "effective": "2026-08-31T21:42:00-06:00",
+                "onset": "2026-08-31T21:42:00-06:00",
+                "expires": "2026-08-31T23:45:00-06:00",
+                "ends": "2026-08-31T23:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued August 31 at 9:42PM MDT until August 31 at 11:45PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nCentral Garfield County in southern Utah...\n\n* Until 1145 PM MDT.\n\n* At 942 PM MDT, flash flooding is still occurring on the Escalante\nRiver with recent gauge observations in Escalante still above 2000\ncfs. These high flows stem from earlier heavy rainfall from\nthunderstorms.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Gauge reported.\n\nIMPACT...Life threatening flash flooding of the Escalante River.\n\n* Some locations that will experience flash flooding include...\nThe Escalante River from near the town of Escalante to the terminus\nat Lake Powell.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 010342"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0116.000000T0000Z-260901T0545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-31T23:45:00-06:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7239664f48fcae74e10fd58f84c446e5871185b7.001.1,2026-08-31T19:31:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.01213a07e965800bba6d6f5babbf4c4c5c818aa3.001.1,2026-08-31T18:27:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f4db62e406703709dcdd34a99d46a3ce15ac4469.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -113.12,
+                            37.33
+                        ],
+                        [
+                            -113.03,
+                            37.4
+                        ],
+                        [
+                            -112.98,
+                            37.42
+                        ],
+                        [
+                            -112.78,
+                            37.36
+                        ],
+                        [
+                            -112.82,
+                            37.27
+                        ],
+                        [
+                            -112.71,
+                            37.18
+                        ],
+                        [
+                            -112.83,
+                            37.11
+                        ],
+                        [
+                            -113.02,
+                            37.16
+                        ],
+                        [
+                            -113.12,
+                            37.33
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f4db62e406703709dcdd34a99d46a3ce15ac4469.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f4db62e406703709dcdd34a99d46a3ce15ac4469.001.1",
+                "areaDesc": "Kane, UT; Washington, UT",
+                "geocode": {
+                    "SAME": [
+                        "049025",
+                        "049053"
+                    ],
+                    "UGC": [
+                        "UTC025",
+                        "UTC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC025",
+                    "https://api.weather.gov/zones/county/UTC053"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.26a58e5b35740b3513c403875fa4896413b98609.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.26a58e5b35740b3513c403875fa4896413b98609.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-31T17:44:00-06:00"
+                    }
+                ],
+                "sent": "2026-08-31T20:51:00-06:00",
+                "effective": "2026-08-31T20:51:00-06:00",
+                "onset": "2026-08-31T20:51:00-06:00",
+                "expires": "2026-08-31T23:00:00-06:00",
+                "ends": "2026-08-31T23:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued August 31 at 8:51PM MDT until August 31 at 11:00PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nWest Central Kane County in southern Utah...\nEast Central Washington County in southwestern Utah...\n\n* Until 1100 PM MDT.\n\n* At 851 PM MDT, National Park Service reported flash flooding from\nearlier thunderstorms producing heavy rain across Zion National\nPark. A gauge at the North Fork of the Virgin River in Springdale\nreported flows peaking over 5500 cfs at 800 PM MDT. The majority of\nrainfall fell earlier, though thunderstorms in the area could\nproduce another 0.20 to 0.40 inches. Flash flooding is already\noccurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...National Park Service reported.\n\nIMPACT...Life threatening flash flooding of creeks, streams, slot\ncanyons, and normally dry washes.\n\n* Some locations that will experience flash flooding include...\nZion National Park, Springdale, Keyhole Canyon, Spry Canyon,\nParunuweap Canyon, the Narrows, Orderville Canyon, and the North\nand East Forks of the Virgin River.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nRemain alert for flooding even in locations not receiving rain. Dry\nwashes, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 010251"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0114.000000T0000Z-260901T0500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-31T23:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.58fe47f38acebc5f80c3ff3812dd256ce371a025.001.1,2026-08-31T15:58:00-06:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:00 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:00 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6b5c1e9c04df9b78ce517f728d3c4853ae22eb26.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.46,
+                            37.8
+                        ],
+                        [
+                            -111.2,
+                            37.74
+                        ],
+                        [
+                            -110.87,
+                            37.35
+                        ],
+                        [
+                            -110.87,
+                            37.33
+                        ],
+                        [
+                            -110.85,
+                            37.32
+                        ],
+                        [
+                            -110.84,
+                            37.32
+                        ],
+                        [
+                            -110.88,
+                            37.28
+                        ],
+                        [
+                            -111.29,
+                            37.7
+                        ],
+                        [
+                            -111.46,
+                            37.76
+                        ],
+                        [
+                            -111.48,
+                            37.8
+                        ],
+                        [
+                            -111.46,
+                            37.8
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6b5c1e9c04df9b78ce517f728d3c4853ae22eb26.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6b5c1e9c04df9b78ce517f728d3c4853ae22eb26.001.1",
+                "areaDesc": "Garfield, UT; Kane, UT",
+                "geocode": {
+                    "SAME": [
+                        "049017",
+                        "049025"
+                    ],
+                    "UGC": [
+                        "UTC017",
+                        "UTC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC017",
+                    "https://api.weather.gov/zones/county/UTC025"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.279e3f1452714bac1068292688c63d5b9e7aa7be.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.279e3f1452714bac1068292688c63d5b9e7aa7be.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-08-31T18:30:00-06:00"
+                    }
+                ],
+                "sent": "2026-08-31T20:45:00-06:00",
+                "effective": "2026-08-31T20:45:00-06:00",
+                "onset": "2026-08-31T20:45:00-06:00",
+                "expires": "2026-08-31T23:00:00-06:00",
+                "ends": "2026-08-31T23:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued August 31 at 8:45PM MDT until August 31 at 11:00PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nSouth Central Garfield County in southern Utah...\nNortheastern Kane County in southern Utah...\n\n* Until 1100 PM MDT.\n\n* At 845 PM MDT, the river gauge on the Escalante River at Escalante\nindicated another flood wave near 2560 cfs that will continue to\nsurge down the Escalante River. The Flash Flood Warning has been\nextended until 1000 PM MDT. Up to 2.25 inches of rain has fallen\nprimarily near the town of Escalante upstream of this warning.\nFlash flooding is already occurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of the Escalante River.\n\n* Some locations that will experience flash flooding include...\nThe Escalante River from near the town of Escalante to the terminus\nat Lake Powell.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nMove to higher ground now. Act quickly to protect your life.\n\nRemain alert for flooding even in locations not receiving rain. Dry\nwashes, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 010245"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0106.000000T0000Z-260901T0500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-08-31T23:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.d48c1c10fe87a2ce91e849491e38f948f3ac1115.001.1,2026-08-31T16:15:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.b78f5ad76f8fe01a887ba0e5a3d09f1b0d0ecd16.001.1,2026-08-31T14:06:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.6646637d5125c00f4715d78bdb7ca5d27350c7c4.001.1,2026-08-31T11:04:00-06:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:00 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:00 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-01T04:47:26+00:00"
+}
