@@ -1508,13 +1508,36 @@ pre-2026-08-14)` and **must never be shortened to "(direct)"**, which would turn
 missing data into a finding.
 
 **Who is out there** — `daily-devices` for how many people per day,
-`device-roster` for the regulars, `return-rate` for how many came back,
+`device-roster` for the regulars, `return-rate` for the SHAPE of how many came
+back, `return-cohort` for the RATE, `never-touched-anything` for which of the
+regulars are probably robots,
 `referrers` for where they come from all time, `referrers-daily` for the shape
 of a spike. That last is separate on purpose: the all-time table flattens one
 busy day and a steady trickle into the same row, and a spike is exactly what
 gets asked about. It is bounded by a `WHERE` on `ts` rather than a `LIMIT`,
 because a `LIMIT` on a two-column grouping drops the quietest sources on the
 busiest day, and those are the new arrivals worth seeing.
+
+**`return-rate` IS A SHAPE AND `return-cohort` IS A RATE, AND QUOTING THE FIRST
+AS THE SECOND IS WRONG BY A MOVING AMOUNT.** `return-rate`'s 1-day bucket
+permanently contains everybody who arrived this week and has not yet had the
+chance to return, so reading it as churn counts yesterday's arrivals as people
+who left — and the size of that error changes with traffic, so the number is
+not even comparable to itself. `return-cohort` counts only devices whose first
+visit was seven or more days ago. **Quote `return-cohort`.** `return-rate`
+stays because the steepness of the drop from one day to two is a real shape
+that an aggregate hides.
+
+**A PEOPLE COUNT ON THIS BRANCH INCLUDES OUR OWN ROBOTS.** The perf-audit
+workflow loads the live site on a schedule and reports telemetry like any
+visitor, so it appears in every device count as a loyal returning person.
+`never-touched-anything` lists devices that turn up on five or more separate
+days and have never pressed a single control, which is the shape of an
+automated browser — and also the shape of somebody who opens the globe, looks,
+and leaves, so it is a suspicion and never a verdict. Subtract them
+deliberately and say so. **The real fix is a column, not a query:** an
+automated browser sets `navigator.webdriver`, and one boolean on the beacon
+would settle it outright. Open, not built.
 
 **`device-roster` HAS A 5-DAY FLOOR AND AN 8-CHARACTER TRUNCATION, AND BOTH ARE
 PRIVACY CONTROLS.** The archive branch is public and a committed identifier
