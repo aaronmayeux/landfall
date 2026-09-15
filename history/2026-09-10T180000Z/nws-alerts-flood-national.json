@@ -1,0 +1,138 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73d774e80e68eb04fba8615da4c5724e4488fce0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -90.79,
+                            30.65
+                        ],
+                        [
+                            -90.83,
+                            30.72
+                        ],
+                        [
+                            -90.83,
+                            30.74
+                        ],
+                        [
+                            -90.82,
+                            30.76
+                        ],
+                        [
+                            -90.43,
+                            30.87
+                        ],
+                        [
+                            -90.26,
+                            30.44
+                        ],
+                        [
+                            -90.52,
+                            30.36
+                        ],
+                        [
+                            -90.79,
+                            30.65
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73d774e80e68eb04fba8615da4c5724e4488fce0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.73d774e80e68eb04fba8615da4c5724e4488fce0.001.1",
+                "areaDesc": "Livingston, LA; St. Helena, LA; Tangipahoa, LA",
+                "geocode": {
+                    "SAME": [
+                        "022063",
+                        "022091",
+                        "022105"
+                    ],
+                    "UGC": [
+                        "LAC063",
+                        "LAC091",
+                        "LAC105"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC063",
+                    "https://api.weather.gov/zones/county/LAC091",
+                    "https://api.weather.gov/zones/county/LAC105"
+                ],
+                "references": [],
+                "sent": "2026-09-10T12:08:00-05:00",
+                "effective": "2026-09-10T12:08:00-05:00",
+                "onset": "2026-09-10T12:08:00-05:00",
+                "expires": "2026-09-10T15:15:00-05:00",
+                "ends": "2026-09-10T15:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS New Orleans LA",
+                "headline": "Flash Flood Warning issued September 10 at 12:08PM CDT until September 10 at 3:15PM CDT by NWS New Orleans LA",
+                "description": "FFWLIX\n\nThe National Weather Service in New Orleans has issued a\n\n* Flash Flood Warning for...\nNortheastern Livingston Parish in southeastern Louisiana...\nSoutheastern St. Helena Parish in southeastern Louisiana...\nSouthwestern Tangipahoa Parish in southeastern Louisiana...\n\n* Until 315 PM CDT.\n\n* At 1208 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain over Hammond, moving northwest at 10 mph. Between 2 and\n4 inches of rain have fallen. Additional rainfall amounts of 1 to 3\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHammond, Amite, Ponchatoula, Amite City, Independence, Roseland,\nAlbany, Springfield, Montpelier, Natalbany, Robert and Tickfaw.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLIX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLIX 101708"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLIX.FF.W.0118.260910T1708Z-260910T2015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-10T15:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-10T18:17:03+00:00"
+}

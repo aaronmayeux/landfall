@@ -1,0 +1,300 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bddcddc86addf5bbc307052b53b515251ab22cf0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.06,
+                            43.5
+                        ],
+                        [
+                            -98.06,
+                            43.56
+                        ],
+                        [
+                            -97.79,
+                            43.62
+                        ],
+                        [
+                            -97.71,
+                            43.51
+                        ],
+                        [
+                            -97.71,
+                            43.45
+                        ],
+                        [
+                            -97.82,
+                            43.37
+                        ],
+                        [
+                            -98.06,
+                            43.43
+                        ],
+                        [
+                            -98.06,
+                            43.5
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bddcddc86addf5bbc307052b53b515251ab22cf0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bddcddc86addf5bbc307052b53b515251ab22cf0.001.1",
+                "areaDesc": "Davison, SD; Hanson, SD; Hutchinson, SD",
+                "geocode": {
+                    "SAME": [
+                        "046035",
+                        "046061",
+                        "046067"
+                    ],
+                    "UGC": [
+                        "SDC035",
+                        "SDC061",
+                        "SDC067"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/SDC035",
+                    "https://api.weather.gov/zones/county/SDC061",
+                    "https://api.weather.gov/zones/county/SDC067"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bb0ba8d9aa18977556cdd9679b447b8fd24b17d4.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.bb0ba8d9aa18977556cdd9679b447b8fd24b17d4.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-05T04:38:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-05T06:24:00-05:00",
+                "effective": "2026-09-05T06:24:00-05:00",
+                "onset": "2026-09-05T06:24:00-05:00",
+                "expires": "2026-09-05T08:45:00-05:00",
+                "ends": "2026-09-05T08:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Sioux Falls SD",
+                "headline": "Flash Flood Warning issued September 5 at 6:24AM CDT until September 5 at 8:45AM CDT by NWS Sioux Falls SD",
+                "description": "At 624 AM CDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2 and 4 inches of rain have\nfallen. The expected rainfall rate is 0.5 to 1 inch in 1 hour.\nAdditional rainfall amounts of 0.5 to 1.5 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nEthan, Dimock and Milltown.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSFSD"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KFSD 051124"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 845 AM CDT THIS MORNING FOR SOUTHEASTERN DAVISON, SOUTHWESTERN HANSON AND NORTHWESTERN HUTCHINSON COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KFSD.FF.W.0011.000000T0000Z-260905T1345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T08:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ff89bdd70578231098872c01e0ae55fd555b5d85.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.95,
+                            40.52
+                        ],
+                        [
+                            -83.79,
+                            40.47
+                        ],
+                        [
+                            -83.68,
+                            40.4
+                        ],
+                        [
+                            -83.59,
+                            40.35
+                        ],
+                        [
+                            -83.55,
+                            40.23
+                        ],
+                        [
+                            -83.72,
+                            40.24
+                        ],
+                        [
+                            -83.78,
+                            40.25
+                        ],
+                        [
+                            -83.78,
+                            40.26
+                        ],
+                        [
+                            -83.79,
+                            40.26
+                        ],
+                        [
+                            -83.89,
+                            40.37
+                        ],
+                        [
+                            -84,
+                            40.48
+                        ],
+                        [
+                            -83.99,
+                            40.48
+                        ],
+                        [
+                            -83.99,
+                            40.49
+                        ],
+                        [
+                            -83.98,
+                            40.52
+                        ],
+                        [
+                            -83.95,
+                            40.52
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ff89bdd70578231098872c01e0ae55fd555b5d85.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ff89bdd70578231098872c01e0ae55fd555b5d85.001.1",
+                "areaDesc": "Logan, OH",
+                "geocode": {
+                    "SAME": [
+                        "039091"
+                    ],
+                    "UGC": [
+                        "OHC091"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC091"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a71d86a69035a7d4553b8d83385401d6d650b667.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a71d86a69035a7d4553b8d83385401d6d650b667.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-05T03:34:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-05T05:55:00-04:00",
+                "effective": "2026-09-05T05:55:00-04:00",
+                "onset": "2026-09-05T05:55:00-04:00",
+                "expires": "2026-09-05T09:30:00-04:00",
+                "ends": "2026-09-05T09:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wilmington OH",
+                "headline": "Flash Flood Warning issued September 5 at 5:55AM EDT until September 5 at 9:30AM EDT by NWS Wilmington OH",
+                "description": "FFWILN\n\nThe National Weather Service in Wilmington has extended the\n\n* Flash Flood Warning for...\nCentral Logan County in west central Ohio...\n\n* Until 930 AM EDT.\n\n* At 555 AM EDT, local law enforcement reported flash flooding across\nthe warned area. Between 3.5 and 4 inches of rain have fallen.\nAdditional rainfall amounts of 0.5 to 1 inch are possible.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that may experience flash flooding include...\nBellefontaine, West Liberty, Russells Point, Lakeview, Huntsville,\nValley Hi, Zanesfield, Mcmorran, New Jerusalem, Pickrelltown,\nLewistown, East Liberty and Middleburg.\n\nAt 5:30 AM, local law enforcement reported high water over multiple\nareas near and around Bellefontaine.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nTo report flash flooding, go to our website at weather.gov/iln and\nsubmit your report via social media, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWILN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KILN 050955"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KILN.FF.W.0082.000000T0000Z-260905T1330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T09:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-05T12:32:27+00:00"
+}

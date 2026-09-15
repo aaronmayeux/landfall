@@ -1,0 +1,9 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-09T12:47:21+00:00"
+}

@@ -1,0 +1,229 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f6b8523bd8b5fd30deae6814c172a85bf582a889.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -93.6,
+                            41.56
+                        ],
+                        [
+                            -93.68,
+                            41.54
+                        ],
+                        [
+                            -93.68,
+                            41.59
+                        ],
+                        [
+                            -93.61,
+                            41.6
+                        ],
+                        [
+                            -93.6,
+                            41.56
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f6b8523bd8b5fd30deae6814c172a85bf582a889.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f6b8523bd8b5fd30deae6814c172a85bf582a889.001.1",
+                "areaDesc": "Polk",
+                "geocode": {
+                    "SAME": [
+                        "019153"
+                    ],
+                    "UGC": [
+                        "IAZ060"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/IAZ060"
+                ],
+                "references": [],
+                "sent": "2026-09-09T01:52:00-05:00",
+                "effective": "2026-09-09T01:52:00-05:00",
+                "onset": "2026-09-10T02:42:00-05:00",
+                "expires": "2026-09-09T22:00:00-05:00",
+                "ends": "2026-09-12T07:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Des Moines IA",
+                "headline": "Flood Watch issued September 9 at 1:52AM CDT until September 12 at 7:00AM CDT by NWS Des Moines IA",
+                "description": "...The National Weather Service in Des Moines has issued a Flood\nWatch for the following rivers in Iowa...\n\nRaccoon River at Des Moines Fleur Dr affecting Polk County.\n\n* WHAT...Flooding is possible.\n\n* WHERE...Raccoon River at Des Moines Fleur Dr, or from Walnut Creek\nto the Des Moines River.\n\n* WHEN...From late tonight to Saturday morning.\n\n* ADDITIONAL DETAILS...\n- At 1:47 AM CDT Wednesday the stage was 9.0 feet, and rising.\n- Forecast...Flood stage may be reached later today.\n- Flood stage is 12.0 feet.",
+                "instruction": "For the latest stream observations and forecasts refer to\nweather.gov/desmoines/water.\n\nRiver forecasts include observed precipitation plus forecast\nprecipitation over the next 24 hours.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFADMX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KDMX 090652"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM LATE TONIGHT TO SATURDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KDMX.FL.A.0020.260910T0742Z-260912T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-12T07:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2e9576bcd7474a3ccce8f969466e32acd7c1c5e6.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2e9576bcd7474a3ccce8f969466e32acd7c1c5e6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2e9576bcd7474a3ccce8f969466e32acd7c1c5e6.001.1",
+                "areaDesc": "Kona; Kohala; Big Island Interior; Big Island Summit; Big Island South; Big Island Southeast; Big Island East; Big Island North",
+                "geocode": {
+                    "SAME": [
+                        "015001"
+                    ],
+                    "UGC": [
+                        "HIZ023",
+                        "HIZ026",
+                        "HIZ027",
+                        "HIZ028",
+                        "HIZ051",
+                        "HIZ052",
+                        "HIZ053",
+                        "HIZ054"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/HIZ023",
+                    "https://api.weather.gov/zones/forecast/HIZ026",
+                    "https://api.weather.gov/zones/forecast/HIZ027",
+                    "https://api.weather.gov/zones/forecast/HIZ028",
+                    "https://api.weather.gov/zones/forecast/HIZ051",
+                    "https://api.weather.gov/zones/forecast/HIZ052",
+                    "https://api.weather.gov/zones/forecast/HIZ053",
+                    "https://api.weather.gov/zones/forecast/HIZ054"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9bb126017822d2c2b3c935d8dc5e97f67b03932e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9bb126017822d2c2b3c935d8dc5e97f67b03932e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-08T03:28:00-10:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.52d6c8bdfca1badc7708805f203cabb2fe650f4c.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.52d6c8bdfca1badc7708805f203cabb2fe650f4c.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-08T15:30:00-10:00"
+                    }
+                ],
+                "sent": "2026-09-08T15:41:00-10:00",
+                "effective": "2026-09-08T15:41:00-10:00",
+                "onset": "2026-09-08T15:41:00-10:00",
+                "expires": "2026-09-09T05:45:00-10:00",
+                "ends": "2026-09-09T18:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flood Watch issued September 8 at 3:41PM HST until September 9 at 6:00PM HST by NWS Honolulu HI",
+                "description": "A weak band of moisture just east of the Big Island will move west\non Wednesday and may produce flooding on the Big Island during the\nafternoon.\n\n* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The Big Island.\n\n* WHEN...Through Wednesday afternoon.\n\n* IMPACTS...Flood prone roads and other low lying areas may be closed\ndue to elevated runoff and overflowing streams. Urban areas may\nreceive more significant flooding and property damage due to rapid\nrunoff.\n\n* ADDITIONAL DETAILS...\n- Trailing moisture along the eastern flank of Hurricane Lowell\nwill bring periods of heavy rain to the main Hawaiian islands\nthrough this afternoon.",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW60 PHFO 090141"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH WEDNESDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PHFO.FA.A.0011.000000T0000Z-260910T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-09T18:00:00-10:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.ed9fd0c9a10283ce5d2a4294f871780bd2d14dd3.001.1,2026-09-07T15:23:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.99126aed466b6af4effaa90deee87ae9721ddd4b.001.1,2026-09-07T03:12:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c53d45ceff38e5a53d777742f92d6a4e5b208b3b.001.1,2026-09-06T17:00:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.1a9232e161ee765c2bcf18fc944fd9fafecdc0df.001.1,2026-09-06T04:15:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9beff5998cb888b6690546699faef519fffe549c.001.1,2026-09-05T15:44:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-09T07:17:36+00:00"
+}

@@ -1,0 +1,306 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f62b190bd0cba3d76ee6d6050347db832a841aab.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f62b190bd0cba3d76ee6d6050347db832a841aab.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f62b190bd0cba3d76ee6d6050347db832a841aab.001.1",
+                "areaDesc": "Deuel; Keith; Perkins; Chase",
+                "geocode": {
+                    "SAME": [
+                        "031049",
+                        "031101",
+                        "031135",
+                        "031029"
+                    ],
+                    "UGC": [
+                        "NEZ056",
+                        "NEZ057",
+                        "NEZ058",
+                        "NEZ069"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NEZ056",
+                    "https://api.weather.gov/zones/forecast/NEZ057",
+                    "https://api.weather.gov/zones/forecast/NEZ058",
+                    "https://api.weather.gov/zones/forecast/NEZ069"
+                ],
+                "references": [],
+                "sent": "2026-09-05T17:35:00-05:00",
+                "effective": "2026-09-05T17:35:00-05:00",
+                "onset": "2026-09-05T17:35:00-05:00",
+                "expires": "2026-09-06T01:45:00-05:00",
+                "ends": "2026-09-06T04:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS North Platte NE",
+                "headline": "Flood Watch issued September 5 at 5:35PM CDT until September 6 at 4:00AM CDT by NWS North Platte NE",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of panhandle and southwest Nebraska, including the\nfollowing counties, in panhandle Nebraska, Deuel. In southwest\nNebraska, Chase, Keith and Perkins.\n\n* WHEN...Until 3 AM MDT Sunday.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nLow-water crossings may be flooded. Extensive street flooding and\nflooding of creeks and rivers are possible.\n\n* ADDITIONAL DETAILS...\n- Slow moving thunderstorms with heavy rainfall\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFALBF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KLBF 052235"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT UNTIL 3 AM MDT SUNDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLBF.FA.A.0002.260905T2235Z-260906T0900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T04:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6974fe397cb7c06998ee1635c046b5ec68211df3.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6974fe397cb7c06998ee1635c046b5ec68211df3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6974fe397cb7c06998ee1635c046b5ec68211df3.001.1",
+                "areaDesc": "Logan County; Sedgwick County; Phillips County",
+                "geocode": {
+                    "SAME": [
+                        "008075",
+                        "008115",
+                        "008095"
+                    ],
+                    "UGC": [
+                        "COZ048",
+                        "COZ050",
+                        "COZ051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ048",
+                    "https://api.weather.gov/zones/forecast/COZ050",
+                    "https://api.weather.gov/zones/forecast/COZ051"
+                ],
+                "references": [],
+                "sent": "2026-09-05T16:31:00-06:00",
+                "effective": "2026-09-05T16:31:00-06:00",
+                "onset": "2026-09-05T16:31:00-06:00",
+                "expires": "2026-09-06T03:00:00-06:00",
+                "ends": "2026-09-06T03:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Denver CO",
+                "headline": "Flood Watch issued September 5 at 4:31PM MDT until September 6 at 3:00AM MDT by NWS Denver CO",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of northeast Colorado, including the following\ncounties, Logan County, Phillips County and Sedgwick County.\n\n* WHEN...Until 3 AM MDT Sunday.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Scattered to numerous thunderstorms are expected to repeatedly\nmove across far northeast Colorado this evening and into the\nearly morning hours. Locally, up to 3 to 5 inches of rainfall is\npossible.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABOU"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KBOU 052231"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT UNTIL 3 AM MDT SUNDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KBOU.FA.A.0006.260905T2231Z-260906T0900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-06T03:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+                "areaDesc": "Wasatch Plateau/Book Cliffs; Western Uinta Basin; Eastern Juab/Millard Counties; Central Mountains; Sanpete Valley; Sevier Valley; Castle Country; Southwest Utah; Zion National Park; Southern Mountains; Upper Sevier River Valleys; Bryce Canyon Country; South Central Utah",
+                "geocode": {
+                    "SAME": [
+                        "049007",
+                        "049013",
+                        "049015",
+                        "049039",
+                        "049049",
+                        "049051",
+                        "049023",
+                        "049027",
+                        "049041",
+                        "049001",
+                        "049021",
+                        "049053",
+                        "049025",
+                        "049017",
+                        "049031",
+                        "049055"
+                    ],
+                    "UGC": [
+                        "UTZ113",
+                        "UTZ114",
+                        "UTZ116",
+                        "UTZ117",
+                        "UTZ118",
+                        "UTZ119",
+                        "UTZ120",
+                        "UTZ122",
+                        "UTZ124",
+                        "UTZ125",
+                        "UTZ126",
+                        "UTZ127",
+                        "UTZ128"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/UTZ113",
+                    "https://api.weather.gov/zones/forecast/UTZ114",
+                    "https://api.weather.gov/zones/forecast/UTZ116",
+                    "https://api.weather.gov/zones/forecast/UTZ117",
+                    "https://api.weather.gov/zones/forecast/UTZ118",
+                    "https://api.weather.gov/zones/forecast/UTZ119",
+                    "https://api.weather.gov/zones/forecast/UTZ120",
+                    "https://api.weather.gov/zones/forecast/UTZ122",
+                    "https://api.weather.gov/zones/forecast/UTZ124",
+                    "https://api.weather.gov/zones/forecast/UTZ125",
+                    "https://api.weather.gov/zones/forecast/UTZ126",
+                    "https://api.weather.gov/zones/forecast/UTZ127",
+                    "https://api.weather.gov/zones/forecast/UTZ128"
+                ],
+                "references": [],
+                "sent": "2026-09-05T10:23:00-06:00",
+                "effective": "2026-09-05T10:23:00-06:00",
+                "onset": "2026-09-06T09:00:00-06:00",
+                "expires": "2026-09-06T01:30:00-06:00",
+                "ends": "2026-09-07T00:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flood Watch issued September 5 at 10:23AM MDT until September 7 at 12:00AM MDT by NWS Salt Lake City UT",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of Utah, including the following areas, Central\nMountains, Eastern Juab/Millard Counties, Sanpete Valley, Sevier\nValley, Wasatch Plateau/Book Cliffs, Western Uinta Basin, Bryce\nCanyon Country, South Central Utah, Southern Mountains, Upper\nSevier River Valleys, Southwest Utah and Zion National Park. This\nwatch also includes recent burn scars such as Cottonwood, Widemouth\n2, Forsyth, France Canyon, Monroe Canyon, and Black Canyon.\n\n* WHEN...From Sunday morning through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, dry washes, slot canyons, and other low-lying and\nflood-prone locations such as slickrock areas and recent burn\nscars.\n\n* ADDITIONAL DETAILS...\n- Excessive rainfall is expected Sunday afternoon associated with\nthe arrival of deep tropical moisture across much of central and\nsouthern Utah. Rates from 0.4-0.6 inches per hour are expected,\nwith isolated higher rates from 0.6-0.8 inches per hour possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFASLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KSLC 051623"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SUNDAY MORNING THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSLC.FA.A.0009.260906T1500Z-260907T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T00:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-05T23:45:00+00:00"
+}

@@ -1,0 +1,596 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6144d6b13bfb2b63b9aaeeb12a9e57062b45329e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -102.93,
+                            42.1
+                        ],
+                        [
+                            -102.89,
+                            42.14
+                        ],
+                        [
+                            -102.83,
+                            42.12
+                        ],
+                        [
+                            -102.83,
+                            42.07
+                        ],
+                        [
+                            -102.92,
+                            42.04
+                        ],
+                        [
+                            -102.93,
+                            42.1
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6144d6b13bfb2b63b9aaeeb12a9e57062b45329e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6144d6b13bfb2b63b9aaeeb12a9e57062b45329e.001.1",
+                "areaDesc": "Box Butte, NE",
+                "geocode": {
+                    "SAME": [
+                        "031013"
+                    ],
+                    "UGC": [
+                        "NEC013"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NEC013"
+                ],
+                "references": [],
+                "sent": "2026-09-05T17:07:00-06:00",
+                "effective": "2026-09-05T17:07:00-06:00",
+                "onset": "2026-09-05T17:07:00-06:00",
+                "expires": "2026-09-05T20:00:00-06:00",
+                "ends": "2026-09-05T20:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Cheyenne WY",
+                "headline": "Flash Flood Warning issued September 5 at 5:07PM MDT until September 5 at 8:00PM MDT by NWS Cheyenne WY",
+                "description": "FFWCYS\n\nThe National Weather Service in Cheyenne has issued a\n\n* Flash Flood Warning for...\nSoutheastern Box Butte County in the panhandle of Nebraska...\n\n* Until 800 PM MDT.\n\n* At 507 PM MDT, gauge reports indicated thunderstorms producing\nheavy rain across the warned area. Between 1.5 and 2 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nAlliance.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCYS"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KCYS 052307"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCYS.FF.W.0025.260905T2307Z-260906T0200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T20:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c68f7590b74647be040dd9c9db519f7f33d2fccc.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.81,
+                            27.29
+                        ],
+                        [
+                            -80.7,
+                            27.22
+                        ],
+                        [
+                            -80.74,
+                            27.18
+                        ],
+                        [
+                            -80.78,
+                            27.2
+                        ],
+                        [
+                            -80.79,
+                            27.21
+                        ],
+                        [
+                            -80.8,
+                            27.21
+                        ],
+                        [
+                            -80.82,
+                            27.2
+                        ],
+                        [
+                            -80.82,
+                            27.27
+                        ],
+                        [
+                            -80.81,
+                            27.29
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c68f7590b74647be040dd9c9db519f7f33d2fccc.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c68f7590b74647be040dd9c9db519f7f33d2fccc.001.1",
+                "areaDesc": "Okeechobee, FL",
+                "geocode": {
+                    "SAME": [
+                        "012093"
+                    ],
+                    "UGC": [
+                        "FLC093"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC093"
+                ],
+                "references": [],
+                "sent": "2026-09-05T19:04:00-04:00",
+                "effective": "2026-09-05T19:04:00-04:00",
+                "onset": "2026-09-05T19:04:00-04:00",
+                "expires": "2026-09-05T22:00:00-04:00",
+                "ends": "2026-09-05T22:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued September 5 at 7:04PM EDT until September 5 at 10:00PM EDT by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nSoutheastern Okeechobee County in east central Florida...\n\n* Until 1000 PM EDT.\n\n* At 704 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3.5 inches of rain\nhave fallen. Additional rainfall amounts up to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nTreasure Island, Okeechobee, Four Seasons Estates and Taylor Creek.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 052304"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FF.W.0005.260905T2304Z-260906T0200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T22:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f766ffa6e954bc720eda915b4a5f980051747a54.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -77.1,
+                            34.68
+                        ],
+                        [
+                            -77.08,
+                            34.72
+                        ],
+                        [
+                            -76.96,
+                            34.72
+                        ],
+                        [
+                            -76.92,
+                            34.66
+                        ],
+                        [
+                            -77.11,
+                            34.62
+                        ],
+                        [
+                            -77.1,
+                            34.67
+                        ],
+                        [
+                            -77.1,
+                            34.68
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f766ffa6e954bc720eda915b4a5f980051747a54.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f766ffa6e954bc720eda915b4a5f980051747a54.001.1",
+                "areaDesc": "Carteret, NC",
+                "geocode": {
+                    "SAME": [
+                        "037031"
+                    ],
+                    "UGC": [
+                        "NCC031"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC031"
+                ],
+                "references": [],
+                "sent": "2026-09-05T18:42:00-04:00",
+                "effective": "2026-09-05T18:42:00-04:00",
+                "onset": "2026-09-05T18:42:00-04:00",
+                "expires": "2026-09-05T21:45:00-04:00",
+                "ends": "2026-09-05T21:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Newport/Morehead City NC",
+                "headline": "Flash Flood Warning issued September 5 at 6:42PM EDT until September 5 at 9:45PM EDT by NWS Newport/Morehead City NC",
+                "description": "FFWMHX\n\nThe National Weather Service in Newport/Morehead City has issued a\n\n* Flash Flood Warning for...\nSouthwestern Carteret County in eastern North Carolina...\n\n* Until 945 PM EDT.\n\n* At 642 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMorehead City, Cape Carteret, Broad Creek, Bogue, Bogue Inlet Pier\nand Cedar Point.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMHX 052242"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMHX.FF.W.0007.260905T2242Z-260906T0145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T21:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.876998c3c1746d9e2b963562dc9a436a12cef8b6.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.07,
+                            42.32
+                        ],
+                        [
+                            -102.92,
+                            42.52
+                        ],
+                        [
+                            -102.77,
+                            42.53
+                        ],
+                        [
+                            -102.77,
+                            42.44
+                        ],
+                        [
+                            -102.75,
+                            42.44
+                        ],
+                        [
+                            -102.75,
+                            42.28
+                        ],
+                        [
+                            -102.97,
+                            42.07
+                        ],
+                        [
+                            -103.14,
+                            42.06
+                        ],
+                        [
+                            -103.2,
+                            42.16
+                        ],
+                        [
+                            -103.07,
+                            42.32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.876998c3c1746d9e2b963562dc9a436a12cef8b6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.876998c3c1746d9e2b963562dc9a436a12cef8b6.001.1",
+                "areaDesc": "Box Butte, NE; Dawes, NE",
+                "geocode": {
+                    "SAME": [
+                        "031013",
+                        "031045"
+                    ],
+                    "UGC": [
+                        "NEC013",
+                        "NEC045"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NEC013",
+                    "https://api.weather.gov/zones/county/NEC045"
+                ],
+                "references": [],
+                "sent": "2026-09-05T15:44:00-06:00",
+                "effective": "2026-09-05T15:44:00-06:00",
+                "onset": "2026-09-05T15:44:00-06:00",
+                "expires": "2026-09-05T18:45:00-06:00",
+                "ends": "2026-09-05T18:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Cheyenne WY",
+                "headline": "Flash Flood Warning issued September 5 at 3:44PM MDT until September 5 at 6:45PM MDT by NWS Cheyenne WY",
+                "description": "FFWCYS\n\nThe National Weather Service in Cheyenne has issued a\n\n* Flash Flood Warning for...\nEastern Box Butte County in the panhandle of Nebraska...\nSoutheastern Dawes County in the panhandle of Nebraska...\n\n* Until 645 PM MDT.\n\n* At 344 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 1.5 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHemingford, Berea and Wild Horse Butte.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCYS"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KCYS 052144"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCYS.FF.W.0024.260905T2144Z-260906T0045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T18:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a77f34b635c09cbc16548c9f8da6bfabcc008d4d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.91,
+                            34.94
+                        ],
+                        [
+                            -76.9,
+                            34.94
+                        ],
+                        [
+                            -76.85,
+                            34.93
+                        ],
+                        [
+                            -76.84,
+                            34.87
+                        ],
+                        [
+                            -76.91,
+                            34.87
+                        ],
+                        [
+                            -76.95,
+                            34.93
+                        ],
+                        [
+                            -76.91,
+                            34.94
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a77f34b635c09cbc16548c9f8da6bfabcc008d4d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a77f34b635c09cbc16548c9f8da6bfabcc008d4d.001.1",
+                "areaDesc": "Craven, NC",
+                "geocode": {
+                    "SAME": [
+                        "037049"
+                    ],
+                    "UGC": [
+                        "NCC049"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC049"
+                ],
+                "references": [],
+                "sent": "2026-09-05T17:19:00-04:00",
+                "effective": "2026-09-05T17:19:00-04:00",
+                "onset": "2026-09-05T17:19:00-04:00",
+                "expires": "2026-09-05T20:15:00-04:00",
+                "ends": "2026-09-05T20:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Newport/Morehead City NC",
+                "headline": "Flash Flood Warning issued September 5 at 5:19PM EDT until September 5 at 8:15PM EDT by NWS Newport/Morehead City NC",
+                "description": "FFWMHX\n\nThe National Weather Service in Newport/Morehead City has issued a\n\n* Flash Flood Warning for...\nSouth Central Craven County in eastern North Carolina...\n\n* Until 815 PM EDT.\n\n* At 519 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHavelock.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMHX 052119"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMHX.FF.W.0006.260905T2119Z-260906T0015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T20:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-05T23:45:00+00:00"
+}

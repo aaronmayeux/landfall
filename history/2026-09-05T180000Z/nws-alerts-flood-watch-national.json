@@ -1,0 +1,305 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ca40341a81b0ec6ec28261afabe28f935aaecc8d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ca40341a81b0ec6ec28261afabe28f935aaecc8d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ca40341a81b0ec6ec28261afabe28f935aaecc8d.001.1",
+                "areaDesc": "South Central Mountains",
+                "geocode": {
+                    "SAME": [
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMZ226"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ226"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c08c56d9dfc9518b5129730edb726eddd76d639b.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c08c56d9dfc9518b5129730edb726eddd76d639b.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-04T21:10:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-05T11:28:00-06:00",
+                "effective": "2026-09-05T11:28:00-06:00",
+                "onset": "2026-09-05T11:28:00-06:00",
+                "expires": "2026-09-05T18:00:00-06:00",
+                "ends": "2026-09-05T18:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flood Watch issued September 5 at 11:28AM MDT until September 5 at 6:00PM MDT by NWS Albuquerque NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of central New Mexico, including the following\narea, South Central Mountains.\n\n* WHEN...Until 6 PM MDT this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Thunderstorms over the Sacramento Mountains will continue from\nnow through the mid afternoon hours. A Flash Flood Warning is in\neffect for areas on and downstream of the South Fork burn scar\nthrough 2 PM MDT. The flash flood risk will taper off mid to late\nthis afternoon.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KABQ 051728"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 6 PM MDT THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FA.A.0018.000000T0000Z-260906T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T18:00:00-06:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.2303cd9fb73493f2d3f806968e50b4c4c2e7bbc3.001.1,2026-09-04T11:48:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9eb4c44a2fd78e83103b1247cd461a54caa8f13c.001.1",
+                "areaDesc": "Wasatch Plateau/Book Cliffs; Western Uinta Basin; Eastern Juab/Millard Counties; Central Mountains; Sanpete Valley; Sevier Valley; Castle Country; Southwest Utah; Zion National Park; Southern Mountains; Upper Sevier River Valleys; Bryce Canyon Country; South Central Utah",
+                "geocode": {
+                    "SAME": [
+                        "049007",
+                        "049013",
+                        "049015",
+                        "049039",
+                        "049049",
+                        "049051",
+                        "049023",
+                        "049027",
+                        "049041",
+                        "049001",
+                        "049021",
+                        "049053",
+                        "049025",
+                        "049017",
+                        "049031",
+                        "049055"
+                    ],
+                    "UGC": [
+                        "UTZ113",
+                        "UTZ114",
+                        "UTZ116",
+                        "UTZ117",
+                        "UTZ118",
+                        "UTZ119",
+                        "UTZ120",
+                        "UTZ122",
+                        "UTZ124",
+                        "UTZ125",
+                        "UTZ126",
+                        "UTZ127",
+                        "UTZ128"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/UTZ113",
+                    "https://api.weather.gov/zones/forecast/UTZ114",
+                    "https://api.weather.gov/zones/forecast/UTZ116",
+                    "https://api.weather.gov/zones/forecast/UTZ117",
+                    "https://api.weather.gov/zones/forecast/UTZ118",
+                    "https://api.weather.gov/zones/forecast/UTZ119",
+                    "https://api.weather.gov/zones/forecast/UTZ120",
+                    "https://api.weather.gov/zones/forecast/UTZ122",
+                    "https://api.weather.gov/zones/forecast/UTZ124",
+                    "https://api.weather.gov/zones/forecast/UTZ125",
+                    "https://api.weather.gov/zones/forecast/UTZ126",
+                    "https://api.weather.gov/zones/forecast/UTZ127",
+                    "https://api.weather.gov/zones/forecast/UTZ128"
+                ],
+                "references": [],
+                "sent": "2026-09-05T10:23:00-06:00",
+                "effective": "2026-09-05T10:23:00-06:00",
+                "onset": "2026-09-06T09:00:00-06:00",
+                "expires": "2026-09-06T01:30:00-06:00",
+                "ends": "2026-09-07T00:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flood Watch issued September 5 at 10:23AM MDT until September 7 at 12:00AM MDT by NWS Salt Lake City UT",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of Utah, including the following areas, Central\nMountains, Eastern Juab/Millard Counties, Sanpete Valley, Sevier\nValley, Wasatch Plateau/Book Cliffs, Western Uinta Basin, Bryce\nCanyon Country, South Central Utah, Southern Mountains, Upper\nSevier River Valleys, Southwest Utah and Zion National Park. This\nwatch also includes recent burn scars such as Cottonwood, Widemouth\n2, Forsyth, France Canyon, Monroe Canyon, and Black Canyon.\n\n* WHEN...From Sunday morning through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, dry washes, slot canyons, and other low-lying and\nflood-prone locations such as slickrock areas and recent burn\nscars.\n\n* ADDITIONAL DETAILS...\n- Excessive rainfall is expected Sunday afternoon associated with\nthe arrival of deep tropical moisture across much of central and\nsouthern Utah. Rates from 0.4-0.6 inches per hour are expected,\nwith isolated higher rates from 0.6-0.8 inches per hour possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFASLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KSLC 051623"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SUNDAY MORNING THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSLC.FA.A.0009.260906T1500Z-260907T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T00:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3bd90c29b5cf6bee2399d3dc12bed2d59c89ba04.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3bd90c29b5cf6bee2399d3dc12bed2d59c89ba04.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3bd90c29b5cf6bee2399d3dc12bed2d59c89ba04.001.1",
+                "areaDesc": "West Slopes Sacramento Mountains Below 7500 Feet; Sacramento Mountains Above 7500 Feet; East Slopes Sacramento Mountains Below 7500 Feet",
+                "geocode": {
+                    "SAME": [
+                        "035035"
+                    ],
+                    "UGC": [
+                        "NMZ414",
+                        "NMZ415",
+                        "NMZ416"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ414",
+                    "https://api.weather.gov/zones/forecast/NMZ415",
+                    "https://api.weather.gov/zones/forecast/NMZ416"
+                ],
+                "references": [],
+                "sent": "2026-09-05T10:03:00-06:00",
+                "effective": "2026-09-05T10:03:00-06:00",
+                "onset": "2026-09-05T11:00:00-06:00",
+                "expires": "2026-09-05T18:00:00-06:00",
+                "ends": "2026-09-05T18:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flood Watch issued September 5 at 10:03AM MDT until September 5 at 6:00PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Sacramento Mountains.\n\n* WHEN...Until 6 PM MDT this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Slow-moving thunderstorms develop this afternoon over the\nSacramento Mountains with high rainfall rates possible. Areas\naround Mescalero and the Salt Fire burn scar are most sensitive\nto flash flooding today.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KEPZ 051603"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM 11 AM THIS MORNING TO 6 PM MDT THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FA.A.0008.260905T1700Z-260906T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-05T18:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-05T18:03:38+00:00"
+}
