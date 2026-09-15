@@ -1,15 +1,14 @@
 {
-  "runAt": "2026-09-14T23:12:54.867Z",
+  "runAt": "2026-09-15T01:34:10.425Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 24,
+      "listed": 23,
       "eligible": 22,
       "stored": 2,
       "unchanged": 20,
       "failed": 0,
       "skipped": [
-        "bep962026.dat — invest — number is reused within a season",
         "bep972026.dat — invest — number is reused within a season"
       ],
       "files": {
@@ -33,17 +32,17 @@
         "btk/2026/bep112026.dat": "unchanged (304)",
         "btk/2026/bep122026.dat": "unchanged (304)",
         "btk/2026/bep132026.dat": "unchanged (304)",
-        "btk/2026/bep142026.dat": "stored 7631 bytes",
-        "btk/2026/bep152026.dat": "stored 3959 bytes"
+        "btk/2026/bep142026.dat": "stored 7847 bytes",
+        "btk/2026/bep152026.dat": "stored 4175 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
       "storms": 2,
-      "linesAdded": 2,
+      "linesAdded": 0,
       "files": {
-        "jtwc/2026/ep1426.jsonl": "+1",
-        "jtwc/2026/ep1526.jsonl": "+1"
+        "jtwc/2026/ep1426.jsonl": "already held",
+        "jtwc/2026/ep1526.jsonl": "already held"
       },
       "faults": []
     }
