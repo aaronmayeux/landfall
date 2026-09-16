@@ -1,14 +1,15 @@
 {
-  "runAt": "2026-09-16T11:48:42.910Z",
+  "runAt": "2026-09-16T17:07:58.345Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 23,
+      "listed": 24,
       "eligible": 22,
       "stored": 0,
       "unchanged": 22,
       "failed": 0,
       "skipped": [
+        "bal982026.dat — invest — number is reused within a season",
         "bep972026.dat — invest — number is reused within a season"
       ],
       "files": {
@@ -38,11 +39,9 @@
     },
     "jtwc": {
       "status": "ok",
-      "storms": 3,
+      "storms": 1,
       "linesAdded": 1,
       "files": {
-        "jtwc/2026/ep1426.jsonl": "already held",
-        "jtwc/2026/ep1526.jsonl": "already held",
         "jtwc/2026/wp2426.jsonl": "+1"
       },
       "faults": []
