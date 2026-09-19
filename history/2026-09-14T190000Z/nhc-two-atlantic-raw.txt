@@ -1,0 +1,25 @@
+ABNT20 KNHC 141751
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+Issued by the NWS Weather Prediction Center College Park MD
+200 PM EDT Mon Sep 14 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Central Subtropical Atlantic:
+A trough of low pressure located about 1000 miles east-southeast 
+of Bermuda continues to produce disorganized showers and 
+thunderstorms. Environmental conditions over the system are 
+forecast to become more conducive for development by the middle of 
+this week. A tropical depression could form late this week as the 
+system moves slowly off to the west-northwest over the subtropical 
+Atlantic. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+$$
+Forecaster Chenard/Blake
+
+

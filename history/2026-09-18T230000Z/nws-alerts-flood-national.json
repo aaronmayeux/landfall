@@ -1,0 +1,677 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.704c85d78ef07c155cbaad5210ed85be4a01cd07.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.55,
+                            33.31
+                        ],
+                        [
+                            -105.54,
+                            33.35
+                        ],
+                        [
+                            -105.5,
+                            33.37
+                        ],
+                        [
+                            -105.45,
+                            33.42
+                        ],
+                        [
+                            -105.42,
+                            33.41
+                        ],
+                        [
+                            -105.44,
+                            33.38
+                        ],
+                        [
+                            -105.45,
+                            33.37
+                        ],
+                        [
+                            -105.43,
+                            33.35
+                        ],
+                        [
+                            -105.4,
+                            33.3
+                        ],
+                        [
+                            -105.55,
+                            33.31
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.704c85d78ef07c155cbaad5210ed85be4a01cd07.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.704c85d78ef07c155cbaad5210ed85be4a01cd07.001.1",
+                "areaDesc": "Lincoln, NM",
+                "geocode": {
+                    "SAME": [
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMC027"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC027"
+                ],
+                "references": [],
+                "sent": "2026-09-18T17:08:00-06:00",
+                "effective": "2026-09-18T17:08:00-06:00",
+                "onset": "2026-09-18T17:08:00-06:00",
+                "expires": "2026-09-18T20:15:00-06:00",
+                "ends": "2026-09-18T20:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 18 at 5:08PM MDT until September 18 at 8:15PM MDT by NWS Albuquerque NM",
+                "description": "FFWABQ\n\nThe National Weather Service in Albuquerque has issued a\n\n* Flash Flood Warning for...\nSouth Central Lincoln County in central New Mexico...\n\n* Until 815 PM MDT.\n\n* At 508 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.75 and 1.5 inches of\nrain have fallen along the Lincoln and Otero County line north of\nWhitetail. Additional rainfall amounts up to 0.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGlencoe.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KABQ 182308"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KABQ.FF.W.0154.260918T2308Z-260919T0215Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T20:15:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6873fc79d2c71b9475a7d049ded7fc91ea903367.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -109.05,
+                            40.14
+                        ],
+                        [
+                            -109.13,
+                            40.1
+                        ],
+                        [
+                            -109.39,
+                            39.99
+                        ],
+                        [
+                            -109.62,
+                            39.9
+                        ],
+                        [
+                            -109.69,
+                            39.93
+                        ],
+                        [
+                            -109.7,
+                            40.01
+                        ],
+                        [
+                            -109.54,
+                            40.13
+                        ],
+                        [
+                            -109.37,
+                            40.23
+                        ],
+                        [
+                            -109.24,
+                            40.31
+                        ],
+                        [
+                            -108.99,
+                            40.39
+                        ],
+                        [
+                            -108.86,
+                            40.37
+                        ],
+                        [
+                            -108.85,
+                            40.24
+                        ],
+                        [
+                            -108.97,
+                            40.17
+                        ],
+                        [
+                            -109.05,
+                            40.14
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6873fc79d2c71b9475a7d049ded7fc91ea903367.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6873fc79d2c71b9475a7d049ded7fc91ea903367.001.1",
+                "areaDesc": "Moffat, CO; Rio Blanco, CO; Uintah, UT",
+                "geocode": {
+                    "SAME": [
+                        "008081",
+                        "008103",
+                        "049047"
+                    ],
+                    "UGC": [
+                        "COC081",
+                        "COC103",
+                        "UTC047"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/COC081",
+                    "https://api.weather.gov/zones/county/COC103",
+                    "https://api.weather.gov/zones/county/UTC047"
+                ],
+                "references": [],
+                "sent": "2026-09-18T16:52:00-06:00",
+                "effective": "2026-09-18T16:52:00-06:00",
+                "onset": "2026-09-18T16:52:00-06:00",
+                "expires": "2026-09-18T19:45:00-06:00",
+                "ends": "2026-09-18T19:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Junction CO",
+                "headline": "Flash Flood Warning issued September 18 at 4:52PM MDT until September 18 at 7:45PM MDT by NWS Grand Junction CO",
+                "description": "FFWGJT\n\nThe National Weather Service in Grand Junction has issued a\n\n* Flash Flood Warning for...\nSouthwestern Moffat County in northwestern Colorado...\nWestern Rio Blanco County in northwestern Colorado...\nEast Central Uintah County in northeastern Utah...\n\n* Until 745 PM MDT.\n\n* At 452 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding. Thunderstorms producing flash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of creeks and streams, urban areas,\nhighways, and streets.\n\n* Some locations that will experience flash flooding include...\nDinosaur, Artesia and Blue Mountain.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWGJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KGJT 182252"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KGJT.FF.W.0125.260918T2252Z-260919T0145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T19:45:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 7:45 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 7:45 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.183f94b46b840c775db6a8e7381c656f4c5644ad.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -109.28,
+                            34.14
+                        ],
+                        [
+                            -109.14,
+                            34.26
+                        ],
+                        [
+                            -109.2,
+                            34.31
+                        ],
+                        [
+                            -109.31,
+                            34.35
+                        ],
+                        [
+                            -109.4,
+                            34.42
+                        ],
+                        [
+                            -109.41,
+                            34.4
+                        ],
+                        [
+                            -109.37,
+                            34.32
+                        ],
+                        [
+                            -109.37,
+                            34.28
+                        ],
+                        [
+                            -109.44,
+                            34.23
+                        ],
+                        [
+                            -109.47,
+                            34.15
+                        ],
+                        [
+                            -109.28,
+                            34.14
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.183f94b46b840c775db6a8e7381c656f4c5644ad.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.183f94b46b840c775db6a8e7381c656f4c5644ad.001.1",
+                "areaDesc": "Apache, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004001"
+                    ],
+                    "UGC": [
+                        "AZC001"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC001"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2e32e0694f91b7bf18b0a4dc14f91aa1d453adf9.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.2e32e0694f91b7bf18b0a4dc14f91aa1d453adf9.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-18T14:11:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-18T15:50:00-07:00",
+                "effective": "2026-09-18T15:50:00-07:00",
+                "onset": "2026-09-18T15:50:00-07:00",
+                "expires": "2026-09-18T17:15:00-07:00",
+                "ends": "2026-09-18T17:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued September 18 at 3:50PM MST until September 18 at 5:15PM MST by NWS Flagstaff AZ",
+                "description": "At 350 PM MST, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1.5 and 3 inches of rain have\nfallen. Additional rainfall amounts up to 0.5 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nnormally dry washes, urban areas, highways, streets and\nunderpasses.\n\nSome locations that will experience flash flooding include...\nSpringerville, Lyman Lake State Park, Becker Lake and Lyman Lake.\n\nThis includes the following highways...\nHighway 60 between mile markers 377 and 387. Highway 180 191 between\nmile markers 380 and 381...and between mile markers 386 and 394.\n\nThis includes the following recreation areas and campgrounds...\nLyman Lake Campground.\n\nThis includes the following creeks, washes and rivers...\nCoyote Creek, Little Colorado River, Carnero Creek, Vigil Run and\nNutrioso Creek.",
+                "instruction": "Flooding of washes and creeks will occur, some dirt roads will become\nmuddy and impassable. Paved roads and underpasses could become\nflooded as well.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KFGZ 182250"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 515 PM MST THIS AFTERNOON FOR APACHE COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KFGZ.FF.W.0178.000000T0000Z-260919T0015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T17:15:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.22cc26fdcfb24c694e6525f69cdf454e8880bb99.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.32,
+                            33.08
+                        ],
+                        [
+                            -105.58,
+                            33.16
+                        ],
+                        [
+                            -105.61,
+                            33.24
+                        ],
+                        [
+                            -105.54,
+                            33.31
+                        ],
+                        [
+                            -105.32,
+                            33.31
+                        ],
+                        [
+                            -105.32,
+                            33.08
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.22cc26fdcfb24c694e6525f69cdf454e8880bb99.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.22cc26fdcfb24c694e6525f69cdf454e8880bb99.001.1",
+                "areaDesc": "Otero, NM",
+                "geocode": {
+                    "SAME": [
+                        "035035"
+                    ],
+                    "UGC": [
+                        "NMC035"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC035"
+                ],
+                "references": [],
+                "sent": "2026-09-18T16:14:00-06:00",
+                "effective": "2026-09-18T16:14:00-06:00",
+                "onset": "2026-09-18T16:14:00-06:00",
+                "expires": "2026-09-18T18:15:00-06:00",
+                "ends": "2026-09-18T18:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 18 at 4:14PM MDT until September 18 at 6:15PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nNortheastern Otero County in south central New Mexico...\n\n* Until 615 PM MDT.\n\n* At 414 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 0.5 inches of rain have\nfallen. Additional rainfall amounts up to 0.5 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMainly rural areas of Northeastern Otero County.\n\nAdditional rain on top of saturated soils will result in flash\nflooding downstream of Whitetail.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 182214"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0148.260918T2214Z-260919T0015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T18:15:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1b740ef0df441d47852e81588812970bca26df02.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -108.92,
+                            39.18
+                        ],
+                        [
+                            -108.89,
+                            39.14
+                        ],
+                        [
+                            -108.83,
+                            39.11
+                        ],
+                        [
+                            -108.75,
+                            39.21
+                        ],
+                        [
+                            -108.77,
+                            39.28
+                        ],
+                        [
+                            -108.84,
+                            39.29
+                        ],
+                        [
+                            -108.91,
+                            39.22
+                        ],
+                        [
+                            -108.92,
+                            39.18
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1b740ef0df441d47852e81588812970bca26df02.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1b740ef0df441d47852e81588812970bca26df02.001.1",
+                "areaDesc": "Mesa, CO",
+                "geocode": {
+                    "SAME": [
+                        "008077"
+                    ],
+                    "UGC": [
+                        "COC077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/COC077"
+                ],
+                "references": [],
+                "sent": "2026-09-18T16:13:00-06:00",
+                "effective": "2026-09-18T16:13:00-06:00",
+                "onset": "2026-09-18T16:13:00-06:00",
+                "expires": "2026-09-18T19:15:00-06:00",
+                "ends": "2026-09-18T19:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Junction CO",
+                "headline": "Flash Flood Warning issued September 18 at 4:13PM MDT until September 18 at 7:15PM MDT by NWS Grand Junction CO",
+                "description": "FFWGJT\n\nThe National Weather Service in Grand Junction has issued a\n\n* Flash Flood Warning for...\nNorthwestern Mesa County in west central Colorado...\n\n* Until 715 PM MDT.\n\n* At 413 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.4 and 0.8 inches of\nrain have fallen. The expected rainfall rate is 1.5 to 3 inches in\n1 hour. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nLoma and Mack. This includes portions of I-70 between mile markers\n8 and 15.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nRemain alert for flooding even in locations not receiving rain.\nArroyos, streams, and rivers can become raging currents in a matter\nof minutes, even from distant rainfall.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become life\nthreatening in heavy rains. Campers and hikers should avoid streams\nor creeks.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWGJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KGJT 182213"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KGJT.FF.W.0124.260918T2213Z-260919T0115Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T19:15:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 7:15 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 7:15 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-18T23:11:06+00:00"
+}

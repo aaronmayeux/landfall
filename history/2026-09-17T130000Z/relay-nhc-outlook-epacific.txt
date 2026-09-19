@@ -1,0 +1,46 @@
+en Español
+
+000
+ABPZ20 KNHC 171154
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Thu Sep 17 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Western East Pacific:
+A tropical wave continues to produce disorganized showers and 
+thunderstorms well to the south-southwest of the southern tip of the 
+Baja California Peninsula. Environmental conditions appear 
+conducive for gradual development of this system, and a tropical 
+depression is likely to form this weekend or early next week as it 
+moves westward at 10 to 15 mph across the western part of the East 
+Pacific.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...high...70 percent.
+
+Well East-Southeast of the Hawaiian Islands (Former TD15-E):
+Showers and thunderstorms have increased somewhat with an area of 
+low pressure related to the remnants of Tropical Depression 
+Fifteen-E. Environmental conditions appear only marginally conducive 
+for some development of this system as it moves gradually westward, 
+remaining east-southeast of the Hawaiian Islands. 
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+Southwest of Southwestern Mexico:
+Another tropical wave is producing disorganized showers and 
+thunderstorms several hundred miles south of southwestern Mexico. 
+Environmental conditions also appear conducive for gradual 
+development of this system, and a tropical depression is likely to 
+form late this weekend or early next week while it moves gradually 
+northwestward turning northward off the coast of southwestern 
+Mexico.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...high...80 percent.
+
+$$
+Forecaster Papin
+  

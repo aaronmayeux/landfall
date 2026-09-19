@@ -1,0 +1,801 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.847370d6815d34e15e119a5854e927fcf0a7d7f1.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.847370d6815d34e15e119a5854e927fcf0a7d7f1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.847370d6815d34e15e119a5854e927fcf0a7d7f1.001.1",
+                "areaDesc": "Upper Santa Cruz River and Altar Valleys including Nogales; Tucson Metro Area including Tucson/Green Valley/Marana/Vail; South Central Pinal County including Eloy/Picacho Peak State Park; Southeast Pinal County including Kearny/Mammoth/Oracle; Upper San Pedro River Valley including Sierra Vista/Benson; Eastern Cochise County Below 5000 Feet including Douglas/Willcox; Upper Gila River and Aravaipa Valleys including Clifton/Safford; Galiuro and Pinaleno Mountains including Mount Graham; Chiricahua Mountains including Chiricahua National Monument; Dragoon/Mule/Huachuca and Santa Rita Mountains including Bisbee/Canelo Hills/Madera Canyon; Santa Catalina and Rincon Mountains including Mount Lemmon/Summerhaven",
+                "geocode": {
+                    "SAME": [
+                        "004019",
+                        "004023",
+                        "004021",
+                        "004003",
+                        "004009",
+                        "004011"
+                    ],
+                    "UGC": [
+                        "AZZ503",
+                        "AZZ504",
+                        "AZZ505",
+                        "AZZ506",
+                        "AZZ507",
+                        "AZZ508",
+                        "AZZ509",
+                        "AZZ511",
+                        "AZZ512",
+                        "AZZ513",
+                        "AZZ514"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ503",
+                    "https://api.weather.gov/zones/forecast/AZZ504",
+                    "https://api.weather.gov/zones/forecast/AZZ505",
+                    "https://api.weather.gov/zones/forecast/AZZ506",
+                    "https://api.weather.gov/zones/forecast/AZZ507",
+                    "https://api.weather.gov/zones/forecast/AZZ508",
+                    "https://api.weather.gov/zones/forecast/AZZ509",
+                    "https://api.weather.gov/zones/forecast/AZZ511",
+                    "https://api.weather.gov/zones/forecast/AZZ512",
+                    "https://api.weather.gov/zones/forecast/AZZ513",
+                    "https://api.weather.gov/zones/forecast/AZZ514"
+                ],
+                "references": [],
+                "sent": "2026-09-13T11:52:00-07:00",
+                "effective": "2026-09-13T11:52:00-07:00",
+                "onset": "2026-09-14T11:00:00-07:00",
+                "expires": "2026-09-14T05:30:00-07:00",
+                "ends": "2026-09-14T23:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flood Watch issued September 13 at 11:52AM MST until September 14 at 11:00PM MST by NWS Tucson AZ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of Southeast Arizona, including the following\nareas, Catalina and Rincon Mountains, Chiricahua Mountains, Dragoon\nand Mule and Huachuca and Santa Rita Mountains, Eastern Cochise\nCounty below 5000 feet, Galiuro and Pinaleno Mountains, South\nCentral Pinal County, Southeast Pinal County, Tucson Metro Area,\nUpper Gila River Valley, Upper San Pedro River Valley and Upper\nSanta Cruz River Valley/Altar Valley.\n\n* WHEN...From Monday morning through Monday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks. Low-water crossings\nmay be flooded.\n\n* ADDITIONAL DETAILS...\n- Well above normal moisture levels for September are expected to\nresult in scattered to numerous showers and thunderstorms capable\nof producing heavy rainfall Monday. Rain totals of 1 to 2 inches\nare expected with the stronger storms with isolated amounts over\n2 inches possible. Areas that received substantial rainfall in\nthe 48 to 72 hours will be more susceptible to flash flooding.\nThis rainfall will result in faster response in washes, creeks,\nand storm drainages.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KTWC 131852"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM MONDAY MORNING THROUGH MONDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTWC.FA.A.0011.260914T1800Z-260915T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-14T23:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.002.1",
+                "areaDesc": "Windham; Southern Worcester; Western Norfolk; Suffolk; Eastern Norfolk",
+                "geocode": {
+                    "SAME": [
+                        "009015",
+                        "025027",
+                        "025021",
+                        "025025"
+                    ],
+                    "UGC": [
+                        "CTZ004",
+                        "MAZ012",
+                        "MAZ013",
+                        "MAZ015",
+                        "MAZ016"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/CTZ004",
+                    "https://api.weather.gov/zones/forecast/MAZ012",
+                    "https://api.weather.gov/zones/forecast/MAZ013",
+                    "https://api.weather.gov/zones/forecast/MAZ015",
+                    "https://api.weather.gov/zones/forecast/MAZ016"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5336d1b5557a2baf49da88efb2205193b6f98833.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.5336d1b5557a2baf49da88efb2205193b6f98833.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-13T01:57:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-13T13:55:00-04:00",
+                "effective": "2026-09-13T13:55:00-04:00",
+                "onset": "2026-09-13T13:55:00-04:00",
+                "expires": "2026-09-13T18:00:00-04:00",
+                "ends": "2026-09-13T18:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Boston/Norton MA",
+                "headline": "Flood Watch issued September 13 at 1:55PM EDT until September 13 at 6:00PM EDT by NWS Boston/Norton MA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of eastern Connecticut and south central\nMassachusetts.\n\n* WHEN...Until 6 PM EDT this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of low-lying and\nflood-prone locations. Flooding may occur in poor drainage and\nurban areas.\n\n* ADDITIONAL DETAILS...\n- Isolated heavy downpour this afternoon over saturated grounds may\nlead to isolated instances of flash flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABOX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KBOX 131755"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 6 PM EDT THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBOX.FA.A.0004.000000T0000Z-260913T2200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T18:00:00-04:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5f96206572c1d71038a1d4606b6524c93e3edff8.001.1,2026-09-12T13:18:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7f4de351a9f43681f0c81ba9a72548369c43fd45.001.1",
+                "areaDesc": "Northern Bristol; Western Plymouth; Eastern Plymouth; Southern Bristol; Southern Plymouth; Barnstable; Dukes; Nantucket; Northwest Providence; Southeast Providence; Western Kent; Eastern Kent; Bristol; Washington; Newport; Block Island",
+                "geocode": {
+                    "SAME": [
+                        "025005",
+                        "025023",
+                        "025021",
+                        "025001",
+                        "025007",
+                        "025019",
+                        "044007",
+                        "044003",
+                        "044001",
+                        "044009",
+                        "044005"
+                    ],
+                    "UGC": [
+                        "MAZ017",
+                        "MAZ018",
+                        "MAZ019",
+                        "MAZ020",
+                        "MAZ021",
+                        "MAZ022",
+                        "MAZ023",
+                        "MAZ024",
+                        "RIZ001",
+                        "RIZ002",
+                        "RIZ003",
+                        "RIZ004",
+                        "RIZ005",
+                        "RIZ006",
+                        "RIZ007",
+                        "RIZ008"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/MAZ017",
+                    "https://api.weather.gov/zones/forecast/MAZ018",
+                    "https://api.weather.gov/zones/forecast/MAZ019",
+                    "https://api.weather.gov/zones/forecast/MAZ020",
+                    "https://api.weather.gov/zones/forecast/MAZ021",
+                    "https://api.weather.gov/zones/forecast/MAZ022",
+                    "https://api.weather.gov/zones/forecast/MAZ023",
+                    "https://api.weather.gov/zones/forecast/MAZ024",
+                    "https://api.weather.gov/zones/forecast/RIZ001",
+                    "https://api.weather.gov/zones/forecast/RIZ002",
+                    "https://api.weather.gov/zones/forecast/RIZ003",
+                    "https://api.weather.gov/zones/forecast/RIZ004",
+                    "https://api.weather.gov/zones/forecast/RIZ005",
+                    "https://api.weather.gov/zones/forecast/RIZ006",
+                    "https://api.weather.gov/zones/forecast/RIZ007",
+                    "https://api.weather.gov/zones/forecast/RIZ008"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5336d1b5557a2baf49da88efb2205193b6f98833.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.5336d1b5557a2baf49da88efb2205193b6f98833.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-13T01:57:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-13T13:55:00-04:00",
+                "effective": "2026-09-13T13:55:00-04:00",
+                "onset": "2026-09-13T13:55:00-04:00",
+                "expires": "2026-09-13T18:00:00-04:00",
+                "ends": "2026-09-13T18:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Boston/Norton MA",
+                "headline": "Flood Watch issued September 13 at 1:55PM EDT until September 13 at 6:00PM EDT by NWS Boston/Norton MA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Rhode Island and southeast Massachusetts.\n\n* WHEN...Until 6 PM EDT this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of low-lying and\nflood-prone locations. Flooding may occur in poor drainage and\nurban areas.\n\n* ADDITIONAL DETAILS...\n- Isolated heavy downpour this afternoon over saturated grounds may\nlead to isolated instances of flash flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABOX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KBOX 131755"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 6 PM EDT THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBOX.FA.A.0004.000000T0000Z-260913T2200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T18:00:00-04:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5f96206572c1d71038a1d4606b6524c93e3edff8.002.1,2026-09-12T13:18:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.147e469d4b782b239b9d52867f3efb0e0c581407.001.1,2026-09-12T02:20:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.005.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.005.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.005.1",
+                "areaDesc": "Chelan, WA; Douglas, WA; Ferry, WA; Okanogan, WA",
+                "geocode": {
+                    "SAME": [
+                        "053007",
+                        "053017",
+                        "053019",
+                        "053047"
+                    ],
+                    "UGC": [
+                        "WAC007",
+                        "WAC017",
+                        "WAC019",
+                        "WAC047"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/WAC007",
+                    "https://api.weather.gov/zones/county/WAC017",
+                    "https://api.weather.gov/zones/county/WAC019",
+                    "https://api.weather.gov/zones/county/WAC047"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-12T12:00:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-12T19:41:00-07:00",
+                "effective": "2026-09-12T19:41:00-07:00",
+                "onset": "2026-09-13T01:00:00-07:00",
+                "expires": "2026-09-13T16:00:00-07:00",
+                "ends": "2026-09-13T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Spokane WA",
+                "headline": "Flood Watch issued September 12 at 7:41PM PDT until September 13 at 8:00PM PDT by NWS Spokane WA",
+                "description": "* WHAT...Debris and ash flows, rock slides, and minor flooding caused\nby excessive rainfall is possible, especially near burn scars.\n\n* WHERE...Portions of North Central and Northeast Washington,\nincluding the following counties, in North Central Washington,\nChelan, Douglas and Okanogan. In Northeast Washington, Ferry.\n\n* WHEN...From 1 AM PDT Sunday through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in debris and ash flows over\nburn scars in steep terrain.  Rock slides will be possible.  Minor\nflooding in urban areas where there is poor drainage. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A slow moving storm system will bring persistent bands of rain\nthrough Central Washington.  Moderate to heavy rain intensities\nare expected at times.  Rainfall amounts will range between 0.50\nand 1.50 inches with locally around 2.00 inches in southern\nChelan County.\n- This includes but is not limited to the following burn scars:\nModrite, Kaiser Canyon, Sinlahekin, Chelan Falls, Little Giant,\nSisi, and Pioneer.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOTX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS66 KOTX 130241"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 1 AM PDT SUNDAY THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KOTX.FA.A.0006.260913T0800Z-260914T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T20:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.007.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.007.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.007.1",
+                "areaDesc": "Waterville Plateau",
+                "geocode": {
+                    "SAME": [
+                        "053017",
+                        "053025"
+                    ],
+                    "UGC": [
+                        "WAZ044"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WAZ044"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-12T12:00:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-12T19:41:00-07:00",
+                "effective": "2026-09-12T19:41:00-07:00",
+                "onset": "2026-09-13T01:00:00-07:00",
+                "expires": "2026-09-13T16:00:00-07:00",
+                "ends": "2026-09-13T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Spokane WA",
+                "headline": "Flood Watch issued September 12 at 7:41PM PDT until September 13 at 8:00PM PDT by NWS Spokane WA",
+                "description": "* WHAT...Debris and ash flows, rock slides, and minor flooding caused\nby excessive rainfall is possible, especially near burn scars.\n\n* WHERE...A portion of Central Washington, including the following\narea and county, Waterville Plateau.\n\n* WHEN...From 1 AM PDT Sunday through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in debris and ash flows over\nburn scars in steep terrain.  Rock slides will be possible.  Minor\nflooding in urban areas where there is poor drainage. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A slow moving storm system will bring persistent bands of rain\nthrough Central Washington.  Moderate to heavy rain intensities\nare expected at times.  Rainfall amounts will range between 0.50\nand 1.50 inches with locally around 2.00 inches in southern\nChelan County\n- This includes but is not limited to the following burn scars:\nChelan Falls.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOTX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS66 KOTX 130241"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 1 AM PDT SUNDAY THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KOTX.FA.A.0006.260913T0800Z-260914T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T20:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.004.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.004.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.004.1",
+                "areaDesc": "Moses Lake Area; Upper Columbia Basin; Northeast Mountains",
+                "geocode": {
+                    "SAME": [
+                        "053001",
+                        "053025",
+                        "053017",
+                        "053043",
+                        "053047",
+                        "053051",
+                        "053063",
+                        "053065"
+                    ],
+                    "UGC": [
+                        "WAZ034",
+                        "WAZ035",
+                        "WAZ037"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WAZ034",
+                    "https://api.weather.gov/zones/forecast/WAZ035",
+                    "https://api.weather.gov/zones/forecast/WAZ037"
+                ],
+                "references": [],
+                "sent": "2026-09-12T19:41:00-07:00",
+                "effective": "2026-09-12T19:41:00-07:00",
+                "onset": "2026-09-13T01:00:00-07:00",
+                "expires": "2026-09-13T16:00:00-07:00",
+                "ends": "2026-09-13T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Spokane WA",
+                "headline": "Flood Watch issued September 12 at 7:41PM PDT until September 13 at 8:00PM PDT by NWS Spokane WA",
+                "description": "* WHAT...Debris and ash flows, rock slides, especially near burn\nscars. Minor flooding caused by excessive rainfall is possible\n\n* WHERE...Portions of East Central and Northeast Washington,\nincluding the following areas and counties, in East Central\nWashington, Moses Lake Area and Upper Columbia Basin. In Northeast\nWashington, Northeast Mountains.\n\n* WHEN...From 1 AM PDT Sunday through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in debris and ash flows over\nburn scars in steep terrain.  Rock slides will be possible.  Minor\nflooding in urban areas where there is poor drainage. Storm drains\nand ditches may become clogged with debris.  Rises on creeks and\nstreams.\n\n* ADDITIONAL DETAILS...\n- A slow moving storm system will bring persistent bands of rain\nthrough Central Washington.  Moderate to heavy rain intensities\nare expected at times. Rainfall amounts will range between 0.50\nand 1.50 inches.\n- This includes but is not limited to the following burn scars:\nModrite, Hudspeth, Autumn Lane, Mitre Rock, and in Grant County,\nGarred Road and Railroad.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOTX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS66 KOTX 130241"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM 1 AM PDT SUNDAY THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KOTX.FA.A.0006.260913T0800Z-260914T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T20:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.003.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.003.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.003.1",
+                "areaDesc": "Grant, WA; Stevens, WA",
+                "geocode": {
+                    "SAME": [
+                        "053025",
+                        "053065"
+                    ],
+                    "UGC": [
+                        "WAC025",
+                        "WAC065"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/WAC025",
+                    "https://api.weather.gov/zones/county/WAC065"
+                ],
+                "references": [],
+                "sent": "2026-09-12T19:41:00-07:00",
+                "effective": "2026-09-12T19:41:00-07:00",
+                "onset": "2026-09-13T01:00:00-07:00",
+                "expires": "2026-09-13T16:00:00-07:00",
+                "ends": "2026-09-13T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Spokane WA",
+                "headline": "Flood Watch issued September 12 at 7:41PM PDT until September 13 at 8:00PM PDT by NWS Spokane WA",
+                "description": "* WHAT...Debris and ash flows, rock slides, especially near burn\nscars. Minor flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of Central and Northeast Washington, including the\nfollowing counties, in Central Washington, Grant. In Northeast\nWashington, Stevens.\n\n* WHEN...From 1 AM PDT Sunday through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in debris and ash flows over\nburn scars in steep terrain.  Rock slides will be possible.  Minor\nflooding in urban areas where there is poor drainage. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A slow moving storm system will bring persistent bands of rain\nthrough Central Washington.  Rain intensities will vary from\nlight to moderate.  Rainfall amounts will range between 0.50 and\n1.50 inches.\n- This includes but is not limited to the following burn scars:\nModrite, Hudspeth, Autumn Lane, Mitre Rock, and in Grant County,\nGarred Road and Railroad.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOTX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS66 KOTX 130241"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM 1 AM PDT SUNDAY THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KOTX.FA.A.0006.260913T0800Z-260914T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T20:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.006.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.006.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10f3c49584be4c84004700a17f8fcc66ba56e964.006.1",
+                "areaDesc": "Okanogan Highlands; Wenatchee Area; Okanogan Valley; Central Chelan County; Western Chelan County; Western Okanogan County",
+                "geocode": {
+                    "SAME": [
+                        "053019",
+                        "053047",
+                        "053007",
+                        "053017"
+                    ],
+                    "UGC": [
+                        "WAZ038",
+                        "WAZ041",
+                        "WAZ043",
+                        "WAZ047",
+                        "WAZ048",
+                        "WAZ049"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/WAZ038",
+                    "https://api.weather.gov/zones/forecast/WAZ041",
+                    "https://api.weather.gov/zones/forecast/WAZ043",
+                    "https://api.weather.gov/zones/forecast/WAZ047",
+                    "https://api.weather.gov/zones/forecast/WAZ048",
+                    "https://api.weather.gov/zones/forecast/WAZ049"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.92730636fd661906da35181464c514b4650d5f52.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-12T12:00:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-12T19:41:00-07:00",
+                "effective": "2026-09-12T19:41:00-07:00",
+                "onset": "2026-09-13T01:00:00-07:00",
+                "expires": "2026-09-13T16:00:00-07:00",
+                "ends": "2026-09-13T20:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Spokane WA",
+                "headline": "Flood Watch issued September 12 at 7:41PM PDT until September 13 at 8:00PM PDT by NWS Spokane WA",
+                "description": "* WHAT...Debris and ash flows, rock slides, and minor flooding caused\nby excessive rainfall is possible, especially near burn scars.\n\n* WHERE...A portion of North Central Washington, including the\nfollowing areas and counties, Central Chelan County, Okanogan\nHighlands, Okanogan Valley, Wenatchee Area, Western Chelan County\nand Western Okanogan County.\n\n* WHEN...From 1 AM PDT Sunday through Sunday evening.\n\n* IMPACTS...Excessive runoff may result in debris and ash flows over\nburn scars in steep terrain.  Rock slides will be possible.  Minor\nflooding in urban areas where there is poor drainage. Storm drains\nand ditches may become clogged with debris.\n\n* ADDITIONAL DETAILS...\n- A slow moving storm system will bring persistent bands of rain\nthrough Central Washington.  Moderate to heavy rain intensities\nare expected at times.  Rainfall amounts will range between 0.50\nand 1.50 inches with locally around 2.00 inches in southern\nChelan County\n- This includes but is not limited to the following burn scars:\nModrite, Kaiser Canyon, Sinlahekin, Chelan Falls, Little Giant,\nSisi, Labor Mountain, and Pioneer.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOTX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS66 KOTX 130241"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 1 AM PDT SUNDAY THROUGH SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KOTX.FA.A.0006.260913T0800Z-260914T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T20:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-13T19:15:51+00:00"
+}

@@ -1,0 +1,26 @@
+ABNT20 KNHC 171150
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Thu Sep 17 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Central Subtropical Atlantic (AL98):
+Showers and thunderstorms associated with a low pressure area 
+located about 350 miles east of Bermuda have changed little in 
+organization during the past several hours.  Environmental 
+conditions could support gradual development of the system during 
+the next day or two, and a tropical depression could form during 
+that time. The system is forecast to move slowly today, and then 
+possibly turn southward on Friday over the subtropical Atlantic. By 
+Sunday, environmental conditions are forecast to become less 
+favorable for development.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+$$
+Forecaster Beven
+
+

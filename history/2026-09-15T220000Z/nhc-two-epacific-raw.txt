@@ -1,0 +1,47 @@
+ABPZ20 KNHC 151742
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+Issued by the NWS Weather Prediction Center College Park MD
+1100 AM PDT Tue Sep 15 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Depression Fifteen-E, located well west-southwest of the 
+southern tip of the Baja California Peninsula and has issued the 
+final advisory on former Tropical Depression Norbert. 
+
+Southwest of Southwestern Mexico:
+An area of low pressure could form well offshore of southwestern 
+Mexico by the end of the week. Environmental conditions appear 
+conducive for some gradual development by the weekend, and this 
+system could become a tropical depression early next week while 
+it moves slowly northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+Gulf of California:
+A small area of low pressure has formed over the southern Gulf of 
+California accompanied by disorganized showers and thunderstorms. 
+While this system has only a slight chance of formation before it 
+moves inland tomorrow over the state of Sonora, periods of heavy 
+rain and isolated flooding are possible over that state during the 
+next couple of days. 
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+Western Portion of the Eastern Pacific:
+An area of low pressure could form over the western portion 
+of the eastern Pacific this weekend. Some gradual development of 
+this system is possible early next week as it moves westward 
+at 10 to 15 mph.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Jackson/Blake
+
+

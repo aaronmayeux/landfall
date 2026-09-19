@@ -1,0 +1,55 @@
+en Español
+
+000
+ABPZ20 KNHC 091738
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Wed Sep 9 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Lowell, located several hundred miles north-northwest of the 
+Hawaiian Islands.
+
+Central Portion and West Portion of the East Pacific (EP96):
+Showers and thunderstorms continue to show signs of organization  
+with an area of low pressure located several hundred miles 
+south-southwest of the southern tip of the Baja California 
+peninsula. Environmental conditions are expected to support 
+continued development of this system, and a tropical depression is 
+expected to form later today or tonight. as the system moves 
+generally west-northwestward at 10 to 15 mph. For more information, 
+including gale warnings, please see High Seas Forecast issued by 
+National Weather Service.
+* Formation chance through 48 hours...high...90 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Central Portion and West Portion of the East Pacific:
+An area of low pressure is forecast to form several hundred miles 
+south of the southern tip of the Baja California Peninsula this 
+weekend or early next week. Some gradual development is possible 
+thereafter, and a tropical depression could form early next week 
+while the system moves generally west-northwestward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+Well South-Southeast of the Hawaiian Islands:
+An area of low pressure is forecast to form several hundred miles 
+south-southeast of the Hawaiian Islands. Some gradual development is 
+possible late this week into this weekend as this system moves 
+slowly north-northwestward. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFEPI, WMO header FZPN02 
+KWBC, and on the web at ocean.weather.gov/shtml/NFDHSFEPI.php
+
+$$
+Forecaster Evans/Kelly
+  

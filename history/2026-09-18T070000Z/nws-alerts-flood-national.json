@@ -1,0 +1,431 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.93078e77102b8b9b82d4302ef06a553e5eb3ffdb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.72,
+                            43.66
+                        ],
+                        [
+                            -111.73,
+                            43.67
+                        ],
+                        [
+                            -111.72,
+                            43.68
+                        ],
+                        [
+                            -111.7,
+                            43.66
+                        ],
+                        [
+                            -111.67,
+                            43.66
+                        ],
+                        [
+                            -111.65,
+                            43.67
+                        ],
+                        [
+                            -111.63,
+                            43.65
+                        ],
+                        [
+                            -111.64,
+                            43.64
+                        ],
+                        [
+                            -111.65,
+                            43.64
+                        ],
+                        [
+                            -111.66,
+                            43.63
+                        ],
+                        [
+                            -111.69,
+                            43.63
+                        ],
+                        [
+                            -111.69,
+                            43.64
+                        ],
+                        [
+                            -111.71,
+                            43.65
+                        ],
+                        [
+                            -111.72,
+                            43.66
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.93078e77102b8b9b82d4302ef06a553e5eb3ffdb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.93078e77102b8b9b82d4302ef06a553e5eb3ffdb.001.1",
+                "areaDesc": "Jefferson, ID; Madison, ID",
+                "geocode": {
+                    "SAME": [
+                        "016051",
+                        "016065"
+                    ],
+                    "UGC": [
+                        "IDC051",
+                        "IDC065"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/IDC051",
+                    "https://api.weather.gov/zones/county/IDC065"
+                ],
+                "references": [],
+                "sent": "2026-09-17T22:25:00-06:00",
+                "effective": "2026-09-17T22:25:00-06:00",
+                "onset": "2026-09-17T22:25:00-06:00",
+                "expires": "2026-09-18T02:30:00-06:00",
+                "ends": "2026-09-18T02:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pocatello ID",
+                "headline": "Flash Flood Warning issued September 17 at 10:25PM MDT until September 18 at 2:30AM MDT by NWS Pocatello ID",
+                "description": "FFWPIH\n\nThe National Weather Service in Pocatello has issued a\n\n* Flash Flood Warning for...\nThe Big Rock burn scar in...\nSoutheastern Jefferson County in southeastern Idaho...\nSouth Central Madison County in southeastern Idaho...\n\n* Until 230 AM MDT.\n\n* At 1025 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain over the Big Rock Burn Scar. Flash flooding is ongoing\nor expected to begin shortly. Excessive rainfall over the burn scar\nwill result in debris flow moving through the Big Rock burn scar.\nThe debris flow can consist of rock, mud, vegetation and other\nloose materials.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding in and around the Big Rock Burn Scar.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nBig Rock Burn Scar.\n\n* Some locations that will experience flash flooding include...\nHeise.",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks...streams...and ditches\nin the Big Rock Burn Scar. Severe debris flows can also be\nanticipated across roads. Roads and driveways may be washed away in\nplaces. If you encounter flood waters...climb to safety.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPIH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KPIH 180425"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPIH.FF.W.0011.260918T0425Z-260918T0830Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T02:30:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:30 AM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:30 AM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.521ca0b82a64c4cd10076caa161c02fe14a7c92f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -112,
+                            43.75
+                        ],
+                        [
+                            -111.95,
+                            43.75
+                        ],
+                        [
+                            -111.95,
+                            43.76
+                        ],
+                        [
+                            -111.91,
+                            43.76
+                        ],
+                        [
+                            -111.89,
+                            43.74
+                        ],
+                        [
+                            -111.87,
+                            43.74
+                        ],
+                        [
+                            -111.87,
+                            43.73
+                        ],
+                        [
+                            -112,
+                            43.46
+                        ],
+                        [
+                            -112.07,
+                            43.51
+                        ],
+                        [
+                            -112.1,
+                            43.51
+                        ],
+                        [
+                            -112,
+                            43.75
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.521ca0b82a64c4cd10076caa161c02fe14a7c92f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.521ca0b82a64c4cd10076caa161c02fe14a7c92f.001.1",
+                "areaDesc": "Bonneville, ID; Jefferson, ID",
+                "geocode": {
+                    "SAME": [
+                        "016019",
+                        "016051"
+                    ],
+                    "UGC": [
+                        "IDC019",
+                        "IDC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/IDC019",
+                    "https://api.weather.gov/zones/county/IDC051"
+                ],
+                "references": [],
+                "sent": "2026-09-17T22:00:00-06:00",
+                "effective": "2026-09-17T22:00:00-06:00",
+                "onset": "2026-09-17T22:00:00-06:00",
+                "expires": "2026-09-18T02:00:00-06:00",
+                "ends": "2026-09-18T02:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pocatello ID",
+                "headline": "Flash Flood Warning issued September 17 at 10:00PM MDT until September 18 at 2:00AM MDT by NWS Pocatello ID",
+                "description": "FFWPIH\n\nThe National Weather Service in Pocatello has issued a\n\n* Flash Flood Warning for...\nNorth Central Bonneville County in southeastern Idaho...\nSouth Central Jefferson County in southeastern Idaho...\n\n* Until 200 AM MDT.\n\n* At 1000 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nIdaho Falls, Rigby, Lorenzo, Ucon, Menan and Lewisville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPIH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KPIH 180400"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPIH.FF.W.0010.260918T0400Z-260918T0800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T02:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a28789e61ad4c02368d41a4d7cfa6b2009bd536a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.81,
+                            43.84
+                        ],
+                        [
+                            -111.81,
+                            43.81
+                        ],
+                        [
+                            -111.8,
+                            43.8
+                        ],
+                        [
+                            -111.75,
+                            43.8
+                        ],
+                        [
+                            -111.75,
+                            43.81
+                        ],
+                        [
+                            -111.73,
+                            43.81
+                        ],
+                        [
+                            -111.73,
+                            43.82
+                        ],
+                        [
+                            -111.72,
+                            43.82
+                        ],
+                        [
+                            -111.72,
+                            43.85
+                        ],
+                        [
+                            -111.73,
+                            43.84
+                        ],
+                        [
+                            -111.81,
+                            43.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a28789e61ad4c02368d41a4d7cfa6b2009bd536a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a28789e61ad4c02368d41a4d7cfa6b2009bd536a.001.1",
+                "areaDesc": "Madison, ID",
+                "geocode": {
+                    "SAME": [
+                        "016065"
+                    ],
+                    "UGC": [
+                        "IDC065"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/IDC065"
+                ],
+                "references": [],
+                "sent": "2026-09-17T21:51:00-06:00",
+                "effective": "2026-09-17T21:51:00-06:00",
+                "onset": "2026-09-17T21:51:00-06:00",
+                "expires": "2026-09-18T02:45:00-06:00",
+                "ends": "2026-09-18T02:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pocatello ID",
+                "headline": "Flash Flood Warning issued September 17 at 9:51PM MDT until September 18 at 2:45AM MDT by NWS Pocatello ID",
+                "description": "FFWPIH\n\nThe National Weather Service in Pocatello has issued a\n\n* Flash Flood Warning for...\nCentral Madison County in southeastern Idaho...\n\n* Until 245 AM MDT.\n\n* At 951 PM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nRexburg.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWPIH"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KPIH 180351"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KPIH.FF.W.0009.260918T0351Z-260918T0845Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-18T02:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-18T07:13:16+00:00"
+}

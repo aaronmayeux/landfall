@@ -1,0 +1,417 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b5471fbef96be0a448bc76624f7f9455aa41f3e5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -90.87,
+                            42.29
+                        ],
+                        [
+                            -90.9,
+                            42.3
+                        ],
+                        [
+                            -91.13,
+                            42.3
+                        ],
+                        [
+                            -91.13,
+                            42.65
+                        ],
+                        [
+                            -90.9,
+                            42.65
+                        ],
+                        [
+                            -90.9,
+                            42.68
+                        ],
+                        [
+                            -90.84,
+                            42.66
+                        ],
+                        [
+                            -90.8,
+                            42.66
+                        ],
+                        [
+                            -90.73,
+                            42.64
+                        ],
+                        [
+                            -90.64,
+                            42.51
+                        ],
+                        [
+                            -90.31,
+                            42.51
+                        ],
+                        [
+                            -89.4,
+                            42.5
+                        ],
+                        [
+                            -89.4,
+                            42.2
+                        ],
+                        [
+                            -90.3,
+                            42.2
+                        ],
+                        [
+                            -90.87,
+                            42.29
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b5471fbef96be0a448bc76624f7f9455aa41f3e5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b5471fbef96be0a448bc76624f7f9455aa41f3e5.001.1",
+                "areaDesc": "Dubuque, IA; Jackson, IA; Jo Daviess, IL; Stephenson, IL",
+                "geocode": {
+                    "SAME": [
+                        "019061",
+                        "019097",
+                        "017085",
+                        "017177"
+                    ],
+                    "UGC": [
+                        "IAC061",
+                        "IAC097",
+                        "ILC085",
+                        "ILC177"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/IAC061",
+                    "https://api.weather.gov/zones/county/IAC097",
+                    "https://api.weather.gov/zones/county/ILC085",
+                    "https://api.weather.gov/zones/county/ILC177"
+                ],
+                "references": [],
+                "sent": "2026-09-19T04:19:00-05:00",
+                "effective": "2026-09-19T04:19:00-05:00",
+                "onset": "2026-09-19T04:19:00-05:00",
+                "expires": "2026-09-19T10:15:00-05:00",
+                "ends": "2026-09-19T10:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Quad Cities IA IL",
+                "headline": "Flash Flood Warning issued September 19 at 4:19AM CDT until September 19 at 10:15AM CDT by NWS Quad Cities IA IL",
+                "description": "FFWDVN\n\nThe National Weather Service in Quad Cities has issued a\n\n* Flash Flood Warning for...\nNortheastern Jackson County in east central Iowa...\nDubuque County in northeastern Iowa...\nJo Daviess County in northwestern Illinois...\nStephenson County in northwestern Illinois...\n\n* Until 1015 AM CDT.\n\n* At 419 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nDubuque, Freeport, Galena, Asbury, Dyersville, Lena, Bellevue,\nCascade, Stockton, Epworth, East Dubuque, Farley, Warren, Peosta,\nHanover, Pearl City, Elizabeth, Cedarville, Davis and Woodbine.\n\nThis includes the following State Parks...\nApple River Canyon State Park and Lake Le-Aqua-Na State Recreation\nArea.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWDVN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KDVN 190919"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KDVN.FF.W.0046.260919T0919Z-260919T1515Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-19T10:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.db41f7c84ce486e8c786c504917bc42c68a2f230.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.45,
+                            43.7
+                        ],
+                        [
+                            -91.73,
+                            43.7
+                        ],
+                        [
+                            -91.73,
+                            43.5
+                        ],
+                        [
+                            -92.45,
+                            43.5
+                        ],
+                        [
+                            -92.45,
+                            43.7
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.db41f7c84ce486e8c786c504917bc42c68a2f230.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.db41f7c84ce486e8c786c504917bc42c68a2f230.001.1",
+                "areaDesc": "Fillmore, MN",
+                "geocode": {
+                    "SAME": [
+                        "027045"
+                    ],
+                    "UGC": [
+                        "MNC045"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC045"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.14e63c32f03d66a232962f232395922fcd6ec10c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.14e63c32f03d66a232962f232395922fcd6ec10c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-18T23:46:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ef61c9f1195af79c888c6cd1b8d7d7250d2060d7.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.ef61c9f1195af79c888c6cd1b8d7d7250d2060d7.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-19T02:20:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-19T03:13:00-05:00",
+                "effective": "2026-09-19T03:13:00-05:00",
+                "onset": "2026-09-19T03:13:00-05:00",
+                "expires": "2026-09-19T04:45:00-05:00",
+                "ends": "2026-09-19T04:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS La Crosse WI",
+                "headline": "Flash Flood Warning issued September 19 at 3:13AM CDT until September 19 at 4:45AM CDT by NWS La Crosse WI",
+                "description": "FFWARX\n\nThe National Weather Service in La Crosse has extended the\n\n* Flash Flood Warning for...\nSouthern Fillmore County in southeastern Minnesota...\n\n* Until 445 AM CDT.\n\n* At 313 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n2.5 and 5 inches of rain have fallen. Additional rainfall amounts\nup to 1 inch are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPreston, Spring Valley, Harmony, Mabel, Canton, Highland, Cherry\nGrove, Bristol, Newburg, Amherst, York, Carimona, Ostrander,\nHutton, Granger, Forestville State Park, Greenleafton and\nHenrytown.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWARX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KARX 190813"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KARX.FF.W.0014.000000T0000Z-260919T0945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-19T04:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dd1b220477d55a6174e58c65c830957b235c4f97.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -93.77,
+                            43.91
+                        ],
+                        [
+                            -93.57,
+                            43.94
+                        ],
+                        [
+                            -93.46,
+                            43.94
+                        ],
+                        [
+                            -93.05,
+                            43.89
+                        ],
+                        [
+                            -93.05,
+                            43.78
+                        ],
+                        [
+                            -93.12,
+                            43.77
+                        ],
+                        [
+                            -93.4,
+                            43.8
+                        ],
+                        [
+                            -93.77,
+                            43.8
+                        ],
+                        [
+                            -93.77,
+                            43.91
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dd1b220477d55a6174e58c65c830957b235c4f97.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.dd1b220477d55a6174e58c65c830957b235c4f97.001.1",
+                "areaDesc": "Faribault, MN; Freeborn, MN; Steele, MN; Waseca, MN",
+                "geocode": {
+                    "SAME": [
+                        "027043",
+                        "027047",
+                        "027147",
+                        "027161"
+                    ],
+                    "UGC": [
+                        "MNC043",
+                        "MNC047",
+                        "MNC147",
+                        "MNC161"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MNC043",
+                    "https://api.weather.gov/zones/county/MNC047",
+                    "https://api.weather.gov/zones/county/MNC147",
+                    "https://api.weather.gov/zones/county/MNC161"
+                ],
+                "references": [],
+                "sent": "2026-09-19T01:07:00-05:00",
+                "effective": "2026-09-19T01:07:00-05:00",
+                "onset": "2026-09-19T01:07:00-05:00",
+                "expires": "2026-09-19T05:00:00-05:00",
+                "ends": "2026-09-19T05:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Twin Cities/Chanhassen MN",
+                "headline": "Flash Flood Warning issued September 19 at 1:07AM CDT until September 19 at 5:00AM CDT by NWS Twin Cities/Chanhassen MN",
+                "description": "FFWMPX\n\nThe National Weather Service in the Twin Cities has issued a\n\n* Flash Flood Warning for...\nNortheastern Faribault County in south central Minnesota...\nNorthern Freeborn County in south central Minnesota...\nSouthern Steele County in south central Minnesota...\nSouthern Waseca County in south central Minnesota...\n\n* Until 500 AM CDT.\n\n* At 107 AM CDT, local law enforcement reported thunderstorms\nproducing heavy rain in southern Waseca county along the MN Highway\n30 corridor. Between 5 and 9 inches of rain have fallen. Additional\nrainfall amounts up to 1 inch are possible in the warned area.\nFlash flooding is already occurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Law enforcement reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBlooming Prairie, New Richland, Ellendale, Geneva, Hartland, Otisco\nand Matawan.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMPX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KMPX 190607"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMPX.FF.W.0011.260919T0607Z-260919T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-19T05:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-19T09:19:29+00:00"
+}

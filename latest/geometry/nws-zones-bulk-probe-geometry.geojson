@@ -1,0 +1,1346 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/AKZ318",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AKZ318",
+                "@type": "wx:Zone",
+                "id": "AKZ318",
+                "type": "public",
+                "name": "Municipality of Skagway",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AK",
+                "forecastOffice": "https://api.weather.gov/offices/AJK",
+                "gridIdentifier": "AJK",
+                "awipsLocationIdentifier": "AJK",
+                "cwa": [
+                    "AJK"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/AJK"
+                ],
+                "timeZone": [
+                    "America/Anchorage"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PAGY"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AKZ319",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AKZ319",
+                "@type": "wx:Zone",
+                "id": "AKZ319",
+                "type": "public",
+                "name": "Haines Borough and Klukwan",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AK",
+                "forecastOffice": "https://api.weather.gov/offices/AJK",
+                "gridIdentifier": "AJK",
+                "awipsLocationIdentifier": "AJK",
+                "cwa": [
+                    "AJK"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/AJK"
+                ],
+                "timeZone": [
+                    "America/Anchorage"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PAHN"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AKZ838",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AKZ838",
+                "@type": "wx:Zone",
+                "id": "AKZ838",
+                "type": "public",
+                "name": "Upper Chena River Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AK",
+                "forecastOffice": "https://api.weather.gov/offices/AFG",
+                "gridIdentifier": "AFG",
+                "awipsLocationIdentifier": "AFG",
+                "cwa": [
+                    "AFG"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/AFG"
+                ],
+                "timeZone": [
+                    "America/Anchorage"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PAEI"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AKZ843",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AKZ843",
+                "@type": "wx:Zone",
+                "id": "AKZ843",
+                "type": "public",
+                "name": "Two Rivers",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AK",
+                "forecastOffice": "https://api.weather.gov/offices/AFG",
+                "gridIdentifier": "AFG",
+                "awipsLocationIdentifier": "AFG",
+                "cwa": [
+                    "AFG"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/AFG"
+                ],
+                "timeZone": [
+                    "America/Anchorage"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PAEI",
+                    "https://api.weather.gov/stations/PAFB"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AKZ844",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AKZ844",
+                "@type": "wx:Zone",
+                "id": "AKZ844",
+                "type": "public",
+                "name": "Fairbanks Metro Area",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AK",
+                "forecastOffice": "https://api.weather.gov/offices/AFG",
+                "gridIdentifier": "AFG",
+                "awipsLocationIdentifier": "AFG",
+                "cwa": [
+                    "AFG"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/AFG"
+                ],
+                "timeZone": [
+                    "America/Anchorage"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PAFA",
+                    "https://api.weather.gov/stations/PAEI",
+                    "https://api.weather.gov/stations/PAFB"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ008",
+                "@type": "wx:Zone",
+                "id": "IAZ008",
+                "type": "public",
+                "name": "Mitchell",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCCY",
+                    "https://api.weather.gov/stations/KAUM",
+                    "https://api.weather.gov/stations/KMCW"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ009",
+                "@type": "wx:Zone",
+                "id": "IAZ009",
+                "type": "public",
+                "name": "Howard",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCCY",
+                    "https://api.weather.gov/stations/KAUM",
+                    "https://api.weather.gov/stations/KDEH"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ010",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ010",
+                "@type": "wx:Zone",
+                "id": "IAZ010",
+                "type": "public",
+                "name": "Winneshiek",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDEH",
+                    "https://api.weather.gov/stations/KCCY"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ011",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ011",
+                "@type": "wx:Zone",
+                "id": "IAZ011",
+                "type": "public",
+                "name": "Allamakee",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDEH",
+                    "https://api.weather.gov/stations/KLSE",
+                    "https://api.weather.gov/stations/KOVS"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ018",
+                "@type": "wx:Zone",
+                "id": "IAZ018",
+                "type": "public",
+                "name": "Floyd",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCCY",
+                    "https://api.weather.gov/stations/KMCW"
+                ],
+                "radarStation": "DMX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ019",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ019",
+                "@type": "wx:Zone",
+                "id": "IAZ019",
+                "type": "public",
+                "name": "Chickasaw",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCCY",
+                    "https://api.weather.gov/stations/KDEH",
+                    "https://api.weather.gov/stations/KOLZ"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ029",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ029",
+                "@type": "wx:Zone",
+                "id": "IAZ029",
+                "type": "public",
+                "name": "Fayette",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KOLZ",
+                    "https://api.weather.gov/stations/KALO",
+                    "https://api.weather.gov/stations/KCCY",
+                    "https://api.weather.gov/stations/KDEH"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ030",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ030",
+                "@type": "wx:Zone",
+                "id": "IAZ030",
+                "type": "public",
+                "name": "Clayton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/ARX",
+                "gridIdentifier": "ARX",
+                "awipsLocationIdentifier": "ARX",
+                "cwa": [
+                    "ARX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ARX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPDC",
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KDEH",
+                    "https://api.weather.gov/stations/KOLZ"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ040",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ040",
+                "@type": "wx:Zone",
+                "id": "IAZ040",
+                "type": "public",
+                "name": "Buchanan",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KALO",
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KIIB",
+                    "https://api.weather.gov/stations/KMXO",
+                    "https://api.weather.gov/stations/KOLZ",
+                    "https://api.weather.gov/stations/KVTI"
+                ],
+                "radarStation": "ARX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ041",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ041",
+                "@type": "wx:Zone",
+                "id": "IAZ041",
+                "type": "public",
+                "name": "Delaware",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KALO",
+                    "https://api.weather.gov/stations/KIIB",
+                    "https://api.weather.gov/stations/KMXO",
+                    "https://api.weather.gov/stations/KOLZ",
+                    "https://api.weather.gov/stations/KPDC"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ042",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ042",
+                "@type": "wx:Zone",
+                "id": "IAZ042",
+                "type": "public",
+                "name": "Dubuque",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KMXO",
+                    "https://api.weather.gov/stations/KPDC"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ051",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ051",
+                "@type": "wx:Zone",
+                "id": "IAZ051",
+                "type": "public",
+                "name": "Benton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KALO",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KVTI"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ052",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ052",
+                "@type": "wx:Zone",
+                "id": "IAZ052",
+                "type": "public",
+                "name": "Linn",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KIIB",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KMXO",
+                    "https://api.weather.gov/stations/KVTI"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ053",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ053",
+                "@type": "wx:Zone",
+                "id": "IAZ053",
+                "type": "public",
+                "name": "Jones",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMXO",
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KIOW"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ054",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ054",
+                "@type": "wx:Zone",
+                "id": "IAZ054",
+                "type": "public",
+                "name": "Jackson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KMXO"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ063",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ063",
+                "@type": "wx:Zone",
+                "id": "IAZ063",
+                "type": "public",
+                "name": "Iowa",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KAWG",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KOTM"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ064",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ064",
+                "@type": "wx:Zone",
+                "id": "IAZ064",
+                "type": "public",
+                "name": "Johnson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KAWG",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KMUT"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ065",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ065",
+                "@type": "wx:Zone",
+                "id": "IAZ065",
+                "type": "public",
+                "name": "Cedar",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCID",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KDVN",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KMLI",
+                    "https://api.weather.gov/stations/KMUT"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ066",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ066",
+                "@type": "wx:Zone",
+                "id": "IAZ066",
+                "type": "public",
+                "name": "Clinton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDVN",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KMLI"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ067",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ067",
+                "@type": "wx:Zone",
+                "id": "IAZ067",
+                "type": "public",
+                "name": "Muscatine",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KAWG",
+                    "https://api.weather.gov/stations/KDVN",
+                    "https://api.weather.gov/stations/KMLI",
+                    "https://api.weather.gov/stations/KMUT"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ068",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ068",
+                "@type": "wx:Zone",
+                "id": "IAZ068",
+                "type": "public",
+                "name": "Scott",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDVN",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KMLI",
+                    "https://api.weather.gov/stations/KMUT"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ077",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ077",
+                "@type": "wx:Zone",
+                "id": "IAZ077",
+                "type": "public",
+                "name": "Washington",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KAWG",
+                    "https://api.weather.gov/stations/KFFL",
+                    "https://api.weather.gov/stations/KMPZ",
+                    "https://api.weather.gov/stations/KMUT",
+                    "https://api.weather.gov/stations/KOTM"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ078",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ078",
+                "@type": "wx:Zone",
+                "id": "IAZ078",
+                "type": "public",
+                "name": "Louisa",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBRL",
+                    "https://api.weather.gov/stations/KAWG",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KMPZ",
+                    "https://api.weather.gov/stations/KMUT"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ001",
+                "@type": "wx:Zone",
+                "id": "ILZ001",
+                "type": "public",
+                "name": "Jo Daviess",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KMRJ",
+                    "https://api.weather.gov/stations/KMXO"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ002",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ002",
+                "@type": "wx:Zone",
+                "id": "ILZ002",
+                "type": "public",
+                "name": "Stephenson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KFEP"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ003",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ003",
+                "@type": "wx:Zone",
+                "id": "ILZ003",
+                "type": "public",
+                "name": "Winnebago",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KDKB",
+                    "https://api.weather.gov/stations/KFEP"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ004",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ004",
+                "@type": "wx:Zone",
+                "id": "ILZ004",
+                "type": "public",
+                "name": "Boone",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KDKB"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ005",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ005",
+                "@type": "wx:Zone",
+                "id": "ILZ005",
+                "type": "public",
+                "name": "McHenry",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KORD",
+                    "https://api.weather.gov/stations/KPWK",
+                    "https://api.weather.gov/stations/KUGN"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ006",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ006",
+                "@type": "wx:Zone",
+                "id": "ILZ006",
+                "type": "public",
+                "name": "Lake",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KORD",
+                    "https://api.weather.gov/stations/KENW",
+                    "https://api.weather.gov/stations/KUGN"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ007",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ007",
+                "@type": "wx:Zone",
+                "id": "ILZ007",
+                "type": "public",
+                "name": "Carroll",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDBQ",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KFEP",
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KSQI"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ008",
+                "@type": "wx:Zone",
+                "id": "ILZ008",
+                "type": "public",
+                "name": "Ogle",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KDKB",
+                    "https://api.weather.gov/stations/KRPJ"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ009",
+                "@type": "wx:Zone",
+                "id": "ILZ009",
+                "type": "public",
+                "name": "Whiteside",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/DVN",
+                "gridIdentifier": "DVN",
+                "awipsLocationIdentifier": "DVN",
+                "cwa": [
+                    "DVN"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DVN"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMLI",
+                    "https://api.weather.gov/stations/KCWI",
+                    "https://api.weather.gov/stations/KDVN",
+                    "https://api.weather.gov/stations/KSQI"
+                ],
+                "radarStation": "DVN"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ010",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ010",
+                "@type": "wx:Zone",
+                "id": "ILZ010",
+                "type": "public",
+                "name": "Lee",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KRFD",
+                    "https://api.weather.gov/stations/KRPJ",
+                    "https://api.weather.gov/stations/KSQI"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ011",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ011",
+                "@type": "wx:Zone",
+                "id": "ILZ011",
+                "type": "public",
+                "name": "De Kalb",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDKB",
+                    "https://api.weather.gov/stations/KARR",
+                    "https://api.weather.gov/stations/KORD"
+                ],
+                "radarStation": "LOT"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ILZ012",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ILZ012",
+                "@type": "wx:Zone",
+                "id": "ILZ012",
+                "type": "public",
+                "name": "Kane",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IL",
+                "forecastOffice": "https://api.weather.gov/offices/LOT",
+                "gridIdentifier": "LOT",
+                "awipsLocationIdentifier": "LOT",
+                "cwa": [
+                    "LOT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LOT"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KORD",
+                    "https://api.weather.gov/stations/KARR",
+                    "https://api.weather.gov/stations/KDPA"
+                ],
+                "radarStation": "LOT"
+            }
+        }
+    ]
+}

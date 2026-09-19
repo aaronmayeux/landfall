@@ -1,0 +1,392 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -81.48,
+                            28.64
+                        ],
+                        [
+                            -81.57,
+                            28.58
+                        ],
+                        [
+                            -81.53,
+                            28.49
+                        ],
+                        [
+                            -81.37,
+                            28.54
+                        ],
+                        [
+                            -81.42,
+                            28.62
+                        ],
+                        [
+                            -81.48,
+                            28.64
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.319a9a149000bf63eaeb7c7a4f65bc7c0dcc8bd6.001.1",
+                "areaDesc": "Orange, FL",
+                "geocode": {
+                    "SAME": [
+                        "012095"
+                    ],
+                    "UGC": [
+                        "FLC095"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC095"
+                ],
+                "references": [],
+                "sent": "2026-09-07T17:56:00-04:00",
+                "effective": "2026-09-07T17:56:00-04:00",
+                "onset": "2026-09-07T17:56:00-04:00",
+                "expires": "2026-09-07T19:30:00-04:00",
+                "ends": "2026-09-07T19:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued September 7 at 5:56PM EDT until September 7 at 7:30PM EDT by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nWest Central Orange County in east central Florida...\n\n* Until 730 PM EDT.\n\n* At 556 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nOrlando, Ocoee, Windermere, Pine Hills, Lockhart, Orlovista,\nClarcona, Gotha and Lake Butler.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 072156"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FF.W.0006.260907T2156Z-260907T2330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T19:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3782caedde409c2a79af4140da479e9efc11a52d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -159.63,
+                            22.2
+                        ],
+                        [
+                            -159.56,
+                            22.25
+                        ],
+                        [
+                            -159.53,
+                            22.24
+                        ],
+                        [
+                            -159.52,
+                            22.25
+                        ],
+                        [
+                            -159.38,
+                            22.25
+                        ],
+                        [
+                            -159.34,
+                            22.23
+                        ],
+                        [
+                            -159.32,
+                            22.21
+                        ],
+                        [
+                            -159.3,
+                            22.17
+                        ],
+                        [
+                            -159.29,
+                            22.17
+                        ],
+                        [
+                            -159.27,
+                            22.15
+                        ],
+                        [
+                            -159.27,
+                            22.13
+                        ],
+                        [
+                            -159.32,
+                            22.04
+                        ],
+                        [
+                            -159.31,
+                            21.99
+                        ],
+                        [
+                            -159.32,
+                            21.96
+                        ],
+                        [
+                            -159.61,
+                            21.99
+                        ],
+                        [
+                            -159.63,
+                            22.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3782caedde409c2a79af4140da479e9efc11a52d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3782caedde409c2a79af4140da479e9efc11a52d.001.1",
+                "areaDesc": "Kauai, HI",
+                "geocode": {
+                    "SAME": [
+                        "015007"
+                    ],
+                    "UGC": [
+                        "HIC007"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC007"
+                ],
+                "references": [],
+                "sent": "2026-09-07T11:11:00-10:00",
+                "effective": "2026-09-07T11:11:00-10:00",
+                "onset": "2026-09-07T11:11:00-10:00",
+                "expires": "2026-09-07T14:00:00-10:00",
+                "ends": "2026-09-07T14:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued September 7 at 11:11AM HST until September 7 at 2:00PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has issued a\n\n* Flash Flood Warning for...\nThe island of Kauai in Kauai County\n\n* Until 200 PM HST.\n\n* At 1111 AM HST, significant rises in water level have occurred\nalong the South Fork of the Wailua River over the past hour due to\nheavy rain upstream. While heavy rain is diminishing, additional\nrunoff is likely and could lead to flooding issues farther\ndownstream near the river mouth in Wailua. This warning replaces\nthe warning previously in effect for the north central portion of\nKauai including the Hanalei area.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLihue, Kapaa, Princeville, Kilauea, North Fork Wailua Trails,\nWailua Homesteads, Hanalei, Wailua, Moloaa, Wainiha, Anahola and\nAlakai Swamp Trails.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 072111"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PHFO.FF.W.0050.260907T2111Z-260908T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T14:00:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e6d8b694a60463975e9881752e2914f12778693d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -159.62,
+                            22.2
+                        ],
+                        [
+                            -159.62,
+                            22.23
+                        ],
+                        [
+                            -159.59,
+                            22.25
+                        ],
+                        [
+                            -159.56,
+                            22.25
+                        ],
+                        [
+                            -159.53,
+                            22.24
+                        ],
+                        [
+                            -159.52,
+                            22.25
+                        ],
+                        [
+                            -159.38,
+                            22.24
+                        ],
+                        [
+                            -159.4,
+                            22.08
+                        ],
+                        [
+                            -159.57,
+                            22.08
+                        ],
+                        [
+                            -159.62,
+                            22.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e6d8b694a60463975e9881752e2914f12778693d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.e6d8b694a60463975e9881752e2914f12778693d.001.1",
+                "areaDesc": "Kauai, HI",
+                "geocode": {
+                    "SAME": [
+                        "015007"
+                    ],
+                    "UGC": [
+                        "HIC007"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC007"
+                ],
+                "references": [],
+                "sent": "2026-09-07T10:17:00-10:00",
+                "effective": "2026-09-07T10:17:00-10:00",
+                "onset": "2026-09-07T10:17:00-10:00",
+                "expires": "2026-09-07T13:15:00-10:00",
+                "ends": "2026-09-07T13:15:00-10:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued September 7 at 10:17AM HST until September 7 at 1:15PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has issued a\n\n* Flash Flood Warning for...\nThe island of Kauai in Kauai County\n\n* Until 115 PM HST.\n\n* At 1017 AM HST, areas of heavy rain have been moving over Kauai\nfrom southeast to northwest over the past couple of hours with rain\nrates around 1 to 2 inches per hour. Water levels at the Hanalei\nRiver gage upstream of the bridge have risen significantly over the\npast hour and flooding is expected further downstream toward\nHanalei town, including portions of Kuhio Highway near the bridge.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHanalei, Princeville, Kilauea, Wainiha, Haena, Na Pali State Park\nand Kalihiwai.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 072017"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.PHFO.FF.W.0049.260907T2017Z-260907T2315Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-07T13:15:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-07T21:57:46+00:00"
+}
