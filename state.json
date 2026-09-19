@@ -130,5 +130,11 @@
     "lastModified": "Sat, 19 Sep 2026 12:38:09 GMT",
     "bytes": 8063,
     "sha256": "c47c0375efe4bca42f31806b18a39a2b6cae2cbfa9159b978a2166b64aed28ce"
+  },
+  "btk/2026/bal062026.dat": {
+    "etag": "\"7df-65bd71b0e05bd\"",
+    "lastModified": "Sat, 19 Sep 2026 14:48:10 GMT",
+    "bytes": 2015,
+    "sha256": "26992ac4caf283997f5784b0410068613338e342253053653ab816d8f31e10cb"
   }
 }
