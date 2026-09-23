@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-09-23T20:30:07.447Z",
+  "runAt": "2026-09-23T23:47:18.204Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -45,13 +45,13 @@
     "jtwc": {
       "status": "ok",
       "storms": 5,
-      "linesAdded": 2,
+      "linesAdded": 3,
       "files": {
-        "jtwc/2026/ep1526.jsonl": "already held",
-        "jtwc/2026/ep1626.jsonl": "already held",
-        "jtwc/2026/ep1726.jsonl": "already held",
-        "jtwc/2026/io0126.jsonl": "+1",
-        "jtwc/2026/wp2526.jsonl": "+1"
+        "jtwc/2026/ep1526.jsonl": "+1",
+        "jtwc/2026/ep1626.jsonl": "+1",
+        "jtwc/2026/ep1726.jsonl": "+1",
+        "jtwc/2026/io0126.jsonl": "already held",
+        "jtwc/2026/wp2526.jsonl": "already held"
       },
       "faults": []
     }
