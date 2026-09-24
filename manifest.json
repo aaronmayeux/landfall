@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-09-24T05:03:14.050Z",
+  "runAt": "2026-09-24T10:11:55.156Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -20,7 +20,7 @@
         "btk/2026/bal032026.dat": "unchanged (304)",
         "btk/2026/bal042026.dat": "unchanged (304)",
         "btk/2026/bal052026.dat": "unchanged (304)",
-        "btk/2026/bal062026.dat": "stored 6551 bytes",
+        "btk/2026/bal062026.dat": "stored 6767 bytes",
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
         "btk/2026/bep012026.dat": "unchanged (304)",
@@ -37,20 +37,20 @@
         "btk/2026/bep122026.dat": "unchanged (304)",
         "btk/2026/bep132026.dat": "unchanged (304)",
         "btk/2026/bep142026.dat": "unchanged (304)",
-        "btk/2026/bep152026.dat": "stored 11555 bytes",
-        "btk/2026/bep162026.dat": "stored 9108 bytes",
-        "btk/2026/bep172026.dat": "stored 10439 bytes"
+        "btk/2026/bep152026.dat": "stored 11771 bytes",
+        "btk/2026/bep162026.dat": "stored 9756 bytes",
+        "btk/2026/bep172026.dat": "stored 11087 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
       "storms": 5,
-      "linesAdded": 5,
+      "linesAdded": 4,
       "files": {
         "jtwc/2026/ep1526.jsonl": "+1",
         "jtwc/2026/ep1626.jsonl": "+1",
         "jtwc/2026/ep1726.jsonl": "+1",
-        "jtwc/2026/io0126.jsonl": "+1",
+        "jtwc/2026/io0126.jsonl": "already held",
         "jtwc/2026/wp2526.jsonl": "+1"
       },
       "faults": []
