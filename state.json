@@ -126,33 +126,33 @@
     "sha256": "2d5895d55c13a3170c88d88b96891bb4edb397a928f92072c4758c3d2a9e4f5d"
   },
   "btk/2026/bep152026.dat": {
-    "etag": "\"381b-65c4e5c4cfd6c\"",
-    "lastModified": "Fri, 25 Sep 2026 13:04:46 GMT",
+    "etag": "\"381b-65c4fd6a05afb\"",
+    "lastModified": "Fri, 25 Sep 2026 14:50:33 GMT",
     "bytes": 14363,
-    "sha256": "c8ee0ce4192be053ff4606e636877ca39a8841444f65bb1e362a830deb74a8d5"
+    "sha256": "bcf019b6c8bcc1ff9199374c152939a26b0047f03ffbfc6def6f75114f444c9b"
   },
   "btk/2026/bal062026.dat": {
-    "etag": "\"1f7f-65c4e70706ffb\"",
-    "lastModified": "Fri, 25 Sep 2026 13:10:23 GMT",
+    "etag": "\"1f7f-65c4fa3869c57\"",
+    "lastModified": "Fri, 25 Sep 2026 14:36:15 GMT",
     "bytes": 8063,
-    "sha256": "614b47a236b31a0ac9a06ea3da15061d9c3a43e967aef81fc7f424325b3af32d"
+    "sha256": "6fa33abbd0996c60560921b59bdad8ad53577ac77a31e1a9778d101a4a82b65d"
   },
   "btk/2026/bep162026.dat": {
-    "etag": "\"32c4-65c4e0c43f79a\"",
-    "lastModified": "Fri, 25 Sep 2026 12:42:23 GMT",
+    "etag": "\"32c4-65c4fc43d8810\"",
+    "lastModified": "Fri, 25 Sep 2026 14:45:24 GMT",
     "bytes": 12996,
-    "sha256": "d9132296c7c276ca660c9cf84ccdcbeaf081460a77f4b276025fdd3f3665a44d"
+    "sha256": "e42ff8a9fee4542dd9b5f7df8a88e73d28f4a60b873eb74dccd9aaab6ee1b9c2"
   },
   "btk/2026/bep172026.dat": {
-    "etag": "\"37f7-65c4e050818e1\"",
-    "lastModified": "Fri, 25 Sep 2026 12:40:21 GMT",
+    "etag": "\"37f7-65c4fcd3a2db3\"",
+    "lastModified": "Fri, 25 Sep 2026 14:47:55 GMT",
     "bytes": 14327,
-    "sha256": "90158cd5da2c1e2ea6e899491106940e786bf9ccf139e762dd72d1b846aea2ab"
+    "sha256": "803f1792f984743f56821bbcb46e532966ed8af454a3fe186bebcf1b82102a61"
   },
   "btk/2026/bal072026.dat": {
-    "etag": "\"a67-65c4e4e42ea47\"",
-    "lastModified": "Fri, 25 Sep 2026 13:00:50 GMT",
+    "etag": "\"a67-65c4fbcc7b93d\"",
+    "lastModified": "Fri, 25 Sep 2026 14:43:19 GMT",
     "bytes": 2663,
-    "sha256": "1005a46340824d1f912396ba8cbb1e6ffaaea2780a920bf513d0b54387a9dd43"
+    "sha256": "785ff5e0eaa459cd70729f2ac47e23d50d08ce27acda70af402b319ca2d82caf"
   }
 }
