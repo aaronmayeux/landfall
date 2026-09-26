@@ -126,33 +126,33 @@
     "sha256": "2d5895d55c13a3170c88d88b96891bb4edb397a928f92072c4758c3d2a9e4f5d"
   },
   "btk/2026/bep152026.dat": {
-    "etag": "\"3fb3-65c5d53cd4c93\"",
-    "lastModified": "Sat, 26 Sep 2026 06:56:07 GMT",
-    "bytes": 16307,
-    "sha256": "11c8402a0569e5464f8c95af4232228ded9ceba9c6ed4ca16fcc6ff1ce94d595"
+    "etag": "\"423b-65c621567f8c4\"",
+    "lastModified": "Sat, 26 Sep 2026 12:36:35 GMT",
+    "bytes": 16955,
+    "sha256": "cd2e3711cc45239b4976d705628897901b7f4268b318c92d59eeac15ac2adbc0"
   },
   "btk/2026/bal062026.dat": {
-    "etag": "\"2207-65c5d923c9462\"",
-    "lastModified": "Sat, 26 Sep 2026 07:13:35 GMT",
-    "bytes": 8711,
-    "sha256": "15c7195ea2cfe9f89c1f906221f6342aa2eea5d2c8505f13fafd90877f58adf3"
+    "etag": "\"22df-65c6249433a15\"",
+    "lastModified": "Sat, 26 Sep 2026 12:51:05 GMT",
+    "bytes": 8927,
+    "sha256": "1d7cb0a071dd3572734ed4fd0f755909bcbdacbf1f27b9295d03b4845eaa3e32"
   },
   "btk/2026/bep162026.dat": {
-    "etag": "\"3a5c-65c5d55ac1322\"",
-    "lastModified": "Sat, 26 Sep 2026 06:56:39 GMT",
-    "bytes": 14940,
-    "sha256": "cedf2aa348c4350f19c344ab6e8822d18da8e19118de21e6e572b37177bad445"
+    "etag": "\"3ce4-65c62482c7e90\"",
+    "lastModified": "Sat, 26 Sep 2026 12:50:47 GMT",
+    "bytes": 15588,
+    "sha256": "995f2586f1527815be5b3fd7363f68f16beaacca5fe18a4bcbdd27e29e570537"
   },
   "btk/2026/bep172026.dat": {
-    "etag": "\"3f8f-65c5d33e7d6a6\"",
-    "lastModified": "Sat, 26 Sep 2026 06:47:12 GMT",
-    "bytes": 16271,
-    "sha256": "0cdbfa0692de63856448edf8f5aceaf19c618ea1ab8061531f0e9bef55b49fba"
+    "etag": "\"4217-65c62297e3c8e\"",
+    "lastModified": "Sat, 26 Sep 2026 12:42:12 GMT",
+    "bytes": 16919,
+    "sha256": "1e1c19ee42e4fcf3146919475fda889248ad0e4a79230440ca23add82ab6128d"
   },
   "btk/2026/bal072026.dat": {
-    "etag": "\"cef-65c5d6b7f02c8\"",
-    "lastModified": "Sat, 26 Sep 2026 07:02:45 GMT",
-    "bytes": 3311,
-    "sha256": "abe9bdda90f1877f2b46dd50ce465462e7511d898e742f0c3526de79915bef76"
+    "etag": "\"dc7-65c624ddb48a3\"",
+    "lastModified": "Sat, 26 Sep 2026 12:52:23 GMT",
+    "bytes": 3527,
+    "sha256": "2b1f8872cc14ecd68a3965a050ca68ec5dcd9472e9e6a20efaa4e432308c663b"
   }
 }
