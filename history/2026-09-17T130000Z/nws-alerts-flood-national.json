@@ -1,0 +1,444 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d9c06186a12e3e1f524935f9822544a042ddfc3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -89.45,
+                            41.58
+                        ],
+                        [
+                            -89.34,
+                            41.71
+                        ],
+                        [
+                            -88.6,
+                            41.69
+                        ],
+                        [
+                            -88.6,
+                            41.52
+                        ],
+                        [
+                            -89.17,
+                            41.56
+                        ],
+                        [
+                            -89.17,
+                            41.58
+                        ],
+                        [
+                            -89.45,
+                            41.58
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d9c06186a12e3e1f524935f9822544a042ddfc3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2d9c06186a12e3e1f524935f9822544a042ddfc3.001.1",
+                "areaDesc": "De Kalb, IL; La Salle, IL; Lee, IL",
+                "geocode": {
+                    "SAME": [
+                        "017037",
+                        "017099",
+                        "017103"
+                    ],
+                    "UGC": [
+                        "ILC037",
+                        "ILC099",
+                        "ILC103"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/ILC037",
+                    "https://api.weather.gov/zones/county/ILC099",
+                    "https://api.weather.gov/zones/county/ILC103"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e6a0e3b4a8d7db961ce8ef46fb4ebffcadd2aabe.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e6a0e3b4a8d7db961ce8ef46fb4ebffcadd2aabe.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-17T07:07:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-17T07:51:00-05:00",
+                "effective": "2026-09-17T07:51:00-05:00",
+                "onset": "2026-09-17T07:51:00-05:00",
+                "expires": "2026-09-17T11:00:00-05:00",
+                "ends": "2026-09-17T11:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Chicago IL",
+                "headline": "Flash Flood Warning issued September 17 at 7:51AM CDT until September 17 at 11:00AM CDT by NWS Chicago IL",
+                "description": "At 751 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between 3\nand 5 inches of rain have fallen. Additional rainfall amounts up to 1\ninch are possible in the warned area. Flash flooding is already\noccurring.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Rapid-onset flooding of creeks, streams, drainage ditches,\nstreets, underpasses, low-lying areas, and other poor\ndrainage areas.\n\nSome locations that will experience flash flooding include...\nSandwich, Mendota, Amboy, Sheridan, Lake Holiday, Somonauk,\nEarlville, Leland, Paw Paw, Sublette, Woodhaven Lakes, Millington,\nCompton and West Brooklyn.",
+                "instruction": "A Flash Flood Warning means rapid-onset flooding is imminent or may\nalready be occurring. Persons along creeks, drainage ditches, and\nother waterways should take immediate precautions to protect life and\nproperty.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSLOT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KLOT 171251"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 11 AM CDT THIS MORNING FOR SOUTHERN DE KALB, NORTHERN LA SALLE AND SOUTHEASTERN LEE COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KLOT.FF.W.0057.000000T0000Z-260917T1600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-17T11:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fed3bb472332fd8a19ef83bca882fcb3757890fc.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.46,
+                            40.68
+                        ],
+                        [
+                            -84.33,
+                            40.69
+                        ],
+                        [
+                            -84.33,
+                            40.48
+                        ],
+                        [
+                            -84.34,
+                            40.48
+                        ],
+                        [
+                            -84.34,
+                            40.45
+                        ],
+                        [
+                            -84.35,
+                            40.42
+                        ],
+                        [
+                            -84.62,
+                            40.44
+                        ],
+                        [
+                            -84.8,
+                            40.47
+                        ],
+                        [
+                            -84.8,
+                            40.73
+                        ],
+                        [
+                            -84.46,
+                            40.73
+                        ],
+                        [
+                            -84.46,
+                            40.68
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fed3bb472332fd8a19ef83bca882fcb3757890fc.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.fed3bb472332fd8a19ef83bca882fcb3757890fc.001.1",
+                "areaDesc": "Auglaize, OH; Mercer, OH",
+                "geocode": {
+                    "SAME": [
+                        "039011",
+                        "039107"
+                    ],
+                    "UGC": [
+                        "OHC011",
+                        "OHC107"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC011",
+                    "https://api.weather.gov/zones/county/OHC107"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.639d5a45ce4df776bd4b50a47da61ff5c4bcd995.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.639d5a45ce4df776bd4b50a47da61ff5c4bcd995.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-17T06:06:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-17T08:26:00-04:00",
+                "effective": "2026-09-17T08:26:00-04:00",
+                "onset": "2026-09-17T08:26:00-04:00",
+                "expires": "2026-09-17T11:00:00-04:00",
+                "ends": "2026-09-17T11:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wilmington OH",
+                "headline": "Flash Flood Warning issued September 17 at 8:26AM EDT until September 17 at 11:00AM EDT by NWS Wilmington OH",
+                "description": "FFWILN\n\nThe National Weather Service in Wilmington has extended the\n\n* Flash Flood Warning for...\nNorthwestern Auglaize County in west central Ohio...\nMercer County in west central Ohio...\n\n* Until 1100 AM EDT.\n\n* At 826 AM EDT, radar indicated thunderstorms producing heavy rain\nacross the warned area. Between 2 and 3 inches of rain have fallen.\nAdditional rainfall amounts up to 0.5 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that may experience flash flooding include...\nCelina, St. Marys, Coldwater, New Bremen, Rockford, Wabash, Mendon,\nChickasaw, Montezuma, Tama, Neptune, Carthagena, Bulkhead, State\nRoute 116 at State Route 197, Chattanooga and Kossuth.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nTo report flash flooding, go to our website at weather.gov/iln and\nsubmit your report via social media, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWILN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KILN 171226"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KILN.FF.W.0090.000000T0000Z-260917T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-17T11:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a4d3f4f722b9c41aec0e55a1ebccf70678207e16.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.34,
+                            40.92
+                        ],
+                        [
+                            -85.23,
+                            40.92
+                        ],
+                        [
+                            -85.08,
+                            40.89
+                        ],
+                        [
+                            -84.81,
+                            40.83
+                        ],
+                        [
+                            -84.67,
+                            40.74
+                        ],
+                        [
+                            -84.68,
+                            40.73
+                        ],
+                        [
+                            -84.8,
+                            40.73
+                        ],
+                        [
+                            -84.8,
+                            40.57
+                        ],
+                        [
+                            -85.2,
+                            40.57
+                        ],
+                        [
+                            -85.38,
+                            40.69
+                        ],
+                        [
+                            -85.64,
+                            40.77
+                        ],
+                        [
+                            -85.64,
+                            40.99
+                        ],
+                        [
+                            -85.34,
+                            40.94
+                        ],
+                        [
+                            -85.34,
+                            40.92
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a4d3f4f722b9c41aec0e55a1ebccf70678207e16.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a4d3f4f722b9c41aec0e55a1ebccf70678207e16.001.1",
+                "areaDesc": "Adams, IN; Huntington, IN; Wells, IN; Van Wert, OH",
+                "geocode": {
+                    "SAME": [
+                        "018001",
+                        "018069",
+                        "018179",
+                        "039161"
+                    ],
+                    "UGC": [
+                        "INC001",
+                        "INC069",
+                        "INC179",
+                        "OHC161"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/INC001",
+                    "https://api.weather.gov/zones/county/INC069",
+                    "https://api.weather.gov/zones/county/INC179",
+                    "https://api.weather.gov/zones/county/OHC161"
+                ],
+                "references": [],
+                "sent": "2026-09-17T07:44:00-04:00",
+                "effective": "2026-09-17T07:44:00-04:00",
+                "onset": "2026-09-17T07:44:00-04:00",
+                "expires": "2026-09-17T14:15:00-04:00",
+                "ends": "2026-09-17T14:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Northern Indiana",
+                "headline": "Flash Flood Warning issued September 17 at 7:44AM EDT until September 17 at 2:15PM EDT by NWS Northern Indiana",
+                "description": "FFWIWX\n\nThe National Weather Service in Northern Indiana has issued a\n\n* Flash Flood Warning for...\nAdams County in northeastern Indiana...\nHuntington County in northeastern Indiana...\nWells County in northeastern Indiana...\nSouthwestern Van Wert County in west central Ohio...\n\n* Until 215 PM EDT Thursday.\n\n* At 744 AM EDT, Scattered showers and thunderstorms continue across\nthe warned area. Doppler radar estimates between 2 and 5 inches of\nrain have fallen overnight. Another round of heavy rainfall is\npossible mid to late morning. Additional rainfall amounts of 0.5 to\n2 inches are possible in the warned area. Flash flooding is already\noccurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Emergency management reported.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nHuntington, Bluffton, Decatur, Berne, Ossian, Geneva, Andrews,\nMarkle, Monroe, Lancaster, Preble, Nottingham, Zanesville,\nWillshire, Uniondale, Wren, Poneto, Vera Cruz, Murray and North\nOaks.\n\nSeveral reports of flooded roads and water rescues have been received\nthis morning.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWIWX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KIWX 171144"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KIWX.FF.W.0014.260917T1144Z-260917T1815Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-17T14:15:00-04:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:15 PM EDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:15 PM EDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-17T13:16:07+00:00"
+}

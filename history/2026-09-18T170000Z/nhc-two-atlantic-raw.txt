@@ -1,0 +1,29 @@
+ABNT20 KNHC 181428
+TWOAT 
+
+Special Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+Issued by the NWS Weather Prediction Center College Park MD
+1030 AM EDT Fri Sep 18 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Special outlook to update information on the area of low pressure 
+located southwest of the Azores (AL99) and to remove AL98 from the 
+outlook. 
+
+Eastern Subtropical Atlantic (AL99):
+Recent satellite imagery indicates that showers and thunderstorms 
+are becoming better organized in association with an area of low 
+pressure located several hundred miles southwest of the Azores. In 
+addition, it appears that a well-defined center is developing. If 
+these current trends continue, a tropical depression could form as 
+soon as later this afternoon. The system is expected to move slowly 
+over the next several days remaining to the southwest of the Azores.
+* Formation chance through 48 hours...medium...60 percent.
+* Formation chance through 7 days...medium...60 percent.
+
+$$
+Forecaster Papin/Snell/Blake/Mahoney
+
+

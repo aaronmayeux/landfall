@@ -1,0 +1,43 @@
+en Español
+
+000
+ABPZ20 KNHC 252341
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Fri Sep 25 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Polo, located a few hundred miles southwest of Cabo Corrientes, 
+Mexico, on Hurricane Odalys, located well west-southwest of the 
+southern tip of Baja California, and on Hurricane Nolo, located 
+about 150 miles south of the Big Island of Hawaii.
+
+South of the Gulf of Tehuantepec (Invest 90E):
+An area of low pressure located south of the Gulf of Tehuantepec is 
+becoming organized.  Environmental conditions are conducive for 
+gradual development, and a tropical depression is expected to form 
+late this weekend or early next week while the system moves slowly 
+west-northwestward to northwestward, parallel to the coast of 
+southern and southwestern Mexico.
+* Formation chance through 48 hours...medium...60 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Well East-Southeast of the Hawaiian Islands:
+A broad area of low pressure is forecast to form about 1000 miles 
+east-southeast of the Hawaiian Islands over the weekend. 
+Environmental conditions appear favorable for gradual development of 
+this system, and a tropical depression could form late this weekend 
+or early next week.  The system is forecast to move generally 
+northeastward, remaining well east-southeast of the Hawaiian 
+Islands.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...medium...60 percent.
+
+$$
+Forecaster Evans/Pierce/Beven
+  

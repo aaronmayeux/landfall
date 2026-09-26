@@ -1,0 +1,585 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7e3ade3e55730d2673a56e6ba2c0e7154f067d06.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.8,
+                            40.71
+                        ],
+                        [
+                            -84.46,
+                            40.67
+                        ],
+                        [
+                            -84.46,
+                            40.38
+                        ],
+                        [
+                            -84.8,
+                            40.39
+                        ],
+                        [
+                            -84.8,
+                            40.71
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7e3ade3e55730d2673a56e6ba2c0e7154f067d06.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7e3ade3e55730d2673a56e6ba2c0e7154f067d06.001.1",
+                "areaDesc": "Mercer, OH",
+                "geocode": {
+                    "SAME": [
+                        "039107"
+                    ],
+                    "UGC": [
+                        "OHC107"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OHC107"
+                ],
+                "references": [],
+                "sent": "2026-09-16T03:09:00-04:00",
+                "effective": "2026-09-16T03:09:00-04:00",
+                "onset": "2026-09-16T03:09:00-04:00",
+                "expires": "2026-09-16T07:00:00-04:00",
+                "ends": "2026-09-16T07:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wilmington OH",
+                "headline": "Flash Flood Warning issued September 16 at 3:09AM EDT until September 16 at 7:00AM EDT by NWS Wilmington OH",
+                "description": "FFWILN\n\nThe National Weather Service in Wilmington has issued a\n\n* Flash Flood Warning for...\nMercer County in west central Ohio...\n\n* Until 700 AM EDT.\n\n* At 309 AM EDT, radar indicated thunderstorms producing heavy rain\nacross the warned area. Between 1.5 and 3 inches of rain have\nfallen. Additional rainfall amounts of 1 to 1.5 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that may experience flash flooding include...\nCelina, Coldwater, St. Henry, Fort Recovery, Rockford, Wabash,\nMendon, Chickasaw, Montezuma, Tama, Carthagena, Neptune,\nChattanooga and Maria Stein.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nTo report flash flooding, go to our website at weather.gov/iln and\nsubmit your report via social media, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWILN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KILN 160709"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KILN.FF.W.0088.260916T0709Z-260916T1100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-16T07:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.61cc91301e4d660bb0a0b53dbd8f3372290c42f2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -108.13,
+                            40.02
+                        ],
+                        [
+                            -107.94,
+                            40.02
+                        ],
+                        [
+                            -107.96,
+                            39.97
+                        ],
+                        [
+                            -107.97,
+                            39.98
+                        ],
+                        [
+                            -107.96,
+                            39.73
+                        ],
+                        [
+                            -108.02,
+                            39.74
+                        ],
+                        [
+                            -108.06,
+                            39.7
+                        ],
+                        [
+                            -108.07,
+                            39.8
+                        ],
+                        [
+                            -108.2,
+                            39.83
+                        ],
+                        [
+                            -108.17,
+                            39.91
+                        ],
+                        [
+                            -108.26,
+                            39.94
+                        ],
+                        [
+                            -108.22,
+                            40
+                        ],
+                        [
+                            -108.24,
+                            40.01
+                        ],
+                        [
+                            -108.18,
+                            40.01
+                        ],
+                        [
+                            -108.17,
+                            39.97
+                        ],
+                        [
+                            -108.14,
+                            40.01
+                        ],
+                        [
+                            -108.12,
+                            39.99
+                        ],
+                        [
+                            -108.13,
+                            40.02
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.61cc91301e4d660bb0a0b53dbd8f3372290c42f2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.61cc91301e4d660bb0a0b53dbd8f3372290c42f2.001.1",
+                "areaDesc": "Rio Blanco, CO",
+                "geocode": {
+                    "SAME": [
+                        "008103"
+                    ],
+                    "UGC": [
+                        "COC103"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/COC103"
+                ],
+                "references": [],
+                "sent": "2026-09-16T00:51:00-06:00",
+                "effective": "2026-09-16T00:51:00-06:00",
+                "onset": "2026-09-16T00:51:00-06:00",
+                "expires": "2026-09-16T02:45:00-06:00",
+                "ends": "2026-09-16T02:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Junction CO",
+                "headline": "Flash Flood Warning issued September 16 at 12:51AM MDT until September 16 at 2:45AM MDT by NWS Grand Junction CO",
+                "description": "FFWGJT\n\nThe National Weather Service in Grand Junction has issued a\n\n* Flash Flood Warning for...\nThe Lee Burn Scar in...\nCentral Rio Blanco County in northwestern Colorado...\n\n* Until 245 AM MDT.\n\n* At 1251 AM MDT, Doppler radar indicated thunderstorms producing\nheavy rain over the Lee Burn Scar. Between 0.2 and 0.5 inches of\nrain have fallen. The expected rainfall rate is 1 to 2 inches in 1\nhour. Flash flooding is ongoing or expected to begin shortly.\nExcessive rainfall over the burn scar will result in debris flow.\nThe debris flow can consist of rock, mud, vegetation and other\nloose materials.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding in and around the Lee Burn Scar.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nLee Burn Scar.\n\n* Some locations that will experience flash flooding include...\nAreas in and near the Lee Burn scar",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks...streams...and ditches\nin the Lee Burn Scar. Severe debris flows can also be anticipated\nacross roads. Roads and driveways may be washed away in places. If\nyou encounter flood waters...climb to safety.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWGJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KGJT 160651"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KGJT.FF.W.0119.260916T0651Z-260916T0845Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-16T02:45:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:45 AM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:45 AM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6afa8d42b2843bf91c78993580798c6c6369c018.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.45,
+                            40.64
+                        ],
+                        [
+                            -85.43,
+                            40.65
+                        ],
+                        [
+                            -85.33,
+                            40.65
+                        ],
+                        [
+                            -85.33,
+                            40.67
+                        ],
+                        [
+                            -85.31,
+                            40.69
+                        ],
+                        [
+                            -85.18,
+                            40.74
+                        ],
+                        [
+                            -84.98,
+                            40.71
+                        ],
+                        [
+                            -84.82,
+                            40.66
+                        ],
+                        [
+                            -84.87,
+                            40.57
+                        ],
+                        [
+                            -85.22,
+                            40.57
+                        ],
+                        [
+                            -85.32,
+                            40.54
+                        ],
+                        [
+                            -85.51,
+                            40.46
+                        ],
+                        [
+                            -85.76,
+                            40.52
+                        ],
+                        [
+                            -85.45,
+                            40.64
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6afa8d42b2843bf91c78993580798c6c6369c018.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6afa8d42b2843bf91c78993580798c6c6369c018.001.1",
+                "areaDesc": "Adams, IN; Blackford, IN; Grant, IN; Wells, IN",
+                "geocode": {
+                    "SAME": [
+                        "018001",
+                        "018009",
+                        "018053",
+                        "018179"
+                    ],
+                    "UGC": [
+                        "INC001",
+                        "INC009",
+                        "INC053",
+                        "INC179"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/INC001",
+                    "https://api.weather.gov/zones/county/INC009",
+                    "https://api.weather.gov/zones/county/INC053",
+                    "https://api.weather.gov/zones/county/INC179"
+                ],
+                "references": [],
+                "sent": "2026-09-16T01:55:00-04:00",
+                "effective": "2026-09-16T01:55:00-04:00",
+                "onset": "2026-09-16T01:55:00-04:00",
+                "expires": "2026-09-16T05:00:00-04:00",
+                "ends": "2026-09-16T05:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Northern Indiana",
+                "headline": "Flash Flood Warning issued September 16 at 1:55AM EDT until September 16 at 5:00AM EDT by NWS Northern Indiana",
+                "description": "FFWIWX\n\nThe National Weather Service in Northern Indiana has issued a\n\n* Flash Flood Warning for...\nNortheastern Grant County in central Indiana...\nNorthwestern Blackford County in east central Indiana...\nSouthern Adams County in northeastern Indiana...\nSouthern Wells County in northeastern Indiana...\n\n* Until 500 AM EDT.\n\n* At 155 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMarion, Bluffton, Gas City, Berne, Upland, Montpelier, Geneva, Van\nBuren, Nottingham, Poneto, Vera Cruz, Keystone, Dillman, Wellsburg,\nMount Zion, Liberty Center, Travisville, Petroleum and Reiffsburg.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWIWX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KIWX 160555"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KIWX.FF.W.0011.260916T0555Z-260916T0900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-16T05:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.74ae3f16715b755cf16d37639e01fb2c589b5cca.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -92.35,
+                            40.49
+                        ],
+                        [
+                            -91.99,
+                            40.57
+                        ],
+                        [
+                            -91.73,
+                            40.61
+                        ],
+                        [
+                            -91.72,
+                            40.6
+                        ],
+                        [
+                            -91.72,
+                            40.61
+                        ],
+                        [
+                            -91.62,
+                            40.65
+                        ],
+                        [
+                            -91.33,
+                            40.66
+                        ],
+                        [
+                            -91.33,
+                            40.62
+                        ],
+                        [
+                            -91.41,
+                            40.55
+                        ],
+                        [
+                            -91.38,
+                            40.52
+                        ],
+                        [
+                            -91.8,
+                            40.43
+                        ],
+                        [
+                            -92.05,
+                            40.39
+                        ],
+                        [
+                            -92.35,
+                            40.36
+                        ],
+                        [
+                            -92.35,
+                            40.49
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.74ae3f16715b755cf16d37639e01fb2c589b5cca.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.74ae3f16715b755cf16d37639e01fb2c589b5cca.001.1",
+                "areaDesc": "Lee, IA; Clark, MO; Scotland, MO",
+                "geocode": {
+                    "SAME": [
+                        "019111",
+                        "029045",
+                        "029199"
+                    ],
+                    "UGC": [
+                        "IAC111",
+                        "MOC045",
+                        "MOC199"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/IAC111",
+                    "https://api.weather.gov/zones/county/MOC045",
+                    "https://api.weather.gov/zones/county/MOC199"
+                ],
+                "references": [],
+                "sent": "2026-09-15T22:28:00-05:00",
+                "effective": "2026-09-15T22:28:00-05:00",
+                "onset": "2026-09-15T22:28:00-05:00",
+                "expires": "2026-09-16T04:30:00-05:00",
+                "ends": "2026-09-16T04:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Quad Cities IA IL",
+                "headline": "Flash Flood Warning issued September 15 at 10:28PM CDT until September 16 at 4:30AM CDT by NWS Quad Cities IA IL",
+                "description": "FFWDVN\n\nThe National Weather Service in Quad Cities has issued a\n\n* Flash Flood Warning for...\nWest Central Lee County in southeastern Iowa...\nNorthwestern Clark County in northeastern Missouri...\nCentral Scotland County in northeastern Missouri...\n\n* Until 430 AM CDT Wednesday.\n\n* At 1028 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 0.5 to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFort Madison, Memphis, Donnellson, Montrose, Luray, Granger,\nCroton, New Boston, Crawford, Revere, Arbela, Chambersburg, Ashton,\nHeath Memorial Conservation Area, Anson, Prospect Grove, Etna,\nPeaksville and Battle of Athens Campground.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWDVN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KDVN 160328"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KDVN.FF.W.0045.260916T0328Z-260916T0930Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-16T04:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-16T07:33:42+00:00"
+}

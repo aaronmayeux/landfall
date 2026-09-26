@@ -1,0 +1,39 @@
+en Español
+
+000
+ABNT20 KNHC 231152
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Wed Sep 23 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Far Eastern Tropical Atlantic:
+An area of low pressure, associated with a tropical wave that just 
+moved off the west coast of Africa, has formed about 600 miles 
+southeast of the Cabo Verde Islands.  This system could become a 
+short-lived tropical depression on Thursday or Friday while it 
+moves northwestward to northward.  However, strong upper-level 
+winds should end the opportunity for development by the weekend.  
+Interests in the Cabo Verde Islands should monitor the progress of 
+this system as gusty winds and areas of heavy rain are possible 
+there by the end of the week.
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+Central Subtropical Atlantic (Former Tropical Storm Fay):
+A low pressure system, formerly Tropical Storm Fay, is located 
+about 800 miles southwest of the Azores.  Shower activity 
+associated with the low has increased this morning.  However, 
+significant re-development of this system is unlikely while it 
+moves generally westward over the next couple of days.  By the
+weekend, increasingly strong upper-level winds should inhibit 
+re-development.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Pasch
+  

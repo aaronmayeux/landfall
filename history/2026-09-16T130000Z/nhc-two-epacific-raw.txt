@@ -1,0 +1,43 @@
+ABPZ20 KNHC 161134
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Wed Sep 16 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Gulf of California:
+An area of low pressure over the central Gulf of California is 
+bringing heavy rains to portions of the Mexican state of Sonora.  
+Although the development chances appear to be decreasing since the 
+system is expected to move inland later this morning, heavy rains 
+will likely continue across portions of the state of Sonora 
+during the next day or so, and could cause isolated flooding.  
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...20 percent.
+
+Southwest of Southwestern Mexico:
+An area of low pressure could form well offshore of southwestern 
+Mexico within the next few days.  Environmental conditions appear 
+conducive for some gradual development, and this system could become 
+a tropical depression early next week while it moves slowly 
+northwestward or northward.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+Western East Pacific:
+A tropical wave is producing disorganized showers and thunderstorms 
+well to the south of the southern tip of the Baja California 
+Peninsula.  Upper-level winds are forecast to be unfavorable for 
+significant development through the weekend as the system moves 
+westward at 10 to 15 mph.  However, some gradual development of this 
+system is possible early next week when it reaches the western 
+portion of the east Pacific basin.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...30 percent.
+
+$$
+Forecaster Cangialosi
+
+

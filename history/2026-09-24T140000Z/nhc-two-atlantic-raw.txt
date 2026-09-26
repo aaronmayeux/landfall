@@ -1,0 +1,38 @@
+ABNT20 KNHC 241132
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Thu Sep 24 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Fay, located several hundred miles southwest of the Azores.
+
+Far Eastern Tropical Atlantic (AL90):
+A broad area of low pressure located a few hundred miles 
+south-southeast of the Cabo Verde Islands is producing a large 
+area of disorganized showers and thunderstorms.  This system could 
+become a short-lived tropical depression or a tropical storm later 
+today or on Friday while it moves northwestward to northward.  
+Increasing upper-level winds, however, should prevent further 
+development by the weekend.  Interests in the Cabo Verde Islands 
+should monitor the progress of this system as gusty winds, areas of 
+heavy rain, and flash flooding are possible over the islands by 
+Friday.
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...70 percent.
+
+&&
+
+Public Advisories on Tropical Storm Fay are issued under WMO 
+header WTNT31 KNHC and under AWIPS header MIATCPAT1.  
+Forecast/Advisories on Tropical Depression Fay are issued under WMO 
+header WTNT21 KNHC and under AWIPS header MIATCMAT1.
+
+$$
+Forecaster Roberts
+
+

@@ -1,0 +1,1288 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ015",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ015",
+                "@type": "wx:Zone",
+                "id": "HIZ015",
+                "type": "public",
+                "name": "Lanai Mauka",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ016",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ016",
+                "@type": "wx:Zone",
+                "id": "HIZ016",
+                "type": "public",
+                "name": "Kahoolawe",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ017",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ017",
+                "@type": "wx:Zone",
+                "id": "HIZ017",
+                "type": "public",
+                "name": "Maui Windward West",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ018",
+                "@type": "wx:Zone",
+                "id": "HIZ018",
+                "type": "public",
+                "name": "Maui Leeward West",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ022",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ022",
+                "@type": "wx:Zone",
+                "id": "HIZ022",
+                "type": "public",
+                "name": "Haleakala Summit",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ023",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ023",
+                "@type": "wx:Zone",
+                "id": "HIZ023",
+                "type": "public",
+                "name": "Kona",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHSF",
+                    "https://api.weather.gov/stations/PHTO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ026",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ026",
+                "@type": "wx:Zone",
+                "id": "HIZ026",
+                "type": "public",
+                "name": "Kohala",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHKO",
+                    "https://api.weather.gov/stations/PHSF"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ027",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ027",
+                "@type": "wx:Zone",
+                "id": "HIZ027",
+                "type": "public",
+                "name": "Big Island Interior",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHKO",
+                    "https://api.weather.gov/stations/PHSF"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ028",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ028",
+                "@type": "wx:Zone",
+                "id": "HIZ028",
+                "type": "public",
+                "name": "Big Island Summit",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHKO",
+                    "https://api.weather.gov/stations/PHSF"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ037",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ037",
+                "@type": "wx:Zone",
+                "id": "HIZ037",
+                "type": "public",
+                "name": "Molokai Windward",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ038",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ038",
+                "@type": "wx:Zone",
+                "id": "HIZ038",
+                "type": "public",
+                "name": "Molokai Southeast",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ039",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ039",
+                "@type": "wx:Zone",
+                "id": "HIZ039",
+                "type": "public",
+                "name": "Molokai North",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ040",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ040",
+                "@type": "wx:Zone",
+                "id": "HIZ040",
+                "type": "public",
+                "name": "Molokai West",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ041",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ041",
+                "@type": "wx:Zone",
+                "id": "HIZ041",
+                "type": "public",
+                "name": "Molokai Leeward South",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ042",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ042",
+                "@type": "wx:Zone",
+                "id": "HIZ042",
+                "type": "public",
+                "name": "Lanai Windward",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ043",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ043",
+                "@type": "wx:Zone",
+                "id": "HIZ043",
+                "type": "public",
+                "name": "Lanai Leeward",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ044",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ044",
+                "@type": "wx:Zone",
+                "id": "HIZ044",
+                "type": "public",
+                "name": "Lanai South",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ045",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ045",
+                "@type": "wx:Zone",
+                "id": "HIZ045",
+                "type": "public",
+                "name": "Maui Central Valley North",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ046",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ046",
+                "@type": "wx:Zone",
+                "id": "HIZ046",
+                "type": "public",
+                "name": "Maui Central Valley South",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ047",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ047",
+                "@type": "wx:Zone",
+                "id": "HIZ047",
+                "type": "public",
+                "name": "Windward Haleakala",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ048",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ048",
+                "@type": "wx:Zone",
+                "id": "HIZ048",
+                "type": "public",
+                "name": "Kipahulu",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ049",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ049",
+                "@type": "wx:Zone",
+                "id": "HIZ049",
+                "type": "public",
+                "name": "South Maui/Upcountry",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ050",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ050",
+                "@type": "wx:Zone",
+                "id": "HIZ050",
+                "type": "public",
+                "name": "South Haleakala",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHJH"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ051",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ051",
+                "@type": "wx:Zone",
+                "id": "HIZ051",
+                "type": "public",
+                "name": "Big Island South",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHSF",
+                    "https://api.weather.gov/stations/PHTO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ052",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ052",
+                "@type": "wx:Zone",
+                "id": "HIZ052",
+                "type": "public",
+                "name": "Big Island Southeast",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHSF",
+                    "https://api.weather.gov/stations/PHTO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ053",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ053",
+                "@type": "wx:Zone",
+                "id": "HIZ053",
+                "type": "public",
+                "name": "Big Island East",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHKO",
+                    "https://api.weather.gov/stations/PHSF"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/HIZ054",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/HIZ054",
+                "@type": "wx:Zone",
+                "id": "HIZ054",
+                "type": "public",
+                "name": "Big Island North",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "HI",
+                "forecastOffice": "https://api.weather.gov/offices/HFO",
+                "gridIdentifier": "HFO",
+                "awipsLocationIdentifier": "HFO",
+                "cwa": [
+                    "HFO"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/HFO"
+                ],
+                "timeZone": [
+                    "Pacific/Honolulu"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PHKO",
+                    "https://api.weather.gov/stations/PHSF"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ004",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ004",
+                "@type": "wx:Zone",
+                "id": "MAZ004",
+                "type": "public",
+                "name": "Northern Worcester",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFIT",
+                    "https://api.weather.gov/stations/KAFN",
+                    "https://api.weather.gov/stations/KCEF",
+                    "https://api.weather.gov/stations/KORE",
+                    "https://api.weather.gov/stations/KORH"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ005",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ005",
+                "@type": "wx:Zone",
+                "id": "MAZ005",
+                "type": "public",
+                "name": "Central Middlesex County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KASH",
+                    "https://api.weather.gov/stations/KFIT",
+                    "https://api.weather.gov/stations/KLWM",
+                    "https://api.weather.gov/stations/KORH"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ006",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ006",
+                "@type": "wx:Zone",
+                "id": "MAZ006",
+                "type": "public",
+                "name": "Western Essex",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KLWM",
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KBVY",
+                    "https://api.weather.gov/stations/KMHT"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ007",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ007",
+                "@type": "wx:Zone",
+                "id": "MAZ007",
+                "type": "public",
+                "name": "Eastern Essex",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBVY",
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KLWM",
+                    "https://api.weather.gov/stations/KPSM"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ012",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ012",
+                "@type": "wx:Zone",
+                "id": "MAZ012",
+                "type": "public",
+                "name": "Southern Worcester",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KORH",
+                    "https://api.weather.gov/stations/KCEF",
+                    "https://api.weather.gov/stations/KFIT",
+                    "https://api.weather.gov/stations/KORE",
+                    "https://api.weather.gov/stations/KSFZ"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ013",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ013",
+                "@type": "wx:Zone",
+                "id": "MAZ013",
+                "type": "public",
+                "name": "Western Norfolk",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KORH",
+                    "https://api.weather.gov/stations/KSFZ"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ014",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ014",
+                "@type": "wx:Zone",
+                "id": "MAZ014",
+                "type": "public",
+                "name": "Southeast Middlesex",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KBVY",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KOWD"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ015",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ015",
+                "@type": "wx:Zone",
+                "id": "MAZ015",
+                "type": "public",
+                "name": "Suffolk",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KBVY",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KOWD"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ016",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ016",
+                "@type": "wx:Zone",
+                "id": "MAZ016",
+                "type": "public",
+                "name": "Eastern Norfolk",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KBED",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KPYM"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ017",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ017",
+                "@type": "wx:Zone",
+                "id": "MAZ017",
+                "type": "public",
+                "name": "Northern Bristol",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KTAN",
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KPVD",
+                    "https://api.weather.gov/stations/KSFZ"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ018",
+                "@type": "wx:Zone",
+                "id": "MAZ018",
+                "type": "public",
+                "name": "Western Plymouth",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KTAN",
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KOWD",
+                    "https://api.weather.gov/stations/KPYM"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ019",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ019",
+                "@type": "wx:Zone",
+                "id": "MAZ019",
+                "type": "public",
+                "name": "Eastern Plymouth",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPYM",
+                    "https://api.weather.gov/stations/KBOS",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KMQE",
+                    "https://api.weather.gov/stations/KTAN"
+                ],
+                "radarStation": "BOX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MAZ020",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MAZ020",
+                "@type": "wx:Zone",
+                "id": "MAZ020",
+                "type": "public",
+                "name": "Southern Bristol",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MA",
+                "forecastOffice": "https://api.weather.gov/offices/BOX",
+                "gridIdentifier": "BOX",
+                "awipsLocationIdentifier": "BOX",
+                "cwa": [
+                    "BOX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/BOX"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KEWB",
+                    "https://api.weather.gov/stations/KFMH",
+                    "https://api.weather.gov/stations/KPVD",
+                    "https://api.weather.gov/stations/KPYM",
+                    "https://api.weather.gov/stations/KUUU"
+                ],
+                "radarStation": "BOX"
+            }
+        }
+    ]
+}

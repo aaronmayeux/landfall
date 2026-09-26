@@ -1,0 +1,1001 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.379c49d7ac397c7a56dc1ddaafa7e05d6c65a077.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -83.19,
+                            36.94
+                        ],
+                        [
+                            -83.36,
+                            36.89
+                        ],
+                        [
+                            -83.33,
+                            36.77
+                        ],
+                        [
+                            -83.07,
+                            36.86
+                        ],
+                        [
+                            -83.04,
+                            36.89
+                        ],
+                        [
+                            -83.1,
+                            36.96
+                        ],
+                        [
+                            -83.19,
+                            36.94
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.379c49d7ac397c7a56dc1ddaafa7e05d6c65a077.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.379c49d7ac397c7a56dc1ddaafa7e05d6c65a077.001.1",
+                "areaDesc": "Harlan, KY",
+                "geocode": {
+                    "SAME": [
+                        "021095"
+                    ],
+                    "UGC": [
+                        "KYC095"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KYC095"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e527d8dfde2818c5bdfec424ad9af6b524ce0fdc.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e527d8dfde2818c5bdfec424ad9af6b524ce0fdc.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-21T23:49:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-22T00:08:00-04:00",
+                "effective": "2026-09-22T00:08:00-04:00",
+                "onset": "2026-09-22T00:08:00-04:00",
+                "expires": "2026-09-22T02:45:00-04:00",
+                "ends": "2026-09-22T02:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jackson KY",
+                "headline": "Flash Flood Warning issued September 22 at 12:08AM EDT until September 22 at 2:45AM EDT by NWS Jackson KY",
+                "description": "At 1208 AM EDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1.5 and 3.5 inches of rain have\nfallen. Additional rainfall amounts of 0.5 to 2 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nHarlan, Loyall, Evarts, Kildav, Bailey Creek, Verda, Darkmont,\nPutney, Ages, Short Town, Kenvir, Coxton, Colts, Black Mountain,\nNolansburg, Shields, Rosspoint, Golden Ash, Chevrolet and Lenarve.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSJKL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KJKL 220408"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 245 AM EDT EARLY THIS MORNING FOR CENTRAL HARLAN COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KJKL.FF.W.0070.000000T0000Z-260922T0645Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T02:45:00-04:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:45 AM EDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:45 AM EDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f6cdbcaa15bcd1cd2cb51abfd068a7d9f43fd31d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.3,
+                            37.3
+                        ],
+                        [
+                            -82.25,
+                            37.34
+                        ],
+                        [
+                            -81.98,
+                            37.44
+                        ],
+                        [
+                            -81.99,
+                            37.36
+                        ],
+                        [
+                            -81.92,
+                            37.36
+                        ],
+                        [
+                            -81.92,
+                            37.35
+                        ],
+                        [
+                            -81.91,
+                            37.35
+                        ],
+                        [
+                            -82.36,
+                            37.18
+                        ],
+                        [
+                            -82.43,
+                            37.25
+                        ],
+                        [
+                            -82.41,
+                            37.25
+                        ],
+                        [
+                            -82.35,
+                            37.27
+                        ],
+                        [
+                            -82.34,
+                            37.27
+                        ],
+                        [
+                            -82.34,
+                            37.28
+                        ],
+                        [
+                            -82.32,
+                            37.28
+                        ],
+                        [
+                            -82.32,
+                            37.29
+                        ],
+                        [
+                            -82.31,
+                            37.3
+                        ],
+                        [
+                            -82.3,
+                            37.3
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f6cdbcaa15bcd1cd2cb51abfd068a7d9f43fd31d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f6cdbcaa15bcd1cd2cb51abfd068a7d9f43fd31d.001.1",
+                "areaDesc": "Buchanan, VA; Dickenson, VA",
+                "geocode": {
+                    "SAME": [
+                        "051027",
+                        "051051"
+                    ],
+                    "UGC": [
+                        "VAC027",
+                        "VAC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC027",
+                    "https://api.weather.gov/zones/county/VAC051"
+                ],
+                "references": [],
+                "sent": "2026-09-21T23:25:00-04:00",
+                "effective": "2026-09-21T23:25:00-04:00",
+                "onset": "2026-09-21T23:25:00-04:00",
+                "expires": "2026-09-22T04:30:00-04:00",
+                "ends": "2026-09-22T04:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston WV",
+                "headline": "Flash Flood Warning issued September 21 at 11:25PM EDT until September 22 at 4:30AM EDT by NWS Charleston WV",
+                "description": "FFWRLX\n\nThe National Weather Service in Charleston has issued a\n\n* Flash Flood Warning for...\nNorthwestern Buchanan County in southwestern Virginia...\nNorth Central Dickenson County in southwestern Virginia...\n\n* Until 430 AM EDT.\n\n* At 1125 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 1.5 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGrundy, Haysi, Breaks Interstate, John Flannagan Lake, Big Rock,\nRoseann and Hurley.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nReport flooding to the National Weather Service by calling toll free,\n800 401 9535, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRLX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KRLX 220325"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRLX.FF.W.0242.260922T0325Z-260922T0830Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T04:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.534d89cd3da46e4eda63d65993699e3f150c567f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.02,
+                            35.99
+                        ],
+                        [
+                            -85.09,
+                            35.91
+                        ],
+                        [
+                            -85.08,
+                            35.85
+                        ],
+                        [
+                            -85,
+                            35.83
+                        ],
+                        [
+                            -84.87,
+                            35.93
+                        ],
+                        [
+                            -84.92,
+                            36
+                        ],
+                        [
+                            -85.02,
+                            35.99
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.534d89cd3da46e4eda63d65993699e3f150c567f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.534d89cd3da46e4eda63d65993699e3f150c567f.001.1",
+                "areaDesc": "Cumberland, TN",
+                "geocode": {
+                    "SAME": [
+                        "047035"
+                    ],
+                    "UGC": [
+                        "TNC035"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TNC035"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.03afc5634fcf2c1fbcf8d2dbac684ad899d114aa.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.03afc5634fcf2c1fbcf8d2dbac684ad899d114aa.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-21T21:19:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-21T22:23:00-05:00",
+                "effective": "2026-09-21T22:23:00-05:00",
+                "onset": "2026-09-21T22:23:00-05:00",
+                "expires": "2026-09-22T00:00:00-05:00",
+                "ends": "2026-09-22T00:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Nashville TN",
+                "headline": "Flash Flood Warning issued September 21 at 10:23PM CDT until September 22 at 12:00AM CDT by NWS Nashville TN",
+                "description": "At 1023 PM CDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1 and 3 inches of rain have\nfallen. Additional rainfall amounts up to 1 inch are possible in the\nwarned area. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nCrossville, Crab Orchard, Cumberland Mountain State Park and Lake\nTansi.\n\nThis includes Interstate 40 between mile markers 320 and 328.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSOHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KOHX 220323"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL MIDNIGHT CDT TONIGHT FOR CENTRAL CUMBERLAND COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KOHX.FF.W.0075.000000T0000Z-260922T0500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T00:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9a4220878692eac77492d6dd797aa5774de78bf3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.41,
+                            37.25
+                        ],
+                        [
+                            -82.47,
+                            37.31
+                        ],
+                        [
+                            -82.39,
+                            37.37
+                        ],
+                        [
+                            -82.18,
+                            37.39
+                        ],
+                        [
+                            -82.31,
+                            37.3
+                        ],
+                        [
+                            -82.32,
+                            37.29
+                        ],
+                        [
+                            -82.32,
+                            37.28
+                        ],
+                        [
+                            -82.34,
+                            37.28
+                        ],
+                        [
+                            -82.34,
+                            37.27
+                        ],
+                        [
+                            -82.35,
+                            37.27
+                        ],
+                        [
+                            -82.41,
+                            37.25
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9a4220878692eac77492d6dd797aa5774de78bf3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9a4220878692eac77492d6dd797aa5774de78bf3.001.1",
+                "areaDesc": "Pike, KY",
+                "geocode": {
+                    "SAME": [
+                        "021195"
+                    ],
+                    "UGC": [
+                        "KYC195"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KYC195"
+                ],
+                "references": [],
+                "sent": "2026-09-21T22:59:00-04:00",
+                "effective": "2026-09-21T22:59:00-04:00",
+                "onset": "2026-09-21T22:59:00-04:00",
+                "expires": "2026-09-22T02:00:00-04:00",
+                "ends": "2026-09-22T02:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jackson KY",
+                "headline": "Flash Flood Warning issued September 21 at 10:59PM EDT until September 22 at 2:00AM EDT by NWS Jackson KY",
+                "description": "FFWJKL\n\nThe National Weather Service in Jackson has issued a\n\n* Flash Flood Warning for...\nSouth Central Pike County in southeastern Kentucky...\n\n* Until 200 AM EDT.\n\n* At 1059 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen in the last 12 hours. Additional rainfall amounts up to\n1 inch are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nElkhorn City, Cedarville, Belcher, Mouthcard and Toonerville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJKL"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KJKL 220259"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KJKL.FF.W.0069.260922T0259Z-260922T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T02:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.14d305f2f623d525406206c39bd489c3005f628f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85.53,
+                            36.24
+                        ],
+                        [
+                            -85.6,
+                            36.23
+                        ],
+                        [
+                            -85.57,
+                            36.35
+                        ],
+                        [
+                            -85.23,
+                            36.52
+                        ],
+                        [
+                            -85.16,
+                            36.47
+                        ],
+                        [
+                            -85.17,
+                            36.4
+                        ],
+                        [
+                            -85.45,
+                            36.27
+                        ],
+                        [
+                            -85.47,
+                            36.28
+                        ],
+                        [
+                            -85.45,
+                            36.28
+                        ],
+                        [
+                            -85.47,
+                            36.3
+                        ],
+                        [
+                            -85.5,
+                            36.3
+                        ],
+                        [
+                            -85.49,
+                            36.29
+                        ],
+                        [
+                            -85.49,
+                            36.28
+                        ],
+                        [
+                            -85.51,
+                            36.28
+                        ],
+                        [
+                            -85.51,
+                            36.26
+                        ],
+                        [
+                            -85.53,
+                            36.26
+                        ],
+                        [
+                            -85.53,
+                            36.24
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.14d305f2f623d525406206c39bd489c3005f628f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.14d305f2f623d525406206c39bd489c3005f628f.001.1",
+                "areaDesc": "Jackson, TN; Overton, TN",
+                "geocode": {
+                    "SAME": [
+                        "047087",
+                        "047133"
+                    ],
+                    "UGC": [
+                        "TNC087",
+                        "TNC133"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TNC087",
+                    "https://api.weather.gov/zones/county/TNC133"
+                ],
+                "references": [],
+                "sent": "2026-09-21T21:42:00-05:00",
+                "effective": "2026-09-21T21:42:00-05:00",
+                "onset": "2026-09-21T21:42:00-05:00",
+                "expires": "2026-09-22T00:30:00-05:00",
+                "ends": "2026-09-22T00:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Nashville TN",
+                "headline": "Flash Flood Warning issued September 21 at 9:42PM CDT until September 22 at 12:30AM CDT by NWS Nashville TN",
+                "description": "FFWOHX\n\nThe National Weather Service in Nashville has issued a\n\n* Flash Flood Warning for...\nSoutheastern Jackson County in Middle Tennessee...\nCentral Overton County in Middle Tennessee...\n\n* Until 1230 AM CDT.\n\n* At 942 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 1 to 2 inches in 1 hour.\nAdditional rainfall amounts up to 1 inch are possible in the warned\narea. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLivingston and Cummins Falls State Park.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOHX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOHX 220242"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOHX.FF.W.0076.260922T0242Z-260922T0530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T00:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.727d8e196ae154aac37eb3b9b2c6241595ea691e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.73,
+                            38.87
+                        ],
+                        [
+                            -80.76,
+                            38.95
+                        ],
+                        [
+                            -80.26,
+                            39.1
+                        ],
+                        [
+                            -80.25,
+                            39.1
+                        ],
+                        [
+                            -80.25,
+                            39.11
+                        ],
+                        [
+                            -80.1,
+                            39.15
+                        ],
+                        [
+                            -79.99,
+                            39.03
+                        ],
+                        [
+                            -80.3,
+                            38.86
+                        ],
+                        [
+                            -80.62,
+                            38.79
+                        ],
+                        [
+                            -80.69,
+                            38.78
+                        ],
+                        [
+                            -80.73,
+                            38.87
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.727d8e196ae154aac37eb3b9b2c6241595ea691e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.727d8e196ae154aac37eb3b9b2c6241595ea691e.001.1",
+                "areaDesc": "Barbour, WV; Braxton, WV; Gilmer, WV; Lewis, WV; Upshur, WV",
+                "geocode": {
+                    "SAME": [
+                        "054001",
+                        "054007",
+                        "054021",
+                        "054041",
+                        "054097"
+                    ],
+                    "UGC": [
+                        "WVC001",
+                        "WVC007",
+                        "WVC021",
+                        "WVC041",
+                        "WVC097"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/WVC001",
+                    "https://api.weather.gov/zones/county/WVC007",
+                    "https://api.weather.gov/zones/county/WVC021",
+                    "https://api.weather.gov/zones/county/WVC041",
+                    "https://api.weather.gov/zones/county/WVC097"
+                ],
+                "references": [],
+                "sent": "2026-09-21T22:28:00-04:00",
+                "effective": "2026-09-21T22:28:00-04:00",
+                "onset": "2026-09-21T22:28:00-04:00",
+                "expires": "2026-09-22T01:30:00-04:00",
+                "ends": "2026-09-22T01:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston WV",
+                "headline": "Flash Flood Warning issued September 21 at 10:28PM EDT until September 22 at 1:30AM EDT by NWS Charleston WV",
+                "description": "FFWRLX\n\nThe National Weather Service in Charleston has issued a\n\n* Flash Flood Warning for...\nNortheastern Braxton County in north central West Virginia...\nEast Central Gilmer County in north central West Virginia...\nSouthwestern Barbour County in northeastern West Virginia...\nNorthern Upshur County in northeastern West Virginia...\nCentral Lewis County in northern West Virginia...\n\n* Until 130 AM EDT.\n\n* At 1028 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBuckhannon, Weston, Audra State Park, Stonewall Jackson,\nBurnsville, Sand Fork, Horner, Lorentz, Walkersville, French Creek,\nSand Run, Hodgesville, Overhill, Century, Volga and Stouts Mills.\n\nThis includes the following highways...\nInterstate 79 between mile markers 74 and 101. Route 33 between mile\nmarkers 1 and 7...and between mile markers 15 and 17.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nReport flooding to the National Weather Service by calling toll free,\n800 401 9535, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRLX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KRLX 220228"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRLX.FF.W.0241.260922T0228Z-260922T0530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T01:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f500f8abee474b7dd79c0bd76709e2e656a1703.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -81.98,
+                            37.51
+                        ],
+                        [
+                            -81.94,
+                            37.52
+                        ],
+                        [
+                            -81.94,
+                            37.51
+                        ],
+                        [
+                            -81.93,
+                            37.52
+                        ],
+                        [
+                            -81.92,
+                            37.51
+                        ],
+                        [
+                            -81.91,
+                            37.53
+                        ],
+                        [
+                            -81.89,
+                            37.53
+                        ],
+                        [
+                            -81.89,
+                            37.54
+                        ],
+                        [
+                            -81.48,
+                            37.67
+                        ],
+                        [
+                            -81.38,
+                            37.44
+                        ],
+                        [
+                            -81.69,
+                            37.37
+                        ],
+                        [
+                            -81.87,
+                            37.35
+                        ],
+                        [
+                            -82,
+                            37.35
+                        ],
+                        [
+                            -81.98,
+                            37.51
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f500f8abee474b7dd79c0bd76709e2e656a1703.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2f500f8abee474b7dd79c0bd76709e2e656a1703.001.1",
+                "areaDesc": "Buchanan, VA; McDowell, WV; Wyoming, WV",
+                "geocode": {
+                    "SAME": [
+                        "051027",
+                        "054047",
+                        "054109"
+                    ],
+                    "UGC": [
+                        "VAC027",
+                        "WVC047",
+                        "WVC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC027",
+                    "https://api.weather.gov/zones/county/WVC047",
+                    "https://api.weather.gov/zones/county/WVC109"
+                ],
+                "references": [],
+                "sent": "2026-09-21T22:24:00-04:00",
+                "effective": "2026-09-21T22:24:00-04:00",
+                "onset": "2026-09-21T22:24:00-04:00",
+                "expires": "2026-09-22T01:30:00-04:00",
+                "ends": "2026-09-22T01:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston WV",
+                "headline": "Flash Flood Warning issued September 21 at 10:24PM EDT until September 22 at 1:30AM EDT by NWS Charleston WV",
+                "description": "FFWRLX\n\nThe National Weather Service in Charleston has issued a\n\n* Flash Flood Warning for...\nNorth Central Buchanan County in southwestern Virginia...\nNorthern McDowell County in southern West Virginia...\nSouthwestern Wyoming County in southern West Virginia...\n\n* Until 130 AM EDT.\n\n* At 1024 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWelch, Pineville, Gilbert Creek, Davy, Bradshaw, Iaeger, Kimball,\nBaileysville, Wolf Pen, Coalwood, Avondale and Panther.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nReport flooding to the National Weather Service by calling toll free,\n800 401 9535, when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWRLX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KRLX 220224"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KRLX.FF.W.0240.260922T0224Z-260922T0530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T01:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-22T04:33:15+00:00"
+}

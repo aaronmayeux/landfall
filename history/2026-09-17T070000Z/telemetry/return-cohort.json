@@ -1,0 +1,20 @@
+[
+  {
+    "kind": "browser tab only",
+    "people": 710,
+    "came_back": 97,
+    "came_back_5_plus_days": 26,
+    "pct_came_back": 13.7,
+    "earliest_arrival": "2026-08-05",
+    "latest_arrival": "2026-09-09"
+  },
+  {
+    "kind": "installed to home screen",
+    "people": 38,
+    "came_back": 24,
+    "came_back_5_plus_days": 19,
+    "pct_came_back": 63.2,
+    "earliest_arrival": "2026-08-05",
+    "latest_arrival": "2026-09-06"
+  }
+]

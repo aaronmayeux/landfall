@@ -1,0 +1,842 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.910121fa672a53d50dc2ce873fa46f30075c4bbb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -73.89,
+                            41
+                        ],
+                        [
+                            -73.66,
+                            41.13
+                        ],
+                        [
+                            -73.54,
+                            41
+                        ],
+                        [
+                            -73.55,
+                            40.99
+                        ],
+                        [
+                            -73.58,
+                            40.99
+                        ],
+                        [
+                            -73.58,
+                            41
+                        ],
+                        [
+                            -73.59,
+                            41
+                        ],
+                        [
+                            -73.6,
+                            40.98
+                        ],
+                        [
+                            -73.62,
+                            40.97
+                        ],
+                        [
+                            -73.65,
+                            40.98
+                        ],
+                        [
+                            -73.68,
+                            40.94
+                        ],
+                        [
+                            -73.72,
+                            40.92
+                        ],
+                        [
+                            -73.74,
+                            40.89
+                        ],
+                        [
+                            -73.74,
+                            40.88
+                        ],
+                        [
+                            -73.76,
+                            40.87
+                        ],
+                        [
+                            -73.89,
+                            41
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.910121fa672a53d50dc2ce873fa46f30075c4bbb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.910121fa672a53d50dc2ce873fa46f30075c4bbb.001.1",
+                "areaDesc": "Fairfield, CT; Westchester, NY",
+                "geocode": {
+                    "SAME": [
+                        "009001",
+                        "036119"
+                    ],
+                    "UGC": [
+                        "CTC001",
+                        "NYC119"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/CTC001",
+                    "https://api.weather.gov/zones/county/NYC119"
+                ],
+                "references": [],
+                "sent": "2026-09-13T07:23:00-04:00",
+                "effective": "2026-09-13T07:23:00-04:00",
+                "onset": "2026-09-13T07:23:00-04:00",
+                "expires": "2026-09-13T10:30:00-04:00",
+                "ends": "2026-09-13T10:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Upton NY",
+                "headline": "Flash Flood Warning issued September 13 at 7:23AM EDT until September 13 at 10:30AM EDT by NWS Upton NY",
+                "description": "FFWOKX\n\nThe National Weather Service in Upton has issued a\n\n* Flash Flood Warning for...\nSouthern Fairfield County in southern Connecticut...\nSouthern Westchester County in southeastern New York...\n\n* Until 1030 AM EDT.\n\n* At 723 AM EDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n0.5 and 1.5 inches of rain have fallen. The expected rainfall rate\nis 1 to 2 inches in 1 hour. Additional rainfall amounts of 1 to 1.5\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNew Rochelle, White Plains, Port Chester, Rye, Greenwich, Harrison,\nScarsdale, Bronxville, Eastchester, Mamaroneck, Rye Brook,\nHastings-on-Hudson, Greenville, Tuckahoe, Larchmont, Hartsdale and\nArdsley.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nExcessive runoff from heavy rainfall will cause flooding of urban\nareas, highways, streets and underpasses as well as other drainage\nareas and low lying spots.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOKX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KOKX 131123"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOKX.FF.W.0057.260913T1123Z-260913T1430Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T10:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fe1ec66b605097eee8dd3f0373b9d0a4d7a723fb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.66,
+                            40.76
+                        ],
+                        [
+                            -74.55,
+                            40.88
+                        ],
+                        [
+                            -74.38,
+                            41.01
+                        ],
+                        [
+                            -74.3,
+                            41
+                        ],
+                        [
+                            -74.3,
+                            40.98
+                        ],
+                        [
+                            -74.28,
+                            40.97
+                        ],
+                        [
+                            -74.29,
+                            40.93
+                        ],
+                        [
+                            -74.27,
+                            40.91
+                        ],
+                        [
+                            -74.27,
+                            40.9
+                        ],
+                        [
+                            -74.33,
+                            40.91
+                        ],
+                        [
+                            -74.34,
+                            40.87
+                        ],
+                        [
+                            -74.32,
+                            40.86
+                        ],
+                        [
+                            -74.33,
+                            40.85
+                        ],
+                        [
+                            -74.33,
+                            40.82
+                        ],
+                        [
+                            -74.36,
+                            40.8
+                        ],
+                        [
+                            -74.38,
+                            40.76
+                        ],
+                        [
+                            -74.36,
+                            40.76
+                        ],
+                        [
+                            -74.39,
+                            40.72
+                        ],
+                        [
+                            -74.42,
+                            40.71
+                        ],
+                        [
+                            -74.48,
+                            40.75
+                        ],
+                        [
+                            -74.66,
+                            40.76
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fe1ec66b605097eee8dd3f0373b9d0a4d7a723fb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.fe1ec66b605097eee8dd3f0373b9d0a4d7a723fb.001.1",
+                "areaDesc": "Morris, NJ",
+                "geocode": {
+                    "SAME": [
+                        "034027"
+                    ],
+                    "UGC": [
+                        "NJC027"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC027"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.befd183cba950bc4c0f1ec7e95a31cd53a8fbdbd.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.befd183cba950bc4c0f1ec7e95a31cd53a8fbdbd.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-13T05:54:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-13T07:08:00-04:00",
+                "effective": "2026-09-13T07:08:00-04:00",
+                "onset": "2026-09-13T07:08:00-04:00",
+                "expires": "2026-09-13T10:00:00-04:00",
+                "ends": "2026-09-13T10:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mount Holly NJ",
+                "headline": "Flash Flood Warning issued September 13 at 7:08AM EDT until September 13 at 10:00AM EDT by NWS Mount Holly NJ",
+                "description": "At 708 AM EDT, Doppler radar and automated rain gauges indicated that\nheavy rain was falling across the warned area. Between 2 and 2.5\ninches of rain have fallen. The expected rainfall rate is 1 to 2\ninches in 1 hour. Additional rainfall amounts of 0.5 to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected to\nbegin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nMorristown, Madison, Florham Park, East Hanover, Lincoln Park,\nKinnelon, Chatham, Boonton, Butler, Rockaway and Morris Plains.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSPHI"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KPHI 131108"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 10 AM EDT THIS MORNING FOR SOUTHEASTERN MORRIS COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPHI.FF.W.0155.000000T0000Z-260913T1400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T10:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.be16deab50623738ac9f58d6e84eeb7653a13674.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -73.66,
+                            41.13
+                        ],
+                        [
+                            -73.23,
+                            41.34
+                        ],
+                        [
+                            -73.1,
+                            41.24
+                        ],
+                        [
+                            -73.12,
+                            41.18
+                        ],
+                        [
+                            -73.1,
+                            41.15
+                        ],
+                        [
+                            -73.14,
+                            41.14
+                        ],
+                        [
+                            -73.18,
+                            41.16
+                        ],
+                        [
+                            -73.27,
+                            41.1
+                        ],
+                        [
+                            -73.31,
+                            41.12
+                        ],
+                        [
+                            -73.34,
+                            41.1
+                        ],
+                        [
+                            -73.35,
+                            41.07
+                        ],
+                        [
+                            -73.36,
+                            41.09
+                        ],
+                        [
+                            -73.36,
+                            41.06
+                        ],
+                        [
+                            -73.41,
+                            41.03
+                        ],
+                        [
+                            -73.44,
+                            41.05
+                        ],
+                        [
+                            -73.46,
+                            41.02
+                        ],
+                        [
+                            -73.49,
+                            41.03
+                        ],
+                        [
+                            -73.5,
+                            41.01
+                        ],
+                        [
+                            -73.54,
+                            41
+                        ],
+                        [
+                            -73.66,
+                            41.13
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.be16deab50623738ac9f58d6e84eeb7653a13674.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.be16deab50623738ac9f58d6e84eeb7653a13674.001.1",
+                "areaDesc": "Fairfield, CT",
+                "geocode": {
+                    "SAME": [
+                        "009001"
+                    ],
+                    "UGC": [
+                        "CTC001"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/CTC001"
+                ],
+                "references": [],
+                "sent": "2026-09-13T07:06:00-04:00",
+                "effective": "2026-09-13T07:06:00-04:00",
+                "onset": "2026-09-13T07:06:00-04:00",
+                "expires": "2026-09-13T10:00:00-04:00",
+                "ends": "2026-09-13T10:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Upton NY",
+                "headline": "Flash Flood Warning issued September 13 at 7:06AM EDT until September 13 at 10:00AM EDT by NWS Upton NY",
+                "description": "FFWOKX\n\nThe National Weather Service in Upton has issued a\n\n* Flash Flood Warning for...\nSouthern Fairfield County in southern Connecticut...\n\n* Until 1000 AM EDT.\n\n* At 706 AM EDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n0.5 and 1.5 inches of rain have fallen. The expected rainfall rate\nis 1 to 2 inches in 1 hour. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBridgeport, Stamford, Norwalk, Milford, Shelton, New Canaan,\nFairfield, Greenwich, Stratford, Trumbull, Westport, Darien,\nMonroe, Wilton, Weston, Redding and Easton.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOKX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KOKX 131106"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOKX.FF.W.0056.260913T1106Z-260913T1400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T10:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b53a35a0012acb4e2f8c03a0a12033d67876d345.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -74.06,
+                            40.95
+                        ],
+                        [
+                            -74.09,
+                            40.75
+                        ],
+                        [
+                            -74.36,
+                            40.77
+                        ],
+                        [
+                            -74.36,
+                            40.8
+                        ],
+                        [
+                            -74.33,
+                            40.82
+                        ],
+                        [
+                            -74.33,
+                            40.85
+                        ],
+                        [
+                            -74.32,
+                            40.86
+                        ],
+                        [
+                            -74.34,
+                            40.87
+                        ],
+                        [
+                            -74.33,
+                            40.91
+                        ],
+                        [
+                            -74.3,
+                            40.91
+                        ],
+                        [
+                            -74.28,
+                            40.9
+                        ],
+                        [
+                            -74.27,
+                            40.9
+                        ],
+                        [
+                            -74.27,
+                            40.92
+                        ],
+                        [
+                            -74.28,
+                            40.92
+                        ],
+                        [
+                            -74.29,
+                            40.93
+                        ],
+                        [
+                            -74.28,
+                            40.94
+                        ],
+                        [
+                            -74.28,
+                            40.97
+                        ],
+                        [
+                            -74.06,
+                            40.95
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b53a35a0012acb4e2f8c03a0a12033d67876d345.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b53a35a0012acb4e2f8c03a0a12033d67876d345.001.1",
+                "areaDesc": "Bergen, NJ; Essex, NJ; Hudson, NJ; Passaic, NJ",
+                "geocode": {
+                    "SAME": [
+                        "034003",
+                        "034013",
+                        "034017",
+                        "034031"
+                    ],
+                    "UGC": [
+                        "NJC003",
+                        "NJC013",
+                        "NJC017",
+                        "NJC031"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NJC003",
+                    "https://api.weather.gov/zones/county/NJC013",
+                    "https://api.weather.gov/zones/county/NJC017",
+                    "https://api.weather.gov/zones/county/NJC031"
+                ],
+                "references": [],
+                "sent": "2026-09-13T06:35:00-04:00",
+                "effective": "2026-09-13T06:35:00-04:00",
+                "onset": "2026-09-13T06:35:00-04:00",
+                "expires": "2026-09-13T09:30:00-04:00",
+                "ends": "2026-09-13T09:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Upton NY",
+                "headline": "Flash Flood Warning issued September 13 at 6:35AM EDT until September 13 at 9:30AM EDT by NWS Upton NY",
+                "description": "FFWOKX\n\nThe National Weather Service in Upton has issued a\n\n* Flash Flood Warning for...\nSouth Central Bergen County in northeastern New Jersey...\nEssex County in northeastern New Jersey...\nHudson County in northeastern New Jersey...\nEastern Passaic County in northeastern New Jersey...\n\n* Until 930 AM EDT.\n\n* At 635 AM EDT, Doppler radar and automated rain gauges indicated\nheavy rain falling across the warned area. Between 0.5 and 1 inch\nof rain has fallen. The expected rainfall rate is 1 to 2 inches in\n1 hour. Additional rainfall amounts of 0.5 to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPaterson, Passaic, Wayne, Bloomfield, Orange, Paramus, Lyndhurst,\nRutherford, Caldwell, Kearny, Hawthorne, Fairfield, Clifton, East\nOrange, West Orange, Montclair, Belleville, Fair Lawn, Garfield and\nLivingston.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nExcessive runoff from heavy rainfall will cause flooding of urban\nareas, highways, streets and underpasses as well as other drainage\nareas and low lying spots.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOKX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KOKX 131035"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOKX.FF.W.0055.260913T1035Z-260913T1330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T09:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.023827e3d2f6d7f95f0eb8289129355370899392.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -75.53,
+                            38.07
+                        ],
+                        [
+                            -75.51,
+                            38.07
+                        ],
+                        [
+                            -75.13,
+                            38.45
+                        ],
+                        [
+                            -75.03,
+                            38.45
+                        ],
+                        [
+                            -75.06,
+                            38.32
+                        ],
+                        [
+                            -75.09,
+                            38.3
+                        ],
+                        [
+                            -75.14,
+                            38.17
+                        ],
+                        [
+                            -75.21,
+                            38.15
+                        ],
+                        [
+                            -75.21,
+                            38.19
+                        ],
+                        [
+                            -75.23,
+                            38.2
+                        ],
+                        [
+                            -75.23,
+                            38.15
+                        ],
+                        [
+                            -75.26,
+                            38.11
+                        ],
+                        [
+                            -75.27,
+                            38.14
+                        ],
+                        [
+                            -75.27,
+                            38.1
+                        ],
+                        [
+                            -75.29,
+                            38.1
+                        ],
+                        [
+                            -75.33,
+                            38.05
+                        ],
+                        [
+                            -75.34,
+                            38.06
+                        ],
+                        [
+                            -75.37,
+                            38.03
+                        ],
+                        [
+                            -75.53,
+                            38.02
+                        ],
+                        [
+                            -75.53,
+                            38.07
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.023827e3d2f6d7f95f0eb8289129355370899392.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.023827e3d2f6d7f95f0eb8289129355370899392.001.1",
+                "areaDesc": "Worcester, MD",
+                "geocode": {
+                    "SAME": [
+                        "024047"
+                    ],
+                    "UGC": [
+                        "MDC047"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MDC047"
+                ],
+                "references": [],
+                "sent": "2026-09-13T04:43:00-04:00",
+                "effective": "2026-09-13T04:43:00-04:00",
+                "onset": "2026-09-13T04:43:00-04:00",
+                "expires": "2026-09-13T07:45:00-04:00",
+                "ends": "2026-09-13T07:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 13 at 4:43AM EDT until September 13 at 7:45AM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nEastern Worcester County in southeastern Maryland...\n\n* Until 745 AM EDT.\n\n* At 443 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 2 inches in 30 minutes.\nAdditional rainfall amounts up to 1 inch are possible in the warned\narea. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nOcean City, Berlin, Snow Hill, Newark, Cape Isle Of Wight, Ocean\nPines, Cedartown, Ironshire, Public Landing, Mount Wesley, Boxiron,\nOcean City Municipality, West Ocean City, Girdletree, Stockton and\nGoodwill.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 130843"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0092.260913T0843Z-260913T1145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-13T07:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-13T11:35:22+00:00"
+}

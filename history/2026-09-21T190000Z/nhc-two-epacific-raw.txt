@@ -1,0 +1,48 @@
+ABPZ20 KNHC 211756
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Mon Sep 21 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Odalys, located located well west-southwest of the southern 
+tip of Baja California, and on recently upgraded Hurricane Polo, 
+located a few hundred miles south of Manzanillo, Mexico.
+
+East-Southeast of the Hawaiian Islands (Former TD 15-E):
+Satellite-wind data indicate the low-level circulation of the 
+remnants of Tropical Depression Fifteen-E has become better 
+defined, located several hundred miles to the east-southeast of the 
+Hawaiian Islands.  Environmental conditions are forecast to become 
+conducive for further development, and a tropical depression is 
+likely to form around midweek while it moves slowly west- 
+northwestward or northwestward.  Interests in the Hawaiian 
+Islands should monitor the progress of this system.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...high...90 percent.
+
+South of the Gulf of Tehuantepec:
+An area of low pressure could form in a few days to the south of the 
+Gulf of Tehuantepec. Thereafter, environmental conditions appear 
+favorable for gradual development, and a tropical depression could 
+form late this week or this weekend while the system moves slowly 
+west-northwestward to northwestward, parallel to the coast of 
+southern and southwestern Mexico. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+&&
+
+Public Advisories on Polo are issued under WMO header WTPZ32 KNHC 
+and under AWIPS header MIATCPEP2. 
+Forecast/Advisories on Polo are issued under WMO header WTPZ22 KNHC 
+and under AWIPS header MIATCMEP2.
+
+$$
+Forecaster Blake
+
+

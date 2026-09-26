@@ -1,0 +1,33 @@
+ABNT20 KNHC 181136
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Fri Sep 18 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Eastern Subtropical Atlantic:
+A trough of low pressure located several hundred miles southwest of 
+the Azores is producing showers and thunderstorms that are 
+showing some signs of organization. Environmental conditions appear 
+marginally favorable for additional development over the next couple 
+of days while the system moves slowly over the eastern portion of 
+the Subtropical Atlantic. By early next week, environmental 
+conditions are forecast to become less favorable for
+development. 
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...30 percent.
+
+Central Subtropical Atlantic (AL98):
+Showers and thunderstorms associated with an area of low pressure 
+located a few hundred miles east of Bermuda have diminished. 
+Development of this system is no longer expected as it drifts slowly 
+over the subtropical Atlantic during the next day or so.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...near 0 percent.
+
+$$
+Forecaster Papin
+
+
