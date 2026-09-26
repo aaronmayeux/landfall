@@ -1,0 +1,203 @@
+{
+  "at": "2026-09-26T12:16:22.088Z",
+  "url": "https://landfall.getgravitate.app/",
+  "throttled": true,
+  "crash": null,
+  "results": [
+    {
+      "arm": "cold-nosw",
+      "swControlled": false,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2579,
+      "styleLoaded": false,
+      "mapLoadedAtMs": null,
+      "styleLoadedNow": false,
+      "storms": 6,
+      "ttfbMs": 122,
+      "fcpMs": 464,
+      "lcpMs": 464,
+      "dclMs": 2851,
+      "loadMs": 3886,
+      "bootMarks": {
+        "create": 2579.399999999965
+      },
+      "longTaskCount": 21,
+      "blockedMs": 24413,
+      "blockedLoadMs": 2567,
+      "blockedLoadTaskCount": 4,
+      "blockedAfterMs": 21846,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 16,
+      "staircaseMs": 1985,
+      "firstModuleAtMs": 188,
+      "lastModuleAtMs": 2173,
+      "vendorCount": 3,
+      "vendorKB": 396,
+      "apiCount": 28,
+      "apiKB": 156,
+      "totalRequests": 250,
+      "transferKB": 2326,
+      "firstApiAtMs": 2817,
+      "data": {
+        "depth": 2,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2817
+          },
+          {
+            "url": "/api/nws/zone?ids=HIZ015%2CHIZ016%2CHIZ017%2CHIZ018%2CHIZ022%2CHIZ023%2CH",
+            "startMs": 4962
+          }
+        ]
+      },
+      "radarTiles": 0
+    },
+    {
+      "arm": "warm-sw",
+      "swControlled": true,
+      "mapCreated": true,
+      "mapCreatedAtMs": 2021,
+      "styleLoaded": true,
+      "mapLoadedAtMs": 13150,
+      "styleLoadedNow": true,
+      "storms": 6,
+      "ttfbMs": 14,
+      "fcpMs": 1476,
+      "lcpMs": 1476,
+      "dclMs": 2265,
+      "loadMs": 2270,
+      "bootMarks": {
+        "create": 2021.0999999999767,
+        "load": 13150.199999999953,
+        "fullLoad": 17477.5
+      },
+      "longTaskCount": 27,
+      "blockedMs": 25666,
+      "blockedLoadMs": 3131,
+      "blockedLoadTaskCount": 8,
+      "blockedAfterMs": 22535,
+      "blockedWindowMs": 5000,
+      "colorNullsMainThread": 0,
+      "workerConsoleWatched": false,
+      "colorSamples": [],
+      "ourModules": 214,
+      "ourWaves": 4,
+      "staircaseMs": 637,
+      "firstModuleAtMs": 1342,
+      "lastModuleAtMs": 1978,
+      "vendorCount": 3,
+      "vendorKB": 0,
+      "apiCount": 29,
+      "apiKB": 157,
+      "totalRequests": 250,
+      "transferKB": 157,
+      "firstApiAtMs": 2256,
+      "data": {
+        "depth": 3,
+        "chain": [
+          {
+            "url": "/api/nws/flood",
+            "startMs": 2256
+          },
+          {
+            "url": "/api/nws/zone?ids=HIZ015%2CHIZ016%2CHIZ017%2CHIZ018%2CHIZ022%2CHIZ023%2CH",
+            "startMs": 3932
+          },
+          {
+            "url": "/api/nhc/genesis?part=areas",
+            "startMs": 4512
+          }
+        ]
+      },
+      "radarTiles": 0
+    }
+  ],
+  "radar": {
+    "arm": "radar",
+    "swControlled": true,
+    "mapCreated": true,
+    "mapCreatedAtMs": 3033,
+    "styleLoaded": true,
+    "mapLoadedAtMs": 26271,
+    "styleLoadedNow": true,
+    "storms": 6,
+    "ttfbMs": 46,
+    "fcpMs": 892,
+    "lcpMs": 892,
+    "dclMs": 3290,
+    "loadMs": 4260,
+    "bootMarks": {
+      "create": 3033.2999999999884,
+      "load": 26271.399999999965
+    },
+    "longTaskCount": 26,
+    "blockedMs": 25662,
+    "blockedLoadMs": 2227,
+    "blockedLoadTaskCount": 4,
+    "blockedAfterMs": 23435,
+    "blockedWindowMs": 5000,
+    "colorNullsMainThread": 0,
+    "workerConsoleWatched": false,
+    "colorSamples": [],
+    "ourModules": 214,
+    "ourWaves": 15,
+    "staircaseMs": 2514,
+    "firstModuleAtMs": 128,
+    "lastModuleAtMs": 2642,
+    "vendorCount": 3,
+    "vendorKB": 396,
+    "apiCount": 29,
+    "apiKB": 156,
+    "totalRequests": 250,
+    "transferKB": 2326,
+    "firstApiAtMs": 3270,
+    "data": {
+      "depth": 3,
+      "chain": [
+        {
+          "url": "/api/nws/flood",
+          "startMs": 3270
+        },
+        {
+          "url": "/api/imagery/radar-frames",
+          "startMs": 3628
+        },
+        {
+          "url": "/api/nws/zone?ids=HIZ015%2CHIZ016%2CHIZ017%2CHIZ018%2CHIZ022%2CHIZ023%2CH",
+          "startMs": 5086
+        }
+      ]
+    },
+    "radarTiles": 12,
+    "radarOnLoad": 12,
+    "radarOnPan": 0,
+    "frames": {
+      "frames": 3,
+      "medianMs": 1199.9,
+      "p95Ms": 1300,
+      "worstMs": 1300,
+      "droppedPct": 67,
+      "approxFps": 1
+    }
+  },
+  "budget": {
+    "ok": true,
+    "notes": [
+      "ok   ourModules: 214 <= 240",
+      "ok   ourWaves: 4 <= 8",
+      "ok   staircaseMs: 637 <= 3000",
+      "ok   dataSerialDepth: 3 <= 6",
+      "--   blockedLoadMs: 3131 (no budget yet — reporting only)",
+      "--   mapLoadedAtMs: 13150 (no budget yet — reporting only)",
+      "--   blockedMs: 25666 (no budget yet — reporting only)",
+      "ok   transferKB: 157 <= 900",
+      "ok   colorNullsMainThread: 0 <= 0",
+      "ok   radarTilesOnPan: 0 <= 120"
+    ]
+  }
+}
