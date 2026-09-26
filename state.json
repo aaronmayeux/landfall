@@ -126,33 +126,33 @@
     "sha256": "2d5895d55c13a3170c88d88b96891bb4edb397a928f92072c4758c3d2a9e4f5d"
   },
   "btk/2026/bep152026.dat": {
-    "etag": "\"44c3-65c6747966721\"",
-    "lastModified": "Sat, 26 Sep 2026 18:48:32 GMT",
+    "etag": "\"44c3-65c68f02a5af0\"",
+    "lastModified": "Sat, 26 Sep 2026 20:47:15 GMT",
     "bytes": 17603,
-    "sha256": "6b0c333f16459c39ea100a5997338a8a9326d9e2f590ab8560e10b646fe2bd21"
+    "sha256": "2c9c3c581f7eec1e07954d45d8c006d3fea5cbe48c1e0b50ec912e907622024b"
   },
   "btk/2026/bal062026.dat": {
-    "etag": "\"23b7-65c679c7abec8\"",
-    "lastModified": "Sat, 26 Sep 2026 19:12:16 GMT",
+    "etag": "\"23b7-65c68cc038592\"",
+    "lastModified": "Sat, 26 Sep 2026 20:37:09 GMT",
     "bytes": 9143,
     "sha256": "a98a39fd1415a89e2fc9c1e7ab457bafa2bb9c701fc6e95c330308d88fd0c8d7"
   },
   "btk/2026/bep162026.dat": {
-    "etag": "\"3f6c-65c67476a51f6\"",
-    "lastModified": "Sat, 26 Sep 2026 18:48:29 GMT",
+    "etag": "\"3f6c-65c68ba9c3972\"",
+    "lastModified": "Sat, 26 Sep 2026 20:32:17 GMT",
     "bytes": 16236,
-    "sha256": "ef2bb89df92c1610f66d293bc0e78d67257ecc5f435dd50e816ae09dd5467542"
+    "sha256": "925584c54ce49c04f11c69aebdd00304cd9a6c4a958ed3a97d58ffeabedfe29d"
   },
   "btk/2026/bep172026.dat": {
-    "etag": "\"449f-65c676ae5acc6\"",
-    "lastModified": "Sat, 26 Sep 2026 18:58:25 GMT",
+    "etag": "\"449f-65c68bcc33850\"",
+    "lastModified": "Sat, 26 Sep 2026 20:32:53 GMT",
     "bytes": 17567,
-    "sha256": "8b117213a1e1a72b4aa12388fc46656e6a320364f137302b9ff40e1c99228ae9"
+    "sha256": "36329c03af94ab098f6159583de887cb8c2f15fb9c6f226e5a0263fd988be5a3"
   },
   "btk/2026/bal072026.dat": {
-    "etag": "\"e9f-65c67738b414f\"",
-    "lastModified": "Sat, 26 Sep 2026 19:00:50 GMT",
+    "etag": "\"e9f-65c68c662f009\"",
+    "lastModified": "Sat, 26 Sep 2026 20:35:34 GMT",
     "bytes": 3743,
-    "sha256": "0d524ea777d9e889aca0471aa4ad3f7df9c14db56cc81b88e6444e787900375e"
+    "sha256": "09ddea07994d4bb700aca75ea2a5e2f9205a0df615a107bffa441d6f315082de"
   }
 }
