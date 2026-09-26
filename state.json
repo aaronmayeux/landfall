@@ -126,33 +126,33 @@
     "sha256": "2d5895d55c13a3170c88d88b96891bb4edb397a928f92072c4758c3d2a9e4f5d"
   },
   "btk/2026/bep152026.dat": {
-    "etag": "\"423b-65c621567f8c4\"",
-    "lastModified": "Sat, 26 Sep 2026 12:36:35 GMT",
+    "etag": "\"423b-65c640545fda6\"",
+    "lastModified": "Sat, 26 Sep 2026 14:55:15 GMT",
     "bytes": 16955,
-    "sha256": "cd2e3711cc45239b4976d705628897901b7f4268b318c92d59eeac15ac2adbc0"
+    "sha256": "060a759380490e4013257f9316c60ce2bd235212921b1fc144e22b58fea23546"
   },
   "btk/2026/bal062026.dat": {
-    "etag": "\"22df-65c6249433a15\"",
-    "lastModified": "Sat, 26 Sep 2026 12:51:05 GMT",
+    "etag": "\"22df-65c63c3b583dd\"",
+    "lastModified": "Sat, 26 Sep 2026 14:36:55 GMT",
     "bytes": 8927,
-    "sha256": "1d7cb0a071dd3572734ed4fd0f755909bcbdacbf1f27b9295d03b4845eaa3e32"
+    "sha256": "5dafdff818236b192b108930949c1e970481ce3cbf023cd39dd666ca4b854b09"
   },
   "btk/2026/bep162026.dat": {
-    "etag": "\"3ce4-65c62482c7e90\"",
-    "lastModified": "Sat, 26 Sep 2026 12:50:47 GMT",
+    "etag": "\"3ce4-65c63d3a67faf\"",
+    "lastModified": "Sat, 26 Sep 2026 14:41:22 GMT",
     "bytes": 15588,
-    "sha256": "995f2586f1527815be5b3fd7363f68f16beaacca5fe18a4bcbdd27e29e570537"
+    "sha256": "390cdf40a64e7162d6bb9f8de85842a0b807a41810b9a6f2c00fa468bb72d8af"
   },
   "btk/2026/bep172026.dat": {
-    "etag": "\"4217-65c62297e3c8e\"",
-    "lastModified": "Sat, 26 Sep 2026 12:42:12 GMT",
+    "etag": "\"4217-65c63eff282e0\"",
+    "lastModified": "Sat, 26 Sep 2026 14:49:17 GMT",
     "bytes": 16919,
-    "sha256": "1e1c19ee42e4fcf3146919475fda889248ad0e4a79230440ca23add82ab6128d"
+    "sha256": "d75e9a8f56fd4bcfbf048732791428f1ccad206ea05c0ff917d48b0b08571de2"
   },
   "btk/2026/bal072026.dat": {
-    "etag": "\"dc7-65c624ddb48a3\"",
-    "lastModified": "Sat, 26 Sep 2026 12:52:23 GMT",
+    "etag": "\"dc7-65c63ca84f8ab\"",
+    "lastModified": "Sat, 26 Sep 2026 14:38:49 GMT",
     "bytes": 3527,
-    "sha256": "2b1f8872cc14ecd68a3965a050ca68ec5dcd9472e9e6a20efaa4e432308c663b"
+    "sha256": "d034c3fc906b3054a65e6d81389e1f05f5efb90afe36c0cdcfff853cb02851fb"
   }
 }
