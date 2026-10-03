@@ -1,0 +1,101 @@
+                                 *                  GFS version                   *
+                                 * EAST PACIFIC 2026 SHIPS INTENSITY FORECAST     *
+                                 * IR SAT DATA AVAILABLE,       OHC AVAILABLE     *
+                                 *  FIFTEEN     EP152026  09/23/26  06 UTC        *
+
+TIME (HR)          0     6    12    18    24    36    48    60    72    84    96   108   120   132   144   156   168
+V (KT) NO LAND    30    34    39    43    49    57    62    65    60    59    62    65    64    68    66    66    66
+V (KT) LAND       30    34    39    43    49    57    62    65    60    59    62    65    64    68    66    66    66
+V (KT) LGEM       30    33    36    39    43    51    57    59    56    55    59    65    72    80    84    83    80
+Storm Type      TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP  TROP
+
+SHEAR (KT)         6     5     5    12    17    15    16    11     7     3     2     6     3     7     8    13    17
+SHEAR ADJ (KT)    -1    -2    -3    -4    -3     0     3     4     3    -1    -1    -4    -2    -5    -4    -3    -2
+SHEAR DIR        140   143   100    91   102   120   145   152   126    58   348    17   351   268   251   236   222
+SST (C)         28.8  28.8  28.6  28.6  28.7  28.6  28.4  28.2  27.7  27.7  28.1  28.2  28.1  28.1  28.1  28.1  27.6
+POT. INT. (KT)   153   152   149   148   148   147   146   144   137   139   144   145   144   145   144   144   139
+200 MB T (C)   -50.7 -51.1 -51.2 -50.7 -50.8 -51.6 -51.2 -51.3 -51.1 -51.4 -51.1 -51.0 -50.6 -50.8 -50.6 -50.7 -50.5
+200 MB VXT (C)   0.2   0.3   0.5   0.5   0.5   0.5   0.3   0.1   0.1   0.3   0.6   0.5   0.3   0.3   0.3   0.4   0.5
+TH_E DEV (C)       7     6     7     6     6     5     6     5     5     5     5     5     6     6     7     7     7
+700-500 MB RH     74    73    72    75    76    74    67    63    56    48    51    52    51    52    53    52    52
+MODEL VTX (KT)    13    13    15    16    18    20    21    22    20    21    24    27    26    32    30    32    32
+850 MB ENV VOR   112   109   103   102   112   128   135   137   130   119   134   134   128   123   106    76    70
+200 MB DIV        92    73    36    49    75   116   100    32     4   -28   -28   -16    41    53    36    36    29
+700-850 TADV       0     0     1     0    -2    -3    -2     1    -4    -4    -8    -3    -2     1     2     5     4
+LAND (KM)        608   550   505   491   482   427   337   226   138   103   185   293   392   390   446   510   553
+LAT (DEG N)     13.9 xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x  xx.x 
+LONG(DEG W)    153.4 xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x xxx.x
+STM SPEED (KT)    11     9     7     4     3     3     5     5     2     4     6     7     8     9     8     7     8
+HEAT CONTENT      26    26    25    28    29    32    29    28    20    20    31    28    27    26    30    24    16
+
+  FORECAST TRACK FROM OFPI      INITIAL HEADING/SPEED (DEG/KT):290/ 12      CX,CY: -10/  4
+  T-12 MAX WIND:  25            PRESSURE OF STEERING LEVEL (MB):  496  (MEAN=586)
+  GOES IR BRIGHTNESS TEMP. STD DEV.  50-200 KM RAD:  16.9 (MEAN=14.5)
+  % GOES IR PIXELS WITH T < -20 C    50-200 KM RAD:  75.0 (MEAN=65.0)
+  PRELIM RI PROB (DV .GE. 35 KT IN 36 HR):           27.9
+
+                        INDIVIDUAL CONTRIBUTIONS TO INTENSITY CHANGE
+                         6    12    18    24    36    48    60    72    84    96   108   120   132   144   156   168
+                        --------------------------------------------------------------------------------------------
+  SAMPLE MEAN CHANGE     0.    1.    1.    1.    2.    2.    2.    1.    1.    0.   -0.   -1.   -2.   -2.   -3.   -3.
+  SST POTENTIAL          0.    1.    1.    2.    5.   10.   14.   17.   18.   20.   22.   23.   24.   26.   27.   29.
+  VERTICAL SHEAR MAG     1.    2.    2.    3.    3.    2.    1.    2.    2.    3.    4.    6.    6.    7.    6.    5.
+  VERTICAL SHEAR ADJ     0.    0.    1.    1.    2.    1.    1.    0.    0.    0.    0.    0.   -0.   -0.    0.    0.
+  VERTICAL SHEAR DIR     0.    0.    1.    1.    2.    2.    2.    2.    2.    2.    1.    1.    0.   -0.   -1.   -1.
+  PERSISTENCE            1.    1.    2.    2.    1.    1.    1.    1.    1.    1.    1.    1.    1.    1.    1.    1.
+  200/250 MB TEMP.      -0.   -0.   -1.   -1.   -2.   -2.   -1.   -1.   -1.   -1.   -0.   -0.   -0.   -0.    0.    1.
+  THETA_E EXCESS         0.    0.    0.    0.    0.   -0.   -0.   -1.   -1.   -1.   -2.   -2.   -2.   -1.   -1.   -1.
+  700-500 MB RH          0.    0.    0.    1.    1.    1.    1.    1.    1.    0.    0.    0.    0.    0.    0.   -0.
+  MODEL VTX TENDENCY     0.    1.    2.    4.    5.    8.   12.    9.   11.   14.   17.   14.   19.   16.   16.   14.
+  850 MB ENV VORTICITY   0.    0.    0.    0.    0.   -0.   -1.   -3.   -3.   -3.   -3.   -3.   -4.   -3.   -3.   -3.
+  200 MB DIVERGENCE      0.    0.    0.    0.    0.    1.    2.    2.    1.    1.    0.    0.    0.   -0.   -0.   -0.
+  850-700 T ADVEC       -0.   -0.   -0.   -0.   -0.    0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.    0.
+  ZONAL STORM MOTION    -0.   -0.   -0.   -0.   -0.   -0.   -0.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -1.
+  STEERING LEVEL PRES   -0.   -0.   -0.   -0.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -0.   -0.    0.
+  DAYS FROM CLIM. PEAK   0.    0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.   -0.
+  GOES PREDICTORS        0.    1.    1.    1.    1.    0.   -0.   -0.   -1.   -1.   -1.   -1.   -1.   -1.   -1.   -2.
+  OCEAN HEAT CONTENT    -0.    0.    0.    0.    0.    0.    1.    1.    1.    1.    1.    1.    0.    0.   -1.   -2.
+  RI POTENTIAL           1.    2.    3.    4.    6.    5.    2.    0.   -1.   -2.   -3.   -3.   -3.   -3.   -3.   -3.
+                        --------------------------------------------------------------------------------------------
+  TOTAL CHANGE           4.    9.   13.   19.   27.   32.   35.   30.   29.   32.   35.   34.   38.   36.   36.   36.
+
+                CURRENT MAX WIND (KT):   30. LAT, LON:   13.9   153.4
+
+       **2026 E. Pacific RI INDEX EP152026 FIFTEEN    09/23/26  06 UTC **
+ (SHIPS-RII PREDICTOR TABLE for 30 KT OR MORE MAXIMUM WIND INCREASE IN NEXT 24-h)
+ 
+     Predictor                  Value   RI Predictor Range  Scaled Value(0-1) % Contribution
+ POT = MPI-VMAX (KT)         :  120.1       30.0  to    148.5        0.76             6.9
+ 12 HR PERSISTENCE (KT)      :    5.0      -22.0  to     44.0        0.41             3.3
+ MULTI-LAYER SHEAR (KT)      :   15.9       34.9  to      7.7        0.70             5.3
+ BL DRY-AIR FLUX (W/M2)      :   89.8      800.8  to    -82.5        0.80            -5.3
+ D200 (10**7s-1)             :   65.0      -33.0  to    170.5        0.48             2.8
+ MAXIMUM WIND (KT)           :   30.0       22.5  to    132.0        0.21             1.2
+ STD DEV OF IR BR TEMP       :   16.9       37.8  to      2.1        0.59             2.8
+ OCEAN HEAT CONTENT(KJ/CM2)  :   30.0        0.0  to    107.8        0.28             1.3
+ %area of TPW <45 mm upshear :    0.0       60.4  to      0.0        1.00             1.3
+ Avg. IR BT 0-120 km (deg C) :  -35.8      -15.6  to    -90.4        0.27            -0.1
+ 
+ SHIPS Prob RI for 20kt/ 12hr RI threshold=   12% is    1.9 times climatological mean ( 6.3%)
+ SHIPS Prob RI for 25kt/ 24hr RI threshold=   24% is    1.9 times climatological mean (12.5%)
+ SHIPS Prob RI for 30kt/ 24hr RI threshold=   20% is    2.3 times climatological mean ( 8.6%)
+ SHIPS Prob RI for 35kt/ 24hr RI threshold=   16% is    2.5 times climatological mean ( 6.2%)
+ SHIPS Prob RI for 40kt/ 24hr RI threshold=    0% is    0.0 times climatological mean ( 4.2%)
+ SHIPS Prob RI for 45kt/ 36hr RI threshold=   22% is    3.3 times climatological mean ( 6.7%)
+ SHIPS Prob RI for 55kt/ 48hr RI threshold=   22% is    3.8 times climatological mean ( 5.9%)
+ SHIPS Prob RI for 65kt/ 72hr RI threshold=   17% is    3.5 times climatological mean ( 4.7%)
+    
+Matrix of RI probabilities
+------------------------------------------------------------------------------
+  RI (kt / h)  | 20/12 | 25/24 | 30/24 | 35/24 | 40/24 | 45/36 | 55/48  |65/72
+------------------------------------------------------------------------------
+   SHIPS-RII:    11.8%   23.5%   19.6%   15.7%    0.0%   22.3%   22.2%   16.6%
+    Logistic:     2.6%    8.6%    2.7%    1.7%    0.6%    2.6%    9.3%    3.2%
+    Bayesian:     0.7%    9.7%    3.4%    1.0%    0.4%    0.4%    0.2%    2.1%
+   Consensus:     5.0%   14.0%    8.6%    6.1%    0.3%    8.4%   10.6%    7.3%
+       DTOPS:     2.0%   13.0%    5.0%    1.0%    1.0%    8.0%   34.0%   15.0%
+       SDCON:     3.5%   13.5%    6.8%    3.5%    0.6%    8.2%   22.3%   11.1%
+
+   ##         ANNULAR HURRICANE INDEX (AHI) EP152026 FIFTEEN    09/23/26  06 UTC         ##
+   ## STORM NOT ANNULAR, SCREENING STEP FAILED, NPASS=5 NFAIL=2                          ##
+   ## AHI=  0   (AHI OF 100 IS BEST FIT TO ANN. STRUC., 1 IS MARGINAL, 0 IS NOT ANNULAR) ##

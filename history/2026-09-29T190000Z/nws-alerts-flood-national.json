@@ -1,0 +1,3377 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d6234837a10bb219845380c8ac7bea71aa48f4fc.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.56,
+                            32.84
+                        ],
+                        [
+                            -107.41,
+                            33.07
+                        ],
+                        [
+                            -107.15,
+                            33.06
+                        ],
+                        [
+                            -107.18,
+                            32.92
+                        ],
+                        [
+                            -107.21,
+                            32.79
+                        ],
+                        [
+                            -107.38,
+                            32.75
+                        ],
+                        [
+                            -107.58,
+                            32.79
+                        ],
+                        [
+                            -107.56,
+                            32.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d6234837a10bb219845380c8ac7bea71aa48f4fc.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d6234837a10bb219845380c8ac7bea71aa48f4fc.001.1",
+                "areaDesc": "Dona Ana, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC013",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.69aa8df525f02c826fd686be2fbd452248987c0e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.69aa8df525f02c826fd686be2fbd452248987c0e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T10:33:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-29T13:15:00-06:00",
+                "effective": "2026-09-29T13:15:00-06:00",
+                "onset": "2026-09-29T13:15:00-06:00",
+                "expires": "2026-09-29T15:00:00-06:00",
+                "ends": "2026-09-29T15:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 1:15PM MDT until September 29 at 3:00PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has extended\nthe\n\n* Flash Flood Warning for...\nNorthwestern Dona Ana County in south central New Mexico...\nSouth Central Sierra County in south central New Mexico...\n\n* Until 300 PM MDT.\n\n* At 115 PM MDT, Another round of moderate to locally heavy rainfall\nis pushing across the Lake Valley area. This will result in\nadditional runoff in arroyos and creeks that flow east towards\nCaballo and Arrey.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nArrey, Caballo, Derry, Palomas, Lower Animas Creek.\n\nAffected arroyos and creeks include Tierra Blanca, Percha, Seco, and\nLas Animas Creeks, and Trujillo Canyon.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nRemain alert for flooding even in locations not receiving rain.\nArroyos, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291915"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KEPZ.FF.W.0194.000000T0000Z-260929T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T15:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.09f7b4b14a4f7b123aba4ae2344fad9218b0f1fd.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.45,
+                            32.7
+                        ],
+                        [
+                            -110.61,
+                            32.67
+                        ],
+                        [
+                            -110.73,
+                            32.57
+                        ],
+                        [
+                            -110.81,
+                            32.66
+                        ],
+                        [
+                            -110.64,
+                            32.89
+                        ],
+                        [
+                            -110.47,
+                            33.17
+                        ],
+                        [
+                            -110.45,
+                            33.2
+                        ],
+                        [
+                            -110.45,
+                            32.7
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.09f7b4b14a4f7b123aba4ae2344fad9218b0f1fd.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.09f7b4b14a4f7b123aba4ae2344fad9218b0f1fd.001.1",
+                "areaDesc": "Pinal, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004021"
+                    ],
+                    "UGC": [
+                        "AZC021"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC021"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.48e71ef6a1ff4445c944a598cb602643879d27bc.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.48e71ef6a1ff4445c944a598cb602643879d27bc.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T10:40:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T12:14:00-07:00",
+                "effective": "2026-09-29T12:14:00-07:00",
+                "onset": "2026-09-29T12:14:00-07:00",
+                "expires": "2026-09-29T13:45:00-07:00",
+                "ends": "2026-09-29T13:45:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 12:14PM MST until September 29 at 1:45PM MST by NWS Tucson AZ",
+                "description": "At 1214 PM MST, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1 and 2 inches of rain have\nfallen. Additional rainfall amounts of 1 to 2 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nOracle, Mammoth, Aravaipa Canyon Wilderness and San Carlos\nReservoir.\n\nThis includes Route 77 between mile markers 102 and 121.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 291914"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 145 PM MST THIS AFTERNOON FOR SOUTHEASTERN PINAL COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FF.W.0238.000000T0000Z-260929T2045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T13:45:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04fed1a1d66e6c57e7e65ee060de6955a22cedc9.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.36,
+                            31.79
+                        ],
+                        [
+                            -111.43,
+                            31.71
+                        ],
+                        [
+                            -111.59,
+                            31.72
+                        ],
+                        [
+                            -111.76,
+                            31.55
+                        ],
+                        [
+                            -112.16,
+                            31.68
+                        ],
+                        [
+                            -112.14,
+                            31.86
+                        ],
+                        [
+                            -112.05,
+                            31.92
+                        ],
+                        [
+                            -111.86,
+                            31.93
+                        ],
+                        [
+                            -111.64,
+                            32.04
+                        ],
+                        [
+                            -111.53,
+                            32.24
+                        ],
+                        [
+                            -111.34,
+                            32.32
+                        ],
+                        [
+                            -111.32,
+                            32.29
+                        ],
+                        [
+                            -111.2,
+                            32.3
+                        ],
+                        [
+                            -111.15,
+                            32.26
+                        ],
+                        [
+                            -111.05,
+                            32.17
+                        ],
+                        [
+                            -111.06,
+                            32.13
+                        ],
+                        [
+                            -111.17,
+                            32.13
+                        ],
+                        [
+                            -111.37,
+                            31.97
+                        ],
+                        [
+                            -111.36,
+                            31.79
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04fed1a1d66e6c57e7e65ee060de6955a22cedc9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.04fed1a1d66e6c57e7e65ee060de6955a22cedc9.001.1",
+                "areaDesc": "Pima, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019"
+                    ],
+                    "UGC": [
+                        "AZC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.645cbd430762199ed3f85bd22cd44c46d9ae2aff.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.645cbd430762199ed3f85bd22cd44c46d9ae2aff.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T10:37:00-07:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.988d0f6b714c904c5f02017131c0a610f608d578.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.988d0f6b714c904c5f02017131c0a610f608d578.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T11:22:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T12:01:00-07:00",
+                "effective": "2026-09-29T12:01:00-07:00",
+                "onset": "2026-09-29T12:01:00-07:00",
+                "expires": "2026-09-29T16:30:00-07:00",
+                "ends": "2026-09-29T16:30:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 12:01PM MST until September 29 at 4:30PM MST by NWS Tucson AZ",
+                "description": "At 1201 PM MST, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain in Brawley Wash. Up to 2 inches of\nrain have fallen. Additional rainfall amounts of 0.5 to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected to\nbegin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nSells, Drexel Heights, Three Points, Topawa, San Miguel, San\nIsidro, Kitt Peak, Tucson Estates, Valencia West, Tucson Mountain\nPark, Saguaro National Park West, Ali Chukson, Gu Oidak, Vamori,\nSouth Komelik, Cowlic, Fresnal and San Pedro.\n\nThis includes the following highways...\nRoute 86 between mile markers 113 and 167. Route 286 between mile\nmarkers 17 and 45.\n\nThis includes the following Flash Flood Prone Locations...\nManville Rd at Brawley Wash, Indian Route 19 south of Topawa and\nIndian Route 20 at Cowlic.\n\nAn automated stream gauge located at Brawley Wash near Milewide Road\nhas shown a significant rise.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 291901"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 430 PM MST THIS AFTERNOON FOR CENTRAL PIMA COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FF.W.0237.000000T0000Z-260929T2330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T16:30:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 4:30 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 4:30 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0dd46acd1533cd184b9bd212826ee0207151daf0.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -106.92,
+                            32.56
+                        ],
+                        [
+                            -106.94,
+                            32.5
+                        ],
+                        [
+                            -106.93,
+                            32.48
+                        ],
+                        [
+                            -106.91,
+                            32.46
+                        ],
+                        [
+                            -106.89,
+                            32.43
+                        ],
+                        [
+                            -106.87,
+                            32.41
+                        ],
+                        [
+                            -106.82,
+                            32.43
+                        ],
+                        [
+                            -106.66,
+                            32.47
+                        ],
+                        [
+                            -106.62,
+                            32.57
+                        ],
+                        [
+                            -106.81,
+                            32.56
+                        ],
+                        [
+                            -106.92,
+                            32.56
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0dd46acd1533cd184b9bd212826ee0207151daf0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0dd46acd1533cd184b9bd212826ee0207151daf0.001.1",
+                "areaDesc": "Dona Ana, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013"
+                    ],
+                    "UGC": [
+                        "NMC013"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013"
+                ],
+                "references": [],
+                "sent": "2026-09-29T12:56:00-06:00",
+                "effective": "2026-09-29T12:56:00-06:00",
+                "onset": "2026-09-29T12:56:00-06:00",
+                "expires": "2026-09-29T16:00:00-06:00",
+                "ends": "2026-09-29T16:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 12:56PM MDT until September 29 at 4:00PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nCentral Dona Ana County in south central New Mexico...\n\n* Until 400 PM MDT.\n\n* At 1256 PM MDT, Another bout of heavy rain has moved across the\nRadium Springs area. This will bring renewed flooding in low water\ncrossings around Radium Springs, Leasburg, and north of Hill. Heavy\nrain and flooding will likely spread towards the Jornada Range Road\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLeasburg, Radium Springs, Portions of Jornada Experimental Range\nand Hill.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291856"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0203.260929T1856Z-260929T2200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T16:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.685274e8f35de533a7b8f51565866c674e941aca.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.3,
+                            32.61
+                        ],
+                        [
+                            -107.31,
+                            32.61
+                        ],
+                        [
+                            -107.31,
+                            32.64
+                        ],
+                        [
+                            -107.43,
+                            32.7
+                        ],
+                        [
+                            -107.43,
+                            32.73
+                        ],
+                        [
+                            -107.42,
+                            32.76
+                        ],
+                        [
+                            -107.38,
+                            32.76
+                        ],
+                        [
+                            -107.23,
+                            32.79
+                        ],
+                        [
+                            -107.18,
+                            32.7
+                        ],
+                        [
+                            -107.2,
+                            32.65
+                        ],
+                        [
+                            -107.24,
+                            32.62
+                        ],
+                        [
+                            -107.3,
+                            32.61
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.685274e8f35de533a7b8f51565866c674e941aca.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.685274e8f35de533a7b8f51565866c674e941aca.001.1",
+                "areaDesc": "Dona Ana, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC013",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9cc5e3b3eda9220cf26a21e926ee5d7a1d356009.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9cc5e3b3eda9220cf26a21e926ee5d7a1d356009.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T11:29:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-29T12:45:00-06:00",
+                "effective": "2026-09-29T12:45:00-06:00",
+                "onset": "2026-09-29T12:45:00-06:00",
+                "expires": "2026-09-29T14:30:00-06:00",
+                "ends": "2026-09-29T14:30:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 12:45PM MDT until September 29 at 2:30PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "At 1245 PM MDT, While heavy rain has moved out of Garfield and Salem\nareas for now, significant run off is continuing. Of particular\nconcern are the few arroyos that lack retention dams, including\nBroadburst Arroyo, and the unnamed arroyos just north of Garfield\nCanyon, near county road E-055.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nSalem and Garfield.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nRemain alert for flooding even in locations not receiving rain.\nArroyos, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KEPZ 291845"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 230 PM MDT THIS AFTERNOON FOR WEST CENTRAL DONA ANA AND SOUTHERN SIERRA COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KEPZ.FF.W.0199.000000T0000Z-260929T2030Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:30:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dc65536268a1c4a412c1fd1774bcedc3917a68be.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -112.25,
+                            33.92
+                        ],
+                        [
+                            -112.25,
+                            33.95
+                        ],
+                        [
+                            -112.24,
+                            33.97
+                        ],
+                        [
+                            -112.19,
+                            34.01
+                        ],
+                        [
+                            -112.16,
+                            34.08
+                        ],
+                        [
+                            -112.14,
+                            34.06
+                        ],
+                        [
+                            -112.15,
+                            34.05
+                        ],
+                        [
+                            -112.16,
+                            34.05
+                        ],
+                        [
+                            -112.15,
+                            34.04
+                        ],
+                        [
+                            -112.16,
+                            34.04
+                        ],
+                        [
+                            -112.16,
+                            34.02
+                        ],
+                        [
+                            -112.18,
+                            34.01
+                        ],
+                        [
+                            -112.18,
+                            34
+                        ],
+                        [
+                            -112.19,
+                            33.99
+                        ],
+                        [
+                            -112.2,
+                            33.97
+                        ],
+                        [
+                            -112.23,
+                            33.96
+                        ],
+                        [
+                            -112.24,
+                            33.96
+                        ],
+                        [
+                            -112.24,
+                            33.94
+                        ],
+                        [
+                            -112.23,
+                            33.94
+                        ],
+                        [
+                            -112.24,
+                            33.92
+                        ],
+                        [
+                            -112.25,
+                            33.92
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dc65536268a1c4a412c1fd1774bcedc3917a68be.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.dc65536268a1c4a412c1fd1774bcedc3917a68be.001.1",
+                "areaDesc": "Yavapai, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004025"
+                    ],
+                    "UGC": [
+                        "AZC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC025"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6f20796873f85551b3f0b735e72eb8e6b9ed3ee7.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.6f20796873f85551b3f0b735e72eb8e6b9ed3ee7.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T08:24:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T11:43:00-07:00",
+                "effective": "2026-09-29T11:43:00-07:00",
+                "onset": "2026-09-29T11:43:00-07:00",
+                "expires": "2026-09-29T14:00:00-07:00",
+                "ends": "2026-09-29T14:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued September 29 at 11:43AM MST until September 29 at 2:00PM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has extended the\n\n* Flash Flood Warning for...\nYavapai County in west central Arizona...\n\n* Until 200 PM MST.\n\n* At 1143 AM MST, a river gauge on the Agua Fria River at Rock\nSprings reported a rapid rise of 3.5 feet from thunderstorms\nproducing heavy rain across the warned area. Up to 1.5 inches of\nrain have fallen. Flash flooding is expected to continue.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nnormally dry washes, urban areas, highways, streets and\nunderpasses.\n\n* Some locations that will experience flash flooding include...\nRock Springs.\n\nThis includes Interstate 17 near mile marker 242.\n\nThis includes the following recreation areas and campgrounds...\nBlack Canyon Campground.\n\nThis includes the following creeks, washes and rivers...\nAgua Fria River, Slate Creek and Black Canyon Creek.",
+                "instruction": "Flooding of washes and creeks will occur, some dirt roads will become\nmuddy and impassable. Paved roads and underpasses could become\nflooded as well.\n\nLow water crossings will become dangerous in heavy rain. Do not\nattempt to cross flooded roads. Find an alternate route.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 291843"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFGZ.FF.W.0185.000000T0000Z-260929T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:00:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f3416fd6289cfd6d3f1e0482152ab320389019db.001.1,2026-09-29T05:48:00-07:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:00 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:00 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8036f09ab08d0139e76e88d276b8bea270932ade.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.46,
+                            33.2
+                        ],
+                        [
+                            -110.43,
+                            33.19
+                        ],
+                        [
+                            -110.4,
+                            33.2
+                        ],
+                        [
+                            -110.42,
+                            33.22
+                        ],
+                        [
+                            -110.42,
+                            33.23
+                        ],
+                        [
+                            -110.44,
+                            33.24
+                        ],
+                        [
+                            -110.45,
+                            33.28
+                        ],
+                        [
+                            -110.44,
+                            33.33
+                        ],
+                        [
+                            -110.45,
+                            33.36
+                        ],
+                        [
+                            -110.41,
+                            33.4
+                        ],
+                        [
+                            -110.36,
+                            33.4
+                        ],
+                        [
+                            -110.34,
+                            33.42
+                        ],
+                        [
+                            -110.13,
+                            33.36
+                        ],
+                        [
+                            -109.99,
+                            33.25
+                        ],
+                        [
+                            -110.2,
+                            32.95
+                        ],
+                        [
+                            -110.33,
+                            32.46
+                        ],
+                        [
+                            -110.45,
+                            32.43
+                        ],
+                        [
+                            -110.45,
+                            32.51
+                        ],
+                        [
+                            -110.46,
+                            32.51
+                        ],
+                        [
+                            -110.47,
+                            33.18
+                        ],
+                        [
+                            -110.46,
+                            33.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8036f09ab08d0139e76e88d276b8bea270932ade.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.8036f09ab08d0139e76e88d276b8bea270932ade.001.1",
+                "areaDesc": "Graham, AZ; Pinal, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004009",
+                        "004021"
+                    ],
+                    "UGC": [
+                        "AZC009",
+                        "AZC021"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC009",
+                    "https://api.weather.gov/zones/county/AZC021"
+                ],
+                "references": [],
+                "sent": "2026-09-29T11:36:00-07:00",
+                "effective": "2026-09-29T11:36:00-07:00",
+                "onset": "2026-09-29T11:36:00-07:00",
+                "expires": "2026-09-29T14:30:00-07:00",
+                "ends": "2026-09-29T14:30:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 11:36AM MST until September 29 at 2:30PM MST by NWS Tucson AZ",
+                "description": "FFWTWC\n\nThe National Weather Service in Tucson has issued a\n\n* Flash Flood Warning for...\nSouthwestern Graham County in southeastern Arizona...\nEast Central Pinal County in southeastern Arizona...\n\n* Until 230 PM MST.\n\n* At 1136 AM MST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 2 inches of rain have\nfallen. Additional rainfall amounts of 1 to 2 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPeridot, Aravaipa Canyon Wilderness, Bylas, Klondyke, Calva and San\nCarlos Reservoir.\n\nThis includes Route 70 between mile markers 272 and 297.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTWC 291836"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTWC.FF.W.0239.260929T1836Z-260929T2130Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:30:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.47ceca07c8875a1bb5afe754b8bbc8b6a9308219.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.77,
+                            32.45
+                        ],
+                        [
+                            -110.88,
+                            32.38
+                        ],
+                        [
+                            -110.94,
+                            32.29
+                        ],
+                        [
+                            -110.98,
+                            32.3
+                        ],
+                        [
+                            -111.06,
+                            32.33
+                        ],
+                        [
+                            -111.07,
+                            32.32
+                        ],
+                        [
+                            -111.05,
+                            32.3
+                        ],
+                        [
+                            -110.8,
+                            32.24
+                        ],
+                        [
+                            -110.8,
+                            32.3
+                        ],
+                        [
+                            -110.66,
+                            32.38
+                        ],
+                        [
+                            -110.77,
+                            32.45
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.47ceca07c8875a1bb5afe754b8bbc8b6a9308219.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.47ceca07c8875a1bb5afe754b8bbc8b6a9308219.001.1",
+                "areaDesc": "Pima, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019"
+                    ],
+                    "UGC": [
+                        "AZC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d5acb9243d20e06a5c9993ec779481a2e5aa9b65.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.d5acb9243d20e06a5c9993ec779481a2e5aa9b65.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T09:12:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T11:29:00-07:00",
+                "effective": "2026-09-29T11:29:00-07:00",
+                "onset": "2026-09-29T11:29:00-07:00",
+                "expires": "2026-09-29T15:15:00-07:00",
+                "ends": "2026-09-29T15:15:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 11:29AM MST until September 29 at 3:15PM MST by NWS Tucson AZ",
+                "description": "At 1129 AM MST, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Up to 2\ninches of rain have fallen. Additional rainfall amounts of 1 to 3\ninches are possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nFlowing Wells, Mount Lemmon/Summerhaven, Sabino Canyon Recreation\nArea, Catalina Foothills and Seven Falls.\n\nThis includes the following highways...\nRoute 77 near mile marker 72. Interstate 10 between mile markers 250\nand 252.\n\nThis includes the following Flash Flood Prone Locations...\nCamino De La Tierra at the Rillito River and Snyder Rd from Kolb Rd\nto Sabino Canyon Rd.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 291829"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 315 PM MST THIS AFTERNOON FOR NORTHEASTERN PIMA COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FF.W.0234.000000T0000Z-260929T2215Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T15:15:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 3:15 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 3:15 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.310cbf03ed262e7f9b593d06dfe0824f241d6251.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -106.96,
+                            32.78
+                        ],
+                        [
+                            -106.95,
+                            32.79
+                        ],
+                        [
+                            -106.89,
+                            32.79
+                        ],
+                        [
+                            -106.64,
+                            32.91
+                        ],
+                        [
+                            -106.54,
+                            32.57
+                        ],
+                        [
+                            -106.97,
+                            32.55
+                        ],
+                        [
+                            -107.01,
+                            32.63
+                        ],
+                        [
+                            -107.02,
+                            32.68
+                        ],
+                        [
+                            -106.96,
+                            32.78
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.310cbf03ed262e7f9b593d06dfe0824f241d6251.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.310cbf03ed262e7f9b593d06dfe0824f241d6251.001.1",
+                "areaDesc": "Dona Ana, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC013",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [],
+                "sent": "2026-09-29T12:18:00-06:00",
+                "effective": "2026-09-29T12:18:00-06:00",
+                "onset": "2026-09-29T12:18:00-06:00",
+                "expires": "2026-09-29T15:15:00-06:00",
+                "ends": "2026-09-29T15:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 12:18PM MDT until September 29 at 3:15PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nNortheastern Dona Ana County in south central New Mexico...\nSoutheastern Sierra County in south central New Mexico...\n\n* Until 315 PM MDT.\n\n* At 1218 PM MDT, Another round of torrential rainfall is crossing\nInterstate 25, and will move across the Jornada Range in the next\nhour. Flooding is likely to redevelop in arroyos and low lying\nareas.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPortions of Jornada Experimental Range.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291818"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0202.260929T1818Z-260929T2115Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T15:15:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0e9c1d2f27a9f0b08cb28ea05d6e0fb8bc935738.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.03,
+                            32.57
+                        ],
+                        [
+                            -110.81,
+                            32.65
+                        ],
+                        [
+                            -110.73,
+                            32.57
+                        ],
+                        [
+                            -110.61,
+                            32.67
+                        ],
+                        [
+                            -110.45,
+                            32.7
+                        ],
+                        [
+                            -110.45,
+                            32.42
+                        ],
+                        [
+                            -110.63,
+                            32.43
+                        ],
+                        [
+                            -110.68,
+                            32.39
+                        ],
+                        [
+                            -110.77,
+                            32.45
+                        ],
+                        [
+                            -110.88,
+                            32.38
+                        ],
+                        [
+                            -110.94,
+                            32.29
+                        ],
+                        [
+                            -111.06,
+                            32.33
+                        ],
+                        [
+                            -111.07,
+                            32.32
+                        ],
+                        [
+                            -111.05,
+                            32.3
+                        ],
+                        [
+                            -111.14,
+                            32.26
+                        ],
+                        [
+                            -111.2,
+                            32.3
+                        ],
+                        [
+                            -111.32,
+                            32.29
+                        ],
+                        [
+                            -111.34,
+                            32.32
+                        ],
+                        [
+                            -111.14,
+                            32.41
+                        ],
+                        [
+                            -111.03,
+                            32.57
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0e9c1d2f27a9f0b08cb28ea05d6e0fb8bc935738.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0e9c1d2f27a9f0b08cb28ea05d6e0fb8bc935738.001.1",
+                "areaDesc": "Pima, AZ; Pinal, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019",
+                        "004021"
+                    ],
+                    "UGC": [
+                        "AZC019",
+                        "AZC021"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019",
+                    "https://api.weather.gov/zones/county/AZC021"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.259d8c0dbbda730480bd1e779db928af1f718b65.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.259d8c0dbbda730480bd1e779db928af1f718b65.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T09:40:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T11:14:00-07:00",
+                "effective": "2026-09-29T11:14:00-07:00",
+                "onset": "2026-09-29T11:14:00-07:00",
+                "expires": "2026-09-29T15:45:00-07:00",
+                "ends": "2026-09-29T15:45:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 11:14AM MST until September 29 at 3:45PM MST by NWS Tucson AZ",
+                "description": "At 1114 AM MST, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between 1\nand 4 inches of rain have fallen. Additional rainfall amounts of 1 to\n2 inches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nCatalina, Oro Valley, Marana, Oracle, Casas Adobes, Saddlebrooke,\nSan Manuel, Saddlebrooke Ranch, Tortolita, Mount\nLemmon/Summerhaven, Catalina State Park, Catalina Foothills,\nSaguaro National Park West, Picture Rocks, Campo Bonito, Biosphere\n2, Oracle Junction, Dove Mountain and Redington.\n\nThis includes the following highways...\nRoute 79 between mile markers 92 and 94. Route 77 between mile\nmarkers 73 and 101. Interstate 10 between mile markers 243 and 249.\n\nThis includes the following Flash Flood Prone Locations...\nRiver Rd at San Pedro River, Silverbell Rd near Ina Rd, Overton Rd at\nCanada del Oro, Sunset Rd west of Camino de Oeste and E Wilds Rd at\nthe Canada del Oro.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KTWC 291814"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 345 PM MST THIS AFTERNOON FOR NORTHEASTERN PIMA AND SOUTHEASTERN PINAL COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FF.W.0235.000000T0000Z-260929T2245Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T15:45:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 3:45 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 3:45 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1e1639c10dc0c1b708e3d7c500bad93a86edf987.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.69,
+                            32.13
+                        ],
+                        [
+                            -107.7,
+                            32.2
+                        ],
+                        [
+                            -107.68,
+                            32.26
+                        ],
+                        [
+                            -107.55,
+                            32.34
+                        ],
+                        [
+                            -107.46,
+                            32.36
+                        ],
+                        [
+                            -107.5,
+                            32.22
+                        ],
+                        [
+                            -107.62,
+                            32.13
+                        ],
+                        [
+                            -107.69,
+                            32.13
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1e1639c10dc0c1b708e3d7c500bad93a86edf987.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1e1639c10dc0c1b708e3d7c500bad93a86edf987.001.1",
+                "areaDesc": "Luna, NM",
+                "geocode": {
+                    "SAME": [
+                        "035029"
+                    ],
+                    "UGC": [
+                        "NMC029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC029"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.27293bcadce27a9eb42d45c050eeeaaeaf260012.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.27293bcadce27a9eb42d45c050eeeaaeaf260012.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T10:40:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-29T12:12:00-06:00",
+                "effective": "2026-09-29T12:12:00-06:00",
+                "onset": "2026-09-29T12:12:00-06:00",
+                "expires": "2026-09-29T13:45:00-06:00",
+                "ends": "2026-09-29T13:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 12:12PM MDT until September 29 at 1:45PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "At 1212 PM MDT, Heavy rainfall has ended for the time being, but\nrunoff is likely to continue to cause flooding in arroyos and low\nwater crossings southeast of Deming, and near Rockhound State Park.\nAdditional heavy rainfall is likely later today as well.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nRock Hound State Park and Deming Ranchettes.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KEPZ 291812"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 145 PM MDT THIS AFTERNOON FOR EAST CENTRAL LUNA COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KEPZ.FF.W.0195.000000T0000Z-260929T1945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T13:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c5f71eeb99444914feeaa94b967e8eb0131d5734.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -106.51,
+                            33.48
+                        ],
+                        [
+                            -106.3,
+                            33.84
+                        ],
+                        [
+                            -106.16,
+                            33.94
+                        ],
+                        [
+                            -105.74,
+                            33.81
+                        ],
+                        [
+                            -105.77,
+                            33.6
+                        ],
+                        [
+                            -105.86,
+                            33.45
+                        ],
+                        [
+                            -105.85,
+                            33.39
+                        ],
+                        [
+                            -106.37,
+                            33.39
+                        ],
+                        [
+                            -106.37,
+                            33.48
+                        ],
+                        [
+                            -106.51,
+                            33.48
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c5f71eeb99444914feeaa94b967e8eb0131d5734.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c5f71eeb99444914feeaa94b967e8eb0131d5734.001.1",
+                "areaDesc": "Lincoln, NM; Socorro, NM",
+                "geocode": {
+                    "SAME": [
+                        "035027",
+                        "035053"
+                    ],
+                    "UGC": [
+                        "NMC027",
+                        "NMC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC027",
+                    "https://api.weather.gov/zones/county/NMC053"
+                ],
+                "references": [],
+                "sent": "2026-09-29T12:00:00-06:00",
+                "effective": "2026-09-29T12:00:00-06:00",
+                "onset": "2026-09-29T12:00:00-06:00",
+                "expires": "2026-09-29T20:00:00-06:00",
+                "ends": "2026-09-29T20:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 29 at 12:00PM MDT until September 29 at 8:00PM MDT by NWS Albuquerque NM",
+                "description": "FFWABQ\n\nThe National Weather Service in Albuquerque has issued a\n\n* Flash Flood Warning for...\nSouthwestern Lincoln County in central New Mexico...\nSoutheastern Socorro County in central New Mexico...\n\n* Until 800 PM MDT Tuesday.\n\n* At noon MDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Up to 0.5 inches of rain have fallen,\nwhere the ground is already saturated and fields are already\npooling with water from recent heavy rains. Additional rainfall\namounts up to 2 inches are possible in the warned area. Flash\nflooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nCarrizozo and Oscuro.\n\nThis includes Highway 380 between Mile Markers 36 and 71.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KABQ 291800"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KABQ.FF.W.0204.260929T1800Z-260930T0200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T20:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d19fa81a2183635699675ff5ac8d057b69fdf1f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -106.89,
+                            32.78
+                        ],
+                        [
+                            -107.22,
+                            32.78
+                        ],
+                        [
+                            -107.16,
+                            33.06
+                        ],
+                        [
+                            -107.41,
+                            33.06
+                        ],
+                        [
+                            -107.38,
+                            33.21
+                        ],
+                        [
+                            -107.23,
+                            33.48
+                        ],
+                        [
+                            -106.37,
+                            33.48
+                        ],
+                        [
+                            -106.37,
+                            33.45
+                        ],
+                        [
+                            -106.38,
+                            33.39
+                        ],
+                        [
+                            -106.35,
+                            33.39
+                        ],
+                        [
+                            -106.34,
+                            33.05
+                        ],
+                        [
+                            -106.89,
+                            32.78
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d19fa81a2183635699675ff5ac8d057b69fdf1f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1d19fa81a2183635699675ff5ac8d057b69fdf1f.001.1",
+                "areaDesc": "Dona Ana, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC013",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [],
+                "sent": "2026-09-29T11:58:00-06:00",
+                "effective": "2026-09-29T11:58:00-06:00",
+                "onset": "2026-09-29T11:58:00-06:00",
+                "expires": "2026-09-29T16:00:00-06:00",
+                "ends": "2026-09-29T16:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 11:58AM MDT until September 29 at 4:00PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nNortheastern Dona Ana County in south central New Mexico...\nEastern Sierra County in south central New Mexico...\n\n* Until 400 PM MDT.\n\n* At 1158 AM MDT, A broad area of moderate to locally heavy rainfall\ncontinues to strea up across eastern Sierra County, including the\nUpper Tularosa Basin and the Jornada del Muerto. Expect flooding in\nlow lying areas to continue to slowly worsen, with increasing flows\non area arroyos and draws. Minor urban flooding is also possible in\nand around Truth or Consequences.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nUpham, Cuchillo, Truth or Consequences, Engle, Cutter, City of\nElephant Butte, Palomas, Spaceport America, Williamsburg, Alamosa\nCanyon and Elephant Butte Lake.",
+                "instruction": "Be aware of your surroundings and do not drive on flooded roads.\n\nRemain alert for flooding even in locations not receiving rain.\nArroyos, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291758"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0201.260929T1758Z-260929T2200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T16:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c6a08c658b0230a9de162b3da5b2b8278e07d590.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.24,
+                            33.48
+                        ],
+                        [
+                            -107.19,
+                            33.59
+                        ],
+                        [
+                            -107.1,
+                            33.7
+                        ],
+                        [
+                            -107.01,
+                            33.77
+                        ],
+                        [
+                            -106.93,
+                            33.86
+                        ],
+                        [
+                            -106.9,
+                            34
+                        ],
+                        [
+                            -106.89,
+                            34.03
+                        ],
+                        [
+                            -106.89,
+                            34.09
+                        ],
+                        [
+                            -106.91,
+                            34.13
+                        ],
+                        [
+                            -106.92,
+                            34.2
+                        ],
+                        [
+                            -106.13,
+                            34.26
+                        ],
+                        [
+                            -106.15,
+                            33.94
+                        ],
+                        [
+                            -106.3,
+                            33.84
+                        ],
+                        [
+                            -106.5,
+                            33.48
+                        ],
+                        [
+                            -107.24,
+                            33.48
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c6a08c658b0230a9de162b3da5b2b8278e07d590.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c6a08c658b0230a9de162b3da5b2b8278e07d590.001.1",
+                "areaDesc": "Socorro, NM",
+                "geocode": {
+                    "SAME": [
+                        "035053"
+                    ],
+                    "UGC": [
+                        "NMC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC053"
+                ],
+                "references": [],
+                "sent": "2026-09-29T11:48:00-06:00",
+                "effective": "2026-09-29T11:48:00-06:00",
+                "onset": "2026-09-29T11:48:00-06:00",
+                "expires": "2026-09-29T19:45:00-06:00",
+                "ends": "2026-09-29T19:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 29 at 11:48AM MDT until September 29 at 7:45PM MDT by NWS Albuquerque NM",
+                "description": "FFWABQ\n\nThe National Weather Service in Albuquerque has issued a\n\n* Flash Flood Warning for...\nSoutheastern Socorro County in central New Mexico...\n\n* Until 745 PM MDT Tuesday.\n\n* At 1148 AM MDT, Doppler radar indicated thunderstorms producing\nmoderate-to-heavy rain across the warned area. Up to 1 inch of rain\nhas fallen, where the ground is already saturated and fields are\nalready pooling with water from recent heavy rains. Additional\nrainfall amounts up to 2 inches are possible in the warned area.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSocorro, San Antonio, Bosque Del Apache Refuge, Bingham, Escondida,\nLemitar, Laborcita and Luis Lopez.\n\nThis includes the following highways...\nHighway 380 between Mile Markers 1 and 35. Interstate 25 between Mile\nMarkers 103 and 146...and between Mile Markers 148 and 150...and near\nMile Marker 154.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KABQ 291748"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KABQ.FF.W.0203.260929T1748Z-260930T0145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T19:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.817f5e9b593a0c0cc8c00d6ecfe239a8c4cbcbfe.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.3,
+                            32.61
+                        ],
+                        [
+                            -107.24,
+                            32.63
+                        ],
+                        [
+                            -107.2,
+                            32.65
+                        ],
+                        [
+                            -107.19,
+                            32.7
+                        ],
+                        [
+                            -107.23,
+                            32.78
+                        ],
+                        [
+                            -106.95,
+                            32.78
+                        ],
+                        [
+                            -107.01,
+                            32.68
+                        ],
+                        [
+                            -107,
+                            32.63
+                        ],
+                        [
+                            -106.96,
+                            32.55
+                        ],
+                        [
+                            -106.99,
+                            32.54
+                        ],
+                        [
+                            -107.07,
+                            32.52
+                        ],
+                        [
+                            -107.15,
+                            32.51
+                        ],
+                        [
+                            -107.3,
+                            32.48
+                        ],
+                        [
+                            -107.3,
+                            32.61
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.817f5e9b593a0c0cc8c00d6ecfe239a8c4cbcbfe.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.817f5e9b593a0c0cc8c00d6ecfe239a8c4cbcbfe.001.1",
+                "areaDesc": "Dona Ana, NM; Luna, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035013",
+                        "035029",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC013",
+                        "NMC029",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC013",
+                    "https://api.weather.gov/zones/county/NMC029",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [],
+                "sent": "2026-09-29T11:45:00-06:00",
+                "effective": "2026-09-29T11:45:00-06:00",
+                "onset": "2026-09-29T11:45:00-06:00",
+                "expires": "2026-09-29T14:45:00-06:00",
+                "ends": "2026-09-29T14:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 11:45AM MDT until September 29 at 2:45PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nNorthwestern Dona Ana County in south central New Mexico...\nSouthern Sierra County in south central New Mexico...\nNortheastern Luna County in southwestern New Mexico...\n\n* Until 245 PM MDT.\n\n* At 1145 AM MDT, Thunderstorms with torrential rainfall rates up to\n3 inches per hour are moving into the Hatch and Rincon Valley. This\nwill lead to serious flash flooding on arroyos and low water\ncrossings, and in poor drainage areas, including in Rincon.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nHatch, Rincon, Angostura, Peaceful Valley.\n\nAll low water crossings on Highway 185 between mile markers 21 and 35\nwill likely become impassable. Expect rapid rises on Rincon Arroyo.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291745"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0200.260929T1745Z-260929T2045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:45:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:45 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:45 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ffe3ae4f231377a92dc6c289b984502fadea775c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.51,
+                            32.56
+                        ],
+                        [
+                            -107.41,
+                            32.69
+                        ],
+                        [
+                            -107.3,
+                            32.64
+                        ],
+                        [
+                            -107.3,
+                            32.48
+                        ],
+                        [
+                            -107.37,
+                            32.42
+                        ],
+                        [
+                            -107.44,
+                            32.37
+                        ],
+                        [
+                            -107.45,
+                            32.37
+                        ],
+                        [
+                            -107.4,
+                            32.5
+                        ],
+                        [
+                            -107.44,
+                            32.56
+                        ],
+                        [
+                            -107.51,
+                            32.56
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ffe3ae4f231377a92dc6c289b984502fadea775c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ffe3ae4f231377a92dc6c289b984502fadea775c.001.1",
+                "areaDesc": "Luna, NM; Sierra, NM",
+                "geocode": {
+                    "SAME": [
+                        "035029",
+                        "035051"
+                    ],
+                    "UGC": [
+                        "NMC029",
+                        "NMC051"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC029",
+                    "https://api.weather.gov/zones/county/NMC051"
+                ],
+                "references": [],
+                "sent": "2026-09-29T11:22:00-06:00",
+                "effective": "2026-09-29T11:22:00-06:00",
+                "onset": "2026-09-29T11:22:00-06:00",
+                "expires": "2026-09-29T14:15:00-06:00",
+                "ends": "2026-09-29T14:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 11:22AM MDT until September 29 at 2:15PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nSouth Central Sierra County in south central New Mexico...\nNortheastern Luna County in southwestern New Mexico...\n\n* Until 215 PM MDT.\n\n* At 1122 AM MDT, Over 1.5 inches of rain has fallen across the Uvas\nValley region in the past hour. While the heaviest rainfall is\nmoving east of the area, runoff will continue, resulting in\nconsiderable flash flooding.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and gauge indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nUvas Valley. Portions of Highway 26 in the vicinity of Nutt and\nMacho Springs.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291722"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0198.260929T1722Z-260929T2015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:15:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:15 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:15 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ea588feb50e4e57143e55e91f1c487eae4610bb4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.44,
+                            32.56
+                        ],
+                        [
+                            -107.51,
+                            32.56
+                        ],
+                        [
+                            -107.58,
+                            32.5
+                        ],
+                        [
+                            -107.53,
+                            32.41
+                        ],
+                        [
+                            -107.49,
+                            32.32
+                        ],
+                        [
+                            -107.45,
+                            32.22
+                        ],
+                        [
+                            -107.38,
+                            32.22
+                        ],
+                        [
+                            -107.37,
+                            32.26
+                        ],
+                        [
+                            -107.43,
+                            32.3
+                        ],
+                        [
+                            -107.44,
+                            32.37
+                        ],
+                        [
+                            -107.4,
+                            32.5
+                        ],
+                        [
+                            -107.44,
+                            32.56
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ea588feb50e4e57143e55e91f1c487eae4610bb4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ea588feb50e4e57143e55e91f1c487eae4610bb4.001.1",
+                "areaDesc": "Luna, NM",
+                "geocode": {
+                    "SAME": [
+                        "035029"
+                    ],
+                    "UGC": [
+                        "NMC029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC029"
+                ],
+                "references": [],
+                "sent": "2026-09-29T10:59:00-06:00",
+                "effective": "2026-09-29T10:59:00-06:00",
+                "onset": "2026-09-29T10:59:00-06:00",
+                "expires": "2026-09-29T17:00:00-06:00",
+                "ends": "2026-09-29T17:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 10:59AM MDT until September 29 at 5:00PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nNortheastern Luna County in southwestern New Mexico...\n\n* Until 500 PM MDT Tuesday.\n\n* At 1059 AM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nAkela.\n\nRunoff will flow southward towards Interstate 10 near Akela from the\nMacho Springs area.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291659"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0197.260929T1659Z-260929T2300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T17:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 5:00 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 5:00 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.abcdeaa851e8c106f3832d4206ced273a23c2e42.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.97,
+                            32.11
+                        ],
+                        [
+                            -110.78,
+                            32.24
+                        ],
+                        [
+                            -111.06,
+                            32.34
+                        ],
+                        [
+                            -111.15,
+                            32.26
+                        ],
+                        [
+                            -111.05,
+                            32.17
+                        ],
+                        [
+                            -111.06,
+                            32.13
+                        ],
+                        [
+                            -110.97,
+                            32.11
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.abcdeaa851e8c106f3832d4206ced273a23c2e42.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.abcdeaa851e8c106f3832d4206ced273a23c2e42.001.1",
+                "areaDesc": "Pima, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019"
+                    ],
+                    "UGC": [
+                        "AZC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019"
+                ],
+                "references": [],
+                "sent": "2026-09-29T09:53:00-07:00",
+                "effective": "2026-09-29T09:53:00-07:00",
+                "onset": "2026-09-29T09:53:00-07:00",
+                "expires": "2026-09-29T13:00:00-07:00",
+                "ends": "2026-09-29T13:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 9:53AM MST until September 29 at 1:00PM MST by NWS Tucson AZ",
+                "description": "FFWTWC\n\nThe National Weather Service in Tucson has issued a\n\n* Flash Flood Warning for...\nNortheastern Pima County in southeastern Arizona...\n\n* Until 100 PM MST.\n\n* At 953 AM MST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Additional rainfall amounts of 1\nto 2 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nTucson, Davis-Monthan Air Force Base, Casas Adobes, Drexel Heights,\nFlowing Wells, South Tucson, San Xavier Community, Tucson\nInternational Airport, Catalina Foothills, Tucson Mountain Park and\nSaguaro National Park West.\n\nThis includes the following highways...\nInterstate 19 between mile markers 58 and 63. Route 86 between mile\nmarkers 168 and 171. Route 77 between mile markers 70 and 72.\nInterstate 10 between mile markers 249 and 265.\n\nThis includes the following Flash Flood Prone Locations...\nSanta Clara Ave at El Vado Wash, 1st Ave north of Fort Lowell Rd,\nStone Ave at Mabel St, Alamo Wash between Speedway and Grant, Camino\nDe La Tierra at the Rillito River, Camino de Oeste from Sweetwater to\nGates Pass, Ironwood Hills Dr from Shannon to Camino de Oeste and\nSunset Rd west of Camino de Oeste.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTWC 291653"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTWC.FF.W.0236.260929T1653Z-260929T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T13:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ab94b5c0d8c9da59c2e2df8b7b00d478269a4465.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -107.5,
+                            32.22
+                        ],
+                        [
+                            -107.43,
+                            32.18
+                        ],
+                        [
+                            -107.36,
+                            32.2
+                        ],
+                        [
+                            -107.33,
+                            32.25
+                        ],
+                        [
+                            -107.3,
+                            32.31
+                        ],
+                        [
+                            -107.3,
+                            32.49
+                        ],
+                        [
+                            -107.47,
+                            32.36
+                        ],
+                        [
+                            -107.5,
+                            32.22
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ab94b5c0d8c9da59c2e2df8b7b00d478269a4465.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ab94b5c0d8c9da59c2e2df8b7b00d478269a4465.001.1",
+                "areaDesc": "Luna, NM",
+                "geocode": {
+                    "SAME": [
+                        "035029"
+                    ],
+                    "UGC": [
+                        "NMC029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC029"
+                ],
+                "references": [],
+                "sent": "2026-09-29T10:46:00-06:00",
+                "effective": "2026-09-29T10:46:00-06:00",
+                "onset": "2026-09-29T10:46:00-06:00",
+                "expires": "2026-09-29T14:45:00-06:00",
+                "ends": "2026-09-29T14:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 29 at 10:46AM MDT until September 29 at 2:45PM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "FFWEPZ\n\nThe National Weather Service in El Paso Tx/Santa Teresa has issued a\n\n* Flash Flood Warning for...\nEast Central Luna County in southwestern New Mexico...\n\n* Until 245 PM MDT.\n\n* At 1046 AM MDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.25 and 0.5 inches of\nrain have fallen. Additional rainfall amounts up to 1 inch is\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nAkela.\n\nRunoff from the Macho Springs area will flow southward towards\nInterstate 10 and Akela.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KEPZ 291646"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEPZ.FF.W.0196.260929T1646Z-260929T2045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d8bf281f1015e71c5e4019502166950b1947f224.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.66,
+                            36.94
+                        ],
+                        [
+                            -111.59,
+                            36.88
+                        ],
+                        [
+                            -111.57,
+                            36.86
+                        ],
+                        [
+                            -111.59,
+                            36.85
+                        ],
+                        [
+                            -111.62,
+                            36.88
+                        ],
+                        [
+                            -111.72,
+                            36.93
+                        ],
+                        [
+                            -111.8,
+                            36.96
+                        ],
+                        [
+                            -111.86,
+                            36.97
+                        ],
+                        [
+                            -111.87,
+                            36.99
+                        ],
+                        [
+                            -111.82,
+                            37
+                        ],
+                        [
+                            -111.7,
+                            37
+                        ],
+                        [
+                            -111.69,
+                            36.98
+                        ],
+                        [
+                            -111.66,
+                            36.94
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d8bf281f1015e71c5e4019502166950b1947f224.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d8bf281f1015e71c5e4019502166950b1947f224.001.1",
+                "areaDesc": "Coconino, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004005"
+                    ],
+                    "UGC": [
+                        "AZC005"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC005"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c94b10d56e2624bd040e2b969a3f6e452cfdae3a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.c94b10d56e2624bd040e2b969a3f6e452cfdae3a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-29T06:27:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-29T09:37:00-07:00",
+                "effective": "2026-09-29T09:37:00-07:00",
+                "onset": "2026-09-29T09:37:00-07:00",
+                "expires": "2026-09-29T13:00:00-07:00",
+                "ends": "2026-09-29T13:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued September 29 at 9:37AM MST until September 29 at 1:00PM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has extended the\n\n* Flash Flood Warning for...\nThe Paria River in...\nCoconino County in north central Arizona...\n\n* Until 100 PM MST /200 PM MDT/.\n\n* At 937 AM MST /1037 AM MDT/, a river gauge on the Paria River at\nLees Ferry reported a rapid rise of 6 feet from heavy rain over the\nParia River. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Life threatening flash flooding. Heavy rain producing\nflash flooding in and around the Paria River.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nParia River.\n\n* Some locations that will experience flash flooding include...\nParia Canyon, Paria River Slot Canyon and Lees Ferry.\n\nThis includes the Colorado River near mile marker 0.\n\nThis includes the following recreation areas and campgrounds...\nLees Ferry Camp Site.\n\nThis includes the following creeks, washes and rivers...\nParia River and Colorado River.",
+                "instruction": "Get out of the Paria River slot canyon!\n\nGet out of washes and creeks if you are camping or hiking! Flooding\nis occurring or imminent and will inundate creeks and washes.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 291637"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFGZ.FF.W.0183.000000T0000Z-260929T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T13:00:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.66feadf8d2b1381db936e49030a8e0bc0ac8bbe4.001.1,2026-09-29T03:37:00-07:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7dfebb6b16579962ca0922d09b2fd7f73e63406c.001.1,2026-09-28T23:39:00-07:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 1:00 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 1:00 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10e7e6cfb8280415d4a27941c29d387c9e6a2fdd.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -111.78,
+                            32.68
+                        ],
+                        [
+                            -111.61,
+                            32.76
+                        ],
+                        [
+                            -111.53,
+                            32.85
+                        ],
+                        [
+                            -110.95,
+                            33.25
+                        ],
+                        [
+                            -110.78,
+                            32.98
+                        ],
+                        [
+                            -110.72,
+                            33.04
+                        ],
+                        [
+                            -110.72,
+                            33.08
+                        ],
+                        [
+                            -110.63,
+                            33.14
+                        ],
+                        [
+                            -110.59,
+                            33.13
+                        ],
+                        [
+                            -110.45,
+                            33.19
+                        ],
+                        [
+                            -110.63,
+                            32.89
+                        ],
+                        [
+                            -110.81,
+                            32.65
+                        ],
+                        [
+                            -111.03,
+                            32.57
+                        ],
+                        [
+                            -111.14,
+                            32.41
+                        ],
+                        [
+                            -111.52,
+                            32.23
+                        ],
+                        [
+                            -111.63,
+                            32.04
+                        ],
+                        [
+                            -111.86,
+                            31.93
+                        ],
+                        [
+                            -112.05,
+                            31.92
+                        ],
+                        [
+                            -112.26,
+                            32.02
+                        ],
+                        [
+                            -112.07,
+                            32.34
+                        ],
+                        [
+                            -111.78,
+                            32.68
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.10e7e6cfb8280415d4a27941c29d387c9e6a2fdd.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.10e7e6cfb8280415d4a27941c29d387c9e6a2fdd.001.1",
+                "areaDesc": "Pima, AZ; Pinal, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004019",
+                        "004021"
+                    ],
+                    "UGC": [
+                        "AZC019",
+                        "AZC021"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC019",
+                    "https://api.weather.gov/zones/county/AZC021"
+                ],
+                "references": [],
+                "sent": "2026-09-29T08:32:00-07:00",
+                "effective": "2026-09-29T08:32:00-07:00",
+                "onset": "2026-09-29T08:32:00-07:00",
+                "expires": "2026-09-29T14:30:00-07:00",
+                "ends": "2026-09-29T14:30:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 8:32AM MST until September 29 at 2:30PM MST by NWS Tucson AZ",
+                "description": "FFWTWC\n\nThe National Weather Service in Tucson has issued a\n\n* Flash Flood Warning for...\nNorth Central Pima County in southeastern Arizona...\nPinal County in southeastern Arizona...\n\n* Until 230 PM MST.\n\n* At 832 AM MST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 1.5 inches of rain have\nfallen. Additional rainfall amounts of 1 to 2 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMarana, Sells, Eloy, Avra Valley, Kearny, Dudleyville, Santa Rosa,\nPicacho, San Isidro, Picacho Peak State Park, Pinal Airpark,\nPicture Rocks, Red Rock, Cactus Forest, Covered Wells, Anegam, Gu\nOidak, Palo Verde Stand, Ak Chin and Queens Well.\n\nThis includes the following highways...\nRoute 79 between mile markers 95 and 128. Route 86 between mile\nmarkers 89 and 112. Route 87 between mile markers 116 and 124. Route\n77 between mile markers 122 and 134. Route 177 between mile markers\n139 and 158. Interstate 10 between mile markers 205 and 242.\n\nThis includes the following Flash Flood Prone Locations...\nSuizo Rd at Cadillac Wash, Sunland Gin Rd at Greene Wash, Sasco Rd at\nSanta Cruz Wash, Park Link Dr between I-10 and HWY 79, Twin Peaks Rd\nbetween Sanders and Sandario and Sil Nakya Wash at Route 34.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTWC 291532"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTWC.FF.W.0233.260929T1532Z-260929T2130Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:30:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.188d5d1cc9778be8a9ee423b5999f6f853dc6b63.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -110.46,
+                            31.35
+                        ],
+                        [
+                            -110.39,
+                            31.49
+                        ],
+                        [
+                            -110.16,
+                            31.58
+                        ],
+                        [
+                            -109.97,
+                            31.58
+                        ],
+                        [
+                            -110.04,
+                            31.33
+                        ],
+                        [
+                            -110.46,
+                            31.33
+                        ],
+                        [
+                            -110.46,
+                            31.35
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.188d5d1cc9778be8a9ee423b5999f6f853dc6b63.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.188d5d1cc9778be8a9ee423b5999f6f853dc6b63.001.1",
+                "areaDesc": "Cochise, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004003"
+                    ],
+                    "UGC": [
+                        "AZC003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC003"
+                ],
+                "references": [],
+                "sent": "2026-09-29T08:24:00-07:00",
+                "effective": "2026-09-29T08:24:00-07:00",
+                "onset": "2026-09-29T08:24:00-07:00",
+                "expires": "2026-09-29T14:30:00-07:00",
+                "ends": "2026-09-29T14:30:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flash Flood Warning issued September 29 at 8:24AM MST until September 29 at 2:30PM MST by NWS Tucson AZ",
+                "description": "FFWTWC\n\nThe National Weather Service in Tucson has issued a\n\n* Flash Flood Warning for...\nSouthwestern Cochise County in southeastern Arizona...\n\n* Until 230 PM MST Tuesday.\n\n* At 824 AM MST, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Up to 1 inch of rain has fallen.\nAdditional rainfall amounts of 1 to 2 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSierra Vista, Hereford, Fort Huachuca, Palominas, Coronado National\nMemorial and Ramsey Canyon Preserve.\n\nThis includes the following highways...\nRoute 90 between mile markers 324 and 336. Route 80 between mile\nmarkers 328 and 335. Route 92 between mile markers 323 and 345.\n\nThis includes the following Flash Flood Prone Locations...\nMoson Rd from HWY 90 and Hereford Rd.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KTWC 291524"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTWC.FF.W.0232.260929T1524Z-260929T2130Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:30:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3c03f5df265227cd6948a79920c9a28a3f2746a6.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -112.15,
+                            34.07
+                        ],
+                        [
+                            -112.11,
+                            34.11
+                        ],
+                        [
+                            -112.12,
+                            34.18
+                        ],
+                        [
+                            -112.07,
+                            34.27
+                        ],
+                        [
+                            -112.08,
+                            34.31
+                        ],
+                        [
+                            -112.15,
+                            34.4
+                        ],
+                        [
+                            -112.17,
+                            34.43
+                        ],
+                        [
+                            -112.2,
+                            34.44
+                        ],
+                        [
+                            -112.19,
+                            34.45
+                        ],
+                        [
+                            -112.17,
+                            34.45
+                        ],
+                        [
+                            -112.09,
+                            34.37
+                        ],
+                        [
+                            -112.03,
+                            34.29
+                        ],
+                        [
+                            -112.04,
+                            34.25
+                        ],
+                        [
+                            -112.08,
+                            34.19
+                        ],
+                        [
+                            -112.07,
+                            34.14
+                        ],
+                        [
+                            -112.09,
+                            34.08
+                        ],
+                        [
+                            -112.11,
+                            34.06
+                        ],
+                        [
+                            -112.12,
+                            34.07
+                        ],
+                        [
+                            -112.14,
+                            34.06
+                        ],
+                        [
+                            -112.15,
+                            34.07
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3c03f5df265227cd6948a79920c9a28a3f2746a6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3c03f5df265227cd6948a79920c9a28a3f2746a6.001.1",
+                "areaDesc": "Yavapai, AZ",
+                "geocode": {
+                    "SAME": [
+                        "004025"
+                    ],
+                    "UGC": [
+                        "AZC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC025"
+                ],
+                "references": [],
+                "sent": "2026-09-29T08:07:00-07:00",
+                "effective": "2026-09-29T08:07:00-07:00",
+                "onset": "2026-09-29T08:07:00-07:00",
+                "expires": "2026-09-29T14:00:00-07:00",
+                "ends": "2026-09-29T14:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flash Flood Warning issued September 29 at 8:07AM MST until September 29 at 2:00PM MST by NWS Flagstaff AZ",
+                "description": "FFWFGZ\n\nThe National Weather Service in Flagstaff has issued a\n\n* Flash Flood Warning for...\nThe Agua Fria River in...\nYavapai County in west central Arizona...\n\n* Until 200 PM MST.\n\n* At 807 AM MST, a river gauge on the Agua Fria River near Cordes\nLakes reported a rapid rise of 4 feet from thunderstorms producing\nheavy rain over the Agua Fria River. Up to 2 inches of rain have\nfallen.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding in and around the Agua Fria River.\n\nSOURCE...River gauge reported.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nAgua Fria River.\n\n* Some locations that will experience flash flooding include...\nAgua Fria National Monument, Black Canyon City and Arcosanti.\n\nThis includes Interstate 17 between mile markers 243 and 244...and\nbetween mile markers 265 and 266.\n\nThis includes the following creeks, washes and rivers...\nBishop Creek, Sycamore Creek, Tank Creek, Squaw Creek, Antelope\nCreek, Badger Spring Wash, Brushy Wash, Black Canyon, Indian Creek,\nLarry Creek, Yarber Wash, Ash Creek, Big Bug Creek, Agua Fria River\nand Silver Creek.",
+                "instruction": "Turn Around, Don't Drown! Avoid driving across the Squaw Valley Road\nlow water crossing in Black Canyon City. Flash flooding of the Agua\nFria is imminent or occurring.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KFGZ 291507"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGZ.FF.W.0186.260929T1507Z-260929T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T14:00:00-07:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:00 PM MST. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:00 PM MST. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-29T19:15:48+00:00"
+}

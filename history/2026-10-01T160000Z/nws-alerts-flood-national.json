@@ -1,0 +1,825 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6e9667aaedb3a2972f3d3a648b77d1ad6ca8092d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -99.6,
+                            38.73
+                        ],
+                        [
+                            -100.11,
+                            38.73
+                        ],
+                        [
+                            -100.1,
+                            39.11
+                        ],
+                        [
+                            -99.23,
+                            39.09
+                        ],
+                        [
+                            -99.06,
+                            39.1
+                        ],
+                        [
+                            -99.05,
+                            39.11
+                        ],
+                        [
+                            -99.07,
+                            38.72
+                        ],
+                        [
+                            -99.6,
+                            38.73
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6e9667aaedb3a2972f3d3a648b77d1ad6ca8092d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6e9667aaedb3a2972f3d3a648b77d1ad6ca8092d.001.1",
+                "areaDesc": "Ellis, KS; Trego, KS",
+                "geocode": {
+                    "SAME": [
+                        "020051",
+                        "020195"
+                    ],
+                    "UGC": [
+                        "KSC051",
+                        "KSC195"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC051",
+                    "https://api.weather.gov/zones/county/KSC195"
+                ],
+                "references": [],
+                "sent": "2026-10-01T10:26:00-05:00",
+                "effective": "2026-10-01T10:26:00-05:00",
+                "onset": "2026-10-01T10:26:00-05:00",
+                "expires": "2026-10-01T13:30:00-05:00",
+                "ends": "2026-10-01T13:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Dodge City KS",
+                "headline": "Flash Flood Warning issued October 1 at 10:26AM CDT until October 1 at 1:30PM CDT by NWS Dodge City KS",
+                "description": "FFWDDC\n\nThe National Weather Service in Dodge City has issued a\n\n* Flash Flood Warning for...\nEllis County in central Kansas...\nTrego County in west central Kansas...\n\n* Until 130 PM CDT.\n\n* At 1026 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. The expected rainfall rate is 0.5 to 1.5 inches in 1\nhour. Additional rainfall amounts of 1 to 2 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nHays, Ellis, Wakeeney, Victoria, Catherine, Ogallah, Riga,\nYocemento, Cedar Bluff, Antonino, Trego Center, Munjor, Toulon,\nEmmeram and Voda.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWDDC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KDDC 011526"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KDDC.FF.W.0023.261001T1526Z-261001T1830Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T13:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.113d86daa7a892f049981f61b718ec17fafd2e98.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.54,
+                            32.99
+                        ],
+                        [
+                            -97.4,
+                            32.99
+                        ],
+                        [
+                            -97.39,
+                            33.26
+                        ],
+                        [
+                            -96.84,
+                            33.24
+                        ],
+                        [
+                            -96.84,
+                            32.99
+                        ],
+                        [
+                            -97.04,
+                            32.55
+                        ],
+                        [
+                            -97.55,
+                            32.56
+                        ],
+                        [
+                            -97.55,
+                            32.84
+                        ],
+                        [
+                            -97.54,
+                            32.99
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.113d86daa7a892f049981f61b718ec17fafd2e98.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.113d86daa7a892f049981f61b718ec17fafd2e98.001.1",
+                "areaDesc": "Dallas, TX; Denton, TX; Tarrant, TX",
+                "geocode": {
+                    "SAME": [
+                        "048113",
+                        "048121",
+                        "048439"
+                    ],
+                    "UGC": [
+                        "TXC113",
+                        "TXC121",
+                        "TXC439"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC113",
+                    "https://api.weather.gov/zones/county/TXC121",
+                    "https://api.weather.gov/zones/county/TXC439"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e2b7482c03ee74b81ed3c2b8883c99be3a09f0f4.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e2b7482c03ee74b81ed3c2b8883c99be3a09f0f4.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-01T07:24:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.89673fe4890e820377cfab17c51df746b8c67e7c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.89673fe4890e820377cfab17c51df746b8c67e7c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-01T08:43:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-01T10:17:00-05:00",
+                "effective": "2026-10-01T10:17:00-05:00",
+                "onset": "2026-10-01T10:17:00-05:00",
+                "expires": "2026-10-01T12:30:00-05:00",
+                "ends": "2026-10-01T12:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Fort Worth TX",
+                "headline": "Flash Flood Warning issued October 1 at 10:17AM CDT until October 1 at 12:30PM CDT by NWS Fort Worth TX",
+                "description": "FFWFWD\n\nThe National Weather Service in Fort Worth has extended the\n\n* Flash Flood Warning for...\nNorthwestern Dallas County in north central Texas...\nDenton County in north central Texas...\nTarrant County in north central Texas...\n\n* Until 1230 PM CDT.\n\n* At 1017 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Up to 4\ninches of rain have fallen. Additional rainfall amounts up to 2\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFort Worth, Arlington, Irving, Grand Prairie, Carrollton, Frisco,\nDenton, Lewisville, Flower Mound, Mansfield, Euless, Bedford,\nGrapevine, Haltom City, Keller, Coppell and Hurst.\n\nThis includes the following highways...\nInterstate 35E between mile markers 437 and 466. Interstate 35W\nbetween mile markers 38 and 85. Interstate 35 between mile markers\n468 and 470. Interstate 20 between mile markers 423 and 456.\nInterstate 30 between mile markers 2 and 37.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFWD"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KFWD 011517"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KFWD.FF.W.0088.000000T0000Z-261001T1730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T12:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e7aa99271000e99e27eb1dd4ddac01bc8d875ae6.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.62,
+                            32.34
+                        ],
+                        [
+                            -97.53,
+                            32.56
+                        ],
+                        [
+                            -96.97,
+                            32.55
+                        ],
+                        [
+                            -97.09,
+                            32.27
+                        ],
+                        [
+                            -97.45,
+                            32.19
+                        ],
+                        [
+                            -97.52,
+                            32.16
+                        ],
+                        [
+                            -97.52,
+                            32.14
+                        ],
+                        [
+                            -97.57,
+                            32.15
+                        ],
+                        [
+                            -97.56,
+                            32.16
+                        ],
+                        [
+                            -97.57,
+                            32.17
+                        ],
+                        [
+                            -97.57,
+                            32.18
+                        ],
+                        [
+                            -97.59,
+                            32.18
+                        ],
+                        [
+                            -97.59,
+                            32.2
+                        ],
+                        [
+                            -97.61,
+                            32.2
+                        ],
+                        [
+                            -97.62,
+                            32.34
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e7aa99271000e99e27eb1dd4ddac01bc8d875ae6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.e7aa99271000e99e27eb1dd4ddac01bc8d875ae6.001.1",
+                "areaDesc": "Ellis, TX; Johnson, TX",
+                "geocode": {
+                    "SAME": [
+                        "048139",
+                        "048251"
+                    ],
+                    "UGC": [
+                        "TXC139",
+                        "TXC251"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC139",
+                    "https://api.weather.gov/zones/county/TXC251"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.af4b7a998d0abf1bbf1841635a7398615c8e4a08.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.af4b7a998d0abf1bbf1841635a7398615c8e4a08.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-01T09:33:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-01T10:10:00-05:00",
+                "effective": "2026-10-01T10:10:00-05:00",
+                "onset": "2026-10-01T10:10:00-05:00",
+                "expires": "2026-10-01T12:30:00-05:00",
+                "ends": "2026-10-01T12:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Fort Worth TX",
+                "headline": "Flash Flood Warning issued October 1 at 10:10AM CDT until October 1 at 12:30PM CDT by NWS Fort Worth TX",
+                "description": "At 1010 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Up to 3.5\ninches of rain have fallen. Additional rainfall amounts up to 2\ninches are possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nMansfield, Burleson, Cleburne, Midlothian, Keene, Joshua, Alvarado,\nVenus, Grandview, Godley, Cross Timber, Lake Pat Cleburne and\nCleburne State Park.\n\nThis includes Interstate 35W between mile markers 15 and 37.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSFWD"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KFWD 011510"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 1230 PM CDT THIS AFTERNOON FOR NORTHWESTERN ELLIS AND JOHNSON COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KFWD.FF.W.0089.000000T0000Z-261001T1730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T12:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2e18a977301a0d64a4bdcd62384e8e65014f30ed.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -101.54,
+                            37.84
+                        ],
+                        [
+                            -101.86,
+                            37.88
+                        ],
+                        [
+                            -101.89,
+                            38.13
+                        ],
+                        [
+                            -101.17,
+                            38.11
+                        ],
+                        [
+                            -101.15,
+                            37.84
+                        ],
+                        [
+                            -101.37,
+                            37.82
+                        ],
+                        [
+                            -101.54,
+                            37.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2e18a977301a0d64a4bdcd62384e8e65014f30ed.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2e18a977301a0d64a4bdcd62384e8e65014f30ed.001.1",
+                "areaDesc": "Hamilton, KS; Kearny, KS",
+                "geocode": {
+                    "SAME": [
+                        "020075",
+                        "020093"
+                    ],
+                    "UGC": [
+                        "KSC075",
+                        "KSC093"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC075",
+                    "https://api.weather.gov/zones/county/KSC093"
+                ],
+                "references": [],
+                "sent": "2026-10-01T08:48:00-06:00",
+                "effective": "2026-10-01T08:48:00-06:00",
+                "onset": "2026-10-01T08:48:00-06:00",
+                "expires": "2026-10-01T11:45:00-06:00",
+                "ends": "2026-10-01T11:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Dodge City KS",
+                "headline": "Flash Flood Warning issued October 1 at 8:48AM MDT until October 1 at 11:45AM MDT by NWS Dodge City KS",
+                "description": "FFWDDC\n\nThe National Weather Service in Dodge City has issued a\n\n* Flash Flood Warning for...\nSoutheastern Hamilton County in southwestern Kansas...\nCentral Kearny County in southwestern Kansas...\n\n* Until 1145 AM MDT /1245 PM CDT/.\n\n* At 848 AM MDT /948 AM CDT/, Doppler radar indicated thunderstorms\nproducing heavy rain across the warned area. Between 1 and 3 inches\nof rain have fallen. The expected rainfall rate is 1 to 2 inches in\n2 hours. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLakin, Syracuse and Kendall.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWDDC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KDDC 011448"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KDDC.FF.W.0022.261001T1448Z-261001T1745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T11:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cb5e0d8071f78c28c95e1880aa9c4ad301bd5dff.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -93.94,
+                            39.33
+                        ],
+                        [
+                            -93.65,
+                            39.61
+                        ],
+                        [
+                            -93.28,
+                            39.62
+                        ],
+                        [
+                            -93.52,
+                            39.38
+                        ],
+                        [
+                            -93.61,
+                            39.27
+                        ],
+                        [
+                            -93.83,
+                            39.27
+                        ],
+                        [
+                            -93.94,
+                            39.33
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cb5e0d8071f78c28c95e1880aa9c4ad301bd5dff.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.cb5e0d8071f78c28c95e1880aa9c4ad301bd5dff.001.1",
+                "areaDesc": "Carroll, MO; Ray, MO",
+                "geocode": {
+                    "SAME": [
+                        "029033",
+                        "029177"
+                    ],
+                    "UGC": [
+                        "MOC033",
+                        "MOC177"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/MOC033",
+                    "https://api.weather.gov/zones/county/MOC177"
+                ],
+                "references": [],
+                "sent": "2026-10-01T09:02:00-05:00",
+                "effective": "2026-10-01T09:02:00-05:00",
+                "onset": "2026-10-01T09:02:00-05:00",
+                "expires": "2026-10-01T15:00:00-05:00",
+                "ends": "2026-10-01T15:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Kansas City/Pleasant Hill MO",
+                "headline": "Flash Flood Warning issued October 1 at 9:02AM CDT until October 1 at 3:00PM CDT by NWS Kansas City/Pleasant Hill MO",
+                "description": "FFWEAX\n\nThe National Weather Service in Pleasant Hill has issued a\n\n* Flash Flood Warning for...\nWestern Carroll County in north central Missouri...\nEast Central Ray County in west central Missouri...\n\n* Until 300 PM CDT.\n\n* At 902 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1.5 and 2 inches of rain\nhave fallen. The expected rainfall rate is 1 to 2 inches in 1 hour.\nAdditional rainfall amounts of 1 to 1.5 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNorborne, Hardin, Hale, Bogard, Tina and Stet.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KEAX 011402"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEAX.FF.W.0067.261001T1402Z-261001T2000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T15:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b76a86bb26c1801217e0b36e0294ed72e81b5138.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.36,
+                            39.42
+                        ],
+                        [
+                            -95.1,
+                            39.6
+                        ],
+                        [
+                            -95.08,
+                            39.58
+                        ],
+                        [
+                            -95.1,
+                            39.58
+                        ],
+                        [
+                            -95.11,
+                            39.57
+                        ],
+                        [
+                            -95.11,
+                            39.54
+                        ],
+                        [
+                            -95.05,
+                            39.5
+                        ],
+                        [
+                            -95.05,
+                            39.48
+                        ],
+                        [
+                            -95.04,
+                            39.46
+                        ],
+                        [
+                            -94.99,
+                            39.44
+                        ],
+                        [
+                            -94.97,
+                            39.42
+                        ],
+                        [
+                            -94.95,
+                            39.41
+                        ],
+                        [
+                            -94.94,
+                            39.39
+                        ],
+                        [
+                            -94.93,
+                            39.39
+                        ],
+                        [
+                            -94.93,
+                            39.36
+                        ],
+                        [
+                            -95.18,
+                            39.36
+                        ],
+                        [
+                            -95.18,
+                            39.42
+                        ],
+                        [
+                            -95.36,
+                            39.42
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b76a86bb26c1801217e0b36e0294ed72e81b5138.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b76a86bb26c1801217e0b36e0294ed72e81b5138.001.1",
+                "areaDesc": "Atchison, KS; Leavenworth, KS",
+                "geocode": {
+                    "SAME": [
+                        "020005",
+                        "020103"
+                    ],
+                    "UGC": [
+                        "KSC005",
+                        "KSC103"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC005",
+                    "https://api.weather.gov/zones/county/KSC103"
+                ],
+                "references": [],
+                "sent": "2026-10-01T08:22:00-05:00",
+                "effective": "2026-10-01T08:22:00-05:00",
+                "onset": "2026-10-01T08:22:00-05:00",
+                "expires": "2026-10-01T14:15:00-05:00",
+                "ends": "2026-10-01T14:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Kansas City/Pleasant Hill MO",
+                "headline": "Flash Flood Warning issued October 1 at 8:22AM CDT until October 1 at 2:15PM CDT by NWS Kansas City/Pleasant Hill MO",
+                "description": "FFWEAX\n\nThe National Weather Service in Pleasant Hill has issued a\n\n* Flash Flood Warning for...\nSoutheastern Atchison County in northeastern Kansas...\nNorthwestern Leavenworth County in northeastern Kansas...\n\n* Until 215 PM CDT.\n\n* At 822 AM CDT, Emergency management reported thunderstorms\nproducing heavy rain across the warned area. Between 1 and 2 inches\nof rain have fallen. The expected rainfall rate is 2 to 2.5 inches\nin 1 hour. Additional rainfall amounts of 0.5 to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Emergency management reported. Road 210 has standing water\nwith several ditches full.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nAtchison, Potter, Lowemont and Cummings.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWEAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KEAX 011322"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEAX.FF.W.0066.261001T1322Z-261001T1915Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T14:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-01T16:15:03+00:00"
+}

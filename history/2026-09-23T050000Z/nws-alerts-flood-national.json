@@ -1,0 +1,648 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d83cef6efb23622df9692258e6b283ca8038fd19.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -105.81,
+                            32
+                        ],
+                        [
+                            -105.83,
+                            32.04
+                        ],
+                        [
+                            -105.87,
+                            32.14
+                        ],
+                        [
+                            -105.86,
+                            32.32
+                        ],
+                        [
+                            -105.81,
+                            32.35
+                        ],
+                        [
+                            -105.76,
+                            32.33
+                        ],
+                        [
+                            -105.62,
+                            32.33
+                        ],
+                        [
+                            -105.5,
+                            32.29
+                        ],
+                        [
+                            -105.37,
+                            32.19
+                        ],
+                        [
+                            -105.22,
+                            32.14
+                        ],
+                        [
+                            -105.19,
+                            32.01
+                        ],
+                        [
+                            -105.32,
+                            31.96
+                        ],
+                        [
+                            -105.49,
+                            31.99
+                        ],
+                        [
+                            -105.8,
+                            31.99
+                        ],
+                        [
+                            -105.81,
+                            32
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d83cef6efb23622df9692258e6b283ca8038fd19.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d83cef6efb23622df9692258e6b283ca8038fd19.001.1",
+                "areaDesc": "Otero, NM; Hudspeth, TX",
+                "geocode": {
+                    "SAME": [
+                        "035035",
+                        "048229"
+                    ],
+                    "UGC": [
+                        "NMC035",
+                        "TXC229"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC035",
+                    "https://api.weather.gov/zones/county/TXC229"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2a949d5b25347ba553ceaad92d79439255a27266.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.2a949d5b25347ba553ceaad92d79439255a27266.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-22T22:49:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-22T23:46:00-06:00",
+                "effective": "2026-09-22T23:46:00-06:00",
+                "onset": "2026-09-22T23:46:00-06:00",
+                "expires": "2026-09-23T01:45:00-06:00",
+                "ends": "2026-09-23T01:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flash Flood Warning issued September 22 at 11:46PM MDT until September 23 at 1:45AM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "At 1146 PM MDT, Thunderstorms have diminished in intensity over the\nOtero Mesa. Radar estimates 2.50 to 3 inches of rain fell in Otero\nCounty, northwest of Dell City. This will result in flooding in\nvarious draws that flow towards Dell City. Retention dams will\nprevent water from reaching Dell City, but flooding will impact rural\nroads north and northwest of town, especially across the New Mexico\nborder.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nRural areas on the Otero Mesa northwest of Dell City.",
+                "instruction": "Be especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nRemain alert for flooding even in locations not receiving rain.\nArroyos, streams, and rivers can become raging killer currents in a\nmatter of minutes, even from distant rainfall.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KEPZ 230546"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 145 AM MDT WEDNESDAY FOR SOUTH CENTRAL OTERO AND NORTH CENTRAL HUDSPETH COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KEPZ.FF.W.0155.000000T0000Z-260923T0745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-23T01:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.281128bf7c60c12363ccb5a5d2fe5f5840b1fac1.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.37,
+                            35.47
+                        ],
+                        [
+                            -82.38,
+                            35.48
+                        ],
+                        [
+                            -82.27,
+                            35.57
+                        ],
+                        [
+                            -82.25,
+                            35.56
+                        ],
+                        [
+                            -82.21,
+                            35.55
+                        ],
+                        [
+                            -82.15,
+                            35.52
+                        ],
+                        [
+                            -82.09,
+                            35.53
+                        ],
+                        [
+                            -82.1,
+                            35.46
+                        ],
+                        [
+                            -82.1,
+                            35.37
+                        ],
+                        [
+                            -82.28,
+                            35.36
+                        ],
+                        [
+                            -82.32,
+                            35.38
+                        ],
+                        [
+                            -82.37,
+                            35.47
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.281128bf7c60c12363ccb5a5d2fe5f5840b1fac1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.281128bf7c60c12363ccb5a5d2fe5f5840b1fac1.001.1",
+                "areaDesc": "Buncombe, NC; Henderson, NC; McDowell, NC; Polk, NC; Rutherford, NC",
+                "geocode": {
+                    "SAME": [
+                        "037021",
+                        "037089",
+                        "037111",
+                        "037149",
+                        "037161"
+                    ],
+                    "UGC": [
+                        "NCC021",
+                        "NCC089",
+                        "NCC111",
+                        "NCC149",
+                        "NCC161"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC021",
+                    "https://api.weather.gov/zones/county/NCC089",
+                    "https://api.weather.gov/zones/county/NCC111",
+                    "https://api.weather.gov/zones/county/NCC149",
+                    "https://api.weather.gov/zones/county/NCC161"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.51fe901dcc4583ae6abbf751ed6fa1834fa30ea5.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.51fe901dcc4583ae6abbf751ed6fa1834fa30ea5.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-22T23:52:00-04:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d6d53b72255c2efdbc99a3ed1a92b5ddbb5c8fc6.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.d6d53b72255c2efdbc99a3ed1a92b5ddbb5c8fc6.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-23T00:39:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-23T01:15:00-04:00",
+                "effective": "2026-09-23T01:15:00-04:00",
+                "onset": "2026-09-23T01:15:00-04:00",
+                "expires": "2026-09-23T05:45:00-04:00",
+                "ends": "2026-09-23T05:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Greenville-Spartanburg SC",
+                "headline": "Flash Flood Warning issued September 23 at 1:15AM EDT until September 23 at 5:45AM EDT by NWS Greenville-Spartanburg SC",
+                "description": "At 115 AM EDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2.5 and 4 inches of rain have\nfallen. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nLake Lure, Chimney Rock Village, Chimney Rock State Park, Bat Cave\nand Gerton.\n\nFlood stage is currently 7.43 feet at the Rocky Broad River near Bat\nCave. Homes and campgrounds near the river gage will begin to flood\nif the river gets above 7.5 feet.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSGSP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS72 KGSP 230515"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 545 AM EDT EARLY THIS MORNING FOR SOUTHEASTERN BUNCOMBE, NORTHEASTERN HENDERSON, SOUTHWESTERN MCDOWELL, NORTHWESTERN POLK AND NORTHWESTERN RUTHERFORD COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KGSP.FF.W.0016.000000T0000Z-260923T0945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-23T05:45:00-04:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 5:45 AM EDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 5:45 AM EDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d08ee1d526356563b003e87b12810b04171f484a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.52,
+                            35.39
+                        ],
+                        [
+                            -103.63,
+                            35.51
+                        ],
+                        [
+                            -103.69,
+                            35.55
+                        ],
+                        [
+                            -103.61,
+                            35.64
+                        ],
+                        [
+                            -103.55,
+                            35.69
+                        ],
+                        [
+                            -103.35,
+                            35.63
+                        ],
+                        [
+                            -103.27,
+                            35.54
+                        ],
+                        [
+                            -103.38,
+                            35.39
+                        ],
+                        [
+                            -103.52,
+                            35.39
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d08ee1d526356563b003e87b12810b04171f484a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d08ee1d526356563b003e87b12810b04171f484a.001.1",
+                "areaDesc": "Harding, NM; Quay, NM",
+                "geocode": {
+                    "SAME": [
+                        "035021",
+                        "035037"
+                    ],
+                    "UGC": [
+                        "NMC021",
+                        "NMC037"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC021",
+                    "https://api.weather.gov/zones/county/NMC037"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5433044d5ac2b26ea75bdbb3d8b3a17ab58e9744.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.5433044d5ac2b26ea75bdbb3d8b3a17ab58e9744.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-22T22:09:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-22T23:01:00-06:00",
+                "effective": "2026-09-22T23:01:00-06:00",
+                "onset": "2026-09-22T23:01:00-06:00",
+                "expires": "2026-09-23T01:00:00-06:00",
+                "ends": "2026-09-23T01:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 22 at 11:01PM MDT until September 23 at 1:00AM MDT by NWS Albuquerque NM",
+                "description": "At 1101 PM MDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1.5 and 3.5 inches of rain have\nfallen. Additional rainfall amounts up to 0.75 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nMainly rural areas of North Central Quay and Southeastern Harding\nCounties.\n\nFlash flooding is expected along McCarty Road and Nara Visa Road near\nthe Quay and Harding County border.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KABQ 230501"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 1 AM MDT WEDNESDAY FOR NORTH CENTRAL QUAY AND SOUTHEASTERN HARDING COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FF.W.0176.000000T0000Z-260923T0700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-23T01:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.59be233aae0fa578cd72ec2655f458fea739b747.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -78.36,
+                            37.48
+                        ],
+                        [
+                            -78.08,
+                            37.66
+                        ],
+                        [
+                            -77.96,
+                            37.62
+                        ],
+                        [
+                            -77.94,
+                            37.64
+                        ],
+                        [
+                            -77.95,
+                            37.67
+                        ],
+                        [
+                            -77.93,
+                            37.67
+                        ],
+                        [
+                            -77.84,
+                            37.64
+                        ],
+                        [
+                            -77.82,
+                            37.61
+                        ],
+                        [
+                            -77.78,
+                            37.61
+                        ],
+                        [
+                            -77.81,
+                            37.48
+                        ],
+                        [
+                            -77.86,
+                            37.44
+                        ],
+                        [
+                            -77.87,
+                            37.46
+                        ],
+                        [
+                            -77.89,
+                            37.45
+                        ],
+                        [
+                            -77.9,
+                            37.48
+                        ],
+                        [
+                            -78,
+                            37.5
+                        ],
+                        [
+                            -78.07,
+                            37.45
+                        ],
+                        [
+                            -78.14,
+                            37.46
+                        ],
+                        [
+                            -78.18,
+                            37.44
+                        ],
+                        [
+                            -78.4,
+                            37.31
+                        ],
+                        [
+                            -78.46,
+                            37.34
+                        ],
+                        [
+                            -78.36,
+                            37.48
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.59be233aae0fa578cd72ec2655f458fea739b747.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.59be233aae0fa578cd72ec2655f458fea739b747.001.1",
+                "areaDesc": "Cumberland, VA; Powhatan, VA",
+                "geocode": {
+                    "SAME": [
+                        "051049",
+                        "051145"
+                    ],
+                    "UGC": [
+                        "VAC049",
+                        "VAC145"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC049",
+                    "https://api.weather.gov/zones/county/VAC145"
+                ],
+                "references": [],
+                "sent": "2026-09-22T23:48:00-04:00",
+                "effective": "2026-09-22T23:48:00-04:00",
+                "onset": "2026-09-22T23:48:00-04:00",
+                "expires": "2026-09-23T03:00:00-04:00",
+                "ends": "2026-09-23T03:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 22 at 11:48PM EDT until September 23 at 3:00AM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nCumberland County in central Virginia...\nPowhatan County in central Virginia...\n\n* Until 300 AM EDT.\n\n* At 1148 PM EDT, gauge reports indicated heavy rain falling across\nthe warned area. Up to 3 inches of rain has fallen in the past two\nhours. The expected rainfall rate is 2 inches in 1 hour and 30\nminutes. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Gauges reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPowhatan, Cumberland, Tobaccoville, Ballsville, Sunnyside,\nTrenholm, Macon, Guinea Mills, Clinton, Hatchers, Belona, Oak\nForest, Ashby, Whiteville, Grays Siding, Lake Powhatan, Tamworth,\nProvost and Rock Castle.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 230348"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0101.260923T0348Z-260923T0700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-23T03:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-23T05:47:08+00:00"
+}

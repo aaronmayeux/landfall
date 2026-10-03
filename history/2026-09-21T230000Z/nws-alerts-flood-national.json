@@ -1,0 +1,293 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ed84cc1e4a32caa117c3f767d4f4ce076145806d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -102.19,
+                            31.65
+                        ],
+                        [
+                            -102.25,
+                            31.96
+                        ],
+                        [
+                            -102.08,
+                            31.97
+                        ],
+                        [
+                            -102.05,
+                            31.8
+                        ],
+                        [
+                            -102.04,
+                            31.65
+                        ],
+                        [
+                            -102.19,
+                            31.65
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ed84cc1e4a32caa117c3f767d4f4ce076145806d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ed84cc1e4a32caa117c3f767d4f4ce076145806d.001.1",
+                "areaDesc": "Midland, TX",
+                "geocode": {
+                    "SAME": [
+                        "048329"
+                    ],
+                    "UGC": [
+                        "TXC329"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC329"
+                ],
+                "references": [],
+                "sent": "2026-09-21T17:53:00-05:00",
+                "effective": "2026-09-21T17:53:00-05:00",
+                "onset": "2026-09-21T17:53:00-05:00",
+                "expires": "2026-09-21T21:00:00-05:00",
+                "ends": "2026-09-21T21:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flash Flood Warning issued September 21 at 5:53PM CDT until September 21 at 9:00PM CDT by NWS Midland/Odessa TX",
+                "description": "FFWMAF\n\nThe National Weather Service in Midland/Odessa has issued a\n\n* Flash Flood Warning for...\nSouthwestern Midland County in western Texas...\n\n* Until 900 PM CDT.\n\n* At 553 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 0.5 to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMidland, Midland International Air and Space Port, Skywest Airport\nand Warfield.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMAF 212253"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMAF.FF.W.0197.260921T2253Z-260922T0200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-21T21:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.baca4f2ebc95bc3dce81e3d0a4ca10a76c6dce32.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -77.08,
+                            35.94
+                        ],
+                        [
+                            -77.09,
+                            35.95
+                        ],
+                        [
+                            -77.08,
+                            36.02
+                        ],
+                        [
+                            -77.07,
+                            36.02
+                        ],
+                        [
+                            -77.03,
+                            36.07
+                        ],
+                        [
+                            -77.01,
+                            36.07
+                        ],
+                        [
+                            -77,
+                            36.09
+                        ],
+                        [
+                            -76.98,
+                            36.1
+                        ],
+                        [
+                            -76.94,
+                            36.1
+                        ],
+                        [
+                            -76.94,
+                            36.09
+                        ],
+                        [
+                            -76.88,
+                            36.1
+                        ],
+                        [
+                            -76.87,
+                            36.09
+                        ],
+                        [
+                            -76.88,
+                            36.08
+                        ],
+                        [
+                            -76.88,
+                            36.05
+                        ],
+                        [
+                            -76.9,
+                            36.04
+                        ],
+                        [
+                            -76.9,
+                            36.02
+                        ],
+                        [
+                            -76.91,
+                            36.02
+                        ],
+                        [
+                            -76.94,
+                            35.97
+                        ],
+                        [
+                            -76.99,
+                            35.95
+                        ],
+                        [
+                            -76.99,
+                            35.94
+                        ],
+                        [
+                            -77.08,
+                            35.94
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.baca4f2ebc95bc3dce81e3d0a4ca10a76c6dce32.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.baca4f2ebc95bc3dce81e3d0a4ca10a76c6dce32.001.1",
+                "areaDesc": "Bertie, NC",
+                "geocode": {
+                    "SAME": [
+                        "037015"
+                    ],
+                    "UGC": [
+                        "NCC015"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NCC015"
+                ],
+                "references": [],
+                "sent": "2026-09-21T18:47:00-04:00",
+                "effective": "2026-09-21T18:47:00-04:00",
+                "onset": "2026-09-21T18:47:00-04:00",
+                "expires": "2026-09-21T21:45:00-04:00",
+                "ends": "2026-09-21T21:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 21 at 6:47PM EDT until September 21 at 9:45PM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nBertie County in northeastern North Carolina...\n\n* Until 945 PM EDT.\n\n* At 647 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. The expected rainfall rate is 2 inches in 30 minutes.\nAdditional rainfall amounts up to 2 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWindsor and Quitsna.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 212247"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0093.260921T2247Z-260922T0145Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-21T21:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-21T23:10:06+00:00"
+}

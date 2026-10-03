@@ -1,0 +1,637 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b6d00420379a0cd5fd434d60bd6e885aa71eb24f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.49,
+                            36.88
+                        ],
+                        [
+                            -76.46,
+                            36.93
+                        ],
+                        [
+                            -76.45,
+                            36.93
+                        ],
+                        [
+                            -76.41,
+                            36.92
+                        ],
+                        [
+                            -76.4,
+                            36.93
+                        ],
+                        [
+                            -76.33,
+                            36.91
+                        ],
+                        [
+                            -76.25,
+                            36.83
+                        ],
+                        [
+                            -76.33,
+                            36.69
+                        ],
+                        [
+                            -76.46,
+                            36.66
+                        ],
+                        [
+                            -76.56,
+                            36.75
+                        ],
+                        [
+                            -76.49,
+                            36.88
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b6d00420379a0cd5fd434d60bd6e885aa71eb24f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b6d00420379a0cd5fd434d60bd6e885aa71eb24f.001.1",
+                "areaDesc": "City of Chesapeake, VA; City of Norfolk, VA; City of Portsmouth, VA; City of Suffolk, VA",
+                "geocode": {
+                    "SAME": [
+                        "051550",
+                        "051710",
+                        "051740",
+                        "051800"
+                    ],
+                    "UGC": [
+                        "VAC550",
+                        "VAC710",
+                        "VAC740",
+                        "VAC800"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC550",
+                    "https://api.weather.gov/zones/county/VAC710",
+                    "https://api.weather.gov/zones/county/VAC740",
+                    "https://api.weather.gov/zones/county/VAC800"
+                ],
+                "references": [],
+                "sent": "2026-09-22T14:23:00-04:00",
+                "effective": "2026-09-22T14:23:00-04:00",
+                "onset": "2026-09-22T14:23:00-04:00",
+                "expires": "2026-09-22T17:30:00-04:00",
+                "ends": "2026-09-22T17:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 22 at 2:23PM EDT until September 22 at 5:30PM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nThe Northwestern City of Chesapeake in southeastern Virginia...\nThe Southwestern City of Norfolk in southeastern Virginia...\nThe City of Portsmouth in southeastern Virginia...\nThe Northeastern City of Suffolk in southeastern Virginia...\n\n* Until 530 PM EDT.\n\n* At 223 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.5 and 1.5 inches of\nrain have fallen. The expected rainfall rate is 2 to 4 inches in 1\nhour. Additional rainfall amounts of 1 to 3 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nChurchland, Deep Creek, Downtown Portsmouth, Old Dominion\nUniversity, Downtown Norfolk, Norfolk, Chesapeake, Portsmouth,\nSuffolk, Bowers Hill, Western Branch, Cradock, Driver, Ghent,\nDeanes, Huntersville, South Norfolk, Wilroy and Portlock.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by posting to the NWS Wakefield Facebook page,\nor using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 221823"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0099.260922T1823Z-260922T2130Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T17:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9c09135540aa71fe22a6653483a321407998b0ac.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.59,
+                            37.08
+                        ],
+                        [
+                            -76.58,
+                            37.21
+                        ],
+                        [
+                            -76.57,
+                            37.21
+                        ],
+                        [
+                            -76.56,
+                            37.22
+                        ],
+                        [
+                            -76.53,
+                            37.18
+                        ],
+                        [
+                            -76.5,
+                            37.16
+                        ],
+                        [
+                            -76.41,
+                            37.15
+                        ],
+                        [
+                            -76.39,
+                            37.17
+                        ],
+                        [
+                            -76.36,
+                            37.18
+                        ],
+                        [
+                            -76.33,
+                            37.16
+                        ],
+                        [
+                            -76.41,
+                            37.09
+                        ],
+                        [
+                            -76.44,
+                            37.09
+                        ],
+                        [
+                            -76.45,
+                            37.08
+                        ],
+                        [
+                            -76.45,
+                            37.06
+                        ],
+                        [
+                            -76.49,
+                            37.03
+                        ],
+                        [
+                            -76.53,
+                            37.04
+                        ],
+                        [
+                            -76.54,
+                            37.05
+                        ],
+                        [
+                            -76.56,
+                            37.06
+                        ],
+                        [
+                            -76.59,
+                            37.08
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9c09135540aa71fe22a6653483a321407998b0ac.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9c09135540aa71fe22a6653483a321407998b0ac.001.1",
+                "areaDesc": "York, VA; City of Newport News, VA; City of Poquoson, VA",
+                "geocode": {
+                    "SAME": [
+                        "051199",
+                        "051700",
+                        "051735"
+                    ],
+                    "UGC": [
+                        "VAC199",
+                        "VAC700",
+                        "VAC735"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC199",
+                    "https://api.weather.gov/zones/county/VAC700",
+                    "https://api.weather.gov/zones/county/VAC735"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a0edc7489bc7e45baf093d360f2699958b76a9f2.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a0edc7489bc7e45baf093d360f2699958b76a9f2.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-22T13:40:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-22T14:02:00-04:00",
+                "effective": "2026-09-22T14:02:00-04:00",
+                "onset": "2026-09-22T14:02:00-04:00",
+                "expires": "2026-09-22T16:45:00-04:00",
+                "ends": "2026-09-22T16:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 22 at 2:02PM EDT until September 22 at 4:45PM EDT by NWS Wakefield VA",
+                "description": "At 202 PM EDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between 2\nand 4 inches of rain have fallen. Additional rainfall amounts of 1 to\n3 inches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nNewport News, Patrick Henry Field, Christopher Newport University,\nTabb, Denbigh, Beaconsdale, Lee Hall, Oyster Point, Oriana,\nMenchville and Newport News Golf Course.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by posting to the NWS Wakefield Facebook page,\nor using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS71 KAKQ 221802"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 445 PM EDT THIS AFTERNOON FOR SOUTHERN YORK COUNTY AND THE CITY OF NEWPORT NEWS AND THE CITY OF POQUOSON"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KAKQ.FF.W.0098.000000T0000Z-260922T2045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T16:45:00-04:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 4:45 PM EDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 4:45 PM EDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5b980aaccdfcba717df69264d4c9f33759ad6622.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.61,
+                            37.37
+                        ],
+                        [
+                            -76.39,
+                            37.35
+                        ],
+                        [
+                            -76.37,
+                            37.25
+                        ],
+                        [
+                            -76.38,
+                            37.24
+                        ],
+                        [
+                            -76.37,
+                            37.23
+                        ],
+                        [
+                            -76.38,
+                            37.18
+                        ],
+                        [
+                            -76.41,
+                            37.15
+                        ],
+                        [
+                            -76.49,
+                            37.16
+                        ],
+                        [
+                            -76.53,
+                            37.18
+                        ],
+                        [
+                            -76.56,
+                            37.22
+                        ],
+                        [
+                            -76.57,
+                            37.21
+                        ],
+                        [
+                            -76.59,
+                            37.21
+                        ],
+                        [
+                            -76.6,
+                            37.24
+                        ],
+                        [
+                            -76.63,
+                            37.23
+                        ],
+                        [
+                            -76.66,
+                            37.24
+                        ],
+                        [
+                            -76.67,
+                            37.26
+                        ],
+                        [
+                            -76.68,
+                            37.27
+                        ],
+                        [
+                            -76.68,
+                            37.28
+                        ],
+                        [
+                            -76.67,
+                            37.36
+                        ],
+                        [
+                            -76.64,
+                            37.39
+                        ],
+                        [
+                            -76.61,
+                            37.37
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5b980aaccdfcba717df69264d4c9f33759ad6622.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5b980aaccdfcba717df69264d4c9f33759ad6622.001.1",
+                "areaDesc": "Gloucester, VA; York, VA",
+                "geocode": {
+                    "SAME": [
+                        "051073",
+                        "051199"
+                    ],
+                    "UGC": [
+                        "VAC073",
+                        "VAC199"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC073",
+                    "https://api.weather.gov/zones/county/VAC199"
+                ],
+                "references": [],
+                "sent": "2026-09-22T12:43:00-04:00",
+                "effective": "2026-09-22T12:43:00-04:00",
+                "onset": "2026-09-22T12:43:00-04:00",
+                "expires": "2026-09-22T15:45:00-04:00",
+                "ends": "2026-09-22T15:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 22 at 12:43PM EDT until September 22 at 3:45PM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nSouthern Gloucester County in southeastern Virginia...\nYork County in southeastern Virginia...\n\n* Until 345 PM EDT.\n\n* At 1243 PM EDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n1 and 2 inches of rain have fallen. Additional rainfall amounts of\n1 to 2 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGloucester Point, Virginia Institute For Marine Sciences, Seaford,\nQueens Lake, Wicomico, Achilles, Carver Gardens, York Terrace,\nYorktown, Ordinary, Lackey, U.s. Naval Weapons, White Marsh, Glass,\nHarris Grove, Hornsbyville and Naxera.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 221643"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0097.260922T1643Z-260922T1945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T15:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc2572900533d98d80c0169e51a3b2cd757e6433.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -76.59,
+                            37.54
+                        ],
+                        [
+                            -76.55,
+                            37.52
+                        ],
+                        [
+                            -76.39,
+                            37.49
+                        ],
+                        [
+                            -76.42,
+                            37.39
+                        ],
+                        [
+                            -76.43,
+                            37.35
+                        ],
+                        [
+                            -76.61,
+                            37.37
+                        ],
+                        [
+                            -76.66,
+                            37.4
+                        ],
+                        [
+                            -76.68,
+                            37.42
+                        ],
+                        [
+                            -76.59,
+                            37.54
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bc2572900533d98d80c0169e51a3b2cd757e6433.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bc2572900533d98d80c0169e51a3b2cd757e6433.001.1",
+                "areaDesc": "Gloucester, VA; Mathews, VA",
+                "geocode": {
+                    "SAME": [
+                        "051073",
+                        "051115"
+                    ],
+                    "UGC": [
+                        "VAC073",
+                        "VAC115"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/VAC073",
+                    "https://api.weather.gov/zones/county/VAC115"
+                ],
+                "references": [],
+                "sent": "2026-09-22T12:14:00-04:00",
+                "effective": "2026-09-22T12:14:00-04:00",
+                "onset": "2026-09-22T12:14:00-04:00",
+                "expires": "2026-09-22T15:15:00-04:00",
+                "ends": "2026-09-22T15:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wakefield VA",
+                "headline": "Flash Flood Warning issued September 22 at 12:14PM EDT until September 22 at 3:15PM EDT by NWS Wakefield VA",
+                "description": "FFWAKQ\n\nThe National Weather Service in Wakefield has issued a\n\n* Flash Flood Warning for...\nWest Central Mathews County in eastern Virginia...\nCentral Gloucester County in southeastern Virginia...\n\n* Until 315 PM EDT.\n\n* At 1214 PM EDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n1 and 2 inches of rain have fallen. Additional rainfall amounts of\n1 to 2 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGloucester Courthouse, Hayes, Ark, Pinero, Belroi, Ware Neck,\nDutton, Fort Nonsense, Beulah, Selden, Soles, Pampa and\nAllmondsville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report flooding by calling 757-899-2415, posting to the NWS\nWakefield Facebook page, or using X @NWSWAKEFIELDVA.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWAKQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS51 KAKQ 221614"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KAKQ.FF.W.0096.260922T1614Z-260922T1915Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-22T15:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-22T18:43:18+00:00"
+}

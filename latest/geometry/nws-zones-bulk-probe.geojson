@@ -1,0 +1,1268 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ261",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ261",
+                "@type": "wx:Zone",
+                "id": "ALZ261",
+                "type": "public",
+                "name": "Mobile Inland",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNSE",
+                    "https://api.weather.gov/stations/KPIB",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ262",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ262",
+                "@type": "wx:Zone",
+                "id": "ALZ262",
+                "type": "public",
+                "name": "Baldwin Inland",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KPIB",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ263",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ263",
+                "@type": "wx:Zone",
+                "id": "ALZ263",
+                "type": "public",
+                "name": "Mobile Central",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ264",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ264",
+                "@type": "wx:Zone",
+                "id": "ALZ264",
+                "type": "public",
+                "name": "Baldwin Central",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ265",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ265",
+                "@type": "wx:Zone",
+                "id": "ALZ265",
+                "type": "public",
+                "name": "Mobile Coastal",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/ALZ266",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/ALZ266",
+                "@type": "wx:Zone",
+                "id": "ALZ266",
+                "type": "public",
+                "name": "Baldwin Coastal",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KPQL"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ007",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ007",
+                "@type": "wx:Zone",
+                "id": "FLZ007",
+                "type": "public",
+                "name": "North Walton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/K79J",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KHEY",
+                    "https://api.weather.gov/stations/KLOR",
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KOZR",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ008",
+                "@type": "wx:Zone",
+                "id": "FLZ008",
+                "type": "public",
+                "name": "Central Walton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/K79J",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KHEY",
+                    "https://api.weather.gov/stations/KLOR",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KOZR",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ009",
+                "@type": "wx:Zone",
+                "id": "FLZ009",
+                "type": "public",
+                "name": "Holmes",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/K79J",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KHEY",
+                    "https://api.weather.gov/stations/KLOR",
+                    "https://api.weather.gov/stations/KOZR",
+                    "https://api.weather.gov/stations/KPAM"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ010",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ010",
+                "@type": "wx:Zone",
+                "id": "FLZ010",
+                "type": "public",
+                "name": "Washington",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/K79J",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KHEY",
+                    "https://api.weather.gov/stations/KLOR",
+                    "https://api.weather.gov/stations/KOZR",
+                    "https://api.weather.gov/stations/KPAM"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ012",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ012",
+                "@type": "wx:Zone",
+                "id": "FLZ012",
+                "type": "public",
+                "name": "Inland Bay",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KAAF",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KTLH"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ014",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ014",
+                "@type": "wx:Zone",
+                "id": "FLZ014",
+                "type": "public",
+                "name": "Inland Gulf",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KAAF",
+                    "https://api.weather.gov/stations/KBGE",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KTLH"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ108",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ108",
+                "@type": "wx:Zone",
+                "id": "FLZ108",
+                "type": "public",
+                "name": "South Walton",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/K79J",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KOZR",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ112",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ112",
+                "@type": "wx:Zone",
+                "id": "FLZ112",
+                "type": "public",
+                "name": "Coastal Bay",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KAAF",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KTLH"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ114",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ114",
+                "@type": "wx:Zone",
+                "id": "FLZ114",
+                "type": "public",
+                "name": "Coastal Gulf",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/TAE",
+                "gridIdentifier": "TAE",
+                "awipsLocationIdentifier": "TAE",
+                "cwa": [
+                    "TAE"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/TAE"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KAAF",
+                    "https://api.weather.gov/stations/KBGE",
+                    "https://api.weather.gov/stations/KDHN",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KMAI",
+                    "https://api.weather.gov/stations/KPAM",
+                    "https://api.weather.gov/stations/KTLH"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ201",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ201",
+                "@type": "wx:Zone",
+                "id": "FLZ201",
+                "type": "public",
+                "name": "Escambia Inland",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KNSE"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ202",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ202",
+                "@type": "wx:Zone",
+                "id": "FLZ202",
+                "type": "public",
+                "name": "Escambia Coastal",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNPA",
+                    "https://api.weather.gov/stations/KNSE"
+                ],
+                "radarStation": "MOB"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ203",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ203",
+                "@type": "wx:Zone",
+                "id": "FLZ203",
+                "type": "public",
+                "name": "Santa Rosa Inland",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KNSE",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNDZ",
+                    "https://api.weather.gov/stations/KPNS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ204",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ204",
+                "@type": "wx:Zone",
+                "id": "FLZ204",
+                "type": "public",
+                "name": "Santa Rosa Coastal",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KGZH",
+                    "https://api.weather.gov/stations/KMEI",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNSE",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ205",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ205",
+                "@type": "wx:Zone",
+                "id": "FLZ205",
+                "type": "public",
+                "name": "Okaloosa Inland",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KBHM",
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KJAN",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KMOB",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KTLH",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/FLZ206",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/FLZ206",
+                "@type": "wx:Zone",
+                "id": "FLZ206",
+                "type": "public",
+                "name": "Okaloosa Coastal",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "FL",
+                "forecastOffice": "https://api.weather.gov/offices/MOB",
+                "gridIdentifier": "MOB",
+                "awipsLocationIdentifier": "MOB",
+                "cwa": [
+                    "MOB"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/MOB"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDTS",
+                    "https://api.weather.gov/stations/KBFM",
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KCEW",
+                    "https://api.weather.gov/stations/KECP",
+                    "https://api.weather.gov/stations/KMGM",
+                    "https://api.weather.gov/stations/KNSE",
+                    "https://api.weather.gov/stations/KPNS",
+                    "https://api.weather.gov/stations/KTLH",
+                    "https://api.weather.gov/stations/KTOI",
+                    "https://api.weather.gov/stations/KVPS"
+                ],
+                "radarStation": "EVX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GUZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GUZ001",
+                "@type": "wx:Zone",
+                "id": "GUZ001",
+                "type": "public",
+                "name": "Guam",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GU",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Guam"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGUM",
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGWT",
+                    "https://api.weather.gov/stations/PHNL",
+                    "https://api.weather.gov/stations/PKMR",
+                    "https://api.weather.gov/stations/PKWA",
+                    "https://api.weather.gov/stations/PTKK",
+                    "https://api.weather.gov/stations/PTKR",
+                    "https://api.weather.gov/stations/PTPN",
+                    "https://api.weather.gov/stations/PTYA",
+                    "https://api.weather.gov/stations/PWAK"
+                ],
+                "radarStation": "GUA"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ050",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ050",
+                "@type": "wx:Zone",
+                "id": "IAZ050",
+                "type": "public",
+                "name": "Tama",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DMX",
+                "gridIdentifier": "DMX",
+                "awipsLocationIdentifier": "DMX",
+                "cwa": [
+                    "DMX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DMX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KMIW",
+                    "https://api.weather.gov/stations/KALO",
+                    "https://api.weather.gov/stations/KAMW",
+                    "https://api.weather.gov/stations/KBNW",
+                    "https://api.weather.gov/stations/KCAV",
+                    "https://api.weather.gov/stations/KDSM",
+                    "https://api.weather.gov/stations/KEBS",
+                    "https://api.weather.gov/stations/KIKV",
+                    "https://api.weather.gov/stations/KMCW",
+                    "https://api.weather.gov/stations/KTNU"
+                ],
+                "radarStation": "DMX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/IAZ062",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/IAZ062",
+                "@type": "wx:Zone",
+                "id": "IAZ062",
+                "type": "public",
+                "name": "Poweshiek",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "IA",
+                "forecastOffice": "https://api.weather.gov/offices/DMX",
+                "gridIdentifier": "DMX",
+                "awipsLocationIdentifier": "DMX",
+                "cwa": [
+                    "DMX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/DMX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGGI",
+                    "https://api.weather.gov/stations/KAMW",
+                    "https://api.weather.gov/stations/KBNW",
+                    "https://api.weather.gov/stations/KCNC",
+                    "https://api.weather.gov/stations/KDSM",
+                    "https://api.weather.gov/stations/KIKV",
+                    "https://api.weather.gov/stations/KIOW",
+                    "https://api.weather.gov/stations/KMIW",
+                    "https://api.weather.gov/stations/KOTM",
+                    "https://api.weather.gov/stations/KOXV",
+                    "https://api.weather.gov/stations/KTNU"
+                ],
+                "radarStation": "DMX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MPZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MPZ001",
+                "@type": "wx:Zone",
+                "id": "MPZ001",
+                "type": "public",
+                "name": "Rota",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MP",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Saipan"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGUM",
+                    "https://api.weather.gov/stations/PGWT"
+                ],
+                "radarStation": "GUA"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MPZ002",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MPZ002",
+                "@type": "wx:Zone",
+                "id": "MPZ002",
+                "type": "public",
+                "name": "Tinian",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MP",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Saipan"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGWT",
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGUM"
+                ],
+                "radarStation": "GUA"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MPZ003",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MPZ003",
+                "@type": "wx:Zone",
+                "id": "MPZ003",
+                "type": "public",
+                "name": "Saipan",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MP",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Saipan"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGUM",
+                    "https://api.weather.gov/stations/PGWT"
+                ],
+                "radarStation": "PGU"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ083",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ083",
+                "@type": "wx:Zone",
+                "id": "MSZ083",
+                "type": "public",
+                "name": "Northern Hancock",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KASD",
+                    "https://api.weather.gov/stations/KGPT"
+                ],
+                "radarStation": "HDC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ084",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ084",
+                "@type": "wx:Zone",
+                "id": "MSZ084",
+                "type": "public",
+                "name": "Northern Harrison",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGPT",
+                    "https://api.weather.gov/stations/KBIX"
+                ],
+                "radarStation": "HDC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ085",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ085",
+                "@type": "wx:Zone",
+                "id": "MSZ085",
+                "type": "public",
+                "name": "Northern Jackson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KGPT"
+                ],
+                "radarStation": "HDC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ086",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ086",
+                "@type": "wx:Zone",
+                "id": "MSZ086",
+                "type": "public",
+                "name": "Southern Hancock",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KASD",
+                    "https://api.weather.gov/stations/KGPT"
+                ],
+                "radarStation": "HDC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ087",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ087",
+                "@type": "wx:Zone",
+                "id": "MSZ087",
+                "type": "public",
+                "name": "Southern Harrison",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGPT",
+                    "https://api.weather.gov/stations/KBIX"
+                ],
+                "radarStation": "HDC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MSZ088",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MSZ088",
+                "@type": "wx:Zone",
+                "id": "MSZ088",
+                "type": "public",
+                "name": "Southern Jackson",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MS",
+                "forecastOffice": "https://api.weather.gov/offices/LIX",
+                "gridIdentifier": "LIX",
+                "awipsLocationIdentifier": "LIX",
+                "cwa": [
+                    "LIX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/LIX"
+                ],
+                "timeZone": [
+                    "America/Chicago"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KBIX",
+                    "https://api.weather.gov/stations/KGPT"
+                ],
+                "radarStation": "HDC"
+            }
+        }
+    ]
+}

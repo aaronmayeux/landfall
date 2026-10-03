@@ -1,0 +1,1556 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f715693282ed3a0b0fdf747cd0d5b74a4dd3f141.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f715693282ed3a0b0fdf747cd0d5b74a4dd3f141.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f715693282ed3a0b0fdf747cd0d5b74a4dd3f141.001.1",
+                "areaDesc": "Aguila Valley; Northwest Valley; Cave Creek/New River; Deer Valley; New River Mesa; Rio Verde/Salt River; Fountain Hills/East Mesa; Superior; Apache Junction/Gold Canyon; Tonto Basin; Mazatzal Mountains; Pinal/Superstition Mountains; San Carlos; Dripping Springs; Globe/Miami; Southeast Gila County",
+                "geocode": {
+                    "SAME": [
+                        "004013",
+                        "004021",
+                        "004007"
+                    ],
+                    "UGC": [
+                        "AZZ534",
+                        "AZZ537",
+                        "AZZ541",
+                        "AZZ542",
+                        "AZZ545",
+                        "AZZ547",
+                        "AZZ549",
+                        "AZZ552",
+                        "AZZ555",
+                        "AZZ556",
+                        "AZZ557",
+                        "AZZ558",
+                        "AZZ560",
+                        "AZZ561",
+                        "AZZ562",
+                        "AZZ563"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ534",
+                    "https://api.weather.gov/zones/forecast/AZZ537",
+                    "https://api.weather.gov/zones/forecast/AZZ541",
+                    "https://api.weather.gov/zones/forecast/AZZ542",
+                    "https://api.weather.gov/zones/forecast/AZZ545",
+                    "https://api.weather.gov/zones/forecast/AZZ547",
+                    "https://api.weather.gov/zones/forecast/AZZ549",
+                    "https://api.weather.gov/zones/forecast/AZZ552",
+                    "https://api.weather.gov/zones/forecast/AZZ555",
+                    "https://api.weather.gov/zones/forecast/AZZ556",
+                    "https://api.weather.gov/zones/forecast/AZZ557",
+                    "https://api.weather.gov/zones/forecast/AZZ558",
+                    "https://api.weather.gov/zones/forecast/AZZ560",
+                    "https://api.weather.gov/zones/forecast/AZZ561",
+                    "https://api.weather.gov/zones/forecast/AZZ562",
+                    "https://api.weather.gov/zones/forecast/AZZ563"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.46aea81f6b9c938b59b4b328b6498e5f9846d590.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.46aea81f6b9c938b59b4b328b6498e5f9846d590.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T01:44:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-27T12:29:00-07:00",
+                "effective": "2026-09-27T12:29:00-07:00",
+                "onset": "2026-09-29T00:00:00-07:00",
+                "expires": "2026-09-28T05:00:00-07:00",
+                "ends": "2026-09-29T21:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Phoenix AZ",
+                "headline": "Flood Watch issued September 27 at 12:29PM MST until September 29 at 9:00PM MST by NWS Phoenix AZ",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of south central Arizona, including the following\nareas, Aguila Valley, Apache Junction/Gold Canyon, Cave Creek/New\nRiver, Deer Valley, Dripping Springs, Fountain Hills/East Mesa,\nGlobe/Miami, Mazatzal Mountains, New River Mesa, Northwest Valley,\nPinal/Superstition Mountains, Rio Verde/Salt River, San Carlos,\nSoutheast Gila County, Superior and Tonto Basin.\n\n* WHEN...From late Monday night through Tuesday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- The combination of deep tropical moisture moving into the area\nfrom the south and an approaching weather disturbance from the\nwest will result in showers and thunderstorms capable of\nproducing localized heavy rainfall. Moderate to heavy rainfall\nrates in excess of 1-2 inches per hour are expected. Some areas\nwill see training of storms leading to heavier rainfall\naccumulations.\n\n- Http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPSR"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPSR 271929"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM LATE MONDAY NIGHT THROUGH TUESDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPSR.FA.A.0008.260929T0700Z-260930T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T21:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9e80750afc87793cb4ea5648524e88d37e4ebd77.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9e80750afc87793cb4ea5648524e88d37e4ebd77.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.9e80750afc87793cb4ea5648524e88d37e4ebd77.001.1",
+                "areaDesc": "Upper Gila River Valley; Southern Gila Foothills/Mimbres Valley; Southwest Desert/Lower Gila River Valley; Lowlands of the Bootheel; Uplands of the Bootheel; Southwest Desert/Mimbres Basin; Eastern Black Range Foothills; Sierra County Lakes; Northern Dona Ana County; Southern Dona Ana County/Mesilla Valley; West Slopes Sacramento Mountains Below 7500 Feet; Sacramento Mountains Above 7500 Feet; East Slopes Sacramento Mountains Below 7500 Feet; Otero Mesa; Central Grant County/Silver City Area; Southern Gila Region Highlands/Black Range; West Central Tularosa Basin/White Sands; East Central Tularosa Basin/Alamogordo; Southeast Tularosa Basin; Western El Paso County; Eastern/Central El Paso County; Northern Hudspeth Highlands/Hueco Mountains; Salt Basin; Southern Hudspeth Highlands; Rio Grande Valley of Eastern El Paso/Western Hudspeth Counties; Rio Grande Valley of Eastern Hudspeth County",
+                "geocode": {
+                    "SAME": [
+                        "035017",
+                        "035023",
+                        "035029",
+                        "035051",
+                        "035013",
+                        "035035",
+                        "048141",
+                        "048229"
+                    ],
+                    "UGC": [
+                        "NMZ401",
+                        "NMZ403",
+                        "NMZ404",
+                        "NMZ405",
+                        "NMZ406",
+                        "NMZ407",
+                        "NMZ408",
+                        "NMZ409",
+                        "NMZ410",
+                        "NMZ411",
+                        "NMZ414",
+                        "NMZ415",
+                        "NMZ416",
+                        "NMZ417",
+                        "NMZ425",
+                        "NMZ426",
+                        "NMZ427",
+                        "NMZ428",
+                        "NMZ429",
+                        "TXZ418",
+                        "TXZ419",
+                        "TXZ420",
+                        "TXZ421",
+                        "TXZ422",
+                        "TXZ423",
+                        "TXZ424"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ401",
+                    "https://api.weather.gov/zones/forecast/NMZ403",
+                    "https://api.weather.gov/zones/forecast/NMZ404",
+                    "https://api.weather.gov/zones/forecast/NMZ405",
+                    "https://api.weather.gov/zones/forecast/NMZ406",
+                    "https://api.weather.gov/zones/forecast/NMZ407",
+                    "https://api.weather.gov/zones/forecast/NMZ408",
+                    "https://api.weather.gov/zones/forecast/NMZ409",
+                    "https://api.weather.gov/zones/forecast/NMZ410",
+                    "https://api.weather.gov/zones/forecast/NMZ411",
+                    "https://api.weather.gov/zones/forecast/NMZ414",
+                    "https://api.weather.gov/zones/forecast/NMZ415",
+                    "https://api.weather.gov/zones/forecast/NMZ416",
+                    "https://api.weather.gov/zones/forecast/NMZ417",
+                    "https://api.weather.gov/zones/forecast/NMZ425",
+                    "https://api.weather.gov/zones/forecast/NMZ426",
+                    "https://api.weather.gov/zones/forecast/NMZ427",
+                    "https://api.weather.gov/zones/forecast/NMZ428",
+                    "https://api.weather.gov/zones/forecast/NMZ429",
+                    "https://api.weather.gov/zones/forecast/TXZ418",
+                    "https://api.weather.gov/zones/forecast/TXZ419",
+                    "https://api.weather.gov/zones/forecast/TXZ420",
+                    "https://api.weather.gov/zones/forecast/TXZ421",
+                    "https://api.weather.gov/zones/forecast/TXZ422",
+                    "https://api.weather.gov/zones/forecast/TXZ423",
+                    "https://api.weather.gov/zones/forecast/TXZ424"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.41485c46e9e1666557bf6f7e64572be019ff50c6.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.41485c46e9e1666557bf6f7e64572be019ff50c6.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-26T23:55:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-27T13:00:00-06:00",
+                "effective": "2026-09-27T13:00:00-06:00",
+                "onset": "2026-09-28T12:00:00-06:00",
+                "expires": "2026-09-27T22:00:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS El Paso Tx/Santa Teresa NM",
+                "headline": "Flood Watch issued September 27 at 1:00PM MDT until September 30 at 6:00AM MDT by NWS El Paso Tx/Santa Teresa NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Southern New Mexico and Far West Texas.\n\n* WHEN...From Monday afternoon through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Tropical moisture will be transported northward ahead of\nHurricane Polo Monday and Tuesday, bringing widespread showers\nand isolated thunderstorms to the region. High rainfall rates and\nrepeated rounds of rain may result in scattered instances of\nflash flooding. Heavy rainfall from last week has saturated soils\nand will elevate the flood threat further through Tuesday night.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAEPZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KEPZ 271900"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY AFTERNOON THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KEPZ.FA.A.0017.260928T1800Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.001.1",
+                "areaDesc": "Lake Havasu and Fort Mohave; Lake Mead - AZ side; Lake Mohave - AZ side; San Bernardino County-Upper Colorado River Valley; Southern Clark County; Lake Mead - NV side; Lake Mohave - NV side",
+                "geocode": {
+                    "SAME": [
+                        "004015",
+                        "006071",
+                        "032003"
+                    ],
+                    "UGC": [
+                        "AZZ002",
+                        "AZZ570",
+                        "AZZ571",
+                        "CAZ527",
+                        "NVZ022",
+                        "NVZ025",
+                        "NVZ026"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ002",
+                    "https://api.weather.gov/zones/forecast/AZZ570",
+                    "https://api.weather.gov/zones/forecast/AZZ571",
+                    "https://api.weather.gov/zones/forecast/CAZ527",
+                    "https://api.weather.gov/zones/forecast/NVZ022",
+                    "https://api.weather.gov/zones/forecast/NVZ025",
+                    "https://api.weather.gov/zones/forecast/NVZ026"
+                ],
+                "references": [],
+                "sent": "2026-09-27T11:17:00-07:00",
+                "effective": "2026-09-27T11:17:00-07:00",
+                "onset": "2026-09-28T05:00:00-07:00",
+                "expires": "2026-09-28T05:00:00-07:00",
+                "ends": "2026-09-29T05:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Las Vegas NV",
+                "headline": "Flood Watch issued September 27 at 11:17AM PDT until September 29 at 5:00AM PDT by NWS Las Vegas NV",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of northwest Arizona, including the following\nareas, Lake Havasu and Fort Mohave, Lake Mead - AZ side and Lake\nMohave - AZ side, southeast California, including the following\narea, San Bernardino County-Upper Colorado River Valley, and\nsouthern Nevada, including the following areas, Lake Mead - NV\nside, Lake Mohave - NV side and Southern Clark County.\n\n* WHEN...From early Monday morning through early Tuesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nLow-water crossings may be flooded.\n\n* ADDITIONAL DETAILS...\n-   - Showers and thunderstorms capable of producing flash\nflooding.\n- Lake Mead, Lake Mohave, Lake Havasu, Searchlight, Needles,\nLaughlin, Bullhead City, Meadview, Willow Beach, Cottonwood Cove.\n- http://www.weather.gov/safety/flood\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAVEF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KVEF 271817"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM EARLY MONDAY THROUGH EARLY TUESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXB.KVEF.FA.A.0004.260928T1200Z-260929T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T05:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4e30189fe66ba2ec29f1a10f1f30de205d107f89.002.1",
+                "areaDesc": "Northwest Plateau; Hualapai Mountains; Northwest Deserts",
+                "geocode": {
+                    "SAME": [
+                        "004015"
+                    ],
+                    "UGC": [
+                        "AZZ001",
+                        "AZZ575",
+                        "AZZ576"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ001",
+                    "https://api.weather.gov/zones/forecast/AZZ575",
+                    "https://api.weather.gov/zones/forecast/AZZ576"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.52c9a34255703c65189ced5a8a1e530c31322b4c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.52c9a34255703c65189ced5a8a1e530c31322b4c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T04:48:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-27T11:17:00-07:00",
+                "effective": "2026-09-27T11:17:00-07:00",
+                "onset": "2026-09-28T05:00:00-07:00",
+                "expires": "2026-09-28T05:00:00-07:00",
+                "ends": "2026-09-29T23:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Las Vegas NV",
+                "headline": "Flood Watch issued September 27 at 11:17AM PDT until September 29 at 11:00PM PDT by NWS Las Vegas NV",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of northwest Arizona, including the following\nareas, Hualapai Mountains, Northwest Deserts and Northwest Plateau.\n\n* WHEN...From late tonight through Tuesday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nLow-water crossings may be flooded.\n\n* ADDITIONAL DETAILS...\n-   - Showers and thunderstorms capable of producing flash\nflooding.\n- Kingman, Colorado City, Valentine, Dolan Springs, Wikieup, Peach\nSprings.\n- http://www.weather.gov/safety/flood\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAVEF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KVEF 271817"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM LATE TONIGHT THROUGH TUESDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KVEF.FA.A.0004.260928T1200Z-260930T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T23:00:00-07:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.bf395783e958c285bfd2b37f18191bb5ead2acfb.001.1,2026-09-26T12:10:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.002.1",
+                "areaDesc": "Glorieta Mesa Including Glorieta Pass; East Slopes Sangre de Cristo Mountains; Estancia Valley; Central Highlands; Johnson and Bartlett Mesas Including Raton Pass; Far Northeast Highlands; Northeast Highlands; Union County; Harding County; Eastern San Miguel County; Guadalupe County; Quay County; Curry County; Roosevelt County; De Baca County; Chaves County Plains; Eastern Lincoln County; Southwest Chaves County",
+                "geocode": {
+                    "SAME": [
+                        "035047",
+                        "035049",
+                        "035007",
+                        "035033",
+                        "035001",
+                        "035057",
+                        "035059",
+                        "035021",
+                        "035019",
+                        "035037",
+                        "035009",
+                        "035041",
+                        "035011",
+                        "035005",
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMZ212",
+                        "NMZ215",
+                        "NMZ222",
+                        "NMZ223",
+                        "NMZ227",
+                        "NMZ228",
+                        "NMZ229",
+                        "NMZ230",
+                        "NMZ231",
+                        "NMZ232",
+                        "NMZ233",
+                        "NMZ234",
+                        "NMZ235",
+                        "NMZ236",
+                        "NMZ237",
+                        "NMZ238",
+                        "NMZ239",
+                        "NMZ240"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ212",
+                    "https://api.weather.gov/zones/forecast/NMZ215",
+                    "https://api.weather.gov/zones/forecast/NMZ222",
+                    "https://api.weather.gov/zones/forecast/NMZ223",
+                    "https://api.weather.gov/zones/forecast/NMZ227",
+                    "https://api.weather.gov/zones/forecast/NMZ228",
+                    "https://api.weather.gov/zones/forecast/NMZ229",
+                    "https://api.weather.gov/zones/forecast/NMZ230",
+                    "https://api.weather.gov/zones/forecast/NMZ231",
+                    "https://api.weather.gov/zones/forecast/NMZ232",
+                    "https://api.weather.gov/zones/forecast/NMZ233",
+                    "https://api.weather.gov/zones/forecast/NMZ234",
+                    "https://api.weather.gov/zones/forecast/NMZ235",
+                    "https://api.weather.gov/zones/forecast/NMZ236",
+                    "https://api.weather.gov/zones/forecast/NMZ237",
+                    "https://api.weather.gov/zones/forecast/NMZ238",
+                    "https://api.weather.gov/zones/forecast/NMZ239",
+                    "https://api.weather.gov/zones/forecast/NMZ240"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ba32388f8c61e0201a6f140ae34e7851b718e76a.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.ba32388f8c61e0201a6f140ae34e7851b718e76a.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T01:39:00-06:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b1d1e5ae2a4e5aad856ce95482b7a5faad8996d4.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.b1d1e5ae2a4e5aad856ce95482b7a5faad8996d4.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T11:59:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-27T12:07:00-06:00",
+                "effective": "2026-09-27T12:07:00-06:00",
+                "onset": "2026-09-28T18:00:00-06:00",
+                "expires": "2026-09-27T23:00:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flood Watch issued September 27 at 12:07PM MDT until September 30 at 6:00AM MDT by NWS Albuquerque NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of central, east central, north central,\nnortheast, and southeast New Mexico, including the following areas,\nin central New Mexico, Central Highlands, Eastern Lincoln County\nand Estancia Valley. In east central New Mexico, Curry County, De\nBaca County, Guadalupe County, Quay County and Roosevelt County. In\nnorth central New Mexico, East Slopes Sangre de Cristo Mountains\nand Glorieta Mesa Including Glorieta Pass. In northeast New Mexico,\nEastern San Miguel County, Far Northeast Highlands, Harding County,\nJohnson and Bartlett Mesas Including Raton Pass, Northeast\nHighlands and Union County. In southeast New Mexico, Chaves County\nPlains and Southwest Chaves County.\n\n* WHEN...From Monday evening through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- A near-record to record surge of moisture combined with two\nmerging storm systems will bring a prolonged multi-day period of\nshowers and thunderstorms producing moderate to heavy rainfall.\nCombined with already rain-soaked soil, there is a moderate to\nhigh risk of flash flooding.\n- Low-lying, poorly drained areas, urban areas and arroyo systems,\nand burn scars will be most susceptible. Rivers and streams will\nsee rises, potentially reaching flood stage.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KABQ 271807"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY EVENING THROUGH LATE TUESDAY NIGHT... ...POTENTIAL FOR LIFE THREATENING FLASH FLOODING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FA.A.0025.260929T0000Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b2c30f270aa6c8768be046b93230ea3271cf9a0b.001.1",
+                "areaDesc": "Northwest Plateau; Chuska Mountains; Far Northwest Highlands; Northwest Highlands; West Central Plateau; West Central Mountains; West Central Highlands; Southwest Mountains; San Francisco River Valley; Tusas Mountains Including Chama; Jemez Mountains; Northern Sangre de Cristo Mountains; Southern Sangre de Cristo Mountains; Upper Rio Grande Valley; Espanola Valley; Santa Fe Metro Area; Middle Rio Grande Valley/Albuquerque Metro Area; Lower Rio Grande Valley; Sandia/Manzano Mountains Including Edgewood; South Central Highlands; Upper Tularosa Valley; South Central Mountains; San Agustin Plains and Adjacent Lowlands",
+                "geocode": {
+                    "SAME": [
+                        "035031",
+                        "035045",
+                        "035039",
+                        "035043",
+                        "035003",
+                        "035006",
+                        "035053",
+                        "035001",
+                        "035061",
+                        "035055",
+                        "035028",
+                        "035007",
+                        "035033",
+                        "035047",
+                        "035049",
+                        "035057",
+                        "035027"
+                    ],
+                    "UGC": [
+                        "NMZ201",
+                        "NMZ202",
+                        "NMZ203",
+                        "NMZ204",
+                        "NMZ205",
+                        "NMZ206",
+                        "NMZ207",
+                        "NMZ208",
+                        "NMZ209",
+                        "NMZ210",
+                        "NMZ211",
+                        "NMZ213",
+                        "NMZ214",
+                        "NMZ216",
+                        "NMZ217",
+                        "NMZ218",
+                        "NMZ219",
+                        "NMZ220",
+                        "NMZ221",
+                        "NMZ224",
+                        "NMZ225",
+                        "NMZ226",
+                        "NMZ241"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ201",
+                    "https://api.weather.gov/zones/forecast/NMZ202",
+                    "https://api.weather.gov/zones/forecast/NMZ203",
+                    "https://api.weather.gov/zones/forecast/NMZ204",
+                    "https://api.weather.gov/zones/forecast/NMZ205",
+                    "https://api.weather.gov/zones/forecast/NMZ206",
+                    "https://api.weather.gov/zones/forecast/NMZ207",
+                    "https://api.weather.gov/zones/forecast/NMZ208",
+                    "https://api.weather.gov/zones/forecast/NMZ209",
+                    "https://api.weather.gov/zones/forecast/NMZ210",
+                    "https://api.weather.gov/zones/forecast/NMZ211",
+                    "https://api.weather.gov/zones/forecast/NMZ213",
+                    "https://api.weather.gov/zones/forecast/NMZ214",
+                    "https://api.weather.gov/zones/forecast/NMZ216",
+                    "https://api.weather.gov/zones/forecast/NMZ217",
+                    "https://api.weather.gov/zones/forecast/NMZ218",
+                    "https://api.weather.gov/zones/forecast/NMZ219",
+                    "https://api.weather.gov/zones/forecast/NMZ220",
+                    "https://api.weather.gov/zones/forecast/NMZ221",
+                    "https://api.weather.gov/zones/forecast/NMZ224",
+                    "https://api.weather.gov/zones/forecast/NMZ225",
+                    "https://api.weather.gov/zones/forecast/NMZ226",
+                    "https://api.weather.gov/zones/forecast/NMZ241"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ba32388f8c61e0201a6f140ae34e7851b718e76a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.ba32388f8c61e0201a6f140ae34e7851b718e76a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T01:39:00-06:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b1d1e5ae2a4e5aad856ce95482b7a5faad8996d4.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.b1d1e5ae2a4e5aad856ce95482b7a5faad8996d4.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T11:59:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-27T12:07:00-06:00",
+                "effective": "2026-09-27T12:07:00-06:00",
+                "onset": "2026-09-28T12:00:00-06:00",
+                "expires": "2026-09-27T23:00:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flood Watch issued September 27 at 12:07PM MDT until September 30 at 6:00AM MDT by NWS Albuquerque NM",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Areas along and west of the central mountain chain\nincluding the west slopes of the Sangre de Cristo Mountains, the\nSandia/Manzano Mountains, and the south-central mountains, as well\nas the Rio Grande Valley westward to the Arizona border. Some metro\nareas and locales include, Albuquerque, Santa Fe, Espanola, Taos,\nSocorro, Ruidoso, Los Alamos, Grants, Gallup, and Farmington.\n\n* WHEN...From Monday afternoon through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- A near-record to record surge of moisture combined with two\nmerging storm systems will bring a prolonged multi-day period of\nshowers and thunderstorms producing moderate to heavy rainfall.\nCombined with already rain-soaked soil, there is a moderate to\nhigh risk of flash flooding.\n- Low-lying, poorly drained areas, urban areas and arroyo systems\nwill be most susceptible. Rivers and streams will see rises,\npotentially reaching flood stage. Recent burn scars may see flash\nflooding, including the Ruidoso area burn scars, Frijoles,\nSacaton, Hummingbird, and Whiskey burn scars.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KABQ 271807"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY AFTERNOON THROUGH LATE TUESDAY NIGHT... ...POTENTIAL FOR LIFE THREATENING FLASH FLOODING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FA.A.0025.260928T1800Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e0b211dcd7bab58026a9cb01526038e869174d9.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4e0b211dcd7bab58026a9cb01526038e869174d9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4e0b211dcd7bab58026a9cb01526038e869174d9.001.1",
+                "areaDesc": "Uncompahgre Plateau/Dallas Divide; Northwestern San Juan Mountains; Southwest San Juan Mountains; Paradox Valley/Lower Dolores River; Four Corners/Upper Dolores River; Animas River Basin; San Juan River Basin; Southeast Utah; La Sal and Abajo Mountains; Canyonlands/Natural Bridges",
+                "geocode": {
+                    "SAME": [
+                        "008029",
+                        "008077",
+                        "008085",
+                        "008091",
+                        "008113",
+                        "008051",
+                        "008053",
+                        "008007",
+                        "008033",
+                        "008067",
+                        "008083",
+                        "008111",
+                        "049037",
+                        "049019"
+                    ],
+                    "UGC": [
+                        "COZ017",
+                        "COZ018",
+                        "COZ019",
+                        "COZ020",
+                        "COZ021",
+                        "COZ022",
+                        "COZ023",
+                        "UTZ022",
+                        "UTZ028",
+                        "UTZ029"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ017",
+                    "https://api.weather.gov/zones/forecast/COZ018",
+                    "https://api.weather.gov/zones/forecast/COZ019",
+                    "https://api.weather.gov/zones/forecast/COZ020",
+                    "https://api.weather.gov/zones/forecast/COZ021",
+                    "https://api.weather.gov/zones/forecast/COZ022",
+                    "https://api.weather.gov/zones/forecast/COZ023",
+                    "https://api.weather.gov/zones/forecast/UTZ022",
+                    "https://api.weather.gov/zones/forecast/UTZ028",
+                    "https://api.weather.gov/zones/forecast/UTZ029"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4c2dd958580560f3aefbdfa5fe5606b541da1e5c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4c2dd958580560f3aefbdfa5fe5606b541da1e5c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-27T00:45:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-27T10:27:00-06:00",
+                "effective": "2026-09-27T10:27:00-06:00",
+                "onset": "2026-09-28T06:00:00-06:00",
+                "expires": "2026-09-28T07:00:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Grand Junction CO",
+                "headline": "Flood Watch issued September 27 at 10:27AM MDT until September 30 at 6:00AM MDT by NWS Grand Junction CO",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of Colorado, including the following areas, Animas\nRiver Basin, Four Corners/Upper Dolores River, Northwest San Juan\nMountains, Paradox Valley/Lower Dolores River, San Juan River\nBasin, Southwest San Juan Mountains and Uncompahgre Plateau and\nDallas Divide and southeast Utah, including the following areas,\nCanyonlands/Natural Bridges, La Sal and Abajo Mountains and\nSoutheast Utah.\n\n* WHEN...From Monday morning through late Tuesday night.\n\n* IMPACTS...Flooding will be possible over burn scars, at low-water\ncrossings, and along creeks, streams, washes, arroyos and other\nflood-prone locations. Creeks and streams may rise out of their\nbanks. Unpaved roads could become muddy and impassable.\n\n* ADDITIONAL DETAILS...\n- Periods of heavy rainfall, associated with remnant moisture from\nHurricane Polo, are expected to produce numerous showers and\nembedded thunderstorms. Heavy rain falling on saturated soils and\nburn scars could lead to localized flash flooding and rises on\nlocal rivers.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KGJT 271627"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY MORNING THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KGJT.FA.A.0009.260928T1200Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7100a3566974619f3066d9efe1f8c3f6c7299223.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7100a3566974619f3066d9efe1f8c3f6c7299223.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7100a3566974619f3066d9efe1f8c3f6c7299223.001.1",
+                "areaDesc": "Guadalupe Mountains of Eddy County; Eddy County Plains; Northern Lea County; Central Lea County; Southern Lea County; Guadalupe Mountains Above 7000 Feet; Guadalupe and Delaware Mountains; Van Horn and Highway 54 Corridor; Eastern Culberson County",
+                "geocode": {
+                    "SAME": [
+                        "035015",
+                        "035025",
+                        "048109"
+                    ],
+                    "UGC": [
+                        "NMZ027",
+                        "NMZ028",
+                        "NMZ029",
+                        "NMZ033",
+                        "NMZ034",
+                        "TXZ270",
+                        "TXZ271",
+                        "TXZ272",
+                        "TXZ273"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/NMZ027",
+                    "https://api.weather.gov/zones/forecast/NMZ028",
+                    "https://api.weather.gov/zones/forecast/NMZ029",
+                    "https://api.weather.gov/zones/forecast/NMZ033",
+                    "https://api.weather.gov/zones/forecast/NMZ034",
+                    "https://api.weather.gov/zones/forecast/TXZ270",
+                    "https://api.weather.gov/zones/forecast/TXZ271",
+                    "https://api.weather.gov/zones/forecast/TXZ272",
+                    "https://api.weather.gov/zones/forecast/TXZ273"
+                ],
+                "references": [],
+                "sent": "2026-09-27T09:41:00-06:00",
+                "effective": "2026-09-27T09:41:00-06:00",
+                "onset": "2026-09-28T18:00:00-06:00",
+                "expires": "2026-09-28T03:00:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flood Watch issued September 27 at 9:41AM MDT until September 30 at 6:00AM MDT by NWS Midland/Odessa TX",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of southeast New Mexico, including the following\nareas, Central Lea, Eddy County Plains, Guadalupe Mountains of Eddy\nCounty, Northern Lea and Southern Lea and southwest Texas,\nincluding the following areas, Eastern Culberson, Guadalupe\nMountains Above 7000 Feet, Guadalupe and Delaware Mountains and Van\nHorn and Highway 54 Corridor.\n\n* WHEN...From Monday evening through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Tropical moisture from the remnants of Hurricane Polo will\noverspread the region, which will promote heavy rain across\nsoutheast New Mexico and far west Texas. Soils in these areas\nremain saturated following heavy rains from last week, which will\nfurther promote the risk for flash flooding.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KMAF 271541"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM MONDAY EVENING THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMAF.FA.A.0006.260929T0000Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.652de6e789df76f07b2675be12643ca489f102c4.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.652de6e789df76f07b2675be12643ca489f102c4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.652de6e789df76f07b2675be12643ca489f102c4.001.1",
+                "areaDesc": "Upper Rio Grande Valley/Eastern San Juan Mountains Below 10000 Ft; Eastern San Juan Mountains Above 10000 Ft",
+                "geocode": {
+                    "SAME": [
+                        "008021",
+                        "008079",
+                        "008105"
+                    ],
+                    "UGC": [
+                        "COZ067",
+                        "COZ068"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/COZ067",
+                    "https://api.weather.gov/zones/forecast/COZ068"
+                ],
+                "references": [],
+                "sent": "2026-09-27T08:13:00-06:00",
+                "effective": "2026-09-27T08:13:00-06:00",
+                "onset": "2026-09-28T06:00:00-06:00",
+                "expires": "2026-09-27T16:15:00-06:00",
+                "ends": "2026-09-30T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Pueblo CO",
+                "headline": "Flood Watch issued September 27 at 8:13AM MDT until September 30 at 6:00AM MDT by NWS Pueblo CO",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The Eastern San Juan Mountains.\n\n* WHEN...From Monday morning through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks.\n\n* ADDITIONAL DETAILS...\n- Periods of heavy rainfall associated with a remnant tropical\nstorm system will spread across southwest Colorado beginning\nMonday.\n- Creede, South Fork and Wolf Creek Pass.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAPUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KPUB 271413"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY MORNING THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KPUB.FA.A.0008.260928T1200Z-260930T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-30T06:00:00-06:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.ed13e94394bc5add2bd3cb8c391b8366392efda9.001.1,2026-09-27T00:01:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04c2b99b56a556b222fb16bb9c979318f26c9668.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.04c2b99b56a556b222fb16bb9c979318f26c9668.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.04c2b99b56a556b222fb16bb9c979318f26c9668.001.1",
+                "areaDesc": "Central Mountains; Castle Country; San Rafael Swell; Lower Washington County; Zion National Park; Southern Mountains; Upper Sevier River Valleys; Bryce Canyon Country; South Central Utah; Capitol Reef National Park and Vicinity; Western Canyonlands; Glen Canyon Recreation Area/Lake Powell",
+                "geocode": {
+                    "SAME": [
+                        "049015",
+                        "049023",
+                        "049027",
+                        "049039",
+                        "049041",
+                        "049007",
+                        "049053",
+                        "049021",
+                        "049025",
+                        "049001",
+                        "049017",
+                        "049031",
+                        "049055",
+                        "049037"
+                    ],
+                    "UGC": [
+                        "UTZ117",
+                        "UTZ120",
+                        "UTZ121",
+                        "UTZ123",
+                        "UTZ124",
+                        "UTZ125",
+                        "UTZ126",
+                        "UTZ127",
+                        "UTZ128",
+                        "UTZ129",
+                        "UTZ130",
+                        "UTZ131"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/UTZ117",
+                    "https://api.weather.gov/zones/forecast/UTZ120",
+                    "https://api.weather.gov/zones/forecast/UTZ121",
+                    "https://api.weather.gov/zones/forecast/UTZ123",
+                    "https://api.weather.gov/zones/forecast/UTZ124",
+                    "https://api.weather.gov/zones/forecast/UTZ125",
+                    "https://api.weather.gov/zones/forecast/UTZ126",
+                    "https://api.weather.gov/zones/forecast/UTZ127",
+                    "https://api.weather.gov/zones/forecast/UTZ128",
+                    "https://api.weather.gov/zones/forecast/UTZ129",
+                    "https://api.weather.gov/zones/forecast/UTZ130",
+                    "https://api.weather.gov/zones/forecast/UTZ131"
+                ],
+                "references": [],
+                "sent": "2026-09-27T07:48:00-06:00",
+                "effective": "2026-09-27T07:48:00-06:00",
+                "onset": "2026-09-28T06:00:00-06:00",
+                "expires": "2026-09-28T00:00:00-06:00",
+                "ends": "2026-09-29T06:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flood Watch issued September 27 at 7:48AM MDT until September 29 at 6:00AM MDT by NWS Salt Lake City UT",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible across\nmuch of central and southern Utah between Monday morning and early\nTuesday morning.\n\n* WHERE...A portion of Utah, including the following areas, Castle\nCountry, Central Mountains, San Rafael Swell, Bryce Canyon Country,\nCapitol Reef National Park and Vicinity, Glen Canyon Recreation\nArea/Lake Powell, South Central Utah, Southern Mountains, Upper\nSevier River Valleys, Western Canyonlands, Lower Washington County\nand Zion National Park.\n\n* WHEN...From Monday morning through early Tuesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, dry washes, slot canyons, and other low-lying and\nflood-prone locations such as slickrock areas and recent burn scars\nincluding Cottonwood, Widemouth 2, France Canyon, Monroe Canyon,\nForsyth, and Silver King.\n\n* ADDITIONAL DETAILS...\n- Deep moisture originating from tropical systems in the Eastern\nPacific draws into portions of central and southern Utah on\nMonday. Concurrently, an upper-level system traversing the Desert\nSouthwest will result in ample instability that will produce\nwidespread heavy rainfall across the area. Isolated heavier\nstorms will be capable of producing rainfall rates in excess of 1\ninch per hour at times.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFASLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KSLC 271348"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM MONDAY MORNING THROUGH TUESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSLC.FA.A.0011.260928T1200Z-260929T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T06:00:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.502052aea489cc6714da12d1b9b26725753af794.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.502052aea489cc6714da12d1b9b26725753af794.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.502052aea489cc6714da12d1b9b26725753af794.001.1",
+                "areaDesc": "Northern Worcester; Central Middlesex County; Western Essex; Eastern Essex; Southern Worcester; Western Norfolk; Southeast Middlesex; Suffolk; Eastern Norfolk; Northern Bristol; Western Plymouth; Eastern Plymouth; Southern Bristol; Southern Plymouth; Barnstable; Dukes; Nantucket; Northwest Middlesex County; Northwest Providence; Southeast Providence; Western Kent; Eastern Kent; Bristol; Washington; Newport; Block Island",
+                "geocode": {
+                    "SAME": [
+                        "025027",
+                        "025017",
+                        "025009",
+                        "025021",
+                        "025025",
+                        "025005",
+                        "025023",
+                        "025001",
+                        "025007",
+                        "025019",
+                        "044007",
+                        "044003",
+                        "044001",
+                        "044009",
+                        "044005"
+                    ],
+                    "UGC": [
+                        "MAZ004",
+                        "MAZ005",
+                        "MAZ006",
+                        "MAZ007",
+                        "MAZ012",
+                        "MAZ013",
+                        "MAZ014",
+                        "MAZ015",
+                        "MAZ016",
+                        "MAZ017",
+                        "MAZ018",
+                        "MAZ019",
+                        "MAZ020",
+                        "MAZ021",
+                        "MAZ022",
+                        "MAZ023",
+                        "MAZ024",
+                        "MAZ026",
+                        "RIZ001",
+                        "RIZ002",
+                        "RIZ003",
+                        "RIZ004",
+                        "RIZ005",
+                        "RIZ006",
+                        "RIZ007",
+                        "RIZ008"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/MAZ004",
+                    "https://api.weather.gov/zones/forecast/MAZ005",
+                    "https://api.weather.gov/zones/forecast/MAZ006",
+                    "https://api.weather.gov/zones/forecast/MAZ007",
+                    "https://api.weather.gov/zones/forecast/MAZ012",
+                    "https://api.weather.gov/zones/forecast/MAZ013",
+                    "https://api.weather.gov/zones/forecast/MAZ014",
+                    "https://api.weather.gov/zones/forecast/MAZ015",
+                    "https://api.weather.gov/zones/forecast/MAZ016",
+                    "https://api.weather.gov/zones/forecast/MAZ017",
+                    "https://api.weather.gov/zones/forecast/MAZ018",
+                    "https://api.weather.gov/zones/forecast/MAZ019",
+                    "https://api.weather.gov/zones/forecast/MAZ020",
+                    "https://api.weather.gov/zones/forecast/MAZ021",
+                    "https://api.weather.gov/zones/forecast/MAZ022",
+                    "https://api.weather.gov/zones/forecast/MAZ023",
+                    "https://api.weather.gov/zones/forecast/MAZ024",
+                    "https://api.weather.gov/zones/forecast/MAZ026",
+                    "https://api.weather.gov/zones/forecast/RIZ001",
+                    "https://api.weather.gov/zones/forecast/RIZ002",
+                    "https://api.weather.gov/zones/forecast/RIZ003",
+                    "https://api.weather.gov/zones/forecast/RIZ004",
+                    "https://api.weather.gov/zones/forecast/RIZ005",
+                    "https://api.weather.gov/zones/forecast/RIZ006",
+                    "https://api.weather.gov/zones/forecast/RIZ007",
+                    "https://api.weather.gov/zones/forecast/RIZ008"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8fe193a3a27c821ed6bba9595ad846d36da29d38.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.8fe193a3a27c821ed6bba9595ad846d36da29d38.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-26T12:18:00-04:00"
+                    }
+                ],
+                "sent": "2026-09-27T02:48:00-04:00",
+                "effective": "2026-09-27T02:48:00-04:00",
+                "onset": "2026-09-27T02:48:00-04:00",
+                "expires": "2026-09-27T17:00:00-04:00",
+                "ends": "2026-09-29T02:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Boston/Norton MA",
+                "headline": "Flood Watch issued September 27 at 2:48AM EDT until September 29 at 2:00AM EDT by NWS Boston/Norton MA",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of Massachusetts, including the following areas,\nBarnstable MA, Central Middlesex MA, Dukes MA, Eastern Essex MA,\nEastern Norfolk MA, Eastern Plymouth MA, Nantucket MA, Northern\nBristol MA, Northern Middlesex MA, Northern Worcester MA, Southeast\nMiddlesex MA, Southern Bristol MA, Southern Plymouth MA, Southern\nWorcester MA, Suffolk MA, Western Essex MA, Western Norfolk MA and\nWestern Plymouth MA and Rhode Island, including the following\nareas, Block Island RI, Bristol RI, Eastern Kent RI, Newport RI,\nNorthwest Providence RI, Southeast Providence RI, Washington RI and\nWestern Kent RI.\n\n* WHEN...Through late Monday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nCreeks and streams may rise out of their banks.\n\n* ADDITIONAL DETAILS...\n- Periods of rain will continue across the region right through\nMonday. Storm total rainfall amount of 2-4\" are expected, but\nlocalized 5-7\" amounts are possible. If these higher amounts are\nrealized...the potential for both urban and small river/stream\nflooding would increase. This is particularly true if these\nlocalized higher amounts occur over a vulnerable urban center.\n\n- Http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFABOX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS61 KBOX 270648"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH LATE MONDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KBOX.FA.A.0005.000000T0000Z-260929T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T02:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73304bb0be784914e4426a27961a591ebe2d6bbe.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73304bb0be784914e4426a27961a591ebe2d6bbe.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.73304bb0be784914e4426a27961a591ebe2d6bbe.001.1",
+                "areaDesc": "Western Pima County Including Ajo/Organ Pipe Cactus National Monument; Tohono O'odham Nation including Sells; Upper Santa Cruz River and Altar Valleys including Nogales; Tucson Metro Area including Tucson/Green Valley/Marana/Vail; South Central Pinal County including Eloy/Picacho Peak State Park; Southeast Pinal County including Kearny/Mammoth/Oracle; Upper San Pedro River Valley including Sierra Vista/Benson; Eastern Cochise County Below 5000 Feet including Douglas/Willcox; Upper Gila River and Aravaipa Valleys including Clifton/Safford; White Mountains of Graham and Greenlee Counties including Hannagan Meadow; Galiuro and Pinaleno Mountains including Mount Graham; Chiricahua Mountains including Chiricahua National Monument; Dragoon/Mule/Huachuca and Santa Rita Mountains including Bisbee/Canelo Hills/Madera Canyon; Santa Catalina and Rincon Mountains including Mount Lemmon/Summerhaven; Baboquivari Mountains including Kitt Peak",
+                "geocode": {
+                    "SAME": [
+                        "004019",
+                        "004021",
+                        "004023",
+                        "004003",
+                        "004009",
+                        "004011"
+                    ],
+                    "UGC": [
+                        "AZZ501",
+                        "AZZ502",
+                        "AZZ503",
+                        "AZZ504",
+                        "AZZ505",
+                        "AZZ506",
+                        "AZZ507",
+                        "AZZ508",
+                        "AZZ509",
+                        "AZZ510",
+                        "AZZ511",
+                        "AZZ512",
+                        "AZZ513",
+                        "AZZ514",
+                        "AZZ515"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ501",
+                    "https://api.weather.gov/zones/forecast/AZZ502",
+                    "https://api.weather.gov/zones/forecast/AZZ503",
+                    "https://api.weather.gov/zones/forecast/AZZ504",
+                    "https://api.weather.gov/zones/forecast/AZZ505",
+                    "https://api.weather.gov/zones/forecast/AZZ506",
+                    "https://api.weather.gov/zones/forecast/AZZ507",
+                    "https://api.weather.gov/zones/forecast/AZZ508",
+                    "https://api.weather.gov/zones/forecast/AZZ509",
+                    "https://api.weather.gov/zones/forecast/AZZ510",
+                    "https://api.weather.gov/zones/forecast/AZZ511",
+                    "https://api.weather.gov/zones/forecast/AZZ512",
+                    "https://api.weather.gov/zones/forecast/AZZ513",
+                    "https://api.weather.gov/zones/forecast/AZZ514",
+                    "https://api.weather.gov/zones/forecast/AZZ515"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.47a62653695189a26effd54fa380b6af9554460d.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.47a62653695189a26effd54fa380b6af9554460d.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-26T13:17:00-07:00"
+                    }
+                ],
+                "sent": "2026-09-26T21:17:00-07:00",
+                "effective": "2026-09-26T21:17:00-07:00",
+                "onset": "2026-09-28T11:00:00-07:00",
+                "expires": "2026-09-27T15:00:00-07:00",
+                "ends": "2026-09-29T23:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tucson AZ",
+                "headline": "Flood Watch issued September 26 at 9:17PM MST until September 29 at 11:00PM MST by NWS Tucson AZ",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...For all of southeast Arizona, including the following\nareas, Baboquivari Mountains, Catalina and Rincon Mountains,\nChiricahua Mountains, Dragoon and Mule and Huachuca and Santa Rita\nMountains, Eastern Cochise County below 5000 feet, Galiuro and\nPinaleno Mountains, South Central Pinal County, Southeast Pinal\nCounty, Tohono O'odham Nation, Tucson Metro Area, Upper Gila River\nValley, Upper San Pedro River Valley, Upper Santa Cruz River\nValley/Altar Valley, Western Pima County and White Mountains of\nGraham and Greenlee Counties.\n\n* WHEN...From Monday morning through Tuesday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Deep tropical moisture will combine with an approaching upper low\nand trough, resulting in areas of heavy rainfall. Rainfall totals\nof 1 to 2 inches are possible across most of southeast Arizona,\nwith locally heavier amounts under the stronger thunderstorms.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATWC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KTWC 270417"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM MONDAY MORNING THROUGH TUESDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTWC.FA.A.0013.260928T1800Z-260930T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T23:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e50ed3715982b7d38f6d11c8fb3fa472fd629878.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e50ed3715982b7d38f6d11c8fb3fa472fd629878.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.e50ed3715982b7d38f6d11c8fb3fa472fd629878.001.1",
+                "areaDesc": "Kaibab Plateau; Marble and Glen Canyons; Grand Canyon Country; Coconino Plateau; Yavapai County Mountains; Northeast Plateaus and Mesas Hwy 264 Northward; Chinle Valley; Chuska Mountains and Defiance Plateau; Little Colorado River Valley in Coconino County; Little Colorado River Valley in Navajo County; Little Colorado River Valley in Apache County; Western Mogollon Rim; Eastern Mogollon Rim; White Mountains; Northern Gila County; Yavapai County Valleys and Basins; Oak Creek and Sycamore Canyons; Black Mesa Area; Northeast Plateaus and Mesas South of Hwy 264",
+                "geocode": {
+                    "SAME": [
+                        "004005",
+                        "004025",
+                        "004001",
+                        "004017",
+                        "004007"
+                    ],
+                    "UGC": [
+                        "AZZ004",
+                        "AZZ005",
+                        "AZZ006",
+                        "AZZ007",
+                        "AZZ008",
+                        "AZZ009",
+                        "AZZ010",
+                        "AZZ011",
+                        "AZZ012",
+                        "AZZ013",
+                        "AZZ014",
+                        "AZZ015",
+                        "AZZ016",
+                        "AZZ017",
+                        "AZZ018",
+                        "AZZ037",
+                        "AZZ038",
+                        "AZZ039",
+                        "AZZ040"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AZZ004",
+                    "https://api.weather.gov/zones/forecast/AZZ005",
+                    "https://api.weather.gov/zones/forecast/AZZ006",
+                    "https://api.weather.gov/zones/forecast/AZZ007",
+                    "https://api.weather.gov/zones/forecast/AZZ008",
+                    "https://api.weather.gov/zones/forecast/AZZ009",
+                    "https://api.weather.gov/zones/forecast/AZZ010",
+                    "https://api.weather.gov/zones/forecast/AZZ011",
+                    "https://api.weather.gov/zones/forecast/AZZ012",
+                    "https://api.weather.gov/zones/forecast/AZZ013",
+                    "https://api.weather.gov/zones/forecast/AZZ014",
+                    "https://api.weather.gov/zones/forecast/AZZ015",
+                    "https://api.weather.gov/zones/forecast/AZZ016",
+                    "https://api.weather.gov/zones/forecast/AZZ017",
+                    "https://api.weather.gov/zones/forecast/AZZ018",
+                    "https://api.weather.gov/zones/forecast/AZZ037",
+                    "https://api.weather.gov/zones/forecast/AZZ038",
+                    "https://api.weather.gov/zones/forecast/AZZ039",
+                    "https://api.weather.gov/zones/forecast/AZZ040"
+                ],
+                "references": [],
+                "sent": "2026-09-26T12:01:00-07:00",
+                "effective": "2026-09-26T12:01:00-07:00",
+                "onset": "2026-09-27T23:00:00-07:00",
+                "expires": "2026-09-28T23:45:00-07:00",
+                "ends": "2026-09-29T23:00:00-07:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Flagstaff AZ",
+                "headline": "Flood Watch issued September 26 at 12:01PM MST until September 29 at 11:00PM MST by NWS Flagstaff AZ",
+                "description": "* WHAT...Flooding caused by excessive and long duration rainfall.\n\n* WHERE...All of northern and central Arizona.\n\n* WHEN...From Sunday evening through Tuesday evening.\n\n* IMPACTS...Flooding will be possible over burn areas, low-water\ncrossings, creeks, streams, washes and swimming holes. Larger\ncreeks and rivers may exceed bankfull. Flooding of paved roads and\nhighway underpasses will be possible. Unpaved roads could become\nmuddy and impassable.\n\n* ADDITIONAL DETAILS...\n- Low pressure will interact with tropical moisture from the\neastern Pacific. This could potentially produce numerous showers\nand embedded thunderstorms, with heavy rain that will fall over\nsaturated soils and burn scars. This could lead to localized\nflash flooding and rises on local rivers, such as the Little\nColorado River.\n- Additional information is available at weather.gov/flagstaff.",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAFGZ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS65 KFGZ 261901"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SUNDAY EVENING THROUGH TUESDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFGZ.FA.A.0009.260928T0600Z-260930T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-29T23:00:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-27T20:00:00+00:00"
+}
