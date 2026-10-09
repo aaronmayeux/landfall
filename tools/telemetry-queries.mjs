@@ -296,6 +296,8 @@ export const QUERIES = [
       'SUM(CASE WHEN model_toggle > 0 THEN 1 ELSE 0 END) AS sessions_toggling_models, ' +
       'SUM(CASE WHEN recenter > 0 THEN 1 ELSE 0 END) AS sessions_recentering, ' +
       'SUM(CASE WHEN home_set > 0 THEN 1 ELSE 0 END) AS sessions_setting_home, ' +
+      'SUM(CASE WHEN layers_open > 0 THEN 1 ELSE 0 END) AS sessions_opening_layers, ' +
+      'SUM(CASE WHEN settings_open > 0 THEN 1 ELSE 0 END) AS sessions_opening_settings, ' +
       'SUM(CASE WHEN retry > 0 THEN 1 ELSE 0 END) AS sessions_pressing_retry, ' +
       'SUM(CASE WHEN webgl_lost > 0 THEN 1 ELSE 0 END) AS sessions_losing_webgl ' +
       'FROM sessions GROUP BY platform ORDER BY sessions DESC',
@@ -461,7 +463,8 @@ export const QUERIES = [
          device that only ever pressed the missing button look untouched. */
       "HAVING COUNT(DISTINCT DATE(ts, 'unixepoch')) >= 5 " +
       'AND SUM(storm_select + advisory_open + layer_toggle + layer_pair + ' +
-      'layer_reset + model_toggle + recenter + home_set + retry) = 0 ' +
+      'layer_reset + model_toggle + recenter + home_set + retry + ' +
+      'layers_open + settings_open) = 0 ' +
       'ORDER BY sessions DESC LIMIT 30',
   },
   {

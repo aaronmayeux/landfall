@@ -356,7 +356,11 @@ project notes is the reading guide; this section is the contract.
   is invisible in review** — every individual call is defensible, and only the
   count is wrong — so it has to be asserted as a number or it comes back.
 - `lib/usage.js` — plain counts. Storms opened, advisories read, layers toggled,
-  retries. **Counts only** — no order, no timestamps, no arguments; never which
+  retries, and the Layers and Settings panels opened (`layers_open`,
+  `settings_open`, counted at the corner button so a Back onto the panel is not
+  an open). The layer counters fire only on a change, so without the open counts
+  "never found it" and "found it, kept the defaults" were the same zero.
+  **Counts only** — no order, no timestamps, no arguments; never which
   storm, never which layer. A sequence with times attached is a behavioural
   fingerprint.
   **One exception, and it is a set rather than a sequence: `retry_which`.** Four

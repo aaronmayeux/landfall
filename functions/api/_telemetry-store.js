@@ -149,6 +149,14 @@ const SESSION_COLUMNS = Object.freeze([
    *   list of four in both lib/usage.js and beacon.js. Adding a fifth button
    *   costs one word in two allowlists and no ALTER TABLE at all. */
   'retry_which',
+  /* Appended 2026-10-09.
+   *
+   * `layers_open` / `settings_open` — the Layers and Settings corner buttons
+   *   pressed to OPEN their panel. Every layer counter above fires only on a
+   *   change, so a visit that opened Layers, looked, and closed it left no
+   *   trace; "cannot find the button" and "found it, changed nothing" were the
+   *   same zero. Plain counts like the rest of lib/usage.js. */
+  'layers_open', 'settings_open',
 ]);
 
 const SESSION_SQL =

@@ -118,7 +118,7 @@ import { startTelemetry, reportSource, setSessionSnapshot } from './lib/telemetr
  * import these — main.js joins them and hands the result over as a callback,
  * so a fault in either can never take error reporting down with it. */
 import { startPerf, mark as perfMark, noteWebglLoss, snapshot as perfSnapshot } from './lib/perf.js';
-import { snapshot as usageSnapshot } from './lib/usage.js';
+import { snapshot as usageSnapshot, count as countAction } from './lib/usage.js';
 /* The one module that must work when nothing else does — see its header on
  * why it imports nothing, not even tokens. */
 import { hasWebGL, showBootFailure } from './ui/boot-failure.js';
@@ -1941,6 +1941,10 @@ function boot() {
     ['btn-settings', 'settings'],
   ];
 
+  /* Which presses count as opening a panel (lib/usage.js). Only these two:
+   * Storms and Home have their own, more specific counters downstream. */
+  const OPEN_COUNTER = { layers: 'layers_open', settings: 'settings_open' };
+
   for (const [id, viewId] of CLUSTER) {
     const btn = document.getElementById(id);
     btn.addEventListener('click', () => {
@@ -1959,8 +1963,12 @@ function boot() {
         open: drawer.isOpen(),
         currentId: drawer.currentId(),
       });
-      if (act === 'close') drawer.close();
-      else if (act === 'go') drawer.go(viewId, undefined, { from: btn });
+      if (act === 'close') {
+        drawer.close();
+        return;
+      }
+      if (OPEN_COUNTER[viewId]) countAction(OPEN_COUNTER[viewId]);
+      if (act === 'go') drawer.go(viewId, undefined, { from: btn });
       else drawer.push(viewId, undefined, { from: btn, replaceTop: act === 'swap' });
     });
   }
