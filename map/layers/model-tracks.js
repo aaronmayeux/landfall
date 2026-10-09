@@ -67,9 +67,10 @@ function lineLayer(id, source) {
     layout: {
       'line-cap': 'round',
       'line-join': 'round',
-      /* Starts hidden: the layer ships OFF (§7 manifest), and creating it
-       * visible would flash every model for one frame on any device slow
-       * enough for the first `setVisible` to land after style load. */
+      /* Starts hidden even though the layer now ships ON (§7 manifest):
+       * the first `setVisible` turns it on, and a reader who switched it off
+       * must never see every model flash for one frame on a device slow
+       * enough for that call to land after style load. */
       visibility: 'none',
     },
     paint: {

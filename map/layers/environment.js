@@ -84,7 +84,7 @@ const fcOfKind = (fc, kind) => ({
  *  visibility depends on which message landed first is a bug that only shows
  *  up on a slow connection.
  *
- *  Seeded FALSE because this layer ships off — the opposite of the cone. */
+ *  Seeded FALSE because this layer ships off, like the cone. */
 let visible = false;
 
 function applyVisibility(map) {

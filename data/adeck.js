@@ -13,7 +13,8 @@
  * glass. §7's line is stale; this file is the as-built.
  *
  * BUT ONLY WHILE THE LAYER IS ON. Warming decks for a layer nobody switched on
- * is pure data spend on a phone, and the toggle ships OFF. main.js gates the
+ * is pure data spend on a phone. The toggle ships ON, so a first visit does
+ * warm them; a reader who switches it off stops paying. main.js gates the
  * call; this module never polls on its own.
  *
  * THE PAYLOAD IS WHY THE RELAY FILTERS. A raw deck is a few MB and a busy

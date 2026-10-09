@@ -271,19 +271,14 @@ export const LAYER_PAIRS = Object.freeze([
     id: 'windField',
     group: LAYER_GROUP.STORM,
     label: 'Wind field',
-    /* BACK TO CURRENT, same day it was changed to swath (2026-07-25). The
-     * argument for the swath — it shows what has been hit and what is in line
-     * to be — is sound in the abstract and wrong on a globe with several
-     * storms on it: a full-track envelope for every active system is a lot of
-     * translucent area, and it competes with the cone, which is the shape that
-     * actually answers "where is this going". Current bands stay tied to a
-     * point, so they read as the storm rather than as weather in general.
-     * The swath is one tap away for the storm you are studying. */
-    /* STILL 'current', not 'off'. The default answers "what should a stranger
-     * arriving by shared link during a hurricane see" (§1), and how far the
-     * dangerous wind reaches is part of that answer. Off is a control for
-     * someone who has looked and wants the map back. */
-    default: 'current',
+    /* FULL TRACK. Aaron's call, 2026-10-09: the swath shows what has been
+     * hit and what is in line to be, and that is the reading he wants a new
+     * visitor to land on. It was tried once before (2026-07-25) and pulled
+     * the same day because a swath per storm is a lot of translucent area
+     * next to the cone; that trade was made knowingly this time, with the
+     * cone shipping OFF so the two do not stack. Current and Off are one tap
+     * away. */
+    default: 'swath',
     options: Object.freeze([
       offOption(),
       Object.freeze({ value: 'current', label: 'Current', key: 'windCurrent', phase: 6 }),
@@ -457,9 +452,11 @@ export const LAYER_TOGGLES = Object.freeze([
     key: 'cone',
     group: LAYER_GROUP.STORM,
     label: 'Cone of uncertainty',
-    /* DEFAULT ON. It is the official forecast envelope; hiding it by default
-     * would be hiding the answer. */
-    default: true,
+    /* DEFAULT OFF. Aaron's call, 2026-10-09, made against the standing
+     * argument that the cone is the official forecast envelope: the full-track
+     * wind swath and the model tracks now ship on, and the cone on top of
+     * both is the overlap that blurs the coastline. One tap brings it back. */
+    default: false,
     phase: 4,
     /* Pure render toggle — the cone rides the geometry bundle that is fetched
      * for every storm regardless, so this row can never go amber. */
@@ -551,18 +548,12 @@ export const LAYER_TOGGLES = Object.freeze([
     key: 'modelTracks',
     group: LAYER_GROUP.STORM,
     label: 'Model tracks',
-    /* SHIPS OFF, and it is the only fetching layer that does.
-     *
-     * Model guidance is an EXPERT read — five lines of disagreement is the
-     * right answer to "how confident is this forecast" and the wrong answer
-     * to "where is the storm going", which is what a stranger arriving by
-     * shared link during a hurricane is asking (§1). Defaulting it on would
-     * put a hairball over the cone for the majority who did not ask for one.
-     *
-     * The off default also gates the WARMING: decks are fetched for every
-     * storm once this is on, so leaving it off costs a first-time visitor
-     * nothing on their connection. */
-    default: false,
+    /* SHIPS ON. Aaron's call, 2026-10-09: how much the models disagree is
+     * part of the first read he wants, not an expert setting behind a switch.
+     * The cost is real and accepted: decks are fetched for every storm on a
+     * first visit (the warming this default used to gate), and the lines
+     * draw on every storm without a tap. */
+    default: true,
     phase: 6,
     fetches: true,
     /* ==> [APPROVE] THE NOTE IS GONE, AND ITS ABSENCE IS THE CHANGE <==
@@ -618,7 +609,7 @@ export const LAYER_TOGGLES = Object.freeze([
    * alert. §48.1's finding was about NHC's rainfall FORECAST; this is NWS's
    * statement about water already on the ground.
    *
-   * SHIPS OFF, and for the reason model tracks and Environment do: the question
+   * SHIPS OFF, and for the reason Environment does: the question
    * a stranger arriving by shared link during a hurricane is asking is "where
    * is it going" (§1), and green boxes over inland counties are not that
    * answer. The off default also gates the FETCH — nothing asks the relay for
@@ -762,9 +753,9 @@ export const LAYER_TOGGLES = Object.freeze([
    * per device, and `fetches: true` is what lets the panel say so honestly
    * instead of presenting a switch that appears dead on a bad connection.
    *
-   * SHIPS OFF, for the same reason model tracks do (§1): the question a
+   * SHIPS OFF (§1): the question a
    * stranger arriving by shared link during a hurricane is asking is "where is
-   * it going", and the answer to that is the cone. This is the second
+   * it going", and the answer to that is the track. This is the second
    * question, and it costs a megabyte to ask.
    *
    * Phase 1 — it draws from a file in the repo, with no source that can fail

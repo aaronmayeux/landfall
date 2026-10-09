@@ -3655,7 +3655,7 @@ colours, so it uses a `['case']` paint expression with no `global-state` in it
 (safe from `map/theme-state.js` rule 1b) and rethemes with two
 `setPaintProperty` calls touching no geometry.
 
-**Off by default**, like model tracks and Environment, and the off default gates
+**Off by default**, like Environment, and the off default gates
 the fetch: nothing asks the relay for this list until the switch goes on. The
 toggle's note names the two limits that would otherwise read as faults — **US
 only**, because NWS is and no global equivalent has been found, and **watches

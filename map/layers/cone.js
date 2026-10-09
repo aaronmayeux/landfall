@@ -32,11 +32,11 @@ const LAYER_IDS = ['amb-cone-fill', 'amb-cone-line', 'sel-cone-fill', 'sel-cone-
  *  layer whose visibility depends on which message landed first is a bug that
  *  only shows up on a slow connection.
  *
- *  Seeded TRUE because this layer ships on — the opposite of model tracks. A
- *  false seed would blank every cone for the frames between style load and the
- *  first `applyLayerState`, which is a visible flash of the app's most
- *  important shape going missing. */
-let visible = true;
+ *  Seeded FALSE because this layer ships off (§7 manifest). A true seed would
+ *  flash every cone for the frames between style load and the first
+ *  `applyLayerState` and then take them away — worse than a reader who turned
+ *  it on seeing it land a few frames late. */
+let visible = false;
 
 function setData(map, fc) {
   map.getSource(SOURCE)?.setData(fc || EMPTY);

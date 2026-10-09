@@ -123,7 +123,7 @@ export const GENESIS_HIT_LAYERS = Object.freeze(['genesis-hit', 'genesis-fill'])
 /* Seeded TRUE because this layer ships on. A false seed would blank the
  * patches for the frames between style load and the first `applyLayerState` —
  * and on a day with no storms that is the whole screen going empty and then
- * un-empty, which reads as a bug. Same reasoning as cone.js. */
+ * un-empty, which reads as a bug. */
 let visible = true;
 
 /** Last pushed areas and selection, held so a theme change can re-derive the

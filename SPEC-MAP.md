@@ -51,14 +51,14 @@ heading; headers are not focusable, rows are.
 
 ```
 STORM DETAIL
-  Wind field ─── [ Off | Current | Full track ]    segmented, default Current
+  Wind field ─── [ Off | Current | Full track ]    segmented, default Full track
   Coastal    ─── [ Off | Watch/warning | Surge ]   segmented, Surge dimmed
   ▸ "Surge coming soon."
   Imagery    ─── [ Off | Satellite | Radar ]       segmented, default Off
   ▸ "Radar only reaches storms near land. Satellite is worldwide."
   Forecast times                      [ ○ ]   default ON
-  Cone of uncertainty                 [ ○ ]   default ON
-  Model tracks                        [ > ]   expands in place
+  Cone of uncertainty                 [ ○ ]   default OFF
+  Model tracks                        [ > ]   default ON, expands in place
 
 REFERENCE
   Home marker                         [ ○ ]
@@ -122,7 +122,7 @@ additive.**
 | Layer | Type | Phase |
 |---|---|---|
 | Storm markers (worldwide) | baseline | 2 |
-| Cone of uncertainty | additive (ships ON), ambient at every zoom, redrawn along the track (§7.9) | 4 |
+| Cone of uncertainty | additive (ships OFF), ambient at every zoom, redrawn along the track (§7.9) | 4 |
 | Past track (dotted) | baseline, ambient at every zoom | 4 |
 | Forecast track (solid) | baseline, ambient at every zoom | 4 |
 | Forecast points (SS-colored, coded) | baseline, ambient at every zoom | 4 |
@@ -133,7 +133,7 @@ additive.**
 | Full-track wind swath | exclusive pair B | 6 |
 | Satellite | exclusive pair C | 7 |
 | Radar | exclusive pair C | 7 |
-| Model spaghetti tracks | additive, per-model sub-selection, ambient, ships OFF | 6 |
+| Model spaghetti tracks | additive, per-model sub-selection, ambient, ships ON | 6 |
 | Home marker + readouts | additive | 3 |
 | State names | additive, basemap furniture | 1 |
 | City names | additive, basemap furniture | 1 |
@@ -144,17 +144,16 @@ The planet-band aesthetic is not a MapLibre layer at all — it is the 3D clear
 globe's cyan geodesic cage (§9), which crossfades out as the dive hands off to
 MapLibre.
 
-**The cone has a toggle and defaults ON.** It is the official forecast envelope
-and a storm without one is a dot with no future. What earned it a switch is the
-ambient presentation: one cone answers "where is this going", six overlapping
-translucent cones are a milky film over the coastline you are reading a track
-against. **A layer that is right almost always and genuinely obstructive
-occasionally needs a switch, not a demotion.**
+**The cone has a toggle and defaults OFF.** It is the official forecast
+envelope, and it was the default until 2026-10-09, when Aaron set the first view
+to the full-track wind swath plus every model track. The cone on top of both is
+the overlap that turns the coastline milky, so it is one tap away instead of
+drawn by default.
 
-**Wind field ships CURRENT, not Full track.** A full-track envelope per storm is
-a lot of translucent area on a busy globe and it competes with the cone, which
-answers the same question better. Current bands stay tied to a point, so they
-read as the storm rather than as weather in general.
+**Wind field ships FULL TRACK.** The swath shows what has been hit and what is
+in line to be, which is the first read wanted. The cost is a lot of translucent
+area on a globe with several storms on it; with the cone off by default the two
+no longer stack. Current and Off are one tap away.
 
 **ANY LAYER ON THE MAPLIBRE CANVAS IS MULTIPLIED BY THE DIVE CROSSFADE.** The
 canvas sits at opacity 0 below `DIVE.zSpace` and does not reach full until
@@ -648,10 +647,10 @@ official cone, and until this layer the two were indistinguishable on screen.
   maxPoints` caps a deck at 32 fixes). What the extra knob did do was draw guidance
   visibly coarser than the tracks beside it — the opposite of the point.
 
-**SHIPS OFF, the only fetching layer that does.** Guidance is an expert read; a
-stranger arriving by shared link mid-storm is asking where it is going, not how
-confident the forecaster is. The off default also gates the warming, so a
-first-time visitor pays nothing for it.
+**SHIPS ON**, every model in the shortlist checked. How much the models
+disagree is part of the first read, not an expert setting behind a switch. The
+cost is accepted: decks are warmed for every storm on a first visit, and a
+reader who switches the layer off stops paying for them.
 
 **AMBIENT ON EVERY STORM**, like the wind field and the cone. **A layer the user
 turned on and then has to tap a storm to see is not a layer, it is a detail popup

@@ -328,12 +328,13 @@ ok(L.modelSelectorGroups(new Set(['nonsense'])).length === 2,
 /* --- per-model selection state -------------------------------------------- */
 section('per-model selection');
 const P = await import('../data/layer-prefs.js');
-ok(P.toggleOn('modelTracks') === false, 'the layer ships OFF');
+ok(P.toggleOn('modelTracks') === true, 'the layer ships ON');
 ok(P.modelsOnCount() === 7, 'every model starts selected — the spread is the point');
 ok(P.modelsOnInFamily('nhc') === 4, 'four NHC prefs (TVCN and HCCA share one)');
 ok(P.modelsOnInFamily('global') === 3, 'three TCGP ensemble means');
-ok(P.modelOn('avno') === false, 'modelOn stays false while the parent layer is off');
 ok(P.isDefault() === true, 'a fresh state compares equal to defaults');
+P.setToggle('modelTracks', false);
+ok(P.modelOn('avno') === false, 'modelOn stays false while the parent layer is off');
 
 P.setToggle('modelTracks', true);
 ok(P.modelOn('avno') === true, 'models draw once the layer is on');
@@ -357,7 +358,7 @@ ok(P.modelsOnInFamily('global') === 1, 'which is refused independently');
 ok(P.setModel('nonsense', true) === false, 'an unknown model is refused');
 
 P.resetLayers();
-ok(P.modelsOnCount() === 7 && P.toggleOn('modelTracks') === false, 'reset restores both levels');
+ok(P.modelsOnCount() === 7 && P.toggleOn('modelTracks') === true, 'reset restores both levels');
 ok(P.isDefault() === true, 'and the reset control disables itself again');
 
 P.setToggle('modelTracks', true);
