@@ -1,0 +1,35 @@
+ABPZ20 KNHC 292305
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Tue Sep 29 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Polo, located just inland in Sonora, Mexico, on Hurricane 
+Nolo, located several hundred miles west of Lihue, Hawaii, on 
+Tropical Storm Rachel, located a few hundred miles southwest of 
+Lazaro Cardenas, Mexico, and on Tropical Depression Nineteen-E, 
+located over the western East Pacific.
+
+South of Southern Mexico:
+An area of low pressure could form late this weekend or early next 
+week south of the southern coast of Mexico. Thereafter, 
+environmental conditions appear favorable for gradual development 
+while the system moves slowly west-northwestward to northwestward. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+Public Advisories on Tropical Depression Nineteen-E are issued under 
+WMO header WTPZ34 KNHC and under AWIPS header MIATCPEP4.
+Forecast/Advisories on Tropical Depression Nineteen-E are issued 
+under WMO header WTPZ24 KNHC and under AWIPS header MIATCMEP4.
+
+$$
+Forecaster Evans/Pierce/Cangialosi
+
+

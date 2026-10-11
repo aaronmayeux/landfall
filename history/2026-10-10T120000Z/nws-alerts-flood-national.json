@@ -1,0 +1,532 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b4d7f872af91a55bc3c9b34f3a02b89ed0184f94.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.12,
+                            32.65
+                        ],
+                        [
+                            -80.12,
+                            32.75
+                        ],
+                        [
+                            -80.11,
+                            32.82
+                        ],
+                        [
+                            -80.07,
+                            32.87
+                        ],
+                        [
+                            -80.04,
+                            32.88
+                        ],
+                        [
+                            -79.96,
+                            32.88
+                        ],
+                        [
+                            -79.96,
+                            32.86
+                        ],
+                        [
+                            -79.93,
+                            32.85
+                        ],
+                        [
+                            -79.93,
+                            32.83
+                        ],
+                        [
+                            -79.92,
+                            32.82
+                        ],
+                        [
+                            -79.92,
+                            32.8
+                        ],
+                        [
+                            -79.91,
+                            32.78
+                        ],
+                        [
+                            -79.87,
+                            32.76
+                        ],
+                        [
+                            -79.84,
+                            32.72
+                        ],
+                        [
+                            -79.86,
+                            32.73
+                        ],
+                        [
+                            -79.86,
+                            32.68
+                        ],
+                        [
+                            -79.87,
+                            32.67
+                        ],
+                        [
+                            -79.97,
+                            32.62
+                        ],
+                        [
+                            -79.99,
+                            32.58
+                        ],
+                        [
+                            -80.09,
+                            32.57
+                        ],
+                        [
+                            -80.12,
+                            32.65
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b4d7f872af91a55bc3c9b34f3a02b89ed0184f94.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b4d7f872af91a55bc3c9b34f3a02b89ed0184f94.001.1",
+                "areaDesc": "Charleston, SC",
+                "geocode": {
+                    "SAME": [
+                        "045019"
+                    ],
+                    "UGC": [
+                        "SCC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/SCC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.deb09ef875ae9f5cd127db5a5ca9e7505b837c3e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.deb09ef875ae9f5cd127db5a5ca9e7505b837c3e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-10T06:36:00-04:00"
+                    }
+                ],
+                "sent": "2026-10-10T07:23:00-04:00",
+                "effective": "2026-10-10T07:23:00-04:00",
+                "onset": "2026-10-10T07:23:00-04:00",
+                "expires": "2026-10-10T09:30:00-04:00",
+                "ends": "2026-10-10T09:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston SC",
+                "headline": "Flash Flood Warning issued October 10 at 7:23AM EDT until October 10 at 9:30AM EDT by NWS Charleston SC",
+                "description": "At 723 AM EDT, City of Charleston Emergency Management reported heavy\nrain in Downtown Charleston. Flash flooding is already occurring with\nseveral road closures across the city.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...City of Charleston Emergency Management reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nNorth Charleston, Mount Pleasant, James Island, Johns Island, West\nAshley, Downtown Charleston, Fort Sumter, Daniel Island, Folly\nBeach and Kiawah Island.\n\nAn area of intense rainfall moved through the Folly Beach, James\nIsland, Johns Island, West Ashley, and Downtown Charleston areas and\nproduced 1 to 2 inches of rain. The heaviest rain has now lifted\nnorthward but light to occasionally moderate rain will continue.\nAdditional rounds of heavy rain could develop through mid morning.\nCity of Charleston Emergency Management reported several roads closed\nacross the Downtown Charleston area and flash flooding is ongoing.\nAdditionally, a inundation depth sensor on Ogier Street near Calhoun\nStreet reported an inundation depth of over half of a foot.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nReport flooding directly to the Charleston National Weather Service\nat 1-888-383-2024 or email your reports to nws.charlestonsc@noaa.gov.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSCHS"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS72 KCHS 101123"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 930 AM EDT THIS MORNING FOR CHARLESTON COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KCHS.FF.W.0022.000000T0000Z-261010T1330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T09:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0ccf3baa1ca2f0996d893c76d55d48811bbfac24.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.46,
+                            33.55
+                        ],
+                        [
+                            -84.52,
+                            33.62
+                        ],
+                        [
+                            -84.49,
+                            33.81
+                        ],
+                        [
+                            -84.46,
+                            33.83
+                        ],
+                        [
+                            -84.46,
+                            33.85
+                        ],
+                        [
+                            -84.44,
+                            33.92
+                        ],
+                        [
+                            -84.16,
+                            34.06
+                        ],
+                        [
+                            -84.03,
+                            33.77
+                        ],
+                        [
+                            -84.12,
+                            33.47
+                        ],
+                        [
+                            -84.33,
+                            33.39
+                        ],
+                        [
+                            -84.38,
+                            33.46
+                        ],
+                        [
+                            -84.39,
+                            33.48
+                        ],
+                        [
+                            -84.42,
+                            33.5
+                        ],
+                        [
+                            -84.44,
+                            33.55
+                        ],
+                        [
+                            -84.46,
+                            33.55
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0ccf3baa1ca2f0996d893c76d55d48811bbfac24.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0ccf3baa1ca2f0996d893c76d55d48811bbfac24.001.1",
+                "areaDesc": "Clayton, GA; DeKalb, GA; Fulton, GA; Gwinnett, GA; Henry, GA; Rockdale, GA",
+                "geocode": {
+                    "SAME": [
+                        "013063",
+                        "013089",
+                        "013121",
+                        "013135",
+                        "013151",
+                        "013247"
+                    ],
+                    "UGC": [
+                        "GAC063",
+                        "GAC089",
+                        "GAC121",
+                        "GAC135",
+                        "GAC151",
+                        "GAC247"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC063",
+                    "https://api.weather.gov/zones/county/GAC089",
+                    "https://api.weather.gov/zones/county/GAC121",
+                    "https://api.weather.gov/zones/county/GAC135",
+                    "https://api.weather.gov/zones/county/GAC151",
+                    "https://api.weather.gov/zones/county/GAC247"
+                ],
+                "references": [],
+                "sent": "2026-10-10T07:12:00-04:00",
+                "effective": "2026-10-10T07:12:00-04:00",
+                "onset": "2026-10-10T07:12:00-04:00",
+                "expires": "2026-10-10T13:15:00-04:00",
+                "ends": "2026-10-10T13:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Peachtree City GA",
+                "headline": "Flash Flood Warning issued October 10 at 7:12AM EDT until October 10 at 1:15PM EDT by NWS Peachtree City GA",
+                "description": "FFWFFC\n\nThe National Weather Service in Peachtree City has issued a\n\n* Flash Flood Warning for...\nClayton County in north central Georgia...\nDeKalb County in north central Georgia...\nCentral Fulton County in north central Georgia...\nSouthwestern Gwinnett County in north central Georgia...\nNorthwestern Henry County in north central Georgia...\nCentral Rockdale County in north central Georgia...\n\n* Until 115 PM EDT Saturday.\n\n* At 712 AM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nAtlanta, McDonough, Decatur, Jonesboro, Peachtree Corners, Sandy\nSprings, Johns Creek, Dunwoody, East Point, Duluth, Stockbridge,\nForest Park, Riverdale, College Park, Lilburn, Chamblee, Norcross\nand Doraville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFFC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KFFC 101112"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFFC.FF.W.0080.261010T1112Z-261010T1715Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T13:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4d3422f73f7bf47b50a13dd09188ecc602c6489f.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.48,
+                            33.2
+                        ],
+                        [
+                            -84.4,
+                            33.28
+                        ],
+                        [
+                            -84.39,
+                            33.31
+                        ],
+                        [
+                            -84.35,
+                            33.34
+                        ],
+                        [
+                            -84.33,
+                            33.4
+                        ],
+                        [
+                            -84.27,
+                            33.42
+                        ],
+                        [
+                            -84.22,
+                            33.46
+                        ],
+                        [
+                            -84.07,
+                            33.46
+                        ],
+                        [
+                            -84.08,
+                            33.36
+                        ],
+                        [
+                            -84.1,
+                            33.31
+                        ],
+                        [
+                            -84.11,
+                            33.31
+                        ],
+                        [
+                            -84.12,
+                            33.24
+                        ],
+                        [
+                            -84.13,
+                            33.24
+                        ],
+                        [
+                            -84.13,
+                            33.11
+                        ],
+                        [
+                            -84.17,
+                            33.06
+                        ],
+                        [
+                            -84.24,
+                            33.04
+                        ],
+                        [
+                            -84.24,
+                            33.03
+                        ],
+                        [
+                            -84.35,
+                            33.03
+                        ],
+                        [
+                            -84.43,
+                            33.05
+                        ],
+                        [
+                            -84.47,
+                            33.08
+                        ],
+                        [
+                            -84.48,
+                            33.2
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4d3422f73f7bf47b50a13dd09188ecc602c6489f.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4d3422f73f7bf47b50a13dd09188ecc602c6489f.001.1",
+                "areaDesc": "Henry, GA; Lamar, GA; Pike, GA; Spalding, GA",
+                "geocode": {
+                    "SAME": [
+                        "013151",
+                        "013171",
+                        "013231",
+                        "013255"
+                    ],
+                    "UGC": [
+                        "GAC151",
+                        "GAC171",
+                        "GAC231",
+                        "GAC255"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC151",
+                    "https://api.weather.gov/zones/county/GAC171",
+                    "https://api.weather.gov/zones/county/GAC231",
+                    "https://api.weather.gov/zones/county/GAC255"
+                ],
+                "references": [],
+                "sent": "2026-10-10T05:43:00-04:00",
+                "effective": "2026-10-10T05:43:00-04:00",
+                "onset": "2026-10-10T05:43:00-04:00",
+                "expires": "2026-10-10T11:45:00-04:00",
+                "ends": "2026-10-10T11:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Peachtree City GA",
+                "headline": "Flash Flood Warning issued October 10 at 5:43AM EDT until October 10 at 11:45AM EDT by NWS Peachtree City GA",
+                "description": "FFWFFC\n\nThe National Weather Service in Peachtree City has issued a\n\n* Flash Flood Warning for...\nSouthwestern Henry County in north central Georgia...\nNorthwestern Lamar County in west central Georgia...\nPike County in west central Georgia...\nSpalding County in west central Georgia...\n\n* Until 1145 AM EDT Saturday.\n\n* At 543 AM EDT, Doppler radar indicated heavy rain across the warned\narea. Between 1.5 and 2.5 inches of rain have fallen. The expected\nrainfall rate is 0.5 to 1.5 inches in 1 hour. Additional rainfall\namounts of 1 to 2 inches are possible in the warned area. Flash\nflooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGriffin, McDonough, Zebulon, Hampton, Locust Grove, Milner,\nWilliamson, Orchard Hill, Meansville, Sunny Side, East Griffin,\nConcord, Experiment, Highland Mills, Rover, Towalaga, Walker Mill,\nZetella and Birdie.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWFFC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KFFC 100943"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KFFC.FF.W.0079.261010T0943Z-261010T1545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T11:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-10T12:15:19+00:00"
+}

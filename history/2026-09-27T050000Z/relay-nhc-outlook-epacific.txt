@@ -1,0 +1,52 @@
+en Español
+
+842 
+ABPZ20 KNHC 262350
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Sat Sep 26 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Polo, located a few hundred miles west-southwest of Cabo Corrientes, 
+Mexico, on Hurricane Odalys, located well west of the southern tip 
+of Baja California, and on Hurricane Nolo, located south of the Big 
+Island of Hawaii.
+
+Southwest of the Gulf of Tehuantepec (EP90):
+Showers and thunderstorms continue to develop in association with an 
+area of low pressure southwest of the Gulf of Tehuantepec. 
+Additional development of the system is anticipated due to 
+conducive environmental conditions and a tropical depression is 
+expected to form in the next day or so. This system is forecast to 
+continue moving slowly to the west-northwest or northwest, staying 
+parallel to the coast of southern and southwestern Mexico.
+For additional information, including Gale Warnings, see High Seas 
+forecast issued by the National Weather Service. 
+* Formation chance through 48 hours...high...90 percent.
+* Formation chance through 7 days...high...90 percent.
+
+Well East-Southeast of the Hawaiian Islands:
+A broad area of low pressure located about 1000 miles to the 
+east-southeast of the Hawaiian Islands is becoming organized. 
+Environmental conditions are expected to be conducive for 
+development of this system, and a tropical depression is likely to 
+form during the early to middle part of next week. The system should 
+move generally northeastward, and remain well east-southeast of the 
+Hawaiian Islands. 
+* Formation chance through 48 hours...low...30 percent.
+* Formation chance through 7 days...high...70 percent.
+
+&&
+
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFEPI, WMO header FZPN02 
+KWBC, and on the web at ocean.weather.gov/shtml/NFDHSFEPI.php 
+
+$$
+Forecaster Evans/Pierce/Beven
+  

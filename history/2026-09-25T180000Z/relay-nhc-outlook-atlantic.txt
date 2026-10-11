@@ -1,0 +1,30 @@
+en Español
+
+372 
+ABNT20 KNHC 251718
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 PM EDT Fri Sep 25 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Gonzalo, located about 160 miles east of the southernmost Cabo 
+Verde Islands, and on Tropical Storm Fay, located well to the 
+west-southwest of the Azores.
+
+Tropical cyclone formation is not expected during the next 7 days.
+
+&&
+
+Public Advisories on Tropical Storm Gonzalo are issued under WMO 
+header WTNT32 KNHC and under AWIPS header MIATCPAT2.  
+Forecast/Advisories on Tropical Storm Gonzalo are issued under WMO 
+header WTNT22 KNHC and under AWIPS header MIATCMAT2.
+
+$$
+Forecaster Katz/Reinhart
+  

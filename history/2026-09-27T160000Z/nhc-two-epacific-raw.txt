@@ -1,0 +1,38 @@
+ABPZ20 KNHC 271141
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 AM PDT Sun Sep 27 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Polo, located southwest of Cabo San Lucas, Mexico, on Hurricane 
+Odalys, located well west of the southern tip of Baja California, 
+and on Hurricane Nolo, located south-southwest of the Big Island of 
+Hawaii, and newly formed Tropical Depression Eighteen-E, located 
+several hundred miles southwest of the Acapulco, Mexico.
+
+Well East-Southeast of the Hawaiian Islands:
+Showers and thunderstorms continue to develop around a broad area of 
+low pressure, currently located well east-southeast of the Hawaiian 
+Islands. Environmental conditions are expected to be conducive for 
+further development, and a tropical depression is likely to form in 
+the next several days. The system is expected to move generally 
+northeastward, and remain well east-southeast of the Hawaiian 
+Islands.
+* Formation chance through 48 hours...medium...50 percent.
+* Formation chance through 7 days...high...80 percent.
+
+&&
+Public Advisories on Tropical Depression Eighteen-E are issued under 
+WMO header WTPZ33 KNHC and under AWIPS header MIATCPEP3.
+Forecast/Advisories on Tropical Depression Eighteen-E are issued 
+under WMO header WTPZ23 KNHC and under AWIPS header MIATCMEP3.
+
+$$
+Forecaster Katz/Papin
+
+

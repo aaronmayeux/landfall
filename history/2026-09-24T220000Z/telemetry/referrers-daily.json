@@ -1,0 +1,50 @@
+[
+  {
+    "day": "2026-09-24",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 34,
+    "people": 21
+  },
+  {
+    "day": "2026-09-23",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 34,
+    "people": 18
+  },
+  {
+    "day": "2026-09-22",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 13,
+    "people": 12
+  },
+  {
+    "day": "2026-09-21",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 12,
+    "people": 8
+  },
+  {
+    "day": "2026-09-20",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 6,
+    "people": 5
+  },
+  {
+    "day": "2026-09-19",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 13,
+    "people": 12
+  },
+  {
+    "day": "2026-09-18",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 8,
+    "people": 8
+  },
+  {
+    "day": "2026-09-17",
+    "source": "(direct, same-site, or pre-2026-08-14)",
+    "sessions": 1,
+    "people": 1
+  }
+]

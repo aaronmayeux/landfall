@@ -1,0 +1,546 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.689f0660b1579b3e07e0993525cef9df7d026209.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -81.68,
+                            30.01
+                        ],
+                        [
+                            -81.65,
+                            30.02
+                        ],
+                        [
+                            -81.61,
+                            30.02
+                        ],
+                        [
+                            -81.59,
+                            30.01
+                        ],
+                        [
+                            -81.45,
+                            29.89
+                        ],
+                        [
+                            -81.46,
+                            29.84
+                        ],
+                        [
+                            -81.5,
+                            29.81
+                        ],
+                        [
+                            -81.57,
+                            29.8
+                        ],
+                        [
+                            -81.61,
+                            29.82
+                        ],
+                        [
+                            -81.68,
+                            29.92
+                        ],
+                        [
+                            -81.71,
+                            29.97
+                        ],
+                        [
+                            -81.7,
+                            30
+                        ],
+                        [
+                            -81.68,
+                            30.01
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.689f0660b1579b3e07e0993525cef9df7d026209.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.689f0660b1579b3e07e0993525cef9df7d026209.001.1",
+                "areaDesc": "Clay, FL; Putnam, FL; St. Johns, FL",
+                "geocode": {
+                    "SAME": [
+                        "012019",
+                        "012107",
+                        "012109"
+                    ],
+                    "UGC": [
+                        "FLC019",
+                        "FLC107",
+                        "FLC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC019",
+                    "https://api.weather.gov/zones/county/FLC107",
+                    "https://api.weather.gov/zones/county/FLC109"
+                ],
+                "references": [],
+                "sent": "2026-10-05T17:29:00-04:00",
+                "effective": "2026-10-05T17:29:00-04:00",
+                "onset": "2026-10-05T17:29:00-04:00",
+                "expires": "2026-10-05T19:30:00-04:00",
+                "ends": "2026-10-05T19:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flash Flood Warning issued October 5 at 5:29PM EDT until October 5 at 7:30PM EDT by NWS Jacksonville FL",
+                "description": "FFWJAX\n\nThe National Weather Service in Jacksonville has issued a\n\n* Flash Flood Warning for...\nEast Central Clay County in northeastern Florida...\nNortheastern Putnam County in northeastern Florida...\nWest Central St. Johns County in northeastern Florida...\n\n* Until 730 PM EDT.\n\n* At 529 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1.5 to 2.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGreen Cove Springs, Picolata and Bakersville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KJAX 052129"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KJAX.FF.W.0047.261005T2129Z-261005T2330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T19:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cebadacbc6e7ffc01b1bbdb1778cf2b5c356b908.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.82,
+                            30.71
+                        ],
+                        [
+                            -84.8,
+                            30.84
+                        ],
+                        [
+                            -84.57,
+                            30.78
+                        ],
+                        [
+                            -84.59,
+                            30.7
+                        ],
+                        [
+                            -84.71,
+                            30.57
+                        ],
+                        [
+                            -84.84,
+                            30.63
+                        ],
+                        [
+                            -84.82,
+                            30.71
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cebadacbc6e7ffc01b1bbdb1778cf2b5c356b908.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.cebadacbc6e7ffc01b1bbdb1778cf2b5c356b908.001.1",
+                "areaDesc": "Gadsden, FL; Decatur, GA; Seminole, GA",
+                "geocode": {
+                    "SAME": [
+                        "012039",
+                        "013087",
+                        "013253"
+                    ],
+                    "UGC": [
+                        "FLC039",
+                        "GAC087",
+                        "GAC253"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC039",
+                    "https://api.weather.gov/zones/county/GAC087",
+                    "https://api.weather.gov/zones/county/GAC253"
+                ],
+                "references": [],
+                "sent": "2026-10-05T16:49:00-04:00",
+                "effective": "2026-10-05T16:49:00-04:00",
+                "onset": "2026-10-05T16:49:00-04:00",
+                "expires": "2026-10-05T19:45:00-04:00",
+                "ends": "2026-10-05T19:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued October 5 at 4:49PM EDT until October 5 at 7:45PM EDT by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nNorthwestern Gadsden County in Big Bend Florida...\nSouthwestern Decatur County in southwestern Georgia...\nSoutheastern Seminole County in southwestern Georgia...\n\n* Until 745 PM EDT.\n\n* At 449 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nGretna, Recovery, Mount Pleasant, Hardaway, Faceville and Rosedale.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 052049"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0036.261005T2049Z-261005T2345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T19:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fa77e57926b6e570938a10fb10caa8846844aa63.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -84.78,
+                            30.5
+                        ],
+                        [
+                            -84.59,
+                            30.7
+                        ],
+                        [
+                            -84.1,
+                            30.67
+                        ],
+                        [
+                            -84.18,
+                            30.55
+                        ],
+                        [
+                            -84.52,
+                            30.46
+                        ],
+                        [
+                            -84.69,
+                            30.3
+                        ],
+                        [
+                            -84.71,
+                            30.3
+                        ],
+                        [
+                            -84.73,
+                            30.29
+                        ],
+                        [
+                            -84.73,
+                            30.27
+                        ],
+                        [
+                            -84.74,
+                            30.27
+                        ],
+                        [
+                            -84.73,
+                            30.26
+                        ],
+                        [
+                            -84.86,
+                            30.14
+                        ],
+                        [
+                            -85.04,
+                            30.24
+                        ],
+                        [
+                            -84.78,
+                            30.5
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fa77e57926b6e570938a10fb10caa8846844aa63.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.fa77e57926b6e570938a10fb10caa8846844aa63.001.1",
+                "areaDesc": "Gadsden, FL; Leon, FL; Liberty, FL",
+                "geocode": {
+                    "SAME": [
+                        "012039",
+                        "012073",
+                        "012077"
+                    ],
+                    "UGC": [
+                        "FLC039",
+                        "FLC073",
+                        "FLC077"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC039",
+                    "https://api.weather.gov/zones/county/FLC073",
+                    "https://api.weather.gov/zones/county/FLC077"
+                ],
+                "references": [],
+                "sent": "2026-10-05T16:43:00-04:00",
+                "effective": "2026-10-05T16:43:00-04:00",
+                "onset": "2026-10-05T16:43:00-04:00",
+                "expires": "2026-10-05T19:45:00-04:00",
+                "ends": "2026-10-05T19:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued October 5 at 4:43PM EDT until October 5 at 7:45PM EDT by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nGadsden County in Big Bend Florida...\nCentral Leon County in Big Bend Florida...\nCentral Liberty County in Big Bend Florida...\n\n* Until 745 PM EDT.\n\n* At 443 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nTallahassee, Quincy, Midway, Havana, Gretna, Wetumpka, Lake\nTalquin, Bloxham, Sawdust, Santa Clara, Douglas City, Quincy\nAirport, Littman, Shady Rest, Florence, Lowry, Scotland, Freemont,\nHosford and Branchville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 052043"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0035.261005T2043Z-261005T2345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T19:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5fc237ae3d01f2761baf493f7a4548d32ebae787.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -85,
+                            30.83
+                        ],
+                        [
+                            -84.79,
+                            30.86
+                        ],
+                        [
+                            -84.83,
+                            30.62
+                        ],
+                        [
+                            -84.96,
+                            30.64
+                        ],
+                        [
+                            -84.99,
+                            30.74
+                        ],
+                        [
+                            -85.09,
+                            30.74
+                        ],
+                        [
+                            -85,
+                            30.83
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5fc237ae3d01f2761baf493f7a4548d32ebae787.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5fc237ae3d01f2761baf493f7a4548d32ebae787.001.1",
+                "areaDesc": "Gadsden, FL; Jackson, FL; Decatur, GA; Seminole, GA",
+                "geocode": {
+                    "SAME": [
+                        "012039",
+                        "012063",
+                        "013087",
+                        "013253"
+                    ],
+                    "UGC": [
+                        "FLC039",
+                        "FLC063",
+                        "GAC087",
+                        "GAC253"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC039",
+                    "https://api.weather.gov/zones/county/FLC063",
+                    "https://api.weather.gov/zones/county/GAC087",
+                    "https://api.weather.gov/zones/county/GAC253"
+                ],
+                "references": [],
+                "sent": "2026-10-05T15:32:00-04:00",
+                "effective": "2026-10-05T15:32:00-04:00",
+                "onset": "2026-10-05T15:32:00-04:00",
+                "expires": "2026-10-05T18:30:00-04:00",
+                "ends": "2026-10-05T18:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flash Flood Warning issued October 5 at 3:32PM EDT until October 5 at 6:30PM EDT by NWS Tallahassee FL",
+                "description": "FFWTAE\n\nThe National Weather Service in Tallahassee has issued a\n\n* Flash Flood Warning for...\nNorthwestern Gadsden County in Big Bend Florida...\nEast Central Jackson County in the panhandle of Florida...\nSouthwestern Decatur County in southwestern Georgia...\nSoutheastern Seminole County in southwestern Georgia...\n\n* Until 630 PM EDT /530 PM CDT/.\n\n* At 332 PM EDT /232 PM CDT/, Doppler radar indicated thunderstorms\nproducing heavy rain across the warned area. Between 2.5 and 4\ninches of rain have fallen. Additional rainfall amounts of 1 to 2\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nChattahoochee, Sneads, Lake Seminole, Seminole State Park, Drakes\nStill, Fairchild, Jinks, River Junction and Hardin Heights.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KTAE 051932"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FF.W.0034.261005T1932Z-261005T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T18:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-05T22:25:55+00:00"
+}

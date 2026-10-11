@@ -1,0 +1,29 @@
+ABPZ20 KNHC 301743
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Wed Sep 30 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Tropical 
+Storm Nolo, located several hundred miles west of Lihue, Hawaii, on 
+Hurricane Rachel, located a couple hundred miles southwest of 
+Cabo Corrientes, Mexico, and on Tropical Depression Nineteen-E, 
+located over the western East Pacific.
+
+South of Southern Mexico:
+An area of low pressure could form late this weekend or early next 
+week south of the southern coast of Mexico. Thereafter, 
+environmental conditions appear favorable for gradual development, 
+and a tropical depression could form while the system moves slowly 
+west-northwestward to northwestward. 
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...medium...50 percent.
+
+$$
+Forecaster Beven
+
+

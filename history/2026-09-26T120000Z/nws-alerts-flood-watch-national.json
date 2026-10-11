@@ -1,0 +1,163 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d123593485ebe94b0f32c96760b8d265195162d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2d123593485ebe94b0f32c96760b8d265195162d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2d123593485ebe94b0f32c96760b8d265195162d.001.1",
+                "areaDesc": "Lanai Mauka; Kahoolawe; Maui Windward West; Maui Leeward West; Haleakala Summit; Kona; Kohala; Big Island Interior; Big Island Summit; Molokai Windward; Molokai Southeast; Molokai North; Molokai West; Molokai Leeward South; Lanai Windward; Lanai Leeward; Lanai South; Maui Central Valley North; Maui Central Valley South; Windward Haleakala; Kipahulu; South Maui/Upcountry; South Haleakala; Big Island South; Big Island Southeast; Big Island East; Big Island North",
+                "geocode": {
+                    "SAME": [
+                        "015009",
+                        "015001"
+                    ],
+                    "UGC": [
+                        "HIZ015",
+                        "HIZ016",
+                        "HIZ017",
+                        "HIZ018",
+                        "HIZ022",
+                        "HIZ023",
+                        "HIZ026",
+                        "HIZ027",
+                        "HIZ028",
+                        "HIZ037",
+                        "HIZ038",
+                        "HIZ039",
+                        "HIZ040",
+                        "HIZ041",
+                        "HIZ042",
+                        "HIZ043",
+                        "HIZ044",
+                        "HIZ045",
+                        "HIZ046",
+                        "HIZ047",
+                        "HIZ048",
+                        "HIZ049",
+                        "HIZ050",
+                        "HIZ051",
+                        "HIZ052",
+                        "HIZ053",
+                        "HIZ054"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/HIZ015",
+                    "https://api.weather.gov/zones/forecast/HIZ016",
+                    "https://api.weather.gov/zones/forecast/HIZ017",
+                    "https://api.weather.gov/zones/forecast/HIZ018",
+                    "https://api.weather.gov/zones/forecast/HIZ022",
+                    "https://api.weather.gov/zones/forecast/HIZ023",
+                    "https://api.weather.gov/zones/forecast/HIZ026",
+                    "https://api.weather.gov/zones/forecast/HIZ027",
+                    "https://api.weather.gov/zones/forecast/HIZ028",
+                    "https://api.weather.gov/zones/forecast/HIZ037",
+                    "https://api.weather.gov/zones/forecast/HIZ038",
+                    "https://api.weather.gov/zones/forecast/HIZ039",
+                    "https://api.weather.gov/zones/forecast/HIZ040",
+                    "https://api.weather.gov/zones/forecast/HIZ041",
+                    "https://api.weather.gov/zones/forecast/HIZ042",
+                    "https://api.weather.gov/zones/forecast/HIZ043",
+                    "https://api.weather.gov/zones/forecast/HIZ044",
+                    "https://api.weather.gov/zones/forecast/HIZ045",
+                    "https://api.weather.gov/zones/forecast/HIZ046",
+                    "https://api.weather.gov/zones/forecast/HIZ047",
+                    "https://api.weather.gov/zones/forecast/HIZ048",
+                    "https://api.weather.gov/zones/forecast/HIZ049",
+                    "https://api.weather.gov/zones/forecast/HIZ050",
+                    "https://api.weather.gov/zones/forecast/HIZ051",
+                    "https://api.weather.gov/zones/forecast/HIZ052",
+                    "https://api.weather.gov/zones/forecast/HIZ053",
+                    "https://api.weather.gov/zones/forecast/HIZ054"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cb1399e1cc8e8553e0387819fafb629a00062f5b.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.cb1399e1cc8e8553e0387819fafb629a00062f5b.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-24T15:45:00-10:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.63236fa3a4fb72ab342348c93af571cd44836a0c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.63236fa3a4fb72ab342348c93af571cd44836a0c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-25T04:35:00-10:00"
+                    }
+                ],
+                "sent": "2026-09-25T16:53:00-10:00",
+                "effective": "2026-09-25T16:53:00-10:00",
+                "onset": "2026-09-25T16:53:00-10:00",
+                "expires": "2026-09-26T07:00:00-10:00",
+                "ends": "2026-09-26T18:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flood Watch issued September 25 at 4:53PM HST until September 26 at 6:00PM HST by NWS Honolulu HI",
+                "description": "Hurricane Nolo is expected to bring heavy showers to the eastern end\nof the state this weekend. Significant heavy rain is likely over\nwindward and southeast Big Island, as well as portions of Maui\nCounty.\n\n* WHAT...Flash flooding caused by excessive rainfall is possible.\n\n* WHERE...Big Island, Maui, Lanai, Molokai, and Kahoolawe.\n\n* WHEN...Through Saturday afternoon.\n\n* IMPACTS...Significant flooding may occur due to the overflow of\nstreams and drainages. Roads in several areas may be closed, along\nwith property damage in urban or low lying spots due to runoff.\nLandslides may also occur in areas with steep terrain.\n\n* ADDITIONAL DETAILS...\n- Deep moisture on the north side of Hurricane Nolo will bring\nheavy showers to the Big Island, and to a lesser extend to Maui\nthrough the Saturday. Windward and southeast Big Island, and\nwindward Maui, are the most likely to experience heavy rain due\nto the slow moving system, with considerable flooding possible\nover the remaining portions of Big Island and Maui through\nSaturday. The remainder of Maui County has a lower possibility of\nflooding, but remains at risk.",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW60 PHFO 260253"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SATURDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PHFO.FA.A.0013.000000T0000Z-260927T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-26T18:00:00-10:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.20a785c891f972e0073d00bbea65c5d10779d95f.001.1,2026-09-24T16:51:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.0be23b1680d7f4f271507185e74b730f908185fa.001.1,2026-09-24T04:48:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.27c93ef1b29bda3e04166629795fe71aa61e2ea6.001.1,2026-09-23T03:44:00-10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.59599f54f3e9e47644ed14ad1fd6294e24114766.001.1,2026-09-22T14:48:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-09-26T12:55:52+00:00"
+}

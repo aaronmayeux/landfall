@@ -1,0 +1,439 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.79668bc24367d120360b7e80d6574c5d4947622d.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -79.94,
+                            32.76
+                        ],
+                        [
+                            -79.96,
+                            32.75
+                        ],
+                        [
+                            -80.13,
+                            32.74
+                        ],
+                        [
+                            -80.15,
+                            32.83
+                        ],
+                        [
+                            -79.95,
+                            32.88
+                        ],
+                        [
+                            -79.86,
+                            32.9
+                        ],
+                        [
+                            -79.76,
+                            32.91
+                        ],
+                        [
+                            -79.74,
+                            32.83
+                        ],
+                        [
+                            -79.94,
+                            32.76
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.79668bc24367d120360b7e80d6574c5d4947622d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.79668bc24367d120360b7e80d6574c5d4947622d.001.1",
+                "areaDesc": "Berkeley, SC; Charleston, SC",
+                "geocode": {
+                    "SAME": [
+                        "045015",
+                        "045019"
+                    ],
+                    "UGC": [
+                        "SCC015",
+                        "SCC019"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/SCC015",
+                    "https://api.weather.gov/zones/county/SCC019"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.391c9a6180de2662be50e7a34cb35f72f26dc911.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.391c9a6180de2662be50e7a34cb35f72f26dc911.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-04T19:58:00-04:00"
+                    }
+                ],
+                "sent": "2026-10-04T20:31:00-04:00",
+                "effective": "2026-10-04T20:31:00-04:00",
+                "onset": "2026-10-04T20:31:00-04:00",
+                "expires": "2026-10-04T23:00:00-04:00",
+                "ends": "2026-10-04T23:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Charleston SC",
+                "headline": "Flash Flood Warning issued October 4 at 8:31PM EDT until October 4 at 11:00PM EDT by NWS Charleston SC",
+                "description": "At 831 PM EDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2 and 4 inches of rain have\nfallen. Additional rainfall amounts of 1 to 3 inches are possible in\nthe warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nNorth Charleston, Mount Pleasant, Downtown Charleston, Daniel\nIsland, James Island, West Ashley, Johns Island, Hollywood,\nCharleston Naval Complex and Charles Towne Landing.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSCHS"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS72 KCHS 050031"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 11 PM EDT THIS EVENING FOR BERKELEY AND CHARLESTON COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KCHS.FF.W.0020.000000T0000Z-261005T0300Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T23:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.48260962a27e0b33db705a662277137d319face4.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.28,
+                            32.99
+                        ],
+                        [
+                            -82.2,
+                            33.01
+                        ],
+                        [
+                            -82.12,
+                            32.99
+                        ],
+                        [
+                            -82.08,
+                            32.92
+                        ],
+                        [
+                            -82.12,
+                            32.88
+                        ],
+                        [
+                            -82.15,
+                            32.82
+                        ],
+                        [
+                            -82.15,
+                            32.81
+                        ],
+                        [
+                            -82.16,
+                            32.82
+                        ],
+                        [
+                            -82.21,
+                            32.8
+                        ],
+                        [
+                            -82.22,
+                            32.81
+                        ],
+                        [
+                            -82.24,
+                            32.81
+                        ],
+                        [
+                            -82.25,
+                            32.82
+                        ],
+                        [
+                            -82.26,
+                            32.82
+                        ],
+                        [
+                            -82.3,
+                            32.83
+                        ],
+                        [
+                            -82.32,
+                            32.83
+                        ],
+                        [
+                            -82.27,
+                            32.94
+                        ],
+                        [
+                            -82.28,
+                            32.99
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.48260962a27e0b33db705a662277137d319face4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.48260962a27e0b33db705a662277137d319face4.001.1",
+                "areaDesc": "Burke, GA",
+                "geocode": {
+                    "SAME": [
+                        "013033"
+                    ],
+                    "UGC": [
+                        "GAC033"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC033"
+                ],
+                "references": [],
+                "sent": "2026-10-04T20:17:00-04:00",
+                "effective": "2026-10-04T20:17:00-04:00",
+                "onset": "2026-10-04T20:17:00-04:00",
+                "expires": "2026-10-04T23:15:00-04:00",
+                "ends": "2026-10-04T23:15:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Columbia SC",
+                "headline": "Flash Flood Warning issued October 4 at 8:17PM EDT until October 4 at 11:15PM EDT by NWS Columbia SC",
+                "description": "FFWCAE\n\nThe National Weather Service in Columbia has issued a\n\n* Flash Flood Warning for...\nSouthwestern Burke County in east central Georgia...\n\n* Until 1115 PM EDT.\n\n* At 817 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2.5 and 4.5 inches of\nrain have fallen. Additional rainfall amounts of 1 to 1.5 inches\nare possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMidville, Magruder and Rosier.",
+                "instruction": "Most flooding deaths occur in vehicles. Never drive through a flooded\nroadway or around barricades. Turn around, don't drown.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KCAE 050017"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCAE.FF.W.0028.261005T0017Z-261005T0315Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T23:15:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.258bd68c06f3e5f73874cfa5b0da3134094832ee.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -87.75,
+                            30.28
+                        ],
+                        [
+                            -87.73,
+                            30.23
+                        ],
+                        [
+                            -88.04,
+                            30.21
+                        ],
+                        [
+                            -88.02,
+                            30.24
+                        ],
+                        [
+                            -87.99,
+                            30.25
+                        ],
+                        [
+                            -87.97,
+                            30.26
+                        ],
+                        [
+                            -87.96,
+                            30.27
+                        ],
+                        [
+                            -87.95,
+                            30.27
+                        ],
+                        [
+                            -87.88,
+                            30.28
+                        ],
+                        [
+                            -87.84,
+                            30.27
+                        ],
+                        [
+                            -87.8,
+                            30.29
+                        ],
+                        [
+                            -87.75,
+                            30.29
+                        ],
+                        [
+                            -87.75,
+                            30.28
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.258bd68c06f3e5f73874cfa5b0da3134094832ee.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.258bd68c06f3e5f73874cfa5b0da3134094832ee.001.1",
+                "areaDesc": "Baldwin, AL",
+                "geocode": {
+                    "SAME": [
+                        "001003"
+                    ],
+                    "UGC": [
+                        "ALC003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/ALC003"
+                ],
+                "references": [],
+                "sent": "2026-10-04T16:39:00-05:00",
+                "effective": "2026-10-04T16:39:00-05:00",
+                "onset": "2026-10-04T16:39:00-05:00",
+                "expires": "2026-10-04T19:45:00-05:00",
+                "ends": "2026-10-04T19:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mobile AL",
+                "headline": "Flash Flood Warning issued October 4 at 4:39PM CDT until October 4 at 7:45PM CDT by NWS Mobile AL",
+                "description": "FFWMOB\n\nThe National Weather Service in Mobile has issued a\n\n* Flash Flood Warning for...\nSouthwestern Baldwin County in southwestern Alabama...\n\n* Until 745 PM CDT.\n\n* At 439 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFort Morgan, Gulf Highlands and Gasque.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMOB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMOB 042139"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMOB.FF.W.0043.261004T2139Z-261005T0045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T19:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-05T00:40:58+00:00"
+}

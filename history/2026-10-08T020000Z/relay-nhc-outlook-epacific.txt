@@ -1,0 +1,37 @@
+en Español
+
+000
+ABPZ20 KNHC 072355
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Wed Oct 7 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Rachel, located several hundred miles west of the southern tip of 
+the Baja California Peninsula, and on recently upgraded Tropical 
+Storm Simon, located about 125 miles offshore of the coast of the 
+Mexican state of Guerrero.
+
+South of Guatemala:
+An area of low pressure is forecast to form south of the coast of 
+Guatemala during the early portion of next week. Environmental 
+conditions appear conducive for some gradual development of this 
+system thereafter while it moves generally west-northwestward at 
+around 10 mph.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...30 percent.
+
+&&
+Public Advisories on Tropical Storm Simon are issued under WMO 
+header WTPZ35 KNHC and under AWIPS header MIATCPEP5.
+Forecast/Advisories on Tropical Storm Simon are issued under WMO 
+header WTPZ25 KNHC and under AWIPS header MIATCMEP5.
+
+$$
+Forecaster Pierce/Hagen
+  

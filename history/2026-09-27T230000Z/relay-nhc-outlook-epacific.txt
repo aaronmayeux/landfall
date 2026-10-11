@@ -1,0 +1,42 @@
+en Español
+
+000
+ABPZ20 KNHC 272319
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+500 PM PDT Sun Sep 27 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Polo, located southwest of Cabo San Lucas, Mexico, on Hurricane 
+Nolo, located a few hundred miles south-southwest of the Big Island 
+of Hawaii, on recently upgraded Tropical Storm Rachel, located 
+several hundred miles southwest of the Acapulco, Mexico, and has 
+issued the last advisory on Post-Tropical Cyclone Odalys, located 
+well west of the southern tip of Baja California.
+
+Well East-Southeast of the Hawaiian Islands:
+A broad area of low pressure located well east-southeast of the 
+Hawaiian Islands is producing a large area of showers and 
+thunderstorms. Recent satellite-derived wind data indicate that the 
+system is becoming better organized. Environmental conditions are 
+expected to be conducive for further development, and a tropical 
+depression is likely to form during the next day or two. The system 
+should move generally northeastward and remain well east-southeast 
+of the Hawaiian Islands.
+* Formation chance through 48 hours...high...70 percent.
+* Formation chance through 7 days...high...90 percent.
+
+&&
+Public Advisories on Tropical Storm Rachel are issued under 
+WMO header WTPZ33 KNHC and under AWIPS header MIATCPEP3.
+Forecast/Advisories on Tropical Storm Rachel are issued 
+under WMO header WTPZ23 KNHC and under AWIPS header MIATCMEP3.
+
+$$
+Forecaster Kelly
+  

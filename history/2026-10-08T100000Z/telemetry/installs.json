@@ -1,0 +1,44 @@
+[
+  {
+    "platform": "ios",
+    "sessions": 1802,
+    "installed_sessions": 311,
+    "people": 552,
+    "installed_people": 24
+  },
+  {
+    "platform": "android",
+    "sessions": 1174,
+    "installed_sessions": 698,
+    "people": 158,
+    "installed_people": 21
+  },
+  {
+    "platform": "windows",
+    "sessions": 449,
+    "installed_sessions": 157,
+    "people": 164,
+    "installed_people": 5
+  },
+  {
+    "platform": "macos",
+    "sessions": 270,
+    "installed_sessions": 32,
+    "people": 45,
+    "installed_people": 1
+  },
+  {
+    "platform": "linux",
+    "sessions": 193,
+    "installed_sessions": 1,
+    "people": 75,
+    "installed_people": 1
+  },
+  {
+    "platform": "other",
+    "sessions": 1,
+    "installed_sessions": 0,
+    "people": 1,
+    "installed_people": 0
+  }
+]

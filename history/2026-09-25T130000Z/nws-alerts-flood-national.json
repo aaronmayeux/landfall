@@ -1,0 +1,294 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.67dcbd0639acbde4620157cfdf09402b55a8193b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -102.35,
+                            32.96
+                        ],
+                        [
+                            -102.35,
+                            32.92
+                        ],
+                        [
+                            -102.42,
+                            32.76
+                        ],
+                        [
+                            -102.56,
+                            32.65
+                        ],
+                        [
+                            -102.6,
+                            32.64
+                        ],
+                        [
+                            -102.64,
+                            32.61
+                        ],
+                        [
+                            -102.67,
+                            32.61
+                        ],
+                        [
+                            -102.67,
+                            32.6
+                        ],
+                        [
+                            -102.79,
+                            32.55
+                        ],
+                        [
+                            -102.81,
+                            32.53
+                        ],
+                        [
+                            -103.06,
+                            32.52
+                        ],
+                        [
+                            -103.06,
+                            32.96
+                        ],
+                        [
+                            -102.35,
+                            32.96
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.67dcbd0639acbde4620157cfdf09402b55a8193b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.67dcbd0639acbde4620157cfdf09402b55a8193b.001.1",
+                "areaDesc": "Gaines, TX",
+                "geocode": {
+                    "SAME": [
+                        "048165"
+                    ],
+                    "UGC": [
+                        "TXC165"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC165"
+                ],
+                "references": [],
+                "sent": "2026-09-25T07:34:00-05:00",
+                "effective": "2026-09-25T07:34:00-05:00",
+                "onset": "2026-09-25T07:34:00-05:00",
+                "expires": "2026-09-25T10:30:00-05:00",
+                "ends": "2026-09-25T10:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flash Flood Warning issued September 25 at 7:34AM CDT until September 25 at 10:30AM CDT by NWS Midland/Odessa TX",
+                "description": "FFWMAF\n\nThe National Weather Service in Midland/Odessa has issued a\n\n* Flash Flood Warning for...\nGaines County in western Texas...\n\n* Until 1030 AM CDT.\n\n* At 734 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 0.5 and 1 inch of rain\nhas fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSeminole, Seagraves, Gaines County Airport, Seagraves Airport,\nPaynes Corner, Gaines County Park, Higginbotham and Loop.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMAF 251234"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMAF.FF.W.0209.260925T1234Z-260925T1530Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-25T10:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cfac6b1a5d867d2ddf89ad7fe8b37109bcea686b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.81,
+                            32.96
+                        ],
+                        [
+                            -103.77,
+                            32.97
+                        ],
+                        [
+                            -103.77,
+                            33.4
+                        ],
+                        [
+                            -103.72,
+                            33.4
+                        ],
+                        [
+                            -103.72,
+                            33.57
+                        ],
+                        [
+                            -103.05,
+                            33.57
+                        ],
+                        [
+                            -103.06,
+                            33
+                        ],
+                        [
+                            -103.06,
+                            32.57
+                        ],
+                        [
+                            -103.93,
+                            32.52
+                        ],
+                        [
+                            -103.94,
+                            32.97
+                        ],
+                        [
+                            -103.81,
+                            32.96
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cfac6b1a5d867d2ddf89ad7fe8b37109bcea686b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.cfac6b1a5d867d2ddf89ad7fe8b37109bcea686b.001.1",
+                "areaDesc": "Eddy, NM; Lea, NM",
+                "geocode": {
+                    "SAME": [
+                        "035015",
+                        "035025"
+                    ],
+                    "UGC": [
+                        "NMC015",
+                        "NMC025"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC015",
+                    "https://api.weather.gov/zones/county/NMC025"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.febaf940c43b0fa7301a520f3deefd67aa44f969.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.febaf940c43b0fa7301a520f3deefd67aa44f969.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-25T04:46:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-25T05:54:00-06:00",
+                "effective": "2026-09-25T05:54:00-06:00",
+                "onset": "2026-09-25T05:54:00-06:00",
+                "expires": "2026-09-25T07:45:00-06:00",
+                "ends": "2026-09-25T07:45:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flash Flood Warning issued September 25 at 5:54AM MDT until September 25 at 7:45AM MDT by NWS Midland/Odessa TX",
+                "description": "At 554 AM MDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 1 and 2 inches of rain have\nfallen. Additional rainfall amounts up to 1 inch are possible in the\nwarned area. Flash flooding is ongoing.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nHobbs, Lovington, Tatum, McDonald, Humble City, Maljamar, Monument,\nCaprock, Crossroads, Nadine, Tatum Airport, Gladiola, Industrial\nAirpark, Knowles, Lea County Regional Airport and Halfway.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KMAF 251154"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 745 AM MDT THIS MORNING FOR NORTHEASTERN EDDY AND LEA COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMAF.FF.W.0208.000000T0000Z-260925T1345Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-25T07:45:00-06:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-25T13:34:08+00:00"
+}

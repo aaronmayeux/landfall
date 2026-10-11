@@ -1,0 +1,441 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.55595e268b425efeedfe28b38940e26cdb78e76b.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -101.98,
+                            35.1
+                        ],
+                        [
+                            -102.16,
+                            35.03
+                        ],
+                        [
+                            -102.16,
+                            34.86
+                        ],
+                        [
+                            -102.12,
+                            34.81
+                        ],
+                        [
+                            -101.85,
+                            34.94
+                        ],
+                        [
+                            -101.85,
+                            35.1
+                        ],
+                        [
+                            -101.98,
+                            35.1
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.55595e268b425efeedfe28b38940e26cdb78e76b.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.55595e268b425efeedfe28b38940e26cdb78e76b.001.1",
+                "areaDesc": "Randall, TX",
+                "geocode": {
+                    "SAME": [
+                        "048381"
+                    ],
+                    "UGC": [
+                        "TXC381"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC381"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b9a604563a8aadde35afc197fcc6c02a8c724394.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.b9a604563a8aadde35afc197fcc6c02a8c724394.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-26T00:36:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f821a5aa92b1a44fc77428a255b91ca23b1fead6.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f821a5aa92b1a44fc77428a255b91ca23b1fead6.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-26T01:12:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-26T01:49:00-05:00",
+                "effective": "2026-09-26T01:49:00-05:00",
+                "onset": "2026-09-26T01:49:00-05:00",
+                "expires": "2026-09-26T03:30:00-05:00",
+                "ends": "2026-09-26T03:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Amarillo TX",
+                "headline": "Flash Flood Warning issued September 26 at 1:49AM CDT until September 26 at 3:30AM CDT by NWS Amarillo TX",
+                "description": "At 149 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n1.5 and 2.5 inches of rain have fallen. Additional rainfall amounts\nup to 0.5 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nCanyon, Umbarger, Mescalero Park and Buffalo Lake.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSAMA"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KAMA 260649"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 330 AM CDT EARLY THIS MORNING FOR WESTERN RANDALL COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KAMA.FF.W.0032.000000T0000Z-260926T0830Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-26T03:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.603e147841d96fceb4175c47db8e9d5410319ed1.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.5,
+                            34.7
+                        ],
+                        [
+                            -103.53,
+                            34.7
+                        ],
+                        [
+                            -103.53,
+                            34.77
+                        ],
+                        [
+                            -103.31,
+                            35
+                        ],
+                        [
+                            -103.04,
+                            35.16
+                        ],
+                        [
+                            -103.04,
+                            34.96
+                        ],
+                        [
+                            -103.11,
+                            34.9
+                        ],
+                        [
+                            -103.24,
+                            34.81
+                        ],
+                        [
+                            -103.33,
+                            34.73
+                        ],
+                        [
+                            -103.45,
+                            34.69
+                        ],
+                        [
+                            -103.5,
+                            34.7
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.603e147841d96fceb4175c47db8e9d5410319ed1.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.603e147841d96fceb4175c47db8e9d5410319ed1.001.1",
+                "areaDesc": "Curry, NM; Quay, NM",
+                "geocode": {
+                    "SAME": [
+                        "035009",
+                        "035037"
+                    ],
+                    "UGC": [
+                        "NMC009",
+                        "NMC037"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NMC009",
+                    "https://api.weather.gov/zones/county/NMC037"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.72f1f0f0a8fc8b0a51fb8eab9bbbbe330ddbfa8f.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.72f1f0f0a8fc8b0a51fb8eab9bbbbe330ddbfa8f.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-25T23:10:00-06:00"
+                    }
+                ],
+                "sent": "2026-09-26T00:09:00-06:00",
+                "effective": "2026-09-26T00:09:00-06:00",
+                "onset": "2026-09-26T00:09:00-06:00",
+                "expires": "2026-09-26T02:15:00-06:00",
+                "ends": "2026-09-26T02:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Albuquerque NM",
+                "headline": "Flash Flood Warning issued September 26 at 12:09AM MDT until September 26 at 2:15AM MDT by NWS Albuquerque NM",
+                "description": "At 1209 AM MDT, Doppler radar indicated thunderstorms producing heavy\nrain across the warned area. Between 2 and 3.5 inches of rain have\nfallen. Additional rainfall amounts up to 1 inch are possible in the\nwarned area. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nGrady and Wheatland.\n\nFlash flooding is likely along Highway 275 east of Wheatland as well\nas  Highways 209 and 469 near Grady.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSABQ"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KABQ 260609"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 215 AM MDT EARLY THIS MORNING FOR NORTH CENTRAL CURRY AND SOUTHEASTERN QUAY COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KABQ.FF.W.0202.000000T0000Z-260926T0815Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-26T02:15:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:15 AM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:15 AM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f3a915293cc4868f23ead529977853810908ade.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.77,
+                            39.57
+                        ],
+                        [
+                            -98.16,
+                            40
+                        ],
+                        [
+                            -97.93,
+                            40
+                        ],
+                        [
+                            -97.93,
+                            39.86
+                        ],
+                        [
+                            -98.3,
+                            39.5
+                        ],
+                        [
+                            -98.59,
+                            39.4
+                        ],
+                        [
+                            -98.8,
+                            39.26
+                        ],
+                        [
+                            -98.91,
+                            39.35
+                        ],
+                        [
+                            -98.93,
+                            39.36
+                        ],
+                        [
+                            -98.77,
+                            39.57
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2f3a915293cc4868f23ead529977853810908ade.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2f3a915293cc4868f23ead529977853810908ade.001.1",
+                "areaDesc": "Jewell, KS; Mitchell, KS; Osborne, KS; Smith, KS",
+                "geocode": {
+                    "SAME": [
+                        "020089",
+                        "020123",
+                        "020141",
+                        "020183"
+                    ],
+                    "UGC": [
+                        "KSC089",
+                        "KSC123",
+                        "KSC141",
+                        "KSC183"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC089",
+                    "https://api.weather.gov/zones/county/KSC123",
+                    "https://api.weather.gov/zones/county/KSC141",
+                    "https://api.weather.gov/zones/county/KSC183"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.dce7ddd381b16a6dce7253e134c2f40a79763f2b.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.dce7ddd381b16a6dce7253e134c2f40a79763f2b.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-09-25T23:18:00-05:00"
+                    }
+                ],
+                "sent": "2026-09-26T00:56:00-05:00",
+                "effective": "2026-09-26T00:56:00-05:00",
+                "onset": "2026-09-26T00:56:00-05:00",
+                "expires": "2026-09-26T05:15:00-05:00",
+                "ends": "2026-09-26T05:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Hastings NE",
+                "headline": "Flash Flood Warning issued September 26 at 12:56AM CDT until September 26 at 5:15AM CDT by NWS Hastings NE",
+                "description": "At 1256 AM CDT, Doppler radar and automated rain gauges indicated a\nswath of heavy rain from thunderstorms Friday evening across the\nwarned area. Between 2.5 and 4.5 inches of rain have fallen.\nAdditional rainfall amounts up to 0.1 inches are possible in the\nwarned area. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nOsborne, Downs, Mankato, Cawker City, Glen Elder, Jewell, Burr Oak,\nPortis, Ionia, Webber, Montrose and Lovewell State Park.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSGID"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KGID 260556"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 515 AM CDT EARLY THIS MORNING FOR JEWELL, NORTHWESTERN MITCHELL, NORTHERN OSBORNE AND SOUTHEASTERN SMITH COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KGID.FF.W.0008.000000T0000Z-260926T1015Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-09-26T05:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-09-26T07:28:11+00:00"
+}

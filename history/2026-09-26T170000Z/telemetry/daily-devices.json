@@ -1,0 +1,128 @@
+[
+  {
+    "day": "2026-09-26",
+    "sessions": 35,
+    "people": 22,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-25",
+    "sessions": 54,
+    "people": 27,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-24",
+    "sessions": 36,
+    "people": 21,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-23",
+    "sessions": 34,
+    "people": 18,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-22",
+    "sessions": 13,
+    "people": 12,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-21",
+    "sessions": 12,
+    "people": 8,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-20",
+    "sessions": 6,
+    "people": 5,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-19",
+    "sessions": 13,
+    "people": 12,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-18",
+    "sessions": 8,
+    "people": 8,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-17",
+    "sessions": 5,
+    "people": 5,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-16",
+    "sessions": 10,
+    "people": 8,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-15",
+    "sessions": 10,
+    "people": 8,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-14",
+    "sessions": 9,
+    "people": 7,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-13",
+    "sessions": 12,
+    "people": 9,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-12",
+    "sessions": 22,
+    "people": 13,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-11",
+    "sessions": 24,
+    "people": 16,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-10",
+    "sessions": 34,
+    "people": 17,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-09",
+    "sessions": 20,
+    "people": 18,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-08",
+    "sessions": 49,
+    "people": 22,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-07",
+    "sessions": 45,
+    "people": 23,
+    "sessions_without_device": 0
+  },
+  {
+    "day": "2026-09-06",
+    "sessions": 55,
+    "people": 31,
+    "sessions_without_device": 0
+  }
+]

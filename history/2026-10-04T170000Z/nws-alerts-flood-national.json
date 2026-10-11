@@ -1,0 +1,379 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b8c59f0f5c4cedebbe1984126b29da349c9bf519.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -90.14,
+                            29.91
+                        ],
+                        [
+                            -90.13,
+                            30.03
+                        ],
+                        [
+                            -90.08,
+                            30.04
+                        ],
+                        [
+                            -90.02,
+                            30.04
+                        ],
+                        [
+                            -90.01,
+                            29.92
+                        ],
+                        [
+                            -90.14,
+                            29.91
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b8c59f0f5c4cedebbe1984126b29da349c9bf519.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b8c59f0f5c4cedebbe1984126b29da349c9bf519.001.1",
+                "areaDesc": "Jefferson, LA; Orleans, LA",
+                "geocode": {
+                    "SAME": [
+                        "022051",
+                        "022071"
+                    ],
+                    "UGC": [
+                        "LAC051",
+                        "LAC071"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC051",
+                    "https://api.weather.gov/zones/county/LAC071"
+                ],
+                "references": [],
+                "sent": "2026-10-04T11:47:00-05:00",
+                "effective": "2026-10-04T11:47:00-05:00",
+                "onset": "2026-10-04T11:47:00-05:00",
+                "expires": "2026-10-04T14:45:00-05:00",
+                "ends": "2026-10-04T14:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS New Orleans LA",
+                "headline": "Flash Flood Warning issued October 4 at 11:47AM CDT until October 4 at 2:45PM CDT by NWS New Orleans LA",
+                "description": "FFWLIX\n\nThe National Weather Service in New Orleans has issued a\n\n* Flash Flood Warning for...\nNorth Central Jefferson Parish in southeastern Louisiana...\nSouthwestern Orleans Parish in southeastern Louisiana...\n\n* Until 245 PM CDT.\n\n* At 1147 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNew Orleans, Gretna and Lakefront Airport.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWLIX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KLIX 041647"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KLIX.FF.W.0121.261004T1647Z-261004T1945Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T14:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.83da9501bbfa58f773b8f986dddcd3bc683dc0a5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -91.98,
+                            32.96
+                        ],
+                        [
+                            -91.51,
+                            32.99
+                        ],
+                        [
+                            -91.64,
+                            32.76
+                        ],
+                        [
+                            -92,
+                            32.74
+                        ],
+                        [
+                            -91.98,
+                            32.96
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.83da9501bbfa58f773b8f986dddcd3bc683dc0a5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.83da9501bbfa58f773b8f986dddcd3bc683dc0a5.001.1",
+                "areaDesc": "Morehouse, LA",
+                "geocode": {
+                    "SAME": [
+                        "022067"
+                    ],
+                    "UGC": [
+                        "LAC067"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC067"
+                ],
+                "references": [],
+                "sent": "2026-10-04T10:55:00-05:00",
+                "effective": "2026-10-04T10:55:00-05:00",
+                "onset": "2026-10-04T10:55:00-05:00",
+                "expires": "2026-10-04T13:00:00-05:00",
+                "ends": "2026-10-04T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jackson MS",
+                "headline": "Flash Flood Warning issued October 4 at 10:55AM CDT until October 4 at 1:00PM CDT by NWS Jackson MS",
+                "description": "FFWJAN\n\nThe National Weather Service in Jackson has issued a\n\n* Flash Flood Warning for...\nNorthern Morehouse Parish in northeastern Louisiana...\n\n* Until 100 PM CDT.\n\n* At 1055 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBastrop, Mer Rouge, Bonita, Galion, Beekman and Jones.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJAN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KJAN 041555"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KJAN.FF.W.0057.261004T1555Z-261004T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T13:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91b21105baab69f2147cb80789b39977eef42587.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -93.78,
+                            32.34
+                        ],
+                        [
+                            -93.79,
+                            32.36
+                        ],
+                        [
+                            -93.57,
+                            32.46
+                        ],
+                        [
+                            -93.44,
+                            32.5
+                        ],
+                        [
+                            -93.18,
+                            32.49
+                        ],
+                        [
+                            -93.14,
+                            32.26
+                        ],
+                        [
+                            -93.5,
+                            32.16
+                        ],
+                        [
+                            -93.73,
+                            32.2
+                        ],
+                        [
+                            -93.78,
+                            32.34
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91b21105baab69f2147cb80789b39977eef42587.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.91b21105baab69f2147cb80789b39977eef42587.001.1",
+                "areaDesc": "Bienville, LA; Bossier, LA; Caddo, LA; De Soto, LA; Red River, LA; Webster, LA",
+                "geocode": {
+                    "SAME": [
+                        "022013",
+                        "022015",
+                        "022017",
+                        "022031",
+                        "022081",
+                        "022119"
+                    ],
+                    "UGC": [
+                        "LAC013",
+                        "LAC015",
+                        "LAC017",
+                        "LAC031",
+                        "LAC081",
+                        "LAC119"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/LAC013",
+                    "https://api.weather.gov/zones/county/LAC015",
+                    "https://api.weather.gov/zones/county/LAC017",
+                    "https://api.weather.gov/zones/county/LAC031",
+                    "https://api.weather.gov/zones/county/LAC081",
+                    "https://api.weather.gov/zones/county/LAC119"
+                ],
+                "references": [],
+                "sent": "2026-10-04T08:42:00-05:00",
+                "effective": "2026-10-04T08:42:00-05:00",
+                "onset": "2026-10-04T08:42:00-05:00",
+                "expires": "2026-10-04T12:45:00-05:00",
+                "ends": "2026-10-04T12:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Shreveport LA",
+                "headline": "Flash Flood Warning issued October 4 at 8:42AM CDT until October 4 at 12:45PM CDT by NWS Shreveport LA",
+                "description": "FFWSHV\n\nThe National Weather Service in Shreveport has issued a\n\n* Flash Flood Warning for...\nSouthwestern Bienville Parish in northwestern Louisiana...\nSoutheastern Bossier Parish in northwestern Louisiana...\nSoutheastern Caddo Parish in northwestern Louisiana...\nNorth Central De Soto Parish in northwestern Louisiana...\nNorthwestern Red River Parish in northwestern Louisiana...\nSoutheastern Webster Parish in northwestern Louisiana...\n\n* Until 1245 PM CDT.\n\n* At 842 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 6 inches of rain\nhave fallen. Additional rainfall amounts of 2 to 4 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nRinggold, Heflin, Castor, Jamestown, Lake Bistineau South, Mc Dade,\nNinock, Koran, Curtis, Elm Grove, Plum Orchard Landing, Caspiana,\nLake Bistineau North, Taylortown, Noles Landing, Sligo, Robson and\nOgden.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSHV"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KSHV 041342"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSHV.FF.W.0076.261004T1342Z-261004T1745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T12:45:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 12:45 PM CDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 12:45 PM CDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-04T17:25:37+00:00"
+}

@@ -1,0 +1,1482 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ001",
+                "@type": "wx:Zone",
+                "id": "AZZ001",
+                "type": "public",
+                "name": "Northwest Plateau",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCDC",
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KKNB",
+                    "https://api.weather.gov/stations/KSGU",
+                    "https://api.weather.gov/stations/QBRA3",
+                    "https://api.weather.gov/stations/QHUA3",
+                    "https://api.weather.gov/stations/QMLA3",
+                    "https://api.weather.gov/stations/QOKA3",
+                    "https://api.weather.gov/stations/QYJA3"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ002",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ002",
+                "@type": "wx:Zone",
+                "id": "AZZ002",
+                "type": "public",
+                "name": "Lake Havasu and Fort Mohave",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KHII",
+                    "https://api.weather.gov/stations/AKPA3",
+                    "https://api.weather.gov/stations/KBLH",
+                    "https://api.weather.gov/stations/KEED",
+                    "https://api.weather.gov/stations/KIFP",
+                    "https://api.weather.gov/stations/QHAA3"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ004",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ004",
+                "@type": "wx:Zone",
+                "id": "AZZ004",
+                "type": "public",
+                "name": "Kaibab Plateau",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KKNB",
+                    "https://api.weather.gov/stations/KPGA"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ005",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ005",
+                "@type": "wx:Zone",
+                "id": "AZZ005",
+                "type": "public",
+                "name": "Marble and Glen Canyons",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix",
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KKNB",
+                    "https://api.weather.gov/stations/KPGA"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ006",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ006",
+                "@type": "wx:Zone",
+                "id": "AZZ006",
+                "type": "public",
+                "name": "Grand Canyon Country",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix",
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KINW",
+                    "https://api.weather.gov/stations/KPGA"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ007",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ007",
+                "@type": "wx:Zone",
+                "id": "AZZ007",
+                "type": "public",
+                "name": "Coconino Plateau",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix",
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCMR",
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KPGA",
+                    "https://api.weather.gov/stations/KPRC"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ008",
+                "@type": "wx:Zone",
+                "id": "AZZ008",
+                "type": "public",
+                "name": "Yavapai County Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KPRC"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ015",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ015",
+                "@type": "wx:Zone",
+                "id": "AZZ015",
+                "type": "public",
+                "name": "Western Mogollon Rim",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KINW",
+                    "https://api.weather.gov/stations/KPRC"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ016",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ016",
+                "@type": "wx:Zone",
+                "id": "AZZ016",
+                "type": "public",
+                "name": "Eastern Mogollon Rim",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KINW"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ018",
+                "@type": "wx:Zone",
+                "id": "AZZ018",
+                "type": "public",
+                "name": "Northern Gila County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KPAN",
+                    "https://api.weather.gov/stations/KPHX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ037",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ037",
+                "@type": "wx:Zone",
+                "id": "AZZ037",
+                "type": "public",
+                "name": "Yavapai County Valleys and Basins",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KPRC",
+                    "https://api.weather.gov/stations/KSEZ"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ038",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ038",
+                "@type": "wx:Zone",
+                "id": "AZZ038",
+                "type": "public",
+                "name": "Oak Creek and Sycamore Canyons",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/FGZ",
+                "gridIdentifier": "FGZ",
+                "awipsLocationIdentifier": "FGZ",
+                "cwa": [
+                    "FGZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FGZ"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFLG",
+                    "https://api.weather.gov/stations/KGCN",
+                    "https://api.weather.gov/stations/KPRC",
+                    "https://api.weather.gov/stations/KSEZ"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ570",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ570",
+                "@type": "wx:Zone",
+                "id": "AZZ570",
+                "type": "public",
+                "name": "Lake Mead - AZ side",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/TCRA3"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ571",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ571",
+                "@type": "wx:Zone",
+                "id": "AZZ571",
+                "type": "public",
+                "name": "Lake Mohave - AZ side",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIFP"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ575",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ575",
+                "@type": "wx:Zone",
+                "id": "AZZ575",
+                "type": "public",
+                "name": "Hualapai Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIGM"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/AZZ576",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/AZZ576",
+                "@type": "wx:Zone",
+                "id": "AZZ576",
+                "type": "public",
+                "name": "Northwest Deserts",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "AZ",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Phoenix"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KIGM"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ043",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ043",
+                "@type": "wx:Zone",
+                "id": "CAZ043",
+                "type": "public",
+                "name": "San Diego County Coastal Areas",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/D5683",
+                    "https://api.weather.gov/stations/E3170",
+                    "https://api.weather.gov/stations/E3174",
+                    "https://api.weather.gov/stations/E3218",
+                    "https://api.weather.gov/stations/E3219",
+                    "https://api.weather.gov/stations/E3680",
+                    "https://api.weather.gov/stations/E9870",
+                    "https://api.weather.gov/stations/E9873",
+                    "https://api.weather.gov/stations/E9975",
+                    "https://api.weather.gov/stations/E9978",
+                    "https://api.weather.gov/stations/E9983",
+                    "https://api.weather.gov/stations/F0495",
+                    "https://api.weather.gov/stations/F0551",
+                    "https://api.weather.gov/stations/F6395",
+                    "https://api.weather.gov/stations/KCRQ",
+                    "https://api.weather.gov/stations/KMYF",
+                    "https://api.weather.gov/stations/KNFG",
+                    "https://api.weather.gov/stations/KNKX",
+                    "https://api.weather.gov/stations/KNXF",
+                    "https://api.weather.gov/stations/KNZY",
+                    "https://api.weather.gov/stations/KOKB",
+                    "https://api.weather.gov/stations/KSAN",
+                    "https://api.weather.gov/stations/KSDM",
+                    "https://api.weather.gov/stations/LSFC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ050",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ050",
+                "@type": "wx:Zone",
+                "id": "CAZ050",
+                "type": "public",
+                "name": "San Diego County Inland Valleys",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/ANEC1",
+                    "https://api.weather.gov/stations/AU709",
+                    "https://api.weather.gov/stations/BAJC1",
+                    "https://api.weather.gov/stations/C2462",
+                    "https://api.weather.gov/stations/D5256",
+                    "https://api.weather.gov/stations/E2652",
+                    "https://api.weather.gov/stations/E3055",
+                    "https://api.weather.gov/stations/E3070",
+                    "https://api.weather.gov/stations/E3231",
+                    "https://api.weather.gov/stations/E3236",
+                    "https://api.weather.gov/stations/E3241",
+                    "https://api.weather.gov/stations/E3263",
+                    "https://api.weather.gov/stations/E3309",
+                    "https://api.weather.gov/stations/E3333",
+                    "https://api.weather.gov/stations/E3619",
+                    "https://api.weather.gov/stations/E4858",
+                    "https://api.weather.gov/stations/E9437",
+                    "https://api.weather.gov/stations/E9915",
+                    "https://api.weather.gov/stations/E9957",
+                    "https://api.weather.gov/stations/E9965",
+                    "https://api.weather.gov/stations/F0381",
+                    "https://api.weather.gov/stations/FBZC1",
+                    "https://api.weather.gov/stations/GOSC1",
+                    "https://api.weather.gov/stations/KL18",
+                    "https://api.weather.gov/stations/KRNM",
+                    "https://api.weather.gov/stations/KSEE",
+                    "https://api.weather.gov/stations/OTYC1",
+                    "https://api.weather.gov/stations/POTC1",
+                    "https://api.weather.gov/stations/PSQC1",
+                    "https://api.weather.gov/stations/PZAC1",
+                    "https://api.weather.gov/stations/SDFBK",
+                    "https://api.weather.gov/stations/UCEL",
+                    "https://api.weather.gov/stations/VLCC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ055",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ055",
+                "@type": "wx:Zone",
+                "id": "CAZ055",
+                "type": "public",
+                "name": "San Bernardino County Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/AT643",
+                    "https://api.weather.gov/stations/AU707",
+                    "https://api.weather.gov/stations/BCNC1",
+                    "https://api.weather.gov/stations/BNJC1",
+                    "https://api.weather.gov/stations/BPFC1",
+                    "https://api.weather.gov/stations/CVEC1",
+                    "https://api.weather.gov/stations/D1871",
+                    "https://api.weather.gov/stations/E0585",
+                    "https://api.weather.gov/stations/E3043",
+                    "https://api.weather.gov/stations/E3063",
+                    "https://api.weather.gov/stations/E3172",
+                    "https://api.weather.gov/stations/E5008",
+                    "https://api.weather.gov/stations/E9869",
+                    "https://api.weather.gov/stations/E9874",
+                    "https://api.weather.gov/stations/E9876",
+                    "https://api.weather.gov/stations/E9887",
+                    "https://api.weather.gov/stations/E9931",
+                    "https://api.weather.gov/stations/E9934",
+                    "https://api.weather.gov/stations/F0025",
+                    "https://api.weather.gov/stations/FWSC1",
+                    "https://api.weather.gov/stations/HHPC1",
+                    "https://api.weather.gov/stations/KL35",
+                    "https://api.weather.gov/stations/MNCC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ056",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ056",
+                "@type": "wx:Zone",
+                "id": "CAZ056",
+                "type": "public",
+                "name": "Riverside County Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/E3500",
+                    "https://api.weather.gov/stations/E9981",
+                    "https://api.weather.gov/stations/F6882",
+                    "https://api.weather.gov/stations/F6883",
+                    "https://api.weather.gov/stations/F6884",
+                    "https://api.weather.gov/stations/KNWC1",
+                    "https://api.weather.gov/stations/KWYC1",
+                    "https://api.weather.gov/stations/MSJC1",
+                    "https://api.weather.gov/stations/NZAC1",
+                    "https://api.weather.gov/stations/POPC1",
+                    "https://api.weather.gov/stations/PYNC1",
+                    "https://api.weather.gov/stations/SDAZE",
+                    "https://api.weather.gov/stations/VGRC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ058",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ058",
+                "@type": "wx:Zone",
+                "id": "CAZ058",
+                "type": "public",
+                "name": "San Diego County Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/AU702",
+                    "https://api.weather.gov/stations/CMNC1",
+                    "https://api.weather.gov/stations/DENC1",
+                    "https://api.weather.gov/stations/F0019",
+                    "https://api.weather.gov/stations/F0527",
+                    "https://api.weather.gov/stations/F6122",
+                    "https://api.weather.gov/stations/JULC1",
+                    "https://api.weather.gov/stations/MLGC1",
+                    "https://api.weather.gov/stations/OGVC1",
+                    "https://api.weather.gov/stations/PAMC1",
+                    "https://api.weather.gov/stations/PIHC1",
+                    "https://api.weather.gov/stations/PVCSD",
+                    "https://api.weather.gov/stations/RCHC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ060",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ060",
+                "@type": "wx:Zone",
+                "id": "CAZ060",
+                "type": "public",
+                "name": "Apple and Lucerne Valleys",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/E0436",
+                    "https://api.weather.gov/stations/E3060",
+                    "https://api.weather.gov/stations/EMRC1",
+                    "https://api.weather.gov/stations/F0490",
+                    "https://api.weather.gov/stations/F1895",
+                    "https://api.weather.gov/stations/F3178",
+                    "https://api.weather.gov/stations/GNTC1",
+                    "https://api.weather.gov/stations/KAPV",
+                    "https://api.weather.gov/stations/KDAG",
+                    "https://api.weather.gov/stations/KGXA",
+                    "https://api.weather.gov/stations/KVCV",
+                    "https://api.weather.gov/stations/MNLC1",
+                    "https://api.weather.gov/stations/SDPNN"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ061",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ061",
+                "@type": "wx:Zone",
+                "id": "CAZ061",
+                "type": "public",
+                "name": "Coachella Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/C2285",
+                    "https://api.weather.gov/stations/E0772",
+                    "https://api.weather.gov/stations/E3081",
+                    "https://api.weather.gov/stations/E3298",
+                    "https://api.weather.gov/stations/E9946",
+                    "https://api.weather.gov/stations/EDRC1",
+                    "https://api.weather.gov/stations/F3842",
+                    "https://api.weather.gov/stations/KPSP",
+                    "https://api.weather.gov/stations/KTRM",
+                    "https://api.weather.gov/stations/UCDE"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ062",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ062",
+                "@type": "wx:Zone",
+                "id": "CAZ062",
+                "type": "public",
+                "name": "San Diego County Deserts",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/D9108",
+                    "https://api.weather.gov/stations/E1631",
+                    "https://api.weather.gov/stations/E3204",
+                    "https://api.weather.gov/stations/E9979",
+                    "https://api.weather.gov/stations/FHCC1",
+                    "https://api.weather.gov/stations/KL08",
+                    "https://api.weather.gov/stations/TNSC1",
+                    "https://api.weather.gov/stations/UCAB"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ065",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ065",
+                "@type": "wx:Zone",
+                "id": "CAZ065",
+                "type": "public",
+                "name": "San Gorgonio Pass Near Banning",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/SGX",
+                "gridIdentifier": "SGX",
+                "awipsLocationIdentifier": "SGX",
+                "cwa": [
+                    "SGX"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/SGX"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/BAZC1",
+                    "https://api.weather.gov/stations/SDDHS",
+                    "https://api.weather.gov/stations/WWAC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ522",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ522",
+                "@type": "wx:Zone",
+                "id": "CAZ522",
+                "type": "public",
+                "name": "Death Valley National Park",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CMP02",
+                    "https://api.weather.gov/stations/CMP03",
+                    "https://api.weather.gov/stations/CMP17",
+                    "https://api.weather.gov/stations/DPSC1",
+                    "https://api.weather.gov/stations/DVJC1",
+                    "https://api.weather.gov/stations/HTSC1",
+                    "https://api.weather.gov/stations/TT184"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ523",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ523",
+                "@type": "wx:Zone",
+                "id": "CAZ523",
+                "type": "public",
+                "name": "Western Mojave Desert",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CMP28",
+                    "https://api.weather.gov/stations/KAPV",
+                    "https://api.weather.gov/stations/KBYS",
+                    "https://api.weather.gov/stations/KEDW",
+                    "https://api.weather.gov/stations/KNID",
+                    "https://api.weather.gov/stations/OPLC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ524",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ524",
+                "@type": "wx:Zone",
+                "id": "CAZ524",
+                "type": "public",
+                "name": "Eastern Mojave Desert, Including the Mojave National Preserve",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/BKRCA",
+                    "https://api.weather.gov/stations/CMP28",
+                    "https://api.weather.gov/stations/DWMC1",
+                    "https://api.weather.gov/stations/EXCC1",
+                    "https://api.weather.gov/stations/GDSN2",
+                    "https://api.weather.gov/stations/KDAG",
+                    "https://api.weather.gov/stations/KEED",
+                    "https://api.weather.gov/stations/OXRC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ525",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ525",
+                "@type": "wx:Zone",
+                "id": "CAZ525",
+                "type": "public",
+                "name": "Morongo Basin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/E3443",
+                    "https://api.weather.gov/stations/KAPV",
+                    "https://api.weather.gov/stations/KDAG",
+                    "https://api.weather.gov/stations/KL35",
+                    "https://api.weather.gov/stations/UCCC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ526",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ526",
+                "@type": "wx:Zone",
+                "id": "CAZ526",
+                "type": "public",
+                "name": "Cadiz Basin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/AKPA3",
+                    "https://api.weather.gov/stations/E3443",
+                    "https://api.weather.gov/stations/KDAG",
+                    "https://api.weather.gov/stations/KEED",
+                    "https://api.weather.gov/stations/KHII",
+                    "https://api.weather.gov/stations/RVYC1",
+                    "https://api.weather.gov/stations/VDJCA"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ527",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ527",
+                "@type": "wx:Zone",
+                "id": "CAZ527",
+                "type": "public",
+                "name": "San Bernardino County-Upper Colorado River Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/VEF",
+                "gridIdentifier": "VEF",
+                "awipsLocationIdentifier": "VEF",
+                "cwa": [
+                    "VEF"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/VEF"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/AKPA3",
+                    "https://api.weather.gov/stations/KBLH",
+                    "https://api.weather.gov/stations/KHII",
+                    "https://api.weather.gov/stations/KIFP",
+                    "https://api.weather.gov/stations/QHAA3",
+                    "https://api.weather.gov/stations/RVYC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ560",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ560",
+                "@type": "wx:Zone",
+                "id": "CAZ560",
+                "type": "public",
+                "name": "Joshua Tree NP West",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/PSR",
+                "gridIdentifier": "PSR",
+                "awipsLocationIdentifier": "PSR",
+                "cwa": [
+                    "PSR"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PSR"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CI233",
+                    "https://api.weather.gov/stations/E9911",
+                    "https://api.weather.gov/stations/LTHC1",
+                    "https://api.weather.gov/stations/WCYC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ561",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ561",
+                "@type": "wx:Zone",
+                "id": "CAZ561",
+                "type": "public",
+                "name": "Joshua Tree NP East",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/PSR",
+                "gridIdentifier": "PSR",
+                "awipsLocationIdentifier": "PSR",
+                "cwa": [
+                    "PSR"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PSR"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/WCYC1"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/CAZ568",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/CAZ568",
+                "@type": "wx:Zone",
+                "id": "CAZ568",
+                "type": "public",
+                "name": "Chiriaco Summit",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CA",
+                "forecastOffice": "https://api.weather.gov/offices/PSR",
+                "gridIdentifier": "PSR",
+                "awipsLocationIdentifier": "PSR",
+                "cwa": [
+                    "PSR"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/PSR"
+                ],
+                "timeZone": [
+                    "America/Los_Angeles"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/DPMC1",
+                    "https://api.weather.gov/stations/E7734"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ008",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ008",
+                "@type": "wx:Zone",
+                "id": "GAZ008",
+                "type": "public",
+                "name": "Union",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/FFC",
+                "gridIdentifier": "FFC",
+                "awipsLocationIdentifier": "FFC",
+                "cwa": [
+                    "FFC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FFC"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KDNN",
+                    "https://api.weather.gov/stations/KAVL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KCHA",
+                    "https://api.weather.gov/stations/KGVL"
+                ],
+                "radarStation": "MRX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ009",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ009",
+                "@type": "wx:Zone",
+                "id": "GAZ009",
+                "type": "public",
+                "name": "Towns",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/FFC",
+                "gridIdentifier": "FFC",
+                "awipsLocationIdentifier": "FFC",
+                "cwa": [
+                    "FFC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FFC"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGVL",
+                    "https://api.weather.gov/stations/KAVL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KCHA",
+                    "https://api.weather.gov/stations/KDNN",
+                    "https://api.weather.gov/stations/KGSP"
+                ],
+                "radarStation": "MRX"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ010",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ010",
+                "@type": "wx:Zone",
+                "id": "GAZ010",
+                "type": "public",
+                "name": "Rabun",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/GSP",
+                "gridIdentifier": "GSP",
+                "awipsLocationIdentifier": "GSP",
+                "cwa": [
+                    "GSP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GSP"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGVL",
+                    "https://api.weather.gov/stations/KATL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KGSP",
+                    "https://api.weather.gov/stations/KRHP"
+                ],
+                "radarStation": "GSP"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ015",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ015",
+                "@type": "wx:Zone",
+                "id": "GAZ015",
+                "type": "public",
+                "name": "Lumpkin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/FFC",
+                "gridIdentifier": "FFC",
+                "awipsLocationIdentifier": "FFC",
+                "cwa": [
+                    "FFC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FFC"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGVL",
+                    "https://api.weather.gov/stations/KAVL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KCHA",
+                    "https://api.weather.gov/stations/KDNN"
+                ],
+                "radarStation": "FFC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ016",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ016",
+                "@type": "wx:Zone",
+                "id": "GAZ016",
+                "type": "public",
+                "name": "White",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/FFC",
+                "gridIdentifier": "FFC",
+                "awipsLocationIdentifier": "FFC",
+                "cwa": [
+                    "FFC"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/FFC"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGVL",
+                    "https://api.weather.gov/stations/KAVL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KCHA",
+                    "https://api.weather.gov/stations/KDNN",
+                    "https://api.weather.gov/stations/KGSP"
+                ],
+                "radarStation": "FFC"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/GAZ017",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GAZ017",
+                "@type": "wx:Zone",
+                "id": "GAZ017",
+                "type": "public",
+                "name": "Habersham",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GA",
+                "forecastOffice": "https://api.weather.gov/offices/GSP",
+                "gridIdentifier": "GSP",
+                "awipsLocationIdentifier": "GSP",
+                "cwa": [
+                    "GSP"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GSP"
+                ],
+                "timeZone": [
+                    "America/New_York"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGVL",
+                    "https://api.weather.gov/stations/KAHN",
+                    "https://api.weather.gov/stations/KATL",
+                    "https://api.weather.gov/stations/KCEU",
+                    "https://api.weather.gov/stations/KGSP"
+                ],
+                "radarStation": "GSP"
+            }
+        }
+    ]
+}

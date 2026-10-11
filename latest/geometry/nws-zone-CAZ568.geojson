@@ -1,0 +1,121 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "id": "https://api.weather.gov/zones/forecast/CAZ568",
+    "type": "Feature",
+    "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+            [
+                [
+                    -115.46991,
+                    33.791077
+                ],
+                [
+                    -115.479492,
+                    33.705505
+                ],
+                [
+                    -115.473389,
+                    33.689697
+                ],
+                [
+                    -115.487793,
+                    33.686096
+                ],
+                [
+                    -115.538513,
+                    33.567078
+                ],
+                [
+                    -115.684082,
+                    33.510315
+                ],
+                [
+                    -115.783997,
+                    33.500916
+                ],
+                [
+                    -115.841187,
+                    33.534119
+                ],
+                [
+                    -115.921814,
+                    33.577881
+                ],
+                [
+                    -115.946396,
+                    33.577881
+                ],
+                [
+                    -115.946396,
+                    33.7391
+                ],
+                [
+                    -115.7677,
+                    33.7351
+                ],
+                [
+                    -115.707999,
+                    33.7469
+                ],
+                [
+                    -115.6088,
+                    33.7615
+                ],
+                [
+                    -115.6052,
+                    33.801292
+                ],
+                [
+                    -115.5982,
+                    33.8781
+                ],
+                [
+                    -115.545099,
+                    33.9259
+                ],
+                [
+                    -115.4287,
+                    33.9153
+                ],
+                [
+                    -115.479492,
+                    33.862488
+                ],
+                [
+                    -115.46991,
+                    33.791077
+                ]
+            ]
+        ]
+    },
+    "properties": {
+        "@id": "https://api.weather.gov/zones/forecast/CAZ568",
+        "@type": "wx:Zone",
+        "id": "CAZ568",
+        "type": "public",
+        "name": "Chiriaco Summit",
+        "effectiveDate": "2026-04-16T18:00:00+00:00",
+        "expirationDate": "2200-01-01T00:00:00+00:00",
+        "state": "CA",
+        "forecastOffice": "https://api.weather.gov/offices/PSR",
+        "gridIdentifier": "PSR",
+        "awipsLocationIdentifier": "PSR",
+        "cwa": [
+            "PSR"
+        ],
+        "forecastOffices": [
+            "https://api.weather.gov/offices/PSR"
+        ],
+        "timeZone": [
+            "America/Los_Angeles"
+        ],
+        "observationStations": [
+            "https://api.weather.gov/stations/DPMC1",
+            "https://api.weather.gov/stations/E7734"
+        ],
+        "radarStation": null
+    }
+}
