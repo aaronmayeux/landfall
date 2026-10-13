@@ -1,11 +1,11 @@
 {
-  "runAt": "2026-10-13T09:33:39.568Z",
+  "runAt": "2026-10-13T17:40:08.611Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 32,
-      "eligible": 31,
-      "stored": 1,
+      "listed": 33,
+      "eligible": 32,
+      "stored": 2,
       "unchanged": 30,
       "failed": 0,
       "skipped": [
@@ -42,15 +42,17 @@
         "btk/2026/bep172026.dat": "unchanged (304)",
         "btk/2026/bep182026.dat": "unchanged (304)",
         "btk/2026/bep192026.dat": "unchanged (304)",
-        "btk/2026/bep202026.dat": "stored 16055 bytes"
+        "btk/2026/bep202026.dat": "stored 16703 bytes",
+        "btk/2026/bep212026.dat": "stored 2231 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
-      "storms": 3,
-      "linesAdded": 3,
+      "storms": 4,
+      "linesAdded": 4,
       "files": {
         "jtwc/2026/ep2026.jsonl": "+1",
+        "jtwc/2026/ep2126.jsonl": "+1",
         "jtwc/2026/wp2726.jsonl": "+1",
         "jtwc/2026/wp2826.jsonl": "+1"
       },
