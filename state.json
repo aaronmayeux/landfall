@@ -180,15 +180,15 @@
     "sha256": "1aa33d534d1877e523965d74c37ba8e771d8bc44cf4708cfb139a54774797482"
   },
   "btk/2026/bep202026.dat": {
-    "etag": "\"557f-65defa576c0f7\"",
-    "lastModified": "Fri, 16 Oct 2026 06:55:14 GMT",
+    "etag": "\"557f-65df1166045a6\"",
+    "lastModified": "Fri, 16 Oct 2026 08:38:24 GMT",
     "bytes": 21887,
-    "sha256": "473017bb5f7342e1cbb44270cca892199747989a1e0bf0a0eade35ae631225e0"
+    "sha256": "55644dfa302d4c52defc2fe546fae0a0f6c26abee32b063c640d3497efce5031"
   },
   "btk/2026/bep212026.dat": {
-    "etag": "\"1cf7-65def8d215841\"",
-    "lastModified": "Fri, 16 Oct 2026 06:48:26 GMT",
-    "bytes": 7415,
-    "sha256": "17766df942e7e6760d0a29db6cb3ab46d75037fbc05593357b5fcabb7ac2059e"
+    "etag": "\"1f7f-65df45397f064\"",
+    "lastModified": "Fri, 16 Oct 2026 12:30:16 GMT",
+    "bytes": 8063,
+    "sha256": "aa0e47cf25c0070bca693a0efd7b987622bdadf45dbee38bc853921c0d67e1ec"
   }
 }
