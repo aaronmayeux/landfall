@@ -1,0 +1,86 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/GUZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/GUZ001",
+                "@type": "wx:Zone",
+                "id": "GUZ001",
+                "type": "public",
+                "name": "Guam",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "GU",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Guam"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGUM",
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGWT",
+                    "https://api.weather.gov/stations/PHNL",
+                    "https://api.weather.gov/stations/PKMR",
+                    "https://api.weather.gov/stations/PKWA",
+                    "https://api.weather.gov/stations/PTKK",
+                    "https://api.weather.gov/stations/PTKR",
+                    "https://api.weather.gov/stations/PTPN",
+                    "https://api.weather.gov/stations/PTYA",
+                    "https://api.weather.gov/stations/PWAK"
+                ],
+                "radarStation": "GUA"
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/MPZ001",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/MPZ001",
+                "@type": "wx:Zone",
+                "id": "MPZ001",
+                "type": "public",
+                "name": "Rota",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "MP",
+                "forecastOffice": "https://api.weather.gov/offices/GUM",
+                "gridIdentifier": "GUM",
+                "awipsLocationIdentifier": "GUM",
+                "cwa": [
+                    "GUM"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GUM"
+                ],
+                "timeZone": [
+                    "Pacific/Saipan"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/PGRO",
+                    "https://api.weather.gov/stations/PGSN",
+                    "https://api.weather.gov/stations/PGUA",
+                    "https://api.weather.gov/stations/PGUM",
+                    "https://api.weather.gov/stations/PGWT"
+                ],
+                "radarStation": "GUA"
+            }
+        }
+    ]
+}

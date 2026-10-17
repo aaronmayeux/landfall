@@ -1,0 +1,254 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ea28973ecb5f2e37bbc4bdf11e508a86395a5461.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.95,
+                            34.14
+                        ],
+                        [
+                            -98.95,
+                            34.3
+                        ],
+                        [
+                            -98.54,
+                            34.18
+                        ],
+                        [
+                            -98.05,
+                            34.19
+                        ],
+                        [
+                            -98.15,
+                            34.06
+                        ],
+                        [
+                            -98.59,
+                            34.02
+                        ],
+                        [
+                            -98.95,
+                            34.14
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ea28973ecb5f2e37bbc4bdf11e508a86395a5461.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ea28973ecb5f2e37bbc4bdf11e508a86395a5461.001.1",
+                "areaDesc": "Tillman; Cotton; Jefferson; Wichita; Clay",
+                "geocode": {
+                    "SAME": [
+                        "040141",
+                        "040033",
+                        "040067",
+                        "048485",
+                        "048077"
+                    ],
+                    "UGC": [
+                        "OKZ037",
+                        "OKZ044",
+                        "OKZ045",
+                        "TXZ086",
+                        "TXZ090"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/OKZ037",
+                    "https://api.weather.gov/zones/forecast/OKZ044",
+                    "https://api.weather.gov/zones/forecast/OKZ045",
+                    "https://api.weather.gov/zones/forecast/TXZ086",
+                    "https://api.weather.gov/zones/forecast/TXZ090"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6a6b86548c79464064379260e0e4b2d67802b873.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.6a6b86548c79464064379260e0e4b2d67802b873.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-16T14:24:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.cdeb232764b7df25dffb2ef01b627d998fd8e0da.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.cdeb232764b7df25dffb2ef01b627d998fd8e0da.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-16T19:57:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-17T02:35:00-05:00",
+                "effective": "2026-10-17T02:35:00-05:00",
+                "onset": "2026-10-18T07:00:00-05:00",
+                "expires": "2026-10-17T16:45:00-05:00",
+                "ends": "2026-10-18T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flood Watch issued October 17 at 2:35AM CDT until October 18 at 7:00PM CDT by NWS Norman OK",
+                "description": "...The Flood Watch continues for the following rivers in Texas...\nOklahoma...\n\nRed River near Burkburnett affecting Cotton, Jefferson, Clay,\nWichita and Tillman Counties.\n\nFor the Upper Red River...including Burkburnett, Terral,\nGainesville...flooding is possible.\n\n* WHAT...Flooding is possible.\n\n* WHERE...Red River near Burkburnett.\n\n* WHEN...From Sunday morning to Sunday evening.\n\n* ADDITIONAL DETAILS...\n- At 1:30 AM CDT Saturday the stage was 7.3 feet.\n- Forecast...Flood stage may be reached tomorrow morning.\n- Flood stage is 9.0 feet.\n- http://www.weather.gov/safety/flood",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nAdditional information is available at www.weather.gov.\n\nThe next statement will be issued this afternoon at 445 PM CDT.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KOUN 170735"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM SUNDAY MORNING TO SUNDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KOUN.FL.A.0003.261018T1200Z-261019T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-18T19:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7e9c8a555cd3eb0357eb7fe26d25db8298efcef7.001.1,2026-10-16T09:02:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7d0ef09ad166d91fd2eddb5b4c770f3139482d76.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7d0ef09ad166d91fd2eddb5b4c770f3139482d76.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7d0ef09ad166d91fd2eddb5b4c770f3139482d76.001.1",
+                "areaDesc": "Guam; Rota; Tinian; Saipan",
+                "geocode": {
+                    "SAME": [
+                        "066010",
+                        "069100",
+                        "069120",
+                        "069110"
+                    ],
+                    "UGC": [
+                        "GUZ001",
+                        "MPZ001",
+                        "MPZ002",
+                        "MPZ003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/GUZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ002",
+                    "https://api.weather.gov/zones/forecast/MPZ003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.fd4402cac5e6279d4fe881da4c732b2b0a8dc3b5.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.fd4402cac5e6279d4fe881da4c732b2b0a8dc3b5.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-17T05:01:00+10:00"
+                    }
+                ],
+                "sent": "2026-10-17T16:10:00+10:00",
+                "effective": "2026-10-17T16:10:00+10:00",
+                "onset": "2026-10-17T16:10:00+10:00",
+                "expires": "2026-10-18T04:30:00+10:00",
+                "ends": "2026-10-18T16:00:00+10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flood Watch issued October 17 at 4:10PM ChST until October 18 at 4:00PM ChST by NWS Tiyan GU",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Guam, Rota, Saipan and Tinian.\n\n* WHEN...Through Sunday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris. Extensive street\nflooding and flooding of creeks and rivers are possible.\n\n* ADDITIONAL DETAILS...\n- Typhoon Champi (29W) will produce locally heavy rainfall late\ntonight and Sunday. although an unexpected southward shift in\ntrack will reduce these somewhat. Tinian and Saipan will see\naround 3 to 5 inches, Rota could receive 5 to 8 inches, and Guam\nmight get 8 to 14 inches.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY60 PGUM 170610"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SUNDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PGUM.FA.A.0008.000000T0000Z-261018T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-18T16:00:00+10:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1,2026-10-16T14:31:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.48dfd579bb5899f7e1c5aa217295bfb3df2d527f.001.1,2026-10-16T03:00:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-17T09:05:27+00:00"
+}

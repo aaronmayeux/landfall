@@ -1,0 +1,176 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.26dc00bc166d39d7a3259fdccec35ec99f0c8d8e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -82.27,
+                            33.27
+                        ],
+                        [
+                            -82.29,
+                            33.27
+                        ],
+                        [
+                            -82.11,
+                            33.57
+                        ],
+                        [
+                            -82.03,
+                            33.61
+                        ],
+                        [
+                            -81.85,
+                            33.57
+                        ],
+                        [
+                            -81.82,
+                            33.52
+                        ],
+                        [
+                            -81.88,
+                            33.41
+                        ],
+                        [
+                            -82.07,
+                            33.09
+                        ],
+                        [
+                            -82.27,
+                            33.14
+                        ],
+                        [
+                            -82.25,
+                            33.2
+                        ],
+                        [
+                            -82.23,
+                            33.23
+                        ],
+                        [
+                            -82.24,
+                            33.23
+                        ],
+                        [
+                            -82.24,
+                            33.24
+                        ],
+                        [
+                            -82.25,
+                            33.26
+                        ],
+                        [
+                            -82.26,
+                            33.26
+                        ],
+                        [
+                            -82.27,
+                            33.27
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.26dc00bc166d39d7a3259fdccec35ec99f0c8d8e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.26dc00bc166d39d7a3259fdccec35ec99f0c8d8e.001.1",
+                "areaDesc": "Burke, GA; Columbia, GA; Richmond, GA; Aiken, SC; Edgefield, SC",
+                "geocode": {
+                    "SAME": [
+                        "013033",
+                        "013073",
+                        "013245",
+                        "045003",
+                        "045037"
+                    ],
+                    "UGC": [
+                        "GAC033",
+                        "GAC073",
+                        "GAC245",
+                        "SCC003",
+                        "SCC037"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/GAC033",
+                    "https://api.weather.gov/zones/county/GAC073",
+                    "https://api.weather.gov/zones/county/GAC245",
+                    "https://api.weather.gov/zones/county/SCC003",
+                    "https://api.weather.gov/zones/county/SCC037"
+                ],
+                "references": [],
+                "sent": "2026-10-10T16:36:00-04:00",
+                "effective": "2026-10-10T16:36:00-04:00",
+                "onset": "2026-10-10T16:36:00-04:00",
+                "expires": "2026-10-10T18:30:00-04:00",
+                "ends": "2026-10-10T18:30:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Columbia SC",
+                "headline": "Flash Flood Warning issued October 10 at 4:36PM EDT until October 10 at 6:30PM EDT by NWS Columbia SC",
+                "description": "FFWCAE\n\nThe National Weather Service in Columbia has issued a\n\n* Flash Flood Warning for...\nNorthwestern Burke County in east central Georgia...\nSoutheastern Columbia County in east central Georgia...\nRichmond County in east central Georgia...\nWest Central Aiken County in central South Carolina...\nSouth Central Edgefield County in central South Carolina...\n\n* Until 630 PM EDT.\n\n* At 436 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNorth Augusta, Grovetown, Evans, Fort Gordon, Augusta, Martinez,\nClearwater, Belvedere, Hephzibah, South Augusta, Augusta Regional\nAirport, Augusta Mall, Glendale, Daniel Field, Summerville,\nMidtown, McBean, Village Plaza Shopping Center, Augusta National\nGolf Club and Gloverville.\n\nThis includes the following highways...\nInterstate 520 in South Carolina between mile markers 16 and 23.\nInterstate 20 in South Carolina between mile markers 0 and 7.\nInterstate 20 in Georgia between mile markers 192 and 201. Interstate\n520 in Georgia between mile markers 1 and 15.",
+                "instruction": "Most flooding deaths occur in vehicles. Never drive through a flooded\nroadway or around barricades. Turn around, don't drown.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KCAE 102036"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCAE.FF.W.0029.261010T2036Z-261010T2230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T18:30:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-10T21:30:01+00:00"
+}

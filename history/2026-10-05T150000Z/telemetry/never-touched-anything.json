@@ -1,0 +1,44 @@
+[
+  {
+    "device_prefix": "ec5d87ce",
+    "platform": "ios",
+    "engine": "webkit",
+    "screen_w": 440,
+    "screen_h": 956,
+    "dpr": 30,
+    "ever_installed": 0,
+    "sessions": 27,
+    "days_active": 18,
+    "longest_visit_ms": 3019620,
+    "first_seen": "2026-08-06",
+    "last_seen": "2026-08-29"
+  },
+  {
+    "device_prefix": "d255cc16",
+    "platform": "ios",
+    "engine": "webkit",
+    "screen_w": 440,
+    "screen_h": 956,
+    "dpr": 30,
+    "ever_installed": 0,
+    "sessions": 9,
+    "days_active": 5,
+    "longest_visit_ms": 0,
+    "first_seen": "2026-08-09",
+    "last_seen": "2026-08-13"
+  },
+  {
+    "device_prefix": "cc85ccaf",
+    "platform": "ios",
+    "engine": "webkit",
+    "screen_w": 440,
+    "screen_h": 956,
+    "dpr": 30,
+    "ever_installed": 0,
+    "sessions": 5,
+    "days_active": 5,
+    "longest_visit_ms": 24627,
+    "first_seen": "2026-08-14",
+    "last_seen": "2026-08-27"
+  }
+]

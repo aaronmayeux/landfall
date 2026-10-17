@@ -1,0 +1,383 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.39e470fb964ec101fac368dd30489d7121f67bac.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.87,
+                            30.24
+                        ],
+                        [
+                            -95.88,
+                            30.38
+                        ],
+                        [
+                            -95.76,
+                            30.39
+                        ],
+                        [
+                            -95.7,
+                            30.38
+                        ],
+                        [
+                            -95.64,
+                            30.34
+                        ],
+                        [
+                            -95.63,
+                            30.3
+                        ],
+                        [
+                            -95.62,
+                            30.19
+                        ],
+                        [
+                            -95.66,
+                            30.11
+                        ],
+                        [
+                            -95.73,
+                            30.1
+                        ],
+                        [
+                            -95.86,
+                            30.12
+                        ],
+                        [
+                            -95.87,
+                            30.24
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.39e470fb964ec101fac368dd30489d7121f67bac.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.39e470fb964ec101fac368dd30489d7121f67bac.001.1",
+                "areaDesc": "Grimes, TX; Montgomery, TX; Waller, TX",
+                "geocode": {
+                    "SAME": [
+                        "048185",
+                        "048339",
+                        "048473"
+                    ],
+                    "UGC": [
+                        "TXC185",
+                        "TXC339",
+                        "TXC473"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC185",
+                    "https://api.weather.gov/zones/county/TXC339",
+                    "https://api.weather.gov/zones/county/TXC473"
+                ],
+                "references": [],
+                "sent": "2026-10-01T19:37:00-05:00",
+                "effective": "2026-10-01T19:37:00-05:00",
+                "onset": "2026-10-01T19:37:00-05:00",
+                "expires": "2026-10-01T22:30:00-05:00",
+                "ends": "2026-10-01T22:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Houston/Galveston TX",
+                "headline": "Flash Flood Warning issued October 1 at 7:37PM CDT until October 1 at 10:30PM CDT by NWS Houston/Galveston TX",
+                "description": "FFWHGX\n\nThe National Weather Service in Houston/Galveston has issued a\n\n* Flash Flood Warning for...\nSoutheastern Grimes County in southeastern Texas...\nSouthwestern Montgomery County in southeastern Texas...\nNortheastern Waller County in southeastern Texas...\n\n* Until 1030 PM CDT.\n\n* At 737 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n4 and 6 inches of rain have fallen. Additional rainfall amounts of\n2 to 3 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nPinehurst, Magnolia, Stagecoach, Todd Mission, Dobbin and\nPlantersville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHGX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KHGX 020037"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KHGX.FF.W.0053.261002T0037Z-261002T0330Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T22:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.745f22c8bc16d421f48fa75fec29635238520d7a.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.69,
+                            27.65
+                        ],
+                        [
+                            -98.51,
+                            27.93
+                        ],
+                        [
+                            -98.36,
+                            28.2
+                        ],
+                        [
+                            -97.96,
+                            28.19
+                        ],
+                        [
+                            -98.18,
+                            27.62
+                        ],
+                        [
+                            -98.69,
+                            27.65
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.745f22c8bc16d421f48fa75fec29635238520d7a.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.745f22c8bc16d421f48fa75fec29635238520d7a.001.1",
+                "areaDesc": "Duval, TX; Jim Wells, TX; Live Oak, TX; McMullen, TX",
+                "geocode": {
+                    "SAME": [
+                        "048131",
+                        "048249",
+                        "048297",
+                        "048311"
+                    ],
+                    "UGC": [
+                        "TXC131",
+                        "TXC249",
+                        "TXC297",
+                        "TXC311"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC131",
+                    "https://api.weather.gov/zones/county/TXC249",
+                    "https://api.weather.gov/zones/county/TXC297",
+                    "https://api.weather.gov/zones/county/TXC311"
+                ],
+                "references": [],
+                "sent": "2026-10-01T18:36:00-05:00",
+                "effective": "2026-10-01T18:36:00-05:00",
+                "onset": "2026-10-01T18:36:00-05:00",
+                "expires": "2026-10-01T21:30:00-05:00",
+                "ends": "2026-10-01T21:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Corpus Christi TX",
+                "headline": "Flash Flood Warning issued October 1 at 6:36PM CDT until October 1 at 9:30PM CDT by NWS Corpus Christi TX",
+                "description": "FFWCRP\n\nThe National Weather Service in Corpus Christi has issued a\n\n* Flash Flood Warning for...\nNorthern Duval County in south central Texas...\nNorthwestern Jim Wells County in south central Texas...\nSouthwestern Live Oak County in south central Texas...\nSoutheastern McMullen County in south central Texas...\n\n* Until 930 PM CDT.\n\n* At 636 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n3 and 6 inches of rain have fallen. The expected rainfall rate is\n2.5 to 5 inches in 1 hour. Additional rainfall amounts of 1 to 4\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSan Diego, Midway, Rancho De La Parita, Rosita, Tecalote, Clegg and\nAnnarose.\n\nThis includes the following highways...\nUS Highway 59 between mile markers 736 and 754. US Highway 281\nbetween mile markers 642 and 664.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCRP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KCRP 012336"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCRP.FF.W.0037.261001T2336Z-261002T0230Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T21:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91a3a5fe682c69fd7a5227aaa9de9ab69bef87f9.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.35,
+                            38.74
+                        ],
+                        [
+                            -95.69,
+                            38.87
+                        ],
+                        [
+                            -95.64,
+                            38.87
+                        ],
+                        [
+                            -95.51,
+                            38.57
+                        ],
+                        [
+                            -96.35,
+                            38.42
+                        ],
+                        [
+                            -96.35,
+                            38.74
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91a3a5fe682c69fd7a5227aaa9de9ab69bef87f9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.91a3a5fe682c69fd7a5227aaa9de9ab69bef87f9.001.1",
+                "areaDesc": "Lyon, KS; Osage, KS; Wabaunsee, KS",
+                "geocode": {
+                    "SAME": [
+                        "020111",
+                        "020139",
+                        "020197"
+                    ],
+                    "UGC": [
+                        "KSC111",
+                        "KSC139",
+                        "KSC197"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC111",
+                    "https://api.weather.gov/zones/county/KSC139",
+                    "https://api.weather.gov/zones/county/KSC197"
+                ],
+                "references": [],
+                "sent": "2026-10-01T17:46:00-05:00",
+                "effective": "2026-10-01T17:46:00-05:00",
+                "onset": "2026-10-01T17:46:00-05:00",
+                "expires": "2026-10-01T21:45:00-05:00",
+                "ends": "2026-10-01T21:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 1 at 5:46PM CDT until October 1 at 9:45PM CDT by NWS Topeka KS",
+                "description": "FFWTOP\n\nThe National Weather Service in Topeka has issued a\n\n* Flash Flood Warning for...\nNorthern Lyon County in east central Kansas...\nOsage County in east central Kansas...\nSoutheastern Wabaunsee County in east central Kansas...\n\n* Until 945 PM CDT.\n\n* At 546 PM CDT, Doppler radar indicated heavy rain across the warned\narea. Between 1 and 3 inches of rain have fallen. Additional\nrainfall amounts of 1 to 3 inches are possible in the warned area.\nFlash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nOsage City, Carbondale, Lyndon, Burlingame, Americus, Scranton,\nQuenemo, Harveyville, Reading, Allen, Admire, Bushong and Pomona\nLake.\n\nThis includes Kansas Turnpike between mile markers 130 and 161.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KTOP 012246"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FF.W.0044.261001T2246Z-261002T0245Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-01T21:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-02T01:30:58+00:00"
+}

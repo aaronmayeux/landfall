@@ -1,0 +1,124 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f2393cd32cc7b9d048b863784cda329b43b22fe7.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.1,
+                            28.76
+                        ],
+                        [
+                            -97.03,
+                            28.88
+                        ],
+                        [
+                            -97.02,
+                            28.91
+                        ],
+                        [
+                            -96.93,
+                            28.89
+                        ],
+                        [
+                            -96.96,
+                            28.76
+                        ],
+                        [
+                            -97.1,
+                            28.76
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f2393cd32cc7b9d048b863784cda329b43b22fe7.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f2393cd32cc7b9d048b863784cda329b43b22fe7.001.1",
+                "areaDesc": "Victoria, TX",
+                "geocode": {
+                    "SAME": [
+                        "048469"
+                    ],
+                    "UGC": [
+                        "TXC469"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC469"
+                ],
+                "references": [],
+                "sent": "2026-10-03T21:44:00-05:00",
+                "effective": "2026-10-03T21:44:00-05:00",
+                "onset": "2026-10-03T21:44:00-05:00",
+                "expires": "2026-10-04T00:45:00-05:00",
+                "ends": "2026-10-04T00:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Corpus Christi TX",
+                "headline": "Flash Flood Warning issued October 3 at 9:44PM CDT until October 4 at 12:45AM CDT by NWS Corpus Christi TX",
+                "description": "FFWCRP\n\nThe National Weather Service in Corpus Christi has issued a\n\n* Flash Flood Warning for...\nCentral Victoria County in south central Texas...\n\n* Until 1245 AM CDT.\n\n* At 944 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 5 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nVictoria, Victoria Riverside Park, Downtown Victoria, Victoria\nCollege, Victoria Detar Hospital North, Ball Airport Area, Victoria\nMall, Victoria Colony Creek Country Club and Saxet Lakes.\n\nThis includes the following highways...\nUS Highway 59 near mile marker 638. US Highway 77 between mile\nmarkers 572 and 576...and near mile marker 584. US Highway 87 between\nmile markers 808 and 814.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWCRP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KCRP 040244"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KCRP.FF.W.0038.261004T0244Z-261004T0545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T00:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-04T05:33:15+00:00"
+}

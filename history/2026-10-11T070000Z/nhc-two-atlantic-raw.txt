@@ -1,0 +1,31 @@
+ABNT20 KNHC 110525
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Sun Oct 11 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The Weather Prediction Center is issuing advisories on 
+Post-Tropical Cyclone Isaias, located inland over Tennessee.
+
+Eastern Tropical Atlantic:
+An elongated area of low pressure centered about 100 miles 
+southwest of the Cabo Verde Islands is producing a large but 
+disorganized area of showers and thunderstorms extending from 
+near those islands southward for several hundred miles.  Some 
+development of this system is possible during the next couple of 
+days while the low north-northwestward before upper-level winds 
+become too strong for development by midweek.  Very heavy rainfall 
+is also possible during the next few days over portions of the Cabo 
+Verde Islands regardless of whether the system ever becomes a 
+tropical cyclone.
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Blake
+
+

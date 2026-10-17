@@ -1,0 +1,113 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.443256933c376217e293549520fb93eefee302cb.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.443256933c376217e293549520fb93eefee302cb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.443256933c376217e293549520fb93eefee302cb.001.1",
+                "areaDesc": "Guam; Rota; Tinian; Saipan",
+                "geocode": {
+                    "SAME": [
+                        "066010",
+                        "069100",
+                        "069120",
+                        "069110"
+                    ],
+                    "UGC": [
+                        "GUZ001",
+                        "MPZ001",
+                        "MPZ002",
+                        "MPZ003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/GUZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ002",
+                    "https://api.weather.gov/zones/forecast/MPZ003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a1c8b56ee60caca08a531c7d8f7593c94e69437c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a1c8b56ee60caca08a531c7d8f7593c94e69437c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-02T22:56:00+10:00"
+                    }
+                ],
+                "sent": "2026-10-03T06:47:00+10:00",
+                "effective": "2026-10-03T06:47:00+10:00",
+                "onset": "2026-10-03T06:47:00+10:00",
+                "expires": "2026-10-03T18:00:00+10:00",
+                "ends": "2026-10-05T04:00:00+10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flood Watch issued October 3 at 6:47AM ChST until October 5 at 4:00AM ChST by NWS Tiyan GU",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Guam, Rota, Saipan and Tinian.\n\n* WHEN...Through late Sunday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Typhoon Choi-wan (26W) is nearly stationary and is expected to\npivot north-northeast through the northern CNMI through the\nweekend near Pagan and Agrihan. To the south of Choi-wan, surging\nmonsoon inflow will maintain wet conditions into early next week,\nresulting in 4 to 6 inches of rain for Guam and Rota, and 5 to 8\ninches for Tinian and Saipan during the Watch period.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY60 PGUM 022047"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH LATE SUNDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PGUM.FA.A.0006.000000T0000Z-261004T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T04:00:00+10:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a7cde57d3079d9997edb7848f01735dcfefe1470.001.1,2026-10-02T08:46:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a7cde57d3079d9997edb7848f01735dcfefe1470.002.1,2026-10-02T08:46:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.5a16e62ca879f892f8e6df4ca54e09d6c53cf846.001.1,2026-10-02T15:05:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.29df6bd1b6dc3ef6f6beca7f4b3cfceee5685b91.001.1,2026-10-01T23:11:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.fa5de1cbd1ed36d0e57d316d76b9f5da4bee172a.001.1,2026-10-01T15:07:00+10:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.afc7d3286e819ca14dcace620d0dcbb91705eb4b.001.1,2026-10-01T02:57:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-03T00:19:34+00:00"
+}

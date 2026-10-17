@@ -1,0 +1,14 @@
+[
+  {
+    "table_name": "events",
+    "rows": 110
+  },
+  {
+    "table_name": "sessions",
+    "rows": 4160
+  },
+  {
+    "table_name": "source_rollup",
+    "rows": 14371
+  }
+]

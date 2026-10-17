@@ -1,0 +1,18 @@
+[
+  {
+    "name": "_cf_KV",
+    "sql": "CREATE TABLE _cf_KV (\n        key TEXT PRIMARY KEY,\n        value BLOB\n      ) WITHOUT ROWID"
+  },
+  {
+    "name": "events",
+    "sql": "CREATE TABLE events (\n  id         INTEGER PRIMARY KEY AUTOINCREMENT,\n  ts         INTEGER NOT NULL,\n  kind       TEXT    NOT NULL,\n  app        TEXT    NOT NULL DEFAULT '',\n  country    TEXT    NOT NULL DEFAULT '',\n  standalone INTEGER NOT NULL DEFAULT 0,\n  message    TEXT    NOT NULL DEFAULT '',\n  stack      TEXT    NOT NULL DEFAULT ''\n)"
+  },
+  {
+    "name": "sessions",
+    "sql": "CREATE TABLE sessions (\n  id             INTEGER PRIMARY KEY AUTOINCREMENT,\n  ts             INTEGER NOT NULL,\n  app            TEXT    NOT NULL DEFAULT '',\n  country        TEXT    NOT NULL DEFAULT '',\n  standalone     INTEGER NOT NULL DEFAULT 0,\n  platform       TEXT    NOT NULL DEFAULT '',\n  engine         TEXT    NOT NULL DEFAULT '',\n  nav_type       TEXT    NOT NULL DEFAULT '',\n  transfer_bytes INTEGER NOT NULL DEFAULT 0,\n  sw_controlled  INTEGER NOT NULL DEFAULT 0,\n  ttfb_ms        INTEGER NOT NULL DEFAULT 0,\n  fcp_ms         INTEGER NOT NULL DEFAULT 0,\n  lcp_ms         INTEGER NOT NULL DEFAULT 0,\n  dcl_ms         INTEGER NOT NULL DEFAULT 0,\n  load_ms        INTEGER NOT NULL DEFAULT 0,\n  t_globe_ms     INTEGER NOT NULL DEFAULT 0,\n  t_data_ms      INTEGER NOT NULL DEFAULT 0,\n  t_storms_ms    INTEGER NOT NULL DEFAULT 0,\n  longtask_n     INTEGER NOT NULL DEFAULT 0,\n  longtask_ms    INTEGER NOT NULL DEFAULT 0,\n  worst_event_ms INTEGER NOT NULL DEFAULT 0,\n  webgl_lost     INTEGER NOT NULL DEFAULT 0,\n  conn_type      TEXT    NOT NULL DEFAULT '',\n  conn_rtt       INTEGER NOT NULL DEFAULT 0,\n  conn_down      INTEGER NOT NULL DEFAULT 0,\n  save_data      INTEGER NOT NULL DEFAULT 0,\n  screen_w       INTEGER NOT NULL DEFAULT 0,\n  screen_h       INTEGER NOT NULL DEFAULT 0,\n  dpr            INTEGER NOT NULL DEFAULT 0,\n  mem_gb         INTEGER NOT NULL DEFAULT 0,\n  cores          INTEGER NOT NULL DEFAULT 0,\n  storm_select   INTEGER NOT NULL DEFAULT 0,\n  advisory_open  INTEGER NOT NULL DEFAULT 0,\n  layer_toggle   INTEGER NOT NULL DEFAULT 0,\n  layer_pair     INTEGER NOT NULL DEFAULT 0,\n  layer_reset    INTEGER NOT NULL DEFAULT 0,\n  model_toggle   INTEGER NOT NULL DEFAULT 0,\n  recenter       INTEGER NOT NULL DEFAULT 0,\n  home_set       INTEGER NOT NULL DEFAULT 0,\n  retry          INTEGER NOT NULL DEFAULT 0\n, hidden_at_start INTEGER NOT NULL DEFAULT 0, first_hidden_ms INTEGER NOT NULL DEFAULT 0, device TEXT NOT NULL DEFAULT '', timings_ok INTEGER NOT NULL DEFAULT 0, t_scripts_ms INTEGER NOT NULL DEFAULT 0, boot_longtask_n INTEGER NOT NULL DEFAULT 0, boot_longtask_ms INTEGER NOT NULL DEFAULT 0, visit_ms INTEGER NOT NULL DEFAULT 0, ref_host TEXT NOT NULL DEFAULT '', retry_which TEXT NOT NULL DEFAULT '')"
+  },
+  {
+    "name": "source_rollup",
+    "sql": "CREATE TABLE source_rollup (\n  bucket     INTEGER NOT NULL,\n  source     TEXT    NOT NULL,\n  status     TEXT    NOT NULL,\n  app        TEXT    NOT NULL DEFAULT '',\n  country    TEXT    NOT NULL DEFAULT '',\n  standalone INTEGER NOT NULL DEFAULT 0,\n  reason     TEXT    NOT NULL DEFAULT '',\n  n          INTEGER NOT NULL DEFAULT 0,\n  PRIMARY KEY (bucket, source, status, app, country, standalone, reason)\n)"
+  }
+]

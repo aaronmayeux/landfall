@@ -1,0 +1,938 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0436421071feb454db489423eb85f42894853c22.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.67,
+                            35.34
+                        ],
+                        [
+                            -97.57,
+                            35.3
+                        ],
+                        [
+                            -97.56,
+                            35.27
+                        ],
+                        [
+                            -97.3,
+                            35.37
+                        ],
+                        [
+                            -97.3,
+                            35.2
+                        ],
+                        [
+                            -98.09,
+                            34.94
+                        ],
+                        [
+                            -98.1,
+                            35.38
+                        ],
+                        [
+                            -98.02,
+                            35.38
+                        ],
+                        [
+                            -97.96,
+                            35.35
+                        ],
+                        [
+                            -97.94,
+                            35.38
+                        ],
+                        [
+                            -97.9,
+                            35.35
+                        ],
+                        [
+                            -97.86,
+                            35.36
+                        ],
+                        [
+                            -97.84,
+                            35.33
+                        ],
+                        [
+                            -97.76,
+                            35.34
+                        ],
+                        [
+                            -97.74,
+                            35.32
+                        ],
+                        [
+                            -97.67,
+                            35.34
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0436421071feb454db489423eb85f42894853c22.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0436421071feb454db489423eb85f42894853c22.001.1",
+                "areaDesc": "Cleveland, OK; Grady, OK; McClain, OK",
+                "geocode": {
+                    "SAME": [
+                        "040027",
+                        "040051",
+                        "040087"
+                    ],
+                    "UGC": [
+                        "OKC027",
+                        "OKC051",
+                        "OKC087"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OKC027",
+                    "https://api.weather.gov/zones/county/OKC051",
+                    "https://api.weather.gov/zones/county/OKC087"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.e095914c40b3bde1e25c9ccaf7e6feaa01e3cc98.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.e095914c40b3bde1e25c9ccaf7e6feaa01e3cc98.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-14T07:49:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-14T10:32:00-05:00",
+                "effective": "2026-10-14T10:32:00-05:00",
+                "onset": "2026-10-14T10:32:00-05:00",
+                "expires": "2026-10-14T12:45:00-05:00",
+                "ends": "2026-10-14T12:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 14 at 10:32AM CDT until October 14 at 12:45PM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has extended the\n\n* Flash Flood Warning for...\nNorthwestern Cleveland County in central Oklahoma...\nNorthern Grady County in central Oklahoma...\nNorthwestern McClain County in central Oklahoma...\n\n* Until 1245 PM CDT.\n\n* At 1032 AM CDT, broadcast media reported widespread flash flooding\nfrom thunderstorms in the area. Between 2 and 5 inches of rain have\nfallen. Additional rainfall amounts of 1 to 2 inches are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Broadcast media reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nSouthwestern Oklahoma City, Norman, Moore, Chickasha, Newcastle,\nBlanchard, Tuttle, Goldsby, Union City, Minco, Verden, Amber,\nBridge Creek, Pocasset, Norge, Middleberg, Tabler, Stanley Draper\nLake, southwestern Lake Thunderbird and Ninnekah.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 141532"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KOUN.FF.W.0107.000000T0000Z-261014T1745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T12:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d88ad9d6af25cba8eaf9d1299e64b3bc756585c.002.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -100.6,
+                            34.57
+                        ],
+                        [
+                            -100.5,
+                            34.74
+                        ],
+                        [
+                            -100.23,
+                            34.74
+                        ],
+                        [
+                            -100.46,
+                            34.33
+                        ],
+                        [
+                            -100.73,
+                            34.33
+                        ],
+                        [
+                            -100.6,
+                            34.57
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1d88ad9d6af25cba8eaf9d1299e64b3bc756585c.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1d88ad9d6af25cba8eaf9d1299e64b3bc756585c.002.1",
+                "areaDesc": "Childress, TX; Hall, TX",
+                "geocode": {
+                    "SAME": [
+                        "048075",
+                        "048191"
+                    ],
+                    "UGC": [
+                        "TXC075",
+                        "TXC191"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC075",
+                    "https://api.weather.gov/zones/county/TXC191"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f19d559ff983b79bd5455d2522ffd12ac041d5aa.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f19d559ff983b79bd5455d2522ffd12ac041d5aa.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-14T09:08:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-14T10:25:00-05:00",
+                "effective": "2026-10-14T10:25:00-05:00",
+                "onset": "2026-10-14T10:25:00-05:00",
+                "expires": "2026-10-14T12:00:00-05:00",
+                "ends": "2026-10-14T12:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Lubbock TX",
+                "headline": "Flash Flood Warning issued October 14 at 10:25AM CDT until October 14 at 12:00PM CDT by NWS Lubbock TX",
+                "description": "At 1025 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between 2\nand 4.5 inches of rain have fallen. Additional rainfall amounts up to\n1 inch are possible in the warned area. Flash flooding is ongoing or\nexpected to begin shortly.\n\nHAZARD...Flash flooding caused by showers and thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\nSome locations that will experience flash flooding include...\nEstelline.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nIn hilly terrain there are hundreds of low water crossings which are\npotentially dangerous in heavy rain. Do not attempt to cross flooded\nroads. Find an alternate route.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSLUB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS74 KLUB 141525"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL NOON CDT TODAY FOR NORTHWESTERN CHILDRESS AND EASTERN HALL COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KLUB.FF.W.0070.000000T0000Z-261014T1700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T12:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2380d1240b965b7f962bef4956b51a0979398f88.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.64,
+                            35.92
+                        ],
+                        [
+                            -97.68,
+                            35.94
+                        ],
+                        [
+                            -97.67,
+                            35.82
+                        ],
+                        [
+                            -97.67,
+                            35.73
+                        ],
+                        [
+                            -98.18,
+                            35.39
+                        ],
+                        [
+                            -98.45,
+                            35.3
+                        ],
+                        [
+                            -98.62,
+                            35.27
+                        ],
+                        [
+                            -98.62,
+                            35.55
+                        ],
+                        [
+                            -98.63,
+                            35.55
+                        ],
+                        [
+                            -98.63,
+                            35.9
+                        ],
+                        [
+                            -98.64,
+                            35.9
+                        ],
+                        [
+                            -98.64,
+                            35.92
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2380d1240b965b7f962bef4956b51a0979398f88.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2380d1240b965b7f962bef4956b51a0979398f88.001.1",
+                "areaDesc": "Blaine, OK; Caddo, OK; Canadian, OK; Kingfisher, OK",
+                "geocode": {
+                    "SAME": [
+                        "040011",
+                        "040015",
+                        "040017",
+                        "040073"
+                    ],
+                    "UGC": [
+                        "OKC011",
+                        "OKC015",
+                        "OKC017",
+                        "OKC073"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OKC011",
+                    "https://api.weather.gov/zones/county/OKC015",
+                    "https://api.weather.gov/zones/county/OKC017",
+                    "https://api.weather.gov/zones/county/OKC073"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9dfb91887f30fc0102b5ab958d0a1e20508736bb.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9dfb91887f30fc0102b5ab958d0a1e20508736bb.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-14T08:08:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-14T10:21:00-05:00",
+                "effective": "2026-10-14T10:21:00-05:00",
+                "onset": "2026-10-14T10:21:00-05:00",
+                "expires": "2026-10-14T12:30:00-05:00",
+                "ends": "2026-10-14T12:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 14 at 10:21AM CDT until October 14 at 12:30PM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has extended the\n\n* Flash Flood Warning for...\nNorthwestern Canadian County in central Oklahoma...\nSouthern Kingfisher County in central Oklahoma...\nSouthern Blaine County in northwestern Oklahoma...\nNorthwestern Caddo County in southwestern Oklahoma...\n\n* Until 1230 PM CDT.\n\n* At 1021 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 4 and 11 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nEl Reno, Watonga, Kingfisher, Piedmont, Hinton, Geary, Okarche,\nHydro, Cashion, Calumet, Eakly, Lookeba, Bridgeport, Greenfield,\nConcho, Omega and Cedar Lake.",
+                "instruction": "Be aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 141521"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KOUN.FF.W.0104.000000T0000Z-261014T1730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T12:30:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.08ac1a2b18877bb43cf64489464c1874ef41e96e.001.1,2026-10-14T05:20:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5bad9e22e4984bab9b5d85e425a670ee81e815ce.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -100,
+                            35.03
+                        ],
+                        [
+                            -100,
+                            35.42
+                        ],
+                        [
+                            -99.37,
+                            35.65
+                        ],
+                        [
+                            -98.74,
+                            35.81
+                        ],
+                        [
+                            -98.63,
+                            35.81
+                        ],
+                        [
+                            -98.63,
+                            35.55
+                        ],
+                        [
+                            -98.62,
+                            35.35
+                        ],
+                        [
+                            -98.62,
+                            35.1
+                        ],
+                        [
+                            -99.37,
+                            35.08
+                        ],
+                        [
+                            -100,
+                            34.77
+                        ],
+                        [
+                            -100,
+                            35.03
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.5bad9e22e4984bab9b5d85e425a670ee81e815ce.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.5bad9e22e4984bab9b5d85e425a670ee81e815ce.001.1",
+                "areaDesc": "Beckham, OK; Custer, OK; Greer, OK; Harmon, OK; Kiowa, OK; Roger Mills, OK; Washita, OK",
+                "geocode": {
+                    "SAME": [
+                        "040009",
+                        "040039",
+                        "040055",
+                        "040057",
+                        "040075",
+                        "040129",
+                        "040149"
+                    ],
+                    "UGC": [
+                        "OKC009",
+                        "OKC039",
+                        "OKC055",
+                        "OKC057",
+                        "OKC075",
+                        "OKC129",
+                        "OKC149"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OKC009",
+                    "https://api.weather.gov/zones/county/OKC039",
+                    "https://api.weather.gov/zones/county/OKC055",
+                    "https://api.weather.gov/zones/county/OKC057",
+                    "https://api.weather.gov/zones/county/OKC075",
+                    "https://api.weather.gov/zones/county/OKC129",
+                    "https://api.weather.gov/zones/county/OKC149"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.25fcbed9b80125f7a3f6e1d76abd807118ee83ed.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.25fcbed9b80125f7a3f6e1d76abd807118ee83ed.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-14T07:21:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-14T10:17:00-05:00",
+                "effective": "2026-10-14T10:17:00-05:00",
+                "onset": "2026-10-14T10:17:00-05:00",
+                "expires": "2026-10-14T12:30:00-05:00",
+                "ends": "2026-10-14T12:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 14 at 10:17AM CDT until October 14 at 12:30PM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has extended the\n\n* Flash Flood Warning for...\nNorthwestern Greer County in southwestern Oklahoma...\nNorthern Harmon County in southwestern Oklahoma...\nNorthern Kiowa County in southwestern Oklahoma...\nBeckham County in western Oklahoma...\nCuster County in western Oklahoma...\nSouthern Roger Mills County in western Oklahoma...\nWashita County in western Oklahoma...\n\n* Until 1230 PM CDT.\n\n* At 1017 AM CDT, the public reported thunderstorms producing heavy\nrain in Elk City, Clinton, Custer City, Cordell. Between 3 and 10\ninches of rain have fallen. Little to no rainfall is expected in\nthe next several hours, but more rain is likely this afternoon and\ntonight. Flash flooding impacts will continue.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Public reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nElk City, Weatherford, Clinton, Sayre, Cordell, Burns Flat, Thomas,\nErick, Sentinel, Arapaho, Mountain View, Hammon, Dill City, Canute,\nCorn, Custer City, Butler, Carter, Bessie and Rocky.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 141517"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KOUN.FF.W.0106.000000T0000Z-261014T1730Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T12:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.78657fd6c57feb37b30874219ecb371b2453c6ef.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.22,
+                            35.38
+                        ],
+                        [
+                            -97.69,
+                            35.73
+                        ],
+                        [
+                            -97.68,
+                            35.94
+                        ],
+                        [
+                            -97.3,
+                            35.9
+                        ],
+                        [
+                            -97.3,
+                            35.36
+                        ],
+                        [
+                            -97.56,
+                            35.27
+                        ],
+                        [
+                            -97.57,
+                            35.3
+                        ],
+                        [
+                            -97.63,
+                            35.31
+                        ],
+                        [
+                            -97.67,
+                            35.34
+                        ],
+                        [
+                            -97.74,
+                            35.32
+                        ],
+                        [
+                            -97.76,
+                            35.34
+                        ],
+                        [
+                            -97.84,
+                            35.33
+                        ],
+                        [
+                            -97.86,
+                            35.36
+                        ],
+                        [
+                            -97.9,
+                            35.35
+                        ],
+                        [
+                            -97.94,
+                            35.38
+                        ],
+                        [
+                            -97.96,
+                            35.35
+                        ],
+                        [
+                            -98.02,
+                            35.38
+                        ],
+                        [
+                            -98.22,
+                            35.38
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.78657fd6c57feb37b30874219ecb371b2453c6ef.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.78657fd6c57feb37b30874219ecb371b2453c6ef.001.1",
+                "areaDesc": "Canadian, OK; Cleveland, OK; Kingfisher, OK; Logan, OK; Oklahoma, OK",
+                "geocode": {
+                    "SAME": [
+                        "040017",
+                        "040027",
+                        "040073",
+                        "040083",
+                        "040109"
+                    ],
+                    "UGC": [
+                        "OKC017",
+                        "OKC027",
+                        "OKC073",
+                        "OKC083",
+                        "OKC109"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OKC017",
+                    "https://api.weather.gov/zones/county/OKC027",
+                    "https://api.weather.gov/zones/county/OKC073",
+                    "https://api.weather.gov/zones/county/OKC083",
+                    "https://api.weather.gov/zones/county/OKC109"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f4dd7107a14e2b03dd833a95895bfa63f6f32ab8.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.f4dd7107a14e2b03dd833a95895bfa63f6f32ab8.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-14T09:23:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-14T10:00:00-05:00",
+                "effective": "2026-10-14T10:00:00-05:00",
+                "onset": "2026-10-14T10:00:00-05:00",
+                "expires": "2026-10-14T13:00:00-05:00",
+                "ends": "2026-10-14T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 14 at 10:00AM CDT until October 14 at 1:00PM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has extended the\n\n* Flash Flood Warning for...\nEastern Canadian County in central Oklahoma...\nNorthwestern Cleveland County in central Oklahoma...\nSoutheastern Kingfisher County in central Oklahoma...\nSouthwestern Logan County in central Oklahoma...\nOklahoma County in central Oklahoma...\n\n* Until 100 PM CDT.\n\n* At 1000 AM CDT, broadcast media reported thunderstorms producing\nwidespread flash flooding in the Oklahoma City metro. Between 3 and\n6 inches of rain have fallen. Additional rainfall amounts of 1 to 3\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Broadcast media reported.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nOklahoma City, western Norman, Edmond, Moore, Midwest City, Del\nCity, El Reno, Guthrie, Newcastle, Yukon, Bethany, Mustang,\nChoctaw, Warr Acres, The Village, Tuttle, Piedmont, Spencer,\nNichols Hills and Jones.",
+                "instruction": "Be aware of your surroundings and do not drive on flooded roads.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 141500"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KOUN.FF.W.0105.000000T0000Z-261014T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T13:00:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.566d92ef58966fb149fe41c5d28977564f587503.001.1,2026-10-14T09:22:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.a23ab485fa2dbf428e3a8f84da5fbf9a063442af.001.1,2026-10-14T06:13:00-05:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 1:00 PM CDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 1:00 PM CDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3048e42fc5b2d0ed50695a08ec2688b370cccceb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.83,
+                            35.46
+                        ],
+                        [
+                            -98.86,
+                            35.53
+                        ],
+                        [
+                            -98.4,
+                            35.92
+                        ],
+                        [
+                            -97.79,
+                            35.93
+                        ],
+                        [
+                            -97.77,
+                            35.66
+                        ],
+                        [
+                            -98.37,
+                            35.33
+                        ],
+                        [
+                            -98.75,
+                            35.27
+                        ],
+                        [
+                            -98.83,
+                            35.46
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3048e42fc5b2d0ed50695a08ec2688b370cccceb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3048e42fc5b2d0ed50695a08ec2688b370cccceb.001.1",
+                "areaDesc": "Blaine, OK; Caddo, OK; Canadian, OK; Custer, OK; Kingfisher, OK; Washita, OK",
+                "geocode": {
+                    "SAME": [
+                        "040011",
+                        "040015",
+                        "040017",
+                        "040039",
+                        "040073",
+                        "040149"
+                    ],
+                    "UGC": [
+                        "OKC011",
+                        "OKC015",
+                        "OKC017",
+                        "OKC039",
+                        "OKC073",
+                        "OKC149"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/OKC011",
+                    "https://api.weather.gov/zones/county/OKC015",
+                    "https://api.weather.gov/zones/county/OKC017",
+                    "https://api.weather.gov/zones/county/OKC039",
+                    "https://api.weather.gov/zones/county/OKC073",
+                    "https://api.weather.gov/zones/county/OKC149"
+                ],
+                "references": [],
+                "sent": "2026-10-14T08:34:00-05:00",
+                "effective": "2026-10-14T08:34:00-05:00",
+                "onset": "2026-10-14T08:34:00-05:00",
+                "expires": "2026-10-14T11:30:00-05:00",
+                "ends": "2026-10-14T11:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 14 at 8:34AM CDT until October 14 at 11:30AM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has issued a\n\n* Flash Flood Warning for...\nNorthern Canadian County in central Oklahoma...\nSouthern Kingfisher County in central Oklahoma...\nSouthern Blaine County in northwestern Oklahoma...\nNorthwestern Caddo County in southwestern Oklahoma...\nSoutheastern Custer County in western Oklahoma...\nNortheastern Washita County in western Oklahoma...\n\n* Until 1130 AM CDT.\n\n* At 834 AM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain in Weatherford, Hydro,\nBridgeport, Hinton, Geary, Okarche, and Kingfisher. Between 5 and 9\ninches of rain have fallen. Additional rainfall amounts of 2 to 4\ninches are possible in the warned area. Flash flooding is ongoing\nor expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams,\nurban areas, highways, streets and underpasses.\n\n* Some locations that will experience flash flooding include...\nEl Reno, Weatherford, Watonga, Kingfisher, Piedmont, Hinton, Geary,\nOkarche, Hydro, Calumet, Corn, Eakly, Lookeba, Colony, Bridgeport,\nGreenfield, Concho, Cedar Lake and Omega.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 141334"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOUN.FF.W.0108.261014T1334Z-261014T1630Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T11:30:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 11:30 AM CDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 11:30 AM CDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-14T15:45:43+00:00"
+}

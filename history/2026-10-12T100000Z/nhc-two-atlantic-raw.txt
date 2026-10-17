@@ -1,0 +1,27 @@
+ABNT20 KNHC 120532
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Mon Oct 12 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Eastern Tropical Atlantic:
+An elongated area of low pressure centered a few hundred miles west 
+of the Cabo Verde Islands continues to produce a large but 
+disorganized area of showers and thunderstorms extending from 
+these islands southwestward into the eastern tropical Atlantic. 
+Environmental conditions appear, at best, marginally conducive for 
+any development of this system during the next day or two before 
+upper-level winds become too strong for any further development. 
+Regardless, heavy rainfall is expected over the couple of days 
+for portions of the Cabo Verde Islands as the system moves slowly 
+northward to north-northwestward.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...low...20 percent.
+
+$$
+Forecaster Blake
+
+

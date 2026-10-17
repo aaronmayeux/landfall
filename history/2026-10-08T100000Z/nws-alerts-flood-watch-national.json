@@ -1,0 +1,631 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.08f3f4596c59b45e9f1cf94a3cce7c8c45fe4b51.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.08f3f4596c59b45e9f1cf94a3cce7c8c45fe4b51.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.08f3f4596c59b45e9f1cf94a3cce7c8c45fe4b51.001.1",
+                "areaDesc": "Coffee; Dale; Henry; Geneva; Houston; North Walton; Central Walton; Holmes; Washington; Jackson; Inland Bay; Calhoun; Inland Gulf; Inland Franklin; Gadsden; Leon; Inland Jefferson; Inland Wakulla; South Walton; Coastal Bay; Coastal Gulf; Coastal Franklin; Coastal Jefferson; Coastal Wakulla; Northern Liberty; Southern Liberty; Quitman; Clay; Randolph; Calhoun; Terrell; Dougherty; Lee; Worth; Early; Miller; Baker; Mitchell; Colquitt; Seminole; Decatur; Grady; Thomas",
+                "geocode": {
+                    "SAME": [
+                        "001031",
+                        "001045",
+                        "001067",
+                        "001061",
+                        "001069",
+                        "012131",
+                        "012059",
+                        "012133",
+                        "012063",
+                        "012005",
+                        "012013",
+                        "012045",
+                        "012037",
+                        "012039",
+                        "012073",
+                        "012065",
+                        "012129",
+                        "012077",
+                        "013239",
+                        "013061",
+                        "013243",
+                        "013037",
+                        "013273",
+                        "013095",
+                        "013177",
+                        "013321",
+                        "013099",
+                        "013201",
+                        "013007",
+                        "013205",
+                        "013071",
+                        "013253",
+                        "013087",
+                        "013131",
+                        "013275"
+                    ],
+                    "UGC": [
+                        "ALZ065",
+                        "ALZ066",
+                        "ALZ067",
+                        "ALZ068",
+                        "ALZ069",
+                        "FLZ007",
+                        "FLZ008",
+                        "FLZ009",
+                        "FLZ010",
+                        "FLZ011",
+                        "FLZ012",
+                        "FLZ013",
+                        "FLZ014",
+                        "FLZ015",
+                        "FLZ016",
+                        "FLZ017",
+                        "FLZ018",
+                        "FLZ027",
+                        "FLZ108",
+                        "FLZ112",
+                        "FLZ114",
+                        "FLZ115",
+                        "FLZ118",
+                        "FLZ127",
+                        "FLZ326",
+                        "FLZ426",
+                        "GAZ120",
+                        "GAZ121",
+                        "GAZ122",
+                        "GAZ123",
+                        "GAZ124",
+                        "GAZ125",
+                        "GAZ126",
+                        "GAZ127",
+                        "GAZ142",
+                        "GAZ143",
+                        "GAZ144",
+                        "GAZ145",
+                        "GAZ146",
+                        "GAZ155",
+                        "GAZ156",
+                        "GAZ157",
+                        "GAZ158"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/ALZ065",
+                    "https://api.weather.gov/zones/forecast/ALZ066",
+                    "https://api.weather.gov/zones/forecast/ALZ067",
+                    "https://api.weather.gov/zones/forecast/ALZ068",
+                    "https://api.weather.gov/zones/forecast/ALZ069",
+                    "https://api.weather.gov/zones/forecast/FLZ007",
+                    "https://api.weather.gov/zones/forecast/FLZ008",
+                    "https://api.weather.gov/zones/forecast/FLZ009",
+                    "https://api.weather.gov/zones/forecast/FLZ010",
+                    "https://api.weather.gov/zones/forecast/FLZ011",
+                    "https://api.weather.gov/zones/forecast/FLZ012",
+                    "https://api.weather.gov/zones/forecast/FLZ013",
+                    "https://api.weather.gov/zones/forecast/FLZ014",
+                    "https://api.weather.gov/zones/forecast/FLZ015",
+                    "https://api.weather.gov/zones/forecast/FLZ016",
+                    "https://api.weather.gov/zones/forecast/FLZ017",
+                    "https://api.weather.gov/zones/forecast/FLZ018",
+                    "https://api.weather.gov/zones/forecast/FLZ027",
+                    "https://api.weather.gov/zones/forecast/FLZ108",
+                    "https://api.weather.gov/zones/forecast/FLZ112",
+                    "https://api.weather.gov/zones/forecast/FLZ114",
+                    "https://api.weather.gov/zones/forecast/FLZ115",
+                    "https://api.weather.gov/zones/forecast/FLZ118",
+                    "https://api.weather.gov/zones/forecast/FLZ127",
+                    "https://api.weather.gov/zones/forecast/FLZ326",
+                    "https://api.weather.gov/zones/forecast/FLZ426",
+                    "https://api.weather.gov/zones/forecast/GAZ120",
+                    "https://api.weather.gov/zones/forecast/GAZ121",
+                    "https://api.weather.gov/zones/forecast/GAZ122",
+                    "https://api.weather.gov/zones/forecast/GAZ123",
+                    "https://api.weather.gov/zones/forecast/GAZ124",
+                    "https://api.weather.gov/zones/forecast/GAZ125",
+                    "https://api.weather.gov/zones/forecast/GAZ126",
+                    "https://api.weather.gov/zones/forecast/GAZ127",
+                    "https://api.weather.gov/zones/forecast/GAZ142",
+                    "https://api.weather.gov/zones/forecast/GAZ143",
+                    "https://api.weather.gov/zones/forecast/GAZ144",
+                    "https://api.weather.gov/zones/forecast/GAZ145",
+                    "https://api.weather.gov/zones/forecast/GAZ146",
+                    "https://api.weather.gov/zones/forecast/GAZ155",
+                    "https://api.weather.gov/zones/forecast/GAZ156",
+                    "https://api.weather.gov/zones/forecast/GAZ157",
+                    "https://api.weather.gov/zones/forecast/GAZ158"
+                ],
+                "references": [],
+                "sent": "2026-10-08T02:38:00-04:00",
+                "effective": "2026-10-08T02:38:00-04:00",
+                "onset": "2026-10-09T14:00:00-04:00",
+                "expires": "2026-10-09T06:00:00-04:00",
+                "ends": "2026-10-10T20:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flood Watch issued October 8 at 2:38AM EDT until October 10 at 8:00PM EDT by NWS Tallahassee FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of southeast Alabama, the Florida Panhandle and\nBig Bend, and southwest Georgia.\n\n* WHEN...From Friday afternoon through Saturday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Hurricane Isaias is expected to bring bands of heavy rainfall to\nthe area. Widespread totals of 3 to 7 inches are expected with\nlocalized amounts of 10 inches. Given saturated soils from recent\nheavy rainfall, flash flooding is expected. Considerable flash\nflooding is possible where bands of heavy rain move repeatedly\nover the same area.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KTAE 080638"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM FRIDAY AFTERNOON THROUGH SATURDAY EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTAE.FA.A.0005.261009T1800Z-261011T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T20:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.001.1",
+                "areaDesc": "Okaloosa Coastal",
+                "geocode": {
+                    "SAME": [
+                        "012091"
+                    ],
+                    "UGC": [
+                        "FLZ206"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ206"
+                ],
+                "references": [],
+                "sent": "2026-10-08T01:37:00-05:00",
+                "effective": "2026-10-08T01:37:00-05:00",
+                "onset": "2026-10-09T13:00:00-05:00",
+                "expires": "2026-10-08T09:45:00-05:00",
+                "ends": "2026-10-10T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mobile AL",
+                "headline": "Flood Watch issued October 8 at 1:37AM CDT until October 10 at 1:00PM CDT by NWS Mobile AL",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of northwest Florida, including the following\narea, Okaloosa Coastal.\n\n* WHEN...From Friday afternoon through Saturday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Hurricane Isaias will move onshore on the northern Gulf coast\nFriday night, with bands of rain ahead of the storm moving\nonshore Friday afternoon.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMOB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KMOB 080637"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM FRIDAY AFTERNOON THROUGH SATURDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXA.KMOB.FA.A.0005.261009T1800Z-261010T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T13:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.859eb7e168f63e11e12feaf26095356444880455.002.1",
+                "areaDesc": "Escambia; Covington; Mobile Inland; Baldwin Inland; Mobile Central; Baldwin Central; Mobile Coastal; Baldwin Coastal; Escambia Inland; Escambia Coastal; Santa Rosa Inland; Santa Rosa Coastal; Okaloosa Inland",
+                "geocode": {
+                    "SAME": [
+                        "001053",
+                        "001039",
+                        "001097",
+                        "001003",
+                        "012033",
+                        "012113",
+                        "012091"
+                    ],
+                    "UGC": [
+                        "ALZ059",
+                        "ALZ060",
+                        "ALZ261",
+                        "ALZ262",
+                        "ALZ263",
+                        "ALZ264",
+                        "ALZ265",
+                        "ALZ266",
+                        "FLZ201",
+                        "FLZ202",
+                        "FLZ203",
+                        "FLZ204",
+                        "FLZ205"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/ALZ059",
+                    "https://api.weather.gov/zones/forecast/ALZ060",
+                    "https://api.weather.gov/zones/forecast/ALZ261",
+                    "https://api.weather.gov/zones/forecast/ALZ262",
+                    "https://api.weather.gov/zones/forecast/ALZ263",
+                    "https://api.weather.gov/zones/forecast/ALZ264",
+                    "https://api.weather.gov/zones/forecast/ALZ265",
+                    "https://api.weather.gov/zones/forecast/ALZ266",
+                    "https://api.weather.gov/zones/forecast/FLZ201",
+                    "https://api.weather.gov/zones/forecast/FLZ202",
+                    "https://api.weather.gov/zones/forecast/FLZ203",
+                    "https://api.weather.gov/zones/forecast/FLZ204",
+                    "https://api.weather.gov/zones/forecast/FLZ205"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.72a2980bef41de3cd22cc8ddb418a6035006fd94.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.72a2980bef41de3cd22cc8ddb418a6035006fd94.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-08T01:29:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-08T01:37:00-05:00",
+                "effective": "2026-10-08T01:37:00-05:00",
+                "onset": "2026-10-09T13:00:00-05:00",
+                "expires": "2026-10-08T09:45:00-05:00",
+                "ends": "2026-10-10T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mobile AL",
+                "headline": "Flood Watch issued October 8 at 1:37AM CDT until October 10 at 1:00PM CDT by NWS Mobile AL",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of Alabama, including the following areas, Baldwin\nCentral, Baldwin Coastal, Baldwin Inland, Covington, Escambia,\nMobile Central, Mobile Coastal and Mobile Inland and northwest\nFlorida, including the following areas, Escambia Coastal, Escambia\nInland, Okaloosa Inland, Santa Rosa Coastal and Santa Rosa Inland.\n\n* WHEN...From Friday afternoon through Saturday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Hurricane Isaias will move onshore on the northern Gulf coast\nFriday night, with bands of rain ahead of the storm moving\nonshore Friday afternoon.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMOB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KMOB 080637"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM FRIDAY AFTERNOON THROUGH SATURDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMOB.FA.A.0005.261009T1800Z-261010T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-10T13:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91a4345b3037a126dfa2aeb36ba253dbd5b56ff0.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.91a4345b3037a126dfa2aeb36ba253dbd5b56ff0.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.91a4345b3037a126dfa2aeb36ba253dbd5b56ff0.001.1",
+                "areaDesc": "Sumter; Pinellas; Coastal Citrus; Coastal Hernando; Coastal Pasco; Coastal Hillsborough; Coastal Manatee; Inland Citrus; Inland Hernando; Inland Pasco; Inland Hillsborough; Inland Manatee",
+                "geocode": {
+                    "SAME": [
+                        "012119",
+                        "012103",
+                        "012017",
+                        "012053",
+                        "012101",
+                        "012057",
+                        "012081"
+                    ],
+                    "UGC": [
+                        "FLZ043",
+                        "FLZ050",
+                        "FLZ142",
+                        "FLZ148",
+                        "FLZ149",
+                        "FLZ151",
+                        "FLZ155",
+                        "FLZ242",
+                        "FLZ248",
+                        "FLZ249",
+                        "FLZ251",
+                        "FLZ255"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/FLZ043",
+                    "https://api.weather.gov/zones/forecast/FLZ050",
+                    "https://api.weather.gov/zones/forecast/FLZ142",
+                    "https://api.weather.gov/zones/forecast/FLZ148",
+                    "https://api.weather.gov/zones/forecast/FLZ149",
+                    "https://api.weather.gov/zones/forecast/FLZ151",
+                    "https://api.weather.gov/zones/forecast/FLZ155",
+                    "https://api.weather.gov/zones/forecast/FLZ242",
+                    "https://api.weather.gov/zones/forecast/FLZ248",
+                    "https://api.weather.gov/zones/forecast/FLZ249",
+                    "https://api.weather.gov/zones/forecast/FLZ251",
+                    "https://api.weather.gov/zones/forecast/FLZ255"
+                ],
+                "references": [],
+                "sent": "2026-10-08T01:34:00-04:00",
+                "effective": "2026-10-08T01:34:00-04:00",
+                "onset": "2026-10-08T05:00:00-04:00",
+                "expires": "2026-10-09T00:00:00-04:00",
+                "ends": "2026-10-09T00:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tampa Bay Ruskin FL",
+                "headline": "Flood Watch issued October 8 at 1:34AM EDT until October 9 at 12:00AM EDT by NWS Tampa Bay Ruskin FL",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of west central Florida, including the following\nareas, Coastal Citrus, Coastal Hernando, Coastal Hillsborough,\nCoastal Manatee, Coastal Pasco, Inland Citrus, Inland Hernando,\nInland Hillsborough, Inland Manatee, Inland Pasco, Pinellas and\nSumter.\n\n* WHEN...From 5 AM EDT early this morning through this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- A frontal boundary across the central Florida peninsula will lift\nslowly north today.  Deep tropical moisture remains over the\nregion.  Numerous to widespread showers and scattered\nthunderstorms are expected throughout the day with locally heavy\nrain likely.  Rainfall totals of 1 to 3 inches with locally 5+\ninches will be possible.\n- https://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATBW"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KTBW 080534"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM 5 AM EDT EARLY THIS MORNING THROUGH THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTBW.FA.A.0002.261008T0900Z-261009T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-09T00:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73376c270147d7da5a53e057a100dfbf6d3f64b6.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.73376c270147d7da5a53e057a100dfbf6d3f64b6.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.73376c270147d7da5a53e057a100dfbf6d3f64b6.001.1",
+                "areaDesc": "Niihau; Kauai Southwest; Kauai Mountains; Waianae Coast; Oahu North Shore; Olomana; Central Oahu; Waianae Mountains; Kauai North; Kauai East; Kauai South; East Honolulu; Honolulu Metro; Ewa Plain; Koolau Windward; Koolau Leeward",
+                "geocode": {
+                    "SAME": [
+                        "015007",
+                        "015003"
+                    ],
+                    "UGC": [
+                        "HIZ001",
+                        "HIZ003",
+                        "HIZ004",
+                        "HIZ006",
+                        "HIZ007",
+                        "HIZ009",
+                        "HIZ010",
+                        "HIZ011",
+                        "HIZ029",
+                        "HIZ030",
+                        "HIZ031",
+                        "HIZ032",
+                        "HIZ033",
+                        "HIZ034",
+                        "HIZ035",
+                        "HIZ036"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/HIZ001",
+                    "https://api.weather.gov/zones/forecast/HIZ003",
+                    "https://api.weather.gov/zones/forecast/HIZ004",
+                    "https://api.weather.gov/zones/forecast/HIZ006",
+                    "https://api.weather.gov/zones/forecast/HIZ007",
+                    "https://api.weather.gov/zones/forecast/HIZ009",
+                    "https://api.weather.gov/zones/forecast/HIZ010",
+                    "https://api.weather.gov/zones/forecast/HIZ011",
+                    "https://api.weather.gov/zones/forecast/HIZ029",
+                    "https://api.weather.gov/zones/forecast/HIZ030",
+                    "https://api.weather.gov/zones/forecast/HIZ031",
+                    "https://api.weather.gov/zones/forecast/HIZ032",
+                    "https://api.weather.gov/zones/forecast/HIZ033",
+                    "https://api.weather.gov/zones/forecast/HIZ034",
+                    "https://api.weather.gov/zones/forecast/HIZ035",
+                    "https://api.weather.gov/zones/forecast/HIZ036"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.47a676cc872758220b32c99e05eb135cc34a5de5.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.47a676cc872758220b32c99e05eb135cc34a5de5.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-07T01:41:00-10:00"
+                    }
+                ],
+                "sent": "2026-10-07T15:07:00-10:00",
+                "effective": "2026-10-07T15:07:00-10:00",
+                "onset": "2026-10-07T18:00:00-10:00",
+                "expires": "2026-10-08T05:15:00-10:00",
+                "ends": "2026-10-08T18:00:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flood Watch issued October 7 at 3:07PM HST until October 8 at 6:00PM HST by NWS Honolulu HI",
+                "description": "A deepening area of low pressure north of the Hawaiian Islands will\ndraw deep tropical moisture northward, resulting in a threat for\nheavy rain over Kauai and Oahu tonight through Thursday.\n\n* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Oahu, Kauai, and Niihau.\n\n* WHEN...Through Thursday afternoon.\n\n* IMPACTS...Flood prone roads and other low lying areas may be closed\ndue to elevated runoff and overflowing streams. Urban areas may\nreceive more significant flooding and property damage due to rapid\nrunoff.\n\n* ADDITIONAL DETAILS...\n- Heavy showers and isolated thunderstorms will develop tonight and\ncontinue through Thursday as deep tropical moisture is drawn\nnorthward over the state. Training of heavy showers containing\nintense rain rates will be possible.",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW60 PHFO 080107"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH THURSDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PHFO.FA.A.0014.261008T0400Z-261009T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-08T18:00:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-08T10:14:18+00:00"
+}

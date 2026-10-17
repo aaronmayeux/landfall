@@ -1,0 +1,140 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ca1643a2a7e568575d7ee9cb20a812c3ef285e2e.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -86.75,
+                            30.39
+                        ],
+                        [
+                            -86.74,
+                            30.46
+                        ],
+                        [
+                            -86.63,
+                            30.52
+                        ],
+                        [
+                            -86.49,
+                            30.54
+                        ],
+                        [
+                            -86.39,
+                            30.53
+                        ],
+                        [
+                            -86.39,
+                            30.43
+                        ],
+                        [
+                            -86.42,
+                            30.43
+                        ],
+                        [
+                            -86.39,
+                            30.42
+                        ],
+                        [
+                            -86.39,
+                            30.37
+                        ],
+                        [
+                            -86.75,
+                            30.39
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ca1643a2a7e568575d7ee9cb20a812c3ef285e2e.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ca1643a2a7e568575d7ee9cb20a812c3ef285e2e.001.1",
+                "areaDesc": "Okaloosa, FL",
+                "geocode": {
+                    "SAME": [
+                        "012091"
+                    ],
+                    "UGC": [
+                        "FLC091"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC091"
+                ],
+                "references": [],
+                "sent": "2026-10-04T06:52:00-05:00",
+                "effective": "2026-10-04T06:52:00-05:00",
+                "onset": "2026-10-04T06:52:00-05:00",
+                "expires": "2026-10-04T09:45:00-05:00",
+                "ends": "2026-10-04T09:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Mobile AL",
+                "headline": "Flash Flood Warning issued October 4 at 6:52AM CDT until October 4 at 9:45AM CDT by NWS Mobile AL",
+                "description": "FFWMOB\n\nThe National Weather Service in Mobile has issued a\n\n* Flash Flood Warning for...\nSoutheastern Okaloosa County in northwestern Florida...\n\n* Until 945 AM CDT.\n\n* At 652 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 3 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWright, Fort Walton Beach, Niceville, Destin, Eglin AFB,\nValparaiso, Mary Esther, Lake Lorraine, Ocean City, Shalimar, Cinco\nBayou, Eglin Village, Longwood, Postil and Seminole.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMOB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMOB 041152"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMOB.FF.W.0039.261004T1152Z-261004T1445Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-04T09:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-04T12:04:20+00:00"
+}

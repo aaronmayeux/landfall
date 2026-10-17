@@ -1,0 +1,237 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.23028e40ed983a5d18c25d7a8c731f7ca7a9d806.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.23028e40ed983a5d18c25d7a8c731f7ca7a9d806.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.23028e40ed983a5d18c25d7a8c731f7ca7a9d806.001.1",
+                "areaDesc": "Geneva; Houston; North Walton; Central Walton; Holmes; Washington; Jackson; Inland Bay; Calhoun; Inland Gulf; Inland Franklin; Gadsden; Leon; Inland Jefferson; Madison; Inland Wakulla; South Walton; Coastal Bay; Coastal Gulf; Coastal Franklin; Coastal Jefferson; Coastal Wakulla; Northern Liberty; Southern Liberty; Randolph; Calhoun; Terrell; Dougherty; Lee; Worth; Turner; Tift; Ben Hill; Irwin; Early; Miller; Baker; Mitchell; Colquitt; Cook; Berrien; Seminole; Decatur; Grady; Thomas; Brooks; Lowndes; Lanier",
+                "geocode": {
+                    "SAME": [
+                        "001061",
+                        "001069",
+                        "012131",
+                        "012059",
+                        "012133",
+                        "012063",
+                        "012005",
+                        "012013",
+                        "012045",
+                        "012037",
+                        "012039",
+                        "012073",
+                        "012065",
+                        "012079",
+                        "012129",
+                        "012077",
+                        "013243",
+                        "013037",
+                        "013273",
+                        "013095",
+                        "013177",
+                        "013321",
+                        "013287",
+                        "013277",
+                        "013017",
+                        "013155",
+                        "013099",
+                        "013201",
+                        "013007",
+                        "013205",
+                        "013071",
+                        "013075",
+                        "013019",
+                        "013253",
+                        "013087",
+                        "013131",
+                        "013275",
+                        "013027",
+                        "013185",
+                        "013173"
+                    ],
+                    "UGC": [
+                        "ALZ068",
+                        "ALZ069",
+                        "FLZ007",
+                        "FLZ008",
+                        "FLZ009",
+                        "FLZ010",
+                        "FLZ011",
+                        "FLZ012",
+                        "FLZ013",
+                        "FLZ014",
+                        "FLZ015",
+                        "FLZ016",
+                        "FLZ017",
+                        "FLZ018",
+                        "FLZ019",
+                        "FLZ027",
+                        "FLZ108",
+                        "FLZ112",
+                        "FLZ114",
+                        "FLZ115",
+                        "FLZ118",
+                        "FLZ127",
+                        "FLZ326",
+                        "FLZ426",
+                        "GAZ122",
+                        "GAZ123",
+                        "GAZ124",
+                        "GAZ125",
+                        "GAZ126",
+                        "GAZ127",
+                        "GAZ128",
+                        "GAZ129",
+                        "GAZ130",
+                        "GAZ131",
+                        "GAZ142",
+                        "GAZ143",
+                        "GAZ144",
+                        "GAZ145",
+                        "GAZ146",
+                        "GAZ147",
+                        "GAZ148",
+                        "GAZ155",
+                        "GAZ156",
+                        "GAZ157",
+                        "GAZ158",
+                        "GAZ159",
+                        "GAZ160",
+                        "GAZ161"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/ALZ068",
+                    "https://api.weather.gov/zones/forecast/ALZ069",
+                    "https://api.weather.gov/zones/forecast/FLZ007",
+                    "https://api.weather.gov/zones/forecast/FLZ008",
+                    "https://api.weather.gov/zones/forecast/FLZ009",
+                    "https://api.weather.gov/zones/forecast/FLZ010",
+                    "https://api.weather.gov/zones/forecast/FLZ011",
+                    "https://api.weather.gov/zones/forecast/FLZ012",
+                    "https://api.weather.gov/zones/forecast/FLZ013",
+                    "https://api.weather.gov/zones/forecast/FLZ014",
+                    "https://api.weather.gov/zones/forecast/FLZ015",
+                    "https://api.weather.gov/zones/forecast/FLZ016",
+                    "https://api.weather.gov/zones/forecast/FLZ017",
+                    "https://api.weather.gov/zones/forecast/FLZ018",
+                    "https://api.weather.gov/zones/forecast/FLZ019",
+                    "https://api.weather.gov/zones/forecast/FLZ027",
+                    "https://api.weather.gov/zones/forecast/FLZ108",
+                    "https://api.weather.gov/zones/forecast/FLZ112",
+                    "https://api.weather.gov/zones/forecast/FLZ114",
+                    "https://api.weather.gov/zones/forecast/FLZ115",
+                    "https://api.weather.gov/zones/forecast/FLZ118",
+                    "https://api.weather.gov/zones/forecast/FLZ127",
+                    "https://api.weather.gov/zones/forecast/FLZ326",
+                    "https://api.weather.gov/zones/forecast/FLZ426",
+                    "https://api.weather.gov/zones/forecast/GAZ122",
+                    "https://api.weather.gov/zones/forecast/GAZ123",
+                    "https://api.weather.gov/zones/forecast/GAZ124",
+                    "https://api.weather.gov/zones/forecast/GAZ125",
+                    "https://api.weather.gov/zones/forecast/GAZ126",
+                    "https://api.weather.gov/zones/forecast/GAZ127",
+                    "https://api.weather.gov/zones/forecast/GAZ128",
+                    "https://api.weather.gov/zones/forecast/GAZ129",
+                    "https://api.weather.gov/zones/forecast/GAZ130",
+                    "https://api.weather.gov/zones/forecast/GAZ131",
+                    "https://api.weather.gov/zones/forecast/GAZ142",
+                    "https://api.weather.gov/zones/forecast/GAZ143",
+                    "https://api.weather.gov/zones/forecast/GAZ144",
+                    "https://api.weather.gov/zones/forecast/GAZ145",
+                    "https://api.weather.gov/zones/forecast/GAZ146",
+                    "https://api.weather.gov/zones/forecast/GAZ147",
+                    "https://api.weather.gov/zones/forecast/GAZ148",
+                    "https://api.weather.gov/zones/forecast/GAZ155",
+                    "https://api.weather.gov/zones/forecast/GAZ156",
+                    "https://api.weather.gov/zones/forecast/GAZ157",
+                    "https://api.weather.gov/zones/forecast/GAZ158",
+                    "https://api.weather.gov/zones/forecast/GAZ159",
+                    "https://api.weather.gov/zones/forecast/GAZ160",
+                    "https://api.weather.gov/zones/forecast/GAZ161"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.26174400d35f97e0f8c73cfe58042ab7d8e0863f.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.26174400d35f97e0f8c73cfe58042ab7d8e0863f.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-04T14:34:00-04:00"
+                    }
+                ],
+                "sent": "2026-10-05T15:39:00-04:00",
+                "effective": "2026-10-05T15:39:00-04:00",
+                "onset": "2026-10-05T15:39:00-04:00",
+                "expires": "2026-10-05T20:00:00-04:00",
+                "ends": "2026-10-05T20:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tallahassee FL",
+                "headline": "Flood Watch issued October 5 at 3:39PM EDT until October 5 at 8:00PM EDT by NWS Tallahassee FL",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of southeast Alabama, including the following\nareas, Geneva and Houston, Florida, including the following areas,\nCalhoun, Central Walton, Coastal Bay, Coastal Franklin, Coastal\nGulf, Coastal Jefferson, Coastal Wakulla, Gadsden, Holmes, Inland\nBay, Inland Franklin, Inland Gulf, Inland Jefferson, Inland\nWakulla, Jackson, Leon, Madison, North Walton, Northern Liberty,\nSouth Walton, Southern Liberty and Washington, and Georgia,\nincluding the following areas, Baker, Ben Hill, Berrien, Brooks,\nCalhoun, Colquitt, Cook, Decatur, Dougherty, Early, Grady, Irwin,\nLanier, Lee, Lowndes, Miller, Mitchell, Randolph, Seminole,\nTerrell, Thomas, Tift, Turner and Worth.\n\n* WHEN...Until 8 PM EDT /7 PM CDT/ this evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas.\n\n* ADDITIONAL DETAILS...\n- Additional rainfall totals of 2 to 4 inches are forecast for most\nof the area with locally higher amounts of up to 6 inches\npossible through this evening, especially along the Emerald and\nForgotten Coasts. Another area of concern is across south-central\nGeorgia where locally heavy rainfall since Friday afternoon has\nprimed the region more so than the rest of our area, so it wont\ntake as much rain to cause flash flooding. Across the flood watch\narea, very high rain rates due to the tropical air mass may lead\nto flash flooding, especially in urban and poor drainage areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATAE"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS62 KTAE 051939"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 8 PM EDT /7 PM CDT/ THIS EVENING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTAE.FA.A.0004.000000T0000Z-261006T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-05T20:00:00-04:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.93690d59f78c5d094031afed52643145ab046a43.002.1,2026-10-04T02:09:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.93690d59f78c5d094031afed52643145ab046a43.001.1,2026-10-04T02:09:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.15253b87b340e90698be91115fd6091ec9b62cd9.001.1,2026-10-03T14:24:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.665bd339e570a3100213cd8557f5016c432dbde6.001.1,2026-10-03T00:52:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-05T22:25:55+00:00"
+}

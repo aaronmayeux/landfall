@@ -1,0 +1,464 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4c23a951f677b46e37da37b202984e8e20f453a5.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -157.88,
+                            21.27
+                        ],
+                        [
+                            -157.98,
+                            21.29
+                        ],
+                        [
+                            -158.1,
+                            21.27
+                        ],
+                        [
+                            -158.25,
+                            21.47
+                        ],
+                        [
+                            -158.25,
+                            21.52
+                        ],
+                        [
+                            -158.3,
+                            21.59
+                        ],
+                        [
+                            -158.12,
+                            21.61
+                        ],
+                        [
+                            -158.01,
+                            21.72
+                        ],
+                        [
+                            -157.82,
+                            21.54
+                        ],
+                        [
+                            -157.82,
+                            21.47
+                        ],
+                        [
+                            -157.76,
+                            21.49
+                        ],
+                        [
+                            -157.71,
+                            21.43
+                        ],
+                        [
+                            -157.68,
+                            21.35
+                        ],
+                        [
+                            -157.63,
+                            21.32
+                        ],
+                        [
+                            -157.63,
+                            21.3
+                        ],
+                        [
+                            -157.68,
+                            21.24
+                        ],
+                        [
+                            -157.72,
+                            21.23
+                        ],
+                        [
+                            -157.75,
+                            21.25
+                        ],
+                        [
+                            -157.83,
+                            21.23
+                        ],
+                        [
+                            -157.88,
+                            21.27
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4c23a951f677b46e37da37b202984e8e20f453a5.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.4c23a951f677b46e37da37b202984e8e20f453a5.001.1",
+                "areaDesc": "Oahu in Honolulu, HI",
+                "geocode": {
+                    "SAME": [
+                        "015003"
+                    ],
+                    "UGC": [
+                        "HIC003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/HIC003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92a6a97344b063a5eb661929f4f0d9d23699668a.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.92a6a97344b063a5eb661929f4f0d9d23699668a.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-08T10:21:00-10:00"
+                    }
+                ],
+                "sent": "2026-10-08T13:10:00-10:00",
+                "effective": "2026-10-08T13:10:00-10:00",
+                "onset": "2026-10-08T13:10:00-10:00",
+                "expires": "2026-10-08T16:15:00-10:00",
+                "ends": "2026-10-08T16:15:00-10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Honolulu HI",
+                "headline": "Flash Flood Warning issued October 8 at 1:10PM HST until October 8 at 4:15PM HST by NWS Honolulu HI",
+                "description": "FFWHFO\n\nThe National Weather Service in Honolulu has extended the\n\n* Flash Flood Warning for...\nThe island of Oahu in Honolulu County\n\n* Until 415 PM HST.\n\n* At 110 PM HST, Moderate to locally heavy rain continues to develop\nand move over the island with the majority occurring over the\nwestern half of the island. Rain rates range from 0.5 to 2 inches\nper hour. Flash flooding is ongoing or expected to begin shortly.\nAdditional showers with embedded heavier rain could develop to the\nsouth and move over the island for the next few hours, especially\nthe western half.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nthe entire island of Oahu.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWHFO"
+                    ],
+                    "WMOidentifier": [
+                        "WGHW50 PHFO 082310"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.PHFO.FF.W.0055.000000T0000Z-261009T0215Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-08T16:15:00-10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce207b53fed765ce4c113eee878122a55d6e0fe8.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -81.68,
+                            30.66
+                        ],
+                        [
+                            -81.41,
+                            30.67
+                        ],
+                        [
+                            -81.41,
+                            30.53
+                        ],
+                        [
+                            -81.49,
+                            30.54
+                        ],
+                        [
+                            -81.51,
+                            30.56
+                        ],
+                        [
+                            -81.52,
+                            30.55
+                        ],
+                        [
+                            -81.58,
+                            30.56
+                        ],
+                        [
+                            -81.59,
+                            30.57
+                        ],
+                        [
+                            -81.6,
+                            30.56
+                        ],
+                        [
+                            -81.61,
+                            30.56
+                        ],
+                        [
+                            -81.6,
+                            30.57
+                        ],
+                        [
+                            -81.61,
+                            30.58
+                        ],
+                        [
+                            -81.61,
+                            30.59
+                        ],
+                        [
+                            -81.62,
+                            30.58
+                        ],
+                        [
+                            -81.63,
+                            30.59
+                        ],
+                        [
+                            -81.65,
+                            30.57
+                        ],
+                        [
+                            -81.7,
+                            30.58
+                        ],
+                        [
+                            -81.72,
+                            30.65
+                        ],
+                        [
+                            -81.68,
+                            30.66
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ce207b53fed765ce4c113eee878122a55d6e0fe8.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ce207b53fed765ce4c113eee878122a55d6e0fe8.001.1",
+                "areaDesc": "Nassau, FL",
+                "geocode": {
+                    "SAME": [
+                        "012089"
+                    ],
+                    "UGC": [
+                        "FLC089"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC089"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.9e281729a1f77f41f05d3d7b8a0410a058ba1066.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.9e281729a1f77f41f05d3d7b8a0410a058ba1066.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-08T17:19:00-04:00"
+                    }
+                ],
+                "sent": "2026-10-08T18:53:00-04:00",
+                "effective": "2026-10-08T18:53:00-04:00",
+                "onset": "2026-10-08T18:53:00-04:00",
+                "expires": "2026-10-08T20:00:00-04:00",
+                "ends": "2026-10-08T20:00:00-04:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Jacksonville FL",
+                "headline": "Flash Flood Warning issued October 8 at 6:53PM EDT until October 8 at 8:00PM EDT by NWS Jacksonville FL",
+                "description": "FFWJAX\n\nThe National Weather Service in Jacksonville has extended the\n\n* Flash Flood Warning for...\nEast Central Nassau County in northeastern Florida...\n\n* Until 800 PM EDT.\n\n* At 653 PM EDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 3 and 5 inches of rain\nhave fallen. Additional rainfall amounts of 1 to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nFernandina Beach, Yulee and Amelia City.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWJAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KJAX 082253"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KJAX.FF.W.0048.000000T0000Z-261009T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-08T20:00:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6a9d9a19607c4caa2a03ea1c4458c06bfe4b3296.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -80.72,
+                            28.16
+                        ],
+                        [
+                            -80.62,
+                            28.17
+                        ],
+                        [
+                            -80.56,
+                            28.06
+                        ],
+                        [
+                            -80.63,
+                            28.03
+                        ],
+                        [
+                            -80.7,
+                            28.06
+                        ],
+                        [
+                            -80.72,
+                            28.16
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.6a9d9a19607c4caa2a03ea1c4458c06bfe4b3296.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.6a9d9a19607c4caa2a03ea1c4458c06bfe4b3296.001.1",
+                "areaDesc": "Brevard, FL",
+                "geocode": {
+                    "SAME": [
+                        "012009"
+                    ],
+                    "UGC": [
+                        "FLC009"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/FLC009"
+                ],
+                "references": [],
+                "sent": "2026-10-08T18:51:00-04:00",
+                "effective": "2026-10-08T18:51:00-04:00",
+                "onset": "2026-10-08T18:51:00-04:00",
+                "expires": "2026-10-08T20:45:00-04:00",
+                "ends": "2026-10-08T20:45:00-04:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Melbourne FL",
+                "headline": "Flash Flood Warning issued October 8 at 6:51PM EDT until October 8 at 8:45PM EDT by NWS Melbourne FL",
+                "description": "FFWMLB\n\nThe National Weather Service in Melbourne has issued a\n\n* Flash Flood Warning for...\nSoutheastern Brevard County in east central Florida...\n\n* Until 845 PM EDT.\n\n* At 651 PM EDT, Doppler radar indicated heavy rain across the warned\narea. Between 2 and 4 inches of rain have fallen. The expected\nrainfall rate is 1 to 2 inches in 1 hour. Additional rainfall\namounts of 1 to 2 inches are possible in the warned area. Flash\nflooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nMelbourne, Indialantic, West Melbourne, Melbourne Beach, Melbourne\nVillage, Melbourne Airport, Eau Gallie and June Park.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMLB"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS52 KMLB 082251"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMLB.FF.W.0007.261008T2251Z-261009T0045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-08T20:45:00-04:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-08T23:13:36+00:00"
+}
