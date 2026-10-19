@@ -186,9 +186,9 @@
     "sha256": "36d8381155ee87fbbd80a581532e5dd85ad59a8a1e05531a31f0cba1c24a7c9e"
   },
   "btk/2026/bep212026.dat": {
-    "etag": "\"3a7f-65e2d52b91d17\"",
-    "lastModified": "Mon, 19 Oct 2026 08:30:14 GMT",
-    "bytes": 14975,
-    "sha256": "388dab4169be10d747598767f30b7604a14485b36b28664379cf015047b421b8"
+    "etag": "\"3c2f-65e32b039804c\"",
+    "lastModified": "Mon, 19 Oct 2026 14:54:18 GMT",
+    "bytes": 15407,
+    "sha256": "c1dd5ac6b0534909a1558ad58914d4385a389192cd7640c578ead8d11c8c9699"
   }
 }
