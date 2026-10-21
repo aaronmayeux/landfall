@@ -190,5 +190,11 @@
     "lastModified": "Tue, 20 Oct 2026 02:32:32 GMT",
     "bytes": 15839,
     "sha256": "50d496753e426f007f9ebdb31af1ba343f2dcf262e00e608acc7139b49e26a29"
+  },
+  "btk/2026/bep222026.dat": {
+    "etag": "\"b3f-65e5e0112d12c\"",
+    "lastModified": "Wed, 21 Oct 2026 18:34:58 GMT",
+    "bytes": 2879,
+    "sha256": "e8bbeb8ed4c2b36d3c48e2f1e5076aa747e24853e440dd2e32b6642656d234c3"
   }
 }
