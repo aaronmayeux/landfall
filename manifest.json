@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-10-24T07:24:56.669Z",
+  "runAt": "2026-10-24T12:46:35.400Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -46,18 +46,17 @@
         "btk/2026/bep192026.dat": "unchanged (304)",
         "btk/2026/bep202026.dat": "unchanged (304)",
         "btk/2026/bep212026.dat": "unchanged (304)",
-        "btk/2026/bep222026.dat": "stored 7631 bytes"
+        "btk/2026/bep222026.dat": "stored 8279 bytes"
       }
     },
     "jtwc": {
       "status": "ok",
-      "storms": 4,
+      "storms": 3,
       "linesAdded": 3,
       "files": {
         "jtwc/2026/ep2226.jsonl": "+1",
         "jtwc/2026/wp2926.jsonl": "+1",
-        "jtwc/2026/wp3026.jsonl": "+1",
-        "jtwc/2027/sh0227.jsonl": "already held"
+        "jtwc/2026/wp3026.jsonl": "+1"
       },
       "faults": []
     }
