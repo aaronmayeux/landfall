@@ -1,0 +1,41 @@
+ABNT20 KNHC 192348
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 PM EDT Mon Oct 19 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Off the East Coast of the United States (AL93):
+A storm-force non-tropical low pressure area is currently attached 
+to an occluded frontal boundary a few hundred miles off the 
+southeast coast of the United States. This low is likely to move 
+slowly north-northeastward over the next couple of days. If the low 
+remains over the Gulf Stream, it could develop organized shower and 
+thunderstorm activity. If the low is also then able to separate 
+from frontal features, it could briefly acquire subtropical cyclone 
+characteristics during the middle to latter portion of this week. 
+The system is expected to move northeastward away from the the 
+eastern United States later this week, and environmental conditions 
+are expected to become unfavorable for subtropical or tropical 
+development by the weekend. 
+
+Regardless of the status of the system, high winds, coastal 
+flooding, and dangerous surf are expected along portions of the U.S. 
+East Coast during the next few days. For more information, please 
+consult statements and warnings from local National Weather Service 
+offices and the Weather Prediction Center, along with High Seas 
+Forecasts and Storm Warnings issued by the National Weather Service.
+* Formation chance through 48 hours...low...20 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Papin
+
+

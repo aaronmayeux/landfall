@@ -1,0 +1,410 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.001.1",
+                "areaDesc": "Ketchikan Gateway Borough; Annette Island",
+                "geocode": {
+                    "SAME": [
+                        "002130",
+                        "002198"
+                    ],
+                    "UGC": [
+                        "AKZ330",
+                        "AKZ332"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ330",
+                    "https://api.weather.gov/zones/forecast/AKZ332"
+                ],
+                "references": [],
+                "sent": "2026-10-16T08:30:00-08:00",
+                "effective": "2026-10-16T08:30:00-08:00",
+                "onset": "2026-10-16T08:30:00-08:00",
+                "expires": "2026-10-16T13:00:00-08:00",
+                "ends": "2026-10-16T13:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 16 at 8:30AM AKDT until October 16 at 1:00PM AKDT by NWS Juneau AK",
+                "description": "Rain showers following a strong system continues through Friday\nmorning, keeping potential for flooding along small creeks. Multiple\nwaves moving up brought  persistent moderate to heavy rain for much\nof the southern half of the panhandle, with the heaviest rain\nexpected through Thursday night.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following area, Southern Inner Channels. This includes\nthe cities of Ketchikan And Metlakatla.\n\n* WHEN...Until 1 PM AKDT this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\nStreet flooding and flooding of creeks and rivers are possible.\nIsolated landslides are possible in areas of steep terrain.\n\n* ADDITIONAL DETAILS...\n- Rain amounts for the Ketchikan and Annette Island area have\nreached around 4 to 6 inches, with higher rain totals up to 8\ninches falling by the morning along favoring southern facing\nmountain sides. While the heavy rain has largely ended this\nmorning, the multiple rounds of heavy rainfall from Thursday and\novernight keep potential for flooding and ponding over roads into\nthe morning hours.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.\n\nAll residents on or near mountain slopes should be prepared for\npossible landslides.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 161630"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 1 PM AKDT THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0003.000000T0000Z-261016T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T13:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.001.1,2026-10-15T20:29:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.001.1,2026-10-15T09:16:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8256f63885aeab7ff39bf767a4a711988c2854e3.001.1,2026-10-14T21:57:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9603768b901cd6ce7dab7904dfa90316e2b75b89.001.1,2026-10-14T10:18:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.519b22ce32ab26b85c4dd97aab6c54c3d3234d59.001.1,2026-10-13T22:20:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.79430e0c9b12b9c3f003bb4317f1ef387bbdd1db.001.1,2026-10-13T10:57:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.784ebaf9c7512e19343127b4e3238c51fdd4385d.002.1",
+                "areaDesc": "Petersburg Borough; Western Kupreanof and Kuiu Island; Prince of Wales Island; City and Borough of Wrangell",
+                "geocode": {
+                    "SAME": [
+                        "002195",
+                        "002198",
+                        "002275"
+                    ],
+                    "UGC": [
+                        "AKZ326",
+                        "AKZ327",
+                        "AKZ328",
+                        "AKZ329"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ326",
+                    "https://api.weather.gov/zones/forecast/AKZ327",
+                    "https://api.weather.gov/zones/forecast/AKZ328",
+                    "https://api.weather.gov/zones/forecast/AKZ329"
+                ],
+                "references": [],
+                "sent": "2026-10-16T08:30:00-08:00",
+                "effective": "2026-10-16T08:30:00-08:00",
+                "onset": "2026-10-16T08:30:00-08:00",
+                "expires": "2026-10-16T13:00:00-08:00",
+                "ends": "2026-10-16T13:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 16 at 8:30AM AKDT until October 16 at 1:00PM AKDT by NWS Juneau AK",
+                "description": "Rain showers following a strong system continues through Friday\nmorning, keeping potential for flooding along small creeks. Multiple\nwaves moving up brought  persistent moderate to heavy rain for much\nof the southern half of the panhandle, with the heaviest rain\nexpected through Thursday night.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following areas, Central Inner Channels, Southern Inner\nChannels and Southeast Gulf Coast. This includes the cities of\nPetersburg, Kake, Port Alexander, Craig, Klawock, Hydaburg, Coffman\nCove, Thorne Bay, And Wrangell.\n\n* WHEN...Until 1 PM AKDT this afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\nStreet flooding and flooding of creeks and rivers are possible.\nIsolated landslides are possible in areas of steep terrain.\n\n* ADDITIONAL DETAILS...\n- Rain amounts have reached around 3 to 5 inches, with higher rain\ntotals falling by the morning along favoring southern facing\nmountain sides. While the heavy rain has largely ended this\nmorning, the multiple rounds of heavy rainfall from Thursday and\novernight keep potential for flooding and ponding over roads into\nthe morning hours.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.\n\nThe ongoing rains could swamp boats. Mariners should check their\nvessels immediately.\n\nAll residents on or near mountain slopes should be prepared for\npossible landslides.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 161630"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT UNTIL 1 PM AKDT THIS AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0003.000000T0000Z-261016T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T13:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.002.1,2026-10-15T20:29:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.002.1,2026-10-15T09:16:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8256f63885aeab7ff39bf767a4a711988c2854e3.002.1,2026-10-14T21:57:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9603768b901cd6ce7dab7904dfa90316e2b75b89.002.1,2026-10-14T10:18:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.519b22ce32ab26b85c4dd97aab6c54c3d3234d59.002.1,2026-10-13T22:20:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.79430e0c9b12b9c3f003bb4317f1ef387bbdd1db.002.1,2026-10-13T10:57:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7e9c8a555cd3eb0357eb7fe26d25db8298efcef7.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.95,
+                            34.14
+                        ],
+                        [
+                            -98.95,
+                            34.3
+                        ],
+                        [
+                            -98.54,
+                            34.18
+                        ],
+                        [
+                            -98.05,
+                            34.19
+                        ],
+                        [
+                            -98.15,
+                            34.06
+                        ],
+                        [
+                            -98.59,
+                            34.02
+                        ],
+                        [
+                            -98.95,
+                            34.14
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.7e9c8a555cd3eb0357eb7fe26d25db8298efcef7.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.7e9c8a555cd3eb0357eb7fe26d25db8298efcef7.001.1",
+                "areaDesc": "Tillman; Cotton; Jefferson; Wichita; Clay",
+                "geocode": {
+                    "SAME": [
+                        "040141",
+                        "040033",
+                        "040067",
+                        "048485",
+                        "048077"
+                    ],
+                    "UGC": [
+                        "OKZ037",
+                        "OKZ044",
+                        "OKZ045",
+                        "TXZ086",
+                        "TXZ090"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/OKZ037",
+                    "https://api.weather.gov/zones/forecast/OKZ044",
+                    "https://api.weather.gov/zones/forecast/OKZ045",
+                    "https://api.weather.gov/zones/forecast/TXZ086",
+                    "https://api.weather.gov/zones/forecast/TXZ090"
+                ],
+                "references": [],
+                "sent": "2026-10-16T09:02:00-05:00",
+                "effective": "2026-10-16T09:02:00-05:00",
+                "onset": "2026-10-17T22:00:00-05:00",
+                "expires": "2026-10-16T23:15:00-05:00",
+                "ends": "2026-10-18T13:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flood Watch issued October 16 at 9:02AM CDT until October 18 at 1:00PM CDT by NWS Norman OK",
+                "description": "...The National Weather Service in Norman has issued a Flood Watch\nfor the following rivers in Oklahoma...Texas...\n\nRed River near Burkburnett affecting Jefferson, Wichita, Clay,\nCotton and Tillman Counties.\n\n* WHAT...Flooding is possible.\n\n* WHERE...Red River near Burkburnett.\n\n* WHEN...From Saturday evening to Sunday afternoon.\n\n* ADDITIONAL DETAILS...\n- At 8:30 AM CDT Friday the stage was 6.5 feet.\n- Forecast...Flood stage may be reached late tomorrow evening.\n- Flood stage is 9.0 feet.\n- http://www.weather.gov/safety/flood",
+                "instruction": "If you are in the watch area, remain alert to possible flooding.\n\nAdditional information is available at www.weather.gov.\n\nThe next statement will be issued this evening at 1115 PM CDT.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KOUN 161402"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM SATURDAY EVENING TO SUNDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOUN.FL.A.0003.261018T0300Z-261018T1800Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-18T13:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FLA"
+                    ],
+                    "NationalWeatherService": [
+                        "FLA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+                "areaDesc": "Guam; Rota; Tinian; Saipan",
+                "geocode": {
+                    "SAME": [
+                        "066010",
+                        "069100",
+                        "069120",
+                        "069110"
+                    ],
+                    "UGC": [
+                        "GUZ001",
+                        "MPZ001",
+                        "MPZ002",
+                        "MPZ003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/GUZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ002",
+                    "https://api.weather.gov/zones/forecast/MPZ003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.48dfd579bb5899f7e1c5aa217295bfb3df2d527f.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.48dfd579bb5899f7e1c5aa217295bfb3df2d527f.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-16T03:00:00+10:00"
+                    }
+                ],
+                "sent": "2026-10-16T14:31:00+10:00",
+                "effective": "2026-10-16T14:31:00+10:00",
+                "onset": "2026-10-16T14:31:00+10:00",
+                "expires": "2026-10-17T15:45:00+10:00",
+                "ends": "2026-10-18T16:00:00+10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flood Watch issued October 16 at 2:31PM ChST until October 18 at 4:00PM ChST by NWS Tiyan GU",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Guam, Rota, Saipan and Tinian.\n\n* WHEN...Through Sunday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris. Extensive street\nflooding and flooding of creeks and rivers are possible.\n\n* ADDITIONAL DETAILS...\n- Tropical Storm Champi is approaching the Marianas and will bring\ntorrential rain Saturday night and Sunday at least. Total\nrainfall accumulations of 12 to 20 inches are possible for Guam,\n10 to 18 inches for Rota and 8 to 12 inches for Tinian and\nSaipan. This could cause flooding problems in poor drainage and\nflood prone areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY60 PGUM 160431"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SUNDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PGUM.FA.A.0008.000000T0000Z-261018T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-18T16:00:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-16T17:55:36+00:00"
+}

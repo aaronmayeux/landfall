@@ -1,0 +1,680 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.aeec7462e195e7df5d13bb74efabdf619edb5009.001.1",
+                "areaDesc": "Guam; Rota; Tinian; Saipan",
+                "geocode": {
+                    "SAME": [
+                        "066010",
+                        "069100",
+                        "069120",
+                        "069110"
+                    ],
+                    "UGC": [
+                        "GUZ001",
+                        "MPZ001",
+                        "MPZ002",
+                        "MPZ003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/GUZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ001",
+                    "https://api.weather.gov/zones/forecast/MPZ002",
+                    "https://api.weather.gov/zones/forecast/MPZ003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.48dfd579bb5899f7e1c5aa217295bfb3df2d527f.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.48dfd579bb5899f7e1c5aa217295bfb3df2d527f.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-16T03:00:00+10:00"
+                    }
+                ],
+                "sent": "2026-10-16T14:31:00+10:00",
+                "effective": "2026-10-16T14:31:00+10:00",
+                "onset": "2026-10-16T14:31:00+10:00",
+                "expires": "2026-10-17T15:45:00+10:00",
+                "ends": "2026-10-18T16:00:00+10:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Tiyan GU",
+                "headline": "Flood Watch issued October 16 at 2:31PM ChST until October 18 at 4:00PM ChST by NWS Tiyan GU",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Guam, Rota, Saipan and Tinian.\n\n* WHEN...Through Sunday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Storm drains\nand ditches may become clogged with debris. Extensive street\nflooding and flooding of creeks and rivers are possible.\n\n* ADDITIONAL DETAILS...\n- Tropical Storm Champi is approaching the Marianas and will bring\ntorrential rain Saturday night and Sunday at least. Total\nrainfall accumulations of 12 to 20 inches are possible for Guam,\n10 to 18 inches for Rota and 8 to 12 inches for Tinian and\nSaipan. This could cause flooding problems in poor drainage and\nflood prone areas.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAGUM"
+                    ],
+                    "WMOidentifier": [
+                        "WGMY60 PGUM 160431"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH SUNDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PGUM.FA.A.0008.000000T0000Z-261018T0600Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-18T16:00:00+10:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.001.1",
+                "areaDesc": "Ketchikan Gateway Borough; Annette Island",
+                "geocode": {
+                    "SAME": [
+                        "002130",
+                        "002198"
+                    ],
+                    "UGC": [
+                        "AKZ330",
+                        "AKZ332"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ330",
+                    "https://api.weather.gov/zones/forecast/AKZ332"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-15T09:16:00-08:00"
+                    }
+                ],
+                "sent": "2026-10-15T20:29:00-08:00",
+                "effective": "2026-10-15T20:29:00-08:00",
+                "onset": "2026-10-15T20:29:00-08:00",
+                "expires": "2026-10-16T08:30:00-08:00",
+                "ends": "2026-10-16T13:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 15 at 8:29PM AKDT until October 16 at 1:00PM AKDT by NWS Juneau AK",
+                "description": "A stronger atmospheric river continues to move over the panhandle\nThursday evening, lasting through Friday morning. Multiple waves\nmoving up will bring persistent moderate to heavy rain for much of\nthe southern half of the panhandle, with the heaviest rain expected\nthrough Thursday night. Elevated gusty winds are expected alongside\nthis heavier rainfall, with the strongest winds expected Thursday\nnight. Prolonged periods of moderate to heavy rain will produce\nsignificant river rises with the potential for at least minor\nflooding. Gusty winds alongside the long duration heavy rainfall will\nbring a possibility of isolated landslides.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following area, Southern Inner Channels. This includes\nthe cities of Ketchikan And Metlakatla.\n\n* WHEN...Through Friday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\nStreet flooding and flooding of creeks and rivers are possible.\nIsolated landslides are possible in areas of steep terrain.\n\n* ADDITIONAL DETAILS...\n- Rain totals between early Thursday morning and late Friday\nmorning for the Ketchikan and Metlakatla area are still expected\nto be around 4 to 6 inches, with higher rain totals favoring\nsouthern facing mountain sides. Highest rain rates are currently\nexpected through this evening, where rates could exceed 0.5\ninches per hour.\n\nWe will continue to see winds of 25 to 35 mph with gusts to 55\nmph at sea level, and exceeding 60 mph at elevation, with the\nhighest winds expected Thursday night. With the multiple rounds\nof moderate to heavy rainfall and the elevated winds, there is\npossibility for isolated landslides along steep mountain slopes.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.\n\nAll residents on or near mountain slopes should be prepared for\npossible landslides.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 160429"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH FRIDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0003.000000T0000Z-261016T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T13:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8256f63885aeab7ff39bf767a4a711988c2854e3.001.1,2026-10-14T21:57:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9603768b901cd6ce7dab7904dfa90316e2b75b89.001.1,2026-10-14T10:18:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.519b22ce32ab26b85c4dd97aab6c54c3d3234d59.001.1,2026-10-13T22:20:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.79430e0c9b12b9c3f003bb4317f1ef387bbdd1db.001.1,2026-10-13T10:57:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.c8db59b3e8b13c4c376743d74ccd7d100a86c820.002.1",
+                "areaDesc": "Petersburg Borough; Western Kupreanof and Kuiu Island; Prince of Wales Island; City and Borough of Wrangell",
+                "geocode": {
+                    "SAME": [
+                        "002195",
+                        "002198",
+                        "002275"
+                    ],
+                    "UGC": [
+                        "AKZ326",
+                        "AKZ327",
+                        "AKZ328",
+                        "AKZ329"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ326",
+                    "https://api.weather.gov/zones/forecast/AKZ327",
+                    "https://api.weather.gov/zones/forecast/AKZ328",
+                    "https://api.weather.gov/zones/forecast/AKZ329"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.20e14b9b4547c343a3fb180d4542bce10382e355.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-15T09:16:00-08:00"
+                    }
+                ],
+                "sent": "2026-10-15T20:29:00-08:00",
+                "effective": "2026-10-15T20:29:00-08:00",
+                "onset": "2026-10-15T20:29:00-08:00",
+                "expires": "2026-10-16T08:30:00-08:00",
+                "ends": "2026-10-16T13:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 15 at 8:29PM AKDT until October 16 at 1:00PM AKDT by NWS Juneau AK",
+                "description": "A stronger atmospheric river continues to move over the panhandle\nThursday evening, lasting through Friday morning. Multiple waves\nmoving up will bring persistent moderate to heavy rain for much of\nthe southern half of the panhandle, with the heaviest rain expected\nthrough Thursday night. Elevated gusty winds are expected alongside\nthis heavier rainfall, with the strongest winds expected Thursday\nnight. Prolonged periods of moderate to heavy rain will produce\nsignificant river rises with the potential for at least minor\nflooding. Gusty winds alongside the long duration heavy rainfall will\nbring a possibility of isolated landslides.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following areas, Central Inner Channels, Southern Inner\nChannels and Southeast Gulf Coast. This includes the cities of\nPetersburg, Kake, Port Alexander, Craig, Klawock, Hydaburg, Coffman\nCove, Thorne Bay, And Wrangell.\n\n* WHEN...Through Friday afternoon.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\nStreet flooding and flooding of creeks and rivers are possible.\nIsolated landslides are possible in areas of steep terrain.\n\n* ADDITIONAL DETAILS...\n- Rain totals between early Thursday morning and late Friday\nmorning for the Central Panhandle and Prince of Wales Island area\nare still expected to be around 2 to 3.5 inches, with higher rain\ntotals favoring southern facing mountain sides. Highest rain\nrates are currently expected through Thursday night, where rates\ncould be as high as 0.3 inches per hour.\n\nWe will continue to see winds of of 20 to 30 mph with gusts to 40\nmph on Thursday, with potential for up to 45 mph wind gusts\nthrough Thursday night. With the multiple rounds of moderate to\nheavy rainfall and the elevated winds, there is possibility for\nisolated landslides along steep mountain slopes.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.\n\nThe ongoing rains could swamp boats. Mariners should check their\nvessels immediately.\n\nAll residents on or near mountain slopes should be prepared for\npossible landslides.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 160429"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH FRIDAY AFTERNOON"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0003.000000T0000Z-261016T2100Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T13:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8256f63885aeab7ff39bf767a4a711988c2854e3.002.1,2026-10-14T21:57:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9603768b901cd6ce7dab7904dfa90316e2b75b89.002.1,2026-10-14T10:18:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.519b22ce32ab26b85c4dd97aab6c54c3d3234d59.002.1,2026-10-13T22:20:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.79430e0c9b12b9c3f003bb4317f1ef387bbdd1db.002.1,2026-10-13T10:57:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.93e8d3f8c51856bca9d4ed2270bae866a987774c.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.93e8d3f8c51856bca9d4ed2270bae866a987774c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.93e8d3f8c51856bca9d4ed2270bae866a987774c.001.1",
+                "areaDesc": "Val Verde",
+                "geocode": {
+                    "SAME": [
+                        "048465"
+                    ],
+                    "UGC": [
+                        "TXZ183"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/TXZ183"
+                ],
+                "references": [],
+                "sent": "2026-10-15T15:05:00-05:00",
+                "effective": "2026-10-15T15:05:00-05:00",
+                "onset": "2026-10-15T15:05:00-05:00",
+                "expires": "2026-10-16T07:00:00-05:00",
+                "ends": "2026-10-16T07:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Austin/San Antonio TX",
+                "headline": "Flood Watch issued October 15 at 3:05PM CDT until October 16 at 7:00AM CDT by NWS Austin/San Antonio TX",
+                "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Val Verde County.\n\n* WHEN...Through Friday morning.\n\n* IMPACTS...There is a potential for life threatening flooding\nsomewhere in the watch area. Excessive runoff may result in\nflooding of rivers, creeks, streams, and other low-lying and\nflood-prone locations. Creeks and streams may rise out of their\nbanks.\n\n* ADDITIONAL DETAILS...\n- Between 1 to 3 inches of rainfall, with isolated amounts of 6\ninches possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAEWX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KEWX 152005"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH FRIDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KEWX.FA.A.0009.000000T0000Z-261016T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T07:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.fe16a889c984f1ef62da223a3b83cd2b5e1cbf20.001.1,2026-10-14T13:47:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d3c84fe1762032979e8584e05e3e683c4d2d03f4.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d3c84fe1762032979e8584e05e3e683c4d2d03f4.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d3c84fe1762032979e8584e05e3e683c4d2d03f4.001.1",
+                "areaDesc": "Gaines; Dawson; Borden; Scurry; Andrews; Martin; Howard; Mitchell; Loving; Winkler; Ector; Midland; Glasscock; Ward; Crane; Upton; Reagan; Pecos; Terrell; Reeves County Plains; Chinati Mountains; Marfa Plateau; Davis Mountains; Davis Mountains Foothills; Central Brewster County; Chisos Basin; Presidio Valley; Lower Brewster County",
+                "geocode": {
+                    "SAME": [
+                        "048165",
+                        "048115",
+                        "048033",
+                        "048415",
+                        "048003",
+                        "048317",
+                        "048227",
+                        "048335",
+                        "048301",
+                        "048495",
+                        "048135",
+                        "048329",
+                        "048173",
+                        "048475",
+                        "048103",
+                        "048461",
+                        "048383",
+                        "048371",
+                        "048443",
+                        "048389",
+                        "048377",
+                        "048243",
+                        "048043",
+                        "048109"
+                    ],
+                    "UGC": [
+                        "TXZ045",
+                        "TXZ046",
+                        "TXZ047",
+                        "TXZ048",
+                        "TXZ050",
+                        "TXZ051",
+                        "TXZ052",
+                        "TXZ053",
+                        "TXZ059",
+                        "TXZ060",
+                        "TXZ061",
+                        "TXZ062",
+                        "TXZ063",
+                        "TXZ067",
+                        "TXZ068",
+                        "TXZ069",
+                        "TXZ070",
+                        "TXZ075",
+                        "TXZ082",
+                        "TXZ274",
+                        "TXZ275",
+                        "TXZ276",
+                        "TXZ277",
+                        "TXZ278",
+                        "TXZ279",
+                        "TXZ280",
+                        "TXZ281",
+                        "TXZ282"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/TXZ045",
+                    "https://api.weather.gov/zones/forecast/TXZ046",
+                    "https://api.weather.gov/zones/forecast/TXZ047",
+                    "https://api.weather.gov/zones/forecast/TXZ048",
+                    "https://api.weather.gov/zones/forecast/TXZ050",
+                    "https://api.weather.gov/zones/forecast/TXZ051",
+                    "https://api.weather.gov/zones/forecast/TXZ052",
+                    "https://api.weather.gov/zones/forecast/TXZ053",
+                    "https://api.weather.gov/zones/forecast/TXZ059",
+                    "https://api.weather.gov/zones/forecast/TXZ060",
+                    "https://api.weather.gov/zones/forecast/TXZ061",
+                    "https://api.weather.gov/zones/forecast/TXZ062",
+                    "https://api.weather.gov/zones/forecast/TXZ063",
+                    "https://api.weather.gov/zones/forecast/TXZ067",
+                    "https://api.weather.gov/zones/forecast/TXZ068",
+                    "https://api.weather.gov/zones/forecast/TXZ069",
+                    "https://api.weather.gov/zones/forecast/TXZ070",
+                    "https://api.weather.gov/zones/forecast/TXZ075",
+                    "https://api.weather.gov/zones/forecast/TXZ082",
+                    "https://api.weather.gov/zones/forecast/TXZ274",
+                    "https://api.weather.gov/zones/forecast/TXZ275",
+                    "https://api.weather.gov/zones/forecast/TXZ276",
+                    "https://api.weather.gov/zones/forecast/TXZ277",
+                    "https://api.weather.gov/zones/forecast/TXZ278",
+                    "https://api.weather.gov/zones/forecast/TXZ279",
+                    "https://api.weather.gov/zones/forecast/TXZ280",
+                    "https://api.weather.gov/zones/forecast/TXZ281",
+                    "https://api.weather.gov/zones/forecast/TXZ282"
+                ],
+                "references": [],
+                "sent": "2026-10-15T13:48:00-05:00",
+                "effective": "2026-10-15T13:48:00-05:00",
+                "onset": "2026-10-15T13:48:00-05:00",
+                "expires": "2026-10-16T07:00:00-05:00",
+                "ends": "2026-10-16T07:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flood Watch issued October 15 at 1:48PM CDT until October 16 at 7:00AM CDT by NWS Midland/Odessa TX",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of southwest and western Texas, including the\nfollowing areas, in southwest Texas, Central Brewster, Chinati\nMountains, Chisos Basin, Davis Mountains, Davis Mountains\nFoothills, Lower Brewster County, Marfa Plateau, Pecos, Presidio\nValley and Terrell. In western Texas, Andrews, Borden, Crane,\nDawson, Ector, Gaines, Glasscock, Howard, Loving, Martin, Midland,\nMitchell, Reagan, Reeves County Plains, Scurry, Upton, Ward and\nWinkler.\n\n* WHEN...Through Friday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Low-water\ncrossings may be flooded.\n\n* ADDITIONAL DETAILS...\n- Moisture from Hurricane Simon will stream over West Texas the\nnext several days. Periods of heavy rain are expected from this\nsystem that will likely cause flash flooding, especially in urban\nareas and low water crossings where drainage is poor.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KMAF 151848"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH FRIDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KMAF.FA.A.0008.000000T0000Z-261016T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T07:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.758a1e5a99042ed24f565649bf6a194d34723966.001.1,2026-10-14T23:06:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e4336e0f3a14710b01433a42601bfcb7e3b85abc.001.1,2026-10-14T05:19:00-05:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.294b13e4da1c03a7c756867da373f03d8875add0.001.1,2026-10-13T13:18:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.78907b74b864a65b5f578f9ecc146d4061f8f5a8.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.78907b74b864a65b5f578f9ecc146d4061f8f5a8.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.78907b74b864a65b5f578f9ecc146d4061f8f5a8.001.1",
+                "areaDesc": "Fisher; Nolan; Sterling; Coke; Runnels; Irion; Tom Green; Concho; Crockett; Schleicher; Sutton; Haskell; Throckmorton; Jones; Shackelford; Taylor; Callahan; Coleman",
+                "geocode": {
+                    "SAME": [
+                        "048151",
+                        "048353",
+                        "048431",
+                        "048081",
+                        "048399",
+                        "048235",
+                        "048451",
+                        "048095",
+                        "048105",
+                        "048413",
+                        "048435",
+                        "048207",
+                        "048447",
+                        "048253",
+                        "048417",
+                        "048441",
+                        "048059",
+                        "048083"
+                    ],
+                    "UGC": [
+                        "TXZ049",
+                        "TXZ054",
+                        "TXZ064",
+                        "TXZ065",
+                        "TXZ066",
+                        "TXZ071",
+                        "TXZ072",
+                        "TXZ073",
+                        "TXZ076",
+                        "TXZ077",
+                        "TXZ078",
+                        "TXZ098",
+                        "TXZ099",
+                        "TXZ113",
+                        "TXZ114",
+                        "TXZ127",
+                        "TXZ128",
+                        "TXZ139"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/TXZ049",
+                    "https://api.weather.gov/zones/forecast/TXZ054",
+                    "https://api.weather.gov/zones/forecast/TXZ064",
+                    "https://api.weather.gov/zones/forecast/TXZ065",
+                    "https://api.weather.gov/zones/forecast/TXZ066",
+                    "https://api.weather.gov/zones/forecast/TXZ071",
+                    "https://api.weather.gov/zones/forecast/TXZ072",
+                    "https://api.weather.gov/zones/forecast/TXZ073",
+                    "https://api.weather.gov/zones/forecast/TXZ076",
+                    "https://api.weather.gov/zones/forecast/TXZ077",
+                    "https://api.weather.gov/zones/forecast/TXZ078",
+                    "https://api.weather.gov/zones/forecast/TXZ098",
+                    "https://api.weather.gov/zones/forecast/TXZ099",
+                    "https://api.weather.gov/zones/forecast/TXZ113",
+                    "https://api.weather.gov/zones/forecast/TXZ114",
+                    "https://api.weather.gov/zones/forecast/TXZ127",
+                    "https://api.weather.gov/zones/forecast/TXZ128",
+                    "https://api.weather.gov/zones/forecast/TXZ139"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8168910ee45d3bd4f243bbf162f0b961c40f28ae.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.8168910ee45d3bd4f243bbf162f0b961c40f28ae.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-15T06:49:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-15T13:01:00-05:00",
+                "effective": "2026-10-15T13:01:00-05:00",
+                "onset": "2026-10-15T13:01:00-05:00",
+                "expires": "2026-10-16T07:00:00-05:00",
+                "ends": "2026-10-16T07:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Angelo TX",
+                "headline": "Flood Watch issued October 15 at 1:01PM CDT until October 16 at 7:00AM CDT by NWS San Angelo TX",
+                "description": "* WHAT...Flash flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...A portion of west central Texas, including the following\ncounties, Callahan, Coke, Coleman, Concho, Crockett, Fisher,\nHaskell, Irion, Jones, Nolan, Runnels, Schleicher, Shackelford,\nSterling, Sutton, Taylor, Throckmorton and Tom Green.\n\n* WHEN...Through Friday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\nFlooding may occur in poor drainage and urban areas. Low-water\ncrossings may be flooded.\n\n* ADDITIONAL DETAILS...\n- There is an increased danger to lives and property due to flash\nflooding. Flash flooding is likely and considerable flash\nflooding is possible.\n\n- With a series of upper-level disturbances and an approaching cold\nfront interacting with a very moist airmass, expect focused areas\nof showers and thunderstorms this afternoon and tonight. Heavy\nrainfall in short periods of time will bring a risk of flooding\nand flash flooding.\n\n- Http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be prepared to take action\nshould Flash Flood Warnings be issued.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFASJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS64 KSJT 151801"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT THROUGH FRIDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KSJT.FA.A.0008.000000T0000Z-261016T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-16T07:00:00-05:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.404683e75c12f9b579b0bcf2bb222b83a05bc267.001.1,2026-10-14T13:46:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-16T06:58:51+00:00"
+}

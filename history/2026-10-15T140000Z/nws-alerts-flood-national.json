@@ -1,0 +1,267 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.798e65f1879957f432fd963e15e63195b112886c.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -99.6,
+                            34.25
+                        ],
+                        [
+                            -99.3,
+                            34.41
+                        ],
+                        [
+                            -99.21,
+                            34.3
+                        ],
+                        [
+                            -99.21,
+                            34.29
+                        ],
+                        [
+                            -99.2,
+                            34.28
+                        ],
+                        [
+                            -99.19,
+                            34.22
+                        ],
+                        [
+                            -99.16,
+                            34.21
+                        ],
+                        [
+                            -99.14,
+                            34.21
+                        ],
+                        [
+                            -99.23,
+                            34.12
+                        ],
+                        [
+                            -99.46,
+                            33.99
+                        ],
+                        [
+                            -99.77,
+                            33.83
+                        ],
+                        [
+                            -99.92,
+                            33.89
+                        ],
+                        [
+                            -99.91,
+                            33.99
+                        ],
+                        [
+                            -99.6,
+                            34.25
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.798e65f1879957f432fd963e15e63195b112886c.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.798e65f1879957f432fd963e15e63195b112886c.001.1",
+                "areaDesc": "Foard, TX; Hardeman, TX; Wilbarger, TX",
+                "geocode": {
+                    "SAME": [
+                        "048155",
+                        "048197",
+                        "048487"
+                    ],
+                    "UGC": [
+                        "TXC155",
+                        "TXC197",
+                        "TXC487"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC155",
+                    "https://api.weather.gov/zones/county/TXC197",
+                    "https://api.weather.gov/zones/county/TXC487"
+                ],
+                "references": [],
+                "sent": "2026-10-15T09:07:00-05:00",
+                "effective": "2026-10-15T09:07:00-05:00",
+                "onset": "2026-10-15T09:07:00-05:00",
+                "expires": "2026-10-15T12:00:00-05:00",
+                "ends": "2026-10-15T12:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 15 at 9:07AM CDT until October 15 at 12:00PM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has issued a\n\n* Flash Flood Warning for...\nCentral Foard County in northern Texas...\nSoutheastern Hardeman County in northern Texas...\nNorthwestern Wilbarger County in northern Texas...\n\n* Until noon CDT.\n\n* At 907 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts up to 2 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nVernon, Crowell, Chillicothe, Medicine Mound, Thalia, Margaret,\nLockett, Odell, Fargo, Rayland and Copper Breaks State Park.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 151407"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOUN.FF.W.0118.261015T1407Z-261015T1700Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-15T12:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.afc40b83bf4bf54ff0e0ecf1ece53e4f1c3fc4f2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -98.66,
+                            33.84
+                        ],
+                        [
+                            -98.65,
+                            34.03
+                        ],
+                        [
+                            -98.42,
+                            34.04
+                        ],
+                        [
+                            -98.42,
+                            33.84
+                        ],
+                        [
+                            -98.66,
+                            33.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.afc40b83bf4bf54ff0e0ecf1ece53e4f1c3fc4f2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.afc40b83bf4bf54ff0e0ecf1ece53e4f1c3fc4f2.001.1",
+                "areaDesc": "Wichita, TX",
+                "geocode": {
+                    "SAME": [
+                        "048485"
+                    ],
+                    "UGC": [
+                        "TXC485"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC485"
+                ],
+                "references": [],
+                "sent": "2026-10-15T07:49:00-05:00",
+                "effective": "2026-10-15T07:49:00-05:00",
+                "onset": "2026-10-15T07:49:00-05:00",
+                "expires": "2026-10-15T10:45:00-05:00",
+                "ends": "2026-10-15T10:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Norman OK",
+                "headline": "Flash Flood Warning issued October 15 at 7:49AM CDT until October 15 at 10:45AM CDT by NWS Norman OK",
+                "description": "FFWOUN\n\nThe National Weather Service in Norman has issued a\n\n* Flash Flood Warning for...\nSoutheastern Wichita County in northern Texas...\n\n* Until 1045 AM CDT.\n\n* At 749 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWichita Falls, Sheppard AFB, Pleasant Valley and Cashion.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe aware of your surroundings and do not drive on flooded roads.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOUN"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KOUN 151249"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOUN.FF.W.0117.261015T1249Z-261015T1545Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-15T10:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-15T14:46:16+00:00"
+}

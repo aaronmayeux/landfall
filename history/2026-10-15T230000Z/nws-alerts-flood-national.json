@@ -1,0 +1,123 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a002ea6fcbe0438402cc08621cf77b717f5856a7.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -100.29,
+                            32.08
+                        ],
+                        [
+                            -100.21,
+                            32.42
+                        ],
+                        [
+                            -99.94,
+                            32.42
+                        ],
+                        [
+                            -99.98,
+                            32.08
+                        ],
+                        [
+                            -100.29,
+                            32.08
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a002ea6fcbe0438402cc08621cf77b717f5856a7.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.a002ea6fcbe0438402cc08621cf77b717f5856a7.001.1",
+                "areaDesc": "Nolan, TX; Taylor, TX",
+                "geocode": {
+                    "SAME": [
+                        "048353",
+                        "048441"
+                    ],
+                    "UGC": [
+                        "TXC353",
+                        "TXC441"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC353",
+                    "https://api.weather.gov/zones/county/TXC441"
+                ],
+                "references": [],
+                "sent": "2026-10-15T15:59:00-05:00",
+                "effective": "2026-10-15T15:59:00-05:00",
+                "onset": "2026-10-15T15:59:00-05:00",
+                "expires": "2026-10-15T19:00:00-05:00",
+                "ends": "2026-10-15T19:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS San Angelo TX",
+                "headline": "Flash Flood Warning issued October 15 at 3:59PM CDT until October 15 at 7:00PM CDT by NWS San Angelo TX",
+                "description": "FFWSJT\n\nThe National Weather Service in San Angelo has issued a\n\n* Flash Flood Warning for...\nSoutheastern Nolan County in west central Texas...\nSouthwestern Taylor County in west central Texas...\n\n* Until 700 PM CDT.\n\n* At 359 PM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 3 inches of rain\nhave fallen. Additional rainfall amounts up to 1 inch are possible\nin the warned area. Flash flooding is ongoing or expected to begin\nshortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nNolan, Happy Valley, Coronados Camp, Hylton, Camp Butman and Shep.\n\nThis includes the following Low Water Crossings...\nFM 89 crossing Elm Creek, crossings along County Road 263, crossings\nalong County Road 357, County Road 196 crossing North Fork Valley\nCreek, County Road 387 crossing Little Bitter Creek, crossings along\nCounty Road 335, County Road 196 crossing North Fork Valley Creek,\ncrossings along County Road 283, crossings along County Road 301 and\nCounty Road 263 crossing Fish Creek.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSJT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KSJT 152059"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSJT.FF.W.0083.261015T2059Z-261016T0000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-15T19:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-15T23:00:30+00:00"
+}

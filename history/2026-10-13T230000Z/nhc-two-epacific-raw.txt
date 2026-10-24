@@ -1,0 +1,27 @@
+ABPZ20 KNHC 131705
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Tue Oct 13 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Simon, located about 100 miles west of Cabo Corrientes, Mexico, and 
+on newly formed Tropical Depression Twenty-One-E, located several 
+hundred miles south-southeast of Acapulco, Mexico.
+
+Tropical cyclone formation is not expected during the next 7 days.
+
+&&
+Public advisories on Tropical Depression Twenty-One-E are issued 
+under WMO header WTPZ31 KNHC and under AWIPS header MIATCPEP1. 
+Forecast/advisories on Tropical Depression Twenty-One-E are issued 
+under WMO header WTPZ21 KNHC and under AWIPS header MIATCMEP1.
+
+$$
+Forecaster Hagen
+
+

@@ -1,0 +1,68 @@
+[
+  {
+    "platform": "other",
+    "clean_sessions": 1,
+    "avg_blocked_ms": 16978,
+    "worst_blocked_ms": 16978,
+    "worst_single_event_ms": 0,
+    "avg_longtask_count": 30,
+    "avg_veil_lift_ms": 4197,
+    "avg_storms_ms": 4728,
+    "avg_lcp_ms": 2280
+  },
+  {
+    "platform": "linux",
+    "clean_sessions": 195,
+    "avg_blocked_ms": 9549,
+    "worst_blocked_ms": 183686,
+    "worst_single_event_ms": 9912,
+    "avg_longtask_count": 15,
+    "avg_veil_lift_ms": 2206,
+    "avg_storms_ms": 3783,
+    "avg_lcp_ms": 1116
+  },
+  {
+    "platform": "windows",
+    "clean_sessions": 377,
+    "avg_blocked_ms": 3440,
+    "worst_blocked_ms": 60768,
+    "worst_single_event_ms": 4368,
+    "avg_longtask_count": 22,
+    "avg_veil_lift_ms": 2284,
+    "avg_storms_ms": 2972,
+    "avg_lcp_ms": 1222
+  },
+  {
+    "platform": "macos",
+    "clean_sessions": 222,
+    "avg_blocked_ms": 1426,
+    "worst_blocked_ms": 56514,
+    "worst_single_event_ms": 8288,
+    "avg_longtask_count": 10,
+    "avg_veil_lift_ms": 814,
+    "avg_storms_ms": 1138,
+    "avg_lcp_ms": 533
+  },
+  {
+    "platform": "android",
+    "clean_sessions": 1140,
+    "avg_blocked_ms": 1216,
+    "worst_blocked_ms": 27263,
+    "worst_single_event_ms": 2072,
+    "avg_longtask_count": 11,
+    "avg_veil_lift_ms": 1604,
+    "avg_storms_ms": 2038,
+    "avg_lcp_ms": 1022
+  },
+  {
+    "platform": "ios",
+    "clean_sessions": 1833,
+    "avg_blocked_ms": 6,
+    "worst_blocked_ms": 6281,
+    "worst_single_event_ms": 18152,
+    "avg_longtask_count": 0,
+    "avg_veil_lift_ms": 1441,
+    "avg_storms_ms": 1981,
+    "avg_lcp_ms": 2190
+  }
+]

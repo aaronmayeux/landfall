@@ -1,0 +1,415 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee51771b7f39fc3642f77d6af490a05ead92ef09.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.ee51771b7f39fc3642f77d6af490a05ead92ef09.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.ee51771b7f39fc3642f77d6af490a05ead92ef09.001.1",
+                "areaDesc": "McPherson; Marion; Chase; Reno; Harvey; Butler; Greenwood; Woodson; Allen; Kingman; Sedgwick",
+                "geocode": {
+                    "SAME": [
+                        "020113",
+                        "020115",
+                        "020017",
+                        "020155",
+                        "020079",
+                        "020015",
+                        "020073",
+                        "020207",
+                        "020001",
+                        "020095",
+                        "020173"
+                    ],
+                    "UGC": [
+                        "KSZ051",
+                        "KSZ052",
+                        "KSZ053",
+                        "KSZ067",
+                        "KSZ068",
+                        "KSZ069",
+                        "KSZ070",
+                        "KSZ071",
+                        "KSZ072",
+                        "KSZ082",
+                        "KSZ083"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/KSZ051",
+                    "https://api.weather.gov/zones/forecast/KSZ052",
+                    "https://api.weather.gov/zones/forecast/KSZ053",
+                    "https://api.weather.gov/zones/forecast/KSZ067",
+                    "https://api.weather.gov/zones/forecast/KSZ068",
+                    "https://api.weather.gov/zones/forecast/KSZ069",
+                    "https://api.weather.gov/zones/forecast/KSZ070",
+                    "https://api.weather.gov/zones/forecast/KSZ071",
+                    "https://api.weather.gov/zones/forecast/KSZ072",
+                    "https://api.weather.gov/zones/forecast/KSZ082",
+                    "https://api.weather.gov/zones/forecast/KSZ083"
+                ],
+                "references": [],
+                "sent": "2026-10-13T02:15:00-05:00",
+                "effective": "2026-10-13T02:15:00-05:00",
+                "onset": "2026-10-13T17:00:00-05:00",
+                "expires": "2026-10-13T19:00:00-05:00",
+                "ends": "2026-10-14T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Wichita KS",
+                "headline": "Flood Watch issued October 13 at 2:15AM CDT until October 14 at 10:00AM CDT by NWS Wichita KS",
+                "description": "* WHAT...Localized flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of central, east central, south central, and\nsoutheast Kansas, including the following counties, in central\nKansas, Marion and McPherson. In east central Kansas, Chase. In\nsouth central Kansas, Butler, Harvey, Kingman, Reno and Sedgwick.\nIn southeast Kansas, Allen, Greenwood and Woodson.\n\n* WHEN...From late this afternoon through mid-morning Wednesday.\n\n* IMPACTS...Excessive runoff may result in localized flooding of\nrivers, creeks, streams, city streets, underpasses, and other\nlow-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Scattered to numerous thunderstorms with high rainfall rates are\nexpected to move east to northeast across the same areas late\nthis afternoon through tonight. Areas of heavy rainfall are\nexpected, which could lead to localized flooding concerns.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAICT"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KICT 130715"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM LATE THIS AFTERNOON THROUGH MID-MORNING WEDNESDAY"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KICT.FA.A.0008.261013T2200Z-261014T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T10:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.092656327250db56f1d0a408fa7b8b0573ac0d73.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.092656327250db56f1d0a408fa7b8b0573ac0d73.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.092656327250db56f1d0a408fa7b8b0573ac0d73.001.1",
+                "areaDesc": "Miami; Linn; Cass; Johnson; Pettis; Bates; Henry",
+                "geocode": {
+                    "SAME": [
+                        "020121",
+                        "020107",
+                        "029037",
+                        "029101",
+                        "029159",
+                        "029013",
+                        "029083"
+                    ],
+                    "UGC": [
+                        "KSZ057",
+                        "KSZ060",
+                        "MOZ043",
+                        "MOZ044",
+                        "MOZ045",
+                        "MOZ053",
+                        "MOZ054"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/KSZ057",
+                    "https://api.weather.gov/zones/forecast/KSZ060",
+                    "https://api.weather.gov/zones/forecast/MOZ043",
+                    "https://api.weather.gov/zones/forecast/MOZ044",
+                    "https://api.weather.gov/zones/forecast/MOZ045",
+                    "https://api.weather.gov/zones/forecast/MOZ053",
+                    "https://api.weather.gov/zones/forecast/MOZ054"
+                ],
+                "references": [],
+                "sent": "2026-10-13T02:05:00-05:00",
+                "effective": "2026-10-13T02:05:00-05:00",
+                "onset": "2026-10-13T19:00:00-05:00",
+                "expires": "2026-10-13T10:15:00-05:00",
+                "ends": "2026-10-14T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Kansas City/Pleasant Hill MO",
+                "headline": "Flood Watch issued October 13 at 2:05AM CDT until October 14 at 10:00AM CDT by NWS Kansas City/Pleasant Hill MO",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...Portions of east central Kansas, including the following\nareas, Linn KS and Miami and Missouri, including the following\nareas, Bates, Cass, Henry, Johnson MO and Pettis.\n\n* WHEN...From this evening through Wednesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Heavy rainfall possible this evening into Wednesday morning.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAEAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KEAX 130705"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM THIS EVENING THROUGH WEDNESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KEAX.FA.A.0018.261014T0000Z-261014T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T10:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3bbb3938ef5cd787b6ac709fa93c58d35085dc3d.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.3bbb3938ef5cd787b6ac709fa93c58d35085dc3d.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.3bbb3938ef5cd787b6ac709fa93c58d35085dc3d.001.1",
+                "areaDesc": "Bourbon; Benton; Morgan; Vernon; St. Clair",
+                "geocode": {
+                    "SAME": [
+                        "020011",
+                        "029015",
+                        "029141",
+                        "029217",
+                        "029185"
+                    ],
+                    "UGC": [
+                        "KSZ073",
+                        "MOZ055",
+                        "MOZ056",
+                        "MOZ066",
+                        "MOZ067"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/KSZ073",
+                    "https://api.weather.gov/zones/forecast/MOZ055",
+                    "https://api.weather.gov/zones/forecast/MOZ056",
+                    "https://api.weather.gov/zones/forecast/MOZ066",
+                    "https://api.weather.gov/zones/forecast/MOZ067"
+                ],
+                "references": [],
+                "sent": "2026-10-13T01:49:00-05:00",
+                "effective": "2026-10-13T01:49:00-05:00",
+                "onset": "2026-10-13T22:00:00-05:00",
+                "expires": "2026-10-14T02:00:00-05:00",
+                "ends": "2026-10-14T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Springfield MO",
+                "headline": "Flood Watch issued October 13 at 1:49AM CDT until October 14 at 10:00AM CDT by NWS Springfield MO",
+                "description": "* WHAT...Forecast rainfall totals up to 2 to 4 inches.\n\n* WHERE...Portions of southeast Kansas, including the following area,\nBourbon and Missouri, including the following areas, Benton,\nMorgan, St. Clair and Vernon.\n\n* WHEN...From this evening through Wednesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Flooding caused by excessive rainfall is possible.\n- http://www.weather.gov/safety/flood",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFASGF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KSGF 130649"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM THIS EVENING THROUGH WEDNESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KSGF.FA.A.0013.261014T0300Z-261014T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T10:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.da3a64adaff188a3a9bec4442efb4fd5f00e2513.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.da3a64adaff188a3a9bec4442efb4fd5f00e2513.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.da3a64adaff188a3a9bec4442efb4fd5f00e2513.001.1",
+                "areaDesc": "Morris; Wabaunsee; Shawnee; Douglas; Lyon; Osage; Franklin; Coffey; Anderson",
+                "geocode": {
+                    "SAME": [
+                        "020127",
+                        "020197",
+                        "020177",
+                        "020045",
+                        "020111",
+                        "020139",
+                        "020059",
+                        "020031",
+                        "020003"
+                    ],
+                    "UGC": [
+                        "KSZ037",
+                        "KSZ038",
+                        "KSZ039",
+                        "KSZ040",
+                        "KSZ054",
+                        "KSZ055",
+                        "KSZ056",
+                        "KSZ058",
+                        "KSZ059"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/KSZ037",
+                    "https://api.weather.gov/zones/forecast/KSZ038",
+                    "https://api.weather.gov/zones/forecast/KSZ039",
+                    "https://api.weather.gov/zones/forecast/KSZ040",
+                    "https://api.weather.gov/zones/forecast/KSZ054",
+                    "https://api.weather.gov/zones/forecast/KSZ055",
+                    "https://api.weather.gov/zones/forecast/KSZ056",
+                    "https://api.weather.gov/zones/forecast/KSZ058",
+                    "https://api.weather.gov/zones/forecast/KSZ059"
+                ],
+                "references": [],
+                "sent": "2026-10-13T01:31:00-05:00",
+                "effective": "2026-10-13T01:31:00-05:00",
+                "onset": "2026-10-13T17:00:00-05:00",
+                "expires": "2026-10-13T16:00:00-05:00",
+                "ends": "2026-10-14T10:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flood Watch issued October 13 at 1:31AM CDT until October 14 at 10:00AM CDT by NWS Topeka KS",
+                "description": "* WHAT...Flooding caused by excessive rainfall is possible.\n\n* WHERE...A portion of east central Kansas, including the following\ncounties, Anderson, Coffey, Douglas, Franklin, Lyon, Morris, Osage,\nShawnee and Wabaunsee.\n\n* WHEN...From this afternoon through Wednesday morning.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Thunderstorms are expected to develop in a very moist environment\nby this evening. This is expected to allow storms to be efficient\nrainfall producers with rain rates around 2 inches per hour.\n\nThe watch may need to be extended into Thursday if additional\nrounds of heavy rainfall become apparent.",
+                "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFATOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS63 KTOP 130631"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH IN EFFECT FROM THIS AFTERNOON THROUGH WEDNESDAY MORNING"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FA.A.0011.261013T2200Z-261014T1500Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-14T10:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-13T10:23:50+00:00"
+}

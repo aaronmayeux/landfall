@@ -1,0 +1,290 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f0c5189602301f4ba8e8872c4bbd98e8c0b255f2.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -112.9,
+                            37.14
+                        ],
+                        [
+                            -113.13,
+                            37.13
+                        ],
+                        [
+                            -113.15,
+                            37.44
+                        ],
+                        [
+                            -112.8,
+                            37.42
+                        ],
+                        [
+                            -112.7,
+                            37.14
+                        ],
+                        [
+                            -112.9,
+                            37.14
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.f0c5189602301f4ba8e8872c4bbd98e8c0b255f2.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.f0c5189602301f4ba8e8872c4bbd98e8c0b255f2.001.1",
+                "areaDesc": "Kane, UT; Washington, UT",
+                "geocode": {
+                    "SAME": [
+                        "049025",
+                        "049053"
+                    ],
+                    "UGC": [
+                        "UTC025",
+                        "UTC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC025",
+                    "https://api.weather.gov/zones/county/UTC053"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.22cb7dd3848ba98b2a2726aa75c8a2596106c012.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.22cb7dd3848ba98b2a2726aa75c8a2596106c012.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-11T17:54:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-11T19:55:00-06:00",
+                "effective": "2026-10-11T19:55:00-06:00",
+                "onset": "2026-10-11T19:55:00-06:00",
+                "expires": "2026-10-11T22:00:00-06:00",
+                "ends": "2026-10-11T22:00:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued October 11 at 7:55PM MDT until October 11 at 10:00PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nWest Central Kane County in southern Utah...\nEast Central Washington County in southwestern Utah...\n\n* Until 1000 PM MDT.\n\n* At 755 PM MDT, National Park Service officials reported\nthunderstorms producing heavy rain and flash flooding across Zion\nNational Park. Between 0.5 and 1.5 inches of rain have fallen, with\nlittle additional rainfall expected. Flash flooding is already\noccurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...National Park Service reported.\n\nIMPACT...Life threatening flash flooding of creeks, streams, slot\ncanyons, and normally dry washes.\n\n* Some locations that will experience flash flooding include...\nZion National Park, Springdale and Rockville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 120155"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0144.000000T0000Z-261012T0400Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-11T22:00:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.8e2944d3ea8e200b6030a23df48716b466be4d81.001.1,2026-10-11T14:59:00-06:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 10:00 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 10:00 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.70c94b643686dfec9ee3a7bdade8d63778f1c3ad.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -113.31,
+                            37.44
+                        ],
+                        [
+                            -113.36,
+                            37.51
+                        ],
+                        [
+                            -113.5,
+                            37.48
+                        ],
+                        [
+                            -113.64,
+                            37.43
+                        ],
+                        [
+                            -113.63,
+                            37.31
+                        ],
+                        [
+                            -113.51,
+                            37.26
+                        ],
+                        [
+                            -113.41,
+                            37.27
+                        ],
+                        [
+                            -113.29,
+                            37.38
+                        ],
+                        [
+                            -113.31,
+                            37.44
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.70c94b643686dfec9ee3a7bdade8d63778f1c3ad.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.70c94b643686dfec9ee3a7bdade8d63778f1c3ad.001.1",
+                "areaDesc": "Washington, UT",
+                "geocode": {
+                    "SAME": [
+                        "049053"
+                    ],
+                    "UGC": [
+                        "UTC053"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/UTC053"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.19dfdee8e929eb48bb49f802bee489c6eb27b210.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.19dfdee8e929eb48bb49f802bee489c6eb27b210.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-11T15:10:00-06:00"
+                    }
+                ],
+                "sent": "2026-10-11T18:04:00-06:00",
+                "effective": "2026-10-11T18:04:00-06:00",
+                "onset": "2026-10-11T18:04:00-06:00",
+                "expires": "2026-10-11T21:15:00-06:00",
+                "ends": "2026-10-11T21:15:00-06:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Salt Lake City UT",
+                "headline": "Flash Flood Warning issued October 11 at 6:04PM MDT until October 11 at 9:15PM MDT by NWS Salt Lake City UT",
+                "description": "FFWSLC\n\nThe National Weather Service in Salt Lake City has extended the\n\n* Flash Flood Warning for...\nThe Forsyth burn scar in...\nCentral Washington County in southwestern Utah...\n\n* Until 915 PM MDT.\n\n* At 604 PM MDT, Emergency management reported heavy rain over the\nForsyth Burn Scar and flooding in Pine Valley. Additionally, river\ngauges remain high along the Santa Clara River above Baker\nReservoir. Between 1.50 and 3 inches of rain have fallen. Flash\nflooding is ongoing. Excessive rainfall over the burn scar will\nresult in debris flow. The debris flow can consist of rock, mud,\nvegetation and other loose materials.\n\nHAZARD...Life threatening flash flooding. Heavy rain producing\nflash flooding in and around the Forsyth Burn Scar.\n\nSOURCE...Emergency management reported.\n\nIMPACT...Life threatening flash flooding of areas in and around the\nForsyth Burn Scar.\n\n* Some locations that will experience flash flooding include...\nPine Valley.\n\nThis includes Utah Route 18 between mile markers 26 and 27.",
+                "instruction": "This is a life threatening situation. Heavy rainfall will cause\nextensive and severe flash flooding of creeks...streams...and ditches\nin the Forsyth Burn Scar. Severe debris flows can also be anticipated\nacross roads. Roads and driveways may be washed away in places. If\nyou encounter flood waters...climb to safety.\n\nBe aware of your surroundings and do not drive on flooded roads.\n\nFlooding is occurring or is imminent. It is important to know where\nyou are relative to streams, rivers, or creeks which can become\nkillers in heavy rains. Campers and hikers should avoid streams or\ncreeks.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWSLC"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS55 KSLC 120004"
+                    ],
+                    "flashFloodDetection": [
+                        "OBSERVED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.EXT.KSLC.FF.W.0142.000000T0000Z-261012T0315Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-11T21:15:00-06:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.7e87a93a08b3164797fb0ade9a8bb1ce127dc662.001.1,2026-10-11T13:55:00-06:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.ddcb8e3a878f051934ed2c7b88b40225177e2036.001.1,2026-10-11T12:18:00-06:00"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 9:15 PM MDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 9:15 PM MDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-12T02:13:38+00:00"
+}

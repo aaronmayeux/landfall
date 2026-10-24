@@ -1,0 +1,1301 @@
+{
+    "@context": {
+        "@version": "1.1"
+    },
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ017",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ017",
+                "@type": "wx:Zone",
+                "id": "COZ017",
+                "type": "public",
+                "name": "Uncompahgre Plateau/Dallas Divide",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CMEC2",
+                    "https://api.weather.gov/stations/CPSC2",
+                    "https://api.weather.gov/stations/D6226",
+                    "https://api.weather.gov/stations/JCRC2",
+                    "https://api.weather.gov/stations/KAJZ",
+                    "https://api.weather.gov/stations/KGJT",
+                    "https://api.weather.gov/stations/KMTJ",
+                    "https://api.weather.gov/stations/LDRC2"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ018",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ018",
+                "@type": "wx:Zone",
+                "id": "COZ018",
+                "type": "public",
+                "name": "Northwestern San Juan Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CAMLP",
+                    "https://api.weather.gov/stations/D6226",
+                    "https://api.weather.gov/stations/HMEC2",
+                    "https://api.weather.gov/stations/KTEX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ019",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ019",
+                "@type": "wx:Zone",
+                "id": "COZ019",
+                "type": "public",
+                "name": "Southwest San Juan Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/BBRC2",
+                    "https://api.weather.gov/stations/CAMLP",
+                    "https://api.weather.gov/stations/KCPW",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KMTJ",
+                    "https://api.weather.gov/stations/KPSO",
+                    "https://api.weather.gov/stations/RMPC2",
+                    "https://api.weather.gov/stations/SAWC2"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ020",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ020",
+                "@type": "wx:Zone",
+                "id": "COZ020",
+                "type": "public",
+                "name": "Paradox Valley/Lower Dolores River",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CPTC2",
+                    "https://api.weather.gov/stations/CSU89",
+                    "https://api.weather.gov/stations/KAIB",
+                    "https://api.weather.gov/stations/KMTJ",
+                    "https://api.weather.gov/stations/KTEX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ021",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ021",
+                "@type": "wx:Zone",
+                "id": "COZ021",
+                "type": "public",
+                "name": "Four Corners/Upper Dolores River",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CAMLP",
+                    "https://api.weather.gov/stations/KCEZ",
+                    "https://api.weather.gov/stations/KCPW",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KPSO",
+                    "https://api.weather.gov/stations/KTEX",
+                    "https://api.weather.gov/stations/MOKC2"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ022",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ022",
+                "@type": "wx:Zone",
+                "id": "COZ022",
+                "type": "public",
+                "name": "Animas River Basin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CAMLP",
+                    "https://api.weather.gov/stations/CO058",
+                    "https://api.weather.gov/stations/KCPW",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KPSO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/COZ023",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/COZ023",
+                "@type": "wx:Zone",
+                "id": "COZ023",
+                "type": "public",
+                "name": "San Juan River Basin",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "CO",
+                "forecastOffice": "https://api.weather.gov/offices/GJT",
+                "gridIdentifier": "GJT",
+                "awipsLocationIdentifier": "GJT",
+                "cwa": [
+                    "GJT"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/GJT"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/CAMLP",
+                    "https://api.weather.gov/stations/CO054",
+                    "https://api.weather.gov/stations/DYKC2",
+                    "https://api.weather.gov/stations/KCEZ",
+                    "https://api.weather.gov/stations/KCPW",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KPSO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ201",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ201",
+                "@type": "wx:Zone",
+                "id": "NMZ201",
+                "type": "public",
+                "name": "Northwest Plateau",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCEZ",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KPSO"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ203",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ203",
+                "@type": "wx:Zone",
+                "id": "NMZ203",
+                "type": "public",
+                "name": "Far Northwest Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFMN",
+                    "https://api.weather.gov/stations/KLAM",
+                    "https://api.weather.gov/stations/KSKX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ204",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ204",
+                "@type": "wx:Zone",
+                "id": "NMZ204",
+                "type": "public",
+                "name": "Northwest Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KFMN",
+                    "https://api.weather.gov/stations/KGNT"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ210",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ210",
+                "@type": "wx:Zone",
+                "id": "NMZ210",
+                "type": "public",
+                "name": "Tusas Mountains Including Chama",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCPW",
+                    "https://api.weather.gov/stations/KDRO",
+                    "https://api.weather.gov/stations/KPSO",
+                    "https://api.weather.gov/stations/KSKX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ211",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ211",
+                "@type": "wx:Zone",
+                "id": "NMZ211",
+                "type": "public",
+                "name": "Jemez Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KGNT",
+                    "https://api.weather.gov/stations/KSAF",
+                    "https://api.weather.gov/stations/KSKX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ212",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ212",
+                "@type": "wx:Zone",
+                "id": "NMZ212",
+                "type": "public",
+                "name": "Glorieta Mesa Including Glorieta Pass",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCQC",
+                    "https://api.weather.gov/stations/KLVS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ213",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ213",
+                "@type": "wx:Zone",
+                "id": "NMZ213",
+                "type": "public",
+                "name": "Northern Sangre de Cristo Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KLVS",
+                    "https://api.weather.gov/stations/KRTN",
+                    "https://api.weather.gov/stations/KSKX",
+                    "https://api.weather.gov/stations/KTAD",
+                    "https://api.weather.gov/stations/KVTP"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ214",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ214",
+                "@type": "wx:Zone",
+                "id": "NMZ214",
+                "type": "public",
+                "name": "Southern Sangre de Cristo Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KLVS",
+                    "https://api.weather.gov/stations/KSAF",
+                    "https://api.weather.gov/stations/KSKX"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ215",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ215",
+                "@type": "wx:Zone",
+                "id": "NMZ215",
+                "type": "public",
+                "name": "East Slopes Sangre de Cristo Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KCQC",
+                    "https://api.weather.gov/stations/KLVS",
+                    "https://api.weather.gov/stations/KRTN",
+                    "https://api.weather.gov/stations/KTAD"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ216",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ216",
+                "@type": "wx:Zone",
+                "id": "NMZ216",
+                "type": "public",
+                "name": "Upper Rio Grande Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ217",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ217",
+                "@type": "wx:Zone",
+                "id": "NMZ217",
+                "type": "public",
+                "name": "Espanola Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ218",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ218",
+                "@type": "wx:Zone",
+                "id": "NMZ218",
+                "type": "public",
+                "name": "Santa Fe Metro Area",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ219",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ219",
+                "@type": "wx:Zone",
+                "id": "NMZ219",
+                "type": "public",
+                "name": "Middle Rio Grande Valley/Albuquerque Metro Area",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ221",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ221",
+                "@type": "wx:Zone",
+                "id": "NMZ221",
+                "type": "public",
+                "name": "Sandia/Manzano Mountains Including Edgewood",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ222",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ222",
+                "@type": "wx:Zone",
+                "id": "NMZ222",
+                "type": "public",
+                "name": "Estancia Valley",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ223",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ223",
+                "@type": "wx:Zone",
+                "id": "NMZ223",
+                "type": "public",
+                "name": "Central Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ224",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ224",
+                "@type": "wx:Zone",
+                "id": "NMZ224",
+                "type": "public",
+                "name": "South Central Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ226",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ226",
+                "@type": "wx:Zone",
+                "id": "NMZ226",
+                "type": "public",
+                "name": "South Central Mountains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ227",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ227",
+                "@type": "wx:Zone",
+                "id": "NMZ227",
+                "type": "public",
+                "name": "Johnson and Bartlett Mesas Including Raton Pass",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ228",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ228",
+                "@type": "wx:Zone",
+                "id": "NMZ228",
+                "type": "public",
+                "name": "Far Northeast Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ229",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ229",
+                "@type": "wx:Zone",
+                "id": "NMZ229",
+                "type": "public",
+                "name": "Northeast Highlands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ232",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ232",
+                "@type": "wx:Zone",
+                "id": "NMZ232",
+                "type": "public",
+                "name": "Eastern San Miguel County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ233",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ233",
+                "@type": "wx:Zone",
+                "id": "NMZ233",
+                "type": "public",
+                "name": "Guadalupe County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ237",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ237",
+                "@type": "wx:Zone",
+                "id": "NMZ237",
+                "type": "public",
+                "name": "De Baca County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ238",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ238",
+                "@type": "wx:Zone",
+                "id": "NMZ238",
+                "type": "public",
+                "name": "Chaves County Plains",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ239",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ239",
+                "@type": "wx:Zone",
+                "id": "NMZ239",
+                "type": "public",
+                "name": "Eastern Lincoln County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ240",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ240",
+                "@type": "wx:Zone",
+                "id": "NMZ240",
+                "type": "public",
+                "name": "Southwest Chaves County",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/ABQ",
+                "gridIdentifier": "ABQ",
+                "awipsLocationIdentifier": "ABQ",
+                "cwa": [
+                    "ABQ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/ABQ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ414",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ414",
+                "@type": "wx:Zone",
+                "id": "NMZ414",
+                "type": "public",
+                "name": "West Slopes Sacramento Mountains Below 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSRR",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ415",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ415",
+                "@type": "wx:Zone",
+                "id": "NMZ415",
+                "type": "public",
+                "name": "Sacramento Mountains Above 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KALM",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ416",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ416",
+                "@type": "wx:Zone",
+                "id": "NMZ416",
+                "type": "public",
+                "name": "East Slopes Sacramento Mountains Below 7500 Feet",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KALM",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ417",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ417",
+                "@type": "wx:Zone",
+                "id": "NMZ417",
+                "type": "public",
+                "name": "Otero Mesa",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [
+                    "https://api.weather.gov/stations/KABQ",
+                    "https://api.weather.gov/stations/KDMN",
+                    "https://api.weather.gov/stations/KELP",
+                    "https://api.weather.gov/stations/KLRU",
+                    "https://api.weather.gov/stations/KMAF",
+                    "https://api.weather.gov/stations/KROW",
+                    "https://api.weather.gov/stations/KSRR",
+                    "https://api.weather.gov/stations/KSVC",
+                    "https://api.weather.gov/stations/KTCS",
+                    "https://api.weather.gov/stations/KTUS"
+                ],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ427",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ427",
+                "@type": "wx:Zone",
+                "id": "NMZ427",
+                "type": "public",
+                "name": "West Central Tularosa Basin/White Sands",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        },
+        {
+            "id": "https://api.weather.gov/zones/forecast/NMZ428",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/zones/forecast/NMZ428",
+                "@type": "wx:Zone",
+                "id": "NMZ428",
+                "type": "public",
+                "name": "East Central Tularosa Basin/Alamogordo",
+                "effectiveDate": "2026-04-16T18:00:00+00:00",
+                "expirationDate": "2200-01-01T00:00:00+00:00",
+                "state": "NM",
+                "forecastOffice": "https://api.weather.gov/offices/EPZ",
+                "gridIdentifier": "EPZ",
+                "awipsLocationIdentifier": "EPZ",
+                "cwa": [
+                    "EPZ"
+                ],
+                "forecastOffices": [
+                    "https://api.weather.gov/offices/EPZ"
+                ],
+                "timeZone": [
+                    "America/Denver"
+                ],
+                "observationStations": [],
+                "radarStation": null
+            }
+        }
+    ]
+}

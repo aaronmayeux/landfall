@@ -1,0 +1,27 @@
+ABPZ20 KNHC 181734
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 AM PDT Sun Oct 18 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Hurricane 
+Trudy, located offshore of southwestern Mexico.
+
+South of Southern Mexico:
+An area of low pressure is forecast to form well offshore of 
+southern Mexico during the next day or two. Environmental 
+conditions appear conducive for gradual development thereafter, and 
+a tropical depression is likely to form around the middle of this 
+week while it moves westward to west-northwestward, well south of 
+Mexico. 
+* Formation chance through 48 hours...low...near 0 percent. 
+* Formation chance through 7 days...high...90 percent.
+
+$$
+Forecaster Adams
+
+

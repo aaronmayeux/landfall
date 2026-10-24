@@ -1,0 +1,32 @@
+ABNT20 KNHC 171735
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 PM EDT Sat Oct 17 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Off the East Coast of the United States:
+A strong non-tropical low pressure area is expected to form during 
+the next day or two off of the eastern coast of the United States. 
+This low is likely to move slowly and erratically through the middle 
+of next week, and some subtropical development is possible during 
+this time. Regardless of whether subtropical development occurs, 
+this system will cause high winds, coastal flooding, and dangerous 
+surf along portions of the U.S. East Coast. Please consult 
+statements and warnings from local National Weather Service offices 
+and the Weather Prediction Center for more information, along with 
+High Seas Forecasts issued by the National Weather Service.
+* Formation chance through 48 hours...low...near 0 percent.
+* Formation chance through 7 days...low...20 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFAT1, WMO header FZNT01 
+KWBC, and online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Beven
+
+
