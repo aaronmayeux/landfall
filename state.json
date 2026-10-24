@@ -192,10 +192,10 @@
     "sha256": "50d496753e426f007f9ebdb31af1ba343f2dcf262e00e608acc7139b49e26a29"
   },
   "btk/2026/bep222026.dat": {
-    "etag": "\"1b47-65e8b65724007\"",
-    "lastModified": "Sat, 24 Oct 2026 00:44:15 GMT",
-    "bytes": 6983,
-    "sha256": "206b8332eed3e297e8bf26961459fb28ec3cb2638dcbfcbaf44a7ce7990bb32d"
+    "etag": "\"1dcf-65e907b82aff3\"",
+    "lastModified": "Sat, 24 Oct 2026 06:48:20 GMT",
+    "bytes": 7631,
+    "sha256": "416c279ce0ca87281f58fd9aa64eb4deb7c214c31492ad99629cd678de68400d"
   },
   "btk/2026/bal102026.dat": {
     "etag": "\"13d3-65e73d32b4a40\"",
