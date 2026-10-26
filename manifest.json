@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-10-25T22:39:32.375Z",
+  "runAt": "2026-10-26T01:20:49.660Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -26,7 +26,7 @@
         "btk/2026/bal102026.dat": "unchanged (304)",
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
-        "btk/2026/bcp032026.dat": "stored 1583 bytes",
+        "btk/2026/bcp032026.dat": "stored 1799 bytes",
         "btk/2026/bep012026.dat": "unchanged (304)",
         "btk/2026/bep022026.dat": "unchanged (304)",
         "btk/2026/bep032026.dat": "unchanged (304)",
@@ -48,20 +48,16 @@
         "btk/2026/bep192026.dat": "unchanged (304)",
         "btk/2026/bep202026.dat": "unchanged (304)",
         "btk/2026/bep212026.dat": "unchanged (304)",
-        "btk/2026/bep222026.dat": "stored 11303 bytes"
+        "btk/2026/bep222026.dat": "stored 11735 bytes"
       }
     },
     "jtwc": {
-      "status": "ok",
-      "storms": 4,
-      "linesAdded": 3,
-      "files": {
-        "jtwc/2026/cp0326.jsonl": "+1",
-        "jtwc/2026/ep2226.jsonl": "+1",
-        "jtwc/2026/wp2926.jsonl": "already held",
-        "jtwc/2026/wp3026.jsonl": "+1"
-      },
-      "faults": []
+      "status": "unavailable",
+      "storms": 0,
+      "linesAdded": 0,
+      "files": {},
+      "faults": [],
+      "reason": "relay reported state \"partial\""
     }
   }
 }
