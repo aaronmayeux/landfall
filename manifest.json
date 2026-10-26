@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-10-26T07:55:17.286Z",
+  "runAt": "2026-10-26T15:17:42.884Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -26,7 +26,7 @@
         "btk/2026/bal102026.dat": "unchanged (304)",
         "btk/2026/bcp012026.dat": "unchanged (304)",
         "btk/2026/bcp022026.dat": "unchanged (304)",
-        "btk/2026/bcp032026.dat": "stored 2015 bytes",
+        "btk/2026/bcp032026.dat": "stored 2231 bytes",
         "btk/2026/bep012026.dat": "unchanged (304)",
         "btk/2026/bep022026.dat": "unchanged (304)",
         "btk/2026/bep032026.dat": "unchanged (304)",
@@ -48,7 +48,7 @@
         "btk/2026/bep192026.dat": "unchanged (304)",
         "btk/2026/bep202026.dat": "unchanged (304)",
         "btk/2026/bep212026.dat": "unchanged (304)",
-        "btk/2026/bep222026.dat": "stored 12167 bytes"
+        "btk/2026/bep222026.dat": "stored 12599 bytes"
       }
     },
     "jtwc": {
