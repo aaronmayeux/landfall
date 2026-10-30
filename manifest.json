@@ -1,12 +1,12 @@
 {
-  "runAt": "2026-10-30T08:45:42.828Z",
+  "runAt": "2026-10-30T16:01:24.952Z",
   "sources": {
     "btk": {
       "status": "ok",
       "listed": 36,
       "eligible": 35,
-      "stored": 1,
-      "unchanged": 34,
+      "stored": 0,
+      "unchanged": 35,
       "failed": 0,
       "skipped": [
         "bcp942026.dat — invest — number is reused within a season"
@@ -46,7 +46,7 @@
         "btk/2026/bep192026.dat": "unchanged (304)",
         "btk/2026/bep202026.dat": "unchanged (304)",
         "btk/2026/bep212026.dat": "unchanged (304)",
-        "btk/2026/bep222026.dat": "stored 15839 bytes"
+        "btk/2026/bep222026.dat": "unchanged (304)"
       }
     },
     "jtwc": {
