@@ -1,16 +1,14 @@
 {
-  "runAt": "2026-10-30T16:01:24.952Z",
+  "runAt": "2026-10-30T20:53:48.799Z",
   "sources": {
     "btk": {
       "status": "ok",
-      "listed": 36,
+      "listed": 35,
       "eligible": 35,
       "stored": 0,
       "unchanged": 35,
       "failed": 0,
-      "skipped": [
-        "bcp942026.dat — invest — number is reused within a season"
-      ],
+      "skipped": [],
       "files": {
         "btk/2026/bal012026.dat": "unchanged (304)",
         "btk/2026/bal022026.dat": "unchanged (304)",
