@@ -1,5 +1,5 @@
 {
-  "runAt": "2026-10-30T02:01:25.530Z",
+  "runAt": "2026-10-30T08:45:42.828Z",
   "sources": {
     "btk": {
       "status": "ok",
@@ -51,10 +51,9 @@
     },
     "jtwc": {
       "status": "ok",
-      "storms": 2,
+      "storms": 1,
       "linesAdded": 1,
       "files": {
-        "jtwc/2026/ep2226.jsonl": "already held",
         "jtwc/2026/wp3026.jsonl": "+1"
       },
       "faults": []
