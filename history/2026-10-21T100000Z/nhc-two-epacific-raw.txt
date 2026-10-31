@@ -1,0 +1,30 @@
+ABPZ20 KNHC 210511
+TWOEP 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+1100 PM PDT Tue Oct 20 2026
+
+For the eastern and central North Pacific east of 180 longitude:
+
+South of Southern Mexico (EP94):
+A low-pressure system located a few hundred miles south of the Gulf 
+of Tehuantepec is producing a large area of showers and 
+thunderstorms that continue to show signs of organization, and a 
+tropical depression is likely to form within the next day or so. 
+This system is expected to move westward to west-northwestward at 
+around 10 mph during the next few days, remaining well offshore of 
+southern Mexico. For additional information, including Gale 
+Warnings, see the High Seas Forecast issued by the National Weather 
+Service.
+* Formation chance through 48 hours...high...90 percent. 
+* Formation chance through 7 days...high...90 percent.
+
+High Seas Forecasts issued by the National Weather Service
+can be found under AWIPS header NFDHSFEPI, WMO header FZPN02 
+KWBC, and on the web at ocean.weather.gov/shtml/NFDHSFEPI.php 
+
+$$
+Forecaster Pierce/Pasch
+
+

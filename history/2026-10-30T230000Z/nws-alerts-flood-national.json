@@ -1,0 +1,144 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2af237b30ca9425283b7e319274a6e6a04b4b0ad.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -114.79,
+                            35.12
+                        ],
+                        [
+                            -114.6,
+                            35.35
+                        ],
+                        [
+                            -114.39,
+                            35.21
+                        ],
+                        [
+                            -114.33,
+                            35.01
+                        ],
+                        [
+                            -114.58,
+                            34.96
+                        ],
+                        [
+                            -114.63,
+                            35
+                        ],
+                        [
+                            -114.79,
+                            35.12
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.2af237b30ca9425283b7e319274a6e6a04b4b0ad.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.2af237b30ca9425283b7e319274a6e6a04b4b0ad.001.1",
+                "areaDesc": "Mohave, AZ; Clark, NV",
+                "geocode": {
+                    "SAME": [
+                        "004015",
+                        "032003"
+                    ],
+                    "UGC": [
+                        "AZC015",
+                        "NVC003"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/AZC015",
+                    "https://api.weather.gov/zones/county/NVC003"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.83cbf996a8a054bf68ea387e2ebf7e3592b5e9b6.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.83cbf996a8a054bf68ea387e2ebf7e3592b5e9b6.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-30T14:53:00-07:00"
+                    }
+                ],
+                "sent": "2026-10-30T16:06:00-07:00",
+                "effective": "2026-10-30T16:06:00-07:00",
+                "onset": "2026-10-30T16:06:00-07:00",
+                "expires": "2026-10-30T17:45:00-07:00",
+                "ends": "2026-10-30T17:45:00-07:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Las Vegas NV",
+                "headline": "Flash Flood Warning issued October 30 at 4:06PM PDT until October 30 at 5:45PM PDT by NWS Las Vegas NV",
+                "description": "At 406 PM PDT /406 PM MST/, Doppler radar indicated thunderstorms\nproducing heavy rain across the warned area. Up to 2 inches of rain\nhave fallen. Flash flooding is ongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar indicated.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nBullhead City, Laughlin, Katherine Landing, Big Bend Rec Area,\nMesquite Creek, Oatman and Mohave Valley.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSVEF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS75 KVEF 302306"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 545 PM PDT /545 PM MST/ THIS AFTERNOON FOR WEST CENTRAL MOHAVE AND SOUTH CENTRAL CLARK COUNTIES"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KVEF.FF.W.0063.000000T0000Z-261031T0045Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T17:45:00-07:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFS"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-30T23:35:51+00:00"
+}

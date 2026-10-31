@@ -1,0 +1,989 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d25e41d5993dba0ad9bbb1c34346205a1a239dac.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -95.84,
+                            39.05
+                        ],
+                        [
+                            -95.78,
+                            38.94
+                        ],
+                        [
+                            -95.6,
+                            39.07
+                        ],
+                        [
+                            -95.71,
+                            39.12
+                        ],
+                        [
+                            -95.84,
+                            39.05
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d25e41d5993dba0ad9bbb1c34346205a1a239dac.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d25e41d5993dba0ad9bbb1c34346205a1a239dac.001.1",
+                "areaDesc": "Shawnee, KS",
+                "geocode": {
+                    "SAME": [
+                        "020177"
+                    ],
+                    "UGC": [
+                        "KSC177"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC177"
+                ],
+                "references": [],
+                "sent": "2026-10-30T01:29:00-05:00",
+                "effective": "2026-10-30T01:29:00-05:00",
+                "onset": "2026-10-30T01:29:00-05:00",
+                "expires": "2026-10-30T04:30:00-05:00",
+                "ends": "2026-10-30T04:30:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 30 at 1:29AM CDT until October 30 at 4:30AM CDT by NWS Topeka KS",
+                "description": "FFWTOP\n\nThe National Weather Service in Topeka has issued a\n\n* Flash Flood Warning for...\nCentral Shawnee County in east central Kansas...\n\n* Until 430 AM CDT.\n\n* At 129 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 1 and 2 inches of rain\nhave fallen. Additional rainfall amounts of 0.5 to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nTopeka.\n\nThis includes Interstate 70 between mile markers 353 and 355.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KTOP 300629"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FF.W.0050.261030T0629Z-261030T0930Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T04:30:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.031e0c7d3960582dd70dee14dc57481793a50898.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.01,
+                            40
+                        ],
+                        [
+                            -96.01,
+                            40.02
+                        ],
+                        [
+                            -95.94,
+                            40.07
+                        ],
+                        [
+                            -95.81,
+                            40.07
+                        ],
+                        [
+                            -95.81,
+                            40.03
+                        ],
+                        [
+                            -95.85,
+                            40
+                        ],
+                        [
+                            -96.01,
+                            40
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.031e0c7d3960582dd70dee14dc57481793a50898.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.031e0c7d3960582dd70dee14dc57481793a50898.001.1",
+                "areaDesc": "Richardson, NE",
+                "geocode": {
+                    "SAME": [
+                        "031147"
+                    ],
+                    "UGC": [
+                        "NEC147"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/NEC147"
+                ],
+                "references": [],
+                "sent": "2026-10-30T01:19:00-05:00",
+                "effective": "2026-10-30T01:19:00-05:00",
+                "onset": "2026-10-30T01:19:00-05:00",
+                "expires": "2026-10-30T04:15:00-05:00",
+                "ends": "2026-10-30T04:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Omaha/Valley NE",
+                "headline": "Flash Flood Warning issued October 30 at 1:19AM CDT until October 30 at 4:15AM CDT by NWS Omaha/Valley NE",
+                "description": "FFWOAX\n\nThe National Weather Service in Omaha/Valley has issued a\n\n* Flash Flood Warning for...\nSouthwestern Richardson County in southeastern Nebraska...\n\n* Until 415 AM CDT.\n\n* At 119 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2 and 4 inches of rain\nhave fallen. Additional rainfall amounts up to 0.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, highways,\nstreets and underpasses as well as other poor drainage and\nlow-lying areas.\n\n* Some locations that will experience flash flooding include...\nCamp Cornhusker and The Highway 75 And 8 Junction.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWOAX"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KOAX 300619"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KOAX.FF.W.0051.261030T0619Z-261030T0915Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T04:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0cfed961fca00e586e9e4168fb8f3efc96b3be90.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -103.78,
+                            29.23
+                        ],
+                        [
+                            -103.79,
+                            29.42
+                        ],
+                        [
+                            -103.78,
+                            29.94
+                        ],
+                        [
+                            -103.2,
+                            29.89
+                        ],
+                        [
+                            -103.35,
+                            29.03
+                        ],
+                        [
+                            -103.39,
+                            29.02
+                        ],
+                        [
+                            -103.39,
+                            29.03
+                        ],
+                        [
+                            -103.43,
+                            29.04
+                        ],
+                        [
+                            -103.45,
+                            29.07
+                        ],
+                        [
+                            -103.47,
+                            29.07
+                        ],
+                        [
+                            -103.47,
+                            29.08
+                        ],
+                        [
+                            -103.52,
+                            29.12
+                        ],
+                        [
+                            -103.55,
+                            29.16
+                        ],
+                        [
+                            -103.58,
+                            29.15
+                        ],
+                        [
+                            -103.61,
+                            29.17
+                        ],
+                        [
+                            -103.65,
+                            29.16
+                        ],
+                        [
+                            -103.66,
+                            29.17
+                        ],
+                        [
+                            -103.72,
+                            29.18
+                        ],
+                        [
+                            -103.76,
+                            29.23
+                        ],
+                        [
+                            -103.77,
+                            29.22
+                        ],
+                        [
+                            -103.78,
+                            29.23
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.0cfed961fca00e586e9e4168fb8f3efc96b3be90.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.0cfed961fca00e586e9e4168fb8f3efc96b3be90.001.1",
+                "areaDesc": "Brewster, TX",
+                "geocode": {
+                    "SAME": [
+                        "048043"
+                    ],
+                    "UGC": [
+                        "TXC043"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/TXC043"
+                ],
+                "references": [],
+                "sent": "2026-10-30T01:04:00-05:00",
+                "effective": "2026-10-30T01:04:00-05:00",
+                "onset": "2026-10-30T01:04:00-05:00",
+                "expires": "2026-10-30T04:00:00-05:00",
+                "ends": "2026-10-30T04:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Midland/Odessa TX",
+                "headline": "Flash Flood Warning issued October 30 at 1:04AM CDT until October 30 at 4:00AM CDT by NWS Midland/Odessa TX",
+                "description": "FFWMAF\n\nThe National Weather Service in Midland/Odessa has issued a\n\n* Flash Flood Warning for...\nSouthwestern Brewster County in southwestern Texas...\n\n* Until 400 AM CDT.\n\n* At 104 AM CDT, Doppler radar and satellite indicated thunderstorms\nproducing heavy rain across the warned area. Local observations\nindicate that between 0.5 and 1.5 inches of rain have fallen. Flash\nflooding is ongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nLajitas, Study Butte, Terlingua, Big Bend National Park, Castolon,\nTerlingua Ranch Airport, Terlingua Ranch Lodge, Santiago Peak and\nBarton Warnock Environmental Educational Center.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWMAF"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS54 KMAF 300604"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KMAF.FF.W.0253.261030T0604Z-261030T0900Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T04:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1775e912e462868190543a27492f0bec26d8a4a9.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.77,
+                            39.7
+                        ],
+                        [
+                            -96.82,
+                            39.6
+                        ],
+                        [
+                            -97.08,
+                            39.57
+                        ],
+                        [
+                            -97.37,
+                            39.57
+                        ],
+                        [
+                            -97.37,
+                            39.83
+                        ],
+                        [
+                            -96.77,
+                            39.83
+                        ],
+                        [
+                            -96.77,
+                            39.7
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.1775e912e462868190543a27492f0bec26d8a4a9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.1775e912e462868190543a27492f0bec26d8a4a9.001.1",
+                "areaDesc": "Marshall, KS; Washington, KS",
+                "geocode": {
+                    "SAME": [
+                        "020117",
+                        "020201"
+                    ],
+                    "UGC": [
+                        "KSC117",
+                        "KSC201"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC117",
+                    "https://api.weather.gov/zones/county/KSC201"
+                ],
+                "references": [],
+                "sent": "2026-10-30T00:58:00-05:00",
+                "effective": "2026-10-30T00:58:00-05:00",
+                "onset": "2026-10-30T00:58:00-05:00",
+                "expires": "2026-10-30T05:00:00-05:00",
+                "ends": "2026-10-30T05:00:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 30 at 12:58AM CDT until October 30 at 5:00AM CDT by NWS Topeka KS",
+                "description": "FFWTOP\n\nThe National Weather Service in Topeka has issued a\n\n* Flash Flood Warning for...\nSouthern Washington County in north central Kansas...\nWest Central Marshall County in northeastern Kansas...\n\n* Until 500 AM CDT.\n\n* At 1258 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2.5 and 3.5 inches of\nrain have fallen. Additional rainfall amounts of 0.5 to 1 inch are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nWashington, Clifton, Linn, Greenleaf, Barnes, Palmer and Vining.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KTOP 300558"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FF.W.0049.261030T0558Z-261030T1000Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T05:00:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.962d6daf293c570ddef3ac84be591cbe715577c9.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.54,
+                            39.85
+                        ],
+                        [
+                            -96.34,
+                            39.87
+                        ],
+                        [
+                            -96.34,
+                            39.78
+                        ],
+                        [
+                            -96.55,
+                            39.74
+                        ],
+                        [
+                            -96.54,
+                            39.85
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.962d6daf293c570ddef3ac84be591cbe715577c9.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.962d6daf293c570ddef3ac84be591cbe715577c9.001.1",
+                "areaDesc": "Marshall, KS",
+                "geocode": {
+                    "SAME": [
+                        "020117"
+                    ],
+                    "UGC": [
+                        "KSC117"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC117"
+                ],
+                "references": [],
+                "sent": "2026-10-30T00:15:00-05:00",
+                "effective": "2026-10-30T00:15:00-05:00",
+                "onset": "2026-10-30T00:15:00-05:00",
+                "expires": "2026-10-30T04:15:00-05:00",
+                "ends": "2026-10-30T04:15:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 30 at 12:15AM CDT until October 30 at 4:15AM CDT by NWS Topeka KS",
+                "description": "FFWTOP\n\nThe National Weather Service in Topeka has issued a\n\n* Flash Flood Warning for...\nCentral Marshall County in northeastern Kansas...\n\n* Until 415 AM CDT.\n\n* At 1215 AM CDT, Doppler radar indicated thunderstorms producing\nheavy rain across the warned area. Between 2.5 and 3 inches of rain\nhave fallen. Additional rainfall amounts of 0.5 to 1.5 inches are\npossible in the warned area. Flash flooding is ongoing or expected\nto begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar indicated.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nBeattie.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KTOP 300515"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FF.W.0048.261030T0515Z-261030T0915Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T04:15:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b603707ae617b504b5d9095d7088340d29d7badb.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.2,
+                            40
+                        ],
+                        [
+                            -96.19,
+                            39.88
+                        ],
+                        [
+                            -95.87,
+                            39.88
+                        ],
+                        [
+                            -95.87,
+                            40
+                        ],
+                        [
+                            -96.2,
+                            40
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.b603707ae617b504b5d9095d7088340d29d7badb.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.b603707ae617b504b5d9095d7088340d29d7badb.001.1",
+                "areaDesc": "Nemaha, KS",
+                "geocode": {
+                    "SAME": [
+                        "020131"
+                    ],
+                    "UGC": [
+                        "KSC131"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC131"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.33d84bfc2fdd28063883bfaedf85e63b69204ebe.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.33d84bfc2fdd28063883bfaedf85e63b69204ebe.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-29T22:49:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-30T00:00:00-05:00",
+                "effective": "2026-10-30T00:00:00-05:00",
+                "onset": "2026-10-30T00:00:00-05:00",
+                "expires": "2026-10-30T02:45:00-05:00",
+                "ends": "2026-10-30T02:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 30 at 12:00AM CDT until October 30 at 2:45AM CDT by NWS Topeka KS",
+                "description": "At midnight CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n3.5 and 4 inches of rain have fallen. Additional rainfall amounts of\n1 to 1.5 inches are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nBern.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KTOP 300500"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 245 AM CDT EARLY THIS MORNING FOR NORTHERN NEMAHA COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTOP.FF.W.0045.000000T0000Z-261030T0745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T02:45:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:45 AM CDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:45 AM CDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d71af7f49d38adc248768d402eafd7eac3db7fe3.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -96.77,
+                            39.84
+                        ],
+                        [
+                            -96.54,
+                            39.9
+                        ],
+                        [
+                            -96.54,
+                            39.76
+                        ],
+                        [
+                            -96.77,
+                            39.73
+                        ],
+                        [
+                            -96.77,
+                            39.84
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.d71af7f49d38adc248768d402eafd7eac3db7fe3.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.d71af7f49d38adc248768d402eafd7eac3db7fe3.001.1",
+                "areaDesc": "Marshall, KS",
+                "geocode": {
+                    "SAME": [
+                        "020117"
+                    ],
+                    "UGC": [
+                        "KSC117"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC117"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a1e9b66b65d308c6a7c0e1bbefb57cadd8f0027c.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.a1e9b66b65d308c6a7c0e1bbefb57cadd8f0027c.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-29T22:50:00-05:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.93ac0f0b5a22b2627ad785d665b53e577ca28637.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.93ac0f0b5a22b2627ad785d665b53e577ca28637.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-29T23:24:00-05:00"
+                    }
+                ],
+                "sent": "2026-10-29T23:59:00-05:00",
+                "effective": "2026-10-29T23:59:00-05:00",
+                "onset": "2026-10-29T23:59:00-05:00",
+                "expires": "2026-10-30T02:45:00-05:00",
+                "ends": "2026-10-30T02:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 29 at 11:59PM CDT until October 30 at 2:45AM CDT by NWS Topeka KS",
+                "description": "At 1159 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain in At least one road in the city\nof Marysville has been closed due to water covering the road making\nit impassable. Between 3.5 and 4 inches of rain have fallen.\nAdditional rainfall amounts of 1 to 2 inches are possible in the\nwarned area. Flash flooding is already occurring.\n\nHAZARD...Life threatening flash flooding. Thunderstorms producing\nflash flooding.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Life threatening flash flooding of creeks and streams, urban\nareas, highways, streets and underpasses.\n\nSome locations that will experience flash flooding include...\nMarysville.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFSTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS73 KTOP 300459"
+                    ],
+                    "NWSheadline": [
+                        "FLASH FLOOD WARNING REMAINS IN EFFECT UNTIL 245 AM CDT FRIDAY FOR WEST CENTRAL MARSHALL COUNTY"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "flashFloodDamageThreat": [
+                        "CONSIDERABLE"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.KTOP.FF.W.0046.000000T0000Z-261030T0745Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T02:45:00-05:00"
+                    ],
+                    "WEAHandling": [
+                        "Imminent Threat"
+                    ],
+                    "CMAMtext": [
+                        "NWS: FLASH FLOOD WARNING this area til 2:45 AM CDT. Avoid flooded areas."
+                    ],
+                    "CMAMlongtext": [
+                        "National Weather Service: A FLASH FLOOD WARNING is in effect for this area until 2:45 AM CDT. This is a dangerous and life-threatening situation. Do not attempt to travel unless you are fleeing an area subject to flooding or under an evacuation order."
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.13e1f32ac1a0852e7aa33e60de847633c7505a26.001.1",
+            "type": "Feature",
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            -97.28,
+                            39.54
+                        ],
+                        [
+                            -97.26,
+                            39.65
+                        ],
+                        [
+                            -97.07,
+                            39.7
+                        ],
+                        [
+                            -97.08,
+                            39.54
+                        ],
+                        [
+                            -97.28,
+                            39.54
+                        ]
+                    ]
+                ]
+            },
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.13e1f32ac1a0852e7aa33e60de847633c7505a26.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.13e1f32ac1a0852e7aa33e60de847633c7505a26.001.1",
+                "areaDesc": "Clay, KS; Washington, KS",
+                "geocode": {
+                    "SAME": [
+                        "020027",
+                        "020201"
+                    ],
+                    "UGC": [
+                        "KSC027",
+                        "KSC201"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/county/KSC027",
+                    "https://api.weather.gov/zones/county/KSC201"
+                ],
+                "references": [],
+                "sent": "2026-10-29T23:51:00-05:00",
+                "effective": "2026-10-29T23:51:00-05:00",
+                "onset": "2026-10-29T23:51:00-05:00",
+                "expires": "2026-10-30T03:45:00-05:00",
+                "ends": "2026-10-30T03:45:00-05:00",
+                "status": "Actual",
+                "messageType": "Alert",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Likely",
+                "urgency": "Immediate",
+                "event": "Flash Flood Warning",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Topeka KS",
+                "headline": "Flash Flood Warning issued October 29 at 11:51PM CDT until October 30 at 3:45AM CDT by NWS Topeka KS",
+                "description": "FFWTOP\n\nThe National Weather Service in Topeka has issued a\n\n* Flash Flood Warning for...\nNorth Central Clay County in north central Kansas...\nSouthwestern Washington County in north central Kansas...\n\n* Until 345 AM CDT.\n\n* At 1151 PM CDT, Doppler radar and automated rain gauges indicated\nthunderstorms producing heavy rain across the warned area. Between\n3 and 3.5 inches of rain have fallen. Additional rainfall amounts\nof 0.5 to 1 inch are possible in the warned area. Flash flooding is\nongoing or expected to begin shortly.\n\nHAZARD...Flash flooding caused by thunderstorms.\n\nSOURCE...Radar and automated gauges.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nClifton, Linn and Palmer.",
+                "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nBe especially cautious at night when it is harder to recognize the\ndangers of flooding.",
+                "response": "Avoid",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFWTOP"
+                    ],
+                    "WMOidentifier": [
+                        "WGUS53 KTOP 300451"
+                    ],
+                    "flashFloodDetection": [
+                        "RADAR AND GAUGE INDICATED"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.NEW.KTOP.FF.W.0047.261030T0451Z-261030T0845Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-30T03:45:00-05:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFW"
+                    ],
+                    "NationalWeatherService": [
+                        "FFW"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flash Flood Warning events",
+    "updated": "2026-10-30T06:56:45+00:00"
+}

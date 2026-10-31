@@ -1,0 +1,42 @@
+en Español
+
+000
+ABNT20 KNHC 211142
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+800 AM EDT Wed Oct 21 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Offshore of the East Coast of the United States (AL93):
+A storm-force non-tropical low pressure area located a few hundred 
+miles off the mid-Atlantic United States coast is producing some 
+shower and thunderstorm activity primarily west and northwest of its 
+center. Over the next day or two, the low could gradually lose its 
+frontal features while it moves slowly north-northeastward over the 
+Gulf Stream, allowing the system to possibly develop subtropical 
+characteristics. By Friday, the system is expected to accelerate 
+northeastward away from the the eastern United States, and 
+environmental conditions are expected to become unfavorable for 
+additional subtropical or tropical development. 
+
+Regardless of the status of the system, high winds, coastal 
+flooding, and dangerous surf are expected along portions of the U.S. 
+East Coast during the next few days. For more information, please 
+consult statements and warnings from local National Weather Service 
+offices and the Weather Prediction Center, along with the High Seas 
+Forecasts and the Storm Warnings issued by the National Weather 
+Service.
+* Formation chance through 48 hours...medium...40 percent.
+* Formation chance through 7 days...medium...40 percent.
+
+&&
+High Seas Forecasts issued by the National Weather Service can be 
+found under AWIPS header NFDHSFAT1, WMO header FZNT01 KWBC, and 
+online at ocean.weather.gov/shtml/NFDHSFAT1.php
+
+$$
+Forecaster Blake
+  

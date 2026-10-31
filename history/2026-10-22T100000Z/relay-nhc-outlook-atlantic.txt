@@ -1,0 +1,36 @@
+en Español
+
+000
+ABNT20 KNHC 220511
+TWOAT 
+
+Tropical Weather Outlook
+NWS National Hurricane Center Miami FL
+200 AM EDT Thu Oct 22 2026
+
+For the North Atlantic...Caribbean Sea and the Gulf of America:
+
+Active Systems:
+The National Hurricane Center is issuing advisories on Subtropical 
+Storm Josephine, located a few hundred miles offshore of the 
+Mid-Atlantic coast of the United States.
+
+Subtropical Central Atlantic:
+A trough of low pressure located several hundred miles to the 
+east-southeast of Bermuda is producing a large area of disorganized 
+showers and thunderstorms. Some development of this system is 
+possible during the next day or two while it moves slowly 
+north-northeastward. Upper-level winds are forecast to become too 
+strong for further development by the weekend.  
+* Formation chance through 48 hours...low...10 percent.
+* Formation chance through 7 days...low...10 percent.
+
+&&
+Public Advisories on Josephine are issued under WMO header WTNT35 
+KNHC and under AWIPS header MIATCPAT5.
+Forecast/Advisories on Josephine are issued under WMO header WTNT25 
+KNHC and under AWIPS header MIATCMAT5.
+
+$$
+Forecaster Gibbs
+  

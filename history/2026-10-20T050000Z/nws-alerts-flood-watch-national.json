@@ -1,0 +1,205 @@
+{
+    "@context": [
+        "https://geojson.org/geojson-ld/geojson-context.jsonld",
+        {
+            "@version": "1.1",
+            "wx": "https://api.weather.gov/ontology#",
+            "@vocab": "https://api.weather.gov/ontology#"
+        }
+    ],
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.001.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.001.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.001.1",
+                "areaDesc": "Cape Fairweather to Lisianski Strait",
+                "geocode": {
+                    "SAME": [
+                        "002105"
+                    ],
+                    "UGC": [
+                        "AKZ322"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ322"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-19T06:34:00-08:00"
+                    }
+                ],
+                "sent": "2026-10-19T15:22:00-08:00",
+                "effective": "2026-10-19T15:22:00-08:00",
+                "onset": "2026-10-19T22:00:00-08:00",
+                "expires": "2026-10-20T03:30:00-08:00",
+                "ends": "2026-10-21T04:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 19 at 3:22PM AKDT until October 21 at 4:00AM AKDT by NWS Juneau AK",
+                "description": "An atmospheric river, currently over the Yakutat area, is expected\nto continue through Tuesday. Multiple periods of heavy rain are\nexpected for the Icy Strait corridor and northeast Gulf Coast,\nincluding the following communities: Yakutat, Elfin Cove, Pelican,\nGustavus, Juneau. Elevated gusty winds are expected alongside this\nheavier rainfall, with the strongest winds from the southwest\nexpected late Tuesday morning into Tuesday afternoon. Prolonged\nperiods of moderate to heavy rain will produce significant river\nrises with the potential for at least minor flooding in Juneau and\nGustavus. Ponding of water in low-lying areas is also possible.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following areas, Eastern Gulf Coast and Northeast Gulf\nCoast. This includes the cities of Elfin Cove And Pelican.\n\n* WHEN...From 10 PM AKDT this evening through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\nLow-water crossings may be flooded. Isolated landslides are\npossible in areas of steep terrain.\n\n* ADDITIONAL DETAILS...\n- Rain totals for the Elfin Cove and Pelican area through and\nTuesday evening range between 3-4 inches, with greater than 6\ninches possible at elevations greater than 1000 ft. Coinciding\nwith high rain rates, possibly exceeding 0.3 inches per hour,\nelevated wind gusts greater than 40 mph are expected at\nelevations greater than 500 ft.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 192322"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 10 PM AKDT THIS EVENING THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0004.261020T0600Z-261021T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-21T04:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.2f06fc6275c0c7f0c4b83cb9b20549627213fd7b.001.1,2026-10-18T20:45:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4da8fbbf1baa3d55ecfe51d13d80931cd56a7d9f.001.1,2026-10-18T12:33:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        },
+        {
+            "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.002.1",
+            "type": "Feature",
+            "geometry": null,
+            "properties": {
+                "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.002.1",
+                "@type": "wx:Alert",
+                "id": "urn:oid:2.49.0.1.840.0.bd966519e3b6f707f8613eafa727faf5b8bc5e93.002.1",
+                "areaDesc": "City and Borough of Yakutat; Glacier Bay; City and Borough of Juneau",
+                "geocode": {
+                    "SAME": [
+                        "002282",
+                        "002105",
+                        "002110"
+                    ],
+                    "UGC": [
+                        "AKZ317",
+                        "AKZ320",
+                        "AKZ325"
+                    ]
+                },
+                "affectedZones": [
+                    "https://api.weather.gov/zones/forecast/AKZ317",
+                    "https://api.weather.gov/zones/forecast/AKZ320",
+                    "https://api.weather.gov/zones/forecast/AKZ325"
+                ],
+                "references": [
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.001.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.001.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-19T06:34:00-08:00"
+                    },
+                    {
+                        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.002.1",
+                        "identifier": "urn:oid:2.49.0.1.840.0.4b1ff4be558afbb5e7cdef55d9d9f637922e8e4e.002.1",
+                        "sender": "w-nws.webmaster@noaa.gov",
+                        "sent": "2026-10-19T06:34:00-08:00"
+                    }
+                ],
+                "sent": "2026-10-19T15:22:00-08:00",
+                "effective": "2026-10-19T15:22:00-08:00",
+                "onset": "2026-10-19T22:00:00-08:00",
+                "expires": "2026-10-20T03:30:00-08:00",
+                "ends": "2026-10-21T04:00:00-08:00",
+                "status": "Actual",
+                "messageType": "Update",
+                "category": "Met",
+                "severity": "Severe",
+                "certainty": "Possible",
+                "urgency": "Future",
+                "event": "Flood Watch",
+                "sender": "w-nws.webmaster@noaa.gov",
+                "senderName": "NWS Juneau AK",
+                "headline": "Flood Watch issued October 19 at 3:22PM AKDT until October 21 at 4:00AM AKDT by NWS Juneau AK",
+                "description": "An atmospheric river, currently over the Yakutat area, is expected\nto continue through Tuesday. Multiple periods of heavy rain are\nexpected for the Icy Strait corridor and northeast Gulf Coast,\nincluding the following communities: Yakutat, Elfin Cove, Pelican,\nGustavus, Juneau. Elevated gusty winds are expected alongside this\nheavier rainfall, with the strongest winds from the southwest\nexpected late Tuesday morning into Tuesday afternoon. Prolonged\nperiods of moderate to heavy rain will produce significant river\nrises with the potential for at least minor flooding in Juneau and\nGustavus. Ponding of water in low-lying areas is also possible.\n\n* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...The following areas, Northeast Gulf Coast and Northern\nInner Channels. This includes the cities of Yakutat, Gustavus, And\nJuneau.\n\n* WHEN...From 10 PM AKDT this evening through late Tuesday night.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, other low-lying areas and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Rain totals for the Yakutat area between this morning and Tuesday\nevening range between 4.5-7.0 inches, with greater than 9 inches\npossible at elevations greater than 1000 ft. For Gustavus, rain\ntotals ranging between 2-4 inches, exceeding 4 inches on south to\nsouthwest facing mountains along the outer coast, and exceeding 4\ninches on south to southwest facing mountains at elevation in\nGlacier Bay and around Gustavus.\n\nFor the Juneau area, rain totals have trended slightly down,\nranging between 2 and 3 inches with totals exceeding 4 inches at\nelevations greater than 4 inches. Highest rain rates are expected\novernight tonight into Tuesday with rain rates as high as 0.2\ninches per hour.",
+                "instruction": "Stay tuned to further developments by listening to your local radio,\ntelevision, or NOAA Weather Radio for further information.\n\nYou should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+                "response": "Prepare",
+                "note": null,
+                "parameters": {
+                    "AWIPSidentifier": [
+                        "FFAAJK"
+                    ],
+                    "WMOidentifier": [
+                        "WGAK67 PAJK 192322"
+                    ],
+                    "NWSheadline": [
+                        "FLOOD WATCH REMAINS IN EFFECT FROM 10 PM AKDT THIS EVENING THROUGH LATE TUESDAY NIGHT"
+                    ],
+                    "BLOCKCHANNEL": [
+                        "EAS",
+                        "NWEM",
+                        "CMAS"
+                    ],
+                    "EAS-ORG": [
+                        "WXR"
+                    ],
+                    "VTEC": [
+                        "/O.CON.PAJK.FA.A.0004.261020T0600Z-261021T1200Z/"
+                    ],
+                    "eventEndingTime": [
+                        "2026-10-21T04:00:00-08:00"
+                    ],
+                    "expiredReferences": [
+                        "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.2f06fc6275c0c7f0c4b83cb9b20549627213fd7b.002.1,2026-10-18T20:45:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.2f06fc6275c0c7f0c4b83cb9b20549627213fd7b.001.1,2026-10-18T20:45:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4da8fbbf1baa3d55ecfe51d13d80931cd56a7d9f.002.1,2026-10-18T12:33:00-08:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.4da8fbbf1baa3d55ecfe51d13d80931cd56a7d9f.001.1,2026-10-18T12:33:00-08:00"
+                    ]
+                },
+                "scope": "Public",
+                "code": "IPAWSv1.0",
+                "language": "en-US",
+                "web": "http://www.weather.gov",
+                "eventCode": {
+                    "SAME": [
+                        "FFA"
+                    ],
+                    "NationalWeatherService": [
+                        "FAA"
+                    ]
+                }
+            }
+        }
+    ],
+    "title": "Current Flood Watch events",
+    "updated": "2026-10-20T05:45:28+00:00"
+}
