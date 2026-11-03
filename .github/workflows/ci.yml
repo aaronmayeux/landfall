@@ -188,12 +188,18 @@ jobs:
           node-version: '22'
 
       # On a runner we install the browser for real. Do NOT copy this into a
-      # sandbox session: browser downloads are blocked there by design, and the
-      # sandbox's own chromium is build 1194, which only playwright 1.56.0
-      # speaks to. Here there is no such constraint.
+      # sandbox session: browser downloads are blocked there by design, and
+      # tools/bootstrap.sh links whichever playwright matches the sandbox's own
+      # chromium instead.
+      #
+      # 1.63.0 is the release the sandbox ships (chromium build 1243), so a
+      # correctness check here and in a session drives the same browser. It is
+      # also the floor: ubuntu-latest became 26.04, and 1.56.0 refuses to
+      # install on it ("does not support chromium on ubuntu26.04-x64"). The
+      # nightly perf-audit hit it first, on 2026-10-23.
       - name: install playwright chromium
         run: |
-          npm i --no-audit --no-fund playwright@1.56.0
+          npm i --no-audit --no-fund playwright@1.63.0
           npx playwright install --with-deps chromium
 
       # The suites load the app over http, not file://. Same port the

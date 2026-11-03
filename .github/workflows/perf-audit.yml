@@ -41,7 +41,13 @@ permissions:
 
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    # PINNED TO 24.04, NOT ubuntu-latest, FOR THE SAME REASON THE BROWSER IS
+    # PINNED BELOW. ubuntu-latest became 26.04 and playwright 1.56.0 will not
+    # install there, which failed every nightly run from 2026-10-23. Moving
+    # the browser to make it install would change the instrument; moving the
+    # runner back keeps every number comparable with the baseline. When 24.04
+    # is retired, bump both together and take a fresh baseline.
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -50,8 +56,7 @@ jobs:
         with:
           node-version: '22'
 
-      # The sandbox pins 1.56.0 because its chromium is build 1194. The runner
-      # has no such constraint, but the version is pinned anyway so a run six
+      # Pinned to 1.56.0 so a run six
       # months from now measures the same browser as this one — an audit whose
       # instrument drifts silently is worse than no audit.
       - name: install playwright chromium
