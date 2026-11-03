@@ -35,9 +35,10 @@ print it, then quote what printed.
 
 **==> THIS SANDBOX DOES HAVE A BROWSER, AND THE RULE BELOW SURVIVES THAT
 INTACT. <==** The line here used to read "this sandbox cannot open a browser".
-That was measured false on 2026-08-23: chromium build 1194 is at
-`/opt/pw-browsers` and `tools/bootstrap.sh` pins the playwright that speaks to
-it. **`boot-smoke.mjs` was run in here and passed.** Believing otherwise costs a
+That was measured false on 2026-08-23: a chromium is at `/opt/pw-browsers`
+and `tools/bootstrap.sh` picks the playwright that speaks to it. The build
+changes with the sandbox image (1194, then 1243 by 2026-11-03), so bootstrap
+reads it rather than pinning a version. **`boot-smoke.mjs` was run in here and passed.** Believing otherwise costs a
 session the one gate that catches swallowed exceptions, so:
 
 ```
@@ -149,9 +150,11 @@ the hook is the gate.** What it does, in order:
 17. home-setup browser check
 
 **Five of those are browser checks.** They need a chromium in `/opt/pw-browsers`
-and `playwright@1.56.0` installed. If this sandbox has neither, the push will
-fail on them and that is the hook working, not a broken environment — install
-`playwright@1.56.0` and set `PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`.
+and a Playwright whose expected build matches it. If this sandbox has neither,
+the push will fail on them and that is the hook working, not a broken
+environment. **"Executable doesn't exist at …chromium_headless_shell-NNNN"**
+means the Playwright and the chromium disagree — re-run `bash tools/bootstrap.sh`,
+which detects the mismatch and links the sandbox's own matching Playwright.
 
 **`seasons-wall-check.mjs` is NOT in the hook** and is the one that drives the
 Wall of Years in a real browser. Run it by hand after any wall change:

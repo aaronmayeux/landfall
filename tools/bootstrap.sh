@@ -20,7 +20,7 @@
 #   1. Git identity              Andy (Cowork) <andy@getgravitate.app>
 #   2. Push credential           found in the project note, never written to a
 #                                repo file, never printed
-#   3. Playwright 1.56.0         the ONLY minor matching the sandbox chromium
+#   3. Playwright                whichever release matches the sandbox chromium
 #   4. Static server :8099       so the browser checks have something to load
 #   5. pre-push hook             the same gates CI runs, minus the browser
 #   6. Prints an orientation card so the session knows what is true
@@ -137,21 +137,61 @@ else
 fi
 
 # ------------------------------------------------------------- 3. playwright
-# Chromium build 1194 ships at /opt/pw-browsers. Exactly one Playwright minor
-# speaks to it — measured by launching each: 1.55.0 wants build 1187 and fails,
-# 1.57.0 wants 1200 and fails, 1.56.0 launches. NEVER run `playwright install`;
-# browser downloads are blocked by design and the binary is already there.
+# Each Playwright release speaks to exactly ONE chromium build, named in its
+# playwright-core/browsers.json. The sandbox ships the chromium at
+# /opt/pw-browsers, and THE BUILD CHANGES WHEN THE SANDBOX IMAGE CHANGES:
+# build 1194 through 2026-10 (only playwright 1.56.0 launches it), build 1243
+# by 2026-11-03 (1.56.0 then fails at every browser gate in the pre-push hook
+# with "Executable doesn't exist"). So nothing here names a version. It reads
+# which build is installed and uses the Playwright that matches:
+#   a. the repo's own node_modules copy, if it already matches
+#   b. else the sandbox's own Playwright (shipped matched to its chromium),
+#      linked into node_modules — ES modules ignore NODE_PATH, so a link is
+#      the only way `import 'playwright'` finds it
+#   c. else, for build 1194 only, npm i playwright@1.56.0
+# NEVER run `playwright install`; browser downloads are blocked by design and
+# the binary is already there.
+pw_rev() { # print the chromium revision a playwright dir expects, or nothing
+  [ -f "$1/../playwright-core/browsers.json" ] || [ -f "$1/node_modules/playwright-core/browsers.json" ] || return 0
+  node -e '
+    const fs=require("fs"),p=require("path"),d=process.argv[1];
+    for (const f of [p.join(d,"..","playwright-core","browsers.json"), p.join(d,"node_modules","playwright-core","browsers.json")]) {
+      try { const b=JSON.parse(fs.readFileSync(f,"utf8")).browsers.find(x=>x.name==="chromium"); if (b) { console.log(b.revision); break; } } catch {}
+    }' "$1" 2>/dev/null
+}
 if [ "$WANT_PW" = "1" ]; then
-  if [ -d "$REPO/node_modules/playwright" ]; then
-    ok "playwright already present"
-  elif [ -d /opt/pw-browsers ]; then
-    if npm i --no-audit --no-fund --silent playwright@1.56.0 >/tmp/pw-install.log 2>&1; then
-      ok "playwright@1.56.0 installed (matches chromium build 1194)"
-    else
-      warn "playwright install failed — see /tmp/pw-install.log"
-    fi
+  PWB="${PLAYWRIGHT_BROWSERS_PATH:-/opt/pw-browsers}"
+  HAVE_REV="$(ls -d "$PWB"/chromium-[0-9]* 2>/dev/null | sed -E 's/.*chromium-//' | sort -n | tail -1)"
+  LOCAL="$REPO/node_modules/playwright"
+  if [ -z "$HAVE_REV" ]; then
+    warn "no chromium under $PWB — not a sandbox with a browser. Skipping."
+  elif [ -e "$LOCAL" ] && [ "$(pw_rev "$(readlink -f "$LOCAL")")" = "$HAVE_REV" ]; then
+    ok "playwright already present (matches chromium build $HAVE_REV)"
   else
-    warn "/opt/pw-browsers missing — not a sandbox with a chromium. Skipping."
+    if [ -e "$LOCAL" ]; then
+      warn "node_modules playwright wants build $(pw_rev "$(readlink -f "$LOCAL")"), sandbox has $HAVE_REV — replacing it"
+      rm -rf "$REPO/node_modules/playwright" "$REPO/node_modules/playwright-core"
+    fi
+    FOUND=""
+    for d in /opt/npm-tools/node_modules "$(npm root -g 2>/dev/null)" ${NODE_PATH//:/ }; do
+      [ -n "$d" ] && [ -d "$d/playwright" ] || continue
+      if [ "$(pw_rev "$d/playwright")" = "$HAVE_REV" ]; then FOUND="$d"; break; fi
+    done
+    if [ -n "$FOUND" ]; then
+      mkdir -p "$REPO/node_modules"
+      ln -sfn "$FOUND/playwright" "$REPO/node_modules/playwright"
+      [ -d "$FOUND/playwright-core" ] && ln -sfn "$FOUND/playwright-core" "$REPO/node_modules/playwright-core"
+      ok "linked the sandbox's playwright from $FOUND (matches chromium build $HAVE_REV)"
+    elif [ "$HAVE_REV" = "1194" ]; then
+      if npm i --no-audit --no-fund --silent playwright@1.56.0 >/tmp/pw-install.log 2>&1; then
+        ok "playwright@1.56.0 installed (matches chromium build 1194)"
+      else
+        warn "playwright install failed — see /tmp/pw-install.log"
+      fi
+    else
+      bad "chromium build $HAVE_REV and no Playwright here that speaks to it. Browser gates WILL fail."
+      say "        find the release whose playwright-core/browsers.json says $HAVE_REV and npm i it"
+    fi
   fi
   # package.json and node_modules are already ignored at the repo root (see
   # .gitignore, which explains at length why). Confirm rather than assume.
@@ -183,7 +223,7 @@ if [ "$WANT_SERVER" = "1" ]; then
       ok "static server up on 127.0.0.1:8099 — DIES when this command ends"
       say "        for browser checks:  bash tools/with-server.sh node tools/csp-check.mjs"
       say ""
-      say "  ==> THIS SANDBOX HAS A REAL BROWSER. Chromium 1194 is installed and"
+      say "  ==> THIS SANDBOX HAS A REAL BROWSER (chromium under /opt/pw-browsers) and"
       say "      boot-smoke has been run in here and passed. Anything telling you"
       say "      otherwise is a stale comment — correct it, do not work around it."
       say ""
@@ -427,8 +467,8 @@ say "  It runs 15 checks, FOUR OF THEM IN A BROWSER — boot smoke, the roster"
 say "  columns, the archive sheet height, home setup. A session that ran"
 say "  check-syntax and the suites by hand has still not run what the push"
 say "  will run. CLAUDE.md lists all fifteen in order."
-say "  Browser checks need: npm i playwright@1.56.0 and"
-say "  PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers (only if /opt/pw-browsers exists)."
+say "  Browser checks need a Playwright matching the sandbox chromium (step 3"
+say "  above picks it) and PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers."
 say ""
 say "  NOT in the hook and easy to forget: seasons-wall-check.mjs, the only"
 say "  browser check for the Wall of Years. After any wall change, run"
